@@ -634,7 +634,7 @@ export const ForecastSection: React.FC = () => {
                                 <table className="w-full text-left border-collapse min-w-[900px]">
                                     <thead>
                                         <tr className="border-b border-stone-50 text-[10px] uppercase font-medium text-stone-300 tracking-[0.15em]">
-                                            <th className="py-4 px-8 min-w-[200px] text-center">Detail Tamu</th>
+                                            <th className="py-4 px-8 min-w-[200px] text-left">Detail Tamu</th>
                                             <th className="py-4 px-8 min-w-[160px] text-center">Channel</th>
                                             <th className="py-4 px-8 min-w-[180px] text-center">Room & Notes</th>
                                             <th className="py-4 px-8 min-w-[160px] text-center">Tagihan / Info</th>
@@ -677,14 +677,14 @@ export const ForecastSection: React.FC = () => {
                                             ).map((entry: any, i: number) => (
                                                 <tr key={i} className="group border-b border-stone-50 last:border-0 hover:bg-stone-50/40 transition-colors duration-150">
                                                     {/* Detail Tamu / Item */}
-                                                    <td className="py-6 px-8 text-center">
-                                                        <div className="flex items-center justify-center gap-3">
-                                                            <div className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 font-bold text-xs uppercase border border-stone-200">
+                                                    <td className="py-6 px-8 text-left">
+                                                        <div className="flex items-center justify-start gap-3">
+                                                            <div className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 font-bold text-xs uppercase border border-stone-200 flex-shrink-0">
                                                                 {(entry.guestName || entry.incomeCategory || "O").charAt(0)}
                                                             </div>
-                                                            <div className="text-left">
-                                                                <div className="text-sm font-bold text-stone-800">{entry.guestName || entry.incomeCategory}</div>
-                                                                <div className="text-[10px] text-stone-400 font-medium">{entry.bookingId || (entry.type === 'other_income' ? `By: ${entry.staffName}` : "#N/A")}</div>
+                                                            <div className="text-left min-w-0">
+                                                                <div className="text-sm font-bold text-stone-800 truncate">{entry.guestName || entry.incomeCategory}</div>
+                                                                <div className="text-[10px] text-stone-400 font-medium truncate">{entry.bookingId || (entry.type === 'other_income' ? `By: ${entry.staffName}` : "#N/A")}</div>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -940,6 +940,7 @@ export const ForecastSection: React.FC = () => {
                         guest={selectedGuest} 
                         isEditing={isEditing}
                         onClose={() => { setSelectedGuest(null); setIsEditing(false); }} 
+                        onSave={() => { stats.refresh(); }}
                     />
                 )}
             </AnimatePresence>

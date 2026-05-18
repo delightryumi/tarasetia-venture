@@ -59,7 +59,7 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                             <div className="flex justify-between items-center mb-0">
                                 <div className="flex items-center gap-4 flex-1">
                                     <div className="w-10 h-10 flex items-center justify-center bg-stone-50 rounded-xl overflow-hidden flex-shrink-0">
-                                        <img src={getChannelLogo(item.channel)} alt="" className="w-6 h-6 object-contain" />
+                                        <img src={getChannelLogo(item.channel)} alt="" className="w-6 h-6 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">

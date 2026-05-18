@@ -43,7 +43,7 @@ const getLocalDateString = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-export const useOverview = () => {
+export const useOverview = (targetDate: 'today' | 'tomorrow' = 'today') => {
     const [stats, setStats] = useState<OverviewStats>({
         roomsCount: 0,
         galleryCount: 0,
@@ -69,7 +69,8 @@ export const useOverview = () => {
 
         const initBookings = async () => {
             try {
-                const dateStr = getLocalDateString(new Date());
+                const baseDate = targetDate === 'tomorrow' ? new Date(Date.now() + 24 * 60 * 60 * 1000) : new Date();
+                const dateStr = getLocalDateString(baseDate);
                 
                 // Query a range to catch overlaps (last 30 days should be enough)
                 const startRange = getLocalDateString(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
@@ -218,7 +219,7 @@ export const useOverview = () => {
             unsubSEO();
             if (unsubDaily) unsubDaily();
         };
-    }, []);
+    }, [targetDate]);
 
     return stats;
 };

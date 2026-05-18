@@ -24,37 +24,37 @@ function SummaryCard({
             variants={variants}
             whileHover={{ y: -6, scale: 1.02 }}
             onClick={onClick}
-            className={`group relative flex flex-col gap-4 md:gap-8 p-5 md:p-7 rounded-xl bg-white border shadow-xl shadow-stone-200/20 hover:shadow-2xl transition-all duration-500 overflow-hidden ${
+            className={`group relative flex flex-col gap-4 md:gap-6 p-4 sm:p-5 md:p-5 rounded-xl bg-white border shadow-xl shadow-stone-200/20 hover:shadow-2xl transition-all duration-500 overflow-hidden ${
                 onClick ? 'cursor-pointer' : 'cursor-default'
             } border-stone-100 hover:border-stone-300`}
         >
             <div className="absolute -right-10 -top-10 w-32 h-32 rounded-full opacity-[0.04] blur-2xl group-hover:scale-150 transition-transform duration-1000 pointer-events-none" style={{ backgroundColor: accent }}></div>
 
-            <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm transition-all group-hover:rotate-6 duration-500"
+            <div className="flex items-center justify-between relative z-10 gap-2">
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm transition-all group-hover:rotate-6 duration-500 flex-shrink-0"
                         style={{ backgroundColor: `${accent}0D`, color: accent, borderColor: `${accent}1A` }}>
                         {icon}
                     </div>
-                    <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-stone-400 leading-tight block">
+                    <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-stone-400 leading-tight truncate">
                         {label}
                     </span>
                 </div>
-                {extra && <div className="relative z-20">{extra}</div>}
+                {extra && <div className="relative z-20 flex-shrink-0">{extra}</div>}
             </div>
 
-            <div className="relative z-10 flex flex-col items-center justify-center py-4 text-center">
-                <div className="flex items-baseline gap-1.5">
+            <div className="relative z-10 flex flex-col items-center justify-center py-3 sm:py-4 text-center w-full min-w-0">
+                <div className="flex items-baseline justify-center gap-1 sm:gap-1.5 w-full min-w-0 px-1 overflow-hidden">
                     {prefix && (
-                        <span className={`text-sm font-medium transition-colors ${loading ? 'text-stone-300' : 'text-stone-400'}`}>
+                        <span className={`text-xs md:text-sm font-medium transition-colors flex-shrink-0 ${loading ? 'text-stone-300' : 'text-stone-400'}`}>
                             {prefix}
                         </span>
                     )}
-                    <p className={`text-3xl font-medium tracking-tighter transition-all duration-500 ${loading ? 'text-stone-200 animate-pulse' : 'text-stone-900'}`}>
+                    <p className={`text-base sm:text-lg md:text-xl lg:text-xl xl:text-xl 2xl:text-2xl font-bold tracking-tight transition-all duration-500 truncate max-w-full ${loading ? 'text-stone-200 animate-pulse' : 'text-stone-900'}`} title={loading ? "Calculating..." : (formatter ? formatter(value) : `${prefix} ${value.toLocaleString('id-ID')}`)}>
                         {loading ? "—" : (formatter ? formatter(value) : value.toLocaleString('id-ID'))}
                     </p>
                     {suffix && (
-                        <span className={`text-sm font-medium transition-colors ${loading ? 'text-stone-300' : 'text-stone-400'}`}>
+                        <span className={`text-xs md:text-sm font-medium transition-colors flex-shrink-0 ${loading ? 'text-stone-300' : 'text-stone-400'}`}>
                             {suffix}
                         </span>
                     )}
@@ -79,7 +79,7 @@ export const PNLSummaryCards: React.FC<PNLSummaryCardsProps> = ({
     pnlResult, loading, vatPercentage, mgmtFeePercentage, onVatChange, onFeeChange, rise, formatIDR
 }) => {
     return (
-        <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6">
             <SummaryCard
                 label="Total Gross Revenue"
                 icon={<TrendingUp size={18} />}

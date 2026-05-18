@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { 
     Trash2,
     Save,
@@ -17,6 +18,7 @@ interface GuestDetailModalProps {
     guest: any;
     isEditing: boolean;
     onClose: () => void;
+    onSave?: () => void;
 }
 
 const CHANNELS = [
@@ -33,7 +35,7 @@ const CHANNELS = [
     { name: "Booking Engine", logo: "/channels/nexura.png" },
 ];
 
-export function GuestDetailModal({ guest, isEditing: initialEditing, onClose }: GuestDetailModalProps) {
+export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, onSave }: GuestDetailModalProps) {
     const [isEditMode, setIsEditMode] = React.useState(initialEditing);
     const [showConfirmDelete, setShowConfirmDelete] = React.useState(false);
     const [formData, setFormData] = React.useState({
@@ -62,11 +64,14 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose }: 
             const hotelId = "bumi-anyom-resort";
             const oldDate = guest.checkInDate || guest.checkIn || new Date(guest.timestamp).toISOString().split('T')[0];
             const newDate = formData.checkIn;
-            const oldDocId = `${hotelId}_${oldDate}`;
+            const oldDocId = guest._docId || `${hotelId}_${oldDate}`;
             const newDocId = `${hotelId}_${newDate}`;
+            const newSource = (formData.channel === "Walk-in" || formData.channel === "Nexura Sales" || formData.channel === "Booking Engine") ? "Walk-in" : "OTA";
+
             const updatedEntry = {
                 ...guest,
                 ...formData,
+                source: newSource,
                 checkInDate: newDate,
                 checkOutDate: formData.checkOut,
                 amount: formData.isSplitBill ? (Number(formData.paidAmount1) + Number(formData.paidAmount2)) : Number(formData.paidAmount1),
@@ -97,9 +102,12 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose }: 
                     await updateDoc(docRef, { entries: updatedEntries, date: oldDate });
                 }
             }
+            toast.success("Transaction updated successfully");
+            if (onSave) onSave();
             onClose();
         } catch (error) {
             console.error(error);
+            toast.error("Failed to update transaction");
         }
     };
 
@@ -111,10 +119,13 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose }: 
                 const entries = docSnap.data().entries || [];
                 const filtered = entries.filter((e: any) => e.timestamp !== guest.timestamp);
                 await updateDoc(docRef, { entries: filtered });
+                toast.success("Transaction archived successfully");
+                if (onSave) onSave();
                 onClose();
             }
         } catch (error) {
             console.error("Action Failed", error);
+            toast.error("Failed to archive transaction");
         } finally {
             setShowConfirmDelete(false);
         }
@@ -288,7 +299,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose }: 
                                 <div className="space-y-1.5 text-right flex flex-col items-end">
                                     <p className="folio-label">Channel</p>
                                     <div className="mt-1 p-1.5 bg-stone-50 rounded-lg border border-stone-100 w-14 h-10 flex items-center justify-center shadow-sm">
-                                        <img src={getChannelIcon(guest.channel)} alt={guest.channel} className="max-w-full max-h-full object-contain grayscale" />
+                                        <img src={getChannelIcon(guest.channel)} alt={guest.channel} className="max-w-full max-h-full object-contain grayscale" onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">

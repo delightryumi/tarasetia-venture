@@ -50,7 +50,7 @@ export function SummaryGrid({
                 <span className="text-[10px] font-semibold bg-blue-600 text-white px-3 py-1 rounded-full uppercase tracking-widest">Main Income</span>
             </div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-[0.2em] mb-2">Total Gross Revenue</p>
-            <h2 className="text-4xl font-semibold text-slate-900 tracking-tighter font-mono-jb mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-2xl xl:text-3xl font-bold text-slate-900 tracking-tight font-mono-jb mb-4 truncate" title={formatIDR(pnlResult.card1_TotalRevenue)}>
               {formatIDR(pnlResult.card1_TotalRevenue)}
             </h2>
             <div className="flex items-center gap-2 text-slate-400 group-hover:text-blue-600 transition-colors">
@@ -76,7 +76,7 @@ export function SummaryGrid({
                 <span className="text-[10px] font-semibold bg-emerald-600 text-white px-3 py-1 rounded-full uppercase tracking-widest">Gross Profit</span>
             </div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-[0.2em] mb-2">Total Operating Profit</p>
-            <h2 className="text-4xl font-semibold text-slate-900 tracking-tighter font-mono-jb mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-2xl xl:text-3xl font-bold text-slate-900 tracking-tight font-mono-jb mb-4 truncate" title={formatIDR(pnlResult.card7_TotalGOP)}>
               {formatIDR(pnlResult.card7_TotalGOP)}
             </h2>
             <div className="flex items-center gap-2 text-slate-400 group-hover:text-emerald-600 transition-colors">
@@ -102,7 +102,7 @@ export function SummaryGrid({
                 <span className="text-[10px] font-semibold bg-white text-slate-900 px-3 py-1 rounded-full uppercase tracking-widest">Owner Net</span>
             </div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.2em] mb-2">Reconciliation Settlement</p>
-            <h2 className="text-4xl font-semibold text-white tracking-tighter font-mono-jb mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-2xl xl:text-3xl font-bold text-white tracking-tight font-mono-jb mb-4 truncate" title={formatIDR(pnlResult.card12_ReconOwner)}>
               {formatIDR(pnlResult.card12_ReconOwner)}
             </h2>
             <div className="flex items-center gap-2 text-slate-500 group-hover:text-white transition-colors">

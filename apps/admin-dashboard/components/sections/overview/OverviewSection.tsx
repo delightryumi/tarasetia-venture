@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
 import { PlusCircle, LogIn, Calendar, XCircle, Download, FileText } from "lucide-react";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
@@ -21,15 +22,17 @@ import { GuestListDrawer } from "./GuestListDrawer";
 
 const SAGE = "#788069";
 const PEACH = "#ffd8a6";
+const RICH_BLACK = "#1A1C14";
 
 export function OverviewSection() {
     const router = useRouter();
+    const [targetDate, setTargetDate] = React.useState<'today' | 'tomorrow'>('today');
     const { 
         loading, 
         checkInCount, checkOutCount, cancelCount,
         todayCheckIns, todayCheckOuts, todayCanceled,
         latestBookings, roomStatus, dailyData, roomTypesData
-    } = useOverview();
+    } = useOverview(targetDate);
     
     const [selectedGuest, setSelectedGuest] = React.useState<any>(null);
     const [isEditing, setIsEditing] = React.useState(false);
@@ -112,6 +115,28 @@ export function OverviewSection() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
+                    {/* Today / Tomorrow Toggle */}
+                    <div className="flex p-1 bg-stone-100 rounded-xl border border-stone-200/40 shadow-inner">
+                        <motion.button 
+                            whileHover={{ scale: targetDate === 'today' ? 1 : 1.02 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setTargetDate('today')}
+                            className={`flex items-center justify-center h-10 rounded-lg text-[13px] font-bold transition-all whitespace-nowrap min-w-[140px] ${targetDate === 'today' ? 'shadow-sm' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-200/50'}`}
+                            style={targetDate === 'today' ? { backgroundColor: PEACH, color: RICH_BLACK } : {}}
+                        >
+                            Today
+                        </motion.button>
+                        <motion.button 
+                            whileHover={{ scale: targetDate === 'tomorrow' ? 1 : 1.02 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setTargetDate('tomorrow')}
+                            className={`flex items-center justify-center h-10 rounded-lg text-[13px] font-bold transition-all whitespace-nowrap min-w-[140px] ${targetDate === 'tomorrow' ? 'shadow-sm' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-200/50'}`}
+                            style={targetDate === 'tomorrow' ? { backgroundColor: PEACH, color: RICH_BLACK } : {}}
+                        >
+                            Tomorrow
+                        </motion.button>
+                    </div>
+
                     <button
                         onClick={() => router.push(`/forecast/add?date=${new Date().toISOString().split('T')[0]}`)}
                         className="h-11 w-11 flex items-center justify-center rounded-xl text-white transition-all hover:brightness-110 hover:shadow-lg active:scale-95 shadow-sm bg-[#788069]"
@@ -149,19 +174,19 @@ export function OverviewSection() {
             {/* SECTION 1: MOVEMENT GRID */}
             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
                 <StatCard 
-                    accent={SAGE} icon={<LogIn size={18} />} label="Check In Today" 
+                    accent={SAGE} icon={<LogIn size={18} />} label={targetDate === 'today' ? "Check In Today" : "Check In Tomorrow"} 
                     count={dash || checkInCount} items={todayCheckIns}
                     onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
                     onStatusUpdate={handleStatusUpdate}
                 />
                 <StatCard 
-                    accent={PEACH} icon={<Calendar size={18} />} label="Check Out Today" 
+                    accent={PEACH} icon={<Calendar size={18} />} label={targetDate === 'today' ? "Check Out Today" : "Check Out Tomorrow"} 
                     count={dash || checkOutCount} items={todayCheckOuts}
                     onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
                     onStatusUpdate={handleStatusUpdate}
                 />
                 <StatCard 
-                    accent="#ef4444" icon={<XCircle size={18} />} label="Cancellations" 
+                    accent="#ef4444" icon={<XCircle size={18} />} label={targetDate === 'today' ? "Cancellations Today" : "Cancellations Tomorrow"} 
                     count={dash || cancelCount} items={todayCanceled}
                     onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
                     onStatusUpdate={handleStatusUpdate}

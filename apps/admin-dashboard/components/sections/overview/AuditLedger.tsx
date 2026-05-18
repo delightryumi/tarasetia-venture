@@ -125,7 +125,7 @@ export function AuditLedger({
                                 <td className="py-16 px-8">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-white border border-stone-100 p-1 flex items-center justify-center">
-                                            <img src={getChannelLogo(booking.channel)} alt="" className="w-5 h-5 object-contain grayscale opacity-50" />
+                                            <img src={getChannelLogo(booking.channel)} alt="" className="w-5 h-5 object-contain grayscale opacity-50" onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
                                         </div>
                                         <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">{booking.channel}</p>
                                     </div>
