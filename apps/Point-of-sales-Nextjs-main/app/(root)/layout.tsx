@@ -115,6 +115,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     return () => {
       eventBus.removeListener('fetchStoreData', handleEventBusEvent);
     };
+  }, [router]);
+
   const getDashboardUrl = () => {
     if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
       return process.env.NEXT_PUBLIC_DASHBOARD_URL;
