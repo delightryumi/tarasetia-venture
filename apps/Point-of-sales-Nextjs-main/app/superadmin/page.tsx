@@ -58,7 +58,12 @@ export default function SuperadminPage() {
     // 1. Route guard
     const userJson = localStorage.getItem('user');
     if (!userJson) {
-      window.location.href = 'http://localhost:3000';
+      const loginGatewayUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL
+        ? process.env.NEXT_PUBLIC_DASHBOARD_URL.replace('/select-module', '')
+        : (typeof window !== 'undefined'
+          ? `${window.location.protocol}//${window.location.hostname.replace('pos.', 'dashboard.').replace(':3001', ':3000')}`
+          : 'http://localhost:3000');
+      window.location.href = loginGatewayUrl;
       return;
     }
 
@@ -149,7 +154,10 @@ export default function SuperadminPage() {
   const handleLogout = () => {
     localStorage.clear();
     toast.success('Berhasil keluar!');
-    window.location.href = 'http://localhost:3000/select-module';
+    const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || (typeof window !== 'undefined'
+      ? `${window.location.protocol}//${window.location.hostname.replace('pos.', 'dashboard.').replace(':3001', ':3000')}/select-module`
+      : 'http://localhost:3000/select-module');
+    window.location.href = dashboardUrl;
   };
 
   if (loading && !adminUser) {

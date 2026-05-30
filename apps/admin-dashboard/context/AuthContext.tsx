@@ -108,8 +108,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.removeItem("auth_user");
         setUser(null);
         await fbSignOut(auth);
-        window.location.href = "http://localhost:3000/select-module";
+        const dashboardUrl = typeof window !== "undefined"
+            ? `${window.location.protocol}//${window.location.hostname}${window.location.port ? ":" + window.location.port : ""}/select-module`
+            : "http://localhost:3000/select-module";
+        window.location.href = dashboardUrl;
     };
+
 
     return (
         <AuthContext.Provider value={{ user, loading, loginWithFirestore, signOutUser }}>

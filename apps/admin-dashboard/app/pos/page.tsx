@@ -11,8 +11,22 @@ export default function POSPage() {
       const hostname = window.location.hostname;
       const protocol = window.location.protocol;
       
-      // Determine target POS base url
-      const basePosUrl = process.env.NEXT_PUBLIC_POS_URL || `${protocol}//${hostname}:3001`;
+      // Determine target POS base url dynamically
+      const getPosUrl = () => {
+        if (process.env.NEXT_PUBLIC_POS_URL) {
+          return process.env.NEXT_PUBLIC_POS_URL;
+        }
+        const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
+        if (isLocal) {
+          return `${protocol}//${hostname}:3001`;
+        }
+        if (hostname.startsWith('dashboard.')) {
+          return `${protocol}//${hostname.replace('dashboard.', 'pos.')}`;
+        }
+        return `${protocol}//${hostname}`;
+      };
+      const basePosUrl = getPosUrl();
+
 
       // Collect session state to forward to the POS app
       const params = new URLSearchParams();

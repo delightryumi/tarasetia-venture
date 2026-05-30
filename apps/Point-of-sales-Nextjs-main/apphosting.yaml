@@ -2,8 +2,8 @@ kind: "AppHostingYaml"
 schemaVersion: "v1"
 
 scripts:
-  build: "pnpm --filter storage build"
-  run: "pnpm --filter storage start"
+  build: "pnpm build"
+  run: "pnpm start"
 
 environmentVariables:
   - variable: "NODE_VERSION"

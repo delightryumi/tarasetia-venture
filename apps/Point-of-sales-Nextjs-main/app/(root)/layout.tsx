@@ -27,7 +27,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   const handleLogout = () => {
     localStorage.clear();
-    window.location.href = 'http://localhost:3000/select-module';
+    window.location.href = dashboardUrl;
   };
 
   useEffect(() => {
@@ -51,7 +51,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     // 1. Enforce Login / Retrieve Session
     const userJson = localStorage.getItem('user');
     if (!userJson) {
-      window.location.href = 'http://localhost:3000';
+      window.location.href = loginGatewayUrl;
       return;
     }
 
@@ -64,9 +64,10 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     } catch (e) {
       console.error('Invalid user session JSON, clearing storage:', e);
       localStorage.removeItem('user');
-      window.location.href = 'http://localhost:3000';
+      window.location.href = loginGatewayUrl;
       return;
     }
+
 
     const restoId = user.restoId;
     const cachedRestoName = localStorage.getItem('restoName') || 'POS Resto';
@@ -114,10 +115,44 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     return () => {
       eventBus.removeListener('fetchStoreData', handleEventBusEvent);
     };
-  }, [router]);
-  const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || (typeof window !== 'undefined'
-    ? `${window.location.protocol}//${window.location.hostname}:3000/select-module`
-    : 'http://localhost:3000/select-module');
+  const getDashboardUrl = () => {
+    if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
+      return process.env.NEXT_PUBLIC_DASHBOARD_URL;
+    }
+    if (typeof window !== 'undefined') {
+      const { protocol, hostname } = window.location;
+      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
+      if (isLocal) {
+        return `${protocol}//${hostname}:3000/select-module`;
+      }
+      if (hostname.startsWith('pos.')) {
+        return `${protocol}//${hostname.replace('pos.', 'dashboard.')}/select-module`;
+      }
+      return `${protocol}//${hostname}/select-module`;
+    }
+    return 'http://localhost:3000/select-module';
+  };
+
+  const getLoginGatewayUrl = () => {
+    if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
+      return process.env.NEXT_PUBLIC_DASHBOARD_URL.replace('/select-module', '');
+    }
+    if (typeof window !== 'undefined') {
+      const { protocol, hostname } = window.location;
+      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
+      if (isLocal) {
+        return `${protocol}//${hostname}:3000`;
+      }
+      if (hostname.startsWith('pos.')) {
+        return `${protocol}//${hostname.replace('pos.', 'dashboard.')}`;
+      }
+      return `${protocol}//${hostname}`;
+    }
+    return 'http://localhost:3000';
+  };
+
+  const dashboardUrl = getDashboardUrl();
+  const loginGatewayUrl = getLoginGatewayUrl();
 
   return (
     <div className="bg-gray-300 dark:bg-black h-screen overflow-hidden">
