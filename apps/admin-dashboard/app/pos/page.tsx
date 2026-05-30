@@ -23,6 +23,11 @@ export default function POSPage() {
         if (hostname.startsWith('dashboard.')) {
           return `${protocol}//${hostname.replace('dashboard.', 'pos.')}`;
         }
+        if (hostname.includes('--bumi-anyom')) {
+          const parts = hostname.split('--');
+          parts[0] = 'pos';
+          return `${protocol}//${parts.join('--')}`;
+        }
         return `${protocol}//${hostname}`;
       };
       const basePosUrl = getPosUrl().replace(/\/+$/, '');
@@ -55,7 +60,13 @@ export default function POSPage() {
       if (activeShift) params.set('activeShift', activeShift);
 
       // Perform a clean redirect to the POS Home screen
-      window.location.href = `${basePosUrl}/home?${params.toString()}`;
+      try {
+        const url = new URL('/home', basePosUrl);
+        url.search = params.toString();
+        window.location.href = url.toString();
+      } catch (e) {
+        window.location.href = `${basePosUrl}/home?${params.toString()}`;
+      }
     }
   }, [user]);
 

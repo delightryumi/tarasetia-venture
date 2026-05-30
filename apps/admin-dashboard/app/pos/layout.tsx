@@ -25,9 +25,14 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
         if (hostname.startsWith('dashboard.')) {
           return `${protocol}//${hostname.replace('dashboard.', 'pos.')}`;
         }
+        if (hostname.includes('--bumi-anyom')) {
+          const parts = hostname.split('--');
+          parts[0] = 'pos';
+          return `${protocol}//${parts.join('--')}`;
+        }
         return `${protocol}//${hostname}`;
       };
-      const basePosUrl = getPosUrl();
+      const basePosUrl = getPosUrl().replace(/\/+$/, '');
 
 
       // Map admin-dashboard paths to the original POS app paths
@@ -73,7 +78,13 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
       if (activeShift) params.set('activeShift', activeShift);
 
       // Perform a clean redirect to the target POS application page
-      window.location.href = `${basePosUrl}${targetPath}?${params.toString()}`;
+      try {
+        const url = new URL(targetPath, basePosUrl);
+        url.search = params.toString();
+        window.location.href = url.toString();
+      } catch (e) {
+        window.location.href = `${basePosUrl}${targetPath}?${params.toString()}`;
+      }
     }
   }, [pathname, user]);
 
