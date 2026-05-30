@@ -1,0 +1,10 @@
+kind: "AppHostingYaml"
+schemaVersion: "v1"
+
+scripts:
+  build: "pnpm --filter storage build"
+  run: "pnpm --filter storage start"
+
+environmentVariables:
+  - variable: "NODE_VERSION"
+    value: "20"

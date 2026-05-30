@@ -8,8 +8,8 @@ import {
     Search, Users, LogOut 
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { auth, db } from "@/lib/firebase";
-import { signOut } from "firebase/auth";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -20,12 +20,35 @@ export const MobileBottomNav = () => {
     const pathname = usePathname();
     const router = useRouter();
     const activeSection = pathname.split("/")[1] || "overview";
+    const { user, signOutUser } = useAuth();
     
     const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
     const [isSuperadmin, setIsSuperadmin] = useState(true);
+    const [activeModule, setActiveModule] = useState<string>("front-office");
 
+    // Sync active module
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const modParam = params.get("module");
+            if (modParam) {
+                localStorage.setItem("active_module", modParam);
+                setActiveModule(modParam);
+            } else {
+                const storedMod = localStorage.getItem("active_module");
+                if (storedMod) {
+                    setActiveModule(storedMod);
+                } else {
+                    localStorage.setItem("active_module", "front-office");
+                    setActiveModule("front-office");
+                }
+            }
+        }
+    }, [pathname]);
+
+    // Sync permissions
+    useEffect(() => {
+        const fetchPermissions = async () => {
             if (!user?.email) return;
 
             try {
@@ -45,6 +68,8 @@ export const MobileBottomNav = () => {
                     const roleSnap = await getDoc(doc(db, "roles_master", roleId));
                     if (roleSnap.exists()) {
                         setUserPermissions(roleSnap.data().permissions || {});
+                    } else {
+                        setUserPermissions({});
                     }
                 } else {
                     setIsSuperadmin(true);
@@ -53,10 +78,10 @@ export const MobileBottomNav = () => {
                 console.error("Error fetching permissions:", err);
                 setIsSuperadmin(true);
             }
-        });
+        };
 
-        return () => unsubscribe();
-    }, []);
+        fetchPermissions();
+    }, [user]);
 
     const allNavItems = [
         { id: "overview", label: "Overview", icon: <BarChart2 size={20} /> },
@@ -77,9 +102,30 @@ export const MobileBottomNav = () => {
         { id: "users", label: "Users", icon: <Users size={20} /> },
     ];
 
-    const navItems = isSuperadmin 
-        ? allNavItems 
-        : allNavItems.filter(item => userPermissions?.[item.id] !== false);
+    const getFilteredNavItems = () => {
+        let items = allNavItems;
+        if (activeModule === "front-office") {
+            items = allNavItems.filter(item => ["overview", "forecast", "invoice"].includes(item.id));
+        } else if (activeModule === "housekeeping") {
+            items = allNavItems.filter(item => ["overview", "forecast"].includes(item.id));
+        } else if (activeModule === "accounting") {
+            items = allNavItems.filter(item => ["pnl"].includes(item.id));
+        } else if (activeModule === "cpanel") {
+            items = allNavItems.filter(item => [
+                "logo", "hero", "room-type", "about", "gallery", 
+                "footer", "attractions", "promo", "packages", "seo", "users"
+            ].includes(item.id));
+        }
+
+        // Filter out POS terminal link
+        items = items.filter(item => item.id !== "pos");
+
+        return isSuperadmin 
+            ? items 
+            : items.filter(item => userPermissions?.[item.id] === true);
+    };
+
+    const navItems = getFilteredNavItems();
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-[100] lg:hidden pointer-events-none">
@@ -90,6 +136,16 @@ export const MobileBottomNav = () => {
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
                 <div className="flex items-center gap-10 min-w-full justify-center">
+                    {/* Pilih Modul Button */}
+                    <button
+                        onClick={() => router.push('/select-module')}
+                        className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:-translate-y-1 transition-all duration-300"
+                    >
+                        <Grid size={26} className="text-[#ffd8a6]" />
+                    </button>
+
+                    <div className="w-px h-8 bg-white/10 mx-2 flex-shrink-0" />
+
                     {navItems.map((item) => {
                         const isActive = activeSection === item.id;
                         return (
@@ -125,7 +181,7 @@ export const MobileBottomNav = () => {
                     <div className="w-px h-8 bg-white/10 mx-2 flex-shrink-0" />
 
                     <button
-                        onClick={() => signOut(auth)}
+                        onClick={signOutUser}
                         className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white/40 hover:text-rose-300 hover:-translate-y-1 transition-all duration-300"
                     >
                         <LogOut size={26} />

@@ -43,6 +43,15 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
         );
     }, [pathname]);
 
+    // ── Purchasing module isolation ──
+    // Per GEMINI.md: purchasing has its own shell (PurchasingShell).
+    // We skip the global DashboardLayout entirely for /purchasing/* paths.
+    if (pathname.startsWith('/purchasing')) {
+        if (loading) return null;
+        if (!user) return <LoginSection />;
+        return <>{children}</>;
+    }
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-broken-white">

@@ -1,0 +1,93 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table Resto {
+  id String [pk]
+  name String [not null]
+  address String
+  createdAt DateTime [default: `now()`, not null]
+  users User [not null]
+  products ProductStock [not null]
+  transactions Transaction [not null]
+  shopData ShopData [not null]
+}
+
+Table User {
+  id String [pk]
+  name String [not null]
+  username String [unique, not null]
+  email String [unique]
+  emailVerified DateTime
+  image String
+  password String
+  role String [not null, default: 'UNKNOW']
+  restoId String
+  resto Resto
+}
+
+Table ProductStock {
+  id String [pk]
+  restoId String
+  resto Resto
+  name String [not null]
+  imageProduct String
+  price Float [not null]
+  stock Float [not null]
+  cat String [not null]
+  Product Product [not null]
+}
+
+Table Product {
+  id String [pk]
+  productId String [unique, not null]
+  productstock ProductStock [not null]
+  sellprice Float [not null]
+  restoId String
+  OnSaleProduct OnSaleProduct [not null]
+}
+
+Table OnSaleProduct {
+  id String [pk]
+  productId String [not null]
+  quantity Int [not null]
+  saledate DateTime [default: `now()`, not null]
+  transactionId String [not null]
+  product Product [not null]
+  transaction Transaction [not null]
+}
+
+Table Transaction {
+  id String [pk]
+  totalAmount Decimal
+  createdAt DateTime [default: `now()`, not null]
+  isComplete Boolean [not null, default: false]
+  restoId String
+  resto Resto
+  products OnSaleProduct [not null]
+  revenueType String [default: 'alacarte']
+}
+
+Table ShopData {
+  id String [pk]
+  tax Int
+  name String
+  address String
+  phone String
+  restoId String
+  resto Resto
+}
+
+Ref: User.restoId > Resto.id
+
+Ref: ProductStock.restoId > Resto.id [delete: Cascade]
+
+Ref: Product.productId > ProductStock.id [delete: Cascade]
+
+Ref: OnSaleProduct.productId > Product.productId [delete: Cascade]
+
+Ref: OnSaleProduct.transactionId > Transaction.id [delete: Cascade]
+
+Ref: Transaction.restoId > Resto.id [delete: Cascade]
+
+Ref: ShopData.restoId > Resto.id [delete: Cascade]

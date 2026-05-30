@@ -57,7 +57,7 @@ export const PNLCharts: React.FC<PNLChartsProps> = ({
                             </Pie>
                             <Tooltip 
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
-                                formatter={(value: number) => formatIDR(value)}
+                                formatter={(value: any) => formatIDR(Number(value) || 0)}
                             />
                             <Legend verticalAlign="bottom" height={36}/>
                         </RePie>
@@ -85,7 +85,7 @@ export const PNLCharts: React.FC<PNLChartsProps> = ({
                             <Tooltip 
                                 cursor={{ fill: 'transparent' }}
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
-                                formatter={(value: number) => formatIDR(value)}
+                                formatter={(value: any) => formatIDR(Number(value) || 0)}
                             />
                             <Bar dataKey="value" radius={[6, 6, 0, 0]} animationDuration={2000}>
                                 {[
@@ -122,7 +122,7 @@ export const PNLCharts: React.FC<PNLChartsProps> = ({
                 </div>
                 <div className="h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={viewMode === "monthly" ? yearTrendData : multiYearTrendData}>
+                        <BarChart data={(viewMode === "monthly" ? yearTrendData : multiYearTrendData) as any}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                             <XAxis 
                                 dataKey={viewMode === "monthly" ? "month" : "year"} 
@@ -134,7 +134,7 @@ export const PNLCharts: React.FC<PNLChartsProps> = ({
                             <Tooltip 
                                 cursor={{ fill: '#f8fafc' }}
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
-                                formatter={(value: number) => formatIDR(value)}
+                                formatter={(value: any) => formatIDR(Number(value) || 0)}
                             />
                             <Bar 
                                 dataKey="revenue" 
@@ -142,7 +142,7 @@ export const PNLCharts: React.FC<PNLChartsProps> = ({
                                 animationDuration={2000}
                                 barSize={viewMode === "monthly" ? undefined : 60}
                             >
-                                {(viewMode === "monthly" ? yearTrendData : multiYearTrendData).map((entry: any, index: number) => (
+                                {((viewMode === "monthly" ? yearTrendData : multiYearTrendData) as any[]).map((entry: any, index: number) => (
                                     <Cell 
                                         key={`cell-${index}`} 
                                         fill={ (viewMode === "monthly" ? entry.fullMonth === monthStr : entry.year === yearStr) ? SAGE : '#f3f4f6'} 
@@ -173,7 +173,7 @@ export const PNLCharts: React.FC<PNLChartsProps> = ({
                                 <YAxis hide />
                                 <Tooltip 
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
-                                    formatter={(value: number) => formatIDR(value)}
+                                    formatter={(value: any) => formatIDR(Number(value) || 0)}
                                 />
                                 <Area type="monotone" dataKey="revenue" stroke="#788069" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" animationDuration={2500} />
                             </AreaChart>

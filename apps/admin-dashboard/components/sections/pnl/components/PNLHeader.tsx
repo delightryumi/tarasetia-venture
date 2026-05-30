@@ -47,7 +47,7 @@ export const PNLHeader: React.FC<PNLHeaderProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-                <div className="flex p-1 bg-stone-100 rounded-xl border border-stone-200/40 shadow-inner">
+                <div className="flex p-1 bg-stone-100 rounded-xl border border-stone-200/40">
                     <button
                         onClick={() => setViewMode("monthly")}
                         className={`flex items-center justify-center h-10 rounded-lg text-[13px] font-bold transition-all whitespace-nowrap min-w-[140px] ${viewMode === "monthly" ? "shadow-sm" : "text-stone-400 hover:text-stone-600 hover:bg-stone-200/50"}`}
@@ -64,7 +64,7 @@ export const PNLHeader: React.FC<PNLHeaderProps> = ({
                     </button>
                 </div>
 
-                <div className="flex p-1 bg-stone-100 rounded-xl border border-stone-200/40 shadow-inner ml-2">
+                <div className="flex p-1 bg-stone-100 rounded-xl border border-stone-200/40 ml-2">
                     <button
                         onClick={() => setDisplayMode("cards")}
                         className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${displayMode === "cards" ? "bg-white shadow-sm text-stone-900" : "text-stone-400 hover:text-stone-600"}`}

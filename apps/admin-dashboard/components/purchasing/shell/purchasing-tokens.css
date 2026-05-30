@@ -1,0 +1,73 @@
+/* purchasing-tokens.css
+   Imported ONLY by PurchasingShell — never globally.
+   All design tokens scoped to .purchasing-root to prevent global bleed. */
+
+.purchasing-root {
+  /* ── Surfaces ── */
+  --p-canvas:          #ffffff;
+  --p-surface-soft:    #f8fafc;
+  --p-surface-strong:  #e0e2e6;
+  --p-surface-dark:    #181d26;
+  --p-hairline:        #dddddd;
+
+  /* ── Signature ── */
+  --p-coral:           #aa2d00;
+  --p-forest:          #0a2e0e;
+  --p-cream:           #f5e9d4;
+  --p-peach:           #fcab79;
+  --p-mint:            #a8d8c4;
+  --p-yellow:          #f4d35e;
+  --p-mustard:         #d9a441;
+
+  /* ── Text ── */
+  --p-ink:             #181d26;
+  --p-body:            #333840;
+  --p-muted:           #41454d;
+  --p-on-dark:         #ffffff;
+
+  /* ── Actions ── */
+  --p-primary:         #181d26;
+  --p-primary-active:  #0d1218;
+  --p-link:            #1b61c9;
+
+  /* ── Semantic ── */
+  --p-success:         #006400;
+  --p-success-border:  #39bf45;
+  --p-danger:          #aa2d00;
+  --p-info:            #254fad;
+  --p-info-border:     #458fff;
+
+  /* ── Spacing ── */
+  --p-space-xxs:       4px;
+  --p-space-xs:        8px;
+  --p-space-sm:        12px;
+  --p-space-md:        16px;
+  --p-space-lg:        24px;
+  --p-space-xl:        32px;
+  --p-space-xxl:       48px;
+  --p-space-section:   96px;
+
+  /* ── Radius ── */
+  --p-radius-sm:       6px;
+  --p-radius-md:       10px;
+  --p-radius-lg:       12px;
+  --p-radius-full:     9999px;
+
+  /* ── Typography ── */
+  /* Using Geist (already loaded globally) — a clean grotesque matching Haas aesthetic */
+  --p-font:            var(--font-geist-sans), 'Inter', system-ui, -apple-system, sans-serif;
+  --p-font-size-xl:    32px;
+  --p-font-size-lg:    24px;
+  --p-font-size-md:    20px;
+  --p-font-size-sm:    18px;
+  --p-font-size-label: 16px;
+  --p-font-size-body:  14px;
+  --p-font-size-caption: 13px;
+
+  /* ── Animation ── */
+  --p-ease-out:        cubic-bezier(0.16, 1, 0.3, 1);
+  --p-ease-in-out:     cubic-bezier(0.4, 0, 0.2, 1);
+  --p-duration-fast:   150ms;
+  --p-duration-base:   250ms;
+  --p-duration-slow:   400ms;
+}

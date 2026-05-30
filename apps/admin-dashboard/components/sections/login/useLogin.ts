@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
@@ -7,6 +8,7 @@ export const useLogin = () => {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const { loginWithFirestore } = useAuth();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -14,6 +16,14 @@ export const useLogin = () => {
         setLoading(true);
 
         try {
+            // 1. Try custom Firestore users_master login first
+            const success = await loginWithFirestore(email, password);
+            if (success) {
+                setLoading(false);
+                return;
+            }
+
+            // 2. Fallback to Firebase Auth
             await signInWithEmailAndPassword(auth, email, password);
         } catch (err: any) {
             console.error(err);

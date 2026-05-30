@@ -1,0 +1,23 @@
+/* PStatusChip.module.css */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--p-radius-full);
+  font-size: var(--p-font-size-caption);
+  font-weight: 500;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.draft        { background: var(--p-yellow);  color: var(--p-ink); }
+.submitted    { background: var(--p-peach);   color: var(--p-ink); }
+.approved     { background: var(--p-mint);    color: var(--p-ink); }
+.fulfilled    { background: var(--p-success); color: var(--p-on-dark); }
+.received     { background: var(--p-success); color: var(--p-on-dark); }
+.rejected     { background: var(--p-coral);   color: var(--p-on-dark); }
+.completed    { background: var(--p-forest);  color: var(--p-on-dark); }
+.locked       { background: var(--p-ink);     color: var(--p-on-dark); }
+.sent_to_supplier { background: var(--p-mustard); color: var(--p-ink); }
+.po_issued    { background: var(--p-surface-dark); color: var(--p-on-dark); }

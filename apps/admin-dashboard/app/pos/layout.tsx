@@ -1,274 +1,127 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { 
-    Search, Plus, RefreshCw, Maximize, 
-    Minimize, User, Bell, ChevronDown, 
-    LayoutDashboard
-} from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useAuth } from "@/context/AuthContext";
-import { POSSidebar } from "@/components/sections/pos/components/POSSidebar";
-import gsap from "gsap";
-import "@/components/sections/pos/POSStyles.css";
-import "@/components/sections/pos/POSGridStyles.css";
+import React, { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
-export default function POSLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
-    const router = useRouter();
-    const pathname = usePathname();
-    const isCheckoutPage = pathname?.includes("/pos/checkout");
-    const { user } = useAuth();
-    const [isFullscreen, setIsFullscreen] = useState(false);
-    const [isSyncing, setIsSyncing] = useState(false);
-    const [userRole, setUserRole] = useState<string | null>(null);
-    const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
-    const [isSuperadmin, setIsSuperadmin] = useState(false);
-    const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
-    const [searchQuery, setSearchQuery] = useState("");
+export default function POSLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const { user } = useAuth();
 
-    const handleSearchChange = (val: string) => {
-        setSearchQuery(val);
-        window.dispatchEvent(new CustomEvent('pos-search', { detail: val }));
-    };
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const protocol = window.location.protocol;
+      
+      // Determine the base URL of the standalone POS application
+      const basePosUrl = process.env.NEXT_PUBLIC_POS_URL || `${protocol}//${hostname}:3001`;
 
-    const headerRef = useRef<HTMLElement>(null);
-    const mainRef = useRef<HTMLDivElement>(null);
-    const searchRef = useRef<HTMLDivElement>(null);
-    const actionButtonsRef = useRef<HTMLDivElement>(null);
+      // Map admin-dashboard paths to the original POS app paths
+      let targetPath = '/home';
+      if (pathname === '/pos') {
+        targetPath = '/home';
+      } else if (pathname === '/pos/home') {
+        targetPath = '/home';
+      } else if (pathname === '/pos/history') {
+        targetPath = '/cashier';
+      } else if (pathname === '/pos/inventory') {
+        targetPath = '/product';
+      } else if (pathname === '/pos/orders') {
+        targetPath = '/records';
+      } else if (pathname === '/pos/settings') {
+        targetPath = '/settings';
+      } else if (pathname === '/pos/technologies') {
+        targetPath = '/technologies';
+      }
 
-    // Fetch User Role & Permissions for Permission Checks
-    useEffect(() => {
-        if (!user?.email) return;
-        
-        const fetchPermissions = async () => {
-            setIsLoadingPermissions(true);
-            try {
-                const userDocId = user.email!.replace(/[@.]/g, '_');
-                const userDocRef = doc(db, "users_master", userDocId);
-                const userSnap = await getDoc(userDocRef);
-                
-                if (userSnap.exists()) {
-                    const userData = userSnap.data();
-                    const role = userData.role;
-                    setUserRole(role);
-                    
-                    if (role === "superadmin") {
-                        setIsSuperadmin(true);
-                        setIsLoadingPermissions(false);
-                        return;
-                    }
-
-                    // Get Role Permissions
-                    const roleId = role.toLowerCase().replace(/\s+/g, '_');
-                    const roleSnap = await getDoc(doc(db, "roles_master", roleId));
-                    if (roleSnap.exists()) {
-                        const perms = roleSnap.data().permissions || {};
-                        setUserPermissions(perms);
-                        
-                        // Check if POS is disabled
-                        if (perms.pos === false) {
-                            router.push('/overview');
-                        }
-                    }
-                }
-            } catch (err) {
-                console.error("Error fetching permissions:", err);
-            } finally {
-                setIsLoadingPermissions(false);
-            }
+      // Collect session state
+      const params = new URLSearchParams();
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        params.set('user', storedUser);
+      } else if (user) {
+        const email = user.email || '';
+        const name = user.displayName || email.split('@')[0];
+        const posUserObj = {
+          id: user.uid,
+          name: name,
+          username: email.split('@')[0],
+          role: 'WORKER',
+          restoId: 'default-resto'
         };
+        params.set('user', JSON.stringify(posUserObj));
+      }
 
-        fetchPermissions();
-    }, [user, router]);
+      const restoName = localStorage.getItem('restoName');
+      if (restoName) params.set('restoName', restoName);
 
-    // GSAP 3D Entrance Animations
-    useEffect(() => {
-        if (isLoadingPermissions) return;
+      const activeShift = localStorage.getItem('active_shift');
+      if (activeShift) params.set('activeShift', activeShift);
 
-        if (headerRef.current) {
-            gsap.fromTo(headerRef.current,
-                { y: -100, opacity: 0 },
-                { y: 0, opacity: 1, duration: 1, ease: "power4.out" }
-            );
-        }
+      // Perform a clean redirect to the target POS application page
+      window.location.href = `${basePosUrl}${targetPath}?${params.toString()}`;
+    }
+  }, [pathname, user]);
 
-        if (searchRef.current) {
-            gsap.fromTo(searchRef.current,
-                { opacity: 0, y: -20, scale: 0.9 },
-                { opacity: 1, y: 0, scale: 1, duration: 1, delay: 0.4, ease: "power3.out", clearProps: "all" }
-            );
-        }
-
-        if (actionButtonsRef.current) {
-            gsap.fromTo(actionButtonsRef.current.children,
-                { opacity: 0, scale: 0.5, rotateZ: -15 },
-                { opacity: 1, scale: 1, rotateZ: 0, duration: 0.6, stagger: 0.1, delay: 0.5, ease: "back.out(2)", clearProps: "all" }
-            );
-        }
-
-        if (mainRef.current) {
-            gsap.fromTo(mainRef.current,
-                { opacity: 0, y: 30 },
-                { opacity: 1, y: 0, duration: 1, delay: 0.3, ease: "power4.out" }
-            );
-        }
-    }, [isLoadingPermissions]);
-
-    const toggleFullscreen = () => {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
-            setIsFullscreen(true);
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-                setIsFullscreen(false);
-            }
-        }
-    };
-
-    const handleSync = () => {
-        setIsSyncing(true);
-        setTimeout(() => setIsSyncing(false), 2000);
-    };
-
-    const canAccessDashboard = isSuperadmin || userRole === "General Manager" || userPermissions?.overview !== false;
-
-    if (isLoadingPermissions) {
-        return (
-            <div className="h-screen flex items-center justify-center bg-[var(--abnb-canvas)]">
-                <div className="flex flex-col items-center gap-4">
-                    <RefreshCw className="animate-spin text-[#0F0F12]" size={32} />
-                    <span className="abnb-caption text-[#737380] uppercase tracking-widest">Verifying Terminal Access...</span>
-                </div>
-            </div>
-        );
+  useEffect(() => {
+    // Add Lottie Player CDN script dynamically
+    const scriptId = 'lottie-player-script';
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.src = 'https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js';
+      script.async = true;
+      document.body.appendChild(script);
     }
 
-    return (
-        <div className="pos-3d-canvas h-screen w-full flex flex-col overflow-hidden selection:bg-[#D4AF37]/30">
-            {/* ── 3D Header (Pure White & Persegi Siku / Sharp Square Corners 0px) ── */}
-            <header ref={headerRef} className="w-full h-20 bg-white border-b border-[#D4AF37]/30 shadow-[0_10px_30px_rgba(15,15,18,0.06)] rounded-none flex items-center justify-between px-3 md:px-8 relative z-[200] flex-shrink-0">
-                {/* Logo Section */}
-                <div className="h-full flex items-center justify-start cursor-pointer py-1 hover:scale-105 transition-transform duration-300 flex-shrink-0 ml-2 md:ml-0" onClick={() => router.push('/pos')}>
-                    <img
-                        src="/channels/nexura.png"
-                        alt="Nexura Logo"
-                        className="h-10 sm:h-12 md:h-14 w-auto object-contain drop-shadow-[0_4px_8px_rgba(15,15,18,0.15)]"
-                    />
-                </div>
+    // Suppress unhandled lottie-player/script error events from triggering Next.js HMR overlay
+    const handleRuntimeError = (event: ErrorEvent) => {
+      if (
+        !event.message ||
+        event.message === 'Script error.' ||
+        event.filename?.includes('lottie') ||
+        event.message?.includes('lottie')
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    window.addEventListener('error', handleRuntimeError);
+    return () => {
+      window.removeEventListener('error', handleRuntimeError);
+    };
+  }, []);
 
-                {/* ── Spacer to shift search bar right ── */}
-                <div className="w-4 md:w-28 flex-shrink-0" />
+  return (
+    <div className="h-screen w-screen bg-black dark:bg-grid-white/[0.15] bg-grid-white/[0.05] relative flex flex-col items-center justify-center overflow-hidden font-sans select-none z-0">
+      {/* Radial gradient mask to fade the edges of the grid */}
+      <div className="absolute pointer-events-none inset-0 flex items-center justify-center bg-black [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] z-0"></div>
 
-                {/* Main Header Content */}
-                <div className="flex-1 h-full hidden md:flex items-center justify-center px-4 md:px-8 max-w-2xl">
-                    {/* Center: Search Utility (Standalone Card Kecil Round 14px dengan Presisi Ikon Ekstra) */}
-                    <div ref={searchRef} className="flex items-center w-full py-4 max-w-md">
-                        <div className="relative w-full group bg-[#f6f6f8] border border-[#D4AF37]/40 shadow-[0_4px_12px_rgba(15,15,18,0.04),_inset_0_2px_4px_rgba(255,255,255,0.9)] flex items-center h-12 rounded-[14px] transition-all duration-300 hover:shadow-[0_6px_16px_rgba(212,175,55,0.15)] focus-within:border-[#D4AF37] focus-within:bg-white focus-within:shadow-[0_0_20px_rgba(212,175,55,0.25)]">
-                            <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-[#737380] group-focus-within:text-[#0F0F12] transition-colors z-10">
-                                <Search size={18} strokeWidth={2.5} />
-                            </div>
-                            <input 
-                                type="text"
-                                placeholder="Search products, orders..."
-                                value={searchQuery}
-                                onChange={(e) => handleSearchChange(e.target.value)}
-                                className="w-full h-full bg-transparent pr-4 abnb-body-md text-[#121214] focus:outline-none transition-all placeholder:text-[#a0a0b0] rounded-[14px]"
-                                style={{ paddingLeft: '3.5rem' }}
-                            />
-                        </div>
-                    </div>
-                </div>
+      {/* Floating background blur glows */}
+      <div className="absolute w-72 h-72 rounded-full bg-blue-500/10 blur-[100px] pointer-events-none z-0" />
 
-                {/* Right: Actions & Utilities (Card Kecil Round 14px) */}
-                <div ref={actionButtonsRef} className="flex items-center gap-3.5 h-full pl-4 flex-shrink-0">
-                    {canAccessDashboard && (
-                        <button 
-                            onClick={() => router.push('/overview')}
-                            className="pos-3d-button w-11 h-11 flex items-center justify-center rounded-[14px]"
-                            title="Back to Dashboard"
-                        >
-                            <LayoutDashboard size={18} strokeWidth={2} />
-                        </button>
-                    )}
+      <div className="flex flex-col items-center justify-center z-10 space-y-6">
+        {/* Lottie Animation container */}
+        <div
+          style={{ height: '280px', width: '280px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+          dangerouslySetInnerHTML={{
+            __html: `<lottie-player src="/animated/b6a540ac-904f-11ee-9286-2bc689aa3dbc.json" background="transparent" speed="1.2" style="width: 100%; height: 100%;" loop autoplay></lottie-player>`
+          }}
+        />
 
-                    <button 
-                        onClick={handleSync}
-                        className={`pos-3d-button w-11 h-11 flex items-center justify-center rounded-[14px] ${isSyncing ? 'text-[#D4AF37]' : ''}`}
-                        title="Sync Menu Data"
-                    >
-                        <RefreshCw size={18} strokeWidth={2} className={isSyncing ? "animate-spin" : ""} />
-                    </button>
-
-                    <button 
-                        onClick={toggleFullscreen}
-                        className="pos-3d-button w-11 h-11 flex items-center justify-center rounded-[14px]"
-                        title="Toggle Fullscreen"
-                    >
-                        {isFullscreen ? <Minimize size={18} strokeWidth={2} /> : <Maximize size={18} strokeWidth={2} />}
-                    </button>
-
-                    {/* Add New Product CTA (Matched size & design with utility buttons) */}
-                    <button 
-                        className="pos-3d-button w-11 h-11 flex items-center justify-center rounded-[14px]"
-                        title="Add New Product"
-                    >
-                        <Plus size={18} strokeWidth={2} />
-                    </button>
-
-                    {/* Profile Shortcut (Clean, no side lines/borders, Jet Black & Gold theme) */}
-                    <button className="flex items-center gap-3 p-1.5 pr-2 bg-transparent border-none shadow-none rounded-[14px] transition-all duration-300 group">
-                        <div className="w-9 h-9 rounded-[10px] overflow-hidden bg-[#f6f6f8] border border-[#D4AF37]/40 flex items-center justify-center shadow-[inset_0_1px_2px_rgba(255,255,255,0.8)] transition-transform duration-300 group-hover:scale-105 flex-shrink-0">
-                            <img 
-                                src={`/avatar/memo_${((((user?.email || "NEXURA").charCodeAt(0) || 0) + 12) % 35) + 1}.png`} 
-                                alt="Profile Avatar"
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <div className="hidden xl:flex flex-col items-start text-left">
-                            <span className="text-[13px] font-semibold text-[#121214] tracking-tight leading-none group-hover:text-[#0F0F12] transition-colors">
-                                {user?.email?.split('@')[0] || 'Nexura Admin'}
-                            </span>
-                            <span className="text-[10px] font-medium text-[#737380] uppercase tracking-widest leading-none mt-1">
-                                {userRole || 'Loading...'}
-                            </span>
-                        </div>
-                        <ChevronDown size={14} className="text-[#a0a0b0] group-hover:text-[#0F0F12] transition-colors ml-0.5" />
-                    </button>
-                </div>
-            </header>
-
-            {/* ── Mobile Dedicated Full-Width Search Bar (md:hidden) ── */}
-            <div className="flex md:hidden w-full bg-white px-4 py-3 border-b border-[#e0e0e0] shadow-sm relative z-[190] flex-shrink-0">
-                <div className="relative w-full group bg-[#f6f6f8] border border-[#D4AF37]/40 shadow-[0_4px_12px_rgba(15,15,18,0.04),_inset_0_2px_4px_rgba(255,255,255,0.9)] flex items-center h-12 rounded-[14px] focus-within:border-[#D4AF37] focus-within:bg-white focus-within:shadow-[0_0_20px_rgba(212,175,55,0.25)] transition-all">
-                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-[#737380] z-10">
-                        <Search size={18} strokeWidth={2.5} />
-                    </div>
-                    <input 
-                        type="text"
-                        placeholder="Search menu products..."
-                        value={searchQuery}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        className="w-full h-full bg-transparent pr-4 abnb-body-md text-[#121214] focus:outline-none transition-all placeholder:text-[#a0a0b0] rounded-[14px] text-sm font-medium"
-                        style={{ paddingLeft: '2.8rem' }}
-                    />
-                </div>
-            </div>
-
-            {/* ── Main Terminal Body (Sidebar + Content) ── */}
-            <div className="flex-1 flex overflow-hidden w-full bg-[#f4f5f8] h-[calc(100vh-80px)] pl-3 md:pl-6 py-3 md:py-6 pr-3 md:pr-6 gap-3 md:gap-6 max-w-[1600px] mx-auto min-w-0 min-h-0">
-                <POSSidebar />
-                <main key={isCheckoutPage ? "pos-checkout-canvas" : "pos-main-canvas-v6"} ref={mainRef} className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
-                    {children}
-                </main>
-            </div>
+        {/* Status text */}
+        <div className="text-center flex flex-col items-center gap-2">
+          <p className="text-blue-500 text-[10px] font-extrabold tracking-[0.25em] uppercase animate-pulse">
+            Connecting...
+          </p>
+          <h2 className="text-neutral-200 text-lg font-bold tracking-wide">
+            Redirecting to POS Terminal
+          </h2>
+          <p className="text-neutral-500 text-xs">
+            Synchronizing data master. Please wait.
+          </p>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

@@ -1,0 +1,215 @@
+/* PurchasingShell.module.css */
+
+.root {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+  background: var(--p-canvas);
+  font-family: var(--p-font);
+  color: var(--p-body);
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 100vh;
+  background: var(--p-canvas);
+  border-right: 1px solid var(--p-hairline);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.sidebarHeader {
+  padding: var(--p-space-lg) var(--p-space-xl);
+  border-bottom: 1px solid var(--p-hairline);
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-sm);
+  min-height: 64px;
+}
+
+.logoMark {
+  width: 28px;
+  height: 28px;
+  background: var(--p-primary);
+  border-radius: var(--p-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--p-on-dark);
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.sidebarTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--p-ink);
+  line-height: 1.2;
+}
+
+.sidebarSubtitle {
+  font-size: 11px;
+  color: var(--p-muted);
+  margin-top: 1px;
+}
+
+.sidebarNav {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--p-space-md) 0;
+}
+
+.navSection {
+  padding: 0 var(--p-space-md);
+  margin-bottom: var(--p-space-xs);
+}
+
+.navSectionLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--p-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: var(--p-space-xs) var(--p-space-sm);
+  margin-bottom: var(--p-space-xxs);
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-sm);
+  padding: var(--p-space-sm) var(--p-space-md);
+  border-radius: var(--p-radius-md);
+  font-size: var(--p-font-size-body);
+  font-weight: 400;
+  color: var(--p-body);
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  transition: background var(--p-duration-fast) var(--p-ease-out),
+              color var(--p-duration-fast) var(--p-ease-out);
+  position: relative;
+  font-family: var(--p-font);
+}
+
+.navItem:hover {
+  background: var(--p-surface-soft);
+  color: var(--p-ink);
+}
+
+.navItemActive {
+  background: var(--p-surface-soft);
+  color: var(--p-ink);
+  font-weight: 500;
+}
+
+.navItemActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background: var(--p-primary);
+  border-radius: 0 var(--p-radius-full) var(--p-radius-full) 0;
+}
+
+.navIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--p-muted);
+}
+
+.navItemActive .navIcon {
+  color: var(--p-ink);
+}
+
+.navBadge {
+  margin-left: auto;
+  background: var(--p-coral);
+  color: var(--p-on-dark);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: var(--p-radius-full);
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.sidebarFooter {
+  padding: var(--p-space-md);
+  border-top: 1px solid var(--p-hairline);
+}
+
+.backLink {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-xs);
+  font-size: var(--p-font-size-body);
+  color: var(--p-muted);
+  text-decoration: none;
+  padding: var(--p-space-sm) var(--p-space-md);
+  border-radius: var(--p-radius-md);
+  transition: background var(--p-duration-fast);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: var(--p-font);
+}
+
+.backLink:hover {
+  background: var(--p-surface-soft);
+  color: var(--p-ink);
+}
+
+.main {
+  grid-column: 2;
+  min-height: 100vh;
+  background: var(--p-canvas);
+  overflow-x: hidden;
+  min-width: 0; /* Prevents content from forcing main grid column to expand */
+}
+
+.mainInner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--p-space-xl); /* reduced from xxl (48px) to xl (32px) as base */
+}
+
+/* Mobile: hide sidebar, show single column */
+@media (max-width: 768px) {
+  .root {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .main {
+    grid-column: 1;
+  }
+
+  .mainInner {
+    padding: var(--p-space-md); /* 16px */
+  }
+}
+
+@media (max-width: 1200px) {
+  .mainInner {
+    padding: var(--p-space-md); /* 16px padding on tablets to avoid any cutoffs */
+  }
+}

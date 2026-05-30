@@ -11,13 +11,23 @@ interface InvestorInputProps {
 export default function InvestorInput({ investors, setInvestors, finalNetProfit }: InvestorInputProps) {
   
   const handleAdd = () => {
-    setInvestors([...investors, { id: Date.now().toString(), name: "Investor Baru", percentage: 0 }]);
+    setInvestors([...investors, { id: Date.now().toString(), name: "Investor Baru", percentage: 0, share: 0 }]);
   };
 
   const handleChange = (index: number, field: keyof InvestorItem, value: any) => {
     const newItems = [...investors];
     if (index === 0 && field === "name") return;
-    newItems[index] = { ...newItems[index], [field]: value };
+    
+    if (field === "percentage" || field === "share") {
+      newItems[index] = { 
+        ...newItems[index], 
+        percentage: Number(value) || 0, 
+        share: Number(value) || 0 
+      };
+    } else {
+      newItems[index] = { ...newItems[index], [field]: value };
+    }
+    
     setInvestors(newItems);
   };
 
@@ -41,7 +51,8 @@ export default function InvestorInput({ investors, setInvestors, finalNetProfit 
       <div className="space-y-3">
         {investors.map((item, index) => {
           const isLocked = index === 0; 
-          const estAmount = (finalNetProfit * item.percentage) / 100;
+          const pct = item.percentage ?? item.share ?? 0;
+          const estAmount = (finalNetProfit * pct) / 100;
 
           return (
             <div key={item.id} className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${isLocked ? 'bg-slate-50 border-slate-200 shadow-inner' : 'bg-white border-slate-100 hover:border-slate-300'}`}>
@@ -64,7 +75,7 @@ export default function InvestorInput({ investors, setInvestors, finalNetProfit 
               <div className="w-24 relative">
                 <input
                   type="number"
-                  value={item.percentage}
+                  value={pct}
                   onChange={(e) => handleChange(index, "percentage", Number(e.target.value))}
                   className="w-full pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-right outline-none focus:border-slate-900 transition-all font-mono-jb"
                 />
@@ -85,8 +96,8 @@ export default function InvestorInput({ investors, setInvestors, finalNetProfit 
       
       <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between items-center">
           <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Total Allocation</span>
-          <span className={`text-xl font-semibold font-mono-jb ${investors.reduce((a,b)=>a+b.percentage,0) > 100 ? 'text-rose-600 underline' : 'text-slate-900'}`}>
-              {investors.reduce((a,b)=>a+b.percentage,0)}%
+          <span className={`text-xl font-semibold font-mono-jb ${investors.reduce((a,b)=>(a + (b.percentage ?? b.share ?? 0)), 0) > 100 ? 'text-rose-600 underline' : 'text-slate-900'}`}>
+              {investors.reduce((a,b)=>(a + (b.percentage ?? b.share ?? 0)), 0)}%
           </span>
       </div>
     </div>

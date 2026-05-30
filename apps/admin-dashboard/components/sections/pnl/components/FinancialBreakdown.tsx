@@ -91,13 +91,14 @@ export default function FinancialBreakdown({
   const val_Card7_TotalGOP = pnlResult.card7_TotalGOP;
 
   const gapAmount = pnlResult.totalGap; 
-  const totalOperationalExpenses = sharedExpensesTotal - gapAmount;
-  const vatAmount = val_Card7_TotalGOP * (vatPercentage / 100);
-  const profitNexura = val_Card7_TotalGOP - totalOperationalExpenses - vatAmount;
+  const totalOperationalExpenses = pnlResult.card8_TotalExpenses || 0;
+  const vatAmount = pnlResult.card11_VAT || 0;
+  const mgmtFeeAmount = pnlResult.card9_FeeGross || 0;
+  const profitNexura = pnlResult.card12_ReconOwner;
 
   const calculatedInvestors = pnlResult.investorDistributions?.map(inv => ({
     ...inv,
-    calculatedAmount: profitNexura * ((inv.percentage || 0) / 100)
+    calculatedAmount: inv.amount
   })) || [];
   
   const mgmtShareData = calculatedInvestors.length > 0 ? calculatedInvestors[0] : null;
@@ -150,12 +151,20 @@ export default function FinancialBreakdown({
                                 <span className="font-mono-jb text-sm font-semibold">{formatIDR(val_Card7_TotalGOP)}</span>
                             </div>
                             <div className="flex items-center gap-10 justify-between">
-                                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Op. Deductions</span>
-                                <span className="font-mono-jb text-sm font-semibold text-rose-400">-{formatIDR(totalOperationalExpenses)}</span>
-                            </div>
-                            <div className="flex items-center gap-10 justify-between">
                                 <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">VAT ({vatPercentage}%) <Sparkles size={10} className="text-yellow-400"/></span>
                                 <span className="font-mono-jb text-sm font-semibold text-rose-400">-{formatIDR(vatAmount)}</span>
+                            </div>
+                            <div className="flex items-center gap-10 justify-between">
+                                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Service Charge</span>
+                                <span className="font-mono-jb text-sm font-semibold text-rose-400">-{formatIDR(pnlResult.summaryServiceCharge || 0)}</span>
+                            </div>
+                            <div className="flex items-center gap-10 justify-between">
+                                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Lost & Breakage</span>
+                                <span className="font-mono-jb text-sm font-semibold text-rose-400">-{formatIDR(pnlResult.summaryLostBreakage || 0)}</span>
+                            </div>
+                            <div className="flex items-center gap-10 justify-between">
+                                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Management Fee</span>
+                                <span className="font-mono-jb text-sm font-semibold text-rose-400">-{formatIDR(mgmtFeeAmount)}</span>
                             </div>
                         </div>
                     </div>
@@ -177,7 +186,7 @@ export default function FinancialBreakdown({
                     <div key={i} className="p-6 bg-white border border-slate-100 rounded-2xl hover:border-blue-200 transition-all shadow-sm">
                          <div className="flex justify-between items-start mb-4">
                             <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-semibold text-xs border border-blue-100">
-                                {inv.percentage}%
+                                {inv.share}%
                             </div>
                             <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">Equity Allocation</span>
                          </div>

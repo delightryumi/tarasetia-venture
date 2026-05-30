@@ -6,6 +6,7 @@ export interface PnlIncomeItem {
   amount: number;
   category?: string;
   paymentStatus?: string;
+  date?: string;
 }
 
 export interface PnlExpenseItem {
@@ -13,6 +14,12 @@ export interface PnlExpenseItem {
   name: string;
   amount: number;
   allocation?: "SHARED" | "MANAGEMENT";
+  fbCategory?: string | null;
+  eventCategory?: string | null;
+  department?: string | null;
+  date?: string;
+  category?: string;
+  description?: string;
 }
 
 export interface InvestorItem {
@@ -38,6 +45,38 @@ export interface GlobalPnLResult {
   card10_GAP: number;
   card11_VAT: number;
   card12_ReconOwner: number;
+  revRoom?: number;
+  revFoodAlacarte?: number;
+  revBeverageAlacarte?: number;
+  revBanquetRevenue?: number;
+  revTotalFnb?: number;
+  
+  expHousekeeping?: number;
+  expAlacarte?: number;
+  expBanquet?: number;
+  expOperational?: number;    // Front Office + Purchasing + Other (excl. HK & F&B)
+  expFood?: number;
+  expBeverage?: number;
+  expFoodAlacarte?: number;
+  expBeverageAlacarte?: number;
+  expFoodBanquet?: number;
+  expBeverageBanquet?: number;
+
+  posGrossRevenue?: number;
+  posNettRevenue?: number;
+  posServiceCharge?: number;
+  posTaxAmount?: number;
+  posLostBreakageAmount?: number;
+  posTotalServiceTax?: number;
+  posServiceRate?: number;
+  posTaxRateIndividual?: number;
+  posLostBreakageRate?: number;
+  posTaxRateCombined?: number;
+
+  summaryServiceCharge?: number;
+  summaryLostBreakage?: number;
+  summaryServiceChargeRate?: number;
+  summaryLostBreakageRate?: number;
   
   netProfit: number;
   gopBasis: number;
@@ -48,6 +87,28 @@ export interface GlobalPnLResult {
     amount: number;
     share: number;
   }[];
+  revAlacarte?: number;
+  revBanquet?: number;
+  revFood?: number;
+  revBeverage?: number;
+}
+
+export interface PnLDetailedItem {
+  id: string;
+  type: string;
+  source: string;
+  description: string;
+  amount: number;
+  date: string;
+  department?: string | null;
+  documentId?: string;
+  docType?: string;
+  category?: string;
+}
+
+export interface DrillDownData {
+  title: string;
+  items: PnLDetailedItem[];
 }
 
 export const formatIDR = (amount: number): string => {

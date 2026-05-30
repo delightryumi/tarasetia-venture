@@ -27,10 +27,33 @@ export const usePnL = () => {
     const [investors, setInvestors] = useState<InvestorItem[]>([]);
     const [vatPercentage, setVatPercentage] = useState(11);
     const [mgmtFeePercentage, setMgmtFeePercentage] = useState(10);
+    const [serviceChargePercentage, setServiceChargePercentage] = useState(10);
+    const [lostBreakagePercentage, setLostBreakagePercentage] = useState(1);
     const [hotelGopPercentages, setHotelGopPercentages] = useState<Record<string, number>>({});
     const [yearTrendData, setYearTrendData] = useState<TrendDataItem[]>([]);
     const [multiYearTrendData, setMultiYearTrendData] = useState<MultiYearTrendDataItem[]>([]);
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [posRevAlacarte, setPosRevAlacarte] = useState(0);
+    const [posRevBanquet, setPosRevBanquet] = useState(0);
+    const [posRevFood, setPosRevFood] = useState(0);
+    const [posRevBeverage, setPosRevBeverage] = useState(0);
+    const [posExpAlacarte, setPosExpAlacarte] = useState(0);
+    const [posExpBanquet, setPosExpBanquet] = useState(0);
+    const [posExpFood, setPosExpFood] = useState(0);
+    const [posExpBeverage, setPosExpBeverage] = useState(0);
+    const [posOrders, setPosOrders] = useState<any[]>([]);
+
+    const [posGrossRevenue, setPosGrossRevenue] = useState(0);
+    const [posNettRevenue, setPosNettRevenue] = useState(0);
+    const [posServiceCharge, setPosServiceCharge] = useState(0);
+    const [posTaxAmount, setPosTaxAmount] = useState(0);
+    const [posLostBreakageAmount, setPosLostBreakageAmount] = useState(0);
+    const [posTotalServiceTax, setPosTotalServiceTax] = useState(0);
+
+    const [posServiceRate, setPosServiceRate] = useState(10);
+    const [posTaxRateIndividual, setPosTaxRateIndividual] = useState(10);
+    const [posLostBreakageRate, setPosLostBreakageRate] = useState(1);
+    const [posTaxRateCombined, setPosTaxRateCombined] = useState(21);
 
     const fetchData = async () => {
         setLoading(true);
@@ -84,9 +107,13 @@ export const usePnL = () => {
                     setInvestors(data.investors || []);
                     setVatPercentage(data.vatPercentage ?? 11);
                     setMgmtFeePercentage(data.mgmtFeePercentage ?? 10);
+                    setServiceChargePercentage(data.serviceChargePercentage ?? 10);
+                    setLostBreakagePercentage(data.lostBreakagePercentage ?? 1);
                     setHotelGopPercentages(data.hotelGopPercentages || {});
                 } else {
-                    setCustomIncomes([]); setNonCommissionRevenue([]); setExpenses([]); setInvestors([]); setVatPercentage(11); setMgmtFeePercentage(10); setHotelGopPercentages({});
+                    setCustomIncomes([]); setNonCommissionRevenue([]); setExpenses([]); setInvestors([]); 
+                    setVatPercentage(11); setMgmtFeePercentage(10); setHotelGopPercentages({});
+                    setServiceChargePercentage(10); setLostBreakagePercentage(1);
                 }
             } else {
                 const yearlyCustomIncomes: PnlIncomeItem[] = [];
@@ -95,6 +122,8 @@ export const usePnL = () => {
                 const yearlyInvestors: InvestorItem[] = [];
                 let latestVat = 11;
                 let latestMgmt = 10;
+                let latestService = 10;
+                let latestLost = 1;
 
                 const pnlQ = query(collection(db, "global_pnl_reports"), 
                             where("__name__", ">=", `${y}-01`), 
@@ -110,6 +139,8 @@ export const usePnL = () => {
                     if (d.id === month) {
                         latestVat = data.vatPercentage ?? 11;
                         latestMgmt = data.mgmtFeePercentage ?? 10;
+                        latestService = data.serviceChargePercentage ?? 10;
+                        latestLost = data.lostBreakagePercentage ?? 1;
                     }
                 });
 
@@ -119,6 +150,8 @@ export const usePnL = () => {
                 setInvestors(yearlyInvestors);
                 setVatPercentage(latestVat);
                 setMgmtFeePercentage(latestMgmt);
+                setServiceChargePercentage(latestService);
+                setLostBreakagePercentage(latestLost);
             }
 
             const currentYear = month.split('-')[0];
@@ -157,6 +190,200 @@ export const usePnL = () => {
                 revenue: yearlyBuckets[yr]
             })));
 
+            // Calculate POS Alacarte & Banquet
+            let alacarteCalc = 0;
+            let banquetCalc = 0;
+            let foodRevCalc = 0;
+            let bevRevCalc = 0;
+            let alacarteExpCalc = 0;
+            let banquetExpCalc = 0;
+            let foodExpCalc = 0;
+            let bevExpCalc = 0;
+
+            let taxTotalCalc = 0;
+            
+            // 1. Fetch settings and products
+            const posSettingsRef = doc(db, 'settings', 'pos');
+            const posSettingsSnap = await getDoc(posSettingsRef);
+            let serviceRate = 0;
+            let taxRateIndividual = 10;
+            let lostBreakageRate = 0;
+            let taxRate = 10;
+            if (posSettingsSnap.exists()) {
+              const sData = posSettingsSnap.data();
+              serviceRate = Number(sData.service || 0);
+              taxRateIndividual = Number(sData.tax || 0);
+              lostBreakageRate = Number(sData.lostBreakage || 0);
+              taxRate = serviceRate + taxRateIndividual + lostBreakageRate;
+            }
+            
+            const prodSnap = await getDocs(collection(db, 'pos_products'));
+            const productMap: Record<string, { buyPrice: number; sellPrice: number; category: string; name?: string }> = {};
+            prodSnap.forEach((d) => {
+              productMap[d.id] = { 
+                buyPrice: Number(d.data().buyPrice || 0), 
+                sellPrice: Number(d.data().price || 0),
+                category: (d.data().category || "").toLowerCase(),
+                name: d.data().name || d.data().Nama || ""
+              };
+            });
+
+            // 2. Fetch pos_orders
+            const posOrdersSnap = await getDocs(collection(db, "pos_orders"));
+            const fetchedPosOrders: any[] = [];
+            posOrdersSnap.forEach((docSnap) => {
+              const data = docSnap.data();
+              const orderId = docSnap.id;
+              
+              let docDateStr: string = "";
+              if (data.timestamp) {
+                const docDate = typeof data.timestamp.toDate === 'function' ? data.timestamp.toDate() : new Date(data.timestamp);
+                docDateStr = docDate.toISOString().split('T')[0];
+              }
+
+              if (docDateStr >= startStr && docDateStr <= endStr) {
+                let sellPriceTotal = 0;
+                let cogsTotal = 0;
+                
+                let orderFoodRev = 0;
+                let orderBevRev = 0;
+                let orderFoodExp = 0;
+                let orderBevExp = 0;
+
+                const isBanquet = data.revenueType === 'banquet' || String(data.category || '').toLowerCase().includes('banquet');
+
+                const items = data.items || [];
+                if (items.length > 0) {
+                  items.forEach((item: any) => {
+                    const qty = Number(item.quantity || 0);
+                    const sellPrice = Number(item.price || 0) * qty;
+                    const tax = sellPrice * (taxRate / 100);
+                    const finalSell = sellPrice + tax;
+                    
+                    const prodInfo = productMap[item.id] || { buyPrice: 0, category: "", name: item.name || "Item" };
+                    const buyPrice = 0; // Disabled as per user request (hotel setup)
+                    
+                    sellPriceTotal += finalSell;
+                    cogsTotal += buyPrice;
+                    taxTotalCalc += tax;
+
+                    let itemCategory: 'food' | 'beverage' | 'banquet' = 'food';
+                    if (isBanquet) {
+                      itemCategory = 'banquet';
+                    } else if (prodInfo.category.includes('drink') || prodInfo.category.includes('beverage') || prodInfo.category.includes('minuman')) {
+                      itemCategory = 'beverage';
+                    }
+
+                    if (!isBanquet) {
+                      if (prodInfo.category.includes('drink') || prodInfo.category.includes('beverage') || prodInfo.category.includes('minuman')) {
+                          orderBevRev += finalSell;
+                          orderBevExp += buyPrice;
+                      } else {
+                          orderFoodRev += finalSell;
+                          orderFoodExp += buyPrice;
+                      }
+                    }
+
+                    fetchedPosOrders.push({
+                      id: `${orderId}-${item.id}`,
+                      type: 'income',
+                      source: isBanquet ? 'POS - Banquet' : 'POS - Alacarte',
+                      description: `${data.customerName || 'Customer'} - ${prodInfo.name || item.name || 'POS Item'} (x${qty})`,
+                      department: 'Food & Beverage',
+                      docType: isBanquet ? 'Banquet' : 'POS Order',
+                      amount: finalSell,
+                      date: docDateStr,
+                      category: itemCategory
+                    });
+                  });
+                } else if (data.quantity !== undefined || data.price !== undefined) {
+                  const qty = Number(data.quantity || 1);
+                  const sellPrice = Number(data.price || data.subtotal || 0) * (data.price ? qty : 1);
+                  const tax = Number(data.tax || (sellPrice * (taxRate / 100)));
+                  const finalSell = sellPrice + tax;
+                  
+                  const prodInfo = productMap[data.id || ""] || { buyPrice: 0, category: "" };
+                  const buyPrice = 0; // Disabled as per user request (hotel setup)
+                  
+                  sellPriceTotal += finalSell;
+                  cogsTotal += buyPrice;
+                  taxTotalCalc += tax;
+                  
+                  let itemCategory: 'food' | 'beverage' | 'banquet' = 'food';
+                  if (isBanquet) {
+                    itemCategory = 'banquet';
+                  } else if (prodInfo.category.includes('drink') || prodInfo.category.includes('beverage') || prodInfo.category.includes('minuman')) {
+                    itemCategory = 'beverage';
+                  }
+
+                  if (!isBanquet) {
+                    if (prodInfo.category.includes('drink') || prodInfo.category.includes('beverage') || prodInfo.category.includes('minuman')) {
+                        orderBevRev += finalSell;
+                        orderBevExp += buyPrice;
+                    } else {
+                        orderFoodRev += finalSell;
+                        orderFoodExp += buyPrice;
+                    }
+                  }
+
+                  fetchedPosOrders.push({
+                    id: orderId,
+                    type: 'income',
+                    source: isBanquet ? 'POS - Banquet' : 'POS - Alacarte',
+                    description: `${data.customerName || 'Customer'} - ${data.name || 'POS Order'} (x${qty})`,
+                    department: 'Food & Beverage',
+                    docType: isBanquet ? 'Banquet' : 'POS Order',
+                    amount: finalSell,
+                    date: docDateStr,
+                    category: itemCategory
+                  });
+                }
+
+                if (isBanquet) {
+                  banquetCalc += sellPriceTotal;
+                  banquetExpCalc += cogsTotal;
+                } else {
+                  alacarteCalc += sellPriceTotal;
+                  alacarteExpCalc += cogsTotal;
+                }
+                
+                foodRevCalc += orderFoodRev;
+                bevRevCalc += orderBevRev;
+                foodExpCalc += orderFoodExp;
+                bevExpCalc += orderBevExp;
+              }
+            });
+            
+            setPosOrders(fetchedPosOrders);
+            
+            setPosRevAlacarte(alacarteCalc);
+            setPosRevBanquet(banquetCalc);
+            setPosRevFood(foodRevCalc);
+            setPosRevBeverage(bevRevCalc);
+            setPosExpAlacarte(alacarteExpCalc);
+            setPosExpBanquet(banquetExpCalc);
+            setPosExpFood(foodExpCalc);
+            setPosExpBeverage(bevExpCalc);
+
+            const grossRevenue = alacarteCalc + banquetCalc;
+            const nettRevenue = grossRevenue - taxTotalCalc;
+            const serviceCharge = taxRate > 0 ? (taxTotalCalc * serviceRate) / taxRate : 0;
+            const taxAmount = taxRate > 0 ? (taxTotalCalc * taxRateIndividual) / taxRate : 0;
+            const lostBreakageAmount = taxRate > 0 ? (taxTotalCalc * lostBreakageRate) / taxRate : 0;
+            const totalServiceTax = serviceCharge + taxAmount + lostBreakageAmount;
+
+            setPosGrossRevenue(grossRevenue);
+            setPosNettRevenue(nettRevenue);
+            setPosServiceCharge(serviceCharge);
+            setPosTaxAmount(taxAmount);
+            setPosLostBreakageAmount(lostBreakageAmount);
+            setPosTotalServiceTax(totalServiceTax);
+
+            setPosServiceRate(serviceRate);
+            setPosTaxRateIndividual(taxRateIndividual);
+            setPosLostBreakageRate(lostBreakageRate);
+            setPosTaxRateCombined(taxRate);
+
         } catch (error) { console.error(error); } 
         finally { setLoading(false); }
     };
@@ -166,9 +393,52 @@ export const usePnL = () => {
     }, [month, viewMode]);
 
     useEffect(() => {
-        const result = processPnLData(rawTransactions, customIncomes, nonCommissionRevenue, expenses, investors, vatPercentage, hotelGopPercentages, allHotels, mgmtFeePercentage);
+        const result = processPnLData(
+            rawTransactions, 
+            customIncomes, 
+            nonCommissionRevenue, 
+            expenses, 
+            investors, 
+            vatPercentage, 
+            hotelGopPercentages, 
+            allHotels, 
+            mgmtFeePercentage, 
+            posRevAlacarte, 
+            posRevBanquet, 
+            posRevFood, 
+            posRevBeverage, 
+            posExpAlacarte, 
+            posExpBanquet, 
+            posExpFood, 
+            posExpBeverage,
+            serviceChargePercentage,
+            lostBreakagePercentage
+        );
+        result.pnlResult.revAlacarte = posRevAlacarte;
+        result.pnlResult.revBanquet = posRevBanquet;
+        result.pnlResult.revFood = posRevFood;
+        result.pnlResult.revBeverage = posRevBeverage;
+
+        result.pnlResult.posGrossRevenue = posGrossRevenue;
+        result.pnlResult.posNettRevenue = posNettRevenue;
+        result.pnlResult.posServiceCharge = posServiceCharge;
+        result.pnlResult.posTaxAmount = posTaxAmount;
+        result.pnlResult.posLostBreakageAmount = posLostBreakageAmount;
+        result.pnlResult.posTotalServiceTax = posTotalServiceTax;
+
+        result.pnlResult.posServiceRate = posServiceRate;
+        result.pnlResult.posTaxRateIndividual = posTaxRateIndividual;
+        result.pnlResult.posLostBreakageRate = posLostBreakageRate;
+        result.pnlResult.posTaxRateCombined = posTaxRateCombined;
+
         setPnlResult(result.pnlResult);
-    }, [rawTransactions, customIncomes, nonCommissionRevenue, expenses, investors, vatPercentage, hotelGopPercentages, allHotels, mgmtFeePercentage]);
+    }, [
+        rawTransactions, customIncomes, nonCommissionRevenue, expenses, investors, vatPercentage, hotelGopPercentages, allHotels, mgmtFeePercentage,
+        posRevAlacarte, posRevBanquet, posRevFood, posRevBeverage, posExpAlacarte, posExpBanquet, posExpFood, posExpBeverage,
+        posGrossRevenue, posNettRevenue, posServiceCharge, posTaxAmount, posLostBreakageAmount, posTotalServiceTax,
+        posServiceRate, posTaxRateIndividual, posLostBreakageRate, posTaxRateCombined,
+        serviceChargePercentage, lostBreakagePercentage
+    ]);
 
     const updateVat = async (val: number) => {
         setVatPercentage(val);
@@ -186,14 +456,33 @@ export const usePnL = () => {
         } catch (error) { console.error("Failed to save Fee:", error); }
     };
 
+    const updateServiceCharge = async (val: number) => {
+        setServiceChargePercentage(val);
+        try {
+            const docRef = doc(db, "global_pnl_reports", month);
+            await updateDoc(docRef, { serviceChargePercentage: val });
+        } catch (error) { console.error("Failed to save Service Charge:", error); }
+    };
+
+    const updateLostBreakage = async (val: number) => {
+        setLostBreakagePercentage(val);
+        try {
+            const docRef = doc(db, "global_pnl_reports", month);
+            await updateDoc(docRef, { lostBreakagePercentage: val });
+        } catch (error) { console.error("Failed to save Lost & Breakage:", error); }
+    };
+
     return {
         viewMode, setViewMode,
         displayMode, setDisplayMode,
         month, setMonth,
         loading, pnlResult,
         expenses, vatPercentage, mgmtFeePercentage,
+        serviceChargePercentage, lostBreakagePercentage,
         yearTrendData, multiYearTrendData,
         showDatePicker, setShowDatePicker,
-        fetchData, updateVat, updateMgmtFee
+        fetchData, updateVat, updateMgmtFee,
+        updateServiceCharge, updateLostBreakage,
+        rawTransactions, customIncomes, posOrders
     };
 };

@@ -1,0 +1,56 @@
+/* PButton.module.css */
+
+.base {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-xs);
+  font-family: var(--p-font);
+  font-size: var(--p-font-size-label);
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 10px var(--p-space-lg);
+  border-radius: var(--p-radius-lg);
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background var(--p-duration-fast) var(--p-ease-out),
+    transform   var(--p-duration-fast) var(--p-ease-out);
+}
+
+.primary {
+  background: var(--p-primary);
+  color: var(--p-on-dark);
+}
+.primary:active { background: var(--p-primary-active); transform: scale(0.98); }
+
+.secondary {
+  background: var(--p-canvas);
+  color: var(--p-ink);
+  border: 1px solid var(--p-hairline);
+}
+.secondary:active { background: var(--p-surface-soft); transform: scale(0.98); }
+
+.danger {
+  background: var(--p-coral);
+  color: var(--p-on-dark);
+}
+.danger:active { background: #8f2600; transform: scale(0.98); }
+
+.success {
+  background: var(--p-success);
+  color: var(--p-on-dark);
+}
+.success:active { background: #004d00; transform: scale(0.98); }
+
+.base:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.sm {
+  font-size: var(--p-font-size-body);
+  padding: 6px var(--p-space-md);
+}

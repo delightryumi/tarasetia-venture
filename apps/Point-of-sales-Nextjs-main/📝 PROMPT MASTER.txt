@@ -1,0 +1,47 @@
+📝 PROMPT MASTER: Rencana Pembangunan Sistem POS Multi-Resto (Offline-First)
+Catatan untuk AI: Tolong simpan arsitektur ini sebagai panduan utama dalam membangun sistem POS.
+
+1. Deskripsi Sistem
+Jenis Aplikasi: Sistem POS (Kasir) Berbasis Web (Next.js).
+
+Model Bisnis: Multi-Tenant / SaaS / CRS. Pengguna bisa mendaftar, membuat akun Resto/Cafe mereka sendiri, dan mengelola kasir mereka masing-masing.
+
+Fitur Utama: Offline-First. Kasir harus bisa melakukan transaksi penjualan, cetak nota, dan potong stok meskipun koneksi internet di resto/cafe tersebut tiba-tiba putus.
+
+2. Arsitektur Data (Multi-Tenant & Offline)
+A. Sisi Cloud / Server Pusat (Database Utama)
+Menggunakan database relasional (PostgreSQL/MySQL) yang di-host di VPS (Coolify).
+
+Setiap tabel utama (User, Product, Transaction, Category) WAJIB memiliki kolom tenant_id atau resto_id untuk memisahkan data antar-resto agar tidak saling tertukar.
+
+Autentikasi menggunakan sistem Login. Saat user login, sistem akan tahu mereka milik resto_id yang mana.
+
+B. Sisi Browser Kasir (Database Lokal)
+Menggunakan IndexedDB (via Dexie.js) di browser perangkat kasir.
+
+Saat kasir online, browser hanya akan mengunduh data Produk dan Kategori yang memiliki resto_id sesuai dengan resto tempat dia bekerja. Browser tidak boleh mengunduh data milik resto lain.
+
+3. Alur Kerja Sistem (Workflow)
+[ KASIR LOGIN ] -> Mengunduh data Produk khusus untuk Resto-nya -> Disimpan di IndexedDB Browser.
+
+[ INTERNET MATI ] -> Kasir tetap bisa jualan -> Transaksi disimpan ke IndexedDB dengan flag:
+                     { id: "UUID-XYZ", resto_id: "RESTO-A", is_synced: 0 }
+
+[ INTERNET HIDUP ] -> Browser mendeteksi internet aktif -> Mengirim data transaksi (is_synced: 0) ke Server.
+                      Server memasukkan data ke DB pusat -> Browser mengubah status menjadi (is_synced: 1).
+4. Struktur Tabel Database Lokal (Dexie.js) - Untuk Referensi Prompt
+Tabel products: id (UUID), resto_id, name, price, stock, category_id.
+
+Tabel transactions: id (UUID), resto_id, total_price, created_at, is_synced (0 atau 1).
+
+Tabel transaction_items: id, transaction_id, product_id, name, quantity, price.
+
+5. Skema Penting untuk Mengatasi Bentrok Data (Conflict Resolution)
+ID Transaksi Wajib UUID: Semua ID transaksi baru yang dibuat di kasir offline tidak boleh menggunakan angka urut (1, 2, 3), melainkan harus String acak unik (UUIDv4) agar saat sinkronisasi massal dari banyak resto, ID-nya tidak tabrakan di database pusat.
+
+Manajemen Stok Offline: Jika transaksi terjadi saat offline, stok di database lokal browser langsung dikurangi. Saat online, server pusat akan mencocokkan ulang data tersebut.
+
+🚀 Cara Menggunakan Rangkuman Ini untuk Prompt Berikutnya:
+Jika Anda ingin melanjutkan coding di Google Anti-Gravity / IDX, Anda cukup mengirimkan pesan seperti ini ke AI-nya:
+
+"Saya ingin melanjutkan pembuatan sistem POS berbasis Next.js dengan arsitektur Multi-Resto (SaaS) sesuai dengan catatan rencana yang saya miliki. Tolong buatkan saya struktur halaman login dan logika pemisahan data berdasarkan resto_id menggunakan Dexie.js di sisi client."

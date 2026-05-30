@@ -42,3 +42,19 @@
     filter: invert(47%) sepia(9%) saturate(495%) hue-rotate(42deg) brightness(92%) contrast(88%);
     cursor: pointer;
 }
+
+/* Custom scrollbar for PNL components to make it smaller and thinner */
+.pnl-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+.pnl-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.pnl-scrollbar::-webkit-scrollbar-thumb {
+    background: #e7e5e4;
+    border-radius: 10px;
+}
+.pnl-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #788069;
+}

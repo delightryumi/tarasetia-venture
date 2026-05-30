@@ -22,12 +22,14 @@ const CATEGORIES = [
     { label: "Other", icon: Tag, color: "text-stone-400" },
 ];
 
+const DEPARTMENTS = ["F&B", "Housekeeping", "Front Office", "Purchasing", "Admin & General", "Other"];
+
 const getCategoryIcon = (category: string) => {
     const found = CATEGORIES.find(c => c.label.toLowerCase() === category.toLowerCase());
     return found ? found.icon : Tag;
 };
 
-const rise = {
+const rise: any = {
     hidden: { opacity: 0, y: 12 },
     show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
 };
@@ -46,13 +48,13 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({ month, expenses,
     
     // Support multiple rows in "Add" mode
     const [newRows, setNewRows] = useState<Partial<PnlExpenseItem>[]>([
-        { category: "", description: "", amount: 0, date: new Date().toISOString().split('T')[0] }
+        { category: "", department: "", description: "", amount: 0, date: new Date().toISOString().split('T')[0] }
     ]);
     
     const [loading, setLoading] = useState(false);
 
     const addRow = () => {
-        setNewRows([...newRows, { category: "", description: "", amount: 0, date: new Date().toISOString().split('T')[0] }]);
+        setNewRows([...newRows, { category: "", department: "", description: "", amount: 0, date: new Date().toISOString().split('T')[0] }]);
     };
 
     const removeRow = (index: number) => {
@@ -80,7 +82,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({ month, expenses,
             const docRef = doc(db, "global_pnl_reports", month);
             await setDoc(docRef, { expenses: updatedExpenses }, { merge: true });
             
-            setNewRows([{ category: "", description: "", amount: 0, date: new Date().toISOString().split('T')[0] }]);
+            setNewRows([{ category: "", department: "", description: "", amount: 0, date: new Date().toISOString().split('T')[0] }]);
             setIsAdding(false);
             onRefresh();
         } catch (error) {
@@ -141,44 +143,49 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({ month, expenses,
             variants={rise} 
             initial="hidden"
             animate="show"
-            className="flex flex-col gap-14 w-full mt-24 mb-32"
+            className="flex flex-col gap-10 w-full mt-10 mb-32"
         >
-            {/* Header - Reverted to Standard Layout */}
-            <div className="flex items-center justify-between w-full">
-                <div className="flex flex-col gap-1">
-                    <h2 className="text-2xl md:text-3xl font-black text-stone-900 tracking-tight">
-                        Operational <span style={{ color: SAGE }}>Expenses</span>
-                    </h2>
-                    <p className="text-[10px] font-medium text-stone-400 uppercase tracking-[0.3em]">Bulk Entry & Audit Ledger</p>
+            <div style={{ padding: '40px' }} className="bg-white rounded-[32px] border border-stone-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-shadow duration-500 w-full">
+                
+                {/* Header */}
+                <div className="flex items-center justify-between w-full mb-8">
+                    <div className="flex flex-col gap-1">
+                        <h2 className="text-2xl md:text-3xl font-black text-stone-900 tracking-tight flex items-center gap-3">
+                            <Receipt size={28} /> Operational <span style={{ color: SAGE }}>Expenses</span>
+                        </h2>
+                        <p className="text-[10px] font-medium text-stone-400 uppercase tracking-[0.3em]">Bulk Entry & Audit Ledger</p>
+                    </div>
+
+                    <button 
+                        onClick={() => setIsAdding(!isAdding)}
+                        className="flex items-center justify-center gap-3 h-11 px-8 rounded-xl text-[11px] font-bold tracking-widest transition-all shadow-sm border border-stone-200/40 hover:bg-white active:scale-95 uppercase"
+                        style={{ backgroundColor: PEACH, color: RICH_BLACK }}
+                    >
+                        {isAdding ? <X size={14} /> : <Plus size={14} />}
+                        {isAdding ? "Cancel Entry" : "Add Expense"}
+                    </button>
                 </div>
 
-                <button 
-                    onClick={() => setIsAdding(!isAdding)}
-                    className="flex items-center justify-center gap-3 h-11 px-8 rounded-xl text-[11px] font-bold tracking-widest transition-all shadow-sm border border-stone-200/40 hover:bg-white active:scale-95 uppercase"
-                    style={{ backgroundColor: PEACH, color: RICH_BLACK }}
-                >
-                    {isAdding ? <X size={14} /> : <Plus size={14} />}
-                    {isAdding ? "Cancel Entry" : "Add Expense"}
-                </button>
-            </div>
-
-            {/* Bulk Input Form - Explicit 50px Padding */}
-            <AnimatePresence mode="popLayout">
-                {isAdding && (
-                    <motion.div 
-                        layout
-                        initial={{ opacity: 0, y: -20, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -20, scale: 0.98 }}
-                        className="bg-white p-6 md:p-8 lg:p-12 rounded-[24px] border border-stone-100 shadow-2xl flex flex-col gap-10 md:gap-14 mb-4 w-full"
-                    >
+                <div style={{ padding: '40px' }} className="bg-stone-100/70 rounded-[24px] border border-stone-200/50 shadow-inner w-full flex flex-col gap-10">
+                    
+                    {/* Bulk Input Form */}
+                    <AnimatePresence mode="popLayout">
+                        {isAdding && (
+                            <motion.div 
+                                layout
+                                initial={{ opacity: 0, y: -20, scale: 0.98 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -20, scale: 0.98 }}
+                                style={{ padding: '32px' }}
+                                className="bg-white rounded-[24px] border border-stone-100 shadow-md flex flex-col gap-10 mb-4 w-full"
+                            >
                         <div className="flex items-center justify-between border-b border-stone-50 pb-10">
                             <span className="text-xs font-medium text-stone-400 uppercase tracking-widest">Bulk Recording • {newRows.length} item(s)</span>
                         </div>
 
                         <div className="flex flex-col gap-10">
                             {newRows.map((row, idx) => (
-                                <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-8 items-end pb-10 border-b border-stone-50/50 last:border-0 group">
+                                <div key={idx} className="grid grid-cols-1 md:grid-cols-6 gap-8 items-end pb-10 border-b border-stone-50/50 last:border-0 group">
                                     <div className="space-y-3">
                                         <label className="text-[9px] font-medium text-stone-400 uppercase tracking-widest">Date</label>
                                         <input 
@@ -246,6 +253,23 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({ month, expenses,
                                         </div>
                                     </div>
                                     <div className="space-y-3">
+                                        <label className="text-[9px] font-medium text-stone-400 uppercase tracking-widest">Department</label>
+                                        <select 
+                                            className="w-full h-12 px-4 rounded-xl bg-stone-50 border border-stone-100 focus:bg-white focus:border-sage outline-none text-sm transition-all font-medium text-stone-800 cursor-pointer"
+                                            value={row.department || ""}
+                                            onChange={e => {
+                                                const updated = [...newRows];
+                                                updated[idx].department = e.target.value;
+                                                setNewRows(updated);
+                                            }}
+                                        >
+                                            <option value="">Select...</option>
+                                            {DEPARTMENTS.map(dept => (
+                                                <option key={dept} value={dept}>{dept}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-3">
                                         <label className="text-[9px] font-medium text-stone-400 uppercase tracking-widest">Amount (IDR)</label>
                                         <input 
                                             type="number" 
@@ -267,7 +291,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({ month, expenses,
                                                 type="text" 
                                                 placeholder="Notes..." 
                                                 className="w-full h-12 px-4 rounded-xl bg-stone-50 border border-stone-100 focus:bg-white focus:border-sage outline-none text-sm transition-all font-medium"
-                                                value={row.description}
+                                                value={row.description || ""}
                                                 onChange={e => {
                                                     const updated = [...newRows];
                                                     updated[idx].description = e.target.value;
@@ -306,41 +330,67 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({ month, expenses,
                 )}
             </AnimatePresence>
 
-            {/* Audit Ledger - Explicit 50px Padding */}
+            {/* Audit Ledger */}
             <div 
-                className="bg-white p-6 md:p-8 lg:p-12 rounded-[24px] border border-stone-100 shadow-xl overflow-hidden w-full"
+                style={{ padding: '32px' }}
+                className="bg-white rounded-[24px] border border-stone-100 shadow-md overflow-hidden w-full"
             >
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[900px]">
+                <div className="overflow-x-auto pnl-scrollbar pb-2">
+                    <table className="w-full text-left border-separate border-spacing-y-3 min-w-[900px]">
                         <thead>
-                            <tr className="border-b border-stone-50 text-[10px] uppercase font-medium text-stone-300 tracking-[0.15em]">
-                                <th className="pb-10 px-6">Date</th>
-                                <th className="pb-10 px-6">Category</th>
-                                <th className="pb-10 px-6">Description</th>
-                                <th className="pb-10 px-6 text-right">Amount</th>
-                                <th className="pb-10 px-6 text-center w-32">Action</th>
+                            <tr className="bg-[#111310] text-stone-400 font-semibold text-[9px] uppercase tracking-[0.2em]">
+                                <th className="py-5 px-8 rounded-l-xl">Date</th>
+                                <th className="py-5 px-6">Category</th>
+                                <th className="py-5 px-6">Department</th>
+                                <th className="py-5 px-6">Description</th>
+                                <th className="py-5 px-6 text-right">Amount</th>
+                                <th className="py-5 px-8 text-center rounded-r-xl w-32">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {expenses.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="py-24 text-center">
+                                    <td colSpan={6} className="py-24 text-center bg-stone-50/80 rounded-2xl">
                                         <div className="flex flex-col items-center gap-3">
-                                            <div className="w-12 h-12 rounded-full bg-stone-50 flex items-center justify-center text-stone-200">
+                                            <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center text-stone-300">
                                                 <AlertCircle size={24} />
                                             </div>
-                                            <span className="text-[10px] font-medium text-stone-300 uppercase tracking-widest">
+                                            <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">
                                                 No manual expenses recorded for this period
                                             </span>
                                         </div>
                                     </td>
                                 </tr>
                             ) : (
-                                [...expenses].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((item, i) => {
-                                    const Icon = getCategoryIcon(item.category);
+                                [...expenses].sort((a,b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()).map((item, i) => {
+                                    const Icon = getCategoryIcon(item.category || '');
+                                    const isEditingThisRow = editingId === item.id;
+                                    
+                                    const isFromPurchasing = item.id?.startsWith('dml-') || item.id?.startsWith('pr-') || item.id?.startsWith('sr-');
+                                    let sourceLabel = '';
+                                    if (item.id?.startsWith('dml-')) sourceLabel = 'DML';
+                                    else if (item.id?.startsWith('pr-')) sourceLabel = 'PR';
+                                    else if (item.id?.startsWith('sr-')) sourceLabel = 'SR';
+                                    
+                                    const tdBg = isEditingThisRow 
+                                        ? 'bg-sage/10 border-y border-sage/20' 
+                                        : 'bg-stone-50/80 group-hover:bg-stone-100/90 transition-colors duration-200';
+                                    
+                                    const firstTdClass = isEditingThisRow
+                                        ? 'py-5 px-8 rounded-l-2xl bg-sage/10 border-l border-y border-sage/20'
+                                        : `py-5 px-8 rounded-l-2xl ${tdBg}`;
+
+                                    const midTdClass = isEditingThisRow
+                                        ? 'py-5 px-6 bg-sage/10 border-y border-sage/20'
+                                        : `py-5 px-6 ${tdBg}`;
+
+                                    const lastTdClass = isEditingThisRow
+                                        ? 'py-5 px-8 rounded-r-2xl bg-sage/10 border-r border-y border-sage/20 text-center'
+                                        : `py-5 px-8 rounded-r-2xl text-center ${tdBg}`;
+
                                     return (
-                                        <tr key={item.id || i} className={`group border-b border-stone-50 last:border-0 transition-colors duration-150 ${editingId === item.id ? 'bg-sage/5' : 'hover:bg-stone-50/40'}`}>
-                                            <td className="py-8 px-6">
+                                        <tr key={item.id || i} className="group transition-all duration-150">
+                                            <td className={firstTdClass}>
                                                 {editingId === item.id ? (
                                                     <input 
                                                         type="date"
@@ -355,7 +405,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({ month, expenses,
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="py-8 px-6">
+                                            <td className={midTdClass}>
                                                 {editingId === item.id ? (
                                                     <div className="relative">
                                                         <input 
@@ -389,11 +439,40 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({ month, expenses,
                                                         <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center text-stone-400 group-hover:text-sage transition-colors">
                                                             <Icon size={12} />
                                                         </div>
-                                                        <span className="text-sm font-medium text-stone-800 uppercase tracking-tight">{item.category}</span>
+                                                        <span className="text-xs font-semibold text-stone-700 uppercase tracking-tight">{item.category}</span>
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="py-8 px-6">
+                                            <td className={midTdClass}>
+                                                {editingId === item.id ? (
+                                                    <select 
+                                                        className="w-full h-10 px-2 rounded-lg border border-sage/30 bg-white text-sm outline-none focus:border-sage font-medium cursor-pointer"
+                                                        value={editData?.department || ""}
+                                                        onChange={e => setEditData(d => d ? {...d, department: e.target.value} : null)}
+                                                    >
+                                                        <option value="">Select...</option>
+                                                        {DEPARTMENTS.map(dept => (
+                                                            <option key={dept} value={dept}>{dept}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <div className="flex items-center gap-2">
+                                                        {isFromPurchasing && (
+                                                            <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                                                                sourceLabel === 'DML' ? 'bg-amber-100 text-amber-800' :
+                                                                sourceLabel === 'PR' ? 'bg-emerald-100 text-emerald-800' :
+                                                                'bg-blue-100 text-blue-800'
+                                                            }`}>
+                                                                {sourceLabel}
+                                                            </span>
+                                                        )}
+                                                        <span className="text-xs font-semibold text-stone-600 uppercase tracking-tight">
+                                                            {item.department || "—"}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className={midTdClass}>
                                                 {editingId === item.id ? (
                                                     <input 
                                                         className="w-full h-10 px-3 rounded-lg border border-sage/30 bg-white text-sm outline-none focus:border-sage font-medium"
@@ -404,7 +483,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({ month, expenses,
                                                     <span className="text-[11px] text-stone-500 font-medium italic">{item.description || "—"}</span>
                                                 )}
                                             </td>
-                                            <td className="py-8 px-6 text-right">
+                                            <td className={`${midTdClass} text-right font-mono-jb`}>
                                                 {editingId === item.id ? (
                                                     <input 
                                                         type="number"
@@ -414,12 +493,16 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({ month, expenses,
                                                         onChange={e => setEditData(d => d ? {...d, amount: Number(e.target.value)} : null)}
                                                     />
                                                 ) : (
-                                                    <span className="text-sm font-medium text-stone-900">Rp {item.amount.toLocaleString('id-ID')}</span>
+                                                    <span className="text-xs font-semibold text-stone-900">Rp {item.amount.toLocaleString('id-ID')}</span>
                                                 )}
                                             </td>
-                                            <td className="py-8 px-6 text-center">
+                                            <td className={lastTdClass}>
                                                 <div className="flex items-center justify-center gap-2">
-                                                    {editingId === item.id ? (
+                                                    {isFromPurchasing ? (
+                                                        <div className="text-[9px] font-bold text-stone-400 flex items-center gap-1 uppercase tracking-widest bg-stone-100 border border-stone-200/50 px-2.5 py-1 rounded-lg">
+                                                            Locked
+                                                        </div>
+                                                    ) : editingId === item.id ? (
                                                         <>
                                                             <button onClick={handleSaveEdit} className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors">
                                                                 <Check size={14} />
@@ -432,13 +515,13 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({ month, expenses,
                                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <button 
                                                                 onClick={() => handleStartEdit(item)}
-                                                                className="p-1.5 rounded-lg bg-stone-50 hover:bg-stone-100 border border-stone-100 text-stone-300 hover:text-sage transition-colors"
+                                                                className="p-1.5 rounded-lg bg-stone-50 hover:bg-stone-150 border border-stone-100 text-stone-400 hover:text-sage transition-colors"
                                                             >
                                                                 <Edit2 size={13} />
                                                             </button>
                                                             <button 
                                                                 onClick={() => handleDeleteExpense(item.id || "")}
-                                                                className="p-1.5 rounded-lg bg-stone-50 hover:bg-stone-100 border border-stone-100 text-stone-300 hover:text-red-500 transition-colors"
+                                                                className="p-1.5 rounded-lg bg-stone-50 hover:bg-stone-150 border border-stone-100 text-stone-400 hover:text-red-500 transition-colors"
                                                             >
                                                                 <Trash2 size={13} />
                                                             </button>
@@ -452,6 +535,8 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({ month, expenses,
                             )}
                         </tbody>
                     </table>
+                </div>
+            </div>
                 </div>
             </div>
         </motion.section>

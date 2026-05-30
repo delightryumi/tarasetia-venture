@@ -15,8 +15,8 @@ import {
     MapPin, Gift, Package, Search, ChevronLeft, Menu,
     TrendingUp, PieChart, Users, ShoppingCart
 } from "lucide-react";
-import { signOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 
@@ -24,7 +24,8 @@ import React, { useEffect, useRef, useState } from "react";
 export type SectionType =
     | "overview" | "logo" | "hero" | "room-type"
     | "about" | "gallery" | "footer"
-    | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "pnl" | "users";
+    | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "pnl" | "users"
+    | "purchasing" | "store-requisition" | "purchase-requisition" | "daily-market-list" | "stock-opname" | "items" | "suppliers";
 
 interface SidebarProps {
     isCollapsed: boolean;
@@ -141,8 +142,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const pathname = usePathname();
     const router = useRouter();
     
-    // Get the first path segment as the active section
-    const activeSection = pathname.split("/")[1] || "overview";
+    // Get the first path segment as the active section, handling subpages under purchasing
+    let activeSection: SectionType = "overview";
+    const pathParts = pathname.split("/");
+    if (pathParts[1] === "purchasing") {
+        activeSection = (pathParts[2] as SectionType) || "purchasing";
+    } else {
+        activeSection = (pathParts[1] as SectionType) || "overview";
+    }
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
     const [isSuperadmin, setIsSuperadmin] = useState(false);
@@ -163,9 +170,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         fetchLogo();
     }, []);
 
+    const { user, signOutUser } = useAuth();
+
     useEffect(() => {
         const fetchPermissions = async () => {
-            const user = auth.currentUser;
             if (!user?.email) return;
 
             try {
@@ -187,6 +195,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     const roleSnap = await getDoc(doc(db, "roles_master", roleId));
                     if (roleSnap.exists()) {
                         setUserPermissions(roleSnap.data().permissions || {});
+                    } else {
+                        setUserPermissions({});
                     }
                 } else {
                     // Default to superadmin if not found in master (for initial setup)
@@ -198,7 +208,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }
         };
         fetchPermissions();
-    }, []);
+    }, [user]);
 
     const allNavItems: { id: SectionType; label: string; icon: React.ReactNode }[] = [
         { id: "overview", label: "Overview", icon: <BarChart2 size={18} strokeWidth={2} /> },
@@ -217,14 +227,73 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: "packages", label: "Custom Packages", icon: <Package size={18} strokeWidth={2} /> },
         { id: "seo", label: "SEO & Metadata", icon: <Search size={18} strokeWidth={2} /> },
         { id: "users", label: "User Management", icon: <Users size={18} strokeWidth={2} /> },
+        { id: "purchasing", label: "Dashboard", icon: <Home size={18} strokeWidth={2} /> },
+        { id: "store-requisition", label: "Store Requisitions", icon: <FileText size={18} strokeWidth={2} /> },
+        { id: "purchase-requisition", label: "Purchase Requisitions", icon: <ShoppingCart size={18} strokeWidth={2} /> },
+        { id: "daily-market-list", label: "Daily Market List", icon: <Coffee size={18} strokeWidth={2} /> },
+        { id: "stock-opname", label: "Stock Opname", icon: <PieChart size={18} strokeWidth={2} /> },
+        { id: "items", label: "Items Master", icon: <Package size={18} strokeWidth={2} /> },
+        { id: "suppliers", label: "Suppliers", icon: <Users size={18} strokeWidth={2} /> },
     ];
 
-    const navItems = isSuperadmin 
-        ? allNavItems 
-        : allNavItems.filter(item => userPermissions?.[item.id] !== false);
+    const [activeModule, setActiveModule] = useState<string>("front-office");
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            if (pathname.startsWith('/purchasing')) {
+                localStorage.setItem("active_module", "purchasing");
+                setActiveModule("purchasing");
+                return;
+            }
+            const params = new URLSearchParams(window.location.search);
+            const modParam = params.get("module");
+            if (modParam) {
+                localStorage.setItem("active_module", modParam);
+                setActiveModule(modParam);
+            } else {
+                const storedMod = localStorage.getItem("active_module");
+                if (storedMod) {
+                    setActiveModule(storedMod);
+                } else {
+                    localStorage.setItem("active_module", "front-office");
+                    setActiveModule("front-office");
+                }
+            }
+        }
+    }, [pathname]);
+
+    const getFilteredNavItems = () => {
+        let items = allNavItems;
+        if (activeModule === "front-office") {
+            items = allNavItems.filter(item => ["overview", "forecast", "invoice"].includes(item.id));
+        } else if (activeModule === "housekeeping") {
+            items = allNavItems.filter(item => ["overview", "forecast"].includes(item.id));
+        } else if (activeModule === "accounting") {
+            items = allNavItems.filter(item => ["pnl"].includes(item.id));
+        } else if (activeModule === "purchasing") {
+            items = allNavItems.filter(item => [
+                "purchasing", "store-requisition", "purchase-requisition", 
+                "daily-market-list", "stock-opname", "items", "suppliers"
+            ].includes(item.id));
+        } else if (activeModule === "cpanel") {
+            items = allNavItems.filter(item => [
+                "logo", "hero", "room-type", "about", "gallery", 
+                "footer", "attractions", "promo", "packages", "seo", "users"
+            ].includes(item.id));
+        }
+
+        // Filter out POS terminal from other modules
+        items = items.filter(item => item.id !== "pos");
+
+        return isSuperadmin 
+            ? items 
+            : items.filter(item => userPermissions?.[item.id] === true);
+    };
+
+    const navItems = getFilteredNavItems();
 
 
-    const handleLogout = () => signOut(auth);
+    const handleLogout = () => signOutUser();
 
     /* ── Expanded sidebar variants ── */
     const sidebarVariants = {
@@ -290,6 +359,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         role="toolbar"
                         aria-label="Navigation dock"
                     >
+                        <DockNavItem
+                            icon={<Grid size={18} className="text-[var(--peach)]" />}
+                            label="Pilih Modul"
+                            isActive={false}
+                            mouseY={mouseY}
+                            onClick={() => router.push('/select-module')}
+                        />
+                        <div className="w-8 h-px my-1" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
+
                         {navItems.map((item) => (
                             <DockNavItem
                                 key={item.id}
@@ -298,7 +376,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 isActive={activeSection === item.id}
                                 mouseY={mouseY}
                                 onClick={() => {
-                                    router.push(`/${item.id}`);
+                                    if (item.id === "purchasing") {
+                                        router.push(`/purchasing?module=purchasing`);
+                                    } else if (["store-requisition", "purchase-requisition", "daily-market-list", "stock-opname", "items", "suppliers"].includes(item.id)) {
+                                        router.push(`/purchasing/${item.id}?module=purchasing`);
+                                    } else {
+                                        router.push(`/${item.id}`);
+                                    }
                                     if (window.innerWidth <= 1024) setIsCollapsed(true);
                                 }}
                             />
@@ -320,6 +404,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             ) : (
                 /* ── EXPANDED MODE ── */
                 <nav className="nav-group">
+                    <motion.button
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={{ scale: 1.03, backgroundColor: "rgba(255, 216, 166, 0.15)", color: "#ffffff" }}
+                        whileTap={{ scale: 0.97 }}
+                        className="nav-item border border-[var(--peach)]/30 text-[var(--peach)] mb-4"
+                        onClick={() => router.push('/select-module')}
+                    >
+                        <Grid size={18} className="text-[var(--peach)]" />
+                        <span className="nav-label font-bold text-[var(--peach)]">Pilih Modul</span>
+                    </motion.button>
+
                     {navItems.map((item) => (
                         <motion.button
                             key={item.id}
@@ -355,7 +451,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             transition={{ type: "spring", stiffness: 300, damping: 24 }}
                             className={`nav-item ${activeSection === item.id ? "active" : ""}`}
                             onClick={() => {
-                                router.push(`/${item.id}`);
+                                if (item.id === "purchasing") {
+                                    router.push(`/purchasing?module=purchasing`);
+                                } else if (["store-requisition", "purchase-requisition", "daily-market-list", "stock-opname", "items", "suppliers"].includes(item.id)) {
+                                    router.push(`/purchasing/${item.id}?module=purchasing`);
+                                } else {
+                                    router.push(`/${item.id}`);
+                                }
                                 if (window.innerWidth <= 1024) setIsCollapsed(true);
                             }}
                         >

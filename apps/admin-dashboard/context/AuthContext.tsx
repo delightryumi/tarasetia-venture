@@ -1,36 +1,118 @@
 "use client";
 
-"use client";
-
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { onAuthStateChanged, signOut as fbSignOut } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+
+interface CustomUser {
+    uid: string;
+    email: string;
+    displayName: string;
+    role?: string;
+}
 
 interface AuthContextType {
-    user: User | null;
+    user: CustomUser | null;
     loading: boolean;
+    loginWithFirestore: (email: string, password: string) => Promise<boolean>;
+    signOutUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
     user: null,
     loading: true,
+    loginWithFirestore: async () => false,
+    signOutUser: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<CustomUser | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // Sync session on load
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setUser(user);
-            setLoading(false);
-        });
+        const checkSession = async () => {
+            const storedUser = localStorage.getItem("auth_user");
+            if (storedUser) {
+                try {
+                    setUser(JSON.parse(storedUser));
+                    setLoading(false);
+                    return;
+                } catch (e) {
+                    localStorage.removeItem("auth_user");
+                }
+            }
 
-        return () => unsubscribe();
+            // Fallback to Firebase Auth
+            const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+                if (fbUser) {
+                    const email = fbUser.email || "";
+                    const docId = email.replace(/[@.]/g, "_");
+                    const docRef = doc(db, "users_master", docId);
+                    const docSnap = await getDoc(docRef);
+                    
+                    const customUser: CustomUser = {
+                        uid: fbUser.uid,
+                        email: email,
+                        displayName: fbUser.displayName || email.split("@")[0],
+                    };
+                    
+                    if (docSnap.exists()) {
+                        customUser.role = docSnap.data().role;
+                        customUser.displayName = docSnap.data().name || customUser.displayName;
+                    }
+                    
+                    localStorage.setItem("auth_user", JSON.stringify(customUser));
+                    setUser(customUser);
+                } else {
+                    setUser(null);
+                }
+                setLoading(false);
+            });
+
+            return unsubscribe;
+        };
+
+        checkSession();
     }, []);
 
+    const loginWithFirestore = async (email: string, password: string): Promise<boolean> => {
+        try {
+            const docId = email.replace(/[@.]/g, "_");
+            const docRef = doc(db, "users_master", docId);
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.password === password) {
+                    const customUser: CustomUser = {
+                        uid: docId,
+                        email: email,
+                        displayName: data.name || email.split("@")[0],
+                        role: data.role,
+                    };
+                    localStorage.setItem("auth_user", JSON.stringify(customUser));
+                    setUser(customUser);
+                    return true;
+                }
+            }
+            return false;
+        } catch (e) {
+            console.error("Firestore auth error:", e);
+            return false;
+        }
+    };
+
+    const signOutUser = async () => {
+        localStorage.removeItem("auth_user");
+        setUser(null);
+        await fbSignOut(auth);
+        window.location.href = "http://localhost:3000/select-module";
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading }}>
+        <AuthContext.Provider value={{ user, loading, loginWithFirestore, signOutUser }}>
             {!loading && children}
         </AuthContext.Provider>
     );

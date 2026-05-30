@@ -48,14 +48,15 @@ export default function StatementModal({
   const val_Card7_TotalGOP = pnlResult.card7_TotalGOP;
 
   const gapAmount = pnlResult.totalGap; 
-  const totalOperationalExpenses = sharedExpensesTotal - gapAmount;
-  const vatAmount = val_Card7_TotalGOP * (vatPercentage / 100);
-  const profitNexura = val_Card7_TotalGOP - totalOperationalExpenses - vatAmount;
+  const totalOperationalExpenses = pnlResult.card8_TotalExpenses || 0;
+  const vatAmount = pnlResult.card11_VAT || 0;
+  const profitNexura = pnlResult.card12_ReconOwner;
 
-  const calculatedInvestors = investors.map(inv => ({
+  const calculatedInvestors = pnlResult.investorDistributions?.map(inv => ({
       ...inv,
-      calculatedAmount: profitNexura * ((inv.percentage || 0) / 100)
-  }));
+      calculatedAmount: inv.amount,
+      percentage: inv.share
+  })) || [];
 
   const mgmtShareData = calculatedInvestors.length > 0 ? calculatedInvestors[0] : null;
   const mgmtShareAmount = mgmtShareData ? mgmtShareData.calculatedAmount : 0;
@@ -116,8 +117,10 @@ export default function StatementModal({
                 <SectionHeader title="III. Net Profit Calculation" />
                 <div className="mt-3 space-y-1">
                     <PrintRow label="Calculation Basis (GOP)" value={val_Card7_TotalGOP} isBold />
-                    <PrintRow label="Total Deduction" value={totalOperationalExpenses} isNegative />
                     <PrintRow label={`VAT Tax (${vatPercentage}%)`} value={vatAmount} isNegative />
+                    <PrintRow label="Service Charge" value={pnlResult.summaryServiceCharge || 0} isNegative />
+                    <PrintRow label="Lost & Breakage" value={pnlResult.summaryLostBreakage || 0} isNegative />
+                    <PrintRow label="Management Fee" value={pnlResult.card9_FeeGross} isNegative />
                 </div>
                 <div className="mt-4 p-4 border border-slate-900 bg-slate-50 rounded-xl flex justify-between items-center">
                     <div>
