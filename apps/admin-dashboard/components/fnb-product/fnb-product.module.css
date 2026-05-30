@@ -1,0 +1,490 @@
+/* fnb-product.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: #ffffff;
+  min-height: 100%;
+}
+
+/* Page Header */
+.headerWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.headerTitleSec {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 34px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.subtitle {
+  font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  color: #7a7a7a;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Apple Pill-Style Tab Bar */
+.tabsContainer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f5f5f7;
+  padding: 4px;
+  border-radius: 9999px;
+  width: fit-content;
+  margin-bottom: 32px;
+  border: 1px solid #e0e0e0;
+}
+
+.tabBtn {
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #7a7a7a;
+  background: transparent;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.tabBtn:hover {
+  color: #1d1d1f;
+}
+
+.tabActive {
+  color: #ffffff !important;
+  background: #0066cc !important; /* Action Blue */
+  box-shadow: 0 4px 10px rgba(0, 102, 204, 0.25);
+}
+
+/* Sub-toggle for Daily vs Monthly view (iOS segmented control style) */
+.toggleContainer {
+  display: flex;
+  align-items: center;
+  background: #f5f5f7;
+  padding: 3px;
+  border-radius: 9999px;
+  border: 1px solid #e0e0e0;
+  width: fit-content;
+}
+
+.toggleBtn {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a7a7a;
+  background: transparent;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  font-family: "SF Pro Text", sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.toggleBtn:hover {
+  color: #1d1d1f;
+}
+
+.toggleActive {
+  color: #0066cc !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Filter Card Panel */
+.filterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fafafc;
+  padding: 16px 24px;
+  border-radius: 18px;
+  border: 1px solid #e0e0e0;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filterLabel {
+  font-family: "SF Pro Text", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a7a7a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filterInput {
+  height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-family: "SF Pro Text", sans-serif;
+  color: #1d1d1f;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 9999px; /* Pill input */
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.filterInput:focus {
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15);
+}
+
+.clearBtn {
+  height: 38px;
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: "SF Pro Text", sans-serif;
+}
+
+.clearBtn:hover {
+  background: #f5f5f7;
+  border-color: #7a7a7a;
+}
+
+/* ── POS/Apple Signature Layout ── */
+.signatureLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  margin-bottom: 48px;
+}
+
+/* POS dark card background style */
+.forestCard {
+  background: #1d1d1f; /* SF Ink background */
+  color: #ffffff;
+  border-radius: 18px;
+  padding: 40px;
+  border: 1px solid #333333;
+}
+
+.forestTitle {
+  font-family: "SF Pro Display", sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  letter-spacing: -0.015em;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* White editorial cards */
+.canvasCard {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 18px;
+  padding: 40px;
+}
+
+.canvasTitle {
+  font-family: "SF Pro Display", sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  letter-spacing: -0.015em;
+  color: #1d1d1f;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 16px;
+}
+
+/* Stat Grid */
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+/* Apple product-mockup style stat card */
+.statCard {
+  padding: 24px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  height: 140px;
+  position: relative;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  color: #1d1d1f;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  border-color: #7a7a7a;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.03);
+}
+
+.statCard:active {
+  transform: scale(0.96);
+}
+
+.statLabel {
+  font-family: "SF Pro Text", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a7a7a;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+}
+
+.statVal {
+  font-family: "SF Pro Display", sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.statIcon {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  opacity: 0.12;
+  color: #1d1d1f;
+}
+
+/* Apple style stat cards colored content indicators */
+.peachCard {
+  border-left: 4px solid #fcab79; /* Peach strip */
+}
+.mintCard {
+  border-left: 4px solid #a8d8c4; /* Mint strip */
+}
+.creamCard {
+  border-left: 4px solid #d9a441; /* Gold/Cream strip */
+}
+.yellowCard {
+  border-left: 4px solid #0066cc; /* Action Blue strip */
+}
+
+/* Deductions (soft gray card style) */
+.softCard {
+  background: #f5f5f7;
+  color: #1d1d1f;
+  border: 1px solid #e0e0e0;
+}
+.softCard .statIcon {
+  color: #7a7a7a;
+}
+
+/* High contrast blue/dark highlight card */
+.darkCard {
+  background: #0066cc; /* Action Blue background */
+  color: #ffffff;
+  border: 1px solid #0066cc;
+}
+.darkCard .statLabel {
+  color: rgba(255, 255, 255, 0.75);
+}
+.darkCard .statVal {
+  color: #ffffff;
+}
+.darkCard .statIcon {
+  color: #ffffff;
+  opacity: 0.2;
+}
+
+/* VS Card performance style */
+.vsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 640px) {
+  .vsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vsCard {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.vsCard:hover {
+  border-color: #7a7a7a;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+.vsCard:active {
+  transform: scale(0.97);
+}
+
+.vsCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vsCardTitle {
+  font-family: "SF Pro Display", sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.vsBadge {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.vsValues {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 0;
+}
+
+.vsValGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vsValLabel {
+  font-size: 11px;
+  color: #7a7a7a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.vsVal {
+  font-family: "SF Pro Display", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.vsProgressContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vsProgressHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.vsProgressLabel {
+  color: #7a7a7a;
+  font-weight: 500;
+}
+
+.vsProgressVal {
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.vsProgressBarBg {
+  height: 6px;
+  background: #f5f5f7;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.vsProgressBarFill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+/* Margin health text colors */
+.healthHealthy { color: #0066cc; }
+.healthWarning { color: #d9a441; }
+.healthCritical { color: #ef4444; }
+
+.emptyBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+  border: 1px dashed #e0e0e0;
+  border-radius: 14px;
+  background: #f5f5f7;
+  color: #7a7a7a;
+  gap: 12px;
+}
+
+.emptyText {
+  font-size: 14px;
+}

@@ -18,7 +18,7 @@ export const TransitionSection: React.FC = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="absolute inset-0 flex flex-col items-center justify-center w-full h-full px-4"
+      className="absolute inset-0 flex flex-col items-center justify-center w-full h-full px-4 -translate-y-28"
     >
       <div
         style={{ height: '360px', width: '100%', maxWidth: '500px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}

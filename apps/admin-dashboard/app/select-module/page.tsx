@@ -167,6 +167,8 @@ export default function SelectModulePage() {
         return userPermissions['pnl'] !== false;
       case 'purchasing':
         return userPermissions['purchasing'] !== false;
+      case 'food-beverage':
+        return userPermissions['food-beverage'] !== false;
       case 'cpanel':
         return userPermissions['users'] !== false;
       default:
@@ -231,8 +233,8 @@ export default function SelectModulePage() {
       title: 'Food & Beverage',
       subtitle: 'Dining & Services',
       description: 'Restaurant, room service & kitchen',
-      href: '#',
-      active: false,
+      href: '/food-beverage/product?module=food-beverage',
+      active: hasAccess('food-beverage'),
       icon: Coffee,
       colSpan: 1 as const,
     },
@@ -285,10 +287,10 @@ export default function SelectModulePage() {
   }
 
   return (
-    <div className="h-screen w-screen dark:bg-black bg-gray-400/[0.5] dark:bg-grid-white/[0.2] bg-grid-black/[0.2] relative flex flex-col overflow-hidden font-sans z-0 select-none">
+    <div className="h-screen w-screen dark:bg-black bg-gray-450/[0.1] dark:bg-dot-white bg-dot-black relative flex flex-col overflow-hidden font-sans z-0 select-none">
       
       {/* Radial gradient mask matching open/page.tsx */}
-      <div className="absolute pointer-events-none inset-0 flex items-center justify-center dark:bg-black bg-white/[0.8] [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] z-0"></div>
+      <div className="absolute pointer-events-none inset-0 flex items-center justify-center dark:bg-black bg-white/[0.7] [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] z-0"></div>
 
       {/* Floating Animated Lottie (Bottom Right Corner - Behind Cards - Shown only in Workspace Module View) */}
       {showGrid && (

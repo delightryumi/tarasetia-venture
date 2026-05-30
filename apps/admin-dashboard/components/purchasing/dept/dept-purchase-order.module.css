@@ -1,0 +1,160 @@
+/* dept-purchase-order.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Page Header Wrapper */
+.headerWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.headerTitleSec {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 850;
+  color: var(--rich-black);
+  margin: 0;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--sage);
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Tabs Container & Pill Buttons */
+.tabsContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(120, 128, 105, 0.06);
+  padding: 6px;
+  border-radius: 16px;
+  width: fit-content;
+  margin-bottom: 24px;
+  border: 1px solid rgba(120, 128, 105, 0.1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.tabBtn {
+  padding: 10px 22px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sage);
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.tabBtn:hover {
+  color: var(--sage-dark);
+  background: rgba(120, 128, 105, 0.08);
+  transform: translateY(-1px);
+}
+
+.tabActive {
+  color: #ffffff !important;
+  background: var(--sage) !important;
+  box-shadow: 0 8px 16px rgba(120, 128, 105, 0.25);
+  transform: translateY(0) !important;
+}
+
+/* Filter Card Panel */
+.filterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 16px 24px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.filterLabel {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--sage);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.filterInput {
+  height: 42px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--rich-black);
+  background: var(--surface-alt);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+}
+
+.filterInput:focus {
+  border-color: var(--sage);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(120, 128, 105, 0.1);
+}
+
+.clearBtn {
+  height: 42px;
+  padding: 0 18px;
+  font-size: 12px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border-light);
+  color: var(--sage-dark);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.clearBtn:hover {
+  background: #ffffff;
+  border-color: var(--sage);
+  color: var(--sage);
+  box-shadow: 0 4px 12px rgba(120, 128, 105, 0.08);
+}

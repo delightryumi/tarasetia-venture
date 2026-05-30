@@ -25,14 +25,14 @@ export const IntroSection: React.FC<IntroSectionProps> = ({ words, onOpenClick }
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 1.01 }}
       transition={{ duration: 0.25, ease: 'easeInOut' }}
-      className="relative flex flex-col items-center justify-start pt-12 md:pt-20 h-full w-full px-4"
+      className="relative flex flex-col items-center justify-start pt-4 md:pt-8 h-full w-full px-4"
     >
       {/* Lottie Animation: Geometry (Placed above the Nexura Logo) - Enlarged 2x and tightened */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6 }}
-        className="-mb-60 flex justify-center items-center select-none"
+        className="-mb-48 flex justify-center items-center select-none"
         style={{ height: '220px', width: '400px' }}
         dangerouslySetInnerHTML={{
           __html: `<lottie-player src="/animated/Geometry.json" background="transparent" speed="1" style="width: 100%; height: 100%;" loop autoplay></lottie-player>`

@@ -29,7 +29,7 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
             whileHover={{ y: -8, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
             style={{ }}
-            className="bg-white p-6 md:p-8 lg:p-12 rounded-xl border border-stone-100 shadow-xl hover:shadow-2xl hover:shadow-stone-200/50 flex flex-col gap-6 cursor-default transition-all duration-300"
+            className="bg-white p-6 md:p-8 rounded-xl border border-stone-100 shadow-xl hover:shadow-2xl hover:shadow-stone-200/50 flex flex-col gap-6 cursor-default transition-all duration-300"
         >
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

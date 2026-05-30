@@ -26,10 +26,10 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({ menus }) => 
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="flex flex-col justify-center items-center w-full h-full px-4 gap-8 md:gap-12"
+      className="flex flex-col justify-start items-center w-full h-full px-4 pt-8 gap-6 md:gap-8"
     >
       {/* Top Header Label */}
-      <div className="text-center z-10 max-w-2xl px-4 mt-0 flex flex-col items-center">
+      <div className="text-center z-10 max-w-2xl px-4 flex flex-col items-center">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -39,7 +39,7 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({ menus }) => 
           <img
             src="/channels/nexura-logo.png"
             alt="Nexura Logo"
-            className="h-24 w-auto object-contain dark:brightness-0 dark:invert drop-shadow-[0_8px_16px_rgba(0,0,0,0.45)]"
+            className="h-16 w-auto object-contain dark:brightness-0 dark:invert drop-shadow-[0_8px_16px_rgba(0,0,0,0.45)]"
           />
         </motion.div>
 

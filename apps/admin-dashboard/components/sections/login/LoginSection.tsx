@@ -5,6 +5,36 @@ import { useLogin } from "./useLogin";
 import { Mail, Lock } from "lucide-react";
 import "./login.css";
 
+const LeftPanel = React.memo(() => {
+    return (
+        <div className="panels-container">
+            <div className="panel left-panel">
+                <div className="panel-content">
+                    <h3>Nexura Global Hospitality</h3>
+                    <p>
+                        Access your hospitality dashboard to manage your point of sales, bookings, housekeeping, and corporate accounts.
+                    </p>
+                </div>
+                {/* Lottie Animation replacing the static image */}
+                <div 
+                    className="panel-image"
+                    style={{ 
+                        minHeight: '260px', 
+                        width: '100%', 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center' 
+                    }}
+                    dangerouslySetInnerHTML={{ 
+                        __html: `<lottie-player src="/animated/DATA SECURITY.json" background="transparent" speed="1.2" style="width: 100%; height: 100%; max-width: 400px;" loop autoplay></lottie-player>` 
+                    }} 
+                />
+            </div>
+        </div>
+    );
+});
+LeftPanel.displayName = "LeftPanel";
+
 export const LoginSection = () => {
     const { email, setEmail, password, setPassword, error, loading, handleLogin } =
         useLogin();
@@ -55,30 +85,7 @@ export const LoginSection = () => {
             </div>
 
             {/* ===== LEFT PANEL (Lottie Animation & Info) ===== */}
-            <div className="panels-container">
-                <div className="panel left-panel">
-                    <div className="panel-content">
-                        <h3>Nexura Global Hospitality</h3>
-                        <p>
-                            Access your hospitality dashboard to manage your point of sales, bookings, housekeeping, and corporate accounts.
-                        </p>
-                    </div>
-                    {/* Lottie Animation replacing the static image */}
-                    <div 
-                        className="panel-image"
-                        style={{ 
-                            minHeight: '260px', 
-                            width: '100%', 
-                            display: 'flex', 
-                            justifyContent: 'center', 
-                            alignItems: 'center' 
-                        }}
-                        dangerouslySetInnerHTML={{ 
-                            __html: `<lottie-player src="/animated/DATA SECURITY.json" background="transparent" speed="1.2" style="width: 100%; height: 100%; max-width: 400px;" loop autoplay></lottie-player>` 
-                        }} 
-                    />
-                </div>
-            </div>
+            <LeftPanel />
         </div>
     );
 };

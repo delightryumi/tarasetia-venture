@@ -13,7 +13,7 @@ import {
     BarChart2, FileImage, Home, Layout, Coffee,
     Info, Grid, Settings, LogOut, FileText,
     MapPin, Gift, Package, Search, ChevronLeft, Menu,
-    TrendingUp, PieChart, Users, ShoppingCart
+    TrendingUp, PieChart, Users, ShoppingCart, ClipboardList
 } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
@@ -25,7 +25,8 @@ export type SectionType =
     | "overview" | "logo" | "hero" | "room-type"
     | "about" | "gallery" | "footer"
     | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "pnl" | "users"
-    | "purchasing" | "store-requisition" | "purchase-requisition" | "daily-market-list" | "stock-opname" | "items" | "suppliers";
+    | "purchasing" | "store-requisition" | "purchase-requisition" | "daily-market-list" | "stock-opname" | "items" | "suppliers"
+    | "purchase-order" | "food-beverage-product";
 
 interface SidebarProps {
     isCollapsed: boolean;
@@ -147,6 +148,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const pathParts = pathname.split("/");
     if (pathParts[1] === "purchasing") {
         activeSection = (pathParts[2] as SectionType) || "purchasing";
+    } else if (
+        ["front-office", "housekeeping", "accounting"].includes(pathParts[1]) &&
+        pathParts[2] === "purchase-order"
+    ) {
+        activeSection = "purchase-order";
+    } else if (pathParts[1] === "food-beverage" && pathParts[2] === "product") {
+        activeSection = "food-beverage-product";
     } else {
         activeSection = (pathParts[1] as SectionType) || "overview";
     }
@@ -234,6 +242,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: "stock-opname", label: "Stock Opname", icon: <PieChart size={18} strokeWidth={2} /> },
         { id: "items", label: "Items Master", icon: <Package size={18} strokeWidth={2} /> },
         { id: "suppliers", label: "Suppliers", icon: <Users size={18} strokeWidth={2} /> },
+        { id: "purchase-order", label: "Purchase Order", icon: <ClipboardList size={18} strokeWidth={2} /> },
+        { id: "food-beverage-product", label: "F&B Product", icon: <Coffee size={18} strokeWidth={2} /> },
     ];
 
     const [activeModule, setActiveModule] = useState<string>("front-office");
@@ -243,6 +253,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
             if (pathname.startsWith('/purchasing')) {
                 localStorage.setItem("active_module", "purchasing");
                 setActiveModule("purchasing");
+                return;
+            }
+            if (pathname.startsWith('/front-office')) {
+                localStorage.setItem("active_module", "front-office");
+                setActiveModule("front-office");
+                return;
+            }
+            if (pathname.startsWith('/housekeeping')) {
+                localStorage.setItem("active_module", "housekeeping");
+                setActiveModule("housekeeping");
+                return;
+            }
+            if (pathname.startsWith('/accounting')) {
+                localStorage.setItem("active_module", "accounting");
+                setActiveModule("accounting");
+                return;
+            }
+            if (pathname.startsWith('/food-beverage')) {
+                localStorage.setItem("active_module", "food-beverage");
+                setActiveModule("food-beverage");
                 return;
             }
             const params = new URLSearchParams(window.location.search);
@@ -265,11 +295,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const getFilteredNavItems = () => {
         let items = allNavItems;
         if (activeModule === "front-office") {
-            items = allNavItems.filter(item => ["overview", "forecast", "invoice"].includes(item.id));
+            items = allNavItems.filter(item => ["overview", "forecast", "invoice", "purchase-order"].includes(item.id));
         } else if (activeModule === "housekeeping") {
-            items = allNavItems.filter(item => ["overview", "forecast"].includes(item.id));
+            items = allNavItems.filter(item => ["overview", "forecast", "purchase-order"].includes(item.id));
         } else if (activeModule === "accounting") {
-            items = allNavItems.filter(item => ["pnl"].includes(item.id));
+            items = allNavItems.filter(item => ["pnl", "purchase-order"].includes(item.id));
+        } else if (activeModule === "food-beverage") {
+            items = allNavItems.filter(item => ["food-beverage-product"].includes(item.id));
         } else if (activeModule === "purchasing") {
             items = allNavItems.filter(item => [
                 "purchasing", "store-requisition", "purchase-requisition", 
@@ -380,6 +412,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                         router.push(`/purchasing?module=purchasing`);
                                     } else if (["store-requisition", "purchase-requisition", "daily-market-list", "stock-opname", "items", "suppliers"].includes(item.id)) {
                                         router.push(`/purchasing/${item.id}?module=purchasing`);
+                                    } else if (item.id === "purchase-order") {
+                                        router.push(`/${activeModule}/purchase-order`);
+                                    } else if (item.id === "food-beverage-product") {
+                                        router.push(`/food-beverage/product?module=food-beverage`);
                                     } else {
                                         router.push(`/${item.id}`);
                                     }
@@ -455,6 +491,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     router.push(`/purchasing?module=purchasing`);
                                 } else if (["store-requisition", "purchase-requisition", "daily-market-list", "stock-opname", "items", "suppliers"].includes(item.id)) {
                                     router.push(`/purchasing/${item.id}?module=purchasing`);
+                                } else if (item.id === "purchase-order") {
+                                    router.push(`/${activeModule}/purchase-order`);
+                                } else if (item.id === "food-beverage-product") {
+                                    router.push(`/food-beverage/product?module=food-beverage`);
                                 } else {
                                     router.push(`/${item.id}`);
                                 }
