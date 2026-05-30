@@ -25,7 +25,7 @@ export default function POSPage() {
         }
         return `${protocol}//${hostname}`;
       };
-      const basePosUrl = getPosUrl();
+      const basePosUrl = getPosUrl().replace(/\/+$/, '');
 
 
       // Collect session state to forward to the POS app
