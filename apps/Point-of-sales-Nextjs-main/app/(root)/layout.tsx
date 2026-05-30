@@ -130,6 +130,11 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       if (hostname.startsWith('pos.')) {
         return `${protocol}//${hostname.replace('pos.', 'dashboard.')}/select-module`;
       }
+      if (hostname.includes('--bumi-anyom')) {
+        const parts = hostname.split('--');
+        parts[0] = 'dashboard';
+        return `${protocol}//${parts.join('--')}/select-module`;
+      }
       return `${protocol}//${hostname}/select-module`;
     }
     return 'http://localhost:3000/select-module';
@@ -147,6 +152,11 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       }
       if (hostname.startsWith('pos.')) {
         return `${protocol}//${hostname.replace('pos.', 'dashboard.')}`;
+      }
+      if (hostname.includes('--bumi-anyom')) {
+        const parts = hostname.split('--');
+        parts[0] = 'dashboard';
+        return `${protocol}//${parts.join('--')}`;
       }
       return `${protocol}//${hostname}`;
     }
