@@ -9,18 +9,6 @@ export const LoginSection = () => {
     const { email, setEmail, password, setPassword, error, loading, handleLogin } =
         useLogin();
 
-    useEffect(() => {
-        // Add Lottie Player CDN script dynamically
-        const scriptId = "lottie-player-script";
-        if (!document.getElementById(scriptId)) {
-            const script = document.createElement("script");
-            script.id = scriptId;
-            script.src = "https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js";
-            script.async = true;
-            document.body.appendChild(script);
-        }
-    }, []);
-
     return (
         <div className="auth-container">
             <div className="forms-container">

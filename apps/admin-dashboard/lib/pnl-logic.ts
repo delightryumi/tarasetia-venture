@@ -316,7 +316,6 @@ export function getDrillDownData(
   rawTransactions: ExtendedTransaction[],
   customIncomes: PnlIncomeItem[],
   expenses: PnlExpenseItem[],
-  posOrders: any[] = [],
   vatPercentage: number = 0,
   mgmtFeePercentage: number = 0,
   serviceChargePercentage: number = 0,
