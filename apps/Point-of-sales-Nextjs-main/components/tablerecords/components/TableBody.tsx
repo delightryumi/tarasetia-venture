@@ -17,6 +17,7 @@ interface Recordsdata {
   totalQuantity: number;
   id: string;
   totalAmount: string | null;
+  discount?: number;
   createdAt: string;
   isComplete: boolean;
   products: Product[]; // Menggunakan array untuk produk
@@ -64,7 +65,10 @@ const TableBodyRecords: React.FC<TableBodyRecordsProps> = ({ data }) => {
               <TableCell className="hidden md:table-cell pl-20 pr-20">
                 {item.totalQuantity}
               </TableCell>
-              <TableCell className="pl-5">
+              <TableCell className="pl-5 text-red-500 font-medium">
+                {item.discount && item.discount > 0 ? `-${formatCurrency(item.discount)}` : '-'}
+              </TableCell>
+              <TableCell className="pl-5 font-bold">
                 {item.totalAmount ? formatCurrency(parseFloat(item.totalAmount)) : 'N/A'}
               </TableCell>
               <TableCell className="pl-4 uppercase font-bold text-[10px]">

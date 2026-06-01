@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { BedDouble } from "lucide-react";
 import { RoomStatusBadge, GuestStatusBadge } from "./StatusPickers";
+import styles from "./OverviewStyles.module.css";
 
 const CHANNELS = [
     { name: "Traveloka", logo: "/channels/traveloka.png" },
@@ -28,56 +29,56 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
         <motion.div 
             whileHover={{ y: -8, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            style={{ }}
-            className="bg-white p-6 md:p-8 rounded-xl border border-stone-100 shadow-xl hover:shadow-2xl hover:shadow-stone-200/50 flex flex-col gap-6 cursor-default transition-all duration-300"
+            className={styles.card}
+            style={{ cursor: 'default' }}
         >
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white shadow-sm border border-stone-50" style={{ color: accent }}>
+            <div className={styles.cardHeader}>
+                <div className={styles.cardHeaderLeft}>
+                    <div className={styles.cardIconBox} style={{ color: accent }}>
                         {icon}
                     </div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">{label}</p>
+                    <p className={styles.cardLabel}>{label}</p>
                 </div>
             </div>
 
             <div>
-                <p className="text-4xl font-semibold text-stone-900 font-outfit tracking-tight">{count}</p>
+                <p className={styles.cardValue}>{count}</p>
             </div>
 
-            <div className="space-y-4">
+            <div className={styles.cardContent}>
                 {items.length === 0 ? (
-                    <div className="py-4 flex items-center justify-center bg-stone-50/50 rounded-2xl border border-stone-50">
-                        <p className="text-[10px] font-bold text-stone-300 uppercase tracking-widest">No activity</p>
+                    <div className={styles.noActivity}>
+                        <p className={styles.noActivityText}>No activity</p>
                     </div>
                 ) : (
                     items.slice(0, 5).map((item: any, idx: number) => (
                         <button 
                             key={idx}
                             onClick={() => onItemClick?.(item)}
-                            className="w-full text-left p-4 hover:bg-stone-50 rounded-2xl transition-all group/item border border-transparent hover:border-stone-100"
+                            className={styles.guestItem}
                         >
-                            <div className="flex justify-between items-center mb-0">
-                                <div className="flex items-center gap-4 flex-1">
-                                    <div className="w-10 h-10 flex items-center justify-center bg-stone-50 rounded-xl overflow-hidden flex-shrink-0">
-                                        <img src={getChannelLogo(item.channel)} alt="" className="w-6 h-6 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
+                                    <div className={styles.guestAvatar}>
+                                        <img src={getChannelLogo(item.channel)} alt="" className={styles.guestAvatarImg} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <p className="text-[13px] font-bold text-stone-900 uppercase font-outfit truncate">{item.guestName || "General Sale"}</p>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div className={styles.guestMainInfo}>
+                                            <p className={styles.guestName} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{item.guestName || "General Sale"}</p>
                                             {item.isExtend && (
-                                                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[7px] font-black rounded border border-amber-100 uppercase tracking-tighter">Extend</span>
+                                                <span className={styles.extendBadge}>Extend</span>
                                             )}
                                         </div>
 
-                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                                            <div className="flex items-start gap-1.5">
-                                                <BedDouble size={10} className="text-stone-300 mt-0.5" />
-                                                <div className="flex flex-col">
-                                                    <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest truncate">
+                                        <div className={styles.guestMetaRow}>
+                                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                                                <BedDouble size={10} style={{ color: 'var(--f-light-muted)', marginTop: '2px' }} />
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <p className={styles.guestSubtext} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                                                         {item.roomType || (item.incomeCategory || '---')}
                                                     </p>
                                                     {item.roomNumber && (
-                                                        <p className="text-[8px] font-medium text-stone-300 uppercase tracking-widest">
+                                                        <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0 }}>
                                                             Room {item.roomNumber}
                                                         </p>
                                                     )}
@@ -85,8 +86,8 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                                             </div>
                                             
                                             {item.type === 'accommodation' && (
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className="w-1 h-1 rounded-full bg-stone-200" />
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--f-hairline)' }} />
                                                     <RoomStatusBadge current={item.roomStatus || 'dirty'} />
                                                     <GuestStatusBadge current={item.guestStatus || 'arriving'} />
                                                 </div>
@@ -94,9 +95,9 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-right flex-shrink-0 ml-4 flex flex-col items-end gap-1">
-                                    <p className="text-[12px] font-bold text-stone-900 font-mono-jb leading-none">Rp {Number(item.amount).toLocaleString('id-ID')}</p>
-                                    <span className={`text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${item.paymentStatus?.includes('Lunas') || !item.paymentStatus ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '16px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                    <p className={styles.guestAmount} style={{ margin: 0, lineHeight: 'none' }}>Rp {Number(item.amount).toLocaleString('id-ID')}</p>
+                                    <span className={`${styles.paymentBadge} ${item.paymentStatus?.includes('Lunas') || !item.paymentStatus ? styles.paymentLunas : styles.paymentPending}`}>
                                         {item.paymentStatus || 'Settled'}
                                     </span>
                                 </div>

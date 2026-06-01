@@ -14,6 +14,14 @@ export interface BookingEntry {
     timestamp: string;
     checkInDate?: string;
     checkOutDate?: string;
+    isExtend?: boolean;
+    _docId?: string;
+    roomNumber?: string;
+    paymentStatus?: string;
+    type?: string;
+    incomeCategory?: string;
+    roomStatus?: string;
+    guestStatus?: string;
 }
 
 export interface OverviewStats {
@@ -43,7 +51,7 @@ const getLocalDateString = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-export const useOverview = (targetDate: 'today' | 'tomorrow' = 'today') => {
+export const useOverview = (startDateStr: string, endDateStr: string) => {
     const [stats, setStats] = useState<OverviewStats>({
         roomsCount: 0,
         galleryCount: 0,
@@ -69,12 +77,14 @@ export const useOverview = (targetDate: 'today' | 'tomorrow' = 'today') => {
 
         const initBookings = async () => {
             try {
-                const baseDate = targetDate === 'tomorrow' ? new Date(Date.now() + 24 * 60 * 60 * 1000) : new Date();
-                const dateStr = getLocalDateString(baseDate);
+                // Calculate dynamic Firestore query range to cover the selected dates plus padding
+                const startRangeDate = new Date(startDateStr);
+                startRangeDate.setDate(startRangeDate.getDate() - 30);
+                const startRange = getLocalDateString(startRangeDate);
                 
-                // Query a range to catch overlaps (last 30 days should be enough)
-                const startRange = getLocalDateString(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
-                const endRange = getLocalDateString(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)); // Include 15 days ahead for calendar
+                const endRangeDate = new Date(endDateStr);
+                endRangeDate.setDate(endRangeDate.getDate() + 15);
+                const endRange = getLocalDateString(endRangeDate);
                 
                 const q = query(
                     collection(db, "daily_revenue"), 
@@ -100,8 +110,9 @@ export const useOverview = (targetDate: 'today' | 'tomorrow' = 'today') => {
                         const entries = (data.entries || []).map((e: any) => ({ ...e, _docId: docSnap.id }));
                         
                         entries.forEach((e: any) => {
-                            const isCancelled = e.status === "CANCELLED";
-                            const isAccommodation = e.type === "accommodation" || (!e.type && e.guestName);
+                            const isCancelled = e.status === "CANCELLED" || e.paymentStatus === "CANCELLED" || e.status === "CANCEL" || e.paymentStatus === "CANCEL";
+                            const isPOS = e.guestName?.startsWith("POS Order") || !!e.posItems || !!e.revenueType;
+                            const isAccommodation = !isPOS && (e.type === "accommodation" || (!e.type && e.guestName));
                             
                             if (isAccommodation) {
                                 const reservationId = `${e.guestName}_${e.checkInDate}_${e.checkOutDate}_${e.roomNumber}`;
@@ -109,28 +120,30 @@ export const useOverview = (targetDate: 'today' | 'tomorrow' = 'today') => {
                                 if (!seenReservations.has(reservationId)) {
                                     seenReservations.add(reservationId);
                                     
-                                    // 1. Logic for Check-In Today (Arrivals + Extensions)
+                                    // 1. Check-In / Arrivals / Extensions in selected range
                                     if (!isCancelled) {
-                                        if (e.checkInDate === dateStr) {
+                                        if (e.checkInDate >= startDateStr && e.checkInDate <= endDateStr) {
                                             checkIn.push({ ...e, isExtend: false });
                                             todayTransactions.push({ ...e, isExtend: false });
-                                        } else if (e.checkInDate < dateStr && e.checkOutDate > dateStr) {
+                                        } else if (e.checkInDate < startDateStr && e.checkOutDate > startDateStr) {
                                             checkIn.push({ ...e, isExtend: true });
                                             todayTransactions.push({ ...e, isExtend: true });
                                         }
                                         
-                                        if (e.checkOutDate === dateStr) checkOut.push(e);
+                                        if (e.checkOutDate >= startDateStr && e.checkOutDate <= endDateStr) {
+                                            checkOut.push(e);
+                                        }
                                         allAccommodation.push(e);
                                     }
 
-                                    // 2. Logic for Cancellations
-                                    if (isCancelled && e.checkInDate === dateStr) {
+                                    // 2. Cancellations in selected range
+                                    if (isCancelled && e.checkInDate >= startDateStr && e.checkInDate <= endDateStr) {
                                         cancels.push(e);
                                     }
                                 }
                             } else {
-                                // 3. Logic for "Other Income" created today
-                                if (docDate === dateStr) {
+                                // 3. Other Income in selected range (excluding POS)
+                                if (!isPOS && docDate >= startDateStr && docDate <= endDateStr) {
                                     todayTransactions.push(e);
                                 }
                             }
@@ -219,7 +232,7 @@ export const useOverview = (targetDate: 'today' | 'tomorrow' = 'today') => {
             unsubSEO();
             if (unsubDaily) unsubDaily();
         };
-    }, [targetDate]);
+    }, [startDateStr, endDateStr]);
 
     return stats;
 };

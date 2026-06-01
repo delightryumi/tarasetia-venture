@@ -132,8 +132,11 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       }
       if (hostname.includes('--bumi-anyom')) {
         const parts = hostname.split('--');
-        parts[0] = 'dashboard';
+        parts[0] = 'admin-dashboard';
         return `${protocol}//${parts.join('--')}/select-module`;
+      }
+      if (hostname.includes('pos')) {
+        return `${protocol}//${hostname.replace('pos', 'admin-dashboard')}/select-module`;
       }
       return `${protocol}//${hostname}/select-module`;
     }

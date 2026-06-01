@@ -78,13 +78,15 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                 />
             )}
             <main className="main-content">
-                <div className="dashboard-top-bar">
-                    <StatusWidget 
-                        onMenuClick={() => setIsCollapsed(false)} 
-                        isCollapsed={isCollapsed}
-                        onToggleSidebar={() => setIsCollapsed(!isCollapsed)}
-                    />
-                </div>
+                {pathname !== "/forecast/add" && pathname !== "/overview" && (
+                    <div className="dashboard-top-bar">
+                        <StatusWidget 
+                            onMenuClick={() => setIsCollapsed(false)} 
+                            isCollapsed={isCollapsed}
+                            onToggleSidebar={() => setIsCollapsed(!isCollapsed)}
+                        />
+                    </div>
+                )}
 
                 <div className="main-scroll-container">
                     <AnimatePresence mode="wait">

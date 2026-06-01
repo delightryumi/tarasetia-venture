@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 
 export const fetchRecords = async ({
   take = 5,
@@ -29,6 +29,15 @@ export const fetchRecords = async ({
       endDate = today;
     }
 
+    // Fetch tax settings
+    const posSettingsRef = doc(db, 'settings', 'pos');
+    const posSettingsSnap = await getDoc(posSettingsRef);
+    let taxRate = 10;
+    if (posSettingsSnap.exists()) {
+      const sData = posSettingsSnap.data();
+      taxRate = Number(sData.service || 0) + Number(sData.tax || 0) + Number(sData.lostBreakage || 0);
+    }
+
     const snap = await getDocs(collection(db, 'pos_orders'));
     let transactions: any[] = [];
 
@@ -40,6 +49,23 @@ export const fetchRecords = async ({
         0
       );
 
+      let calcSubtotal = 0;
+      items.forEach((item: any) => {
+        calcSubtotal += Number(item.price || 0) * Number(item.quantity || 0);
+      });
+      calcSubtotal = calcSubtotal > 0 ? calcSubtotal : Number(data.subtotal || 0);
+
+      const dbTotal = Number(data.total || 0);
+      const dbTax = Number(data.tax || 0);
+      let dbDiscount = Number(data.discount || 0);
+      if (!dbDiscount && dbTotal > 0 && calcSubtotal > 0) {
+        dbDiscount = Math.max(0, calcSubtotal + dbTax - dbTotal);
+      }
+
+      const nettTotal = Math.max(0, calcSubtotal - dbDiscount);
+      const computedTax = nettTotal * (taxRate / 100);
+      const calculatedTotal = nettTotal + computedTax;
+
       let createdAt = new Date().toISOString();
       if (data.timestamp) {
         createdAt = typeof data.timestamp.toDate === 'function' 
@@ -49,7 +75,8 @@ export const fetchRecords = async ({
 
       transactions.push({
         id: data.transactionId || docSnap.id,
-        totalAmount: Number(data.total || 0),
+        totalAmount: calculatedTotal,
+        discount: dbDiscount,
         createdAt,
         isComplete: true, // Assuming all pos_orders are confirmed
         products: items.map((item: any) => ({

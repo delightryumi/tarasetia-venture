@@ -104,6 +104,7 @@ export interface PnLDetailedItem {
   documentId?: string;
   docType?: string;
   category?: string;
+  discount?: number;
 }
 
 export interface DrillDownData {

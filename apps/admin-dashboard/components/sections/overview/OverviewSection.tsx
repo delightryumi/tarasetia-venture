@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { PlusCircle, LogIn, Calendar, XCircle, Download, FileText } from "lucide-react";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
@@ -12,7 +12,7 @@ import { db } from "@/lib/firebase";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 
 // Modular Imports
-import "./OverviewStyles.css";
+import styles from "./OverviewStyles.module.css";
 import { StatCard } from "./StatCard";
 import { InventoryCalendar } from "./InventoryCalendar";
 import { AuditLedger } from "./AuditLedger";
@@ -26,13 +26,36 @@ const RICH_BLACK = "#1A1C14";
 
 export function OverviewSection() {
     const router = useRouter();
-    const [targetDate, setTargetDate] = React.useState<'today' | 'tomorrow'>('today');
+    
+    const todayStr = React.useMemo(() => {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }, []);
+    
+    const tomorrowStr = React.useMemo(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }, []);
+
+    const [startDate, setStartDate] = React.useState(todayStr);
+    const [endDate, setEndDate] = React.useState(todayStr);
+
+    const isTodayActive = startDate === todayStr && endDate === todayStr;
+    const isTomorrowActive = startDate === tomorrowStr && endDate === tomorrowStr;
+
     const { 
         loading, 
         checkInCount, checkOutCount, cancelCount,
         todayCheckIns, todayCheckOuts, todayCanceled,
         latestBookings, roomStatus, dailyData, roomTypesData
-    } = useOverview(targetDate);
+    } = useOverview(startDate, endDate);
     
     const [selectedGuest, setSelectedGuest] = React.useState<any>(null);
     const [isEditing, setIsEditing] = React.useState(false);
@@ -99,143 +122,200 @@ export function OverviewSection() {
     };
 
     return (
-        <div className="w-full max-w-[1440px] mx-auto flex flex-col gap-8 font-sans">
+        <div className={styles.overviewRoot}>
             {/* Header - Unified with Forecast */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-stone-100">
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-3.5 mb-1">
-                        <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[#ffd8a6] text-[#788069]">
-                            <PlusCircle size={13} />
+            <header className={styles.header}>
+                <div className={styles.headerInner}>
+                    <div className={styles.headerLeft}>
+                        <div className={styles.headerBadge} style={{ backgroundColor: PEACH, color: SAGE }}>
+                            <PlusCircle size={15} />
                         </div>
-                        <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">Nexura Operational</span>
-                    </div>
-                    <h1 className="text-2xl md:text-3xl font-black text-stone-900 tracking-tight">
-                        Command <span style={{ color: SAGE }}>Center</span>
-                    </h1>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4">
-                    {/* Today / Tomorrow Toggle */}
-                    <div className="flex p-1 bg-stone-100 rounded-xl border border-stone-200/40 shadow-inner">
-                        <motion.button 
-                            whileHover={{ scale: targetDate === 'today' ? 1 : 1.02 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setTargetDate('today')}
-                            className={`flex items-center justify-center h-10 rounded-lg text-[13px] font-bold transition-all whitespace-nowrap min-w-[140px] ${targetDate === 'today' ? 'shadow-sm' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-200/50'}`}
-                            style={targetDate === 'today' ? { backgroundColor: PEACH, color: RICH_BLACK } : {}}
-                        >
-                            Today
-                        </motion.button>
-                        <motion.button 
-                            whileHover={{ scale: targetDate === 'tomorrow' ? 1 : 1.02 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setTargetDate('tomorrow')}
-                            className={`flex items-center justify-center h-10 rounded-lg text-[13px] font-bold transition-all whitespace-nowrap min-w-[140px] ${targetDate === 'tomorrow' ? 'shadow-sm' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-200/50'}`}
-                            style={targetDate === 'tomorrow' ? { backgroundColor: PEACH, color: RICH_BLACK } : {}}
-                        >
-                            Tomorrow
-                        </motion.button>
+                        <div className={styles.headerMeta}>
+                            <span className={styles.headerSubtitle}>Nexura Operational</span>
+                            <h1 className={styles.headerTitle}>
+                                Command <span style={{ color: SAGE }}>Center</span>
+                            </h1>
+                        </div>
                     </div>
 
-                    <button
-                        onClick={() => router.push(`/forecast/add?date=${new Date().toISOString().split('T')[0]}`)}
-                        className="h-11 w-11 flex items-center justify-center rounded-xl text-white transition-all hover:brightness-110 hover:shadow-lg active:scale-95 shadow-sm bg-[#788069]"
-                        title="Add Transaction"
-                    >
-                        <PlusCircle size={18} />
-                    </button>
+                    <div className={styles.headerRight}>
+                        {/* Today / Tomorrow Toggle */}
+                        <div className={styles.toggleWrapper}>
+                            <motion.button 
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => {
+                                    setStartDate(todayStr);
+                                    setEndDate(todayStr);
+                                }}
+                                className={`${styles.toggleBtn} ${isTodayActive ? styles.toggleBtnActive : ''}`}
+                            >
+                                Today
+                            </motion.button>
+                            <motion.button 
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => {
+                                    setStartDate(tomorrowStr);
+                                    setEndDate(tomorrowStr);
+                                }}
+                                className={`${styles.toggleBtn} ${isTomorrowActive ? styles.toggleBtnActive : ''}`}
+                            >
+                                Tomorrow
+                            </motion.button>
+                        </div>
 
-                    <div className="flex items-center gap-2 border-l border-stone-100 pl-4 ml-1">
+                        <div className={styles.vDivider} />
+
+                        {/* Custom Date Range Picker */}
+                        <div className={styles.datePickerWrapper}>
+                            <div className={styles.datePickerInputGroup}>
+                                <span className={styles.datePickerLabel}>From</span>
+                                <input 
+                                    type="date" 
+                                    value={startDate} 
+                                    onChange={(e) => {
+                                        if (e.target.value) setStartDate(e.target.value);
+                                    }} 
+                                    className={styles.dateInput}
+                                />
+                            </div>
+                            <div className={styles.datePickerDivider}>→</div>
+                            <div className={styles.datePickerInputGroup}>
+                                <span className={styles.datePickerLabel}>To</span>
+                                <input 
+                                    type="date" 
+                                    value={endDate} 
+                                    onChange={(e) => {
+                                        if (e.target.value) setEndDate(e.target.value);
+                                    }} 
+                                    className={styles.dateInput}
+                                />
+                            </div>
+                        </div>
+
+                        <div className={styles.vDivider} />
+
+                        <button
+                            onClick={() => router.push(`/forecast/add?date=${startDate}`)}
+                            className={styles.btnPrimary}
+                            title="Add Transaction"
+                            style={{ height: '36px', width: '36px', borderRadius: '8px' }}
+                        >
+                            <PlusCircle size={16} />
+                        </button>
+
+                        <div className={styles.vDivider} />
+
                         <button 
                             onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                            className={`h-11 w-11 flex items-center justify-center rounded-xl border border-stone-100 transition-all shadow-sm ${isCalendarOpen ? 'bg-[#788069] text-white' : 'bg-white text-stone-400 hover:text-[#788069] hover:bg-stone-50'}`}
+                            className={styles.btnIcon}
+                            style={isCalendarOpen ? { backgroundColor: SAGE, color: '#ffffff', borderColor: SAGE, height: '36px', width: '36px', borderRadius: '8px' } : { height: '36px', width: '36px', borderRadius: '8px' }}
                             title={isCalendarOpen ? "Close Calendar" : "Open Calendar"}
                         >
-                            <Calendar size={18} />
+                            <Calendar size={16} />
                         </button>
                         <button 
                             onClick={handleExportExcel}
-                            className="h-11 w-11 flex items-center justify-center rounded-xl bg-white border border-stone-100 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all shadow-sm"
+                            className={styles.btnIcon}
+                            style={{ height: '36px', width: '36px', borderRadius: '8px' }}
                             title="Export to Excel"
                         >
                             <Download size={16} />
                         </button>
                         <button 
                             onClick={handleExportPDF}
-                            className="h-11 w-11 flex items-center justify-center rounded-xl bg-white border border-stone-100 text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-all shadow-sm"
+                            className={styles.btnIcon}
+                            style={{ height: '36px', width: '36px', borderRadius: '8px' }}
                             title="Export to PDF"
                         >
                             <FileText size={16} />
                         </button>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            {/* SECTION 1: MOVEMENT GRID */}
-            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
-                <StatCard 
-                    accent={SAGE} icon={<LogIn size={18} />} label={targetDate === 'today' ? "Check In Today" : "Check In Tomorrow"} 
-                    count={dash || checkInCount} items={todayCheckIns}
-                    onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
-                    onStatusUpdate={handleStatusUpdate}
-                />
-                <StatCard 
-                    accent={PEACH} icon={<Calendar size={18} />} label={targetDate === 'today' ? "Check Out Today" : "Check Out Tomorrow"} 
-                    count={dash || checkOutCount} items={todayCheckOuts}
-                    onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
-                    onStatusUpdate={handleStatusUpdate}
-                />
-                <StatCard 
-                    accent="#ef4444" icon={<XCircle size={18} />} label={targetDate === 'today' ? "Cancellations Today" : "Cancellations Tomorrow"} 
-                    count={dash || cancelCount} items={todayCanceled}
-                    onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
-                    onStatusUpdate={handleStatusUpdate}
-                />
-            </section>
-
-            {/* SECTION 2: AUDIT LEDGER */}
-            <AuditLedger 
-                bookings={latestBookings}
-                onView={(b) => { setSelectedGuest(b); setIsEditing(false); }}
-                onEdit={(b) => { setSelectedGuest(b); setIsEditing(true); }}
-                onDelete={(b) => setBookingToDelete(b)}
-                onStatusUpdate={handleStatusUpdate}
-                onExportExcel={handleExportExcel}
-                onExportPDF={handleExportPDF}
-            />
-
-            {/* SECTION 3: INVENTORY CALENDAR */}
-            {isCalendarOpen && (
-                <section className="animate-in fade-in slide-in-from-top-4 duration-500">
-                    <InventoryCalendar 
-                        targetDate={targetDate}
-                        data={dailyData} 
-                        roomTypes={roomTypesData}
-                        totalRooms={roomStatus.total} 
-                        onDateSelect={(date) => router.push(`/forecast/add?date=${date}`)}
-                        onCellClick={(bookings, date, type) => setCalendarContext({ bookings, date, type })}
+            <main className={styles.mainContainer}>
+                {/* SECTION 1: MOVEMENT GRID */}
+                <section className={styles.statGrid}>
+                    <StatCard 
+                        accent={SAGE} icon={<LogIn size={18} />} 
+                        label={isTodayActive ? "Check In Today" : (isTomorrowActive ? "Check In Tomorrow" : `Check In (${startDate} to ${endDate})`)} 
+                        count={dash || checkInCount} items={todayCheckIns}
+                        onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
+                        onStatusUpdate={handleStatusUpdate}
+                    />
+                    <StatCard 
+                        accent={PEACH} icon={<Calendar size={18} />} 
+                        label={isTodayActive ? "Check Out Today" : (isTomorrowActive ? "Check Out Tomorrow" : `Check Out (${startDate} to ${endDate})`)} 
+                        count={dash || checkOutCount} items={todayCheckOuts}
+                        onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
+                        onStatusUpdate={handleStatusUpdate}
+                    />
+                    <StatCard 
+                        accent="#ef4444" icon={<XCircle size={18} />} 
+                        label={isTodayActive ? "Cancellations Today" : (isTomorrowActive ? "Cancellations Tomorrow" : `Cancellations (${startDate} to ${endDate})`)} 
+                        count={dash || cancelCount} items={todayCanceled}
+                        onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
+                        onStatusUpdate={handleStatusUpdate}
                     />
                 </section>
-            )}
 
-            <GuestListDrawer 
-                isOpen={!!calendarContext}
-                onClose={() => setCalendarContext(null)}
-                date={calendarContext?.date || ""}
-                roomType={calendarContext?.type || ""}
-                bookings={calendarContext?.bookings || []}
-                onAdd={(date) => router.push(`/forecast/add?date=${date}`)}
-            />
-
-            {/* Modals */}
-            {selectedGuest && (
-                <GuestDetailModal 
-                    key={selectedGuest.timestamp || selectedGuest.bookingId || Math.random()}
-                    guest={selectedGuest} 
-                    isEditing={isEditing} 
-                    onClose={() => setSelectedGuest(null)} 
+                {/* SECTION 2: AUDIT LEDGER */}
+                <AuditLedger 
+                    bookings={latestBookings}
+                    onView={(b) => { setSelectedGuest(b); setIsEditing(false); }}
+                    onEdit={(b) => { setSelectedGuest(b); setIsEditing(true); }}
+                    onDelete={(b) => setBookingToDelete(b)}
+                    onStatusUpdate={handleStatusUpdate}
+                    onExportExcel={handleExportExcel}
+                    onExportPDF={handleExportPDF}
                 />
-            )}
+
+                {/* SECTION 3: INVENTORY CALENDAR */}
+                {isCalendarOpen && (
+                    <div className={styles.twoColumnLayout}>
+                        <div style={{ flex: 1, width: '100%', minWidth: 0 }}>
+                            <InventoryCalendar 
+                                targetDate={isTodayActive ? 'today' : (isTomorrowActive ? 'tomorrow' : 'today')}
+                                data={dailyData} 
+                                roomTypes={roomTypesData}
+                                totalRooms={roomStatus.total} 
+                                onDateSelect={(date) => router.push(`/forecast/add?date=${date}`)}
+                                onCellClick={(bookings, date, type) => setCalendarContext({ bookings, date, type })}
+                            />
+                        </div>
+                        <GuestListDrawer 
+                            isOpen={!!calendarContext}
+                            onClose={() => setCalendarContext(null)}
+                            date={calendarContext?.date || ""}
+                            roomType={calendarContext?.type || ""}
+                            bookings={calendarContext?.bookings || []}
+                            onAdd={(date) => router.push(`/forecast/add?date=${date}`)}
+                        />
+                    </div>
+                )}
+            </main>
+
+            {/* Right Drawer Overlay Popup */}
+            <AnimatePresence>
+                {selectedGuest && (
+                    <motion.div 
+                        key="backdrop"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className={styles.sidebarBackdrop}
+                        onClick={() => setSelectedGuest(null)}
+                    />
+                )}
+                {selectedGuest && (
+                    <GuestDetailModal 
+                        key={selectedGuest.timestamp || selectedGuest.bookingId || Math.random()}
+                        guest={selectedGuest} 
+                        isEditing={isEditing} 
+                        onClose={() => setSelectedGuest(null)} 
+                    />
+                )}
+            </AnimatePresence>
 
             <DeleteConfirmModal 
                 isOpen={!!bookingToDelete}

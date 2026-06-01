@@ -1,102 +1,142 @@
+/* ── Premium Digital Folio Redesign ── */
+
 .folio-container {
-    background-color: #ffffff;
-    background-image: 
-        radial-gradient(#f1f1f1 1px, transparent 1px),
-        linear-gradient(to right, #f9f9f9 1px, transparent 1px);
-    background-size: 20px 20px, 40px 100%;
-    position: relative;
-    box-shadow: 
-        0 0 0 1px rgba(0,0,0,0.05),
-        0 20px 50px -10px rgba(0,0,0,0.1);
+  background-color: var(--f-surface);
+  border: 1px solid var(--f-hairline);
+  border-radius: var(--f-radius-lg);
+  position: relative;
+  padding: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
 
-.folio-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 40px;
-    bottom: 0;
-    width: 1px;
-    background: rgba(220, 38, 38, 0.1);
+/* Elegant brand header */
+.folio-brand-header {
+  border-bottom: 2px double var(--f-hairline);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
 }
 
-.folio-header-badge {
-    padding: 4px 12px;
-    background: #1A1C14;
-    color: #ffd8a6;
-    font-size: 9px;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.3em;
-    clip-path: polygon(0% 0%, 95% 0%, 100% 50%, 95% 100%, 0% 100%);
+.folio-brand-title {
+  font-family: var(--f-font);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--f-rich-black);
+  margin: 0 0 4px 0;
 }
 
-.folio-label {
-    font-size: 8px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    color: #a8a29e;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+.folio-brand-subtitle {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--f-sage);
+  margin: 0;
 }
 
-.folio-value {
-    font-size: 13px;
-    font-weight: 700;
-    color: #1c1917;
-    text-transform: uppercase;
-    font-family: var(--font-outfit);
+/* Sections */
+.folio-section-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--f-light-muted);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.folio-mono {
-    font-family: var(--font-jb-mono);
-    font-variant-numeric: tabular-nums;
+.folio-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--f-hairline);
 }
 
-.folio-divider-dashed {
-    border-top: 1px dashed #e7e5e4;
-    height: 0;
-    width: 100%;
+/* Grid parameters */
+.folio-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-.folio-item-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #f5f5f4;
+.folio-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.folio-total-box {
-    background: #fafaf9;
-    border: 1px solid #e7e5e4;
-    padding: 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.folio-info-label {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--f-light-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-.folio-stamp {
-    position: absolute;
-    bottom: 40px;
-    right: 40px;
-    width: 100px;
-    height: 100px;
-    border: 3px double rgba(120, 128, 105, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transform: rotate(-15deg);
-    pointer-events: none;
+.folio-info-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--f-ink);
+  text-transform: uppercase;
 }
 
-.folio-stamp::after {
-    content: 'AUDITED';
-    font-size: 10px;
-    font-weight: 900;
-    color: rgba(120, 128, 105, 0.3);
-    letter-spacing: 0.2em;
+/* Receipt total styling */
+.folio-total-card {
+  background-color: var(--f-sage-bg);
+  border: 1px solid var(--f-sage-border);
+  border-radius: var(--f-radius-md);
+  padding: 16px;
+  margin-top: 20px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.folio-total-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--f-sage);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 4px;
+}
+
+.folio-total-amount {
+  font-size: 18px;
+  font-weight: 800;
+  font-family: var(--f-font-mono);
+  color: var(--f-sage-dark);
+  margin: 0;
+}
+
+/* Watermark Stamp */
+.folio-watermark-seal {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  width: 140px;
+  height: 140px;
+  border: 4px double rgba(120, 128, 105, 0.05);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-20deg);
+  pointer-events: none;
+}
+
+.folio-watermark-seal::after {
+  content: 'OFFICIAL RECORD';
+  font-size: 8px;
+  font-weight: 900;
+  color: rgba(120, 128, 105, 0.08);
+  letter-spacing: 0.3em;
+  text-align: center;
 }

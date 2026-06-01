@@ -16,4 +16,5 @@ export interface TransactionData {
   transactionId: string;
   product: Product;
   saledate?: string | Date;
+  discount?: number;
 }

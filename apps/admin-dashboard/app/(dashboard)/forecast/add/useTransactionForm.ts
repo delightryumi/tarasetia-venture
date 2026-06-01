@@ -49,7 +49,7 @@ const INITIAL_FORM = {
     payHotel: "",
     payNexura: "",
     totalAmount: "",
-    incomeType: "other",
+    incomeType: "Other",
     note: "",
     staffName: ""
 };
@@ -62,7 +62,7 @@ export const useTransactionForm = () => {
     const [roomTypes, setRoomTypes] = useState<any[]>([]);
     const [occupancy, setOccupancy] = useState<any[]>([]);
     const [saving, setSaving] = useState(false);
-    const [step, setStep] = useState<"type" | "form">("type");
+    const [step, setStep] = useState<"select" | "form">("select");
     const [revenueType, setRevenueType] = useState<"room" | "other">("room");
     const [queue, setQueue] = useState<any[]>([]);
     
@@ -91,6 +91,15 @@ export const useTransactionForm = () => {
             }));
         }
     }, [form.channel, revenueType, totalGross]);
+
+    useEffect(() => {
+        if (revenueType === "other") {
+            setForm(prev => ({
+                ...prev,
+                payNexura: "0"
+            }));
+        }
+    }, [revenueType]);
 
     // Fetch Allotment & Current Bookings
     useEffect(() => {

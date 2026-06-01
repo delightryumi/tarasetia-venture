@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import styles from "./ForecastStyles.module.css";
 
 const MONTHS_ID = [
     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -52,45 +53,51 @@ function DailyCalendar({ value, onChange }: { value: string, onChange: (v: strin
     };
 
     return (
-        <div className="w-[300px] p-4">
+        <div style={{ width: "300px", padding: "16px" }}>
             {/* Month/Year Header */}
-            <div className="flex items-center justify-between mb-4">
-                <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-stone-100 transition-colors text-stone-500 hover:text-stone-800">
-                    <ChevronLeft size={16} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                <button onClick={prevMonth} className={styles.btnIcon} style={{ width: "28px", height: "28px", borderRadius: "6px", border: "none", boxShadow: "none" }}>
+                    <ChevronLeft size={14} />
                 </button>
-                <span className="text-sm font-medium text-stone-800">
+                <span className={styles.guestSubtext} style={{ fontSize: "11px", color: "var(--f-ink)", fontWeight: 700 }}>
                     {MONTHS_ID[viewMonth]} {viewYear}
                 </span>
-                <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-stone-100 transition-colors text-stone-500 hover:text-stone-800">
-                    <ChevronRight size={16} />
+                <button onClick={nextMonth} className={styles.btnIcon} style={{ width: "28px", height: "28px", borderRadius: "6px", border: "none", boxShadow: "none" }}>
+                    <ChevronRight size={14} />
                 </button>
             </div>
 
             {/* Day Labels */}
-            <div className="grid grid-cols-7 mb-1">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", marginBottom: "4px" }}>
                 {DAYS_SHORT.map(d => (
-                    <div key={d} className="text-center text-[10px] font-medium text-stone-400 py-1">{d}</div>
+                    <div key={d} className={styles.guestSubtext} style={{ textAlign: "center", fontSize: "9px", color: "var(--f-light-muted)" }}>{d}</div>
                 ))}
             </div>
 
             {/* Day Grid */}
-            <div className="grid grid-cols-7 gap-y-0.5">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px" }}>
                 {cells.map((day, i) => (
-                    <div key={i} className="flex items-center justify-center">
+                    <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                         {day ? (
                             <button
                                 onClick={() => handleDay(day)}
-                                className={`w-9 h-9 rounded-lg text-xs font-medium transition-all duration-150 ${
-                                    isSel(day)
-                                        ? "bg-stone-900 text-white shadow-sm"
-                                        : isToday(day)
-                                            ? "border border-stone-300 text-stone-800 hover:bg-stone-100"
-                                            : "text-stone-700 hover:bg-stone-100"
-                                }`}
+                                style={{
+                                    width: "32px",
+                                    height: "32px",
+                                    borderRadius: "6px",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                    fontFamily: "var(--f-font-mono)",
+                                    cursor: "pointer",
+                                    transition: "all var(--f-duration-fast)",
+                                    border: isSel(day) ? "none" : (isToday(day) ? "1px solid var(--f-light-muted)" : "none"),
+                                    backgroundColor: isSel(day) ? "var(--f-sage)" : "transparent",
+                                    color: isSel(day) ? "#ffffff" : (isToday(day) ? "var(--f-sage)" : "var(--f-body)")
+                                }}
                             >
                                 {day}
                             </button>
-                        ) : <div className="w-9 h-9" />}
+                        ) : <div style={{ width: "32px", height: "32px" }} />}
                     </div>
                 ))}
             </div>
@@ -118,31 +125,35 @@ function MonthlyCalendar({ value, onChange }: { value: string, onChange: (v: str
     };
 
     return (
-        <div className="w-[280px] p-4">
+        <div style={{ width: "280px", padding: "16px" }}>
             {/* Year Header */}
-            <div className="flex items-center justify-between mb-4">
-                <button onClick={() => setViewYear(y => y - 1)} className="p-1.5 rounded-lg hover:bg-stone-100 transition-colors text-stone-500 hover:text-stone-800">
-                    <ChevronLeft size={16} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                <button onClick={() => setViewYear(y => y - 1)} className={styles.btnIcon} style={{ width: "28px", height: "28px", borderRadius: "6px", border: "none", boxShadow: "none" }}>
+                    <ChevronLeft size={14} />
                 </button>
-                <span className="text-sm font-medium text-stone-800">{viewYear}</span>
-                <button onClick={() => setViewYear(y => y + 1)} className="p-1.5 rounded-lg hover:bg-stone-100 transition-colors text-stone-500 hover:text-stone-800">
-                    <ChevronRight size={16} />
+                <span className={styles.guestSubtext} style={{ fontSize: "11px", color: "var(--f-ink)", fontWeight: 700 }}>{viewYear}</span>
+                <button onClick={() => setViewYear(y => y + 1)} className={styles.btnIcon} style={{ width: "28px", height: "28px", borderRadius: "6px", border: "none", boxShadow: "none" }}>
+                    <ChevronRight size={14} />
                 </button>
             </div>
 
             {/* Month Grid */}
-            <div className="grid grid-cols-3 gap-2">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px" }}>
                 {MONTHS_ID.map((name, i) => (
                     <button
                         key={name}
                         onClick={() => handleMonth(i)}
-                        className={`py-2.5 px-1 rounded-lg text-xs font-medium transition-all duration-150 ${
-                            isSel(i)
-                                ? "bg-stone-900 text-white shadow-sm"
-                                : isCurrentMonth(i)
-                                    ? "border border-stone-300 text-stone-800 hover:bg-stone-100"
-                                    : "text-stone-600 hover:bg-stone-100"
-                        }`}
+                        style={{
+                            padding: "8px 0",
+                            borderRadius: "6px",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "all var(--f-duration-fast)",
+                            border: isSel(i) ? "none" : (isCurrentMonth(i) ? "1px solid var(--f-light-muted)" : "none"),
+                            backgroundColor: isSel(i) ? "var(--f-sage)" : "transparent",
+                            color: isSel(i) ? "#ffffff" : (isCurrentMonth(i) ? "var(--f-sage)" : "var(--f-body)")
+                        }}
                     >
                         {name.slice(0, 3)}
                     </button>
@@ -159,22 +170,27 @@ function YearlyCalendar({ value, onChange }: { value: string, onChange: (v: stri
     const years = Array.from({ length: 12 }, (_, i) => currentYear - 5 + i);
 
     return (
-        <div className="w-[280px] p-4">
-            <div className="text-center mb-4 py-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Pilih Tahun</span>
+        <div style={{ width: "280px", padding: "16px" }}>
+            <div style={{ textAlign: "center", marginBottom: "16px", padding: "4px 0" }}>
+                <span className={styles.headerSubtitle} style={{ fontSize: "8px" }}>Pilih Tahun</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px" }}>
                 {years.map((yr) => (
                     <button
                         key={yr}
                         onClick={() => onChange(`${yr}-01-01`)}
-                        className={`py-3 px-1 rounded-lg text-xs font-bold transition-all duration-150 ${
-                            currentYear === yr
-                                ? "bg-stone-900 text-white shadow-sm"
-                                : today.getFullYear() === yr
-                                    ? "border border-stone-300 text-stone-800 hover:bg-stone-100"
-                                    : "text-stone-600 hover:bg-stone-100"
-                        }`}
+                        style={{
+                            padding: "10px 0",
+                            borderRadius: "6px",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            fontFamily: "var(--f-font-mono)",
+                            cursor: "pointer",
+                            transition: "all var(--f-duration-fast)",
+                            border: currentYear === yr ? "none" : (today.getFullYear() === yr ? "1px solid var(--f-light-muted)" : "none"),
+                            backgroundColor: currentYear === yr ? "var(--f-sage)" : "transparent",
+                            color: currentYear === yr ? "#ffffff" : (today.getFullYear() === yr ? "var(--f-sage)" : "var(--f-body)")
+                        }}
                     >
                         {yr}
                     </button>
@@ -212,18 +228,27 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ mode, value,
     };
 
     return (
-        <div ref={ref} className="relative">
+        <div ref={ref} style={{ position: "relative" }}>
             {/* Trigger */}
             <button
                 onClick={() => setOpen(o => !o)}
-                className={`flex items-center justify-center gap-3 h-10 px-4 rounded-lg border bg-white cursor-pointer transition-all duration-300 min-w-[180px] text-left ${
-                    open
-                        ? "border-stone-400 ring-2 ring-stone-200/70"
-                        : "border-stone-200 hover:border-stone-300"
-                }`}
+                className={styles.btnIcon}
+                style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: "8px", 
+                    height: "46px", 
+                    padding: "0 16px", 
+                    borderRadius: "10px", 
+                    minWidth: "180px", 
+                    justifyContent: "flex-start",
+                    backgroundColor: "var(--f-surface-soft)",
+                    borderColor: open ? "var(--f-light-muted)" : "var(--f-hairline)",
+                    boxShadow: "none"
+                }}
             >
-                <Calendar size={14} className="text-stone-400 flex-shrink-0" />
-                <span className="text-[13px] font-medium text-stone-700 whitespace-nowrap">
+                <Calendar size={14} style={{ color: "var(--f-light-muted)", flexShrink: 0 }} />
+                <span className={styles.guestSubtext} style={{ color: "var(--f-ink)", fontSize: "11px", fontWeight: 700 }}>
                     {formatDisplay(value)}
                 </span>
             </button>
@@ -236,7 +261,17 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ mode, value,
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.97 }}
                         transition={{ duration: 0.18, ease: "easeOut" }}
-                        className="absolute right-0 top-[calc(100%+8px)] z-50 bg-white rounded-2xl border border-stone-100 shadow-2xl shadow-stone-300/30 overflow-hidden"
+                        style={{
+                            position: "absolute",
+                            right: 0,
+                            top: "calc(100% + 8px)",
+                            zIndex: 50,
+                            backgroundColor: "var(--f-canvas)",
+                            borderRadius: "var(--f-radius-lg)",
+                            border: "1px solid var(--f-hairline)",
+                            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)",
+                            overflow: "hidden"
+                        }}
                     >
                         {mode === "daily" ? (
                             <DailyCalendar value={value} onChange={handleChange} />

@@ -15,7 +15,6 @@ import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
 import { TransactionData } from '@/types/transaction';
-import { useReactToPrint } from 'react-to-print';
 import { useRouter, useParams } from 'next/navigation';
 import { useCurrency } from '@/hooks/useCurrency';
 
@@ -52,8 +51,10 @@ export default function DetailPage() {
   transactionData.forEach(item => {
     if (item?.product) subtotal += item.product.sellprice * item.quantity;
   });
-  const tax   = subtotal * (taxRate / 100);
-  const total = subtotal + tax;
+  const discount = transactionData[0]?.discount || 0;
+  const nettTotal = subtotal - discount;
+  const tax   = nettTotal * (taxRate / 100);
+  const total = nettTotal + tax;
 
   // Category totals
   const grouped = groupItems(transactionData);
@@ -66,12 +67,9 @@ export default function DetailPage() {
   });
 
   // ── Print ───────────────────────────────────────────────────────────────────
-  const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
-    documentTitle: `Receipt-${id}`,
-    onBeforeGetContent: () => setPrinting(true),
-    onAfterPrint: () => setPrinting(false),
-  });
+  const handlePrint = () => {
+    window.print();
+  };
 
   // ── Fetch shop data ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -215,6 +213,12 @@ export default function DetailPage() {
               <span className="text-muted-foreground">Subtotal</span>
               <span>{formatCurrency(subtotal)}</span>
             </li>
+            {discount > 0 && (
+              <li className="flex justify-between text-red-500">
+                <span className="text-muted-foreground text-red-400">Discount</span>
+                <span>-{formatCurrency(discount)}</span>
+              </li>
+            )}
             <li className="flex justify-between">
               <span className="text-muted-foreground">Service TAX ({taxRate}%)</span>
               <span>{formatCurrency(tax)}</span>
@@ -307,6 +311,11 @@ export default function DetailPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Subtotal:</span><span>{formatCurrency(subtotal)}</span>
           </div>
+          {discount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Discount:</span><span>-{formatCurrency(discount)}</span>
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Service TAX ({taxRate}%):</span><span>{formatCurrency(tax)}</span>
           </div>

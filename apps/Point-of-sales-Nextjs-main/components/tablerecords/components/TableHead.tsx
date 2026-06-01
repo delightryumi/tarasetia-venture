@@ -10,6 +10,7 @@ function TableHeadRecords() {
           <TableHead className="hidden md:table-cell p-4">
             Total Product Sales
           </TableHead>
+          <TableHead className="p-4">Discount</TableHead>
           <TableHead className="p-4">Total Amount</TableHead>
           <TableHead className="p-4">Metode Pembayaran</TableHead>
           <TableHead className="p-4">Alokasi Pendapatan</TableHead>

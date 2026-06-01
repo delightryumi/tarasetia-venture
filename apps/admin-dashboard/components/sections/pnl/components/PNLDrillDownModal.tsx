@@ -36,6 +36,8 @@ interface PNLDrillDownModalProps {
         expenses:           number;
         netProfit:          number;
         costPercentage:     number;
+        totalDiscount:      number;
+        subtotal:           number;
     } | null;
     costConfig:      { costLabel: string; healthyThreshold: number; warningThreshold: number };
     modalBadgeInfo:  { color: string; text: string };
@@ -112,6 +114,9 @@ export function PNLDrillDownModal({
                             </button>
                         </div>
 
+                        {/* ── SCROLLABLE BODY ── */}
+                        <div style={{ flex: 1, overflowY: "auto", minHeight: 0, display: "flex", flexDirection: "column" }}>
+
                         {/* ── STATS STRIP ── */}
                         {isFbPerformanceCard && fbPerformanceData ? (
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, padding: "18px 28px", background: T.surface2, borderBottom: T.border, flexShrink: 0 }}>
@@ -121,11 +126,25 @@ export function PNLDrillDownModal({
                                         <TrendingUp size={16} className="text-emerald-600" />
                                         <span style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em" }}>Revenue Breakdown</span>
                                     </div>
+                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#444" }}>
+                                        <span className="flex-1">Subtotal (Harga Awal)</span>
+                                        <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.subtotal)}</span>
+                                    </div>
+                                    {fbPerformanceData.totalDiscount > 0 && (
+                                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#A32D2D" }}>
+                                            <span className="flex-1">Diskon</span>
+                                            <span style={{ fontFamily: T.mono }}>−{formatIDR(fbPerformanceData.totalDiscount)}</span>
+                                        </div>
+                                    )}
+                                    <div style={{ borderTop: "1px dashed rgba(0,0,0,0.1)", margin: "4px 0" }} />
+                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "#0F6E56" }}>
+                                        <span className="flex-1">Nett Revenue</span>
+                                        <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.netRevenue)}</span>
+                                    </div>
                                     {[
-                                        ["Gross Revenue",                          formatIDR(fbPerformanceData.grossRevenue),       false],
-                                        [`Service Charge (${fbPerformanceData.serviceRate}%)`,       `−${formatIDR(fbPerformanceData.serviceCharge)}`,   true],
-                                        [`Tax/VAT (${fbPerformanceData.taxRateIndividual}%)`,        `−${formatIDR(fbPerformanceData.taxAmount)}`,        true],
-                                        [`Lost & Breakage (${fbPerformanceData.lostBreakageRate}%)`, `−${formatIDR(fbPerformanceData.lostBreakageAmount)}`,true],
+                                        [`Service Charge (${fbPerformanceData.serviceRate}%)`,       `+${formatIDR(fbPerformanceData.serviceCharge)}`,   true],
+                                        [`Tax/VAT (${fbPerformanceData.taxRateIndividual}%)`,        `+${formatIDR(fbPerformanceData.taxAmount)}`,        true],
+                                        [`Lost & Breakage (${fbPerformanceData.lostBreakageRate}%)`, `+${formatIDR(fbPerformanceData.lostBreakageAmount)}`,true],
                                     ].map(([label, val, dimmed]) => (
                                         <div key={label as string} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: dimmed ? "#666" : "#444" }}>
                                             <span className="flex-1">{label}</span>
@@ -133,9 +152,9 @@ export function PNLDrillDownModal({
                                         </div>
                                     ))}
                                     <div style={{ borderTop: "1px dashed rgba(0,0,0,0.1)", margin: "4px 0" }} />
-                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "#0F6E56" }}>
-                                        <span className="flex-1">Nett Revenue</span>
-                                        <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.netRevenue)}</span>
+                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "#444" }}>
+                                        <span className="flex-1">Gross Revenue</span>
+                                        <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.grossRevenue)}</span>
                                     </div>
                                 </div>
 
@@ -244,20 +263,20 @@ export function PNLDrillDownModal({
                         </div>
 
                         {/* ── TABLE ── */}
-                        <div style={{ overflowY: "auto", flex: 1 }}>
+                        <div style={{ flex: 1 }}>
                             {/* Desktop */}
                             <div className="hidden md:block">
                                 <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
                                     <colgroup>
                                         <col style={{ width: 44 }} /><col style={{ width: 114 }} />
                                         <col /><col style={{ width: 94 }} />
-                                        <col style={{ width: 128 }} /><col style={{ width: 138 }} />
+                                        <col style={{ width: 128 }} /><col style={{ width: 90 }} /><col style={{ width: 120 }} />
                                         <col style={{ width: 72 }} />
                                     </colgroup>
                                     <thead>
                                         <tr style={{ background: T.surface2, borderBottom: T.border, position: "sticky", top: 0, zIndex: 1 }}>
-                                            {(["#", "Source", "Description", "Dept", "Document", "Amount", "Date"] as const).map((col, i) => (
-                                                <th key={col} style={{ padding: "10px 16px", fontSize: 10, fontWeight: 500, color: T.textSec, textAlign: i === 5 ? "right" : "left", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>
+                                            {(["#", "Source", "Description", "Dept", "Document", "Discount", "Amount", "Date"] as const).map((col, i) => (
+                                                <th key={col} style={{ padding: "10px 16px", fontSize: 10, fontWeight: 500, color: T.textSec, textAlign: (i === 5 || i === 6) ? "right" : "left", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>
                                                     {col}
                                                 </th>
                                             ))}
@@ -266,7 +285,7 @@ export function PNLDrillDownModal({
                                     <tbody>
                                         {modalData.filtered.length === 0 ? (
                                             <tr>
-                                                <td colSpan={7} style={{ textAlign: "center", padding: "64px 16px", color: T.textSec, fontSize: 13 }}>
+                                                <td colSpan={8} style={{ textAlign: "center", padding: "64px 16px", color: T.textSec, fontSize: 13 }}>
                                                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
                                                         <Receipt size={28} style={{ opacity: 0.3 }} />
                                                         <span>No transaction logs matching filters</span>
@@ -277,10 +296,8 @@ export function PNLDrillDownModal({
                                             modalData.filtered.map((item: PnLDetailedItem, index: number) => {
                                                 const isExpense = item.type === "expense";
                                                 return (
-                                                    <motion.tr
+                                                    <tr
                                                         key={item.id ?? index}
-                                                        initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-                                                        transition={{ duration: 0.18, delay: Math.min(index * 0.012, 0.25) }}
                                                         style={{ borderBottom: T.border }}
                                                         onMouseEnter={(e) => (e.currentTarget.style.background = T.surface2)}
                                                         onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
@@ -292,11 +309,14 @@ export function PNLDrillDownModal({
                                                         <td style={{ padding: "13px 16px" }}>
                                                             {item.docType ? <DocTag label={item.docType} /> : <span style={{ color: T.textSec, fontSize: 12 }}>—</span>}
                                                         </td>
+                                                        <td style={{ padding: "13px 16px", fontSize: 11, textAlign: "right", fontFamily: T.mono, color: "#A32D2D" }}>
+                                                            {item.discount && item.discount > 0 ? `−${formatIDR(item.discount)}` : "—"}
+                                                        </td>
                                                         <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 500, textAlign: "right", fontFamily: T.mono, color: isExpense ? "#A32D2D" : "#0F6E56" }}>
                                                             {isExpense ? "−" : "+"}{formatIDR(item.amount)}
                                                         </td>
                                                         <td style={{ padding: "13px 16px", fontSize: 11, color: T.textSec, fontFamily: T.mono }}>{item.date ?? "N/A"}</td>
-                                                    </motion.tr>
+                                                    </tr>
                                                 );
                                             })
                                         )}
@@ -331,6 +351,14 @@ export function PNLDrillDownModal({
                                                         <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>Department</p>
                                                         <p style={{ fontSize: 12, fontWeight: 500, color: T.textPri }}>{item.department ?? "—"}</p>
                                                     </div>
+                                                    {item.discount && item.discount > 0 && (
+                                                        <div style={{ textAlign: "right" }}>
+                                                            <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>Discount</p>
+                                                            <p style={{ fontSize: 12, fontWeight: 500, fontFamily: T.mono, color: "#A32D2D" }}>
+                                                                −{formatIDR(item.discount)}
+                                                            </p>
+                                                        </div>
+                                                    )}
                                                     <div style={{ textAlign: "right" }}>
                                                         <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>Net amount</p>
                                                         <p style={{ fontSize: 14, fontWeight: 500, fontFamily: T.mono, color: isExpense ? "#A32D2D" : "#0F6E56" }}>
@@ -343,6 +371,7 @@ export function PNLDrillDownModal({
                                     })
                                 )}
                             </div>
+                        </div>
                         </div>
 
                         {/* ── FOOTER ── */}

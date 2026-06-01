@@ -104,6 +104,9 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                                   (viewMode === "yearly" && dY === year);
 
                 (data.entries || []).forEach((e: any) => {
+                    const isPOS = e.guestName?.startsWith('POS Order #') || Array.isArray(e.posItems);
+                    if (isPOS) return;
+
                     if (e.status !== "CANCELLED") {
                         const amount = Number(e.amount) || 0;
                         const isAcc = e.type === "accommodation" || (!e.type && e.guestName);

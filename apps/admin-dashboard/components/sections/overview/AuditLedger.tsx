@@ -4,6 +4,7 @@ import React from "react";
 import { Activity, Download, FileText, Eye, Pencil, Trash2 } from "lucide-react";
 import { getChannelLogo } from "./StatCard";
 import { RoomStatusPicker, GuestStatusPicker } from "./StatusPickers";
+import styles from "./OverviewStyles.module.css";
 
 interface AuditLedgerProps {
     bookings: any[];
@@ -25,95 +26,95 @@ export function AuditLedger({
     onExportExcel
 }: AuditLedgerProps) {
     return (
-        <section 
-            className="bg-white p-6 md:p-8 rounded-xl border border-stone-100 shadow-xl overflow-hidden"
-        >
-            <div className="p-4 md:p-6 border-b border-stone-50 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-3.5 mb-1">
-                        <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[#ffd8a6] text-[#788069]">
-                            <Activity size={13} />
-                        </div>
-                        <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">Nexura Operational</span>
+        <section className={styles.card} style={{ overflow: 'hidden', padding: 0 }}>
+            <div className={styles.cardHeader} style={{ padding: '24px 24px 16px 24px', borderBottom: '1px solid var(--f-hairline)', marginBottom: 0 }}>
+                <div className={styles.cardHeaderLeft}>
+                    <div className={styles.headerBadge} style={{ backgroundColor: '#ffd8a6', color: '#788069' }}>
+                        <Activity size={15} />
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-black text-stone-900 tracking-tight">
-                        Detail <span style={{ color: '#788069' }}>Transaksi</span>
-                    </h2>
-                    <p className="text-[9px] font-bold text-stone-300 uppercase tracking-widest mt-1">Laporan Aktivitas Harian Operasional</p>
+                    <div className={styles.headerMeta}>
+                        <span className={styles.headerSubtitle}>Nexura Operational</span>
+                        <h2 className={styles.headerTitle} style={{ fontSize: '13px' }}>
+                            Detail <span style={{ color: '#788069' }}>Transaksi</span>
+                        </h2>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="flex flex-col items-end mr-4 border-r border-stone-100 pr-6 hidden sm:flex">
-                        <span className="text-[9px] font-black text-stone-300 uppercase tracking-widest mb-1">Ledger Status</span>
-                        <div className="flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[10px] font-bold text-stone-800 uppercase tracking-wider">{bookings.length} Active Entries</span>
+                <div className={styles.headerRight}>
+                    <div style={{ textAlign: 'right', marginRight: '16px', borderRight: '1px solid var(--f-hairline)', paddingRight: '16px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span className={styles.headerSubtitle} style={{ fontSize: '8px' }}>Ledger Status</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                            <span className={styles.guestSubtext} style={{ color: 'var(--f-ink)', fontSize: '9px', fontWeight: 700 }}>{bookings.length} Active Entries</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <button 
-                            onClick={onExportExcel} 
-                            className="h-11 w-11 flex items-center justify-center rounded-xl bg-white border border-stone-100 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all shadow-sm"
-                            title="Export to Excel"
-                        >
-                            <Download size={16} />
-                        </button>
-                        <button 
-                            onClick={onExportPDF} 
-                            className="h-11 w-11 flex items-center justify-center rounded-xl bg-white border border-stone-100 text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-all shadow-sm"
-                            title="Export to PDF"
-                        >
-                            <FileText size={16} />
-                        </button>
-                    </div>
+                    <button 
+                        onClick={onExportExcel} 
+                        className={styles.btnIcon}
+                        style={{ width: '36px', height: '36px', borderRadius: '8px' }}
+                        title="Export to Excel"
+                    >
+                        <Download size={16} />
+                    </button>
+                    <button 
+                        onClick={onExportPDF} 
+                        className={styles.btnIcon}
+                        style={{ width: '36px', height: '36px', borderRadius: '8px' }}
+                        title="Export to PDF"
+                    >
+                        <FileText size={16} />
+                    </button>
                 </div>
             </div>
 
-            <div className="overflow-x-auto custom-scrollbar pt-6">
-                <table className="w-full text-left">
-                    <thead>
-                        <tr className="border-b border-stone-50">
-                            <th className="py-3.5 px-6 text-[9px] font-bold text-stone-400 uppercase tracking-widest">Guest Name</th>
-                            <th className="py-3.5 px-6 text-[9px] font-bold text-stone-400 uppercase tracking-widest">Stay Period</th>
-                            <th className="py-3.5 px-6 text-[9px] font-bold text-stone-400 uppercase tracking-widest">Room & Remarks</th>
-                            <th className="py-3.5 px-6 text-[9px] font-bold text-stone-400 uppercase tracking-widest">Channel</th>
-                            <th className="py-3.5 px-6 text-[9px] font-bold text-stone-400 uppercase tracking-widest">Financials</th>
-                            <th className="py-3.5 px-6 text-[9px] font-bold text-stone-400 uppercase tracking-widest text-center">Status</th>
-                            <th className="py-3.5 px-6 text-[9px] font-bold text-stone-400 uppercase tracking-widest text-center">Action</th>
+            <div className={styles.tableContainer}>
+                <table className={styles.tableElement}>
+                    <thead className={styles.tableHead}>
+                        <tr>
+                            <th className={styles.tableHeadCell}>Guest Name</th>
+                            <th className={styles.tableHeadCell}>Stay Period</th>
+                            <th className={styles.tableHeadCell}>Room & Remarks</th>
+                            <th className={styles.tableHeadCell}>Channel</th>
+                            <th className={styles.tableHeadCell}>Financials</th>
+                            <th className={styles.tableHeadCell} style={{ textAlign: 'center' }}>Status</th>
+                            <th className={styles.tableHeadCell} style={{ textAlign: 'center' }}>Action</th>
                         </tr>
                     </thead>
-                    <tbody className="">
+                    <tbody>
                         {bookings.map((booking, idx) => (
                             <tr 
                                 key={idx} 
-                                className={`group transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#fff9f5]'}`}
+                                className={styles.tableRow}
+                                style={idx % 2 === 0 ? { backgroundColor: '#ffffff' } : { backgroundColor: '#fffbf9' }}
                             >
-                                <td className="py-4 px-6">
-                                    <div className="flex flex-col gap-1">
-                                        <p className="text-[12px] font-bold text-stone-900 uppercase font-outfit truncate max-w-[150px]">
+                                <td className={styles.tableCell}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <p className={styles.guestName} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '150px' }}>
                                             {booking.guestName || "General Sale"}
                                         </p>
-                                        <p className="text-[9px] text-stone-400 font-mono-jb uppercase">{booking.bookingId || "Walk-In"}</p>
+                                        <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0, fontFamily: 'var(--f-font-mono)' }}>{booking.bookingId || "Walk-In"}</p>
                                     </div>
                                 </td>
-                                <td className="py-4 px-6">
-                                    <div className="flex flex-col gap-1">
-                                        <p className="text-[10px] font-bold text-stone-700 uppercase tracking-tighter">
+                                <td className={styles.tableCell}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <p className={styles.guestSubtext} style={{ color: 'var(--f-body)', fontWeight: 700, margin: 0 }}>
                                             {booking.checkInDate || "---"}
                                         </p>
-                                        <p className="text-[8px] font-medium text-stone-300 uppercase tracking-widest">Until {booking.checkOutDate || "---"}</p>
+                                        <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0 }}>Until {booking.checkOutDate || "---"}</p>
                                     </div>
                                 </td>
-                                <td className="py-4 px-6">
-                                    <div className="flex flex-col gap-2">
-                                        <div className="flex">
-                                            <span className="text-[9px] font-bold text-stone-900 bg-stone-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                                <td className={styles.tableCell}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        <div style={{ display: 'flex' }}>
+                                            <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: 'var(--f-surface-soft)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--f-hairline)' }}>
                                                 {booking.roomType || "Service"}
                                             </span>
                                         </div>
-                                        <span className="text-[9px] font-medium text-sage uppercase tracking-tighter">
-                                            {booking.roomNumber ? `Room ${booking.roomNumber}` : ""}
-                                        </span>
+                                        {booking.roomNumber && (
+                                            <span className={styles.guestSubtext} style={{ color: 'var(--f-sage)', fontWeight: 700, fontSize: '9px' }}>
+                                                Room {booking.roomNumber}
+                                            </span>
+                                        )}
                                         {booking.type === 'accommodation' && (
                                             <RoomStatusPicker 
                                                 current={booking.roomStatus || 'dirty'} 
@@ -122,39 +123,39 @@ export function AuditLedger({
                                         )}
                                     </div>
                                 </td>
-                                <td className="py-4 px-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-white border border-stone-100 p-1 flex items-center justify-center">
-                                            <img src={getChannelLogo(booking.channel)} alt="" className="w-5 h-5 object-contain grayscale opacity-50" onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
+                                <td className={styles.tableCell}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: '#ffffff', border: '1px solid var(--f-hairline)', padding: '4px', display: 'flex', alignItems: 'center', justifycontent: 'center' }}>
+                                            <img src={getChannelLogo(booking.channel)} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain', opacity: 0.6 }} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
                                         </div>
-                                        <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">{booking.channel}</p>
+                                        <p className={styles.guestSubtext} style={{ margin: 0, fontWeight: 700, color: 'var(--f-light-muted)' }}>{booking.channel}</p>
                                     </div>
                                 </td>
-                                <td className="py-4 px-6">
-                                    <div className="flex flex-col gap-1">
-                                        <p className="text-[12px] font-bold text-stone-900 font-mono-jb">Rp {Number(booking.amount).toLocaleString('id-ID')}</p>
-                                        <p className={`text-[8px] font-black uppercase tracking-tight ${booking.paymentStatus?.includes('Lunas') ? 'text-sage' : 'text-amber-500'}`}>
+                                <td className={styles.tableCell}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <p className={styles.guestAmount} style={{ margin: 0 }}>Rp {Number(booking.amount).toLocaleString('id-ID')}</p>
+                                        <p className={`${styles.paymentBadge} ${booking.paymentStatus?.includes('Lunas') || !booking.paymentStatus ? styles.paymentLunas : styles.paymentPending}`} style={{ margin: 0, width: 'fit-content' }}>
                                             {booking.paymentStatus || 'Pending'}
                                         </p>
                                     </div>
                                 </td>
-                                <td className="py-4 px-6 text-center">
-                                    <div className="flex justify-center">
+                                <td className={styles.tableCell} style={{ textAlign: 'center' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
                                         {booking.type === 'accommodation' ? (
                                             <GuestStatusPicker 
                                                 current={booking.guestStatus || 'arriving'} 
                                                 onChange={(val) => onStatusUpdate(booking, 'guestStatus', val)}
                                             />
                                         ) : (
-                                            <span className="text-[8px] font-bold text-stone-300 uppercase tracking-[0.2em]">Service</span>
+                                            <span className={styles.guestSubtext} style={{ color: 'var(--f-light-muted)', fontSize: '8px', fontWeight: 700, letterSpacing: '0.1em' }}>Service</span>
                                         )}
                                     </div>
                                 </td>
-                                <td className="py-4 px-6">
-                                    <div className="flex items-center justify-center gap-2">
-                                        <button onClick={() => onView(booking)} className="w-8 h-8 flex items-center justify-center rounded-lg text-stone-300 hover:text-stone-900 hover:bg-white hover:shadow-sm transition-all"><Eye size={14} /></button>
-                                        <button onClick={() => onEdit(booking)} className="w-8 h-8 flex items-center justify-center rounded-lg text-stone-300 hover:text-[#788069] hover:bg-white hover:shadow-sm transition-all"><Pencil size={14} /></button>
-                                        <button onClick={() => onDelete(booking)} className="w-8 h-8 flex items-center justify-center rounded-lg text-stone-300 hover:text-rose-500 hover:bg-rose-50 transition-all"><Trash2 size={14} /></button>
+                                <td className={styles.tableCell}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        <button onClick={() => onView(booking)} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="View Details"><Eye size={14} /></button>
+                                        <button onClick={() => onEdit(booking)} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Edit"><Pencil size={14} /></button>
+                                        <button onClick={() => onDelete(booking)} className={`${styles.btnIcon} ${styles.btnIconDanger}`} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Delete"><Trash2 size={14} /></button>
                                     </div>
                                 </td>
                             </tr>

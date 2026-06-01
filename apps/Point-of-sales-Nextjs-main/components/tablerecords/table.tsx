@@ -26,6 +26,7 @@ interface Recordsdata {
   totalQuantity: number;
   id: string;
   totalAmount: string | null;
+  discount?: number;
   createdAt: string;
   isComplete: boolean;
   products: Product[];
@@ -66,6 +67,7 @@ export async function Records(props: PageProps) {
     totalQuantity: item.totalQuantity,
     id: item.id,
     totalAmount: item.totalAmount ? item.totalAmount.toString() : null,
+    discount: item.discount || 0,
     createdAt: item.createdAt instanceof Date ? item.createdAt.toISOString() : String(item.createdAt),
     isComplete: item.isComplete,
     products: item.products,

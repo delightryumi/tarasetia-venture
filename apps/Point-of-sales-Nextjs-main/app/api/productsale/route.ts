@@ -113,12 +113,29 @@ export async function GET(req: NextRequest) {
       }).format(docDate);
 
       if (docDateStr >= start && docDateStr <= end) {
+        const dbSubtotal = Number(data.subtotal || 0);
+        const dbTax = Number(data.tax || 0);
+        const dbTotal = Number(data.total || 0);
+        let dbDiscount = Number(data.discount || 0);
+        
         const items = data.items || [];
         if (Array.isArray(items) && items.length > 0) {
+          let calcSubtotal = 0;
+          items.forEach((item: any) => {
+            calcSubtotal += Number(item.price || 0) * Number(item.quantity || 0);
+          });
+          calcSubtotal = calcSubtotal || 1;
+
+          if (!dbDiscount && dbTotal > 0 && dbSubtotal > 0) {
+            dbDiscount = Math.max(0, calcSubtotal + dbTax - dbTotal);
+          }
+
           items.forEach((item: any) => {
             const qty = Number(item.quantity || 0);
-            const price = Number(item.price || 0);
-            const sellPrice = price * qty;
+            const rawSellPrice = Number(item.price || 0) * qty;
+            const itemDiscount = dbDiscount * (rawSellPrice / calcSubtotal);
+            const sellPrice = Math.max(0, rawSellPrice - itemDiscount);
+            
             const tax = sellPrice * (taxRate / 100);
             const rev = sellPrice + tax; // Always use gross revenue (sellPrice + tax)
             const itemName = item.name || 'Unnamed Product';
@@ -151,8 +168,12 @@ export async function GET(req: NextRequest) {
             breakdownMap[cat].items[itemName].rev += rev;
           });
         } else {
+          if (!dbDiscount && dbTotal > 0 && dbSubtotal > 0) {
+            dbDiscount = Math.max(0, dbSubtotal + dbTax - dbTotal);
+          }
           const qty = Number(data.quantity || 1);
-          const sellPrice = Number(data.price || data.subtotal || 0) * (data.price ? qty : 1);
+          const rawSellPrice = Number(data.price || data.subtotal || 0) * (data.price ? qty : 1);
+          const sellPrice = Math.max(0, rawSellPrice - dbDiscount);
           const tax = Number(data.tax || (sellPrice * (taxRate / 100)));
           const price = sellPrice + tax; // Always use gross revenue (sellPrice + tax)
           

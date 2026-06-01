@@ -87,8 +87,10 @@ export function useDrillDown({
         const lostBreakageRateV  = Number(pnlResult.posLostBreakageRate  || 0);
         const taxRateCombined    = serviceRate + taxRateIndividual + lostBreakageRateV;
 
+        const totalDiscount    = modalData.searched.filter((i) => i.type !== "expense").reduce((s, i) => s + (i.discount || 0), 0);
         const grossRevenue     = modalData.totalIncome;
         const netRevenue       = taxRateCombined > 0 ? grossRevenue / (1 + taxRateCombined / 100) : grossRevenue;
+        const subtotal         = netRevenue + totalDiscount;
         const serviceCharge    = netRevenue * (serviceRate       / 100);
         const taxAmount        = netRevenue * (taxRateIndividual / 100);
         const lostBreakageAmt  = netRevenue * (lostBreakageRateV / 100);
@@ -98,7 +100,7 @@ export function useDrillDown({
 
         return {
             serviceRate, taxRateIndividual, lostBreakageRate: lostBreakageRateV, taxRateCombined,
-            grossRevenue, netRevenue, serviceCharge, taxAmount,
+            grossRevenue, netRevenue, serviceCharge, taxAmount, totalDiscount, subtotal,
             lostBreakageAmount: lostBreakageAmt, expenses: expensesTotal, netProfit, costPercentage,
         };
     }, [selectedDrillDown, isFbPerformanceCard, modalData, pnlResult]);

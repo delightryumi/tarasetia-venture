@@ -42,6 +42,7 @@ export async function GET(
           subcategory: item.subcategory || '',
         },
       },
+      discount: docData.discount || 0,
     }));
 
     return NextResponse.json(items, { status: 200 });

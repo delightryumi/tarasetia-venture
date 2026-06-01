@@ -306,6 +306,7 @@ export default function LexuPosPage() {
           })),
           subtotal,
           tax,
+          discount,
           total: payableAmount,
           paymentMethod,
           customerName: customerName.trim() || 'Guest',

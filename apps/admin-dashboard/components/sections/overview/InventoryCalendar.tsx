@@ -17,6 +17,7 @@ import {
     startOfDay,
     isWeekend
 } from "date-fns";
+import styles from "./OverviewStyles.module.css";
 
 export function InventoryCalendar({ 
     targetDate = 'today',
@@ -35,86 +36,188 @@ export function InventoryCalendar({
 }) {
     const [viewDate, setViewDate] = React.useState(new Date());
 
+    const [startDate, setStartDate] = React.useState<string>(() => {
+        const today = new Date();
+        return format(today, "yyyy-MM-dd");
+    });
+
+    const [endDate, setEndDate] = React.useState<string>(() => {
+        const today = new Date();
+        return format(addDays(today, 13), "yyyy-MM-dd");
+    });
+
     const activeDate = React.useMemo(() => {
         return targetDate === 'tomorrow' ? addDays(startOfDay(new Date()), 1) : startOfDay(new Date());
     }, [targetDate]);
 
     React.useEffect(() => {
-        setViewDate(targetDate === 'tomorrow' ? addDays(startOfDay(new Date()), 1) : startOfDay(new Date()));
+        const start = targetDate === 'tomorrow' ? addDays(new Date(), 1) : new Date();
+        setStartDate(format(start, "yyyy-MM-dd"));
+        setEndDate(format(addDays(start, 13), "yyyy-MM-dd"));
+        setViewDate(start);
     }, [targetDate]);
 
     const days = React.useMemo(() => {
-        return Array.from({ length: 14 }, (_, i) => addDays(startOfDay(viewDate), i));
-    }, [viewDate]);
+        try {
+            const start = startOfDay(new Date(startDate));
+            const end = startOfDay(new Date(endDate));
+            
+            if (start > end) {
+                return Array.from({ length: 14 }, (_, i) => addDays(start, i));
+            }
 
-    const handlePrevMonth = () => setViewDate(prev => subMonths(prev, 1));
-    const handleNextMonth = () => setViewDate(prev => addMonths(prev, 1));
-    const handleToday = () => setViewDate(new Date());
+            const diffTime = Math.abs(end.getTime() - start.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            const limitDays = Math.min(60, diffDays); // cap at 60 days to prevent rendering overflow
+            return Array.from({ length: limitDays }, (_, i) => addDays(start, i));
+        } catch (e) {
+            return Array.from({ length: 14 }, (_, i) => addDays(startOfDay(new Date()), i));
+        }
+    }, [startDate, endDate]);
+
+    const handlePrevMonth = () => {
+        const newStart = subMonths(new Date(startDate), 1);
+        const newEnd = addDays(newStart, 13);
+        setStartDate(format(newStart, "yyyy-MM-dd"));
+        setEndDate(format(newEnd, "yyyy-MM-dd"));
+        setViewDate(newStart);
+    };
+
+    const handleNextMonth = () => {
+        const newStart = addMonths(new Date(startDate), 1);
+        const newEnd = addDays(newStart, 13);
+        setStartDate(format(newStart, "yyyy-MM-dd"));
+        setEndDate(format(newEnd, "yyyy-MM-dd"));
+        setViewDate(newStart);
+    };
+
+    const handleToday = () => {
+        const today = new Date();
+        setStartDate(format(today, "yyyy-MM-dd"));
+        setEndDate(format(addDays(today, 13), "yyyy-MM-dd"));
+        setViewDate(today);
+    };
 
     return (
-        <div className="bg-white rounded-xl border border-stone-100 shadow-xl overflow-hidden mb-12">
+        <div className={styles.card} style={{ padding: 0, overflow: 'hidden' }}>
             {/* Header - Sage Aesthetic */}
-            <div className="p-6 md:p-12 border-b border-stone-50 flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-stone-50/10">
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-3.5 mb-1">
-                        <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[#788069] text-white">
-                            <CalendarIcon size={13} />
-                        </div>
-                        <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">Nexura Operational</span>
+            <div className={styles.calendarHeader} style={{ flexWrap: 'wrap', gap: '16px' }}>
+                <div className={styles.cardHeaderLeft}>
+                    <div className={styles.headerBadge} style={{ backgroundColor: '#788069', color: '#ffffff' }}>
+                        <CalendarIcon size={15} />
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-black text-stone-900 tracking-tight">
-                        Inventory <span style={{ color: '#788069' }}>Control</span>
-                    </h2>
-                    <p className="text-[9px] font-bold text-stone-300 uppercase tracking-widest mt-1">Real-time Allotment Sync</p>
+                    <div className={styles.headerMeta}>
+                        <span className={styles.headerSubtitle}>Nexura Operational</span>
+                        <h2 className={styles.headerTitle} style={{ fontSize: '13px' }}>
+                            Inventory <span style={{ color: '#788069' }}>Control</span>
+                        </h2>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-stone-100 shadow-sm">
-                    <button onClick={handlePrevMonth} className="w-9 h-9 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 rounded-xl transition-all">
-                        <ChevronLeft size={16} />
+                <div className={styles.calendarNav} style={{ flexWrap: 'wrap', gap: '8px', padding: '4px 12px' }}>
+                    {/* Custom Date Range Pickers */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className={styles.guestSubtext} style={{ fontSize: '8px', fontWeight: 700, color: 'var(--f-light-muted)' }}>FROM</span>
+                        <input 
+                            type="date" 
+                            value={startDate} 
+                            onChange={(e) => {
+                                if (e.target.value) {
+                                    setStartDate(e.target.value);
+                                    setViewDate(new Date(e.target.value));
+                                }
+                            }}
+                            style={{ 
+                                padding: '4px 8px', 
+                                border: '1px solid var(--f-hairline)', 
+                                borderRadius: '6px', 
+                                fontSize: '11px', 
+                                fontFamily: 'var(--f-font-mono)', 
+                                color: 'var(--f-body)',
+                                outline: 'none',
+                                height: '28px',
+                                backgroundColor: 'var(--f-surface)'
+                            }} 
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className={styles.guestSubtext} style={{ fontSize: '8px', fontWeight: 700, color: 'var(--f-light-muted)' }}>TO</span>
+                        <input 
+                            type="date" 
+                            value={endDate} 
+                            onChange={(e) => {
+                                if (e.target.value) {
+                                    setEndDate(e.target.value);
+                                }
+                            }}
+                            style={{ 
+                                padding: '4px 8px', 
+                                border: '1px solid var(--f-hairline)', 
+                                borderRadius: '6px', 
+                                fontSize: '11px', 
+                                fontFamily: 'var(--f-font-mono)', 
+                                color: 'var(--f-body)',
+                                outline: 'none',
+                                height: '28px',
+                                backgroundColor: 'var(--f-surface)'
+                            }} 
+                        />
+                    </div>
+
+                    <div className={styles.vDivider} style={{ height: '18px', margin: '0 4px' }} />
+
+                    <button onClick={handlePrevMonth} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', boxShadow: 'none' }} title="Previous Month">
+                        <ChevronLeft size={14} />
                     </button>
-                    <div className="px-6 text-center min-w-[160px]">
-                        <p className="text-[11px] font-bold text-stone-900 uppercase tracking-[0.15em] font-outfit">
+                    <div style={{ textAlign: 'center', minWidth: '100px' }}>
+                        <p className={styles.calendarMonthName} style={{ margin: 0, fontSize: '10px' }}>
                             {format(viewDate, 'MMMM yyyy')}
                         </p>
                     </div>
-                    <button onClick={handleNextMonth} className="w-9 h-9 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 rounded-xl transition-all">
-                        <ChevronRight size={18} />
+                    <button onClick={handleNextMonth} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', boxShadow: 'none' }} title="Next Month">
+                        <ChevronRight size={14} />
                     </button>
-                    <div className="w-[1px] h-5 bg-stone-100 mx-2" />
-                    <button onClick={handleToday} className="px-5 py-2 text-[10px] font-bold text-[#788069] uppercase tracking-widest hover:bg-[#788069]/5 rounded-xl transition-all">
+                    <div className={styles.vDivider} style={{ height: '18px', margin: '0 4px' }} />
+                    <button onClick={handleToday} className={styles.btnIcon} style={{ height: '28px', borderRadius: '6px', fontSize: '9px', fontWeight: 700, padding: '0 8px', border: 'none', boxShadow: 'none', width: 'auto' }}>
                         Today
                     </button>
                 </div>
             </div>
 
             {/* Professional Inventory Grid */}
-            <div className="overflow-x-auto custom-scrollbar">
-                <table className="w-full border-collapse">
+            <div className={styles.tableContainer}>
+                <table className={styles.calendarGrid}>
                     <thead>
                         <tr>
-                            <th className="sticky left-0 z-20 bg-stone-50 p-6 border-b border-r border-stone-100 min-w-[200px] text-left">
-                                <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Room Type</p>
+                            <th className={styles.calendarTh} style={{ position: 'sticky', left: 0, zIndex: 20, backgroundColor: 'var(--f-surface)', borderRight: '1px solid var(--f-hairline)', minWidth: '180px', textAlign: 'left', padding: '16px' }}>
+                                <p className={styles.headerSubtitle} style={{ margin: 0, color: 'var(--f-light-muted)' }}>Room Type</p>
                             </th>
                             {days.map((day, idx) => {
                                 const isEnd = isWeekend(day);
                                 const isActive = isSameDay(day, activeDate);
                                 return (
-                                <th key={idx} className={`p-4 border-b border-stone-100 min-w-[100px] text-center ${isActive ? 'bg-[#788069]/10 border-b-2 border-b-[#788069]' : isEnd ? 'bg-red-50/50' : 'bg-white'}`}>
-                                    <p className={`text-[8px] font-black uppercase tracking-tighter mb-0.5 ${isEnd ? 'text-red-400' : 'text-stone-300'}`}>{format(day, 'EEE')}</p>
-                                    <p className={`text-[14px] font-bold font-outfit ${isActive ? 'text-[#788069]' : isEnd ? 'text-red-600' : 'text-stone-900'}`}>{format(day, 'dd')}</p>
-                                </th>
-                            )})}
+                                    <th 
+                                        key={idx} 
+                                        className={`${styles.calendarTh} ${isActive ? styles.calendarThActive : ''}`}
+                                        style={isEnd && !isActive ? { backgroundColor: '#fef2f2' } : {}}
+                                    >
+                                        <p className={styles.headerSubtitle} style={{ fontSize: '8px', color: isEnd && !isActive ? '#fca5a5' : 'var(--f-light-muted)', margin: 0, fontWeight: 700 }}>{format(day, 'EEE')}</p>
+                                        <p className={styles.headerTitle} style={{ fontSize: '13px', color: isActive ? 'var(--f-sage)' : (isEnd ? '#ef4444' : 'var(--f-ink)'), margin: 0, fontWeight: 700, fontFamily: 'var(--f-font-mono)' }}>{format(day, 'dd')}</p>
+                                    </th>
+                                );
+                            })}
                         </tr>
                     </thead>
                     <tbody>
                         {roomTypes.map((type: any, tIdx: number) => (
-                            <tr key={tIdx} className="group hover:bg-stone-50/50 transition-all">
-                                <td className="sticky left-0 z-10 bg-white group-hover:bg-stone-50 p-6 border-b border-r border-stone-100 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">
-                                    <div className="flex flex-col gap-1">
-                                        <p className="text-[11px] font-bold text-stone-900 uppercase tracking-tight">{type.name}</p>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                            <p className="text-[8px] font-bold text-stone-300 uppercase tracking-widest">{type.allotment} Total</p>
+                            <tr key={tIdx} className={styles.tableRow}>
+                                <td className={styles.calendarRowHeader}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <p className={styles.guestName} style={{ margin: 0, fontSize: '11px' }}>{type.name}</p>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                                            <p className={styles.guestSubtext} style={{ margin: 0, color: 'var(--f-light-muted)' }}>{type.allotment} Total</p>
                                         </div>
                                     </div>
                                 </td>
@@ -152,22 +255,26 @@ export function InventoryCalendar({
                                         <td 
                                             key={dIdx} 
                                             onClick={handleCellClick}
-                                            className={`p-4 border-b border-r border-stone-100/50 text-center cursor-pointer transition-all ${isActive ? 'bg-[#788069]/10 shadow-inner' : ''} ${isSoldOut ? 'bg-rose-50/40' : (isEnd ? 'bg-red-50/30 hover:bg-red-50/70' : 'hover:bg-stone-100/50')}`}
+                                            className={`${styles.calendarTd} ${isActive ? styles.calendarTdActive : ''}`}
+                                            style={isSoldOut ? { backgroundColor: '#fef2f2' } : (isEnd ? { backgroundColor: '#fff5f5' } : {})}
                                         >
-                                            <div className="flex flex-col items-center justify-center gap-1">
-                                                <div className="flex items-center gap-1.5">
-                                                    <p className={`text-[12px] font-black ${isSoldOut ? 'text-rose-500' : 'text-[#788069]'}`}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <p className={styles.guestAmount} style={{ fontSize: '11px', color: isSoldOut ? '#ef4444' : 'var(--f-sage)', margin: 0 }}>
                                                         {available}
                                                     </p>
-                                                    {occupied > 0 && <Users size={8} className="text-stone-300" />}
+                                                    {occupied > 0 && <Users size={8} style={{ color: 'var(--f-light-muted)' }} />}
                                                 </div>
-                                                <div className="w-8 h-[2px] bg-stone-100 rounded-full overflow-hidden">
+                                                <div className={styles.calendarBar}>
                                                     <div 
-                                                        className={`h-full transition-all duration-700 ${isSoldOut ? 'bg-rose-400' : 'bg-emerald-400'}`} 
-                                                        style={{ width: `${(available / type.allotment) * 100}%` }} 
+                                                        className={styles.calendarBarFill}
+                                                        style={{ 
+                                                            width: `${(available / type.allotment) * 100}%`,
+                                                            backgroundColor: isSoldOut ? '#f87171' : '#34d399'
+                                                        }} 
                                                     />
                                                 </div>
-                                                <p className="text-[7px] font-bold text-stone-300 uppercase tracking-tighter">
+                                                <p className={styles.guestSubtext} style={{ fontSize: '7px', color: 'var(--f-light-muted)', margin: 0 }}>
                                                     {occupied > 0 ? `${occupied} Busy` : 'Left'}
                                                 </p>
                                             </div>

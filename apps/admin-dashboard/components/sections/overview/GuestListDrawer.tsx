@@ -2,8 +2,9 @@
 
 import React from "react";
 import { X, User, Calendar, Home, CreditCard, PlusCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { getChannelLogo } from "./StatCard";
+import styles from "./OverviewStyles.module.css";
 
 interface GuestListDrawerProps {
     isOpen: boolean;
@@ -14,115 +15,105 @@ interface GuestListDrawerProps {
     onAdd?: (date: string) => void;
 }
 
-export function GuestListDrawer({ isOpen, onClose, date, roomType, bookings }: GuestListDrawerProps) {
+export function GuestListDrawer({ isOpen, onClose, date, roomType, bookings, onAdd }: GuestListDrawerProps) {
+    if (!isOpen) return null;
+
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <>
-                    {/* Backdrop */}
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        className="fixed inset-0 bg-stone-900/20 backdrop-blur-sm z-[100]"
-                    />
+        <motion.aside 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className={styles.rightSidebarCol}
+        >
+            <div className={styles.card} style={{ height: '100%', minHeight: '400px' }}>
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--f-hairline)', paddingBottom: '16px', marginBottom: '16px' }}>
+                    <div>
+                        <h2 className={styles.headerTitle} style={{ fontSize: '13px', margin: 0 }}>{roomType}</h2>
+                        <p className={styles.guestSubtext} style={{ color: 'var(--f-light-muted)', margin: '2px 0 0 0' }}>{date}</p>
+                    </div>
+                    <button onClick={onClose} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Tutup Detail">
+                        <X size={16} />
+                    </button>
+                </div>
+
+                {/* Guest List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', maxHeight: '550px', paddingRight: '4px' }} className="custom-scrollbar">
+                    <p className={styles.guestSubtext} style={{ color: 'var(--f-light-muted)', fontWeight: 700, letterSpacing: '0.1em', margin: 0 }}>
+                        Occupancy Details ({bookings.length})
+                    </p>
                     
-                    {/* Drawer */}
-                    <motion.div 
-                        initial={{ x: "100%" }}
-                        animate={{ x: 0 }}
-                        exit={{ x: "100%" }}
-                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                        className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-[101] overflow-hidden flex flex-col"
-                    >
-                        {/* Header */}
-                        <div className="p-8 bg-stone-50 border-b border-stone-100 flex justify-between items-center">
-                            <div>
-                                <h2 className="text-[14px] font-black text-stone-900 uppercase tracking-[0.2em]">{roomType}</h2>
-                                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">{date}</p>
+                    {bookings.map((booking, idx) => (
+                        <div key={idx} className={styles.card} style={{ padding: '16px', gap: '12px', border: '1px solid var(--f-hairline)', backgroundColor: '#fffbf9' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div className={styles.guestAvatar}>
+                                    <img 
+                                        src={`/avatar/memo_${((((booking.guestName || "G").charCodeAt(0) || 0) + (booking.amount || 0)) % 35) + 1}.png`} 
+                                        alt={booking.guestName}
+                                        className={styles.guestAvatarImg}
+                                        style={{ borderRadius: '4px' }}
+                                    />
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p className={styles.guestName} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{booking.guestName || "General Sale"}</p>
+                                    <p className={styles.guestSubtext} style={{ margin: 0, color: 'var(--f-light-muted)' }}>{booking.channel}</p>
+                                </div>
                             </div>
-                            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-stone-200/50 text-stone-400 transition-all">
-                                <X size={20} />
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', paddingTop: '12px', borderTop: '1px solid var(--f-hairline)' }}>
+                                <div>
+                                    <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <Home size={8} /> Room No
+                                    </p>
+                                    <p className={styles.guestSubtext} style={{ color: 'var(--f-ink)', fontWeight: 700, margin: '2px 0 0 0' }}>{booking.roomNumber || "---"}</p>
+                                </div>
+                                <div>
+                                    <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <Calendar size={8} /> Duration
+                                    </p>
+                                    <p className={styles.guestSubtext} style={{ color: 'var(--f-ink)', fontWeight: 700, margin: '2px 0 0 0' }}>{booking.nights} Nights</p>
+                                </div>
+                                <div>
+                                    <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <CreditCard size={8} /> Payment
+                                    </p>
+                                    <p className={styles.guestAmount} style={{ margin: '2px 0 0 0', fontSize: '10px' }}>Rp {Number(booking.amount).toLocaleString('id-ID')}</p>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0 }}>Status</p>
+                                    <p className={`${styles.paymentBadge} ${booking.paymentStatus?.includes('Lunas') || !booking.paymentStatus ? styles.paymentLunas : styles.paymentPending}`} style={{ margin: '2px 0 0 auto', width: 'fit-content' }}>{booking.paymentStatus || "Pending"}</p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+
+                    {bookings.length === 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '16px', padding: '32px 16px' }}>
+                            <div className={styles.guestAvatar} style={{ width: '48px', height: '48px' }}>
+                                <PlusCircle size={24} style={{ color: 'var(--f-light-muted)' }} />
+                            </div>
+                            <div>
+                                <p className={styles.guestSubtext} style={{ fontWeight: 700, color: 'var(--f-light-muted)' }}>No active bookings for this slot</p>
+                                <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', marginTop: '2px' }}>Ready for a new reservation?</p>
+                            </div>
+                            <button 
+                                onClick={() => { onClose(); onAdd?.(date); }}
+                                className={styles.btnPrimary}
+                                style={{ width: 'auto', padding: '0 20px', height: '36px', borderRadius: '8px' }}
+                            >
+                                + New Reservation
                             </button>
                         </div>
+                    )}
+                </div>
 
-                        {/* Guest List */}
-                        <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
-                            <p className="text-[10px] font-bold text-stone-300 uppercase tracking-[0.3em] mb-4">Occupancy Details ({bookings.length})</p>
-                            
-                            {bookings.map((booking, idx) => (
-                                <div key={idx} className="p-6 rounded-2xl border border-stone-100 bg-white shadow-sm space-y-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center text-sage relative overflow-hidden">
-                                            <img 
-                                                src={`/avatar/memo_${((((booking.guestName || "G").charCodeAt(0) || 0) + (booking.amount || 0)) % 35) + 1}.png`} 
-                                                alt={booking.guestName}
-                                                className="w-full h-full object-cover"
-                                            />
-                                            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-lg border border-stone-100 p-1 flex items-center justify-center shadow-sm">
-                                                <img src={getChannelLogo(booking.channel)} alt="" className="w-4 h-4 object-contain grayscale opacity-60" onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <p className="text-[13px] font-black text-stone-900 uppercase tracking-tight">{booking.guestName || "General Sale"}</p>
-                                            <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">{booking.channel}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-stone-50">
-                                        <div className="space-y-1">
-                                            <p className="text-[8px] font-bold text-stone-300 uppercase tracking-widest flex items-center gap-1.5">
-                                                <Home size={8} /> Room No
-                                            </p>
-                                            <p className="text-[11px] font-bold text-stone-800">{booking.roomNumber || "---"}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-[8px] font-bold text-stone-300 uppercase tracking-widest flex items-center gap-1.5">
-                                                <Calendar size={8} /> Duration
-                                            </p>
-                                            <p className="text-[11px] font-bold text-stone-800">{booking.nights} Nights</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-[8px] font-bold text-stone-300 uppercase tracking-widest flex items-center gap-1.5">
-                                                <CreditCard size={8} /> Payment
-                                            </p>
-                                            <p className="text-[11px] font-bold text-stone-800">Rp {Number(booking.amount).toLocaleString('id-ID')}</p>
-                                        </div>
-                                        <div className="space-y-1 text-right">
-                                            <p className="text-[8px] font-bold text-stone-300 uppercase tracking-widest">Status</p>
-                                            <p className="text-[10px] font-black text-sage uppercase tracking-tighter">{booking.paymentStatus || "Pending"}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-
-                            {bookings.length === 0 && (
-                                <div className="py-20 flex flex-col items-center text-center gap-6">
-                                    <div className="w-16 h-16 bg-stone-50 rounded-full flex items-center justify-center text-stone-200">
-                                        <PlusCircle size={32} strokeWidth={1} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[11px] font-bold text-stone-300 uppercase tracking-[0.3em]">No active bookings for this slot</p>
-                                        <p className="text-[9px] text-stone-400 uppercase tracking-widest mt-1">Ready for a new reservation?</p>
-                                    </div>
-                                    <button 
-                                        onClick={() => { onClose(); onAdd?.(date); }}
-                                        className="mt-4 px-10 py-5 bg-[#788069] text-white text-[12px] font-black uppercase tracking-[0.4em] rounded-none shadow-xl shadow-[#788069]/10 hover:brightness-110 transition-all active:scale-95"
-                                    >
-                                        + Add New Reservation
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Footer */}
-                        <div className="p-8 border-t border-stone-100 bg-stone-50/50">
-                            <p className="text-[9px] font-bold text-stone-400 uppercase tracking-[0.2em] text-center">Nexura Operational Ledger View</p>
-                        </div>
-                    </motion.div>
-                </>
-            )}
-        </AnimatePresence>
+                {/* Footer */}
+                <div style={{ borderTop: '1px solid var(--f-hairline)', paddingTop: '16px', marginTop: 'auto' }}>
+                    <p className={styles.guestSubtext} style={{ color: 'var(--f-light-muted)', fontSize: '8px', textAlign: 'center', margin: 0 }}>
+                        Nexura Operational Ledger View
+                    </p>
+                </div>
+            </div>
+        </motion.aside>
     );
 }

@@ -135,11 +135,28 @@ export async function GET(req: NextRequest) {
         let sellPriceTotal = 0;
         let taxProfit = 0;
 
+        const dbSubtotal = Number(data.subtotal || 0);
+        const dbTax = Number(data.tax || 0);
+        const dbTotal = Number(data.total || 0);
+        let dbDiscount = Number(data.discount || 0);
+        if (!dbDiscount && dbTotal > 0 && dbSubtotal > 0) {
+          dbDiscount = Math.max(0, dbSubtotal + dbTax - dbTotal);
+        }
+
         const items = data.items || [];
         if (items.length > 0) {
+          let calcSubtotal = 0;
+          items.forEach((item: any) => {
+            calcSubtotal += Number(item.price || 0) * Number(item.quantity || 0);
+          });
+          calcSubtotal = calcSubtotal || 1;
+
           items.forEach((item: any) => {
             const qty = Number(item.quantity || 0);
-            const sellPrice = Number(item.price || 0) * qty;
+            const rawSellPrice = Number(item.price || 0) * qty;
+            const itemDiscount = dbDiscount * (rawSellPrice / calcSubtotal);
+            const sellPrice = rawSellPrice - itemDiscount;
+
             const productInfo = productMap[item.id];
             
             const buyPrice = (productInfo ? productInfo.buyPrice : Number(item.price || 0)) * qty;
@@ -160,7 +177,9 @@ export async function GET(req: NextRequest) {
           });
         } else if (data.quantity !== undefined || data.price !== undefined) {
           const qty = Number(data.quantity || 1);
-          const sellPrice = Number(data.price || data.subtotal || 0) * (data.price ? qty : 1);
+          const rawSellPrice = Number(data.price || data.subtotal || 0) * (data.price ? qty : 1);
+          const sellPrice = rawSellPrice - dbDiscount;
+
           const productInfo = productMap[data.id || ''];
           
           const buyPrice = (productInfo ? productInfo.buyPrice : Number(data.price || data.subtotal || 0)) * (data.price ? qty : 1);

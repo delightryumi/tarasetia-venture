@@ -35,16 +35,23 @@ interface BreakdownGroup {
 
 const PREMIUM_COLORS = ['#3C50E0', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#64748B'];
 
-export default function ChartOne() {
+interface ChartOneProps {
+  defaultStartDate?: string;
+  defaultEndDate?: string;
+}
+
+export default function ChartOne({ defaultStartDate, defaultEndDate }: ChartOneProps = {}) {
   const { formatCurrency } = useCurrency();
 
   // Date Range state
   const [startDate, setStartDate] = useState<string>(() => {
+    if (defaultStartDate) return defaultStartDate;
     const d = new Date();
     d.setDate(d.getDate() - 7); // Last 7 days by default
     return d.toISOString().split('T')[0];
   });
   const [endDate, setEndDate] = useState<string>(() => {
+    if (defaultEndDate) return defaultEndDate;
     return new Date().toISOString().split('T')[0];
   });
 

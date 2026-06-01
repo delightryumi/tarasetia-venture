@@ -7,11 +7,12 @@ import {
     Trash2,
     Save,
     User,
-    ArrowUpRight
+    X
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, getDoc, collection, getDocs, setDoc } from "firebase/firestore";
 import { getChannelLogo } from "./StatCard";
+import styles from "./OverviewStyles.module.css";
 import "./FolioAesthetic.css";
 
 interface GuestDetailModalProps {
@@ -39,17 +40,60 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
     const [isEditMode, setIsEditMode] = React.useState(initialEditing);
     const [showConfirmDelete, setShowConfirmDelete] = React.useState(false);
     const [formData, setFormData] = React.useState({
-        ...guest,
-        totalAmount: guest.totalAmount || guest.amount || 0,
-        paidAmount1: guest.paidAmount1 || guest.amount || 0,
-        paidAmount2: guest.paidAmount2 || 0,
-        isSplitBill: guest.isSplitBill || false,
-        checkIn: guest.checkInDate || guest.checkIn || '',
-        checkOut: guest.checkOutDate || guest.checkOut || '',
-        roomTypeId: guest.roomTypeId || '',
+        guestName: '',
+        totalAmount: 0,
+        paidAmount1: 0,
+        paidAmount2: 0,
+        isSplitBill: false,
+        checkIn: '',
+        checkOut: '',
+        roomTypeId: '',
+        roomNumber: '',
+        channel: 'Walk-in',
+        staffName: '',
+        note: '',
+        type: 'accommodation',
+        paymentStatus: 'Pending',
+        status: 'Pending',
+        bookingId: '',
+        timestamp: 0,
+        roomType: '',
+        _docId: '',
     });
 
     const [roomTypes, setRoomTypes] = React.useState<any[]>([]);
+
+    // Sync edit mode when edit/view is toggled externally
+    React.useEffect(() => {
+        setIsEditMode(initialEditing);
+    }, [initialEditing, guest]);
+
+    // Populate and sync form data when selected guest changes
+    React.useEffect(() => {
+        if (guest) {
+            setFormData({
+                ...guest,
+                totalAmount: guest.totalAmount || guest.amount || 0,
+                paidAmount1: guest.paidAmount1 || guest.amount || 0,
+                paidAmount2: guest.paidAmount2 || 0,
+                isSplitBill: guest.isSplitBill || false,
+                checkIn: guest.checkInDate || guest.checkIn || '',
+                checkOut: guest.checkOutDate || guest.checkOut || '',
+                roomTypeId: guest.roomTypeId || '',
+                roomNumber: guest.roomNumber || '',
+                channel: guest.channel || 'Walk-in',
+                staffName: guest.staffName || '',
+                note: guest.note || '',
+                type: guest.type || 'accommodation',
+                paymentStatus: guest.paymentStatus || 'Pending',
+                status: guest.status || 'Pending',
+                bookingId: guest.bookingId || '',
+                timestamp: guest.timestamp || 0,
+                roomType: guest.roomType || '',
+                _docId: guest._docId || '',
+            });
+        }
+    }, [guest]);
 
     React.useEffect(() => {
         const fetchRoomTypes = async () => {
@@ -57,7 +101,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             const fetchedTypes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setRoomTypes(fetchedTypes);
             
-            if (!formData.roomTypeId && guest.roomType) {
+            if (guest && !formData.roomTypeId && guest.roomType) {
                 const matched = fetchedTypes.find((r: any) => r.name?.toLowerCase() === guest.roomType.toLowerCase());
                 if (matched) {
                     setFormData(prev => ({ ...prev, roomTypeId: matched.id }));
@@ -65,7 +109,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             }
         };
         fetchRoomTypes();
-    }, [guest.roomType]);
+    }, [guest?.roomType]);
 
     const handleSave = async () => {
         try {
@@ -144,89 +188,112 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
         return ch ? ch.logo : "/channels/walk_in.png";
     };
 
+    if (!guest) return null;
+
     return (
-        <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-stone-900/60 backdrop-blur-md flex justify-end"
-            onClick={onClose}
+        <motion.aside 
+            initial={{ opacity: 0, x: "100%" }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className={styles.rightDrawer}
         >
-            <motion.div 
-                initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="bg-white w-full max-w-[580px] h-full shadow-2xl rounded-none overflow-hidden flex flex-col border-l border-stone-200"
-                onClick={e => e.stopPropagation()}
-            >
+            <div className={styles.card} style={{ height: '100%', minHeight: '500px', display: 'flex', flexDirection: 'column', padding: 0, border: 'none', borderRadius: 0, overflow: 'hidden' }}>
                 {/* Header */}
-                <div className="px-20 py-10 border-b border-stone-100 flex items-center justify-between bg-stone-50/30">
-                    <div className="flex flex-col">
-                        <div className="flex items-center gap-3 mb-1">
-                            <div className="w-6 h-[1px] bg-[#788069]/30" />
-                            <span className="text-[9px] font-bold text-[#788069] uppercase tracking-[0.4em]">{isEditMode ? "Adjustment Mode" : "Digital Folio"}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--f-hairline)', padding: '16px', backgroundColor: 'var(--f-surface-soft)' }}>
+                    <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                            <div style={{ width: '6px', height: '1px', backgroundColor: 'var(--f-sage)' }} />
+                            <span className={styles.guestSubtext} style={{ fontSize: '8px', fontWeight: 700, color: 'var(--f-sage)', letterSpacing: '0.2em' }}>
+                                {isEditMode ? "Adjustment Mode" : "Digital Folio"}
+                            </span>
                         </div>
-                        <h2 className="text-2xl font-light text-stone-900 uppercase font-outfit tracking-tight">
-                            {isEditMode ? "Modify" : "Review"} <span className="font-semibold text-[#788069]">{guest.type === 'accommodation' ? 'Entry' : 'Income'}</span>
+                        <h2 className={styles.headerTitle} style={{ fontSize: '13px', margin: 0 }}>
+                            {isEditMode ? "Modify" : "Review"} <span style={{ color: 'var(--f-sage)' }}>{guest.type === 'accommodation' ? 'Entry' : 'Income'}</span>
                         </h2>
                     </div>
-                    <button onClick={onClose} className="w-10 h-10 rounded-full flex items-center justify-center text-stone-300 hover:text-stone-900 hover:bg-stone-100 transition-all">
-                        <ArrowUpRight size={20} className="rotate-45" />
+                    <button onClick={onClose} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Close">
+                        <X size={16} />
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-20 py-16 custom-scrollbar bg-stone-50/10">
+                {/* Content */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }} className="custom-scrollbar">
                     {isEditMode ? (
-                        <div className="space-y-16 py-6">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             {/* Section 01: Identity */}
                             <section>
-                                <div className="flex items-center gap-4 mb-8">
-                                    <span className="text-[9px] font-bold text-[#788069] bg-[#788069]/5 px-2 py-0.5">01</span>
-                                    <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-stone-900 font-outfit">Identity & Stay</h3>
-                                    <div className="h-[1px] bg-stone-100 flex-1" />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                                    <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: 'rgba(120, 128, 105, 0.08)', padding: '2px 6px', borderRadius: '4px' }}>01</span>
+                                    <h3 className={styles.headerTitle} style={{ fontSize: '11px', margin: 0 }}>Identity & Stay</h3>
+                                    <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--f-hairline)' }} />
                                 </div>
-                                <div className="grid grid-cols-2 gap-8">
-                                    <div className="col-span-2">
-                                        <NexuraInputLabel label="Guest Name" value={formData.guestName} onChange={(v: string) => setFormData({...formData, guestName: v})} />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <NexuraInputLabel label="Guest Name" value={formData.guestName} onChange={(v: string) => setFormData({...formData, guestName: v})} />
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                        <NexuraInputLabel label="Check-in" type="date" value={formData.checkIn} onChange={(v: string) => setFormData({...formData, checkIn: v})} />
+                                        <NexuraInputLabel label="Check-out" type="date" value={formData.checkOut} onChange={(v: string) => setFormData({...formData, checkOut: v})} />
                                     </div>
-                                    <NexuraInputLabel label="Check-in" type="date" value={formData.checkIn} onChange={(v: string) => setFormData({...formData, checkIn: v})} />
-                                    <NexuraInputLabel label="Check-out" type="date" value={formData.checkOut} onChange={(v: string) => setFormData({...formData, checkOut: v})} />
                                 </div>
                             </section>
 
                             {/* Section 02: Assignment */}
                             <section>
-                                <div className="flex items-center gap-4 mb-8">
-                                    <span className="text-[9px] font-bold text-[#788069] bg-[#788069]/5 px-2 py-0.5">02</span>
-                                    <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-stone-900 font-outfit">Stay Details</h3>
-                                    <div className="h-[1px] bg-stone-100 flex-1" />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                                    <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: 'rgba(120, 128, 105, 0.08)', padding: '2px 6px', borderRadius: '4px' }}>02</span>
+                                    <h3 className={styles.headerTitle} style={{ fontSize: '11px', margin: 0 }}>Stay Details</h3>
+                                    <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--f-hairline)' }} />
                                 </div>
-                                <div className="grid grid-cols-2 gap-8">
-                                    <div className="space-y-3">
-                                        <label className="text-[9px] font-bold uppercase tracking-[0.2em] text-stone-400 ml-1">Room Category</label>
-                                        <div className="relative group luxury-input bg-white transition-all rounded-lg shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-stone-100/50 focus-within:border-[#788069] focus-within:shadow-md">
-                                            <select
-                                                value={formData.roomTypeId}
-                                                onChange={e => {
-                                                    const selectedId = e.target.value;
-                                                    const selectedRoom = roomTypes.find(r => r.id === selectedId);
-                                                    setFormData({
-                                                        ...formData, 
-                                                        roomTypeId: selectedId,
-                                                        roomType: selectedRoom ? selectedRoom.name : formData.roomType
-                                                    });
-                                                }}
-                                                className="w-full h-11 px-4 bg-transparent outline-none text-[11px] font-bold uppercase tracking-widest custom-select cursor-pointer text-stone-800"
-                                            >
-                                                <option value=""></option>
-                                                {roomTypes.map(r => <option key={r.id} value={r.id}>{r.name.toUpperCase()}</option>)}
-                                            </select>
-                                        </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <label className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>Room Category</label>
+                                        <select
+                                            value={formData.roomTypeId}
+                                            onChange={e => {
+                                                const selectedId = e.target.value;
+                                                const selectedRoom = roomTypes.find(r => r.id === selectedId);
+                                                setFormData({
+                                                    ...formData, 
+                                                    roomTypeId: selectedId,
+                                                    roomType: selectedRoom ? selectedRoom.name : formData.roomType
+                                                });
+                                            }}
+                                            style={{
+                                                width: '100%',
+                                                height: '40px',
+                                                padding: '0 12px',
+                                                borderRadius: '6px',
+                                                border: '1px solid var(--f-hairline)',
+                                                backgroundColor: 'var(--f-surface)',
+                                                fontSize: '11px',
+                                                color: 'var(--f-body)',
+                                                outline: 'none',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <option value=""></option>
+                                            {roomTypes.map(r => <option key={r.id} value={r.id}>{r.name.toUpperCase()}</option>)}
+                                        </select>
                                     </div>
                                     <NexuraInputLabel label="Room Number" value={formData.roomNumber} onChange={(v: string) => setFormData({...formData, roomNumber: v})} />
-                                    <div className="space-y-3">
-                                        <label className="text-[9px] font-bold uppercase tracking-[0.2em] text-stone-400 ml-1">Channel Source</label>
+                                    
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <label className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>Channel Source</label>
                                         <select
                                             value={formData.channel}
                                             onChange={e => setFormData({...formData, channel: e.target.value})}
-                                            className="w-full h-11 px-4 bg-white rounded-lg border border-stone-100 outline-none text-[11px] font-bold uppercase tracking-widest custom-select"
+                                            style={{
+                                                width: '100%',
+                                                height: '40px',
+                                                padding: '0 12px',
+                                                borderRadius: '6px',
+                                                border: '1px solid var(--f-hairline)',
+                                                backgroundColor: 'var(--f-surface)',
+                                                fontSize: '11px',
+                                                color: 'var(--f-body)',
+                                                outline: 'none',
+                                                cursor: 'pointer'
+                                            }}
                                         >
                                             {CHANNELS.map(c => <option key={c.name}>{c.name}</option>)}
                                         </select>
@@ -237,36 +304,76 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
                             {/* Section 03: Financials */}
                             <section>
-                                <div className="flex items-center gap-4 mb-8">
-                                    <span className="text-[9px] font-bold text-[#788069] bg-[#788069]/5 px-2 py-0.5">03</span>
-                                    <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-stone-900 font-outfit">Financials</h3>
-                                    <div className="h-[1px] bg-stone-100 flex-1" />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                                    <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: 'rgba(120, 128, 105, 0.08)', padding: '2px 6px', borderRadius: '4px' }}>03</span>
+                                    <h3 className={styles.headerTitle} style={{ fontSize: '11px', margin: 0 }}>Financials</h3>
+                                    <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--f-hairline)' }} />
                                 </div>
-                                <div className="space-y-10">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                     <NexuraInputLabel label="Total Gross Amount" type="number" value={formData.totalAmount} onChange={(v: string) => setFormData({...formData, totalAmount: v})} />
-                                    <div className="flex items-center justify-between p-5 bg-stone-50/50 rounded-lg border border-stone-100">
+                                    
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: 'var(--f-surface-soft)', borderRadius: '8px', border: '1px solid var(--f-hairline)' }}>
                                         <div>
-                                            <p className="text-[10px] font-bold uppercase text-stone-900 tracking-wider">Split Settlement</p>
-                                            <p className="text-[9px] text-stone-400 uppercase tracking-widest">Enable dual payment methods</p>
+                                            <p className={styles.guestName} style={{ margin: 0, fontSize: '11px' }}>Split Settlement</p>
+                                            <p className={styles.guestSubtext} style={{ margin: '2px 0 0 0', color: 'var(--f-light-muted)', fontSize: '8px' }}>Enable dual payment methods</p>
                                         </div>
-                                        <button onClick={() => setFormData({...formData, isSplitBill: !formData.isSplitBill})} className={`w-10 h-5 relative rounded-full transition-all ${formData.isSplitBill ? 'bg-[#788069]' : 'bg-stone-200'}`}>
-                                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${formData.isSplitBill ? 'left-5.5' : 'left-0.5'}`} />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setFormData({...formData, isSplitBill: !formData.isSplitBill})} 
+                                            style={{ 
+                                                width: '36px', 
+                                                height: '18px', 
+                                                position: 'relative', 
+                                                borderRadius: '999px', 
+                                                border: 'none', 
+                                                cursor: 'pointer',
+                                                backgroundColor: formData.isSplitBill ? 'var(--f-sage)' : 'var(--f-light-muted)',
+                                                transition: 'all 0.2s' 
+                                            }}
+                                        >
+                                            <div 
+                                                style={{ 
+                                                    position: 'absolute', 
+                                                    top: '1px', 
+                                                    width: '16px', 
+                                                    height: '16px', 
+                                                    backgroundColor: '#ffffff', 
+                                                    borderRadius: '50%', 
+                                                    left: formData.isSplitBill ? '19px' : '1px', 
+                                                    transition: 'all 0.2s' 
+                                                }} 
+                                            />
                                         </button>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-8">
+                                    
+                                    <div style={{ display: 'grid', gridTemplateColumns: formData.isSplitBill ? '1fr 1fr' : '1fr', gap: '12px' }}>
                                         <NexuraInputLabel label={formData.isSplitBill ? "Payment A" : "Amount Paid"} type="number" value={formData.paidAmount1} onChange={(v: string) => setFormData({...formData, paidAmount1: v})} />
                                         {formData.isSplitBill && (
                                             <NexuraInputLabel label="Payment B" type="number" value={formData.paidAmount2} onChange={(v: string) => setFormData({...formData, paidAmount2: v})} />
                                         )}
                                     </div>
-                                    <div className="space-y-4">
-                                        <label className="text-[9px] font-bold uppercase tracking-[0.2em] text-stone-400 ml-1">Payment Status</label>
-                                        <div className="grid grid-cols-2 gap-2">
+                                    
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <label className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>Payment Status</label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                                             {["Lunas", "Belum Bayar", "DP / Partial", "CANCELLED"].map(s => (
                                                 <button 
                                                     key={s}
+                                                    type="button"
                                                     onClick={() => setFormData({...formData, paymentStatus: s, status: s})}
-                                                    className={`h-9 text-[8px] font-bold uppercase tracking-widest rounded-lg border transition-all ${formData.paymentStatus === s ? 'bg-[#788069] text-white border-[#788069]' : 'bg-white text-stone-400 border-stone-100'}`}
+                                                    style={{
+                                                        height: '36px',
+                                                        fontSize: '9px',
+                                                        fontWeight: 700,
+                                                        textTransform: 'uppercase',
+                                                        letterSpacing: '0.05em',
+                                                        borderRadius: '6px',
+                                                        cursor: 'pointer',
+                                                        border: '1px solid var(--f-hairline)',
+                                                        backgroundColor: formData.paymentStatus === s ? 'var(--f-sage)' : 'var(--f-canvas)',
+                                                        color: formData.paymentStatus === s ? '#ffffff' : 'var(--f-muted)',
+                                                        transition: 'all 0.15s'
+                                                    }}
                                                 >
                                                     {s}
                                                 </button>
@@ -278,119 +385,147 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
                             {/* Section 04: Remarks */}
                             <section>
-                                <div className="flex items-center gap-4 mb-8">
-                                    <span className="text-[9px] font-bold text-[#788069] bg-[#788069]/5 px-2 py-0.5">04</span>
-                                    <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-stone-900 font-outfit">Remarks</h3>
-                                    <div className="h-[1px] bg-stone-100 flex-1" />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                                    <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: 'rgba(120, 128, 105, 0.08)', padding: '2px 6px', borderRadius: '4px' }}>04</span>
+                                    <h3 className={styles.headerTitle} style={{ fontSize: '11px', margin: 0 }}>Remarks</h3>
+                                    <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--f-hairline)' }} />
                                 </div>
                                 <textarea
                                     value={formData.note}
                                     onChange={e => setFormData({...formData, note: e.target.value})}
                                     rows={3}
-                                    className="w-full bg-stone-50/50 rounded-lg p-4 text-[11px] font-medium text-stone-700 outline-none border border-stone-100 focus:border-[#788069] transition-all resize-none"
+                                    style={{
+                                        width: '100%',
+                                        backgroundColor: 'var(--f-surface)',
+                                        borderRadius: '8px',
+                                        padding: '12px',
+                                        fontSize: '11px',
+                                        color: 'var(--f-body)',
+                                        outline: 'none',
+                                        border: '1px solid var(--f-hairline)',
+                                        resize: 'none',
+                                        transition: 'all 0.15s'
+                                    }}
                                     placeholder="Enter internal audit notes..."
                                 />
                             </section>
                         </div>
                     ) : (
-                        <div className="w-full mx-auto folio-container p-10 space-y-10 my-4">
-                            <div className="folio-stamp" />
-                            <div className="flex justify-between items-start border-b border-stone-100 pb-8">
-                                <div className="space-y-2">
-                                    <div className="folio-header-badge">Ledger Entry</div>
-                                    <h3 className="text-xl font-bold text-stone-900 font-outfit uppercase tracking-tight">Bumi Anyom Resort</h3>
-                                    <p className="text-[8px] font-bold text-stone-400 uppercase tracking-[0.4em]">Integrated PMS Folio v3.0</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="folio-label mb-1 justify-end">Ref</p>
-                                    <p className="text-[12px] font-bold text-stone-900 uppercase folio-mono">{guest.bookingId || `TRX-${guest.timestamp?.toString().slice(-6)}`}</p>
-                                    <p className="text-[7px] text-stone-300 mt-1">{new Date(guest.timestamp).toLocaleString()}</p>
-                                </div>
+                        <div className="folio-container">
+                            {/* Watermark Seal */}
+                            <div className="folio-watermark-seal" />
+
+                            {/* Brand Header */}
+                            <div className="folio-brand-header">
+                                <h3 className="folio-brand-title">Bumi Anyom Resort</h3>
+                                <p className="folio-brand-subtitle">Integrated PMS Folio v3.0</p>
                             </div>
-                            <div className="grid grid-cols-2 gap-y-8 gap-x-12">
-                                <div className="space-y-1.5">
-                                    <p className="folio-label"><User size={9} /> Guest</p>
-                                    <p className="folio-value !text-[12px]">{guest.guestName || "Unspecified"}</p>
+
+                            {/* Section 1: Guest & Stay Details */}
+                            <div className="folio-section-title">Folio Information</div>
+                            
+                            <div className="folio-info-grid">
+                                <div className="folio-info-item">
+                                    <span className="folio-info-label">Guest Name</span>
+                                    <span className="folio-info-value">{guest.guestName || "General Sale"}</span>
                                 </div>
-                                <div className="space-y-1.5 text-right flex flex-col items-end">
-                                    <p className="folio-label">Channel</p>
-                                    <div className="mt-1 p-1.5 bg-stone-50 rounded-lg border border-stone-100 w-14 h-10 flex items-center justify-center shadow-sm">
-                                        <img src={getChannelIcon(guest.channel)} alt={guest.channel} className="max-w-full max-h-full object-contain grayscale" onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
+                                <div className="folio-info-item" style={{ alignItems: 'flex-end', textAlign: 'right' }}>
+                                    <span className="folio-info-label">Source Channel</span>
+                                    <div style={{ marginTop: '2px', padding: '2px', backgroundColor: '#ffffff', borderRadius: '4px', border: '1px solid var(--f-hairline)', width: '40px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <img src={getChannelIcon(guest.channel)} alt={guest.channel} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', opacity: 0.6 }} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
                                     </div>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <p className="folio-label">Stay Period</p>
-                                    <p className="folio-value folio-mono !text-[11px]">
-                                        {guest.checkInDate || "---"} <span className="text-stone-300 mx-1">→</span> {guest.checkOutDate || "---"}
-                                    </p>
+                                <div className="folio-info-item">
+                                    <span className="folio-info-label">Stay Period</span>
+                                    <span className="folio-info-value folio-mono" style={{ fontSize: '10px' }}>
+                                        {guest.checkInDate || "---"} → {guest.checkOutDate || "---"}
+                                    </span>
                                 </div>
-                                <div className="space-y-1.5 text-right">
-                                    <p className="folio-label">Inventory</p>
-                                    <p className="folio-value !text-[11px]">
-                                        {guest.roomType || "Service"} <span className="text-[#788069] mx-1">|</span> {guest.roomNumber ? `RM ${guest.roomNumber}` : "NA"}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="space-y-6 pt-2">
-                                <div className="folio-divider-dashed" />
-                                <div className="flex justify-between items-center text-[8px] font-bold text-stone-300 uppercase tracking-[0.4em]">
-                                    <span>Classification</span>
-                                    <span>Audit Total</span>
-                                </div>
-                                <div className="space-y-1">
-                                    <div className="folio-item-row py-2">
-                                        <p className="text-[12px] font-bold text-stone-700 uppercase font-outfit">Revenue Item</p>
-                                        <p className="text-[13px] font-bold text-stone-900 folio-mono">Rp {Number(guest.amount).toLocaleString('id-ID')}</p>
-                                    </div>
-                                    <div className="folio-item-row border-none py-1">
-                                        <p className="folio-label">Staff Entry</p>
-                                        <p className="text-[10px] font-bold text-stone-500 uppercase">{guest.staffName || "System"}</p>
-                                    </div>
+                                <div className="folio-info-item" style={{ alignItems: 'flex-end', textAlign: 'right' }}>
+                                    <span className="folio-info-label">Room Assignment</span>
+                                    <span className="folio-info-value" style={{ fontSize: '10px' }}>
+                                        {guest.roomType || "Service"} {guest.roomNumber ? `| RM ${guest.roomNumber}` : ""}
+                                    </span>
                                 </div>
                             </div>
-                            <div className="folio-total-box p-5">
-                                <div className="space-y-0.5">
-                                    <p className="folio-label">Status</p>
-                                    <p className={`text-[10px] font-black uppercase tracking-widest ${guest.paymentStatus?.includes('Lunas') ? 'text-[#788069]' : 'text-amber-500'}`}>
+
+                            {/* Section 2: Audit Breakdown */}
+                            <div className="folio-section-title">Audit Ledger Summary</div>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px solid var(--f-hairline)' }}>
+                                    <span className={styles.guestSubtext} style={{ fontSize: '10px', fontWeight: 600 }}>Reference Code</span>
+                                    <span className="folio-mono" style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-ink)' }}>
+                                        {guest.bookingId || `TRX-${guest.timestamp?.toString().slice(-6)}`}
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px solid var(--f-hairline)' }}>
+                                    <span className={styles.guestSubtext} style={{ fontSize: '10px', fontWeight: 600 }}>Classification</span>
+                                    <span className={styles.guestSubtext} style={{ color: 'var(--f-ink)', fontWeight: 700 }}>
+                                        {guest.type === 'accommodation' ? 'Accommodation Revenue' : (guest.incomeCategory || 'Other Income')}
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px solid var(--f-hairline)' }}>
+                                    <span className={styles.guestSubtext} style={{ fontSize: '10px', fontWeight: 600 }}>Audited By</span>
+                                    <span className={styles.guestSubtext} style={{ color: 'var(--f-ink)', fontWeight: 700 }}>
+                                        {guest.staffName || "System Agent"}
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px' }}>
+                                    <span className={styles.guestSubtext} style={{ fontSize: '10px', fontWeight: 600 }}>Timestamp</span>
+                                    <span className="folio-mono" style={{ fontSize: '9px', color: 'var(--f-muted)' }}>
+                                        {new Date(guest.timestamp).toLocaleString('id-ID')}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Section 3: Financial Summary Card */}
+                            <div className="folio-total-card">
+                                <div>
+                                    <p className="folio-total-label">Settle Status</p>
+                                    <span className={`${styles.paymentBadge} ${guest.paymentStatus?.includes('Lunas') || !guest.paymentStatus ? styles.paymentLunas : styles.paymentPending}`} style={{ margin: 0, padding: '2px 8px', fontSize: '9px' }}>
                                         {guest.paymentStatus || 'Pending'}
-                                    </p>
+                                    </span>
                                 </div>
-                                <div className="text-right space-y-0.5">
-                                    <p className="folio-label">Final Value</p>
-                                    <p className="text-2xl font-black text-stone-900 folio-mono">Rp {Number(guest.amount).toLocaleString('id-ID')}</p>
+                                <div style={{ textAlign: 'right' }}>
+                                    <p className="folio-total-label">Grand Total</p>
+                                    <p className="folio-total-amount">Rp {Number(guest.amount).toLocaleString('id-ID')}</p>
                                 </div>
                             </div>
-                            <div className="pt-4 space-y-3">
-                                <p className="folio-label italic border-l-2 border-[#788069] pl-2">Audit Note</p>
-                                <p className="text-[10px] text-stone-500 leading-relaxed italic font-outfit bg-stone-50/30 p-4 rounded-lg">
-                                    {guest.note || "System Log: No operational remarks recorded."}
+                            
+                            {/* Section 4: Remarks & Audit Notes */}
+                            <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <span className="folio-info-label" style={{ fontStyle: 'italic', borderLeft: '2px solid var(--f-sage)', paddingLeft: '8px' }}>Audit Remark</span>
+                                <p className={styles.guestSubtext} style={{ margin: 0, fontStyle: 'italic', color: 'var(--f-muted)', lineHeight: '1.5', backgroundColor: 'var(--f-surface-soft)', padding: '12px', borderRadius: 'var(--f-radius-sm)', border: '1px solid var(--f-hairline)' }}>
+                                    {guest.note || "No remarks or audit adjustments recorded for this folio."}
                                 </p>
                             </div>
                         </div>
                     )}
                 </div>
 
-                <div className="px-20 h-24 border-t border-stone-100 flex items-center justify-end gap-4 bg-white">
+                {/* Footer Actions */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', padding: '16px', borderTop: '1px solid var(--f-hairline)', backgroundColor: 'var(--f-canvas)' }}>
                     {isEditMode ? (
                         <>
-                            <button onClick={() => setIsEditMode(false)} className="text-[9px] font-medium text-stone-300 hover:text-stone-900 uppercase tracking-[0.4em] transition-colors">Abort</button>
-                            <button onClick={handleSave} className="flex items-center justify-center gap-2 h-10 min-w-[140px] px-6 text-[10px] font-medium uppercase tracking-[0.1em] transition-all text-white bg-[#788069] hover:brightness-110 active:scale-95 rounded-lg">
-                                <Save size={14} /> Commit Changes
+                            <button onClick={() => setIsEditMode(false)} className={styles.btnSecondary} style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px' }}>Abort</button>
+                            <button onClick={handleSave} className={styles.btnPrimary} style={{ width: 'auto', padding: '0 20px', height: '36px', borderRadius: '8px' }}>
+                                <Save size={14} /> Save Folio
                             </button>
                         </>
                     ) : (
-                        <div className="flex w-full items-center justify-between">
-                            <button onClick={onClose} className="text-[9px] font-medium text-stone-300 hover:text-stone-900 uppercase tracking-[0.4em] transition-colors">Close</button>
-                            <div className="flex gap-3">
-                                <button onClick={() => setIsEditMode(true)} className="h-10 px-6 text-[10px] font-medium uppercase tracking-[0.1em] border border-stone-100 text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-all rounded-lg">Modify</button>
-                                <button onClick={() => setShowConfirmDelete(true)} className="flex items-center justify-center gap-2 h-10 min-w-[140px] px-6 text-[10px] font-medium uppercase tracking-[0.1em] transition-all text-white bg-red-500 hover:bg-red-600 active:scale-95 rounded-lg">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                            <button onClick={onClose} className={styles.btnSecondary} style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px' }}>Close</button>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button onClick={() => setIsEditMode(true)} className={styles.btnIcon} style={{ height: '36px', padding: '0 16px', width: 'auto', fontSize: '10px', borderRadius: '8px', fontWeight: 700 }}>Modify</button>
+                                <button onClick={() => setShowConfirmDelete(true)} className="flex items-center justify-center gap-2 h-9 px-4 text-[10px] font-medium uppercase tracking-[0.1em] transition-all text-white bg-red-500 hover:bg-red-600 active:scale-95 rounded-lg border-none cursor-pointer">
                                     <Trash2 size={14} /> Archive Entry
                                 </button>
                             </div>
                         </div>
                     )}
                 </div>
-            </motion.div>
+            </div>
 
             <AnimatePresence>
                 {showConfirmDelete && (
@@ -412,25 +547,37 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                 Are you sure you want to permanently delete the transaction for <span className="font-bold text-stone-900">{guest.guestName || guest.incomeCategory}</span>?
                             </p>
                             <div className="flex gap-4">
-                                <button onClick={() => setShowConfirmDelete(false)} className="flex-1 h-12 rounded-xl border border-stone-200 text-[11px] font-bold text-stone-600 uppercase tracking-widest hover:bg-stone-50 transition-colors">Cancel</button>
-                                <button onClick={executeDelete} className="flex-1 h-12 rounded-xl bg-red-500 text-[11px] font-bold text-white uppercase tracking-widest hover:bg-red-600 transition-colors">Delete</button>
+                                <button onClick={() => setShowConfirmDelete(false)} className="flex-1 h-12 rounded-xl border border-stone-200 text-[11px] font-bold text-stone-600 uppercase tracking-widest hover:bg-stone-50 transition-colors cursor-pointer bg-white">Cancel</button>
+                                <button onClick={executeDelete} className="flex-1 h-12 rounded-xl bg-red-500 text-[11px] font-bold text-white uppercase tracking-widest hover:bg-red-600 transition-colors cursor-pointer border-none">Delete</button>
                             </div>
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
-        </motion.div>
+        </motion.aside>
     );
 }
 
 function NexuraInputLabel({ label, value, onChange, type = "text" }: { label: string, value: any, onChange: any, type?: string }) {
     return (
-        <div className="space-y-3">
-            <span className="text-[9px] font-medium uppercase tracking-[0.2em] ml-0.5" style={{ color: "#788069" }}>{label}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+            <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>{label}</span>
             <input
                 type={type} value={value} onChange={e => onChange(e.target.value)}
                 onWheel={(e) => e.currentTarget.type === "number" && e.currentTarget.blur()}
-                className="w-full h-11 px-4 rounded-lg bg-stone-50 border border-stone-100 outline-none text-[11px] font-normal tracking-widest placeholder:text-stone-200 hover:bg-white transition-all"
+                style={{
+                    width: '100%',
+                    height: '40px',
+                    padding: '0 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--f-hairline)',
+                    backgroundColor: 'var(--f-surface)',
+                    fontSize: '11px',
+                    fontFamily: type === 'date' || type === 'number' ? 'var(--f-font-mono)' : 'inherit',
+                    color: 'var(--f-body)',
+                    outline: 'none',
+                    transition: 'all 0.15s'
+                }}
             />
         </div>
     );

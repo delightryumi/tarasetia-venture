@@ -199,32 +199,41 @@ export function processPnLData(
   // i.e. Front Office + Purchasing + other manual expenses
   const expOperational = expFrontOfficeAndPurchasing + otherManualExpenses;
   
-  // Calculate Room Revenue (All ledger transactions except other_income)
+  // Match Front Office Overview logic for Accommodation vs Other Income
+  const isAccommodation = (t: any) => {
+      const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+      return !isPOS && (t.type === "accommodation" || (!t.type && t.guestName));
+  };
+  const isFOOtherIncome = (t: any) => {
+      const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+      return !isPOS && !isAccommodation(t);
+  };
+
+  // Calculate Room Revenue (Accommodation only)
   const ledgerRoomRevenue = transactions
-    .filter(t => t.type !== "other_income")
+    .filter(isAccommodation)
     .reduce((sum, t) => sum + t.amount, 0);
   
-  // Calculate Revenue Hotel Collect (Pay at Hotel)
+  // Calculate Revenue Hotel Collect (Pay at Hotel) - Accommodation only
   const revenueHotelCollect = transactions
-    .filter(t => t.type !== "other_income")
+    .filter(isAccommodation)
     .reduce((sum, t) => sum + (Number(t.paidCash) || 0), 0);
 
-  // Calculate Revenue Nexura Collect (Pay at Nexura)
+  // Calculate Revenue Nexura Collect (Pay at Nexura) - Accommodation only
   const revenueNexuraCollect = transactions
-    .filter(t => t.type !== "other_income")
+    .filter(isAccommodation)
     .reduce((sum, t) => sum + (Number(t.paidTransfer) || 0), 0);
 
-  // Other Income from daily_revenue (Ledger)
+  // Other Income from daily_revenue (Ledger) - Matches FO Overview
   const ledgerOtherIncome = transactions
-    .filter(t => t.type === "other_income")
+    .filter(isFOOtherIncome)
     .reduce((sum, t) => sum + t.amount, 0);
 
   // Card 5: Other Revenue (Manual + Ledger) – kept separate from Gross Revenue
   const otherRevenueTotal = totalExtraIncome + ledgerOtherIncome;
   
-  // Total Gross Revenue = Room Revenue + Total F&B A la Carte Revenue + Banquet Revenue
-  // (Other Revenue is tracked separately as card5_OtherRevenue)
-  const totalRevenue = ledgerRoomRevenue + posRevAlacarte + posRevBanquet;
+  // Total Gross Revenue = Room Revenue + Total F&B A la Carte Revenue + Banquet Revenue + Other Revenue
+  const totalRevenue = ledgerRoomRevenue + posRevAlacarte + posRevBanquet + otherRevenueTotal;
   
   const revFoodAlacarte = posRevFood;
   const revBeverageAlacarte = posRevBeverage;
@@ -350,40 +359,84 @@ export function getDrillDownData(
         }));
       break;
 
+    case "Revenue Hotel Collect":
+      {
+        const isAccommodation = (t: any) => {
+            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+            return !isPOS && (t.type === "accommodation" || (!t.type && t.guestName));
+        };
+        items = rawTransactions
+          .filter(isAccommodation)
+          .filter(t => (Number(t.paidCash) || 0) > 0)
+          .map(t => ({
+            id: t.bookingId || Math.random().toString(),
+            type: 'income',
+            source: t.channel || 'Ledger',
+            description: `${t.guestName || 'Guest'} (${t.roomType || 'Room'})`,
+            department: 'Rooms',
+            docType: 'Hotel Collect',
+            amount: Number(t.paidCash) || 0,
+            date: t.date || 'N/A'
+          }));
+      }
+      break;
+
     case "Revenue Nexura Collect":
-      items = rawTransactions
-        .filter(t => t.type !== "other_income" && (Number(t.paidTransfer) || 0) > 0)
-        .map(t => ({
-          id: t.bookingId || Math.random().toString(),
-          type: 'income',
-          source: t.channel || 'Ledger',
-          description: `${t.guestName || 'Guest'} (${t.roomType || 'Room'})`,
-          department: 'Rooms',
-          docType: 'Nexura Collect',
-          amount: Number(t.paidTransfer) || 0,
-          date: t.date || 'N/A'
-        }));
+      {
+        const isAccommodation = (t: any) => {
+            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+            return !isPOS && (t.type === "accommodation" || (!t.type && t.guestName));
+        };
+        items = rawTransactions
+          .filter(isAccommodation)
+          .filter(t => (Number(t.paidTransfer) || 0) > 0)
+          .map(t => ({
+            id: t.bookingId || Math.random().toString(),
+            type: 'income',
+            source: t.channel || 'Ledger',
+            description: `${t.guestName || 'Guest'} (${t.roomType || 'Room'})`,
+            department: 'Rooms',
+            docType: 'Nexura Collect',
+            amount: Number(t.paidTransfer) || 0,
+            date: t.date || 'N/A'
+          }));
+      }
       break;
 
     case "Revenue Room":
-      items = rawTransactions
-        .filter(t => t.type !== "other_income")
-        .map(t => ({
-          id: t.bookingId || Math.random().toString(),
-          type: 'income',
-          source: t.channel || 'Ledger',
-          description: `${t.guestName || 'Guest'} (${t.roomType || 'Room'})`,
-          department: 'Rooms',
-          docType: 'Room Booking',
-          amount: t.amount,
-          date: t.date || 'N/A'
-        }));
+    case "Room Revenue":
+      {
+        const isAccommodation = (t: any) => {
+            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+            return !isPOS && (t.type === "accommodation" || (!t.type && t.guestName));
+        };
+        items = rawTransactions
+          .filter(isAccommodation)
+          .map(t => ({
+            id: t.bookingId || Math.random().toString(),
+            type: 'income',
+            source: t.channel || 'Ledger',
+            description: `${t.guestName || 'Guest'} (${t.roomType || 'Room'})`,
+            department: 'Rooms',
+            docType: 'Room Booking',
+            amount: t.amount,
+            date: t.date || 'N/A'
+          }));
+      }
       break;
 
     case "Other Revenue":
       {
+        const isAccommodation = (t: any) => {
+            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+            return !isPOS && (t.type === "accommodation" || (!t.type && t.guestName));
+        };
+        const isFOOtherIncome = (t: any) => {
+            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+            return !isPOS && !isAccommodation(t);
+        };
         const ledgerOther = rawTransactions
-          .filter(t => t.type === "other_income")
+          .filter(isFOOtherIncome)
           .map(t => ({
             id: t.bookingId || Math.random().toString(),
             type: 'income',
