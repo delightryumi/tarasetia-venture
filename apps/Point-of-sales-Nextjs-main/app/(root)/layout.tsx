@@ -38,7 +38,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     window.location.href = `${getDashboardUrl()}?logout=true`;
   };
 
-  useEffect(() => {
+    // Session bridge disabled in production due to modern browser storage partitioning
+    /*
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'SESSION_STATUS') {
         if (event.data.loggedIn === false) {
@@ -51,6 +52,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
+    */
   }, []);
 
   useEffect(() => {
@@ -282,13 +284,14 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                 disableTransitionOnChange
               >
                 <NextTopLoader showSpinner={false} />
-                {isMounted && (
+                {/* Iframe session-bridge disabled in production due to modern browser storage partitioning
+                isMounted && (
                   <iframe
                     src={`${dashboardUrl.replace('/select-module', '')}/auth/session-bridge`}
                     className="hidden"
                     style={{ display: 'none' }}
                   />
-                )}
+                )*/}
                 {rbacLoading ? (
                   <div className="flex flex-1 items-center justify-center">
                     <p className="text-sm text-muted-foreground animate-pulse">Checking access...</p>
