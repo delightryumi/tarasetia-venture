@@ -5,13 +5,15 @@ interface RootLayoutProps {
   children: React.ReactNode;
 }
 import Link from 'next/link';
-import { Menu, TriangleAlert, LogOut, ArrowLeft } from 'lucide-react';
+import { Menu, TriangleAlert, LogOut, ArrowLeft, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
 import { ModeToggle } from '@/components/darkmode/darkmode';
 import { ThemeProvider } from '@/components/theme-provider';
 import Navbar from '@/components/dashboard/navbar';
 import { NavbarSheet } from '@/components/dashboard/NavbarSheet';
+import { NAVBAR_ITEMS } from '@/constant/navbarMenu';
+import { useRBAC } from '@/hooks/useRBAC';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import eventBus from '@/lib/even';
@@ -21,7 +23,10 @@ import { registerNetworkSync, syncProductsFromServer, syncUnsyncedTransactions }
 const RootLayout = ({ children }: RootLayoutProps) => {
   const router = useRouter();
   const pathname = usePathname();
+  const { canAccess, loading: rbacLoading } = useRBAC();
   const [storeName, setStoreName] = useState<string | null>(null);
+
+  const isAuthorized = canAccess('pos');
 
   const isRecordDetail = pathname?.startsWith('/records/') && pathname !== '/records';
 
@@ -118,52 +123,56 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   }, [router]);
 
   const getDashboardUrl = () => {
+    let url = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/select-module';
     if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
-      return process.env.NEXT_PUBLIC_DASHBOARD_URL;
-    }
-    if (typeof window !== 'undefined') {
+      url = process.env.NEXT_PUBLIC_DASHBOARD_URL;
+    } else if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
       if (isLocal) {
-        return `${protocol}//${hostname}:3000/select-module`;
-      }
-      if (hostname.startsWith('pos.')) {
-        return `${protocol}//${hostname.replace('pos.', 'dashboard.')}/select-module`;
-      }
-      if (hostname.includes('--bumi-anyom')) {
+        url = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/select-module';
+      } else if (hostname.startsWith('pos.')) {
+        url = `${protocol}//${hostname.replace('pos.', 'dashboard.')}/select-module`;
+      } else if (hostname.includes('--bumi-anyom')) {
         const parts = hostname.split('--');
-        parts[0] = 'admin-dashboard';
-        return `${protocol}//${parts.join('--')}/select-module`;
+        parts[0] = 'bumianyom-web-1';
+        url = `${protocol}//${parts.join('--')}/select-module`;
+      } else if (hostname.includes('pos')) {
+        url = `${protocol}//${hostname.replace('pos', 'bumianyom-web-1')}/select-module`;
+      } else {
+        url = `${protocol}//${hostname}/select-module`;
       }
-      if (hostname.includes('pos')) {
-        return `${protocol}//${hostname.replace('pos', 'admin-dashboard')}/select-module`;
-      }
-      return `${protocol}//${hostname}/select-module`;
     }
-    return 'http://localhost:3000/select-module';
+    
+    if (!url.endsWith('/select-module')) {
+      url = url.replace(/\/$/, '') + '/select-module';
+    }
+    
+    return url;
   };
 
   const getLoginGatewayUrl = () => {
+    let url = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app';
     if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
-      return process.env.NEXT_PUBLIC_DASHBOARD_URL.replace('/select-module', '');
-    }
-    if (typeof window !== 'undefined') {
+      url = process.env.NEXT_PUBLIC_DASHBOARD_URL.replace('/select-module', '');
+    } else if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
       if (isLocal) {
-        return `${protocol}//${hostname}:3000`;
-      }
-      if (hostname.startsWith('pos.')) {
-        return `${protocol}//${hostname.replace('pos.', 'dashboard.')}`;
-      }
-      if (hostname.includes('--bumi-anyom')) {
+        url = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app';
+      } else if (hostname.startsWith('pos.')) {
+        url = `${protocol}//${hostname.replace('pos.', 'dashboard.')}`;
+      } else if (hostname.includes('--bumi-anyom')) {
         const parts = hostname.split('--');
-        parts[0] = 'dashboard';
-        return `${protocol}//${parts.join('--')}`;
+        parts[0] = 'bumianyom-web-1';
+        url = `${protocol}//${parts.join('--')}`;
+      } else if (hostname.includes('pos')) {
+        url = `${protocol}//${hostname.replace('pos', 'bumianyom-web-1')}`;
+      } else {
+        url = `${protocol}//${hostname}`;
       }
-      return `${protocol}//${hostname}`;
     }
-    return 'http://localhost:3000';
+    return url;
   };
 
   const dashboardUrl = getDashboardUrl();
@@ -237,7 +246,24 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                 disableTransitionOnChange
               >
                 <NextTopLoader showSpinner={false} />
-                {children}
+                {rbacLoading ? (
+                  <div className="flex flex-1 items-center justify-center">
+                    <p className="text-sm text-muted-foreground animate-pulse">Checking access...</p>
+                  </div>
+                ) : !isAuthorized ? (
+                  (() => {
+                    if (typeof window !== 'undefined') {
+                      window.location.href = loginGatewayUrl;
+                    }
+                    return (
+                      <div className="flex flex-1 items-center justify-center">
+                        <p className="text-sm text-muted-foreground">Redirecting to login...</p>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  children
+                )}
               </ThemeProvider>
             </div>
           </main>
