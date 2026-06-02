@@ -38,22 +38,6 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     window.location.href = `${getDashboardUrl()}?logout=true`;
   };
 
-    // Session bridge disabled in production due to modern browser storage partitioning
-    /*
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'SESSION_STATUS') {
-        if (event.data.loggedIn === false) {
-          console.log('Session bridge detected logout on dashboard. Logging out of POS...');
-          localStorage.clear();
-          window.location.href = getLoginGatewayUrl();
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-    */
-  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
