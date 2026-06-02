@@ -154,27 +154,37 @@ export default function SuperadminPage() {
   const handleLogout = () => {
     localStorage.clear();
     toast.success('Berhasil keluar!');
-    let dashboardUrl = 'http://localhost:3000/select-module';
-    if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
-      dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL;
-    } else if (typeof window !== 'undefined') {
+    let dashboardUrl = '';
+    
+    if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
       if (isLocal) {
-        dashboardUrl = `${protocol}//${hostname}:3000/select-module`;
-      } else if (hostname.startsWith('pos.')) {
-        dashboardUrl = `${protocol}//${hostname.replace('pos.', 'dashboard.')}/select-module`;
-      } else if (hostname.includes('--bumi-anyom')) {
-        const parts = hostname.split('--');
-        parts[0] = 'admin-dashboard';
-        dashboardUrl = `${protocol}//${parts.join('--')}/select-module`;
-      } else if (hostname.includes('pos')) {
-        dashboardUrl = `${protocol}//${hostname.replace('pos', 'admin-dashboard')}/select-module`;
-      } else {
-        dashboardUrl = `${protocol}//${hostname}/select-module`;
+        dashboardUrl = 'http://localhost:3000/select-module';
       }
     }
-    window.location.href = dashboardUrl;
+
+    if (!dashboardUrl) {
+      dashboardUrl = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/select-module';
+      if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
+        dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL;
+      } else if (typeof window !== 'undefined') {
+        const { protocol, hostname } = window.location;
+        if (hostname.startsWith('pos.')) {
+          dashboardUrl = `${protocol}//${hostname.replace('pos.', 'dashboard.')}/select-module`;
+        } else if (hostname.includes('--bumi-anyom')) {
+          const parts = hostname.split('--');
+          parts[0] = 'admin-dashboard';
+          dashboardUrl = `${protocol}//${parts.join('--')}/select-module`;
+        } else if (hostname.includes('pos')) {
+          dashboardUrl = `${protocol}//${hostname.replace('pos', 'admin-dashboard')}/select-module`;
+        } else {
+          dashboardUrl = `${protocol}//${hostname}/select-module`;
+        }
+      }
+    }
+    
+    window.location.href = `${dashboardUrl}?logout=true`;
   };
 
   if (loading && !adminUser) {

@@ -22,6 +22,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { IntroSection } from '@/components/select-module/IntroSection';
 import { TransitionSection } from '@/components/select-module/TransitionSection';
 import { WorkspaceSection } from '@/components/select-module/WorkspaceSection';
+import styles from './select-module.module.css';
 
 export default function SelectModulePage() {
   const { user, loading: authLoading, signOutUser } = useAuth();
@@ -112,7 +113,7 @@ export default function SelectModulePage() {
       }
 
       try {
-        const userDocId = user.email.replace(/[@.]/g, '_');
+        const userDocId = user.email.toLowerCase().replace(/[@.]/g, '_');
         const userSnap = await getDoc(doc(db, "users_master", userDocId));
         
         if (userSnap.exists()) {
@@ -125,11 +126,7 @@ export default function SelectModulePage() {
             return;
           }
 
-          const roleId = role.toLowerCase().replace(/\s+/g, '_');
-          const roleSnap = await getDoc(doc(db, "roles_master", roleId));
-          if (roleSnap.exists()) {
-            setUserPermissions(roleSnap.data().permissions || {});
-          }
+          setUserPermissions(userData.permissions || {});
         }
       } catch (err) {
         console.error("Error fetching permissions:", err);
@@ -158,19 +155,33 @@ export default function SelectModulePage() {
     
     switch (moduleKey) {
       case 'pos':
-        return userPermissions['pos'] !== false;
+        return userPermissions['module_pos'] !== undefined 
+          ? !!userPermissions['module_pos'] 
+          : userPermissions['pos'] !== false;
       case 'front-office':
-        return userPermissions['overview'] !== false || userPermissions['forecast'] !== false || userPermissions['invoice'] !== false;
+        return userPermissions['module_front_office'] !== undefined 
+          ? !!userPermissions['module_front_office'] 
+          : (userPermissions['overview'] !== false || userPermissions['forecast'] !== false || userPermissions['invoice'] !== false);
       case 'housekeeping':
-        return userPermissions['overview'] !== false || userPermissions['forecast'] !== false;
+        return userPermissions['module_housekeeping'] !== undefined 
+          ? !!userPermissions['module_housekeeping'] 
+          : (userPermissions['overview'] !== false || userPermissions['forecast'] !== false);
       case 'accounting':
-        return userPermissions['pnl'] !== false;
+        return userPermissions['module_accounting'] !== undefined 
+          ? !!userPermissions['module_accounting'] 
+          : userPermissions['pnl'] !== false;
       case 'purchasing':
-        return userPermissions['purchasing'] !== false;
+        return userPermissions['module_purchasing'] !== undefined 
+          ? !!userPermissions['module_purchasing'] 
+          : userPermissions['purchasing'] !== false;
       case 'food-beverage':
-        return userPermissions['food-beverage'] !== false;
+        return userPermissions['module_food_beverage'] !== undefined 
+          ? !!userPermissions['module_food_beverage'] 
+          : userPermissions['food-beverage'] !== false;
       case 'cpanel':
-        return userPermissions['users'] !== false;
+        return userPermissions['module_cpanel'] !== undefined 
+          ? !!userPermissions['module_cpanel'] 
+          : userPermissions['users'] !== false;
       default:
         return false;
     }
@@ -287,10 +298,10 @@ export default function SelectModulePage() {
   }
 
   return (
-    <div className="h-screen w-screen dark:bg-black bg-gray-450/[0.1] dark:bg-dot-white bg-dot-black relative flex flex-col overflow-hidden font-sans z-0 select-none">
+    <div className={styles.container}>
       
       {/* Radial gradient mask matching open/page.tsx */}
-      <div className="absolute pointer-events-none inset-0 flex items-center justify-center dark:bg-black bg-white/[0.7] [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] z-0"></div>
+      <div className={styles.radialMask}></div>
 
       {/* Floating Animated Lottie (Bottom Right Corner - Behind Cards - Shown only in Workspace Module View) */}
       {showGrid && (
@@ -315,7 +326,7 @@ export default function SelectModulePage() {
           repeat: Infinity,
           ease: 'easeInOut',
         }}
-        className="absolute top-10 left-10 w-72 h-72 rounded-full bg-blue-500/10 dark:bg-blue-600/10 blur-[100px] pointer-events-none z-0"
+        className={styles.glowBlue}
       />
       <motion.div
         animate={{
@@ -329,7 +340,7 @@ export default function SelectModulePage() {
           ease: 'easeInOut',
           delay: 2,
         }}
-        className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-indigo-500/10 dark:bg-indigo-600/10 blur-[120px] pointer-events-none z-0"
+        className={styles.glowIndigo}
       />
 
       {/* Modular Action Buttons (Matched to POS page spacing) */}

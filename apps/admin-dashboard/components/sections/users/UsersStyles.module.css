@@ -1,0 +1,982 @@
+/* Container Layout */
+.container {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 32px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    font-family: var(--font-sans, -apple-system, sans-serif);
+    color: #181d26;
+}
+
+/* Header & Tabs */
+.header {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #dddddd;
+}
+
+@media (min-width: 1024px) {
+    .header {
+        flex-direction: row;
+        align-items: flex-end;
+    }
+}
+
+.headerTitleSec {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.subTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #9297a0;
+}
+
+.title {
+    font-size: 36px;
+    font-weight: 450;
+    letter-spacing: -0.02em;
+    color: #181d26;
+    line-height: 1.1;
+}
+
+.titleHighlight {
+    font-weight: 500;
+    color: #788069;
+}
+
+.headerActions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+}
+
+.tabGroup {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #dddddd;
+}
+
+.tabButton {
+    height: 36px;
+    padding: 0 20px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border: none;
+    background: transparent;
+    color: #9297a0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tabButtonActive {
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    color: #181d26;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.primaryButton {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: #181d26;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.primaryButton:hover {
+    background: #0d1218;
+}
+
+/* Search Bar */
+.searchWrapper {
+    position: relative;
+    max-width: 400px;
+    width: 100%;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9297a0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.searchInput {
+    width: 100%;
+    height: 40px;
+    padding: 0 16px 0 42px;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #181d26;
+    transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: #181d26;
+    box-shadow: 0 0 0 3px rgba(24, 29, 38, 0.05);
+}
+
+.usersTabContent {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.loadingContainer {
+    height: 256px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9297a0;
+}
+
+.loadingText {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    animation: loadingPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes loadingPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}
+
+/* Grids */
+.userGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.roleGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 32px;
+}
+
+/* UserCard styles */
+.userCard {
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 10px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.01);
+}
+
+.userCard:hover {
+    border-color: #9297a0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.profileInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatarContainer {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #dddddd;
+    background: #f8fafc;
+}
+
+.avatarImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(100%);
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.userCard:hover .avatarImage {
+    filter: grayscale(0%);
+    opacity: 1;
+}
+
+.nameRoleCluster {
+    display: flex;
+    flex-direction: column;
+}
+
+.userName {
+    font-size: 15px;
+    font-weight: 500;
+    color: #181d26;
+    line-height: 1.3;
+}
+
+.userRole {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #788069;
+    margin-top: 2px;
+}
+
+.cardActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.iconButton {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid #dddddd;
+    background: #ffffff;
+    color: #9297a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.iconButton:hover {
+    color: #181d26;
+    border-color: #9297a0;
+    background: #f8fafc;
+}
+
+.iconButtonDanger:hover {
+    color: #aa2d00;
+    border-color: #fcab79;
+    background: rgba(252, 171, 121, 0.1);
+}
+
+.lockBadge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: #f8fafc;
+    border: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9297a0;
+}
+
+.cardBody {
+    border-top: 1px solid #f1f5f9;
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cardDetailItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #41454d;
+}
+
+.cardFooter {
+    border-top: 1px solid #f1f5f9;
+    padding-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #9297a0;
+}
+
+.footerLeftActive {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #788069;
+}
+
+.footerLeftActiveCircle {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #788069;
+}
+
+.mailIcon {
+    opacity: 0.4;
+}
+
+.footerRightSecure {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* RoleCard styles */
+.roleCard {
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    color: #181d26;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.01);
+}
+
+.roleCardHeader {
+    padding: 20px;
+    border-bottom: 1px solid transparent;
+    background: #f8fafc;
+    transition: all 0.25s ease;
+}
+
+.roleCardHeaderExpanded {
+    border-bottom-color: #dddddd;
+}
+
+.chevronContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9297a0;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chevronExpanded {
+    transform: rotate(180deg);
+    color: #181d26;
+}
+
+.roleHeaderCluster {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.roleIconContainer {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #788069;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.roleLabel {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #181d26;
+}
+
+.roleSubtitle {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #9297a0;
+    margin-top: 2px;
+}
+
+.roleCardBody {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    max-height: 550px;
+}
+
+.moduleBox {
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+    padding: 16px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.moduleHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.moduleLabelCluster {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.moduleIcon {
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    background: #f8fafc;
+    border: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9297a0;
+}
+
+.moduleLabel {
+    font-size: 12px;
+    font-weight: 650;
+    color: #181d26;
+}
+
+.submenuContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.submenuContainerDisabled {
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.submenuRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+}
+
+.submenuRow:hover {
+    background: #f8fafc;
+}
+
+.submenuLabelCluster {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.submenuIcon {
+    color: #9297a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.submenuLabel {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #41454d;
+}
+
+/* Master Toggle Button Styles to overwrite tailwind interference */
+.toggleBtn {
+    width: 36px;
+    height: 20px;
+    border-radius: 999px;
+    position: relative;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    padding: 0;
+    margin: 0;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.toggleBtnOff {
+    background-color: #e0e2e6 !important;
+}
+
+.toggleBtnOn {
+    background-color: #788069 !important;
+}
+
+.toggleCircle {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggleBtnOn .toggleCircle {
+    transform: translateX(16px);
+}
+
+.toggleIconOn {
+    color: #788069;
+    font-weight: bold;
+}
+
+.toggleIconOff {
+    color: #9297a0;
+}
+
+/* Submenu Toggle Button Styles */
+.toggleBtnSub {
+    width: 32px;
+    height: 16px;
+    border-radius: 999px;
+    position: relative;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    padding: 0;
+    margin: 0;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.toggleBtnSubOff {
+    background-color: #e2e8f0 !important;
+}
+
+.toggleBtnSubOn {
+    background-color: #788069 !important;
+}
+
+.toggleCircleSub {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggleBtnSubOn .toggleCircleSub {
+    transform: translateX(16px);
+}
+
+.roleCardFooter {
+    padding: 16px 20px;
+    border-top: 1px solid #dddddd;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #9297a0;
+}
+
+.footerDivider {
+    width: 32px;
+    height: 1px;
+    background: #dddddd;
+}
+
+/* Drawer styles */
+.drawerOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(24, 29, 38, 0.3);
+    backdrop-filter: blur(1px);
+}
+
+.drawerPanel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
+    width: 100%;
+    max-width: 440px;
+    background: #ffffff;
+    border-left: 1px solid #dddddd;
+    z-index: 501;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-sans, -apple-system, sans-serif);
+    color: #181d26;
+}
+
+.drawerHeader {
+    padding: 24px;
+    border-bottom: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.drawerHeaderTitleCluster {
+    display: flex;
+    flex-direction: column;
+}
+
+.drawerHeaderMeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.drawerHeaderMetaIcon {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: #f8fafc;
+    border: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9297a0;
+}
+
+.drawerHeaderMetaText {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #9297a0;
+}
+
+.drawerTitle {
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: #181d26;
+}
+
+.drawerTitleHighlight {
+    font-weight: 600;
+    color: #788069;
+}
+
+.drawerCloseBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid #dddddd;
+    background: #ffffff;
+    color: #9297a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.drawerCloseBtn:hover {
+    color: #181d26;
+    border-color: #9297a0;
+}
+
+.drawerBody {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.drawerFormGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.drawerFormLabel {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #9297a0;
+    padding-left: 2px;
+}
+
+.drawerInputWrapper {
+    position: relative;
+}
+
+.drawerInputIcon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9297a0;
+    pointer-events: none;
+}
+
+.drawerInput {
+    width: 100%;
+    height: 38px;
+    padding: 0 12px 0 38px;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #181d26;
+    transition: all 0.2s ease;
+}
+
+.drawerInput:focus {
+    outline: none;
+    border-color: #181d26;
+    box-shadow: 0 0 0 3px rgba(24, 29, 38, 0.05);
+}
+
+.drawerInput:disabled {
+    opacity: 0.5;
+    background: #f8fafc;
+    cursor: not-allowed;
+}
+
+.resetBtnCluster {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 9px;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #788069;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    width: fit-content;
+}
+
+.resetIconBox {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.roleSelectHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 2px;
+    margin-bottom: 4px;
+}
+
+.levelBadge {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #788069;
+    background: #f8fafc;
+    border: 1px solid #dddddd;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.roleButtonGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.roleSelectBtn {
+    height: 38px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    color: #9297a0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.roleSelectBtn:hover {
+    border-color: #9297a0;
+    color: #41454d;
+}
+
+.roleSelectBtnActive {
+    background: #788069;
+    border-color: #788069;
+    color: #ffffff;
+}
+
+.drawerFooter {
+    padding: 24px;
+    background: #f8fafc;
+    border-top: 1px solid #dddddd;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.submitBtn {
+    width: 100%;
+    height: 40px;
+    background: #181d26;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.submitBtn:hover {
+    background: #0d1218;
+}
+
+.submitBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.cancelBtn {
+    width: 100%;
+    height: 38px;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    color: #9297a0;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cancelBtn:hover {
+    color: #41454d;
+    border-color: #9297a0;
+}
+
+/* Custom scrollbar utility */
+.customScrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.customScrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.customScrollbar::-webkit-scrollbar-thumb {
+    background: #e0e2e6;
+    border-radius: 10px;
+}
+
+.customScrollbar::-webkit-scrollbar-thumb:hover {
+    background: #788069;
+}
+
+.pointerEventsAuto {
+    pointer-events: auto;
+}
+
+.pointerEventsNone {
+    pointer-events: none;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.animateSpin {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+

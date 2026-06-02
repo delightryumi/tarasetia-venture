@@ -36,9 +36,23 @@ export default function POSPage() {
       // Collect session state to forward to the POS app
       const params = new URLSearchParams();
       
-      const storedUser = localStorage.getItem('user');
+      const storedUser = localStorage.getItem('auth_user');
       if (storedUser) {
-        params.set('user', storedUser);
+        // Map auth_user fields to pos expected fields
+        try {
+          const authUserObj = JSON.parse(storedUser);
+          const posUserObj = {
+            id: authUserObj.uid,
+            name: authUserObj.displayName,
+            username: authUserObj.email?.split('@')[0],
+            email: authUserObj.email,
+            role: authUserObj.role || 'WORKER',
+            restoId: 'default-resto'
+          };
+          params.set('user', JSON.stringify(posUserObj));
+        } catch (e) {
+          params.set('user', storedUser);
+        }
       } else if (user) {
         // Fallback user state structure
         const email = user.email || '';
@@ -47,7 +61,8 @@ export default function POSPage() {
           id: user.uid,
           name: name,
           username: email.split('@')[0],
-          role: 'WORKER',
+          email: email,
+          role: user.role || 'WORKER',
           restoId: 'default-resto'
         };
         params.set('user', JSON.stringify(posUserObj));

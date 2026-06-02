@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Plus_Jakarta_Sans } from 'next/font/google';
+import styles from './ModuleBentoGrid.module.css';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -144,41 +145,32 @@ const LuxuryBentoCard = ({ item }: { item: MenuItem }) => {
 
   const CardContent = (
     <>
-      {/* 1. Base Bento Grid styled Background with Animated Dot Pattern */}
-      <motion.div 
+      {/* 1. Base Bento Grid styled Background with Premium Glassmorphism */}
+      <div 
         className={cn(
-          "absolute inset-0 rounded-xl z-0 transition-all duration-300",
-          "bg-white dark:bg-black bg-dot-black dark:bg-dot-white"
+          "absolute inset-0 rounded-2xl z-0 transition-all duration-300",
+          "bg-gradient-to-br from-white/90 to-neutral-50/50 dark:from-neutral-900/70 dark:to-neutral-950/40"
         )}
-        animate={item.active && isHovered ? {
-          backgroundPosition: ["0px 0px", "32px 32px"],
-        } : {
-          backgroundPosition: "0px 0px"
-        }}
-        transition={{
-          repeat: Infinity,
-          duration: 4,
-          ease: "linear"
-        }}
       />
 
-      {/* 2. Radial Mask to fade the dots towards the edges (like the Clock/Weather widgets) */}
+      {/* 2. Soft Accent Background Glow (Shines on hover) */}
       <div 
-        className="absolute inset-0 rounded-xl z-0 pointer-events-none [mask-image:radial-gradient(ellipse_at_center,white,transparent)]"
+        className="absolute inset-0 rounded-2xl z-0 pointer-events-none transition-opacity duration-500"
         style={{
           background: item.active
-            ? `radial-gradient(circle at center, transparent 15%, ${theme.base}12 100%)`
-            : undefined
+            ? `radial-gradient(circle at 80% 80%, ${theme.base}12, transparent 65%)`
+            : undefined,
+          opacity: isHovered ? 1.0 : 0.6
         }}
       />
 
       {/* 3. Glassy Frost Overlay (giving the premium transparent "kaca" look) */}
-      <div className="absolute inset-[1px] bg-neutral-100/40 dark:bg-black/60 backdrop-blur-md rounded-[11px] z-10" />
+      <div className="absolute inset-[1px] bg-white/70 dark:bg-black/45 backdrop-blur-xl rounded-[15px] z-10" />
 
       {/* 4. The Spotlight Border effect that follows mouse */}
       {item.active && isHovered && (
         <motion.div
-          className="absolute inset-0 rounded-xl z-20 pointer-events-none"
+          className="absolute inset-0 rounded-2xl z-20 pointer-events-none"
           style={{
             background: spotlightBg
           }}
@@ -188,19 +180,19 @@ const LuxuryBentoCard = ({ item }: { item: MenuItem }) => {
       {/* 5. Static Border for structure */}
       <div 
         className={cn(
-          "absolute inset-0 rounded-xl border z-20 pointer-events-none transition-all duration-500",
+          "absolute inset-0 rounded-2xl border z-20 pointer-events-none transition-all duration-500",
           item.active 
-            ? "border-neutral-200 dark:border-white/[0.15]" 
-            : "border-neutral-100 dark:border-white/[0.05]"
+            ? "border-neutral-200/80 dark:border-white/[0.12]" 
+            : "border-neutral-100 dark:border-white/[0.04]"
         )} 
         style={item.active && isHovered ? { 
           borderColor: theme.base + '66', 
-          boxShadow: `0 0 15px ${theme.base}15, inset 0 0 8px ${theme.base}08` 
+          boxShadow: `inset 0 0 8px ${theme.base}08` 
         } : {}}
       />
 
       {/* 6. Lock / Active status indicator at top right */}
-      <div className="absolute top-2 right-2 z-40">
+      <div className="absolute top-2.5 right-2.5 z-40">
         {item.active ? (
           <span className="relative flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60"></span>
@@ -211,10 +203,10 @@ const LuxuryBentoCard = ({ item }: { item: MenuItem }) => {
         )}
       </div>
 
-      {/* --- Actual Content Layer in Horizontal Row layout for 60px height --- */}
+      {/* --- Actual Content Layer in Horizontal Row layout for 82px height --- */}
       <div 
         className={cn(
-          "relative z-30 h-full w-full p-2.5 flex items-center gap-3 select-none transition-all duration-300",
+          "relative z-30 h-full w-full px-4 py-3.5 flex items-center gap-3.5 select-none transition-all duration-300",
           plusJakartaSans.className
         )}
       >
@@ -229,32 +221,36 @@ const LuxuryBentoCard = ({ item }: { item: MenuItem }) => {
             ease: "easeInOut"
           }}
           className={cn(
-            'relative flex items-center justify-center w-9 h-9 rounded-lg shrink-0 transition-all duration-500 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_2px_6px_rgba(0,0,0,0.5)]',
+            'relative flex items-center justify-center w-11 h-11 rounded-xl shrink-0 transition-all duration-500 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.7)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.3)]',
             item.active
-              ? `bg-neutral-50 dark:bg-zinc-900 border border-neutral-200/50 dark:border-white/[0.1] ${theme.text}`
+              ? `${theme.text}`
               : 'bg-neutral-100/50 dark:bg-neutral-900/30 border border-transparent text-neutral-400'
           )}
+          style={item.active ? {
+            backgroundColor: `${theme.base}12`,
+            border: `1px solid ${theme.base}25`,
+          } : {}}
         >
           {/* Glowing dot inside icon for active items */}
           {item.active && (
             <div 
-              className="absolute inset-0 rounded-lg blur-sm opacity-35 z-[-1]" 
+              className="absolute inset-0 rounded-xl blur-sm opacity-25 z-[-1]" 
               style={{ backgroundColor: theme.base }} 
             />
           )}
-          <Icon strokeWidth={1.5} className="w-5.5 h-5.5" />
+          <Icon strokeWidth={1.5} className="w-6 h-6" />
         </motion.div>
 
         {/* Right: Title & Description with Hover shift and Text Shadow */}
-        <div className="flex flex-col flex-1 min-w-0 text-left justify-center pl-1 transition-transform duration-300 group-hover:translate-x-1.5">
+        <div className="flex flex-col flex-1 min-w-0 text-left justify-center pl-0.5 transition-transform duration-300 group-hover:translate-x-1">
           <h3
             className={cn(
-              'text-[11px] font-extrabold tracking-tight transition-all duration-300 flex items-center gap-1.5',
+              'text-[13px] font-extrabold tracking-tight transition-all duration-300 flex items-center gap-1.5',
               item.active
                 ? 'text-neutral-900 dark:text-white'
                 : 'text-neutral-400'
             )}
-            style={item.active && isHovered ? { textShadow: `0 0 5px ${theme.base}` } : {}}
+            style={item.active && isHovered ? { textShadow: `0 0 8px ${theme.base}44` } : {}}
           >
             {item.title}
             {item.active && (
@@ -268,7 +264,7 @@ const LuxuryBentoCard = ({ item }: { item: MenuItem }) => {
               </motion.div>
             )}
           </h3>
-          <p className="text-[9px] mt-0.5 line-clamp-1 font-bold text-neutral-500 dark:text-neutral-400 leading-tight">
+          <p className="text-[10.5px] mt-0.5 line-clamp-1 font-bold text-neutral-500 dark:text-neutral-400/90 leading-tight">
             {item.description}
           </p>
         </div>
@@ -290,13 +286,20 @@ const LuxuryBentoCard = ({ item }: { item: MenuItem }) => {
         transformPerspective: 1000,
       }}
       className={cn(
-        "group block relative rounded-xl h-[60px] w-full sm:w-[220px] cursor-pointer",
-        "transition-shadow duration-500",
-        isHovered ? "shadow-xl shadow-black/5 dark:shadow-black/25" : "shadow-md shadow-black/[0.02] dark:shadow-none"
+        "group block relative rounded-2xl h-[82px] w-full sm:w-[256px] cursor-pointer",
+        "transition-all duration-500"
       )}
     >
       <motion.div
+        animate={{
+          y: isHovered ? -6 : 0,
+          scale: isHovered ? 1.035 : 1,
+          boxShadow: isHovered 
+            ? `0 20px 40px -12px ${theme.base}33, 0 8px 16px -6px ${theme.base}20` 
+            : '0 4px 20px -10px rgba(0,0,0,0.05)',
+        }}
         whileTap={{ scale: 0.98 }} // Apple-like click effect
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
         className="w-full h-full relative"
       >
         {CardContent}
@@ -305,8 +308,8 @@ const LuxuryBentoCard = ({ item }: { item: MenuItem }) => {
   ) : (
     <div 
       className={cn(
-        "relative rounded-xl h-[60px] w-full sm:w-[220px]",
-        "opacity-75 grayscale-[40%] cursor-not-allowed"
+        "relative rounded-2xl h-[82px] w-full sm:w-[256px]",
+        "opacity-60 grayscale-[50%] cursor-not-allowed border border-dashed border-neutral-250 dark:border-white/[0.08]"
       )}
     >
       {CardContent}
@@ -349,8 +352,8 @@ export function ModuleBentoGrid({ menus }: ModuleBentoGridProps) {
       animate="visible"
       className="w-full max-w-5xl mx-auto z-10 p-4"
     >
-      {/* Symmetric wrapped layout centered on page */}
-      <div className={cn("flex flex-wrap justify-center gap-3.5 w-full", plusJakartaSans.className)}>
+      {/* Symmetric wrapped layout centered on page with standard Tailwind gap classes */}
+      <div className={cn("flex flex-wrap justify-center gap-x-6 gap-y-12 sm:gap-y-16 w-full", plusJakartaSans.className)}>
         {menus.map((item, idx) => (
           <motion.div 
             key={item.title + idx} 

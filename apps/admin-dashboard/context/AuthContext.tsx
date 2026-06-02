@@ -3,7 +3,17 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut as fbSignOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+
+const SUPERADMIN_PERMISSIONS_FALLBACK = [
+    "module_pos", "module_front_office", "module_housekeeping", 
+    "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel",
+    "overview", "forecast", "invoice", "pnl", "logo", "hero", "room-type", 
+    "about", "gallery", "footer", "attractions", "promo", "packages", "seo", "users",
+    "purchasing", "store-requisition", "purchase-requisition", "daily-market-list", 
+    "stock-opname", "items", "suppliers", "purchase-order", "food-beverage-product",
+    "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings", "pos_technologies"
+];
 
 interface CustomUser {
     uid: string;
@@ -33,6 +43,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Sync session on load
     useEffect(() => {
         const checkSession = async () => {
+            if (typeof window !== "undefined") {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get("logout") === "true") {
+                    localStorage.removeItem("auth_user");
+                    setUser(null);
+                    await fbSignOut(auth);
+                    window.location.href = "/";
+                    return;
+                }
+            }
+
             const storedUser = localStorage.getItem("auth_user");
             if (storedUser) {
                 try {
@@ -48,9 +69,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
                 if (fbUser) {
                     const email = fbUser.email || "";
-                    const docId = email.replace(/[@.]/g, "_");
+                    const docId = email.toLowerCase().replace(/[@.]/g, "_");
                     const docRef = doc(db, "users_master", docId);
-                    const docSnap = await getDoc(docRef);
+                    let docSnap = await getDoc(docRef);
+                    
+                    // Proactively create superadmin document if it doesn't exist
+                    if (!docSnap.exists() && email.toLowerCase() === "nexura.management@gmail.com") {
+                        const adminPerms: Record<string, boolean> = {};
+                        SUPERADMIN_PERMISSIONS_FALLBACK.forEach(k => {
+                            adminPerms[k] = true;
+                        });
+                        await setDoc(docRef, {
+                            name: "Nexura Management",
+                            email: email,
+                            password: "000000",
+                            role: "superadmin",
+                            permissions: adminPerms
+                        });
+                        docSnap = await getDoc(docRef);
+                    }
                     
                     const customUser: CustomUser = {
                         uid: fbUser.uid,
@@ -79,9 +116,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const loginWithFirestore = async (email: string, password: string): Promise<boolean> => {
         try {
-            const docId = email.replace(/[@.]/g, "_");
+            const docId = email.toLowerCase().replace(/[@.]/g, "_");
             const docRef = doc(db, "users_master", docId);
-            const docSnap = await getDoc(docRef);
+            let docSnap = await getDoc(docRef);
+            
+            // Proactively create superadmin document if it doesn't exist
+            if (!docSnap.exists() && email.toLowerCase() === "nexura.management@gmail.com" && password === "000000") {
+                const adminPerms: Record<string, boolean> = {};
+                SUPERADMIN_PERMISSIONS_FALLBACK.forEach(k => {
+                    adminPerms[k] = true;
+                });
+                await setDoc(docRef, {
+                    name: "Nexura Management",
+                    email: email,
+                    password: "000000",
+                    role: "superadmin",
+                    permissions: adminPerms
+                });
+                docSnap = await getDoc(docRef);
+            }
             
             if (docSnap.exists()) {
                 const data = docSnap.data();

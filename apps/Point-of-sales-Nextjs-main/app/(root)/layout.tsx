@@ -23,17 +23,35 @@ import { registerNetworkSync, syncProductsFromServer, syncUnsyncedTransactions }
 const RootLayout = ({ children }: RootLayoutProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const { canAccess, loading: rbacLoading } = useRBAC();
+  const { canAccess, role, loading: rbacLoading } = useRBAC();
   const [storeName, setStoreName] = useState<string | null>(null);
 
-  const isAuthorized = canAccess('pos');
+  console.log('RBAC hook role:', role);
+  const isAuthorized = canAccess('module_pos') || canAccess('pos');
+  console.log('isAuthorized computed:', isAuthorized);
+
 
   const isRecordDetail = pathname?.startsWith('/records/') && pathname !== '/records';
 
   const handleLogout = () => {
     localStorage.clear();
-    window.location.href = dashboardUrl;
+    window.location.href = `${getDashboardUrl()}?logout=true`;
   };
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'SESSION_STATUS') {
+        if (event.data.loggedIn === false) {
+          console.log('Session bridge detected logout on dashboard. Logging out of POS...');
+          localStorage.clear();
+          window.location.href = getLoginGatewayUrl();
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -56,7 +74,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     // 1. Enforce Login / Retrieve Session
     const userJson = localStorage.getItem('user');
     if (!userJson) {
-      window.location.href = loginGatewayUrl;
+      window.location.href = getLoginGatewayUrl();
       return;
     }
 
@@ -69,12 +87,13 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     } catch (e) {
       console.error('Invalid user session JSON, clearing storage:', e);
       localStorage.removeItem('user');
-      window.location.href = loginGatewayUrl;
+      window.location.href = getLoginGatewayUrl();
       return;
     }
 
 
-    const restoId = user.restoId;
+        console.log('Parsed user object:', user);
+        const restoId = user.restoId;
     const cachedRestoName = localStorage.getItem('restoName') || 'POS Resto';
     setStoreName(cachedRestoName);
 
@@ -123,15 +142,20 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   }, [router]);
 
   const getDashboardUrl = () => {
+    if (typeof window !== 'undefined') {
+      const { protocol, hostname } = window.location;
+      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
+      if (isLocal) {
+        return 'http://localhost:3000/select-module';
+      }
+    }
+
     let url = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/select-module';
     if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
       url = process.env.NEXT_PUBLIC_DASHBOARD_URL;
     } else if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
-      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
-      if (isLocal) {
-        url = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/select-module';
-      } else if (hostname.startsWith('pos.')) {
+      if (hostname.startsWith('pos.')) {
         url = `${protocol}//${hostname.replace('pos.', 'dashboard.')}/select-module`;
       } else if (hostname.includes('--bumi-anyom')) {
         const parts = hostname.split('--');
@@ -152,15 +176,20 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   };
 
   const getLoginGatewayUrl = () => {
+    if (typeof window !== 'undefined') {
+      const { protocol, hostname } = window.location;
+      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
+      if (isLocal) {
+        return 'http://localhost:3000';
+      }
+    }
+
     let url = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app';
     if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
       url = process.env.NEXT_PUBLIC_DASHBOARD_URL.replace('/select-module', '');
     } else if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
-      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
-      if (isLocal) {
-        url = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app';
-      } else if (hostname.startsWith('pos.')) {
+      if (hostname.startsWith('pos.')) {
         url = `${protocol}//${hostname.replace('pos.', 'dashboard.')}`;
       } else if (hostname.includes('--bumi-anyom')) {
         const parts = hostname.split('--');
@@ -175,8 +204,15 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     return url;
   };
 
-  const dashboardUrl = getDashboardUrl();
-  const loginGatewayUrl = getLoginGatewayUrl();
+  const [dashboardUrl, setDashboardUrl] = useState('https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/select-module');
+  const [loginGatewayUrl, setLoginGatewayUrl] = useState('https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app');
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setDashboardUrl(getDashboardUrl());
+    setLoginGatewayUrl(getLoginGatewayUrl());
+    setIsMounted(true);
+  }, []);
 
   return (
     <div className="bg-gray-300 dark:bg-black h-screen overflow-hidden">
@@ -246,6 +282,13 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                 disableTransitionOnChange
               >
                 <NextTopLoader showSpinner={false} />
+                {isMounted && (
+                  <iframe
+                    src={`${dashboardUrl.replace('/select-module', '')}/auth/session-bridge`}
+                    className="hidden"
+                    style={{ display: 'none' }}
+                  />
+                )}
                 {rbacLoading ? (
                   <div className="flex flex-1 items-center justify-center">
                     <p className="text-sm text-muted-foreground animate-pulse">Checking access...</p>

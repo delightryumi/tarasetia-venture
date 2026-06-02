@@ -55,9 +55,22 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
 
       // Collect session state
       const params = new URLSearchParams();
-      const storedUser = localStorage.getItem('user');
+      const storedUser = localStorage.getItem('auth_user');
       if (storedUser) {
-        params.set('user', storedUser);
+        try {
+          const authUserObj = JSON.parse(storedUser);
+          const posUserObj = {
+            id: authUserObj.uid,
+            name: authUserObj.displayName,
+            username: authUserObj.email?.split('@')[0],
+            email: authUserObj.email,
+            role: authUserObj.role || 'WORKER',
+            restoId: 'default-resto'
+          };
+          params.set('user', JSON.stringify(posUserObj));
+        } catch (e) {
+          params.set('user', storedUser);
+        }
       } else if (user) {
         const email = user.email || '';
         const name = user.displayName || email.split('@')[0];
@@ -65,7 +78,8 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
           id: user.uid,
           name: name,
           username: email.split('@')[0],
-          role: 'WORKER',
+          email: email,
+          role: user.role || 'WORKER',
           restoId: 'default-resto'
         };
         params.set('user', JSON.stringify(posUserObj));

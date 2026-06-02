@@ -7,7 +7,8 @@ import {
     LayoutDashboard, TrendingUp, FileText, PieChart,
     FileImage, Home as HomeIcon, Layout as LayoutIcon, 
     Info, Grid, Settings as SettingsIcon, MapPin, 
-    Gift, Package, Users, ShoppingCart
+    Gift, Package, Users, ShoppingCart, Banknote, Building2,
+    BedDouble, Coffee, ShoppingBag, Calculator, Store, User as UserIcon, Archive, Star
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -15,30 +16,112 @@ import { useUsers, ROLES } from "./useUsers";
 import { UserCard } from "./components/UserCard";
 import { RoleCard } from "./components/RoleCard";
 import { UserDrawer } from "./components/UserDrawer";
-import { MenuItem, UserProfile } from "./types";
-import "./UsersStyles.css";
+import { UserProfile } from "./types";
+import styles from "./UsersStyles.module.css";
 
-/* ── Brand Colors ── */
+/* ── Brand Colors & Design Tokens ── */
 const SAGE = "#788069";
+const INK = "#181d26";
 
-/* ── Menu Definition ── */
-const MENU_ITEMS: MenuItem[] = [
-    { id: "overview", label: "Overview", icon: <LayoutDashboard size={14} /> },
-    { id: "forecast", label: "Forecast", icon: <TrendingUp size={14} /> },
-    { id: "pos", label: "POS Terminal", icon: <ShoppingCart size={14} /> },
-    { id: "invoice", label: "Create Invoice", icon: <FileText size={14} /> },
-    { id: "pnl", label: "PNL Statement", icon: <PieChart size={14} /> },
-    { id: "logo", label: "Logo Management", icon: <FileImage size={14} /> },
-    { id: "hero", label: "Hero Management", icon: <HomeIcon size={14} /> },
-    { id: "room-type", label: "Room Categories", icon: <LayoutIcon size={14} /> },
-    { id: "about", label: "About Us", icon: <Info size={14} /> },
-    { id: "gallery", label: "Gallery", icon: <Grid size={14} /> },
-    { id: "footer", label: "Footer Info", icon: <SettingsIcon size={14} /> },
-    { id: "attractions", label: "Nearby Attractions", icon: <MapPin size={14} /> },
-    { id: "promo", label: "Promo Management", icon: <Gift size={14} /> },
-    { id: "packages", label: "Custom Packages", icon: <Package size={14} /> },
-    { id: "seo", label: "SEO & Metadata", icon: <Search size={14} /> },
-    { id: "users", label: "User Management", icon: <Users size={14} /> },
+export interface PermissionSubmenu {
+    id: string;
+    label: string;
+    icon: React.ReactNode;
+}
+
+export interface PermissionModule {
+    id: string;
+    label: string;
+    icon: React.ReactNode;
+    submenus: PermissionSubmenu[];
+}
+
+/* ── Permission Tree (Module & Feature Structure) ── */
+const PERMISSION_TREE: PermissionModule[] = [
+    {
+        id: "module_pos",
+        label: "POS (Point of Sales)",
+        icon: <Banknote size={14} />,
+        submenus: [
+            { id: "pos_home", label: "Home", icon: <HomeIcon size={14} /> },
+            { id: "pos_lexupos", label: "LexuPos", icon: <Store size={14} /> },
+            { id: "pos_cashier", label: "Cashier", icon: <UserIcon size={14} /> },
+            { id: "pos_product", label: "Product", icon: <Package size={14} /> },
+            { id: "pos_records", label: "Records", icon: <Archive size={14} /> },
+            { id: "pos_settings", label: "Settings", icon: <SettingsIcon size={14} /> },
+            { id: "pos_technologies", label: "Technologies", icon: <Star size={14} /> },
+        ]
+    },
+    {
+        id: "module_front_office",
+        label: "Front Office",
+        icon: <Building2 size={14} />,
+        submenus: [
+            { id: "overview", label: "Overview", icon: <LayoutDashboard size={14} /> },
+            { id: "forecast", label: "Forecast", icon: <TrendingUp size={14} /> },
+            { id: "invoice", label: "Create Invoice", icon: <FileText size={14} /> },
+            { id: "purchase-order", label: "Purchase Order", icon: <FileText size={14} /> },
+        ]
+    },
+    {
+        id: "module_housekeeping",
+        label: "House Keeping",
+        icon: <BedDouble size={14} />,
+        submenus: [
+            { id: "overview", label: "Overview", icon: <LayoutDashboard size={14} /> },
+            { id: "forecast", label: "Forecast", icon: <TrendingUp size={14} /> },
+            { id: "purchase-order", label: "Purchase Order", icon: <FileText size={14} /> },
+        ]
+    },
+    {
+        id: "module_food_beverage",
+        label: "Food & Beverage",
+        icon: <Coffee size={14} />,
+        submenus: [
+            { id: "food-beverage-product", label: "F&B Product", icon: <Coffee size={14} /> },
+        ]
+    },
+    {
+        id: "module_purchasing",
+        label: "Purchasing",
+        icon: <ShoppingBag size={14} />,
+        submenus: [
+            { id: "purchasing", label: "Dashboard", icon: <HomeIcon size={14} /> },
+            { id: "store-requisition", label: "Store Requisitions", icon: <FileText size={14} /> },
+            { id: "purchase-requisition", label: "Purchase Requisitions", icon: <ShoppingCart size={14} /> },
+            { id: "daily-market-list", label: "Daily Market List", icon: <Coffee size={14} /> },
+            { id: "stock-opname", label: "Stock Opname", icon: <PieChart size={14} /> },
+            { id: "items", label: "Items Master", icon: <Package size={14} /> },
+            { id: "suppliers", label: "Suppliers", icon: <Users size={14} /> },
+        ]
+    },
+    {
+        id: "module_accounting",
+        label: "Accounting",
+        icon: <Calculator size={14} />,
+        submenus: [
+            { id: "pnl", label: "PNL Statement", icon: <PieChart size={14} /> },
+            { id: "purchase-order", label: "Purchase Order", icon: <FileText size={14} /> },
+        ]
+    },
+    {
+        id: "module_cpanel",
+        label: "CPanel (System Admin)",
+        icon: <SettingsIcon size={14} />,
+        submenus: [
+            { id: "logo", label: "Logo Management", icon: <FileImage size={14} /> },
+            { id: "hero", label: "Hero Management", icon: <HomeIcon size={14} /> },
+            { id: "room-type", label: "Room Categories", icon: <LayoutIcon size={14} /> },
+            { id: "about", label: "About Us", icon: <Info size={14} /> },
+            { id: "gallery", label: "Gallery", icon: <Grid size={14} /> },
+            { id: "footer", label: "Footer Info", icon: <SettingsIcon size={14} /> },
+            { id: "attractions", label: "Nearby Attractions", icon: <MapPin size={14} /> },
+            { id: "promo", label: "Promo Management", icon: <Gift size={14} /> },
+            { id: "packages", label: "Custom Packages", icon: <Package size={14} /> },
+            { id: "seo", label: "SEO & Metadata", icon: <Search size={14} /> },
+            { id: "users", label: "User Management", icon: <Users size={14} /> },
+        ]
+    }
 ];
 
 /* ── Animations ── */
@@ -53,9 +136,9 @@ const rise = {
 
 export const UsersSection: React.FC = () => {
     const { 
-        users, rolesPerms, loading, 
+        users, loading, 
         handleSaveUser, handleDeleteUser, togglePermission 
-    } = useUsers(MENU_ITEMS);
+    } = useUsers([]);
 
     const [activeTab, setActiveTab] = useState<"users" | "permissions">("users");
     const [searchQuery, setSearchQuery] = useState("");
@@ -79,7 +162,7 @@ export const UsersSection: React.FC = () => {
 
     const openEditDrawer = (user: UserProfile) => {
         setEditingUser(user);
-        setFormData({ email: user.email, name: user.name, role: user.role });
+        setFormData({ email: user.email, name: user.name, role: user.role, password: "" });
         setIsDrawerOpen(true);
     };
 
@@ -120,55 +203,48 @@ export const UsersSection: React.FC = () => {
     };
 
     const filteredUsers = users.filter(u => 
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        u.email.toLowerCase().includes(searchQuery.toLowerCase())
+        (u.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+        (u.email || "").toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
-        <div className="w-full max-w-[1440px] mx-auto px-6 md:px-10 py-8 flex flex-col gap-8 font-sans">
+        <div className={styles.container}>
             {/* ─── Header ─── */}
-            <motion.header variants={rise} initial="hidden" animate="show" className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-stone-100">
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-3.5 mb-1">
-                        <div className="w-7 h-7 rounded-md flex items-center justify-center bg-sage/10 text-sage transition-transform hover:rotate-12" style={{ backgroundColor: `${SAGE}1A`, color: SAGE }}>
-                            <ShieldCheck size={13} />
-                        </div>
-                        <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">Security & Access</span>
+            <motion.header variants={rise} initial="hidden" animate="show" className={styles.header}>
+                <div className={styles.headerTitleSec}>
+                    <div className={styles.subTitle}>
+                        <ShieldCheck size={12} />
+                        <span>Security & Administration</span>
                     </div>
-                    <h1 className="text-2xl md:text-3xl font-black text-stone-900 tracking-tight">
-                        User <span style={{ color: SAGE }}>Management</span>
+                    <h1 className={styles.title}>
+                        User <span className={styles.titleHighlight}>Management</span>
                     </h1>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-3">
+                <div className={styles.headerActions}>
+                    <div className={styles.tabGroup}>
                         <button 
                             onClick={() => setActiveTab("users")}
-                            className={`h-[46px] min-w-[150px] px-6 rounded-xl text-[10px] font-medium uppercase tracking-[0.2em] transition-all ${activeTab === "users" ? "text-white shadow-lg shadow-sage/20" : "bg-white border border-stone-100 text-stone-400 hover:text-stone-600 hover:border-stone-200"}`}
-                            style={activeTab === "users" ? { backgroundColor: SAGE } : {}}
+                            className={`${styles.tabButton} ${activeTab === "users" ? styles.tabButtonActive : ""}`}
                         >
                             Users
                         </button>
                         <button 
                             onClick={() => setActiveTab("permissions")}
-                            className={`h-[46px] min-w-[150px] px-6 rounded-xl text-[10px] font-medium uppercase tracking-[0.2em] transition-all ${activeTab === "permissions" ? "text-white shadow-lg shadow-black/20" : "bg-white border border-stone-100 text-stone-400 hover:text-stone-600 hover:border-stone-200"}`}
-                            style={activeTab === "permissions" ? { backgroundColor: "#1A1C14" } : {}}
+                            className={`${styles.tabButton} ${activeTab === "permissions" ? styles.tabButtonActive : ""}`}
                         >
                             Permissions
                         </button>
                     </div>
                     
                     {activeTab === "users" && (
-                        <div className="flex items-center gap-3 border-l border-stone-100 pl-4">
-                            <button 
-                                onClick={openCreateDrawer}
-                                className="h-[46px] min-w-[150px] px-6 rounded-xl text-[10px] font-medium uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-stone-200/40 text-stone-900"
-                                style={{ backgroundColor: "#ffd8a6" }}
-                            >
-                                <Plus size={14} />
-                                Add User
-                            </button>
-                        </div>
+                        <button 
+                            onClick={openCreateDrawer}
+                            className={styles.primaryButton}
+                        >
+                            <Plus size={14} />
+                            Add User
+                        </button>
                     )}
                 </div>
             </motion.header>
@@ -178,14 +254,15 @@ export const UsersSection: React.FC = () => {
                 {activeTab === "users" ? (
                     <motion.section 
                         key="users-tab"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 10 }}
-                        className="flex flex-col gap-6"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className={styles.usersTabContent}
                     >
                         {/* Search Bar */}
-                        <div className="relative max-w-md w-full group">
-                            <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-stone-400 group-focus-within:text-sage transition-colors">
+                        <div className={styles.searchWrapper}>
+                            <div className={styles.searchIcon}>
                                 <Search size={16} />
                             </div>
                             <input 
@@ -193,22 +270,21 @@ export const UsersSection: React.FC = () => {
                                 placeholder="Search by name or email..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full h-12 pr-4 bg-white border border-stone-100 rounded-xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-sage/5 focus:border-sage transition-all placeholder:text-stone-300 shadow-sm"
-                                style={{ paddingLeft: '3.5rem' }}
+                                className={styles.searchInput}
                             />
                         </div>
 
                         {/* User Grid */}
                         {loading ? (
-                            <div className="h-64 flex items-center justify-center text-stone-300">
-                                <p className="text-xs uppercase font-bold tracking-[0.3em] animate-pulse">Syncing Personnel Database...</p>
+                            <div className={styles.loadingContainer}>
+                                <p className={styles.loadingText}>Syncing Personnel Database...</p>
                             </div>
                         ) : (
                             <motion.div 
                                 variants={stagger}
                                 initial="hidden"
                                 animate="show"
-                                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                                className={styles.userGrid}
                             >
                                 {filteredUsers.map((user) => (
                                     <UserCard 
@@ -225,16 +301,17 @@ export const UsersSection: React.FC = () => {
                 ) : (
                     <motion.section 
                         key="perms-tab"
-                        initial={{ opacity: 0, x: 10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
-                        className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className={styles.roleGrid}
                     >
-                        {rolesPerms.map((rp) => (
+                        {users.map((u) => (
                             <RoleCard 
-                                key={rp.id}
-                                role={rp}
-                                menuItems={MENU_ITEMS}
+                                key={u.id}
+                                user={u}
+                                permissionTree={PERMISSION_TREE}
                                 onToggle={togglePermission}
                             />
                         ))}

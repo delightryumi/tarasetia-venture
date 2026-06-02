@@ -5,6 +5,7 @@ export interface UserProfile {
     email: string;
     name: string;
     role: string;
+    permissions?: Record<string, boolean>;
 }
 
 export interface RolePermission {

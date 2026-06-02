@@ -6,34 +6,51 @@ import { SheetContent } from '@/components/ui/sheet';
 import { NAVBAR_ITEMS } from '@/constant/navbarMenu';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { useRBAC } from '@/hooks/useRBAC';
 
 export function NavbarSheet() {
   const pathname = usePathname();
   const router = useRouter();
+  const { canAccess } = useRBAC();
+
+  const visibleItems = NAVBAR_ITEMS.filter(item => {
+    const key = `pos_${item.title.toLowerCase()}`;
+    return canAccess(key);
+  });
 
   const handleLogout = () => {
     localStorage.clear();
-    let dashboardUrl = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/select-module';
-    if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
-      dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL;
-    } else if (typeof window !== 'undefined') {
+    let dashboardUrl = '';
+    
+    if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
       if (isLocal) {
-        dashboardUrl = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/select-module';
-      } else if (hostname.startsWith('pos.')) {
-        dashboardUrl = `${protocol}//${hostname.replace('pos.', 'dashboard.')}/select-module`;
-      } else if (hostname.includes('--bumi-anyom')) {
-        const parts = hostname.split('--');
-        parts[0] = 'bumianyom-web-1';
-        dashboardUrl = `${protocol}//${parts.join('--')}/select-module`;
-      } else if (hostname.includes('pos')) {
-        dashboardUrl = `${protocol}//${hostname.replace('pos', 'bumianyom-web-1')}/select-module`;
-      } else {
-        dashboardUrl = `${protocol}//${hostname}/select-module`;
+        dashboardUrl = 'http://localhost:3000/select-module';
       }
     }
-    window.location.href = dashboardUrl;
+
+    if (!dashboardUrl) {
+      dashboardUrl = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/select-module';
+      if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
+        dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL;
+      } else if (typeof window !== 'undefined') {
+        const { protocol, hostname } = window.location;
+        if (hostname.startsWith('pos.')) {
+          dashboardUrl = `${protocol}//${hostname.replace('pos.', 'dashboard.')}/select-module`;
+        } else if (hostname.includes('--bumi-anyom')) {
+          const parts = hostname.split('--');
+          parts[0] = 'bumianyom-web-1';
+          dashboardUrl = `${protocol}//${parts.join('--')}/select-module`;
+        } else if (hostname.includes('pos')) {
+          dashboardUrl = `${protocol}//${hostname.replace('pos', 'bumianyom-web-1')}/select-module`;
+        } else {
+          dashboardUrl = `${protocol}//${hostname}/select-module`;
+        }
+      }
+    }
+    
+    window.location.href = `${dashboardUrl}?logout=true`;
   };
 
 
@@ -52,8 +69,8 @@ export function NavbarSheet() {
             <span>POS Menu</span>
           </Link>
 
-          {/* Map through NAVBAR_ITEMS to create navigation links */}
-          {NAVBAR_ITEMS.map((item) => (
+          {/* Map through visibleItems to create navigation links */}
+          {visibleItems.map((item) => (
             <Link
               key={item.path}
               href={item.path}

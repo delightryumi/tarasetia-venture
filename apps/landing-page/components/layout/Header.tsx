@@ -203,7 +203,7 @@ const BookButton = ({ isScrolled, bookingUrl }: { isScrolled: boolean; bookingUr
           ? 'bg-[#1a1a1a] border-transparent text-white'
           : 'bg-white/10 backdrop-blur-md border-white/20 text-white'}`}
       >
-        <div ref={bgRef} className="absolute inset-0 bg-[#fef7e5] rounded-md" style={{ transform: 'translateY(101%)' }} />
+        <div ref={bgRef} className="absolute inset-0 bg-[#788069] rounded-md" style={{ transform: 'translateY(101%)' }} />
         <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.25em]">Reserve Now</span>
       </a>
     </Magnetic>
@@ -322,7 +322,7 @@ export const Header = ({ forceScrolledState = false }: { forceScrolledState?: bo
 
         <div className={`container mx-auto px-6 md:px-12 flex items-center justify-between transition-all duration-700 ${isScrolled || mobileMenuOpen ? 'py-4' : 'py-6'}`}>
           <Magnetic>
-            <Link href="/" className="relative z-50 block">
+            <Link href="/" className="relative z-50 flex flex-col items-start select-none">
               {(lightLogo || darkLogo) ? (
                 <img
                   src={(isScrolled || mobileMenuOpen) ? (darkLogo || lightLogo!) : (lightLogo || darkLogo!)}
@@ -333,6 +333,9 @@ export const Header = ({ forceScrolledState = false }: { forceScrolledState?: bo
                   BUMI <span className="font-light">ANYOM</span>
                 </h1>
               )}
+              <span className={`text-[6px] md:text-[7px] font-bold uppercase tracking-[0.25em] block leading-none mt-1.5 pl-2 transition-colors duration-300 ${(isScrolled || mobileMenuOpen) ? 'text-[#1a1a1a]' : 'text-white/60'}`}>
+                manage by nexura
+              </span>
             </Link>
           </Magnetic>
 
@@ -352,6 +355,7 @@ export const Header = ({ forceScrolledState = false }: { forceScrolledState?: bo
             </div>
             {/* Static links */}
             <AnimatedLink title="Gallery" href="/gallery" isScrolled={isScrolled} />
+            <AnimatedLink title="Cafe & Resto" href="/cafe-resto" isScrolled={isScrolled} />
             <BookButton isScrolled={isScrolled} bookingUrl={bookingEngineUrl} />
           </nav>
 
@@ -402,6 +406,7 @@ export const Header = ({ forceScrolledState = false }: { forceScrolledState?: bo
               {[
                 { label: 'Room', href: '/rooms' }, { label: 'Package', href: '/packages' },
                 { label: 'Attraction', href: '/attractions' }, { label: 'Gallery', href: '/gallery' },
+                { label: 'Cafe & Resto', href: '/cafe-resto' },
               ].map((link, i) => (
                 <div key={i} className="mobile-menu-item overflow-hidden">
                   <Link href={link.href} onClick={() => setMobileMenuOpen(false)}

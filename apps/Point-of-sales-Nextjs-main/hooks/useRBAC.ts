@@ -13,47 +13,57 @@ export const useRBAC = () => {
 
   useEffect(() => {
     // 1. Get user role from localStorage
-    const userJson = localStorage.getItem('user');
+    let userJson = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const userParam = urlParams.get('user');
+      if (userParam) {
+        userJson = userParam;
+      }
+    }
+
     let currentRole: string | null = null;
+    let userEmail: string | null = null;
     
     if (userJson) {
       try {
         const user = JSON.parse(userJson);
         currentRole = user?.role || null;
+        userEmail = user?.email || null;
       } catch (e) {
         console.error('Invalid user session JSON for RBAC');
       }
     }
 
-    setRole(currentRole);
+      setRole(currentRole);
+      console.log('RBAC role set to:', currentRole);
+      console.log('RBAC user email:', userEmail);
 
-    if (!currentRole) {
-      setLoading(false);
-      return;
-    }
+      if (!userEmail) {
+        setLoading(false);
+        return;
+      }
 
-    // superadmin has full access, we can either hardcode it or rely on DB
-    if (currentRole === 'superadmin') {
-      // Allow all permissions by default for superadmin if DB doesn't respond fast enough
-    }
-
-    // 2. Fetch role permissions from Firebase
-    const roleId = currentRole.toLowerCase().replace(/\s+/g, '_');
-    const roleDocRef = doc(db, 'roles_master', roleId);
+    // 2. Fetch user-specific permissions from Firebase
+    const userDocId = userEmail.toLowerCase().replace(/[@.]/g, '_');
+    const userDocRef = doc(db, 'users_master', userDocId);
 
     const unsubscribe = onSnapshot(
-      roleDocRef,
+      userDocRef,
       (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setPermissions(data.permissions || {});
+        console.log('Fetched permissions from Firestore:', data.permissions);
+        setPermissions(data.permissions || {});
+
         } else {
           setPermissions({});
         }
         setLoading(false);
       },
       (error) => {
-        console.error('Error fetching RBAC permissions:', error);
+        console.error('Error fetching user permissions:', error);
         setLoading(false);
       }
     );
@@ -63,7 +73,7 @@ export const useRBAC = () => {
 
   const canAccess = (menuId: string | undefined): boolean => {
     if (!menuId) return true; // If no id is provided, assume it's publicly accessible
-    if (role === 'superadmin') return true; // Superadmin always has access
+    if (role && (role.toLowerCase() === 'superadmin' || role.toLowerCase() === 'super admin')) return true; // Superadmin always has access
     return !!permissions[menuId];
   };
 

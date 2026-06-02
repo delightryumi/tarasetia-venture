@@ -52,7 +52,7 @@ export const MobileBottomNav = () => {
             if (!user?.email) return;
 
             try {
-                const userDocId = user.email.replace(/[@.]/g, '_');
+                const userDocId = user.email.toLowerCase().replace(/[@.]/g, '_');
                 const userSnap = await getDoc(doc(db, "users_master", userDocId));
                 
                 if (userSnap.exists()) {
@@ -64,13 +64,8 @@ export const MobileBottomNav = () => {
                         return;
                     }
 
-                    const roleId = role.toLowerCase().replace(/\s+/g, '_');
-                    const roleSnap = await getDoc(doc(db, "roles_master", roleId));
-                    if (roleSnap.exists()) {
-                        setUserPermissions(roleSnap.data().permissions || {});
-                    } else {
-                        setUserPermissions({});
-                    }
+                    setIsSuperadmin(false);
+                    setUserPermissions(userData.permissions || {});
                 } else {
                     setIsSuperadmin(true);
                 }
@@ -103,6 +98,19 @@ export const MobileBottomNav = () => {
     ];
 
     const getFilteredNavItems = () => {
+        if (!isSuperadmin && userPermissions) {
+            const moduleMap: Record<string, string> = {
+                "front-office": "module_front_office",
+                "housekeeping": "module_housekeeping",
+                "accounting": "module_accounting",
+                "cpanel": "module_cpanel"
+            };
+            const moduleKey = moduleMap[activeModule];
+            if (moduleKey && userPermissions[moduleKey] === false) {
+                return [];
+            }
+        }
+
         let items = allNavItems;
         if (activeModule === "front-office") {
             items = allNavItems.filter(item => ["overview", "forecast", "invoice"].includes(item.id));

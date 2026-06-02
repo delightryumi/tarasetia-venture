@@ -1,0 +1,81 @@
+.container {
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--font-sans, sans-serif);
+  z-index: 0;
+  user-select: none;
+  background-color: rgba(156, 163, 175, 0.1); /* bg-gray-450/[0.1] fallback */
+}
+
+:global(.dark) .container {
+  background-color: #000000;
+}
+
+/* Base dot backgrounds */
+.container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='16' height='16' fill='none'%3E%3Ccircle fill='rgba%280%2C0%2C0%2C0.08%29' id='pattern-circle' cx='10' cy='10' r='1.6'%3E%3C/circle%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+:global(.dark) .container::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='16' height='16' fill='none'%3E%3Ccircle fill='rgba%28255%2C255%2C255%2C0.15%29' id='pattern-circle' cx='10' cy='10' r='1.6'%3E%3C/circle%3E%3C/svg%3E");
+}
+
+.radialMask {
+  position: absolute;
+  pointer-events: none;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: -1;
+  background-color: rgba(255, 255, 255, 0.7);
+  mask-image: radial-gradient(ellipse at center, transparent 20%, #000000 100%);
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 20%, #000000 100%);
+}
+
+:global(.dark) .radialMask {
+  background-color: #000000;
+}
+
+.glowBlue {
+  position: absolute;
+  top: 40px;
+  left: 40px;
+  width: 288px;
+  height: 288px;
+  border-radius: 9999px;
+  background-color: rgba(59, 130, 246, 0.1);
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+:global(.dark) .glowBlue {
+  background-color: rgba(37, 99, 235, 0.1);
+}
+
+.glowIndigo {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  width: 384px;
+  height: 384px;
+  border-radius: 9999px;
+  background-color: rgba(99, 102, 241, 0.1);
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+:global(.dark) .glowIndigo {
+  background-color: rgba(79, 70, 229, 0.1);
+}

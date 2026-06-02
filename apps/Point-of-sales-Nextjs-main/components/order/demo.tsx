@@ -30,10 +30,22 @@ export function Orders() {
 
   const handleLogout = () => {
     localStorage.clear();
-    const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || (typeof window !== 'undefined'
-      ? `${window.location.protocol}//${window.location.hostname.replace('pos.', 'dashboard.').replace(':3001', ':3000')}/select-module`
-      : 'http://localhost:3000/select-module');
-    window.location.href = dashboardUrl;
+    let dashboardUrl = '';
+    
+    if (typeof window !== 'undefined') {
+      const { protocol, hostname } = window.location;
+      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
+      if (isLocal) {
+        dashboardUrl = 'http://localhost:3000/select-module';
+      }
+    }
+
+    if (!dashboardUrl) {
+      dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || (typeof window !== 'undefined'
+        ? `${window.location.protocol}//${window.location.hostname.replace('pos.', 'dashboard.').replace(':3001', ':3000')}/select-module`
+        : 'http://localhost:3000/select-module');
+    }
+    window.location.href = `${dashboardUrl}?logout=true`;
   };
 
   const [dialogDeleteOpen, setDialogDeleteOpen] = useState(false);

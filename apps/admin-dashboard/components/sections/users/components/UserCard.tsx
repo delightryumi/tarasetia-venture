@@ -1,7 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { User, Mail, Edit3, Trash2, Lock } from "lucide-react";
+import { Mail, Edit3, Trash2, Lock } from "lucide-react";
 import { UserProfile } from "../types";
+import styles from "../UsersStyles.module.css";
 
 interface UserCardProps {
     user: UserProfile;
@@ -10,77 +11,72 @@ interface UserCardProps {
     variants: any;
 }
 
-const SAGE = "#788069";
-
 export const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, variants }) => {
+    const isSystemAdmin = user.email === "nexura.management@gmail.com";
+    
     return (
         <motion.div 
             variants={variants}
-            whileHover={{ y: -6, scale: 1.02 }}
-            className="group relative flex flex-col gap-8 p-7 rounded-xl bg-white border border-stone-100 shadow-xl shadow-stone-200/20 hover:shadow-2xl transition-all duration-500 overflow-hidden"
+            className={styles.userCard}
         >
-            {/* Decorative Circle */}
-            <div className="absolute -right-10 -top-10 w-32 h-32 rounded-full opacity-[0.04] blur-2xl group-hover:scale-150 transition-transform duration-1000 pointer-events-none bg-sage" style={{ backgroundColor: SAGE }}></div>
-
-            <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-sage/20 bg-stone-100 flex-shrink-0 shadow-sm transition-all group-hover:scale-105 duration-500">
+            <div className={styles.cardHeader}>
+                <div className={styles.profileInfo}>
+                    <div className={styles.avatarContainer}>
                         <img 
                             src={`/avatar/memo_${((((user.name || "U").charCodeAt(0) || 0) + (user.email || "E").charCodeAt(0)) % 35) + 1}.png`} 
                             alt={user.name}
-                            className="w-full h-full object-cover"
+                            className={styles.avatarImage}
                         />
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-stone-400 leading-tight block">
-                            Account Profile
-                        </span>
+                    <div className={styles.nameRoleCluster}>
+                        <h3 className={styles.userName}>{user.name}</h3>
+                        <span className={styles.userRole}>{user.role}</span>
                     </div>
                 </div>
-                <div className="flex items-center gap-1.5 relative z-20">
-                    {user.email === "nexura.management@gmail.com" ? (
-                        <div className="px-2 py-1 rounded bg-stone-50 border border-stone-100 flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter text-stone-400">
+                
+                <div className={styles.cardActions}>
+                    {isSystemAdmin ? (
+                        <div className={styles.lockBadge}>
                             <Lock size={10} />
                             <span>System Lock</span>
                         </div>
                     ) : (
                         <>
                             <button 
+                                type="button"
                                 onClick={() => onEdit(user)}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-stone-300 hover:text-sage hover:bg-sage/10 transition-all border border-transparent hover:border-sage/20"
+                                className={styles.iconButton}
                             >
-                                <Edit3 size={14} />
+                                <Edit3 size={12} />
                             </button>
                             <button 
+                                type="button"
                                 onClick={() => onDelete(user.id, user.name)}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-stone-300 hover:text-red-500 hover:bg-red-50 transition-all border border-transparent hover:border-red-100"
+                                className={`${styles.iconButton} ${styles.iconButtonDanger}`}
                             >
-                                <Trash2 size={14} />
+                                <Trash2 size={12} />
                             </button>
                         </>
                     )}
                 </div>
             </div>
             
-            <div className="relative z-10 flex flex-col items-center justify-center py-2 text-center">
-                <h3 className="text-2xl font-medium tracking-tighter text-stone-900 group-hover:text-sage transition-colors duration-500 mb-1" style={{ '--hover-color': SAGE } as any}>{user.name}</h3>
-                <p className="text-xs font-medium text-stone-400 flex items-center gap-2">
-                    <Mail size={12} className="opacity-30" />
-                    {user.email}
-                </p>
-                
-                <div className="mt-4 w-12 h-0.5 rounded-full group-hover:w-20 transition-all duration-700 bg-sage/20" style={{ backgroundColor: `${SAGE}33` }} />
+            <div className={styles.cardBody}>
+                <div className={styles.cardDetailItem}>
+                    <Mail size={12} className={styles.mailIcon} />
+                    <span>{user.email}</span>
+                </div>
             </div>
 
-            <div className="mt-auto pt-4 border-t border-stone-50 flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SAGE }}></div>
-                    <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest">{user.role}</span>
-                </div>
-                <div className="flex items-center gap-1 text-[9px] font-medium" style={{ color: SAGE }}>
-                    <Lock size={10} />
-                    <span>Secure Access</span>
-                </div>
+            <div className={styles.cardFooter}>
+                <span className={styles.footerLeftActive}>
+                    <span className={styles.footerLeftActiveCircle}></span>
+                    Active Profile
+                </span>
+                <span className={styles.footerRightSecure}>
+                    <Lock size={9} />
+                    Secure
+                </span>
             </div>
         </motion.div>
     );

@@ -1,0 +1,17 @@
+.gridContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 24px;
+  row-gap: 48px; /* High vertical gap on desktop to separate rows clearly */
+  width: 100%;
+  padding: 16px 0;
+}
+
+@media (max-width: 640px) {
+  .gridContainer {
+    row-gap: 20px; /* Closer gap on mobile for compact viewing */
+    column-gap: 16px;
+    padding: 8px 0;
+  }
+}

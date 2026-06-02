@@ -1,68 +1,138 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { Lock, Check, X } from "lucide-react";
-import { RolePermission, MenuItem } from "../types";
+import React, { useState } from "react";
+import { ShieldAlert, Check, X, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { UserProfile } from "../types";
+import { PermissionModule } from "../UsersSection";
+import styles from "../UsersStyles.module.css";
 
 interface RoleCardProps {
-    role: RolePermission;
-    menuItems: MenuItem[];
-    onToggle: (roleId: string, menuId: string, current: boolean) => void;
+    user: UserProfile;
+    permissionTree: PermissionModule[];
+    onToggle: (userId: string, menuId: string, current: boolean) => void;
 }
 
-const SAGE = "#788069";
+export const RoleCard: React.FC<RoleCardProps> = ({ user, permissionTree, onToggle }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
 
-export const RoleCard: React.FC<RoleCardProps> = ({ role, menuItems, onToggle }) => {
     return (
-        <div className="bg-white rounded-xl border border-stone-100 shadow-xl shadow-stone-200/20 overflow-hidden flex flex-col h-full group hover:shadow-2xl transition-all duration-500">
-            <header className="p-8 border-b border-stone-100 bg-stone-50/20 relative">
-                <div className="absolute -right-6 -top-6 w-20 h-20 rounded-full bg-sage/5 blur-xl group-hover:scale-150 transition-transform duration-1000" style={{ backgroundColor: `${SAGE}0D` }}></div>
-                
-                <div className="flex items-center gap-4 relative z-10">
-                    <div className="w-12 h-12 rounded-xl bg-white border border-stone-100 flex items-center justify-center text-sage shadow-sm group-hover:rotate-3 transition-transform duration-500" style={{ color: SAGE }}>
-                        <Lock size={18} />
+        <div className={styles.roleCard}>
+            <header 
+                className={`${styles.roleCardHeader} ${isExpanded ? styles.roleCardHeaderExpanded : ""}`}
+                onClick={() => setIsExpanded(!isExpanded)}
+                style={{ cursor: "pointer", userSelect: "none" }}
+            >
+                <div className={styles.roleHeaderCluster}>
+                    <div className={styles.roleIconContainer}>
+                        <ShieldAlert size={16} />
                     </div>
-                    <div>
-                        <h3 className="text-base font-black text-stone-900 tracking-tight uppercase">{role.label}</h3>
-                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mt-1">Permission Profile</p>
+                    <div style={{ flex: 1 }}>
+                        <h3 className={styles.roleLabel}>{user.name}</h3>
+                        <p className={styles.roleSubtitle}>{user.role} | User Access Profile</p>
+                    </div>
+                    <div className={`${styles.chevronContainer} ${isExpanded ? styles.chevronExpanded : ""}`}>
+                        <ChevronDown size={16} />
                     </div>
                 </div>
             </header>
             
-            <div className="flex-1 p-6 space-y-2 overflow-y-auto max-h-[500px] custom-scrollbar bg-white">
-                {menuItems.map((menu) => (
-                    <div 
-                        key={menu.id}
-                        className="flex items-center justify-between p-3.5 rounded-xl border border-transparent hover:border-stone-50 hover:bg-stone-50/40 transition-all group/item"
+            {/* Card Body & Footer Accordion */}
+            <AnimatePresence initial={false}>
+                {isExpanded && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: "easeInOut" }}
+                        style={{ overflow: "hidden" }}
                     >
-                        <div className="flex items-center gap-3.5">
-                            <div className="w-8 h-8 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center text-stone-300 group-hover/item:text-sage group-hover/item:bg-white transition-all shadow-sm">
-                                {menu.icon}
-                            </div>
-                            <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest">{menu.label}</span>
+                        {/* Card Body - Nested Modules & Submenus */}
+                        <div className={`${styles.roleCardBody} ${styles.customScrollbar}`}>
+                            {permissionTree.map((mod) => {
+                                const isModuleEnabled = user.permissions?.[mod.id] !== false;
+                                
+                                return (
+                                    <div key={mod.id} className={styles.moduleBox}>
+                                        {/* Module Header Toggle */}
+                                        <div className={styles.moduleHeader}>
+                                            <div className={styles.moduleLabelCluster}>
+                                                <div className={styles.moduleIcon}>
+                                                    {mod.icon}
+                                                </div>
+                                                <span className={styles.moduleLabel}>{mod.label}</span>
+                                            </div>
+                                            
+                                            <button 
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Avoid triggering accordion close
+                                                    onToggle(user.id, mod.id, isModuleEnabled);
+                                                }}
+                                                className={`${styles.toggleBtn} ${isModuleEnabled ? styles.toggleBtnOn : styles.toggleBtnOff}`}
+                                            >
+                                                <div className={styles.toggleCircle}>
+                                                    {isModuleEnabled ? (
+                                                        <Check size={6} className={styles.toggleIconOn} />
+                                                    ) : (
+                                                        <X size={6} className={styles.toggleIconOff} />
+                                                    )}
+                                                </div>
+                                            </button>
+                                        </div>
+                                        
+                                        {/* Submenu Items */}
+                                        <div className={`${styles.submenuContainer} ${!isModuleEnabled ? styles.submenuContainerDisabled : ''}`}>
+                                            {mod.submenus.map((sub) => {
+                                                const isSubEnabled = isModuleEnabled && (user.permissions?.[sub.id] === true);
+                                                
+                                                return (
+                                                    <div 
+                                                        key={sub.id}
+                                                        className={styles.submenuRow}
+                                                    >
+                                                        <div className={styles.submenuLabelCluster}>
+                                                            <div className={styles.submenuIcon}>
+                                                                {sub.icon}
+                                                            </div>
+                                                            <span className={styles.submenuLabel}>{sub.label}</span>
+                                                        </div>
+                                                        
+                                                        <button 
+                                                            type="button"
+                                                            disabled={!isModuleEnabled}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation(); // Avoid triggering accordion close
+                                                                onToggle(user.id, sub.id, isSubEnabled);
+                                                            }}
+                                                            className={`${styles.toggleBtnSub} ${isSubEnabled ? styles.toggleBtnSubOn : styles.toggleBtnSubOff}`}
+                                                        >
+                                                            <div className={styles.toggleCircleSub}>
+                                                                {isSubEnabled ? (
+                                                                    <Check size={5} className={styles.toggleIconOn} />
+                                                                ) : (
+                                                                    <X size={5} className={styles.toggleIconOff} />
+                                                                )}
+                                                            </div>
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                         
-                        <button 
-                            onClick={() => onToggle(role.id, menu.id, role.permissions[menu.id] || false)}
-                            className={`w-10 h-5 rounded-full transition-all relative ${role.permissions[menu.id] ? 'bg-sage shadow-inner shadow-black/5' : 'bg-stone-100'}`}
-                            style={{ backgroundColor: role.permissions[menu.id] ? SAGE : undefined }}
-                        >
-                            <motion.div 
-                                animate={{ x: role.permissions[menu.id] ? 22 : 2 }}
-                                className="absolute top-1 left-0 w-3 h-3 rounded-full bg-white shadow-sm flex items-center justify-center"
-                            >
-                                {role.permissions[menu.id] ? <Check size={6} style={{ color: SAGE }} className="font-black" /> : <X size={6} className="text-stone-300" />}
-                            </motion.div>
-                        </button>
-                    </div>
-                ))}
-            </div>
-            
-            <footer className="p-6 bg-stone-50/10 border-t border-stone-100 flex items-center justify-between">
-                <span className="text-[9px] font-bold text-stone-400 uppercase tracking-[0.2em]">
-                    {Object.values(role.permissions).filter(Boolean).length} Active Features
-                </span>
-                <div className="w-10 h-0.5 rounded-full bg-stone-100 group-hover:bg-sage/20 transition-colors" style={{ backgroundColor: `${SAGE}33` }} />
-            </footer>
+                        {/* Card Footer */}
+                        <footer className={styles.roleCardFooter}>
+                            <span>
+                                {Object.entries(user.permissions || {}).filter(([key, val]) => val && !key.startsWith("module_") && key !== "pos").length} Active Features
+                            </span>
+                            <div className={styles.footerDivider} />
+                        </footer>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
+

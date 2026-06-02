@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { 
     collection, setDoc, doc, updateDoc, 
-    deleteDoc, onSnapshot, query, orderBy 
+    deleteDoc, onSnapshot, query, orderBy, getDoc
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { UserProfile, RolePermission } from "./types";
+import { UserProfile } from "./types";
 
 export const ROLES = [
     "superadmin", 
@@ -12,17 +12,30 @@ export const ROLES = [
     "House Keeping", 
     "Purchasing", 
     "Kasir", 
-    "Kitchen"
+    "Kitchen",
+    "Finance"
+];
+
+const ALL_KEYS = [
+    // Modules
+    "module_pos", "module_front_office", "module_housekeeping", 
+    "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel",
+    // Submenus
+    "overview", "forecast", "invoice", "pnl", "logo", "hero", "room-type", 
+    "about", "gallery", "footer", "attractions", "promo", "packages", "seo", "users",
+    "purchasing", "store-requisition", "purchase-requisition", "daily-market-list", 
+    "stock-opname", "items", "suppliers", "purchase-order", "food-beverage-product",
+    // POS submenus
+    "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings", "pos_technologies"
 ];
 
 export const useUsers = (menuItems: any[]) => {
     const [users, setUsers] = useState<UserProfile[]>([]);
-    const [rolesPerms, setRolesPerms] = useState<RolePermission[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         // Listen to Users
-        const unsubUsers = onSnapshot(query(collection(db, "users_master"), orderBy("name")), (snap) => {
+        const unsubUsers = onSnapshot(query(collection(db, "users_master"), orderBy("name")), async (snap) => {
             const list: UserProfile[] = [];
             snap.forEach(d => list.push({ id: d.id, ...d.data() } as UserProfile));
             
@@ -30,49 +43,65 @@ export const useUsers = (menuItems: any[]) => {
             const adminEmail = "nexura.management@gmail.com";
             const adminExists = list.some(u => u.email === adminEmail);
             if (!adminExists) {
-                const adminId = adminEmail.replace(/[@.]/g, '_');
-                setDoc(doc(db, "users_master", adminId), {
+                const adminId = adminEmail.toLowerCase().replace(/[@.]/g, '_');
+                const isSuper = true;
+                const adminPerms: Record<string, boolean> = {};
+                ALL_KEYS.forEach(k => {
+                    adminPerms[k] = isSuper;
+                });
+                await setDoc(doc(db, "users_master", adminId), {
                     name: "Nexura Management",
                     email: adminEmail,
                     password: "000000",
-                    role: "superadmin"
+                    role: "superadmin",
+                    permissions: adminPerms
                 });
+            }
+
+            // Proactive Migration: if any user has no permissions map, migrate them in background
+            const needsMigration = list.filter(u => !u.permissions);
+            if (needsMigration.length > 0) {
+                migrateUsersPermissions(needsMigration);
             }
 
             setUsers(list);
             setLoading(false);
         });
 
-        // Listen to Role Permissions
-        const unsubRoles = onSnapshot(collection(db, "roles_master"), (snap) => {
-            const list: RolePermission[] = [];
-            snap.forEach(d => list.push({ id: d.id, ...d.data() } as RolePermission));
-            
-            if (list.length < ROLES.length) {
-                initializeRoles(list, menuItems);
-            } else {
-                setRolesPerms(list);
-            }
-        });
-
         return () => {
             unsubUsers();
-            unsubRoles();
         };
     }, []);
 
-    const initializeRoles = async (existing: RolePermission[], menuItems: any[]) => {
-        const existingIds = existing.map(r => r.id);
-        for (const role of ROLES) {
-            const roleId = role.toLowerCase().replace(/\s+/g, '_');
-            if (!existingIds.includes(roleId)) {
-                const defaultPerms: Record<string, boolean> = {};
-                menuItems.forEach(m => defaultPerms[m.id] = role === "superadmin");
-                
-                await setDoc(doc(db, "roles_master", roleId), {
-                    label: role,
-                    permissions: defaultPerms
+    const migrateUsersPermissions = async (needsMigrationList: UserProfile[]) => {
+        for (const u of needsMigrationList) {
+            const isSuper = u.role === "superadmin" || u.role?.toLowerCase() === "superadmin";
+            const roleId = u.role?.toLowerCase().replace(/\s+/g, '_') || "";
+            let initialPerms: Record<string, boolean> = {};
+            
+            if (roleId) {
+                try {
+                    const roleSnap = await getDoc(doc(db, "roles_master", roleId));
+                    if (roleSnap.exists()) {
+                        initialPerms = roleSnap.data().permissions || {};
+                    }
+                } catch (e) {
+                    console.error("Error fetching legacy role perms for user:", u.email, e);
+                }
+            }
+            
+            if (Object.keys(initialPerms).length === 0) {
+                ALL_KEYS.forEach(k => {
+                    initialPerms[k] = isSuper;
                 });
+            }
+            
+            try {
+                await updateDoc(doc(db, "users_master", u.id), {
+                    permissions: initialPerms
+                });
+            } catch (e) {
+                console.error("Failed to migrate permissions for user:", u.id, e);
             }
         }
     };
@@ -86,8 +115,16 @@ export const useUsers = (menuItems: any[]) => {
                 await updateDoc(userDoc, updateData);
                 console.log("User updated successfully:", editingUser.id);
             } else {
-                const newId = formData.email.replace(/[@.]/g, '_');
-                await setDoc(doc(db, "users_master", newId), formData);
+                const newId = formData.email.toLowerCase().replace(/[@.]/g, '_');
+                const isSuper = formData.role === "superadmin" || formData.role?.toLowerCase() === "superadmin";
+                const defaultPerms: Record<string, boolean> = {};
+                ALL_KEYS.forEach(k => {
+                    defaultPerms[k] = isSuper;
+                });
+                await setDoc(doc(db, "users_master", newId), {
+                    ...formData,
+                    permissions: defaultPerms
+                });
                 console.log("User created successfully:", newId);
             }
             return true;
@@ -108,19 +145,19 @@ export const useUsers = (menuItems: any[]) => {
         }
     };
 
-    const togglePermission = async (roleId: string, menuId: string, currentValue: boolean) => {
-        const roleDoc = doc(db, "roles_master", roleId);
-        await updateDoc(roleDoc, {
+    const togglePermission = async (userId: string, menuId: string, currentValue: boolean) => {
+        const userDoc = doc(db, "users_master", userId);
+        await updateDoc(userDoc, {
             [`permissions.${menuId}`]: !currentValue
         });
     };
 
     return {
         users,
-        rolesPerms,
         loading,
         handleSaveUser,
         handleDeleteUser,
         togglePermission
     };
 };
+

@@ -186,7 +186,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             try {
                 // 1. Get User Role
-                const userDocId = user.email.replace(/[@.]/g, '_');
+                const userDocId = user.email.toLowerCase().replace(/[@.]/g, '_');
                 const userSnap = await getDoc(doc(db, "users_master", userDocId));
                 
                 if (userSnap.exists()) {
@@ -198,14 +198,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         return;
                     }
 
-                    // 2. Get Role Permissions
-                    const roleId = role.toLowerCase().replace(/\s+/g, '_');
-                    const roleSnap = await getDoc(doc(db, "roles_master", roleId));
-                    if (roleSnap.exists()) {
-                        setUserPermissions(roleSnap.data().permissions || {});
-                    } else {
-                        setUserPermissions({});
-                    }
+                    setUserPermissions(userData.permissions || {});
                 } else {
                     // Default to superadmin if not found in master (for initial setup)
                     setIsSuperadmin(true);
@@ -293,6 +286,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }, [pathname]);
 
     const getFilteredNavItems = () => {
+        if (!isSuperadmin && userPermissions) {
+            const moduleMap: Record<string, string> = {
+                "front-office": "module_front_office",
+                "housekeeping": "module_housekeeping",
+                "accounting": "module_accounting",
+                "food-beverage": "module_food_beverage",
+                "purchasing": "module_purchasing",
+                "cpanel": "module_cpanel"
+            };
+            const moduleKey = moduleMap[activeModule];
+            if (moduleKey && userPermissions[moduleKey] === false) {
+                return [];
+            }
+        }
+
         let items = allNavItems;
         if (activeModule === "front-office") {
             items = allNavItems.filter(item => ["overview", "forecast", "invoice", "purchase-order"].includes(item.id));
