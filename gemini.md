@@ -134,3 +134,85 @@ Apabila sistem ini siap diintegrasikan, berikut adalah tahapan pengerjaan yang d
 4.  **Langkah 4**: Refactor semua hooks pemanggilan data di dashboard dan POS agar menyisipkan parameter `hotelCode` pada path koleksi Firestore.
 5.  **Langkah 5**: Tambahkan halaman `/superadmin` di dashboard utama yang dikunci hanya untuk role superadmin.
 6.  **Langkah 6**: Sesuaikan landing page agar dapat mendeteksi domain tamu secara dinamis.
+
+---
+
+### F. Struktur Dokumen Master `/hotels` secara Detail
+Untuk memastikan database teratur, setiap dokumen di `/hotels/{hotelCode}` wajib memiliki skema standar berikut:
+
+```typescript
+interface HotelMasterDoc {
+  hotelCode: string;       // ID unik dokumen (lowercase, kebab-case, misal: nexura-resort)
+  name: string;            // Nama resmi Hotel (misal: Nexura Resort & Spa)
+  active: boolean;         // Flag status sistem aktif/nonaktif
+  domain: string;          // Domain utama custom (misal: resort.nexuraglobal.com)
+  subdomain: string;       // Subdomain cadangan (misal: nexura-resort.nexuracrs.com)
+  createdAt: string;       // ISO string waktu registrasi
+  suspendedAt: string | null; // ISO string jika sistem dinonaktifkan
+  
+  // Kontak & Alamat
+  address: string;
+  phone: string;
+  email: string;
+  
+  // Konfigurasi Layanan & Billing
+  billing: {
+    plan: "basic" | "premium" | "enterprise";
+    cycle: "monthly" | "yearly";
+    nextDueDate: string;   // Tanggal jatuh tempo tagihan berikutnya
+    status: "paid" | "overdue" | "grace-period";
+  };
+}
+```
+
+---
+
+### G. Aturan Keamanan (Firebase Security Rules) Multi-Tenant
+Untuk mencegah kebocoran data (misalnya User Hotel A tidak sengaja membaca data Hotel B), Firebase Security Rules harus dikonfigurasi untuk mengecek `hotelCode` pada klaim token user (`auth.token.hotelCode`):
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Fungsi pembantu untuk memverifikasi kepemilikan hotelCode
+    function isAssignedToHotel(hotelCode) {
+      return request.auth != null && request.auth.token.hotelCode == hotelCode;
+    }
+    
+    // Fungsi pembantu untuk Superadmin
+    function isSuperadmin() {
+      return request.auth != null && request.auth.token.role == 'superadmin';
+    }
+
+    // Aturan untuk Koleksi Master Hotels
+    match /hotels/{hotelCode} {
+      allow read: if request.auth != null; // Semua user terdaftar bisa membaca config
+      allow write: if isSuperadmin();      // Hanya superadmin yang bisa merubah/mendaftar hotel baru
+      
+      // Aturan untuk Sub-koleksi operasional di bawah hotelCode tertentu
+      match /{document=**} {
+        allow read, write: if isSuperadmin() || isAssignedToHotel(hotelCode);
+      }
+    }
+  }
+}
+```
+*Catatan*: Klaim `auth.token.hotelCode` akan disematkan secara aman menggunakan Firebase Custom Claims pada level Cloud Functions setelah proses sign-in diverifikasi.
+
+---
+
+### H. Alur Penanganan Status Inactive (System Suspended)
+Jika superadmin mematikan akses sebuah hotel (`active = false`) atau sistem mendeteksi billing overdue, penanganan otomatis di aplikasi klien (Dashboard & POS) diatur dengan flow berikut:
+
+1. **Pendeteksian Awal (Auth Context)**:
+   Saat aplikasi memuat halaman atau mendeteksi perubahan state authentikasi, sistem melakukan pengecekan data status ke `/hotels/{hotelCode}` secara real-time atau pada saat inisialisasi session.
+2. **Pencegahan Akses (Guard Component)**:
+   Kita membuat pembungkus rute global (`HotelStatusGuard.tsx`) yang memeriksa properti `active`.
+3. **Redirect Halaman Peringatan**:
+   Jika `active == false`, user akan langsung dialihkan ke halaman `/suspended` dengan pesan informatif:
+   > **"Sistem Ditangguhkan"**  
+   > Layanan untuk hotel Anda sedang dinonaktifkan sementara oleh administrator sistem. Silakan hubungi bagian administrasi atau pusat dukungan Nexura Global Hospitality untuk informasi lebih lanjut.
+4. **Pemblokiran API**:
+   Firebase Security Rules secara otomatis menolak seluruh request read/write yang dikirimkan oleh klien, menjaga integritas data tetap aman selama masa penangguhan pembayaran.
+
