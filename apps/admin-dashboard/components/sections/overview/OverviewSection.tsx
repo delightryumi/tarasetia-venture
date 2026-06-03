@@ -7,9 +7,8 @@ import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useOverview } from "./useOverview";
-import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
 
 // Modular Imports
 import styles from "./OverviewStyles.module.css";
@@ -90,6 +89,23 @@ export function OverviewSection() {
                 const entries = docSnap.data().entries || [];
                 const filtered = entries.filter((e: any) => e.timestamp !== bookingToDelete.timestamp);
                 await updateDoc(docRef, { entries: filtered });
+
+                // Cascade delete if it is a POS transaction
+                const bookingId = bookingToDelete.bookingId;
+                if (bookingId) {
+                    const posQuery = query(collection(db, "pos_orders"), where("transactionId", "==", bookingId));
+                    const posSnap = await getDocs(posQuery);
+                    for (const d of posSnap.docs) {
+                        await deleteDoc(d.ref);
+                    }
+
+                    const revQuery = query(collection(db, "revenue_transactions"), where("transactionId", "==", bookingId));
+                    const revSnap = await getDocs(revQuery);
+                    for (const d of revSnap.docs) {
+                        await deleteDoc(d.ref);
+                    }
+                }
+
                 setBookingToDelete(null);
             }
         } catch (error) {

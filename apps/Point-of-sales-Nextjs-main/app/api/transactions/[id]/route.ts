@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, doc, updateDoc, orderBy, limit, deleteDoc, where } from 'firebase/firestore';
+import { collection, query, getDocs, doc, updateDoc, orderBy, limit, deleteDoc, where, getDoc } from 'firebase/firestore';
 
 // GET request handler to fetch onSaleProducts by transactionId from Firestore daily_revenue
 export async function GET(
@@ -77,38 +77,86 @@ export const DELETE = async (
 ) => {
   const { id } = await params;
   try {
-    const q = query(
-      collection(db, 'daily_revenue'),
-      orderBy('date', 'desc'),
-      limit(10)
-    );
-    const snap = await getDocs(q);
-    let deleted = false;
+    let transactionDate: string | null = null;
 
-    for (const docSnap of snap.docs) {
-      const entries = docSnap.data().entries || [];
-      const index = entries.findIndex((e: any) => e.bookingId === id);
-      if (index !== -1) {
-        const updatedEntries = entries.filter((e: any) => e.bookingId !== id);
-        await updateDoc(docSnap.ref, {
-          entries: updatedEntries,
+    // 1. Try to find the transaction date in pos_orders first
+    const posOrdersQuery = query(collection(db, 'pos_orders'), where('transactionId', '==', id));
+    const posOrdersSnap = await getDocs(posOrdersQuery);
+    
+    // Also fetch from revenue_transactions just in case
+    const revQuery = query(collection(db, 'revenue_transactions'), where('transactionId', '==', id));
+    const revSnap = await getDocs(revQuery);
+
+    // Extract transactionDate
+    if (!posOrdersSnap.empty) {
+      const orderDoc = posOrdersSnap.docs[0].data();
+      if (orderDoc.timestamp) {
+        const tDate = orderDoc.timestamp.toDate ? orderDoc.timestamp.toDate() : new Date(orderDoc.timestamp);
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Jakarta',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
         });
-        deleted = true;
-        break;
+        transactionDate = formatter.format(tDate);
+      }
+    } else if (!revSnap.empty) {
+      const revDoc = revSnap.docs[0].data();
+      if (revDoc.date) {
+        transactionDate = revDoc.date;
+      } else if (revDoc.timestamp) {
+        const tDate = revDoc.timestamp.toDate ? revDoc.timestamp.toDate() : new Date(revDoc.timestamp);
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Jakarta',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        });
+        transactionDate = formatter.format(tDate);
       }
     }
 
-    // Delete from pos_orders
-    const posOrdersQuery = query(collection(db, 'pos_orders'), where('transactionId', '==', id));
-    const posOrdersSnap = await getDocs(posOrdersQuery);
+    let deleted = false;
+
+    // 2. If we determined the transaction date, we can load the specific daily_revenue doc directly!
+    if (transactionDate) {
+      const hotelId = 'bumi-anyom-resort';
+      const docId = `${hotelId}_${transactionDate}`;
+      const docRef = doc(db, 'daily_revenue', docId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const entries = docSnap.data().entries || [];
+        const updatedEntries = entries.filter((e: any) => e.bookingId !== id);
+        await updateDoc(docRef, {
+          entries: updatedEntries,
+        });
+        deleted = true;
+      }
+    }
+
+    // 3. Fallback: If no date could be found, or direct document delete didn't happen, scan daily_revenue
+    if (!deleted) {
+      const dailyRevSnap = await getDocs(collection(db, 'daily_revenue'));
+      for (const docSnap of dailyRevSnap.docs) {
+        const entries = docSnap.data().entries || [];
+        const index = entries.findIndex((e: any) => e.bookingId === id);
+        if (index !== -1) {
+          const updatedEntries = entries.filter((e: any) => e.bookingId !== id);
+          await updateDoc(docSnap.ref, {
+            entries: updatedEntries,
+          });
+          deleted = true;
+          break;
+        }
+      }
+    }
+
+    // 4. Delete from pos_orders and revenue_transactions
     for (const orderDoc of posOrdersSnap.docs) {
       await deleteDoc(orderDoc.ref);
       deleted = true;
     }
 
-    // Delete from revenue_transactions
-    const revQuery = query(collection(db, 'revenue_transactions'), where('transactionId', '==', id));
-    const revSnap = await getDocs(revQuery);
     for (const revDoc of revSnap.docs) {
       await deleteDoc(revDoc.ref);
       deleted = true;

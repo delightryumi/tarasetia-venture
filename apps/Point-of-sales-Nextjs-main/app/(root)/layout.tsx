@@ -48,6 +48,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       const restoNameParam = urlParams.get('restoName');
       const activeShiftParam = urlParams.get('activeShift');
       const themeParam = urlParams.get('theme');
+      const dashboardUrlParam = urlParams.get('dashboardUrl');
       
       if (userParam) {
         localStorage.setItem('user', userParam);
@@ -60,6 +61,9 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       }
       if (themeParam && (themeParam === 'light' || themeParam === 'dark')) {
         setTheme(themeParam);
+      }
+      if (dashboardUrlParam) {
+        localStorage.setItem('dashboard_url', dashboardUrlParam);
       }
     }
 
@@ -135,6 +139,9 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   const getDashboardUrl = () => {
     if (typeof window !== 'undefined') {
+      const storedUrl = localStorage.getItem('dashboard_url');
+      if (storedUrl) return storedUrl;
+
       const { protocol, hostname } = window.location;
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
       if (isLocal) {
@@ -169,6 +176,11 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   const getLoginGatewayUrl = () => {
     if (typeof window !== 'undefined') {
+      const storedUrl = localStorage.getItem('dashboard_url');
+      if (storedUrl) {
+        return storedUrl.replace(/\/select-module$/, '');
+      }
+
       const { protocol, hostname } = window.location;
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
       if (isLocal) {
