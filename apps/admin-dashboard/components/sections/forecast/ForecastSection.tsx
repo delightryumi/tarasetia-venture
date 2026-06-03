@@ -92,13 +92,20 @@ export const ForecastSection: React.FC = () => {
     };
 
     const [bookingToDelete, setBookingToDelete] = useState<any>(null);
+    const [passwordInput, setPasswordInput] = useState("");
 
     const handleDeleteClick = (booking: any) => {
         setBookingToDelete(booking);
+        setPasswordInput("");
     };
 
     const executeDelete = async () => {
         if (!bookingToDelete) return;
+
+        if (passwordInput !== 'admin123' && passwordInput !== 'owner123') {
+            toast.error("Password Admin salah! Penghapusan dibatalkan.");
+            return;
+        }
 
         try {
             const docRef = doc(db, "daily_revenue", bookingToDelete._docId);
@@ -115,6 +122,7 @@ export const ForecastSection: React.FC = () => {
             toast.error("Failed to delete transaction");
         } finally {
             setBookingToDelete(null);
+            setPasswordInput("");
             stats.refresh(); // Correctly trigger refresh using hook's internal state
         }
     };
@@ -988,7 +996,7 @@ export const ForecastSection: React.FC = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className={styles.sidebarBackdrop}
+                        className="delete-modal-overlay"
                         onClick={() => setBookingToDelete(null)}
                     >
                         <motion.div 
@@ -996,27 +1004,49 @@ export const ForecastSection: React.FC = () => {
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white rounded-[24px] p-8 max-w-md w-full shadow-2xl border border-stone-100"
-                            style={{ margin: "auto" }}
+                            className="delete-modal-card"
                         >
-                            <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-6">
-                                <Trash2 size={20} />
+                            <h3 className="delete-modal-title">
+                                Are you absolutely sure want to delete ?
+                            </h3>
+                            <div className="delete-modal-desc">
+                                <p>
+                                    This action cannot be undone. This will permanently delete the transaction for{" "}
+                                    <strong>
+                                        {bookingToDelete.guestName || bookingToDelete.incomeCategory}
+                                    </strong>.
+                                </p>
+                                
+                                <div className="delete-modal-separator">
+                                    <label htmlFor="adminPassword" className="delete-modal-label">
+                                        Konfirmasi Password Admin
+                                    </label>
+                                    <input
+                                        id="adminPassword"
+                                        type="password"
+                                        placeholder="Masukkan password admin..."
+                                        value={passwordInput}
+                                        onChange={(e) => setPasswordInput(e.target.value)}
+                                        className="delete-modal-input"
+                                        autoFocus
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') executeDelete();
+                                        }}
+                                    />
+                                </div>
                             </div>
-                            <h3 className="text-xl font-bold text-stone-900 font-outfit uppercase tracking-tight mb-2">Confirm Deletion</h3>
-                            <p className="text-[11px] text-stone-500 uppercase tracking-widest leading-relaxed mb-8">
-                                Are you sure you want to permanently delete the transaction for <span className="font-bold text-stone-900">{bookingToDelete.guestName || bookingToDelete.incomeCategory}</span>? This action cannot be undone.
-                            </p>
-                            <div className="flex gap-4">
+
+                            <div className="delete-modal-footer">
                                 <button 
                                     onClick={() => setBookingToDelete(null)}
-                                    className="flex-1 h-12 rounded-xl border border-stone-200 text-[11px] font-bold text-stone-600 uppercase tracking-widest hover:bg-stone-50 transition-colors"
+                                    className="delete-modal-btn-cancel"
                                     style={{ cursor: "pointer" }}
                                 >
                                     Cancel
                                 </button>
                                 <button 
                                     onClick={executeDelete}
-                                    className="flex-1 h-12 rounded-xl bg-red-500 text-[11px] font-bold text-white uppercase tracking-widest hover:bg-red-600 transition-colors"
+                                    className="delete-modal-btn-delete"
                                     style={{ cursor: "pointer" }}
                                 >
                                     Delete
