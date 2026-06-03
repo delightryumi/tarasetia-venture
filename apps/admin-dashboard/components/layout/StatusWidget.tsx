@@ -93,7 +93,7 @@ export const StatusWidget = ({ onMenuClick }: StatusWidgetProps) => {
             <div className="flex items-center gap-3 min-w-0">
                 <button
                     onClick={onMenuClick}
-                    className="lg:hidden p-2 -ml-2 text-stone-300 hover:text-white transition-colors flex-shrink-0 cursor-pointer"
+                    className="hidden p-2 -ml-2 text-stone-300 hover:text-white transition-colors flex-shrink-0 cursor-pointer"
                 >
                     <Menu size={22} />
                 </button>

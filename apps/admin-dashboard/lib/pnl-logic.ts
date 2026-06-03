@@ -66,7 +66,8 @@ export function processPnLData(
   vatPercentage: number = 11,
   hotelGopPercentages: Record<string, any> = {},
   allHotels: HotelMaster[] = [],
-  mgmtFeePercentage: number = 10,
+  mgmtFeeRoomPercentage: number = 10,
+  mgmtFeeFnbPercentage: number = 10,
   posRevAlacarte: number = 0,
   posRevBanquet: number = 0,
   posRevFood: number = 0,
@@ -127,17 +128,25 @@ export function processPnLData(
     const evCatLower = (e.eventCategory || (e as any).event_category || "").toLowerCase();
 
     // Check if Beverage vs Food
-    const isBeverage = 
-      fbCatLower.includes('beverage') || 
-      catLower.includes('beverage') || 
-      catLower.includes('drink') || 
-      catLower.includes('minuman') || 
-      nameLower.includes('beverage') || 
-      nameLower.includes('drink') || 
-      nameLower.includes('minuman') ||
-      descLower.includes('beverage') || 
-      descLower.includes('drink') || 
-      descLower.includes('minuman');
+    let isBeverage = false;
+    if (fbCatLower) {
+      isBeverage = fbCatLower.includes('beverage') || fbCatLower.includes('drink') || fbCatLower.includes('minuman');
+    } else {
+      const cleanString = (str: string) => str.replace(/food\s*&\s*beverage/g, '').replace(/f\s*&\s*b/g, '');
+      const cleanCat = cleanString(catLower);
+      const cleanName = cleanString(nameLower);
+      const cleanDesc = cleanString(descLower);
+      isBeverage = 
+        cleanCat.includes('beverage') || 
+        cleanCat.includes('drink') || 
+        cleanCat.includes('minuman') || 
+        cleanName.includes('beverage') || 
+        cleanName.includes('drink') || 
+        cleanName.includes('minuman') ||
+        cleanDesc.includes('beverage') || 
+        cleanDesc.includes('drink') || 
+        cleanDesc.includes('minuman');
+    }
     
     // Check if Banquet vs A la Carte
     const isBanquet = 
@@ -250,8 +259,10 @@ export function processPnLData(
     card6_GOP: totalRevenue - totalOperationalExpenses, 
     card7_TotalGOP: 0, // Calculated below
     card8_TotalExpenses: totalOperationalExpenses,
-    // VAT and Management Fee are applied on Total Gross Revenue
-    card9_FeeGross: totalRevenue * (mgmtFeePercentage / 100), 
+    // Management Fee Room and F&B calculations
+    card9_FeeGrossRoom: ledgerRoomRevenue * (mgmtFeeRoomPercentage / 100),
+    card9_FeeGrossFnb: (revTotalFnb + revBanquetRevenue) * (mgmtFeeFnbPercentage / 100),
+    card9_FeeGross: (ledgerRoomRevenue * (mgmtFeeRoomPercentage / 100)) + ((revTotalFnb + revBanquetRevenue) * (mgmtFeeFnbPercentage / 100)),
     card10_GAP: 0,
     card11_VAT: totalRevenue * (vatPercentage / 100),
     card12_ReconOwner: 0, 
@@ -274,7 +285,7 @@ export function processPnLData(
     expBeverageBanquet: beverageBanquetExp,
     netProfit: 0,
     gopBasis: totalRevenue,
-    gopFee: totalRevenue * (mgmtFeePercentage / 100),
+    gopFee: (ledgerRoomRevenue * (mgmtFeeRoomPercentage / 100)) + ((revTotalFnb + revBanquetRevenue) * (mgmtFeeFnbPercentage / 100)),
     totalGap: 0,
     investorDistributions: investors.map(inv => ({
       name: inv.name,
@@ -613,17 +624,25 @@ export function getDrillDownData(
             const fbCatLower = (e.fbCategory || (e as any).fb_category || "").toLowerCase();
             const evCatLower = (e.eventCategory || (e as any).event_category || "").toLowerCase();
 
-            const isBeverage = 
-              fbCatLower.includes('beverage') || 
-              catLower.includes('beverage') || 
-              catLower.includes('drink') || 
-              catLower.includes('minuman') || 
-              nameLower.includes('beverage') || 
-              nameLower.includes('drink') || 
-              nameLower.includes('minuman') ||
-              descLower.includes('beverage') || 
-              descLower.includes('drink') || 
-              descLower.includes('minuman');
+            let isBeverage = false;
+            if (fbCatLower) {
+              isBeverage = fbCatLower.includes('beverage') || fbCatLower.includes('drink') || fbCatLower.includes('minuman');
+            } else {
+              const cleanString = (str: string) => str.replace(/food\s*&\s*beverage/g, '').replace(/f\s*&\s*b/g, '');
+              const cleanCat = cleanString(catLower);
+              const cleanName = cleanString(nameLower);
+              const cleanDesc = cleanString(descLower);
+              isBeverage = 
+                cleanCat.includes('beverage') || 
+                cleanCat.includes('drink') || 
+                cleanCat.includes('minuman') || 
+                cleanName.includes('beverage') || 
+                cleanName.includes('drink') || 
+                cleanName.includes('minuman') ||
+                cleanDesc.includes('beverage') || 
+                cleanDesc.includes('drink') || 
+                cleanDesc.includes('minuman');
+            }
             
             const isBanquet = 
               evCatLower.includes('banquet') || 
@@ -826,17 +845,25 @@ export function getDrillDownData(
             const fbCatLower = (e.fbCategory || (e as any).fb_category || "").toLowerCase();
             const evCatLower = (e.eventCategory || (e as any).event_category || "").toLowerCase();
 
-            const isBeverage = 
-              fbCatLower.includes('beverage') || 
-              catLower.includes('beverage') || 
-              catLower.includes('drink') || 
-              catLower.includes('minuman') || 
-              nameLower.includes('beverage') || 
-              nameLower.includes('drink') || 
-              nameLower.includes('minuman') ||
-              descLower.includes('beverage') || 
-              descLower.includes('drink') || 
-              descLower.includes('minuman');
+            let isBeverage = false;
+            if (fbCatLower) {
+              isBeverage = fbCatLower.includes('beverage') || fbCatLower.includes('drink') || fbCatLower.includes('minuman');
+            } else {
+              const cleanString = (str: string) => str.replace(/food\s*&\s*beverage/g, '').replace(/f\s*&\s*b/g, '');
+              const cleanCat = cleanString(catLower);
+              const cleanName = cleanString(nameLower);
+              const cleanDesc = cleanString(descLower);
+              isBeverage = 
+                cleanCat.includes('beverage') || 
+                cleanCat.includes('drink') || 
+                cleanCat.includes('minuman') || 
+                cleanName.includes('beverage') || 
+                cleanName.includes('drink') || 
+                cleanName.includes('minuman') ||
+                cleanDesc.includes('beverage') || 
+                cleanDesc.includes('drink') || 
+                cleanDesc.includes('minuman');
+            }
             
             const isBanquet = 
               evCatLower.includes('banquet') || 

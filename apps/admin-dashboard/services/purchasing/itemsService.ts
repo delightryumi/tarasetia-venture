@@ -68,5 +68,32 @@ export const itemsService = {
         await this.create(item);
       }
     }
+  },
+
+  async getCategories(): Promise<string[]> {
+    const q = collection(db, "item_categories");
+    const snap = await getDocs(q);
+    return snap.docs.map(d => d.data().name as string);
+  },
+
+  async addCategory(name: string): Promise<void> {
+    const cleanName = name.trim();
+    if (!cleanName) return;
+    const docRef = doc(db, "item_categories", cleanName.toLowerCase());
+    await setDoc(docRef, { name: cleanName, created_at: serverTimestamp() });
+  },
+
+  async getUnits(): Promise<string[]> {
+    const q = collection(db, "item_units");
+    const snap = await getDocs(q);
+    return snap.docs.map(d => d.data().name as string);
+  },
+
+  async addUnit(name: string): Promise<void> {
+    const cleanName = name.trim();
+    if (!cleanName) return;
+    const docRef = doc(db, "item_units", cleanName.toLowerCase());
+    await setDoc(docRef, { name: cleanName, created_at: serverTimestamp() });
   }
 };
+

@@ -42,6 +42,8 @@ export interface GlobalPnLResult {
   card7_TotalGOP: number;
   card8_TotalExpenses: number;
   card9_FeeGross: number;
+  card9_FeeGrossRoom?: number;
+  card9_FeeGrossFnb?: number;
   card10_GAP: number;
   card11_VAT: number;
   card12_ReconOwner: number;

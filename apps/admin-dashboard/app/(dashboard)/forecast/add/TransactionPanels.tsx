@@ -110,7 +110,7 @@ interface TransactionEntryFormProps {
     roomTypes: any[];
     updateForm: (field: string, value: any) => void;
     updateRoom: (idx: number, field: string, value: any) => void;
-    updateNightRate: (idx: number, rate: number) => void;
+    updateNightRate: (idx: number, rate: any) => void;
     onCancel: () => void;
     onSubmit: () => void;
 }
@@ -125,6 +125,10 @@ export function TransactionEntryForm({
     onCancel,
     onSubmit
 }: TransactionEntryFormProps) {
+    const startD = form.checkIn ? new Date(form.checkIn) : null;
+    const endD = form.checkOut ? new Date(form.checkOut) : null;
+    const nights = (startD && endD && endD > startD) ? Math.ceil((endD.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24)) : 1;
+
     return (
         <div className={styles.card}>
             <div className={styles.cardHeader}>
@@ -201,14 +205,23 @@ export function TransactionEntryForm({
                                     onChange={(val: string) => updateForm("channel", val)}
                                 />
                             </div>
-                            <NexuraInput 
-                                label="Total Room Rate per Malam"
-                                value={form.rooms[0].nightRate}
-                                onChange={(val: string) => updateNightRate(0, Number(val))}
-                                placeholder="0"
-                                type="number"
-                                isAmount={true}
-                            />
+                            {startD && Array.from({ length: nights }).map((_, idx) => {
+                                const currentD = new Date(startD);
+                                currentD.setDate(currentD.getDate() + idx);
+                                const dateLabel = currentD.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+                                const label = nights > 1 ? `Room Rate Malam ${idx + 1} (${dateLabel})` : "Total Room Rate per Malam";
+                                return (
+                                    <NexuraInput 
+                                        key={idx}
+                                        label={label}
+                                        value={form.nightRates[idx] ?? ""}
+                                        onChange={(val: string) => updateNightRate(idx, val)}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                );
+                            })}
                         </div>
 
                         <SectionTitle number="03" label="Rincian Pembayaran & Pendapatan Bersih" />

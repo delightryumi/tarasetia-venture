@@ -32,7 +32,6 @@ export default function SelectModulePage() {
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [showGrid, setShowGrid] = useState(false);
-  const [showTransition, setShowTransition] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -43,98 +42,38 @@ export default function SelectModulePage() {
     } else {
       document.documentElement.classList.remove('dark');
     }
-
-    // Add Lottie Player CDN script dynamically
-    const scriptId = 'lottie-player-script';
-    if (!document.getElementById(scriptId)) {
-      const script = document.createElement('script');
-      script.id = scriptId;
-      script.src = 'https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js';
-      script.async = true;
-      document.body.appendChild(script);
-    }
-
-    // Suppress unhandled lottie-player/CDN script error events from triggering Next.js HMR overlay
-    const handleRuntimeError = (event: ErrorEvent) => {
-      if (
-        !event.message ||
-        event.message === 'Script error.' ||
-        event.filename?.includes('lottie') ||
-        event.message?.includes('lottie')
-      ) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    };
-    window.addEventListener('error', handleRuntimeError);
-    return () => {
-      window.removeEventListener('error', handleRuntimeError);
-    };
   }, []);
 
-  useEffect(() => {
-    if (showTransition) {
-      let resolved = false;
-      const handleComplete = () => {
-        if (!resolved) {
-          resolved = true;
-          setShowTransition(false);
-          setShowGrid(true);
-        }
-      };
-
-      // Fallback timer ALWAYS runs to guarantee transition after 3.2 seconds
-      const fallback = setTimeout(handleComplete, 3200);
-
-      // Attempt to attach complete event listener on next tick after player element is rendered in DOM
-      const attachTimer = setTimeout(() => {
-        const player = document.getElementById('transition-player');
-        if (player) {
-          player.addEventListener('complete', handleComplete);
-        }
-      }, 150);
-
-      return () => {
-        clearTimeout(fallback);
-        clearTimeout(attachTimer);
-        const player = document.getElementById('transition-player');
-        if (player) {
-          player.removeEventListener('complete', handleComplete);
-        }
-      };
+  const fetchPermissions = async () => {
+    if (!user?.email) {
+      setLoadingPerms(false);
+      return;
     }
-  }, [showTransition]);
+
+    try {
+      const userDocId = user.email.toLowerCase().replace(/[@.]/g, '_');
+      const userSnap = await getDoc(doc(db, "users_master", userDocId));
+      
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        const role = userData.role;
+        
+        if (role === "superadmin") {
+          setIsSuperadmin(true);
+          setLoadingPerms(false);
+          return;
+        }
+
+        setUserPermissions(userData.permissions || {});
+      }
+    } catch (err) {
+      console.error("Error fetching permissions:", err);
+    } finally {
+      setLoadingPerms(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPermissions = async () => {
-      if (!user?.email) {
-        setLoadingPerms(false);
-        return;
-      }
-
-      try {
-        const userDocId = user.email.toLowerCase().replace(/[@.]/g, '_');
-        const userSnap = await getDoc(doc(db, "users_master", userDocId));
-        
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          const role = userData.role;
-          
-          if (role === "superadmin") {
-            setIsSuperadmin(true);
-            setLoadingPerms(false);
-            return;
-          }
-
-          setUserPermissions(userData.permissions || {});
-        }
-      } catch (err) {
-        console.error("Error fetching permissions:", err);
-      } finally {
-        setLoadingPerms(false);
-      }
-    };
-
     fetchPermissions();
   }, [user]);
 
@@ -186,31 +125,6 @@ export default function SelectModulePage() {
         return false;
     }
   };
-
-  const words = [
-    {
-      text: 'Optimizing',
-    },
-    {
-      text: 'your',
-    },
-    {
-      text: 'business',
-    },
-    {
-      text: 'with',
-    },
-    {
-      text: 'the',
-    },
-    {
-      text: 'best',
-    },
-    {
-      text: 'Solution .',
-      className: 'text-blue-500 dark:text-blue-500',
-    },
-  ];
 
   const menus = [
     {
@@ -299,53 +213,25 @@ export default function SelectModulePage() {
 
   return (
     <div className={styles.container}>
-      
-      {/* Radial gradient mask matching open/page.tsx */}
-      <div className={styles.radialMask}></div>
-
-      {/* Floating Animated Lottie (Bottom Right Corner - Behind Cards - Shown only in Workspace Module View) */}
-      {showGrid && (
-        <div
-          className="absolute bottom-[-100px] right-[-100px] pointer-events-none z-0 opacity-[0.35] select-none"
-          style={{ width: '480px', height: '480px' }}
-          dangerouslySetInnerHTML={{
-            __html: `<lottie-player src="/animated/Female Employee Working on Data Security.json" background="transparent" speed="1.1" style="width: 100%; height: 100%;" loop autoplay></lottie-player>`
-          }}
+      {/* Fixed Luxury Background Image Layers */}
+      <div className="absolute inset-0 w-full h-full pointer-events-none z-0 select-none overflow-hidden">
+        <img
+          src="/luxury-bg.png"
+          alt="Luxury Abstract Background Light"
+          className="w-full h-full object-cover dark:hidden opacity-75 transition-opacity duration-700"
         />
-      )}
+        <img
+          src="/luxury-bg-dark.png"
+          alt="Luxury Abstract Background Dark"
+          className="w-full h-full object-cover hidden dark:block opacity-70 transition-opacity duration-700"
+        />
+        {/* Soft overlay to ensure readability */}
+        <div className="absolute inset-0 bg-white/20 dark:bg-[#060606]/35 backdrop-blur-[0.5px] pointer-events-none" />
+      </div>
 
-      {/* Floating Animated Background Glows */}
-      <motion.div
-        animate={{
-          scale: [1, 1.15, 1],
-          x: [0, 20, 0],
-          y: [0, -30, 0],
-        }}
-        transition={{
-          duration: 10,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className={styles.glowBlue}
-      />
-      <motion.div
-        animate={{
-          scale: [1, 1.1, 1],
-          x: [0, -20, 0],
-          y: [0, 30, 0],
-        }}
-        transition={{
-          duration: 12,
-          repeat: Infinity,
-          ease: 'easeInOut',
-          delay: 2,
-        }}
-        className={styles.glowIndigo}
-      />
-
-      {/* Modular Action Buttons (Matched to POS page spacing) */}
+      {/* Modular Action Buttons (Now floating bottom-left) */}
       <ModuleActionButtons
-        showGrid={showGrid}
+        showGrid={false}
         setShowGrid={setShowGrid}
         theme={theme}
         toggleTheme={toggleTheme}
@@ -353,18 +239,13 @@ export default function SelectModulePage() {
       />
 
       {/* Main viewport body content */}
-      <div className="flex-1 flex flex-col justify-center items-center relative overflow-y-auto w-full z-10 py-6">
-        <AnimatePresence mode="wait">
-          {showTransition ? (
-            <TransitionSection />
-          ) : !showGrid ? (
-            <IntroSection words={words} onOpenClick={() => setShowTransition(true)} />
-          ) : (
-            <WorkspaceSection menus={menus} />
-          )}
-        </AnimatePresence>
+      <div className="flex-1 flex flex-col justify-start md:justify-center items-center relative overflow-y-auto w-full z-10 py-6">
+        {showGrid ? (
+          <WorkspaceSection menus={menus} />
+        ) : (
+          <IntroSection onOpenClick={() => setShowGrid(true)} />
+        )}
       </div>
-
     </div>
   );
 }

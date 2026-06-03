@@ -1,0 +1,761 @@
+/* ================================================================
+   FinancialBreakdown.module.css
+   Fully scoped modular styles for Financial Breakdown section.
+   Aligns with ExpenseSection.module.css visual design and premium aesthetic.
+   ================================================================ */
+
+.fontMonoJb {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.fontInstrument {
+  font-family: 'Instrument Sans', sans-serif;
+}
+
+/* ── Section wrapper ── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  margin-top: 40px;
+  margin-bottom: 128px;
+}
+
+/* ── Outer card ── */
+.outerCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  padding: 40px;
+  width: 100%;
+  transition: box-shadow 0.5s;
+}
+
+.outerCard:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Inner tray ── */
+.innerTray {
+  background: #f8fafc;
+  border: 1px solid rgba(229, 231, 235, 0.5);
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-top: 24px;
+}
+
+/* ── Section header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1c14;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.titleAccent {
+  color: #788069;
+}
+
+.subtitle {
+  font-size: 10px;
+  font-weight: 500;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  margin: 0;
+}
+
+/* ── Grid of 3 sub-tables ── */
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .grid3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Section header inside grid ── */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.sectionIconBox {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sectionIconEmerald {
+  color: #047857;
+  background-color: rgba(240, 253, 244, 0.7);
+  border-color: #dcfce7;
+}
+
+.sectionIconRose {
+  color: #e11d48;
+  background-color: rgba(255, 241, 242, 0.7);
+  border-color: #ffe4e6;
+}
+
+.sectionIconBlue {
+  color: #0284c7;
+  background-color: rgba(240, 249, 255, 0.7);
+  border-color: #e0f2fe;
+}
+
+.sectionIconZinc {
+  color: #27272a;
+  background-color: rgba(244, 244, 245, 0.7);
+  border-color: #e4e4e7;
+}
+
+.sectionHeaderRight {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a1c14;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.sectionSubtitle {
+  font-size: 9px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.sectionDivider {
+  flex: 1;
+  height: 1px;
+  background-color: rgba(229, 231, 235, 0.5);
+  margin-left: 12px;
+}
+
+/* ── Table cards in breakdown ── */
+.tableCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  padding: 12px;
+  overflow: hidden;
+  height: 100%;
+}
+
+.tableScroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+}
+
+.tableScroll::-webkit-scrollbar        { height: 6px; }
+.tableScroll::-webkit-scrollbar-track  { background: transparent; }
+.tableScroll::-webkit-scrollbar-thumb  { background: #e5e7eb; border-radius: 3px; }
+
+/* ── Table cards in breakdown ── */
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+}
+
+.tableHead th {
+  padding: 10px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  text-align: left;
+  background: #111310;
+}
+
+.tableHead th:first-child {
+  border-radius: 8px 0 0 8px;
+  padding-left: 12px;
+}
+
+.tableHead th:last-child {
+  border-radius: 0 8px 8px 0;
+  text-align: right;
+  padding-right: 12px;
+}
+
+.thCenter {
+  text-align: center !important;
+}
+
+.thRight {
+  text-align: right !important;
+}
+
+/* ── Table Body cells ── */
+.tdFirst {
+  padding: 10px 8px;
+  border-radius: 8px 0 0 8px;
+  background: #f8fafc;
+  vertical-align: middle;
+  padding-left: 12px;
+}
+
+.tdMid {
+  padding: 10px 8px;
+  background: #f8fafc;
+  vertical-align: middle;
+}
+
+.tdLast {
+  padding: 10px 8px;
+  border-radius: 0 8px 8px 0;
+  background: #f8fafc;
+  vertical-align: middle;
+  text-align: right;
+  padding-right: 12px;
+}
+
+.tdCenter {
+  text-align: center !important;
+}
+
+.rowGroup:hover .tdFirst,
+.rowGroup:hover .tdMid,
+.rowGroup:hover .tdLast {
+  background: #f0f0ed;
+}
+
+/* Highlight row */
+.rowHighlight .tdFirst,
+.rowHighlight .tdMid,
+.rowHighlight .tdLast {
+  background: rgba(240, 253, 244, 0.5);
+}
+
+.rowHighlight:hover .tdFirst,
+.rowHighlight:hover .tdMid,
+.rowHighlight:hover .tdLast {
+  background: rgba(240, 253, 244, 0.8);
+}
+
+.tdHighlightLabel {
+  color: #064e3b !important;
+  font-weight: 700 !important;
+}
+
+.tdHighlightAmount {
+  color: #047857 !important;
+}
+
+/* ── Total Row ── */
+.tdFirstTotal {
+  padding: 12px 10px;
+  border-radius: 8px 0 0 8px;
+  background: #1A1C14;
+  vertical-align: middle;
+  padding-left: 14px;
+}
+
+.tdMidTotal {
+  padding: 12px 10px;
+  background: #1A1C14;
+  vertical-align: middle;
+}
+
+.tdLastTotal {
+  padding: 12px 10px;
+  border-radius: 0 8px 8px 0;
+  background: #1A1C14;
+  vertical-align: middle;
+  text-align: right;
+  padding-right: 14px;
+}
+
+.totalLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffd8a6;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  line-height: 1.2;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.totalSubLabel {
+  font-size: 8px;
+  color: #a8a29e;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 3px;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.totalAmount {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.totalAmountPositive {
+  color: #ffd8a6;
+}
+
+.totalAmountNegative {
+  color: #fca5a5;
+}
+
+/* ── Label Group ── */
+.labelBox {
+  display: flex;
+  flex-direction: column;
+}
+
+.labelMain {
+  font-size: 10px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.labelSub {
+  font-size: 8px;
+  color: #9ca3af;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 3px;
+  line-height: 1.1;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* ── Amount and rate values ── */
+.rateText {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9ca3af;
+}
+
+.amountText {
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.amountPositive {
+  color: #1f2937;
+}
+
+.amountNegative {
+  color: #ef4444;
+}
+
+.emptyDash {
+  color: #d1d5db;
+  opacity: 0.5;
+}
+
+/* ── Section 4: Distribution Audit ── */
+.distCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.distGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 640px) {
+  .distGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.investorCard {
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.investorCard:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.investorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.shareBadge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(2, 132, 199, 0.08);
+  color: #0284c7;
+  font-weight: 700;
+  font-size: 11px;
+  border: 1px solid rgba(2, 132, 199, 0.15);
+}
+
+.investorMeta {
+  font-size: 9px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.investorName {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 6px 0;
+}
+
+.investorAmount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+/* ── Section 5: Management Cashflow ── */
+.mgmtCard {
+  background: rgba(240, 253, 244, 0.4);
+  border: 1px solid rgba(220, 252, 231, 0.8);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.mgmtHeader {
+  padding: 24px;
+  border-bottom: 1px solid rgba(220, 252, 231, 0.8);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+}
+
+.mgmtHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mgmtHeaderIcon {
+  padding: 10px;
+  background: #dcfce7;
+  color: #16a34a;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.1);
+}
+
+.mgmtHeaderTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: #064e3b;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin: 0;
+}
+
+.mgmtHeaderSubtitle {
+  font-size: 9px;
+  color: #16a34a;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin: 2px 0 0 0;
+}
+
+.mgmtBody {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mgmtStatsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .mgmtStatsGrid {
+    flex-direction: row;
+  }
+}
+
+.mgmtStatCol {
+  flex: 1;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.mgmtStatMeta {
+  font-size: 9px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 6px;
+}
+
+.mgmtStatVal {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.mgmtStatValNegative {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ef4444;
+  margin: 0;
+}
+
+/* Retained input controls */
+.retainedActionBox {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.retainedInputWrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f8fafc;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.retainedInput {
+  width: 28px;
+  background: transparent;
+  text-align: center;
+  font-weight: 700;
+  color: #1f2937;
+  outline: none;
+  border: none;
+  font-size: 11px;
+}
+
+.retainedInput[type=number]::-webkit-outer-spin-button,
+.retainedInput[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.retainedInput[type=number] {
+  -moz-appearance: textfield;
+}
+
+.percentIcon {
+  color: #9ca3af;
+}
+
+/* Settlement CTA box */
+.settlementCard {
+  background: #1A1C14;
+  padding: 32px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  margin-top: 8px;
+}
+
+.settlementMeta {
+  font-size: 10px;
+  font-weight: 750;
+  color: #787069;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.settlementAmount {
+  font-size: 36px;
+  font-weight: 800;
+  color: #ffd8a6;
+  letter-spacing: -0.03em;
+  margin: 0 0 24px 0;
+}
+
+.settlementBtn {
+  background: #ffd8a6;
+  color: #1a1c14;
+  border: none;
+  padding: 16px 40px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 14px rgba(255, 216, 166, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settlementBtn:hover {
+  background: #ffebcc;
+  box-shadow: 0 6px 20px rgba(255, 216, 166, 0.35);
+}
+
+.settlementBtn:active {
+  transform: scale(0.97);
+}
+
+/* ── Desktop Only Constraints ── */
+@media (min-width: 1101px) {
+  .tdFirst,
+  .tdFirstTotal {
+    max-width: 140px;
+  }
+}
+
+/* ── Mobile and Tablet Responsiveness ── */
+@media (max-width: 768px) {
+  .outerCard {
+    padding: 20px;
+    border-radius: 16px;
+  }
+  
+  .innerTray {
+    padding: 16px;
+    gap: 20px;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .title {
+    font-size: 18px;
+  }
+  
+  .distCard {
+    padding: 20px;
+  }
+  
+  .mgmtHeader {
+    padding: 16px 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .mgmtBody {
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .mgmtStatCol {
+    padding: 16px;
+  }
+  
+  .settlementCard {
+    padding: 20px;
+  }
+  
+  .settlementAmount {
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+  
+  .settlementBtn {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+  }
+}

@@ -136,6 +136,7 @@ export interface StockOpnameItem {
   variance: number; // system_qty - physical_qty
   variance_type: "normal_shrinkage" | "damage" | "missing" | "none";
   notes?: string;
+  unit_price?: number;
 }
 
 export interface StockOpname {
@@ -145,9 +146,11 @@ export interface StockOpname {
   items: StockOpnameItem[];
   conducted_by: string;
   conducted_by_name?: string;
+  conducted_by_role?: string;
   approved_by: string | null;
   approved_by_name?: string | null;
   created_at: any; // Timestamp
   approved_at: any | null; // Timestamp
   is_deleted?: boolean;
+  department?: string;
 }

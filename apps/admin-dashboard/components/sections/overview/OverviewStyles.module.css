@@ -660,4 +660,116 @@
   z-index: 190;
 }
 
+/* ── Mobile and Tablet Responsiveness ── */
+@media (max-width: 1200px) {
+  .headerInner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 0 16px;
+  }
+  
+  .headerRight {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: flex-start;
+  }
+  
+  .vDivider {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContainer {
+    padding: 16px;
+    gap: 24px;
+  }
+  
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px !important;
+  }
+  
+  .cardHeaderLeft {
+    width: 100%;
+  }
+  
+  .cardHeader :global(.headerRight) {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  
+  .cardHeader :global(.headerRight) > div {
+    border-right: none !important;
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    text-align: left !important;
+  }
+  
+  .calendarHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px !important;
+  }
+  
+  .calendarNav {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 12px !important;
+    padding: 8px 12px !important;
+  }
+  
+  .calendarNav > div {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+  
+  .calendarNav .vDivider {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .datePickerWrapper {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .datePickerInputGroup {
+    flex: 1;
+  }
+  
+  .dateInput {
+    width: 100%;
+  }
+  
+  .toggleWrapper {
+    width: 100%;
+  }
+  
+  .toggleBtn {
+    flex: 1;
+    text-align: center;
+    padding: 0 8px;
+  }
+  
+  .calendarNav {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .calendarNav > div {
+    width: 100%;
+  }
+}
+
+
 

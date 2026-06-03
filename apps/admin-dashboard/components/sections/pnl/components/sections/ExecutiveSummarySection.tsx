@@ -11,11 +11,13 @@ interface ExecutiveSummarySectionProps {
     loading: boolean;
     rise: any;
     vatPercentage: number;
-    mgmtFeePercentage: number;
+    mgmtFeeRoomPercentage: number;
+    mgmtFeeFnbPercentage: number;
     serviceChargePercentage: number;
     lostBreakagePercentage: number;
     onVatChange: (v: number) => void;
-    onFeeChange: (v: number) => void;
+    onFeeRoomChange: (v: number) => void;
+    onFeeFnbChange: (v: number) => void;
     onServiceChange: (v: number) => void;
     onLostChange: (v: number) => void;
     onCardClick: (cardId: string) => void;
@@ -38,8 +40,8 @@ function RateInput({ value, onChange }: { value: number; onChange: (v: number) =
 
 export function ExecutiveSummarySection({
     pnlResult, loading, rise,
-    vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage,
-    onVatChange, onFeeChange, onServiceChange, onLostChange,
+    vatPercentage, mgmtFeeRoomPercentage, mgmtFeeFnbPercentage, serviceChargePercentage, lostBreakagePercentage,
+    onVatChange, onFeeRoomChange, onFeeFnbChange, onServiceChange, onLostChange,
     onCardClick,
 }: ExecutiveSummarySectionProps) {
     return (
@@ -177,7 +179,6 @@ export function ExecutiveSummarySection({
                         loading={loading}
                         variants={rise}
                         bgVariant="expense"
-                        onClick={onCardClick}
                         extra={<RateInput value={vatPercentage} onChange={onVatChange} />}
                     />
                     <SummaryCard
@@ -188,7 +189,6 @@ export function ExecutiveSummarySection({
                         loading={loading}
                         variants={rise}
                         bgVariant="amber"
-                        onClick={onCardClick}
                         extra={<RateInput value={serviceChargePercentage} onChange={onServiceChange} />}
                     />
                     <SummaryCard
@@ -199,19 +199,27 @@ export function ExecutiveSummarySection({
                         loading={loading}
                         variants={rise}
                         bgVariant="pink"
-                        onClick={onCardClick}
                         extra={<RateInput value={lostBreakagePercentage} onChange={onLostChange} />}
                     />
                     <SummaryCard
-                        label={`Management Fee (${mgmtFeePercentage}%)`}
+                        label={`Management Fee - Room (${mgmtFeeRoomPercentage}%)`}
                         icon={<Wallet size={18} />}
-                        accent="#f59e0b"
-                        value={pnlResult?.card9_FeeGross || 0}
+                        accent="#0ea5e9"
+                        value={pnlResult?.card9_FeeGrossRoom || 0}
                         loading={loading}
                         variants={rise}
-                        bgVariant="amber"
-                        onClick={onCardClick}
-                        extra={<RateInput value={mgmtFeePercentage} onChange={onFeeChange} />}
+                        bgVariant="blue"
+                        extra={<RateInput value={mgmtFeeRoomPercentage} onChange={onFeeRoomChange} />}
+                    />
+                    <SummaryCard
+                        label={`Management Fee - F&B (${mgmtFeeFnbPercentage}%)`}
+                        icon={<Wallet size={18} />}
+                        accent="#0ea5e9"
+                        value={pnlResult?.card9_FeeGrossFnb || 0}
+                        loading={loading}
+                        variants={rise}
+                        bgVariant="blue"
+                        extra={<RateInput value={mgmtFeeFnbPercentage} onChange={onFeeFnbChange} />}
                     />
                 </motion.div>
             </div>

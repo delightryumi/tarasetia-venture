@@ -13,6 +13,7 @@ import { PNLFooter }         from "./components/PNLFooter";
 import { PNLDrillDownModal } from "./components/PNLDrillDownModal";
 import { useDrillDown }      from "./hooks/useDrillDown";
 import { usePnLExport }      from "./hooks/usePnLExport";
+import FinancialBreakdown    from "./components/FinancialBreakdown";
 import "./PNLStyles.css";
 
 /* ── Animations ── */
@@ -35,15 +36,26 @@ export function PNLSection() {
         month, setMonth,
         loading, pnlResult,
         expenses, vatPercentage, mgmtFeePercentage,
+        mgmtFeeRoomPercentage, mgmtFeeFnbPercentage,
         serviceChargePercentage, lostBreakagePercentage,
         yearTrendData, multiYearTrendData,
         showDatePicker, setShowDatePicker,
         fetchData, updateVat, updateMgmtFee,
+        updateMgmtFeeRoom, updateMgmtFeeFnb,
         updateServiceCharge, updateLostBreakage,
-        rawTransactions, customIncomes, posOrders,
+        rawTransactions, customIncomes, posOrders, nonCommissionRevenue,
     } = usePnL();
 
+    const [retainedPercent, setRetainedPercent] = React.useState(0);
+
     const [y, mStr] = month.split("-");
+
+    const sharedExpensesTotal = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const mgmtExpensesTotal = 0;
+    const totalNonComm = pnlResult?.card2_NonCommRevenue || 0;
+    const finalMgmtNet = pnlResult?.card12_ReconOwner || 0;
+    const gopPercentage = pnlResult?.gopBasis && pnlResult.gopBasis > 0 ? (pnlResult.gopFee / pnlResult.gopBasis) * 100 : 0;
+    const totalRevenueHotelCollect = pnlResult?.card3_RevHotelCollect || 0;
 
     /* ── Drill-down state & logic ── */
     const drillDown = useDrillDown({
@@ -82,11 +94,13 @@ export function PNLSection() {
                         pnlResult={pnlResult}
                         loading={loading}
                         vatPercentage={vatPercentage}
-                        mgmtFeePercentage={mgmtFeePercentage}
+                        mgmtFeeRoomPercentage={mgmtFeeRoomPercentage}
+                        mgmtFeeFnbPercentage={mgmtFeeFnbPercentage}
                         serviceChargePercentage={serviceChargePercentage}
                         lostBreakagePercentage={lostBreakagePercentage}
                         onVatChange={updateVat}
-                        onFeeChange={updateMgmtFee}
+                        onFeeRoomChange={updateMgmtFeeRoom}
+                        onFeeFnbChange={updateMgmtFeeFnb}
                         onServiceChange={updateServiceCharge}
                         onLostChange={updateLostBreakage}
                         rise={rise}
@@ -94,16 +108,47 @@ export function PNLSection() {
                         onCardClick={drillDown.handleCardClick}
                     />
                 ) : (
-                    <PNLCharts
-                        viewMode={viewMode}
-                        pnlResult={pnlResult}
-                        yearTrendData={yearTrendData}
-                        multiYearTrendData={multiYearTrendData}
-                        monthStr={mStr}
-                        yearStr={y}
-                        formatIDR={formatIDR}
-                    />
+                    <motion.div
+                        key="charts-view"
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12 }}
+                        className="flex flex-col gap-10"
+                    >
+                        <PNLCharts
+                            viewMode={viewMode}
+                            pnlResult={pnlResult}
+                            yearTrendData={yearTrendData}
+                            multiYearTrendData={multiYearTrendData}
+                            monthStr={mStr}
+                            yearStr={y}
+                            formatIDR={formatIDR}
+                        />
+
+                        {pnlResult && (
+                            <FinancialBreakdown
+                                pnlResult={pnlResult}
+                                customIncomes={customIncomes}
+                                nonCommissionRevenue={nonCommissionRevenue}
+                                expenses={expenses}
+                                sharedExpensesTotal={sharedExpensesTotal}
+                                mgmtExpensesTotal={mgmtExpensesTotal}
+                                totalNonComm={totalNonComm}
+                                finalMgmtNet={finalMgmtNet}
+                                vatPercentage={vatPercentage}
+                                gopPercentage={gopPercentage}
+                                totalRevenueHotelCollect={totalRevenueHotelCollect}
+                                retainedPercent={retainedPercent}
+                                setRetainedPercent={setRetainedPercent}
+                                mgmtFeeRoomPercentage={mgmtFeeRoomPercentage}
+                                mgmtFeeFnbPercentage={mgmtFeeFnbPercentage}
+                                serviceChargePercentage={serviceChargePercentage}
+                                lostBreakagePercentage={lostBreakagePercentage}
+                            />
+                        )}
+                    </motion.div>
                 )}
+
             </AnimatePresence>
 
             {/* Drill-Down Modal */}

@@ -12,8 +12,6 @@ export function useStockOpname() {
     setLoading(true);
     setError(null);
     try {
-      const items = await itemsService.getAll();
-      await opnameService.seedDemoOpnames(items);
       const data = await opnameService.getAll();
       setOpnames(data);
     } catch (err: any) {

@@ -82,15 +82,15 @@
 
 .filterSelect:focus { border-color: var(--p-info-border); }
 
-/* ── Main table card ── */
 .tableCard {
   background: var(--p-canvas);
   border: 1px solid var(--p-hairline);
   border-radius: var(--p-radius-lg);
   overflow-x: auto;
-  min-width: 0; /* Prevents grid column from expanding beyond screen */
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
-
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -1253,4 +1253,18 @@
   font-size: 13px;
   color: var(--p-muted);
   text-align: center;
+}
+
+/* Responsive layout for Perform Opname */
+.responsiveGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--p-space-lg);
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .responsiveGrid {
+    grid-template-columns: 1fr;
+  }
 }

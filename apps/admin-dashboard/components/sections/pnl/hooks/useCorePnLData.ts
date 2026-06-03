@@ -13,6 +13,8 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
     const [investors, setInvestors] = useState<InvestorItem[]>([]);
     const [vatPercentage, setVatPercentage] = useState(11);
     const [mgmtFeePercentage, setMgmtFeePercentage] = useState(10);
+    const [mgmtFeeRoomPercentage, setMgmtFeeRoomPercentage] = useState(10);
+    const [mgmtFeeFnbPercentage, setMgmtFeeFnbPercentage] = useState(10);
     const [serviceChargePercentage, setServiceChargePercentage] = useState(10);
     const [lostBreakagePercentage, setLostBreakagePercentage] = useState(1);
     const [hotelGopPercentages, setHotelGopPercentages] = useState<Record<string, number>>({});
@@ -40,13 +42,16 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
                     setExpenses(data.expenses || []);
                     setInvestors(data.investors || []);
                     setVatPercentage(data.vatPercentage ?? 11);
-                    setMgmtFeePercentage(data.mgmtFeePercentage ?? 10);
+                    const baseMgmt = data.mgmtFeePercentage ?? 10;
+                    setMgmtFeePercentage(baseMgmt);
+                    setMgmtFeeRoomPercentage(data.mgmtFeeRoomPercentage ?? baseMgmt);
+                    setMgmtFeeFnbPercentage(data.mgmtFeeFnbPercentage ?? baseMgmt);
                     setServiceChargePercentage(data.serviceChargePercentage ?? 10);
                     setLostBreakagePercentage(data.lostBreakagePercentage ?? 1);
                     setHotelGopPercentages(data.hotelGopPercentages || {});
                 } else {
                     setCustomIncomes([]); setNonCommissionRevenue([]); setExpenses([]); setInvestors([]); 
-                    setVatPercentage(11); setMgmtFeePercentage(10); setHotelGopPercentages({});
+                    setVatPercentage(11); setMgmtFeePercentage(10); setMgmtFeeRoomPercentage(10); setMgmtFeeFnbPercentage(10); setHotelGopPercentages({});
                     setServiceChargePercentage(10); setLostBreakagePercentage(1);
                 }
             } else {
@@ -57,6 +62,8 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
                 const yearlyInvestors: InvestorItem[] = [];
                 let latestVat = 11;
                 let latestMgmt = 10;
+                let latestMgmtRoom = 10;
+                let latestMgmtFnb = 10;
                 let latestService = 10;
                 let latestLost = 1;
 
@@ -73,7 +80,10 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
                     if (yearlyInvestors.length === 0) yearlyInvestors.push(...(data.investors || []));
                     if (d.id === month) {
                         latestVat = data.vatPercentage ?? 11;
-                        latestMgmt = data.mgmtFeePercentage ?? 10;
+                        const baseMgmt = data.mgmtFeePercentage ?? 10;
+                        latestMgmt = baseMgmt;
+                        latestMgmtRoom = data.mgmtFeeRoomPercentage ?? baseMgmt;
+                        latestMgmtFnb = data.mgmtFeeFnbPercentage ?? baseMgmt;
                         latestService = data.serviceChargePercentage ?? 10;
                         latestLost = data.lostBreakagePercentage ?? 1;
                     }
@@ -85,6 +95,8 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
                 setInvestors(yearlyInvestors);
                 setVatPercentage(latestVat);
                 setMgmtFeePercentage(latestMgmt);
+                setMgmtFeeRoomPercentage(latestMgmtRoom);
+                setMgmtFeeFnbPercentage(latestMgmtFnb);
                 setServiceChargePercentage(latestService);
                 setLostBreakagePercentage(latestLost);
             }
@@ -113,6 +125,22 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
             const docRef = doc(db, "global_pnl_reports", month);
             await updateDoc(docRef, { mgmtFeePercentage: val });
         } catch (error) { console.error("Failed to save Fee:", error); }
+    };
+
+    const updateMgmtFeeRoom = async (val: number) => {
+        setMgmtFeeRoomPercentage(val);
+        try {
+            const docRef = doc(db, "global_pnl_reports", month);
+            await updateDoc(docRef, { mgmtFeeRoomPercentage: val });
+        } catch (error) { console.error("Failed to save Room Fee:", error); }
+    };
+
+    const updateMgmtFeeFnb = async (val: number) => {
+        setMgmtFeeFnbPercentage(val);
+        try {
+            const docRef = doc(db, "global_pnl_reports", month);
+            await updateDoc(docRef, { mgmtFeeFnbPercentage: val });
+        } catch (error) { console.error("Failed to save F&B Fee:", error); }
     };
 
     const updateServiceCharge = async (val: number) => {
@@ -149,11 +177,15 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
         investors,
         vatPercentage,
         mgmtFeePercentage,
+        mgmtFeeRoomPercentage,
+        mgmtFeeFnbPercentage,
         serviceChargePercentage,
         lostBreakagePercentage,
         hotelGopPercentages,
         updateVat,
         updateMgmtFee,
+        updateMgmtFeeRoom,
+        updateMgmtFeeFnb,
         updateServiceCharge,
         updateLostBreakage,
         updateHotelGop,

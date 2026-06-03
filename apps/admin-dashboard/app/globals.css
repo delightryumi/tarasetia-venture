@@ -74,7 +74,8 @@ a {
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -83,11 +84,17 @@ a {
 
 ::-webkit-scrollbar-thumb {
   background: var(--sage-light);
-  border-radius: 10px;
+  border-radius: 99px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--sage);
+}
+
+/* Firefox scrollbar width */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sage-light) transparent;
 }
 
 /* Hide scrollbar utility */

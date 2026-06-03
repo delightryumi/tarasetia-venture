@@ -13,7 +13,7 @@ interface SummaryCardProps {
     extra?: React.ReactNode;
     variants?: any;
     accent?: string;
-    bgVariant?: "neutral" | "revenue" | "expense" | "amber" | "yellow" | "pink";
+    bgVariant?: "neutral" | "revenue" | "expense" | "amber" | "yellow" | "pink" | "blue";
 }
 
 export function SummaryCard({
@@ -27,6 +27,7 @@ export function SummaryCard({
         amber:   "bg-amber-50/60 border-amber-100/80 hover:border-amber-200",
         yellow:  "bg-amber-50/60 border-amber-100/80 hover:border-amber-200",
         pink:    "bg-pink-50/60 border-pink-100/80 hover:border-pink-200",
+        blue:    "bg-sky-50/60 border-sky-100/80 hover:border-sky-200",
     };
     const bgStyleClass = bgMap[bgVariant] ?? bgMap.neutral;
     const isColored = bgVariant !== "neutral";

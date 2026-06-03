@@ -8,8 +8,7 @@ const COLLECTION_NAME = "stock_opnames";
 
 export const opnameService = {
   async getAll(): Promise<StockOpname[]> {
-    const q = query(collection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
-    const snap = await getDocs(q);
+    const snap = await getDocs(collection(db, COLLECTION_NAME));
     return snap.docs
       .map(d => ({ id: d.id, ...d.data() } as StockOpname))
       .filter(d => d.is_deleted !== true);
@@ -23,19 +22,22 @@ export const opnameService = {
   },
 
   async create(opname: Omit<StockOpname, "id" | "created_at" | "approved_at">): Promise<string> {
-    // Enforce single opname per period: check if already exists
+    // Enforce single opname per period per department
+    const targetDept = opname.department || "Purchasing";
     const q = query(
       collection(db, COLLECTION_NAME), 
       where("period", "==", opname.period),
+      where("department", "==", targetDept),
       where("is_deleted", "!=", true)
     );
     const snap = await getDocs(q);
     if (!snap.empty) {
-      throw new Error(`A stock opname record already exists for period ${opname.period}`);
+      throw new Error(`A stock opname record already exists for period ${opname.period} in department ${targetDept}`);
     }
 
     const docRef = await addDoc(collection(db, COLLECTION_NAME), {
       ...opname,
+      department: targetDept,
       is_deleted: false,
       created_at: serverTimestamp(),
       approved_at: null

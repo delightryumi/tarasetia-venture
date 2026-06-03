@@ -125,9 +125,19 @@ export const useTransactionForm = () => {
     // Sync nightRates with nights
     useEffect(() => {
         if (revenueType === "room") {
-            const currentPrice = form.rooms[0]?.price || "";
-            const newRates = Array(nights).fill(currentPrice);
-            setForm(prev => ({ ...prev, nightRates: newRates }));
+            setForm(prev => {
+                const currentRates = prev.nightRates || [];
+                if (currentRates.length === nights) return prev;
+                
+                const defaultPrice = prev.rooms[0]?.price || "";
+                const newRates = Array(nights).fill("").map((_, i) => {
+                    if (currentRates[i] !== undefined && currentRates[i] !== "") {
+                        return currentRates[i];
+                    }
+                    return defaultPrice;
+                });
+                return { ...prev, nightRates: newRates };
+            });
         }
     }, [nights, revenueType]);
 
@@ -135,7 +145,13 @@ export const useTransactionForm = () => {
         setForm(prev => {
             const newRates = [...(prev.nightRates || [])];
             newRates[idx] = val;
-            return { ...prev, nightRates: newRates };
+            
+            const newRooms = [...prev.rooms];
+            if (idx === 0 && newRooms[0]) {
+                newRooms[0] = { ...newRooms[0], price: val.toString() };
+            }
+            
+            return { ...prev, nightRates: newRates, rooms: newRooms };
         });
     };
 

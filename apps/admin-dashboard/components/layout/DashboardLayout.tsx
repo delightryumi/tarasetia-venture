@@ -117,7 +117,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                     </footer>
                 </div>
             </main>
-
+            <MobileBottomNav />
         </div>
     );
 };

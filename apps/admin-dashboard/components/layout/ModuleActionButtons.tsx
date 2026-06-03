@@ -20,59 +20,28 @@ export function ModuleActionButtons({
   signOutUser,
 }: ModuleActionButtonsProps) {
   return (
-    <div
-      className="w-full flex justify-between items-center z-20 shrink-0 select-none"
-      style={{
-        paddingTop: '20px',
-        paddingRight: '24px',
-        paddingLeft: '24px',
-        marginBottom: '16px',
-      }}
-    >
-      {/* Left Side: Back button */}
-      <div>
-        <AnimatePresence mode="wait">
-          {showGrid && (
-            <motion.button
-              key="back-btn"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setShowGrid(false)}
-              className="flex items-center justify-center gap-2 h-9 w-28 rounded-xl border border-black/[0.06] dark:border-white/[0.08] bg-white/40 dark:bg-zinc-900/30 hover:bg-white/80 dark:hover:bg-zinc-900/80 hover:border-black/[0.12] dark:hover:border-white/[0.16] text-neutral-750 dark:text-neutral-300 transition-all cursor-pointer shadow-sm backdrop-blur-md text-xs font-medium"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back</span>
-            </motion.button>
-          )}
-        </AnimatePresence>
-      </div>
+    <div className="fixed bottom-6 left-6 z-50 flex items-center gap-1.5 p-1 bg-white/80 dark:bg-[#0c0c0c]/85 border border-neutral-200/80 dark:border-neutral-800/80 rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)] backdrop-blur-md select-none pointer-events-auto">
+      {/* Theme switcher toggle */}
+      <button
+        onClick={toggleTheme}
+        className="flex items-center justify-center w-8 h-8 rounded-md text-neutral-600 dark:text-neutral-450 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-all cursor-pointer"
+        title="Toggle theme"
+      >
+        {theme === 'dark' ? (
+          <Sun className="w-4 h-4 text-amber-500" />
+        ) : (
+          <Moon className="w-4 h-4" />
+        )}
+      </button>
 
-      {/* Right Side: Theme toggle & Logout */}
-      <div className="flex items-center gap-3">
-        {/* Theme switcher toggle */}
-        <button
-          onClick={toggleTheme}
-          className="flex items-center justify-center w-9 h-9 rounded-xl border border-black/[0.06] dark:border-white/[0.08] bg-white/40 dark:bg-zinc-900/30 hover:bg-white/80 dark:hover:bg-zinc-900/80 hover:border-black/[0.12] dark:hover:border-white/[0.16] text-neutral-750 dark:text-neutral-300 transition-all cursor-pointer shadow-sm backdrop-blur-md"
-          title="Toggle theme"
-        >
-          {theme === 'dark' ? (
-            <Sun className="w-4.5 h-4.5 text-amber-500" />
-          ) : (
-            <Moon className="w-4.5 h-4.5 text-neutral-600" />
-          )}
-        </button>
-
-        {/* Logout (Red themed glass deck button) */}
-        <button
-          onClick={signOutUser}
-          className="flex items-center justify-center gap-2 h-9 w-28 rounded-xl border border-black/[0.06] dark:border-white/[0.08] bg-white/40 dark:bg-zinc-900/30 hover:bg-red-50/80 dark:hover:bg-red-950/20 hover:border-red-200/60 dark:hover:border-red-900/30 text-neutral-750 dark:text-neutral-300 hover:text-red-650 dark:hover:text-red-400 font-medium transition-all text-xs cursor-pointer shadow-sm backdrop-blur-md"
-        >
-          <Power className="w-4 h-4" />
-          <span>Logout</span>
-        </button>
-      </div>
+      {/* Logout button */}
+      <button
+        onClick={signOutUser}
+        className="flex items-center justify-center w-8 h-8 rounded-md text-neutral-600 dark:text-neutral-450 hover:text-red-650 dark:hover:text-red-400 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-all cursor-pointer"
+        title="Sign Out"
+      >
+        <Power className="w-4 h-4 shrink-0" />
+      </button>
     </div>
   );
 }

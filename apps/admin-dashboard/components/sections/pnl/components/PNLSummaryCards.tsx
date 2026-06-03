@@ -11,13 +11,15 @@ interface PNLSummaryCardsProps {
     pnlResult:               GlobalPnLResult | null;
     loading:                 boolean;
     vatPercentage:           number;
-    mgmtFeePercentage:       number;
+    mgmtFeeRoomPercentage:   number;
+    mgmtFeeFnbPercentage:    number;
     serviceChargePercentage: number;
     lostBreakagePercentage:  number;
-    onVatChange:     (v: number) => void;
-    onFeeChange:     (v: number) => void;
-    onServiceChange: (v: number) => void;
-    onLostChange:    (v: number) => void;
+    onVatChange:       (v: number) => void;
+    onFeeRoomChange:   (v: number) => void;
+    onFeeFnbChange:    (v: number) => void;
+    onServiceChange:   (v: number) => void;
+    onLostChange:      (v: number) => void;
     rise:            any;
     formatIDR:       (v: number) => string;
     onCardClick:     (cardId: string) => void;
@@ -25,8 +27,8 @@ interface PNLSummaryCardsProps {
 
 export const PNLSummaryCards: React.FC<PNLSummaryCardsProps> = ({
     pnlResult, loading, rise,
-    vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage,
-    onVatChange, onFeeChange, onServiceChange, onLostChange,
+    vatPercentage, mgmtFeeRoomPercentage, mgmtFeeFnbPercentage, serviceChargePercentage, lostBreakagePercentage,
+    onVatChange, onFeeRoomChange, onFeeFnbChange, onServiceChange, onLostChange,
     onCardClick,
 }) => {
     return (
@@ -37,11 +39,13 @@ export const PNLSummaryCards: React.FC<PNLSummaryCardsProps> = ({
             <ExecutiveSummarySection
                 pnlResult={pnlResult} loading={loading} rise={rise}
                 vatPercentage={vatPercentage}
-                mgmtFeePercentage={mgmtFeePercentage}
+                mgmtFeeRoomPercentage={mgmtFeeRoomPercentage}
+                mgmtFeeFnbPercentage={mgmtFeeFnbPercentage}
                 serviceChargePercentage={serviceChargePercentage}
                 lostBreakagePercentage={lostBreakagePercentage}
                 onVatChange={onVatChange}
-                onFeeChange={onFeeChange}
+                onFeeRoomChange={onFeeRoomChange}
+                onFeeFnbChange={onFeeFnbChange}
                 onServiceChange={onServiceChange}
                 onLostChange={onLostChange}
                 onCardClick={onCardClick}

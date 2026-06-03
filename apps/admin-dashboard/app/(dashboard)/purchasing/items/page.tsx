@@ -7,6 +7,7 @@ import { useItems } from '@/hooks/purchasing/useItems';
 import { useSuppliers } from '@/hooks/purchasing/useSuppliers';
 import { toast } from 'sonner';
 import { ITEM_CATEGORIES, ITEM_UNITS } from '@/lib/purchasing/constants';
+import { itemsService } from '@/services/purchasing/itemsService';
 import { formatRupiah } from '@/lib/purchasing/utils';
 import { PStatusChip } from '@/components/purchasing/ui/PStatusChip';
 import { PButton } from '@/components/purchasing/ui/PButton';
@@ -37,6 +38,33 @@ export default function ItemsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({ ...BLANK_FORM });
 
+  const [categories, setCategories] = useState<string[]>(ITEM_CATEGORIES);
+  const [units, setUnits] = useState<string[]>(ITEM_UNITS);
+  const [newCategory, setNewCategory] = useState('');
+  const [newUnit, setNewUnit] = useState('');
+
+  React.useEffect(() => {
+    const loadDynamicOptions = async () => {
+      try {
+        const [dbCats, dbUnits] = await Promise.all([
+          itemsService.getCategories(),
+          itemsService.getUnits()
+        ]);
+        setCategories(prev => {
+          const merged = [...ITEM_CATEGORIES, ...dbCats];
+          return Array.from(new Set(merged));
+        });
+        setUnits(prev => {
+          const merged = [...ITEM_UNITS, ...dbUnits];
+          return Array.from(new Set(merged));
+        });
+      } catch (err) {
+        console.error("Failed to load custom categories/units:", err);
+      }
+    };
+    loadDynamicOptions();
+  }, []);
+
   const filtered = useMemo(() => {
     return items.filter(item => {
       const matchSearch = !search || item.name.toLowerCase().includes(search.toLowerCase()) || (item.item_code || '').toLowerCase().includes(search.toLowerCase());
@@ -48,14 +76,74 @@ export default function ItemsPage() {
 
   const lowStockItems = useMemo(() => items.filter(i => i.current_stock <= i.min_stock && i.is_active), [items]);
 
-  const openCreate = () => { setForm({ ...BLANK_FORM, category: ITEM_CATEGORIES[0], unit: ITEM_UNITS[0], procurement_module: 'SR' }); setIsEditing(false); setIsOpen(true); };
-  const openEdit = (item: any) => { setForm({ name: item.name, category: item.category, unit: item.unit, min_stock: item.min_stock, current_stock: item.current_stock, last_purchase_price: item.last_purchase_price, default_supplier_id: item.default_supplier_id || '', is_active: item.is_active, item_code: item.item_code || '', procurement_module: item.procurement_module || 'SR' }); setIsEditing(true); setIsOpen(true); };
+  const openCreate = () => { 
+    setForm({ 
+      ...BLANK_FORM, 
+      category: categories[0] || ITEM_CATEGORIES[0], 
+      unit: units[0] || ITEM_UNITS[0], 
+      procurement_module: 'SR' 
+    }); 
+    setNewCategory('');
+    setNewUnit('');
+    setIsEditing(false); 
+    setIsOpen(true); 
+  };
+
+  const openEdit = (item: any) => { 
+    setForm({ 
+      name: item.name, 
+      category: item.category, 
+      unit: item.unit, 
+      min_stock: item.min_stock, 
+      current_stock: item.current_stock, 
+      last_purchase_price: item.last_purchase_price, 
+      default_supplier_id: item.default_supplier_id || '', 
+      is_active: item.is_active, 
+      item_code: item.item_code || '', 
+      procurement_module: item.procurement_module || 'SR' 
+    }); 
+    setNewCategory('');
+    setNewUnit('');
+    setIsEditing(true); 
+    setIsOpen(true); 
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let finalCategory = form.category;
+      let finalUnit = form.unit;
+
+      if (form.category === '__NEW__') {
+        const cleanCat = newCategory.trim();
+        if (!cleanCat) {
+          toast.error('Please enter a valid category name.');
+          return;
+        }
+        await itemsService.addCategory(cleanCat);
+        finalCategory = cleanCat;
+        setCategories(prev => Array.from(new Set([...prev, cleanCat])));
+      }
+
+      if (form.unit === '__NEW__') {
+        const cleanUnit = newUnit.trim();
+        if (!cleanUnit) {
+          toast.error('Please enter a valid unit name.');
+          return;
+        }
+        await itemsService.addUnit(cleanUnit);
+        finalUnit = cleanUnit;
+        setUnits(prev => Array.from(new Set([...prev, cleanUnit])));
+      }
+
       const sup = suppliers.find(s => s.id === form.default_supplier_id);
-      const formData = { ...form, default_supplier_name: sup?.name || '' };
+      const formData = { 
+        ...form, 
+        category: finalCategory,
+        unit: finalUnit,
+        default_supplier_name: sup?.name || '' 
+      };
+
       if (isEditing && selectedItem) {
         await updateItem(selectedItem.id, formData);
         toast.success('Item updated successfully.');
@@ -64,7 +152,9 @@ export default function ItemsPage() {
         toast.success('Item created successfully.');
       }
       setIsOpen(false);
-    } catch (err: any) { toast.error(err.message || 'Failed to save item.'); }
+    } catch (err: any) { 
+      toast.error(err.message || 'Failed to save item.'); 
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -116,7 +206,7 @@ export default function ItemsPage() {
         </div>
         <select className={s.filterSelect} value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
           <option value="">All categories</option>
-          {ITEM_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          {categories.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <select className={s.filterSelect} value={moduleFilter} onChange={e => setModuleFilter(e.target.value)}>
           <option value="">All modules</option>
@@ -172,8 +262,12 @@ export default function ItemsPage() {
                       </span>
                     </td>
                     <td className={s.tdMuted}>{item.unit}</td>
-                    <td className={`${s.tdRight} ${s.tdMono}`} style={{ color: isLow ? 'var(--p-coral)' : 'var(--p-body)', fontWeight: isLow ? 500 : 400 }}>{item.current_stock}</td>
-                    <td className={`${s.tdRight} ${s.tdMuted}`}>{item.min_stock}</td>
+                    <td className={`${s.tdRight} ${s.tdMono}`} style={{ color: isLow && procMod !== 'DML' ? 'var(--p-coral)' : 'var(--p-body)', fontWeight: isLow && procMod !== 'DML' ? 500 : 400 }}>
+                      {procMod === 'DML' ? '—' : item.current_stock}
+                    </td>
+                    <td className={`${s.tdRight} ${s.tdMuted}`}>
+                      {procMod === 'DML' ? '—' : item.min_stock}
+                    </td>
                     <td className={`${s.tdRight} ${s.tdMono}`}>{formatRupiah(item.last_purchase_price)}</td>
                     <td><span style={{ fontSize: 13, fontWeight: 500, color: item.is_active ? 'var(--p-success)' : 'var(--p-muted)' }}>{item.is_active ? 'Active' : 'Inactive'}</span></td>
                   </tr>
@@ -214,8 +308,12 @@ export default function ItemsPage() {
                     <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Category</div><div className={s.detailMetaValue}>{selectedItem.category}</div></div>
                     <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Procurement</div><div className={s.detailMetaValue} style={{ fontWeight: 600 }}>{selectedItem.procurement_module || 'SR'}</div></div>
                     <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Unit</div><div className={s.detailMetaValue}>{selectedItem.unit}</div></div>
-                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Current Stock</div><div className={s.detailMetaValue} style={{ color: selectedItem.current_stock <= selectedItem.min_stock ? 'var(--p-coral)' : 'var(--p-ink)' }}>{selectedItem.current_stock} {selectedItem.unit}</div></div>
-                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Min Stock</div><div className={s.detailMetaValue}>{selectedItem.min_stock} {selectedItem.unit}</div></div>
+                    {selectedItem.procurement_module !== 'DML' && (
+                      <>
+                        <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Current Stock</div><div className={s.detailMetaValue} style={{ color: selectedItem.current_stock <= selectedItem.min_stock ? 'var(--p-coral)' : 'var(--p-ink)' }}>{selectedItem.current_stock} {selectedItem.unit}</div></div>
+                        <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Min Stock</div><div className={s.detailMetaValue}>{selectedItem.min_stock} {selectedItem.unit}</div></div>
+                      </>
+                    )}
                   </div>
 
                   <div className={s.darkCard}>
@@ -262,12 +360,31 @@ export default function ItemsPage() {
                   <div className={s.formField}>
                     <label className={s.formLabel}>Category</label>
                     <select className={s.formSelect} value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} required>
-                      {ITEM_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                      <option value="__NEW__">+ Add New Category...</option>
                     </select>
                   </div>
+                  {form.category === '__NEW__' && (
+                    <div className={s.formField} style={{ gridColumn: '1 / -1' }}>
+                      <label className={s.formLabel}>New Category Name</label>
+                      <input className={s.formInput} value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="e.g. Fresh Pasta" required />
+                    </div>
+                  )}
                   <div className={s.formField}>
                     <label className={s.formLabel}>Procurement Module</label>
-                    <select className={s.formSelect} value={form.procurement_module} onChange={e => setForm(f => ({ ...f, procurement_module: e.target.value as any }))} required>
+                    <select 
+                      className={s.formSelect} 
+                      value={form.procurement_module} 
+                      onChange={e => {
+                        const val = e.target.value as any;
+                        setForm(f => ({ 
+                          ...f, 
+                          procurement_module: val,
+                          ...(val === 'DML' ? { current_stock: 0, min_stock: 0 } : {})
+                        }));
+                      }} 
+                      required
+                    >
                       <option value="SR">Store Requisition (SR)</option>
                       <option value="PR">Purchase Requisition (PR)</option>
                       <option value="DML">Daily Market List (DML)</option>
@@ -276,9 +393,16 @@ export default function ItemsPage() {
                   <div className={s.formField}>
                     <label className={s.formLabel}>Unit</label>
                     <select className={s.formSelect} value={form.unit} onChange={e => setForm(f => ({ ...f, unit: e.target.value }))} required>
-                      {ITEM_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                      {units.map(u => <option key={u} value={u}>{u}</option>)}
+                      <option value="__NEW__">+ Add New Unit...</option>
                     </select>
                   </div>
+                  {form.unit === '__NEW__' && (
+                    <div className={s.formField} style={{ gridColumn: '1 / -1' }}>
+                      <label className={s.formLabel}>New Unit Name</label>
+                      <input className={s.formInput} value={newUnit} onChange={e => setNewUnit(e.target.value)} placeholder="e.g. tray" required />
+                    </div>
+                  )}
                   <div className={s.formField}>
                     <label className={s.formLabel}>Default Supplier</label>
                     <select className={s.formSelect} value={form.default_supplier_id} onChange={e => setForm(f => ({ ...f, default_supplier_id: e.target.value }))}>
@@ -286,14 +410,18 @@ export default function ItemsPage() {
                       {suppliers.map(sup => <option key={sup.id} value={sup.id}>{sup.name}</option>)}
                     </select>
                   </div>
-                  <div className={s.formField}>
-                    <label className={s.formLabel}>Current Stock</label>
-                    <input className={s.formInput} type="number" min={0} value={form.current_stock} onChange={e => setForm(f => ({ ...f, current_stock: Number(e.target.value) }))} required />
-                  </div>
-                  <div className={s.formField}>
-                    <label className={s.formLabel}>Minimum Stock</label>
-                    <input className={s.formInput} type="number" min={0} value={form.min_stock} onChange={e => setForm(f => ({ ...f, min_stock: Number(e.target.value) }))} required />
-                  </div>
+                  {form.procurement_module !== 'DML' && (
+                    <>
+                      <div className={s.formField}>
+                        <label className={s.formLabel}>Current Stock</label>
+                        <input className={s.formInput} type="number" min={0} value={form.current_stock} onChange={e => setForm(f => ({ ...f, current_stock: Number(e.target.value) }))} required />
+                      </div>
+                      <div className={s.formField}>
+                        <label className={s.formLabel}>Minimum Stock</label>
+                        <input className={s.formInput} type="number" min={0} value={form.min_stock} onChange={e => setForm(f => ({ ...f, min_stock: Number(e.target.value) }))} required />
+                      </div>
+                    </>
+                  )}
                   <div className={s.formField} style={{ gridColumn: '1 / -1' }}>
                     <label className={s.formLabel}>Last Purchase Price (IDR)</label>
                     <input className={s.formInput} type="number" min={0} value={form.last_purchase_price} onChange={e => setForm(f => ({ ...f, last_purchase_price: Number(e.target.value) }))} required />

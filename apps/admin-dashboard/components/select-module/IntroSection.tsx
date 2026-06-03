@@ -13,68 +13,84 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 interface IntroSectionProps {
-  words: { text: string; className?: string }[];
   onOpenClick: () => void;
 }
 
-export const IntroSection: React.FC<IntroSectionProps> = ({ words, onOpenClick }) => {
+export const IntroSection: React.FC<IntroSectionProps> = ({ onOpenClick }) => {
+  const words = [
+    { text: 'Optimizing' },
+    { text: 'your' },
+    { text: 'business' },
+    { text: 'with' },
+    { text: 'the' },
+    { text: 'best' },
+    {
+      text: 'Solution.',
+      className: 'text-sky-500 dark:text-sky-450 font-extrabold',
+    },
+  ];
+
   return (
     <motion.div
       key="intro-screen"
-      initial={{ opacity: 0, scale: 0.99 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.01 }}
-      transition={{ duration: 0.25, ease: 'easeInOut' }}
-      className="relative flex flex-col items-center justify-start pt-4 md:pt-8 h-full w-full px-4"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className="relative flex flex-col items-center justify-center min-h-[60vh] w-full px-4 text-center select-none z-10"
     >
-      {/* Lottie Animation: Geometry (Placed above the Nexura Logo) - Enlarged 2x and tightened */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6 }}
-        className="-mb-48 flex justify-center items-center select-none"
-        style={{ height: '220px', width: '400px' }}
-        dangerouslySetInnerHTML={{
-          __html: `<lottie-player src="/animated/Geometry.json" background="transparent" speed="1" style="width: 100%; height: 100%;" loop autoplay></lottie-player>`
-        }}
-      />
+      {/* Background Soft Ambient Light (Luxury Glow) */}
+      <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-64 h-64 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none z-0" />
 
+      {/* Logo Container with Refined Backlight */}
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.15 }}
-        className="mb-6 flex justify-center"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+        className="relative mb-8 flex justify-center z-10"
       >
+        <div className="absolute inset-0 bg-neutral-900/5 dark:bg-white/5 blur-2xl rounded-full scale-110 pointer-events-none" />
         <img
           src="/channels/nexura-logo.png"
           alt="Nexura Logo"
-          className="h-32 w-auto object-contain dark:brightness-0 dark:invert drop-shadow-[0_8px_16px_rgba(0,0,0,0.45)]"
+          className="h-20 w-auto object-contain dark:brightness-0 dark:invert transition-all duration-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:drop-shadow-[0_4px_24px_rgba(255,255,255,0.08)]"
         />
       </motion.div>
-      
-      <p className={cn("text-neutral-850 dark:text-neutral-200 text-xl font-bold mb-10 tracking-wide", plusJakartaSans.className)}>
-        Welcome to Nexura Global Hospitality
-      </p>
-      
-      <TypewriterEffect words={words} />
 
-      {/* Bottom Right Floating Open Button (Large Premium CTA style) */}
-      <div className="absolute bottom-6 right-6 flex items-center justify-center">
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.98 }}
+      {/* Modern Uppercase Enterprise Subtitle */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-neutral-200/60 dark:border-neutral-800/40 bg-neutral-100/40 dark:bg-neutral-900/30 backdrop-blur-sm text-[10px] font-bold tracking-[0.25em] text-neutral-500 dark:text-neutral-450 uppercase mb-8 z-10"
+      >
+        Welcome to Nexura Workspace
+      </motion.div>
+
+      {/* Typewriter Effect Text Section */}
+      <div className="w-full max-w-3xl z-10" style={{ minHeight: '140px', marginBottom: '24px' }}>
+        <TypewriterEffect words={words} />
+      </div>
+
+      {/* Luxury Corporate CTA Button */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
+        className="z-10"
+        style={{ marginTop: '80px' }}
+      >
+        <button
           onClick={onOpenClick}
           className={cn(
-            "flex items-center justify-center gap-2.5 h-12 w-40 rounded-2xl border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-white transition-all cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.12)] dark:border-neutral-200 dark:bg-white dark:hover:bg-neutral-50 dark:text-black dark:shadow-[0_4px_20px_rgba(255,255,255,0.06)] hover:shadow-neutral-900/25 dark:hover:shadow-white/10 text-xs font-extrabold uppercase tracking-widest relative overflow-hidden group",
+            "group flex items-center justify-center gap-3 h-12 w-48 rounded-lg bg-neutral-900 hover:bg-black dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black font-extrabold uppercase tracking-[0.25em] text-xs cursor-pointer border border-neutral-800 dark:border-neutral-200 transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_24px_rgba(255,255,255,0.05)] hover:shadow-neutral-950/20 dark:hover:shadow-white/10 active:scale-[0.97]",
             plusJakartaSans.className
           )}
         >
-          {/* Glow overlay */}
-          <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-violet-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-          <span className="relative z-10">Open</span>
-          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300 relative z-10" />
-        </motion.button>
-      </div>
+          <span>Open</span>
+          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform duration-300" />
+        </button>
+      </motion.div>
     </motion.div>
   );
 };

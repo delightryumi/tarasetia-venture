@@ -26,7 +26,7 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({ menus }) => 
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="flex flex-col justify-start items-center w-full h-full px-4 pt-8 gap-6 md:gap-8"
+      className="flex flex-col justify-start items-center w-full px-4 pt-8 pb-32 sm:pb-12 gap-6 md:gap-8"
     >
       {/* Top Header Label */}
       <div className="text-center z-10 max-w-2xl px-4 flex flex-col items-center">
@@ -44,12 +44,13 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({ menus }) => 
         </motion.div>
 
         <motion.h1
-          initial={{ opacity: 0, y: -15 }}
+          initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-2xl md:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight"
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="text-3xl sm:text-4xl font-normal text-neutral-900 dark:text-white tracking-wide italic"
+          style={{ fontFamily: 'Playfair Display, Georgia, Garamond, serif' }}
         >
-          Select Module
+          Select Workspace Module
         </motion.h1>
       </div>
 
