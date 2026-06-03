@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
 import { ModeToggle } from '@/components/darkmode/darkmode';
 import { ThemeProvider } from '@/components/theme-provider';
+import { useTheme } from 'next-themes';
 import Navbar from '@/components/dashboard/navbar';
 import { NavbarSheet } from '@/components/dashboard/NavbarSheet';
 import { NAVBAR_ITEMS } from '@/constant/navbarMenu';
@@ -25,6 +26,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const pathname = usePathname();
   const { canAccess, role, loading: rbacLoading } = useRBAC();
   const [storeName, setStoreName] = useState<string | null>(null);
+  const { setTheme } = useTheme();
 
   console.log('RBAC hook role:', role);
   const isAuthorized = canAccess('module_pos') || canAccess('pos');
@@ -45,6 +47,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       const userParam = urlParams.get('user');
       const restoNameParam = urlParams.get('restoName');
       const activeShiftParam = urlParams.get('activeShift');
+      const themeParam = urlParams.get('theme');
       
       if (userParam) {
         localStorage.setItem('user', userParam);
@@ -54,6 +57,9 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       }
       if (activeShiftParam) {
         localStorage.setItem('active_shift', activeShiftParam);
+      }
+      if (themeParam && (themeParam === 'light' || themeParam === 'dark')) {
+        setTheme(themeParam);
       }
     }
 
@@ -125,7 +131,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     return () => {
       eventBus.removeListener('fetchStoreData', handleEventBusEvent);
     };
-  }, [router]);
+  }, [router, setTheme]);
 
   const getDashboardUrl = () => {
     if (typeof window !== 'undefined') {

@@ -91,6 +91,9 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
       const activeShift = localStorage.getItem('active_shift');
       if (activeShift) params.set('activeShift', activeShift);
 
+      const theme = localStorage.getItem('theme');
+      if (theme) params.set('theme', theme);
+
       // Perform a clean redirect to the target POS application page
       try {
         const url = new URL(targetPath, basePosUrl);
@@ -103,6 +106,16 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
   }, [pathname, user]);
 
   useEffect(() => {
+    // Sync document element class with selected theme
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+
     // Add Lottie Player CDN script dynamically
     const scriptId = 'lottie-player-script';
     if (!document.getElementById(scriptId)) {
@@ -132,9 +145,9 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="h-screen w-screen bg-black dark:bg-grid-white/[0.15] bg-grid-white/[0.05] relative flex flex-col items-center justify-center overflow-hidden font-sans select-none z-0">
+    <div className="h-screen w-screen bg-neutral-50 dark:bg-black bg-grid-black/[0.05] dark:bg-grid-white/[0.15] relative flex flex-col items-center justify-center overflow-hidden font-sans select-none z-0">
       {/* Radial gradient mask to fade the edges of the grid */}
-      <div className="absolute pointer-events-none inset-0 flex items-center justify-center bg-black [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] z-0"></div>
+      <div className="absolute pointer-events-none inset-0 flex items-center justify-center bg-neutral-50 dark:bg-black [mask-image:radial-gradient(ellipse_at_center,transparent_20%,white)] dark:[mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] z-0"></div>
 
       {/* Floating background blur glows */}
       <div className="absolute w-72 h-72 rounded-full bg-blue-500/10 blur-[100px] pointer-events-none z-0" />
@@ -153,10 +166,10 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
           <p className="text-blue-500 text-[10px] font-extrabold tracking-[0.25em] uppercase animate-pulse">
             Connecting...
           </p>
-          <h2 className="text-neutral-200 text-lg font-bold tracking-wide">
+          <h2 className="text-neutral-800 dark:text-neutral-200 text-lg font-bold tracking-wide">
             Redirecting to POS Terminal
           </h2>
-          <p className="text-neutral-500 text-xs">
+          <p className="text-neutral-500 dark:text-neutral-450 text-xs">
             Synchronizing data master. Please wait.
           </p>
         </div>

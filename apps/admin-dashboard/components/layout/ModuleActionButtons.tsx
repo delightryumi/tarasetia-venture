@@ -1,14 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Sun, Moon, Power } from 'lucide-react';
+import { Sun, MoonStar, Monitor, Power } from 'lucide-react';
+import styles from './ModuleActionButtons.module.css';
 
 interface ModuleActionButtonsProps {
   showGrid: boolean;
   setShowGrid: (show: boolean) => void;
-  theme: string;
-  toggleTheme: () => void;
+  theme: 'dark' | 'light' | 'system';
+  changeTheme: (theme: 'dark' | 'light' | 'system') => void;
   signOutUser: () => void;
 }
 
@@ -16,31 +17,97 @@ export function ModuleActionButtons({
   showGrid,
   setShowGrid,
   theme,
-  toggleTheme,
+  changeTheme,
   signOutUser,
 }: ModuleActionButtonsProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="fixed bottom-6 left-6 z-50 flex items-center gap-1.5 p-1 bg-white/80 dark:bg-[#0c0c0c]/85 border border-neutral-200/80 dark:border-neutral-800/80 rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)] backdrop-blur-md select-none pointer-events-auto">
-      {/* Theme switcher toggle */}
-      <button
-        onClick={toggleTheme}
-        className="flex items-center justify-center w-8 h-8 rounded-md text-neutral-600 dark:text-neutral-450 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-all cursor-pointer"
-        title="Toggle theme"
-      >
-        {theme === 'dark' ? (
-          <Sun className="w-4 h-4 text-amber-500" />
-        ) : (
-          <Moon className="w-4 h-4" />
-        )}
-      </button>
+    <div className={styles.panelContainer}>
+      
+      {/* Dropdown Backdrop to close click-outside */}
+      {isOpen && (
+        <div 
+          className={styles.backdrop} 
+          onClick={() => setIsOpen(false)} 
+        />
+      )}
+
+      {/* Theme switcher toggle container */}
+      <div className="relative z-50">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={styles.circleButton}
+          title="Change theme"
+        >
+          {/* Rotate transitions matching POS exactly */}
+          <Sun className={`w-[1.15rem] h-[1.15rem] text-amber-500 absolute transition-all duration-300 transform ${
+            theme === 'light' ? 'rotate-0 scale-100' : 'rotate-95 scale-0'
+          }`} />
+          <MoonStar className={`w-[1.15rem] h-[1.15rem] text-indigo-400 dark:text-neutral-200 absolute transition-all duration-300 transform ${
+            theme === 'dark' ? 'rotate-0 scale-100' : '-rotate-95 scale-0'
+          }`} />
+          <Monitor className={`w-[1.15rem] h-[1.15rem] absolute transition-all duration-300 transform ${
+            theme === 'system' ? 'rotate-0 scale-100' : 'rotate-180 scale-0'
+          }`} />
+          <span className="sr-only">Toggle theme</span>
+        </button>
+
+        {/* Dropdown Menu matching standard POS Dropdown exactly */}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ duration: 0.15 }}
+              className={styles.dropdownMenu}
+            >
+              <button
+                onClick={() => {
+                  changeTheme('light');
+                  setIsOpen(false);
+                }}
+                className={`${styles.dropdownItem} ${
+                  theme === 'light' ? styles.dropdownItemActive : ''
+                }`}
+              >
+                Light
+              </button>
+              <button
+                onClick={() => {
+                  changeTheme('dark');
+                  setIsOpen(false);
+                }}
+                className={`${styles.dropdownItem} ${
+                  theme === 'dark' ? styles.dropdownItemActive : ''
+                }`}
+              >
+                Dark
+              </button>
+              <button
+                onClick={() => {
+                  changeTheme('system');
+                  setIsOpen(false);
+                }}
+                className={`${styles.dropdownItem} ${
+                  theme === 'system' ? styles.dropdownItemActive : ''
+                }`}
+              >
+                System
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Logout button */}
       <button
         onClick={signOutUser}
-        className="flex items-center justify-center w-8 h-8 rounded-md text-neutral-600 dark:text-neutral-450 hover:text-red-650 dark:hover:text-red-400 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-all cursor-pointer"
+        className={styles.circleButton}
         title="Sign Out"
       >
-        <Power className="w-4 h-4 shrink-0" />
+        <Power className="w-[1.15rem] h-[1.15rem] shrink-0" />
       </button>
     </div>
   );

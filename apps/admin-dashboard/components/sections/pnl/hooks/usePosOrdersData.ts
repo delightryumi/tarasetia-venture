@@ -155,7 +155,7 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                     desc += ` (Termasuk Diskon -Rp${Math.round(itemDiscount).toLocaleString('id-ID')})`;
                   }
 
-                  // Push the base nett revenue
+                  // Push consolidated POS item with tax/nett breakdown
                   fetchedPosOrders.push({
                       id: `${orderId}-${item.id}`,
                       type: 'income',
@@ -163,26 +163,13 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                       description: desc,
                       department: 'Food & Beverage',
                       docType: isBanquet ? 'Banquet' : 'POS Order',
-                      amount: nettSell,
+                      amount: nettSell + tax,
+                      nettAmount: nettSell,
+                      taxAmount: tax,
                       date: docDateStr,
                       category: itemCategory,
                       discount: itemDiscount > 0 ? itemDiscount : undefined
                   });
-
-                  // Push the tax/service as a separate item if exists
-                  if (tax > 0) {
-                      fetchedPosOrders.push({
-                          id: `${orderId}-${item.id}-tax`,
-                          type: 'income',
-                          source: isBanquet ? 'POS - Banquet' : 'POS - Alacarte',
-                          description: `Tax, Service & PB1 - ${prodInfo.name || item.name || 'POS Item'} (x${qty})`,
-                          department: 'Food & Beverage',
-                          docType: isBanquet ? 'Banquet' : 'POS Order',
-                          amount: tax,
-                          date: docDateStr,
-                          category: itemCategory
-                      });
-                  }
                 });
                 } else if (data.quantity !== undefined || data.price !== undefined) {
                   try {
@@ -222,7 +209,7 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                       desc += ` (Termasuk Diskon -Rp${Math.round(itemDiscount).toLocaleString('id-ID')})`;
                     }
 
-                    // Push base nett revenue
+                    // Push consolidated POS item with tax/nett breakdown
                     fetchedPosOrders.push({
                       id: orderId,
                       type: 'income',
@@ -230,26 +217,13 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                       description: desc,
                       department: 'Food & Beverage',
                       docType: isBanquet ? 'Banquet' : 'POS Order',
-                      amount: nettSell,
+                      amount: nettSell + tax,
+                      nettAmount: nettSell,
+                      taxAmount: tax,
                       date: docDateStr,
                       category: itemCategory,
                       discount: itemDiscount > 0 ? itemDiscount : undefined
                     });
-
-                    // Push tax as separate item
-                    if (tax > 0) {
-                        fetchedPosOrders.push({
-                          id: `${orderId}-tax`,
-                          type: 'income',
-                          source: isBanquet ? 'POS - Banquet' : 'POS - Alacarte',
-                          description: `Tax, Service & PB1 - ${data.name || 'POS Order'} (x${qty})`,
-                          department: 'Food & Beverage',
-                          docType: isBanquet ? 'Banquet' : 'POS Order',
-                          amount: tax,
-                          date: docDateStr,
-                          category: itemCategory
-                        });
-                    }
                   } catch (err) {
                     console.error("Error processing POS item:", err);
                   }

@@ -1,0 +1,122 @@
+/* ================================================================
+   SummaryCard.module.css
+   Scoped modular styles for PNL SummaryCards.
+   Aligns with apps/admin-dashboard/airtable/DESIGN.md and matches VsCard.
+   ================================================================ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 12px; /* rounded.lg: 12px */
+  background-color: #ffffff; /* canvas */
+  border: 1px solid #dddddd; /* hairline */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  padding: 16px;
+  min-height: 110px;
+  width: 100%;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.cardClickable {
+  cursor: pointer;
+}
+
+.cardClickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  border-color: #9297a0; /* border-strong */
+}
+
+/* Background color maps for each status category */
+.bgNeutral {
+  background-color: #ffffff;
+}
+
+.bgRevenue {
+  background-color: #f0fdf4;
+  border-color: #dcfce7;
+}
+
+.bgExpense {
+  background-color: #fff1f2;
+  border-color: #ffe4e6;
+}
+
+.bgAmber {
+  background-color: #fffbeb;
+  border-color: #fef3c7;
+}
+
+.bgYellow {
+  background-color: #fffbeb;
+  border-color: #fef3c7;
+}
+
+.bgPink {
+  background-color: #fdf2f8;
+  border-color: #fce7f3;
+}
+
+.bgBlue {
+  background-color: #f0f9ff;
+  border-color: #e0f2fe;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.iconBox {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px; /* rounded.md */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.label {
+  font-family: "Haas", sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: #41454d; /* muted */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.labelColored {
+  color: #181d26; /* ink */
+}
+
+.valueContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.value {
+  font-family: "Haas", sans-serif;
+  font-size: 15px; /* ink large */
+  font-weight: 700;
+  color: #181d26; /* ink */
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.extraContainer {
+  margin-top: 8px;
+  width: 100%;
+}

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import classes from "./VsCard.module.css";
 
 interface VsCardProps {
     label: string;
@@ -31,52 +32,88 @@ export function VsCard({
     const isHealthy = costPercentage <= healthyThreshold;
     const isWarning = costPercentage > healthyThreshold && costPercentage <= warningThreshold;
 
-    const badgeColor =
+    const badgeClass =
         costPercentage === 0
-            ? "bg-neutral-100 text-neutral-500 border-neutral-200"
+            ? classes.badgeNeutral
             : isHealthy
-            ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+            ? classes.badgeHealthy
             : isWarning
-            ? "bg-amber-50 text-amber-600 border-amber-100"
-            : "bg-rose-50 text-rose-600 border-rose-100";
+            ? classes.badgeWarning
+            : classes.badgeCritical;
+
+    const textClass =
+        costPercentage === 0
+            ? classes.textNeutral
+            : isHealthy
+            ? classes.textHealthy
+            : isWarning
+            ? classes.textWarning
+            : classes.textCritical;
+
+    const barColor =
+        costPercentage === 0
+            ? '#d4d4d4'
+            : isHealthy
+            ? '#006400' /* success */
+            : isWarning
+            ? '#d9a441' /* signature-mustard */
+            : '#aa2d00'; /* signature-coral */
 
     return (
         <motion.div
             variants={variants}
             whileHover={{ y: -2 }}
             onClick={() => onClick && onClick(label)}
-            style={{ padding: "24px" }}
-            className={`flex flex-col justify-between rounded-[20px] bg-white border border-stone-200/60 shadow-sm hover:shadow-md hover:border-stone-300 transition-all duration-300 min-h-[140px] w-full ${onClick ? "cursor-pointer" : "cursor-default"}`}
+            className={`${classes.card} ${onClick ? classes.cardClickable : ""}`}
         >
-            <div className="flex items-start justify-between mb-5 w-full gap-3">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className={classes.header}>
+                <div className={classes.headerLeft}>
                     <div
                         style={{ backgroundColor: accent ? `${accent}10` : undefined, color: accent || undefined }}
-                        className="w-9 h-9 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-500 flex-shrink-0"
+                        className={classes.iconBox}
                     >
                         {icon}
                     </div>
-                    <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider line-clamp-2 leading-tight">
+                    <h3 className={classes.label}>
                         {label}
-                    </span>
+                    </h3>
                 </div>
-                <div className={`px-2.5 py-1 rounded-md text-[9px] font-bold border flex-shrink-0 ${badgeColor}`}>
-                    {loading ? "—" : `${costPercentage.toFixed(1)}%`} {costLabel}
+                <div className={`${classes.badge} ${badgeClass}`}>
+                    {costLabel}
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mt-auto w-full">
-                <div className="flex flex-col gap-1">
-                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Nett Revenue</span>
-                    <span className="text-sm font-bold text-stone-800 tracking-tight">
+            <div className={classes.grid}>
+                <div className={classes.col}>
+                    <span className={classes.colLabel}>Nett Revenue</span>
+                    <span className={classes.colValue}>
                         {loading ? "—" : `Rp ${Math.round(nettRevenue).toLocaleString("id-ID")}`}
                     </span>
                 </div>
-                <div className="flex flex-col gap-1 pl-4 border-l border-neutral-100">
-                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Expenses</span>
-                    <span className="text-sm font-bold text-stone-800 tracking-tight">
+                <div className={`${classes.col} ${classes.borderLeft}`}>
+                    <span className={classes.colLabel}>Expenses</span>
+                    <span className={classes.colValue}>
                         {loading ? "—" : `Rp ${expenses.toLocaleString("id-ID")}`}
                     </span>
+                </div>
+            </div>
+
+            {/* Cost Ratio Progress Bar */}
+            <div className={classes.progressContainer}>
+                <div className={classes.progressHeader}>
+                    <span className={classes.progressLabel}>Cost Ratio</span>
+                    <span className={`${classes.progressPercentage} ${textClass}`}>
+                        {loading ? "—" : `${costPercentage.toFixed(1)}%`}
+                    </span>
+                </div>
+                <div className={classes.progressBarBg}>
+                    <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: loading ? 0 : `${Math.min(costPercentage, 100)}%` }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        className={classes.progressBarFill}
+                        style={{ backgroundColor: barColor }}
+                    />
                 </div>
             </div>
         </motion.div>

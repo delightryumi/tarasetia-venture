@@ -28,10 +28,32 @@ export function useDrillDown({
 
     const handleCardClick = (cardId: string) => {
         if (!pnlResult) return;
-        const drillDown = getDrillDownData(
+        let drillDown = getDrillDownData(
             cardId, rawTransactions, customIncomes, expenses, posOrders,
             vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage,
         );
+
+        if (drillDown && drillDown.items) {
+          drillDown.items = drillDown.items.map(item => {
+            if (item.id === 'vat-calc' || item.id === 'ded-vat' || item.id === 'recon-vat') {
+              return { ...item, amount: pnlResult.card11_VAT || 0 };
+            }
+            if (item.id === 'mgmt-calc' || item.id === 'ded-mgmt' || item.id === 'recon-mgmt') {
+              return { ...item, amount: pnlResult.card9_FeeGross || 0 };
+            }
+            if (item.id === 'service-calc' || item.id === 'ded-service' || item.id === 'recon-service') {
+              return { ...item, amount: pnlResult.summaryServiceCharge || 0 };
+            }
+            if (item.id === 'lost-calc' || item.id === 'ded-lost' || item.id === 'recon-lost') {
+              return { ...item, amount: pnlResult.summaryLostBreakage || 0 };
+            }
+            if (item.id === 'recon-gop') {
+              return { ...item, amount: pnlResult.card7_TotalGOP || 0 };
+            }
+            return item;
+          });
+        }
+
         setSelectedDrillDown(drillDown);
         setDrillDownSearchQuery("");
         setDrillDownTab("all");

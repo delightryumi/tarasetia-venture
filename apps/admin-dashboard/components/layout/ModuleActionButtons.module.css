@@ -1,0 +1,134 @@
+/* Floating actions panel container at bottom-left */
+.panelContainer {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(229, 229, 229, 0.8);
+  border-radius: 9999px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: auto;
+}
+
+:global(.dark) .panelContainer {
+  background-color: rgba(12, 12, 12, 0.85);
+  border-color: rgba(38, 38, 38, 0.8);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Base button style (circular trigger) */
+.circleButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  border: 1px solid #e5e5e5;
+  background-color: #ffffff;
+  color: #525252;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+:global(.dark) .circleButton {
+  border-color: #27272a;
+  background-color: #09090b;
+  color: #a1a1aa;
+}
+
+.circleButton:hover {
+  background-color: #f4f4f5;
+  color: #18181b;
+}
+
+:global(.dark) .circleButton:hover {
+  background-color: #18181b;
+  color: #ffffff;
+}
+
+/* Dropdown overlay/backdrop to capture outside clicks */
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  cursor: default;
+}
+
+/* Dropdown popover menu */
+.dropdownMenu {
+  position: absolute;
+  bottom: 48px; /* sits nicely above the button */
+  left: 0;
+  width: 140px;
+  background-color: #ffffff;
+  border: 1px solid rgba(229, 229, 229, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  padding: 6px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+:global(.dark) .dropdownMenu {
+  background-color: #18181b;
+  border-color: rgba(38, 38, 38, 0.9);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+}
+
+/* Dropdown single item button */
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  font-family: inherit;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: #737373;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+:global(.dark) .dropdownItem {
+  color: #a1a1aa;
+}
+
+.dropdownItem:hover {
+  background-color: #f4f4f5;
+  color: #18181b;
+}
+
+:global(.dark) .dropdownItem:hover {
+  background-color: rgba(39, 39, 42, 0.6);
+  color: #ffffff;
+}
+
+/* Active selection styling */
+.dropdownItemActive {
+  font-weight: 500;
+  color: #18181b;
+  background-color: #f4f4f5;
+}
+
+:global(.dark) .dropdownItemActive {
+  color: #ffffff;
+  background-color: rgba(39, 39, 42, 0.6);
+}

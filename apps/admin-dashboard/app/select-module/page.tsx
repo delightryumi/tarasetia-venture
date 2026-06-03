@@ -30,14 +30,18 @@ export default function SelectModulePage() {
   const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [loadingPerms, setLoadingPerms] = useState(true);
   const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('dark');
   const [showGrid, setShowGrid] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    setTheme(savedTheme as 'dark' | 'light');
-    if (savedTheme === 'dark') {
+    const savedTheme = (localStorage.getItem('theme') as 'dark' | 'light' | 'system') || 'dark';
+    setTheme(savedTheme);
+    let resolved = savedTheme;
+    if (savedTheme === 'system') {
+      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    if (resolved === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
@@ -77,11 +81,14 @@ export default function SelectModulePage() {
     fetchPermissions();
   }, [user]);
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
+  const changeTheme = (newTheme: 'dark' | 'light' | 'system') => {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    if (newTheme === 'dark') {
+    let resolved = newTheme;
+    if (newTheme === 'system') {
+      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    if (resolved === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
@@ -217,8 +224,8 @@ export default function SelectModulePage() {
       <div className="absolute inset-0 w-full h-full pointer-events-none z-0 select-none overflow-hidden">
         <img
           src="/luxury-bg.png"
-          alt="Luxury Abstract Background Light"
-          className="w-full h-full object-cover dark:hidden opacity-75 transition-opacity duration-700"
+          alt="Luxury Bohemian Background Light"
+          className="w-full h-full object-cover dark:hidden opacity-85 transition-opacity duration-700"
         />
         <img
           src="/luxury-bg-dark.png"
@@ -226,7 +233,7 @@ export default function SelectModulePage() {
           className="w-full h-full object-cover hidden dark:block opacity-70 transition-opacity duration-700"
         />
         {/* Soft overlay to ensure readability */}
-        <div className="absolute inset-0 bg-white/20 dark:bg-[#060606]/35 backdrop-blur-[0.5px] pointer-events-none" />
+        <div className="absolute inset-0 bg-white/10 dark:bg-[#060606]/35 backdrop-blur-[0.5px] pointer-events-none" />
       </div>
 
       {/* Modular Action Buttons (Now floating bottom-left) */}
@@ -234,7 +241,7 @@ export default function SelectModulePage() {
         showGrid={false}
         setShowGrid={setShowGrid}
         theme={theme}
-        toggleTheme={toggleTheme}
+        changeTheme={changeTheme}
         signOutUser={signOutUser}
       />
 

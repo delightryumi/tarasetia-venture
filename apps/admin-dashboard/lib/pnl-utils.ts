@@ -107,6 +107,8 @@ export interface PnLDetailedItem {
   docType?: string;
   category?: string;
   discount?: number;
+  nettAmount?: number;
+  taxAmount?: number;
 }
 
 export interface DrillDownData {

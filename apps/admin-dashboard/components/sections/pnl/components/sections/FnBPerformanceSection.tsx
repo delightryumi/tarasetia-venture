@@ -6,6 +6,8 @@ import { Store, Activity } from "lucide-react";
 import { GlobalPnLResult } from "@/lib/pnl-utils";
 import { VsCard } from "../shared/VsCard";
 
+import styles from "./PNLSectionLayout.module.css";
+
 interface FnBPerformanceSectionProps {
     pnlResult: GlobalPnLResult | null;
     loading: boolean;
@@ -19,15 +21,15 @@ export function FnBPerformanceSection({ pnlResult, loading, rise, onCardClick }:
     const lostBreakageRate  = pnlResult?.posLostBreakageRate  || 0;
 
     return (
-        <div style={{ padding: "40px" }} className="bg-white rounded-[32px] border border-stone-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-shadow duration-500 w-full">
-            <div className="flex flex-col gap-1 mb-8">
-                <h2 className="text-2xl md:text-3xl font-black text-stone-900 tracking-tight flex items-center gap-3">
+        <div className={styles.sectionWrapper}>
+            <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionTitle}>
                     <Activity size={28} /> F&B <span style={{ color: "#788069" }}>Performance</span>
                 </h2>
-                <p className="text-[10px] font-medium text-stone-400 uppercase tracking-[0.3em]">Revenue Vs Expenses Analysis</p>
+                <p className={styles.sectionSubtitle}>Revenue Vs Expenses Analysis</p>
             </div>
 
-            <div style={{ padding: "40px" }} className="bg-stone-100/70 rounded-[24px] border border-stone-200/50 shadow-inner w-full">
+            <div className={styles.innerContainer}>
                 <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 xl:gap-10">
                     <VsCard
                         label="Food A la Carte Performance"

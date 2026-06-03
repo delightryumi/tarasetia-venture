@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Receipt, X, Search, TrendingUp, TrendingDown, Hash, FileDown, BarChart2, Equal } from "lucide-react";
 import { formatIDR, PnLDetailedItem, DrillDownData } from "@/lib/pnl-utils";
 import { SourcePill, DocTag, StatCard, MODAL_TOKENS as T } from "./shared/PnLPrimitives";
+import styles from "./PNLDrillDownModal.module.css";
 
 const TABS = [
     { value: "all"     as const, label: "All logs"  },
@@ -265,7 +266,7 @@ export function PNLDrillDownModal({
                         {/* ── TABLE ── */}
                         <div style={{ flex: 1 }}>
                             {/* Desktop */}
-                            <div className="hidden md:block">
+                            <div className={styles.desktopView}>
                                 <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
                                     <colgroup>
                                         <col style={{ width: 44 }} /><col style={{ width: 114 }} />
@@ -304,7 +305,18 @@ export function PNLDrillDownModal({
                                                     >
                                                         <td style={{ padding: "13px 16px", fontSize: 11, color: T.textSec, fontFamily: T.mono }}>{index + 1}</td>
                                                         <td style={{ padding: "13px 16px" }}><SourcePill label={item.source ?? "—"} /></td>
-                                                        <td title={item.description} style={{ padding: "13px 16px", fontSize: 13, color: T.textPri, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.description}</td>
+                                                        <td style={{ padding: "13px 16px", fontSize: 13, color: T.textPri }}>
+                                                            <div style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }} title={item.description}>
+                                                                {item.description}
+                                                            </div>
+                                                            {item.taxAmount !== undefined && item.taxAmount > 0 && (
+                                                                <div style={{ fontSize: 10, color: T.textSec, marginTop: 4, display: "flex", gap: 8, alignItems: "center" }}>
+                                                                    <span>DPP (Nett): {formatIDR(item.nettAmount || 0)}</span>
+                                                                    <span style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(0,0,0,0.15)", display: "inline-block" }} />
+                                                                    <span>Tax, Service & PB1: {formatIDR(item.taxAmount)}</span>
+                                                                </div>
+                                                            )}
+                                                        </td>
                                                         <td style={{ padding: "13px 16px", fontSize: 12, color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.department ?? "—"}</td>
                                                         <td style={{ padding: "13px 16px" }}>
                                                             {item.docType ? <DocTag label={item.docType} /> : <span style={{ color: T.textSec, fontSize: 12 }}>—</span>}
@@ -313,7 +325,12 @@ export function PNLDrillDownModal({
                                                             {item.discount && item.discount > 0 ? `−${formatIDR(item.discount)}` : "—"}
                                                         </td>
                                                         <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 500, textAlign: "right", fontFamily: T.mono, color: isExpense ? "#A32D2D" : "#0F6E56" }}>
-                                                            {isExpense ? "−" : "+"}{formatIDR(item.amount)}
+                                                            <div>{isExpense ? "−" : "+"}{formatIDR(item.amount)}</div>
+                                                            {item.taxAmount !== undefined && item.taxAmount > 0 && (
+                                                                <div style={{ fontSize: 9, color: "#888", fontWeight: 400, marginTop: 4 }}>
+                                                                    Total Nota
+                                                                </div>
+                                                            )}
                                                         </td>
                                                         <td style={{ padding: "13px 16px", fontSize: 11, color: T.textSec, fontFamily: T.mono }}>{item.date ?? "N/A"}</td>
                                                     </tr>
@@ -325,7 +342,7 @@ export function PNLDrillDownModal({
                             </div>
 
                             {/* Mobile cards */}
-                            <div className="md:hidden" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                            <div className={styles.mobileView}>
                                 {modalData.filtered.length === 0 ? (
                                     <div style={{ textAlign: "center", padding: "60px 16px", color: T.textSec, fontSize: 13, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
                                         <Receipt size={28} style={{ opacity: 0.3 }} />
@@ -345,7 +362,14 @@ export function PNLDrillDownModal({
                                                     <SourcePill label={item.source ?? "—"} />
                                                     <span style={{ fontSize: 11, color: T.textSec, fontFamily: T.mono }}>{item.date ?? "N/A"}</span>
                                                 </div>
-                                                <p style={{ fontSize: 13, fontWeight: 500, color: T.textPri, marginBottom: 12, lineHeight: 1.4 }}>{item.description}</p>
+                                                <p style={{ fontSize: 13, fontWeight: 500, color: T.textPri, marginBottom: 12, lineHeight: 1.4 }}>
+                                                    {item.description}
+                                                    {item.taxAmount !== undefined && item.taxAmount > 0 && (
+                                                        <span style={{ display: "block", fontSize: 11, color: "#888", marginTop: 4, fontWeight: 400 }}>
+                                                            DPP (Nett): {formatIDR(item.nettAmount || 0)} · Tax, Service & PB1: {formatIDR(item.taxAmount)}
+                                                        </span>
+                                                    )}
+                                                </p>
                                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 12, borderTop: T.border }}>
                                                     <div>
                                                         <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>Department</p>
@@ -360,7 +384,9 @@ export function PNLDrillDownModal({
                                                         </div>
                                                     )}
                                                     <div style={{ textAlign: "right" }}>
-                                                        <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>Net amount</p>
+                                                        <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>
+                                                            {item.taxAmount !== undefined && item.taxAmount > 0 ? "Total Nota" : "Net amount"}
+                                                        </p>
                                                         <p style={{ fontSize: 14, fontWeight: 500, fontFamily: T.mono, color: isExpense ? "#A32D2D" : "#0F6E56" }}>
                                                             {isExpense ? "−" : "+"}{formatIDR(item.amount)}
                                                         </p>
