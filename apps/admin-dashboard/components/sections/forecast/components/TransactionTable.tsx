@@ -94,13 +94,13 @@ export function TransactionTable({
                     <table className={styles.tableElement}>
                         <thead className={styles.tableHead}>
                             <tr>
-                                <th className={styles.tableHeadCell}>Detail Tamu</th>
+                                <th className={styles.tableHeadCell}>Guest Name</th>
+                                <th className={styles.tableHeadCell}>Stay Period</th>
+                                <th className={styles.tableHeadCell}>Room & Remarks</th>
                                 <th className={styles.tableHeadCell}>Channel</th>
-                                <th className={styles.tableHeadCell} style={{ textAlign: "center" }}>Room & Notes</th>
-                                <th className={styles.tableHeadCell} style={{ textAlign: "center" }}>Tagihan / Info</th>
+                                <th className={styles.tableHeadCell}>Financials</th>
                                 <th className={styles.tableHeadCell} style={{ textAlign: "center" }}>Status</th>
-                                <th className={styles.tableHeadCell} style={{ textAlign: "center" }}>Sumber</th>
-                                <th className={styles.tableHeadCell} style={{ textAlign: "center" }}>Aksi</th>
+                                <th className={styles.tableHeadCell} style={{ textAlign: "center" }}>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -134,7 +134,7 @@ export function TransactionTable({
                                             className={`${styles.tableRow} ${isCancelled ? styles.cancelledRow : ""}`}
                                             style={i % 2 === 0 ? { backgroundColor: "#ffffff" } : { backgroundColor: "#fffbf9" }}
                                         >
-                                            {/* Detail Tamu */}
+                                            {/* Guest Name */}
                                             <td className={styles.tableCell}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                                                     <div 
@@ -160,12 +160,44 @@ export function TransactionTable({
                                                     </div>
                                                     <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                                                         <p className={styles.guestName} style={{ margin: 0, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "150px" }}>
-                                                            {entry.guestName || entry.incomeCategory}
+                                                            {entry.guestName || entry.incomeCategory || "General Sale"}
                                                         </p>
                                                         <p className={styles.guestSubtext} style={{ fontSize: "8px", color: "var(--f-light-muted)", margin: 0, fontFamily: "var(--f-font-mono)" }}>
-                                                            {entry.checkInDate ? `${entry.checkInDate} — ${entry.checkOutDate || entry.checkInDate}` : (entry.bookingId || (entry.type === 'other_income' ? `By: ${entry.staffName}` : "—"))}
+                                                            {entry.bookingId || (entry.type === 'other_income' ? `By: ${entry.staffName}` : "Walk-In")}
                                                         </p>
                                                     </div>
+                                                </div>
+                                            </td>
+                                            {/* Stay Period */}
+                                            <td className={styles.tableCell}>
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                                    <p className={styles.guestSubtext} style={{ color: "var(--f-body)", fontWeight: 700, margin: 0 }}>
+                                                        {entry.checkInDate || "---"}
+                                                    </p>
+                                                    <p className={styles.guestSubtext} style={{ fontSize: "8px", color: "var(--f-light-muted)", margin: 0 }}>
+                                                        {entry.checkOutDate ? `Until ${entry.checkOutDate}` : "---"}
+                                                    </p>
+                                                </div>
+                                            </td>
+                                            {/* Room & Remarks */}
+                                            <td className={styles.tableCell}>
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                                    <div style={{ display: "flex" }}>
+                                                        <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: "var(--f-surface-soft)", padding: "2px 6px", borderRadius: "4px", border: "1px solid var(--f-hairline)" }}>
+                                                            {entry.roomType || (entry.type === 'other_income' ? 'OTHER INCOME' : 'Service')}
+                                                        </span>
+                                                    </div>
+                                                    {entry.roomNumber && (
+                                                        <span className={styles.guestSubtext} style={{ color: "var(--f-sage)", fontWeight: 700, fontSize: "9px" }}>
+                                                            Room {entry.roomNumber}
+                                                        </span>
+                                                    )}
+                                                    {entry.type !== 'other_income' && (
+                                                        <RoomStatusPicker 
+                                                            current={entry.roomStatus || 'dirty'} 
+                                                            onChange={(val) => handleStatusUpdate(entry, 'roomStatus', val)} 
+                                                        />
+                                                    )}
                                                 </div>
                                             </td>
                                             {/* Channel */}
@@ -200,42 +232,18 @@ export function TransactionTable({
                                                     <span className={styles.guestSubtext} style={{ margin: 0, fontWeight: 700, color: "var(--f-light-muted)" }}>{entry.channel || "Internal"}</span>
                                                 </div>
                                             </td>
-                                            {/* Room & Notes */}
-                                            <td className={styles.tableCell} style={{ textAlign: "center" }}>
-                                                <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "center" }}>
-                                                    <div style={{ display: "flex" }}>
-                                                        <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: "var(--f-surface-soft)", padding: "2px 6px", borderRadius: "4px", border: "1px solid var(--f-hairline)" }}>
-                                                            {entry.roomType || (entry.type === 'other_income' ? 'OTHER INCOME' : '—')}
-                                                        </span>
-                                                    </div>
-                                                    {entry.roomNumber && (
-                                                        <span className={styles.guestSubtext} style={{ color: "var(--f-sage)", fontWeight: 700, fontSize: "9px" }}>
-                                                            Room {entry.roomNumber}
-                                                        </span>
-                                                    )}
-                                                    {entry.type !== 'other_income' && (
-                                                        <RoomStatusPicker 
-                                                            current={entry.roomStatus || 'dirty'} 
-                                                            onChange={(val) => handleStatusUpdate(entry, 'roomStatus', val)} 
-                                                        />
-                                                    )}
-                                                </div>
-                                            </td>
-                                            {/* Tagihan / Info */}
-                                            <td className={styles.tableCell} style={{ textAlign: "center" }}>
-                                                <div style={{ display: "flex", flexDirection: "column", gap: "2px", alignItems: "center" }}>
+                                            {/* Financials */}
+                                            <td className={styles.tableCell}>
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                                                     <p className={styles.guestAmount} style={{ margin: 0 }}>Rp {formatCurrency(entry.amount)}</p>
-                                                    <span className={`${styles.paymentBadge} ${entry.paymentStatus?.includes('Lunas') || !entry.paymentStatus ? styles.paymentLunas : styles.paymentPending}`}>
+                                                    <span className={`${styles.paymentBadge} ${entry.paymentStatus?.includes('Lunas') || !entry.paymentStatus ? styles.paymentLunas : styles.paymentPending}`} style={{ margin: 0, width: "fit-content" }}>
                                                         {entry.paymentStatus || 'Pending'}
                                                     </span>
                                                 </div>
                                             </td>
                                             {/* Status */}
                                             <td className={styles.tableCell} style={{ textAlign: "center" }}>
-                                                <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "center" }}>
-                                                    <div className={`${styles.paymentBadge} ${entry.status === 'CONFIRMED' ? styles.paymentLunas : styles.paymentPending}`} style={{ margin: 0, fontSize: "8px" }}>
-                                                        {entry.status}
-                                                    </div>
+                                                <div style={{ display: "flex", justifyContent: "center" }}>
                                                     {entry.type !== 'other_income' ? (
                                                         <GuestStatusPicker 
                                                             current={entry.guestStatus || 'arriving'} 
@@ -246,11 +254,7 @@ export function TransactionTable({
                                                     )}
                                                 </div>
                                             </td>
-                                            {/* Sumber */}
-                                            <td className={styles.tableCell} style={{ textAlign: "center" }}>
-                                                <span className={styles.guestSubtext} style={{ color: "var(--f-light-muted)", fontSize: "9px", fontWeight: 700 }}>{entry.source}</span>
-                                            </td>
-                                            {/* Aksi */}
+                                            {/* Action */}
                                             <td className={styles.tableCell} style={{ textAlign: "center" }}>
                                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
                                                     <button onClick={() => setSelectedGuest(entry)} className={styles.btnIcon} style={{ width: "32px", height: "32px", borderRadius: "6px" }} title="View Details"><Eye size={14} /></button>

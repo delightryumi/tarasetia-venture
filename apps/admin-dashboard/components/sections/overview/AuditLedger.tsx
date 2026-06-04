@@ -93,11 +93,34 @@ export function AuditLedger({
                                     style={idx % 2 === 0 ? { backgroundColor: '#ffffff' } : { backgroundColor: '#fffbf9' }}
                                 >
                                     <td className={styles.tableCell}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <p className={styles.guestName} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '150px' }}>
-                                                {booking.guestName || "General Sale"}
-                                            </p>
-                                            <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0, fontFamily: 'var(--f-font-mono)' }}>{booking.bookingId || "Walk-In"}</p>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                                            <div 
+                                                style={{ 
+                                                    width: "40px", 
+                                                    height: "40px", 
+                                                    borderRadius: "50%", 
+                                                    overflow: "hidden", 
+                                                    border: "1px solid var(--f-hairline)", 
+                                                    display: "flex", 
+                                                    alignItems: "center", 
+                                                    justifyContent: "center", 
+                                                    padding: 0,
+                                                    flexShrink: 0,
+                                                    backgroundColor: ['#ffd8a630', '#78806930', '#f3e8ff', '#e0e7ff', '#dcfce7', '#fee2e2', '#fef3c7'][((((booking.guestName || "O").charCodeAt(0) || 0) + (booking.amount || 0)) % 7)] 
+                                                }}
+                                            >
+                                                <img 
+                                                    src={`/avatar/memo_${((((booking.guestName || "O").charCodeAt(0) || 0) + (booking.amount || 0)) % 35) + 1}.png`} 
+                                                    alt={booking.guestName || "Guest"} 
+                                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                                />
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                <p className={styles.guestName} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '150px' }}>
+                                                    {booking.guestName || "General Sale"}
+                                                </p>
+                                                <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0, fontFamily: 'var(--f-font-mono)' }}>{booking.bookingId || "Walk-In"}</p>
+                                            </div>
                                         </div>
                                     </td>
                                     <td className={styles.tableCell}>

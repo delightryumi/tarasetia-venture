@@ -1,0 +1,60 @@
+/* SummaryCard.module.css */
+
+.summaryCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: var(--f-radius-md, 10px);
+  background-color: var(--f-canvas, #ffffff);
+  border: 1px solid var(--f-hairline, #dddddd);
+  transition: all var(--f-duration-fast, 150ms) var(--f-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  overflow: hidden;
+}
+
+.summaryCardActive {
+  border-color: var(--f-sage, #788069);
+  background-color: var(--f-surface-soft, #f8fafc);
+}
+
+.summaryCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--f-light-muted, #a8a29e);
+}
+
+.cardLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--f-muted, #41454d);
+}
+
+.cardIconBox {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--f-radius-sm, 6px);
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cardValue {
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--f-ink, #181d26);
+  margin: 0;
+  font-family: var(--f-font-mono, monospace);
+  letter-spacing: -0.02em;
+}
+
+.guestSubtext {
+  font-size: 10px;
+  color: var(--f-muted, #41454d);
+  text-transform: uppercase;
+  font-weight: 500;
+}

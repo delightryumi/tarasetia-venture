@@ -2,6 +2,7 @@
 
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "sonner";
+import { WhatsAppWidget } from "./WhatsAppWidget";
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -21,6 +22,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
           },
         }}
       />
+      <WhatsAppWidget />
     </AuthProvider>
   );
 }
