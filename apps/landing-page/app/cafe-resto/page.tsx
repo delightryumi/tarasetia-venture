@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { FooterSection } from "@/components/sections/footer/FooterSection";
 import { motion } from "framer-motion";
@@ -117,27 +117,8 @@ export default function CafeRestoComingSoon() {
                         )}
                     </motion.div>
 
-                    {/* ── Direct PDF Embed Section ── */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 25 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.5 }}
-                        className="w-full bg-white border border-neutral-200/50 rounded-2xl shadow-xl shadow-neutral-100 overflow-hidden mb-12 p-2"
-                    >
-                        <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3 bg-neutral-50/50 rounded-t-xl">
-                            <div className="flex items-center gap-2 text-neutral-700">
-                                <span className="text-[10px] font-bold uppercase tracking-widest">Concept & Menu Concept Preview</span>
-                            </div>
-                        </div>
-
-                        {/* Interactive PDF frame */}
-                        <iframe
-                            src="/cafe/CK_KONSEPING%20BUMI%20ANYOM%20CAFE.pdf#toolbar=0"
-                            className="w-full h-[500px] md:h-[650px] lg:h-[750px] border-none rounded-b-xl"
-                            title="Bumi Anyom Cafe Concept PDF"
-                        />
-                    </motion.div>
-
+                    {/* ── Direct PDF Embed with Safe Scroll Overlay ── */}
+                    <PDFViewerSection />
                 </div>
 
                 {/* ── Footer ── */}
@@ -146,3 +127,163 @@ export default function CafeRestoComingSoon() {
         </PageLayout>
     );
 }
+
+// ── Helper Component: Dynamic PDF Pages Canvas Renderer ──
+function PDFViewerSection() {
+    const pdfUrl = "/cafe/CK_KONSEPING%20BUMI%20ANYOM%20CAFE.pdf";
+    const [pages, setPages] = useState<number[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const renderTasksRef = useRef<any[]>([]);
+
+    useEffect(() => {
+        let active = true;
+
+        const loadPdfJs = async () => {
+            if ((window as any).pdfjsLib) {
+                return (window as any).pdfjsLib;
+            }
+
+            return new Promise((resolve, reject) => {
+                const script = document.createElement("script");
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+                script.onload = () => {
+                    const pdfjsLib = (window as any).pdfjsLib;
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+                    resolve(pdfjsLib);
+                };
+                script.onerror = () => {
+                    reject(new Error("Failed to load PDF.js library"));
+                };
+                document.head.appendChild(script);
+            });
+        };
+
+        const renderPDF = async () => {
+            try {
+                const pdfjsLib = await loadPdfJs();
+                if (!active) return;
+
+                const loadingTask = pdfjsLib.getDocument(pdfUrl);
+                const pdf = await loadingTask.promise;
+                if (!active) return;
+
+                const numPages = pdf.numPages;
+                const pageNumbers = Array.from({ length: numPages }, (_, i) => i + 1);
+                setPages(pageNumbers);
+                setLoading(false);
+
+                // Wait for the container to mount and render canvases in the DOM
+                setTimeout(async () => {
+                    if (!active) return;
+                    for (const pageNum of pageNumbers) {
+                        try {
+                            const page = await pdf.getPage(pageNum);
+                            if (!active) return;
+
+                            const canvas = document.getElementById(`pdf-page-${pageNum}`) as HTMLCanvasElement;
+                            if (!canvas) continue;
+
+                            const context = canvas.getContext("2d");
+                            if (!context) continue;
+
+                            const dpr = window.devicePixelRatio || 1;
+                            const containerWidth = containerRef.current?.clientWidth || 800;
+                            const unscaledViewport = page.getViewport({ scale: 1 });
+                            const scale = (containerWidth - 32) / unscaledViewport.width;
+                            const viewport = page.getViewport({ scale: Math.min(scale, 1.8) });
+
+                            canvas.width = viewport.width * dpr;
+                            canvas.height = viewport.height * dpr;
+                            canvas.style.width = `${viewport.width}px`;
+                            canvas.style.height = `${viewport.height}px`;
+
+                            context.scale(dpr, dpr);
+
+                            const renderContext = {
+                                canvasContext: context,
+                                viewport: viewport,
+                            };
+                            const renderTask = page.render(renderContext);
+                            renderTasksRef.current.push(renderTask);
+                            await renderTask.promise;
+                        } catch (pageErr) {
+                            console.error(`Error rendering page ${pageNum}:`, pageErr);
+                        }
+                    }
+                }, 100);
+            } catch (err: any) {
+                console.error("Error loading PDF:", err);
+                if (active) {
+                    setError(err.message || "Gagal memuat PDF");
+                    setLoading(false);
+                }
+            }
+        };
+
+        renderPDF();
+
+        return () => {
+            active = false;
+            // Cancel any ongoing render tasks
+            renderTasksRef.current.forEach(task => {
+                if (task && typeof task.destroy === 'function') {
+                    task.destroy();
+                }
+            });
+        };
+    }, [pdfUrl]);
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="w-full bg-white border border-neutral-200/50 rounded-3xl shadow-2xl overflow-hidden mb-12 p-4 md:p-6"
+        >
+            {/* Header Control Panel */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-neutral-100 pb-4 mb-6">
+                <div className="text-left">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#788069] block mb-1">Concept &amp; Menu Book</span>
+                    <h3 className="text-base font-serif italic text-neutral-800">Bumi Anyom Cafe &amp; Resto</h3>
+                </div>
+                
+                <div>
+                    <a
+                        href={pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-5 py-2.5 bg-[#1a1a1a] text-white hover:bg-[#788069] rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all duration-300 flex items-center gap-1.5 shadow-md shadow-neutral-200"
+                    >
+                        Buka Tab Baru / Download PDF
+                    </a>
+                </div>
+            </div>
+
+            {/* Viewer Container */}
+            <div ref={containerRef} className="w-full flex flex-col gap-6 items-center">
+                {loading && (
+                    <div className="flex flex-col items-center justify-center py-20 gap-3">
+                        <div className="w-8 h-8 border-4 border-[#788069] border-t-transparent rounded-full animate-spin" />
+                        <span className="text-xs text-neutral-400 font-medium animate-pulse">Memuat konsep menu...</span>
+                    </div>
+                )}
+
+                {error && (
+                    <div className="p-8 text-center text-red-500 bg-red-50 border border-red-200 rounded-2xl w-full">
+                        <p className="font-semibold text-sm">Gagal menampilkan menu preview</p>
+                        <p className="text-xs text-neutral-500 mt-1">{error}</p>
+                    </div>
+                )}
+                
+                {pages.map((pageNum) => (
+                    <div key={pageNum} className="w-full bg-white border border-neutral-100 rounded-2xl shadow-sm overflow-hidden p-2 flex justify-center max-w-4xl">
+                        <canvas id={`pdf-page-${pageNum}`} className="max-w-full block" />
+                    </div>
+                ))}
+            </div>
+        </motion.div>
+    );
+}
+

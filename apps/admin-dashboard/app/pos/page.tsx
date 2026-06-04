@@ -77,13 +77,13 @@ export default function POSPage() {
       // Pass the dashboard's current URL for redirection back
       params.set('dashboardUrl', window.location.origin + '/select-module');
 
-      // Perform a clean redirect to the POS Home screen
+      // Perform a clean redirect to the POS Home screen using hash parameters for safety
       try {
         const url = new URL('/home', basePosUrl);
-        url.search = params.toString();
+        url.hash = params.toString();
         window.location.href = url.toString();
       } catch (e) {
-        window.location.href = `${basePosUrl}/home?${params.toString()}`;
+        window.location.href = `${basePosUrl}/home#${params.toString()}`;
       }
     }
   }, [user]);

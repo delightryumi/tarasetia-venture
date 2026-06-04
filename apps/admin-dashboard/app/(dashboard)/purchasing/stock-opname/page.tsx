@@ -41,22 +41,22 @@ export default function StockOpnamePage() {
       <div className={s.header}>
         <div>
           <h1 className={s.title}>Stock Opname</h1>
-          <p className={s.subtitle}>Physical inventory count, variance reconciliation, and stock synchronization.</p>
+          <p className={s.subtitle}>Perhitungan inventaris fisik, rekonsiliasi selisih, dan sinkronisasi stok.</p>
         </div>
         <PButton onClick={() => router.push('/purchasing/stock-opname/new?module=purchasing')}>
           <Plus size={16} strokeWidth={2} />
-          Perform Opname
+          Lakukan Opname
         </PButton>
       </div>
 
       {/* Filter Bar */}
       <div className={s.filterBar}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--p-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filter Department</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--p-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filter Departemen</span>
           <select className={s.filterSelect} value={departmentFilter} onChange={e => setDepartmentFilter(e.target.value)}>
-            <option value="">All Departments</option>
-            <option value="Food">Food</option>
-            <option value="Beverage">Beverage</option>
+            <option value="">Semua Departemen</option>
+            <option value="Food">Makanan</option>
+            <option value="Beverage">Minuman</option>
             <option value="Front Office">Front Office</option>
             <option value="Housekeeping">Housekeeping</option>
             <option value="Purchasing">Purchasing</option>
@@ -69,23 +69,23 @@ export default function StockOpnamePage() {
           <table className={s.table}>
             <thead className={s.tableHead}>
               <tr>
-                <th>Period</th>
-                <th>Department</th>
-                <th>Conducted By</th>
-                <th className={s.thRight}>Lines</th>
-                <th className={s.thRight}>Variance Items</th>
+                <th>Periode</th>
+                <th>Departemen</th>
+                <th>Dilakukan Oleh</th>
+                <th className={s.thRight}>Baris</th>
+                <th className={s.thRight}>Barang Selisih</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody className={s.tableBody}>
               {loading ? (
-                <tr><td colSpan={6}><div className={s.empty}><p className={s.emptyBody}>Loading…</p></div></td></tr>
+                <tr><td colSpan={6}><div className={s.empty}><p className={s.emptyBody}>Memuat...</p></div></td></tr>
               ) : filteredOpnames.length === 0 ? (
                 <tr><td colSpan={6}>
                   <div className={s.empty}>
                     <ClipboardList size={40} className={s.emptyIcon} />
-                    <p className={s.emptyTitle}>No stock opname records</p>
-                    <p className={s.emptyBody}>Perform your first physical stock count to reconcile inventory levels.</p>
+                    <p className={s.emptyTitle}>Belum ada riwayat stock opname</p>
+                    <p className={s.emptyBody}>Lakukan perhitungan stok fisik pertama Anda untuk merekonsiliasi tingkat inventaris.</p>
                   </div>
                 </td></tr>
               ) : filteredOpnames.map(op => {
@@ -97,9 +97,9 @@ export default function StockOpnamePage() {
                     <td className={s.tdMuted}>{op.conducted_by_name || op.conducted_by}</td>
                     <td className={`${s.tdRight} ${s.tdMuted}`}>{(op.items || []).length}</td>
                     <td className={`${s.tdRight}`} style={{ color: varianceCount > 0 ? 'var(--p-coral)' : 'var(--p-muted)', fontWeight: varianceCount > 0 ? 500 : 400 }}>
-                      {varianceCount > 0 ? `${varianceCount} items` : '—'}
+                      {varianceCount > 0 ? `${varianceCount} barang` : '—'}
                     </td>
-                    <td><span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 9999, fontSize: 13, fontWeight: 500, background: op.status === 'locked' ? 'var(--p-ink)' : op.status === 'approved' ? 'var(--p-forest)' : 'var(--p-mint)', color: op.status === 'locked' || op.status === 'approved' ? '#fff' : 'var(--p-ink)' }}>{op.status.charAt(0).toUpperCase() + op.status.slice(1)}</span></td>
+                    <td><span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 9999, fontSize: 13, fontWeight: 500, background: op.status === 'locked' ? 'var(--p-ink)' : op.status === 'approved' ? 'var(--p-forest)' : 'var(--p-mint)', color: op.status === 'locked' || op.status === 'approved' ? '#fff' : 'var(--p-ink)' }}>{op.status === 'locked' ? 'Terkunci' : op.status === 'approved' ? 'Disetujui' : op.status}</span></td>
                   </tr>
                 );
               })}
@@ -135,16 +135,16 @@ export default function StockOpnamePage() {
                 </div>
                 <div className={s.detailBody}>
                   <div className={s.detailMeta}>
-                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Department</div><div className={s.detailMetaValue} style={{ fontWeight: 600 }}>{selected.department || 'Purchasing'}</div></div>
-                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Conducted By</div><div className={s.detailMetaValue}>{selected.conducted_by_name || selected.conducted_by}</div></div>
-                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Variance Items</div><div className={s.detailMetaValue} style={{ color: 'var(--p-coral)' }}>{(selected.items || []).filter((i: any) => i.variance !== 0).length} items</div></div>
+                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Departemen</div><div className={s.detailMetaValue} style={{ fontWeight: 600 }}>{selected.department || 'Purchasing'}</div></div>
+                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Dilakukan Oleh</div><div className={s.detailMetaValue}>{selected.conducted_by_name || selected.conducted_by}</div></div>
+                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Barang Selisih</div><div className={s.detailMetaValue} style={{ color: 'var(--p-coral)' }}>{(selected.items || []).filter((i: any) => i.variance !== 0).length} barang</div></div>
                   </div>
                   <div className={s.detailItems}>
                     {(selected.items || []).filter((i: any) => i.variance !== 0).slice(0, 10).map((item: any, idx: number) => (
                       <div key={idx} className={s.detailItem}>
                         <div>
                           <div className={s.detailItemName}>{item.name}</div>
-                          <div className={s.detailItemNote}>System: {item.system_qty} → Physical: {item.physical_qty} {item.unit}</div>
+                          <div className={s.detailItemNote}>Sistem: {item.system_qty} → Fisik: {item.physical_qty} {item.unit}</div>
                         </div>
                         <div className={s.detailItemQty} style={{ color: item.variance < 0 ? 'var(--p-coral)' : 'var(--p-success)' }}>
                           {item.variance > 0 ? '+' : ''}{item.variance} {item.unit}
@@ -154,14 +154,14 @@ export default function StockOpnamePage() {
                     {(selected.items || []).filter((i: any) => i.variance === 0).length > 0 && (
                       <div className={s.detailItem} style={{ justifyContent: 'center' }}>
                         <span style={{ fontSize: 13, color: 'var(--p-muted)' }}>
-                          {(selected.items || []).filter((i: any) => i.variance === 0).length} items with no variance
+                          {(selected.items || []).filter((i: any) => i.variance === 0).length} barang tanpa selisih
                         </span>
                       </div>
                     )}
                   </div>
                 </div>
                 <div className={s.actionRow}>
-                  <PButton variant="secondary" size="sm" onClick={() => setSelected(null)}>Close</PButton>
+                  <PButton variant="secondary" size="sm" onClick={() => setSelected(null)}>Tutup</PButton>
                 </div>
               </motion.div>
             </>

@@ -176,6 +176,20 @@ export default function DailyMarketListPage() {
     }
   };
 
+  const handleApprove = async (dml: any) => {
+    try {
+      await updateDML(dml.id, { 
+        status: 'approved', 
+        verified_by: user?.uid || 'system', 
+        verified_by_name: user?.displayName || user?.email || 'Purchasing' 
+      });
+      toast.success('Daily Market List approved.');
+      setSelectedDml(null);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to approve Daily Market List.');
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -223,6 +237,7 @@ export default function DailyMarketListPage() {
             onClose={() => setSelectedDml(null)}
             onEdit={() => handleOpenEdit(selectedDml)}
             onVerify={() => handleVerify(selectedDml)}
+            onApprove={() => handleApprove(selectedDml)}
             onDelete={() => handleDeleteClick(selectedDml.id)}
             onPrint={handlePrint}
           />

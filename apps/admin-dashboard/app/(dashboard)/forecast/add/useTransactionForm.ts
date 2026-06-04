@@ -185,13 +185,18 @@ export const useTransactionForm = () => {
     }, [nights, revenueType]);
 
     const updateNightRate = (idx: number, val: string | number) => {
+        let finalVal = val;
+        const num = Number(val);
+        if (!isNaN(num) && num < 0) {
+            finalVal = 0;
+        }
         setForm(prev => {
             const newRates = [...(prev.nightRates || [])];
-            newRates[idx] = val;
+            newRates[idx] = finalVal;
             
             const newRooms = [...prev.rooms];
             if (idx === 0 && newRooms[0]) {
-                newRooms[0] = { ...newRooms[0], price: val.toString() };
+                newRooms[0] = { ...newRooms[0], price: finalVal.toString() };
             }
             
             return { ...prev, nightRates: newRates, rooms: newRooms };
@@ -271,8 +276,32 @@ export const useTransactionForm = () => {
             if (!form.checkOut) { toast.error("Check-out Date is required"); return null; }
             if (form.checkOut <= form.checkIn) { toast.error("Check-out Date must be after Check-in Date"); return null; }
             if (!form.rooms[0]?.roomTypeId) { toast.error("Room Category is required"); return null; }
+            
+            // Check for negative room rates
+            const hasNegativeRate = (form.nightRates || []).some(r => Number(r) < 0);
+            if (hasNegativeRate) {
+                toast.error("Room rate cannot be negative");
+                return null;
+            }
+            // Check for negative payments
+            if (Number(form.payHotel) < 0 || Number(form.payNexura) < 0) {
+                toast.error("Payment amount cannot be negative");
+                return null;
+            }
         } else {
-            if (!form.totalAmount || Number(form.totalAmount) <= 0) { toast.error("Total Amount is required"); return null; }
+            const amountVal = Number(form.totalAmount);
+            if (isNaN(amountVal) || amountVal === 0 || form.totalAmount === "") {
+                toast.error("Total Amount is required");
+                return null;
+            }
+            if (amountVal < 0) {
+                toast.error("Total Amount must be greater than 0");
+                return null;
+            }
+            if (Number(form.payHotel) < 0 || Number(form.payNexura) < 0) {
+                toast.error("Payment amount cannot be negative");
+                return null;
+            }
         }
 
         if (isRoom && !isAvailable()) {
@@ -440,7 +469,14 @@ export const useTransactionForm = () => {
     }, [form, queue, prepareEntries, handleCancel, revenueType]);
 
     const updateForm = (field: string, value: any) => {
-        setForm(prev => ({ ...prev, [field]: value }));
+        let finalValue = value;
+        if (["payHotel", "payNexura", "totalAmount"].includes(field)) {
+            const num = Number(value);
+            if (!isNaN(num) && num < 0) {
+                finalValue = 0;
+            }
+        }
+        setForm(prev => ({ ...prev, [field]: finalValue }));
     };
 
     return {

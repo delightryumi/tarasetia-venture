@@ -228,13 +228,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: "packages", label: "Custom Packages", icon: <Package size={18} strokeWidth={2} /> },
         { id: "seo", label: "SEO & Metadata", icon: <Search size={18} strokeWidth={2} /> },
         { id: "users", label: "User Management", icon: <Users size={18} strokeWidth={2} /> },
-        { id: "purchasing", label: "Dashboard", icon: <Home size={18} strokeWidth={2} /> },
-        { id: "store-requisition", label: "Store Requisitions", icon: <FileText size={18} strokeWidth={2} /> },
-        { id: "purchase-requisition", label: "Purchase Requisitions", icon: <ShoppingCart size={18} strokeWidth={2} /> },
+        { id: "purchasing", label: "Dasbor", icon: <Home size={18} strokeWidth={2} /> },
+        { id: "store-requisition", label: "Store Requisition", icon: <FileText size={18} strokeWidth={2} /> },
+        { id: "purchase-requisition", label: "Purchase Requisition", icon: <ShoppingCart size={18} strokeWidth={2} /> },
         { id: "daily-market-list", label: "Daily Market List", icon: <Coffee size={18} strokeWidth={2} /> },
         { id: "stock-opname", label: "Stock Opname", icon: <PieChart size={18} strokeWidth={2} /> },
-        { id: "items", label: "Items Master", icon: <Package size={18} strokeWidth={2} /> },
-        { id: "suppliers", label: "Suppliers", icon: <Users size={18} strokeWidth={2} /> },
+        { id: "items", label: "Master Barang", icon: <Package size={18} strokeWidth={2} /> },
+        { id: "suppliers", label: "Supplier", icon: <Users size={18} strokeWidth={2} /> },
         { id: "purchase-order", label: "Purchase Order", icon: <ClipboardList size={18} strokeWidth={2} /> },
         { id: "food-beverage-product", label: "F&B Product", icon: <Coffee size={18} strokeWidth={2} /> },
     ];
@@ -438,7 +438,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         {/* ── Sign Out inside the dock ── */}
                         <DockNavItem
                             icon={<LogOut size={18} />}
-                            label="Sign Out"
+                            label="Keluar"
                             isActive={false}
                             mouseY={mouseY}
                             onClick={handleLogout}
@@ -532,7 +532,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onClick={handleLogout}
                     >
                         <LogOut size={20} />
-                        <span>Sign Out</span>
+                        <span>Keluar</span>
                     </motion.button>
                 </div>
             )}

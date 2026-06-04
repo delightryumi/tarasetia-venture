@@ -120,7 +120,7 @@ export default function RoomDetailsPage() {
                                             </div>
                                         </div>
                                     )}
-                                    {room.roomSizeValue && (
+                                    {!!room.roomSizeValue && (
                                         <div className="space-y-1">
                                             <span className="text-[10px] font-bold uppercase tracking-widest text-[#788069]/60">Size</span>
                                             <div className="flex items-center gap-3 text-lg font-light">

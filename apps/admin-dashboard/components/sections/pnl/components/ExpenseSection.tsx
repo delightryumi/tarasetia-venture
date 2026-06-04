@@ -212,48 +212,21 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                       </div>
 
                       {/* Category */}
-                      <div className={s.field} style={{ position: "relative" }}>
+                      <div className={s.field}>
                         <label className={s.label}>Category</label>
-                        <div className={s.inputWrap}>
-                          <input
-                            type="text"
-                            placeholder="Type or select…"
-                            className={s.input}
-                            value={row.category || ""}
-                            onFocus={() => setActiveRowIdx(idx)}
-                            onBlur={() => setTimeout(() => setActiveRowIdx(null), 180)}
-                            onChange={e => patchRow(idx, { category: e.target.value })}
-                          />
-                          <span className={s.inputChevron}><ChevronDown size={13} /></span>
-
-                          {activeRowIdx === idx && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                              className={s.categoryDropdown}
-                            >
-                              {CATEGORIES.map(cat => (
-                                <button
-                                  key={cat.label}
-                                  onMouseDown={e => {
-                                    e.preventDefault();
-                                    patchRow(idx, { category: cat.label });
-                                    setActiveRowIdx(null);
-                                  }}
-                                  className={`${s.categoryOption} ${row.category === cat.label ? s.categoryOptionActive : ""}`}
-                                >
-                                  <div className={s.categoryIconBox}>
-                                    <cat.icon size={15} />
-                                  </div>
-                                  <div className={s.categoryOptionText}>
-                                    <span className={s.categoryOptionName}>{cat.label}</span>
-                                    <span className={s.categoryOptionMeta}>Preset</span>
-                                  </div>
-                                </button>
-                              ))}
-                            </motion.div>
-                          )}
-                        </div>
+                        <select
+                          className={s.select}
+                          value={row.category || ""}
+                          onChange={e => patchRow(idx, { category: e.target.value })}
+                          required
+                        >
+                          <option value="">Select…</option>
+                          {CATEGORIES.map(cat => (
+                            <option key={cat.label} value={cat.label}>
+                              {cat.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
 
                       {/* Department */}
@@ -384,33 +357,18 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                           {/* ── Category ── */}
                           <td className={tdMid}>
                             {isEditing ? (
-                              <div style={{ position: "relative" }}>
-                                <input
-                                  className={s.cellInput}
-                                  value={editData?.category || ""}
-                                  onFocus={() => setEditDropdown(true)}
-                                  onBlur={() => setTimeout(() => setEditDropdown(false), 180)}
-                                  onChange={e => setEditData(d => d ? { ...d, category: e.target.value } : null)}
-                                />
-                                {editDropdown && (
-                                  <div className={s.miniDropdown}>
-                                    {CATEGORIES.map(cat => (
-                                      <button
-                                        key={cat.label}
-                                        onMouseDown={e => {
-                                          e.preventDefault();
-                                          setEditData(d => d ? { ...d, category: cat.label } : null);
-                                          setEditDropdown(false);
-                                        }}
-                                        className={s.miniOption}
-                                      >
-                                        <cat.icon size={12} />
-                                        {cat.label}
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
+                              <select
+                                className={s.cellSelect}
+                                value={editData?.category || ""}
+                                onChange={e => setEditData(d => d ? { ...d, category: e.target.value } : null)}
+                              >
+                                <option value="">Select…</option>
+                                {CATEGORIES.map(cat => (
+                                  <option key={cat.label} value={cat.label}>
+                                    {cat.label}
+                                  </option>
+                                ))}
+                              </select>
                             ) : (
                               <div className={s.cellCategory}>
                                 <div className={s.catIconBox}><Icon size={12} /></div>

@@ -16,8 +16,12 @@ export const useRBAC = () => {
     let userJson = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
     
     if (typeof window !== 'undefined') {
+      let hashParams = new URLSearchParams();
+      if (window.location.hash) {
+        hashParams = new URLSearchParams(window.location.hash.substring(1));
+      }
       const urlParams = new URLSearchParams(window.location.search);
-      const userParam = urlParams.get('user');
+      const userParam = hashParams.get('user') || urlParams.get('user');
       if (userParam) {
         userJson = userParam;
       }

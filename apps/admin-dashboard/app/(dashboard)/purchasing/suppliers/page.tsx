@@ -43,33 +43,33 @@ export default function SuppliersPage() {
     try {
       if (isEditing && selected) {
         await updateSupplier(selected.id, form);
-        toast.success('Supplier profile updated.');
+        toast.success('Profil supplier diperbarui.');
       } else {
         await createSupplier(form as any);
-        toast.success('Supplier profile created.');
+        toast.success('Profil supplier dibuat.');
       }
       setIsOpen(false);
-    } catch (err: any) { toast.error(err.message || 'Failed to save supplier.'); }
+    } catch (err: any) { toast.error(err.message || 'Gagal menyimpan supplier.'); }
   };
 
   const handleDelete = (id: string) => {
     const sup = suppliers.find(s => s.id === id);
     if (!sup) return;
-    toast(`Remove supplier ${sup.name}?`, {
-      description: "This will permanently remove the supplier profile from the directory.",
+    toast(`Hapus supplier ${sup.name}?`, {
+      description: "Tindakan ini akan menghapus profil supplier secara permanen dari direktori.",
       action: {
-        label: "Remove",
+        label: "Hapus",
         onClick: async () => {
           try {
             await deleteSupplier(id);
             setSelected(null);
-            toast.success("Supplier profile removed.");
+            toast.success("Profil supplier dihapus.");
           } catch (err: any) {
-            toast.error(err.message || "Failed to remove supplier.");
+            toast.error(err.message || "Gagal menghapus supplier.");
           }
         }
       },
-      cancel: { label: "Keep", onClick: () => {} }
+      cancel: { label: "Batal", onClick: () => {} }
     });
   };
 
@@ -77,19 +77,19 @@ export default function SuppliersPage() {
     <motion.div variants={fadeUp} initial="hidden" animate="visible">
       <div className={s.header}>
         <div>
-          <h1 className={s.title}>Suppliers</h1>
-          <p className={s.subtitle}>Manage authorized vendor profiles, contacts, and payment terms.</p>
+          <h1 className={s.title}>Supplier</h1>
+          <p className={s.subtitle}>Kelola profil vendor resmi, kontak, dan syarat pembayaran.</p>
         </div>
         <PButton onClick={openCreate}>
           <Plus size={16} strokeWidth={2} />
-          Add Supplier
+          Tambah Supplier
         </PButton>
       </div>
 
       <div className={s.filterBar}>
         <div className={s.searchWrap}>
           <Search size={15} className={s.searchIcon} />
-          <input className={s.searchInput} placeholder="Search suppliers…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input className={s.searchInput} placeholder="Cari supplier..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
       </div>
 
@@ -98,22 +98,22 @@ export default function SuppliersPage() {
           <table className={s.table}>
             <thead className={s.tableHead}>
               <tr>
-                <th>Supplier Name</th>
-                <th>Contact PIC</th>
-                <th>Phone</th>
-                <th>Payment Terms</th>
+                <th>Nama Supplier</th>
+                <th>Kontak PIC</th>
+                <th>Telepon</th>
+                <th>Syarat Pembayaran</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody className={s.tableBody}>
               {loading ? (
-                <tr><td colSpan={5}><div className={s.empty}><p className={s.emptyBody}>Loading…</p></div></td></tr>
+                <tr><td colSpan={5}><div className={s.empty}><p className={s.emptyBody}>Memuat...</p></div></td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={5}>
                   <div className={s.empty}>
                     <Users size={40} className={s.emptyIcon} />
-                    <p className={s.emptyTitle}>No suppliers found</p>
-                    <p className={s.emptyBody}>Add your first supplier to the vendor directory.</p>
+                    <p className={s.emptyTitle}>Supplier tidak ditemukan</p>
+                    <p className={s.emptyBody}>Tambah supplier pertama Anda ke direktori vendor.</p>
                   </div>
                 </td></tr>
               ) : filtered.map(sup => (
@@ -122,7 +122,7 @@ export default function SuppliersPage() {
                   <td className={s.tdMuted}>{sup.pic_name || '—'}</td>
                   <td className={s.tdMuted}>{sup.pic_contact || '—'}</td>
                   <td className={s.tdMuted}>{sup.payment_terms || '—'}</td>
-                  <td><span style={{ fontSize: 13, fontWeight: 500, color: sup.is_active ? 'var(--p-success)' : 'var(--p-muted)' }}>{sup.is_active ? 'Active' : 'Inactive'}</span></td>
+                  <td><span style={{ fontSize: 13, fontWeight: 500, color: sup.is_active ? 'var(--p-success)' : 'var(--p-muted)' }}>{sup.is_active ? 'Aktif' : 'Nonaktif'}</span></td>
                 </tr>
               ))}
             </tbody>
@@ -153,27 +153,27 @@ export default function SuppliersPage() {
               >
                 <div className={s.detailHeader}>
                   <span className={s.detailDocNum}>{selected.name}</span>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: selected.is_active ? 'var(--p-success)' : 'var(--p-muted)' }}>{selected.is_active ? 'Active' : 'Inactive'}</span>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: selected.is_active ? 'var(--p-success)' : 'var(--p-muted)' }}>{selected.is_active ? 'Aktif' : 'Nonaktif'}</span>
                 </div>
                 <div className={s.detailBody}>
                   <div className={s.detailMeta}>
-                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Contact PIC</div><div className={s.detailMetaValue}>{selected.pic_name || '—'}</div></div>
-                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Phone / Email</div><div className={s.detailMetaValue}>{selected.pic_contact || '—'}</div></div>
-                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Payment Terms</div><div className={s.detailMetaValue}>{selected.payment_terms || '—'}</div></div>
+                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Kontak PIC</div><div className={s.detailMetaValue}>{selected.pic_name || '—'}</div></div>
+                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Telepon / Email</div><div className={s.detailMetaValue}>{selected.pic_contact || '—'}</div></div>
+                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Syarat Pembayaran</div><div className={s.detailMetaValue}>{selected.payment_terms || '—'}</div></div>
                   </div>
 
                   {selected.address && (
                     <div className={s.creamCard}>
-                      <div className={s.creamCardTitle}>Address</div>
+                      <div className={s.creamCardTitle}>Alamat</div>
                       <div className={s.creamCardBody}>{selected.address}</div>
                     </div>
                   )}
                 </div>
 
                 <div className={s.actionRow}>
-                  <PButton size="sm" onClick={() => openEdit(selected)}>Edit</PButton>
-                  <PButton variant="danger" size="sm" onClick={() => handleDelete(selected.id)}>Remove</PButton>
-                  <PButton variant="secondary" size="sm" onClick={() => setSelected(null)}>Close</PButton>
+                  <PButton size="sm" onClick={() => openEdit(selected)}>Ubah</PButton>
+                  <PButton variant="danger" size="sm" onClick={() => handleDelete(selected.id)}>Hapus</PButton>
+                  <PButton variant="secondary" size="sm" onClick={() => setSelected(null)}>Tutup</PButton>
                 </div>
               </motion.div>
             </>
@@ -185,44 +185,44 @@ export default function SuppliersPage() {
         {isOpen && (
           <motion.div className={s.modalOverlay} variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }} initial="hidden" animate="visible" exit="hidden" onClick={e => { if (e.target === e.currentTarget) setIsOpen(false); }}>
             <motion.div variants={fadeUp} initial="hidden" animate="visible" className={s.modal}>
-              <h2 className={s.modalTitle}>{isEditing ? 'Edit Supplier' : 'Add New Supplier'}</h2>
-              <p className={s.modalSubtitle}>Record vendor profile, contact details, and payment arrangement.</p>
+              <h2 className={s.modalTitle}>{isEditing ? 'Ubah Supplier' : 'Tambah Supplier Baru'}</h2>
+              <p className={s.modalSubtitle}>Catat profil vendor, detail kontak, dan pengaturan pembayaran.</p>
 
               <form onSubmit={handleSubmit}>
                 <div className={s.formGrid}>
                   <div className={s.formField} style={{ gridColumn: '1 / -1' }}>
-                    <label className={s.formLabel}>Company / Supplier Name</label>
-                    <input className={s.formInput} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. PT. Fresh Foods Indonesia" required />
+                    <label className={s.formLabel}>Nama Perusahaan / Supplier</label>
+                    <input className={s.formInput} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="misal. PT. Fresh Foods Indonesia" required />
                   </div>
                   <div className={s.formField}>
-                    <label className={s.formLabel}>Contact PIC Name</label>
-                    <input className={s.formInput} value={form.pic_name} onChange={e => setForm(f => ({ ...f, pic_name: e.target.value }))} placeholder="e.g. Budi Santoso" />
+                    <label className={s.formLabel}>Nama PIC Kontak</label>
+                    <input className={s.formInput} value={form.pic_name} onChange={e => setForm(f => ({ ...f, pic_name: e.target.value }))} placeholder="misal. Budi Santoso" />
                   </div>
                   <div className={s.formField}>
-                    <label className={s.formLabel}>Phone / WhatsApp / Email</label>
-                    <input className={s.formInput} value={form.pic_contact} onChange={e => setForm(f => ({ ...f, pic_contact: e.target.value }))} placeholder="e.g. +62812345678" />
+                    <label className={s.formLabel}>Telepon / WhatsApp / Email</label>
+                    <input className={s.formInput} value={form.pic_contact} onChange={e => setForm(f => ({ ...f, pic_contact: e.target.value }))} placeholder="misal. +62812345678" />
                   </div>
                   <div className={s.formField}>
-                    <label className={s.formLabel}>Payment Terms</label>
+                    <label className={s.formLabel}>Syarat Pembayaran</label>
                     <select className={s.formSelect} value={form.payment_terms} onChange={e => setForm(f => ({ ...f, payment_terms: e.target.value }))}>
                       {['COD', 'NET 7', 'NET 14', 'NET 30', 'NET 45', 'NET 60'].map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
                   <div className={s.formField} style={{ gridColumn: '1 / -1' }}>
-                    <label className={s.formLabel}>Address</label>
-                    <textarea className={s.formTextarea} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="Full business address…" style={{ minHeight: 72 }} />
+                    <label className={s.formLabel}>Alamat</label>
+                    <textarea className={s.formTextarea} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="Alamat lengkap bisnis..." style={{ minHeight: 72 }} />
                   </div>
                   <div className={s.formField} style={{ gridColumn: '1 / -1' }}>
                     <div className={s.checkRow}>
                       <input id="sup_active" type="checkbox" className={s.checkbox} checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} />
-                      <label htmlFor="sup_active" className={s.checkLabel}>Supplier is active and eligible for purchase orders</label>
+                      <label htmlFor="sup_active" className={s.checkLabel}>Supplier aktif dan memenuhi syarat untuk purchase order</label>
                     </div>
                   </div>
                 </div>
 
                 <div className={s.modalActions}>
-                  <PButton type="submit">{isEditing ? 'Save Changes' : 'Add Supplier'}</PButton>
-                  <PButton type="button" variant="secondary" onClick={() => setIsOpen(false)}>Cancel</PButton>
+                  <PButton type="submit">{isEditing ? 'Simpan Perubahan' : 'Tambah Supplier'}</PButton>
+                  <PButton type="button" variant="secondary" onClick={() => setIsOpen(false)}>Batal</PButton>
                 </div>
               </form>
             </motion.div>

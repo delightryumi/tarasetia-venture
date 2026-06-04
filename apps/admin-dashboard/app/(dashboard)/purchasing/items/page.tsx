@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Suspense, useEffect } from 'react';
 import { Package, X, Plus, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useItems } from '@/hooks/purchasing/useItems';
@@ -11,6 +11,7 @@ import { itemsService } from '@/services/purchasing/itemsService';
 import { formatRupiah } from '@/lib/purchasing/utils';
 import { PStatusChip } from '@/components/purchasing/ui/PStatusChip';
 import { PButton } from '@/components/purchasing/ui/PButton';
+import { useSearchParams } from 'next/navigation';
 import s from '../shared-page.module.css';
 
 const fadeUp = {
@@ -26,13 +27,27 @@ const slideInRight = {
 
 const BLANK_FORM = { name: '', category: '', unit: '', min_stock: 0, current_stock: 0, last_purchase_price: 0, default_supplier_id: '', is_active: true, item_code: '', procurement_module: 'SR' as 'SR' | 'PR' | 'DML' };
 
-export default function ItemsPage() {
+function ItemsPageContent() {
   const { items, loading, createItem, updateItem, deleteItem } = useItems();
   const { suppliers } = useSuppliers();
+
+  const searchParams = useSearchParams();
+  const filterParam = searchParams.get('filter');
 
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [moduleFilter, setModuleFilter] = useState('');
+  const [stockFilter, setStockFilter] = useState(() => {
+    return filterParam === 'low-stock' ? 'low' : '';
+  });
+
+  useEffect(() => {
+    if (filterParam === 'low-stock') {
+      setStockFilter('low');
+    } else {
+      setStockFilter('');
+    }
+  }, [filterParam]);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -70,9 +85,13 @@ export default function ItemsPage() {
       const matchSearch = !search || item.name.toLowerCase().includes(search.toLowerCase()) || (item.item_code || '').toLowerCase().includes(search.toLowerCase());
       const matchCat = !categoryFilter || item.category === categoryFilter;
       const matchMod = !moduleFilter || (item.procurement_module || 'SR') === moduleFilter;
-      return matchSearch && matchCat && matchMod;
+      
+      const isLow = item.current_stock <= item.min_stock && item.is_active && (item.procurement_module || 'SR') !== 'DML';
+      const matchStock = !stockFilter || (stockFilter === 'low' ? isLow : !isLow);
+      
+      return matchSearch && matchCat && matchMod && matchStock;
     });
-  }, [items, search, categoryFilter, moduleFilter]);
+  }, [items, search, categoryFilter, moduleFilter, stockFilter]);
 
   const lowStockItems = useMemo(() => items.filter(i => i.current_stock <= i.min_stock && i.is_active), [items]);
 
@@ -117,7 +136,7 @@ export default function ItemsPage() {
       if (form.category === '__NEW__') {
         const cleanCat = newCategory.trim();
         if (!cleanCat) {
-          toast.error('Please enter a valid category name.');
+          toast.error('Harap masukkan nama kategori yang valid.');
           return;
         }
         await itemsService.addCategory(cleanCat);
@@ -128,7 +147,7 @@ export default function ItemsPage() {
       if (form.unit === '__NEW__') {
         const cleanUnit = newUnit.trim();
         if (!cleanUnit) {
-          toast.error('Please enter a valid unit name.');
+          toast.error('Harap masukkan nama satuan yang valid.');
           return;
         }
         await itemsService.addUnit(cleanUnit);
@@ -146,35 +165,35 @@ export default function ItemsPage() {
 
       if (isEditing && selectedItem) {
         await updateItem(selectedItem.id, formData);
-        toast.success('Item updated successfully.');
+        toast.success('Barang berhasil diperbarui.');
       } else {
         await createItem(formData as any);
-        toast.success('Item created successfully.');
+        toast.success('Barang berhasil dibuat.');
       }
       setIsOpen(false);
     } catch (err: any) { 
-      toast.error(err.message || 'Failed to save item.'); 
+      toast.error(err.message || 'Gagal menyimpan barang.'); 
     }
   };
 
   const handleDelete = (id: string) => {
     const item = items.find(i => i.id === id);
     if (!item) return;
-    toast(`Delete item ${item.name}?`, {
-      description: "This will permanently remove the item from the catalog.",
+    toast(`Hapus barang ${item.name}?`, {
+      description: "Tindakan ini akan menghapus barang secara permanen dari katalog.",
       action: {
-        label: "Delete",
+        label: "Hapus",
         onClick: async () => {
           try {
             await deleteItem(id);
             setSelectedItem(null);
-            toast.success("Item removed successfully.");
+            toast.success("Barang berhasil dihapus.");
           } catch (err: any) {
-            toast.error(err.message || "Failed to delete item.");
+            toast.error(err.message || "Gagal menghapus barang.");
           }
         }
       },
-      cancel: { label: "Keep", onClick: () => {} }
+      cancel: { label: "Batal", onClick: () => {} }
     });
   };
 
@@ -182,19 +201,19 @@ export default function ItemsPage() {
     <motion.div variants={fadeUp} initial="hidden" animate="visible">
       <div className={s.header}>
         <div>
-          <h1 className={s.title}>Items Master</h1>
-          <p className={s.subtitle}>Central catalog of all purchasable and requestable items.</p>
+          <h1 className={s.title}>Master Barang</h1>
+          <p className={s.subtitle}>Katalog pusat semua barang yang dapat dibeli dan diminta.</p>
         </div>
         <PButton onClick={openCreate}>
           <Plus size={16} strokeWidth={2} />
-          Add Item
+          Tambah Barang
         </PButton>
       </div>
 
       {/* Low stock banner */}
       {lowStockItems.length > 0 && (
         <div className={s.inlineAlert}>
-          <div className={s.inlineAlertTitle}>{lowStockItems.length} item{lowStockItems.length > 1 ? 's' : ''} below minimum stock level</div>
+          <div className={s.inlineAlertTitle}>{lowStockItems.length} barang di bawah stok minimum</div>
           <div className={s.inlineAlertBody}>{lowStockItems.map(i => i.name).join(', ')}</div>
         </div>
       )}
@@ -202,17 +221,22 @@ export default function ItemsPage() {
       <div className={s.filterBar}>
         <div className={s.searchWrap}>
           <Search size={15} className={s.searchIcon} />
-          <input className={s.searchInput} placeholder="Search items…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input className={s.searchInput} placeholder="Cari barang..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className={s.filterSelect} value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
-          <option value="">All categories</option>
+          <option value="">Semua kategori</option>
           {categories.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <select className={s.filterSelect} value={moduleFilter} onChange={e => setModuleFilter(e.target.value)}>
-          <option value="">All modules</option>
+          <option value="">Semua modul</option>
           <option value="SR">Store Requisition (SR)</option>
           <option value="PR">Purchase Requisition (PR)</option>
           <option value="DML">Daily Market List (DML)</option>
+        </select>
+        <select className={s.filterSelect} value={stockFilter} onChange={e => setStockFilter(e.target.value)}>
+          <option value="">Semua tingkat stok</option>
+          <option value="low">Hanya Stok Rendah</option>
+          <option value="normal">Stok Cukup</option>
         </select>
       </div>
 
@@ -221,25 +245,25 @@ export default function ItemsPage() {
           <table className={s.table}>
             <thead className={s.tableHead}>
               <tr>
-                <th>Item Name</th>
-                <th>Category</th>
-                <th>Module</th>
-                <th>Unit</th>
-                <th className={s.thRight}>Stock</th>
-                <th className={s.thRight}>Min Stock</th>
-                <th className={s.thRight}>Last Price</th>
+                <th>Nama Barang</th>
+                <th>Kategori</th>
+                <th>Modul</th>
+                <th>Satuan</th>
+                <th className={s.thRight}>Stok</th>
+                <th className={s.thRight}>Stok Min</th>
+                <th className={s.thRight}>Harga Terakhir</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody className={s.tableBody}>
               {loading ? (
-                <tr><td colSpan={8}><div className={s.empty}><p className={s.emptyBody}>Loading…</p></div></td></tr>
+                <tr><td colSpan={8}><div className={s.empty}><p className={s.emptyBody}>Memuat...</p></div></td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={8}>
                   <div className={s.empty}>
                     <Package size={40} className={s.emptyIcon} />
-                    <p className={s.emptyTitle}>No items found</p>
-                    <p className={s.emptyBody}>Add your first item to the catalog or adjust your search.</p>
+                    <p className={s.emptyTitle}>Barang tidak ditemukan</p>
+                    <p className={s.emptyBody}>Tambah barang pertama Anda ke katalog atau sesuaikan pencarian Anda.</p>
                   </div>
                 </td></tr>
               ) : filtered.map(item => {
@@ -269,7 +293,7 @@ export default function ItemsPage() {
                       {procMod === 'DML' ? '—' : item.min_stock}
                     </td>
                     <td className={`${s.tdRight} ${s.tdMono}`}>{formatRupiah(item.last_purchase_price)}</td>
-                    <td><span style={{ fontSize: 13, fontWeight: 500, color: item.is_active ? 'var(--p-success)' : 'var(--p-muted)' }}>{item.is_active ? 'Active' : 'Inactive'}</span></td>
+                    <td><span style={{ fontSize: 13, fontWeight: 500, color: item.is_active ? 'var(--p-success)' : 'var(--p-muted)' }}>{item.is_active ? 'Aktif' : 'Nonaktif'}</span></td>
                   </tr>
                 );
               })}
@@ -301,38 +325,38 @@ export default function ItemsPage() {
               >
                 <div className={s.detailHeader}>
                   <span className={s.detailDocNum}>{selectedItem.name}</span>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: selectedItem.is_active ? 'var(--p-success)' : 'var(--p-muted)' }}>{selectedItem.is_active ? 'Active' : 'Inactive'}</span>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: selectedItem.is_active ? 'var(--p-success)' : 'var(--p-muted)' }}>{selectedItem.is_active ? 'Aktif' : 'Nonaktif'}</span>
                 </div>
                 <div className={s.detailBody}>
                   <div className={s.detailMeta}>
-                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Category</div><div className={s.detailMetaValue}>{selectedItem.category}</div></div>
-                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Procurement</div><div className={s.detailMetaValue} style={{ fontWeight: 600 }}>{selectedItem.procurement_module || 'SR'}</div></div>
-                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Unit</div><div className={s.detailMetaValue}>{selectedItem.unit}</div></div>
+                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Kategori</div><div className={s.detailMetaValue}>{selectedItem.category}</div></div>
+                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Modul Pengadaan</div><div className={s.detailMetaValue} style={{ fontWeight: 600 }}>{selectedItem.procurement_module || 'SR'}</div></div>
+                    <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Satuan</div><div className={s.detailMetaValue}>{selectedItem.unit}</div></div>
                     {selectedItem.procurement_module !== 'DML' && (
                       <>
-                        <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Current Stock</div><div className={s.detailMetaValue} style={{ color: selectedItem.current_stock <= selectedItem.min_stock ? 'var(--p-coral)' : 'var(--p-ink)' }}>{selectedItem.current_stock} {selectedItem.unit}</div></div>
-                        <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Min Stock</div><div className={s.detailMetaValue}>{selectedItem.min_stock} {selectedItem.unit}</div></div>
+                        <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Stok Saat Ini</div><div className={s.detailMetaValue} style={{ color: selectedItem.current_stock <= selectedItem.min_stock ? 'var(--p-coral)' : 'var(--p-ink)' }}>{selectedItem.current_stock} {selectedItem.unit}</div></div>
+                        <div className={s.detailMetaItem}><div className={s.detailMetaLabel}>Stok Minimum</div><div className={s.detailMetaValue}>{selectedItem.min_stock} {selectedItem.unit}</div></div>
                       </>
                     )}
                   </div>
 
                   <div className={s.darkCard}>
-                    <div className={s.darkCardLabel}>Last Purchase Price</div>
+                    <div className={s.darkCardLabel}>Harga Pembelian Terakhir</div>
                     <div className={s.darkCardValue}>{formatRupiah(selectedItem.last_purchase_price)}</div>
                   </div>
 
                   {selectedItem.default_supplier_id && (
                     <div className={s.creamCard}>
-                      <div className={s.creamCardTitle}>Default Supplier</div>
+                      <div className={s.creamCardTitle}>Supplier Default</div>
                       <div className={s.creamCardBody}>{suppliers.find(s => s.id === selectedItem.default_supplier_id)?.name || selectedItem.default_supplier_id}</div>
                     </div>
                   )}
                 </div>
 
                 <div className={s.actionRow}>
-                  <PButton size="sm" onClick={() => { openEdit(selectedItem); }}>Edit Item</PButton>
-                  <PButton variant="danger" size="sm" onClick={() => handleDelete(selectedItem.id)}>Delete</PButton>
-                  <PButton variant="secondary" size="sm" onClick={() => setSelectedItem(null)}>Close</PButton>
+                  <PButton size="sm" onClick={() => { openEdit(selectedItem); }}>Ubah Barang</PButton>
+                  <PButton variant="danger" size="sm" onClick={() => handleDelete(selectedItem.id)}>Hapus</PButton>
+                  <PButton variant="secondary" size="sm" onClick={() => setSelectedItem(null)}>Tutup</PButton>
                 </div>
               </motion.div>
             </>
@@ -344,34 +368,34 @@ export default function ItemsPage() {
         {isOpen && (
           <motion.div className={s.modalOverlay} variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }} initial="hidden" animate="visible" exit="hidden" onClick={e => { if (e.target === e.currentTarget) setIsOpen(false); }}>
             <motion.div variants={fadeUp} initial="hidden" animate="visible" className={s.modal}>
-              <h2 className={s.modalTitle}>{isEditing ? 'Edit Item' : 'Add New Item'}</h2>
-              <p className={s.modalSubtitle}>Define catalog details, stock thresholds, and supplier assignment.</p>
+              <h2 className={s.modalTitle}>{isEditing ? 'Ubah Barang' : 'Tambah Barang Baru'}</h2>
+              <p className={s.modalSubtitle}>Tentukan detail katalog, ambang batas stok, dan penugasan supplier.</p>
 
               <form onSubmit={handleSubmit}>
                 <div className={s.formGrid}>
                   <div className={s.formField} style={{ gridColumn: '1 / -1' }}>
-                    <label className={s.formLabel}>Item Name</label>
-                    <input className={s.formInput} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Chicken Breast" required />
+                    <label className={s.formLabel}>Nama Barang</label>
+                    <input className={s.formInput} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="misal. Chicken Breast" required />
                   </div>
                   <div className={s.formField}>
-                    <label className={s.formLabel}>Item Code</label>
-                    <input className={s.formInput} value={form.item_code} onChange={e => setForm(f => ({ ...f, item_code: e.target.value }))} placeholder="e.g. CHK-001" />
+                    <label className={s.formLabel}>Kode Barang</label>
+                    <input className={s.formInput} value={form.item_code} onChange={e => setForm(f => ({ ...f, item_code: e.target.value }))} placeholder="misal. CHK-001" />
                   </div>
                   <div className={s.formField}>
-                    <label className={s.formLabel}>Category</label>
+                    <label className={s.formLabel}>Kategori</label>
                     <select className={s.formSelect} value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} required>
                       {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                      <option value="__NEW__">+ Add New Category...</option>
+                      <option value="__NEW__">+ Tambah Kategori Baru...</option>
                     </select>
                   </div>
                   {form.category === '__NEW__' && (
                     <div className={s.formField} style={{ gridColumn: '1 / -1' }}>
-                      <label className={s.formLabel}>New Category Name</label>
-                      <input className={s.formInput} value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="e.g. Fresh Pasta" required />
+                      <label className={s.formLabel}>Nama Kategori Baru</label>
+                      <input className={s.formInput} value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="misal. Fresh Pasta" required />
                     </div>
                   )}
                   <div className={s.formField}>
-                    <label className={s.formLabel}>Procurement Module</label>
+                    <label className={s.formLabel}>Modul Pengadaan</label>
                     <select 
                       className={s.formSelect} 
                       value={form.procurement_module} 
@@ -391,52 +415,52 @@ export default function ItemsPage() {
                     </select>
                   </div>
                   <div className={s.formField}>
-                    <label className={s.formLabel}>Unit</label>
+                    <label className={s.formLabel}>Satuan</label>
                     <select className={s.formSelect} value={form.unit} onChange={e => setForm(f => ({ ...f, unit: e.target.value }))} required>
                       {units.map(u => <option key={u} value={u}>{u}</option>)}
-                      <option value="__NEW__">+ Add New Unit...</option>
+                      <option value="__NEW__">+ Tambah Satuan Baru...</option>
                     </select>
                   </div>
                   {form.unit === '__NEW__' && (
                     <div className={s.formField} style={{ gridColumn: '1 / -1' }}>
-                      <label className={s.formLabel}>New Unit Name</label>
-                      <input className={s.formInput} value={newUnit} onChange={e => setNewUnit(e.target.value)} placeholder="e.g. tray" required />
+                      <label className={s.formLabel}>Nama Satuan Baru</label>
+                      <input className={s.formInput} value={newUnit} onChange={e => setNewUnit(e.target.value)} placeholder="misal. tray" required />
                     </div>
                   )}
                   <div className={s.formField}>
-                    <label className={s.formLabel}>Default Supplier</label>
+                    <label className={s.formLabel}>Supplier Default</label>
                     <select className={s.formSelect} value={form.default_supplier_id} onChange={e => setForm(f => ({ ...f, default_supplier_id: e.target.value }))}>
-                      <option value="">None</option>
+                      <option value="">Tidak ada</option>
                       {suppliers.map(sup => <option key={sup.id} value={sup.id}>{sup.name}</option>)}
                     </select>
                   </div>
                   {form.procurement_module !== 'DML' && (
                     <>
                       <div className={s.formField}>
-                        <label className={s.formLabel}>Current Stock</label>
+                        <label className={s.formLabel}>Stok Saat Ini</label>
                         <input className={s.formInput} type="number" min={0} value={form.current_stock} onChange={e => setForm(f => ({ ...f, current_stock: Number(e.target.value) }))} required />
                       </div>
                       <div className={s.formField}>
-                        <label className={s.formLabel}>Minimum Stock</label>
+                        <label className={s.formLabel}>Stok Minimum</label>
                         <input className={s.formInput} type="number" min={0} value={form.min_stock} onChange={e => setForm(f => ({ ...f, min_stock: Number(e.target.value) }))} required />
                       </div>
                     </>
                   )}
                   <div className={s.formField} style={{ gridColumn: '1 / -1' }}>
-                    <label className={s.formLabel}>Last Purchase Price (IDR)</label>
+                    <label className={s.formLabel}>Harga Pembelian Terakhir (IDR)</label>
                     <input className={s.formInput} type="number" min={0} value={form.last_purchase_price} onChange={e => setForm(f => ({ ...f, last_purchase_price: Number(e.target.value) }))} required />
                   </div>
                   <div className={s.formField} style={{ gridColumn: '1 / -1' }}>
                     <div className={s.checkRow}>
                       <input id="is_active" type="checkbox" className={s.checkbox} checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} />
-                      <label htmlFor="is_active" className={s.checkLabel}>Item is active and available for requisitions</label>
+                      <label htmlFor="is_active" className={s.checkLabel}>Barang aktif dan tersedia untuk requisition</label>
                     </div>
                   </div>
                 </div>
 
                 <div className={s.modalActions}>
-                  <PButton type="submit">{isEditing ? 'Save Changes' : 'Add Item'}</PButton>
-                  <PButton type="button" variant="secondary" onClick={() => setIsOpen(false)}>Cancel</PButton>
+                  <PButton type="submit">{isEditing ? 'Simpan Perubahan' : 'Tambah Barang'}</PButton>
+                  <PButton type="button" variant="secondary" onClick={() => setIsOpen(false)}>Batal</PButton>
                 </div>
               </form>
             </motion.div>
@@ -444,5 +468,13 @@ export default function ItemsPage() {
         )}
       </AnimatePresence>
     </motion.div>
+  );
+}
+
+export default function ItemsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#ffffff' }}><div style={{ width: '48px', height: '48px', border: '2px solid rgba(0,0,0,0.05)', borderTopColor: '#788069', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>}>
+      <ItemsPageContent />
+    </Suspense>
   );
 }

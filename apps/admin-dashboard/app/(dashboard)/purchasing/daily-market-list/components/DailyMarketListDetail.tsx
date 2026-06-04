@@ -13,6 +13,7 @@ interface DailyMarketListDetailProps {
   onClose: () => void;
   onEdit: () => void;
   onVerify: () => void;
+  onApprove: () => void;
   onDelete: () => void;
   onPrint: () => void;
 }
@@ -28,6 +29,7 @@ export default function DailyMarketListDetail({
   onClose,
   onEdit,
   onVerify,
+  onApprove,
   onDelete,
   onPrint
 }: DailyMarketListDetailProps) {
@@ -113,9 +115,14 @@ export default function DailyMarketListDetail({
                 </>
               )}
               {selectedDml.status === 'submitted' && (
-                <PButton variant="secondary" size="sm" onClick={onEdit}>
-                  Edit List
-                </PButton>
+                <>
+                  <PButton variant="secondary" size="sm" onClick={onEdit}>
+                    Edit List
+                  </PButton>
+                  <PButton variant="success" size="sm" onClick={onApprove}>
+                    <Check size={14} /> Approve List
+                  </PButton>
+                </>
               )}
               {(selectedDml.status === 'submitted' || selectedDml.status === 'approved' || selectedDml.status === 'draft') && (
                 <PButton variant="danger" size="sm" onClick={onDelete}>

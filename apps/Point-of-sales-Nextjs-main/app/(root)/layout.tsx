@@ -43,27 +43,47 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const userParam = urlParams.get('user');
-      const restoNameParam = urlParams.get('restoName');
-      const activeShiftParam = urlParams.get('activeShift');
-      const themeParam = urlParams.get('theme');
-      const dashboardUrlParam = urlParams.get('dashboardUrl');
+      // 1. Parse parameters from hash fragment first (more secure, never sent to server)
+      let hashParams = new URLSearchParams();
+      if (window.location.hash) {
+        hashParams = new URLSearchParams(window.location.hash.substring(1));
+      }
+
+      // 2. Fallback to query params
+      const searchParams = new URLSearchParams(window.location.search);
+
+      const userParam = hashParams.get('user') || searchParams.get('user');
+      const restoNameParam = hashParams.get('restoName') || searchParams.get('restoName');
+      const activeShiftParam = hashParams.get('activeShift') || searchParams.get('activeShift');
+      const themeParam = hashParams.get('theme') || searchParams.get('theme');
+      const dashboardUrlParam = hashParams.get('dashboardUrl') || searchParams.get('dashboardUrl');
       
+      let dataUpdated = false;
       if (userParam) {
         localStorage.setItem('user', userParam);
+        dataUpdated = true;
       }
       if (restoNameParam) {
         localStorage.setItem('restoName', restoNameParam);
+        dataUpdated = true;
       }
       if (activeShiftParam) {
         localStorage.setItem('active_shift', activeShiftParam);
+        dataUpdated = true;
       }
       if (themeParam && (themeParam === 'light' || themeParam === 'dark')) {
         setTheme(themeParam);
+        dataUpdated = true;
       }
       if (dashboardUrlParam) {
         localStorage.setItem('dashboard_url', dashboardUrlParam);
+        dataUpdated = true;
+      }
+
+      // Clean the URL immediately to remove sensitive query parameters/hash from address bar, history, and referrer logs
+      if (dataUpdated && (window.location.hash || window.location.search)) {
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
       }
     }
 

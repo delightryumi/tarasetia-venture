@@ -17,6 +17,10 @@ interface PageLayoutProps {
 
 export const PageLayout = ({ children, forceScrolledState }: PageLayoutProps) => {
   useEffect(() => {
+    // Reset scroll to top immediately on page transition/mount
+    window.scrollTo(0, 0);
+    ScrollTrigger.refresh();
+
     // Initialize Lenis smooth scrolling
     const lenis = new Lenis({
       duration: 1.2,

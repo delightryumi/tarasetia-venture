@@ -152,7 +152,7 @@ export default function PerformOpnamePage() {
     const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
     if (calculatedLines.length === 0) {
-      toast.error('Please add at least one item to perform stock opname.');
+      toast.error('Harap tambahkan setidaknya satu barang untuk melakukan stock opname.');
       return;
     }
 
@@ -175,10 +175,10 @@ export default function PerformOpnamePage() {
         }
       }
 
-      toast.success(`Stock opname for ${activeDept} submitted successfully.`);
+      toast.success(`Stock opname untuk ${activeDept} berhasil dikirim.`);
       router.push('/purchasing/stock-opname?module=purchasing');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to submit stock opname.');
+      toast.error(err.message || 'Gagal mengirimkan stock opname.');
     }
   };
 
@@ -199,10 +199,10 @@ export default function PerformOpnamePage() {
       <div className={s.header} style={{ marginBottom: 'var(--p-space-lg)' }}>
         <div>
           <button type="button" onClick={() => router.push('/purchasing/stock-opname?module=purchasing')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--p-primary)', cursor: 'pointer', padding: 0, marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
-            <ChevronLeft size={16} /> Back to List
+            <ChevronLeft size={16} /> Kembali ke Daftar
           </button>
-          <h1 className={s.title}>Perform Physical Stock Count</h1>
-          <p className={s.subtitle}>Audit actual item stock levels, verify variances, and record updates.</p>
+          <h1 className={s.title}>Lakukan Perhitungan Stok Fisik</h1>
+          <p className={s.subtitle}>Audit tingkat stok barang aktual, verifikasi selisih, dan catat pembaruan.</p>
         </div>
       </div>
 
@@ -211,7 +211,7 @@ export default function PerformOpnamePage() {
         <div className={s.tableCard} style={{ padding: 'var(--p-space-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--p-space-md)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--p-space-md)' }}>
             <div className={s.formField}>
-              <label className={s.formLabel}>Department</label>
+              <label className={s.formLabel}>Departemen</label>
               <select 
                 className={s.formSelect} 
                 value={activeDept} 
@@ -225,8 +225,8 @@ export default function PerformOpnamePage() {
                 }}
                 required
               >
-                <option value="Food">Food</option>
-                <option value="Beverage">Beverage</option>
+                <option value="Food">Makanan</option>
+                <option value="Beverage">Minuman</option>
                 <option value="Front Office">Front Office</option>
                 <option value="Housekeeping">Housekeeping</option>
                 <option value="Purchasing">Purchasing</option>
@@ -234,10 +234,10 @@ export default function PerformOpnamePage() {
             </div>
 
             <div className={s.formField} style={{ position: 'relative' }}>
-              <label className={s.formLabel}>Search & Add Item</label>
+              <label className={s.formLabel}>Cari & Tambah Barang</label>
               <input 
                 className={s.formInput} 
-                placeholder="Type item name or code..." 
+                placeholder="Ketik nama atau kode barang..." 
                 value={modalSearch} 
                 onChange={e => {
                   setModalSearch(e.target.value);
@@ -266,7 +266,7 @@ export default function PerformOpnamePage() {
                       setModalSearch('');
                       setShowModalSuggestions(false);
                     } else {
-                      toast.error('No matching item found or item already added.');
+                      toast.error('Barang yang cocok tidak ditemukan atau sudah ditambahkan.');
                     }
                   }
                 }}
@@ -338,7 +338,7 @@ export default function PerformOpnamePage() {
                       return (matchName || matchCode) && !alreadyAdded;
                     }).length === 0 && (
                       <div style={{ padding: '10px 12px', fontSize: 13, color: 'var(--p-muted)' }}>
-                        No matching items found
+                        Barang yang cocok tidak ditemukan
                       </div>
                     )}
                 </div>
@@ -350,12 +350,12 @@ export default function PerformOpnamePage() {
             <table className={s.table}>
               <thead className={s.tableHead}>
                 <tr>
-                  <th>Item</th>
-                  <th style={{ width: 140 }}>Unit Price</th>
-                  <th className={s.thRight}>System Qty</th>
-                  <th>Physical Count</th>
-                  <th className={s.thRight}>Variance</th>
-                  <th className={s.thRight}>Value Diff</th>
+                  <th>Barang</th>
+                  <th style={{ width: 140 }}>Harga Satuan</th>
+                  <th className={s.thRight}>Stok Sistem</th>
+                  <th>Hitungan Fisik</th>
+                  <th className={s.thRight}>Selisih</th>
+                  <th className={s.thRight}>Selisih Nilai</th>
                   <th style={{ width: 40 }}></th>
                 </tr>
               </thead>
@@ -363,7 +363,7 @@ export default function PerformOpnamePage() {
                 {calculatedLines.length === 0 ? (
                   <tr>
                     <td colSpan={7} style={{ textAlign: 'center', color: 'var(--p-muted)', padding: '36px 0' }}>
-                      No items added yet. Search and press Enter to add items to audit.
+                      Belum ada barang yang ditambahkan. Cari dan tekan Enter untuk menambahkan barang.
                     </td>
                   </tr>
                 ) : calculatedLines.map(line => {
@@ -434,7 +434,7 @@ export default function PerformOpnamePage() {
         {/* Right Panel: Summary & Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--p-space-md)' }}>
           <div className={s.darkCard} style={{ padding: 'var(--p-space-lg)' }}>
-            <div className={s.darkCardLabel} style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255,255,255,0.6)' }}>Net Variance Value</div>
+            <div className={s.darkCardLabel} style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255,255,255,0.6)' }}>Nilai Selisih Bersih</div>
             <div className={s.darkCardValue} style={{ fontSize: 24, fontWeight: 700, marginTop: 8, color: totalVariance < 0 ? 'var(--p-peach)' : totalVariance > 0 ? 'var(--p-mint)' : '#fff' }}>
               {totalVariance > 0 ? '+' : ''}{formatRupiah(totalVariance)}
             </div>
@@ -442,10 +442,10 @@ export default function PerformOpnamePage() {
 
           <div className={s.tableCard} style={{ padding: 'var(--p-space-lg)' }}>
             <div className={s.formField}>
-              <label className={s.formLabel}>Audit Remarks</label>
+              <label className={s.formLabel}>Catatan Audit</label>
               <textarea 
                 className={s.formTextarea} 
-                placeholder="Justification for variances, damage notes, etc." 
+                placeholder="Justifikasi untuk selisih, catatan kerusakan, dll." 
                 value={notes} 
                 onChange={e => setNotes(e.target.value)} 
                 style={{ minHeight: 96 }} 
@@ -453,8 +453,8 @@ export default function PerformOpnamePage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 'var(--p-space-md)' }}>
-              <PButton type="submit" style={{ width: '100%' }}>Submit & Sync Inventory</PButton>
-              <PButton type="button" variant="secondary" onClick={() => router.push('/purchasing/stock-opname?module=purchasing')} style={{ width: '100%' }}>Cancel</PButton>
+              <PButton type="submit" style={{ width: '100%' }}>Kirim & Sinkronkan Inventaris</PButton>
+              <PButton type="button" variant="secondary" onClick={() => router.push('/purchasing/stock-opname?module=purchasing')} style={{ width: '100%' }}>Batal</PButton>
             </div>
           </div>
         </div>

@@ -120,7 +120,15 @@ export default function DeptSRDetail({
                 <div className={s.creamCard}>
                   <div className={s.creamCardTitle}>Status Info</div>
                   <div className={s.creamCardBody}>
-                    Dokumen ini sedang diproses oleh tim Purchasing. Approval dan penghapusan hanya dapat dilakukan oleh Purchasing.
+                    {selectedSr?.status === 'approved' ? (
+                      `Dokumen ini sudah di-approve oleh Purchasing${selectedSr.approved_by_name ? ` (${selectedSr.approved_by_name})` : ''}.`
+                    ) : selectedSr?.status === 'fulfilled' ? (
+                      'Dokumen ini sudah dipenuhi (fulfilled).'
+                    ) : selectedSr?.status === 'rejected' ? (
+                      'Dokumen ini ditolak (rejected).'
+                    ) : (
+                      'Dokumen ini sedang diproses oleh tim Purchasing. Approval dan penghapusan hanya dapat dilakukan oleh Purchasing.'
+                    )}
                   </div>
                 </div>
               )}

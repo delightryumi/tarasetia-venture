@@ -298,7 +298,29 @@ export const NexuraInput = ({ label, value, onChange, placeholder, type = "text"
                         <input
                             type={type}
                             value={value ?? ""}
-                            onChange={e => onChange(e.target.value)}
+                            onChange={e => {
+                                let val = e.target.value;
+                                if (type === "number" || isAmount) {
+                                    // Strip negative sign if pasted or manually entered
+                                    if (val.startsWith("-")) {
+                                        val = val.replace("-", "");
+                                    }
+                                    const num = Number(val);
+                                    if (!isNaN(num) && num < 0) {
+                                        val = "0";
+                                    }
+                                }
+                                onChange(val);
+                            }}
+                            onKeyDown={e => {
+                                if (type === "number" || isAmount) {
+                                    // Block keys: '-', '+', 'e', 'E'
+                                    if (["-", "+", "e", "E"].includes(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                }
+                            }}
+                            min={(type === "number" || isAmount) ? "0" : undefined}
                             onWheel={(e) => (e.target as HTMLElement).blur()}
                             placeholder={placeholder}
                             disabled={disabled}

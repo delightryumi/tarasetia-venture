@@ -76,7 +76,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
                                 <span>{room.capacity} Guests</span>
                             </div>
                         )}
-                        {room.roomSizeValue && (
+                        {!!room.roomSizeValue && (
                             <div className="flex items-center gap-2 text-[11px] font-medium text-neutral-600">
                                 <Maximize size={12} className="text-[#788069] shrink-0" />
                                 <span>{room.roomSizeValue} {room.roomSizeUnit === 'm2' ? 'm²' : room.roomSizeUnit}</span>

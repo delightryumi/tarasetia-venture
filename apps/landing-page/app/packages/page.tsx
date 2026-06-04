@@ -117,8 +117,12 @@ export default function PackagesPage() {
 
                                     <div className="flex items-center justify-between border-t border-white/20 pt-6">
                                         <div className="flex flex-col">
-                                            <span className="text-white/40 text-[8px] font-bold uppercase tracking-widest mb-1">Price starting from</span>
-                                            <span className="text-xl text-[#788069] font-medium">{formatIDR(pkg.price)}</span>
+                                            {pkg.price && Number(pkg.price) > 0 ? (
+                                                <>
+                                                    <span className="text-white/40 text-[8px] font-bold uppercase tracking-widest mb-1">Price starting from</span>
+                                                    <span className="text-xl text-[#788069] font-medium">{formatIDR(pkg.price)}</span>
+                                                </>
+                                            ) : null}
                                         </div>
                                         <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-[#788069] transition-all duration-500">
                                             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />

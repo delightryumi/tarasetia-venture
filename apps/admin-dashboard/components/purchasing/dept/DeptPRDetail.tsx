@@ -124,7 +124,17 @@ export default function DeptPRDetail({
                 <div className={s.creamCard}>
                   <div className={s.creamCardTitle}>Status Info</div>
                   <div className={s.creamCardBody}>
-                    Dokumen ini sedang dalam proses approval oleh Purchasing / Finance. Approval dan penghapusan hanya dapat dilakukan oleh Purchasing.
+                    {selectedPr?.status === 'approved' ? (
+                      `Dokumen ini sudah di-approve oleh Purchasing / Finance${selectedPr.approved_by_name ? ` (${selectedPr.approved_by_name})` : ''}.`
+                    ) : selectedPr?.status === 'po_issued' ? (
+                      'PO telah diterbitkan untuk dokumen ini (PO Issued).'
+                    ) : selectedPr?.status === 'received' ? (
+                      'Barang untuk dokumen ini sudah diterima (Received).'
+                    ) : selectedPr?.status === 'closed' ? (
+                      'Dokumen ini sudah ditutup (Closed).'
+                    ) : (
+                      'Dokumen ini sedang dalam proses approval oleh Purchasing / Finance. Approval dan penghapusan hanya dapat dilakukan oleh Purchasing.'
+                    )}
                   </div>
                 </div>
               )}

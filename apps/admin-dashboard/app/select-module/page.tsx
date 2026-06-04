@@ -33,7 +33,7 @@ export default function SelectModulePage() {
   const [loadingPerms, setLoadingPerms] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('dark');
-  const [showGrid, setShowGrid] = useState(false);
+  const [showGrid, setShowGrid] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -48,6 +48,11 @@ export default function SelectModulePage() {
     } else {
       document.documentElement.classList.remove('dark');
     }
+
+    // Check if intro is requested
+    const urlParams = new URLSearchParams(window.location.search);
+    const isIntro = urlParams.get('intro') === 'true';
+    setShowGrid(!isIntro);
   }, []);
 
   const fetchPermissions = async () => {

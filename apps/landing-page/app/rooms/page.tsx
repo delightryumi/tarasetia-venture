@@ -113,7 +113,7 @@ export default function RoomsPage() {
                                                     <span>{room.capacity} Orang</span>
                                                 </div>
                                             )}
-                                            {room.roomSizeValue && (
+                                            {!!room.roomSizeValue && (
                                                 <div className="flex items-center gap-2">
                                                     <Maximize size={14} strokeWidth={2.5} />
                                                     <span>{room.roomSizeValue} {room.roomSizeUnit === 'm2' ? 'm²' : room.roomSizeUnit}</span>

@@ -94,13 +94,13 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
       const theme = localStorage.getItem('theme');
       if (theme) params.set('theme', theme);
 
-      // Perform a clean redirect to the target POS application page
+      // Perform a clean redirect to the target POS application page using hash parameters for safety
       try {
         const url = new URL(targetPath, basePosUrl);
-        url.search = params.toString();
+        url.hash = params.toString();
         window.location.href = url.toString();
       } catch (e) {
-        window.location.href = `${basePosUrl}${targetPath}?${params.toString()}`;
+        window.location.href = `${basePosUrl}${targetPath}#${params.toString()}`;
       }
     }
   }, [pathname, user]);

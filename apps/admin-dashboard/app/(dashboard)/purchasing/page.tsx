@@ -52,10 +52,10 @@ export default function PurchasingOverviewPage() {
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <h1 className={styles.title}>Purchasing</h1>
-          <p className={styles.subtitle}>Overview of procurement activity, stock levels, and pending approvals.</p>
+          <p className={styles.subtitle}>Ikhtisar aktivitas pengadaan, tingkat stok, dan persetujuan tertunda.</p>
         </div>
         <Link href="/purchasing/store-requisition">
-          <PButton>New Store Requisition</PButton>
+          <PButton>Store Requisition Baru</PButton>
         </Link>
       </div>
 
@@ -63,13 +63,13 @@ export default function PurchasingOverviewPage() {
       {lowStockItems.length > 0 && (
         <motion.div variants={fadeUp} className={styles.alertCard}>
           <div className={styles.alertCardTitle}>
-            {lowStockItems.length} item{lowStockItems.length > 1 ? 's' : ''} below minimum stock
+            {lowStockItems.length} barang di bawah stok minimum
           </div>
           <div className={styles.alertCardBody}>
-            These items need to be replenished. Create a Store Requisition or Purchase Requisition to reorder.
+            Barang-barang ini perlu ditambah. Buat Store Requisition atau Purchase Requisition untuk memesan kembali.
           </div>
-          <Link href="/purchasing/items">
-            <PButton variant="secondary" size="sm">View Items Master</PButton>
+          <Link href="/purchasing/items?filter=low-stock">
+            <PButton variant="secondary" size="sm">Lihat Master Barang</PButton>
           </Link>
         </motion.div>
       )}
@@ -77,25 +77,25 @@ export default function PurchasingOverviewPage() {
       {/* ── KPI Cards ── */}
       <motion.div variants={staggerContainer} initial="hidden" animate="visible" className={styles.kpiGrid}>
         <motion.div variants={fadeUp} className={styles.kpiCard}>
-          <div className={styles.kpiLabel}>Total Items</div>
+          <div className={styles.kpiLabel}>Total Barang</div>
           <div className={styles.kpiValue}>{items.length}</div>
           <div className={styles.kpiMeta}>
             {lowStockItems.length > 0 ? (
-              <span className={styles.kpiAlert}>{lowStockItems.length} low stock</span>
+              <span className={styles.kpiAlert}>{lowStockItems.length} stok rendah</span>
             ) : (
-              'All stocked'
+              'Semua terstok'
             )}
           </div>
         </motion.div>
 
         <motion.div variants={fadeUp} className={styles.kpiCard}>
-          <div className={styles.kpiLabel}>Suppliers</div>
+          <div className={styles.kpiLabel}>Supplier</div>
           <div className={styles.kpiValue}>{suppliers.length}</div>
-          <div className={styles.kpiMeta}>{suppliers.filter(s => s.is_active).length} active</div>
+          <div className={styles.kpiMeta}>{suppliers.filter(s => s.is_active).length} aktif</div>
         </motion.div>
 
         <motion.div variants={fadeUp} className={styles.kpiCard}>
-          <div className={styles.kpiLabel}>Pending Approvals</div>
+          <div className={styles.kpiLabel}>Persetujuan Tertunda</div>
           <div className={styles.kpiValue}>{pendingCount}</div>
           <div className={styles.kpiMeta}>
             {srs.filter(s => s.status === 'submitted').length} SR ·{' '}
@@ -104,9 +104,9 @@ export default function PurchasingOverviewPage() {
         </motion.div>
 
         <motion.div variants={fadeUp} className={styles.kpiCardDark}>
-          <div className={styles.kpiLabel}>Active DML</div>
+          <div className={styles.kpiLabel}>DML Aktif</div>
           <div className={styles.kpiValue}>{dmls.filter(d => d.status !== 'received').length}</div>
-          <div className={styles.kpiMeta}>Daily market lists open</div>
+          <div className={styles.kpiMeta}>Daily market list terbuka</div>
         </motion.div>
       </motion.div>
 
@@ -115,16 +115,16 @@ export default function PurchasingOverviewPage() {
         {/* Recent Purchase Requisitions */}
         <motion.div variants={fadeUp} className={styles.sectionCard}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionTitle}>Recent Purchase Requisitions</span>
-            <Link href="/purchasing/purchase-requisition" className={styles.sectionLink}>View all</Link>
+            <span className={styles.sectionTitle}>Purchase Requisition Terbaru</span>
+            <Link href="/purchasing/purchase-requisition" className={styles.sectionLink}>Lihat semua</Link>
           </div>
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead className={styles.tableHead}>
                 <tr>
-                  <th>PR Number</th>
+                  <th>Nomor PR</th>
                   <th>Supplier</th>
-                  <th style={{ textAlign: 'right' }}>Est. Cost</th>
+                  <th style={{ textAlign: 'right' }}>Est. Biaya</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -133,7 +133,7 @@ export default function PurchasingOverviewPage() {
                   <tr>
                     <td colSpan={4}>
                       <div className={styles.empty}>
-                        <p className={styles.emptyText}>No purchase requisitions yet.</p>
+                        <p className={styles.emptyText}>Belum ada purchase requisition.</p>
                       </div>
                     </td>
                   </tr>
@@ -158,13 +158,13 @@ export default function PurchasingOverviewPage() {
         {/* Low Stock Items */}
         <motion.div variants={fadeUp} className={styles.sectionCard}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionTitle}>Low Stock Items</span>
-            <Link href="/purchasing/items" className={styles.sectionLink}>Manage</Link>
+            <span className={styles.sectionTitle}>Barang Stok Rendah</span>
+            <Link href="/purchasing/items?filter=low-stock" className={styles.sectionLink}>Kelola</Link>
           </div>
           <div className={styles.stockList}>
             {lowStockItems.length === 0 ? (
               <div className={styles.empty}>
-                <p className={styles.emptyText}>All items are adequately stocked.</p>
+                <p className={styles.emptyText}>Semua barang terstok dengan cukup.</p>
               </div>
             ) : (
               lowStockItems.slice(0, 8).map(item => (

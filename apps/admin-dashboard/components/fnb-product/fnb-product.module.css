@@ -488,3 +488,179 @@
 .emptyText {
   font-size: 14px;
 }
+
+/* Date & Month Picker Popover Dropdown Custom Classes */
+.datepickerDropdown {
+  position: absolute;
+  top: 100%;
+  margin-top: 16px;
+  right: 0;
+  width: 320px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #f5f5f4;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 24px;
+  z-index: 100;
+}
+
+.datepickerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.datepickerColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.datepickerHeader {
+  font-size: 12px;
+  font-weight: 800;
+  color: #a8a29e;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+.datepickerList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.datepickerBtn {
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  border: none;
+  background-color: transparent;
+  color: #44403c;
+  cursor: pointer;
+}
+
+.datepickerBtnActive {
+  background-color: #0066cc !important; /* Matches F&B Blue */
+  color: #ffffff !important;
+}
+
+.datepickerBtnInactive {
+  background-color: transparent;
+  color: #44403c;
+}
+
+.datepickerBtnInactive:hover {
+  background-color: #fafaf9;
+}
+
+.datepickerMonthsScroll {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  max-height: 192px;
+  overflow-y: auto;
+  padding-right: 8px;
+  gap: 4px;
+}
+
+/* Custom trigger button */
+.datepickerTrigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 9999px; /* Matches layout filter bar */
+  font-size: 13px;
+  font-weight: 600;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  font-family: "SF Pro Text", sans-serif;
+}
+
+.datepickerTrigger:hover {
+  background-color: #f5f5f7;
+  border-color: #7a7a7a;
+}
+
+/* Daily Calendar inside Popover */
+.dailyCalendarWrapper {
+  width: 280px;
+}
+
+.dailyCalendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.dailyCalendarTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1d1d1f;
+}
+
+.dailyCalendarDaysHead {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+
+.dailyCalendarDayName {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #a8a29e;
+}
+
+.dailyCalendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.dailyCalendarCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dailyCalendarDayBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  background-color: transparent;
+}
+
+.dailyCalendarDayBtnActive {
+  background-color: #0066cc !important;
+  color: #ffffff !important;
+}
+
+.dailyCalendarDayBtnInactive {
+  color: #1d1d1f;
+}
+
+.dailyCalendarDayBtnInactive:hover {
+  background-color: #f5f5f7;
+}
+
+.dailyCalendarDayBtnToday {
+  border: 1px solid #8e8e93;
+}
+

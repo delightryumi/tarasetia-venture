@@ -278,12 +278,14 @@ export function PackagesSection() {
               </div>
 
               <div className="space-y-4">
-                <div className="flex flex-col">
-                   <p className="text-[9px] uppercase tracking-widest text-white/50 mb-1">Starting From</p>
-                   <p className="text-3xl md:text-4xl text-[#ffd8a6] font-medium" style={{ fontFamily: 'var(--font-heading), serif' }}>
-                      {formatIDR(active.price)}
-                   </p>
-                </div>
+                {active.price && parseInt(active.price.replace(/\D/g, ''), 10) > 0 ? (
+                  <div className="flex flex-col">
+                     <p className="text-[9px] uppercase tracking-widest text-white/50 mb-1">Starting From</p>
+                     <p className="text-3xl md:text-4xl text-[#ffd8a6] font-medium" style={{ fontFamily: 'var(--font-heading), serif' }}>
+                        {formatIDR(active.price)}
+                     </p>
+                  </div>
+                ) : null}
                 
                 <p className="text-white/70 text-sm max-w-lg line-clamp-3 leading-relaxed font-light border-t border-white/10 pt-4">
                   {active.description}

@@ -145,13 +145,15 @@ export default function PackageDetailsPage() {
                             <div className="sticky top-32 p-10 md:p-12 bg-white rounded-[3rem] border border-black/5 shadow-2xl space-y-12 reveal-item">
                                 
                                 <div className="space-y-6">
-                                    <div>
-                                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#788069]/60">Investment</span>
-                                        <div className="flex items-baseline gap-2">
-                                            <h3 className="text-4xl font-serif">{formatIDR(Number(pkg.price.replace(/\D/g, '')))}</h3>
-                                            <span className="text-xs text-[#1a1a1a]/40 uppercase tracking-widest">/ Nett</span>
+                                    {pkg.price && Number(pkg.price.replace(/\D/g, '')) > 0 ? (
+                                        <div>
+                                            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#788069]/60">Investment</span>
+                                            <div className="flex items-baseline gap-2">
+                                                <h3 className="text-4xl font-serif">{formatIDR(Number(pkg.price.replace(/\D/g, '')))}</h3>
+                                                <span className="text-xs text-[#1a1a1a]/40 uppercase tracking-widest">/ Nett</span>
+                                            </div>
                                         </div>
-                                    </div>
+                                    ) : null}
 
                                     <div className="flex flex-col gap-4 py-8 border-y border-black/5">
                                         <div className="flex items-center justify-between text-sm">

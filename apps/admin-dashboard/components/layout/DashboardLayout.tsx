@@ -29,9 +29,12 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     useLayoutEffect(() => {
         if (!containerRef.current) return;
 
+        const targets = containerRef.current.querySelectorAll(".card, .glass-card, .section-container > header, .form-group");
+        if (targets.length === 0) return;
+
         // Reset and animate
         gsap.fromTo(
-            containerRef.current.querySelectorAll(".card, .glass-card, .section-container > header, .form-group"),
+            targets,
             {
                 opacity: 0,
                 y: 30,

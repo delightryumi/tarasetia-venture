@@ -87,7 +87,7 @@ export const RoomRow: React.FC<RoomRowProps> = ({ room, index }) => {
                                 </div>
                             </div>
                         )}
-                        {room.roomSizeValue && (
+                        {!!room.roomSizeValue && (
                             <div className="flex flex-col gap-0.5">
                                 <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Kamar Size</span>
                                 <div className="flex items-center gap-1.5 text-xs font-semibold text-neutral-700">

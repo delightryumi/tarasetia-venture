@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { X, ArrowUpRight, Maximize } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGallery, GalleryItem } from "@/services/useGallery";
+import { gsap } from "gsap";
+import "./Masonry.css";
 
 // High-end curated fallback images (landscape focus)
 const FALLBACK_GALLERY: GalleryItem[] = [
@@ -21,6 +23,70 @@ const FALLBACK_GALLERY: GalleryItem[] = [
     { id: "f10", url: "https://images.unsplash.com/photo-1610641818989-c2051b5e2cfd?auto=format&fit=crop&w=1200", order: 9, storagePath: "" },
 ];
 
+const useMedia = (queries: string[], values: number[], defaultValue: number) => {
+  const get = () => {
+    if (typeof window === "undefined") return defaultValue;
+    const index = queries.findIndex(q => window.matchMedia(q).matches);
+    return values[index] ?? defaultValue;
+  };
+
+  const [value, setValue] = useState(defaultValue);
+
+  useEffect(() => {
+    setValue(get());
+    const handler = () => setValue(get());
+    
+    queries.forEach(q => {
+      window.matchMedia(q).addEventListener('change', handler);
+    });
+    
+    return () => {
+      queries.forEach(q => {
+        window.matchMedia(q).removeEventListener('change', handler);
+      });
+    };
+  }, [queries]);
+
+  return value;
+};
+
+const useMeasure = (): [(node: HTMLDivElement | null) => void, { width: number; height: number }] => {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const observerRef = useRef<ResizeObserver | null>(null);
+
+  const refCallback = useCallback((node: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+
+    if (node) {
+      const ro = new ResizeObserver(([entry]) => {
+        const { width, height } = entry.contentRect;
+        setSize({ width, height });
+      });
+      ro.observe(node);
+      observerRef.current = ro;
+    }
+  }, []);
+
+  return [refCallback, size];
+};
+
+const preloadImages = async (urls: string[]) => {
+  if (typeof window === "undefined") return;
+  await Promise.all(
+    urls.map(
+      src =>
+        new Promise<void>(resolve => {
+          const img = new window.Image();
+          img.src = src;
+          img.onload = img.onerror = () => resolve();
+        })
+    )
+  );
+};
+
 export const WideLandscapeGallery = () => {
     const { items: dbItems, loading } = useGallery();
     const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
@@ -31,10 +97,157 @@ export const WideLandscapeGallery = () => {
         return dbItems && dbItems.length > 0 ? dbItems : FALLBACK_GALLERY;
     }, [dbItems, loading]);
 
-    if (loading) return null;
-
     // Use a flat map, limiting to 10 images for the layout
-    const galleryItems = items.slice(0, 10);
+    const galleryItems = useMemo(() => items.slice(0, 10), [items]);
+
+    const heights = [600, 400, 500, 450, 550, 420, 580, 480, 520, 460];
+    const masonryItems = useMemo(() => {
+        return galleryItems.map((item, index) => ({
+            id: item.id || String(index),
+            img: item.url,
+            height: heights[index % heights.length],
+            originalIndex: index,
+            item: item
+        }));
+    }, [galleryItems]);
+
+    const columns = useMedia(
+        ['(min-width:1500px)', '(min-width:1000px)', '(min-width:600px)', '(min-width:400px)'],
+        [5, 4, 3, 2],
+        1
+    );
+
+    const [containerRef, { width }] = useMeasure();
+    const [imagesReady, setImagesReady] = useState(false);
+
+    useEffect(() => {
+        preloadImages(masonryItems.map(i => i.img)).then(() => setImagesReady(true));
+    }, [masonryItems]);
+
+    const { grid, maxHeight } = useMemo(() => {
+        if (!width) return { grid: [], maxHeight: 600 };
+
+        const colHeights = new Array(columns).fill(0);
+        const columnWidth = width / columns;
+
+        const mapped = masonryItems.map(child => {
+            const col = colHeights.indexOf(Math.min(...colHeights));
+            const x = columnWidth * col;
+            const height = (child.height / 600) * (columnWidth * 0.65);
+            const y = colHeights[col];
+
+            colHeights[col] += height;
+
+            return { ...child, x, y, w: columnWidth, h: height };
+        });
+
+        const maxHeight = Math.max(...colHeights);
+        return { grid: mapped, maxHeight };
+    }, [columns, masonryItems, width]);
+
+    const hasMounted = useRef(false);
+
+    useLayoutEffect(() => {
+        if (!imagesReady || grid.length === 0) return;
+
+        grid.forEach((item, index) => {
+            const selector = `[data-key="${item.id}"]`;
+            const animationProps = {
+                x: item.x,
+                y: item.y,
+                width: item.w,
+                height: item.h
+            };
+
+            if (!hasMounted.current) {
+                const initialPos = { x: item.x, y: window.innerHeight + 200 };
+                const initialState = {
+                    opacity: 0,
+                    x: initialPos.x,
+                    y: initialPos.y,
+                    width: item.w,
+                    height: item.h,
+                    filter: 'blur(10px)'
+                };
+
+                gsap.fromTo(selector, initialState, {
+                    opacity: 1,
+                    ...animationProps,
+                    filter: 'blur(0px)',
+                    duration: 0.8,
+                    ease: 'power3.out',
+                    delay: index * 0.05
+                });
+            } else {
+                gsap.to(selector, {
+                    ...animationProps,
+                    duration: 0.6,
+                    ease: 'power3.out',
+                    overwrite: 'auto'
+                });
+            }
+        });
+
+        hasMounted.current = true;
+    }, [grid, imagesReady]);
+
+    const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>, item: any) => {
+        const element = e.currentTarget;
+        const selector = `[data-key="${item.id}"]`;
+
+        gsap.to(selector, {
+            scale: 0.96,
+            duration: 0.3,
+            ease: 'power2.out'
+        });
+
+        const overlay = element.querySelector('.hover-overlay-ui');
+        const image = element.querySelector('.item-img-inner');
+        if (overlay) {
+            gsap.to(overlay, {
+                opacity: 1,
+                y: 0,
+                duration: 0.3,
+                ease: 'power2.out'
+            });
+        }
+        if (image) {
+            gsap.to(image, {
+                scale: 1.05,
+                duration: 0.5,
+                ease: 'power2.out'
+            });
+        }
+    };
+
+    const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>, item: any) => {
+        const element = e.currentTarget;
+        const selector = `[data-key="${item.id}"]`;
+
+        gsap.to(selector, {
+            scale: 1,
+            duration: 0.3,
+            ease: 'power2.out'
+        });
+
+        const overlay = element.querySelector('.hover-overlay-ui');
+        const image = element.querySelector('.item-img-inner');
+        if (overlay) {
+            gsap.to(overlay, {
+                opacity: 0,
+                y: 10,
+                duration: 0.3,
+                ease: 'power2.out'
+            });
+        }
+        if (image) {
+            gsap.to(image, {
+                scale: 1,
+                duration: 0.5,
+                ease: 'power2.out'
+            });
+        }
+    };
 
     const handleOpen = (item: GalleryItem, index: number) => {
         setSelectedImage(item);
@@ -54,6 +267,8 @@ export const WideLandscapeGallery = () => {
         setSelectedImage(galleryItems[next]);
         setSelectedIndex(next);
     };
+
+    if (loading) return null;
 
     return (
         <section className="relative w-full bg-[#111310] pt-20 pb-32 overflow-hidden border-t border-white/5">
@@ -84,37 +299,54 @@ export const WideLandscapeGallery = () => {
                     </Link>
                 </div>
 
+                {/* ── Dynamic Masonry Loader ── */}
+                {!imagesReady && (
+                    <div className="w-full flex flex-col items-center justify-center py-24 gap-3">
+                        <div className="w-8 h-8 border-4 border-[#a8b09a] border-t-transparent rounded-full animate-spin" />
+                        <span className="text-[9px] text-[#a8b09a] font-bold tracking-[0.3em] uppercase animate-pulse">Loading Frames...</span>
+                    </div>
+                )}
+
                 {/* ── Ultra-wide Masonry Grid ── */}
-                {/* We use CSS columns for true masonry without JS, creating a flowing tight landscape grid */}
-                <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-3 md:gap-4 lg:gap-5 space-y-3 md:space-y-4 lg:space-y-5">
-                    {galleryItems.map((item, index) => {
-                        // All images are forced into landscape to keep the cinematic aesthetic
+                <div 
+                    ref={containerRef} 
+                    className="list transition-opacity duration-500" 
+                    style={{ 
+                        opacity: imagesReady ? 1 : 0,
+                        height: `${maxHeight}px`
+                    }}
+                >
+                    {imagesReady && grid.map((item) => {
                         return (
-                            <div 
-                                key={item.id || index}
-                                className="break-inside-avoid relative w-full overflow-hidden group rounded-lg bg-black cursor-pointer aspect-[16/9]"
-                                onClick={() => handleOpen(item, index)}
+                            <div
+                                key={item.id}
+                                data-key={item.id}
+                                className="item-wrapper"
+                                onClick={() => handleOpen(item.item, item.originalIndex)}
+                                onMouseEnter={e => handleMouseEnter(e, item)}
+                                onMouseLeave={e => handleMouseLeave(e, item)}
                             >
-                                <Image
-                                    src={item.url}
-                                    alt={`Gallery Frame ${index + 1}`}
-                                    fill
-                                    unoptimized
-                                    className="object-cover transition-transform duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-110 opacity-80 group-hover:opacity-100"
-                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1536px) 33vw, 20vw"
-                                />
-                                {/* Cinematic Gradient Overlay */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                
-                                {/* Hover UI */}
-                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                                    <div className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center text-white">
-                                        <Maximize size={14} />
+                                <div className="item-img">
+                                    <div 
+                                        className="item-img-inner absolute inset-0 bg-cover bg-center"
+                                        style={{ backgroundImage: `url(${item.img})` }}
+                                    />
+                                    
+                                    {/* Cinematic Gradient Overlay */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/25 to-black/10 pointer-events-none" />
+                                    
+                                    {/* Hover UI */}
+                                    <div className="hover-overlay-ui absolute inset-0 flex flex-col justify-between p-5 opacity-0 translate-y-2 pointer-events-none z-10">
+                                        <div className="flex justify-end">
+                                            <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center text-white">
+                                                <Maximize size={12} />
+                                            </div>
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="text-[9px] text-[#a8b09a] font-black tracking-[0.3em] uppercase">Bumi Anyom</p>
+                                            <p className="text-white text-xs font-serif italic mt-1 font-light">Captured Moment</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="absolute bottom-4 left-5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 translate-y-2 group-hover:translate-y-0">
-                                    <p className="text-[9px] text-[#a8b09a] font-black tracking-[0.3em] uppercase">Bumi Anyom</p>
-                                    <p className="text-white text-xs font-serif italic mt-1 font-light">Captured Moment</p>
                                 </div>
                             </div>
                         );

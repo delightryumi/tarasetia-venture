@@ -58,3 +58,81 @@
 .pnl-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #788069;
 }
+
+/* Date Picker Dropdown Custom Classes */
+.datepicker-dropdown {
+    position: absolute;
+    top: 100%;
+    margin-top: 16px;
+    right: 0;
+    width: 320px; /* w-80 */
+    background-color: #ffffff;
+    border-radius: 16px; /* rounded-2xl */
+    border: 1px solid #f5f5f4; /* border-stone-100 */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* shadow-2xl */
+    padding: 24px; /* p-6 */
+    z-index: 100;
+}
+
+.datepicker-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.datepicker-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.datepicker-header {
+    font-size: 12px; /* text-xs */
+    font-weight: 800; /* font-extrabold */
+    color: #a8a29e; /* text-stone-400 */
+    text-transform: uppercase;
+    letter-spacing: 0.1em; /* tracking-widest */
+    margin: 0;
+}
+
+.datepicker-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.datepicker-btn {
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px; /* px-3 py-2 */
+    border-radius: 8px; /* rounded-lg */
+    font-size: 14px; /* text-sm */
+    font-weight: 700; /* font-bold */
+    transition: background-color 0.2s, color 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.datepicker-btn-active {
+    background-color: #1c1917; /* bg-stone-900 */
+    color: #ffffff;
+}
+
+.datepicker-btn-inactive {
+    background-color: transparent;
+    color: #44403c; /* text-stone-600 */
+}
+
+.datepicker-btn-inactive:hover {
+    background-color: #fafaf9; /* hover:bg-stone-50 */
+}
+
+/* Custom scrollable month list */
+.datepicker-months-scroll {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    max-height: 192px; /* max-h-48 */
+    overflow-y: auto;
+    padding-right: 8px;
+    gap: 4px;
+}

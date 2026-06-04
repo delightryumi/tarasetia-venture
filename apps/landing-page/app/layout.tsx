@@ -15,6 +15,7 @@ const cormorantGaramond = Cormorant_Garamond({
 });
 
 import { getSEO } from "../services/getSEO";
+import ClickSpark from "@/components/ClickSpark";
 
 export async function generateMetadata(): Promise<Metadata> {
   const seo = await getSEO();
@@ -61,8 +62,17 @@ export default function RootLayout({
       <body
         className={`${outfit.variable} ${cormorantGaramond.variable} antialiased font-body font-light`}
       >
-        {children}
+        <ClickSpark
+          sparkColor="#788069"
+          sparkSize={12}
+          sparkRadius={25}
+          sparkCount={8}
+          duration={350}
+        >
+          {children}
+        </ClickSpark>
       </body>
     </html>
   );
 }
+

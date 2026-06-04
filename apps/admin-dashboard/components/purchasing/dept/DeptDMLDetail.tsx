@@ -115,7 +115,15 @@ export default function DeptDMLDetail({
                 <div className={s.creamCard}>
                   <div className={s.creamCardTitle}>Status Info</div>
                   <div className={s.creamCardBody}>
-                    Dokumen ini sedang dalam proses review oleh Purchasing. Penghapusan hanya dapat dilakukan oleh tim Purchasing.
+                    {selectedDml?.status === 'approved' ? (
+                      `Dokumen ini sudah di-approve oleh Purchasing${selectedDml.verified_by_name ? ` (${selectedDml.verified_by_name})` : ''}.`
+                    ) : selectedDml?.status === 'fulfilled' ? (
+                      'Dokumen ini sudah dipenuhi (fulfilled).'
+                    ) : selectedDml?.status === 'rejected' ? (
+                      'Dokumen ini ditolak (rejected).'
+                    ) : (
+                      'Dokumen ini sedang dalam proses review oleh Purchasing. Penghapusan hanya dapat dilakukan oleh tim Purchasing.'
+                    )}
                   </div>
                 </div>
               )}

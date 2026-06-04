@@ -132,13 +132,13 @@ export const MobileBottomNav = () => {
         { id: "packages", label: "Packages", icon: <Package size={20} /> },
         { id: "seo", label: "SEO", icon: <Search size={20} /> },
         { id: "users", label: "Users", icon: <Users size={20} /> },
-        { id: "purchasing", label: "Dashboard", icon: <Home size={20} /> },
-        { id: "store-requisition", label: "Store Requisitions", icon: <FileText size={20} /> },
-        { id: "purchase-requisition", label: "Purchase Requisitions", icon: <ShoppingCart size={20} /> },
-        { id: "daily-market-list", label: "Market List", icon: <Coffee size={20} /> },
+        { id: "purchasing", label: "Dasbor", icon: <Home size={20} /> },
+        { id: "store-requisition", label: "Store Requisition", icon: <FileText size={20} /> },
+        { id: "purchase-requisition", label: "Purchase Requisition", icon: <ShoppingCart size={20} /> },
+        { id: "daily-market-list", label: "Daily Market List", icon: <Coffee size={20} /> },
         { id: "stock-opname", label: "Stock Opname", icon: <PieChart size={20} /> },
-        { id: "items", label: "Items", icon: <Package size={20} /> },
-        { id: "suppliers", label: "Suppliers", icon: <Users size={20} /> },
+        { id: "items", label: "Master Barang", icon: <Package size={20} /> },
+        { id: "suppliers", label: "Supplier", icon: <Users size={20} /> },
         { id: "purchase-order", label: "PO List", icon: <ClipboardList size={20} /> },
         { id: "food-beverage-product", label: "Products", icon: <Coffee size={20} /> },
     ];
@@ -206,7 +206,7 @@ export const MobileBottomNav = () => {
                         title="Pilih Modul"
                     >
                         <Grid size={18} className="text-[#ffd8a6]" />
-                        <span className="text-[9px] font-normal tracking-wide text-white/50">Modules</span>
+                        <span className="text-[9px] font-normal tracking-wide text-white/50">Modul</span>
                     </button>
 
                     <div className="w-px h-6 bg-white/10 flex-shrink-0 mx-1" />
@@ -255,10 +255,10 @@ export const MobileBottomNav = () => {
                     <button
                         onClick={signOutUser}
                         className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] text-white/40 hover:text-rose-450 transition-all duration-300"
-                        title="Sign Out"
+                        title="Keluar"
                     >
                         <LogOut size={18} />
-                        <span className="text-[9px] font-normal tracking-wide text-white/40">Sign Out</span>
+                        <span className="text-[9px] font-normal tracking-wide text-white/40">Keluar</span>
                     </button>
                 </div>
             </motion.div>

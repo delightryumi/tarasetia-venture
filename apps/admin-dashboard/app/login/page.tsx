@@ -10,7 +10,7 @@ function LoginContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/select-module';
+  const redirectTo = searchParams.get('redirect') || '/select-module?intro=true';
 
   useEffect(() => {
     if (!loading && user) {

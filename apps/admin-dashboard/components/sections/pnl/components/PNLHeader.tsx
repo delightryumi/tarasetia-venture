@@ -115,23 +115,35 @@ export const PNLHeader: React.FC<PNLHeaderProps> = ({
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 10 }}
-                                className="absolute top-full mt-4 right-0 w-80 bg-white rounded-2xl border border-stone-100 shadow-2xl p-6 z-[100]"
+                                className="datepicker-dropdown"
                             >
-                                <div className={viewMode === "monthly" ? "grid grid-cols-2 gap-6" : "block"}>
-                                    <div className="space-y-4">
-                                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Year</p>
-                                        <div className="space-y-1">
+                                <div className={viewMode === "monthly" ? "datepicker-grid" : "block"}>
+                                    <div className="datepicker-column">
+                                        <p className="datepicker-header">Year</p>
+                                        <div className="datepicker-list">
                                             {YEARS.map(yr => (
-                                                <button key={yr} onClick={() => { setMonth(`${yr}-${mStr}`); if(viewMode === "yearly") setShowDatePicker(false); }} className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors ${parseInt(y) === yr ? 'bg-stone-900 text-white' : 'hover:bg-stone-50 text-stone-600'}`}>{yr}</button>
+                                                <button 
+                                                    key={yr} 
+                                                    onClick={() => { setMonth(`${yr}-${mStr}`); if(viewMode === "yearly") setShowDatePicker(false); }} 
+                                                    className={`datepicker-btn ${parseInt(y) === yr ? 'datepicker-btn-active' : 'datepicker-btn-inactive'}`}
+                                                >
+                                                    {yr}
+                                                </button>
                                             ))}
                                         </div>
                                     </div>
                                     {viewMode === "monthly" && (
-                                        <div className="space-y-4">
-                                            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Month</p>
-                                            <div className="grid grid-cols-1 max-h-48 overflow-y-auto custom-scrollbar pr-2 space-y-1">
+                                        <div className="datepicker-column">
+                                            <p className="datepicker-header">Month</p>
+                                            <div className="datepicker-months-scroll custom-scrollbar">
                                                 {MONTHS.map(mth => (
-                                                    <button key={mth.v} onClick={() => { setMonth(`${y}-${mth.v}`); setShowDatePicker(false); }} className={`w-full text-left px-3 py-2 rounded-lg text-[10px] font-bold transition-colors ${mStr === mth.v ? 'bg-stone-100 text-stone-900' : 'hover:bg-stone-50 text-stone-500'}`}>{mth.n}</button>
+                                                    <button 
+                                                        key={mth.v} 
+                                                        onClick={() => { setMonth(`${y}-${mth.v}`); setShowDatePicker(false); }} 
+                                                        className={`datepicker-btn ${mStr === mth.v ? 'datepicker-btn-active' : 'datepicker-btn-inactive'}`}
+                                                    >
+                                                        {mth.n}
+                                                    </button>
                                                 ))}
                                             </div>
                                         </div>
