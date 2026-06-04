@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X } from "lucide-react";
+import { X, Headphones } from "lucide-react";
 
 const WhatsAppIcon = ({ size = 18 }: { size?: number }) => (
     <svg 
@@ -118,7 +118,7 @@ export function WhatsAppWidget() {
                 }}
                 onMouseDown={(e) => e.preventDefault()}
             >
-                <WhatsAppIcon size={20} />
+                {isOpen ? <WhatsAppIcon size={20} /> : <Headphones size={20} />}
                 {!isOpen && (
                     <span 
                         style={{ 
