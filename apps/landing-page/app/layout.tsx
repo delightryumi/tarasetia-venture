@@ -15,6 +15,7 @@ const cormorantGaramond = Cormorant_Garamond({
 });
 
 import { getSEO } from "../services/getSEO";
+import Script from "next/script";
 import ClickSpark from "@/components/ClickSpark";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -59,6 +60,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+  <head>
+    <Script src="https://www.googletagmanager.com/gtag/js?id=G-F3YJ6ZLPRH" strategy="afterInteractive" />
+    <Script id="ga-init" strategy="afterInteractive">
+      {`window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-F3YJ6ZLPRH');`}
+    </Script>
+  </head>
+  <body
       <body
         className={`${outfit.variable} ${cormorantGaramond.variable} antialiased font-body font-light`}
       >
