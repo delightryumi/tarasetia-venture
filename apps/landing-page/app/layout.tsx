@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Outfit } from "next/font/google";
+// Trigger commit for redeploy
+
 import "./globals.css";
 
 const outfit = Outfit({
