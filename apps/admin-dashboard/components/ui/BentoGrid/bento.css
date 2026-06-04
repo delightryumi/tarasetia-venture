@@ -4,19 +4,19 @@
 }
 
 .bento-card {
-  background-color: white;
-  border-radius: 1rem; /* 16px */
-  border: 1px solid #e5e7eb; /* gray-200 */
+  background-color: #ffffff; /* canvas */
+  border-radius: 12px; /* rounded.lg */
+  border: 1px solid #dddddd; /* hairline */
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-  padding: 1.5rem; /* 24px */
+  padding: 32px; /* spacing.xl */
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease-in-out;
+  box-sizing: border-box;
+  transition: box-shadow 150ms ease;
 }
 
 .bento-card:hover {
-  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.06);
 }
 
 /* Add styles for different card sizes if needed */

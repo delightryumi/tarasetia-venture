@@ -36,7 +36,7 @@ export const PromoSection = () => {
     );
 
     return (
-        <div className="promo-section-wrapper py-6 space-y-8 fade-in">
+        <div className="clean-container py-12 space-y-8">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-gray-100">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
@@ -45,8 +45,8 @@ export const PromoSection = () => {
                         </div>
                         <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Marketing Suite</span>
                     </div>
-                    <h1 className="text-3xl font-extrabold text-rich-black tracking-tight">Special Privileges</h1>
-                    <p className="text-sm text-gray-500 mt-1 font-medium">Curate exclusive offers that define the sanctuary experience.</p>
+                    <h1 className="text-proper-h1 mb-2">Special Privileges</h1>
+                    <p className="text-proper-subtitle">Curate exclusive offers that define the sanctuary experience.</p>
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -58,12 +58,12 @@ export const PromoSection = () => {
                         {isActive ? "CAMPAIGN LIVE" : "CAMPAIGN PAUSED"}
                     </button>
                     <button
-                        className="btn-primary px-6 py-2.5 flex items-center gap-2 shadow-lg shadow-sage/20"
+                        className="btn-clean-primary"
                         onClick={handleSave}
                         disabled={saving}
                     >
                         <Save size={16} />
-                        <span className="font-bold">{saving ? "Securing..." : "Update Settings"}</span>
+                        <span>{saving ? "Securing..." : "Update Settings"}</span>
                     </button>
                 </div>
             </header>
@@ -74,13 +74,13 @@ export const PromoSection = () => {
                     <BentoCard className="p-8">
                         <div className="promo-form-grid">
                             <div className="form-group">
-                                <label className="promo-input-label">
-                                    <Megaphone size={14} className="text-sage" />
+                                <label className="label-clean flex items-center gap-2">
+                                    <Megaphone size={14} />
                                     Campaign Title
                                 </label>
                                 <input
                                     type="text"
-                                    className="form-input focus:ring-sage/20"
+                                    className="input-clean font-bold"
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="e.g., Seasonal Sanctuary Escape"
@@ -89,13 +89,13 @@ export const PromoSection = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="form-group">
-                                    <label className="promo-input-label">
-                                        <TicketPercent size={14} className="text-sage" />
+                                    <label className="label-clean flex items-center gap-2">
+                                        <TicketPercent size={14} />
                                         Voucher Code
                                     </label>
                                     <input
                                         type="text"
-                                        className="form-input font-mono uppercase tracking-wider text-terracotta bg-peach-light/30 border-peach/20"
+                                        className="input-clean font-mono uppercase tracking-wider text-[#aa2d00]"
                                         value={promoCode}
                                         onChange={(e) => setPromoCode(e.target.value)}
                                         placeholder="SANCTUARY20"
@@ -103,13 +103,13 @@ export const PromoSection = () => {
                                     <p className="text-[10px] text-gray-400 mt-1.5 font-medium italic">* Leave blank if no code is required.</p>
                                 </div>
                                 <div className="form-group">
-                                    <label className="promo-input-label">
-                                        <CalendarDays size={14} className="text-sage" />
+                                    <label className="label-clean flex items-center gap-2">
+                                        <CalendarDays size={14} />
                                         Offer Validity
                                     </label>
                                     <input
                                         type="date"
-                                        className="form-input"
+                                        className="input-clean"
                                         value={expiryDate}
                                         onChange={(e) => setExpiryDate(e.target.value)}
                                     />
@@ -117,8 +117,8 @@ export const PromoSection = () => {
                             </div>
 
                             <div className="form-group">
-                                <label className="promo-input-label">
-                                    <FileImage size={14} className="text-sage" />
+                                <label className="label-clean flex items-center gap-2">
+                                    <FileImage size={14} />
                                     Atmospheric Visual (16:7 Recommended)
                                 </label>
                                 <ImageUpload
@@ -129,12 +129,12 @@ export const PromoSection = () => {
                             </div>
 
                             <div className="form-group">
-                                <label className="promo-input-label">
-                                    <CheckCircle2 size={14} className="text-sage" />
+                                <label className="label-clean flex items-center gap-2">
+                                    <CheckCircle2 size={14} />
                                     The Narrative
                                 </label>
                                 <textarea
-                                    className="form-input min-h-[140px] leading-relaxed"
+                                    className="input-clean min-h-[140px] leading-relaxed"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="Weave a story about the exclusivity and tranquility of this offer..."

@@ -59,7 +59,7 @@ export const PackagesSection = () => {
     };
 
     return (
-        <div className="section-container min-h-[calc(100vh-100px)]">
+        <div className="w-full min-h-[calc(100vh-100px)]">
             <AnimatePresence mode="wait">
                 {view === 'list' ? (
                     <motion.div
@@ -329,7 +329,7 @@ export const PackagesSection = () => {
                                                 />
                                                 <button
                                                     onClick={addFeature}
-                                                    className="w-16 h-16 bg-sage text-white rounded-2xl flex items-center justify-center hover:bg-sage/90 transition-all font-bold text-2xl"
+                                                    className="w-16 h-16 bg-[#181d26] text-white rounded-xl flex items-center justify-center hover:bg-[#0d1218] transition-all font-bold text-2xl cursor-pointer"
                                                 >
                                                     +
                                                 </button>

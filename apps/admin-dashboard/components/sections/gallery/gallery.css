@@ -1,17 +1,18 @@
 .gallery-item-premium {
     position: relative;
     aspect-ratio: 4/5;
-    border-radius: 20px;
+    border-radius: 12px; /* rounded.lg */
     overflow: hidden;
-    background: var(--cream);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    background: #ffffff; /* canvas */
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); /* minimal shadow */
     cursor: default;
-    border: 1px solid rgba(0, 0, 0, 0.03);
-    transition: box-shadow 0.3s ease;
+    border: 1px solid #dddddd; /* hairline */
+    transition: all 150ms ease;
 }
 
 .gallery-item-premium:hover {
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: #9297a0; /* border-strong */
 }
 
 .gallery-img-premium {
@@ -75,9 +76,9 @@
 }
 
 .btn-delete-premium {
-    background: white;
-    color: #e11d48;
-    border: none;
+    background: #ffffff;
+    color: #dc2626;
+    border: 1px solid #dddddd;
     width: 42px;
     height: 42px;
     border-radius: 12px;
@@ -85,12 +86,11 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
+    transition: all 150ms ease;
 }
 
 .btn-delete-premium:hover {
-    background: #e11d48;
-    color: white;
-    transform: translateY(-2px);
+    background: #fff5f5;
+    border-color: #f87171;
+    color: #ef4444;
 }

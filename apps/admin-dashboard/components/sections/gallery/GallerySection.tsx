@@ -150,7 +150,7 @@ export const GallerySection = () => {
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="section-container"
+            className="clean-container py-12"
         >
             <header className="content-header">
                 <div className="flex items-center gap-3 mb-2">
@@ -186,7 +186,7 @@ export const GallerySection = () => {
                                     <button 
                                         key={cat}
                                         onClick={() => setSelectedCategory(cat)}
-                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${selectedCategory === cat ? 'bg-sage text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${selectedCategory === cat ? 'bg-[#181d26] text-white' : 'bg-white text-slate-600 border border-[#dddddd] hover:bg-slate-50'}`}
                                     >
                                         {cat}
                                     </button>
@@ -199,7 +199,7 @@ export const GallerySection = () => {
                             whileTap={stagedUploads.length > 0 ? { scale: 0.98 } : {}}
                             disabled={stagedUploads.length === 0 || saving}
                             onClick={handleConfirmAdd}
-                            className={`btn-primary w-full mt-6 py-4 flex flex-col items-center justify-center gap-1 ${stagedUploads.length === 0 ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                            className={`btn-clean-primary w-full mt-6 py-4 flex flex-col items-center justify-center gap-1 ${stagedUploads.length === 0 ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
                         >
                             <span className="font-bold">
                                 {saving ? "Adding..." : stagedUploads.length > 0 ? `Add ${stagedUploads.length} Photo${stagedUploads.length > 1 ? 's' : ''}` : "Add to Gallery"}

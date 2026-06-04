@@ -212,7 +212,7 @@ export const useRoomTypes = () => {
                     }
                 }
             },
-            cancel: { label: "Keep" }
+            cancel: { label: "Keep", onClick: () => {} }
         });
     };
 

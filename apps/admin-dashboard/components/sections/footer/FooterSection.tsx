@@ -90,61 +90,48 @@ export const FooterSection = () => {
     );
 
     return (
-        <div className="section-container fade-in !p-0">
-            <header className="p-12 pb-0">
-                <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100 text-sage">
-                        <Info size={24} />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-serif font-black text-slate-900 tracking-tight">Identity & Reach</h1>
-                        <p className="text-proper-subtitle">Curate your business presence across the digital landscape.</p>
-                    </div>
-                </div>
+        <div className="clean-container py-12">
+            <header className="content-header mb-12">
+                <h1 className="text-proper-h1 mb-2">Identity & Reach</h1>
+                <p className="text-proper-subtitle">Curate your business presence across the digital landscape.</p>
             </header>
 
-            <BentoGrid className="p-12 grid-cols-1 lg:grid-cols-2">
+            <BentoGrid className="grid-cols-1 lg:grid-cols-2 gap-6">
                 <BentoCard className="space-y-12">
                     <section>
-                        <h3 className="text-[10px] font-black text-terracotta uppercase tracking-[0.25em] mb-6 flex items-center gap-3">
-                            <span className="w-8 h-[1px] bg-terracotta/30"></span>
+                        <h2 className="text-lg font-bold text-slate-900 mb-8 flex items-center gap-3">
+                            <Phone className="text-sage" size={20} />
                             Primary Contacts
-                        </h3>
+                        </h2>
 
                         <div className="space-y-8">
                             <div className="form-group">
-                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Email Address</label>
-                                <div className="boutique-input-group">
-                                    <Mail className="text-slate-300" size={18} />
-                                    <input
-                                        type="email"
-                                        className="boutique-input"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="Ex: concierge@bumianyom.com"
-                                    />
-                                </div>
+                                <label className="label-clean">Email Address</label>
+                                <input
+                                    type="email"
+                                    className="input-clean"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Ex: concierge@bumianyom.com"
+                                />
                             </div>
 
                             <div className="form-group">
-                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-4 block">Phone Numbers</label>
-                                <div className="flex gap-2 mb-4">
-                                    <div className="boutique-input-group flex-grow">
-                                        <Phone className="text-slate-300" size={18} />
-                                        <input
-                                            type="text"
-                                            className="boutique-input"
-                                            value={newPhone}
-                                            onChange={(e) => setNewPhone(e.target.value)}
-                                            placeholder="+62 812..."
-                                            onKeyPress={(e) => e.key === 'Enter' && addPhone()}
-                                        />
-                                    </div>
+                                <label className="label-clean">Phone Numbers</label>
+                                <div className="flex gap-3 mb-4">
+                                    <input
+                                        type="text"
+                                        className="input-clean flex-grow"
+                                        value={newPhone}
+                                        onChange={(e) => setNewPhone(e.target.value)}
+                                        placeholder="+62 812..."
+                                        onKeyPress={(e) => e.key === 'Enter' && addPhone()}
+                                    />
                                     <button
                                         onClick={addPhone}
-                                        className="w-12 h-12 flex items-center justify-center bg-sage text-white rounded-xl hover:bg-sage-dark transition-all shadow-sm flex-shrink-0"
+                                        className="btn-clean-primary !py-0 h-11 px-6 text-sm shrink-0"
                                     >
-                                        <Plus size={20} />
+                                        Add
                                     </button>
                                 </div>
 
@@ -159,10 +146,12 @@ export const FooterSection = () => {
                                                 className="luxury-list-item px-4 rounded-xl"
                                             >
                                                 <div className="list-item-main !grid-cols-[40px_1fr]">
-                                                    <div className="w-2 h-2 rounded-full bg-sage/30"></div>
-                                                    <span className="text-sm font-bold text-slate-600 tracking-tight">{p}</span>
+                                                    <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                                                        <Phone size={14} />
+                                                    </div>
+                                                    <span className="text-sm font-medium text-slate-800 tracking-tight">{p}</span>
                                                 </div>
-                                                <button onClick={() => removePhone(idx)} className="text-slate-200 hover:text-terracotta transition-colors px-2">
+                                                <button onClick={() => removePhone(idx)} className="text-slate-400 hover:text-red-600 transition-colors px-2">
                                                     <Trash2 size={16} />
                                                 </button>
                                             </motion.div>
@@ -174,32 +163,29 @@ export const FooterSection = () => {
                     </section>
 
                     <section>
-                        <h3 className="text-[10px] font-black text-terracotta uppercase tracking-[0.25em] mb-6 flex items-center gap-3">
-                            <span className="w-8 h-[1px] bg-terracotta/30"></span>
+                        <h2 className="text-lg font-bold text-slate-900 mb-8 flex items-center gap-3">
+                            <MapPin className="text-sage" size={20} />
                             Location & Map
-                        </h3>
+                        </h2>
                         <div className="space-y-6">
                             <div className="form-group">
-                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Narrative Address</label>
+                                <label className="label-clean">Narrative Address</label>
                                 <textarea
-                                    className="w-full bg-white border border-slate-100 rounded-xl p-4 text-sm font-medium text-slate-700 min-h-[120px] outline-none focus:border-sage focus:ring-4 focus:ring-sage/5 transition-all shadow-sm resize-none"
+                                    className="input-clean min-h-[120px] py-3 resize-none"
                                     value={address}
                                     onChange={(e) => setAddress(e.target.value)}
                                     placeholder="Jl. Raya Anyer KM 12..."
                                 />
                             </div>
                             <div className="form-group">
-                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Google Maps Embed URL</label>
-                                <div className="boutique-input-group">
-                                    <MapPin className="text-slate-300" size={18} />
-                                    <input
-                                        type="url"
-                                        className="boutique-input text-xs"
-                                        value={mapsEmbed}
-                                        onChange={(e) => setMapsEmbed(e.target.value)}
-                                        placeholder="Paste the <iframe src='...'> url here"
-                                    />
-                                </div>
+                                <label className="label-clean">Google Maps Embed URL</label>
+                                <input
+                                    type="url"
+                                    className="input-clean"
+                                    value={mapsEmbed}
+                                    onChange={(e) => setMapsEmbed(e.target.value)}
+                                    placeholder="Paste the <iframe src='...'> url here"
+                                />
                                 <p className="text-[10px] text-slate-400 mt-2 italic px-1">Copy the SRC from the Google Maps Share &gt; Embed iframe.</p>
                             </div>
                         </div>
@@ -207,14 +193,14 @@ export const FooterSection = () => {
                 </BentoCard>
                 <BentoCard className="space-y-12">
                     <section>
-                        <h3 className="text-[10px] font-black text-terracotta uppercase tracking-[0.25em] mb-6 flex items-center gap-3">
-                            <span className="w-8 h-[1px] bg-terracotta/30"></span>
+                        <h2 className="text-lg font-bold text-slate-900 mb-8 flex items-center gap-3">
+                            <Instagram className="text-sage" size={20} />
                             Social Presence
-                        </h3>
+                        </h2>
                         <div>
                             <div className="flex flex-col sm:flex-row gap-4 mb-8">
                                 <select
-                                    className="bg-white border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-600 outline-none focus:border-sage min-w-[150px] shadow-sm"
+                                    className="input-clean min-w-[150px] !w-auto font-medium"
                                     value={newPlatform}
                                     onChange={(e) => setNewPlatform(e.target.value)}
                                 >
@@ -225,19 +211,17 @@ export const FooterSection = () => {
                                     <option value="tiktok">TikTok</option>
                                     <option value="twitter">X / Twitter</option>
                                 </select>
-                                <div className="boutique-input-group flex-grow">
-                                    <input
-                                        type="text"
-                                        className="boutique-input"
-                                        value={newUrl}
-                                        onChange={(e) => setNewUrl(e.target.value)}
-                                        placeholder="Full link to profile..."
-                                        onKeyPress={(e) => e.key === 'Enter' && addSocial()}
-                                    />
-                                </div>
+                                <input
+                                    type="text"
+                                    className="input-clean flex-grow"
+                                    value={newUrl}
+                                    onChange={(e) => setNewUrl(e.target.value)}
+                                    placeholder="Full link to profile..."
+                                    onKeyPress={(e) => e.key === 'Enter' && addSocial()}
+                                />
                                 <button
                                     onClick={addSocial}
-                                    className="btn-connect"
+                                    className="btn-clean-primary !py-0 h-11 px-6 text-sm shrink-0"
                                 >
                                     Connect
                                 </button>
@@ -262,10 +246,10 @@ export const FooterSection = () => {
                                                         <Icon />
                                                     </div>
                                                     <div className="list-item-main">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{link.platform}</span>
-                                                        <span className="text-sm font-bold text-slate-900 truncate max-w-[200px] tracking-tight">{link.url}</span>
+                                                        <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">{link.platform}</span>
+                                                        <span className="text-sm font-medium text-slate-800 truncate tracking-tight">{link.url}</span>
                                                     </div>
-                                                    <button onClick={() => removeSocial(i)} className="text-slate-200 hover:text-terracotta transition-colors px-2">
+                                                    <button onClick={() => removeSocial(i)} className="text-slate-400 hover:text-red-600 transition-colors px-2">
                                                         <Trash2 size={18} />
                                                     </button>
                                                 </motion.div>
@@ -278,35 +262,31 @@ export const FooterSection = () => {
                     </section>
 
                     <section>
-                        <h3 className="text-[10px] font-black text-terracotta uppercase tracking-[0.25em] mb-6 flex items-center gap-3">
-                            <span className="w-8 h-[1px] bg-terracotta/30"></span>
+                        <h2 className="text-lg font-bold text-slate-900 mb-8 flex items-center gap-3">
+                            <Globe className="text-sage" size={20} />
                             Master Footer Tag
-                        </h3>
+                        </h2>
                         <div className="space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="form-group">
-                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Branding Label</label>
-                                    <div className="boutique-input-group">
-                                        <input
-                                            type="text"
-                                            className="boutique-input"
-                                            value={poweredByText}
-                                            onChange={(e) => setPoweredByText(e.target.value)}
-                                            placeholder="Ex: Built by Nexura Digital"
-                                        />
-                                    </div>
+                                    <label className="label-clean">Branding Label</label>
+                                    <input
+                                        type="text"
+                                        className="input-clean"
+                                        value={poweredByText}
+                                        onChange={(e) => setPoweredByText(e.target.value)}
+                                        placeholder="Ex: Built by Nexura Digital"
+                                    />
                                 </div>
                                 <div className="form-group">
-                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Destination Link</label>
-                                    <div className="boutique-input-group">
-                                        <input
-                                            type="url"
-                                            className="boutique-input"
-                                            value={poweredByLink}
-                                            onChange={(e) => setPoweredByLink(e.target.value)}
-                                            placeholder="https://..."
-                                        />
-                                    </div>
+                                    <label className="label-clean">Destination Link</label>
+                                    <input
+                                        type="url"
+                                        className="input-clean"
+                                        value={poweredByLink}
+                                        onChange={(e) => setPoweredByLink(e.target.value)}
+                                        placeholder="https://..."
+                                    />
                                 </div>
                             </div>
 
@@ -321,9 +301,9 @@ export const FooterSection = () => {
                                     <motion.div
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
-                                        className="w-12 h-12 flex items-center justify-center bg-white/20 rounded-full backdrop-blur-md"
+                                        className="w-8 h-8 flex items-center justify-center bg-slate-200/50 rounded-full text-slate-600"
                                     >
-                                        <ExternalLink size={20} />
+                                        <ExternalLink size={16} />
                                     </motion.div>
                                 )}
                             </div>
@@ -332,23 +312,21 @@ export const FooterSection = () => {
                 </BentoCard>
             </BentoGrid>
 
-            <div className="p-12 pt-0 flex justify-center sticky bottom-0 bg-gradient-to-t from-slate-50/90 to-transparent pointer-events-none">
-                <motion.button
-                    whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(120, 128, 105, 0.2)" }}
-                    whileTap={{ scale: 0.95 }}
-                    className="btn-primary !bg-sage pointer-events-auto px-16 py-6 flex items-center gap-4 text-lg rounded-2xl shadow-xl border-none"
+            <div className="mt-12 flex justify-end border-t border-slate-100 pt-8">
+                <button
+                    className="btn-clean-primary flex items-center gap-2"
                     onClick={handleSave}
                     disabled={saving}
                 >
                     {saving ? (
-                        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
                         <>
-                            <Heart size={22} className="fill-white/10" />
+                            <Heart size={16} />
                             Synchronize Footer
                         </>
                     )}
-                </motion.button>
+                </button>
             </div>
         </div>
     );

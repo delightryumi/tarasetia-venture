@@ -64,24 +64,25 @@ export const HeroSection = () => {
     );
 
     /* ─── Shared card classes ─────────────────── */
-    const card = "bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]";
+    /* ─── Shared card classes ─────────────────── */
+    const card = "builder-box-clean";
 
     /* ─── Layer card classes ──────────────────── */
-    const layerCard = `${card} p-5 flex flex-col gap-4 flex-1`;
+    const layerCard = "builder-box-clean !p-5 flex-1";
 
     return (
         <div className="flex flex-col gap-6 pb-24">
 
             {/* ── Page Header ─────────────────────────────── */}
-            <motion.div {...FADE_UP(0)} className="flex items-center gap-3">
-                <div className="p-2.5 bg-[#788069]/10 rounded-xl">
-                    <Sparkles size={20} className="text-[#788069]" />
+            <motion.header {...FADE_UP(0)} className="content-header">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-sage/10 rounded-lg text-sage">
+                        <Sparkles size={24} />
+                    </div>
+                    <h1 className="content-title">Hero Management</h1>
                 </div>
-                <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">Hero Management</h1>
-                    <p className="text-sm text-gray-400 mt-0.5 leading-none">Control the first impression of your property&apos;s website</p>
-                </div>
-            </motion.div>
+                <p className="content-subtitle">Control the first impression of your property's website</p>
+            </motion.header>
 
             {/* ═══════════════════════════════════════════════════════
                 ROW 0 · SLIDE NAVIGATION BAR
@@ -92,8 +93,8 @@ export const HeroSection = () => {
                         key={slide.id}
                         onClick={() => setActiveSlideId(slide.id)}
                         className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap min-w-max border ${activeSlideId === slide.id
-                            ? "bg-[#788069] text-white border-transparent shadow-md"
-                            : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                            ? "bg-[#181d26] text-white border-transparent"
+                            : "bg-white text-gray-600 border-[#dddddd] hover:bg-gray-50"
                             }`}
                     >
                         Slide {index + 1}
@@ -102,7 +103,7 @@ export const HeroSection = () => {
 
                 <button
                     onClick={addNewSlide}
-                    className="flex flex-col items-center justify-center px-4 py-2 rounded-xl border border-dashed border-emerald-300 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                    className="flex flex-col items-center justify-center px-4 py-2.5 rounded-xl border border-dashed border-emerald-300 text-emerald-600 bg-emerald-50/50 hover:bg-emerald-100/50 transition-colors"
                     title="Add new revolution slide"
                 >
                     <span className="text-xs font-bold leading-none">+ Add Slide</span>
@@ -112,7 +113,7 @@ export const HeroSection = () => {
             {/* ═══════════════════════════════════════════════════════
                 ROW 1 · LIVE PREVIEW (full-width, premium card)
             ═══════════════════════════════════════════════════════ */}
-            <motion.div {...FADE_UP(0.06)} className={`${card} p-6 flex flex-col gap-4`}>
+            <motion.div {...FADE_UP(0.06)} className={`${card} !p-6 gap-4`}>
 
                 {/* Card header */}
                 <div className="flex items-center justify-between">
@@ -285,7 +286,7 @@ export const HeroSection = () => {
             {/* ═══════════════════════════════════════════════════════
                 ROW 3 · TYPOGRAPHY & COPY + SAVE BUTTON
             ═══════════════════════════════════════════════════════ */}
-            <motion.div {...FADE_UP(0.25)} className={`${card} p-8`}>
+            <motion.div {...FADE_UP(0.25)} className={`${card} !p-8`}>
 
                 {/* Section label */}
                 <div className="flex items-center justify-between mb-5">
@@ -304,45 +305,39 @@ export const HeroSection = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Title */}
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Hero Title</label>
+                        <label className="label-clean">Hero Title</label>
                         <input
                             type="text"
                             value={activeSlide.title || ""}
                             onChange={(e) => updateActiveSlide({ title: e.target.value })}
                             placeholder="e.g. Welcome to Bumi Anyom"
-                            className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-base placeholder-gray-300
-                                       focus:outline-none focus:border-[#788069] focus:ring-2 focus:ring-[#788069]/15 focus:bg-white
-                                       hover:border-gray-300 transition-all duration-200"
+                            className="input-clean font-bold"
                         />
                     </div>
 
                     {/* Subtitle */}
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Hero Subtitle</label>
+                        <label className="label-clean">Hero Subtitle</label>
                         <textarea
                             value={activeSlide.subtitle || ""}
                             onChange={(e) => updateActiveSlide({ subtitle: e.target.value })}
                             placeholder="e.g. Experience luxury in the heart of nature."
                             rows={3}
-                            className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-base placeholder-gray-300 resize-none
-                                       focus:outline-none focus:border-[#788069] focus:ring-2 focus:ring-[#788069]/15 focus:bg-white
-                                       hover:border-gray-300 transition-all duration-200"
+                            className="input-clean min-h-[100px] resize-none leading-relaxed"
                         />
                     </div>
                 </div>
 
                 <div className="mt-6">
                     <div className="flex flex-col gap-2 max-w-sm">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                        <label className="label-clean flex items-center gap-2">
                             Text Entry Animation
                             <span className="bg-emerald-100 text-emerald-600 text-[10px] px-2 py-0.5 rounded uppercase tracking-widest font-bold">New</span>
                         </label>
                         <select
                             value={activeSlide.textAnimation || 'fade-up'}
                             onChange={(e) => updateActiveSlide({ textAnimation: e.target.value as any })}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm font-medium
-                                       focus:outline-none focus:border-[#788069] focus:ring-2 focus:ring-[#788069]/15 focus:bg-white
-                                       hover:border-gray-300 transition-all duration-200 appearance-none cursor-pointer"
+                            className="input-clean appearance-none cursor-pointer"
                         >
                             <option value="fade-up">Fade Up (Clean & Modern)</option>
                             <option value="fade-down">Fade Down (Weighty)</option>
@@ -359,7 +354,7 @@ export const HeroSection = () => {
                     {slides.length > 1 ? (
                         <button
                             onClick={() => deleteSlide(activeSlideId!)}
-                            className="text-sm font-semibold text-red-500 hover:bg-red-50 px-4 py-2 rounded-xl transition-colors self-start md:self-auto"
+                            className="text-sm font-semibold border border-red-200 text-red-600 bg-white hover:bg-red-50 rounded-xl px-5 py-2.5 transition-colors self-start md:self-auto"
                         >
                             Delete Slide
                         </button>
@@ -370,7 +365,7 @@ export const HeroSection = () => {
                         whileTap={{ scale: 0.98 }}
                         onClick={handleSave}
                         disabled={saving}
-                        className="btn-primary flex items-center gap-2 px-10 py-4 shadow-xl shadow-[#788069]/20 self-end md:self-auto"
+                        className="btn-clean-primary flex items-center gap-2 self-end md:self-auto"
                     >
                         <Save size={20} />
                         {saving ? "Publishing All..." : "Save All Slides"}

@@ -29,9 +29,9 @@ export const SEOSection = () => {
                 <p className="text-proper-subtitle">Optimize how your property is discovered and presented across the digital landscape.</p>
             </header>
 
-            <BentoGrid className="grid-cols-1 lg:grid-cols-2">
-                <BentoCard className="space-y-12">
-                    <div className="builder-box-clean !p-8">
+            <BentoGrid className="grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                    <BentoCard className="!p-8">
                         <h2 className="text-lg font-bold text-slate-900 mb-8 flex items-center gap-3">
                             <Search className="text-sage" size={20} />
                             Search Engine Listing
@@ -83,10 +83,10 @@ export const SEOSection = () => {
                                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Separate with commas</p>
                             </div>
                         </div>
-                    </div>
+                    </BentoCard>
 
                     {/* Favicons */}
-                    <div className="builder-box-clean !p-8">
+                    <BentoCard className="!p-8">
                         <h2 className="text-lg font-bold text-slate-900 mb-8 flex items-center gap-3">
                             <LayoutGrid className="text-sage" size={20} />
                             Site Icons (Favicons)
@@ -117,12 +117,12 @@ export const SEOSection = () => {
                                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Will appear in admin browser tabs</p>
                             </div>
                         </div>
-                    </div>
-                </BentoCard>
+                    </BentoCard>
+                </div>
 
-                <BentoCard className="space-y-12">
+                <div className="space-y-6">
                     {/* Social Sharing */}
-                    <div className="builder-box-clean !p-8">
+                    <BentoCard className="!p-8">
                         <h2 className="text-lg font-bold text-slate-900 mb-8 flex items-center gap-3">
                             <ImageIcon className="text-sage" size={20} />
                             Social Media Presence
@@ -167,10 +167,10 @@ export const SEOSection = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </BentoCard>
 
                     {/* Advanced Verification */}
-                    <div className="builder-box-clean !p-8">
+                    <BentoCard className="!p-8">
                         <h2 className="text-lg font-bold text-slate-900 mb-8 flex items-center gap-3">
                             <ShieldCheck className="text-sage" size={20} />
                             Advanced Optimization
@@ -231,10 +231,10 @@ export const SEOSection = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </BentoCard>
 
                     {/* Preview */}
-                    <div className="builder-box-clean !p-8 bg-slate-50/30">
+                    <BentoCard className="!p-8 bg-slate-50/30">
                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
                             <ExternalLink size={12} /> Live Google Result Preview
                         </h3>
@@ -268,8 +268,8 @@ export const SEOSection = () => {
                                 {seo.description || "Experience the ultimate luxury stay at Bumi Anyom. Our resort offers premium villas, world-class amenities, and breathtaking views for your perfect holiday."}
                             </div>
                         </div>
-                    </div>
-                </BentoCard>
+                    </BentoCard>
+                </div>
             </BentoGrid>
 
             <div className="mt-16 flex justify-end border-t border-slate-100 pt-12">

@@ -615,7 +615,7 @@ export const RoomTypeSection = () => {
     );
 
     return (
-        <div className="section-container min-h-[calc(100vh-100px)]">
+        <div className="w-full min-h-[calc(100vh-100px)]">
             <AnimatePresence mode="wait">
                 {view === 'list' ? renderListView() : renderStepperView()}
             </AnimatePresence>

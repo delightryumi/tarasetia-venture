@@ -23,10 +23,14 @@ export const AboutUsSection = () => {
         handleSave,
     } = useAboutUs();
 
-    if (loading) return <div>Loading about us settings...</div>;
+    if (loading) return (
+        <div className="flex items-center justify-center py-40">
+            <div className="w-10 h-10 border-2 border-slate-200 border-t-sage rounded-full animate-spin" />
+        </div>
+    );
 
     return (
-        <div className="section-container fade-in">
+        <div className="clean-container py-12">
             <header className="content-header">
                 <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 bg-sage/10 rounded-lg text-sage">
@@ -43,17 +47,17 @@ export const AboutUsSection = () => {
                 <BentoCard colSpan={1}>
                     <div className="space-y-6">
                         <div className="form-group">
-                            <label className="form-label">Section Title</label>
+                            <label className="label-clean">Section Title</label>
                             <input
                                 type="text"
-                                className="form-input"
+                                className="input-clean font-bold"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 placeholder="Ex: Our Heritage & Story"
                             />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Hero / Brand Image</label>
+                            <label className="label-clean">Hero / Brand Image</label>
                             <ImageUpload
                                 path="about/hero.jpg"
                                 currentUrl={imageUrl}
@@ -63,9 +67,9 @@ export const AboutUsSection = () => {
                             <p className="text-xs text-gray-400 mt-2">Recommended: 1200x800px high-quality landscape image.</p>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Main Description</label>
+                            <label className="label-clean">Main Description</label>
                             <textarea
-                                className="form-input min-h-[200px]"
+                                className="input-clean min-h-[200px] leading-relaxed"
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
                                 placeholder="Write a detailed description about your property..."
@@ -76,7 +80,7 @@ export const AboutUsSection = () => {
                     <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="btn-primary w-full mt-8 py-4 flex items-center justify-center gap-2"
+                        className="btn-clean-primary w-full mt-8 py-4 flex items-center justify-center gap-2"
                         onClick={handleSave}
                         disabled={saving}
                     >

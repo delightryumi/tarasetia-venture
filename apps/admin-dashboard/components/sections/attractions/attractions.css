@@ -1,16 +1,15 @@
-/* Sync with rooms.css boutique tokens */
 .attraction-card-premium {
-    background: white;
-    border-radius: 20px;
+    background: #ffffff; /* canvas */
+    border-radius: 12px; /* rounded.lg */
     padding: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #dddddd; /* hairline */
+    transition: all 150ms ease;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); /* minimal shadow */
 }
 
 .attraction-card-premium:hover {
-    transform: translateY(-4px);
-    border-color: var(--sage-light);
-    box-shadow: 0 15px 40px rgba(120, 128, 105, 0.08);
+    border-color: #9297a0; /* border-strong */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 /* Specific Attraction Overrides if any */

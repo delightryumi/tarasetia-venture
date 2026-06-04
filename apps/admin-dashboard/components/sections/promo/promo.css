@@ -16,7 +16,7 @@
 /* ── Refined Promo Toggle ── */
 .status-toggle-btn {
     display: flex;
-    items-center: center;
+    align-items: center;
     gap: 8px;
     padding: 6px 14px;
     border-radius: 99px;

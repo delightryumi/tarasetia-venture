@@ -112,7 +112,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                     }
                 }
             },
-            cancel: { label: "Keep" }
+            cancel: { label: "Keep", onClick: () => {} }
         });
     };
 

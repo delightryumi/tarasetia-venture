@@ -178,7 +178,7 @@ export const usePackages = () => {
                     }
                 }
             },
-            cancel: { label: "Keep" }
+            cancel: { label: "Keep", onClick: () => {} }
         });
     };
 
