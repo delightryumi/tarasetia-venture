@@ -66,10 +66,7 @@ export default function RootLayout({
       {`window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-F3YJ6ZLPRH');`}
     </Script>
   </head>
-  <body
-      <body
-        className={`${outfit.variable} ${cormorantGaramond.variable} antialiased font-body font-light`}
-      >
+  <body className={`${outfit.variable} ${cormorantGaramond.variable} antialiased font-body font-light`}>
         <ClickSpark
           sparkColor="#788069"
           sparkSize={12}
