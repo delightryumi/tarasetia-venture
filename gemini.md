@@ -216,3 +216,4 @@ Jika superadmin mematikan akses sebuah hotel (`active = false`) atau sistem mend
 4. **Pemblokiran API**:
    Firebase Security Rules secara otomatis menolak seluruh request read/write yang dikirimkan oleh klien, menjaga integritas data tetap aman selama masa penangguhan pembayaran.
 
+pastikan semua no error dan tidak merubah semua fungsi yang sudah ada
