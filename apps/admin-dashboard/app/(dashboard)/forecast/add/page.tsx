@@ -30,7 +30,8 @@ function AddTransactionContent() {
         queue,
         addToQueue,
         removeFromQueue,
-        commitTransactions
+        commitTransactions,
+        handleCancel
     } = useTransactionForm();
 
     return (
@@ -44,7 +45,7 @@ function AddTransactionContent() {
                     if (step === 'form') {
                         setStep('select');
                     } else {
-                        router.push('/overview');
+                        handleCancel();
                     }
                 }}
             />

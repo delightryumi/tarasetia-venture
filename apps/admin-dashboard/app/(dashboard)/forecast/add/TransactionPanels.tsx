@@ -164,7 +164,7 @@ export function TransactionEntryForm({
                                 icon={User}
                             />
                             <div className={styles.colSpan2}>
-                                <div style={{ display: 'flex', gap: '16px' }}>
+                                <div className={styles.dateCardsContainer}>
                                     <DateCard 
                                         label="Check In"
                                         value={form.checkIn}

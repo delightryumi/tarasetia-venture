@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Activity, Download, FileText, Eye, Pencil, Trash2 } from "lucide-react";
+import { Activity, Download, FileText, Eye, Pencil, Trash2, CalendarX } from "lucide-react";
 import { getChannelLogo } from "./StatCard";
 import { RoomStatusPicker, GuestStatusPicker } from "./StatusPickers";
 import styles from "./OverviewStyles.module.css";
@@ -11,6 +11,7 @@ interface AuditLedgerProps {
     onView: (booking: any) => void;
     onEdit: (booking: any) => void;
     onDelete: (booking: any) => void;
+    onCancel?: (booking: any) => void;
     onStatusUpdate: (item: any, field: string, value: string) => void;
     onExportPDF: () => void;
     onExportExcel: () => void;
@@ -21,6 +22,7 @@ export function AuditLedger({
     onView, 
     onEdit, 
     onDelete, 
+    onCancel,
     onStatusUpdate,
     onExportPDF,
     onExportExcel
@@ -81,85 +83,99 @@ export function AuditLedger({
                         </tr>
                     </thead>
                     <tbody>
-                        {bookings.map((booking, idx) => (
-                            <tr 
-                                key={idx} 
-                                className={styles.tableRow}
-                                style={idx % 2 === 0 ? { backgroundColor: '#ffffff' } : { backgroundColor: '#fffbf9' }}
-                            >
-                                <td className={styles.tableCell}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        <p className={styles.guestName} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '150px' }}>
-                                            {booking.guestName || "General Sale"}
-                                        </p>
-                                        <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0, fontFamily: 'var(--f-font-mono)' }}>{booking.bookingId || "Walk-In"}</p>
-                                    </div>
-                                </td>
-                                <td className={styles.tableCell}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        <p className={styles.guestSubtext} style={{ color: 'var(--f-body)', fontWeight: 700, margin: 0 }}>
-                                            {booking.checkInDate || "---"}
-                                        </p>
-                                        <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0 }}>Until {booking.checkOutDate || "---"}</p>
-                                    </div>
-                                </td>
-                                <td className={styles.tableCell}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                        <div style={{ display: 'flex' }}>
-                                            <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: 'var(--f-surface-soft)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--f-hairline)' }}>
-                                                {booking.roomType || "Service"}
-                                            </span>
+                        {bookings.map((booking, idx) => {
+                            const isAcc = booking.type === 'accommodation' || (!booking.type && booking.guestName && !booking.guestName.startsWith('POS Order') && !booking.posItems && !booking.revenueType);
+                            const isCancelled = booking.status === 'CANCELLED' || booking.status === 'CANCEL';
+                            return (
+                                <tr 
+                                    key={idx} 
+                                    className={`${styles.tableRow} ${isCancelled ? styles.cancelledRow : ''}`}
+                                    style={idx % 2 === 0 ? { backgroundColor: '#ffffff' } : { backgroundColor: '#fffbf9' }}
+                                >
+                                    <td className={styles.tableCell}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                            <p className={styles.guestName} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '150px' }}>
+                                                {booking.guestName || "General Sale"}
+                                            </p>
+                                            <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0, fontFamily: 'var(--f-font-mono)' }}>{booking.bookingId || "Walk-In"}</p>
                                         </div>
-                                        {booking.roomNumber && (
-                                            <span className={styles.guestSubtext} style={{ color: 'var(--f-sage)', fontWeight: 700, fontSize: '9px' }}>
-                                                Room {booking.roomNumber}
-                                            </span>
-                                        )}
-                                        {booking.type === 'accommodation' && (
-                                            <RoomStatusPicker 
-                                                current={booking.roomStatus || 'dirty'} 
-                                                onChange={(val) => onStatusUpdate(booking, 'roomStatus', val)} 
-                                            />
-                                        )}
-                                    </div>
-                                </td>
-                                <td className={styles.tableCell}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <div style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: '#ffffff', border: '1px solid var(--f-hairline)', padding: '4px', display: 'flex', alignItems: 'center', justifycontent: 'center' }}>
-                                            <img src={getChannelLogo(booking.channel)} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain', opacity: 0.6 }} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
+                                    </td>
+                                    <td className={styles.tableCell}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                            <p className={styles.guestSubtext} style={{ color: 'var(--f-body)', fontWeight: 700, margin: 0 }}>
+                                                {booking.checkInDate || "---"}
+                                            </p>
+                                            <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0 }}>Until {booking.checkOutDate || "---"}</p>
                                         </div>
-                                        <p className={styles.guestSubtext} style={{ margin: 0, fontWeight: 700, color: 'var(--f-light-muted)' }}>{booking.channel}</p>
-                                    </div>
-                                </td>
-                                <td className={styles.tableCell}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        <p className={styles.guestAmount} style={{ margin: 0 }}>Rp {Number(booking.amount).toLocaleString('id-ID')}</p>
-                                        <p className={`${styles.paymentBadge} ${booking.paymentStatus?.includes('Lunas') || !booking.paymentStatus ? styles.paymentLunas : styles.paymentPending}`} style={{ margin: 0, width: 'fit-content' }}>
-                                            {booking.paymentStatus || 'Pending'}
-                                        </p>
-                                    </div>
-                                </td>
-                                <td className={styles.tableCell} style={{ textAlign: 'center' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                        {booking.type === 'accommodation' ? (
-                                            <GuestStatusPicker 
-                                                current={booking.guestStatus || 'arriving'} 
-                                                onChange={(val) => onStatusUpdate(booking, 'guestStatus', val)}
-                                            />
-                                        ) : (
-                                            <span className={styles.guestSubtext} style={{ color: 'var(--f-light-muted)', fontSize: '8px', fontWeight: 700, letterSpacing: '0.1em' }}>Service</span>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className={styles.tableCell}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                        <button onClick={() => onView(booking)} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="View Details"><Eye size={14} /></button>
-                                        <button onClick={() => onEdit(booking)} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Edit"><Pencil size={14} /></button>
-                                        <button onClick={() => onDelete(booking)} className={`${styles.btnIcon} ${styles.btnIconDanger}`} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Delete"><Trash2 size={14} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td className={styles.tableCell}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                            <div style={{ display: 'flex' }}>
+                                                <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: 'var(--f-surface-soft)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--f-hairline)' }}>
+                                                    {booking.roomType || "Service"}
+                                                </span>
+                                            </div>
+                                            {booking.roomNumber && (
+                                                <span className={styles.guestSubtext} style={{ color: 'var(--f-sage)', fontWeight: 700, fontSize: '9px' }}>
+                                                    Room {booking.roomNumber}
+                                                </span>
+                                            )}
+                                            {isAcc && (
+                                                <RoomStatusPicker 
+                                                    current={booking.roomStatus || 'dirty'} 
+                                                    onChange={(val) => onStatusUpdate(booking, 'roomStatus', val)} 
+                                                />
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className={styles.tableCell}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: '#ffffff', border: '1px solid var(--f-hairline)', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <img src={getChannelLogo(booking.channel)} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain', opacity: 0.6 }} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
+                                            </div>
+                                            <p className={styles.guestSubtext} style={{ margin: 0, fontWeight: 700, color: 'var(--f-light-muted)' }}>{booking.channel}</p>
+                                        </div>
+                                    </td>
+                                    <td className={styles.tableCell}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                            <p className={styles.guestAmount} style={{ margin: 0 }}>Rp {Number(booking.amount).toLocaleString('id-ID')}</p>
+                                            <p className={`${styles.paymentBadge} ${booking.paymentStatus?.includes('Lunas') || !booking.paymentStatus ? styles.paymentLunas : styles.paymentPending}`} style={{ margin: 0, width: 'fit-content' }}>
+                                                {booking.paymentStatus || 'Pending'}
+                                            </p>
+                                        </div>
+                                    </td>
+                                    <td className={styles.tableCell} style={{ textAlign: 'center' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                            {isAcc ? (
+                                                <GuestStatusPicker 
+                                                    current={booking.guestStatus || 'arriving'} 
+                                                    onChange={(val) => onStatusUpdate(booking, 'guestStatus', val)}
+                                                />
+                                            ) : (
+                                                <span className={styles.guestSubtext} style={{ color: 'var(--f-light-muted)', fontSize: '8px', fontWeight: 700, letterSpacing: '0.1em' }}>Service</span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className={styles.tableCell}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                            <button onClick={() => onView(booking)} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="View Details"><Eye size={14} /></button>
+                                            <button onClick={() => onEdit(booking)} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Edit"><Pencil size={14} /></button>
+                                            {!isCancelled && (
+                                                <button 
+                                                    onClick={() => onCancel?.(booking)} 
+                                                    className={`${styles.btnIcon} ${styles.btnIconWarning}`} 
+                                                    style={{ width: '32px', height: '32px', borderRadius: '6px' }} 
+                                                    title="Cancel Booking"
+                                                >
+                                                    <CalendarX size={14} />
+                                                </button>
+                                            )}
+                                            <button onClick={() => onDelete(booking)} className={`${styles.btnIcon} ${styles.btnIconDanger}`} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Void Entry"><Trash2 size={14} /></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

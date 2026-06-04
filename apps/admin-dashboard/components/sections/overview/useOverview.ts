@@ -102,52 +102,99 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                     
                     const seenReservations = new Set<string>();
                     
+                    const allEntriesRaw: any[] = [];
+                    
                     querySnapshot.forEach((docSnap) => {
                         const data = docSnap.data();
                         const docDate = data.date || docSnap.id;
                         allDays.push({ ...data, date: docDate });
 
-                        const entries = (data.entries || []).map((e: any) => ({ ...e, _docId: docSnap.id }));
-                        
-                        entries.forEach((e: any) => {
-                            const isCancelled = e.status === "CANCELLED" || e.paymentStatus === "CANCELLED" || e.status === "CANCEL" || e.paymentStatus === "CANCEL";
-                            const isPOS = e.guestName?.startsWith("POS Order") || !!e.posItems || !!e.revenueType;
-                            const isAccommodation = !isPOS && (e.type === "accommodation" || (!e.type && e.guestName));
-                            
-                            if (isAccommodation) {
-                                const reservationId = `${e.guestName}_${e.checkInDate}_${e.checkOutDate}_${e.roomNumber}`;
-                                
-                                if (!seenReservations.has(reservationId)) {
-                                    seenReservations.add(reservationId);
-                                    
-                                    // 1. Check-In / Arrivals / Extensions in selected range
-                                    if (!isCancelled) {
-                                        if (e.checkInDate >= startDateStr && e.checkInDate <= endDateStr) {
-                                            checkIn.push({ ...e, isExtend: false });
-                                            todayTransactions.push({ ...e, isExtend: false });
-                                        } else if (e.checkInDate < startDateStr && e.checkOutDate > startDateStr) {
-                                            checkIn.push({ ...e, isExtend: true });
-                                            todayTransactions.push({ ...e, isExtend: true });
-                                        }
-                                        
-                                        if (e.checkOutDate >= startDateStr && e.checkOutDate <= endDateStr) {
-                                            checkOut.push(e);
-                                        }
-                                        allAccommodation.push(e);
-                                    }
+                        const entries = (data.entries || [])
+                            .filter((e: any) => e.status !== "VOID" && e.status !== "VOIDED")
+                            .map((e: any) => ({ 
+                                ...e, 
+                                _docId: docSnap.id,
+                                _docDate: docDate
+                            }));
+                        allEntriesRaw.push(...entries);
+                    });
 
-                                    // 2. Cancellations in selected range
-                                    if (isCancelled && e.checkInDate >= startDateStr && e.checkInDate <= endDateStr) {
-                                        cancels.push(e);
-                                    }
-                                }
-                            } else {
-                                // 3. Other Income in selected range (excluding POS)
-                                if (!isPOS && docDate >= startDateStr && docDate <= endDateStr) {
-                                    todayTransactions.push(e);
-                                }
+                    const accommodationGroups: Record<string, any[]> = {};
+                    const nonAccommodationEntries: any[] = [];
+
+                    allEntriesRaw.forEach((e) => {
+                        const isPOS = e.guestName?.startsWith("POS Order") || !!e.posItems || !!e.revenueType;
+                        const isAccommodation = !isPOS && (e.type === "accommodation" || (!e.type && e.guestName));
+                        
+                        if (isAccommodation) {
+                            const key = e.bookingId || e.timestamp || `${e.guestName}_${e.checkInDate}_${e.checkOutDate}_${e.roomNumber}`;
+                            if (!accommodationGroups[key]) {
+                                accommodationGroups[key] = [];
                             }
-                        });
+                            accommodationGroups[key].push(e);
+                        } else {
+                            if (!isPOS) {
+                                nonAccommodationEntries.push(e);
+                            }
+                        }
+                    });
+
+                    const resolvedAccommodation: any[] = [];
+                    Object.values(accommodationGroups).forEach((group) => {
+                        const isCancelled = group.some(e => 
+                            e.status === "CANCELLED" || 
+                            e.paymentStatus === "CANCELLED" || 
+                            e.status === "CANCEL" || 
+                            e.paymentStatus === "CANCEL"
+                        );
+                        
+                        const rep = { ...group[0] };
+                        if (isCancelled) {
+                            rep.status = "CANCELLED";
+                            rep.paymentStatus = "CANCELLED";
+                        }
+                        
+                        // Aggregate accommodation amounts across all nights of the stay
+                        rep.amount = group.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                        rep.payHotel = group.reduce((sum, item) => sum + (Number(item.payHotel || item.paidCash || item.paidAmount1) || 0), 0);
+                        rep.payNexura = group.reduce((sum, item) => sum + (Number(item.payNexura || item.paidTransfer || item.paidAmount2) || 0), 0);
+                        
+                        resolvedAccommodation.push(rep);
+                    });
+
+                    resolvedAccommodation.forEach((e) => {
+                        const isCancelled = e.status === "CANCELLED" || e.paymentStatus === "CANCELLED" || e.status === "CANCEL" || e.paymentStatus === "CANCEL";
+                        
+                        if (!isCancelled) {
+                            if (e.checkInDate >= startDateStr && e.checkInDate <= endDateStr) {
+                                checkIn.push({ ...e, isExtend: false });
+                                todayTransactions.push({ ...e, isExtend: false });
+                            } else if (e.checkInDate < startDateStr && e.checkOutDate > startDateStr) {
+                                checkIn.push({ ...e, isExtend: true });
+                                todayTransactions.push({ ...e, isExtend: true });
+                            }
+                            
+                            if (e.checkOutDate >= startDateStr && e.checkOutDate <= endDateStr) {
+                                checkOut.push(e);
+                            }
+                            allAccommodation.push(e);
+                        } else {
+                            const cancellationDate = e.cancelledAt || e.checkInDate;
+                            if (cancellationDate >= startDateStr && cancellationDate <= endDateStr) {
+                                cancels.push(e);
+                            }
+                            if (e.checkInDate >= startDateStr && e.checkInDate <= endDateStr) {
+                                todayTransactions.push({ ...e, isExtend: false });
+                            } else if (e.checkInDate < startDateStr && e.checkOutDate > startDateStr) {
+                                todayTransactions.push({ ...e, isExtend: true });
+                            }
+                        }
+                    });
+
+                    nonAccommodationEntries.forEach((e) => {
+                        if (e._docDate >= startDateStr && e._docDate <= endDateStr) {
+                            todayTransactions.push(e);
+                        }
                     });
                     
                     const latest = [...todayTransactions]

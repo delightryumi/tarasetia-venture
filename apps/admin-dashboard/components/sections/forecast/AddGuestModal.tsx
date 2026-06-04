@@ -54,6 +54,23 @@ export const AddGuestModal: React.FC<AddGuestModalProps> = ({ isOpen, onClose, s
             const hotelId = "bumi-anyom-resort";
             const docId = `${hotelId}_${selectedDate}`;
             
+            const checkInD = new Date(selectedDate);
+            const checkOutD = new Date(checkInD);
+            checkOutD.setDate(checkOutD.getDate() + 1);
+            
+            const yyyy = checkOutD.getFullYear();
+            const mm = String(checkOutD.getMonth() + 1).padStart(2, '0');
+            const dd = String(checkOutD.getDate()).padStart(2, '0');
+            const checkOutDateStr = `${yyyy}-${mm}-${dd}`;
+
+            const now = new Date();
+            const todayY = now.getFullYear();
+            const todayM = String(now.getMonth() + 1).padStart(2, '0');
+            const todayD = String(now.getDate()).padStart(2, '0');
+            const todayStr = `${todayY}-${todayM}-${todayD}`;
+
+            const isCancelled = formData.status === "CANCELLED";
+
             const newEntry = {
                 ...formData,
                 amount: Number(formData.amount),
@@ -61,13 +78,18 @@ export const AddGuestModal: React.FC<AddGuestModalProps> = ({ isOpen, onClose, s
                 paidTransfer: Number(formData.paidTransfer),
                 feePercentage: Number(formData.feePercentage),
                 timestamp: new Date().toISOString(),
-                bookingId: `TRX-${Date.now().toString().slice(-6)}`
+                bookingId: `TRX-${Date.now().toString().slice(-6)}`,
+                checkInDate: selectedDate,
+                checkOutDate: checkOutDateStr,
+                type: "accommodation",
+                cancelledAt: isCancelled ? todayStr : null
             };
 
             const docRef = doc(db, "daily_revenue", docId);
             await setDoc(docRef, {
                 entries: arrayUnion(newEntry),
-                lastUpdated: new Date().toISOString()
+                lastUpdated: new Date().toISOString(),
+                date: selectedDate
             }, { merge: true });
 
             toast.success("Tamu berhasil ditambahkan!");

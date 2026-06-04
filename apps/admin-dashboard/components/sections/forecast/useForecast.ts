@@ -106,8 +106,11 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                 (data.entries || []).forEach((e: any) => {
                     const isPOS = e.guestName?.startsWith('POS Order #') || Array.isArray(e.posItems);
                     if (isPOS) return;
+                    if (e.status === "VOID" || e.status === "VOIDED") return;
 
-                    if (e.status !== "CANCELLED") {
+                    const isCancelled = e.status === "CANCELLED" || e.status === "CANCEL";
+
+                    if (!isCancelled) {
                         const amount = Number(e.amount) || 0;
                         const isAcc = e.type === "accommodation" || (!e.type && e.guestName);
 
@@ -145,6 +148,10 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                             }
                             currentEntries.push({ ...e, _docId: d.id });
                         }
+                    } else {
+                        if (isCurrent) {
+                            currentEntries.push({ ...e, _docId: d.id });
+                        }
                     }
                 });
             });
@@ -164,6 +171,30 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
 
             const totalPossibleRoomNights = totalPhysicalRooms * totalDaysForOcc;
             
+            const forecastAccommodationGroups: Record<string, any[]> = {};
+            const resolvedEntries: any[] = [];
+
+            currentEntries.forEach((e) => {
+                const isAcc = e.type === "accommodation" || (!e.type && e.guestName);
+                if (isAcc) {
+                    const key = e.bookingId || e.timestamp || `${e.guestName}_${e.checkInDate}_${e.checkOutDate}_${e.roomNumber}`;
+                    if (!forecastAccommodationGroups[key]) {
+                        forecastAccommodationGroups[key] = [];
+                    }
+                    forecastAccommodationGroups[key].push(e);
+                } else {
+                    resolvedEntries.push(e);
+                }
+            });
+
+            Object.values(forecastAccommodationGroups).forEach((group) => {
+                const rep = { ...group[0] };
+                rep.amount = group.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                rep.payHotel = group.reduce((sum, item) => sum + (Number(item.payHotel || item.paidCash || item.paidAmount1) || 0), 0);
+                rep.payNexura = group.reduce((sum, item) => sum + (Number(item.payNexura || item.paidTransfer || item.paidAmount2) || 0), 0);
+                resolvedEntries.push(rep);
+            });
+
             setStats({
                 totalGrossRevenue: gross,
                 salesPayAtNexura: nexura,
@@ -174,7 +205,7 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                 occ: totalPossibleRoomNights > 0 ? (roomsSold / totalPossibleRoomNights) * 100 : 0,
                 arr: roomsSold > 0 ? roomRevenue / roomsSold : 0,
                 revPar: totalPossibleRoomNights > 0 ? roomRevenue / totalPossibleRoomNights : 0,
-                entries: currentEntries.sort((a, b) => (b.checkInDate || "").localeCompare(a.checkInDate || "")),
+                entries: resolvedEntries.sort((a, b) => (b.checkInDate || "").localeCompare(a.checkInDate || "")),
                 trendData,
                 loading: false,
             });

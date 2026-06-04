@@ -1,13 +1,14 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { PlusCircle, LogIn, Calendar, XCircle, Download, FileText } from "lucide-react";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useOverview } from "./useOverview";
+import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
 
@@ -17,7 +18,8 @@ import { StatCard } from "./StatCard";
 import { InventoryCalendar } from "./InventoryCalendar";
 import { AuditLedger } from "./AuditLedger";
 import { GuestDetailModal } from "./GuestDetailModal";
-import { DeleteConfirmModal } from "./DeleteConfirmModal";
+import { VoidConfirmModal } from "./VoidConfirmModal";
+import { CancelConfirmModal } from "./CancelConfirmModal";
 import { GuestListDrawer } from "./GuestListDrawer";
 
 const SAGE = "#788069";
@@ -26,6 +28,9 @@ const RICH_BLACK = "#1A1C14";
 
 export function OverviewSection() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const currentModule = searchParams.get("module") || "front-office";
+    const { user } = useAuth();
     
     const todayStr = React.useMemo(() => {
         const d = new Date();
@@ -59,58 +64,179 @@ export function OverviewSection() {
     
     const [selectedGuest, setSelectedGuest] = React.useState<any>(null);
     const [isEditing, setIsEditing] = React.useState(false);
-    const [bookingToDelete, setBookingToDelete] = React.useState<any>(null);
+    const [bookingToVoid, setBookingToVoid] = React.useState<any>(null);
+    const [bookingToCancel, setBookingToCancel] = React.useState<any>(null);
     const [isCalendarOpen, setIsCalendarOpen] = React.useState(true);
     const [calendarContext, setCalendarContext] = React.useState<{ bookings: any[], date: string, type: string } | null>(null);
 
     const dash = loading ? "—" : null;
 
+    const getDatesBetween = (checkInStr: string, checkOutStr: string, isAccommodation: boolean) => {
+        if (!checkInStr) return [];
+        if (!isAccommodation || !checkOutStr || new Date(checkOutStr) <= new Date(checkInStr)) {
+            return [checkInStr];
+        }
+        const dates = [];
+        let curr = new Date(checkInStr);
+        const end = new Date(checkOutStr);
+        while (curr < end) {
+            dates.push(curr.toISOString().split('T')[0]);
+            curr.setDate(curr.getDate() + 1);
+        }
+        return dates;
+    };
+
+
     const handleStatusUpdate = async (item: any, field: string, value: string) => {
+        console.log("handleStatusUpdate triggered", { item, field, value });
         try {
-            const docRef = doc(db, "daily_revenue", item._docId);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const entries = docSnap.data().entries || [];
-                const updatedEntries = entries.map((e: any) => 
-                    e.timestamp === item.timestamp ? { ...e, [field]: value } : e
-                );
-                await updateDoc(docRef, { entries: updatedEntries });
+            const hotelId = "bumi-anyom-resort";
+            const checkInDate = item.checkInDate || item.checkIn;
+            const checkOutDate = item.checkOutDate || item.checkOut;
+            const isAcc = item.type === "accommodation" || (!item.type && item.guestName && !item.guestName.startsWith("POS Order") && !item.posItems && !item.revenueType);
+            
+            const dates = getDatesBetween(checkInDate, checkOutDate, isAcc);
+            for (const d of dates) {
+                const docRef = doc(db, "daily_revenue", `${hotelId}_${d}`);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const entries = docSnap.data().entries || [];
+                    const updatedEntries = entries.map((e: any) => {
+                        const isMatch = e.timestamp === item.timestamp || 
+                            (isAcc && 
+                             e.guestName === item.guestName && 
+                             e.checkInDate === item.checkInDate && 
+                             e.checkOutDate === item.checkOutDate && 
+                             String(e.roomNumber) === String(item.roomNumber));
+                        
+                        if (isMatch) {
+                            const updated = { ...e, [field]: value };
+                            if (field === "status" || field === "paymentStatus") {
+                                if (value === "CANCELLED" || value === "CANCEL") {
+                                    const now = new Date();
+                                    const yyyy = now.getFullYear();
+                                    const mm = String(now.getMonth() + 1).padStart(2, '0');
+                                    const dd = String(now.getDate()).padStart(2, '0');
+                                    updated.cancelledAt = `${yyyy}-${mm}-${dd}`;
+                                    updated.status = "CANCELLED";
+                                    updated.paymentStatus = "CANCELLED";
+                                    updated.cancelledBy = user ? `${user.displayName} (${user.role || 'user'})` : "System";
+                                } else {
+                                    updated.cancelledAt = null;
+                                    updated.cancelledBy = null;
+                                }
+                            }
+                            return updated;
+                        }
+                        return e;
+                    });
+                    await updateDoc(docRef, { entries: updatedEntries, date: d });
+                }
             }
         } catch (error) {
             console.error("Status Update Failed", error);
         }
     };
 
-    const executeDelete = async () => {
-        if (!bookingToDelete) return;
+    const executeVoid = async () => {
+        if (!bookingToVoid) return;
         try {
-            const docRef = doc(db, "daily_revenue", bookingToDelete._docId);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const entries = docSnap.data().entries || [];
-                const filtered = entries.filter((e: any) => e.timestamp !== bookingToDelete.timestamp);
-                await updateDoc(docRef, { entries: filtered });
+            const hotelId = "bumi-anyom-resort";
+            const checkInDate = bookingToVoid.checkInDate || bookingToVoid.checkIn;
+            const checkOutDate = bookingToVoid.checkOutDate || bookingToVoid.checkOut;
+            const isPOS = bookingToVoid.guestName?.startsWith("POS Order") || !!bookingToVoid.posItems || !!bookingToVoid.revenueType;
+            const isAcc = !isPOS && (bookingToVoid.type === "accommodation" || (!bookingToVoid.type && bookingToVoid.guestName));
+            
+            const dates = getDatesBetween(checkInDate, checkOutDate, isAcc);
+            for (const d of dates) {
+                const docRef = doc(db, "daily_revenue", `${hotelId}_${d}`);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const entries = docSnap.data().entries || [];
+                    const mapped = entries.map((e: any) => {
+                        const isMatch = e.timestamp === bookingToVoid.timestamp || 
+                            (isAcc && 
+                             e.guestName === bookingToVoid.guestName && 
+                             e.checkInDate === bookingToVoid.checkInDate && 
+                             e.checkOutDate === bookingToVoid.checkOutDate && 
+                             e.roomNumber === bookingToVoid.roomNumber);
+                        if (isMatch) {
+                            return { ...e, status: "VOID", paymentStatus: "VOID" };
+                        }
+                        return e;
+                    });
+                    await updateDoc(docRef, { entries: mapped, date: d });
+                }
+            }
 
-                // Cascade delete if it is a POS transaction
-                const bookingId = bookingToDelete.bookingId;
-                if (bookingId) {
-                    const posQuery = query(collection(db, "pos_orders"), where("transactionId", "==", bookingId));
-                    const posSnap = await getDocs(posQuery);
-                    for (const d of posSnap.docs) {
-                        await deleteDoc(d.ref);
-                    }
-
-                    const revQuery = query(collection(db, "revenue_transactions"), where("transactionId", "==", bookingId));
-                    const revSnap = await getDocs(revQuery);
-                    for (const d of revSnap.docs) {
-                        await deleteDoc(d.ref);
-                    }
+            // Cascade void if it has a bookingId
+            const bookingId = bookingToVoid.bookingId;
+            if (bookingId) {
+                const posQuery = query(collection(db, "pos_orders"), where("transactionId", "==", bookingId));
+                const posSnap = await getDocs(posQuery);
+                for (const d of posSnap.docs) {
+                    await updateDoc(d.ref, { status: "VOID", isDeleted: true });
                 }
 
-                setBookingToDelete(null);
+                const revQuery = query(collection(db, "revenue_transactions"), where("transactionId", "==", bookingId));
+                const revSnap = await getDocs(revQuery);
+                for (const d of revSnap.docs) {
+                    await updateDoc(d.ref, { status: "VOID", isDeleted: true });
+                }
             }
+
+            setBookingToVoid(null);
         } catch (error) {
-            console.error("Delete Failed", error);
+            console.error("Void Failed", error);
+        }
+    };
+
+    const executeCancel = async () => {
+        if (!bookingToCancel) return;
+        try {
+            const hotelId = "bumi-anyom-resort";
+            const checkInDate = bookingToCancel.checkInDate || bookingToCancel.checkIn;
+            const checkOutDate = bookingToCancel.checkOutDate || bookingToCancel.checkOut;
+            const isPOS = bookingToCancel.guestName?.startsWith("POS Order") || !!bookingToCancel.posItems || !!bookingToCancel.revenueType;
+            const isAcc = !isPOS && (bookingToCancel.type === "accommodation" || (!bookingToCancel.type && bookingToCancel.guestName));
+            
+            const dates = getDatesBetween(checkInDate, checkOutDate, isAcc);
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const todayStr = `${yyyy}-${mm}-${dd}`;
+            const cancelledByVal = user ? `${user.displayName} (${user.role || 'user'})` : "System";
+
+            for (const d of dates) {
+                const docRef = doc(db, "daily_revenue", `${hotelId}_${d}`);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const entries = docSnap.data().entries || [];
+                    const mapped = entries.map((e: any) => {
+                        const isMatch = e.timestamp === bookingToCancel.timestamp || 
+                            (isAcc && 
+                             e.guestName === bookingToCancel.guestName && 
+                             e.checkInDate === bookingToCancel.checkInDate && 
+                             e.checkOutDate === bookingToCancel.checkOutDate && 
+                             e.roomNumber === bookingToCancel.roomNumber);
+                        if (isMatch) {
+                            return { 
+                                ...e, 
+                                status: "CANCELLED", 
+                                paymentStatus: "CANCELLED",
+                                cancelledAt: todayStr,
+                                cancelledBy: cancelledByVal
+                            };
+                        }
+                        return e;
+                    });
+                    await updateDoc(docRef, { entries: mapped, date: d });
+                }
+            }
+            setBookingToCancel(null);
+        } catch (error) {
+            console.error("Cancel Failed", error);
         }
     };
 
@@ -212,7 +338,7 @@ export function OverviewSection() {
                         <div className={styles.vDivider} />
 
                         <button
-                            onClick={() => router.push(`/forecast/add?date=${startDate}`)}
+                            onClick={() => router.push(`/forecast/add?date=${startDate}&module=${currentModule}`)}
                             className={styles.btnPrimary}
                             title="Add Transaction"
                             style={{ height: '36px', width: '36px', borderRadius: '8px' }}
@@ -281,7 +407,8 @@ export function OverviewSection() {
                     bookings={latestBookings}
                     onView={(b) => { setSelectedGuest(b); setIsEditing(false); }}
                     onEdit={(b) => { setSelectedGuest(b); setIsEditing(true); }}
-                    onDelete={(b) => setBookingToDelete(b)}
+                    onDelete={(b) => setBookingToVoid(b)}
+                    onCancel={(b) => setBookingToCancel(b)}
                     onStatusUpdate={handleStatusUpdate}
                     onExportExcel={handleExportExcel}
                     onExportPDF={handleExportPDF}
@@ -296,7 +423,7 @@ export function OverviewSection() {
                                 data={dailyData} 
                                 roomTypes={roomTypesData}
                                 totalRooms={roomStatus.total} 
-                                onDateSelect={(date) => router.push(`/forecast/add?date=${date}`)}
+                                onDateSelect={(date) => router.push(`/forecast/add?date=${date}&module=${currentModule}`)}
                                 onCellClick={(bookings, date, type) => setCalendarContext({ bookings, date, type })}
                             />
                         </div>
@@ -306,7 +433,7 @@ export function OverviewSection() {
                             date={calendarContext?.date || ""}
                             roomType={calendarContext?.type || ""}
                             bookings={calendarContext?.bookings || []}
-                            onAdd={(date) => router.push(`/forecast/add?date=${date}`)}
+                            onAdd={(date) => router.push(`/forecast/add?date=${date}&module=${currentModule}`)}
                         />
                     </div>
                 )}
@@ -330,15 +457,23 @@ export function OverviewSection() {
                         guest={selectedGuest} 
                         isEditing={isEditing} 
                         onClose={() => setSelectedGuest(null)} 
+                        onSave={() => router.refresh()}
                     />
                 )}
             </AnimatePresence>
 
-            <DeleteConfirmModal 
-                isOpen={!!bookingToDelete}
-                itemName={bookingToDelete?.guestName || "General Sale"}
-                onConfirm={executeDelete}
-                onCancel={() => setBookingToDelete(null)}
+            <VoidConfirmModal 
+                isOpen={!!bookingToVoid}
+                itemName={bookingToVoid?.guestName || "General Sale"}
+                onConfirm={executeVoid}
+                onCancel={() => setBookingToVoid(null)}
+            />
+
+            <CancelConfirmModal 
+                isOpen={!!bookingToCancel}
+                itemName={bookingToCancel?.guestName || "General Sale"}
+                onConfirm={executeCancel}
+                onCancel={() => setBookingToCancel(null)}
             />
         </div>
     );

@@ -191,31 +191,30 @@ export const MobileBottomNav = () => {
     const navItems = getFilteredNavItems();
 
     return (
-        <div className="fixed bottom-4 left-4 right-4 z-[100] lg:hidden pointer-events-none flex justify-center">
+        <div className="fixed bottom-0 left-0 right-0 z-[100] lg:hidden pointer-events-none flex justify-center">
             <motion.div 
                 initial={{ y: 80, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                className="pointer-events-auto flex items-center bg-[#788069]/90 dark:bg-stone-900/90 h-[64px] px-4 border border-white/10 dark:border-white/[0.06] rounded-2xl w-full max-w-[460px] shadow-[0_20px_50px_rgba(0,0,0,0.35)] backdrop-blur-xl overflow-x-auto bottom-nav-scroll"
+                className="pointer-events-auto flex items-center bg-[#121212]/95 dark:bg-[#121212]/95 h-[68px] border-t border-white/[0.08] w-full shadow-[0_-8px_30px_rgba(0,0,0,0.5)] backdrop-blur-md overflow-x-auto bottom-nav-scroll pb-[env(safe-area-inset-bottom)]"
             >
-                <div className="flex items-center gap-3.5 justify-start px-1 md:justify-center md:mx-auto min-w-max">
+                <div className="flex items-center justify-around w-full px-2 min-w-max md:min-w-0 md:justify-center md:gap-6">
                     {/* Pilih Modul Button */}
                     <button
                         onClick={() => router.push('/select-module')}
-                        className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 hover:border-white/10 transition-all duration-300"
+                        className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] text-white/50 hover:text-white transition-all duration-300"
                         title="Pilih Modul"
                     >
-                        <Grid size={22} className="text-[#ffd8a6]" />
+                        <Grid size={18} className="text-[#ffd8a6]" />
+                        <span className="text-[9px] font-normal tracking-wide text-white/50">Modules</span>
                     </button>
 
-                    <div className="w-px h-6 bg-white/10 flex-shrink-0" />
+                    <div className="w-px h-6 bg-white/10 flex-shrink-0 mx-1" />
 
                     {navItems.map((item) => {
                         const isActive = activeSection === item.id;
                         return (
-                            <motion.button
-                                layout
-                                transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                            <button
                                 key={item.id}
                                 onClick={() => {
                                     if (item.id === "purchasing") {
@@ -231,49 +230,38 @@ export const MobileBottomNav = () => {
                                     }
                                 }}
                                 className={`
-                                    flex-shrink-0 flex items-center justify-center gap-2 rounded-[8px] h-10 transition-all duration-300 relative group
+                                    flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] transition-all duration-200
                                     ${isActive 
-                                        ? 'bg-[#ffd8a6] text-[#232323] px-3.5 shadow-[0_4px_12px_rgba(255,216,166,0.3)] font-extrabold' 
-                                        : 'w-10 text-white/60 hover:text-white hover:bg-white/5'
+                                        ? 'text-[#ffd8a6]' 
+                                        : 'text-white/50 hover:text-white'
                                     }
                                 `}
                             >
                                 <div className="flex items-center justify-center shrink-0">
                                     {React.cloneElement(item.icon as React.ReactElement, { 
                                         size: 18, 
-                                        strokeWidth: isActive ? 2.5 : 2 
+                                        strokeWidth: isActive ? 2 : 1.8 
                                     })}
                                 </div>
-
-                                <AnimatePresence initial={false}>
-                                    {isActive && (
-                                        <motion.span 
-                                            initial={{ opacity: 0, width: 0 }}
-                                            animate={{ opacity: 1, width: "auto" }}
-                                            exit={{ opacity: 0, width: 0 }}
-                                            transition={{ duration: 0.2 }}
-                                            className="text-[11px] font-black uppercase tracking-wider whitespace-nowrap overflow-hidden"
-                                        >
-                                            {item.label}
-                                        </motion.span>
-                                    )}
-                                </AnimatePresence>
-                            </motion.button>
+                                <span className={`text-[9px] font-normal tracking-wide whitespace-nowrap transition-colors duration-200 ${isActive ? 'text-[#ffd8a6]' : 'text-white/50'}`}>
+                                    {item.label}
+                                </span>
+                            </button>
                         );
                     })}
 
-                    <div className="w-px h-6 bg-white/10 flex-shrink-0" />
+                    <div className="w-px h-6 bg-white/10 flex-shrink-0 mx-1" />
 
                     <button
                         onClick={signOutUser}
-                        className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-white/40 hover:text-rose-300 hover:bg-white/5 transition-all duration-300"
+                        className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] text-white/40 hover:text-rose-450 transition-all duration-300"
                         title="Sign Out"
                     >
-                        <LogOut size={20} />
+                        <LogOut size={18} />
+                        <span className="text-[9px] font-normal tracking-wide text-white/40">Sign Out</span>
                     </button>
                 </div>
             </motion.div>
-            
         </div>
     );
 };

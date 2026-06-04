@@ -6,6 +6,24 @@ import { ChevronLeft, ChevronRight, ArrowRight, BedDouble, Calendar as CalendarI
 import { CHANNELS } from "./useTransactionForm";
 import styles from "./TransactionFormStyles.module.css";
 
+function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () => void, active: boolean) {
+    React.useEffect(() => {
+        if (!active) return;
+        const listener = (event: Event) => {
+            if (!ref.current || ref.current.contains(event.target as Node)) {
+                return;
+            }
+            handler();
+        };
+        document.addEventListener("mousedown", listener);
+        document.addEventListener("touchstart", listener);
+        return () => {
+            document.removeEventListener("mousedown", listener);
+            document.removeEventListener("touchstart", listener);
+        };
+    }, [ref, handler, active]);
+}
+
 export const SectionTitle = ({ number, label }: { number: string; label: string }) => (
     <div className={styles.sectionTitle}>
         <div className={styles.sectionTitleInner}>
@@ -102,10 +120,12 @@ const CustomCalendar = ({ value, onChange, onClose, accentColor }: any) => {
 
 export function ChannelSelect({ value, onChange }: { value: string, onChange: (v: string) => void }) {
     const [isOpen, setIsOpen] = useState(false);
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    useClickOutside(containerRef, () => setIsOpen(false), isOpen);
     const selectedChannel = CHANNELS.find(c => c.name === value) || CHANNELS[CHANNELS.length - 1];
 
     return (
-        <div className="relative">
+        <div className="relative" ref={containerRef}>
             <button 
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
@@ -123,36 +143,33 @@ export function ChannelSelect({ value, onChange }: { value: string, onChange: (v
 
             <AnimatePresence>
                 {isOpen && (
-                    <>
-                        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                        <motion.div 
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 5 }}
-                            className={styles.popover}
-                        >
-                            {CHANNELS.map((channel) => (
-                                <button
-                                    key={channel.name}
-                                    type="button"
-                                    onClick={() => {
-                                        onChange(channel.name);
-                                        setIsOpen(false);
-                                    }}
-                                    className={styles.popoverItem}
-                                    style={{
-                                        backgroundColor: value === channel.name ? 'var(--f-sage)' : '',
-                                        color: value === channel.name ? '#ffffff' : 'var(--f-body)'
-                                    }}
-                                >
-                                    <div style={{ width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <img src={channel.logo} alt="" className="max-w-[14px] max-h-[14px] object-contain" style={{ filter: value === channel.name ? 'brightness(10)' : 'none' }} />
-                                    </div>
-                                    <span className={styles.popoverItemText}>{channel.name}</span>
-                                </button>
-                            ))}
-                        </motion.div>
-                    </>
+                    <motion.div 
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        className={styles.popover}
+                    >
+                        {CHANNELS.map((channel) => (
+                            <button
+                                key={channel.name}
+                                type="button"
+                                onClick={() => {
+                                    onChange(channel.name);
+                                    setIsOpen(false);
+                                }}
+                                className={styles.popoverItem}
+                                style={{
+                                    backgroundColor: value === channel.name ? 'var(--f-sage)' : '',
+                                    color: value === channel.name ? '#ffffff' : 'var(--f-body)'
+                                }}
+                            >
+                                <div style={{ width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <img src={channel.logo} alt="" className="max-w-[14px] max-h-[14px] object-contain" style={{ filter: value === channel.name ? 'brightness(10)' : 'none' }} />
+                                </div>
+                                <span className={styles.popoverItemText}>{channel.name}</span>
+                            </button>
+                        ))}
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>
@@ -161,10 +178,12 @@ export function ChannelSelect({ value, onChange }: { value: string, onChange: (v
 
 export function RoomTypeSelect({ value, options, onChange }: { value: string, options: any[], onChange: (v: string) => void }) {
     const [isOpen, setIsOpen] = useState(false);
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    useClickOutside(containerRef, () => setIsOpen(false), isOpen);
     const selected = options.find(o => o.id === value);
 
     return (
-        <div className="relative">
+        <div className="relative" ref={containerRef}>
             <button 
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
@@ -182,34 +201,31 @@ export function RoomTypeSelect({ value, options, onChange }: { value: string, op
 
             <AnimatePresence>
                 {isOpen && (
-                    <>
-                        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                        <motion.div 
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 5 }}
-                            className={styles.popover}
-                        >
-                            {options.map((option) => (
-                                <button
-                                    key={option.id}
-                                    type="button"
-                                    onClick={() => {
-                                        onChange(option.id);
-                                        setIsOpen(false);
-                                    }}
-                                    className={styles.popoverItem}
-                                    style={{
-                                        backgroundColor: value === option.id ? 'var(--f-sage)' : '',
-                                        color: value === option.id ? '#ffffff' : 'var(--f-body)'
-                                    }}
-                                >
-                                    <BedDouble size={16} style={{ color: value === option.id ? '#ffffff' : 'var(--f-muted)' }} />
-                                    <span className={styles.popoverItemText}>{option.name}</span>
-                                </button>
-                            ))}
-                        </motion.div>
-                    </>
+                    <motion.div 
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        className={styles.popover}
+                    >
+                        {options.map((option) => (
+                            <button
+                                key={option.id}
+                                type="button"
+                                onClick={() => {
+                                    onChange(option.id);
+                                    setIsOpen(false);
+                                }}
+                                className={styles.popoverItem}
+                                style={{
+                                    backgroundColor: value === option.id ? 'var(--f-sage)' : '',
+                                    color: value === option.id ? '#ffffff' : 'var(--f-body)'
+                                }}
+                            >
+                                <BedDouble size={16} style={{ color: value === option.id ? '#ffffff' : 'var(--f-muted)' }} />
+                                <span className={styles.popoverItemText}>{option.name}</span>
+                            </button>
+                        ))}
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>
@@ -218,8 +234,10 @@ export function RoomTypeSelect({ value, options, onChange }: { value: string, op
 
 export function OtherIncomeTypeSelect({ value, options, onChange }: { value: string, options: string[], onChange: (v: string) => void }) {
     const [isOpen, setIsOpen] = useState(false);
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    useClickOutside(containerRef, () => setIsOpen(false), isOpen);
     return (
-        <div className="relative">
+        <div className="relative" ref={containerRef}>
             <button 
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
@@ -237,34 +255,31 @@ export function OtherIncomeTypeSelect({ value, options, onChange }: { value: str
 
             <AnimatePresence>
                 {isOpen && (
-                    <>
-                        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                        <motion.div 
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 5 }}
-                            className={styles.popover}
-                        >
-                            {options.map((option) => (
-                                <button
-                                    key={option}
-                                    type="button"
-                                    onClick={() => {
-                                        onChange(option);
-                                        setIsOpen(false);
-                                    }}
-                                    className={styles.popoverItem}
-                                    style={{
-                                        backgroundColor: value === option ? 'var(--f-sage)' : '',
-                                        color: value === option ? '#ffffff' : 'var(--f-body)'
-                                    }}
-                                >
-                                    <Package size={16} style={{ color: value === option ? '#ffffff' : 'var(--f-muted)' }} />
-                                    <span className={styles.popoverItemText}>{option}</span>
-                                </button>
-                            ))}
-                        </motion.div>
-                    </>
+                    <motion.div 
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        className={styles.popover}
+                    >
+                        {options.map((option) => (
+                            <button
+                                key={option}
+                                type="button"
+                                onClick={() => {
+                                    onChange(option);
+                                    setIsOpen(false);
+                                }}
+                                className={styles.popoverItem}
+                                style={{
+                                    backgroundColor: value === option ? 'var(--f-sage)' : '',
+                                    color: value === option ? '#ffffff' : 'var(--f-body)'
+                                }}
+                            >
+                                <Package size={16} style={{ color: value === option ? '#ffffff' : 'var(--f-muted)' }} />
+                                <span className={styles.popoverItemText}>{option}</span>
+                            </button>
+                        ))}
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>
@@ -345,6 +360,8 @@ export const TypeCard = ({ label, description, icon: Icon, onClick }: any) => {
 
 export const DateCard = ({ label, value, onChange, type }: any) => {
     const [isOpen, setIsOpen] = useState(false);
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    useClickOutside(containerRef, () => setIsOpen(false), isOpen);
     const isCheckIn = type === "check-in";
     const colorClass = isCheckIn ? "var(--f-sage-dark)" : "var(--f-terracotta)";
     const bgClass = isCheckIn ? "var(--f-sage-bg)" : "var(--f-terracotta-bg)";
@@ -354,7 +371,7 @@ export const DateCard = ({ label, value, onChange, type }: any) => {
     const formattedDate = value ? new Date(value).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Set Date';
 
     return (
-        <div className={styles.formGroup} style={{ flex: 1, position: 'relative' }}>
+        <div className={styles.formGroup} style={{ flex: 1, position: 'relative' }} ref={containerRef}>
             <label className={styles.inputLabel}>{label}</label>
             <button 
                 type="button"
@@ -376,15 +393,12 @@ export const DateCard = ({ label, value, onChange, type }: any) => {
 
             <AnimatePresence>
                 {isOpen && (
-                    <>
-                        <div className="fixed inset-0 z-[90]" onClick={() => setIsOpen(false)} />
-                        <CustomCalendar 
-                            value={value} 
-                            onChange={onChange} 
-                            onClose={() => setIsOpen(false)}
-                            accentColor={accentClass}
-                        />
-                    </>
+                    <CustomCalendar 
+                        value={value} 
+                        onChange={onChange} 
+                        onClose={() => setIsOpen(false)}
+                        accentColor={accentClass}
+                    />
                 )}
             </AnimatePresence>
         </div>

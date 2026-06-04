@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { collection, getDocs, doc, updateDoc, getDoc, arrayUnion, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 export interface RoomType {
     id: string;
@@ -57,7 +58,39 @@ const INITIAL_FORM = {
 export const useTransactionForm = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { user } = useAuth();
     const selectedDate = searchParams.get("date") || new Date().toISOString().split("T")[0];
+
+    const handleCancel = useCallback(() => {
+        const searchMod = searchParams.get("module");
+        let moduleParam = "front-office";
+        if (searchMod) {
+            moduleParam = searchMod;
+        } else {
+            const storedMod = typeof window !== "undefined" ? localStorage.getItem("active_module") : null;
+            if (storedMod) {
+                moduleParam = storedMod;
+            } else if (user?.role) {
+                const r = user.role.toLowerCase();
+                if (r === "house keeping") moduleParam = "housekeeping";
+                else if (r === "purchasing") moduleParam = "purchasing";
+                else if (r === "kasir" || r === "kitchen") moduleParam = "food-beverage";
+                else if (r === "finance") moduleParam = "accounting";
+            }
+        }
+
+        let redirectPath = `/overview?module=${moduleParam}`;
+        if (moduleParam === "purchasing") {
+            redirectPath = "/purchasing?module=purchasing";
+        } else if (moduleParam === "food-beverage") {
+            redirectPath = "/food-beverage/product?module=food-beverage";
+        } else if (moduleParam === "accounting") {
+            redirectPath = "/pnl?module=accounting";
+        } else if (moduleParam === "cpanel") {
+            redirectPath = "/logo?module=cpanel";
+        }
+        router.push(redirectPath);
+    }, [router, searchParams, user]);
 
     const [roomTypes, setRoomTypes] = useState<any[]>([]);
     const [occupancy, setOccupancy] = useState<any[]>([]);
@@ -108,6 +141,16 @@ export const useTransactionForm = () => {
                 const rSnap = await getDocs(collection(db, "roomTypes"));
                 const types = rSnap.docs.map(d => ({ id: d.id, ...d.data() }));
                 setRoomTypes(types);
+                
+                if (types.length > 0) {
+                    setForm(prev => {
+                        const newRooms = [...prev.rooms];
+                        if (newRooms[0] && !newRooms[0].roomTypeId) {
+                            newRooms[0] = { ...newRooms[0], roomTypeId: types[0].id };
+                        }
+                        return { ...prev, rooms: newRooms };
+                    });
+                }
 
                 const bSnap = await getDocs(collection(db, "daily_revenue"));
                 const allBookings = bSnap.docs.flatMap(d => d.data().entries || []);
@@ -224,8 +267,10 @@ export const useTransactionForm = () => {
         
         // 1. Core Validation
         if (isRoom) {
-            if (!form.guestName) { toast.error("Guest Nama is required"); return null; }
+            if (!form.guestName) { toast.error("Guest Name is required"); return null; }
             if (!form.checkOut) { toast.error("Check-out Date is required"); return null; }
+            if (form.checkOut <= form.checkIn) { toast.error("Check-out Date must be after Check-in Date"); return null; }
+            if (!form.rooms[0]?.roomTypeId) { toast.error("Room Category is required"); return null; }
         } else {
             if (!form.totalAmount || Number(form.totalAmount) <= 0) { toast.error("Total Amount is required"); return null; }
         }
@@ -385,14 +430,14 @@ export const useTransactionForm = () => {
             }
 
             toast.success("All transactions synchronized successfully");
-            router.push("/overview");
+            handleCancel();
         } catch (err) {
             console.error(err);
             toast.error("Synchronization failed.");
         } finally {
             setSaving(false);
         }
-    }, [form, queue, prepareEntries, router, revenueType]);
+    }, [form, queue, prepareEntries, handleCancel, revenueType]);
 
     const updateForm = (field: string, value: any) => {
         setForm(prev => ({ ...prev, [field]: value }));
@@ -416,6 +461,7 @@ export const useTransactionForm = () => {
         updateRoom,
         isAvailable,
         router,
+        handleCancel,
         queue,
         addToQueue,
         removeFromQueue,

@@ -210,6 +210,12 @@
   border-color: #fca5a5;
 }
 
+.btnIconWarning:hover {
+  color: #d97706;
+  background-color: #fffbeb;
+  border-color: #fde68a;
+}
+
 .btnIconSuccess:hover {
   color: #10b981;
   background-color: #ecfdf5;
@@ -591,4 +597,9 @@
 .paymentPending {
   background-color: #fffbeb;
   color: #d97706;
+}
+
+.cancelledRow {
+  opacity: 0.6;
+  text-decoration: line-through;
 }

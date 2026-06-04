@@ -1,22 +1,21 @@
 "use client";
-
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
-interface DeleteConfirmModalProps {
+interface VoidConfirmModalProps {
     isOpen: boolean;
     itemName: string;
     onConfirm: () => void;
     onCancel: () => void;
 }
 
-export function DeleteConfirmModal({ isOpen, itemName, onConfirm, onCancel }: DeleteConfirmModalProps) {
+export function VoidConfirmModal({ isOpen, itemName, onConfirm, onCancel }: VoidConfirmModalProps) {
     const [passwordInput, setPasswordInput] = useState("");
 
     const handleConfirm = () => {
         if (passwordInput !== 'admin123' && passwordInput !== 'owner123') {
-            toast.error("Password Admin salah! Penghapusan dibatalkan.");
+            toast.error("Password Admin salah! Proses void dibatalkan.");
             return;
         }
         onConfirm();
@@ -42,14 +41,11 @@ export function DeleteConfirmModal({ isOpen, itemName, onConfirm, onCancel }: De
                         className="delete-modal-card"
                     >
                         <h3 className="delete-modal-title">
-                            Are you absolutely sure want to delete ?
+                            Void Transaction Entry
                         </h3>
                         <div className="delete-modal-desc">
                             <p>
-                                This action cannot be undone. This will permanently delete the transaction for{" "}
-                                <strong>
-                                    {itemName}
-                                </strong>.
+                                Apakah Anda yakin ingin mem-void transaksi ini? Transaksi untuk <strong>{itemName}</strong> akan dihapus dari daftar dan room inventory akan dibebaskan.
                             </p>
                             
                             <div className="delete-modal-separator">
@@ -77,14 +73,14 @@ export function DeleteConfirmModal({ isOpen, itemName, onConfirm, onCancel }: De
                                 className="delete-modal-btn-cancel"
                                 style={{ cursor: "pointer" }}
                             >
-                                Cancel
+                                Abort
                             </button>
                             <button 
                                 onClick={handleConfirm}
                                 className="delete-modal-btn-delete"
                                 style={{ cursor: "pointer" }}
                             >
-                                Delete
+                                Void Entry
                             </button>
                         </div>
                     </motion.div>

@@ -232,7 +232,9 @@ export function InventoryCalendar({
 
                                         const isAcc = (e.type === 'accommodation' || (!e.type && e.guestName)) && 
                                                       e.status?.toUpperCase() !== 'CANCELLED' && 
-                                                      e.status?.toUpperCase() !== 'CANCEL';
+                                                      e.status?.toUpperCase() !== 'CANCEL' && 
+                                                      e.status?.toUpperCase() !== 'VOID' && 
+                                                      e.status?.toUpperCase() !== 'VOIDED';
                                         if (!isAcc) return false;
 
                                         const typeMatch = e.roomType?.trim().toLowerCase() === type.name?.trim().toLowerCase();

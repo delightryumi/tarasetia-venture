@@ -20,7 +20,11 @@ export function RoomStatusPicker({ current, onChange }: { current: string, onCha
                 <button
                     key={s.id}
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); onChange(s.id); }}
+                    onClick={(e) => { 
+                        console.log("RoomStatusPicker button clicked", s.id); 
+                        e.stopPropagation(); 
+                        onChange(s.id); 
+                    }}
                     title={s.label}
                     className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 border ${
                         current === s.id 
@@ -59,7 +63,11 @@ export function GuestStatusPicker({ current, onChange }: { current: string, onCh
                 <button
                     key={s.id}
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); onChange(s.id); }}
+                    onClick={(e) => { 
+                        console.log("GuestStatusPicker button clicked", s.id); 
+                        e.stopPropagation(); 
+                        onChange(s.id); 
+                    }}
                     className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-widest transition-all duration-200 border ${
                         current === s.id 
                             ? 'shadow-sm translate-y-[-1px]' 

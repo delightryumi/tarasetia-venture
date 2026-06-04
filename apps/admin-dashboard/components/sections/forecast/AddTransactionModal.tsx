@@ -108,6 +108,16 @@ export const AddTransactionModal = ({
             return;
         }
 
+        if (!form.checkOut) {
+            toast.error("Check-out Date is required");
+            return;
+        }
+
+        if (form.checkOut <= form.checkIn) {
+            toast.error("Check-out Date must be after Check-in Date");
+            return;
+        }
+
         if (form.isSplitBill && balance !== 0) {
             toast.error("Split bill balance must be zero before publishing");
             return;

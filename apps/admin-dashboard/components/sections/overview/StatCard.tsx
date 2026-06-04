@@ -85,7 +85,7 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                                                 </div>
                                             </div>
                                             
-                                            {item.type === 'accommodation' && (
+                                            {(item.type === 'accommodation' || (!item.type && item.guestName && !item.guestName.startsWith('POS Order') && !item.posItems && !item.revenueType)) && (
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                     <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--f-hairline)' }} />
                                                     <RoomStatusBadge current={item.roomStatus || 'dirty'} />

@@ -1210,3 +1210,73 @@
 .footerLink:hover .footerBrandText {
   color: var(--f-sage);
 }
+
+/* ── Date Cards Responsive Container ── */
+.dateCardsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+@media (min-width: 480px) {
+  .dateCardsContainer {
+    flex-direction: row;
+  }
+}
+
+/* ── Mobile Layout Adjustments ── */
+@media (max-width: 768px) {
+  .header {
+    top: -20px;
+    margin: -20px -20px 24px -20px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  
+  .headerInner {
+    padding: 0 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .headerLeft {
+    justify-content: flex-start;
+    width: 100%;
+  }
+  
+  .headerRight {
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .vDivider {
+    display: none;
+  }
+  
+  .mainContainer {
+    padding: 12px;
+  }
+  
+  .calendarContainer {
+    position: absolute;
+    left: 50% !important;
+    margin-left: -140px !important;
+    right: auto !important;
+    width: 280px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .popover {
+    left: auto;
+    right: 0;
+    width: 280px;
+    max-width: calc(100vw - 32px);
+  }
+  
+  .detailCellRow2 {
+    flex-wrap: wrap;
+  }
+}
