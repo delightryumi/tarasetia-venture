@@ -13,6 +13,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import { ModuleActionButtons } from '@/components/layout/ModuleActionButtons';
 import { LoginSection } from '@/components/sections/login/LoginSection';
 import { db } from '@/lib/firebase';
@@ -26,6 +27,7 @@ import styles from './select-module.module.css';
 
 export default function SelectModulePage() {
   const { user, loading: authLoading, signOutUser } = useAuth();
+  const router = useRouter();
   const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [loadingPerms, setLoadingPerms] = useState(true);
@@ -80,6 +82,12 @@ export default function SelectModulePage() {
   useEffect(() => {
     fetchPermissions();
   }, [user]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
 
   const changeTheme = (newTheme: 'dark' | 'light' | 'system') => {
     setTheme(newTheme);
@@ -215,7 +223,7 @@ export default function SelectModulePage() {
   }
 
   if (!user) {
-    return <LoginSection />;
+    return null;
   }
 
   return (

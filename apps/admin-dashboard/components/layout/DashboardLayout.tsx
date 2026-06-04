@@ -7,18 +7,24 @@ import { MobileBottomNav } from "./MobileBottomNav";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExternalLink } from "lucide-react";
 import { useFooter } from "../sections/footer/useFooter";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { LoginSection } from "@/components/sections/login/LoginSection";
 import gsap from "gsap";
 import "./layout.css";
 
 export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const { user, loading } = useAuth();
+    const router = useRouter();
     const [isCollapsed, setIsCollapsed] = useState(true);
     const { poweredByText, poweredByLink } = useFooter();
     const containerRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
+
+    React.useEffect(() => {
+        if (!loading && !user) {
+            router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+        }
+    }, [user, loading, router, pathname]);
 
     useLayoutEffect(() => {
         if (!containerRef.current) return;
@@ -48,7 +54,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     // We skip the global DashboardLayout entirely for /purchasing/* paths.
     if (pathname.startsWith('/purchasing')) {
         if (loading) return null;
-        if (!user) return <LoginSection />;
+        if (!user) return null;
         return <>{children}</>;
     }
 
@@ -61,7 +67,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     }
 
     if (!user) {
-        return <LoginSection />;
+        return null;
     }
 
     return (

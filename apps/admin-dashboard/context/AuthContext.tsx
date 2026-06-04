@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     localStorage.removeItem("auth_user");
                     setUser(null);
                     await fbSignOut(auth);
-                    window.location.href = "/";
+                    window.location.href = "/login";
                     return;
                 }
             }
@@ -162,8 +162,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
         await fbSignOut(auth);
         const dashboardUrl = typeof window !== "undefined"
-            ? `${window.location.protocol}//${window.location.hostname}${window.location.port ? ":" + window.location.port : ""}/select-module`
-            : "http://localhost:3000/select-module";
+            ? `${window.location.protocol}//${window.location.hostname}${window.location.port ? ":" + window.location.port : ""}/login`
+            : "http://localhost:3000/login";
         window.location.href = dashboardUrl;
     };
 

@@ -178,31 +178,31 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     if (typeof window !== 'undefined') {
       const storedUrl = localStorage.getItem('dashboard_url');
       if (storedUrl) {
-        return storedUrl.replace(/\/select-module$/, '');
+        return storedUrl.replace(/\/select-module$/, '') + '/login';
       }
 
       const { protocol, hostname } = window.location;
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
       if (isLocal) {
-        return 'http://localhost:3000';
+        return 'http://localhost:3000/login';
       }
     }
 
-    let url = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app';
+    let url = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/login';
     if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
-      url = process.env.NEXT_PUBLIC_DASHBOARD_URL.replace('/select-module', '');
+      url = process.env.NEXT_PUBLIC_DASHBOARD_URL.replace('/select-module', '') + '/login';
     } else if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
       if (hostname.startsWith('pos.')) {
-        url = `${protocol}//${hostname.replace('pos.', 'dashboard.')}`;
+        url = `${protocol}//${hostname.replace('pos.', 'dashboard.')}/login`;
       } else if (hostname.includes('--bumi-anyom')) {
         const parts = hostname.split('--');
         parts[0] = 'bumianyom-web-1';
-        url = `${protocol}//${parts.join('--')}`;
+        url = `${protocol}//${parts.join('--')}/login`;
       } else if (hostname.includes('pos')) {
-        url = `${protocol}//${hostname.replace('pos', 'bumianyom-web-1')}`;
+        url = `${protocol}//${hostname.replace('pos', 'bumianyom-web-1')}/login`;
       } else {
-        url = `${protocol}//${hostname}`;
+        url = `${protocol}//${hostname}/login`;
       }
     }
     return url;
