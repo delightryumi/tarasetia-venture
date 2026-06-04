@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { useIncomeAnalytics } from './chartfour/hooks/useIncomeAnalytics';
-import { FilterBar } from './chartfour/components/FilterBar';
-import { OverviewMetrics } from './chartfour/components/OverviewMetrics';
-import { RevenueCharts } from './chartfour/components/RevenueCharts';
-import { CategoryBreakdownTable } from './chartfour/components/CategoryBreakdownTable';
-import { CostSections } from './chartfour/components/CostSections';
+import { useIncomeAnalytics } from './hooks/useIncomeAnalytics';
+import { FilterBar } from './components/FilterBar';
+import { OverviewMetrics } from './components/OverviewMetrics';
+import { RevenueCharts } from './components/RevenueCharts';
+import { CategoryBreakdownTable } from './components/CategoryBreakdownTable';
+import { CostSections } from './components/CostSections';
 
 const ChartFour: React.FC = () => {
   const {

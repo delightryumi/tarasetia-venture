@@ -41,7 +41,7 @@ export function Orders() {
     }
 
     if (!dashboardUrl) {
-      dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL;
+      dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || '';
       if (!dashboardUrl && typeof window !== 'undefined') {
         const { protocol, hostname } = window.location;
         if (hostname.startsWith('pos.')) {
