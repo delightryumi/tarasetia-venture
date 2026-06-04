@@ -41,9 +41,15 @@ export function Orders() {
     }
 
     if (!dashboardUrl) {
-      dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || (typeof window !== 'undefined'
-        ? `${window.location.protocol}//${window.location.hostname.replace('pos.', 'dashboard.').replace(':3001', ':3000')}/select-module`
-        : 'http://localhost:3000/select-module');
+      dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL;
+      if (!dashboardUrl && typeof window !== 'undefined') {
+        const { protocol, hostname } = window.location;
+        if (hostname.startsWith('pos.')) {
+          dashboardUrl = `${protocol}//${hostname.replace('pos.', 'pms.')}/select-module`;
+        } else {
+          dashboardUrl = 'https://pms.bumianyom.com/select-module';
+        }
+      }
     }
     window.location.href = `${dashboardUrl}?logout=true`;
   };

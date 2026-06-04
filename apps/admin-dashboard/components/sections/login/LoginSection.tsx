@@ -3,8 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { useLogin } from "./useLogin";
 import { Mail, Lock } from "lucide-react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import "./login.css";
 
 const LeftPanel = React.memo(() => {
@@ -107,7 +105,6 @@ LeftPanel.displayName = "LeftPanel";
 export const LoginSection = () => {
     const { email, setEmail, password, setPassword, error, loading, handleLogin } =
         useLogin();
-    const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
     useEffect(() => {
         const scriptId = 'lottie-player-script';
@@ -120,31 +117,11 @@ export const LoginSection = () => {
         }
     }, []);
 
-    useEffect(() => {
-        const fetchLogo = async () => {
-            try {
-                const docRef = doc(db, "settings", "landingPage");
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    setLogoUrl(docSnap.data().lightLogo || null);
-                }
-            } catch (err) {
-                console.error("Error fetching logo:", err);
-            }
-        };
-        fetchLogo();
-    }, []);
-
     return (
         <div className="auth-container">
             <div className="forms-container">
                 {/* Top Logo */}
                 <div className="auth-header">
-                    {logoUrl ? (
-                        <img src={logoUrl} alt="Nexura Logo" className="auth-logo" />
-                    ) : (
-                        <span className="auth-logo-text">Nexura</span>
-                    )}
                 </div>
 
                 {/* Form in the center */}

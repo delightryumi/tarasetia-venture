@@ -20,15 +20,7 @@ export default function POSPage() {
         if (isLocal) {
           return `${protocol}//${hostname}:3001`;
         }
-        if (hostname.startsWith('dashboard.')) {
-          return `${protocol}//${hostname.replace('dashboard.', 'pos.')}`;
-        }
-        if (hostname.includes('--bumi-anyom')) {
-          const parts = hostname.split('--');
-          parts[0] = 'pos';
-          return `${protocol}//${parts.join('--')}`;
-        }
-        return `${protocol}//${hostname}`;
+        return `https://pos.bumianyom.com`;
       };
       const basePosUrl = getPosUrl().replace(/\/+$/, '');
 

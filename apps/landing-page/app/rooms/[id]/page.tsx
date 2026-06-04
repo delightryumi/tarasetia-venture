@@ -93,7 +93,7 @@ export default function RoomDetailsPage() {
     </div>;
 
     return (
-        <PageLayout>
+        <PageLayout forceScrolledState={true}>
             <main className="bg-[#fdfbf7]">
                 <RoomDetailsHero images={room.images} name={room.name} />
 

@@ -76,7 +76,7 @@ export default function PackageDetailsPage() {
         }).format(p);
 
     return (
-        <PageLayout>
+        <PageLayout forceScrolledState={true}>
             <main className="bg-[#fdfbf7] min-h-screen">
                 
                 {/* ── Hero Section ── */}

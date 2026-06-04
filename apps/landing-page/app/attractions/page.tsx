@@ -58,7 +58,7 @@ export default function AttractionsPage() {
     );
 
     return (
-        <PageLayout>
+        <PageLayout forceScrolledState={true}>
             <main ref={containerRef} className="bg-[#fdfbf7] min-h-screen selection:bg-[#788069] selection:text-white">
                 
                 {/* ── Editorial Hero ── */}

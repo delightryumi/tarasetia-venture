@@ -169,21 +169,15 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       }
     }
 
-    let url = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/select-module';
+    let url = 'https://pms.bumianyom.com/select-module';
     if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
       url = process.env.NEXT_PUBLIC_DASHBOARD_URL;
     } else if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
       if (hostname.startsWith('pos.')) {
-        url = `${protocol}//${hostname.replace('pos.', 'dashboard.')}/select-module`;
-      } else if (hostname.includes('--bumi-anyom')) {
-        const parts = hostname.split('--');
-        parts[0] = 'bumianyom-web-1';
-        url = `${protocol}//${parts.join('--')}/select-module`;
-      } else if (hostname.includes('pos')) {
-        url = `${protocol}//${hostname.replace('pos', 'bumianyom-web-1')}/select-module`;
+        url = `${protocol}//${hostname.replace('pos.', 'pms.')}/select-module`;
       } else {
-        url = `${protocol}//${hostname}/select-module`;
+        url = `https://pms.bumianyom.com/select-module`;
       }
     }
     
@@ -208,28 +202,22 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       }
     }
 
-    let url = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/login';
+    let url = 'https://pms.bumianyom.com/login';
     if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
       url = process.env.NEXT_PUBLIC_DASHBOARD_URL.replace('/select-module', '') + '/login';
     } else if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
       if (hostname.startsWith('pos.')) {
-        url = `${protocol}//${hostname.replace('pos.', 'dashboard.')}/login`;
-      } else if (hostname.includes('--bumi-anyom')) {
-        const parts = hostname.split('--');
-        parts[0] = 'bumianyom-web-1';
-        url = `${protocol}//${parts.join('--')}/login`;
-      } else if (hostname.includes('pos')) {
-        url = `${protocol}//${hostname.replace('pos', 'bumianyom-web-1')}/login`;
+        url = `${protocol}//${hostname.replace('pos.', 'pms.')}/login`;
       } else {
-        url = `${protocol}//${hostname}/login`;
+        url = `https://pms.bumianyom.com/login`;
       }
     }
     return url;
   };
 
-  const [dashboardUrl, setDashboardUrl] = useState('https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/select-module');
-  const [loginGatewayUrl, setLoginGatewayUrl] = useState('https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app');
+  const [dashboardUrl, setDashboardUrl] = useState('https://pms.bumianyom.com/select-module');
+  const [loginGatewayUrl, setLoginGatewayUrl] = useState('https://pms.bumianyom.com/login');
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {

@@ -58,7 +58,7 @@ export default function AttractionDetailsPage() {
     }
 
     return (
-        <PageLayout>
+        <PageLayout forceScrolledState={true}>
             <main className="bg-[#fdfbf7] min-h-screen selection:bg-[#788069] selection:text-white">
                 
                 {/* ── Cinematic Hero ── */}

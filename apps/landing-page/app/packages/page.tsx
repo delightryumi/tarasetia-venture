@@ -71,7 +71,7 @@ export default function PackagesPage() {
     );
 
     return (
-        <PageLayout>
+        <PageLayout forceScrolledState={true}>
             <main className="bg-[#fdfbf7] min-h-screen">
                 {/* Hero */}
                 <section className="relative h-[50vh] flex items-center justify-center pt-24 overflow-hidden">

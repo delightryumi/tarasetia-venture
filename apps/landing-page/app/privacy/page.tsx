@@ -7,7 +7,7 @@ import { Shield, Eye, Lock, FileText, ChevronRight } from "lucide-react";
 
 export default function PrivacyPage() {
     return (
-        <PageLayout>
+        <PageLayout forceScrolledState={true}>
             <main className="bg-[#fdfbf7] min-h-screen selection:bg-[#788069] selection:text-white">
                 {/* Hero / Header Section */}
                 <section className="relative h-[55vh] flex flex-col items-center justify-center pt-24 px-6 text-center border-b border-black/5">

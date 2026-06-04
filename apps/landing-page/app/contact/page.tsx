@@ -17,7 +17,7 @@ export default function ContactPage() {
     );
 
     return (
-        <PageLayout>
+        <PageLayout forceScrolledState={true}>
             <main className="bg-[#fdfbf7] min-h-screen">
                 {/* Hero */}
                 <section className="relative h-[60vh] flex flex-col items-center justify-center pt-24 px-6 text-center border-b border-black/5">

@@ -137,7 +137,7 @@ export default function GalleryPage() {
     );
 
     return (
-        <PageLayout>
+        <PageLayout forceScrolledState={true}>
             <main ref={containerRef} className="bg-[#fdfbf7] min-h-screen relative selection:bg-[#788069] selection:text-white">
                 
                 {/* ── Custom Cursor ── */}

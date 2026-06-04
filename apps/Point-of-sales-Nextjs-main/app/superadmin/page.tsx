@@ -165,21 +165,15 @@ export default function SuperadminPage() {
     }
 
     if (!dashboardUrl) {
-      dashboardUrl = 'https://bumianyom-web-1--bumi-anyom.asia-southeast1.hosted.app/select-module';
+      dashboardUrl = 'https://pms.bumianyom.com/select-module';
       if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
         dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL;
       } else if (typeof window !== 'undefined') {
         const { protocol, hostname } = window.location;
         if (hostname.startsWith('pos.')) {
-          dashboardUrl = `${protocol}//${hostname.replace('pos.', 'dashboard.')}/select-module`;
-        } else if (hostname.includes('--bumi-anyom')) {
-          const parts = hostname.split('--');
-          parts[0] = 'admin-dashboard';
-          dashboardUrl = `${protocol}//${parts.join('--')}/select-module`;
-        } else if (hostname.includes('pos')) {
-          dashboardUrl = `${protocol}//${hostname.replace('pos', 'admin-dashboard')}/select-module`;
+          dashboardUrl = `${protocol}//${hostname.replace('pos.', 'pms.')}/select-module`;
         } else {
-          dashboardUrl = `${protocol}//${hostname}/select-module`;
+          dashboardUrl = `https://pms.bumianyom.com/select-module`;
         }
       }
     }
