@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Send } from "lucide-react";
+import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const WhatsAppIcon = ({ size = 18 }: { size?: number }) => (
@@ -17,139 +17,102 @@ const WhatsAppIcon = ({ size = 18 }: { size?: number }) => (
 
 export function WhatsAppWidget() {
     const [isOpen, setIsOpen] = useState(false);
-    const [message, setMessage] = useState("");
-    
     const phoneNumber = "628112719990"; 
-    
-    const handleSend = () => {
-        const text = message.trim() 
-            ? encodeURIComponent(message.trim())
-            : encodeURIComponent("Halo Admin Bumi Anyom, saya butuh bantuan.");
-        const url = `https://wa.me/${phoneNumber}?text=${text}`;
-        window.open(url, "_blank", "noopener,noreferrer");
-        setMessage("");
-        setIsOpen(false);
-    };
+    const waUrl = `https://wa.me/${phoneNumber}?text=Halo%20Admin%20Bumi%20Anyom,%20saya%20butuh%20bantuan.`;
 
     return (
         <div style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 9999, fontFamily: "var(--font-geist-sans), sans-serif" }}>
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                         style={{
-                            width: "290px",
-                            borderRadius: "12px",
+                            width: "220px",
+                            borderRadius: "10px",
                             backgroundColor: "#ffffff",
                             border: "1px solid rgba(0, 0, 0, 0.08)",
-                            boxShadow: "0 16px 48px -12px rgba(24, 29, 38, 0.12)",
-                            marginBottom: "12px",
-                            overflow: "hidden",
+                            boxShadow: "0 12px 36px -8px rgba(24, 29, 38, 0.12)",
+                            marginBottom: "10px",
+                            padding: "12px",
                             display: "flex",
-                            flexDirection: "column"
+                            flexDirection: "column",
+                            gap: "10px"
                         }}
                     >
-                        {/* Header: Compact Support Brand */}
-                        <div style={{ padding: "12px 14px", backgroundColor: "#788069", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        {/* Upper Info Row */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <div style={{ position: "relative", width: "28px", height: "28px", borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255, 255, 255, 0.6)", flexShrink: 0 }}>
+                                <div style={{ position: "relative", width: "24px", height: "24px", borderRadius: "50%", overflow: "hidden", border: "1px solid rgba(0,0,0,0.05)", flexShrink: 0 }}>
                                     <img 
                                         src="/avatar/memo_9.png" 
                                         alt="CS Avatar" 
                                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                                     />
-                                    <div style={{ position: "absolute", bottom: "0", right: "0", width: "7px", height: "7px", borderRadius: "50%", backgroundColor: "#10b981", border: "1.5px solid #788069" }} />
+                                    <div style={{ position: "absolute", bottom: "0", right: "0", width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#10b981", border: "1px solid #ffffff" }} />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column" }}>
-                                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#ffffff", lineHeight: 1.1 }}>Bumi Anyom Concierge</span>
-                                    <span style={{ fontSize: "8px", color: "rgba(255, 255, 255, 0.8)", fontWeight: 500 }}>Online & Ready</span>
+                                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#181d26", lineHeight: 1.1 }}>CS Admin</span>
+                                    <span style={{ fontSize: "8px", color: "#10b981", fontWeight: 600 }}>Ready to chat</span>
                                 </div>
                             </div>
                             <button 
                                 onClick={() => setIsOpen(false)} 
-                                style={{ background: "transparent", border: "none", color: "#ffffff", cursor: "pointer", padding: "4px", display: "flex", alignItems: "center", opacity: 0.85 }}
+                                style={{ background: "transparent", border: "none", color: "#8c8c8c", cursor: "pointer", padding: "2px", display: "flex", alignItems: "center" }}
                             >
-                                <X size={14} />
+                                <X size={12} />
                             </button>
                         </div>
 
-                        {/* Body Chat Bubble & Input (Unified & Compact) */}
-                        <div style={{ padding: "14px", backgroundColor: "#faf9f6", display: "flex", flexDirection: "column", gap: "10px" }}>
-                            <div style={{ alignSelf: "flex-start", backgroundColor: "#ffffff", border: "1px solid rgba(120, 128, 105, 0.1)", padding: "10px", borderRadius: "0 8px 8px 8px", boxShadow: "0 2px 4px rgba(0, 0, 0, 0.01)" }}>
-                                <p style={{ fontSize: "10px", color: "#44403c", margin: 0, lineHeight: 1.4 }}>
-                                    Halo! Butuh bantuan atau informasi? Ketik pesan Anda di bawah untuk chat langsung via WhatsApp.
-                                </p>
-                            </div>
-
-                            {/* Minimalist Input Bar */}
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px" }}>
-                                <input
-                                    type="text"
-                                    value={message}
-                                    onChange={(e) => setMessage(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter") handleSend();
-                                    }}
-                                    placeholder="Tulis pesan..."
-                                    style={{
-                                        flex: 1,
-                                        height: "34px",
-                                        padding: "0 12px",
-                                        fontSize: "11px",
-                                        borderRadius: "17px",
-                                        border: "1px solid #e5e5e5",
-                                        outline: "none",
-                                        fontFamily: "inherit",
-                                        color: "#333840",
-                                        backgroundColor: "#ffffff",
-                                        transition: "border-color 150ms ease"
-                                    }}
-                                />
-                                <button 
-                                    onClick={handleSend}
-                                    style={{
-                                        width: "34px",
-                                        height: "34px",
-                                        borderRadius: "50%",
-                                        backgroundColor: "#00a884", // Pure WA green
-                                        color: "#ffffff",
-                                        border: "none",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        cursor: "pointer",
-                                        boxShadow: "0 4px 10px rgba(0, 168, 132, 0.15)",
-                                        flexShrink: 0,
-                                        transition: "transform 150ms ease"
-                                    }}
-                                >
-                                    <Send size={11} style={{ marginLeft: "1px" }} />
-                                </button>
-                            </div>
-                        </div>
+                        {/* Direct WA Action Link */}
+                        <a 
+                            href={waUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            onClick={() => setIsOpen(false)}
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "6px",
+                                height: "30px",
+                                backgroundColor: "#00a884", // Pure WA green
+                                color: "#ffffff",
+                                fontSize: "10px",
+                                fontWeight: 700,
+                                borderRadius: "6px",
+                                textDecoration: "none",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                                boxShadow: "0 4px 10px rgba(0, 168, 132, 0.15)",
+                                transition: "background 150ms ease"
+                            }}
+                        >
+                            <WhatsAppIcon size={12} />
+                            <span>Chat Sekarang</span>
+                        </a>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* Toggle Button: Compact & Sleek Circle */}
+            {/* Toggle Button: Compact Circle */}
             <motion.button
                 onClick={() => setIsOpen(!isOpen)}
-                whileHover={{ scale: 1.05, y: -1 }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    width: "46px",
-                    height: "46px",
+                    width: "44px",
+                    height: "44px",
                     borderRadius: "50%",
-                    backgroundColor: "#00a884", // WA Green
+                    backgroundColor: "#00a884", 
                     color: "#ffffff",
                     border: "none",
-                    boxShadow: "0 6px 20px rgba(0, 168, 132, 0.25)",
+                    boxShadow: "0 6px 20px rgba(0, 168, 132, 0.2)",
                     cursor: "pointer",
                     zIndex: 10000,
                     position: "relative"
@@ -162,8 +125,8 @@ export function WhatsAppWidget() {
                             position: "absolute", 
                             top: "1px", 
                             right: "1px", 
-                            width: "9px", 
-                            height: "9px", 
+                            width: "8px", 
+                            height: "8px", 
                             borderRadius: "50%", 
                             backgroundColor: "#ef4444", 
                             border: "1.5px solid #ffffff",
