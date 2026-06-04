@@ -21,77 +21,83 @@ export function WhatsAppWidget() {
 
     return (
         <div style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 9999, fontFamily: "var(--font-geist-sans), sans-serif" }}>
-            {isOpen && (
-                <div
+            {/* Pop-up: Absolutely Positioned above the button */}
+            <div
+                style={{
+                    position: "absolute",
+                    bottom: "54px", // 44px (button height) + 10px spacing
+                    right: "0",
+                    width: "220px",
+                    borderRadius: "10px",
+                    backgroundColor: "#ffffff",
+                    border: "1px solid rgba(0, 0, 0, 0.08)",
+                    boxShadow: "0 12px 36px -8px rgba(24, 29, 38, 0.12)",
+                    padding: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                    opacity: isOpen ? 1 : 0,
+                    transform: isOpen ? "translateY(0) scale(1)" : "translateY(10px) scale(0.95)",
+                    pointerEvents: isOpen ? "auto" : "none",
+                    transformOrigin: "bottom right",
+                    transition: "opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)"
+                }}
+            >
+                {/* Upper Info Row */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div style={{ position: "relative", width: "24px", height: "24px", borderRadius: "50%", overflow: "hidden", border: "1px solid rgba(0,0,0,0.05)", flexShrink: 0 }}>
+                            <img 
+                                src="/avatar/memo_9.png" 
+                                alt="CS Avatar" 
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                            <div style={{ position: "absolute", bottom: "0", right: "0", width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#10b981", border: "1px solid #ffffff" }} />
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontSize: "11px", fontWeight: 700, color: "#181d26", lineHeight: 1.1 }}>CS Admin</span>
+                            <span style={{ fontSize: "8px", color: "#10b981", fontWeight: 600 }}>Ready to chat</span>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => setIsOpen(false)} 
+                        style={{ background: "transparent", border: "none", color: "#8c8c8c", cursor: "pointer", padding: "2px", display: "flex", alignItems: "center" }}
+                    >
+                        <X size={12} />
+                    </button>
+                </div>
+
+                {/* Direct WA Action Link */}
+                <a 
+                    href={waUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    onClick={() => setIsOpen(false)}
                     style={{
-                        width: "220px",
-                        borderRadius: "10px",
-                        backgroundColor: "#ffffff",
-                        border: "1px solid rgba(0, 0, 0, 0.08)",
-                        boxShadow: "0 12px 36px -8px rgba(24, 29, 38, 0.12)",
-                        marginBottom: "10px",
-                        padding: "12px",
                         display: "flex",
-                        flexDirection: "column",
-                        gap: "10px"
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "6px",
+                        height: "30px",
+                        backgroundColor: "#00a884", 
+                        color: "#ffffff",
+                        fontSize: "10px",
+                        fontWeight: 700,
+                        borderRadius: "6px",
+                        textDecoration: "none",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        boxShadow: "0 4px 10px rgba(0, 168, 132, 0.15)",
+                        transition: "background 150ms ease"
                     }}
                 >
-                    {/* Upper Info Row */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <div style={{ position: "relative", width: "24px", height: "24px", borderRadius: "50%", overflow: "hidden", border: "1px solid rgba(0,0,0,0.05)", flexShrink: 0 }}>
-                                <img 
-                                    src="/avatar/memo_9.png" 
-                                    alt="CS Avatar" 
-                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                />
-                                <div style={{ position: "absolute", bottom: "0", right: "0", width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#10b981", border: "1px solid #ffffff" }} />
-                            </div>
-                            <div style={{ display: "flex", flexDirection: "column" }}>
-                                <span style={{ fontSize: "11px", fontWeight: 700, color: "#181d26", lineHeight: 1.1 }}>CS Admin</span>
-                                <span style={{ fontSize: "8px", color: "#10b981", fontWeight: 600 }}>Ready to chat</span>
-                            </div>
-                        </div>
-                        <button 
-                            onClick={() => setIsOpen(false)} 
-                            style={{ background: "transparent", border: "none", color: "#8c8c8c", cursor: "pointer", padding: "2px", display: "flex", alignItems: "center" }}
-                        >
-                            <X size={12} />
-                        </button>
-                    </div>
+                    <WhatsAppIcon size={12} />
+                    <span>Chat Sekarang</span>
+                </a>
+            </div>
 
-                    {/* Direct WA Action Link */}
-                    <a 
-                        href={waUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        onClick={() => setIsOpen(false)}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "6px",
-                            height: "30px",
-                            backgroundColor: "#00a884", 
-                            color: "#ffffff",
-                            fontSize: "10px",
-                            fontWeight: 700,
-                            borderRadius: "6px",
-                            textDecoration: "none",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.05em",
-                            boxShadow: "0 4px 10px rgba(0, 168, 132, 0.15)",
-                            transition: "background 150ms ease"
-                        }}
-                    >
-                        <WhatsAppIcon size={12} />
-                        <span>Chat Sekarang</span>
-                    </a>
-                </div>
-            )}
-
-            {/* Toggle Button: Compact Circle */}
+            {/* Toggle Button: Compact Circle (Anchored exactly at bottom:20px, right:20px) */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 style={{
@@ -107,8 +113,10 @@ export function WhatsAppWidget() {
                     boxShadow: "0 6px 20px rgba(0, 168, 132, 0.2)",
                     cursor: "pointer",
                     zIndex: 10000,
-                    position: "relative"
+                    position: "relative",
+                    transition: "transform 150ms ease"
                 }}
+                onMouseDown={(e) => e.preventDefault()}
             >
                 <WhatsAppIcon size={20} />
                 {!isOpen && (
