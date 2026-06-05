@@ -7,6 +7,7 @@ import {
   LayoutDashboard, FileText, ShoppingCart, Coffee,
   ClipboardList, Package, Users, ArrowLeft
 } from 'lucide-react';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import styles from './PurchasingShell.module.css';
 import './purchasing-tokens.css';
 
@@ -96,6 +97,8 @@ export function PurchasingShell({ children }: PurchasingShellProps) {
           {children}
         </div>
       </main>
+
+      <MobileBottomNav />
     </div>
   );
 }

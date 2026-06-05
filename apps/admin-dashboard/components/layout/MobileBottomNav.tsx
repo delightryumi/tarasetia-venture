@@ -133,10 +133,10 @@ export const MobileBottomNav = () => {
         { id: "seo", label: "SEO", icon: <Search size={20} /> },
         { id: "users", label: "Users", icon: <Users size={20} /> },
         { id: "purchasing", label: "Dasbor", icon: <Home size={20} /> },
-        { id: "store-requisition", label: "Store Requisition", icon: <FileText size={20} /> },
-        { id: "purchase-requisition", label: "Purchase Requisition", icon: <ShoppingCart size={20} /> },
-        { id: "daily-market-list", label: "Daily Market List", icon: <Coffee size={20} /> },
-        { id: "stock-opname", label: "Stock Opname", icon: <PieChart size={20} /> },
+        { id: "store-requisition", label: "SR", icon: <FileText size={20} /> },
+        { id: "purchase-requisition", label: "PR", icon: <ShoppingCart size={20} /> },
+        { id: "daily-market-list", label: "DML", icon: <Coffee size={20} /> },
+        { id: "stock-opname", label: "SO", icon: <PieChart size={20} /> },
         { id: "items", label: "Master Barang", icon: <Package size={20} /> },
         { id: "suppliers", label: "Supplier", icon: <Users size={20} /> },
         { id: "purchase-order", label: "PO List", icon: <ClipboardList size={20} /> },
@@ -202,7 +202,7 @@ export const MobileBottomNav = () => {
                     {/* Pilih Modul Button */}
                     <button
                         onClick={() => router.push('/select-module')}
-                        className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] text-white/50 hover:text-white transition-all duration-300"
+                        className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] flex-shrink-0 text-white/50 hover:text-white transition-all duration-300"
                         title="Pilih Modul"
                     >
                         <Grid size={18} className="text-[#ffd8a6]" />
@@ -230,7 +230,7 @@ export const MobileBottomNav = () => {
                                     }
                                 }}
                                 className={`
-                                    flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] transition-all duration-200
+                                    flex flex-col items-center justify-center gap-1 min-w-[55px] px-3 h-[54px] flex-shrink-0 transition-all duration-200
                                     ${isActive 
                                         ? 'text-[#ffd8a6]' 
                                         : 'text-white/50 hover:text-white'
@@ -254,7 +254,7 @@ export const MobileBottomNav = () => {
 
                     <button
                         onClick={signOutUser}
-                        className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] text-white/40 hover:text-rose-450 transition-all duration-300"
+                        className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] flex-shrink-0 text-white/40 hover:text-rose-450 transition-all duration-300"
                         title="Keluar"
                     >
                         <LogOut size={18} />

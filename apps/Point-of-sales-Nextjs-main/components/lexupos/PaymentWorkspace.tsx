@@ -71,7 +71,17 @@ export default function PaymentWorkspace({
     <div className="flex flex-col lg:flex-row flex-1 h-full min-w-0 overflow-y-auto lg:overflow-hidden bg-neutral-50/30 dark:bg-zinc-950/30">
       
       {/* Left Side: Transaction Review */}
-      <div className="flex-1 flex flex-col min-w-0 p-5 lg:p-8 shrink-0 overflow-y-auto thin-scrollbar">
+      <div className="flex-1 flex flex-col min-w-0 p-5 lg:p-8 shrink-0 lg:overflow-y-auto thin-scrollbar">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBackToPOS}
+          className="self-start text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white flex items-center gap-1.5 text-xs font-semibold px-2 py-1 mb-4 border border-neutral-200 dark:border-white/10 rounded-xl"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Kembali ke POS</span>
+        </Button>
+
         <div className="flex flex-col gap-3 mb-5 shrink-0">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-neutral-800 dark:text-neutral-200">
@@ -105,7 +115,15 @@ export default function PaymentWorkspace({
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-zinc-900/50 border border-neutral-200/80 dark:border-white/[0.05] rounded-2xl p-5 flex flex-col gap-4 thin-scrollbar shadow-sm">
+        {/* Compact Item Summary on Mobile */}
+        <div className="flex lg:hidden items-center justify-between bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.05] rounded-xl p-3 shadow-sm mb-4 shrink-0">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">Total Item</span>
+          <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+            {cart.reduce((sum, item) => sum + item.quantity, 0)} Pcs ({formatCurrency(subtotal)})
+          </span>
+        </div>
+
+        <div className="hidden lg:flex flex-1 overflow-y-auto bg-white dark:bg-zinc-900/50 border border-neutral-200/80 dark:border-white/[0.05] rounded-2xl p-5 flex flex-col gap-4 thin-scrollbar shadow-sm">
           {cart.map((item) => (
             <div 
               key={item.product.id}

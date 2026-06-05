@@ -14,14 +14,18 @@ import { syncUnsyncedTransactions, syncProductsFromServer } from '@/lib/dexie-sy
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { ShoppingBag } from 'lucide-react';
+import { useCurrency } from '@/hooks/useCurrency';
 
 // Dynamic products will be fetched from Dexie (localDb) synced with the backend
 export default function LexuPosPage() {
+  const { formatCurrency } = useCurrency();
   const [step, setStep] = useState<'pos' | 'payment'>('pos');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [showCart, setShowCart] = useState(false);
 
   // Customer, Table & Notes state
   const [customerName, setCustomerName] = useState('');
@@ -351,9 +355,9 @@ export default function LexuPosPage() {
   };
 
   return (
-    <div className="flex h-full w-full flex-col">
-      <div className="flex flex-1 flex-col w-full h-full">
-        <div className="w-full h-[calc(100vh-100px)] flex rounded-2xl overflow-hidden bg-white dark:bg-zinc-950 border border-neutral-200 dark:border-white/[0.1] shadow-sm">
+    <div className="flex h-full w-full flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col w-full h-full overflow-hidden">
+        <div className="w-full h-full flex md:rounded-2xl overflow-hidden bg-white dark:bg-zinc-950 border-0 md:border border-neutral-200 dark:border-white/[0.1] shadow-none md:shadow-sm">
           {/* Dynamic Style Tag to completely hide browser scrollbars */}
           <style>{`
             .no-scrollbar::-webkit-scrollbar {
@@ -393,45 +397,64 @@ export default function LexuPosPage() {
           {step === 'pos' ? (
             <>
               {/* Left Side: Product Selection */}
-              <POSCatalogView
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                selectedCategory={selectedCategory}
-                setSelectedCategory={handleCategoryChange}
-                categories={dynamicCategories}
-                subcategories={dynamicSubcategories}
-                selectedSubcategory={selectedSubcategory}
-                setSelectedSubcategory={(sub) => {
-                  if (!checkActiveShift()) return;
-                  setSelectedSubcategory(sub);
-                }}
-                filteredProducts={filteredProducts}
-                onAddToCart={addToCart}
-              />
+              <div className={`flex-1 h-full flex ${showCart ? 'hidden lg:flex' : 'flex'}`}>
+                <POSCatalogView
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  selectedCategory={selectedCategory}
+                  setSelectedCategory={handleCategoryChange}
+                  categories={dynamicCategories}
+                  subcategories={dynamicSubcategories}
+                  selectedSubcategory={selectedSubcategory}
+                  setSelectedSubcategory={(sub) => {
+                    if (!checkActiveShift()) return;
+                    setSelectedSubcategory(sub);
+                  }}
+                  filteredProducts={filteredProducts}
+                  onAddToCart={addToCart}
+                />
+              </div>
 
               {/* Right Side: Cart Summary */}
-              <POSCartSidebar
-                customerName={customerName}
-                setCustomerName={setCustomerName}
-                tableNumber={tableNumber}
-                setTableNumber={setTableNumber}
-                notes={notes}
-                setNotes={setNotes}
-                cart={cart}
-                onUpdateQuantity={updateQuantity}
-                onClearCart={clearCart}
-                subtotal={subtotal}
-                tax={tax}
-                discount={discount}
-                discountPercent={discountPercent}
-                setDiscountPercent={setDiscountPercent}
-                payableAmount={payableAmount}
-                onHoldOrder={() => {
-                  if (!checkActiveShift()) return;
-                  setIsHoldConfirmOpen(true);
-                }}
-                onProceed={handleProceed}
-              />
+              <div className={`h-full ${showCart ? 'flex w-full lg:w-auto' : 'hidden lg:flex'}`}>
+                <POSCartSidebar
+                  customerName={customerName}
+                  setCustomerName={setCustomerName}
+                  tableNumber={tableNumber}
+                  setTableNumber={setTableNumber}
+                  notes={notes}
+                  setNotes={setNotes}
+                  cart={cart}
+                  onUpdateQuantity={updateQuantity}
+                  onClearCart={clearCart}
+                  subtotal={subtotal}
+                  tax={tax}
+                  discount={discount}
+                  discountPercent={discountPercent}
+                  setDiscountPercent={setDiscountPercent}
+                  payableAmount={payableAmount}
+                  onHoldOrder={() => {
+                    if (!checkActiveShift()) return;
+                    setIsHoldConfirmOpen(true);
+                  }}
+                  onProceed={handleProceed}
+                  onBackToCatalog={() => setShowCart(false)}
+                />
+              </div>
+
+              {/* Mobile Floating Cart Button */}
+              {!showCart && cart.length > 0 && (
+                <button
+                  onClick={() => setShowCart(true)}
+                  className="fixed bottom-24 right-6 z-50 lg:hidden bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-3 rounded-full shadow-2xl flex items-center gap-2 active:scale-95 transition-transform"
+                >
+                  <ShoppingBag size={18} />
+                  <span className="bg-white text-emerald-600 font-bold text-[10px] rounded-full w-5 h-5 flex items-center justify-center">
+                    {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                  </span>
+                  <span className="text-[11px] font-extrabold">{formatCurrency(payableAmount)}</span>
+                </button>
+              )}
             </>
           ) : (
             /* Payment Step Interface */

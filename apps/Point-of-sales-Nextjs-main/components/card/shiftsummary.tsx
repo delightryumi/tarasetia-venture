@@ -42,20 +42,20 @@ function ActiveShiftSummary(): React.ReactNode {
       className="flex flex-1 w-full h-full min-h-[6rem] dark:bg-dot-white/[0.2] bg-dot-black/[0.2] flex-col justify-center items-center px-4"
     >
       {activeShift ? (
-        <div className="w-full flex gap-4 h-full">
-          <div className="h-full w-1/3 rounded-2xl bg-emerald-50/[0.8] p-4 dark:bg-emerald-950/20 dark:border-emerald-500/[0.2] border border-emerald-200 flex flex-col items-center justify-center">
-            <UserCircle size={40} className="text-emerald-600 dark:text-emerald-400" />
-            <p className="sm:text-sm text-xs text-center font-semibold text-neutral-500 mt-4">
+        <div className="w-full flex flex-col md:flex-row gap-4 h-auto md:h-full py-2">
+          <div className="py-4 px-3 w-full md:w-1/3 rounded-2xl bg-emerald-50/[0.8] dark:bg-emerald-950/20 dark:border-emerald-500/[0.2] border border-emerald-200 flex flex-col items-center justify-center">
+            <UserCircle size={32} className="text-emerald-600 dark:text-emerald-400" />
+            <p className="text-[10px] sm:text-xs text-center font-semibold text-neutral-500 mt-2">
               Kasir Aktif
             </p>
-            <p className="font-bold text-neutral-800 dark:text-white mt-1 text-center">
+            <p className="font-bold text-neutral-800 dark:text-white mt-1 text-center text-xs sm:text-sm truncate max-w-full px-1" title={activeShift.cashierName}>
               {activeShift.cashierName}
             </p>
           </div>
 
-          <div className="h-full w-1/3 rounded-2xl bg-blue-50/[0.8] p-4 dark:bg-blue-950/20 dark:border-blue-500/[0.2] border border-blue-200 flex flex-col items-center justify-center">
-            <Clock size={40} className="text-blue-600 dark:text-blue-400" />
-            <p className="sm:text-sm text-xs text-center font-semibold text-neutral-500 mt-4">
+          <div className="py-4 px-3 w-full md:w-1/3 rounded-2xl bg-blue-50/[0.8] dark:bg-blue-950/20 dark:border-blue-500/[0.2] border border-blue-200 flex flex-col items-center justify-center">
+            <Clock size={32} className="text-blue-600 dark:text-blue-400" />
+            <p className="text-[10px] sm:text-xs text-center font-semibold text-neutral-500 mt-2">
               Waktu Buka
             </p>
             <p className="font-bold text-neutral-800 dark:text-white mt-1 text-center text-xs">
@@ -63,12 +63,12 @@ function ActiveShiftSummary(): React.ReactNode {
             </p>
           </div>
 
-          <div className="h-full w-1/3 rounded-2xl bg-amber-50/[0.8] p-4 dark:bg-amber-950/20 dark:border-amber-500/[0.2] border border-amber-200 flex flex-col items-center justify-center">
-            <Wallet size={40} className="text-amber-600 dark:text-amber-400" />
-            <p className="sm:text-sm text-xs text-center font-semibold text-neutral-500 mt-4">
+          <div className="py-4 px-3 w-full md:w-1/3 rounded-2xl bg-amber-50/[0.8] dark:bg-amber-950/20 dark:border-amber-500/[0.2] border border-amber-200 flex flex-col items-center justify-center">
+            <Wallet size={32} className="text-amber-600 dark:text-amber-400" />
+            <p className="text-[10px] sm:text-xs text-center font-semibold text-neutral-500 mt-2">
               Kas Awal (Modal)
             </p>
-            <p className="font-bold text-amber-600 dark:text-amber-400 mt-1 text-center text-sm">
+            <p className="font-bold text-amber-600 dark:text-amber-400 mt-1 text-center text-xs sm:text-sm break-all max-w-full px-1">
               {formatCurrency(activeShift.houseBank)}
             </p>
           </div>

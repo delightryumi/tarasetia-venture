@@ -213,3 +213,9 @@
     padding: var(--p-space-md); /* 16px padding on tablets to avoid any cutoffs */
   }
 }
+
+@media (max-width: 1024px) {
+  .mainInner {
+    padding-bottom: 100px;
+  }
+}

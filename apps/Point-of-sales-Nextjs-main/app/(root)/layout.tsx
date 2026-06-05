@@ -13,6 +13,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { useTheme } from 'next-themes';
 import Navbar from '@/components/dashboard/navbar';
 import { NavbarSheet } from '@/components/dashboard/NavbarSheet';
+import { MobileBottomNav } from '@/components/dashboard/MobileBottomNav';
 import { NAVBAR_ITEMS } from '@/constant/navbarMenu';
 import { useRBAC } from '@/hooks/useRBAC';
 import { toast } from 'react-toastify';
@@ -34,6 +35,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
 
   const isRecordDetail = pathname?.startsWith('/records/') && pathname !== '/records';
+  const isLexuPos = pathname === '/lexupos';
 
   const handleLogout = () => {
     localStorage.clear();
@@ -244,7 +246,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex flex-col h-full overflow-hidden relative">
           <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 sticky top-0 z-10">
             <div className="flex items-center gap-4">
               <Sheet>
@@ -261,19 +263,12 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                 <NavbarSheet />
               </Sheet>
               
-              {isRecordDetail ? (
+              {isRecordDetail && (
                 <Button asChild variant="ghost" size="sm" className="h-9 px-3 gap-1.5 rounded-xl text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors border border-transparent hover:border-neutral-200 dark:hover:border-white/10 shrink-0">
                   <Link href="/records" className="flex items-center gap-1.5">
                     <ArrowLeft className="h-4 w-4" />
                     <span className="hidden sm:inline text-xs font-semibold">Back</span>
                   </Link>
-                </Button>
-              ) : (
-                <Button asChild variant="ghost" size="sm" className="h-9 px-3 gap-1.5 rounded-xl text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors border border-transparent hover:border-neutral-200 dark:hover:border-white/10 shrink-0">
-                  <a href={dashboardUrl} target="_top" className="flex items-center gap-1.5">
-                    <ArrowLeft className="h-4 w-4" />
-                    <span className="hidden sm:inline text-xs font-semibold">Menu Utama</span>
-                  </a>
                 </Button>
               )}
             </div>
@@ -282,9 +277,9 @@ const RootLayout = ({ children }: RootLayoutProps) => {
             </div>
           </header>
           
-          <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-slate-50 dark:bg-zinc-900/10">
+          <main className={`flex-1 ${isLexuPos ? 'overflow-hidden p-0 pb-[56px] md:pb-0' : 'overflow-y-auto p-4 lg:p-6 pb-[72px] md:pb-0'} bg-slate-50 dark:bg-zinc-900/10`}>
             <div
-              className="flex flex-col flex-1 rounded-lg min-h-full"
+              className={`flex flex-col flex-1 ${isLexuPos ? 'h-full rounded-none overflow-hidden' : 'rounded-lg min-h-full'}`}
               x-chunk="dashboard-02-chunk-1"
             >
               <ThemeProvider
@@ -323,6 +318,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
               </ThemeProvider>
             </div>
           </main>
+          <MobileBottomNav />
         </div>
       </div>
     </div>

@@ -155,7 +155,7 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
       <div className="flex flex-col items-center justify-center z-10 space-y-6">
         {/* Lottie Animation container */}
         <div
-          style={{ height: '280px', width: '280px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+          style={{ height: '93px', width: '93px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
           dangerouslySetInnerHTML={{
             __html: `<lottie-player src="/animated/b6a540ac-904f-11ee-9286-2bc689aa3dbc.json" background="transparent" speed="1.2" style="width: 100%; height: 100%;" loop autoplay></lottie-player>`
           }}

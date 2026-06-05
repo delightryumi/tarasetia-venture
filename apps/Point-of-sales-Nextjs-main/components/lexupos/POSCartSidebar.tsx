@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Trash2, Plus, Minus, Pause, ArrowRight, ShoppingBag } from 'lucide-react';
+import { Trash2, Plus, Minus, Pause, ArrowRight, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CartItem } from './types';
@@ -25,6 +25,7 @@ interface POSCartSidebarProps {
   payableAmount: number;
   onHoldOrder: () => void;
   onProceed: () => void;
+  onBackToCatalog?: () => void;
 }
 
 export default function POSCartSidebar({
@@ -44,11 +45,25 @@ export default function POSCartSidebar({
   setDiscountPercent,
   payableAmount,
   onHoldOrder,
-  onProceed
+  onProceed,
+  onBackToCatalog
 }: POSCartSidebarProps) {
   const { formatCurrency } = useCurrency();
   return (
-    <div className="w-[300px] md:w-[320px] lg:w-[340px] xl:w-[385px] flex flex-col h-full border-l border-neutral-200 dark:border-white/[0.1] bg-white/40 dark:bg-zinc-950/20">
+    <div className="w-full lg:w-[340px] xl:w-[385px] flex flex-col h-full border-l border-neutral-200 dark:border-white/[0.1] bg-white/40 dark:bg-zinc-950/20">
+      {onBackToCatalog && (
+        <div className="p-3 bg-neutral-100 dark:bg-zinc-900 border-b border-neutral-200 dark:border-white/[0.05] lg:hidden flex items-center shrink-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBackToCatalog}
+            className="text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white flex items-center gap-1.5 text-xs font-semibold px-2 py-1"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Kembali ke Katalog</span>
+          </Button>
+        </div>
+      )}
       
       {/* Customer & Table Inputs Header */}
       <div className="p-4 border-b border-neutral-200 dark:border-white/[0.1] flex flex-col gap-2 shrink-0 bg-white/60 dark:bg-zinc-950/40">
