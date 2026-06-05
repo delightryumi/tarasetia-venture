@@ -52,7 +52,7 @@ export function MobileBottomNav() {
               }`}
             >
               <div className="flex items-center justify-center shrink-0">
-                {React.cloneElement(item.icon as React.ReactElement, {
+                {React.cloneElement(item.icon as React.ReactElement<any>, {
                   size: 18,
                   strokeWidth: isActive ? 2.2 : 1.8,
                 })}
