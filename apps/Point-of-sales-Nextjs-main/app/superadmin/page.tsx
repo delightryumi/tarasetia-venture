@@ -58,12 +58,24 @@ export default function SuperadminPage() {
     // 1. Route guard
     const userJson = localStorage.getItem('user');
     if (!userJson) {
-      const loginGatewayUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL
-        ? process.env.NEXT_PUBLIC_DASHBOARD_URL.replace('/select-module', '')
-        : (typeof window !== 'undefined'
-          ? `${window.location.protocol}//${window.location.hostname.replace('pos.', 'dashboard.').replace(':3001', ':3000')}`
-          : 'http://localhost:3000');
-      window.location.href = loginGatewayUrl;
+      let loginGatewayUrl = '';
+      if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
+        loginGatewayUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL.replace('/select-module', '');
+      } else if (typeof window !== 'undefined') {
+        const { protocol, hostname } = window.location;
+        if (hostname.startsWith('pos.')) {
+          loginGatewayUrl = `${protocol}//${hostname.replace('pos.', 'pms.')}`;
+        } else if (hostname.includes('--bumi-anyom')) {
+          const parts = hostname.split('--');
+          parts[0] = 'bumianyom-web-1';
+          loginGatewayUrl = `${protocol}//${parts.join('--')}`;
+        } else {
+          loginGatewayUrl = `${protocol}//${hostname.replace('pos.', 'pms.').replace(':3001', ':3000')}`;
+        }
+      } else {
+        loginGatewayUrl = 'http://localhost:3000';
+      }
+      window.location.href = loginGatewayUrl + '/login';
       return;
     }
 
@@ -172,6 +184,10 @@ export default function SuperadminPage() {
         const { protocol, hostname } = window.location;
         if (hostname.startsWith('pos.')) {
           dashboardUrl = `${protocol}//${hostname.replace('pos.', 'pms.')}/select-module`;
+        } else if (hostname.includes('--bumi-anyom')) {
+          const parts = hostname.split('--');
+          parts[0] = 'bumianyom-web-1';
+          dashboardUrl = `${protocol}//${parts.join('--')}/select-module`;
         } else {
           dashboardUrl = `https://pms.bumianyom.com/select-module`;
         }

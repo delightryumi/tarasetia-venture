@@ -46,6 +46,10 @@ export function Orders() {
         const { protocol, hostname } = window.location;
         if (hostname.startsWith('pos.')) {
           dashboardUrl = `${protocol}//${hostname.replace('pos.', 'pms.')}/select-module`;
+        } else if (hostname.includes('--bumi-anyom')) {
+          const parts = hostname.split('--');
+          parts[0] = 'bumianyom-web-1';
+          dashboardUrl = `${protocol}//${parts.join('--')}/select-module`;
         } else {
           dashboardUrl = 'https://pms.bumianyom.com/select-module';
         }

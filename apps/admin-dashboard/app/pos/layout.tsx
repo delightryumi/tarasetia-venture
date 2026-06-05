@@ -22,6 +22,9 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
         if (isLocal) {
           return `${protocol}//${hostname}:3001`;
         }
+        if (hostname.startsWith('pms.')) {
+          return `${protocol}//${hostname.replace('pms.', 'pos.')}`;
+        }
         if (hostname.startsWith('dashboard.')) {
           return `${protocol}//${hostname.replace('dashboard.', 'pos.')}`;
         }
@@ -30,7 +33,7 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
           parts[0] = 'pos';
           return `${protocol}//${parts.join('--')}`;
         }
-        return `${protocol}//${hostname}`;
+        return `https://pos.bumianyom.com`;
       };
       const basePosUrl = getPosUrl().replace(/\/+$/, '');
 

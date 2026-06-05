@@ -178,6 +178,10 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       const { protocol, hostname } = window.location;
       if (hostname.startsWith('pos.')) {
         url = `${protocol}//${hostname.replace('pos.', 'pms.')}/select-module`;
+      } else if (hostname.includes('--bumi-anyom')) {
+        const parts = hostname.split('--');
+        parts[0] = 'bumianyom-web-1';
+        url = `${protocol}//${parts.join('--')}/select-module`;
       } else {
         url = `https://pms.bumianyom.com/select-module`;
       }
@@ -211,6 +215,10 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       const { protocol, hostname } = window.location;
       if (hostname.startsWith('pos.')) {
         url = `${protocol}//${hostname.replace('pos.', 'pms.')}/login`;
+      } else if (hostname.includes('--bumi-anyom')) {
+        const parts = hostname.split('--');
+        parts[0] = 'bumianyom-web-1';
+        url = `${protocol}//${parts.join('--')}/login`;
       } else {
         url = `https://pms.bumianyom.com/login`;
       }

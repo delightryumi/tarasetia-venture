@@ -17,10 +17,18 @@ export function MobileBottomNav() {
         const storedUrl = localStorage.getItem('dashboard_url');
         if (storedUrl) return storedUrl;
         
-        const { hostname } = window.location;
+        const { protocol, hostname } = window.location;
         const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
         if (isLocal) {
           return 'http://localhost:3000/select-module';
+        }
+        if (hostname.startsWith('pos.')) {
+          return `${protocol}//${hostname.replace('pos.', 'pms.')}/select-module`;
+        }
+        if (hostname.includes('--bumi-anyom')) {
+          const parts = hostname.split('--');
+          parts[0] = 'bumianyom-web-1';
+          return `${protocol}//${parts.join('--')}/select-module`;
         }
       }
       return 'https://pms.bumianyom.com/select-module';
