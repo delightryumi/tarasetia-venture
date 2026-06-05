@@ -161,10 +161,14 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   const getDashboardUrl = () => {
     if (typeof window !== 'undefined') {
+      const { protocol, hostname } = window.location;
+      if (hostname === 'pos.bumianyom.com') {
+        return `${protocol}//pms.bumianyom.com/select-module`;
+      }
+
       const storedUrl = localStorage.getItem('dashboard_url');
       if (storedUrl) return storedUrl;
 
-      const { protocol, hostname } = window.location;
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
       if (isLocal) {
         return 'http://localhost:3000/select-module';
@@ -196,12 +200,16 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   const getLoginGatewayUrl = () => {
     if (typeof window !== 'undefined') {
+      const { protocol, hostname } = window.location;
+      if (hostname === 'pos.bumianyom.com') {
+        return `${protocol}//pms.bumianyom.com/login`;
+      }
+
       const storedUrl = localStorage.getItem('dashboard_url');
       if (storedUrl) {
         return storedUrl.replace(/\/select-module$/, '') + '/login';
       }
 
-      const { protocol, hostname } = window.location;
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
       if (isLocal) {
         return 'http://localhost:3000/login';

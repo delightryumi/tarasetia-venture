@@ -59,7 +59,9 @@ export default function SuperadminPage() {
     const userJson = localStorage.getItem('user');
     if (!userJson) {
       let loginGatewayUrl = '';
-      if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
+      if (typeof window !== 'undefined' && window.location.hostname === 'pos.bumianyom.com') {
+        loginGatewayUrl = `${window.location.protocol}//pms.bumianyom.com`;
+      } else if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
         loginGatewayUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL.replace('/select-module', '');
       } else if (typeof window !== 'undefined') {
         const { protocol, hostname } = window.location;
@@ -170,9 +172,13 @@ export default function SuperadminPage() {
     
     if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
-      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
-      if (isLocal) {
-        dashboardUrl = 'http://localhost:3000/select-module';
+      if (hostname === 'pos.bumianyom.com') {
+        dashboardUrl = `${protocol}//pms.bumianyom.com/select-module`;
+      } else {
+        const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
+        if (isLocal) {
+          dashboardUrl = 'http://localhost:3000/select-module';
+        }
       }
     }
 

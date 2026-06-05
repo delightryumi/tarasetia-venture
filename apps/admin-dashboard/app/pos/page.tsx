@@ -13,6 +13,9 @@ export default function POSPage() {
       
       // Determine target POS base url dynamically
       const getPosUrl = () => {
+        if (hostname === 'pms.bumianyom.com') {
+          return `${protocol}//pos.bumianyom.com`;
+        }
         if (process.env.NEXT_PUBLIC_POS_URL) {
           return process.env.NEXT_PUBLIC_POS_URL;
         }

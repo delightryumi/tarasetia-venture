@@ -18,10 +18,14 @@ export function NavbarSheet() {
   React.useEffect(() => {
     const getDashboardUrl = () => {
       if (typeof window !== 'undefined') {
+        const { protocol, hostname } = window.location;
+        if (hostname === 'pos.bumianyom.com') {
+          return `${protocol}//pms.bumianyom.com/select-module`;
+        }
+
         const storedUrl = localStorage.getItem('dashboard_url');
         if (storedUrl) return storedUrl;
 
-        const { protocol, hostname } = window.location;
         const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
         if (isLocal) {
           return 'http://localhost:3000/select-module';
@@ -65,9 +69,13 @@ export function NavbarSheet() {
     
     if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
-      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
-      if (isLocal) {
-        dashboardUrl = 'http://localhost:3000/select-module';
+      if (hostname === 'pos.bumianyom.com') {
+        dashboardUrl = `${protocol}//pms.bumianyom.com/select-module`;
+      } else {
+        const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
+        if (isLocal) {
+          dashboardUrl = 'http://localhost:3000/select-module';
+        }
       }
     }
 
