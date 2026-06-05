@@ -64,16 +64,16 @@ export default function RoomsPage() {
     }, []);
 
     useEffect(() => {
-        if (!loading) {
-            gsap.from(".reveal-card", {
-                y: 40,
-                opacity: 0,
-                duration: 0.9,
-                stagger: 0.12,
-                ease: "power3.out",
+        if (!loading && rooms.length > 0) {
+            const ctx = gsap.context(() => {
+                gsap.fromTo(".reveal-card", 
+                    { y: 40, opacity: 0 },
+                    { y: 0, opacity: 1, duration: 0.9, stagger: 0.12, ease: "power3.out" }
+                );
             });
+            return () => ctx.revert();
         }
-    }, [loading]);
+    }, [loading, rooms]);
 
     if (loading) return (
         <div className="h-screen w-full bg-[#fdfbf7] flex items-center justify-center">
