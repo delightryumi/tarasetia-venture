@@ -4,38 +4,38 @@
 
 .purchasing-root {
   /* ── Surfaces ── */
-  --p-canvas:          #ffffff;
-  --p-surface-soft:    #f8fafc;
-  --p-surface-strong:  #e0e2e6;
-  --p-surface-dark:    #181d26;
-  --p-hairline:        #dddddd;
+  --p-canvas:          #fdfbf7;
+  --p-surface-soft:    #f5f2eb;
+  --p-surface-strong:  #e4d7b4;
+  --p-surface-dark:    #8d7a52;
+  --p-hairline:        #e4d7b4;
 
   /* ── Signature ── */
-  --p-coral:           #aa2d00;
-  --p-forest:          #0a2e0e;
-  --p-cream:           #f5e9d4;
-  --p-peach:           #fcab79;
-  --p-mint:            #a8d8c4;
-  --p-yellow:          #f4d35e;
-  --p-mustard:         #d9a441;
+  --p-coral:           #b85d3c;
+  --p-forest:          #788069;
+  --p-cream:           #f1ede0;
+  --p-peach:           #e4d7b4;
+  --p-mint:            #8d9a86;
+  --p-yellow:          #eedba5;
+  --p-mustard:         #8d7a52;
 
   /* ── Text ── */
-  --p-ink:             #181d26;
-  --p-body:            #333840;
-  --p-muted:           #41454d;
+  --p-ink:             #25221b;
+  --p-body:            #444036;
+  --p-muted:           #787466;
   --p-on-dark:         #ffffff;
 
   /* ── Actions ── */
-  --p-primary:         #181d26;
-  --p-primary-active:  #0d1218;
-  --p-link:            #1b61c9;
+  --p-primary:         #8d7a52;
+  --p-primary-active:  #70603f;
+  --p-link:            #8d7a52;
 
   /* ── Semantic ── */
-  --p-success:         #006400;
-  --p-success-border:  #39bf45;
-  --p-danger:          #aa2d00;
-  --p-info:            #254fad;
-  --p-info-border:     #458fff;
+  --p-success:         #788069;
+  --p-success-border:  #8d9a86;
+  --p-danger:          #b85d3c;
+  --p-info:            #8d7a52;
+  --p-info-border:     #e4d7b4;
 
   /* ── Spacing ── */
   --p-space-xxs:       4px;
