@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { X, Headphones } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 const WhatsAppIcon = ({ size = 18 }: { size?: number }) => (
     <svg 
@@ -15,9 +16,17 @@ const WhatsAppIcon = ({ size = 18 }: { size?: number }) => (
 );
 
 export function WhatsAppWidget() {
+    const pathname = usePathname();
+    const isSelectModule = pathname === '/select-module';
+    const isLogin = pathname === '/login';
+
     const [isOpen, setIsOpen] = useState(false);
     const phoneNumber = "628112719990"; 
     const waUrl = `https://wa.me/${phoneNumber}?text=Halo%20Admin%20Bumi%20Anyom,%20saya%20butuh%20bantuan.`;
+
+    if (isSelectModule || isLogin) {
+        return null;
+    }
 
     return (
         <div style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 9999, fontFamily: "var(--font-geist-sans), sans-serif" }}>
