@@ -16,82 +16,102 @@ const LeftPanel = React.memo(() => {
                         Access your hospitality dashboard to manage your point of sales, bookings, housekeeping, and corporate accounts.
                     </p>
                 </div>
-                {/* Live Dashboard Teaser (Opsi 1) */}
-                <div className="teaser-dashboard">
-                    <div className="teaser-header">
-                        <span className="teaser-badge">
+                
+                {/* Professional Operations Center Mockup */}
+                <div className="pro-dashboard-preview">
+                    <div className="preview-header">
+                        <div className="status-indicator">
                             <span className="pulse-dot"></span>
-                            Live System Status
-                        </span>
-                        <span className="teaser-time">Today</span>
+                            <span>Live Control Center</span>
+                        </div>
+                        <span className="preview-date">Analytics Overview</span>
                     </div>
 
-                    <div className="teaser-grid">
-                        {/* Card 1: Occupancy */}
-                        <div className="teaser-card">
-                            <div className="card-header">
-                                <span className="card-label">Occupancy</span>
-                                <span className="card-percent">+4.2%</span>
-                            </div>
-                            <div className="card-body">
-                                <h4 className="card-value">88%</h4>
-                                <div className="progress-track">
-                                    <div className="progress-bar" style={{ width: '88%' }}></div>
-                                </div>
-                            </div>
+                    {/* Stats Summary Strip */}
+                    <div className="preview-stats-row">
+                        <div className="stat-item">
+                            <span className="stat-label">Net Revenue</span>
+                            <span className="stat-value">Rp 248.89M</span>
+                            <span className="stat-trend trend-up">↑ 12.4%</span>
                         </div>
-
-                        {/* Card 2: Revenue */}
-                        <div className="teaser-card">
-                            <div className="card-header">
-                                <span className="card-label">Revenue</span>
-                                <span className="card-trend text-gold">↑ 12.4%</span>
-                            </div>
-                            <div className="card-body">
-                                <h4 className="card-value">Rp 14.8M</h4>
-                                <div className="mini-chart">
-                                    <svg viewBox="0 0 100 30" className="chart-svg">
-                                        <defs>
-                                            <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#C5A880" stopOpacity="0.4" />
-                                                <stop offset="100%" stopColor="#C5A880" stopOpacity="0.0" />
-                                            </linearGradient>
-                                        </defs>
-                                        <path
-                                            d="M0,25 Q15,10 30,18 T60,5 T90,8 L100,2"
-                                            fill="none"
-                                            stroke="#C5A880"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                        />
-                                        <path
-                                            d="M0,25 Q15,10 30,18 T60,5 T90,8 L100,2 L100,30 L0,30 Z"
-                                            fill="url(#chart-grad)"
-                                        />
-                                    </svg>
-                                </div>
-                            </div>
+                        <div className="stat-item border-l">
+                            <span className="stat-label">Occupancy</span>
+                            <span className="stat-value">92.4%</span>
+                            <span className="stat-trend trend-up">↑ 4.2%</span>
                         </div>
+                    </div>
 
-                        {/* Card 3: Active Terminals */}
-                        <div className="teaser-card col-span-2">
-                            <div className="card-header">
-                                <span className="card-label">POS Terminals</span>
-                                <span className="terminal-badge">Active</span>
+                    {/* Interactive Chart Section */}
+                    <div className="preview-section">
+                        <span className="section-title">Revenue Performance Trend</span>
+                        <div className="svg-chart-container">
+                            <svg viewBox="0 0 320 100" className="pro-chart-svg">
+                                <defs>
+                                    <linearGradient id="pro-chart-grad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#C5A880" stopOpacity="0.25" />
+                                        <stop offset="100%" stopColor="#C5A880" stopOpacity="0.0" />
+                                    </linearGradient>
+                                    <linearGradient id="grid-grad" x1="0" y1="0" x2="1" y2="0">
+                                        <stop offset="0%" stopColor="rgba(255,255,255,0.01)" />
+                                        <stop offset="50%" stopColor="rgba(255,255,255,0.05)" />
+                                        <stop offset="100%" stopColor="rgba(255,255,255,0.01)" />
+                                    </linearGradient>
+                                </defs>
+                                {/* Grid Lines */}
+                                <line x1="0" y1="20" x2="320" y2="20" stroke="url(#grid-grad)" strokeWidth="1" />
+                                <line x1="0" y1="50" x2="320" y2="50" stroke="url(#grid-grad)" strokeWidth="1" />
+                                <line x1="0" y1="80" x2="320" y2="80" stroke="url(#grid-grad)" strokeWidth="1" />
+                                
+                                {/* Area Path */}
+                                <path
+                                    d="M0,85 L20,78 L50,82 L90,45 L130,55 L170,25 L210,38 L250,15 L290,22 L320,10 L320,95 L0,95 Z"
+                                    fill="url(#pro-chart-grad)"
+                                />
+                                {/* Line Path */}
+                                <path
+                                    d="M0,85 L20,78 L50,82 L90,45 L130,55 L170,25 L210,38 L250,15 L290,22 L320,10"
+                                    fill="none"
+                                    stroke="#C5A880"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                                {/* Data Points */}
+                                <circle cx="90" cy="45" r="3" fill="#C5A880" stroke="#1A1C14" strokeWidth="1" />
+                                <circle cx="170" cy="25" r="3" fill="#C5A880" stroke="#1A1C14" strokeWidth="1" />
+                                <circle cx="250" cy="15" r="3" fill="#C5A880" stroke="#1A1C14" strokeWidth="1" />
+                                <circle cx="320" cy="10" r="3" fill="#C5A880" stroke="#1A1C14" strokeWidth="1" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* Table Section */}
+                    <div className="preview-section border-t">
+                        <span className="section-title">Recent Reservation Stream</span>
+                        <div className="preview-table">
+                            <div className="table-header-row">
+                                <span className="col-guest">Guest</span>
+                                <span className="col-room">Room</span>
+                                <span className="col-status">Status</span>
+                                <span className="col-amount text-right">Amount</span>
                             </div>
-                            <div className="card-terminal-body">
-                                <div className="terminal-item">
-                                    <span className="dot online"></span>
-                                    <span>Main cashier</span>
-                                </div>
-                                <div className="terminal-item">
-                                    <span className="dot online"></span>
-                                    <span>Restaurant POS</span>
-                                </div>
-                                <div className="terminal-item">
-                                    <span className="dot online"></span>
-                                    <span>Bar Terminal</span>
-                                </div>
+                            <div className="table-data-row">
+                                <span className="col-guest text-white">Clara Oswald</span>
+                                <span className="col-room">Suite 402</span>
+                                <span className="col-status badge-gold">Confirmed</span>
+                                <span className="col-amount text-gold text-right">Rp 4.5M</span>
+                            </div>
+                            <div className="table-data-row">
+                                <span className="col-guest text-white">David Tennant</span>
+                                <span className="col-room">Deluxe 108</span>
+                                <span className="col-status badge-sage">Checked In</span>
+                                <span className="col-amount text-gold text-right">Rp 2.8M</span>
+                            </div>
+                            <div className="table-data-row">
+                                <span className="col-guest text-white">Sarah Smith</span>
+                                <span className="col-room">Exec 301</span>
+                                <span className="col-status badge-muted">Completed</span>
+                                <span className="col-amount text-gold text-right">Rp 6.2M</span>
                             </div>
                         </div>
                     </div>

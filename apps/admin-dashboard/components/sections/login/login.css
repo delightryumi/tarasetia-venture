@@ -116,212 +116,213 @@
     font-weight: 300;
 }
 
-/* ── Live Dashboard Teaser (Opsi 1) ── */
-.teaser-dashboard {
+/* ── Professional Dashboard Mockup Preview ── */
+.pro-dashboard-preview {
     width: 100%;
     margin-top: 0.8rem;
     border-radius: 20px;
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.35), 
                 inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    padding: 1.2rem;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 1.4rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    gap: 1.2rem;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
 }
 
-.teaser-dashboard:hover {
+.pro-dashboard-preview:hover {
     transform: translateY(-2px);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), 
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45), 
                 inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.teaser-header {
+.preview-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.teaser-badge {
+.status-indicator {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(197, 168, 128, 0.1);
-    border: 1px solid rgba(197, 168, 128, 0.2);
-    padding: 4px 10px;
+    gap: 8px;
+    background: rgba(197, 168, 128, 0.08);
+    border: 1px solid rgba(197, 168, 128, 0.18);
+    padding: 5px 12px;
     border-radius: 20px;
     font-size: 0.7rem;
     font-weight: 600;
     color: #c5a880;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
 }
 
-.pulse-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: #10B981;
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    animation: pulse 1.8s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    }
-    70% {
-        transform: scale(1);
-        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
-    }
-    100% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-    }
-}
-
-.teaser-time {
+.preview-date {
     font-size: 0.7rem;
     color: rgba(255, 255, 255, 0.4);
     font-weight: 500;
 }
 
-/* Teaser Grid */
-.teaser-grid {
+/* Stats Row */
+.preview-stats-row {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.8rem;
+    grid-template-columns: 1fr 1fr;
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 10px 0;
 }
 
-.teaser-card {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: 12px;
-    padding: 0.8rem 1rem;
+.stat-item {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    transition: background 0.3s;
+    padding: 0 15px;
 }
 
-.teaser-card:hover {
-    background: rgba(255, 255, 255, 0.04);
+.stat-item.border-l {
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.col-span-2 {
-    grid-column: span 2;
-}
-
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.card-label {
+.stat-label {
     font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: rgba(255, 255, 255, 0.4);
     font-weight: 600;
+    margin-bottom: 2px;
 }
 
-.card-percent {
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: #10B981;
-}
-
-.card-trend.text-gold {
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: #c5a880;
-}
-
-.card-body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-
-.card-value {
-    font-size: 1.3rem;
+.stat-value {
+    font-size: 1.2rem;
     font-weight: 700;
     color: #ffffff;
     letter-spacing: -0.5px;
 }
 
-/* Progress Track */
-.progress-track {
-    width: 100%;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.progress-bar {
-    height: 100%;
-    background: #c5a880;
-    border-radius: 10px;
-    box-shadow: 0 0 8px rgba(197, 168, 128, 0.5);
-    transition: width 1s ease-in-out;
-}
-
-/* Mini SVG Line Chart */
-.mini-chart {
-    height: 20px;
-    width: 100%;
+.stat-trend {
+    font-size: 0.65rem;
+    font-weight: 600;
     margin-top: 2px;
 }
 
-.chart-svg {
+.trend-up {
+    color: #10B981;
+}
+
+/* Preview Section */
+.preview-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.preview-section.border-t {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 12px;
+}
+
+.section-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 600;
+}
+
+/* SVG Chart */
+.svg-chart-container {
+    height: 75px;
+    width: 100%;
+    margin-top: 5px;
+    overflow: hidden;
+}
+
+.pro-chart-svg {
     width: 100%;
     height: 100%;
     overflow: visible;
 }
 
-/* Terminal items style */
-.card-terminal-body {
+/* Preview Table */
+.preview-table {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 2px;
-}
-
-.terminal-badge {
-    font-size: 0.6rem;
-    font-weight: 700;
-    color: #10B981;
-    background: rgba(16, 185, 129, 0.1);
-    padding: 2px 6px;
-    border-radius: 4px;
-    text-transform: uppercase;
-}
-
-.terminal-item {
-    display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 6px;
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.7);
+    margin-top: 4px;
+}
+
+.table-header-row,
+.table-data-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1.2fr 1fr;
+    align-items: center;
+    font-size: 0.72rem;
+}
+
+.table-header-row {
+    color: rgba(255, 255, 255, 0.35);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.62rem;
+    letter-spacing: 0.5px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.table-data-row {
+    color: rgba(255, 255, 255, 0.6);
+    padding: 4px 0;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-white {
+    color: #ffffff;
     font-weight: 500;
 }
 
-.dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
+.text-gold {
+    color: #c5a880;
+    font-family: monospace;
+    font-weight: 600;
 }
 
-.dot.online {
-    background-color: #10B981;
-    box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+/* Status Badges */
+.badge-gold,
+.badge-sage,
+.badge-muted {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    width: fit-content;
+}
+
+.badge-gold {
+    background: rgba(197, 168, 128, 0.1);
+    color: #c5a880;
+    border: 1px solid rgba(197, 168, 128, 0.18);
+}
+
+.badge-sage {
+    background: rgba(120, 128, 105, 0.15);
+    color: #aab4a2;
+    border: 1px solid rgba(120, 128, 105, 0.25);
+}
+
+.badge-muted {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ── Right Form Panel (Warm Cream & Minimal) ── */
@@ -543,7 +544,7 @@
         line-height: 1.6;
     }
 
-    .teaser-dashboard {
+    .pro-dashboard-preview {
         display: none; /* Sembunyikan Lottie/Bento di layar pendek agar logo besar muat sempurna */
     }
 
@@ -570,9 +571,12 @@
 @media (max-width: 992px) {
     .auth-container {
         flex-direction: column;
-        height: auto;
-        max-height: none;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100vh;
+        max-height: 100dvh;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .panels-container {
@@ -607,7 +611,7 @@
         max-width: 480px;
     }
 
-    .teaser-dashboard {
+    .pro-dashboard-preview {
         max-width: 320px;
         margin: 0 auto;
         padding: 1rem;
@@ -647,7 +651,7 @@
         line-height: 1.6;
     }
 
-    .teaser-dashboard {
+    .pro-dashboard-preview {
         display: none; /* Sembunyikan bento di mobile layar kecil */
     }
 
