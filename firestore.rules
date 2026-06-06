@@ -1,0 +1,149 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // SAGE & PEACH SYSTEM "SATPAM" (RBAC & TENANCY GUARDIAN HELPER FUNCTIONS)
+    // =========================================================================
+
+    // Cek apakah user sudah login
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Cek role user dari Firebase Auth Custom Claims
+    function isSuperadmin() {
+      return isSignedIn() && request.auth.token.role == 'superadmin';
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (request.auth.token.role == 'admin' || request.auth.token.role == 'superadmin');
+    }
+
+    function isOwner() {
+      return isSignedIn() && (request.auth.token.role == 'owner' || request.auth.token.role == 'superadmin');
+    }
+
+    function isCashier() {
+      return isSignedIn() && (request.auth.token.role == 'cashier' || request.auth.token.role == 'admin' || request.auth.token.role == 'superadmin');
+    }
+
+    function isHousekeeping() {
+      return isSignedIn() && (request.auth.token.role == 'housekeeping' || request.auth.token.role == 'admin' || request.auth.token.role == 'superadmin');
+    }
+
+    // Memverifikasi apakah user memiliki izin akses ke hotelCode yang diminta (Multi-Tenancy)
+    function isAssignedToHotel(hotelCode) {
+      return isSignedIn() && request.auth.token.hotelCode == hotelCode;
+    }
+
+    // Memverifikasi izin spesifik dari map klaim token (jika disematkan)
+    function hasPermission(permission) {
+      return isSignedIn() && (
+        request.auth.token.role == 'superadmin' || 
+        (request.auth.token.permissions != null && request.auth.token.permissions[permission] == true)
+      );
+    }
+
+    // =========================================================================
+    // MULTI-HOTEL CRS TENANT ISOLATION RULES
+    // =========================================================================
+
+    // Koleksi Master Hotels: Hanya Superadmin yang bisa mengelola registrasi hotel
+    match /hotels/{hotelCode} {
+      allow read: if isSignedIn(); 
+      allow write: if isSuperadmin();
+
+      // Sub-koleksi operasional milik hotelCode tertentu (Kamar, POS, PNL, Keuangan)
+      match /{document=**} {
+        // Satpam Verifikasi: Harus Superadmin ATAU Staff resmi hotel yang bersangkutan
+        allow read, write: if isSuperadmin() || isAssignedToHotel(hotelCode);
+      }
+    }
+
+    // =========================================================================
+    // LEGACY ROOT-LEVEL COLLECTIONS RBAC (PROSES MIGRASI)
+    // =========================================================================
+
+    // Master User
+    match /users_master/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperadmin() || (isSignedIn() && request.auth.uid == userId);
+    }
+
+    // Koleksi Transaksi POS & Pendapatan Restoran
+    match /pos_orders/{orderId} {
+      allow read: if isSignedIn() && (isCashier() || isOwner());
+      allow write: if isSignedIn() && isCashier();
+    }
+
+    match /revenue_transactions/{txId} {
+      allow read: if isSignedIn() && (isCashier() || isOwner());
+      allow write: if isSignedIn() && isCashier();
+    }
+
+    match /pos_products/{prodId} {
+      allow read: if isSignedIn() || request.auth == null; // Tamu landing page/POS bisa membaca produk
+      allow write: if isSignedIn() && (isAdmin() || isSuperadmin());
+    }
+
+    // Koleksi Laporan Keuangan & Harian Hotel (Sangat Sensitif)
+    match /daily_revenue/{revId} {
+      allow read: if isSignedIn() && (isAdmin() || isOwner());
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    match /global_pnl_reports/{repId} {
+      allow read: if isSignedIn() && (isAdmin() || isOwner());
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    // Pengaturan Kamar & Promo Publik (Tamu web bisa membaca, hanya admin/superadmin yang bisa mengedit)
+    match /roomTypes/{typeId} {
+      allow read: if true; // Publik (Web Booking)
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    match /packages/{pkgId} {
+      allow read: if true; // Publik (Web Booking)
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    match /gallery/{galId} {
+      allow read: if true; // Publik
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    match /attractions/{attId} {
+      allow read: if true; // Publik
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    // Koleksi Purchasing / Pengadaan Barang
+    match /suppliers/{supId} {
+      allow read: if isSignedIn() && isAdmin();
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    match /items/{itemId} {
+      allow read: if isSignedIn() && (isAdmin() || isCashier());
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    match /store-requisition/{srId} {
+      allow read, write: if isSignedIn() && isAdmin();
+    }
+
+    match /purchase-requisition/{prId} {
+      allow read, write: if isSignedIn() && isAdmin();
+    }
+
+    match /daily-market-list/{dmlId} {
+      allow read, write: if isSignedIn() && isAdmin();
+    }
+
+    match /stock-opname/{opId} {
+      allow read, write: if isSignedIn() && isAdmin();
+    }
+  }
+}
