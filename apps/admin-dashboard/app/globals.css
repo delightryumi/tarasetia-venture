@@ -3,16 +3,16 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --sage: #788069;
-  --sage-light: #9DA68E;
-  --sage-dark: #5C6351;
-  --peach: #ffd8a6;
-  --peach-light: #ffe4c2;
-  --peach-dark: #e6b878;
-  --cream: #ffffff;
-  --surface-alt: #f8fafc;
-  --border-light: rgba(120, 128, 105, 0.15);
-  --rich-black: #1A1C14;
+  --sage: #8d9884;
+  --sage-light: #aab4a2;
+  --sage-dark: #6c7664;
+  --peach: #8d7a52;
+  --peach-light: #dfd3b2;
+  --peach-dark: #736342;
+  --cream: #f1eee1;
+  --surface-alt: #ebe7d7;
+  --border-light: rgba(141, 122, 82, 0.12);
+  --rich-black: #212121;
 
   /* Legacy aliases for backwards compatibility */
   --terracotta: var(--peach);
@@ -20,10 +20,15 @@
   --terracotta-dark: var(--peach-dark);
   --broken-white: var(--cream);
 
-  --background: radial-gradient(circle at center, #ffffff 0%, #e2e8f0 100%);
+  --background: radial-gradient(circle at center, #fdfbf7 0%, #f1eee1 100%);
   --foreground: var(--rich-black);
 
-  --sidebar-width: 300px;
+  --f-income-bg: #e1f5ee;
+  --f-income-color: #0f6e56;
+  --f-expense-bg: #fcebeb;
+  --f-expense-color: #a32d2d;
+
+  --sidebar-width: 240px;
 }
 
 @theme inline {
@@ -41,6 +46,44 @@
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-white: #faf8f5;
+
+  /* Bohemian Soft Borders (rgba(141, 122, 82, 0.12)) & Warm Grays */
+  --color-neutral-50: #faf8f5;
+  --color-neutral-100: #f7f5f0;
+  --color-neutral-200: rgba(141, 122, 82, 0.12);
+  --color-neutral-300: #dccfb7;
+  --color-neutral-700: #383838;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #212121;
+  --color-neutral-950: #1a1a1a;
+
+  --color-zinc-50: #faf8f5;
+  --color-zinc-100: #f7f5f0;
+  --color-zinc-200: rgba(141, 122, 82, 0.12);
+  --color-zinc-300: #dccfb7;
+  --color-zinc-700: #383838;
+  --color-zinc-800: #262626;
+  --color-zinc-900: #212121;
+  --color-zinc-950: #1a1a1a;
+
+  --color-slate-50: #faf8f5;
+  --color-slate-100: #f7f5f0;
+  --color-slate-200: rgba(141, 122, 82, 0.12);
+  --color-slate-300: #dccfb7;
+  --color-slate-700: #383838;
+  --color-slate-800: #262626;
+  --color-slate-900: #212121;
+  --color-slate-950: #1a1a1a;
+
+  --color-gray-50: #faf8f5;
+  --color-gray-100: #f7f5f0;
+  --color-gray-200: rgba(141, 122, 82, 0.12);
+  --color-gray-300: #dccfb7;
+  --color-gray-700: #383838;
+  --color-gray-800: #262626;
+  --color-gray-900: #212121;
+  --color-gray-950: #1a1a1a;
 
   --font-outfit: "Outfit", sans-serif;
   --font-mono-jb: "JetBrains Mono", monospace;
@@ -55,7 +98,7 @@
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow: hidden;
   height: 100%;
 }
 
@@ -252,5 +295,210 @@ a {
 
 .delete-modal-btn-delete:hover {
   background-color: #b91c1c;
+}
+
+/* Custom Global Border Softness & Premium Hover Overrides (Bohemian Style) */
+.room-list-item-clean,
+.room-thumb-clean,
+.step-number-slim,
+.btn-action-edit,
+.btn-action-delete,
+.input-clean,
+.builder-box-clean,
+.card,
+.delete-modal-card,
+.delete-modal-input,
+.delete-modal-btn-cancel,
+.upload-dropzone,
+.preview-container,
+.preview-image,
+.border,
+.border-t,
+.border-b,
+.border-l,
+.border-r,
+.border-x,
+.border-y,
+[class*="border-"],
+[class*="divide-"] > :not([hidden]) ~ :not([hidden]),
+hr,
+table,
+thead,
+tbody,
+tr,
+th,
+td {
+  border-color: rgba(141, 122, 82, 0.12) !important;
+}
+
+.dark .room-list-item-clean,
+.dark .room-thumb-clean,
+.dark .step-number-slim,
+.dark .btn-action-edit,
+.dark .btn-action-delete,
+.dark .input-clean,
+.dark .builder-box-clean,
+.dark .card,
+.dark .delete-modal-card,
+.dark .delete-modal-input,
+.dark .delete-modal-btn-cancel,
+.dark .upload-dropzone,
+.dark .preview-container,
+.dark .preview-image,
+.dark .border,
+.dark .border-t,
+.dark .dark\:border-t,
+.dark .border-b,
+.dark .dark\:border-b,
+.dark .border-l,
+.dark .dark\:border-l,
+.dark .border-r,
+.dark .dark\:border-r,
+.dark .border-x,
+.dark .dark\:border-x,
+.dark .border-y,
+.dark .dark\:border-y,
+.dark [class*="border-"],
+.dark [class*="dark:border-"],
+.dark [class*="divide-"] > :not([hidden]) ~ :not([hidden]),
+.dark hr,
+.dark table,
+.dark thead,
+.dark tbody,
+.dark tr,
+.dark th,
+.dark td {
+  border-color: rgba(143, 134, 119, 0.12) !important;
+}
+
+/* ── Premium Bohemian Soft Backgrounds & Warm Off-White Overrides ── */
+
+/* Override local canvases to use warm off-white instead of stark white */
+:root {
+  --f-canvas: #faf8f5 !important;
+  --f-surface: #f5f2eb !important;
+  --f-surface-soft: #ebe7d7 !important;
+  --f-hairline: rgba(141, 122, 82, 0.12) !important;
+}
+
+/* Force page roots to be transparent to show the main body gradient background */
+[class*="overviewRoot"],
+.overviewRoot,
+.mainContainer,
+[class*="mainContainer"] {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Force cards, panels, and modals to use the premium warm off-white background */
+.card,
+.builder-box-clean,
+.room-list-item-clean,
+.delete-modal-card,
+.datepicker-dropdown,
+.upload-dropzone,
+.preview-container,
+[class*="SummaryCard_card"],
+[class*="VsCard_card"],
+[class*="_kpiCard"]:not([class*="Dark"]):not([class*="dark"]),
+[class*="_sectionCard"] {
+  background-color: #faf8f4 !important;
+  background: #faf8f4 !important;
+}
+
+/* Glassmorphic headers removed to allow clean transparent page headers */
+
+/* Overriding white text input background */
+.input-clean,
+.delete-modal-input,
+.datepicker-btn-inactive:hover,
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+select,
+textarea {
+  background-color: #fbf9f4 !important;
+  color-scheme: light !important;
+}
+
+
+/* ── Dark Mode Overrides ── */
+.dark {
+  --f-canvas: #212121 !important;
+  --f-surface: #1e1e1e !important;
+  --f-surface-soft: #2a2a2a !important;
+  --f-hairline: rgba(143, 134, 119, 0.12) !important;
+  --f-income-bg: rgba(16, 185, 129, 0.15) !important;
+  --f-income-color: #34d399 !important;
+  --f-expense-bg: rgba(239, 68, 68, 0.15) !important;
+  --f-expense-color: #f87171 !important;
+}
+
+.dark .card,
+.dark .builder-box-clean,
+.dark .room-list-item-clean,
+.dark .delete-modal-card,
+.dark .datepicker-dropdown,
+.dark .upload-dropzone,
+.dark .preview-container,
+.dark [class*="SummaryCard_card"],
+.dark [class*="VsCard_card"],
+.dark [class*="_kpiCard"]:not([class*="Dark"]):not([class*="dark"]),
+.dark [class*="_sectionCard"] {
+  background-color: #262626 !important;
+  background: #262626 !important;
+}
+
+/* Dark mode glassmorphic headers removed */
+
+.dark .input-clean,
+.dark .delete-modal-input,
+.dark .datepicker-btn-inactive:hover,
+.dark input[type="text"],
+.dark input[type="number"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="date"],
+.dark select,
+.dark textarea {
+  background-color: #1e1e1e !important;
+  color: #e4e4e7 !important;
+  color-scheme: dark !important;
+}
+
+/* Force calendar/date inputs in light-themed containers (Overview, Forecast, Invoice cards) to render with light background & color scheme */
+input[type="date"],
+[class*="overviewRoot"] input[type="date"],
+.overviewRoot input[type="date"],
+[class*="card"] input[type="date"],
+.card input[type="date"],
+[class*="invoice"] input[type="date"],
+.dateInput,
+input[type="date"].dateInput {
+  border: 1px solid rgba(141, 122, 82, 0.15) !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  background-color: #fbf9f4 !important;
+  color: #1c1917 !important;
+  color-scheme: light !important;
+  font-family: var(--font-mono-jb), 'JetBrains Mono', monospace !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  height: 28px !important;
+}
+
+/* Smooth Transitions & Premium Hover Shadows */
+.card,
+.builder-box-clean,
+.room-list-item-clean {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.card:hover,
+.builder-box-clean:hover {
+  box-shadow: 0 10px 30px rgba(141, 122, 82, 0.08) !important;
+  border-color: rgba(141, 122, 82, 0.2) !important;
 }
 

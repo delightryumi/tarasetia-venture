@@ -49,6 +49,7 @@
   border: 1px solid var(--p-hairline);
   border-radius: var(--p-radius-lg);
   padding: var(--p-space-xl);
+  box-shadow: var(--p-shadow);
 }
 
 .kpiLabel {
@@ -116,6 +117,7 @@
   border: 1px solid var(--p-hairline);
   border-radius: var(--p-radius-lg);
   overflow: hidden;
+  box-shadow: var(--p-shadow);
 }
 
 .sectionHeader {

@@ -45,7 +45,10 @@ export const useInvoice = () => {
     const [notes, setNotes] = useState("Terima kasih atas kunjungan Anda di Bumi Anyom Resort.");
 
     const searchTransactions = async (queryStr: string) => {
-        if (!queryStr || queryStr.length < 2) return;
+        if (!queryStr || queryStr.length < 2) {
+            setTransactions([]);
+            return;
+        }
         setSearching(true);
         try {
             const { collection, getDocs, query, limit } = await import("firebase/firestore");

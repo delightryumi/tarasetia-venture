@@ -129,7 +129,7 @@ export const StatusWidget = ({ onMenuClick }: StatusWidgetProps) => {
                     <div className="flex items-center gap-3 px-1 py-1">
                         <div 
                             className="w-10 h-10 rounded-full overflow-hidden border border-peach/40 shadow-inner flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: ['#ffd8a630', '#78806930', '#f3e8ff', '#e0e7ff', '#dcfce7', '#fee2e2', '#fef3c7'][((userName || "U").charCodeAt(0) || 0) % 7] }}
+                            style={{ backgroundColor: ['rgba(141, 122, 82, 0.15)', 'rgba(120, 128, 105, 0.15)', '#f3e8ff', '#e0e7ff', '#dcfce7', '#fee2e2', '#fef3c7'][((userName || "U").charCodeAt(0) || 0) % 7] }}
                         >
                             <img 
                                 src={`/avatar/memo_${((((userName || "U").charCodeAt(0) || 0) + 5) % 35) + 1}.png`} 

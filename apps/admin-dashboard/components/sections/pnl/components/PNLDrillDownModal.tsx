@@ -94,7 +94,7 @@ export function PNLDrillDownModal({
                                 </div>
                                 <div>
                                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
-                                        <span style={{ fontSize: 10, fontWeight: 500, padding: "2px 9px", borderRadius: 99, textTransform: "uppercase", letterSpacing: "0.05em", background: "#E1F5EE", color: "#0F6E56", border: "0.5px solid #9FE1CB" }}>
+                                        <span style={{ fontSize: 10, fontWeight: 500, padding: "2px 9px", borderRadius: 99, textTransform: "uppercase", letterSpacing: "0.05em", background: "var(--f-income-bg)", color: "var(--f-income-color)", border: T.border }}>
                                             Nexura Audit
                                         </span>
                                         <span style={{ fontSize: 10, fontWeight: 400, padding: "2px 9px", borderRadius: 99, fontFamily: T.mono, background: T.surface2, color: T.textSec, border: T.border }}>
@@ -122,23 +122,23 @@ export function PNLDrillDownModal({
                         {isFbPerformanceCard && fbPerformanceData ? (
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, padding: "18px 28px", background: T.surface2, borderBottom: T.border, flexShrink: 0 }}>
                                 {/* Revenue Breakdown card */}
-                                <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.12)", borderRadius: 12, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
+                                <div style={{ background: T.surface, border: T.border, borderRadius: 12, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                                         <TrendingUp size={16} className="text-emerald-600" />
-                                        <span style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em" }}>Revenue Breakdown</span>
+                                        <span style={{ fontSize: 11, fontWeight: 700, color: T.textSec, textTransform: "uppercase", letterSpacing: "0.05em" }}>Revenue Breakdown</span>
                                     </div>
-                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#444" }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textPri }}>
                                         <span className="flex-1">Subtotal (Harga Awal)</span>
                                         <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.subtotal)}</span>
                                     </div>
                                     {fbPerformanceData.totalDiscount > 0 && (
-                                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#A32D2D" }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--f-expense-color)" }}>
                                             <span className="flex-1">Diskon</span>
                                             <span style={{ fontFamily: T.mono }}>−{formatIDR(fbPerformanceData.totalDiscount)}</span>
                                         </div>
                                     )}
-                                    <div style={{ borderTop: "1px dashed rgba(0,0,0,0.1)", margin: "4px 0" }} />
-                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "#0F6E56" }}>
+                                    <div style={{ borderTop: "1px dashed var(--f-hairline)", margin: "4px 0" }} />
+                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "var(--f-income-color)" }}>
                                         <span className="flex-1">Nett Revenue</span>
                                         <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.netRevenue)}</span>
                                     </div>
@@ -147,43 +147,43 @@ export function PNLDrillDownModal({
                                         [`Tax/VAT (${fbPerformanceData.taxRateIndividual}%)`,        `+${formatIDR(fbPerformanceData.taxAmount)}`,        true],
                                         [`Lost & Breakage (${fbPerformanceData.lostBreakageRate}%)`, `+${formatIDR(fbPerformanceData.lostBreakageAmount)}`,true],
                                     ].map(([label, val, dimmed]) => (
-                                        <div key={label as string} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: dimmed ? "#666" : "#444" }}>
+                                        <div key={label as string} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: dimmed ? T.textSec : T.textPri }}>
                                             <span className="flex-1">{label}</span>
                                             <span style={{ fontFamily: T.mono }}>{val}</span>
                                         </div>
                                     ))}
-                                    <div style={{ borderTop: "1px dashed rgba(0,0,0,0.1)", margin: "4px 0" }} />
-                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "#444" }}>
+                                    <div style={{ borderTop: "1px dashed var(--f-hairline)", margin: "4px 0" }} />
+                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: T.textPri }}>
                                         <span className="flex-1">Gross Revenue</span>
                                         <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.grossRevenue)}</span>
                                     </div>
                                 </div>
 
                                 {/* Profitability & Expenses card */}
-                                <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.12)", borderRadius: 12, padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 8 }}>
+                                <div style={{ background: T.surface, border: T.border, borderRadius: 12, padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 8 }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                                         <TrendingDown size={16} className="text-rose-600" />
-                                        <span style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em" }}>Profitability & Expenses</span>
+                                        <span style={{ fontSize: 11, fontWeight: 700, color: T.textSec, textTransform: "uppercase", letterSpacing: "0.05em" }}>Profitability & Expenses</span>
                                     </div>
-                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#444" }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textPri }}>
                                         <span className="flex-1">Nett Revenue</span>
                                         <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.netRevenue)}</span>
                                     </div>
-                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#A32D2D" }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--f-expense-color)" }}>
                                         <span className="flex-1">Expenses (Cost)</span>
                                         <span style={{ fontFamily: T.mono }}>−{formatIDR(fbPerformanceData.expenses)}</span>
                                     </div>
-                                    <div style={{ borderTop: "1px dashed rgba(0,0,0,0.1)", margin: "4px 0", marginTop: "auto" }} />
-                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: fbPerformanceData.netProfit >= 0 ? "#0F6E56" : "#A32D2D" }}>
+                                    <div style={{ borderTop: "1px dashed var(--f-hairline)", margin: "4px 0", marginTop: "auto" }} />
+                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: fbPerformanceData.netProfit >= 0 ? "var(--f-income-color)" : "var(--f-expense-color)" }}>
                                         <span className="flex-1">Net Profit</span>
                                         <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.netProfit)}</span>
                                     </div>
                                 </div>
 
                                 {/* COGS badge card */}
-                                <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.12)", borderRadius: 12, padding: "16px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, textAlign: "center" }}>
-                                    <span style={{ fontSize: 10, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.08em" }}>{costConfig.costLabel} Percentage</span>
-                                    <span style={{ fontSize: 32, fontWeight: 900, color: "#1c1917", fontFamily: T.mono, letterSpacing: "-0.02em" }}>
+                                <div style={{ background: T.surface, border: T.border, borderRadius: 12, padding: "16px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, textAlign: "center" }}>
+                                    <span style={{ fontSize: 10, fontWeight: 700, color: T.textSec, textTransform: "uppercase", letterSpacing: "0.08em" }}>{costConfig.costLabel} Percentage</span>
+                                    <span style={{ fontSize: 32, fontWeight: 900, color: T.textPri, fontFamily: T.mono, letterSpacing: "-0.02em" }}>
                                         {fbPerformanceData.costPercentage.toFixed(1)}%
                                     </span>
                                     <div style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 6 }} className={modalBadgeInfo.color}>
@@ -312,7 +312,7 @@ export function PNLDrillDownModal({
                                                             {item.taxAmount !== undefined && item.taxAmount > 0 && (
                                                                 <div style={{ fontSize: 10, color: T.textSec, marginTop: 4, display: "flex", gap: 8, alignItems: "center" }}>
                                                                     <span>DPP (Nett): {formatIDR(item.nettAmount || 0)}</span>
-                                                                    <span style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(0,0,0,0.15)", display: "inline-block" }} />
+                                                                    <span style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--f-hairline, rgba(0,0,0,0.15))", display: "inline-block" }} />
                                                                     <span>Tax, Service & PB1: {formatIDR(item.taxAmount)}</span>
                                                                 </div>
                                                             )}
@@ -321,13 +321,13 @@ export function PNLDrillDownModal({
                                                         <td style={{ padding: "13px 16px" }}>
                                                             {item.docType ? <DocTag label={item.docType} /> : <span style={{ color: T.textSec, fontSize: 12 }}>—</span>}
                                                         </td>
-                                                        <td style={{ padding: "13px 16px", fontSize: 11, textAlign: "right", fontFamily: T.mono, color: "#A32D2D" }}>
+                                                        <td style={{ padding: "13px 16px", fontSize: 11, textAlign: "right", fontFamily: T.mono, color: "var(--f-expense-color)" }}>
                                                             {item.discount && item.discount > 0 ? `−${formatIDR(item.discount)}` : "—"}
                                                         </td>
-                                                        <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 500, textAlign: "right", fontFamily: T.mono, color: isExpense ? "#A32D2D" : "#0F6E56" }}>
+                                                        <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 500, textAlign: "right", fontFamily: T.mono, color: isExpense ? "var(--f-expense-color)" : "var(--f-income-color)" }}>
                                                             <div>{isExpense ? "−" : "+"}{formatIDR(item.amount)}</div>
                                                             {item.taxAmount !== undefined && item.taxAmount > 0 && (
-                                                                <div style={{ fontSize: 9, color: "#888", fontWeight: 400, marginTop: 4 }}>
+                                                                <div style={{ fontSize: 9, color: T.textSec, fontWeight: 400, marginTop: 4 }}>
                                                                     Total Nota
                                                                 </div>
                                                             )}
@@ -365,7 +365,7 @@ export function PNLDrillDownModal({
                                                 <p style={{ fontSize: 13, fontWeight: 500, color: T.textPri, marginBottom: 12, lineHeight: 1.4 }}>
                                                     {item.description}
                                                     {item.taxAmount !== undefined && item.taxAmount > 0 && (
-                                                        <span style={{ display: "block", fontSize: 11, color: "#888", marginTop: 4, fontWeight: 400 }}>
+                                                        <span style={{ display: "block", fontSize: 11, color: T.textSec, marginTop: 4, fontWeight: 400 }}>
                                                             DPP (Nett): {formatIDR(item.nettAmount || 0)} · Tax, Service & PB1: {formatIDR(item.taxAmount)}
                                                         </span>
                                                     )}
@@ -378,7 +378,7 @@ export function PNLDrillDownModal({
                                                     {item.discount && item.discount > 0 && (
                                                         <div style={{ textAlign: "right" }}>
                                                             <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>Discount</p>
-                                                            <p style={{ fontSize: 12, fontWeight: 500, fontFamily: T.mono, color: "#A32D2D" }}>
+                                                            <p style={{ fontSize: 12, fontWeight: 500, fontFamily: T.mono, color: "var(--f-expense-color)" }}>
                                                                 −{formatIDR(item.discount)}
                                                             </p>
                                                         </div>
@@ -387,7 +387,7 @@ export function PNLDrillDownModal({
                                                         <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>
                                                             {item.taxAmount !== undefined && item.taxAmount > 0 ? "Total Nota" : "Net amount"}
                                                         </p>
-                                                        <p style={{ fontSize: 14, fontWeight: 500, fontFamily: T.mono, color: isExpense ? "#A32D2D" : "#0F6E56" }}>
+                                                        <p style={{ fontSize: 14, fontWeight: 500, fontFamily: T.mono, color: isExpense ? "var(--f-expense-color)" : "var(--f-income-color)" }}>
                                                             {isExpense ? "−" : "+"}{formatIDR(item.amount)}
                                                         </p>
                                                     </div>
@@ -410,7 +410,7 @@ export function PNLDrillDownModal({
                                     <span style={{ fontSize: 12, color: T.textSec }}>
                                         {isFbPerformanceCard ? "Net Profit" : "Net flow"}
                                     </span>
-                                    <span style={{ fontSize: 16, fontWeight: 500, fontFamily: T.mono, color: (isFbPerformanceCard ? (fbPerformanceData?.netProfit ?? 0) : modalData.netFlow) >= 0 ? "#0F6E56" : "#A32D2D" }}>
+                                    <span style={{ fontSize: 16, fontWeight: 500, fontFamily: T.mono, color: (isFbPerformanceCard ? (fbPerformanceData?.netProfit ?? 0) : modalData.netFlow) >= 0 ? "var(--f-income-color)" : "var(--f-expense-color)" }}>
                                         {formatIDR(Math.abs(isFbPerformanceCard ? (fbPerformanceData?.netProfit ?? 0) : modalData.netFlow))}
                                     </span>
                                 </div>

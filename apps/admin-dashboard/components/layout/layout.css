@@ -10,19 +10,16 @@
     position: fixed;
     left: 20px;
     top: 20px;
-    background: linear-gradient(135deg, var(--sage) 0%, var(--sage-dark) 100%);
+    background: #ebe7d7; /* Putih Kotor / Muted Sand */
     border-radius: 24px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(141, 122, 82, 0.15);
     display: flex;
     flex-direction: column;
     padding: 32px 16px;
     z-index: 50;
-    box-shadow: 20px 20px 60px rgba(0, 0, 0, 0.1),
-        inset 0 0 20px rgba(255, 255, 255, 0.05);
+    box-shadow: 10px 10px 40px rgba(141, 122, 82, 0.05);
     overflow-y: hidden;
-    /* Only vertical overflow allowed on parent */
     overflow-x: visible;
-    /* Allow shadows to bleed */
 }
 
 .dashboard-wrapper:not(.collapsed) .main-content {
@@ -36,13 +33,14 @@
 }
 
 .sidebar.collapsed {
-    width: 110px;
-    padding: 40px 0;
+    width: 100px;
+    padding: 32px 0;
     /* Remove horizontal padding to center items perfectly */
     overflow: visible;
 }
 
 .sidebar-header {
+    height: 56px; /* Explicit height to preserve vertical space even when logo is hidden */
     margin-bottom: 40px;
     padding: 0 12px;
     display: flex;
@@ -50,38 +48,33 @@
     justify-content: space-between;
 }
 
+.sidebar.collapsed .sidebar-header {
+    justify-content: center;
+    padding: 0;
+}
+
 .sidebar-toggle {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: #ffffff;
+    border: 1px solid rgba(141, 122, 82, 0.15);
     cursor: pointer;
-    color: white;
-    padding: 14px;
-    border-radius: 14px;
+    color: var(--rich-black);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sidebar.collapsed .sidebar-toggle {
-    width: 60px;
-    height: 60px;
-    padding: 0;
-    margin: 0 auto 24px auto;
-    /* Perfect centering */
-    border-radius: 16px;
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    z-index: 100;
+    flex-shrink: 0;
 }
 
 .sidebar-toggle:hover {
     background: var(--peach);
-    color: var(--rich-black);
-    box-shadow: 0 4px 12px rgba(255, 216, 166, 0.4);
+    color: white;
+    border-color: var(--peach);
+    box-shadow: 0 4px 12px rgba(141, 122, 82, 0.25);
 }
 
 .sidebar-logo {
@@ -131,21 +124,17 @@
     justify-content: flex-start;
     gap: 16px;
     padding: 14px 24px;
-    /* Increased padding to match premium feel */
     border-radius: 14px;
-    color: rgba(255, 255, 255, 0.7);
-    font-weight: 700;
-    /* Matching logout weight */
+    color: rgba(33, 33, 33, 0.6);
+    font-weight: 500; /* Clean non-bold styling */
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     font-size: 1rem;
     white-space: nowrap;
     position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    /* Soft border like logout */
+    border: 1px solid rgba(141, 122, 82, 0.08);
     text-align: left;
-    background: rgba(255, 255, 255, 0.03);
-    /* Subtle background base */
+    background: rgba(141, 122, 82, 0.03);
 }
 
 .nav-label {
@@ -174,17 +163,17 @@
 }
 
 .nav-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border-color: rgba(255, 255, 255, 0.05);
+    background: rgba(141, 122, 82, 0.08);
+    color: var(--rich-black);
+    border-color: rgba(141, 122, 82, 0.15);
 }
 
 .nav-item.active {
     background: var(--peach) !important;
-    color: var(--rich-black) !important;
+    color: white !important;
     z-index: 10;
-    box-shadow: 0 12px 30px rgba(255, 216, 166, 0.5);
-    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 20px rgba(141, 122, 82, 0.25);
+    border-color: rgba(141, 122, 82, 0.1);
 }
 
 .sidebar.collapsed .nav-item.active {
@@ -195,7 +184,7 @@
 .sidebar-footer {
     margin-top: auto;
     padding-top: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(141, 122, 82, 0.1);
 }
 
 .logout-button {
@@ -205,22 +194,21 @@
     justify-content: flex-start;
     gap: 16px;
     padding: 14px 24px;
-    /* Unified padding */
     border-radius: 14px;
-    color: var(--peach-light);
-    font-weight: 700;
+    color: var(--rich-black);
+    font-weight: 500; /* Clean non-bold styling */
     font-size: 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(141, 122, 82, 0.05);
+    border: 1px solid rgba(141, 122, 82, 0.1);
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: left;
 }
 
 .logout-button:hover {
-    background: rgba(255, 216, 166, 0.15);
-    color: white;
-    border-color: rgba(255, 216, 166, 0.3);
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+    border-color: rgba(220, 38, 38, 0.2);
 }
 
 .sidebar.collapsed .logout-button {

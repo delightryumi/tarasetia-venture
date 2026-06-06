@@ -26,7 +26,7 @@ import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 
 /* ── Brand Colors ── */
-const PEACH = "#ffd8a6";
+const PEACH = "#8d7a52";
 const SAGE = "#788069";
 const RICH_BLACK = "#1A1C14";
 
@@ -428,10 +428,10 @@ export const AddTransactionModal = ({
                                                             onClick={() => updateForm("paymentMethod", "Pay at Nexura")}
                                                             className={`flex-1 h-12 text-[10px] font-medium uppercase tracking-widest transition-all rounded-lg flex items-center justify-center gap-2.5 ${
                                                                 form.paymentMethod === "Pay at Nexura" 
-                                                                ? 'text-stone-900 shadow-lg border border-peach' 
+                                                                ? 'text-white shadow-lg' 
                                                                 : 'text-stone-400 hover:text-stone-600'
                                                             }`}
-                                                            style={form.paymentMethod === "Pay at Nexura" ? { backgroundColor: PEACH } : {}}
+                                                            style={form.paymentMethod === "Pay at Nexura" ? { backgroundColor: PEACH, borderColor: PEACH } : {}}
                                                         >
                                                             <Sparkles size={14} />
                                                             Pay at Nexura

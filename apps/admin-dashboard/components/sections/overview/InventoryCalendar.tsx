@@ -136,7 +136,8 @@ export function InventoryCalendar({
                                 color: 'var(--f-body)',
                                 outline: 'none',
                                 height: '28px',
-                                backgroundColor: 'var(--f-surface)'
+                                backgroundColor: '#fbf9f4',
+                                colorScheme: 'light'
                             }} 
                         />
                     </div>
@@ -160,7 +161,8 @@ export function InventoryCalendar({
                                 color: 'var(--f-body)',
                                 outline: 'none',
                                 height: '28px',
-                                backgroundColor: 'var(--f-surface)'
+                                backgroundColor: '#fbf9f4',
+                                colorScheme: 'light'
                             }} 
                         />
                     </div>

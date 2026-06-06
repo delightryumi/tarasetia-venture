@@ -264,7 +264,7 @@ export const AddGuestModal: React.FC<AddGuestModalProps> = ({ isOpen, onClose, s
                             disabled={loading}
                             onClick={handleSubmit}
                             className={`flex items-center gap-2 px-8 h-12 rounded-xl text-sm font-black transition-all shadow-lg shadow-stone-200/50 hover:scale-105 active:scale-95 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            style={{ backgroundColor: "#1A1C14", color: "#ffd8a6" }}
+                            style={{ backgroundColor: "#1A1C14", color: "#c5a880" }}
                         >
                             <Save size={18} />
                             {loading ? "Saving..." : "Save Transaction"}

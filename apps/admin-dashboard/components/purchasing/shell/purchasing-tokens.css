@@ -4,11 +4,12 @@
 
 .purchasing-root {
   /* ── Surfaces ── */
-  --p-canvas:          #fdfbf7;
+  --p-canvas:          #ffffff;
   --p-surface-soft:    #f5f2eb;
   --p-surface-strong:  #e4d7b4;
   --p-surface-dark:    #8d7a52;
-  --p-hairline:        #e4d7b4;
+  --p-hairline:        rgba(141, 122, 82, 0.12);
+  --p-shadow:          0 10px 30px -10px rgba(141, 122, 82, 0.08), 0 1px 3px -1px rgba(0, 0, 0, 0.02);
 
   /* ── Signature ── */
   --p-coral:           #b85d3c;

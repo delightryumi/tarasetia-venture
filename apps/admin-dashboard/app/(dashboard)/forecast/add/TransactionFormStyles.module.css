@@ -87,27 +87,16 @@
 
 /* ── Top Header Navigation Bar ── */
 .header {
-  position: sticky;
-  top: -40px;
-  z-index: 50;
-  background-color: var(--f-canvas);
-  border-bottom: 1px solid var(--f-hairline);
-  padding: 14px 0;
+  position: relative;
+  background: transparent !important;
+  border-bottom: none !important;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: -40px -40px 24px -40px;
-  padding-left: 40px;
-  padding-right: 40px;
-}
-
-@media (max-width: 1024px) {
-  .header {
-    top: -20px;
-    margin: -20px -20px 24px -20px;
-    padding-left: 20px;
-    padding-right: 20px;
-  }
+  margin: 0 auto 24px auto;
+  max-width: 1400px;
+  width: 100%;
 }
 
 .headerInner {
@@ -1227,12 +1216,6 @@
 
 /* ── Mobile Layout Adjustments ── */
 @media (max-width: 768px) {
-  .header {
-    top: -20px;
-    margin: -20px -20px 24px -20px;
-    padding-left: 8px;
-    padding-right: 8px;
-  }
   
   .headerInner {
     padding: 0 8px;

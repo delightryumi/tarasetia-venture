@@ -19,7 +19,7 @@ interface PNLHeaderProps {
     rise: any;
 }
 
-const PEACH = "#ffd8a6";
+const PEACH = "#dfd3b2";
 const SAGE = "#788069";
 const RICH_BLACK = "#1A1C14";
 

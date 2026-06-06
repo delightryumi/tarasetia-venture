@@ -15,7 +15,7 @@ import "./layout.css";
 export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const { user, loading } = useAuth();
     const router = useRouter();
-    const [isCollapsed, setIsCollapsed] = useState(true);
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const { poweredByText, poweredByLink } = useFooter();
     const containerRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
@@ -52,14 +52,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
         );
     }, [pathname]);
 
-    // ── Purchasing module isolation ──
-    // Per GEMINI.md: purchasing has its own shell (PurchasingShell).
-    // We skip the global DashboardLayout entirely for /purchasing/* paths.
-    if (pathname.startsWith('/purchasing')) {
-        if (loading) return null;
-        if (!user) return null;
-        return <>{children}</>;
-    }
+
 
     if (loading) {
         return (
@@ -87,7 +80,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                 />
             )}
             <main className="main-content">
-                {pathname !== "/forecast/add" && pathname !== "/overview" && (
+                {pathname !== "/forecast/add" && (
                     <div className="dashboard-top-bar">
                         <StatusWidget 
                             onMenuClick={() => setIsCollapsed(false)} 

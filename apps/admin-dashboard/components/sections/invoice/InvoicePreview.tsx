@@ -57,29 +57,29 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
                             marginTop: '10mm',
                             display: 'flex',
                             width: '100%',
-                            borderTop: '1px solid #111',
-                            borderBottom: '1px solid #111',
+                            borderTop: '1px solid var(--invoice-sage)',
+                            borderBottom: '1px solid var(--invoice-sage)',
                             padding: '4mm 0',
                             justifyContent: 'space-between'
                         }}>
-                            <div className="detail-item" style={{ flex: 1, borderRight: '1px solid #eee', paddingRight: '4mm' }}>
+                            <div className="detail-item" style={{ flex: 1, borderRight: '1px solid var(--invoice-border)', paddingRight: '4mm' }}>
                                 <span className="detail-label" style={{ marginBottom: '2px' }}>Reference No.</span>
-                                <span className="detail-value" style={{ fontSize: '10pt', fontWeight: 800 }}>#{invoiceNumber}</span>
+                                <span className="detail-value" style={{ fontSize: '10pt', fontWeight: 600 }}>#{invoiceNumber}</span>
                             </div>
-                            <div className="detail-item" style={{ flex: 1, borderRight: '1px solid #eee', paddingLeft: '4mm', paddingRight: '4mm' }}>
+                            <div className="detail-item" style={{ flex: 1, borderRight: '1px solid var(--invoice-border)', paddingLeft: '4mm', paddingRight: '4mm' }}>
                                 <span className="detail-label" style={{ marginBottom: '2px' }}>Date Issued</span>
-                                <span className="detail-value" style={{ fontSize: '10pt', fontWeight: 800 }}>{invoiceDate}</span>
+                                <span className="detail-value" style={{ fontSize: '10pt', fontWeight: 600 }}>{invoiceDate}</span>
                             </div>
                             {checkInDate && (
-                                <div className="detail-item" style={{ flex: 1, borderRight: '1px solid #eee', paddingLeft: '4mm', paddingRight: '4mm' }}>
+                                <div className="detail-item" style={{ flex: 1, borderRight: '1px solid var(--invoice-border)', paddingLeft: '4mm', paddingRight: '4mm' }}>
                                     <span className="detail-label" style={{ marginBottom: '2px' }}>Check‑In</span>
-                                    <span className="detail-value" style={{ fontSize: '10pt', fontWeight: 800 }}>{checkInDate}</span>
+                                    <span className="detail-value" style={{ fontSize: '10pt', fontWeight: 600 }}>{checkInDate}</span>
                                 </div>
                             )}
                             {checkOutDate && (
                                 <div className="detail-item" style={{ flex: 1, paddingLeft: '4mm' }}>
                                     <span className="detail-label" style={{ marginBottom: '2px' }}>Check‑Out</span>
-                                    <span className="detail-value" style={{ fontSize: '10pt', fontWeight: 800 }}>{checkOutDate}</span>
+                                    <span className="detail-value" style={{ fontSize: '10pt', fontWeight: 600 }}>{checkOutDate}</span>
                                 </div>
                             )}
                         </div>
@@ -90,14 +90,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
                 <div className="info-grid">
                     <div className="info-card">
                         <h4>Bill To</h4>
-                        <p style={{ fontSize: '22pt', fontWeight: 950, margin: '0 0 10px 0', color: '#111' }}>
+                        <p style={{ fontSize: '22pt', fontWeight: 700, margin: '0 0 10px 0', color: 'var(--rich-black)' }}>
                             {clientName || 'Valued Guest'}
                         </p>
                         <pre style={{
                             font: 'inherit',
                             whiteSpace: 'pre-wrap',
                             margin: 0,
-                            color: '#4b5563',
+                            color: '#5c5850',
                             fontSize: '11pt',
                             lineHeight: '1.7',
                             maxWidth: '120mm'
@@ -107,14 +107,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
                     </div>
                     <div className="info-card" style={{ textAlign: 'right' }}>
                         <h4>From</h4>
-                        <p style={{ fontSize: '12pt', fontWeight: 800, color: '#111', margin: '0 0 8px 0' }}>
+                        <p style={{ fontSize: '12pt', fontWeight: 600, color: 'var(--rich-black)', margin: '0 0 8px 0' }}>
                             Bumi Anyom Resort
                         </p>
-                        <p style={{ fontSize: '10pt', color: '#6b7280', lineHeight: '1.6', maxWidth: '120mm' }}>
+                        <p style={{ fontSize: '10pt', color: '#706c64', lineHeight: '1.6', maxWidth: '120mm' }}>
                             {branding.address || 'Jl. Bumi Anyom No. 1, Temanggung'}<br />
                             Central Java, Indonesia
                         </p>
-                        <div style={{ marginTop: '12px', fontSize: '9pt', color: '#9ca3af' }}>
+                        <div style={{ marginTop: '12px', fontSize: '9pt', color: '#9fa392' }}>
                             {branding.phones.join(' • ')}<br />
                             {branding.email}
                         </div>
@@ -135,11 +135,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
                         {items.map(item => (
                             <tr key={item.id}>
                                 <td className="invoice-col-desc">
-                                    <p style={{ fontWeight: 800, marginBottom: '4px' }}>{item.description || 'General Service'}</p>
+                                    <p style={{ fontWeight: 600, marginBottom: '4px' }}>{item.description || 'General Service'}</p>
                                 </td>
                                 <td className="invoice-col-qty">{item.quantity}</td>
                                 <td className="invoice-col-unit">{formatCurrency(item.rate)}</td>
-                                <td className="invoice-col-total" style={{ fontWeight: 950 }}>{formatCurrency(item.quantity * item.rate)}</td>
+                                <td className="invoice-col-total" style={{ fontWeight: 700 }}>{formatCurrency(item.quantity * item.rate)}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -169,7 +169,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
                     <div className="signatory">
                         <p>Authorized Signatory</p>
                         <div className="sig-line" />
-                        <p style={{ marginTop: '4px', fontWeight: 800 }}>Bumi Anyom Resort</p>
+                        <p style={{ marginTop: '4px', fontWeight: 600 }}>Bumi Anyom Resort</p>
                     </div>
                     <div className="branding-footer">
                         <p>www.bumianyom.com</p>

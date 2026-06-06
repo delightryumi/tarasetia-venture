@@ -34,7 +34,7 @@ import { CancelConfirmModal } from "../overview/CancelConfirmModal";
 import { OtherRevenueDrawer } from "./components/OtherRevenueDrawer";
 
 /* ── Brand Colors ── */
-const PEACH = "#ffd8a6";
+const PEACH = "#8d7a52";
 const SAGE = "#788069";
 
 /* ── Animations ── */

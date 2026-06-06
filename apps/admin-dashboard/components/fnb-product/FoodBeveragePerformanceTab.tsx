@@ -31,7 +31,7 @@ export default function FoodBeveragePerformanceTab({ activePnLStats, loading, on
             expenses={activePnLStats?.expFoodAlacarte || 0}
             loading={loading}
             onClick={onCardClick}
-            accent="#0066cc"
+            accent="#8d7a52"
             costLabel="Food Cost"
             healthyThreshold={30}
             warningThreshold={40}

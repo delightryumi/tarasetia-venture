@@ -58,12 +58,12 @@ export function DocTag({ label }: { label: string }) {
 type StatVariant = "neutral" | "income" | "expense";
 
 const STAT_ICON_STYLE: Record<StatVariant, { bg: string; color: string }> = {
-    neutral: { bg: "#F1EFE8", color: "#5F5E5A" },
-    income: { bg: "#E1F5EE", color: "#0F6E56" },
-    expense: { bg: "#FCEBEB", color: "#A32D2D" },
+    neutral: { bg: "var(--f-surface-soft, #f5f2eb)", color: "var(--p-muted, #787466)" },
+    income: { bg: "var(--f-income-bg, #E1F5EE)", color: "var(--f-income-color, #0F6E56)" },
+    expense: { bg: "var(--f-expense-bg, #FCEBEB)", color: "var(--f-expense-color, #A32D2D)" },
 };
 const STAT_VALUE_COLOR: Record<StatVariant, string> = {
-    neutral: "#111", income: "#0F6E56", expense: "#A32D2D",
+    neutral: "var(--foreground, #111)", income: "var(--f-income-color, #0F6E56)", expense: "var(--f-expense-color, #A32D2D)",
 };
 
 export function StatCard({
@@ -74,7 +74,7 @@ export function StatCard({
     return (
         <div
             style={{
-                background: "#fff", border: "0.5px solid rgba(0,0,0,0.12)",
+                background: "var(--f-canvas, #faf8f4)", border: "0.5px solid var(--f-hairline, rgba(141, 122, 82, 0.12))",
                 borderRadius: 10, padding: "14px 16px",
                 display: "flex", alignItems: "center", gap: 12,
             }}
@@ -90,7 +90,7 @@ export function StatCard({
                 <Icon size={18} />
             </div>
             <div>
-                <p style={{ fontSize: 11, color: "#888", marginBottom: 3 }}>{label}</p>
+                <p style={{ fontSize: 11, color: "var(--p-muted, #787466)", marginBottom: 3 }}>{label}</p>
                 <p
                     style={{
                         fontSize: 15, fontWeight: 500,
@@ -109,12 +109,12 @@ export function StatCard({
    DESIGN TOKENS (re-exported for modal reuse)
 ══════════════════════════════════════════════════════ */
 export const MODAL_TOKENS = {
-    surface:  "var(--color-background-primary,    #ffffff)",
-    surface2: "var(--color-background-secondary,  #F5F5F3)",
-    border:   "0.5px solid var(--color-border-tertiary,  rgba(0,0,0,0.12))",
-    borderSm: "0.5px solid var(--color-border-secondary, rgba(0,0,0,0.22))",
-    textPri:  "var(--color-text-primary,   #111111)",
-    textSec:  "var(--color-text-secondary, #888888)",
+    surface:  "var(--f-canvas, #faf8f4)",
+    surface2: "var(--f-surface, #f5f2eb)",
+    border:   "0.5px solid var(--f-hairline, rgba(141, 122, 82, 0.12))",
+    borderSm: "0.5px solid var(--f-hairline, rgba(141, 122, 82, 0.2))",
+    textPri:  "var(--foreground, #212121)",
+    textSec:  "var(--p-muted, #787466)",
     mono:     "var(--font-mono, 'JetBrains Mono', monospace)",
     radius:   10,
 } as const;

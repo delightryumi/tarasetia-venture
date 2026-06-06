@@ -321,7 +321,7 @@
 .totalLabel {
   font-size: 10px;
   font-weight: 700;
-  color: #ffd8a6;
+  color: #dfd3b2;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   line-height: 1.2;
@@ -348,7 +348,7 @@
 }
 
 .totalAmountPositive {
-  color: #ffd8a6;
+  color: #dfd3b2;
 }
 
 .totalAmountNegative {
@@ -662,14 +662,14 @@
 .settlementAmount {
   font-size: 36px;
   font-weight: 800;
-  color: #ffd8a6;
+  color: #dfd3b2;
   letter-spacing: -0.03em;
   margin: 0 0 24px 0;
 }
 
 .settlementBtn {
-  background: #ffd8a6;
-  color: #1a1c14;
+  background: #8d7a52;
+  color: #ffffff;
   border: none;
   padding: 16px 40px;
   border-radius: 12px;
@@ -679,15 +679,15 @@
   letter-spacing: 0.25em;
   cursor: pointer;
   transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
-  box-shadow: 0 4px 14px rgba(255, 216, 166, 0.2);
+  box-shadow: 0 4px 14px rgba(141, 122, 82, 0.2);
   display: inline-flex;
   align-items: center;
   gap: 12px;
 }
 
 .settlementBtn:hover {
-  background: #ffebcc;
-  box-shadow: 0 6px 20px rgba(255, 216, 166, 0.35);
+  background: #736342;
+  box-shadow: 0 6px 20px rgba(141, 122, 82, 0.35);
 }
 
 .settlementBtn:active {

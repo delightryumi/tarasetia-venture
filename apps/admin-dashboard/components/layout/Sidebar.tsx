@@ -94,13 +94,13 @@ function DockNavItem({
                     w-full h-full rounded-[10px] flex items-center justify-center
                     border transition-colors duration-200
                     ${isActive
-                        ? "bg-[var(--peach)] border-[var(--peach)] text-[var(--rich-black)] shadow-[0_4px_16px_rgba(255,216,166,0.5)]"
-                        : "text-white/70 hover:text-white hover:border-white/25"
+                        ? "bg-[var(--peach)] border-[var(--peach)] text-white shadow-[0_4px_16px_rgba(141,122,82,0.25)]"
+                        : "text-[var(--rich-black)]/60 hover:text-[var(--rich-black)] hover:border-[var(--peach)]/25"
                     }
                 `}
                 style={isActive ? undefined : {
-                    backgroundColor: "rgba(255,255,255,0.08)",
-                    borderColor: "rgba(255,255,255,0.1)",
+                    backgroundColor: "rgba(141, 122, 82, 0.04)",
+                    borderColor: "rgba(141, 122, 82, 0.08)",
                 }}
             >
                 {icon}
@@ -368,7 +368,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <img
                             src={logoUrl}
                             alt="Logo"
-                            className="h-14 w-auto object-contain brightness-0 invert drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]"
+                            className="h-14 w-auto object-contain brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)]"
                         />
                     )}
                 </motion.div>
@@ -378,7 +378,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClick={() => setIsCollapsed(!isCollapsed)}
                     className="sidebar-toggle"
                 >
-                    {isCollapsed ? <Menu size={24} /> : <ChevronLeft size={24} />}
+                    {isCollapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
                 </motion.button>
             </div>
 
@@ -406,7 +406,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             mouseY={mouseY}
                             onClick={() => router.push('/select-module')}
                         />
-                        <div className="w-8 h-px my-1" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
+                        <div className="w-8 h-px my-1" style={{ backgroundColor: "rgba(141, 122, 82, 0.15)" }} />
 
                         {navItems.map((item) => (
                             <DockNavItem
@@ -433,7 +433,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         ))}
 
                         {/* ── Divider ── */}
-                        <div className="w-8 h-px my-1" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
+                        <div className="w-8 h-px my-1" style={{ backgroundColor: "rgba(141, 122, 82, 0.15)" }} />
 
                         {/* ── Sign Out inside the dock ── */}
                         <DockNavItem
@@ -451,7 +451,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <motion.button
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        whileHover={{ scale: 1.03, backgroundColor: "rgba(255, 216, 166, 0.15)", color: "#ffffff" }}
+                        whileHover={{ scale: 1.03, backgroundColor: "rgba(141, 122, 82, 0.15)", color: "var(--peach)" }}
                         whileTap={{ scale: 0.97 }}
                         className="nav-item border border-[var(--peach)]/30 text-[var(--peach)] mb-4"
                         onClick={() => router.push('/select-module')}
@@ -470,14 +470,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 backgroundColor:
                                     activeSection === item.id
                                         ? "var(--peach)"
-                                        : "rgba(255, 255, 255, 0.04)",
+                                        : "rgba(141, 122, 82, 0.04)",
                                 color:
                                     activeSection === item.id
-                                        ? "var(--rich-black)"
-                                        : "rgba(255, 255, 255, 0.6)",
+                                        ? "#ffffff"
+                                        : "rgba(33, 33, 33, 0.6)",
                                 boxShadow:
                                     activeSection === item.id
-                                        ? "0 12px 30px rgba(255, 216, 166, 0.5)"
+                                        ? "0 8px 20px rgba(141, 122, 82, 0.25)"
                                         : "none",
                             }}
                             whileHover={{
@@ -485,11 +485,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 backgroundColor:
                                     activeSection === item.id
                                         ? "var(--peach)"
-                                        : "rgba(255, 255, 255, 0.12)",
+                                        : "rgba(141, 122, 82, 0.08)",
                                 color:
                                     activeSection === item.id
-                                        ? "var(--rich-black)"
-                                        : "#ffffff",
+                                        ? "#ffffff"
+                                        : "var(--rich-black)",
                             }}
                             whileTap={{ scale: 0.97 }}
                             transition={{ type: "spring", stiffness: 300, damping: 24 }}
@@ -526,9 +526,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && (
                 <div className="sidebar-footer">
                     <motion.button
-                        whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 216, 166, 0.2)" }}
+                        whileHover={{ scale: 1.05, backgroundColor: "rgba(220, 38, 38, 0.1)", color: "#dc2626" }}
                         whileTap={{ scale: 0.95 }}
-                        className="logout-button"
+                        className="logout-button hover:border-red-500/30"
                         onClick={handleLogout}
                     >
                         <LogOut size={20} />

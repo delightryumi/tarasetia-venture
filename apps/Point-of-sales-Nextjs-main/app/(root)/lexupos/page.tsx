@@ -357,7 +357,7 @@ export default function LexuPosPage() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="flex flex-1 flex-col w-full h-full overflow-hidden">
-        <div className="w-full h-full flex md:rounded-2xl overflow-hidden bg-white dark:bg-zinc-950 border-0 md:border border-neutral-200 dark:border-white/[0.1] shadow-none md:shadow-sm">
+        <div className="w-full h-full flex md:rounded-2xl overflow-hidden bg-white dark:bg-zinc-950 border-0 md:border border-neutral-200 dark:border-white/[0.1] shadow-none md:shadow-sm relative">
           {/* Dynamic Style Tag to completely hide browser scrollbars */}
           <style>{`
             .no-scrollbar::-webkit-scrollbar {

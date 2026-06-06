@@ -4,7 +4,6 @@ import {
   ShoppingCart,
   Archive,
   Settings,
-  Star,
   Store,
   User,
 } from 'lucide-react';
@@ -40,10 +39,5 @@ export const NAVBAR_ITEMS: NavItem[] = [
     title: 'Settings',
     path: '/settings',
     icon: <Settings className="h-4 w-4" />,
-  },
-  {
-    title: 'Technologies',
-    path: '/technologies',
-    icon: <Star className="h-4 w-4" />,
   },
 ];

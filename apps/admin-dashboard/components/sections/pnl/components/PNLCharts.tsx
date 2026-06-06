@@ -62,7 +62,7 @@ export const PNLCharts: React.FC<PNLChartsProps> = ({
                                         animationBegin={0}
                                         animationDuration={1500}
                                     >
-                                        <Cell fill="#ffd8a6" />
+                                        <Cell fill="#8d7a52" />
                                         <Cell fill="#788069" />
                                         <Cell fill="#1A1C14" />
                                     </Pie>

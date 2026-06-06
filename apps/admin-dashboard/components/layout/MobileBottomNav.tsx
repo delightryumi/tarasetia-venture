@@ -205,7 +205,7 @@ export const MobileBottomNav = () => {
                         className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] flex-shrink-0 text-white/50 hover:text-white transition-all duration-300"
                         title="Pilih Modul"
                     >
-                        <Grid size={18} className="text-[#ffd8a6]" />
+                        <Grid size={18} className="text-[#dfd3b2]" />
                         <span className="text-[9px] font-normal tracking-wide text-white/50">Modul</span>
                     </button>
 
@@ -232,7 +232,7 @@ export const MobileBottomNav = () => {
                                 className={`
                                     flex flex-col items-center justify-center gap-1 min-w-[55px] px-3 h-[54px] flex-shrink-0 transition-all duration-200
                                     ${isActive 
-                                        ? 'text-[#ffd8a6]' 
+                                        ? 'text-[#dfd3b2]' 
                                         : 'text-white/50 hover:text-white'
                                     }
                                 `}
@@ -243,7 +243,7 @@ export const MobileBottomNav = () => {
                                         strokeWidth: isActive ? 2 : 1.8 
                                     })}
                                 </div>
-                                <span className={`text-[9px] font-normal tracking-wide whitespace-nowrap transition-colors duration-200 ${isActive ? 'text-[#ffd8a6]' : 'text-white/50'}`}>
+                                <span className={`text-[9px] font-normal tracking-wide whitespace-nowrap transition-colors duration-200 ${isActive ? 'text-[#dfd3b2]' : 'text-white/50'}`}>
                                     {item.label}
                                 </span>
                             </button>

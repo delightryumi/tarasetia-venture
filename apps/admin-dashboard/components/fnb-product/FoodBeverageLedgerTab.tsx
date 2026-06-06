@@ -47,7 +47,7 @@ export default function FoodBeverageLedgerTab({ activePnLStats, loading, onCardC
             value={activePnLStats?.revBanquetRevenue || 0}
             loading={loading}
             icon={<Store size={18} />}
-            accent="#0ea5e9"
+            accent="#d9a441"
             bgVariant="revenue"
             onClick={onCardClick}
           />
@@ -67,7 +67,7 @@ export default function FoodBeverageLedgerTab({ activePnLStats, loading, onCardC
             value={activePnLStats?.posServiceCharge || 0}
             loading={loading}
             icon={<Percent size={18} />}
-            accent="#3b82f6"
+            accent="#8d7a52"
             bgVariant="amber"
           />
           <SummaryCard 
@@ -101,8 +101,8 @@ export default function FoodBeverageLedgerTab({ activePnLStats, loading, onCardC
             value={activePnLStats?.posGrossRevenue || 0}
             loading={loading}
             icon={<Hotel size={18} />}
-            accent="#3b82f6"
-            bgVariant="blue"
+            accent="#8d7a52"
+            bgVariant="yellow"
           />
           <SummaryCard 
             label="Nett Revenue"

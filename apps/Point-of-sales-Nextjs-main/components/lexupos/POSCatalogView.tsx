@@ -84,23 +84,15 @@ export default function POSCatalogView({
   return (
     <div className="flex-1 flex flex-col h-full min-w-0 p-4 overflow-hidden">
       {/* Header & Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 shrink-0">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-neutral-800 dark:text-neutral-200 flex items-center gap-2">
-            <Store className="w-5 h-5 text-neutral-500" />
-            <span>LexuPos Workspace</span>
-          </h1>
-          <p className="text-[11px] text-neutral-500 mt-0.5">Filter & Kelola pesanan secara real-time</p>
-        </div>
-
-        <div className="relative max-w-xs w-full sm:w-56">
+      <div className="flex items-center justify-start gap-3 mb-4 shrink-0">
+        <div className="relative max-w-xs w-full sm:w-64">
           <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-neutral-500" />
           <Input
             type="text"
             placeholder="Cari produk / subkategori..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-xl text-neutral-600 dark:text-neutral-200 text-xs h-8"
+            className="pl-8 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-xl text-neutral-600 dark:text-neutral-200 text-xs h-8.5"
           />
         </div>
       </div>

@@ -8,8 +8,8 @@
   --f-sage-bg: #f3f5f0;
   --f-sage-border: #e2e6dd;
 
-  --f-peach: #ffd8a6;
-  --f-peach-dark: #e0b47b;
+  --f-peach: #8d7a52;
+  --f-peach-dark: #736342;
   --f-rich-black: #1a1c14;
 
   --f-canvas: #ffffff;
@@ -50,29 +50,18 @@
   gap: 32px;
 }
 
-/* ── Sticky Header ── */
+/* ── Header ── */
 .header {
-  position: sticky;
-  top: -40px;
-  z-index: 50;
-  background-color: var(--f-canvas);
-  border-bottom: 1px solid var(--f-hairline);
-  padding: 14px 0;
+  position: relative;
+  background: transparent !important;
+  border-bottom: none !important;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: -40px -40px 24px -40px;
-  padding-left: 40px;
-  padding-right: 40px;
-}
-
-@media (max-width: 1024px) {
-  .header {
-    top: -20px;
-    margin: -20px -20px 24px -20px;
-    padding-left: 20px;
-    padding-right: 20px;
-  }
+  margin: 0 auto 24px auto;
+  max-width: 1400px;
+  width: 100%;
 }
 
 .headerInner {
@@ -155,7 +144,7 @@
 
 .toggleBtnActive {
   background-color: var(--f-peach);
-  color: var(--f-rich-black);
+  color: #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -328,10 +317,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 12px;
-  background-color: var(--f-surface-soft);
-  border-radius: var(--f-radius-md);
-  border: 1px solid var(--f-hairline);
   box-sizing: border-box;
   height: 46px;
 }
@@ -351,16 +336,18 @@
 }
 
 .dateInput {
-  background: transparent;
-  border: none;
+  background-color: #fbf9f4 !important;
+  border: 1px solid var(--f-hairline) !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
   font-size: 11px;
   font-weight: 700;
   font-family: var(--f-font-mono);
   color: var(--f-body);
   outline: none;
   cursor: pointer;
-  padding: 0;
-  height: 100%;
+  height: 28px;
+  color-scheme: light !important;
 }
 
 .datePickerDivider {

@@ -59,7 +59,7 @@ export function TransactionTable({
             <div className={styles.card} style={{ overflow: "hidden", padding: 0 }}>
                 <div className={styles.cardHeader} style={{ padding: "24px 24px 16px 24px", borderBottom: "1px solid var(--f-hairline)", marginBottom: 0 }}>
                     <div className={styles.cardHeaderLeft}>
-                        <div className={styles.headerBadge} style={{ backgroundColor: "#ffd8a6", color: "#788069" }}>
+                        <div className={styles.headerBadge} style={{ backgroundColor: "#dfd3b2", color: "#8d7a52" }}>
                             <Activity size={15} />
                         </div>
                         <div className={styles.headerMeta}>
@@ -132,7 +132,7 @@ export function TransactionTable({
                                         <tr 
                                             key={i} 
                                             className={`${styles.tableRow} ${isCancelled ? styles.cancelledRow : ""}`}
-                                            style={i % 2 === 0 ? { backgroundColor: "#ffffff" } : { backgroundColor: "#fffbf9" }}
+                                            style={i % 2 === 0 ? { backgroundColor: "#ffffff" } : { backgroundColor: "#fbf9f4" }}
                                         >
                                             {/* Guest Name */}
                                             <td className={styles.tableCell}>
@@ -149,7 +149,7 @@ export function TransactionTable({
                                                             justifyContent: "center", 
                                                             padding: 0,
                                                             flexShrink: 0,
-                                                            backgroundColor: ['#ffd8a630', '#78806930', '#f3e8ff', '#e0e7ff', '#dcfce7', '#fee2e2', '#fef3c7'][((((entry.guestName || entry.incomeCategory || "O").charCodeAt(0) || 0) + (entry.amount || 0)) % 7)] 
+                                                            backgroundColor: ['rgba(141, 122, 82, 0.15)', 'rgba(120, 128, 105, 0.15)', '#f3e8ff', '#e0e7ff', '#dcfce7', '#fee2e2', '#fef3c7'][((((entry.guestName || entry.incomeCategory || "O").charCodeAt(0) || 0) + (entry.amount || 0)) % 7)] 
                                                         }}
                                                     >
                                                         <img 

@@ -58,7 +58,7 @@ export function ChannelPerformance({
             <div className={styles.card} style={{ overflow: "hidden", padding: 0 }}>
                 <div className={styles.cardHeader} style={{ padding: "24px 24px 16px 24px", borderBottom: "1px solid var(--f-hairline)", marginBottom: 0 }}>
                     <div className={styles.cardHeaderLeft}>
-                        <div className={styles.headerBadge} style={{ backgroundColor: "#ffd8a6", color: "#788069" }}>
+                        <div className={styles.headerBadge} style={{ backgroundColor: "#dfd3b2", color: "#8d7a52" }}>
                             <Activity size={15} />
                         </div>
                         <div className={styles.headerMeta}>

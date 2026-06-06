@@ -11,7 +11,7 @@ import { Sheet, SheetTrigger } from '@/components/ui/sheet';
 import { ModeToggle } from '@/components/darkmode/darkmode';
 import { ThemeProvider } from '@/components/theme-provider';
 import { useTheme } from 'next-themes';
-import Navbar from '@/components/dashboard/navbar';
+import Sidebar from '@/components/dashboard/Sidebar';
 import { NavbarSheet } from '@/components/dashboard/NavbarSheet';
 import { MobileBottomNav } from '@/components/dashboard/MobileBottomNav';
 import { NAVBAR_ITEMS } from '@/constant/navbarMenu';
@@ -237,105 +237,134 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const [dashboardUrl, setDashboardUrl] = useState('https://pms.bumianyom.com/select-module');
   const [loginGatewayUrl, setLoginGatewayUrl] = useState('https://pms.bumianyom.com/login');
   const [isMounted, setIsMounted] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     setDashboardUrl(getDashboardUrl());
     setLoginGatewayUrl(getLoginGatewayUrl());
     setIsMounted(true);
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pos_sidebar_collapsed');
+      if (saved === 'true') {
+        setIsCollapsed(true);
+      }
+    }
   }, []);
 
-  return (
-    <div className="bg-gray-300 dark:bg-black h-screen overflow-hidden">
-      <div className="grid h-full w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-        
-        {/* Sidebar */}
-        <div className="hidden border-r bg-muted/40 md:flex flex-col h-full overflow-hidden">
-          <div className="flex h-14 shrink-0 items-center border-b px-4 lg:h-[60px] lg:px-6">
-            <Link href="/" className="flex items-center gap-2 font-semibold">
-              <TriangleAlert className="h-6 w-6" />
-              <span className="">{storeName} Inc</span>
-            </Link>
-          </div>
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <Navbar />
-          </div>
-        </div>
+  const handleToggleCollapse = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('pos_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
-        {/* Main Content Area */}
-        <div className="flex flex-col h-full overflow-hidden relative">
-          <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 sticky top-0 z-10">
-            <div className="flex items-center gap-4">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="shrink-0 md:hidden"
-                  >
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Toggle navigation menu</span>
-                  </Button>
-                </SheetTrigger>
-                <NavbarSheet />
-              </Sheet>
-              
-              {isRecordDetail && (
-                <Button asChild variant="ghost" size="sm" className="h-9 px-3 gap-1.5 rounded-xl text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors border border-transparent hover:border-neutral-200 dark:hover:border-white/10 shrink-0">
-                  <Link href="/records" className="flex items-center gap-1.5">
-                    <ArrowLeft className="h-4 w-4" />
-                    <span className="hidden sm:inline text-xs font-semibold">Back</span>
-                  </Link>
+  const getPageTitle = (path: string) => {
+    if (path.startsWith('/home')) return 'Home Dashboard';
+    if (path.startsWith('/lexupos')) return 'LexuPos Workspace';
+    if (path.startsWith('/cashier')) return 'Cashier Shift';
+    if (path.startsWith('/product')) return 'Products Catalog';
+    if (path.startsWith('/records')) return 'Transaction Records';
+    if (path.startsWith('/settings')) return 'Settings Panel';
+    if (path.startsWith('/technologies')) return 'Technologies Stack';
+    if (path.startsWith('/orders')) return 'Order Management';
+    return 'POS Workspace';
+  };
+
+  const getPageDescription = (path: string) => {
+    if (path.startsWith('/home')) return 'Real-time summary of sales, shift status, and analytics.';
+    if (path.startsWith('/lexupos')) return 'Manage active orders, tables, billing, and checkout.';
+    if (path.startsWith('/cashier')) return 'Monitor cashier shifts, cash flows, and drawer balancing.';
+    if (path.startsWith('/product')) return 'View and manage restaurant products, stocks, and categories.';
+    if (path.startsWith('/records')) return 'Track order history, payment methods, and revenue types.';
+    if (path.startsWith('/settings')) return 'Configure restaurant details, tax rates, and system settings.';
+    if (path.startsWith('/technologies')) return 'Overview of tech stack powering the Nexura POS platform.';
+    if (path.startsWith('/orders')) return 'Active orders and queue details.';
+    return 'Manage your POS system.';
+  };
+
+  return (
+    <div className="bg-background text-foreground h-screen overflow-hidden flex relative">
+      {/* Sidebar */}
+      <Sidebar 
+        isCollapsed={isCollapsed} 
+        onToggleCollapse={handleToggleCollapse} 
+        storeName={storeName} 
+      />
+
+      {/* Main Content Area */}
+      <div 
+        className={`flex flex-col h-full overflow-hidden w-full transition-all duration-500 ${
+          isCollapsed ? "md:pl-[140px]" : "md:pl-[280px]"
+        }`}
+      >
+        <header className="flex h-16 shrink-0 items-center justify-between gap-4 px-4 lg:px-6 sticky top-0 z-20 bg-transparent border-0 w-full">
+          <div className="flex items-center gap-4">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0 md:hidden rounded-xl border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 shadow-sm"
+                >
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle navigation menu</span>
                 </Button>
-              )}
+              </SheetTrigger>
+              <NavbarSheet />
+            </Sheet>
+            
+            {isRecordDetail && (
+              <Button asChild variant="ghost" size="sm" className="h-9 px-3 gap-1.5 rounded-xl text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors border border-transparent hover:border-neutral-200 dark:hover:border-white/10 shrink-0">
+                <Link href="/records" className="flex items-center gap-1.5">
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline text-xs font-semibold">Back</span>
+                </Link>
+              </Button>
+            )}
+
+            {/* Page Title & Subtitle */}
+            <div className="flex flex-col select-none">
+              <h1 className="text-sm md:text-base font-bold tracking-tight text-neutral-800 dark:text-neutral-100">
+                {getPageTitle(pathname)}
+              </h1>
+              <p className="hidden sm:block text-[10px] text-neutral-400">
+                {getPageDescription(pathname)}
+              </p>
             </div>
-            <div className="flex items-center gap-3">
-              <ModeToggle />
-            </div>
-          </header>
+          </div>
           
-          <main className={`flex-1 ${isLexuPos ? 'overflow-hidden p-0 pb-[56px] md:pb-0' : 'overflow-y-auto p-4 lg:p-6 pb-[72px] md:pb-0'} bg-slate-50 dark:bg-zinc-900/10`}>
-            <div
-              className={`flex flex-col flex-1 ${isLexuPos ? 'h-full rounded-none overflow-hidden' : 'rounded-lg min-h-full'}`}
-              x-chunk="dashboard-02-chunk-1"
-            >
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-              >
-                <NextTopLoader showSpinner={false} />
-                {/* Iframe session-bridge disabled in production due to modern browser storage partitioning
-                isMounted && (
-                  <iframe
-                    src={`${dashboardUrl.replace('/select-module', '')}/auth/session-bridge`}
-                    className="hidden"
-                    style={{ display: 'none' }}
-                  />
-                )*/}
-                {rbacLoading ? (
+          <div className="flex items-center gap-3">
+            <ModeToggle />
+          </div>
+        </header>
+        
+        <main className={`flex-1 ${isLexuPos ? 'overflow-hidden p-0 pb-[56px] md:pb-0' : 'overflow-y-auto p-4 lg:p-6 pb-[72px] md:pb-0'} bg-slate-50 dark:bg-zinc-900/10`}>
+          <div
+            className={`flex flex-col flex-1 ${isLexuPos ? 'h-full rounded-none overflow-hidden' : 'rounded-lg min-h-full'}`}
+            x-chunk="dashboard-02-chunk-1"
+          >
+            {rbacLoading ? (
+              <div className="flex flex-1 items-center justify-center">
+                <p className="text-sm text-muted-foreground animate-pulse">Checking access...</p>
+              </div>
+            ) : !isAuthorized ? (
+              (() => {
+                if (typeof window !== 'undefined') {
+                  window.location.href = loginGatewayUrl;
+                }
+                return (
                   <div className="flex flex-1 items-center justify-center">
-                    <p className="text-sm text-muted-foreground animate-pulse">Checking access...</p>
+                    <p className="text-sm text-muted-foreground">Redirecting to login...</p>
                   </div>
-                ) : !isAuthorized ? (
-                  (() => {
-                    if (typeof window !== 'undefined') {
-                      window.location.href = loginGatewayUrl;
-                    }
-                    return (
-                      <div className="flex flex-1 items-center justify-center">
-                        <p className="text-sm text-muted-foreground">Redirecting to login...</p>
-                      </div>
-                    );
-                  })()
-                ) : (
-                  children
-                )}
-              </ThemeProvider>
-            </div>
-          </main>
-          <MobileBottomNav />
-        </div>
+                );
+              })()
+            ) : (
+              children
+            )}
+          </div>
+        </main>
+        <MobileBottomNav />
       </div>
     </div>
   );

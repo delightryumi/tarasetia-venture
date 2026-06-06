@@ -1,40 +1,99 @@
 "use client";
 
-import * as React from "react";
-import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
+import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sun, MoonStar, Monitor } from "lucide-react";
 
 export function ModeToggle() {
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-neutral-600 dark:text-zinc-400 shrink-0 flex items-center justify-center">
+        <Sun className="w-[1.15rem] h-[1.15rem]" />
+      </div>
+    );
+  }
+
+  const changeTheme = (newTheme: "dark" | "light" | "system") => {
+    setTheme(newTheme);
+    setIsOpen(false);
+  };
+
+  const getDropdownItemClass = (active: boolean) => {
+    return `flex items-center w-full px-4 py-2 text-xs font-semibold text-left border-none bg-transparent rounded-lg cursor-pointer transition-all duration-150 ${
+      active
+        ? 'text-neutral-900 bg-neutral-100 dark:text-white dark:bg-zinc-800/80'
+        : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800/50'
+    }`;
+  };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          <SunIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <MoonIcon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="relative">
+      {/* Dropdown Backdrop to close click-outside */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 cursor-default bg-transparent" 
+          onClick={() => setIsOpen(false)} 
+        />
+      )}
+
+      {/* Theme switcher toggle trigger button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-neutral-600 dark:text-zinc-400 hover:bg-neutral-100 dark:hover:bg-zinc-900 hover:text-neutral-900 dark:hover:text-white transition-all shadow-sm flex items-center justify-center relative z-50 cursor-pointer focus:outline-none"
+        title="Change theme"
+      >
+        <Sun className={`w-[1.15rem] h-[1.15rem] text-amber-500 absolute transition-all duration-300 transform ${
+          theme === 'light' ? 'rotate-0 scale-100' : 'rotate-95 scale-0'
+        }`} />
+        <MoonStar className={`w-[1.15rem] h-[1.15rem] text-indigo-400 dark:text-neutral-200 absolute transition-all duration-300 transform ${
+          theme === 'dark' ? 'rotate-0 scale-100' : '-rotate-95 scale-0'
+        }`} />
+        <Monitor className={`w-[1.15rem] h-[1.15rem] absolute transition-all duration-300 transform ${
+          theme === 'system' ? 'rotate-0 scale-100' : 'rotate-180 scale-0'
+        }`} />
+        <span className="sr-only">Toggle theme</span>
+      </button>
+
+      {/* Dropdown Menu matching standard POS Dropdown exactly */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 8 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-10 md:top-11 right-0 w-36 bg-white dark:bg-zinc-950 border border-neutral-200/90 dark:border-zinc-850/90 rounded-xl shadow-lg p-1.5 z-50 flex flex-col gap-1"
+          >
+            <button
+              onClick={() => changeTheme('light')}
+              className={getDropdownItemClass(theme === 'light')}
+            >
+              Light
+            </button>
+            <button
+              onClick={() => changeTheme('dark')}
+              className={getDropdownItemClass(theme === 'dark')}
+            >
+              Dark
+            </button>
+            <button
+              onClick={() => changeTheme('system')}
+              className={getDropdownItemClass(theme === 'system')}
+            >
+              System
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

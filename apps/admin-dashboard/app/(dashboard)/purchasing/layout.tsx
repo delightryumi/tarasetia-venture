@@ -1,9 +1,6 @@
 // app/(dashboard)/purchasing/layout.tsx
-// DashboardLayout detects /purchasing/* and passes children through (no sidebar/topbar).
-// This layout then wraps children with the isolated PurchasingShell.
-// Full layout and CSS isolation is achieved without moving route files.
 
-import { PurchasingShell } from '@/components/purchasing/shell/PurchasingShell';
+import '@/components/purchasing/shell/purchasing-tokens.css';
 
 export const metadata = {
   title: 'Purchasing | Nexura HMS',
@@ -11,5 +8,5 @@ export const metadata = {
 };
 
 export default function PurchasingLayout({ children }: { children: React.ReactNode }) {
-  return <PurchasingShell>{children}</PurchasingShell>;
+  return <div className="purchasing-root">{children}</div>;
 }

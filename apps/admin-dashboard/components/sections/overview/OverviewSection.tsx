@@ -23,7 +23,7 @@ import { CancelConfirmModal } from "./CancelConfirmModal";
 import { GuestListDrawer } from "./GuestListDrawer";
 
 const SAGE = "#788069";
-const PEACH = "#ffd8a6";
+const PEACH = "#8d7a52";
 const RICH_BLACK = "#1A1C14";
 
 export function OverviewSection() {
@@ -270,7 +270,7 @@ export function OverviewSection() {
             <header className={styles.header}>
                 <div className={styles.headerInner}>
                     <div className={styles.headerLeft}>
-                        <div className={styles.headerBadge} style={{ backgroundColor: PEACH, color: SAGE }}>
+                        <div className={styles.headerBadge} style={{ backgroundColor: PEACH, color: '#ffffff' }}>
                             <PlusCircle size={15} />
                         </div>
                         <div className={styles.headerMeta}>

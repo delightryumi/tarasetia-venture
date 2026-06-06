@@ -31,16 +31,16 @@ export const InvoiceSection = () => {
     );
 
     return (
-        <section className="min-h-screen bg-[#fafafa]">
-            <header className="px-8 pt-8 pb-4 flex justify-between items-end no-print">
+        <section className="min-h-screen bg-transparent">
+            <header className="content-header no-print flex justify-between items-end mb-8">
                 <div>
-                    <h1 className="text-4xl font-black text-black tracking-tighter flex items-center gap-3">
-                        <div className="bg-black p-2 rounded-xl text-white">
-                            <FileText size={28} />
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-sage/10 rounded-lg text-sage">
+                            <FileText size={24} />
                         </div>
-                        Invoice Creator
-                    </h1>
-                    <p className="text-gray-500 font-medium mt-2">Craft professional, nature-inspired documents for Bumi Anyom Resort.</p>
+                        <h1 className="content-title">Invoice Creator</h1>
+                    </div>
+                    <p className="content-subtitle">Craft professional, nature-inspired documents for Bumi Anyom Resort.</p>
                 </div>
                 <div className="flex gap-4" style={{ marginRight: '1.5cm' }}>
                     <motion.button
@@ -64,16 +64,16 @@ export const InvoiceSection = () => {
                 <div className="invoice-form-card custom-scrollbar">
                     <div className="space-y-12">
                         
-                        <section className="form-section !bg-stone-50/50">
+                        <section className="form-section verify-guest-section">
                             <h3 className="section-header">
                                 Verify & Link Guest
                             </h3>
-                            <div className="space-y-4">
+                            <div className="verify-guest-container">
                                 <div className="relative">
                                     <input 
                                         type="text" 
                                         placeholder="Cari nama tamu (min. 2 huruf)..."
-                                        className="w-full h-11 px-4 bg-white border border-stone-100 rounded-xl text-sm outline-none focus:border-sage transition-all shadow-sm"
+                                        className="w-full h-11 px-4 bg-[#fbf9f4] border border-[rgba(141,122,82,0.12)] rounded-xl text-sm outline-none focus:border-sage focus:ring-1 focus:ring-sage transition-all shadow-sm"
                                         onChange={(e) => searchTransactions(e.target.value)}
                                     />
                                     {searching && (
@@ -83,23 +83,21 @@ export const InvoiceSection = () => {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-1 gap-2 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
-                                    {transactions.length === 0 && !searching && <p className="text-[10px] text-gray-300 italic px-2">Ketik nama tamu untuk mencari data asli dari sistem...</p>}
+                                <div className="verify-results-list custom-scrollbar">
+                                    {transactions.length === 0 && !searching && <p className="verify-helper-text">Ketik nama tamu untuk mencari data asli dari sistem...</p>}
                                     {transactions.map((tr, i) => (
                                         <button
                                             key={i}
                                             onClick={() => selectTransaction(tr)}
-                                            className="flex items-center justify-between p-3 bg-white border border-stone-100 rounded-xl hover:border-sage hover:shadow-sm transition-all text-left group"
+                                            className="verify-result-btn"
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <div>
-                                                    <div className="text-[11px] font-bold text-stone-800 uppercase tracking-tight line-clamp-1">{tr.guestName || tr.incomeCategory}</div>
-                                                    <div className="text-[9px] text-stone-400 font-medium">{tr.checkInDate || new Date(tr.timestamp).toLocaleDateString()} — {tr.channel || 'Internal'}</div>
-                                                </div>
+                                            <div className="verify-result-info">
+                                                <div className="verify-result-name">{tr.guestName || tr.incomeCategory}</div>
+                                                <div className="verify-result-meta">{tr.checkInDate || new Date(tr.timestamp).toLocaleDateString()} — {tr.channel || 'Internal'}</div>
                                             </div>
-                                            <div className="text-right">
-                                                <div className="text-[11px] font-black text-stone-900">Rp {Number(tr.amount).toLocaleString('id-ID')}</div>
-                                                <div className="text-[8px] font-bold text-sage uppercase tracking-widest">{tr.type === 'accommodation' ? 'Stay' : 'Other'}</div>
+                                            <div className="verify-result-value">
+                                                <div className="verify-result-amount">Rp {Number(tr.amount).toLocaleString('id-ID')}</div>
+                                                <div className="verify-result-badge">{tr.type === 'accommodation' ? 'Stay' : 'Other'}</div>
                                             </div>
                                         </button>
                                     ))}
@@ -255,7 +253,7 @@ export const InvoiceSection = () => {
                                                 <div className="col-span-12 lg:col-span-1 flex justify-end lg:pb-2 mt-2 lg:mt-0">
                                                     <button 
                                                         onClick={() => removeItem(item.id)}
-                                                        className="flex items-center gap-2 text-stone-400 hover:text-red-500 transition-colors text-[10px] font-bold uppercase lg:justify-center"
+                                                        className="flex items-center gap-2 text-neutral-400 hover:text-red-500 transition-colors text-[10px] font-semibold uppercase lg:justify-center"
                                                     >
                                                         <Trash2 size={16} />
                                                         <span className="lg:hidden">Remove Item</span>

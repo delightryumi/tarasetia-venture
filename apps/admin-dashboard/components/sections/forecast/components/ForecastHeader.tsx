@@ -5,7 +5,7 @@ import { Waves, Download, FileText, LayoutDashboard, TrendingUp } from "lucide-r
 import { CustomDatePicker } from "../CustomDatePicker";
 import styles from "../ForecastStyles.module.css";
 
-const PEACH = "#ffd8a6";
+const PEACH = "#8d7a52";
 const SAGE = "#788069";
 
 interface ForecastHeaderProps {

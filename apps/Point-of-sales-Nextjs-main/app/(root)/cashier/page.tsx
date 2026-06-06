@@ -697,17 +697,8 @@ export default function CashierPage() {
           
           {viewMode === 'main' ? (
           <>
-          {/* Header Section matching home bento alignment */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0 pb-2">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
-                <ClipboardList className="w-6 h-6 text-neutral-600 dark:text-neutral-400" />
-                <span>Manajemen Shift Kasir</span>
-              </h1>
-              <p className="text-xs text-neutral-500 mt-1">
-                Pantau kas laci (House Bank), penerimaan sales, dan validasi selisih shift aktif.
-              </p>
-            </div>
+          {/* Header Action Section */}
+          <div className="flex flex-row justify-end items-center gap-4 shrink-0 pb-2">
             <div className="flex items-center gap-2">
               <Button onClick={() => setViewMode('history')} variant="outline" className="h-9 px-4 rounded-xl text-xs font-bold border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 shadow-sm">
                 <History className="w-4 h-4 mr-2" />
