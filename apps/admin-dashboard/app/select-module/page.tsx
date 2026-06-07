@@ -249,6 +249,17 @@ export default function SelectModulePage() {
         <div className="absolute inset-0 bg-white/10 dark:bg-[#060606]/35 backdrop-blur-[0.5px] pointer-events-none" />
       </div>
 
+      {/* Aurora Lights (Dynamic Luxury Glows) */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 select-none">
+        {/* Light Mode Glows */}
+        <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-blue-200/35 to-purple-200/20 blur-[120px] dark:hidden" />
+        <div className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-amber-100/35 to-rose-100/20 blur-[120px] dark:hidden" />
+        
+        {/* Dark Mode Glows */}
+        <div className="absolute -top-[30%] -left-[20%] w-[80%] h-[80%] rounded-full bg-gradient-to-tr from-indigo-950/20 to-purple-950/10 blur-[150px] hidden dark:block" />
+        <div className="absolute -bottom-[30%] -right-[20%] w-[80%] h-[80%] rounded-full bg-gradient-to-tr from-emerald-950/15 to-teal-950/10 blur-[150px] hidden dark:block" />
+      </div>
+
       {/* Modular Action Buttons (Now floating bottom-left) */}
       <ModuleActionButtons
         showGrid={false}

@@ -13,7 +13,7 @@ import { localDb } from '@/lib/dexie';
 import { syncUnsyncedTransactions, syncProductsFromServer } from '@/lib/dexie-sync';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { ShoppingBag } from 'lucide-react';
 import { useCurrency } from '@/hooks/useCurrency';
 
@@ -114,6 +114,36 @@ export default function LexuPosPage() {
     fetchShopTax();
   }, []);
 
+  // Check for restored held order on mount and listen to real-time events
+  useEffect(() => {
+    const handleRestoreEvent = () => {
+      if (typeof window !== 'undefined') {
+        const restoredJson = localStorage.getItem('restored_held_order');
+        if (restoredJson) {
+          try {
+            const restoredOrder = JSON.parse(restoredJson);
+            if (restoredOrder.cart && Array.isArray(restoredOrder.cart)) {
+              setCart(restoredOrder.cart);
+              setCustomerName(restoredOrder.customerName || '');
+              setTableNumber(restoredOrder.tableNumber || '');
+              setNotes(restoredOrder.notes || '');
+              setDiscountPercent(restoredOrder.discountPercent || 0);
+              toast.success(`Mengembalikan pesanan held untuk ${restoredOrder.customerName || 'Guest'}`);
+            }
+          } catch (err) {
+            console.error('Failed to parse restored held order:', err);
+          } finally {
+            localStorage.removeItem('restored_held_order');
+          }
+        }
+      }
+    };
+
+    handleRestoreEvent();
+    window.addEventListener('restore_held_order', handleRestoreEvent);
+    return () => window.removeEventListener('restore_held_order', handleRestoreEvent);
+  }, []);
+
   // Auto-switch and lock revenueType to 'banquet' if the cart contains any BANQUET items
   useEffect(() => {
     const hasBanquetItem = cart.some(
@@ -189,19 +219,88 @@ export default function LexuPosPage() {
   };
 
   const subtotal = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
-  const tax = subtotal * (taxRatePercent / 100); 
   const discount = subtotal * (discountPercent / 100);
-  const payableAmount = subtotal + tax - discount;
+  const tax = (subtotal - discount) * (taxRatePercent / 100); 
+  const payableAmount = subtotal - discount + tax;
 
-  const handleHoldConfirm = () => {
+  const handleHoldConfirm = async () => {
     const nameStr = customerName.trim() ? ` untuk ${customerName.trim()}` : '';
     const tableStr = tableNumber.trim() ? ` (Meja ${tableNumber.trim()})` : '';
-    toast.info(`Pesanan${nameStr}${tableStr} ditunda (Hold Order).`);
+
+    const heldId = `HLD-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    const userJson = localStorage.getItem('user');
+    let restoId = 'default-resto';
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        restoId = user.restoId || 'default-resto';
+      } catch (e) {}
+    }
+
+    const heldOrderData = {
+      id: heldId,
+      customerName: customerName.trim() || 'Guest',
+      tableNumber: tableNumber.trim() || '',
+      notes: notes.trim() || '',
+      cart: cart.map(item => ({
+        product: {
+          id: item.product.id,
+          name: item.product.name,
+          price: item.product.price,
+          category: item.product.category || '',
+          subcategory: item.product.subcategory || '',
+          image: item.product.image || ''
+        },
+        quantity: item.quantity
+      })),
+      subtotal,
+      discount,
+      discountPercent,
+      tax,
+      payableAmount,
+      createdAt: new Date().toISOString(),
+      restoId,
+      cashierName: cashierName || 'Kasir'
+    };
+
+    try {
+      // 1. Save to local DB (Dexie)
+      await localDb.heldOrders.put(heldOrderData);
+
+      // 2. Save to Firebase Firestore
+      await setDoc(doc(db, "pos_held_orders", heldId), heldOrderData);
+
+      toast.success(`Pesanan${nameStr}${tableStr} berhasil ditunda (Hold Order).`);
+    } catch (err) {
+      console.error("Failed to hold order:", err);
+      toast.error("Gagal menunda pesanan. Silakan coba lagi.");
+    }
+
     setCart([]);
     setCustomerName('');
     setTableNumber('');
     setNotes('');
+    setDiscountPercent(0);
     setIsHoldConfirmOpen(false);
+  };
+
+  const handleRestoreOrder = async (order: any) => {
+    if (cart.length > 0 && !window.confirm('Ada item aktif di keranjang. Pulihkan pesanan ini dan timpa keranjang saat ini?')) {
+      return;
+    }
+    setCart(order.cart);
+    setCustomerName(order.customerName || '');
+    setTableNumber(order.tableNumber || '');
+    setNotes(order.notes || '');
+    setDiscountPercent(order.discountPercent || 0);
+
+    try {
+      await deleteDoc(doc(db, 'pos_held_orders', order.id));
+      await localDb.heldOrders.delete(order.id);
+      toast.success(`Berhasil memulihkan pesanan tamu: ${order.customerName || 'Guest'}`);
+    } catch (e) {
+      console.error('Failed to remove restored order from database:', e);
+    }
   };
 
   const handleProceed = () => {

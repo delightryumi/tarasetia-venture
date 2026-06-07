@@ -1,9 +1,20 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { Store, Search, Plus, Info, Layers } from 'lucide-react';
+import { Store, Search, Plus, Info, Layers, RotateCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Product } from './types';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { toast } from 'react-toastify';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface POSCatalogViewProps {
   searchQuery: string;
@@ -33,8 +44,6 @@ export default function POSCatalogView({
   onAddToCart
 }: POSCatalogViewProps) {
   const { formatCurrency } = useCurrency();
-
-  // Drag Scroll for Category tabs
   const catScrollRef = useRef<HTMLDivElement>(null);
   const [isDraggingCat, setIsDraggingCat] = useState(false);
   const [startXCat, setStartXCat] = useState(0);

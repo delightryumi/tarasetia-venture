@@ -214,10 +214,16 @@ export default function DetailPage() {
               <span>{formatCurrency(subtotal)}</span>
             </li>
             {discount > 0 && (
-              <li className="flex justify-between text-red-500">
-                <span className="text-muted-foreground text-red-400">Discount</span>
-                <span>-{formatCurrency(discount)}</span>
-              </li>
+              <>
+                <li className="flex justify-between text-red-500">
+                  <span className="text-muted-foreground text-red-400">Discount</span>
+                  <span>-{formatCurrency(discount)}</span>
+                </li>
+                <li className="flex justify-between font-semibold text-neutral-600 dark:text-neutral-400">
+                  <span className="text-muted-foreground">Setelah Diskon</span>
+                  <span>{formatCurrency(subtotal - discount)}</span>
+                </li>
+              </>
             )}
             <li className="flex justify-between">
               <span className="text-muted-foreground">Service TAX ({taxRate}%)</span>
@@ -312,9 +318,14 @@ export default function DetailPage() {
             <span>Subtotal:</span><span>{formatCurrency(subtotal)}</span>
           </div>
           {discount > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Discount:</span><span>-{formatCurrency(discount)}</span>
-            </div>
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Discount:</span><span>-{formatCurrency(discount)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                <span>Setelah Diskon:</span><span>{formatCurrency(subtotal - discount)}</span>
+              </div>
+            </>
           )}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Service TAX ({taxRate}%):</span><span>{formatCurrency(tax)}</span>

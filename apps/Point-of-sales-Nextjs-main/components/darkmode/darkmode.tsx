@@ -16,7 +16,7 @@ export function ModeToggle() {
 
   if (!mounted) {
     return (
-      <div className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-neutral-600 dark:text-zinc-400 shrink-0 flex items-center justify-center">
+      <div className="w-9 h-9 rounded-xl border border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 text-neutral-600 dark:text-neutral-300 shrink-0 flex items-center justify-center">
         <Sun className="w-[1.15rem] h-[1.15rem]" />
       </div>
     );
@@ -48,7 +48,7 @@ export function ModeToggle() {
       {/* Theme switcher toggle trigger button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-neutral-600 dark:text-zinc-400 hover:bg-neutral-100 dark:hover:bg-zinc-900 hover:text-neutral-900 dark:hover:text-white transition-all shadow-sm flex items-center justify-center relative z-50 cursor-pointer focus:outline-none"
+        className="w-9 h-9 rounded-xl border border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white transition-all shadow-sm active:scale-95 flex items-center justify-center relative z-50 cursor-pointer focus:outline-none"
         title="Change theme"
       >
         <Sun className={`w-[1.15rem] h-[1.15rem] text-amber-500 absolute transition-all duration-300 transform ${

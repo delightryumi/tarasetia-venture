@@ -87,6 +87,9 @@ export const fetchRecords = async ({
         totalQuantity,
         paymentMethod: data.paymentMethod || 'cash',
         revenueType: data.revenueType || 'alacarte',
+        customerName: data.customerName || '',
+        tableNumber: data.tableNumber || '',
+        cashierName: data.cashierName || '',
       });
     });
 

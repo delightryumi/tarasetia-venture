@@ -243,18 +243,26 @@ export default function PaymentWorkspace({
         {/* BOTTOM SECTION: Calculation, Cash Input, Confirm */}
         <div className="p-5 mt-auto border-t border-neutral-200 dark:border-white/[0.05] flex flex-col gap-5 bg-white dark:bg-zinc-950 z-10 flex-1">
           
-          <div className="grid grid-cols-3 gap-3">
+          <div className={`grid gap-3 ${discount > 0 ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <div className="bg-neutral-50 dark:bg-zinc-900/50 p-3 rounded-xl border border-neutral-100 dark:border-white/[0.05]">
               <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Subtotal</span>
               <span className="text-xs font-black text-neutral-700 dark:text-neutral-200">{formatCurrency(subtotal)}</span>
             </div>
+            {discount > 0 && (
+              <>
+                <div className="bg-red-50/50 dark:bg-red-950/20 p-3 rounded-xl border border-red-100 dark:border-red-900/30">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-red-400 block mb-1.5">Diskon</span>
+                  <span className="text-xs font-black text-red-500">-{formatCurrency(discount)}</span>
+                </div>
+                <div className="bg-neutral-50 dark:bg-zinc-900/50 p-3 rounded-xl border border-neutral-100 dark:border-white/[0.05]">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Setelah Diskon</span>
+                  <span className="text-xs font-black text-neutral-700 dark:text-neutral-200">{formatCurrency(subtotal - discount)}</span>
+                </div>
+              </>
+            )}
             <div className="bg-neutral-50 dark:bg-zinc-900/50 p-3 rounded-xl border border-neutral-100 dark:border-white/[0.05]">
-              <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Pajak ({subtotal > 0 ? Math.round((tax / subtotal) * 100) : 10}% Service TAX)</span>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Pajak ({subtotal - discount > 0 ? Math.round((tax / (subtotal - discount)) * 100) : 10}%)</span>
               <span className="text-xs font-black text-neutral-700 dark:text-neutral-200">{formatCurrency(tax)}</span>
-            </div>
-            <div className="bg-red-50/50 dark:bg-red-950/20 p-3 rounded-xl border border-red-100 dark:border-red-900/30">
-              <span className="text-[9px] font-bold uppercase tracking-widest text-red-400 block mb-1.5">Diskon</span>
-              <span className="text-xs font-black text-red-500">-{formatCurrency(discount)}</span>
             </div>
           </div>
 

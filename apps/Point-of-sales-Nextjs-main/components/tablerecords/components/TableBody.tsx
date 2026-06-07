@@ -23,6 +23,9 @@ interface Recordsdata {
   products: Product[]; // Menggunakan array untuk produk
   paymentMethod: string;
   revenueType: string;
+  customerName?: string;
+  tableNumber?: string;
+  cashierName?: string;
 }
 
 interface TableBodyRecordsProps {
@@ -49,8 +52,11 @@ const TableBodyRecords: React.FC<TableBodyRecordsProps> = ({ data }) => {
         ? Array.from({ length: 5 }).map((_, i) => <SkeletonRecords key={i} />)
         : recordsData.map((item) => (
             <TableRow key={item.id}>
-              <TableCell className="font-medium pl-4">{item.id}</TableCell>
-              <TableCell>
+              <TableCell className="font-medium pl-4 whitespace-nowrap">{item.id}</TableCell>
+              <TableCell className="pl-4 font-semibold text-neutral-800 dark:text-neutral-200 whitespace-nowrap">{item.customerName || '-'}</TableCell>
+              <TableCell className="pl-4 whitespace-nowrap">{item.tableNumber || '-'}</TableCell>
+              <TableCell className="pl-4 text-neutral-600 dark:text-neutral-400 whitespace-nowrap">{item.cashierName || '-'}</TableCell>
+              <TableCell className="text-center whitespace-nowrap">
                 <Badge
                   variant="outline"
                   className={
@@ -62,26 +68,26 @@ const TableBodyRecords: React.FC<TableBodyRecordsProps> = ({ data }) => {
                   {item.isComplete ? 'Complete' : 'Incomplete'}
                 </Badge>
               </TableCell>
-              <TableCell className="hidden md:table-cell pl-20 pr-20">
+              <TableCell className="hidden md:table-cell text-center whitespace-nowrap">
                 {item.totalQuantity}
               </TableCell>
-              <TableCell className="pl-5 text-red-500 font-medium">
+              <TableCell className="p-4 text-right text-red-500 font-medium whitespace-nowrap">
                 {item.discount && item.discount > 0 ? `-${formatCurrency(item.discount)}` : '-'}
               </TableCell>
-              <TableCell className="pl-5 font-bold">
+              <TableCell className="p-4 text-right font-bold text-neutral-800 dark:text-neutral-200 whitespace-nowrap">
                 {item.totalAmount ? formatCurrency(parseFloat(item.totalAmount)) : 'N/A'}
               </TableCell>
-              <TableCell className="pl-4 uppercase font-bold text-[10px]">
+              <TableCell className="p-4 text-center uppercase font-bold text-[10px] whitespace-nowrap">
                 <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800">
                   {item.paymentMethod}
                 </Badge>
               </TableCell>
-              <TableCell className="pl-4 capitalize font-semibold text-[10px]">
+              <TableCell className="p-4 text-center capitalize font-semibold text-[10px] whitespace-nowrap">
                 <Badge variant="outline" className={item.revenueType === 'banquet' ? 'bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800' : 'bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800'}>
                   {item.revenueType === 'banquet' ? 'Banquet' : 'A la Carte'}
                 </Badge>
               </TableCell>
-              <TableCell className="hidden md:table-cell pl-3">
+              <TableCell className="hidden md:table-cell pl-3 whitespace-nowrap">
                 {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}
               </TableCell>
               <TableCell>

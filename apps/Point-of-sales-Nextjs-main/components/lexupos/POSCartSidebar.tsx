@@ -212,13 +212,21 @@ export default function POSCartSidebar({
             <span>Subtotal</span>
             <span className="font-semibold text-neutral-700 dark:text-neutral-200">{formatCurrency(subtotal)}</span>
           </div>
+          {discount > 0 && (
+            <>
+              <div className="flex justify-between">
+                <span>Diskon</span>
+                <span className="font-semibold text-red-500">-{formatCurrency(discount)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Total Setelah Diskon</span>
+                <span className="font-semibold text-neutral-700 dark:text-neutral-200">{formatCurrency(subtotal - discount)}</span>
+              </div>
+            </>
+          )}
           <div className="flex justify-between">
-            <span>Pajak ({subtotal > 0 ? Math.round((tax / subtotal) * 100) : 10}% Service TAX)</span>
+            <span>Pajak ({subtotal - discount > 0 ? Math.round((tax / (subtotal - discount)) * 100) : 10}% Service TAX)</span>
             <span className="font-semibold text-neutral-700 dark:text-neutral-200">{formatCurrency(tax)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Diskon</span>
-            <span className="font-semibold text-red-500">-{formatCurrency(discount)}</span>
           </div>
           
           <div className="h-[1px] bg-neutral-200 dark:bg-white/[0.1] my-1" />

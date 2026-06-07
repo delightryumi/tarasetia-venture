@@ -32,6 +32,9 @@ interface Recordsdata {
   products: Product[];
   paymentMethod: string;
   revenueType: string;
+  customerName?: string;
+  tableNumber?: string;
+  cashierName?: string;
 }
 
 export async function Records(props: PageProps) {
@@ -73,6 +76,9 @@ export async function Records(props: PageProps) {
     products: item.products,
     paymentMethod: item.paymentMethod || 'cash',
     revenueType: item.revenueType || 'alacarte',
+    customerName: item.customerName || '',
+    tableNumber: item.tableNumber || '',
+    cashierName: item.cashierName || '',
   }));
   return (
     <Card x-chunk="dashboard-06-chunk-0" className="h-full flex flex-col">

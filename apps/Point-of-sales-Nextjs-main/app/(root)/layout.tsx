@@ -5,7 +5,7 @@ interface RootLayoutProps {
   children: React.ReactNode;
 }
 import Link from 'next/link';
-import { Menu, TriangleAlert, LogOut, ArrowLeft, ShieldAlert } from 'lucide-react';
+import { Menu, TriangleAlert, LogOut, ArrowLeft, ShieldAlert, ShoppingCart, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
 import { ModeToggle } from '@/components/darkmode/darkmode';
@@ -21,6 +21,18 @@ import axios from 'axios';
 import eventBus from '@/lib/even';
 import { useRouter, usePathname } from 'next/navigation';
 import { registerNetworkSync, syncProductsFromServer, syncUnsyncedTransactions } from '@/lib/dexie-sync';
+import { db } from '@/lib/firebase';
+import { localDb } from '@/lib/dexie';
+import { collection, onSnapshot, query, where, deleteDoc, doc } from 'firebase/firestore';
+import { useCurrency } from '@/hooks/useCurrency';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const RootLayout = ({ children }: RootLayoutProps) => {
   const router = useRouter();
@@ -36,6 +48,67 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   const isRecordDetail = pathname?.startsWith('/records/') && pathname !== '/records';
   const isLexuPos = pathname === '/lexupos';
+
+  const { formatCurrency } = useCurrency();
+  const [heldOrders, setHeldOrders] = useState<any[]>([]);
+  const [openList, setOpenList] = useState(false);
+
+  useEffect(() => {
+    const userJson = localStorage.getItem('user');
+    let restoId = 'default-resto';
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        restoId = user.restoId || 'default-resto';
+      } catch (e) {}
+    }
+
+    const q = query(
+      collection(db, 'pos_held_orders'),
+      where('restoId', '==', restoId)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const orders = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      }));
+      setHeldOrders(orders);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleRestore = async (order: any) => {
+    try {
+      localStorage.setItem('restored_held_order', JSON.stringify(order));
+      await deleteDoc(doc(db, 'pos_held_orders', order.id));
+      await localDb.heldOrders.delete(order.id);
+      window.dispatchEvent(new Event('restore_held_order'));
+      toast.success(`Mengembalikan pesanan untuk ${order.customerName || 'Guest'} ke POS`);
+      if (window.location.pathname !== '/lexupos') {
+        router.push('/lexupos');
+      }
+      setOpenList(false);
+    } catch (err) {
+      console.error('Failed to restore order:', err);
+      toast.error('Gagal mengembalikan pesanan.');
+    }
+  };
+
+  const handleDeleteHeld = async (orderId: string, customerName: string) => {
+    if (!window.confirm(`Apakah Anda yakin ingin menghapus pesanan held untuk "${customerName || 'Guest'}" secara permanen?`)) {
+      return;
+    }
+    try {
+      await deleteDoc(doc(db, 'pos_held_orders', orderId));
+      await localDb.heldOrders.delete(orderId);
+      toast.info(`Pesanan held untuk "${customerName}" berhasil dihapus.`);
+    } catch (err) {
+      console.error('Failed to delete held order:', err);
+      toast.error('Gagal menghapus pesanan.');
+    }
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -335,6 +408,19 @@ const RootLayout = ({ children }: RootLayoutProps) => {
           </div>
           
           <div className="flex items-center gap-3">
+            {/* Quick Access Waiting List Icon Button */}
+            <Link
+              href="/waiting-list"
+              className="relative p-2.5 rounded-xl border border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all shadow-sm active:scale-95 cursor-pointer flex items-center justify-center h-9 w-9"
+              title="Daftar Tunggu (Waiting List)"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              {heldOrders.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white font-extrabold text-[8px] rounded-full w-4.5 h-4.5 flex items-center justify-center border border-white dark:border-zinc-950 shadow-sm animate-pulse">
+                  {heldOrders.length}
+                </span>
+              )}
+            </Link>
             <ModeToggle />
           </div>
         </header>

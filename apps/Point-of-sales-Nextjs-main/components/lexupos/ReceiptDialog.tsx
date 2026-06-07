@@ -212,13 +212,19 @@ export default function ReceiptDialog({
               <span>{formatCurrency(subtotal)}</span>
             </div>
             {discount > 0 && (
-              <div className="flex justify-between text-red-500">
-                <span>Diskon:</span>
-                <span>-{formatCurrency(discount)}</span>
-              </div>
+              <>
+                <div className="flex justify-between text-red-500">
+                  <span>Diskon:</span>
+                  <span>-{formatCurrency(discount)}</span>
+                </div>
+                <div className="flex justify-between text-[11px] font-semibold text-neutral-600 dark:text-neutral-400">
+                  <span>Setelah Diskon:</span>
+                  <span>{formatCurrency(subtotal - discount)}</span>
+                </div>
+              </>
             )}
             <div className="flex justify-between">
-              <span>Service TAX ({subtotal > 0 ? Math.round((tax / subtotal) * 100) : 10}%):</span>
+              <span>Service TAX ({subtotal - discount > 0 ? Math.round((tax / (subtotal - discount)) * 100) : 10}%):</span>
               <span>{formatCurrency(tax)}</span>
             </div>
             <div className="flex justify-between text-sm font-black text-neutral-800 dark:text-white pt-1 border-t border-neutral-300 dark:border-white/[0.1] mt-1">

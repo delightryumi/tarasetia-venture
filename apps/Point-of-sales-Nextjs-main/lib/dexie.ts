@@ -30,10 +30,27 @@ export interface LocalTransactionItem {
   price: number;
 }
 
+export interface LocalHeldOrder {
+  id: string;
+  customerName: string;
+  tableNumber: string;
+  notes: string;
+  cart: any[];
+  subtotal: number;
+  discount: number;
+  discountPercent: number;
+  tax: number;
+  payableAmount: number;
+  createdAt: string;
+  restoId: string;
+  cashierName: string;
+}
+
 class POSDexieDB extends Dexie {
   products!: Table<LocalProduct>;
   transactions!: Table<LocalTransaction>;
   transactionItems!: Table<LocalTransactionItem>;
+  heldOrders!: Table<LocalHeldOrder>;
 
   constructor() {
     super('POSDexieDB');
@@ -47,6 +64,13 @@ class POSDexieDB extends Dexie {
       products: 'id, restoId, cat, subcategory',
       transactions: 'id, restoId, isSynced, createdAt',
       transactionItems: '++id, transactionId, productId',
+    });
+    // Version 3: added heldOrders table for Hold Bill feature
+    this.version(3).stores({
+      products: 'id, restoId, cat, subcategory',
+      transactions: 'id, restoId, isSynced, createdAt',
+      transactionItems: '++id, transactionId, productId',
+      heldOrders: 'id, customerName, tableNumber, createdAt',
     });
   }
 }
