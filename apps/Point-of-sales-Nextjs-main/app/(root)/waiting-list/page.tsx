@@ -152,7 +152,7 @@ export default function WaitingListPage() {
           <ShoppingCart className="w-16 h-16 stroke-[1.2] text-neutral-300 dark:text-neutral-700 mb-4 animate-bounce" />
           <CardTitle className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Belum Ada Pesanan Ditunda</CardTitle>
           <CardDescription className="text-xs max-w-[280px] mt-1.5">
-            Saat transaksi berlangsung di POS, klik tombol "Hold Order" untuk menyimpan pesanan sementara ke halaman ini.
+            Saat transaksi berlangsung di POS, klik tombol &quot;Hold Order&quot; untuk menyimpan pesanan sementara ke halaman ini.
           </CardDescription>
           <Button
             onClick={() => router.push('/lexupos')}
