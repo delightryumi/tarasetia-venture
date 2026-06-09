@@ -13,6 +13,8 @@ export interface ForecastStats {
     occ: number;
     arr: number;
     revPar: number;
+    roomsSold: number;
+    totalPossibleRoomNights: number;
     
     entries: any[];
     trendData: any[];
@@ -31,6 +33,8 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
         occ: 0,
         arr: 0,
         revPar: 0,
+        roomsSold: 0,
+        totalPossibleRoomNights: 0,
         entries: [],
         trendData: [],
         loading: true,
@@ -195,6 +199,30 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                 resolvedEntries.push(rep);
             });
 
+// Compute ARR and RevPar based on view mode
+            let finalArr = 0;
+            let finalRevPar = 0;
+            if (viewMode === 'monthly') {
+                // Monthly bucket
+                const monthIdx = Number(month) - 1;
+                const monthLabel = trendLabels[monthIdx];
+                const monthBucket = buckets[monthLabel] || { roomRev: 0, sold: 0 };
+                finalArr = monthBucket.sold > 0 ? monthBucket.roomRev / monthBucket.sold : 0;
+                const daysInMonth = totalDaysForOcc; // days in selected month
+                finalRevPar = (totalPhysicalRooms * daysInMonth) > 0 ? monthBucket.roomRev / (totalPhysicalRooms * daysInMonth) : 0;
+            } else if (viewMode === 'daily') {
+                // Daily bucket
+                const day = selectedDate.split('-')[2];
+                const dayLabel = String(parseInt(day, 10));
+                const dayBucket = buckets[dayLabel] || { roomRev: 0, sold: 0 };
+                finalArr = dayBucket.sold > 0 ? dayBucket.roomRev / dayBucket.sold : 0;
+                finalRevPar = (totalPhysicalRooms) > 0 ? dayBucket.roomRev / totalPhysicalRooms : 0;
+            } else {
+                // Yearly totals
+                finalArr = roomsSold > 0 ? roomRevenue / roomsSold : 0;
+                finalRevPar = totalPossibleRoomNights > 0 ? roomRevenue / totalPossibleRoomNights : 0;
+            }
+
             setStats({
                 totalGrossRevenue: gross,
                 salesPayAtNexura: nexura,
@@ -203,8 +231,10 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                 otaRevenue: ota,
                 otherRevenue: other,
                 occ: totalPossibleRoomNights > 0 ? (roomsSold / totalPossibleRoomNights) * 100 : 0,
-                arr: roomsSold > 0 ? roomRevenue / roomsSold : 0,
-                revPar: totalPossibleRoomNights > 0 ? roomRevenue / totalPossibleRoomNights : 0,
+                arr: finalArr,
+                revPar: finalRevPar,
+                roomsSold,
+                totalPossibleRoomNights,
                 entries: resolvedEntries.sort((a, b) => (b.checkInDate || "").localeCompare(a.checkInDate || "")),
                 trendData,
                 loading: false,

@@ -32,6 +32,8 @@ export interface ExtendedTransaction {
 export interface HotelMaster {
   id: string;
   name: string;
+  /** Number of rooms for the hotel */
+  roomCount?: number;
 }
 
 export interface PropertyStat {

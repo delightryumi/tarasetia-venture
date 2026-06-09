@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
     Home,
     Coffee,
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import styles from "./TransactionFormStyles.module.css";
 import { CHANNELS } from "./useTransactionForm";
+import Modal from "./Modal";
 import {
     SectionTitle,
     ChannelSelect,
@@ -125,6 +126,7 @@ export function TransactionEntryForm({
     onCancel,
     onSubmit
 }: TransactionEntryFormProps) {
+  const [modalData, setModalData] = useState<{ type: string; data: any } | null>(null);
     const startD = form.checkIn ? new Date(form.checkIn) : null;
     const endD = form.checkOut ? new Date(form.checkOut) : null;
     const nights = (startD && endD && endD > startD) ? Math.ceil((endD.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24)) : 1;
@@ -132,15 +134,15 @@ export function TransactionEntryForm({
     return (
         <div className={styles.card}>
             <div className={styles.cardHeader}>
-                <div className={styles.cardHeaderLeft}>
+                <div className={styles.cardHeaderLeft} onClick={() => setModalData({ type: 'transactionEntry', data: { revenueType, form } })} style={{ cursor: 'pointer' }}>
                     <div className={`${styles.dotAccent} ${revenueType === 'room' ? styles.dotSage : styles.dotTerracotta}`} />
                     <span className={styles.cardTitle}>
                         Entri Transaksi - {revenueType === 'room' ? "Room Revenue" : "Other Income"}
                     </span>
                 </div>
-                <button onClick={onCancel} className={styles.cardHeaderBtn}>
-                    Ubah Kategori
-                </button>
+                 <button onClick={(e) => { e.stopPropagation(); onCancel(); }} className={styles.cardHeaderBtn}>
+                     Ubah Kategori
+                 </button>
             </div>
 
             <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -318,6 +320,13 @@ export function TransactionEntryForm({
                     </button>
                 </div>
             </form>
+            {modalData && (
+              <Modal onClose={() => setModalData(null)}>
+                <pre>{JSON.stringify(modalData.data, null, 2)}</pre>
+              </Modal>
+            )}
+            
+
         </div>
     );
 }
@@ -341,11 +350,12 @@ export function ReviewSidebar({
     saving,
     onCommit
 }: ReviewSidebarProps) {
+    const [modalData, setModalData] = useState<{ type: string; data: any } | null>(null);
     const currentChannel = CHANNELS.find(c => c.name === form.channel);
     
     return (
         <aside className={styles.rightSidebarCol}>
-            <div className={`${styles.card} ${styles.sidebar}`}>
+            <div className={`${styles.card} ${styles.sidebar}`} onClick={() => setModalData({ type: 'reviewSidebar', data: { revenueType, form, totalGross, queue } })} style={{ cursor: 'pointer' }}>
                 <div className={styles.sidebarInner}>
                     <div className={styles.sidebarHeader}>
                         <h2 className={styles.sidebarTitle}>Review Transaksi</h2>
@@ -474,6 +484,7 @@ interface QueueTableProps {
 }
 
 export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
+  const [modalData, setModalData] = useState<{ type: string; data: any } | null>(null);
     return (
         <div className={styles.tableContainer}>
             <div className={styles.tableHeader}>
@@ -511,7 +522,7 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                             queue.map((item, idx) => {
                                 const channelLogo = CHANNELS.find(c => c.name === item.channel)?.logo;
                                 return (
-                                    <tr key={idx} className={styles.tableRow}>
+                                    <tr key={idx} className={styles.tableRow} onClick={() => setModalData({ type: 'queueItem', data: item })}>
                                         <td className={`${styles.tableCell} ${styles.dateCell}`}>{item.checkInDate}</td>
                                         <td className={styles.tableCell}>
                                             <div className={styles.detailCellInner}>
@@ -535,7 +546,7 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                                         <td className={styles.tableCell} style={{ textAlign: 'right', fontFamily: 'var(--f-font-mono)', fontWeight: '700' }}>
                                             Rp {formatCurrency(item.amount)}
                                         </td>
-                                        <td className={styles.tableCell} style={{ textAlign: 'center' }}>
+                                        <td className={styles.tableCell} style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                                             <button onClick={() => removeFromQueue(idx)} className={styles.tableActionBtn}>
                                                 <Trash2 size={15} />
                                             </button>

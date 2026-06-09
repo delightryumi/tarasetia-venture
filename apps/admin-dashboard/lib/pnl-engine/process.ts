@@ -13,6 +13,8 @@ export function processPnLData(
   nonCommissionRevenue: PnlIncomeItem[],
   expenses: PnlExpenseItem[],
   investors: InvestorItem[],
+  period: string,
+  viewMode: 'monthly' | 'yearly',
   vatPercentage: number = 11,
   hotelGopPercentages: Record<string, any> = {},
   allHotels: HotelMaster[] = [],
@@ -174,6 +176,18 @@ export function processPnLData(
   const ledgerRoomRevenue = transactions
     .filter(isAccommodation)
     .reduce((sum, t) => sum + t.amount, 0);
+
+  // KPI calculations
+  const totalRooms = allHotels.reduce((sum, h) => sum + (h.roomCount || 0), 0);
+  const daysInPeriod = viewMode === "monthly"
+    ? new Date(Number(period.split('-')[0]), Number(period.split('-')[1]), 0).getDate()
+    : 365;
+  const roomsAvailable = totalRooms * daysInPeriod;
+  const roomsSold = transactions.filter(isAccommodation).length;
+  const occ = roomsAvailable ? (roomsSold / roomsAvailable) * 100 : 0;
+  const arr = roomsSold ? ledgerRoomRevenue / roomsSold : 0;
+  const revPar = roomsAvailable ? ledgerRoomRevenue / roomsAvailable : 0;
+
   
   const revenueHotelCollect = transactions
     .filter(isAccommodation)
@@ -241,7 +255,11 @@ export function processPnLData(
     summaryServiceCharge: totalRevenue * (serviceChargePercentage / 100),
     summaryLostBreakage: totalRevenue * (lostBreakagePercentage / 100),
     summaryServiceChargeRate: serviceChargePercentage,
-    summaryLostBreakageRate: lostBreakagePercentage
+    summaryLostBreakageRate: lostBreakagePercentage,
+  // KPI metrics
+  occ,
+  arr,
+  revPar
   };
 
   pnlResult.card7_TotalGOP = pnlResult.card1_TotalRevenue - pnlResult.card8_TotalExpenses;

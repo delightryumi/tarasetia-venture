@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { processPnLData } from "@/lib/pnl-logic";
 import { GlobalPnLResult } from "@/lib/pnl-utils";
 import { useCorePnLData } from "./hooks/useCorePnLData";
+import { useForecast } from "../forecast/useForecast";
 import { useFrontOfficeData, YEARS, MONTHS } from "./hooks/useFrontOfficeData";
 import { usePosOrdersData } from "./hooks/usePosOrdersData";
 
@@ -70,7 +71,9 @@ export const usePnL = () => {
         refetchPOSData
     } = usePosOrdersData(month, viewMode);
 
-    const loading = loadingCore || loadingFO || loadingPOS;
+    const { loading: forecastLoading, occ: forecastOcc, revPar: forecastRevPar } = useForecast(viewMode, month);
+
+    const loading = loadingCore || loadingFO || loadingPOS || forecastLoading;
 
     const fetchData = async () => {
         await Promise.all([
@@ -81,24 +84,27 @@ export const usePnL = () => {
     };
 
     useEffect(() => {
+        // Forecast data fetched via hook above
         const result = processPnLData(
-            rawTransactions, 
-            customIncomes, 
-            nonCommissionRevenue, 
-            expenses, 
-            investors, 
-            vatPercentage, 
-            hotelGopPercentages, 
-            allHotels, 
-            mgmtFeeRoomPercentage, 
-            mgmtFeeFnbPercentage, 
-            posRevAlacarte, 
-            posRevBanquet, 
-            posRevFood, 
-            posRevBeverage, 
-            posExpAlacarte, 
-            posExpBanquet, 
-            posExpFood, 
+            rawTransactions,
+            customIncomes,
+            nonCommissionRevenue,
+            expenses,
+            investors,
+            month,
+            viewMode,
+            vatPercentage,
+            hotelGopPercentages,
+            allHotels,
+            mgmtFeeRoomPercentage,
+            mgmtFeeFnbPercentage,
+            posRevAlacarte,
+            posRevBanquet,
+            posRevFood,
+            posRevBeverage,
+            posExpAlacarte,
+            posExpBanquet,
+            posExpFood,
             posExpBeverage,
             serviceChargePercentage,
             lostBreakagePercentage
@@ -121,18 +127,28 @@ export const usePnL = () => {
         result.pnlResult.posLostBreakageRate = posLostBreakageRate;
         result.pnlResult.posTaxRateCombined = posTaxRateCombined;
 
+        const totalRooms = allHotels.reduce((sum, h) => sum + (h.roomCount || 0), 0);
+        // Override OCC and RevPAR with forecast values for consistency
+        result.pnlResult.occ = forecastOcc ?? 0;
+        result.pnlResult.revPar = forecastRevPar ?? 0;
+        // Preserve existing KPI calculation if needed
+        result.pnlResult.kpiRevPar = result.pnlResult.totalRevenue / (totalRooms || 1);
+
         setPnlResult(result.pnlResult);
     }, [
         rawTransactions, customIncomes, nonCommissionRevenue, expenses, investors, vatPercentage, hotelGopPercentages, allHotels, mgmtFeeRoomPercentage, mgmtFeeFnbPercentage,
         posRevAlacarte, posRevBanquet, posRevFood, posRevBeverage, posExpAlacarte, posExpBanquet, posExpFood, posExpBeverage,
         posGrossRevenue, posNettRevenue, posServiceCharge, posTaxAmount, posLostBreakageAmount, posTotalServiceTax,
         posServiceRate, posTaxRateIndividual, posLostBreakageRate, posTaxRateCombined,
-        serviceChargePercentage, lostBreakagePercentage
+        serviceChargePercentage, lostBreakagePercentage,
+        forecastOcc, forecastRevPar
     ]);
 
     return {
         viewMode, setViewMode,
         displayMode, setDisplayMode,
+        forecastLoading,
+
         month, setMonth,
         loading,
         pnlResult,

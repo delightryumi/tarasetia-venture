@@ -93,6 +93,10 @@ export interface GlobalPnLResult {
   revBanquet?: number;
   revFood?: number;
   revBeverage?: number;
+  // New KPI metrics
+  occ?: number; // Occupancy %
+  arr?: number; // Average Room Rate
+  revPar?: number; // Revenue per Available Room
 }
 
 export interface PnLDetailedItem {

@@ -36,9 +36,8 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
     const [formData, setFormData] = React.useState({
         guestName: '',
         totalAmount: 0,
-        paidAmount1: 0,
-        paidAmount2: 0,
-        isSplitBill: false,
+        payHotel: 0,
+        payNexura: 0,
         checkIn: '',
         checkOut: '',
         roomTypeId: '',
@@ -68,9 +67,8 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             setFormData({
                 ...guest,
                 totalAmount: guest.totalAmount || guest.amount || 0,
-                paidAmount1: guest.paidAmount1 || guest.amount || 0,
-                paidAmount2: guest.paidAmount2 || 0,
-                isSplitBill: guest.isSplitBill || false,
+                payHotel: guest.payHotel ?? guest.paidCash ?? guest.amount ?? 0,
+                payNexura: guest.payNexura ?? guest.paidTransfer ?? 0,
                 checkIn: guest.checkInDate || guest.checkIn || '',
                 checkOut: guest.checkOutDate || guest.checkOut || '',
                 roomTypeId: guest.roomTypeId || '',
@@ -124,7 +122,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
     const handleSave = async () => {
         try {
             const hotelId = "bumi-anyom-resort";
-            const newSource = (formData.channel === "Walk-in" || formData.channel === "Nexura Sales" || formData.channel === "Booking Engine") ? "Walk-in" : "OTA";
+            const newSource = formData.channel === "Walk-in" ? "Walk-in" : "OTA";
 
             if (formData.type === "accommodation") {
                 if (!formData.guestName) { toast.error("Guest Name is required"); return; }
@@ -162,8 +160,8 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             const nights = newDates.length || 1;
             
             const totalAmount = Number(formData.totalAmount) || 0;
-            const payHotel = Number(formData.paidAmount1) || 0;
-            const payNexura = formData.isSplitBill ? (Number(formData.paidAmount2) || 0) : 0;
+            const payHotel = Number(formData.payHotel) || 0;
+            const payNexura = Number(formData.payNexura) || 0;
             
             let remainingPayHotel = payHotel;
             let remainingPayNexura = payNexura;

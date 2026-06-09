@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -31,7 +31,7 @@ import { TransactionTable } from "./components/TransactionTable";
 import { ChannelPerformance } from "./components/ChannelPerformance";
 import { VoidConfirmModal } from "../overview/VoidConfirmModal";
 import { CancelConfirmModal } from "../overview/CancelConfirmModal";
-import { OtherRevenueDrawer } from "./components/OtherRevenueDrawer";
+import { ForecastDetailDrawer } from "./components/ForecastDetailDrawer";
 
 /* ── Brand Colors ── */
 const PEACH = "#8d7a52";
@@ -48,11 +48,102 @@ export const ForecastSection: React.FC = () => {
     const [viewMode, setViewMode] = useState<"daily" | "monthly" | "yearly">("daily");
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [activeFilter, setActiveFilter] = useState<string | null>(null);
-    const [isOtherRevenueOpen, setIsOtherRevenueOpen] = useState(false);
+    const [detailDrawerConfig, setDetailDrawerConfig] = useState<{ title: string, entries: any[], summary?: { label: string, formula: string, values: string, result: string } } | null>(null);
     const [displayMode, setDisplayMode] = useState<"cards" | "charts">("cards");
     const [searchQuery, setSearchQuery] = useState("");
 
     const stats = useForecast(viewMode, selectedDate);
+
+    const getFilteredEntries = (type: string) => {
+        let filtered: any[] = [];
+        let title = "";
+        let summary;
+        
+        switch(type) {
+            case "Gross":
+            case "Total Gross Revenue":
+                filtered = stats.entries;
+                title = "Total Gross Revenue";
+                break;
+            case "Hotel":
+            case "Sales Pay at Hotel":
+                filtered = stats.entries.filter((e: any) => {
+                    const cashAmt = Number(e.payHotel || e.paidCash || e.paidAmount1 || 0);
+                    return cashAmt > 0 || e.paymentStatus === "Pay at Hotel";
+                });
+                title = "Sales Pay at Hotel";
+                break;
+            case "Nexura":
+            case "Sales Pay at Nexura":
+                filtered = stats.entries.filter((e: any) => {
+                    const digitalAmt = Number(e.payNexura || e.paidTransfer || e.paidAmount2 || 0);
+                    return digitalAmt > 0 || e.paymentStatus === "Pay at Nexura";
+                });
+                title = "Sales Pay at Nexura";
+                break;
+            case "WalkIn":
+            case "Walk-in Revenue":
+                filtered = stats.entries.filter((e: any) => e.type !== "other_income" && (e.source === "Walk-in" || e.channel === "Walk-in" || e.channel === "WALKIN"));
+                title = "Walk-in Revenue";
+                break;
+            case "OTA":
+            case "OTA Revenue":
+                filtered = stats.entries.filter((e: any) => e.type !== "other_income" && e.source !== "Walk-in" && e.channel !== "Walk-in" && e.channel !== "WALKIN");
+                title = "OTA Revenue";
+                break;
+            case "Other":
+            case "Other Revenue":
+                filtered = stats.entries.filter((e: any) => e.type === "other_income");
+                title = "Other Revenue";
+                break;
+            case "OCC":
+            case "Occupancy Bookings":
+                filtered = stats.entries.filter((e: any) => e.type === "accommodation" || (!e.type && e.guestName));
+                title = "Occupancy Bookings";
+                summary = {
+                    label: "OCC Calculation",
+                    formula: "Rooms Sold / Total Allotment",
+                    values: `${stats.roomsSold} / ${stats.totalPossibleRoomNights}`,
+                    result: `${stats.occ.toFixed(1)}%`
+                };
+                break;
+            case "ARR":
+            case "Average Room Rate":
+                filtered = stats.entries.filter((e: any) => e.type === "accommodation" || (!e.type && e.guestName));
+                title = "Average Room Rate";
+                summary = {
+                    label: "ARR Calculation",
+                    formula: "Gross Revenue / Rooms Sold",
+                    values: `Rp ${stats.totalGrossRevenue.toLocaleString()} / ${stats.roomsSold}`,
+                    result: `Rp ${stats.arr.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                };
+                break;
+            case "RevPAR":
+            case "RevPAR Performance":
+                filtered = stats.entries.filter((e: any) => e.type === "accommodation" || (!e.type && e.guestName));
+                title = "RevPAR Performance";
+                summary = {
+                    label: "RevPAR Calculation",
+                    formula: "Gross Revenue / Total Allotment",
+                    values: `Rp ${stats.totalGrossRevenue.toLocaleString()} / ${stats.totalPossibleRoomNights}`,
+                    result: `Rp ${stats.revPar.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                };
+                break;
+        }
+        return { filtered, title, summary };
+    };
+
+    useEffect(() => {
+        if (detailDrawerConfig && !stats.loading) {
+            const { filtered, summary } = getFilteredEntries(detailDrawerConfig.title);
+            setDetailDrawerConfig(prev => prev ? { ...prev, entries: filtered, summary } : null);
+        }
+    }, [stats.entries, stats.loading]);
+
+    const handleCardClick = (type: string) => {
+        const { filtered, title, summary } = getFilteredEntries(type);
+        setDetailDrawerConfig({ title, entries: filtered, summary });
+    };
 
     const formatCurrency = (val: number) => {
         return new Intl.NumberFormat('id-ID').format(Math.floor(val));
@@ -347,6 +438,7 @@ export const ForecastSection: React.FC = () => {
                                 value={stats.totalGrossRevenue}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
+                                onClick={() => handleCardClick("Gross")}
                             />
                             <SummaryCard
                                 label="Sales (Pay at Hotel)"
@@ -355,6 +447,7 @@ export const ForecastSection: React.FC = () => {
                                 value={stats.salesPayAtHotel}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
+                                onClick={() => handleCardClick("Hotel")}
                             />
                             <SummaryCard
                                 label="Sales (Pay at Nexura)"
@@ -363,6 +456,7 @@ export const ForecastSection: React.FC = () => {
                                 value={stats.salesPayAtNexura}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
+                                onClick={() => handleCardClick("Nexura")}
                             />
                             <SummaryCard
                                 label="Walk-in Revenue"
@@ -371,6 +465,7 @@ export const ForecastSection: React.FC = () => {
                                 value={stats.walkInRevenue}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
+                                onClick={() => handleCardClick("WalkIn")}
                             />
                             <SummaryCard
                                 label="OTA Revenue"
@@ -379,6 +474,7 @@ export const ForecastSection: React.FC = () => {
                                 value={stats.otaRevenue}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
+                                onClick={() => handleCardClick("OTA")}
                             />
                             <SummaryCard
                                 label="Other Revenue"
@@ -387,7 +483,7 @@ export const ForecastSection: React.FC = () => {
                                 value={stats.otherRevenue}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
-                                onClick={() => setIsOtherRevenueOpen(true)}
+                                onClick={() => handleCardClick("Other")}
                             />
                             <SummaryCard
                                 label="OCC (Occupancy)"
@@ -398,6 +494,7 @@ export const ForecastSection: React.FC = () => {
                                 value={stats.occ}
                                 loading={stats.loading}
                                 formatter={(v) => v.toFixed(1)}
+                                onClick={() => handleCardClick("OCC")}
                             />
                             <SummaryCard
                                 label="ARR (Avg Room Rate)"
@@ -406,6 +503,7 @@ export const ForecastSection: React.FC = () => {
                                 value={stats.arr}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
+                                onClick={() => handleCardClick("ARR")}
                             />
                             <SummaryCard
                                 label="RevPar"
@@ -414,6 +512,7 @@ export const ForecastSection: React.FC = () => {
                                 value={stats.revPar}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
+                                onClick={() => handleCardClick("RevPar")}
                             />
                         </motion.section>
                     ) : (
@@ -465,10 +564,12 @@ export const ForecastSection: React.FC = () => {
                 </AnimatePresence>
 
                 <AnimatePresence>
-                    {isOtherRevenueOpen && (
-                        <OtherRevenueDrawer 
-                            entries={stats.entries.filter((e: any) => e.type === 'other_income')} 
-                            onClose={() => setIsOtherRevenueOpen(false)}
+                    {detailDrawerConfig && (
+                        <ForecastDetailDrawer 
+                            title={detailDrawerConfig.title}
+                            entries={detailDrawerConfig.entries} 
+                            summary={detailDrawerConfig.summary}
+                            onClose={() => setDetailDrawerConfig(null)}
                             formatCurrency={formatCurrency}
                         />
                     )}

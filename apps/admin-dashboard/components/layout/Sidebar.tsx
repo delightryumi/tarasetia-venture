@@ -222,6 +222,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: "room-type", label: "Room Categories", icon: <Layout size={18} strokeWidth={2} /> },
         { id: "about", label: "About Us", icon: <Info size={18} strokeWidth={2} /> },
         { id: "gallery", label: "Gallery", icon: <Grid size={18} strokeWidth={2} /> },
+        { id: "cpanel", label: "CPanel", icon: <Settings size={18} strokeWidth={2} /> },
         { id: "footer", label: "Footer Info", icon: <Settings size={18} strokeWidth={2} /> },
         { id: "attractions", label: "Nearby Attractions", icon: <MapPin size={18} strokeWidth={2} /> },
         { id: "promo", label: "Promo Management", icon: <Gift size={18} strokeWidth={2} /> },

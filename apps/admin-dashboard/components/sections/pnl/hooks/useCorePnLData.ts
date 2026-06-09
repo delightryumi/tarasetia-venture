@@ -27,7 +27,13 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
             const hotelList: HotelMaster[] = [];
             propertiesSnap.forEach((docSnap) => {
                 const d = docSnap.data();
-                hotelList.push({ id: docSnap.id, name: d.Nama || d.name || `Property ${docSnap.id}` });
+                // Tambahkan roomCount jika tersedia di dokumen properti
+                const roomCount = typeof d.roomCount === 'number' ? d.roomCount : (typeof d.totalRooms === 'number' ? d.totalRooms : 0);
+                hotelList.push({
+                  id: docSnap.id,
+                  name: d.Nama || d.name || `Property ${docSnap.id}`,
+                  roomCount,
+                });
             });
             setAllHotels(hotelList);
 

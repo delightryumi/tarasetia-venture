@@ -30,6 +30,7 @@ export function OverviewSection() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentModule = searchParams.get("module") || "front-office";
+    const isReadOnly = currentModule === "housekeeping"; // read‑only mode for housekeeping
     const { user } = useAuth();
     
     const todayStr = React.useMemo(() => {
@@ -88,6 +89,7 @@ export function OverviewSection() {
 
 
     const handleStatusUpdate = async (item: any, field: string, value: string) => {
+        // Allow status updates even in housekeeping view (they manage room status/remarks)
         console.log("handleStatusUpdate triggered", { item, field, value });
         try {
             const hotelId = "bumi-anyom-resort";
@@ -338,10 +340,17 @@ export function OverviewSection() {
                         <div className={styles.vDivider} />
 
                         <button
-                            onClick={() => router.push(`/forecast/add?date=${startDate}&module=${currentModule}`)}
+                            onClick={() => {
+                                if (isReadOnly) {
+                                    alert('Add transaction is not allowed in housekeeping view.');
+                                } else {
+                                    router.push(`/forecast/add?date=${startDate}&module=${currentModule}`);
+                                }
+                            }}
                             className={styles.btnPrimary}
                             title="Add Transaction"
                             style={{ height: '36px', width: '36px', borderRadius: '8px' }}
+                            disabled={isReadOnly}
                         >
                             <PlusCircle size={16} />
                         </button>
@@ -406,7 +415,7 @@ export function OverviewSection() {
                 <AuditLedger 
                     bookings={latestBookings}
                     onView={(b) => { setSelectedGuest(b); setIsEditing(false); }}
-                    onEdit={(b) => { setSelectedGuest(b); setIsEditing(true); }}
+                    onEdit={(b) => setSelectedGuest(b) && setIsEditing(true)}
                     onDelete={(b) => setBookingToVoid(b)}
                     onCancel={(b) => setBookingToCancel(b)}
                     onStatusUpdate={handleStatusUpdate}

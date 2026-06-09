@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Hotel, Store, Sparkles, MoreHorizontal, Receipt } from "lucide-react";
+import { Hotel, Store, Sparkles, MoreHorizontal, Receipt, Percent, Target, TrendingUp } from "lucide-react";
 import { GlobalPnLResult } from "@/lib/pnl-utils";
 import { SummaryCard } from "../shared/SummaryCard";
 
@@ -50,6 +50,35 @@ export function RoomRevenueSection({ pnlResult, loading, rise, onCardClick }: Ro
                         accent="#3b82f6"
                         value={pnlResult?.revRoom || 0}
                         loading={loading}
+                        variants={rise}
+                        onClick={onCardClick}
+                    />
+                    <SummaryCard
+                        label="OCC"
+                        icon={<Percent size={18} />}
+                        accent="#f59e0b"
+                        value={pnlResult?.occ || 0}
+                        loading={loading}
+                        formatter={(v) => `${v.toFixed(1)}%`}
+                        variants={rise}
+                        onClick={onCardClick}
+                    />
+                    <SummaryCard
+                        label="ARR"
+                        icon={<Target size={18} />}
+                        accent="#10b981"
+                        value={pnlResult?.arr || 0}
+                        loading={loading}
+                        variants={rise}
+                        onClick={onCardClick}
+                    />
+                    <SummaryCard
+                        label="RevPAR"
+                        icon={<TrendingUp size={18} />}
+                        accent="#6366f1"
+                        value={pnlResult?.revPar || 0}
+                        loading={loading}
+                        formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
                         variants={rise}
                         onClick={onCardClick}
                     />

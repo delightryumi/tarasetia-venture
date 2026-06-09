@@ -362,7 +362,7 @@ export const useTransactionForm = () => {
                     paidTransfer: dailyPayNexura,
                     paidAmount2: dailyPayNexura,
                     paymentStatus: balance === 0 ? "PAID" : "UNPAID",
-                    source: (form.channel === "Walk-in" || form.channel === "Nexura Sales" || form.channel === "Booking Engine") ? "Walk-in" : "OTA",
+                    source: form.channel === "Walk-in" ? "Walk-in" : "OTA",
                     status: "CONFIRMED",
                     staffName: form.staffName,
                     note: form.note,

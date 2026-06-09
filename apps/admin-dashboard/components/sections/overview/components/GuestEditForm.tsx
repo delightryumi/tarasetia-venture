@@ -117,45 +117,9 @@ export function GuestEditForm({ formData, setFormData, roomTypes }: GuestEditFor
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <NexuraInputLabel label="Total Gross Amount" type="number" value={formData.totalAmount} onChange={(v: string) => setFormData({...formData, totalAmount: Number(v)})} />
                     
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: 'var(--f-surface-soft)', borderRadius: '8px', border: '1px solid var(--f-hairline)' }}>
-                        <div>
-                            <p className={styles.guestName} style={{ margin: 0, fontSize: '11px' }}>Split Settlement</p>
-                            <p className={styles.guestSubtext} style={{ margin: '2px 0 0 0', color: 'var(--f-light-muted)', fontSize: '8px' }}>Enable dual payment methods</p>
-                        </div>
-                        <button 
-                            type="button"
-                            onClick={() => setFormData({...formData, isSplitBill: !formData.isSplitBill})} 
-                            style={{ 
-                                width: '36px', 
-                                height: '18px', 
-                                position: 'relative', 
-                                borderRadius: '999px', 
-                                border: 'none', 
-                                cursor: 'pointer',
-                                backgroundColor: formData.isSplitBill ? 'var(--f-sage)' : 'var(--f-light-muted)',
-                                transition: 'all 0.2s' 
-                            }}
-                        >
-                            <div 
-                                style={{ 
-                                    position: 'absolute', 
-                                    top: '1px', 
-                                    width: '16px', 
-                                    height: '16px', 
-                                    backgroundColor: '#ffffff', 
-                                    borderRadius: '50%', 
-                                    left: formData.isSplitBill ? '19px' : '1px', 
-                                    transition: 'all 0.2s' 
-                                }} 
-                            />
-                        </button>
-                    </div>
-                    
-                    <div style={{ display: 'grid', gridTemplateColumns: formData.isSplitBill ? '1fr 1fr' : '1fr', gap: '12px' }}>
-                        <NexuraInputLabel label={formData.isSplitBill ? "Payment A" : "Amount Paid"} type="number" value={formData.paidAmount1} onChange={(v: string) => setFormData({...formData, paidAmount1: Number(v)})} />
-                        {formData.isSplitBill && (
-                            <NexuraInputLabel label="Payment B" type="number" value={formData.paidAmount2} onChange={(v: string) => setFormData({...formData, paidAmount2: Number(v)})} />
-                        )}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <NexuraInputLabel label="Pay at Hotel (Cash/Transfer to Hotel)" type="number" value={formData.payHotel} onChange={(v: string) => setFormData({...formData, payHotel: Number(v)})} />
+                        <NexuraInputLabel label="Pay at Nexura (OTA / VCC)" type="number" value={formData.payNexura} onChange={(v: string) => setFormData({...formData, payNexura: Number(v)})} />
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

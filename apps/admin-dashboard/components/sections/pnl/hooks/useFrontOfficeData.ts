@@ -41,12 +41,17 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
                 const data = doc.data();
                 const hotelId = data.hotelId || "bumi-anyom-resort";
                 (data.entries || []).forEach((t: any) => {
-                    transactions.push({ 
-                        ...t, 
-                        propertyId: hotelId, 
-                        amount: Number(t.amount) || 0, 
-                        paidCash: Number(t.paidCash || t.paidAmount1) || 0, 
-                        paidTransfer: Number(t.paidTransfer || t.paidAmount2) || 0 
+                    // Skip cancelled or voided transactions
+                    const status = t.status?.toUpperCase?.();
+                    if (status === 'CANCELLED' || status === 'VOID' || status === 'VOIDED') {
+                        return; // ignore this entry
+                    }
+                    transactions.push({
+                        ...t,
+                        propertyId: hotelId,
+                        amount: Number(t.amount) || 0,
+                        paidCash: Number(t.paidCash || t.paidAmount1) || 0,
+                        paidTransfer: Number(t.paidTransfer || t.paidAmount2) || 0
                     });
                 });
             });
