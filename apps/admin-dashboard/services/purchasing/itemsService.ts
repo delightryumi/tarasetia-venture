@@ -1,5 +1,5 @@
 import { 
-  collection, doc, getDoc, getDocs, addDoc, updateDoc, query, where, serverTimestamp, setDoc
+  collection, doc, getDoc, getDocs, addDoc, updateDoc, query, where, serverTimestamp, setDoc, deleteDoc
 } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { ItemMaster } from "../../lib/purchasing/types";
@@ -46,6 +46,11 @@ export const itemsService = {
       is_deleted: true,
       updated_at: serverTimestamp()
     });
+  },
+
+  async delete(id: string): Promise<void> {
+    const docRef = doc(db, COLLECTION_NAME, id);
+    await deleteDoc(docRef);
   },
 
   // Helper to seeds demo item data

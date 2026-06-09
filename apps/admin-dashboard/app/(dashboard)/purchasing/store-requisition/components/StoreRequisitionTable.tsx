@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FileText } from 'lucide-react';
+import { Trash2, FileText } from 'lucide-react';
 import { PStatusChip } from '@/components/purchasing/ui/PStatusChip';
 import s from '../../shared-page.module.css';
 
@@ -10,13 +10,15 @@ interface StoreRequisitionTableProps {
   filteredSrs: any[];
   selectedSr: any;
   setSelectedSr: (sr: any) => void;
+  onDelete: (id: string) => void;
 }
 
 export default function StoreRequisitionTable({
   loading,
   filteredSrs,
   selectedSr,
-  setSelectedSr
+  setSelectedSr,
+  onDelete
 }: StoreRequisitionTableProps) {
   return (
     <div className={s.tableCard}>
@@ -30,12 +32,13 @@ export default function StoreRequisitionTable({
             <th>Requested By</th>
             <th>Items</th>
             <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody className={s.tableBody}>
           {loading ? (
             <tr>
-              <td colSpan={7}>
+              <td colSpan={8}>
                 <div className={s.empty}>
                   <p className={s.emptyBody}>Loading…</p>
                 </div>
@@ -43,7 +46,7 @@ export default function StoreRequisitionTable({
             </tr>
           ) : filteredSrs.length === 0 ? (
             <tr>
-              <td colSpan={7}>
+              <td colSpan={8}>
                 <div className={s.empty}>
                   <FileText size={40} className={s.emptyIcon} />
                   <p className={s.emptyTitle}>No store requisitions</p>
@@ -71,7 +74,14 @@ export default function StoreRequisitionTable({
                   <td className={s.tdMuted}>{srSuppliers.join(', ') || '—'}</td>
                   <td className={s.tdMuted}>{sr.requested_by_name || sr.requested_by}</td>
                   <td className={s.tdMuted}>{sr.items.length} lines</td>
-                  <td><PStatusChip status={sr.status} /></td>
+                  <td className={s.tdMuted}>
+                    <PStatusChip status={sr.status} />
+                  </td>
+                  <td className={s.tdMuted}>
+                    <button className={s.pageBtn} onClick={(e) => { e.stopPropagation(); onDelete(sr.id); }} title="Delete">
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
                 </tr>
               );
             })

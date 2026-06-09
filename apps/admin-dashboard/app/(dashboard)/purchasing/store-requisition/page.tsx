@@ -200,6 +200,7 @@ export default function StoreRequisitionPage() {
             filteredSrs={filteredSrs}
             selectedSr={selectedSr}
             setSelectedSr={setSelectedSr}
+            onDelete={handleDeleteClick}
           />
 
           <StoreRequisitionDetail 

@@ -3,21 +3,26 @@
 import React from 'react';
 import { formatRupiah } from '@/lib/purchasing/utils';
 import s from '../../shared-page.module.css';
+import { useSettings } from '@/hooks/useSettings';
 
 interface StoreRequisitionPrintProps {
   selectedSr: any;
 }
 
 export default function StoreRequisitionPrint({ selectedSr }: StoreRequisitionPrintProps) {
+  const { branding, pos } = useSettings();
+
   if (!selectedSr) return null;
 
   return (
     <div className={s.printArea}>
       <div className={s.printHeader}>
-        <div className={s.printHeaderLeft}>
-          <div className={s.printCompany}>Bumi Anyom Hospitality</div>
-          <div className={s.printCompanyAddr}>Jl. Contoh Alamat No. 123, Bali, Indonesia</div>
-        </div>
+          <div className={s.printHeaderLeft}>
+            {branding?.darkLogo && <img src={branding.darkLogo} alt="Logo" className={s.printLogo} />}
+            <div className={s.printCompany}>{pos?.name || 'Hotel'}</div>
+            <div className={s.printCompanyAddr}>{pos?.address || ''}</div>
+            {pos?.phone && <div className={s.printCompanyAddr}>{pos.phone}</div>}
+          </div>
         <div>
           <div className={s.printDocTitle}>STORE REQUISITION (SR)</div>
           <div className={s.printDocNum}>NO: {selectedSr.sr_number}</div>
@@ -26,8 +31,7 @@ export default function StoreRequisitionPrint({ selectedSr }: StoreRequisitionPr
 
       <div className={s.printMetaGrid}>
         <div>
-          <div className={s.printMetaLabel}>Tanggal Order</div>
-          <div className={s.printMetaValue}>{selectedSr.order_date ? new Date(selectedSr.order_date).toLocaleDateString('id-ID') : '—'}</div>
+
         </div>
         <div>
           <div className={s.printMetaLabel}>Tanggal Datang</div>
@@ -42,8 +46,7 @@ export default function StoreRequisitionPrint({ selectedSr }: StoreRequisitionPr
           </div>
         </div>
         <div>
-          <div className={s.printMetaLabel}>Supplier</div>
-          <div className={s.printMetaValue}>{Array.from(new Set((selectedSr.items ?? []).map((i: any) => i.supplier_name))).filter(Boolean).join(', ') || '—'}</div>
+
         </div>
         <div>
           <div className={s.printMetaLabel}>Requested By</div>
@@ -70,7 +73,7 @@ export default function StoreRequisitionPrint({ selectedSr }: StoreRequisitionPr
           {selectedSr.items.map((item: any, idx: number) => (
             <tr key={idx}>
               <td style={{ textAlign: 'center' }}>{idx + 1}</td>
-              <td>{item.name} {item.notes && <><br/><span style={{ fontSize: 9, color: '#666' }}>{item.notes}</span></>}</td>
+              <td style={{ paddingLeft: 16 }}>{item.name}<br/><span style={{ fontSize: 9, color: '#666' }}>{item.supplier_name}</span>{item.notes && <> <br/><span style={{ fontSize: 9, color: '#666' }}>{item.notes}</span></>}</td>
               <td style={{ textAlign: 'center' }}>{item.unit}</td>
               <td style={{ textAlign: 'right' }}>{item.qty_requested}</td>
               <td style={{ textAlign: 'right' }}>{formatRupiah(item.unit_price || 0)}</td>

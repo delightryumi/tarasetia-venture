@@ -1,5 +1,15 @@
-import { 
-  collection, doc, getDoc, getDocs, addDoc, updateDoc, query, where, serverTimestamp, orderBy 
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  query,
+  where,
+  serverTimestamp,
+  orderBy,
+  deleteDoc
 } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { StoreRequisition } from "../../lib/purchasing/types";
@@ -52,6 +62,12 @@ export const srService = {
       is_deleted: true,
       updated_at: serverTimestamp()
     });
+  },
+
+  // Hard delete: permanently remove document, allowed for any status
+  async hardDelete(id: string): Promise<void> {
+    const docRef = doc(db, COLLECTION_NAME, id);
+    await deleteDoc(docRef);
   },
 
   async seedDemoSRs(items: any[]): Promise<void> {

@@ -20,6 +20,7 @@ export default function DeleteConfirmModal({
 
   const handleConfirm = () => {
     onConfirm(password);
+    setPassword('');
   };
 
   return (

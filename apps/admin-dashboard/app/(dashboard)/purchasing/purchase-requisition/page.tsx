@@ -212,6 +212,8 @@ export default function PurchaseRequisitionPage() {
             filteredPrs={filteredPrs}
             selectedPr={selectedPr}
             setSelectedPr={setSelectedPr}
+            deletePR={deletePR}
+            onDeleteClick={handleDeleteClick}
           />
 
           <PurchaseRequisitionDetail 

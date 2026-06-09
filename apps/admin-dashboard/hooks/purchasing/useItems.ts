@@ -11,8 +11,7 @@ export function useItems() {
     setLoading(true);
     setError(null);
     try {
-      // First ensure demo seeds are run
-      await itemsService.seedDemoItems();
+      // Demo seeds removed to allow permanent deletion
       const data = await itemsService.getAll();
       setItems(data);
     } catch (err: any) {
@@ -44,7 +43,7 @@ export function useItems() {
 
   const deleteItem = async (id: string) => {
     try {
-      await itemsService.softDelete(id);
+      await itemsService.delete(id);
       await fetchItems();
     } catch (err: any) {
       throw new Error(err?.message || "Failed to delete item");

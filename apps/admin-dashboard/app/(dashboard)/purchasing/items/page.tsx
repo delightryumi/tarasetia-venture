@@ -41,6 +41,13 @@ function ItemsPageContent() {
     return filterParam === 'low-stock' ? 'low' : '';
   });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, categoryFilter, moduleFilter, stockFilter]);
+
   useEffect(() => {
     if (filterParam === 'low-stock') {
       setStockFilter('low');
@@ -92,6 +99,9 @@ function ItemsPageContent() {
       return matchSearch && matchCat && matchMod && matchStock;
     });
   }, [items, search, categoryFilter, moduleFilter, stockFilter]);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const lowStockItems = useMemo(() => items.filter(i => i.current_stock <= i.min_stock && i.is_active), [items]);
 
@@ -266,7 +276,7 @@ function ItemsPageContent() {
                     <p className={s.emptyBody}>Tambah barang pertama Anda ke katalog atau sesuaikan pencarian Anda.</p>
                   </div>
                 </td></tr>
-              ) : filtered.map(item => {
+              ) : paginatedItems.map(item => {
                 const isLow = item.current_stock <= item.min_stock;
                 const procMod = item.procurement_module || 'SR';
                 return (
@@ -299,6 +309,50 @@ function ItemsPageContent() {
               })}
             </tbody>
           </table>
+          
+          {totalPages > 1 && (
+            <div className={s.pagination}>
+              <button 
+                className={s.pageBtn} 
+                disabled={currentPage === 1} 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              >
+                &lt; Prev
+              </button>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                if (
+                  page === 1 || 
+                  page === totalPages || 
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <button 
+                      key={page} 
+                      className={`${s.pageBtn} ${currentPage === page ? s.pageBtnActive : ''}`} 
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (
+                  page === currentPage - 2 || 
+                  page === currentPage + 2
+                ) {
+                  return <span key={page} className={s.pageEllipsis}>...</span>;
+                }
+                return null;
+              })}
+
+              <button 
+                className={s.pageBtn} 
+                disabled={currentPage === totalPages} 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              >
+                Next &gt;
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Detail Drawer Popup */}

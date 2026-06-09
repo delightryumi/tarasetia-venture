@@ -2,9 +2,28 @@
 
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "sonner";
+import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 // import { WhatsAppWidget } from "./WhatsAppWidget";
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      let resolved = savedTheme;
+      if (savedTheme === 'system') {
+        resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      if (resolved === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, [pathname]);
+
   return (
     <AuthProvider>
       {children}

@@ -3,6 +3,7 @@
 import React from 'react';
 import { formatRupiah } from '@/lib/purchasing/utils';
 import s from '../../shared-page.module.css';
+import { useSettings } from '@/hooks/useSettings';
 
 interface DailyMarketListPrintProps {
   selectedDml: any;
@@ -11,12 +12,16 @@ interface DailyMarketListPrintProps {
 export default function DailyMarketListPrint({ selectedDml }: DailyMarketListPrintProps) {
   if (!selectedDml) return null;
 
+  const { pos, branding } = useSettings();
+
   return (
     <div className={s.printArea}>
       <div className={s.printHeader}>
         <div className={s.printHeaderLeft}>
-          <div className={s.printCompany}>Bumi Anyom Hospitality</div>
-          <div className={s.printCompanyAddr}>Jl. Contoh Alamat No. 123, Bali, Indonesia</div>
+          {branding?.darkLogo && <img src={branding.darkLogo} alt="Logo" className={s.printLogo} />}
+          <div className={s.printCompany}>{pos?.name || 'Hotel'}</div>
+          <div className={s.printCompanyAddr}>{pos?.address || ''}</div>
+          {pos?.phone && <div className={s.printCompanyAddr}>{pos.phone}</div>}
         </div>
         <div>
           <div className={s.printDocTitle}>DAILY MARKET LIST (DML)</div>
@@ -46,8 +51,7 @@ export default function DailyMarketListPrint({ selectedDml }: DailyMarketListPri
           <div className={s.printMetaValue}>{selectedDml.event_category || '—'}</div>
         </div>
         <div>
-          <div className={s.printMetaLabel}>Supplier</div>
-          <div className={s.printMetaValue}>{Array.from(new Set((selectedDml.items ?? []).map((i: any) => i.supplier_name))).filter(Boolean).join(', ') || '—'}</div>
+          
         </div>
         <div>
           <div className={s.printMetaLabel}>Prepared By</div>
@@ -81,7 +85,7 @@ export default function DailyMarketListPrint({ selectedDml }: DailyMarketListPri
                 return (
                   <tr key={`p-${counter}`}>
                     <td style={{ textAlign: 'center' }}>{counter}</td>
-                    <td style={{ paddingLeft: 16 }}>{item.name}</td>
+                    <td style={{ paddingLeft: 16 }}>{item.name}<br/><span style={{ fontSize: 9, color: '#666' }}>{item.supplier_name}</span></td>
                     <td style={{ textAlign: 'center' }}>{item.unit}</td>
                     <td style={{ textAlign: 'right' }}>{item.qty_ordered}</td>
                     <td style={{ textAlign: 'right' }}>{formatRupiah(item.unit_price || 0)}</td>

@@ -512,6 +512,11 @@
   margin-bottom: var(--p-space-md);
 }
 
+.printLogo {
+  max-height: 40px;
+  margin-bottom: var(--p-space-sm);
+}
+
 .itemRowsLabel {
   font-size: var(--p-font-size-label);
   font-weight: 500;
@@ -1016,21 +1021,33 @@
 /* ════════════════════════════════════════════
    PRINT STYLES — Procurement Document
    ════════════════════════════════════════════ */
-@media print {
-  /* Hide root content when printing */
-  .printHideRoot { visibility: hidden; height: 0; overflow: hidden; }
-  .printArea, .printArea * { visibility: visible !important; }
-  .printArea {
-    position: fixed;
-    left: 0; top: 0;
-    width: 100%;
-    padding: 20px 30px;
-    background: #fff;
-  }
+.printArea { display: block; }
 
-  /* Force colors on print */
+@media print {
+  .printArea {
+    display: block !important;
+    visibility: visible !important;
+    position: relative !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    overflow: visible !important;
+    z-index: 9999 !important;
+  }
+  .printHideRoot { display: none !important; }
+  .printArea, .printArea * { visibility: visible !important; color: inherit !important; }
   .printDocTitle { color: #111 !important; }
   .printSignLine { border-bottom: 1px solid #333 !important; }
+}
+
+/* Printable template on‑screen preview */
+.printArea {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  color: #111;
+  background: #fff;
+  padding: 32px;
 }
 
 /* ── Print Document Layout (on-screen preview too) ── */
@@ -1267,5 +1284,61 @@
 @media (max-width: 1024px) {
   .responsiveGrid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--p-space-xs);
+  padding: var(--p-space-md) var(--p-space-xl);
+  border-top: 1px solid var(--p-hairline);
+}
+
+.pageBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: var(--p-radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--p-muted);
+  font-family: var(--p-font);
+  font-size: var(--p-font-size-body);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--p-duration-fast);
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: var(--p-surface-soft);
+  color: var(--p-ink);
+}
+
+.pageBtnActive {
+  background: var(--p-primary) !important;
+  color: var(--p-on-dark) !important;
+  border-color: var(--p-primary) !important;
+}
+
+.pageBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pageEllipsis {
+  color: var(--p-muted);
+  padding: 0 4px;
+}
+@media print {
+  .printArea {
+    position: static;
+    width: 100%;
+    padding: 0;
   }
 }

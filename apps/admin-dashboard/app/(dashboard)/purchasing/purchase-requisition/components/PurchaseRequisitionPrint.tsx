@@ -1,28 +1,33 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { formatRupiah } from '@/lib/purchasing/utils';
 import s from '../../shared-page.module.css';
+import { useSettings } from '@/hooks/useSettings';
 
 interface PurchaseRequisitionPrintProps {
   selectedPr: any;
 }
 
 export default function PurchaseRequisitionPrint({ selectedPr }: PurchaseRequisitionPrintProps) {
+  const { branding, pos } = useSettings();
   if (!selectedPr) return null;
 
   return (
     <div className={s.printArea}>
-      <div className={s.printHeader}>
-        <div className={s.printHeaderLeft}>
-          <div className={s.printCompany}>Bumi Anyom Hospitality</div>
-          <div className={s.printCompanyAddr}>Jl. Contoh Alamat No. 123, Bali, Indonesia</div>
+        <div className={s.darkCard}>
+          <div className={s.printHeaderLeft}>
+            {branding?.darkLogo && <img src={branding.darkLogo} alt="Logo" className={s.printLogo} />}
+            <div className={s.printCompany}>{pos?.name || 'Hotel'}</div>
+            <div className={s.printCompanyAddr}>{pos?.address || ''}</div>
+            {pos?.phone && <div className={s.printCompanyAddr}>{pos.phone}</div>}
+          </div>
+          <div>
+            <div className={s.printDocTitle}>PERMINTAAN PEMBELIAN (PR)</div>
+            <div className={s.printDocNum}>NO: {selectedPr.pr_number}</div>
+          </div>
         </div>
-        <div>
-          <div className={s.printDocTitle}>PURCHASE REQUISITION (PR)</div>
-          <div className={s.printDocNum}>NO: {selectedPr.pr_number}</div>
-        </div>
-      </div>
 
       <div className={s.printMetaGrid}>
         <div>
@@ -34,19 +39,14 @@ export default function PurchaseRequisitionPrint({ selectedPr }: PurchaseRequisi
           <div className={s.printMetaValue}>{selectedPr.delivery_date ? (selectedPr.delivery_date.toDate ? selectedPr.delivery_date.toDate().toLocaleDateString('id-ID') : new Date(selectedPr.delivery_date).toLocaleDateString('id-ID')) : '—'}</div>
         </div>
         <div>
-          <div className={s.printMetaLabel}>Department</div>
-          <div className={s.printMetaValue}>
-            {selectedPr.department || '—'}
-            {selectedPr.department === 'Food & Beverage' && selectedPr.fb_category && ` (${selectedPr.fb_category})`}
-            {selectedPr.department === 'Food & Beverage' && selectedPr.event_category && ` - ${selectedPr.event_category}`}
-          </div>
+          <div className={s.printMetaLabel}>Departemen</div>
+          <div className={s.printMetaValue}>{selectedPr.department || '—'}</div>
         </div>
         <div>
-          <div className={s.printMetaLabel}>Supplier</div>
-          <div className={s.printMetaValue}>{Array.from(new Set((selectedPr.items ?? []).map((i: any) => i.supplier_name))).filter(Boolean).join(', ') || '—'}</div>
+
         </div>
         <div>
-          <div className={s.printMetaLabel}>Requested By</div>
+          <div className={s.printMetaLabel}>Diajukan Oleh</div>
           <div className={s.printMetaValue}>{selectedPr.requested_by_name || 'Staff'}</div>
         </div>
         <div>
@@ -70,7 +70,7 @@ export default function PurchaseRequisitionPrint({ selectedPr }: PurchaseRequisi
           {selectedPr.items.map((item: any, idx: number) => (
             <tr key={idx}>
               <td style={{ textAlign: 'center' }}>{idx + 1}</td>
-              <td>{item.name} <br/><span style={{ fontSize: 9, color: '#666' }}>{item.supplier_name}</span></td>
+              <td style={{ paddingLeft: 16 }}>{item.name}<br/><span style={{ fontSize: 9, color: '#666' }}>{item.supplier_name}</span></td>
               <td style={{ textAlign: 'center' }}>{item.unit}</td>
               <td style={{ textAlign: 'right' }}>{item.qty}</td>
               <td style={{ textAlign: 'right' }}>{formatRupiah(item.estimated_price || 0)}</td>
@@ -87,11 +87,18 @@ export default function PurchaseRequisitionPrint({ selectedPr }: PurchaseRequisi
       </table>
 
       {selectedPr.notes && (
-        <div className={s.printNotes}>
-          <div className={s.printNotesLabel}>Purchase Order Memo</div>
-          <div>{selectedPr.notes}</div>
-        </div>
-      )}
+          <div className={s.printNotes}>
+            <div className={s.printNotesLabel}>Catatan Tambahan</div>
+            <div>{selectedPr.notes}</div>
+          </div>
+        )}
+        {/* Render any extra fields */}
+        {selectedPr.extra && Object.entries(selectedPr.extra).map(([key, value]) => (
+          <div className={s.printNotes} key={key}>
+            <div className={s.printNotesLabel}>{key}</div>
+            <div>{String(value)}</div>
+          </div>
+        ))}
 
       <div className={s.printSignatureRow}>
         <div className={s.printSignBlock}>
