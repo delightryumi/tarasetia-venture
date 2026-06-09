@@ -304,7 +304,12 @@ export const useTransactionForm = () => {
             }
         }
 
-        if (isRoom && !isAvailable()) {
+        // Allow adding transactions for past dates without availability check
+        const checkInDate = new Date(form.checkIn);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isFutureOrToday = checkInDate >= today;
+        if (isRoom && !isAvailable() && isFutureOrToday) {
             toast.error("Requested room types are sold out for these dates");
             return null;
         }
