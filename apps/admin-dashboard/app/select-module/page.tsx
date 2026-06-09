@@ -233,27 +233,51 @@ export default function SelectModulePage() {
 
   return (
     <div className={styles.container}>
-      {/* Fixed Luxury Background Image Layers */}
+      {/* Decorative Vector Elements (Circles, Grid & Fluid Blobs) */}
       <div className="absolute inset-0 w-full h-full pointer-events-none z-0 select-none overflow-hidden">
-        <img
-          src="/luxury-bg.png"
-          alt="Luxury Bohemian Background Light"
-          className="w-full h-full object-cover dark:hidden opacity-85 transition-opacity duration-700"
+        {/* Living Mesh Gradient Blobs (Light Mode Only) */}
+        <div className={`${styles.blob} ${styles.blob1} dark:hidden`} />
+        <div className={`${styles.blob} ${styles.blob2} dark:hidden`} />
+        <div className={`${styles.blob} ${styles.blob3} dark:hidden`} />
+
+        {/* Faint Luxury Grid Pattern Overlay */}
+        <div className="absolute inset-0 bg-grid-black/[0.02] dark:bg-grid-white/[0.03] pointer-events-none z-0" />
+
+        {/* Concentric Rotating Glass Rings (Aesthetic lens) */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full border border-dashed border-white/30 animate-[spin_180s_linear_infinite] pointer-events-none dark:hidden" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[680px] h-[680px] rounded-full border border-white/10 pointer-events-none dark:hidden" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] rounded-full border border-white/20 pointer-events-none dark:hidden" />
+
+        {/* Aesthetic Dot Matrix Patterns */}
+        <div className="absolute top-[12%] right-[8%] w-[120px] h-[160px] bg-dot-white opacity-60 dark:hidden" />
+        <div className="absolute bottom-[18%] left-[6%] w-[120px] h-[140px] bg-dot-white opacity-40 dark:hidden" />
+
+        {/* Soft white/sunlight ambient glow */}
+        <div className="absolute top-[10%] right-[20%] w-[350px] h-[350px] rounded-full bg-white/10 blur-[100px] dark:hidden" />
+
+        {/* Luxury Grain Overlay for Depth */}
+        <div 
+          className="absolute inset-0 opacity-[0.025] pointer-events-none mix-blend-overlay dark:hidden"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+          }}
         />
+
+        {/* Dark theme background image */}
         <img
           src="/luxury-bg-dark.png"
           alt="Luxury Abstract Background Dark"
           className="w-full h-full object-cover hidden dark:block opacity-70 transition-opacity duration-700"
         />
         {/* Soft overlay to ensure readability */}
-        <div className="absolute inset-0 bg-white/10 dark:bg-[#060606]/35 backdrop-blur-[0.5px] pointer-events-none" />
+        <div className="absolute inset-0 bg-white/5 dark:bg-[#060606]/35 backdrop-blur-[0.5px] pointer-events-none" />
       </div>
 
       {/* Aurora Lights (Dynamic Luxury Glows) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 select-none">
-        {/* Light Mode Glows */}
-        <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-blue-200/35 to-purple-200/20 blur-[120px] dark:hidden" />
-        <div className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-amber-100/35 to-rose-100/20 blur-[120px] dark:hidden" />
+        {/* Light Mode Glows (Updated to soft white/cream with amber/maroon blushes) */}
+        <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-white/35 to-amber-100/10 blur-[120px] dark:hidden" />
+        <div className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-white/25 to-red-100/5 blur-[120px] dark:hidden" />
         
         {/* Dark Mode Glows */}
         <div className="absolute -top-[30%] -left-[20%] w-[80%] h-[80%] rounded-full bg-gradient-to-tr from-indigo-950/20 to-purple-950/10 blur-[150px] hidden dark:block" />
@@ -270,9 +294,16 @@ export default function SelectModulePage() {
       />
 
       {/* Main viewport body content */}
-      <div className="flex-1 flex flex-col justify-start md:justify-center items-center relative overflow-y-auto w-full z-10 py-6">
+      <div className={`flex-grow flex flex-col items-center relative overflow-y-auto overflow-x-hidden w-full h-full z-10 ${showGrid ? 'justify-start md:justify-center pt-8 pb-32 md:py-0' : 'justify-center pt-8 md:py-0'}`}>
         {showGrid ? (
-          <WorkspaceSection menus={menus} />
+          <WorkspaceSection
+            menus={menus}
+            user={user}
+            isSuperadmin={isSuperadmin}
+            onRefresh={fetchPermissions}
+            onSignOut={signOutUser}
+            isRefreshing={loadingPerms}
+          />
         ) : (
           <IntroSection onOpenClick={() => setShowGrid(true)} />
         )}

@@ -83,7 +83,7 @@ export const IntroSection: React.FC<IntroSectionProps> = ({ onOpenClick }) => {
         <button
           onClick={onOpenClick}
           className={cn(
-            "group flex items-center justify-center gap-3 h-12 w-48 rounded-lg bg-neutral-900 hover:bg-black dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black font-extrabold uppercase tracking-[0.25em] text-xs cursor-pointer border border-neutral-800 dark:border-neutral-200 transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_24px_rgba(255,255,255,0.05)] hover:shadow-neutral-950/20 dark:hover:shadow-white/10 active:scale-[0.97]",
+            "group flex items-center justify-center gap-3 h-12 w-48 rounded-lg bg-neutral-900 hover:bg-black dark:bg-white dark:hover:bg-neutral-100 text-white dark:!text-black font-extrabold uppercase tracking-[0.25em] text-xs cursor-pointer border border-neutral-800 dark:border-neutral-200 transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_24px_rgba(255,255,255,0.05)] hover:shadow-neutral-950/20 dark:hover:shadow-white/10 active:scale-[0.97]",
             plusJakartaSans.className
           )}
         >

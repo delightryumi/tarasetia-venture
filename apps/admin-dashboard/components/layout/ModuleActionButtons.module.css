@@ -1,11 +1,11 @@
-/* Floating actions panel container - bottom center on mobile, top right on desktop */
+/* Floating actions panel container - top right on mobile and desktop */
 .panelContainer {
   position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  top: auto;
-  right: auto;
+  top: 16px;
+  right: 16px;
+  bottom: auto;
+  left: auto;
+  transform: none;
   z-index: 50;
   display: flex;
   align-items: center;
@@ -22,14 +22,8 @@
 
 @media (min-width: 768px) {
   .panelContainer {
-    position: fixed;
     top: 24px;
     right: 24px;
-    bottom: auto;
-    left: auto;
-    transform: none;
-    padding: 6px;
-    gap: 8px;
   }
 }
 
@@ -90,31 +84,23 @@
   cursor: default;
 }
 
-/* Dropdown popover menu - opens upward on mobile, downward on desktop */
+/* Dropdown popover menu - opens downward */
 .dropdownMenu {
   position: absolute;
-  bottom: 44px; /* opens upward on mobile */
-  top: auto;
+  top: 42px; /* opens downward */
+  bottom: auto;
   right: 0;
   left: auto;
   width: 140px;
   background-color: #ffffff;
   border: 1px solid rgba(229, 229, 229, 0.9);
   border-radius: 12px;
-  box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.08), 0 -8px 10px -6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
   padding: 6px;
   z-index: 50;
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-@media (min-width: 768px) {
-  .dropdownMenu {
-    bottom: auto;
-    top: 42px; /* opens downward on desktop */
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
-  }
 }
 
 :global(.dark) .dropdownMenu {

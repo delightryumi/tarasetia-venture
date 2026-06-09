@@ -445,14 +445,29 @@
     color: #C5A880;
 }
 
-.input-field input {
-    background: none;
+.input-field input,
+.input-field input[type="email"],
+.input-field input[type="password"],
+.dark .input-field input,
+.dark .input-field input[type="email"],
+.dark .input-field input[type="password"] {
+    background: transparent !important;
+    background-color: transparent !important;
     outline: none;
     border: none;
     font-weight: 500;
     font-size: 0.95rem;
-    color: #1A1C14;
+    color: #1A1C14 !important;
     padding-right: 1rem;
+}
+
+/* Chrome/Safari Autofill override */
+.input-field input:-webkit-autofill,
+.input-field input:-webkit-autofill:hover, 
+.input-field input:-webkit-autofill:focus, 
+.input-field input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: #1A1C14 !important;
 }
 
 .input-field input::placeholder {

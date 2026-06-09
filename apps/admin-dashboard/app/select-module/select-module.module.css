@@ -8,9 +8,62 @@
   font-family: var(--font-sans, sans-serif);
   z-index: 0;
   user-select: none;
-  background-color: #f8fafc;
+  background-color: #fafaf9; /* Nexura Cream Canvas */
+  transition: background-color 0.4s ease;
 }
 
 :global(.dark) .container {
-  background-color: #060606;
+  background-color: #1A1C14; /* Nexura Obsidian Black */
+}
+
+/* Soft Ambient Nexura Glows */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(140px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.85;
+}
+
+.blob1 {
+  background-color: rgba(107, 29, 47, 0.06); /* Nexura Maroon Red Accent */
+  width: 700px;
+  height: 700px;
+  top: -15%;
+  left: -10%;
+  animation: floatSlow 28s infinite alternate ease-in-out;
+}
+
+.blob2 {
+  background-color: rgba(197, 168, 128, 0.05); /* Nexura Satin Gold Accent */
+  width: 800px;
+  height: 800px;
+  bottom: -20%;
+  right: -10%;
+  animation: floatSlowReverse 32s infinite alternate ease-in-out;
+}
+
+.blob3 {
+  background-color: rgba(250, 246, 240, 0.5); /* Cream Haze */
+  width: 600px;
+  height: 600px;
+  top: 30%;
+  left: 20%;
+}
+
+:global(.dark) .blob3 {
+  background-color: rgba(26, 28, 20, 0.4); /* Obsidian Black Haze */
+}
+
+@keyframes floatSlow {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, 60px) scale(1.05); }
+  100% { transform: translate(-30px, 40px) scale(0.95); }
+}
+
+@keyframes floatSlowReverse {
+  0% { transform: translate(0, 0) scale(0.95); }
+  50% { transform: translate(-60px, -40px) scale(1.05); }
+  100% { transform: translate(40px, 50px) scale(1); }
 }

@@ -127,6 +127,9 @@ export const LoginSection = () => {
         useLogin();
 
     useEffect(() => {
+        if (typeof window !== 'undefined') {
+            document.documentElement.classList.remove('dark');
+        }
         const scriptId = 'lottie-player-script';
         if (!document.getElementById(scriptId)) {
             const script = document.createElement('script');
