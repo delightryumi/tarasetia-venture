@@ -208,4 +208,33 @@
   }
 }
 
+/* ── Dark Mode Overrides ── */
+:global(.dark) .title {
+  color: #dfd6c6 !important;
+}
 
+:global(.dark) .filterBar {
+  background: #212121 !important;
+  border-color: #383530 !important;
+}
+
+:global(.dark) .filterInput {
+  background: #262626 !important;
+  border-color: #383530 !important;
+  color: #dfd6c6 !important;
+}
+
+:global(.dark) .filterInput:focus {
+  background: #2e2e2e !important;
+}
+
+:global(.dark) .clearBtn {
+  background: #262626 !important;
+  border-color: #383530 !important;
+  color: #b0a99c !important;
+}
+
+:global(.dark) .clearBtn:hover {
+  background: #2e2e2e !important;
+  color: #dfd6c6 !important;
+}

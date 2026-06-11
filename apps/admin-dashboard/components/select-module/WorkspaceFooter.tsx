@@ -22,22 +22,26 @@ export const WorkspaceFooter: React.FC<WorkspaceFooterProps> = () => {
   const formattedDate = time.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
   return (
-    <div className="absolute bottom-3 md:bottom-4 left-0 w-full px-6 md:px-12 lg:px-16 pb-2 select-none z-10 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-2 pointer-events-none">
+    <footer className="absolute bottom-0 left-0 w-full px-6 md:px-12 lg:px-16 py-3.5 select-none z-20 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-2 border-t border-slate-200/50 dark:border-zinc-800/45 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-md">
       {/* Left side: Time System */}
-      <div className="text-[11px] text-zinc-900/40 dark:text-zinc-100/30 pointer-events-auto flex items-center gap-2.5 font-sans font-light tracking-wide">
-        <span className="tracking-wide text-[10.5px] font-medium opacity-80">Time System</span>
+      <div className="text-[11px] text-slate-500 dark:text-zinc-450 flex items-center gap-2 font-sans font-normal tracking-wide">
+        <span className="font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider text-[9.5px]">System Time</span>
         <span className="opacity-40 text-[9px]">•</span>
-        <span className="font-medium tracking-widest">{mounted ? formattedTime : '--:--:--'}</span>
+        <span className="font-semibold text-slate-700 dark:text-zinc-200 tabular-nums">
+          {mounted ? formattedTime : '--:--:--'}
+        </span>
         <span className="opacity-40 text-[9px]">•</span>
-        <span className="tracking-wider">{mounted ? formattedDate : '---'}</span>
+        <span className="text-slate-600 dark:text-zinc-350 font-medium">
+          {mounted ? formattedDate : '---'}
+        </span>
       </div>
 
       {/* Right side: Copyright */}
-      <div className="text-[11px] text-zinc-900/40 dark:text-zinc-100/30 pointer-events-auto flex items-center gap-1.5">
-        <span className="font-sans font-light tracking-normal">Powered by</span>
-        <span className="font-serif italic font-light tracking-wide">© 2026 Nexura Global Hospitality.</span>
-        <span className="font-sans font-light tracking-normal opacity-80">All rights reserved.</span>
+      <div className="text-[11px] text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
+        <span className="font-sans font-light tracking-normal text-slate-400 dark:text-zinc-500">Powered by</span>
+        <span className="font-serif italic font-light tracking-wide text-slate-700 dark:text-zinc-300">© 2026 Nexura Global Hospitality.</span>
+        <span className="font-sans font-light tracking-normal opacity-80 text-slate-400 dark:text-zinc-500">All rights reserved.</span>
       </div>
-    </div>
+    </footer>
   );
 };

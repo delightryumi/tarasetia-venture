@@ -42,9 +42,9 @@ const LuxuryBentoCard = ({ item, isCenteredMobile }: { item: MenuItem; isCentere
         className={cn(
           "absolute inset-0 z-0 transition-all duration-300 rounded-lg",
           item.active
-            ? "bg-white border border-[#e6dfd8]/40 dark:bg-zinc-900/40 dark:border-white/5"
-            : "bg-[#FAF6F0]/30 border border-dashed border-[#e6dfd8]/30 dark:bg-[#1A1C14]/20 dark:border-white/5",
-          item.active && isHovered && "bg-white border-[#c5a880]/30 dark:bg-zinc-900/70 dark:border-[#c5a880]/20 shadow-[0_8px_25px_rgba(197,168,128,0.06)]"
+            ? "bg-white border border-[#e6dfd8]/40 dark:bg-zinc-900 dark:border-white/10"
+            : "bg-[#FAF6F0]/30 border border-dashed border-[#e6dfd8]/30 dark:bg-zinc-900/30 dark:border-white/5",
+          item.active && isHovered && "bg-white border-[#c5a880]/30 dark:bg-zinc-850 dark:border-[#c5a880]/30 shadow-[0_8px_25px_rgba(197,168,128,0.06)]"
         )}
       />
 
@@ -75,7 +75,7 @@ const LuxuryBentoCard = ({ item, isCenteredMobile }: { item: MenuItem; isCentere
           className={cn(
             'flex items-center justify-center rounded-xl shrink-0 transition-all duration-350 border w-12 h-12 sm:w-16 sm:h-16 relative overflow-hidden',
             item.active
-              ? 'bg-[#FAF6F0] border-[#e6dfd8]/40 text-[#8d7a52] dark:bg-[#1A1C14] dark:border-white/5 dark:text-[#c5a880]'
+              ? 'bg-[#FAF6F0] border-[#e6dfd8]/40 text-[#8d7a52] dark:bg-zinc-950 dark:border-white/10 dark:text-[#c5a880]'
               : 'bg-[#FAF6F0]/20 border-transparent text-neutral-450/40 dark:bg-zinc-950/20 dark:text-zinc-650'
           )}
           style={item.active && isHovered ? {
@@ -87,9 +87,9 @@ const LuxuryBentoCard = ({ item, isCenteredMobile }: { item: MenuItem; isCentere
         >
           {/* Dark Mode Specific Overwrite for Hover */}
           {item.active && isHovered && (
-            <div className="absolute inset-0 bg-[#c5a880] border-[#c5a880] text-[#1A1C14] hidden dark:block" />
+            <div className="absolute inset-0 bg-[#c5a880] border-[#c5a880] text-[#09090b] hidden dark:block" />
           )}
-          <Icon strokeWidth={1.25} className="w-7 h-7 sm:w-9 sm:h-9 relative z-20 dark:group-hover:text-[#1A1C14]" />
+          <Icon strokeWidth={1.25} className="w-7 h-7 sm:w-9 sm:h-9 relative z-20 dark:group-hover:text-[#09090b]" />
         </div>
 
         {/* Text metadata */}

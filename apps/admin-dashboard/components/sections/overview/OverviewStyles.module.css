@@ -646,7 +646,7 @@
 }
 
 .dateInput {
-  background-color: #fbf9f4 !important;
+  background-color: var(--f-canvas) !important;
   border: 1px solid var(--f-hairline) !important;
   border-radius: 6px !important;
   padding: 4px 8px !important;
@@ -657,7 +657,7 @@
   outline: none;
   cursor: pointer;
   height: 28px;
-  color-scheme: light !important;
+  color-scheme: inherit !important;
 }
 
 .datePickerDivider {
@@ -823,20 +823,106 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 16px;
+  height: 46px;
+}
+
+.datePickerInputGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.datePickerLabel {
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--f-light-muted);
+}
+
+.dateInput {
+  background-color: var(--f-canvas) !important;
+  border: 1px solid var(--f-hairline) !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--f-font-mono);
+  color: var(--f-body);
+  outline: none;
   cursor: pointer;
-  transition: all var(--f-duration-fast) var(--f-ease-out);
+  height: 28px;
+  color-scheme: inherit !important;
 }
 
-.btnWarning:hover {
-  background-color: #d97706;
+.datePickerDivider {
+  font-size: 11px;
+  color: var(--f-light-muted);
+  font-weight: 700;
 }
 
-.cancelledRow {
-  opacity: 0.6;
-  text-decoration: line-through;
+/* --- Dark Mode Overrides --- */
+:global(.dark) .overviewRoot {
+  --f-canvas: #1a1a1a;
+  --f-surface: #1f1f1f;
+  --f-surface-soft: #262626;
+  --f-hairline: #333333;
+  
+  --f-ink: #f4f4f5;
+  --f-body: #a1a1aa;
+  --f-muted: #71717a;
+  --f-light-muted: #52525b;
+
+  --f-sage-bg: #2b2e25;
+  --f-sage-border: #3b4033;
 }
 
+/* Hardcoded overrides for dark mode */
+:global(.dark) .headerBadge,
+:global(.dark) .btnPrimary,
+:global(.dark) .btnSecondary,
+:global(.dark) .btnIcon,
+:global(.dark) .filterBtn,
+:global(.dark) .datePickerBtn {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
 
+:global(.dark) .emptyStateCard {
+  background-color: #1f1f1f;
+}
 
+:global(.dark) .dateInput {
+  background-color: #1f1f1f !important;
+  color: #ffffff !important;
+  border-color: #333333 !important;
+  color-scheme: dark !important;
+}
 
+:global(.dark) .toggleBtnActive {
+  color: #1a1c14; /* contrast for peach */
+}
+
+/* Calendar Dynamic Cells */
+.weekendHeader {
+  background-color: #fef2f2;
+}
+
+:global(.dark) .weekendHeader {
+  background-color: #2b1e1e !important;
+}
+
+.weekendCell {
+  background-color: #fff5f5;
+}
+
+:global(.dark) .weekendCell {
+  background-color: #241a1a !important;
+}
+
+.soldOutCell {
+  background-color: #fef2f2;
+}
+
+:global(.dark) .soldOutCell {
+  background-color: #3b1b1b !important;
+}

@@ -756,3 +756,55 @@
   }
 }
 
+/* --- Dark Mode Overrides --- */
+:global(.dark) .overviewRoot {
+  --f-canvas: #1a1a1a;
+  --f-surface: #1f1f1f;
+  --f-surface-soft: #262626;
+  --f-hairline: #333333;
+  
+  --f-ink: #f4f4f5;
+  --f-body: #a1a1aa;
+  --f-muted: #71717a;
+  --f-light-muted: #52525b;
+
+  --f-sage-bg: #2b2e25;
+  --f-sage-border: #3b4033;
+}
+
+:global(.dark) .headerBadge,
+:global(.dark) .btnPrimary,
+:global(.dark) .btnSecondary,
+:global(.dark) .btnIcon,
+:global(.dark) .filterBtn,
+:global(.dark) .datePickerBtn {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .card,
+:global(.dark) .summaryCard,
+:global(.dark) .channelCard {
+  background-color: var(--f-surface);
+  border-color: var(--f-hairline);
+}
+
+:global(.dark) .toggleBtnActive {
+  color: #1a1c14; /* contrast for peach */
+}
+
+:global(.dark) .dateInput {
+  background-color: var(--f-canvas) !important;
+  color-scheme: dark !important;
+}
+
+:global(.dark) .tableHead {
+  background-color: var(--f-surface-soft);
+}
+
+:global(.dark) .tableRow {
+  border-bottom-color: var(--f-hairline);
+}
+
+:global(.dark) .tableRow:hover {
+  background-color: var(--f-surface-soft) !important;
+}

@@ -833,3 +833,82 @@
   }
 }
 
+/* --- Dark Mode Overrides --- */
+:global(.dark) .outerCard {
+  background: #1a1a1a !important;
+  border-color: #262626 !important;
+}
+
+:global(.dark) .innerTray {
+  background: #1f1f1f !important;
+  border-color: #333333 !important;
+}
+
+:global(.dark) .title {
+  color: #f4f4f5 !important;
+}
+
+:global(.dark) .subtitle {
+  color: #a1a1aa !important;
+}
+
+:global(.dark) .addBtn {
+  background: #404040 !important;
+  border-color: #52525b !important;
+  color: #f4f4f5 !important;
+}
+
+:global(.dark) .addBtn:hover {
+  background: #52525b !important;
+}
+
+:global(.dark) .formCard {
+  background: #262626 !important;
+  border-color: #3f3f46 !important;
+}
+
+:global(.dark) .input,
+:global(.dark) .select {
+  background: #1f1f1f !important;
+  border-color: #3f3f46 !important;
+  color: #f4f4f5 !important;
+}
+
+:global(.dark) .ledgerCard {
+  background: #1a1a1a !important;
+  border-color: #262626 !important;
+}
+
+:global(.dark) .tableHead th {
+  background: #000000 !important;
+  color: #a1a1aa !important;
+}
+
+:global(.dark) .tdFirst,
+:global(.dark) .tdMid,
+:global(.dark) .tdLast {
+  background: #1a1a1a !important;
+}
+
+:global(.dark) .rowGroup:hover .tdFirst,
+:global(.dark) .rowGroup:hover .tdMid,
+:global(.dark) .rowGroup:hover .tdLast {
+  background: #262626 !important;
+}
+
+:global(.dark) .amountText,
+:global(.dark) .deptText,
+:global(.dark) .catLabel {
+  color: #f4f4f5 !important;
+}
+
+:global(.dark) .descText {
+  color: #a1a1aa !important;
+}
+
+:global(.dark) .cellInput,
+:global(.dark) .cellSelect {
+  background: #1f1f1f !important;
+  border-color: #3f3f46 !important;
+  color: #f4f4f5 !important;
+}

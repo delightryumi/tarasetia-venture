@@ -32,7 +32,7 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                 </div>
                 <div className="folio-info-item" style={{ alignItems: 'flex-end', textAlign: 'right' }}>
                     <span className="folio-info-label">Source Channel</span>
-                    <div style={{ marginTop: '2px', padding: '2px', backgroundColor: '#ffffff', borderRadius: '4px', border: '1px solid var(--f-hairline)', width: '40px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ marginTop: '2px', padding: '2px', backgroundColor: 'var(--f-canvas)', borderRadius: '4px', border: '1px solid var(--f-hairline)', width: '40px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <img 
                             src={getChannelLogo(guest.channel)} 
                             alt={guest.channel} 

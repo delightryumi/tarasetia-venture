@@ -90,7 +90,7 @@ export function AuditLedger({
                                 <tr 
                                     key={idx} 
                                     className={`${styles.tableRow} ${isCancelled ? styles.cancelledRow : ''}`}
-                                    style={idx % 2 === 0 ? { backgroundColor: '#ffffff' } : { backgroundColor: '#fffbf9' }}
+                                    style={idx % 2 === 0 ? { backgroundColor: 'var(--f-canvas)' } : { backgroundColor: 'var(--f-surface)' }}
                                 >
                                     <td className={styles.tableCell}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
@@ -153,7 +153,7 @@ export function AuditLedger({
                                     </td>
                                     <td className={styles.tableCell}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: '#ffffff', border: '1px solid var(--f-hairline)', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <div style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: 'var(--f-canvas)', border: '1px solid var(--f-hairline)', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                 <img src={getChannelLogo(booking.channel)} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain', opacity: 0.6 }} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
                                             </div>
                                             <p className={styles.guestSubtext} style={{ margin: 0, fontWeight: 700, color: 'var(--f-light-muted)' }}>{booking.channel}</p>

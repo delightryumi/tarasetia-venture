@@ -41,57 +41,57 @@ export const PNLHeader: React.FC<PNLHeaderProps> = ({
                     </div>
                     <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">Nexura Audit Core</span>
                 </div>
-                <h1 className="text-2xl md:text-3xl font-black text-stone-900 tracking-tight">
+                <h1 className="text-2xl md:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
                     Global <span style={{ color: SAGE }}>PnL Reports</span>
                 </h1>
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-                <div className="flex p-1 bg-stone-100 rounded-xl border border-stone-200/40">
+                <div className="flex p-1 bg-stone-100 dark:bg-[#1a1a1a] rounded-xl border border-stone-200/40 dark:border-[#262626]">
                     <button
                         onClick={() => setViewMode("monthly")}
-                        className={`flex items-center justify-center h-10 rounded-lg text-[13px] font-bold transition-all whitespace-nowrap min-w-[140px] ${viewMode === "monthly" ? "shadow-sm" : "text-stone-400 hover:text-stone-600 hover:bg-stone-200/50"}`}
+                        className={`flex items-center justify-center h-10 rounded-lg text-[13px] font-bold transition-all whitespace-nowrap min-w-[140px] ${viewMode === "monthly" ? "shadow-sm" : "text-stone-400 hover:text-stone-600 hover:bg-stone-200/50 dark:hover:text-[#f4f4f5] dark:hover:bg-[#1f1f1f]"}`}
                         style={viewMode === "monthly" ? { backgroundColor: PEACH, color: RICH_BLACK } : {}}
                     >
                         Monthly
                     </button>
                     <button
                         onClick={() => setViewMode("yearly")}
-                        className={`flex items-center justify-center h-10 rounded-lg text-[13px] font-bold transition-all whitespace-nowrap min-w-[140px] ${viewMode === "yearly" ? "shadow-sm" : "text-stone-400 hover:text-stone-600 hover:bg-stone-200/50"}`}
+                        className={`flex items-center justify-center h-10 rounded-lg text-[13px] font-bold transition-all whitespace-nowrap min-w-[140px] ${viewMode === "yearly" ? "shadow-sm" : "text-stone-400 hover:text-stone-600 hover:bg-stone-200/50 dark:hover:text-[#f4f4f5] dark:hover:bg-[#1f1f1f]"}`}
                         style={viewMode === "yearly" ? { backgroundColor: PEACH, color: RICH_BLACK } : {}}
                     >
                         Yearly
                     </button>
                 </div>
 
-                <div className="flex p-1 bg-stone-100 rounded-xl border border-stone-200/40 ml-2">
+                <div className="flex p-1 bg-stone-100 dark:bg-[#1a1a1a] rounded-xl border border-stone-200/40 dark:border-[#262626] ml-2">
                     <button
                         onClick={() => setDisplayMode("cards")}
-                        className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${displayMode === "cards" ? "bg-white shadow-sm text-stone-900" : "text-stone-400 hover:text-stone-600"}`}
+                        className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${displayMode === "cards" ? "bg-white dark:bg-[#262626] shadow-sm text-stone-900 dark:text-[#f4f4f5]" : "text-stone-400 hover:text-stone-600 dark:text-[#a1a1aa] dark:hover:text-[#f4f4f5] dark:hover:bg-[#1f1f1f]"}`}
                         title="Card View"
                     >
                         <LayoutDashboard size={16} />
                     </button>
                     <button
                         onClick={() => setDisplayMode("charts")}
-                        className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${displayMode === "charts" ? "bg-white shadow-sm text-stone-900" : "text-stone-400 hover:text-stone-600"}`}
+                        className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${displayMode === "charts" ? "bg-white dark:bg-[#262626] shadow-sm text-stone-900 dark:text-[#f4f4f5]" : "text-stone-400 hover:text-stone-600 dark:text-[#a1a1aa] dark:hover:text-[#f4f4f5] dark:hover:bg-[#1f1f1f]"}`}
                         title="Analytics View"
                     >
                         <TrendingUp size={16} />
                     </button>
                 </div>
 
-                <div className="flex items-center gap-2 border-l border-stone-200 pl-4 ml-2">
+                <div className="flex items-center gap-2 border-l border-stone-200 dark:border-[#262626] pl-4 ml-2">
                     <button 
                         onClick={onExportExcel}
-                        className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-stone-100 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all shadow-sm"
+                        className="h-10 w-10 flex items-center justify-center rounded-xl bg-white dark:bg-[#262626] border border-stone-100 dark:border-[#262626] text-stone-400 hover:text-emerald-600 dark:text-[#a1a1aa] dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-[#1f1f1f] transition-all shadow-sm"
                         title="Export to Excel"
                     >
                         <Download size={18} />
                     </button>
                     <button 
                         onClick={onExportPDF}
-                        className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-stone-100 text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-all shadow-sm"
+                        className="h-10 w-10 flex items-center justify-center rounded-xl bg-white dark:bg-[#262626] border border-stone-100 dark:border-stone-800/50 text-stone-400 hover:text-rose-600 dark:hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all shadow-sm"
                         title="Export to PDF"
                     >
                         <FileText size={18} />
@@ -101,7 +101,7 @@ export const PNLHeader: React.FC<PNLHeaderProps> = ({
                 <div className="relative w-full sm:w-auto">
                     <button 
                         onClick={() => setShowDatePicker(!showDatePicker)}
-                        className="flex items-center justify-center gap-3 h-10 px-6 rounded-xl text-[13px] font-bold tracking-widest transition-all shadow-sm border border-stone-200/40 hover:bg-white active:scale-95 uppercase w-full sm:min-w-[180px]"
+                        className="flex items-center justify-center gap-3 h-10 px-6 rounded-xl text-[13px] font-bold tracking-widest transition-all shadow-sm border border-stone-200/40 dark:border-stone-800/50 hover:bg-white dark:hover:bg-[#262626] active:scale-95 uppercase w-full sm:min-w-[180px]"
                         style={{ backgroundColor: PEACH, color: RICH_BLACK }}
                     >
                         <Calendar size={16} />

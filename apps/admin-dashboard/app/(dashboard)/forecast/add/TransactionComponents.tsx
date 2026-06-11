@@ -363,8 +363,8 @@ export const TypeCard = ({ label, description, icon: Icon, onClick }: any) => {
                 </div>
                 
                 <div className="space-y-1">
-                    <h3 className="text-[16px] font-semibold text-stone-900 tracking-tight leading-none" style={{ margin: 0 }}>{label}</h3>
-                    <p className="text-stone-500 text-[11px] font-normal tracking-wide" style={{ margin: '4px 0 0 0', lineHeight: '1.4' }}>
+                    <h3 className="text-[16px] font-semibold text-stone-900 dark:text-stone-100 tracking-tight leading-none" style={{ margin: 0 }}>{label}</h3>
+                    <p className="text-stone-500 dark:text-stone-400 text-[11px] font-normal tracking-wide" style={{ margin: '4px 0 0 0', lineHeight: '1.4' }}>
                         {description}
                     </p>
                 </div>

@@ -120,3 +120,21 @@
   margin-top: 8px;
   width: 100%;
 }
+
+/* --- Dark Mode Overrides --- */
+:global(.dark) .card {
+  background-color: #262626 !important;
+  border-color: #3f3f46 !important;
+}
+
+:global(.dark) .label {
+  color: #a1a1aa !important;
+}
+
+:global(.dark) .labelColored {
+  color: #e4e4e7 !important;
+}
+
+:global(.dark) .value {
+  color: #f4f4f5 !important;
+}

@@ -95,7 +95,7 @@ function DockNavItem({
                     border transition-colors duration-200
                     ${isActive
                         ? "bg-[var(--peach)] border-[var(--peach)] text-white shadow-[0_4px_16px_rgba(141,122,82,0.25)]"
-                        : "text-[var(--rich-black)]/60 hover:text-[var(--rich-black)] hover:border-[var(--peach)]/25"
+                        : "text-[var(--rich-black)]/60 dark:text-white/60 hover:text-[var(--rich-black)] dark:hover:text-white hover:border-[var(--peach)]/25"
                     }
                 `}
                 style={isActive ? undefined : {

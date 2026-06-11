@@ -37,7 +37,7 @@ export function ModuleActionButtons({
       <div className="relative z-50">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={styles.circleButton}
+          className={styles.squareButton}
           title="Change theme"
         >
           {/* Rotate transitions matching POS exactly */}
@@ -52,7 +52,7 @@ export function ModuleActionButtons({
           }`} />
           <span className="sr-only">Toggle theme</span>
         </button>
-
+ 
         {/* Dropdown Menu matching standard POS Dropdown exactly */}
         <AnimatePresence>
           {isOpen && (
@@ -100,11 +100,11 @@ export function ModuleActionButtons({
           )}
         </AnimatePresence>
       </div>
-
+ 
       {/* Logout button */}
       <button
         onClick={signOutUser}
-        className={styles.circleButton}
+        className={styles.squareButton}
         title="Sign Out"
       >
         <Power className="w-[1.15rem] h-[1.15rem] shrink-0" />

@@ -27,3 +27,9 @@
 .row-span-2 {
   grid-row: span 2 / span 2;
 }
+
+/* --- DARK MODE OVERRIDES --- */
+.dark .bento-card {
+  background-color: #262626 !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}

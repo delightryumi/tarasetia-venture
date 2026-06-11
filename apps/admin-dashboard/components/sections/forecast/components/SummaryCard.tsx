@@ -46,8 +46,8 @@ export function SummaryCard({
             }}
         >
             {/* Header: Label (Left) and Icon (Right) */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", position: "relative", zIndex: 10 }}>
-                <span className={styles.cardLabel}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", position: "relative", zIndex: 10, backgroundColor: "transparent" }}>
+                <span className={styles.cardLabel} style={{ backgroundColor: "transparent" }}>
                     {label}
                 </span>
                 <div 
@@ -63,27 +63,27 @@ export function SummaryCard({
             </div>
 
             {/* Body: Prominent Amount (Left-aligned) */}
-            <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", gap: "2px", alignItems: "flex-start", marginTop: "8px" }}>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
+            <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", gap: "2px", alignItems: "flex-start", marginTop: "8px", backgroundColor: "transparent" }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "4px", backgroundColor: "transparent" }}>
                     {prefix && (
-                        <span className={styles.guestSubtext} style={{ fontSize: "12px", fontWeight: 600 }}>
+                        <span className={styles.guestSubtext} style={{ fontSize: "12px", fontWeight: 600, backgroundColor: "transparent" }}>
                             {prefix}
                         </span>
                     )}
                     <p 
                         className={styles.cardValue} 
-                        style={{ color: loading ? "var(--f-light-muted)" : "var(--f-ink)" }}
+                        style={{ color: loading ? "var(--f-light-muted)" : "var(--f-ink)", backgroundColor: "transparent" }}
                     >
                         {loading ? "—" : (formatter ? formatter(value) : value)}
                     </p>
                     {suffix && (
-                        <span className={styles.guestSubtext} style={{ fontSize: "12px", fontWeight: 600 }}>
+                        <span className={styles.guestSubtext} style={{ fontSize: "12px", fontWeight: 600, backgroundColor: "transparent" }}>
                             {suffix}
                         </span>
                     )}
                 </div>
                 {loading && (
-                    <span className={styles.guestSubtext} style={{ fontSize: "8px", color: "var(--f-light-muted)" }}>
+                    <span className={styles.guestSubtext} style={{ fontSize: "8px", color: "var(--f-light-muted)", backgroundColor: "transparent" }}>
                         Loading real-time data...
                     </span>
                 )}

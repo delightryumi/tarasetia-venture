@@ -4,6 +4,7 @@ import React from "react";
 import { MapPin, Mail, Phone, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useFooter } from "@/services/useFooter";
+import { formatExternalUrl } from "@/lib/utils";
 
 // Precise Brand SVGs (Synchronized with Footer)
 const SocialIcons = {
@@ -97,7 +98,7 @@ export const Topbar = () => {
                         {data.socialLinks.map((social, idx) => (
                             <a 
                                 key={idx} 
-                                href={social.url} 
+                                href={formatExternalUrl(social.url)} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="hover:text-[#ffd8a6] hover:scale-110 transition-all flex items-center justify-center"

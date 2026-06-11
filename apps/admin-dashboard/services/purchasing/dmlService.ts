@@ -56,32 +56,42 @@ export const dmlService = {
 
     if (items.length === 0) return;
 
+    const dmlItems = [];
+    let totalCost = 0;
+
+    if (items[0]) {
+        dmlItems.push({
+            item_id: items[0].id || "1",
+            category: items[0].category,
+            name: items[0].name,
+            unit: items[0].unit,
+            qty_ordered: 10,
+            qty_received: 0,
+            unit_price: 15000,
+            total: 150000
+        });
+        totalCost += 150000;
+    }
+
+    if (items[1]) {
+        dmlItems.push({
+            item_id: items[1].id || "2",
+            category: items[1].category,
+            name: items[1].name,
+            unit: items[1].unit,
+            qty_ordered: 5,
+            qty_received: 0,
+            unit_price: 18000,
+            total: 90000
+        });
+        totalCost += 90000;
+    }
+
     const demoDML: Omit<DailyMarketList, "id" | "dml_number" | "created_at"> = {
       date: serverTimestamp(),
       status: "draft",
-      items: [
-        {
-          item_id: items[0].id || "1",
-          category: items[0].category,
-          name: items[0].name,
-          unit: items[0].unit,
-          qty_ordered: 10,
-          qty_received: 0,
-          unit_price: 15000,
-          total: 150000
-        },
-        {
-          item_id: items[1].id || "2",
-          category: items[1].category,
-          name: items[1].name,
-          unit: items[1].unit,
-          qty_ordered: 5,
-          qty_received: 0,
-          unit_price: 18000,
-          total: 90000
-        }
-      ],
-      total_cost: 240000,
+      items: dmlItems,
+      total_cost: totalCost,
       submitted_by: "Demo Chef",
       submitted_by_name: "Executive Chef Marco",
       verified_by: null,

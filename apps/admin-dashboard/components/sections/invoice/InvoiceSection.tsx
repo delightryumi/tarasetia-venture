@@ -73,7 +73,7 @@ export const InvoiceSection = () => {
                                     <input 
                                         type="text" 
                                         placeholder="Cari nama tamu (min. 2 huruf)..."
-                                        className="w-full h-11 px-4 bg-[#fbf9f4] border border-[rgba(141,122,82,0.12)] rounded-xl text-sm outline-none focus:border-sage focus:ring-1 focus:ring-sage transition-all shadow-sm"
+                                        className="w-full h-11 px-4 bg-[#fbf9f4] dark:bg-[#1a1a1a] border border-[rgba(141,122,82,0.12)] dark:border-[#333333] rounded-xl text-sm outline-none focus:border-sage focus:ring-1 focus:ring-sage transition-all shadow-sm dark:text-white"
                                         onChange={(e) => searchTransactions(e.target.value)}
                                     />
                                     {searching && (

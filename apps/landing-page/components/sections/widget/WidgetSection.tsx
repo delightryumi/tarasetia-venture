@@ -108,45 +108,45 @@ export const WidgetSection = ({ insideHero = false }: { insideHero?: boolean }) 
   const weatherInfo = weather ? getWeatherDetails(weather.code, weather.isDay) : null;
 
   const InnerContent = (
-    <div className="relative group">
-      <div className="absolute inset-0 bg-white/40 backdrop-blur-[20px] rounded-[1.5rem] md:rounded-full border border-white/60 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] transition-all duration-700 group-hover:bg-white/50 group-hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.12)]" />
+    <div className="relative group max-w-full">
+      <div className="absolute inset-0 bg-white/40 backdrop-blur-[20px] rounded-2xl sm:rounded-full border border-white/60 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] transition-all duration-700 group-hover:bg-white/50 group-hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.12)]" />
       
-      <div className="relative px-6 py-4 md:px-10 md:py-5 flex flex-col md:flex-row items-center gap-6 md:gap-10 lg:gap-14">
+      <div className="relative px-4 py-3 md:px-10 md:py-5 flex flex-row items-center justify-center gap-3 sm:gap-6 md:gap-10 lg:gap-14 w-full overflow-x-auto scrollbar-hide">
         
         {/* Time */}
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#788069]/10 flex items-center justify-center text-[#788069]">
-            <Clock size={16} />
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#788069]/10 flex items-center justify-center text-[#788069] shrink-0">
+            <Clock size={14} className="sm:w-4 sm:h-4" />
           </div>
           <div>
-            <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#788069]/60 mb-0.5">Local Time</p>
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-medium text-[#1a1a1a] tracking-tight tabular-nums">{formattedTime}</span>
-              <span className="text-[9px] font-bold text-[#1a1a1a]/30 uppercase tracking-widest">WIB</span>
+            <p className="text-[6px] sm:text-[8px] font-black uppercase tracking-[0.3em] text-[#788069]/60 mb-0.5">Local Time</p>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-sm sm:text-xl font-medium text-[#1a1a1a] tracking-tight tabular-nums">{formattedTime}</span>
+              <span className="text-[7px] sm:text-[9px] font-bold text-[#1a1a1a]/30 uppercase tracking-widest">WIB</span>
             </div>
           </div>
         </div>
 
-        <div className="hidden md:block w-px h-8 bg-black/5" />
+        <div className="w-px h-6 sm:h-8 bg-black/10 shrink-0" />
 
         {/* Location */}
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#ffd8a6]/20 flex items-center justify-center text-[#d9a86a]">
-            <MapPin size={16} />
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#ffd8a6]/20 flex items-center justify-center text-[#d9a86a] shrink-0">
+            <MapPin size={14} className="sm:w-4 sm:h-4" />
           </div>
           <div>
-            <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#788069]/60 mb-0.5">Discovery At</p>
-            <div className="flex items-center gap-2">
-              <span className="text-[13px] font-bold text-[#1a1a1a] tracking-tight">Temanggung</span>
-              <span className="text-[9px] font-medium text-[#1a1a1a]/30 uppercase tracking-widest">{formattedDate}</span>
+            <p className="text-[6px] sm:text-[8px] font-black uppercase tracking-[0.3em] text-[#788069]/60 mb-0.5">Discovery At</p>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[11px] sm:text-[13px] font-bold text-[#1a1a1a] tracking-tight">Temanggung</span>
+              <span className="text-[7px] sm:text-[9px] font-medium text-[#1a1a1a]/30 uppercase tracking-widest">{formattedDate}</span>
             </div>
           </div>
         </div>
 
-        <div className="hidden md:block w-px h-8 bg-black/5" />
+        <div className="w-px h-6 sm:h-8 bg-black/10 shrink-0" />
 
         {/* Weather */}
-        <div className="flex items-center gap-4 min-w-[120px]">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <AnimatePresence mode="wait">
             {status === "loading" ? (
               <motion.div 
@@ -154,10 +154,10 @@ export const WidgetSection = ({ insideHero = false }: { insideHero?: boolean }) 
                 initial={{ opacity: 0 }} 
                 animate={{ opacity: 1 }} 
                 exit={{ opacity: 0 }}
-                className="flex items-center gap-3"
+                className="flex items-center gap-2 sm:gap-3"
               >
-                <RefreshCw size={14} className="text-[#788069] animate-spin" />
-                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#788069]/40">Syncing</span>
+                <RefreshCw size={12} className="text-[#788069] animate-spin sm:w-3.5 sm:h-3.5" />
+                <span className="text-[7px] sm:text-[9px] font-bold uppercase tracking-[0.2em] text-[#788069]/40">Syncing</span>
               </motion.div>
             ) : status === "error" ? (
               <motion.div 
@@ -166,25 +166,25 @@ export const WidgetSection = ({ insideHero = false }: { insideHero?: boolean }) 
                 animate={{ opacity: 1 }}
                 className="flex items-center gap-2 text-rose-400"
               >
-                <AlertCircle size={14} />
-                <span className="text-[9px] font-bold uppercase tracking-widest">Offline</span>
+                <AlertCircle size={12} className="sm:w-3.5 sm:h-3.5" />
+                <span className="text-[7px] sm:text-[9px] font-bold uppercase tracking-widest">Offline</span>
               </motion.div>
             ) : (
               <motion.div 
                 key="success" 
                 initial={{ opacity: 0, x: -10 }} 
                 animate={{ opacity: 1, x: 0 }}
-                className="flex items-center gap-4"
+                className="flex items-center gap-2 sm:gap-4"
               >
-                <div className={`p-2 rounded-lg bg-black/5 ${weatherInfo?.color}`}>
+                <div className={`p-1.5 sm:p-2 rounded-lg bg-black/5 shrink-0 ${weatherInfo?.color}`}>
                   {weatherInfo?.icon}
                 </div>
                 <div>
                   <div className="flex items-baseline gap-0.5">
-                    <span className="text-xl font-medium text-[#1a1a1a] tabular-nums">{weather?.temp}°</span>
-                    <span className="text-[9px] font-bold text-[#1a1a1a]/30 uppercase">C</span>
+                    <span className="text-sm sm:text-xl font-medium text-[#1a1a1a] tabular-nums">{weather?.temp}°</span>
+                    <span className="text-[7px] sm:text-[9px] font-bold text-[#1a1a1a]/30 uppercase">C</span>
                   </div>
-                  <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-[#1a1a1a]/40">
+                  <p className="text-[6px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#1a1a1a]/40">
                     {weatherInfo?.text}
                   </p>
                 </div>
@@ -196,7 +196,7 @@ export const WidgetSection = ({ insideHero = false }: { insideHero?: boolean }) 
         <button 
           onClick={() => fetchWeather()}
           disabled={isRefreshing}
-          className="ml-auto hidden lg:flex w-7 h-7 rounded-full items-center justify-center text-black/10 hover:text-[#788069] hover:bg-[#788069]/5 transition-all duration-300"
+          className="ml-auto hidden lg:flex w-7 h-7 rounded-full items-center justify-center text-black/10 hover:text-[#788069] hover:bg-[#788069]/5 transition-all duration-300 shrink-0"
         >
           <RefreshCw size={12} className={isRefreshing ? "animate-spin" : ""} />
         </button>

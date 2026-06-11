@@ -759,3 +759,65 @@
     padding: 14px 20px;
   }
 }
+
+/* --- Dark Mode Overrides --- */
+:global(.dark) .outerCard, :global(.dark) .distCard {
+  background: #1a1a1a !important;
+  border-color: #262626 !important;
+}
+
+:global(.dark) .innerTray, :global(.dark) .investorCard, :global(.dark) .mgmtStatCol {
+  background: #1f1f1f !important;
+  border-color: #333333 !important;
+}
+
+:global(.dark) .title, :global(.dark) .sectionTitle, :global(.dark) .investorName, :global(.dark) .investorAmount, :global(.dark) .mgmtHeaderTitle, :global(.dark) .mgmtStatVal {
+  color: #f4f4f5 !important;
+}
+
+:global(.dark) .tableCard {
+  background: #1a1a1a !important;
+  border-color: #262626 !important;
+}
+
+:global(.dark) .tdFirst, :global(.dark) .tdMid, :global(.dark) .tdLast {
+  background: #1f1f1f !important;
+}
+
+:global(.dark) .rowGroup:hover .tdFirst,
+:global(.dark) .rowGroup:hover .tdMid,
+:global(.dark) .rowGroup:hover .tdLast {
+  background: #262626 !important;
+}
+
+:global(.dark) .tdFirstTotal, :global(.dark) .tdMidTotal, :global(.dark) .tdLastTotal, :global(.dark) .settlementCard {
+  background: #1f1f1f !important;
+  border-color: #333333 !important;
+}
+
+:global(.dark) .mgmtCard {
+  background: #1a1a1a !important;
+  border-color: #262626 !important;
+}
+
+:global(.dark) .mgmtHeader {
+  background: #262626 !important;
+  border-bottom-color: #1f1f1f !important;
+}
+
+:global(.dark) .retainedInputWrap {
+  background: #1f1f1f !important;
+  border-color: #333333 !important;
+}
+
+:global(.dark) .retainedInput {
+  color: #f4f4f5 !important;
+}
+
+:global(.dark) .subtitle, :global(.dark) .sectionSubtitle, :global(.dark) .labelSub, :global(.dark) .investorMeta, :global(.dark) .mgmtStatMeta, :global(.dark) .percentIcon {
+  color: #a1a1aa !important;
+}
+
+:global(.dark) .labelMain {
+  color: #f4f4f5 !important;
+}

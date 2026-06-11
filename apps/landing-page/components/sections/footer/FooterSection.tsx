@@ -7,6 +7,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useFooter } from "@/services/useFooter";
 import { useLandingSettings } from "@/services/useLandingSettings";
+import { formatExternalUrl } from "@/lib/utils";
 
 if (typeof window !== "undefined") {
     gsap.registerPlugin(ScrollTrigger);
@@ -130,7 +131,7 @@ export const FooterSection = () => {
                         {data.socialLinks.map((s, i) => (
                             <a
                                 key={i}
-                                href={s.url}
+                                href={formatExternalUrl(s.url)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 aria-label={s.platform}
@@ -234,7 +235,7 @@ export const FooterSection = () => {
                     <span className="font-normal lowercase">Powered by</span>
                     {data.poweredByLink ? (
                         <a
-                            href={data.poweredByLink}
+                            href={formatExternalUrl(data.poweredByLink)}
                             target="_blank"
                             rel="noreferrer"
                             className="text-[#788069] hover:text-white transition-colors"

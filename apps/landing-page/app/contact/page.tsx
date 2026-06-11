@@ -4,8 +4,9 @@ import React from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { FooterSection } from "@/components/sections/footer/FooterSection";
 import { useFooter } from "@/services/useFooter";
-import { Mail, Phone, MapPin, Globe, ArrowUpRight } from "lucide-react";
 import gsap from "gsap";
+import { Mail, Phone, MapPin, Globe } from "lucide-react";
+import { formatExternalUrl } from "@/lib/utils";
 
 export default function ContactPage() {
     const { data, loading } = useFooter();
@@ -63,7 +64,7 @@ export default function ContactPage() {
                                     {data.socialLinks.map((social, i) => (
                                         <a 
                                             key={i} 
-                                            href={social.url} 
+                                            href={formatExternalUrl(social.url)} 
                                             target="_blank" 
                                             rel="noopener noreferrer" 
                                             className="text-xs font-black uppercase tracking-[0.3em] hover:text-[#788069] transition-all"

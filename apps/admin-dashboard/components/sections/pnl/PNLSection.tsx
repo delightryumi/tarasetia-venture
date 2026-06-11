@@ -172,13 +172,17 @@ export function PNLSection() {
             {/* Expense Input Section */}
             {viewMode === "monthly" ? (
                 <ExpenseSection month={month} expenses={expenses} onRefresh={fetchData} />
+            ) : loading ? (
+                <div className="bg-white dark:bg-[#1a1a1a] border border-stone-100 dark:border-[#262626] rounded-2xl p-10 text-center shadow-xl shadow-stone-200/20 dark:shadow-none">
+                    <p className="text-stone-500 dark:text-[#a1a1aa] animate-pulse font-medium">Memuat data Profit & Loss...</p>
+                </div>
             ) : (
-                <div className="bg-white border border-stone-100 rounded-2xl p-10 text-center shadow-xl shadow-stone-200/20">
-                    <div className="w-16 h-16 bg-stone-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-stone-300">
+                <div className="bg-white dark:bg-[#1a1a1a] border border-stone-100 dark:border-[#262626] rounded-2xl p-10 text-center shadow-xl shadow-stone-200/20 dark:shadow-none">
+                    <div className="w-16 h-16 bg-stone-50 dark:bg-[#1f1f1f] rounded-2xl flex items-center justify-center mx-auto mb-6 text-stone-300 dark:text-[#a1a1aa]">
                         <Receipt size={32} />
                     </div>
-                    <h3 className="text-xl font-bold text-stone-800 mb-2 uppercase tracking-tight">Annual Expense Audit</h3>
-                    <p className="text-stone-400 text-[13px] max-w-md mx-auto leading-relaxed">
+                    <h3 className="text-xl font-bold text-stone-800 dark:text-stone-100 mb-2 uppercase tracking-tight">Annual Expense Audit</h3>
+                    <p className="text-stone-400 dark:text-[#a1a1aa] text-[13px] max-w-md mx-auto leading-relaxed">
                         The yearly PnL view provides a consolidated report of all operational costs. To edit or add specific expenses, please switch back to{" "}
                         <button onClick={() => setViewMode("monthly")} className="mx-1 text-sage font-bold hover:underline">
                             Monthly View

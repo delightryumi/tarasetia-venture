@@ -217,22 +217,22 @@ export const AddTransactionModal = ({
                         animate={{ x: 0 }}
                         exit={{ x: "100%" }}
                         transition={{ type: "tween", duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                        className="fixed top-0 right-0 bottom-0 z-[300] w-full max-w-[640px] bg-white shadow-2xl flex flex-col border-l border-stone-100 rounded-none overflow-hidden"
+                        className="fixed top-0 right-0 bottom-0 z-[300] w-full max-w-[640px] bg-white dark:bg-[#1a1a1a] shadow-2xl flex flex-col border-l border-stone-100 dark:border-[#333333] rounded-none overflow-hidden"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between px-20 h-20 border-b border-stone-100 bg-white">
+                        <div className="flex items-center justify-between px-20 h-20 border-b border-stone-100 dark:border-[#333333] bg-white dark:bg-[#1a1a1a]">
                             <div className="flex flex-col">
                                 <div className="flex items-center gap-2 mb-1">
                                     <Sparkles size={10} style={{ color: SAGE }} />
                                     <span className="text-[9px] font-medium uppercase tracking-[0.4em]" style={{ color: SAGE }}>Nexura Hub</span>
                                 </div>
-                                <h2 className="text-xl font-light text-stone-900 tracking-tight uppercase">
+                                <h2 className="text-xl font-light text-stone-900 dark:text-[#f4f4f5] tracking-tight uppercase">
                                     {step === "type" ? "Category" : "Details"}
                                 </h2>
                             </div>
                             <button 
                                 onClick={onClose} 
-                                className="w-8 h-8 flex items-center justify-center hover:bg-stone-50 transition-all border border-stone-100 text-stone-300 hover:text-stone-900 rounded-md"
+                                className="w-8 h-8 flex items-center justify-center hover:bg-stone-50 dark:hover:bg-[#262626] transition-all border border-stone-100 dark:border-[#333333] text-stone-300 dark:text-[#52525b] hover:text-stone-900 dark:hover:text-[#f4f4f5] rounded-md"
                             >
                                 <X size={16} />
                             </button>
@@ -257,13 +257,13 @@ export const AddTransactionModal = ({
                                         comingSoon
                                     />
                                     
-                                    <div className="mt-8 p-10 border border-stone-50 bg-stone-50/30 flex items-start gap-8 rounded-xl">
-                                        <div className="w-10 h-10 flex items-center justify-center bg-white border border-stone-100 rounded-lg shadow-sm" style={{ color: SAGE }}>
+                                    <div className="mt-8 p-10 border border-stone-50 dark:border-[#333333] bg-stone-50/30 dark:bg-[#1f1f1f] flex items-start gap-8 rounded-xl">
+                                        <div className="w-10 h-10 flex items-center justify-center bg-white dark:bg-[#1a1a1a] border border-stone-100 dark:border-[#333333] rounded-lg shadow-sm" style={{ color: SAGE }}>
                                             <ShieldCheck size={20} />
                                         </div>
                                         <div className="flex-1">
-                                            <span className="text-[9px] font-medium uppercase tracking-widest text-stone-900 block mb-1.5">Synchronized Entry</span>
-                                            <p className="text-[10px] text-stone-400 leading-relaxed font-normal uppercase tracking-wider">
+                                            <span className="text-[9px] font-medium uppercase tracking-widest text-stone-900 dark:text-[#f4f4f5] block mb-1.5">Synchronized Entry</span>
+                                            <p className="text-[10px] text-stone-400 dark:text-[#71717a] leading-relaxed font-normal uppercase tracking-wider">
                                                 Records are audited and synced across Nexura Global clusters.
                                             </p>
                                         </div>
@@ -309,7 +309,7 @@ export const AddTransactionModal = ({
                                                     <select 
                                                         value={form.roomTypeId}
                                                         onChange={e => updateForm("roomTypeId", e.target.value)}
-                                                        className="w-full h-11 px-4 rounded-lg bg-stone-50 border border-stone-100 outline-none text-[11px] font-normal uppercase tracking-widest appearance-none cursor-pointer hover:bg-white transition-all"
+                                                        className="w-full h-11 px-4 rounded-lg bg-stone-50 dark:bg-[#1f1f1f] border border-stone-100 dark:border-[#333333] outline-none text-[11px] font-normal uppercase tracking-widest appearance-none cursor-pointer hover:bg-white dark:hover:bg-[#262626] transition-all text-stone-900 dark:text-[#f4f4f5]"
                                                     >
                                                         <option value="">CHOOSE TYPE</option>
                                                         {roomTypes.map(r => <option key={r.id} value={r.id}>{r.name.toUpperCase()}</option>)}
@@ -334,7 +334,7 @@ export const AddTransactionModal = ({
                                                         <select 
                                                             value={form.channel}
                                                             onChange={e => updateForm("channel", e.target.value)}
-                                                            className="w-full h-11 px-4 rounded-lg bg-stone-50 border border-stone-100 outline-none text-[11px] font-normal uppercase tracking-widest appearance-none cursor-pointer hover:bg-white transition-all"
+                                                            className="w-full h-11 px-4 rounded-lg bg-stone-50 dark:bg-[#1f1f1f] border border-stone-100 dark:border-[#333333] outline-none text-[11px] font-normal uppercase tracking-widest appearance-none cursor-pointer hover:bg-white dark:hover:bg-[#262626] transition-all text-stone-900 dark:text-[#f4f4f5]"
                                                         >
                                                             {CHANNELS.map(c => <option key={c.name} value={c.name}>{c.name.toUpperCase()}</option>)}
                                                         </select>
@@ -357,21 +357,21 @@ export const AddTransactionModal = ({
                                                             onWheel={preventScroll}
                                                             onChange={e => updateForm("totalAmount", e.target.value)}
                                                             placeholder="INPUT AMOUNT"
-                                                            className="w-full h-[85px] px-8 rounded-xl bg-stone-50 border border-stone-100 outline-none text-4xl font-light tracking-tighter transition-all hover:bg-white text-stone-900 placeholder:text-stone-200"
+                                                            className="w-full h-[85px] px-8 rounded-xl bg-stone-50 dark:bg-[#1f1f1f] border border-stone-100 dark:border-[#333333] outline-none text-4xl font-light tracking-tighter transition-all hover:bg-white dark:hover:bg-[#262626] text-stone-900 dark:text-[#f4f4f5] placeholder:text-stone-200 dark:placeholder:text-[#52525b]"
                                                         />
                                                     </div>
                                                 </div>
 
                                                 {/* Split Bill Card */}
                                                 <div className="py-4">
-                                                    <div className="flex items-center justify-between p-8 bg-stone-50 rounded-xl border border-stone-100">
+                                                    <div className="flex items-center justify-between p-8 bg-stone-50 dark:bg-[#1f1f1f] rounded-xl border border-stone-100 dark:border-[#333333]">
                                                         <div className="flex items-center gap-6">
-                                                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-stone-300 border border-stone-100 shadow-sm">
+                                                            <div className="w-8 h-8 rounded-lg bg-white dark:bg-[#1a1a1a] flex items-center justify-center text-stone-300 dark:text-[#52525b] border border-stone-100 dark:border-[#333333] shadow-sm">
                                                                 <Receipt size={14} />
                                                             </div>
                                                             <div>
-                                                                <span className="text-[10px] font-medium uppercase text-stone-900 block tracking-widest mb-1">Split Mode</span>
-                                                                <span className="text-[9px] text-stone-400 font-normal uppercase tracking-wider">Multiple methods</span>
+                                                                <span className="text-[10px] font-medium uppercase text-stone-900 dark:text-[#f4f4f5] block tracking-widest mb-1">Split Mode</span>
+                                                                <span className="text-[9px] text-stone-400 dark:text-[#71717a] font-normal uppercase tracking-wider">Multiple methods</span>
                                                             </div>
                                                         </div>
                                                         <button 
@@ -408,17 +408,17 @@ export const AddTransactionModal = ({
                                                     <div className="flex items-center justify-between mb-5">
                                                         <span className="text-[9px] font-medium uppercase tracking-[0.2em] ml-0.5" style={{ color: SAGE }}>Settlement Method Selection</span>
                                                         {!(form.channel === "Walk-in" || form.channel === "Nexura Sales") && (
-                                                            <span className="text-[8px] font-bold text-stone-300 uppercase tracking-widest bg-stone-50 px-2 py-0.5 rounded border border-stone-100">Locked for OTA/Engine</span>
+                                                            <span className="text-[8px] font-bold text-stone-300 dark:text-[#52525b] uppercase tracking-widest bg-stone-50 dark:bg-[#1f1f1f] px-2 py-0.5 rounded border border-stone-100 dark:border-[#333333]">Locked for OTA/Engine</span>
                                                         )}
                                                     </div>
-                                                    <div className="flex gap-2 p-2 bg-stone-50 rounded-xl border border-stone-100 shadow-sm">
+                                                    <div className="flex gap-2 p-2 bg-stone-50 dark:bg-[#1f1f1f] rounded-xl border border-stone-100 dark:border-[#333333] shadow-sm">
                                                         <button 
                                                             onClick={() => updateForm("paymentMethod", "Pay at Hotel")}
                                                             disabled={!(form.channel === "Walk-in" || form.channel === "Nexura Sales")}
                                                             className={`flex-1 h-12 text-[10px] font-medium uppercase tracking-widest transition-all rounded-lg flex items-center justify-center gap-2.5 ${
                                                                 form.paymentMethod === "Pay at Hotel" 
-                                                                ? 'bg-stone-900 text-white shadow-lg' 
-                                                                : 'text-stone-400 hover:text-stone-600'
+                                                                ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-lg' 
+                                                                : 'text-stone-400 dark:text-[#71717a] hover:text-stone-600 dark:hover:text-[#f4f4f5]'
                                                             } ${!(form.channel === "Walk-in" || form.channel === "Nexura Sales") ? 'opacity-20 cursor-not-allowed grayscale' : ''}`}
                                                         >
                                                             <Home size={14} />
@@ -429,7 +429,7 @@ export const AddTransactionModal = ({
                                                             className={`flex-1 h-12 text-[10px] font-medium uppercase tracking-widest transition-all rounded-lg flex items-center justify-center gap-2.5 ${
                                                                 form.paymentMethod === "Pay at Nexura" 
                                                                 ? 'text-white shadow-lg' 
-                                                                : 'text-stone-400 hover:text-stone-600'
+                                                                : 'text-stone-400 dark:text-[#71717a] hover:text-stone-600 dark:hover:text-[#f4f4f5]'
                                                             }`}
                                                             style={form.paymentMethod === "Pay at Nexura" ? { backgroundColor: PEACH, borderColor: PEACH } : {}}
                                                         >
@@ -442,15 +442,15 @@ export const AddTransactionModal = ({
                                         </div>
 
                                         {/* Digital Invoice: Using mt-12 instead of mt-24 but added pb-20 to section above */}
-                                        <div className="mt-8 bg-white border border-stone-100 rounded-xl overflow-hidden shadow-sm">
-                                            <div className="px-10 py-8 border-b border-dashed border-stone-100 flex items-center justify-between bg-stone-50/30">
+                                        <div className="mt-8 bg-white dark:bg-[#1a1a1a] border border-stone-100 dark:border-[#333333] rounded-xl overflow-hidden shadow-sm">
+                                            <div className="px-10 py-8 border-b border-dashed border-stone-100 dark:border-[#333333] flex items-center justify-between bg-stone-50/30 dark:bg-[#1f1f1f]/30">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-11 h-11 bg-white border border-stone-100 rounded-lg flex items-center justify-center text-stone-400 shadow-sm">
+                                                    <div className="w-11 h-11 bg-white dark:bg-[#1f1f1f] border border-stone-100 dark:border-[#333333] rounded-lg flex items-center justify-center text-stone-400 dark:text-[#52525b] shadow-sm">
                                                         <Receipt size={20} />
                                                     </div>
                                                     <div>
                                                         <span className="text-[8px] font-medium uppercase tracking-[0.4em] text-stone-400 block mb-0.5">Nexura Digital</span>
-                                                        <h4 className="text-base font-light text-stone-900 uppercase tracking-widest">Digital Invoice</h4>
+                                                        <h4 className="text-base font-light text-stone-900 dark:text-[#f4f4f5] uppercase tracking-widest">Digital Invoice</h4>
                                                     </div>
                                                 </div>
                                                 <div className={`px-3 py-1 rounded-full text-[8px] font-medium uppercase tracking-widest border ${balance === 0 && form.guestName ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-amber-50 border-amber-100 text-amber-600'}`}>
@@ -480,9 +480,9 @@ export const AddTransactionModal = ({
                                                 </div>
                                             </div>
 
-                                            <div className="px-10 py-8 bg-stone-50 border-t border-stone-100 flex items-center justify-between">
+                                            <div className="px-10 py-8 bg-stone-50 dark:bg-[#1f1f1f] border-t border-stone-100 dark:border-[#333333] flex items-center justify-between">
                                                 <span className="text-[10px] font-medium uppercase tracking-[0.4em] text-stone-400">Total Settlement</span>
-                                                <span className="text-3xl font-light tracking-tighter text-stone-900">{formatCurrency(form.totalAmount)}</span>
+                                                <span className="text-3xl font-light tracking-tighter text-stone-900 dark:text-[#f4f4f5]">{formatCurrency(form.totalAmount)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -491,11 +491,11 @@ export const AddTransactionModal = ({
                         </div>
 
                         {/* Sticky Footer */}
-                        <div className="px-20 h-24 border-t border-stone-100 flex items-center justify-between bg-white">
+                        <div className="px-20 h-24 border-t border-stone-100 dark:border-[#333333] flex items-center justify-between bg-white dark:bg-[#1a1a1a]">
                             {step === "form" && (
                                 <button 
                                     onClick={() => setStep("type")}
-                                    className="text-[10px] font-medium text-stone-300 hover:text-stone-900 uppercase tracking-[0.4em] transition-colors"
+                                    className="text-[10px] font-medium text-stone-300 dark:text-[#52525b] hover:text-stone-900 dark:hover:text-[#f4f4f5] uppercase tracking-[0.4em] transition-colors"
                                 >
                                     Cancel
                                 </button>
@@ -504,7 +504,7 @@ export const AddTransactionModal = ({
                             <button 
                                 disabled={step === "type" || saving || (form.isSplitBill && balance > 0)}
                                 onClick={handleSubmit}
-                                className={`flex items-center justify-center gap-2 h-10 min-w-[160px] px-8 text-[11px] font-medium uppercase tracking-[0.1em] transition-all text-white hover:brightness-110 active:scale-95 disabled:bg-stone-50 disabled:text-stone-300 disabled:cursor-not-allowed rounded-lg`}
+                                className={`flex items-center justify-center gap-2 h-10 min-w-[160px] px-8 text-[11px] font-medium uppercase tracking-[0.1em] transition-all text-white hover:brightness-110 active:scale-95 disabled:bg-stone-50 dark:disabled:bg-[#1f1f1f] disabled:text-stone-300 dark:disabled:text-[#52525b] disabled:cursor-not-allowed rounded-lg`}
                                 style={{ backgroundColor: SAGE }}
                             >
                                 {saving ? "SYNCING..." : (
@@ -531,7 +531,7 @@ function NexuraInput({ label, type = "text", placeholder, value, onChange, onWhe
             <input 
                 type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
                 onWheel={onWheel}
-                className="w-full h-11 px-4 rounded-lg bg-stone-50 border border-stone-100 outline-none text-[11px] font-normal tracking-widest placeholder:text-stone-200 hover:bg-white transition-all"
+                className="w-full h-11 px-4 rounded-lg bg-stone-50 dark:bg-[#1f1f1f] border border-stone-100 dark:border-[#333333] outline-none text-[11px] font-normal tracking-widest placeholder:text-stone-200 dark:placeholder:text-[#52525b] hover:bg-white dark:hover:bg-[#262626] text-stone-900 dark:text-[#f4f4f5] transition-all dark:[color-scheme:dark]"
             />
         </div>
     );
@@ -540,9 +540,9 @@ function NexuraInput({ label, type = "text", placeholder, value, onChange, onWhe
 function SectionHeader({ label }: { label: string }) {
     return (
         <div className="flex items-center gap-6">
-            <div className="h-px bg-stone-900 w-10" />
-            <span className="text-[11px] font-medium uppercase tracking-[0.3em] text-stone-900">{label}</span>
-            <div className="h-px bg-stone-100 flex-1" />
+            <div className="h-px bg-stone-900 dark:bg-[#f4f4f5] w-10" />
+            <span className="text-[11px] font-medium uppercase tracking-[0.3em] text-stone-900 dark:text-[#f4f4f5]">{label}</span>
+            <div className="h-px bg-stone-100 dark:bg-[#333333] flex-1" />
         </div>
     );
 }
@@ -550,8 +550,8 @@ function SectionHeader({ label }: { label: string }) {
 function InvoiceItem({ label, value }: { label: string, value: string }) {
     return (
         <div className="flex flex-col gap-2">
-            <span className="text-[8px] font-medium uppercase tracking-[0.3em] text-stone-300">{label}</span>
-            <span className="text-[12px] font-normal text-stone-900 uppercase tracking-widest truncate">{value}</span>
+            <span className="text-[8px] font-medium uppercase tracking-[0.3em] text-stone-300 dark:text-[#52525b]">{label}</span>
+            <span className="text-[12px] font-normal text-stone-900 dark:text-[#f4f4f5] uppercase tracking-widest truncate">{value}</span>
         </div>
     );
 }
@@ -563,7 +563,7 @@ function TypeCard({ label, desc, icon, onClick, accent, comingSoon = false }: an
             onClick={onClick}
             disabled={comingSoon}
             className={`group relative flex items-center justify-between p-8 border transition-all duration-500 text-left rounded-xl overflow-hidden ${
-                comingSoon ? 'bg-stone-50 border-stone-100 opacity-50 cursor-not-allowed' : 'bg-white border-stone-100 shadow-sm hover:shadow-md'
+                comingSoon ? 'bg-stone-50 dark:bg-[#1f1f1f] border-stone-100 dark:border-[#333333] opacity-50 cursor-not-allowed' : 'bg-white dark:bg-[#1a1a1a] border-stone-100 dark:border-[#333333] shadow-sm hover:shadow-md'
             }`}
         >
             <div className="flex items-center gap-8 relative z-10">
@@ -573,13 +573,13 @@ function TypeCard({ label, desc, icon, onClick, accent, comingSoon = false }: an
                 </div>
                 <div>
                     <div className="flex items-center gap-3 mb-1">
-                        <span className={`text-[11px] font-medium uppercase tracking-[0.3em] leading-tight block ${comingSoon ? 'text-stone-300' : 'text-stone-400'}`}>{label}</span>
-                        {comingSoon && <span className="px-2 py-0.5 bg-stone-100 text-[8px] font-normal uppercase text-stone-400 tracking-widest border border-stone-200 rounded-md">Locked</span>}
+                        <span className={`text-[11px] font-medium uppercase tracking-[0.3em] leading-tight block ${comingSoon ? 'text-stone-300' : 'text-stone-400 dark:text-[#71717a]'}`}>{label}</span>
+                        {comingSoon && <span className="px-2 py-0.5 bg-stone-100 dark:bg-[#1a1a1a] text-[8px] font-normal uppercase text-stone-400 dark:text-[#71717a] tracking-widest border border-stone-200 dark:border-[#333333] rounded-md">Locked</span>}
                     </div>
-                    <p className={`text-[9px] font-normal uppercase tracking-widest ${comingSoon ? 'text-stone-200' : 'text-stone-400'}`}>{desc}</p>
+                    <p className={`text-[9px] font-normal uppercase tracking-widest ${comingSoon ? 'text-stone-200' : 'text-stone-400 dark:text-[#71717a]'}`}>{desc}</p>
                 </div>
             </div>
-            {!comingSoon && <ChevronRight size={18} className="text-stone-200 group-hover:text-stone-900 transition-colors" />}
+            {!comingSoon && <ChevronRight size={18} className="text-stone-200 dark:text-[#52525b] group-hover:text-stone-900 dark:group-hover:text-[#f4f4f5] transition-colors" />}
         </motion.button>
     );
 }

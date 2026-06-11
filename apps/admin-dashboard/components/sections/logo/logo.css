@@ -361,3 +361,101 @@
     background-color: #b91c1c !important;
     transform: translateY(-50%) scale(1.05) !important;
 }
+
+/* --- DARK MODE OVERRIDES --- */
+.dark .airtable-header-icon {
+    background-color: #1f1f1f;
+    border-color: #333333;
+    color: #e5e5e5;
+}
+
+.dark .airtable-title {
+    color: #e5e5e5;
+}
+
+.dark .airtable-subtitle {
+    color: #a3a3a3;
+}
+
+.dark .airtable-toast-success {
+    background-color: rgba(57, 191, 69, 0.1);
+    border-color: #39bf45;
+    border-left-color: #39bf45;
+    color: #4ade80;
+}
+
+.dark .airtable-card {
+    background-color: #1f1f1f;
+    border-color: #333333;
+    box-shadow: none;
+}
+
+.dark .airtable-card-title {
+    color: #e5e5e5;
+}
+
+.dark .airtable-card-desc {
+    color: #a3a3a3;
+}
+
+.dark .airtable-card-icon-link {
+    color: #e5e5e5;
+}
+
+.dark .logo-preview-box-light {
+    background-color: #1f1f1f;
+    border-color: #333333;
+    background-image: radial-gradient(#333333 1.5px, transparent 1.5px);
+}
+
+.dark .logo-preview-box-dark {
+    background-color: #141414;
+    border-color: #222222;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1.5px, transparent 1.5px);
+}
+
+.dark .airtable-label {
+    color: #e5e5e5;
+}
+
+.dark .airtable-text-input {
+    background-color: #2a2a2a;
+    border-color: #444444;
+    color: #e5e5e5;
+}
+
+.dark .airtable-text-input:focus {
+    border-color: #458fff;
+}
+
+.dark .airtable-btn-primary {
+    background-color: #e5e5e5;
+    color: #181d26;
+}
+
+.dark .airtable-btn-primary:hover:not(:disabled) {
+    background-color: #ffffff;
+}
+
+.dark .logo-section-container .upload-dropzone {
+    background: #1f1f1f !important;
+    border-color: #444444 !important;
+}
+
+.dark .logo-section-container .upload-dropzone:hover {
+    background: #2a2a2a !important;
+    border-color: #666666 !important;
+}
+
+.dark .logo-section-container .upload-icon {
+    color: #e5e5e5 !important;
+}
+
+.dark .logo-section-container .upload-text {
+    color: #e5e5e5 !important;
+}
+
+.dark .logo-section-container .preview-container {
+    background-color: #2a2a2a !important;
+    border-color: #444444 !important;
+}

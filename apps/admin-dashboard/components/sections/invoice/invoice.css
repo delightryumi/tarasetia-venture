@@ -721,3 +721,39 @@
         background: white !important;
     }
 }
+
+/* --- Dark Mode Overrides --- */
+.dark .invoice-container {
+    --invoice-pure-white: #1a1a1a;
+    --invoice-off-white: transparent;
+    --invoice-black: #faf8f5;
+    --invoice-gray-dark: #a8a29e;
+    --invoice-gray-muted: #78716c;
+    --invoice-gray-light: #44403c;
+    --invoice-border: #333333;
+}
+
+.dark .invoice-paper {
+    --invoice-pure-white: #faf8f4;
+    --invoice-off-white: transparent;
+    --invoice-black: #212121;
+    --invoice-gray-dark: #5c5850;
+    --invoice-gray-muted: #706c64;
+    --invoice-gray-light: #9fa392;
+    --invoice-border: rgba(141, 122, 82, 0.12);
+}
+
+.dark .verify-result-btn {
+    background: #1f1f1f;
+}
+
+.dark .form-group-custom input,
+.dark .form-group-custom textarea {
+    background: #1f1f1f !important;
+    color: var(--invoice-black) !important;
+    color-scheme: dark !important;
+}
+
+.dark input[type="date"] {
+    color-scheme: dark !important;
+}

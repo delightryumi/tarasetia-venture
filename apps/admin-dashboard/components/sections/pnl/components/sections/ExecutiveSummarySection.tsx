@@ -26,14 +26,14 @@ interface ExecutiveSummarySectionProps {
 /** Inline percentage rate input rendered inside a card's `extra` slot */
 function RateInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
     return (
-        <div className="flex items-center gap-2 bg-stone-50 rounded-lg px-2 border border-stone-100 group-hover:border-stone-200 transition-colors">
+        <div className="flex items-center gap-2 bg-stone-50 dark:bg-[#1c1917] rounded-lg px-2 border border-stone-100 dark:border-stone-800 group-hover:border-stone-200 dark:group-hover:border-stone-700 transition-colors">
             <input
                 type="number"
-                className="w-8 bg-transparent outline-none text-[10px] font-bold text-stone-900 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-center"
+                className="w-8 bg-transparent outline-none text-[10px] font-bold text-stone-900 dark:text-stone-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-center"
                 value={value}
                 onChange={(e) => onChange(Number(e.target.value))}
             />
-            <span className="text-[9px] font-bold text-stone-600 uppercase">%</span>
+            <span className="text-[9px] font-bold text-stone-600 dark:text-stone-400 uppercase">%</span>
         </div>
     );
 }

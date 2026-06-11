@@ -8,12 +8,12 @@
   font-family: var(--font-sans, sans-serif);
   z-index: 0;
   user-select: none;
-  background-color: #fafaf9; /* Nexura Cream Canvas */
+  background-color: #f8fafc; /* Professional Flat Corporate Light */
   transition: background-color 0.4s ease;
 }
 
 :global(.dark) .container {
-  background-color: #1A1C14; /* Nexura Obsidian Black */
+  background-color: #09090b; /* Professional Flat Corporate Dark */
 }
 
 /* Soft Ambient Nexura Glows */

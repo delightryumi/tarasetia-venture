@@ -426,6 +426,8 @@ textarea {
 
 /* ── Dark Mode Overrides ── */
 .dark {
+  --background: #121212 !important;
+  --foreground: #f5f5f4 !important;
   --f-canvas: #212121 !important;
   --f-surface: #1e1e1e !important;
   --f-surface-soft: #2a2a2a !important;

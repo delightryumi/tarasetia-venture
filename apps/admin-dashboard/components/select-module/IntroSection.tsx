@@ -42,20 +42,7 @@ export const IntroSection: React.FC<IntroSectionProps> = ({ onOpenClick }) => {
       {/* Background Soft Ambient Light (Luxury Glow) */}
       <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-64 h-64 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none z-0" />
 
-      {/* Logo Container with Refined Backlight */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, delay: 0.1 }}
-        className="relative mb-8 flex justify-center z-10"
-      >
-        <div className="absolute inset-0 bg-neutral-900/5 dark:bg-white/5 blur-2xl rounded-full scale-110 pointer-events-none" />
-        <img
-          src="/channels/nexura-logo.png"
-          alt="Nexura Logo"
-          className="h-20 w-auto object-contain dark:brightness-0 dark:invert transition-all duration-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:drop-shadow-[0_4px_24px_rgba(255,255,255,0.08)]"
-        />
-      </motion.div>
+
 
       {/* Modern Uppercase Enterprise Subtitle */}
       <motion.div

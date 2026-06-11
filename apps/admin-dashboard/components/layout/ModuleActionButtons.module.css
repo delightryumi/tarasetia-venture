@@ -1,76 +1,51 @@
-/* Floating actions panel container - top right on mobile and desktop */
+/* Header Actions Container - flat layout inside header */
 .panelContainer {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  bottom: auto;
-  left: auto;
-  transform: none;
-  z-index: 50;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(229, 229, 229, 0.6);
-  border-radius: 9999px;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   pointer-events: auto;
 }
 
-@media (min-width: 768px) {
-  .panelContainer {
-    top: 24px;
-    right: 24px;
-  }
-}
-
-:global(.dark) .panelContainer {
-  background-color: rgba(12, 12, 12, 0.85);
-  border-color: rgba(38, 38, 38, 0.8);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
-}
-
-/* Base button style (circular trigger) */
-.circleButton {
+/* Base button style (square trigger with small rounded corners) - Dark look to match dark headers in both modes */
+.squareButton {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 9999px;
-  border: 1px solid #e5e5e5;
-  background-color: #ffffff;
-  color: #525252;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background-color: #2d2d30;
+  color: #f4f4f5;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 @media (min-width: 768px) {
-  .circleButton {
+  .squareButton {
     width: 36px;
     height: 36px;
   }
 }
 
-:global(.dark) .circleButton {
-  border-color: #27272a;
-  background-color: #09090b;
-  color: #a1a1aa;
+:global(.dark) .squareButton {
+  border-color: rgba(255, 255, 255, 0.15);
+  background-color: #1e1e21;
+  color: #f4f4f5;
 }
 
-.circleButton:hover {
-  background-color: #f4f4f5;
-  color: #18181b;
-}
-
-:global(.dark) .circleButton:hover {
-  background-color: #18181b;
+.squareButton:hover {
+  background-color: #3e3e42;
   color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+:global(.dark) .squareButton:hover {
+  background-color: #2b2b2e;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 /* Dropdown overlay/backdrop to capture outside clicks */
@@ -92,10 +67,10 @@
   right: 0;
   left: auto;
   width: 140px;
-  background-color: #ffffff;
-  border: 1px solid rgba(229, 229, 229, 0.9);
+  background-color: #242424;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
   padding: 6px;
   z-index: 50;
   display: flex;
@@ -105,8 +80,7 @@
 
 :global(.dark) .dropdownMenu {
   background-color: #18181b;
-  border-color: rgba(38, 38, 38, 0.9);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 /* Dropdown single item button */
@@ -120,19 +94,15 @@
   text-align: left;
   border: none;
   background: transparent;
-  color: #737373;
+  color: #a1a1aa;
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-:global(.dark) .dropdownItem {
-  color: #a1a1aa;
-}
-
 .dropdownItem:hover {
-  background-color: #f4f4f5;
-  color: #18181b;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
 :global(.dark) .dropdownItem:hover {
@@ -143,8 +113,8 @@
 /* Active selection styling */
 .dropdownItemActive {
   font-weight: 500;
-  color: #18181b;
-  background-color: #f4f4f5;
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 :global(.dark) .dropdownItemActive {

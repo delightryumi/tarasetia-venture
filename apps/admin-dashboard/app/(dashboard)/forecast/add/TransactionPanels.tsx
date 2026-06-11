@@ -49,7 +49,7 @@ export function TerminalHeader({ checkIn, queueLength, saving, onCommit, onBack 
                         <ArrowLeft size={16} strokeWidth={2} />
                     </button>
                     <div className="flex flex-col">
-                        <h1 className="text-[14px] font-bold text-stone-900 uppercase tracking-wider" style={{ margin: 0 }}>
+                        <h1 className="text-[14px] font-bold text-stone-900 dark:text-stone-100 uppercase tracking-wider" style={{ margin: 0 }}>
                             POS Forecast Terminal
                         </h1>
                     </div>

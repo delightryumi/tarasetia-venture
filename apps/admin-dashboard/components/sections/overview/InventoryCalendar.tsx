@@ -136,8 +136,8 @@ export function InventoryCalendar({
                                 color: 'var(--f-body)',
                                 outline: 'none',
                                 height: '28px',
-                                backgroundColor: '#fbf9f4',
-                                colorScheme: 'light'
+                                backgroundColor: 'var(--f-canvas)',
+                                colorScheme: 'dark'
                             }} 
                         />
                     </div>
@@ -161,8 +161,8 @@ export function InventoryCalendar({
                                 color: 'var(--f-body)',
                                 outline: 'none',
                                 height: '28px',
-                                backgroundColor: '#fbf9f4',
-                                colorScheme: 'light'
+                                backgroundColor: 'var(--f-canvas)',
+                                colorScheme: 'inherit'
                             }} 
                         />
                     </div>
@@ -201,8 +201,7 @@ export function InventoryCalendar({
                                 return (
                                     <th 
                                         key={idx} 
-                                        className={`${styles.calendarTh} ${isActive ? styles.calendarThActive : ''}`}
-                                        style={isEnd && !isActive ? { backgroundColor: '#fef2f2' } : {}}
+                                        className={`${styles.calendarTh} ${isActive ? styles.calendarThActive : ''} ${isEnd && !isActive ? styles.weekendHeader : ''}`}
                                     >
                                         <p className={styles.headerSubtitle} style={{ fontSize: '8px', color: isEnd && !isActive ? '#fca5a5' : 'var(--f-light-muted)', margin: 0, fontWeight: 700 }}>{format(day, 'EEE')}</p>
                                         <p className={styles.headerTitle} style={{ fontSize: '13px', color: isActive ? 'var(--f-sage)' : (isEnd ? '#ef4444' : 'var(--f-ink)'), margin: 0, fontWeight: 700, fontFamily: 'var(--f-font-mono)' }}>{format(day, 'dd')}</p>
@@ -259,8 +258,7 @@ export function InventoryCalendar({
                                         <td 
                                             key={dIdx} 
                                             onClick={handleCellClick}
-                                            className={`${styles.calendarTd} ${isActive ? styles.calendarTdActive : ''}`}
-                                            style={isSoldOut ? { backgroundColor: '#fef2f2' } : (isEnd ? { backgroundColor: '#fff5f5' } : {})}
+                                            className={`${styles.calendarTd} ${isActive ? styles.calendarTdActive : ''} ${isSoldOut ? styles.soldOutCell : (isEnd ? styles.weekendCell : '')}`}
                                         >
                                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

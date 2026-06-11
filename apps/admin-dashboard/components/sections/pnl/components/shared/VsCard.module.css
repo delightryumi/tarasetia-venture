@@ -194,3 +194,37 @@
   height: 100%;
   border-radius: 9999px;
 }
+
+/* --- Dark Mode Overrides --- */
+:global(.dark) .card {
+  background-color: #262626 !important;
+  border-color: #3f3f46 !important;
+}
+
+:global(.dark) .label {
+  color: #a1a1aa !important;
+}
+
+:global(.dark) .colLabel,
+:global(.dark) .progressLabel {
+  color: #71717a !important;
+}
+
+:global(.dark) .colValue {
+  color: #f4f4f5 !important;
+}
+
+:global(.dark) .borderLeft {
+  border-left-color: #3f3f46 !important;
+}
+
+:global(.dark) .badgeNeutral {
+  background-color: #3f3f46 !important;
+  color: #f4f4f5 !important;
+  border-color: #52525b !important;
+}
+
+:global(.dark) .progressBarBg {
+  background-color: #3f3f46 !important;
+  border-color: #52525b !important;
+}

@@ -30,6 +30,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--f-muted, #41454d);
+  background-color: transparent !important;
 }
 
 .cardIconBox {
@@ -41,6 +42,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background-color: transparent !important;
 }
 
 .cardValue {
@@ -50,6 +52,7 @@
   margin: 0;
   font-family: var(--f-font-mono, monospace);
   letter-spacing: -0.02em;
+  background-color: transparent !important;
 }
 
 .guestSubtext {
@@ -57,4 +60,16 @@
   color: var(--f-muted, #41454d);
   text-transform: uppercase;
   font-weight: 500;
+  background-color: transparent !important;
+}
+
+/* --- Dark Mode Overrides --- */
+:global(.dark) .summaryCard {
+  background-color: var(--f-surface, #1f1f1f);
+  border-color: var(--f-hairline, #333333);
+}
+
+:global(.dark) .summaryCardActive {
+  background-color: var(--f-surface-soft, #262626);
+  border-color: var(--f-sage, #788069);
 }

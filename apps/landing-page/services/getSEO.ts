@@ -19,9 +19,9 @@ export interface SEOData {
 
 export const getSEO = async (): Promise<SEOData> => {
     const defaultSEO: SEOData = {
-        title: "Bumi Anyom | Kembali Membumi",
-        description: "Luxury resort sanctuary in the heart of nature.",
-        keywords: "luxury resort, nature sanctuary, bumi anyom, accommodation",
+        title: "Bumi Anyom Resort | Resort & Hotel Terbaik di Temanggung",
+        description: "Bumi Anyom Resort adalah hotel & resort terbaik di Temanggung yang menawarkan kemewahan di tengah alam asri. Destinasi peristirahatan tenang dengan pemandangan pegunungan dan fasilitas premium.",
+        keywords: "bumi anyom, bumi anyom resort, best resort temanggung, hotel terbaik temanggung, resort temanggung, hotel di temanggung, penginapan temanggung, luxury resort temanggung, tempat wisata temanggung",
         ogImage: "",
         twitterCard: "summary_large_image",
     };
@@ -31,10 +31,15 @@ export const getSEO = async (): Promise<SEOData> => {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-            return {
-                ...defaultSEO,
-                ...docSnap.data(),
-            } as SEOData;
+            const data = docSnap.data();
+            const merged = { ...defaultSEO };
+            Object.keys(data).forEach((key) => {
+                const val = data[key];
+                if (val !== undefined && val !== null && val !== "") {
+                    (merged as any)[key] = val;
+                }
+            });
+            return merged as SEOData;
         }
     } catch (err) {
         console.error("Error fetching SEO:", err);

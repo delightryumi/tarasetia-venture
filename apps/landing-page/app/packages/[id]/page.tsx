@@ -14,6 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 import gsap from "gsap";
 import { useLandingSettings } from "@/services/useLandingSettings";
+import { formatExternalUrl } from "@/lib/utils";
 
 export default function PackageDetailsPage() {
     const { id } = useParams();
@@ -59,9 +60,10 @@ export default function PackageDetailsPage() {
         );
     }
 
-    // Find WhatsApp URL
-    const whatsappLink = footerData?.socialLinks.find(s => s.platform.toLowerCase() === "whatsapp")?.url 
-        || `https://wa.me/${footerData?.phones[0]?.replace(/\D/g, '')}`;
+    const rawWhatsappLink = footerData?.socialLinks.find(s => s.platform.toLowerCase() === "whatsapp")?.url;
+    const whatsappLink = rawWhatsappLink 
+        ? formatExternalUrl(rawWhatsappLink)
+        : `https://wa.me/${footerData?.phones[0]?.replace(/\D/g, '')}`;
     
     const encodedMessage = encodeURIComponent(`Halo Bumi Anyom, saya tertarik untuk memesan paket: ${pkg.name}. Bisa bantu informasi lebih lanjut?`);
     const finalWhatsAppUrl = whatsappLink.includes("?") 

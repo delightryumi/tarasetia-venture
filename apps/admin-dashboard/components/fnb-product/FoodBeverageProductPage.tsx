@@ -184,10 +184,13 @@ export default function FoodBeverageProductPage() {
       [], // nonCommissionRevenue
       dailyFilteredExpenses,
       [], // investors
+      dateFilter, // period
+      'monthly', // viewMode
       vatPercentage,
       {}, // hotelGopPercentages
       [], // allHotels
-      mgmtFeePercentage,
+      mgmtFeePercentage, // mgmtFeeRoomPercentage
+      mgmtFeePercentage, // mgmtFeeFnbPercentage
       alacarteCalc,
       banquetCalc,
       foodRevCalc,

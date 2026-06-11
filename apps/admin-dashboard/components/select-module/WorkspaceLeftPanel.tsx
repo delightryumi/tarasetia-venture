@@ -52,7 +52,7 @@ export const WorkspaceLeftPanel: React.FC<WorkspaceLeftPanelProps> = ({ user, is
           <img
             src="/channels/nexura-logo.png"
             alt="Nexura Logo"
-            className="h-7 w-auto object-contain dark:brightness-0 dark:invert"
+            className="h-7 w-auto object-contain"
           />
         </div>
         <div className="text-center md:text-left mt-1">

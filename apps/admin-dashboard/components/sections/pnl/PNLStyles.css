@@ -131,8 +131,34 @@
 .datepicker-months-scroll {
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));
+
     max-height: 192px; /* max-h-48 */
     overflow-y: auto;
     padding-right: 8px;
     gap: 4px;
+}
+
+/* --- Dark Mode Overrides --- */
+.dark .datepicker-dropdown {
+    background-color: #1a1a1a;
+    border-color: #262626;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.dark .datepicker-header {
+    color: #a1a1aa;
+}
+
+.dark .datepicker-btn-inactive {
+    color: #f4f4f5;
+}
+
+.dark .datepicker-btn-inactive:hover {
+    background-color: #1f1f1f;
+    color: #ffffff;
+}
+
+.dark .datepicker-btn-active {
+    background-color: #333333;
+    color: #ffffff;
 }

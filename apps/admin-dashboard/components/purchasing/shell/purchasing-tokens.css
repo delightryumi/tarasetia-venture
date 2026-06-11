@@ -72,3 +72,25 @@
   --p-duration-base:   250ms;
   --p-duration-slow:   400ms;
 }
+
+/* ── Dark Mode Overrides ── */
+:root.dark .purchasing-root,
+html.dark .purchasing-root,
+.dark .purchasing-root {
+  /* Surfaces - Matching POS */
+  --p-canvas:          #212121; /* 0 0% 13% */
+  --p-surface-soft:    #262626; /* 0 0% 15% */
+  --p-surface-strong:  #2e2e2e; /* 0 0% 18% */
+  --p-surface-dark:    #1a1a1a; /* 0 0% 10% */
+  --p-hairline:        #383530; /* 39 9% 20% */
+  --p-shadow:          0 10px 30px -10px rgba(0, 0, 0, 0.7);
+
+  /* Text - Matching POS */
+  --p-ink:             #dfd6c6; /* 39 31% 82% */
+  --p-body:            #b0a99c; /* 39 9% 65% */
+  --p-muted:           #918b80; /* roughly 39 9% 55% */
+  --p-on-dark:         #ffffff;
+
+  /* Semantic - Matching POS */
+  --p-cream:           #262626; /* match card bg */
+}

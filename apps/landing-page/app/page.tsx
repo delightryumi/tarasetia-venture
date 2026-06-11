@@ -31,6 +31,28 @@ export default function Home() {
   const mainRef = useRef<HTMLElement>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(
+        window.matchMedia("(max-width: 768px)").matches || 
+        ('ontouchstart' in window) || 
+        (navigator.maxTouchPoints > 0)
+      );
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile || slides.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isMobile, slides.length]);
 
   useEffect(() => {
     const fetchSlides = async () => {
@@ -54,6 +76,7 @@ export default function Home() {
 
   useGSAP(() => {
     if (!containerRef.current || !slidesWrapperRef.current || slides.length === 0) return;
+    if (isMobile) return;
 
     const pinDuration = `${slides.length * 350}%`;
 
@@ -254,7 +277,7 @@ export default function Home() {
     }
 
 
-  }, { scope: mainRef, dependencies: [slides.length] });
+  }, { scope: mainRef, dependencies: [slides.length, isMobile] });
 
   if (loading) {
     return (
@@ -278,70 +301,86 @@ export default function Home() {
   }
 
   return (
-    <PageLayout forceScrolledState={activeIndex > 0}>
+    <PageLayout forceScrolledState={isMobile ? true : activeIndex > 0}>
       <main ref={mainRef} className="w-full bg-[#1a1a1a]">
 
-        <div ref={containerRef} className="relative h-screen w-full bg-[#1a1a1a]">
+        <div ref={containerRef} className={`relative ${isMobile ? 'w-full aspect-[4/3] sm:aspect-video' : 'h-screen w-full'} bg-[#1a1a1a]`}>
           <div ref={slidesWrapperRef} className="absolute inset-0 w-full h-full overflow-hidden">
-            {slides.map((slide, index) => (
-              <div key={slide.id} className="gsap-slide absolute inset-0 w-full h-full">
+            {slides.map((slide, index) => {
+              const isActive = isMobile ? index === activeIndex : true;
+              return (
+                <div 
+                  key={slide.id} 
+                  className={`gsap-slide absolute inset-0 w-full h-full ${isMobile ? 'transition-opacity duration-1000' : ''}`}
+                  style={isMobile ? { opacity: isActive ? 1 : 0, pointerEvents: isActive ? 'auto' : 'none', zIndex: isActive ? 10 : 1 } : {}}
+                >
 
-                {/* Background Layer */}
-                <div className="gsap-bg absolute inset-x-0 -top-[20vh] w-full h-[140vh] pointer-events-none will-change-transform">
-                  {slide.backgroundImage && (
-                    <img src={slide.backgroundImage} alt="Background" className="w-full h-full object-cover" />
+                  {/* Background Layer */}
+                  <div className={`gsap-bg absolute inset-x-0 ${isMobile ? 'inset-0 w-full h-full' : '-top-[20vh] w-full h-[140vh] will-change-transform'} pointer-events-none`}>
+                    {slide.backgroundImage && (
+                      <img src={slide.backgroundImage} alt="Background" className="w-full h-full object-cover" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/40 to-transparent" />
+                    <div className="absolute inset-0 bg-black/20" />
+                  </div>
+
+                  {/* Midground Layer */}
+                  {slide.midgroundImage && (
+                    <div className={`gsap-mg absolute inset-x-0 ${isMobile ? 'inset-0 w-full h-full' : '-top-[10vh] w-full h-[130vh] will-change-transform'} pointer-events-none origin-center`}>
+                      <img src={slide.midgroundImage} alt="Midground" className="w-full h-full object-cover" />
+                    </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/40 to-transparent" />
-                  <div className="absolute inset-0 bg-black/20" />
-                </div>
 
-                {/* Midground Layer */}
-                {slide.midgroundImage && (
-                  <div className="gsap-mg absolute inset-x-0 -top-[10vh] w-full h-[130vh] pointer-events-none will-change-transform origin-center">
-                    <img src={slide.midgroundImage} alt="Midground" className="w-full h-full object-cover" />
-                  </div>
-                )}
-
-                {/* Foreground Layer */}
-                {slide.foregroundImage && (
-                  <div className="gsap-fg absolute inset-x-0 bottom-0 w-full h-full pointer-events-none z-30 origin-bottom will-change-transform">
-                    <img src={slide.foregroundImage} alt="Foreground" className="w-full h-full object-cover object-bottom" />
-                  </div>
-                )}
-
-                {/* Typography + Widget Container */}
-                <div className="absolute inset-0 z-40 flex flex-col items-center justify-center text-center px-6 pointer-events-none">
-                  <div className="max-w-5xl mx-auto w-full flex flex-col items-center">
-
-                    {/* Title / Subtitle — animated by GSAP */}
-                    <div className="gsap-text w-full flex flex-col items-center pointer-events-auto">
-                      {slide.title && (
-                        <h1
-                          className="text-6xl md:text-8xl lg:text-9xl font-light italic text-white leading-[1.0] tracking-wide mb-4 drop-shadow-2xl whitespace-pre-line"
-                          style={{ fontFamily: 'var(--font-display), serif' }}
-                        >
-                          {slide.title}
-                        </h1>
-                      )}
-                      {slide.subtitle && (
-                        <p className="text-lg md:text-xl text-white/80 font-light max-w-2xl leading-relaxed drop-shadow-lg">
-                          {slide.subtitle}
-                        </p>
-                      )}
+                  {/* Foreground Layer */}
+                  {slide.foregroundImage && (
+                    <div className={`gsap-fg absolute inset-x-0 bottom-0 w-full h-full pointer-events-none z-30 origin-bottom ${isMobile ? '' : 'will-change-transform'}`}>
+                      <img src={slide.foregroundImage} alt="Foreground" className="w-full h-full object-cover object-bottom" />
                     </div>
+                  )}
 
-                    {/* Widget — animated by GSAP, appears after text */}
-                    <div className="gsap-widget mt-8 w-full flex justify-center pointer-events-auto">
-                      <WidgetSection insideHero={true} />
+                  {/* Typography + Widget Container */}
+                  <div className="absolute inset-0 z-40 flex flex-col items-center justify-center text-center px-6 pointer-events-none">
+                    <div className="max-w-5xl mx-auto w-full flex flex-col items-center mt-12 sm:mt-16">
+
+                      {/* Title / Subtitle — animated by GSAP */}
+                      <div className="gsap-text w-full flex flex-col items-center pointer-events-auto">
+                        {slide.title && (
+                          <h1
+                            className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-light italic text-white leading-[1.0] tracking-wide mb-2 sm:mb-4 drop-shadow-2xl whitespace-pre-line"
+                            style={{ fontFamily: 'var(--font-display), serif' }}
+                          >
+                            {slide.title}
+                          </h1>
+                        )}
+                        {slide.subtitle && (
+                          <p className="text-xs sm:text-sm md:text-lg text-white/80 font-light max-w-2xl leading-relaxed drop-shadow-lg">
+                            {slide.subtitle}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Widget — animated by GSAP, appears after text */}
+                      {!isMobile && (
+                        <div className="gsap-widget mt-8 w-full flex justify-center pointer-events-auto">
+                          <WidgetSection insideHero={true} />
+                        </div>
+                      )}
+
                     </div>
-
                   </div>
-                </div>
 
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
+
+        {/* Mobile Widget Section */}
+        {isMobile && (
+          <div className="w-full bg-[#1a1a1a] pt-4 pb-8 flex justify-center px-6">
+            <WidgetSection insideHero={true} />
+          </div>
+        )}
 
         {/* POST-HERO SECTIONS */}
         <div className="gsap-post-hero relative w-full z-50 bg-[#fdfbf7]" style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}>

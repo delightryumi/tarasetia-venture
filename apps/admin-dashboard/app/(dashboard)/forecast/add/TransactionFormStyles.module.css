@@ -24,12 +24,20 @@
   --f-muted: #78716c;
   --f-light-muted: #a8a29e;
   
+  --f-input-bg: rgba(250, 249, 246, 0.3);
+  --f-card-bg: rgba(250, 250, 249, 0.5);
+  --f-draft-bg: rgba(250, 246, 238, 0.7);
+  --f-draft-border: #f2e8d5;
+  --f-draft-note-bg: rgba(255, 255, 255, 0.7);
+  
   --f-radius-sm: 6px;
   --f-radius-md: 10px;
   --f-radius-lg: 12px;
   
   --f-font: var(--font-geist-sans), 'Inter', system-ui, -apple-system, sans-serif;
   --f-font-mono: var(--font-mono-jb), 'JetBrains Mono', monospace;
+  
+  --f-color-scheme: light;
   
   --f-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --f-duration-fast: 150ms;
@@ -38,8 +46,35 @@
   font-family: var(--f-font);
   color: var(--f-ink);
   background-color: var(--f-canvas);
+  color-scheme: var(--f-color-scheme);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+}
+
+:global(.dark) .forecastTerminalRoot {
+  --f-canvas: #121212;
+  --f-surface: #1e1e1e;
+  --f-surface-soft: #2a2a2a;
+  --f-hairline: #333333;
+  
+  --f-ink: #f5f5f5;
+  --f-body: #d4d4d4;
+  --f-muted: #a3a3a3;
+  --f-light-muted: #737373;
+  
+  --f-color-scheme: dark;
+  
+  --f-sage-bg: #1f241a;
+  --f-sage-border: #313829;
+  
+  --f-terracotta-bg: #2b1b16;
+  --f-terracotta-border: #3f2720;
+  
+  --f-input-bg: rgba(255, 255, 255, 0.05);
+  --f-card-bg: rgba(255, 255, 255, 0.02);
+  --f-draft-bg: rgba(255, 255, 255, 0.03);
+  --f-draft-border: #333333;
+  --f-draft-note-bg: rgba(0, 0, 0, 0.2);
 }
 
 /* ── Layout Panels ── */
@@ -454,7 +489,7 @@
 /* ── Compact Inputs ── */
 .inputWrapper {
   position: relative;
-  background-color: rgba(250, 249, 246, 0.3);
+  background-color: var(--f-input-bg);
   border: 1px solid var(--f-hairline);
   border-radius: var(--f-radius-sm);
   transition: all var(--f-duration-fast) var(--f-ease-out);
@@ -754,8 +789,8 @@
 
 /* ── Draft Entry Card ── */
 .draftCard {
-  background-color: rgba(250, 246, 238, 0.7);
-  border: 1px solid #f2e8d5;
+  background-color: var(--f-draft-bg);
+  border: 1px solid var(--f-draft-border);
   border-radius: var(--f-radius-lg);
   padding: 20px;
   display: flex;
@@ -770,7 +805,7 @@
 }
 
 .draftCardDivider {
-  border-bottom: 1px solid #f2e8d5;
+  border-bottom: 1px solid var(--f-draft-border);
   padding-bottom: 12px;
 }
 
@@ -791,8 +826,8 @@
 .draftNote {
   margin-top: 4px;
   padding: 10px;
-  background-color: rgba(255, 255, 255, 0.7);
-  border: 1px solid #f2e8d5;
+  background-color: var(--f-draft-note-bg);
+  border: 1px solid var(--f-draft-border);
   border-radius: var(--f-radius-sm);
 }
 
@@ -803,7 +838,7 @@
 }
 
 .draftAmountSection {
-  border-top: 1px solid #f2e8d5;
+  border-top: 1px solid var(--f-draft-border);
   padding-top: 14px;
   display: flex;
   flex-direction: column;
@@ -842,7 +877,7 @@
 
 /* ── Cumulative Summary Card ── */
 .summaryCard {
-  background-color: rgba(250, 250, 249, 0.5);
+  background-color: var(--f-card-bg);
   border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: var(--f-radius-lg);
   padding: 20px;
@@ -974,7 +1009,7 @@
 
 .tableHeader {
   padding: 16px 20px;
-  background-color: rgba(250, 250, 249, 0.5);
+  background-color: var(--f-card-bg);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1029,7 +1064,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   border-bottom: 1px solid var(--f-hairline);
-  background-color: rgba(250, 250, 249, 0.4);
+  background-color: var(--f-card-bg);
 }
 
 .tableRow {
@@ -1042,7 +1077,7 @@
 }
 
 .tableRow:hover {
-  background-color: rgba(250, 250, 249, 0.15);
+  background-color: var(--f-input-bg);
 }
 
 .tableCell {

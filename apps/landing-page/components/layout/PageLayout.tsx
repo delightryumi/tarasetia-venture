@@ -21,6 +21,15 @@ export const PageLayout = ({ children, forceScrolledState }: PageLayoutProps) =>
     window.scrollTo(0, 0);
     ScrollTrigger.refresh();
 
+    // Check if mobile/touch device
+    const isMobile = window.matchMedia("(max-width: 768px)").matches || 
+                     ('ontouchstart' in window) || 
+                     (navigator.maxTouchPoints > 0);
+
+    if (isMobile) {
+      return;
+    }
+
     // Initialize Lenis smooth scrolling
     const lenis = new Lenis({
       duration: 1.2,
@@ -34,15 +43,16 @@ export const PageLayout = ({ children, forceScrolledState }: PageLayoutProps) =>
     // Sync Lenis with GSAP ScrollTrigger
     lenis.on('scroll', ScrollTrigger.update);
 
-    gsap.ticker.add((time) => {
+    const tickerCallback = (time: number) => {
       lenis.raf(time * 1000);
-    });
+    };
+    gsap.ticker.add(tickerCallback);
 
     gsap.ticker.lagSmoothing(0);
 
     return () => {
       lenis.destroy();
-      gsap.ticker.remove(lenis.raf);
+      gsap.ticker.remove(tickerCallback);
     };
   }, []);
 
