@@ -1,8 +1,8 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { useLogin } from "./useLogin";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Building } from "lucide-react";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import "./login.css";
 
 const LeftPanel = React.memo(() => {
@@ -23,8 +23,14 @@ const LeftPanel = React.memo(() => {
 LeftPanel.displayName = "LeftPanel";
 
 export const LoginSection = () => {
-    const { email, setEmail, password, setPassword, error, loading, handleLogin } =
+    const { email, setEmail, password, setPassword, hotelCode, setHotelCode, error, loading, handleLogin } =
         useLogin();
+
+    const [mode, setMode] = useState<'login' | 'reset-password'>('login');
+    const [resetEmail, setResetEmail] = useState("");
+    const [resetError, setResetError] = useState("");
+    const [resetSuccess, setResetSuccess] = useState("");
+    const [resetLoading, setResetLoading] = useState(false);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -40,6 +46,29 @@ export const LoginSection = () => {
         }
     }, []);
 
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setResetError("");
+        setResetSuccess("");
+        setResetLoading(true);
+
+        try {
+            await sendPasswordResetEmail(auth, resetEmail.trim());
+            setResetSuccess("Link reset password telah dikirim ke email Anda. Silakan periksa inbox atau spam folder.");
+        } catch (err: any) {
+            console.error(err);
+            setResetError(
+                err.code === "auth/user-not-found"
+                    ? "Email tidak terdaftar."
+                    : err.code === "auth/invalid-email"
+                    ? "Format email tidak valid."
+                    : err.message || "Gagal mengirim link reset password."
+            );
+        } finally {
+            setResetLoading(false);
+        }
+    };
+
     return (
         <div className="auth-container">
             <div className="forms-container">
@@ -49,44 +78,121 @@ export const LoginSection = () => {
 
                 {/* Form in the center */}
                 <div className="signin-signup">
-                    {/* ===== SIGN IN FORM ONLY ===== */}
-                    <form className="sign-in-form" onSubmit={handleLogin}>
-                        <h2 className="auth-title">Sign In</h2>
-                        <p className="auth-subtitle">Welcome back to Nexura Global Hospitality</p>
+                    {mode === 'login' ? (
+                        /* ===== SIGN IN FORM ===== */
+                        <form className="sign-in-form" onSubmit={handleLogin}>
+                            <h2 className="auth-title">Sign In</h2>
+                            <p className="auth-subtitle">Welcome back to Nexura Global Hospitality</p>
 
-                        {error && <div className="auth-error">{error}</div>}
+                            {error && <div className="auth-error">{error}</div>}
 
-                        <div className="input-field">
-                            <span className="input-icon">
-                                <Mail size={20} />
+                            <div className="input-field">
+                                <span className="input-icon">
+                                    <Building size={20} />
+                                </span>
+                                <input
+                                    type="text"
+                                    placeholder="Hotel Code (e.g. 87241)"
+                                    value={hotelCode}
+                                    onChange={(e) => setHotelCode(e.target.value)}
+                                    disabled={loading}
+                                />
+                            </div>
+                            <div className="input-field">
+                                <span className="input-icon">
+                                    <Mail size={20} />
+                                </span>
+                                <input
+                                    type="email"
+                                    placeholder="Email Address"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    disabled={loading}
+                                />
+                            </div>
+                            <div className="input-field">
+                                <span className="input-icon">
+                                    <Lock size={20} />
+                                </span>
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    disabled={loading}
+                                />
+                            </div>
+
+                            <div className="forgot-password-link" style={{ textAlign: 'right', marginTop: '4px', width: '100%', maxWidth: '380px' }}>
+                                <span 
+                                    onClick={() => {
+                                        setMode('reset-password');
+                                        setResetError("");
+                                        setResetSuccess("");
+                                    }} 
+                                    style={{ cursor: 'pointer', fontSize: '12px', color: '#8d7a52', fontWeight: 550 }}
+                                >
+                                    Forgot Password?
+                                </span>
+                            </div>
+
+                            <button type="submit" className="auth-btn solid" disabled={loading} style={{ marginTop: '16px' }}>
+                                {loading ? "Signing in..." : "Sign In"}
+                            </button>
+                        </form>
+                    ) : (
+                        /* ===== RESET PASSWORD FORM ===== */
+                        <form className="sign-in-form" onSubmit={handleResetPassword}>
+                            <h2 className="auth-title">Reset Password</h2>
+                            <p className="auth-subtitle">Enter your email address to receive a reset link</p>
+
+                            {resetError && <div className="auth-error">{resetError}</div>}
+                            {resetSuccess && (
+                                <div 
+                                    className="auth-error" 
+                                    style={{ 
+                                        backgroundColor: '#f0fdf4', 
+                                        borderColor: 'rgba(34, 197, 94, 0.2)', 
+                                        color: '#15803d',
+                                        fontSize: '12px',
+                                        lineHeight: '1.4'
+                                    }}
+                                >
+                                    {resetSuccess}
+                                </div>
+                            )}
+
+                            <div className="input-field">
+                                <span className="input-icon">
+                                    <Mail size={20} />
+                                </span>
+                                <input
+                                    type="email"
+                                    placeholder="Email Address"
+                                    value={resetEmail}
+                                    onChange={(e) => setResetEmail(e.target.value)}
+                                    required
+                                    disabled={resetLoading}
+                                />
+                            </div>
+
+                            <button type="submit" className="auth-btn solid" disabled={resetLoading} style={{ marginTop: '16px' }}>
+                                {resetLoading ? "Sending Link..." : "Send Reset Link"}
+                            </button>
+
+                            <span 
+                                onClick={() => {
+                                    setMode('login');
+                                    setResetEmail("");
+                                }} 
+                                style={{ cursor: 'pointer', fontSize: '13px', color: '#181d26', marginTop: '20px', fontWeight: 600, textDecoration: 'underline' }}
+                            >
+                                Back to Sign In
                             </span>
-                            <input
-                                type="email"
-                                placeholder="Email Address"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                disabled={loading}
-                            />
-                        </div>
-                        <div className="input-field">
-                            <span className="input-icon">
-                                <Lock size={20} />
-                            </span>
-                            <input
-                                type="password"
-                                placeholder="Password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                disabled={loading}
-                            />
-                        </div>
-
-                        <button type="submit" className="auth-btn solid" disabled={loading}>
-                            {loading ? "Signing in..." : "Sign In"}
-                        </button>
-                    </form>
+                        </form>
+                    )}
                 </div>
 
                 {/* Bottom Copyright */}
@@ -95,7 +201,7 @@ export const LoginSection = () => {
                 </div>
             </div>
 
-            {/* ===== LEFT PANEL (Lottie Animation & Info) ===== */}
+            {/* ===== LEFT PANEL ===== */}
             <LeftPanel />
         </div>
     );

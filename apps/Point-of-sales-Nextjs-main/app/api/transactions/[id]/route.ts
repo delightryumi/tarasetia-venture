@@ -120,7 +120,7 @@ export const DELETE = async (
 
     // 2. If we determined the transaction date, we can load the specific daily_revenue doc directly!
     if (transactionDate) {
-      const hotelId = 'bumi-anyom-resort';
+      const hotelId = '87241';
       const docId = `${hotelId}_${transactionDate}`;
       const docRef = doc(db, 'daily_revenue', docId);
       const docSnap = await getDoc(docRef);

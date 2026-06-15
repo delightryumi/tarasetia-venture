@@ -5,6 +5,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { WidgetSection } from "@/components/sections/widget/WidgetSection";
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 import { HeroSlide } from '../types/hero';
 import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
@@ -57,7 +58,7 @@ export default function Home() {
   useEffect(() => {
     const fetchSlides = async () => {
       try {
-        const docRef = doc(db, "sections", "hero");
+        const docRef = doc(getHotelCollection(db, "sections"), "hero");
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();

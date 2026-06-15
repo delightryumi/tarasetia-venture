@@ -8,6 +8,7 @@ import {
     onSnapshot
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface GalleryItem {
     id: string;
@@ -22,7 +23,7 @@ export const useGallery = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const q = query(collection(db, "gallery"), orderBy("order", "asc"));
+        const q = query(getHotelCollection(db, "gallery"), orderBy("order", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => ({
                 id: doc.id,

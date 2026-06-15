@@ -6,6 +6,7 @@ import { auth } from "@/lib/firebase";
 export const useLogin = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [hotelCode, setHotelCode] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const { loginWithFirestore } = useAuth();
@@ -16,21 +17,13 @@ export const useLogin = () => {
         setLoading(true);
 
         try {
-            // 1. Try custom Firestore users_master login first
-            const success = await loginWithFirestore(email, password);
-            if (success) {
-                setLoading(false);
-                return;
-            }
-
-            // 2. Fallback to Firebase Auth
-            await signInWithEmailAndPassword(auth, email, password);
+            await loginWithFirestore(email, password, hotelCode);
         } catch (err: any) {
             console.error(err);
             setError(
-                err.code === "auth/invalid-credential"
-                    ? "Invalid email or password."
-                    : "Failed to login. Please try again."
+                err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password"
+                    ? "Email, Password, atau Hotel Code salah."
+                    : err.message || "Failed to login. Please try again."
             );
         } finally {
             setLoading(false);
@@ -42,6 +35,8 @@ export const useLogin = () => {
         setEmail,
         password,
         setPassword,
+        hotelCode,
+        setHotelCode,
         error,
         loading,
         handleLogin,

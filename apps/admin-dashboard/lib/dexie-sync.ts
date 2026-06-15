@@ -1,6 +1,7 @@
 import { localDb } from './dexie';
 import { db } from './firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { getHotelCollection } from './firestoreHelper';
+import { getDocs, query, orderBy } from 'firebase/firestore';
 
 export async function syncProductsFromServer(restoId: string) {
   if (typeof window === 'undefined' || !navigator.onLine) {
@@ -9,7 +10,7 @@ export async function syncProductsFromServer(restoId: string) {
   }
 
   try {
-    const q = query(collection(db, "pos_products"), orderBy("name"));
+    const q = query(getHotelCollection(db, "pos_products"), orderBy("name"));
     const snap = await getDocs(q);
     const localProducts: any[] = [];
 

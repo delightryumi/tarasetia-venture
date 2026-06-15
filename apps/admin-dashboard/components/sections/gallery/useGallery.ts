@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { toast } from "sonner";
 
 export interface GalleryItem {
@@ -30,7 +31,7 @@ export const useGallery = () => {
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        const q = query(collection(db, "gallery"), orderBy("order", "asc"));
+        const q = query(getHotelCollection(db, "gallery"), orderBy("order", "asc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -52,7 +53,7 @@ export const useGallery = () => {
             // Find highest order to add at the end
             const maxOrder = items.length > 0 ? Math.max(...items.map(i => i.order)) : -1;
 
-            await addDoc(collection(db, "gallery"), {
+            await addDoc(getHotelCollection(db, "gallery"), {
                 url: newUrl,
                 storagePath: lastPath,
                 order: maxOrder + 1,
@@ -84,7 +85,7 @@ export const useGallery = () => {
                         }
 
                         // Delete from Firestore
-                        await deleteDoc(doc(db, "gallery", item.id));
+                        await deleteDoc(doc(getHotelCollection(db, "gallery"), item.id));
                         toast.success("Masterpiece removed successfully.");
                     } catch (err) {
                         console.error("Error deleting gallery image:", err);
@@ -105,7 +106,7 @@ export const useGallery = () => {
         try {
             const batch = writeBatch(db);
             newItems.forEach((item, index) => {
-                const docRef = doc(db, "gallery", item.id);
+                const docRef = doc(getHotelCollection(db, "gallery"), item.id);
                 batch.update(docRef, { order: index });
             });
             await batch.commit();
@@ -117,7 +118,7 @@ export const useGallery = () => {
 
     const updateItemCategory = async (id: string, category: string) => {
         try {
-            const docRef = doc(db, "gallery", id);
+            const docRef = doc(getHotelCollection(db, "gallery"), id);
             await updateDoc(docRef, { category });
             toast.success("Category updated.");
         } catch (err) {
@@ -135,7 +136,7 @@ export const useGallery = () => {
             const currentMaxOrder = items.length > 0 ? Math.max(...items.map(i => i.order)) : -1;
 
             uploads.forEach((upload, index) => {
-                const newDocRef = doc(collection(db, "gallery"));
+                const newDocRef = doc(getHotelCollection(db, "gallery"));
                 batch.set(newDocRef, {
                     url: upload.url,
                     storagePath: upload.storagePath,

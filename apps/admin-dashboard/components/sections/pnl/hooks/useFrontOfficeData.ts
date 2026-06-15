@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase"; 
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { ExtendedTransaction } from "@/lib/pnl-logic";
 import { TrendDataItem, MultiYearTrendDataItem } from "../types";
 
@@ -34,12 +35,12 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
             }
 
             // Fetch transactions for the current period
-            const q = query(collection(db, "daily_revenue"), where("date", ">=", startStr), where("date", "<=", endStr));
+            const q = query(getHotelCollection(db, "daily_revenue"), where("date", ">=", startStr), where("date", "<=", endStr));
             const querySnapshot = await getDocs(q);
             const transactions: ExtendedTransaction[] = [];
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                const hotelId = data.hotelId || "bumi-anyom-resort";
+                const hotelId = data.hotelId || "87241";
                 (data.entries || []).forEach((t: any) => {
                     // Skip cancelled or voided transactions
                     const status = t.status?.toUpperCase?.();
@@ -63,7 +64,7 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
             const yearlyBuckets: Record<number, number> = {};
             YEARS.forEach(yr => yearlyBuckets[yr] = 0);
 
-            const allRevenueQ = query(collection(db, "daily_revenue"));
+            const allRevenueQ = query(getHotelCollection(db, "daily_revenue"));
             const allRevenueSnap = await getDocs(allRevenueQ);
             
             allRevenueSnap.forEach(doc => {

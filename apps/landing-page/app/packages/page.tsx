@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { FooterSection } from "@/components/sections/footer/FooterSection";
 import { Users, Clock, Star, ArrowRight, Tag } from "lucide-react";
@@ -26,7 +27,7 @@ export default function PackagesPage() {
     useEffect(() => {
         const fetchPackages = async () => {
             try {
-                const q = query(collection(db, "packages"), orderBy("createdAt", "desc"));
+                const q = query(getHotelCollection(db, "packages"), orderBy("createdAt", "desc"));
                 const snap = await getDocs(q);
                 setPackages(snap.docs.map(d => ({ 
                     id: d.id, 

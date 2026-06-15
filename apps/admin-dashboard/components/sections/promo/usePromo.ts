@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { toast } from "sonner";
 
 export const usePromo = () => {
@@ -16,7 +17,7 @@ export const usePromo = () => {
     useEffect(() => {
         const fetchPromo = async () => {
             try {
-                const docRef = doc(db, "sections", "promo");
+                const docRef = doc(getHotelCollection(db, "sections"), "promo");
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
@@ -41,7 +42,7 @@ export const usePromo = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await setDoc(doc(db, "sections", "promo"), {
+            await setDoc(doc(getHotelCollection(db, "sections"), "promo"), {
                 isActive,
                 title,
                 description,

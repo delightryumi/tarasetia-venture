@@ -17,14 +17,15 @@ import {
 } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import React, { useEffect, useRef, useState } from "react";
 
 /* ── Types ── */
 export type SectionType =
     | "overview" | "logo" | "hero" | "room-type"
     | "about" | "gallery" | "footer"
-    | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "pnl" | "users"
+    | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "pnl" | "users" | "superadmin"
     | "purchasing" | "store-requisition" | "purchase-requisition" | "daily-market-list" | "stock-opname" | "items" | "suppliers"
     | "purchase-order" | "food-beverage-product";
 
@@ -166,7 +167,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     useEffect(() => {
         const fetchLogo = async () => {
             try {
-                const docRef = doc(db, "settings", "landingPage");
+                const docRef = doc(getHotelCollection(db, "settings"), "landingPage");
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     setLogoUrl(docSnap.data().lightLogo || null);
@@ -178,7 +179,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
         fetchLogo();
     }, []);
 
-    const { user, signOutUser } = useAuth();
+    const { user, signOutUser, activeHotelCode } = useAuth();
+    const [activeModules, setActiveModules] = useState<string[] | null>(null);
+
+    useEffect(() => {
+        if (!activeHotelCode || isSuperadmin) {
+            setActiveModules(null);
+            return;
+        }
+        const docRef = doc(db, 'hotels', activeHotelCode);
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                let modules = data.billing?.activeModules || [];
+                // Map old cpanel key to cpanel-full or cpanel-only
+                if (modules.includes('cpanel')) {
+                    modules = modules.filter(m => m !== 'cpanel');
+                    const plan = data.billing?.plan || 'premium';
+                    if (plan === 'basic') {
+                        if (!modules.includes('cpanel-only')) modules.push('cpanel-only');
+                    } else {
+                        if (!modules.includes('cpanel-full')) modules.push('cpanel-full');
+                    }
+                }
+                if (modules.length === 0) {
+                    const plan = data.billing?.plan || 'premium';
+                    if (plan === 'basic') {
+                        modules = ['pos', 'cpanel-only'];
+                    } else {
+                        modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'cpanel-full'];
+                    }
+                }
+                setActiveModules(modules);
+            }
+        }, (err) => {
+            console.error('Error fetching hotel modules in Sidebar:', err);
+        });
+        return () => unsubscribe();
+    }, [activeHotelCode, isSuperadmin]);
 
     useEffect(() => {
         const fetchPermissions = async () => {
@@ -187,7 +225,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             try {
                 // 1. Get User Role
                 const userDocId = user.email.toLowerCase().replace(/[@.]/g, '_');
-                const userSnap = await getDoc(doc(db, "users_master", userDocId));
+                const isSuper = (user as any).role === "superadmin" || user.email.toLowerCase() === "nexura.management@gmail.com";
+                const userSnap = await getDoc(
+                    isSuper 
+                        ? doc(db, "users_master", userDocId) 
+                        : doc(getHotelCollection(db, "users_master"), userDocId)
+                );
                 
                 if (userSnap.exists()) {
                     const userData = userSnap.data();
@@ -229,6 +272,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: "packages", label: "Custom Packages", icon: <Package size={18} strokeWidth={2} /> },
         { id: "seo", label: "SEO & Metadata", icon: <Search size={18} strokeWidth={2} /> },
         { id: "users", label: "User Management", icon: <Users size={18} strokeWidth={2} /> },
+
         { id: "purchasing", label: "Dasbor", icon: <Home size={18} strokeWidth={2} /> },
         { id: "store-requisition", label: "Store Requisition", icon: <FileText size={18} strokeWidth={2} /> },
         { id: "purchase-requisition", label: "Purchase Requisition", icon: <ShoppingCart size={18} strokeWidth={2} /> },
@@ -317,18 +361,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 "daily-market-list", "stock-opname", "items", "suppliers"
             ].includes(item.id));
         } else if (activeModule === "cpanel") {
-            items = allNavItems.filter(item => [
-                "logo", "hero", "room-type", "about", "gallery", 
-                "footer", "attractions", "promo", "packages", "seo", "users"
-            ].includes(item.id));
+            if (activeSection === "users") {
+                items = allNavItems.filter(item => ["users", "superadmin"].includes(item.id));
+            } else {
+                if (activeModules !== null && !activeModules.includes('cpanel-full')) {
+                    items = allNavItems.filter(item => ["logo"].includes(item.id));
+                } else {
+                    items = allNavItems.filter(item => [
+                        "logo", "hero", "room-type", "about", "gallery", 
+                        "footer", "attractions", "promo", "packages", "seo", "superadmin"
+                    ].includes(item.id));
+                }
+            }
         }
 
         // Filter out POS terminal from other modules
         items = items.filter(item => item.id !== "pos");
 
-        return isSuperadmin 
-            ? items 
-            : items.filter(item => userPermissions?.[item.id] === true);
+        const isAdminUser = user?.role?.toLowerCase() === "admin";
+        
+        let finalItems = items;
+        if (!isSuperadmin) {
+            finalItems = finalItems.filter(item => item.id !== "superadmin");
+        }
+
+        return (isSuperadmin || isAdminUser)
+            ? finalItems
+            : finalItems.filter(item => userPermissions?.[item.id] === true);
     };
 
     const navItems = getFilteredNavItems();
@@ -434,16 +493,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         ))}
 
                         {/* ── Divider ── */}
-                        <div className="w-8 h-px my-1" style={{ backgroundColor: "rgba(141, 122, 82, 0.15)" }} />
-
+                        {activeModule !== "cpanel" && (
+                            <div className="w-8 h-px my-1" style={{ backgroundColor: "rgba(141, 122, 82, 0.15)" }} />
+                        )}
+ 
                         {/* ── Sign Out inside the dock ── */}
-                        <DockNavItem
-                            icon={<LogOut size={18} />}
-                            label="Keluar"
-                            isActive={false}
-                            mouseY={mouseY}
-                            onClick={handleLogout}
-                        />
+                        {activeModule !== "cpanel" && (
+                            <DockNavItem
+                                icon={<LogOut size={18} />}
+                                label="Keluar"
+                                isActive={false}
+                                mouseY={mouseY}
+                                onClick={handleLogout}
+                            />
+                        )}
                     </motion.nav>
                 </div>
             ) : (
@@ -524,7 +587,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
 
             {/* Footer / Logout — only shown in expanded mode */}
-            {!isCollapsed && (
+            {!isCollapsed && activeModule !== "cpanel" && (
                 <div className="sidebar-footer">
                     <motion.button
                         whileHover={{ scale: 1.05, backgroundColor: "rgba(220, 38, 38, 0.1)", color: "#dc2626" }}

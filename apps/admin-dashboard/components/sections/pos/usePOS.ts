@@ -4,6 +4,7 @@ import {
     orderBy, addDoc, serverTimestamp 
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { POSProduct, CartItem, POSCategory, POSOrder } from "./types";
 import { seedPOSProducts } from "./seedPOS";
 
@@ -17,7 +18,7 @@ export const usePOS = () => {
 
     // 1. Fetch Products
     useEffect(() => {
-        const q = query(collection(db, "pos_products"), orderBy("name"));
+        const q = query(getHotelCollection(db, "pos_products"), orderBy("name"));
         const unsub = onSnapshot(q, async (snap) => {
             const list: POSProduct[] = [];
             snap.forEach(doc => list.push({ id: doc.id, ...doc.data() } as POSProduct));
@@ -96,10 +97,10 @@ export const usePOS = () => {
             };
 
             // Save to POS Orders
-            const orderRef = await addDoc(collection(db, "pos_orders"), orderData);
+            const orderRef = await addDoc(getHotelCollection(db, "pos_orders"), orderData);
 
             // Sync to Revenue Transactions for PNL
-            await addDoc(collection(db, "revenue_transactions"), {
+            await addDoc(getHotelCollection(db, "revenue_transactions"), {
                 date: new Date().toISOString().split('T')[0],
                 category: "Other Revenue", // Or F&B
                 description: `POS Order #${orderRef.id.slice(-6)} - ${customerName || 'Guest'}`,

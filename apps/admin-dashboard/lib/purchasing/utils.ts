@@ -1,5 +1,6 @@
 import { runTransaction, collection, doc } from "firebase/firestore";
 import { db } from "../firebase";
+import { getHotelCollection } from "../firestoreHelper";
 
 /**
  * Generates an atomic, collision-free document sequence number using a counter document in Firestore.
@@ -16,7 +17,7 @@ export async function generateDocNumber(prefix: "SR" | "PR" | "DML"): Promise<st
     periodStr = `${year}-${month}-${day}`;
   }
 
-  const counterRef = doc(db, "purchasing_counters", `${prefix}_${periodStr}`);
+  const counterRef = doc(getHotelCollection(db, "purchasing_counters"), `${prefix}_${periodStr}`);
 
   return await runTransaction(db, async (transaction) => {
     const counterSnap = await transaction.get(counterRef);

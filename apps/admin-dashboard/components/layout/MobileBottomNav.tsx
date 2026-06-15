@@ -10,13 +10,51 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { doc, getDoc } from "firebase/firestore";
+import { getHotelCollection } from "@/lib/firestoreHelper";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 
 export const MobileBottomNav = () => {
     const pathname = usePathname();
     const router = useRouter();
-    const { user, signOutUser } = useAuth();
+    const { user, signOutUser, activeHotelCode } = useAuth();
+    const [activeModules, setActiveModules] = useState<string[] | null>(null);
+
+    useEffect(() => {
+        if (!activeHotelCode || (user && (user.role === "superadmin" || user.email.toLowerCase() === "nexura.management@gmail.com"))) {
+            setActiveModules(null);
+            return;
+        }
+        const docRef = doc(db, 'hotels', activeHotelCode);
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                let modules = data.billing?.activeModules || [];
+                // Map old cpanel key to cpanel-full or cpanel-only
+                if (modules.includes('cpanel')) {
+                    modules = modules.filter(m => m !== 'cpanel');
+                    const plan = data.billing?.plan || 'premium';
+                    if (plan === 'basic') {
+                        if (!modules.includes('cpanel-only')) modules.push('cpanel-only');
+                    } else {
+                        if (!modules.includes('cpanel-full')) modules.push('cpanel-full');
+                    }
+                }
+                if (modules.length === 0) {
+                    const plan = data.billing?.plan || 'premium';
+                    if (plan === 'basic') {
+                        modules = ['pos', 'cpanel-only'];
+                    } else {
+                        modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'cpanel-full'];
+                    }
+                }
+                setActiveModules(modules);
+            }
+        }, (err) => {
+            console.error('Error fetching hotel modules in MobileBottomNav:', err);
+        });
+        return () => unsubscribe();
+    }, [activeHotelCode, user]);
     
     const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
     const [isSuperadmin, setIsSuperadmin] = useState(true);
@@ -90,7 +128,12 @@ export const MobileBottomNav = () => {
 
             try {
                 const userDocId = user.email.toLowerCase().replace(/[@.]/g, '_');
-                const userSnap = await getDoc(doc(db, "users_master", userDocId));
+                const isSuper = user.role === "superadmin" || user.email.toLowerCase() === "nexura.management@gmail.com";
+                const userSnap = await getDoc(
+                    isSuper 
+                        ? doc(db, "users_master", userDocId) 
+                        : doc(getHotelCollection(db, "users_master"), userDocId)
+                );
                 
                 if (userSnap.exists()) {
                     const userData = userSnap.data();
@@ -174,18 +217,33 @@ export const MobileBottomNav = () => {
                 "daily-market-list", "stock-opname", "items", "suppliers"
             ].includes(item.id));
         } else if (activeModule === "cpanel") {
-            items = allNavItems.filter(item => [
-                "logo", "hero", "room-type", "about", "gallery", 
-                "footer", "attractions", "promo", "packages", "seo", "users"
-            ].includes(item.id));
+            if (activeSection === "users") {
+                items = allNavItems.filter(item => ["users"].includes(item.id));
+            } else {
+                if (activeModules !== null && !activeModules.includes('cpanel-full')) {
+                    items = allNavItems.filter(item => ["logo"].includes(item.id));
+                } else {
+                    items = allNavItems.filter(item => [
+                        "logo", "hero", "room-type", "about", "gallery", 
+                        "footer", "attractions", "promo", "packages", "seo"
+                    ].includes(item.id));
+                }
+            }
         }
 
         // Filter out POS terminal link
         items = items.filter(item => item.id !== "pos");
 
-        return isSuperadmin 
-            ? items 
-            : items.filter(item => userPermissions?.[item.id] === true);
+        const isAdminUser = user?.role?.toLowerCase() === "admin";
+        
+        let finalItems = items;
+        if (!isSuperadmin) {
+            finalItems = finalItems.filter(item => item.id !== "superadmin");
+        }
+
+        return (isSuperadmin || isAdminUser)
+            ? finalItems
+            : finalItems.filter(item => userPermissions?.[item.id] === true);
     };
 
     const navItems = getFilteredNavItems();
@@ -250,16 +308,19 @@ export const MobileBottomNav = () => {
                         );
                     })}
 
-                    <div className="w-px h-6 bg-white/10 flex-shrink-0 mx-1" />
-
-                    <button
-                        onClick={signOutUser}
-                        className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] flex-shrink-0 text-white/40 hover:text-rose-450 transition-all duration-300"
-                        title="Keluar"
-                    >
-                        <LogOut size={18} />
-                        <span className="text-[9px] font-normal tracking-wide text-white/40">Keluar</span>
-                    </button>
+                    {activeModule !== "cpanel" && (
+                        <>
+                            <div className="w-px h-6 bg-white/10 flex-shrink-0 mx-1" />
+                            <button
+                                onClick={signOutUser}
+                                className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] flex-shrink-0 text-white/40 hover:text-rose-450 transition-all duration-300"
+                                title="Keluar"
+                            >
+                                <LogOut size={18} />
+                                <span className="text-[9px] font-normal tracking-wide text-white/40">Keluar</span>
+                            </button>
+                        </>
+                    )}
                 </div>
             </motion.div>
         </div>

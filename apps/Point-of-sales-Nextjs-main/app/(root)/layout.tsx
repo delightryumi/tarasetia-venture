@@ -14,6 +14,7 @@ import { useTheme } from 'next-themes';
 import Sidebar from '@/components/dashboard/Sidebar';
 import { NavbarSheet } from '@/components/dashboard/NavbarSheet';
 import { MobileBottomNav } from '@/components/dashboard/MobileBottomNav';
+import { BillingSuspendedModal } from '@/components/dashboard/BillingSuspendedModal';
 import { NAVBAR_ITEMS } from '@/constant/navbarMenu';
 import { useRBAC } from '@/hooks/useRBAC';
 import { toast } from 'react-toastify';
@@ -40,6 +41,48 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const { canAccess, role, loading: rbacLoading } = useRBAC();
   const [storeName, setStoreName] = useState<string | null>(null);
   const { setTheme } = useTheme();
+  const [isHotelActive, setIsHotelActive] = useState<boolean | null>(null);
+  const [nextDueDate, setNextDueDate] = useState<string>('');
+  const [hotelName, setHotelName] = useState<string>('');
+
+  useEffect(() => {
+    const userJson = localStorage.getItem('user');
+    if (!userJson) return;
+    try {
+      const parsedUser = JSON.parse(userJson);
+      const isSuperadmin =
+        parsedUser?.role?.toLowerCase() === 'superadmin' ||
+        parsedUser?.role?.toLowerCase() === 'super admin' ||
+        parsedUser?.email?.toLowerCase() === 'nexura.management@gmail.com';
+
+      if (isSuperadmin) {
+        setIsHotelActive(true);
+        return;
+      }
+
+      const hotelCode = parsedUser?.hotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+      if (!hotelCode) return;
+
+      const docRef = doc(db, 'hotels', hotelCode);
+      const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setIsHotelActive(data.active !== false);
+          setNextDueDate(data.billing?.nextDueDate || '');
+          setHotelName(data.name || 'Hotel');
+          if (data.name) {
+            setStoreName(data.name);
+            localStorage.setItem('restoName', data.name);
+          }
+        }
+      }, (err) => {
+        console.error('Error fetching hotel status in POS RootLayout:', err);
+      });
+      return () => unsubscribe();
+    } catch (e) {
+      console.error('Error in POS active check:', e);
+    }
+  }, []);
 
   console.log('RBAC hook role:', role);
   const isAuthorized = canAccess('module_pos') || canAccess('pos');
@@ -355,6 +398,23 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     if (path.startsWith('/orders')) return 'Active orders and queue details.';
     return 'Manage your POS system.';
   };
+
+  if (isHotelActive === false) {
+    const formattedDueDate = nextDueDate
+      ? new Date(nextDueDate).toLocaleDateString('id-ID', {
+          day: 'numeric', month: 'long', year: 'numeric',
+        })
+      : '-';
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-[#08080a] font-sans">
+        <BillingSuspendedModal
+          hotelName={hotelName || 'Hotel'}
+          formattedDueDate={formattedDueDate}
+          signOutUser={handleLogout}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background text-foreground h-screen overflow-hidden flex relative">

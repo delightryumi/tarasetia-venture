@@ -12,6 +12,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { doc, updateDoc, getDoc, collection, getDocs, setDoc } from "firebase/firestore";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { VoidConfirmModal } from "./VoidConfirmModal";
 import { CancelConfirmModal } from "./CancelConfirmModal";
 import { GuestEditForm } from "./components/GuestEditForm";
@@ -89,7 +90,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
     React.useEffect(() => {
         const fetchRoomTypes = async () => {
-            const querySnapshot = await getDocs(collection(db, "roomTypes"));
+            const querySnapshot = await getDocs(getHotelCollection(db, "roomTypes"));
             const fetchedTypes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setRoomTypes(fetchedTypes);
             
@@ -121,7 +122,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
     const handleSave = async () => {
         try {
-            const hotelId = "bumi-anyom-resort";
+            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
             const newSource = formData.channel === "Walk-in" ? "Walk-in" : "OTA";
 
             if (formData.type === "accommodation") {
@@ -138,7 +139,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             const oldDates = getDatesBetween(oldCheckIn, oldCheckOut, oldIsAcc);
             
             for (const d of oldDates) {
-                const oldRef = doc(db, "daily_revenue", `${hotelId}_${d}`);
+                const oldRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const oldSnap = await getDoc(oldRef);
                 if (oldSnap.exists()) {
                     const oldEntries = oldSnap.data().entries || [];
@@ -220,7 +221,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             // 3. Write new entries
             for (const entry of newEntries) {
                 const dateStr = entry.effectiveDate || entry.checkInDate;
-                const docRef = doc(db, "daily_revenue", `${hotelId}_${dateStr}`);
+                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${dateStr}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
@@ -241,7 +242,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
     const executeVoid = async () => {
         try {
-            const hotelId = "bumi-anyom-resort";
+            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
             const checkInDate = guest.checkInDate || guest.checkIn;
             const checkOutDate = guest.checkOutDate || guest.checkOut;
             const isPOS = guest.guestName?.startsWith("POS Order") || !!guest.posItems || !!guest.revenueType;
@@ -249,7 +250,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             
             const dates = getDatesBetween(checkInDate, checkOutDate, isAcc);
             for (const d of dates) {
-                const docRef = doc(db, "daily_revenue", `${hotelId}_${d}`);
+                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
@@ -281,7 +282,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
     const executeCancel = async () => {
         try {
-            const hotelId = "bumi-anyom-resort";
+            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
             const checkInDate = guest.checkInDate || guest.checkIn;
             const checkOutDate = guest.checkOutDate || guest.checkOut;
             const isPOS = guest.guestName?.startsWith("POS Order") || !!guest.posItems || !!guest.revenueType;
@@ -296,7 +297,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             const cancelledByVal = user ? `${user.displayName} (${user.role || 'user'})` : "System";
 
             for (const d of dates) {
-                const docRef = doc(db, "daily_revenue", `${hotelId}_${d}`);
+                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];

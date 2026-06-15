@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { toast } from "sonner";
 
 export const useAboutUs = () => {
@@ -14,7 +15,7 @@ export const useAboutUs = () => {
     useEffect(() => {
         const fetchAbout = async () => {
             try {
-                const docRef = doc(db, "sections", "about");
+                const docRef = doc(getHotelCollection(db, "sections"), "about");
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
@@ -37,7 +38,7 @@ export const useAboutUs = () => {
         setSaving(true);
         setMessage("");
         try {
-            await setDoc(doc(db, "sections", "about"), {
+            await setDoc(doc(getHotelCollection(db, "sections"), "about"), {
                 title,
                 content,
                 imageUrl,

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface Package {
     id: string;
@@ -17,7 +18,7 @@ export const usePackages = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const q = query(collection(db, "packages"), orderBy("createdAt", "desc"));
+        const q = query(getHotelCollection(db, "packages"), orderBy("createdAt", "desc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -42,7 +43,7 @@ export const usePackageById = (id: string) => {
         const fetchPackage = async () => {
             try {
                 const { doc, getDoc } = await import("firebase/firestore");
-                const docRef = doc(db, "packages", id);
+                const docRef = doc(getHotelCollection(db, "packages"), id);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     setPkg({ id: docSnap.id, ...docSnap.data() } as Package);

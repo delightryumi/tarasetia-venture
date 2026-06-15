@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface Package {
     id: string;
@@ -39,7 +40,7 @@ export const usePackages = () => {
     const [currentStep, setCurrentStep] = useState(1);
 
     useEffect(() => {
-        const q = query(collection(db, "packages"), orderBy("createdAt", "desc"));
+        const q = query(getHotelCollection(db, "packages"), orderBy("createdAt", "desc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -80,7 +81,7 @@ export const usePackages = () => {
         setSaving(true);
         try {
             const finalType = packageType === "Custom" ? customType : packageType;
-            await addDoc(collection(db, "packages"), {
+            await addDoc(getHotelCollection(db, "packages"), {
                 name: newName,
                 description: newDesc,
                 price: newPrice,
@@ -108,7 +109,7 @@ export const usePackages = () => {
         setSaving(true);
         try {
             const finalType = packageType === "Custom" ? customType : packageType;
-            const pkgRef = doc(db, "packages", editingPackage.id);
+            const pkgRef = doc(getHotelCollection(db, "packages"), editingPackage.id);
             await updateDoc(pkgRef, {
                 name: newName,
                 description: newDesc,
@@ -170,7 +171,7 @@ export const usePackages = () => {
                 label: "Delete",
                 onClick: async () => {
                     try {
-                        await deleteDoc(doc(db, "packages", id));
+                        await deleteDoc(doc(getHotelCollection(db, "packages"), id));
                         toast.success(`${pkg.name} has been removed.`);
                     } catch (err) {
                         console.error("Error deleting package:", err);

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { collection, getDocs, doc, updateDoc, getDoc, arrayUnion, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
@@ -58,7 +59,7 @@ const INITIAL_FORM = {
 export const useTransactionForm = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { user } = useAuth();
+    const { user, activeHotelCode } = useAuth();
     const selectedDate = searchParams.get("date") || new Date().toISOString().split("T")[0];
 
     const handleCancel = useCallback(() => {
@@ -138,7 +139,7 @@ export const useTransactionForm = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const rSnap = await getDocs(collection(db, "roomTypes"));
+                const rSnap = await getDocs(getHotelCollection(db, "roomTypes"));
                 const types = rSnap.docs.map(d => ({ id: d.id, ...d.data() }));
                 setRoomTypes(types);
                 
@@ -152,7 +153,7 @@ export const useTransactionForm = () => {
                     });
                 }
 
-                const bSnap = await getDocs(collection(db, "daily_revenue"));
+                const bSnap = await getDocs(getHotelCollection(db, "daily_revenue"));
                 const allBookings = bSnap.docs.flatMap(d => d.data().entries || []);
                 const uniqueBookings = allBookings.filter((e: any, idx: number, self: any[]) => 
                     self.findIndex(t => t.timestamp === e.timestamp) === idx
@@ -445,9 +446,9 @@ export const useTransactionForm = () => {
             });
 
             for (const [dateStr, transactionEntries] of Object.entries(entriesByDate)) {
-                const hotelId = "bumi-anyom-resort";
+                const hotelId = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") : null) || "87241";
                 const docId = `${hotelId}_${dateStr}`;
-                const docRef = doc(db, "daily_revenue", docId);
+                const docRef = doc(getHotelCollection(db, "daily_revenue"), docId);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {

@@ -1,5 +1,7 @@
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
+import { getServerSideHotel } from "@/lib/hotelResolverServer";
 
 export interface SEOData {
     title: string;
@@ -27,7 +29,9 @@ export const getSEO = async (): Promise<SEOData> => {
     };
 
     try {
-        const docRef = doc(db, "settings", "seo");
+        const hotel = await getServerSideHotel();
+        const hotelCode = hotel?.hotelCode || "87241";
+        const docRef = doc(getHotelCollection(db, "settings", hotelCode), "seo");
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {

@@ -4,12 +4,13 @@ import {
 import { db } from "../../lib/firebase";
 import { PurchaseRequisition } from "../../lib/purchasing/types";
 import { generateDocNumber } from "../../lib/purchasing/utils";
+import { getHotelCollection } from "../../lib/firestoreHelper";
 
 const COLLECTION_NAME = "purchase_requisitions";
 
 export const prService = {
   async getAll(): Promise<PurchaseRequisition[]> {
-    const q = query(collection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
+    const q = query(getHotelCollection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
     const snap = await getDocs(q);
     return snap.docs
       .map(d => ({ id: d.id, ...d.data() } as PurchaseRequisition))
@@ -17,7 +18,7 @@ export const prService = {
   },
 
   async getById(id: string): Promise<PurchaseRequisition | null> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     const snap = await getDoc(docRef);
     if (!snap.exists() || snap.data().is_deleted) return null;
     return { id: snap.id, ...snap.data() } as PurchaseRequisition;
@@ -25,7 +26,7 @@ export const prService = {
 
   async create(pr: Omit<PurchaseRequisition, "id" | "pr_number" | "created_at" | "updated_at">): Promise<string> {
     const prNumber = await generateDocNumber("PR");
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+    const docRef = await addDoc(getHotelCollection(db, COLLECTION_NAME), {
       ...pr,
       pr_number: prNumber,
       is_deleted: false,
@@ -36,7 +37,7 @@ export const prService = {
   },
 
   async update(id: string, pr: Partial<PurchaseRequisition>): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await updateDoc(docRef, {
       ...pr,
       updated_at: serverTimestamp()
@@ -44,7 +45,7 @@ export const prService = {
   },
 
   async softDelete(id: string): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await updateDoc(docRef, {
       is_deleted: true,
       updated_at: serverTimestamp()
@@ -52,7 +53,7 @@ export const prService = {
   },
 
   async seedDemoPRs(items: any[], suppliers: any[]): Promise<void> {
-    const q = query(collection(db, COLLECTION_NAME));
+    const q = query(getHotelCollection(db, COLLECTION_NAME));
     const snap = await getDocs(q);
     if (!snap.empty) return;
 

@@ -10,6 +10,7 @@ import {
     orderBy
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { toast } from "sonner";
 
 export interface Attraction {
@@ -34,7 +35,7 @@ export const useAttractions = () => {
     const [currentStep, setCurrentStep] = useState(1);
 
     useEffect(() => {
-        const q = query(collection(db, "attractions"), orderBy("distance"));
+        const q = query(getHotelCollection(db, "attractions"), orderBy("distance"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -60,7 +61,7 @@ export const useAttractions = () => {
 
         setSaving(true);
         try {
-            await addDoc(collection(db, "attractions"), {
+            await addDoc(getHotelCollection(db, "attractions"), {
                 name: newName,
                 description: newDesc,
                 distance: newDistance,
@@ -85,7 +86,7 @@ export const useAttractions = () => {
 
         setSaving(true);
         try {
-            const attrRef = doc(db, "attractions", editingAttraction.id);
+            const attrRef = doc(getHotelCollection(db, "attractions"), editingAttraction.id);
             await updateDoc(attrRef, {
                 name: newName,
                 description: newDesc,
@@ -134,7 +135,7 @@ export const useAttractions = () => {
                 label: "Remove",
                 onClick: async () => {
                     try {
-                        await deleteDoc(doc(db, "attractions", id));
+                        await deleteDoc(doc(getHotelCollection(db, "attractions"), id));
                         toast.success(`${attraction.name} removed from attractions.`);
                     } catch (err) {
                         console.error("Error deleting attraction:", err);

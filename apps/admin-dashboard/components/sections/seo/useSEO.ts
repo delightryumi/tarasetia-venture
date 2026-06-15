@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { toast } from "sonner";
 
 export interface SEOData {
@@ -39,7 +40,7 @@ export const useSEO = () => {
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        const unsubscribe = onSnapshot(doc(db, "settings", "seo"), (snapshot) => {
+        const unsubscribe = onSnapshot(doc(getHotelCollection(db, "settings"), "seo"), (snapshot) => {
             if (snapshot.exists()) {
                 setSeo((prev) => ({ ...prev, ...snapshot.data() }));
             }
@@ -52,7 +53,7 @@ export const useSEO = () => {
         e?.preventDefault();
         setSaving(true);
         try {
-            await setDoc(doc(db, "settings", "seo"), seo);
+            await setDoc(doc(getHotelCollection(db, "settings"), "seo"), seo);
             toast.success("SEO settings secured.");
         } catch (err) {
             console.error("Error saving SEO:", err);

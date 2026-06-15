@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs, query, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface PackageItem {
   id: string;
@@ -34,7 +35,7 @@ export const useServices = () => {
     const fetchPackages = async () => {
       try {
         setLoading(true);
-        const q = query(collection(db, "packages"), limit(10));
+        const q = query(getHotelCollection(db, "packages"), limit(10));
         const querySnapshot = await getDocs(q);
         
         const results: PackageItem[] = [];
@@ -87,7 +88,7 @@ export const usePackage = (id: string | null) => {
       }
       try {
         setLoading(true);
-        const docRef = doc(db, "packages", id);
+        const docRef = doc(getHotelCollection(db, "packages"), id);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -131,7 +132,7 @@ export const useAttractions = () => {
   useEffect(() => {
     const fetchAttractions = async () => {
       try {
-        const snap = await getDocs(collection(db, "attractions"));
+        const snap = await getDocs(getHotelCollection(db, "attractions"));
         setAttractions(snap.docs.map(d => ({ 
           id: d.id, 
           ...d.data() 
@@ -160,7 +161,7 @@ export const useAttraction = (id: string | null) => {
       }
       try {
         setLoading(true);
-        const docRef = doc(db, "attractions", id);
+        const docRef = doc(getHotelCollection(db, "attractions"), id);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {

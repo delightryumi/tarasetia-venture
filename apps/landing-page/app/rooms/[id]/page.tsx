@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RoomDetailsHero } from "@/components/sections/rooms/RoomDetailsHero";
 import { FooterSection } from "@/components/sections/footer/FooterSection";
@@ -50,7 +51,7 @@ export default function RoomDetailsPage() {
         const fetchRoom = async () => {
             if (!id) return;
             try {
-                const docRef = doc(db, "roomTypes", id as string);
+                const docRef = doc(getHotelCollection(db, "roomTypes"), id as string);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     setRoom({ id: docSnap.id, ...docSnap.data() } as RoomType);

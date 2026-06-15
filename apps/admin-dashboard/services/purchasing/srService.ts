@@ -14,13 +14,14 @@ import {
 import { db } from "../../lib/firebase";
 import { StoreRequisition } from "../../lib/purchasing/types";
 import { generateDocNumber } from "../../lib/purchasing/utils";
+import { getHotelCollection } from "../../lib/firestoreHelper";
 
 const COLLECTION_NAME = "store_requisitions";
 
 export const srService = {
   async getAll(): Promise<StoreRequisition[]> {
     const q = query(
-      collection(db, COLLECTION_NAME), 
+      getHotelCollection(db, COLLECTION_NAME), 
       where("is_deleted", "!=", true)
     );
     const snap = await getDocs(q);
@@ -30,7 +31,7 @@ export const srService = {
   },
 
   async getById(id: string): Promise<StoreRequisition | null> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     const snap = await getDoc(docRef);
     if (!snap.exists() || snap.data().is_deleted) return null;
     return { id: snap.id, ...snap.data() } as StoreRequisition;
@@ -38,7 +39,7 @@ export const srService = {
 
   async create(sr: Omit<StoreRequisition, "id" | "sr_number" | "created_at" | "updated_at">): Promise<string> {
     const srNumber = await generateDocNumber("SR");
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+    const docRef = await addDoc(getHotelCollection(db, COLLECTION_NAME), {
       ...sr,
       sr_number: srNumber,
       is_deleted: false,
@@ -49,7 +50,7 @@ export const srService = {
   },
 
   async update(id: string, sr: Partial<StoreRequisition>): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await updateDoc(docRef, {
       ...sr,
       updated_at: serverTimestamp()
@@ -57,7 +58,7 @@ export const srService = {
   },
 
   async softDelete(id: string): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await updateDoc(docRef, {
       is_deleted: true,
       updated_at: serverTimestamp()
@@ -66,12 +67,12 @@ export const srService = {
 
   // Hard delete: permanently remove document, allowed for any status
   async hardDelete(id: string): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await deleteDoc(docRef);
   },
 
   async seedDemoSRs(items: any[]): Promise<void> {
-    const q = query(collection(db, COLLECTION_NAME));
+    const q = query(getHotelCollection(db, COLLECTION_NAME));
     const snap = await getDocs(q);
     if (!snap.empty) return;
 

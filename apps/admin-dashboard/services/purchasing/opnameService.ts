@@ -3,19 +3,20 @@ import {
 } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { StockOpname } from "../../lib/purchasing/types";
+import { getHotelCollection } from "../../lib/firestoreHelper";
 
 const COLLECTION_NAME = "stock_opnames";
 
 export const opnameService = {
   async getAll(): Promise<StockOpname[]> {
-    const snap = await getDocs(collection(db, COLLECTION_NAME));
+    const snap = await getDocs(getHotelCollection(db, COLLECTION_NAME));
     return snap.docs
       .map(d => ({ id: d.id, ...d.data() } as StockOpname))
       .filter(d => d.is_deleted !== true);
   },
 
   async getById(id: string): Promise<StockOpname | null> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     const snap = await getDoc(docRef);
     if (!snap.exists() || snap.data().is_deleted) return null;
     return { id: snap.id, ...snap.data() } as StockOpname;
@@ -25,7 +26,7 @@ export const opnameService = {
     // Enforce single opname per period per department
     const targetDept = opname.department || "Purchasing";
     const q = query(
-      collection(db, COLLECTION_NAME), 
+      getHotelCollection(db, COLLECTION_NAME), 
       where("period", "==", opname.period),
       where("department", "==", targetDept),
       where("is_deleted", "!=", true)
@@ -35,7 +36,7 @@ export const opnameService = {
       throw new Error(`A stock opname record already exists for period ${opname.period} in department ${targetDept}`);
     }
 
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+    const docRef = await addDoc(getHotelCollection(db, COLLECTION_NAME), {
       ...opname,
       department: targetDept,
       is_deleted: false,
@@ -46,7 +47,7 @@ export const opnameService = {
   },
 
   async update(id: string, opname: Partial<StockOpname>): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await updateDoc(docRef, {
       ...opname,
       updated_at: serverTimestamp()
@@ -54,7 +55,7 @@ export const opnameService = {
   },
 
   async approve(id: string, approvedBy: string, approvedByName: string): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await updateDoc(docRef, {
       status: "approved",
       approved_by: approvedBy,
@@ -64,14 +65,14 @@ export const opnameService = {
   },
 
   async softDelete(id: string): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await updateDoc(docRef, {
       is_deleted: true
     });
   },
 
   async seedDemoOpnames(items: any[]): Promise<void> {
-    const q = query(collection(db, COLLECTION_NAME));
+    const q = query(getHotelCollection(db, COLLECTION_NAME));
     const snap = await getDocs(q);
     if (!snap.empty) return;
 

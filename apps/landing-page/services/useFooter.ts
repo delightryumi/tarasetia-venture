@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface SocialLink {
     platform: string;
@@ -26,7 +27,7 @@ export const useFooter = () => {
     useEffect(() => {
         const fetchFooter = async () => {
             try {
-                const docRef = doc(db, "settings", "footer");
+                const docRef = doc(getHotelCollection(db, "settings"), "footer");
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {

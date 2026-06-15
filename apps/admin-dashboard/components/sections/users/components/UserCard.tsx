@@ -1,6 +1,6 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { Mail, Edit3, Trash2, Lock } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mail, Edit3, Trash2, Lock, MoreVertical } from "lucide-react";
 import { UserProfile } from "../types";
 import styles from "../UsersStyles.module.css";
 
@@ -9,10 +9,23 @@ interface UserCardProps {
     onEdit: (user: UserProfile) => void;
     onDelete: (id: string, name: string) => void;
     variants: any;
+    onChangePasswordClick?: (user: UserProfile) => void;
 }
 
-export const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, variants }) => {
+export const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, variants, onChangePasswordClick }) => {
     const isSystemAdmin = user.email === "nexura.management@gmail.com";
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
     
     return (
         <motion.div 
@@ -41,22 +54,65 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, vari
                             <span>System Lock</span>
                         </div>
                     ) : (
-                        <>
+                        <div className={styles.dropdownContainer} ref={menuRef}>
                             <button 
                                 type="button"
-                                onClick={() => onEdit(user)}
+                                onClick={() => setIsOpen(!isOpen)}
                                 className={styles.iconButton}
                             >
-                                <Edit3 size={12} />
+                                <MoreVertical size={14} />
                             </button>
-                            <button 
-                                type="button"
-                                onClick={() => onDelete(user.id, user.name)}
-                                className={`${styles.iconButton} ${styles.iconButtonDanger}`}
-                            >
-                                <Trash2 size={12} />
-                            </button>
-                        </>
+                            
+                            <AnimatePresence>
+                                {isOpen && (
+                                    <motion.div 
+                                        initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                                        transition={{ duration: 0.1 }}
+                                        className={styles.dropdownMenu}
+                                    >
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                onEdit(user);
+                                                setIsOpen(false);
+                                            }}
+                                            className={styles.dropdownItem}
+                                        >
+                                            <Edit3 size={14} />
+                                            <span>Edit User</span>
+                                        </button>
+                                        
+                                        {onChangePasswordClick && (
+                                            <button 
+                                                type="button"
+                                                onClick={() => {
+                                                    onChangePasswordClick(user);
+                                                    setIsOpen(false);
+                                                }}
+                                                className={styles.dropdownItem}
+                                            >
+                                                <Lock size={14} />
+                                                <span>Change Password</span>
+                                            </button>
+                                        )}
+                                        
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                onDelete(user.id, user.name);
+                                                setIsOpen(false);
+                                            }}
+                                            className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
+                                        >
+                                            <Trash2 size={14} />
+                                            <span>Delete User</span>
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     )}
                 </div>
             </div>

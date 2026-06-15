@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface LandingSettings {
     lightLogo: string;
@@ -19,7 +20,7 @@ export const useLandingSettings = () => {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const docSnap = await getDoc(doc(db, "settings", "landingPage"));
+                const docSnap = await getDoc(doc(getHotelCollection(db, "settings"), "landingPage"));
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     setSettings({

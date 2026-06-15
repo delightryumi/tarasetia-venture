@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export interface Branding {
   darkLogo?: string;
@@ -31,8 +32,8 @@ export function useSettings() {
   useEffect(() => {
     async function fetch() {
       try {
-        const landingRef = doc(db, 'settings', 'landingPage');
-        const posRef = doc(db, 'settings', 'pos');
+        const landingRef = doc(getHotelCollection(db, 'settings'), 'landingPage');
+        const posRef = doc(getHotelCollection(db, 'settings'), 'pos');
         const [landingSnap, posSnap] = await Promise.all([
           getDoc(landingRef),
           getDoc(posRef),

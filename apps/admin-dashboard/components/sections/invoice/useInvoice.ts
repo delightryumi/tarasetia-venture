@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface InvoiceItem {
     id: string;
@@ -51,14 +52,14 @@ export const useInvoice = () => {
         }
         setSearching(true);
         try {
-            const { collection, getDocs, query, limit } = await import("firebase/firestore");
-            const snap = await getDocs(query(collection(db, "daily_revenue"), limit(30))); 
+            const { getDocs, query, limit } = await import("firebase/firestore");
+            const snap = await getDocs(query(getHotelCollection(db, "daily_revenue"), limit(30))); 
             let results: any[] = [];
             snap.forEach(doc => {
                 const entries = doc.data().entries || [];
                 const matched = entries.filter((e: any) => 
-                    (e.guestName?.toLowerCase().includes(queryStr.toLowerCase())) ||
-                    (e.incomeCategory?.toLowerCase().includes(queryStr.toLowerCase()))
+                     (e.guestName?.toLowerCase().includes(queryStr.toLowerCase())) ||
+                     (e.incomeCategory?.toLowerCase().includes(queryStr.toLowerCase()))
                 );
                 results = [...results, ...matched];
             });
@@ -74,8 +75,8 @@ export const useInvoice = () => {
         const fetchData = async () => {
             try {
                 // 1. Fetch Branding
-                const logoDoc = await getDoc(doc(db, "settings", "landingPage"));
-                const footerDoc = await getDoc(doc(db, "settings", "footer"));
+                const logoDoc = await getDoc(doc(getHotelCollection(db, "settings"), "landingPage"));
+                const footerDoc = await getDoc(doc(getHotelCollection(db, "settings"), "footer"));
                 const logoData = logoDoc.exists() ? logoDoc.data() : {};
                 const footerData = footerDoc.exists() ? footerDoc.data() : {};
 

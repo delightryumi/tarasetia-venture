@@ -3,12 +3,13 @@ import {
 } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { Supplier } from "../../lib/purchasing/types";
+import { getHotelCollection } from "../../lib/firestoreHelper";
 
 const COLLECTION_NAME = "suppliers";
 
 export const suppliersService = {
   async getAll(): Promise<Supplier[]> {
-    const q = query(collection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
+    const q = query(getHotelCollection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
     const snap = await getDocs(q);
     return snap.docs
       .map(d => ({ id: d.id, ...d.data() } as Supplier))
@@ -16,14 +17,14 @@ export const suppliersService = {
   },
 
   async getById(id: string): Promise<Supplier | null> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     const snap = await getDoc(docRef);
     if (!snap.exists() || snap.data().is_deleted) return null;
     return { id: snap.id, ...snap.data() } as Supplier;
   },
 
   async create(supplier: Omit<Supplier, "id" | "created_at" | "updated_at">): Promise<string> {
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+    const docRef = await addDoc(getHotelCollection(db, COLLECTION_NAME), {
       ...supplier,
       is_deleted: false,
       created_at: serverTimestamp(),
@@ -33,7 +34,7 @@ export const suppliersService = {
   },
 
   async update(id: string, supplier: Partial<Supplier>): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await updateDoc(docRef, {
       ...supplier,
       updated_at: serverTimestamp()
@@ -41,7 +42,7 @@ export const suppliersService = {
   },
 
   async softDelete(id: string): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await updateDoc(docRef, {
       is_deleted: true,
       updated_at: serverTimestamp()
@@ -49,7 +50,7 @@ export const suppliersService = {
   },
 
   async seedDemoSuppliers(): Promise<void> {
-    const q = query(collection(db, COLLECTION_NAME));
+    const q = query(getHotelCollection(db, COLLECTION_NAME));
     const snap = await getDocs(q);
     if (!snap.empty) return;
 

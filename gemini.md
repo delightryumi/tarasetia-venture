@@ -1,7 +1,12 @@
 # Dokumentasi Pengembangan & Rencana Multi-Hotel CRS (Nexura Global Hospitality)
 
 Dokumen ini mencatat status terakhir pengerjaan sistem dan memetakan rencana detail pengembangan sistem menjadi **Multi-Hotel Central Reservation System (CRS)** dengan satu basis kode logika, namun basis data yang terisolasi per hotel.
+Tolong jangan jalankan pnpm dev, pnpm build dan push ke git sebelum saya perintahkan
 
+> [!IMPORTANT]
+> Seluruh tata letak (layout), tombol, radius border, warna, dan tipografi untuk fitur CRS (termasuk halaman `/superadmin`) wajib diselaraskan dengan panduan desain editorial yang terdokumentasi di [Airtable DESIGN.md](file:///f:/WEB-SERVER/WEB/bumi-anyom-web/apps/admin-dashboard/airtable/DESIGN.md) dan mendukung tema Dark/Light secara penuh.
+
+pastikan semua dibuat dengan full modular, pisahkan setiap section
 ---
 
 ## 1. Status Terakhir Pengerjaan (Completed)
@@ -14,6 +19,30 @@ Berikut adalah perbaikan dan optimasi yang telah diterapkan dan dipush ke branch
 *   **Pagination & Lazy Loading**: Menambahkan sistem pagination berbasis cursor (`limit` + `startAfter`) pada koleksi besar seperti `roomTypes` dan `gallery` untuk menekan biaya Firestore Read.
 *   **Sistem Soft-Delete**: Data transaksi yang dihapus sekarang ditandai dengan flag `isDeleted: true` dan timestamp `deletedAt`. Cloud Function terjadwal secara otomatis membersihkan data yang berumur lebih dari 30 hari secara permanen di latar belakang.
 *   **Port Dynamic Redirect**: Redireksi dari dashboard admin ke POS tidak lagi hardcoded ke port `3000`. Dashboard mengirimkan `dashboardUrl` saat mengarahkan user, lalu POS menyimpannya ke `localStorage` agar user dapat diarahkan kembali ke dashboard admin asal secara dinamis di port mana pun aplikasi tersebut berjalan.
+*   **Migrasi Database Multi-Hotel**: Telah melakukan kloning data dari database root `bumi-anyom` ke database baru `crs-nexura` di bawah namespace `/hotels/bumi-anyom-resort/...` (sukses tanpa error).
+*   **Infrastruktur Helper Query**: Menyediakan `firestoreHelper.ts` di ketiga sub-project (`admin-dashboard`, `Point-of-sales-Nextjs-main`, `landing-page`) untuk mendukung pemanggilan collection dinamis berdasarkan `hotelCode` dengan fallback otomatis ke `root` jika dinonaktifkan.
+*   **Superadmin CRS Portal**: Membuat halaman khusus superadmin (`/superadmin`) untuk mendaftarkan tenant hotel baru, mengedit metadata hotel, dan menonaktifkan/mengaktifkan status sistem secara instan.
+*   **Inisialisasi Master Hotel**: Menjalankan script `seed_hotels.mjs` untuk mengonfigurasi default metadata hotel pertama `bumi-anyom-resort` di project baru `crs-nexura`.
+*   **Format ID Hotel Baru (5 Digit Acak)**: ID/Kode hotel baru sekarang secara otomatis digenerate sebagai angka 5 digit acak (`Math.floor(10000 + Math.random() * 90000)`) dan kolom input kuncinya dinonaktifkan (`disabled={true}`) agar tidak bisa dimanipulasi secara manual.
+*   **Migrasi Kode Hotel Bumi Anyom (ke ID 87241)**: Kode hotel untuk Bumi Anyom Resort berhasil diganti dari `"bumi-anyom-resort"` menjadi kode 5 digit acak `"87241"`. Seluruh referensi kode fallback di codebase Next.js telah diupdate, dan data Firestore (termasuk dokumen master, sub-koleksi operasional, dan ID dokumen `daily_revenue`) telah dimigrasi sepenuhnya ke ID baru tersebut.
+*   **Autentikasi Multi-Hotel & Dropdown Superadmin**: Memperluas `AuthContext.tsx` dan login form (`LoginSection.tsx`) agar mendukung input `hotelCode` serta pengecekan status keaktifan hotel (`active === true`). Menampilkan informasi nama hotel yang aktif diawali kode hotel (misal: `[87241] Bumi Anyom Resort`) pada bagian header aplikasi (`StatusWidget.tsx`). Menyediakan dropdown selector dinamis khusus untuk role `superadmin` agar dapat berpindah CRS tenant secara real-time.
+*   **Penghapusan Berantai Tenant (Cascade Delete)**: Penambahan fitur penghapusan berantai di Superadmin Portal yang secara rekursif membersihkan seluruh sub-koleksi operasional milik hotel target di Firestore sebelum menghapus dokumen induk hotel. Fitur ini diproteksi dengan modal konfirmasi destruktif yang mengharuskan penulisan ulang kode hotel secara tepat.
+*   **Pendaftaran Admin & Welcome Email via Brevo HTTPS**: Pendaftaran hotel baru secara otomatis memicu pembuatan akun administrator baru di Firebase Auth secara server-side (melalui REST API tanpa mengganggu sesi superadmin klien), memetakan data profil `/users_master` ter-modular dengan status full permissions, serta mengapalkan email sambutan HTML premium berisi kredensial login temporer (Link Dashboard, Kode Hotel, Email, & Password) memanfaatkan HTTPS REST API Brevo (Port 443) untuk menghindari pemblokiran port SMTP pada cloud server.
+*   **Pemulihan Akun (Forgot Password)**: Mengintegrasikan tautan "Forgot Password?" di halaman login yang membuka form reset password client-side, terintegrasi langsung dengan Firebase Authentication `sendPasswordResetEmail` untuk memicu email pemulihan resmi secara instan.
+*   **Pencegahan Bypass Penangguhan Layanan (Deactivation Security Guard)**: Menutup celah bypass status nonaktif hotel (`active === false`) dengan melakukan short-circuit rendering di tingkat layout (`DashboardLayout.tsx` dan `select-module/page.tsx`). Jika properti `active` diubah menjadi `false`, seluruh UI dashboard langsung digantikan total dengan overlay `<BillingSuspendedModal />` fullscreen, menghentikan eksekusi komponen anak dan mencegah Firestore read/write yang tidak sah. Mekanisme serupa diterapkan pada layout POS (`Point-of-sales-Nextjs-main`) untuk memblokir cashier workspace secara real-time.
+*   **Akses Sub-Menu CPanel Otomatis bagi Admin**: Menyempurnakan filter sidebar (`Sidebar.tsx`) dan navigasi mobile (`MobileBottomNav.tsx`) agar pengguna dengan role `admin` secara otomatis mendapatkan akses penuh ke seluruh sub-menu dari modul yang aktif/berlangganan (seperti `cpanel-full` untuk semua menu landing page) tanpa perlu dicentang per-item secara manual pada manajemen izin.
+*   **Penyempurnaan Fitur Reset Password & Manajemen User**: Memperbaiki hoisting compilation error pada halaman `/users` dengan merelokasi letak inisialisasi helper migration, serta mengimplementasikan reset password personnel secara real-time yang memperbarui data Firestore dan menampilkan password sementara baru via Sonner toast. Native `alert()` / `confirm()` diganti dengan custom `ConfirmModal` ter-modular.
+*   **Dynamic Domain Binding & Suspended Guard di Landing Page**: Menyelesaikan implementasi resolusi domain otomatis pada sub-project `landing-page`. Server-side (`getServerSideHotel`) dan client-side (`HotelProvider`) kini secara dinamis membaca request host, mencocokkannya ke database `/hotels/{hotelCode}` untuk memetakan konten yang sesuai, serta secara otomatis menampilkan overlay "Sistem Ditangguhkan" jika status hotel adalah `active === false`.
+*   **Penyematan Custom Claims & Migrasi Firebase Auth (Next.js API Routes)**: Pemasangan `firebase-admin` SDK pada `admin-dashboard` untuk mengelola personnel di Firebase Auth secara server-side melalui REST API endpoint `/api/users`. Mengonfigurasi `register-admin/route.ts` dan `/api/users` agar secara otomatis menyematkan custom claims (`role`, `hotelCode`) pada token user, serta memperbarui `AuthContext.tsx` dan login form agar langsung membaca claims token (`fbUser.getIdTokenResult()`) dengan fallback query Firestore demi keamanan akses basis data.
+*   **Central Billing & Invoice Control (Superadmin Portal - Per Akun)**: Mengimplementasikan dasbor penagihan tabular di `/superadmin` yang membagi modul menjadi *Registry Tenant* dan *Central Billing*. Dilengkapi dengan kalkulasi KPI pendapatan real-time dan panel **Daftar Riwayat Pembayaran (Per Akun)** dinamis dengan dropdown selector. Tim Billing dapat memantau tagihan (Sudah Dibayar / Belum Lunas), mencetak invoice print-friendly (PDF), mengirim email, serta mencatatkan transaksi pembayaran baru (`billing_records`) secara inline dengan fitur *smooth-scroll* navigasi instan tanpa pop-up modal.
+*   **Penyederhanaan Hamburger Header Menu & Tombol Sesi (CPanel, User Settings, & Logout)**: Menyederhanakan menu dropdown hamburger di header `/select-module` menjadi tepat 3 opsi: CPanel (mengarahkan langsung ke cpanel lengkap `/logo?module=cpanel`), User Settings, dan Logout. Seluruh styling inline Tailwind pada dropdown telah dipisahkan secara modular ke dalam CSS modules (`select-module.module.css`) untuk kerapian, kebersihan JSX, dan keselarasan dengan tema editorial Bohemian Sage/Gold/Cream. Menghapus tombol logout duplikat di sebelah pemilih tema pada header (`ModuleActionButtons.tsx`) agar tampilan lebih bersih.
+
+*   **Akses Sub-Menu CPanel Otomatis & Pembersihan Sidebar**: Menyempurnakan filter sidebar (`Sidebar.tsx`) dan navigasi mobile (`MobileBottomNav.tsx`) agar saat modul CPanel aktif, menu *User Management* (`users`) dan tombol *Logout* (Keluar) disembunyikan dari sidebar. Selain itu, ketika pengguna mengklik *User Settings* (mengarahkan ke `/users?module=cpanel`), sidebar secara dinamis disaring hanya untuk menampilkan menu *User Management* (dan *Superadmin* jika memiliki hak akses) saja, tanpa menampilkan menu penyiapan landing page lainnya guna memfokuskan pengerjaan.
+*   **Optimalisasi Ukuran Card Modul Bento (Workspace Grid)**: Memperkecil dimensi kartu modul bento pada halaman `/select-module` dari `150px` menjadi `130px` pada lebar desktop (dan penyesuaian tinggi dari `155px` menjadi `135px`). Ukuran box ikon, ukuran ikon, padding internal, jarak antar komponen (gap), serta ukuran font judul dan deskripsi diselaraskan lebih proporsional guna menghasilkan visualisasi yang lebih padat, bersih, dan menonjolkan estetika *clean flat corporate design*.
+
+
+
+
 
 ---
 
@@ -216,4 +245,39 @@ Jika superadmin mematikan akses sebuah hotel (`active = false`) atau sistem mend
 4. **Pemblokiran API**:
    Firebase Security Rules secara otomatis menolak seluruh request read/write yang dikirimkan oleh klien, menjaga integritas data tetap aman selama masa penangguhan pembayaran.
 
-pastikan semua no error dan tidak merubah semua fungsi yang sudah ada
+---
+
+### I. Panduan Spacing, Padding & Tata Letak (Airtable & Purchasing Aligned)
+Untuk memastikan seluruh halaman baru di CRS (termasuk dashboard superadmin dan halaman internal lainnya) presisi, rapi, dan konsisten dengan halaman *Purchasing*:
+
+1. **Page Container**:
+   * Selalu gunakan padding terluar halaman sebesar `32px` (Tailwind: `p-8` atau `py-8 px-8`, margin antar bagian `space-y-8`).
+2. **Card & Card Content**:
+   * Setiap modul card utama atau widget data menggunakan background `bg-[#faf8f4]` (light) dan `dark:bg-[#262626]` (dark), border hairline tipis `border-[#dddddd]` (light) / `dark:border-neutral-800`, dan padding internal penuh `32px` (Tailwind: `p-8`).
+3. **Card Section Header**:
+   * Judul di dalam card dipisahkan dengan border bawah hairline, menggunakan padding vertikal `24px` dan horizontal `32px` (Tailwind: `px-8 py-6`).
+4. **Table Spacing & Layout**:
+   * **Table Headers (th)**: Padding vertikal `12px` dan horizontal `32px` (Tailwind: `px-8 py-3`), font semi-bold ukuran `11px`, huruf kapital.
+   * **Table Data (td)**: Padding vertikal `16px` dan horizontal `32px` (Tailwind: `px-8 py-4`), font size `14px`.
+5. **Modal Forms**:
+   * Header Modal: Padding `px-8 py-6` (vertical 24px, horizontal 32px).
+   * Body Form: Padding `p-8` (32px) dengan spacing antar form element `space-y-6` (24px).
+   * Footer Modal: Padding `px-8 py-6` dengan tombol yang rata kanan.
+
+## 3. Rencana Ke Depan (Future Roadmap - Belum Dijalankan)
+
+Berikut adalah rencana pengembangan lanjutan yang belum diimplementasikan di environment production:
+
+*   **Otomatisasi Cron Job Pengecekan Billing (Central Billing Worker)**:
+    *   Buat Cloud Functions terjadwal (misal harian) yang mencocokkan `billing.nextDueDate` dengan tanggal sekarang.
+    *   Otomatis mengubah status `active = false` (sistem ditangguhkan) jika tanggal jatuh tempo sudah terlewat batas tenggang (grace period) tanpa adanya transaksi perpanjangan paket yang sukses terverifikasi.
+*   **Pengembangan Modul Absensi Multi-Hotel (Opsi B - Aplikasi Mandiri)**:
+    *   **Sub-Project Baru (`apps/attendance-app`)**: Membuat aplikasi Next.js/React ringan yang didesain khusus untuk tampilan mobile agar karyawan dapat melakukan absensi dengan cepat dan responsif.
+    *   **Fitur Keamanan Absensi (Geofencing & Selfie)**:
+        *   Mengambil koordinat GPS karyawan secara real-time dan mencocokkannya dengan koordinat GPS hotel di Firestore `/hotels/{hotelCode}/settings/hrd`. Karyawan hanya bisa absen dalam radius aman (misal: 50 meter).
+        *   Integrasi Swafoto (Selfie Verification) menggunakan kamera HP yang langsung terunggah ke Firebase Storage sebelum data disimpan.
+    *   **Integrasi HRD Portal di CPanel**:
+        *   Menambahkan modul *HRD & Personnel* di `admin-dashboard` untuk memantau log absensi masuk/pulang karyawan secara real-time.
+        *   Fasilitas konfigurasi titik koordinat lokasi hotel dan radius batas absensi.
+        *   Fasilitas rekap bulanan & ekspor data (Excel/PDF) untuk keperluan penggajian (*payroll*).
+    *   **Isolasi Data Absensi**: Seluruh log absensi disimpan aman di sub-koleksi masing-masing tenant pada `/hotels/{hotelCode}/attendance/{date_userId}`.

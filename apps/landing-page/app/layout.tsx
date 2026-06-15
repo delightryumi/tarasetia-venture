@@ -19,6 +19,8 @@ const cormorantGaramond = Cormorant_Garamond({
 import { getSEO } from "../services/getSEO";
 import Script from "next/script";
 import ClickSpark from "@/components/ClickSpark";
+import { HotelProvider } from "@/context/HotelContext";
+import { getServerSideHotel } from "@/lib/hotelResolverServer";
 
 export async function generateMetadata(): Promise<Metadata> {
   const seo = await getSEO();
@@ -55,11 +57,13 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const hotel = await getServerSideHotel();
+
   return (
     <html lang="en">
   <head>
@@ -69,15 +73,17 @@ export default function RootLayout({
     </Script>
   </head>
   <body className={`${outfit.variable} ${cormorantGaramond.variable} antialiased font-body font-light`}>
-        <ClickSpark
-          sparkColor="#788069"
-          sparkSize={12}
-          sparkRadius={25}
-          sparkCount={8}
-          duration={350}
-        >
-          {children}
-        </ClickSpark>
+        <HotelProvider initialHotel={hotel}>
+          <ClickSpark
+            sparkColor="#788069"
+            sparkSize={12}
+            sparkRadius={25}
+            sparkCount={8}
+            duration={350}
+          >
+            {children}
+          </ClickSpark>
+        </HotelProvider>
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export const useLogo = () => {
     const [lightLogo, setLightLogo] = useState("");
@@ -13,7 +14,7 @@ export const useLogo = () => {
     useEffect(() => {
         const fetchLogos = async () => {
             try {
-                const docRef = doc(db, "settings", "landingPage");
+                const docRef = doc(getHotelCollection(db, "settings"), "landingPage");
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
@@ -39,7 +40,7 @@ export const useLogo = () => {
             const finalLight = overrides?.light !== undefined ? overrides.light : lightLogo;
             const finalDark = overrides?.dark !== undefined ? overrides.dark : darkLogo;
 
-            await setDoc(doc(db, "settings", "landingPage"), {
+            await setDoc(doc(getHotelCollection(db, "settings"), "landingPage"), {
                 lightLogo: finalLight,
                 darkLogo: finalDark,
                 bookingEngineUrl: bookingEngineUrl

@@ -16,6 +16,8 @@ import { useUsers, ROLES } from "./useUsers";
 import { UserCard } from "./components/UserCard";
 import { RoleCard } from "./components/RoleCard";
 import { UserDrawer } from "./components/UserDrawer";
+import { ConfirmModal } from "./components/ConfirmModal";
+import { ChangePasswordModal } from "./components/ChangePasswordModal";
 import { UserProfile } from "./types";
 import styles from "./UsersStyles.module.css";
 
@@ -137,7 +139,8 @@ const rise = {
 export const UsersSection: React.FC = () => {
     const { 
         users, loading, 
-        handleSaveUser, handleDeleteUser, togglePermission 
+        handleSaveUser, handleDeleteUser, togglePermission,
+        handleChangePassword
     } = useUsers([]);
 
     const [activeTab, setActiveTab] = useState<"users" | "permissions">("users");
@@ -145,6 +148,15 @@ export const UsersSection: React.FC = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Delete Confirmation State
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    // Password Change State
+    const [passwordChangeTarget, setPasswordChangeTarget] = useState<UserProfile | null>(null);
+    // Removed unused newPassword state; ChangePasswordModal manages its own state.
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -164,6 +176,11 @@ export const UsersSection: React.FC = () => {
         setEditingUser(user);
         setFormData({ email: user.email, name: user.name, role: user.role, password: "" });
         setIsDrawerOpen(true);
+    };
+
+    // Open Change Password Modal
+    const openChangePassword = (user: UserProfile) => {
+        setPasswordChangeTarget(user);
     };
 
     const onSave = async () => {
@@ -188,17 +205,37 @@ export const UsersSection: React.FC = () => {
         }
     };
 
-    const onDelete = async (id: string, name: string) => {
-        if (confirm(`Are you sure you want to remove ${name} from the system?`)) {
-            try {
-                await handleDeleteUser(id);
-                toast.success("Personnel removed successfully.", {
-                    description: `${name} has been purged from the database.`,
-                    className: "luxury-toast",
-                });
-            } catch (error) {
-                toast.error("Failed to delete personnel.");
-            }
+    // Open delete confirmation modal instead of native confirm()
+    const onDelete = (id: string, name: string) => {
+        setDeleteTarget({ id, name });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+        setIsDeleting(true);
+        try {
+            await handleDeleteUser(deleteTarget.id);
+            toast.success("Personnel removed successfully.", {
+                description: `${deleteTarget.name} has been purged from the database.`,
+                className: "luxury-toast",
+            });
+        } catch (error) {
+            toast.error("Failed to delete personnel.");
+        } finally {
+            setIsDeleting(false);
+            setDeleteTarget(null);
+        }
+    };
+
+    const onChangePassword = async (userId: string, newPassword: string) => {
+        try {
+            await handleChangePassword(userId, newPassword);
+            toast.success("Password Changed", {
+                description: "Password berhasil diperbarui.",
+                className: "luxury-toast",
+            });
+        } catch (error) {
+            toast.error("Gagal mengubah password.");
         }
     };
 
@@ -277,6 +314,7 @@ export const UsersSection: React.FC = () => {
                         {/* User Grid */}
                         {loading ? (
                             <div className={styles.loadingContainer}>
+                                <div className={styles.spinner}></div>
                                 <p className={styles.loadingText}>Syncing Personnel Database...</p>
                             </div>
                         ) : (
@@ -293,6 +331,7 @@ export const UsersSection: React.FC = () => {
                                         onEdit={openEditDrawer}
                                         onDelete={onDelete}
                                         variants={rise}
+                                        onChangePasswordClick={openChangePassword}
                                     />
                                 ))}
                             </motion.div>
@@ -329,6 +368,36 @@ export const UsersSection: React.FC = () => {
                 roles={ROLES}
                 onSave={onSave}
                 isSaving={isSaving}
+                onChangePassword={onChangePassword}
+            />
+
+            {/* ─── Change Password Modal ─── */}
+            <ChangePasswordModal
+                isOpen={!!passwordChangeTarget}
+                userName={passwordChangeTarget?.name}
+                isLoading={isChangingPassword}
+                onConfirm={async (password) => {
+                    if (passwordChangeTarget) {
+                        setIsChangingPassword(true);
+                        await handleChangePassword(passwordChangeTarget.id, password);
+                        setIsChangingPassword(false);
+                        setPasswordChangeTarget(null);
+                    }
+                }}
+                onCancel={() => setPasswordChangeTarget(null)}
+            />
+
+            {/* ─── Delete User Confirmation Modal ─── */}
+            <ConfirmModal
+                isOpen={!!deleteTarget}
+                variant="delete"
+                title="Hapus Personnel"
+                message={`Apakah Anda yakin ingin menghapus ${deleteTarget?.name || "user ini"} dari sistem? Tindakan ini tidak dapat dibatalkan.`}
+                confirmLabel="Hapus"
+                cancelLabel="Batal"
+                isLoading={isDeleting}
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteTarget(null)}
             />
         </div>
     );

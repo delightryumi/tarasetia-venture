@@ -8,6 +8,7 @@ import { gsap } from 'gsap';
 import { Magnetic } from '@/components/ui/Magnetic';
 import { Topbar } from '@/components/layout/Topbar';
 import { useLandingSettings } from '@/services/useLandingSettings';
+import { useHotel } from '@/context/HotelContext';
 
 const NAV_LINKS = [
   { label: 'Room',        href: '/rooms' },
@@ -68,6 +69,11 @@ const BookButton = ({ isScrolled, bookingUrl }: { isScrolled: boolean; bookingUr
 // ─── Main Header ──────────────────────────────────────────────────────────────
 export const Header = ({ forceScrolledState = false }: { forceScrolledState?: boolean }) => {
   const { lightLogo, darkLogo, bookingEngineUrl } = useLandingSettings();
+  const { hotelData } = useHotel();
+  const hotelName = hotelData?.name || "Bumi Anyom";
+  const nameParts = hotelName.split(" ");
+  const firstName = nameParts[0] || "";
+  const restName = nameParts.slice(1).join(" ") || "";
   const [internalIsScrolled, setInternalIsScrolled] = useState(false);
   const isScrolled = internalIsScrolled || forceScrolledState;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -153,7 +159,7 @@ export const Header = ({ forceScrolledState = false }: { forceScrolledState?: bo
                 <span className={`text-sm font-black tracking-widest uppercase transition-colors duration-300 ${
                   isScrolled || mobileMenuOpen ? 'text-[#1a1a1a]' : 'text-white'
                 }`}>
-                  BUMI <span className="font-light">ANYOM</span>
+                  {firstName} <span className="font-light">{restName}</span>
                 </span>
               )}
               <span className={`text-[6px] md:text-[7px] font-bold uppercase tracking-[0.25em] block leading-none mt-1.5 pl-2 transition-colors duration-300 ${

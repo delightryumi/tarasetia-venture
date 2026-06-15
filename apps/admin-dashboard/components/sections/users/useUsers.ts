@@ -5,6 +5,8 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { UserProfile } from "./types";
+import { getHotelCollection } from "@/lib/firestoreHelper";
+import { useAuth } from "@/context/AuthContext";
 
 export const ROLES = [
     "superadmin", 
@@ -32,46 +34,8 @@ const ALL_KEYS = [
 export const useUsers = (menuItems: any[]) => {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        // Listen to Users
-        const unsubUsers = onSnapshot(query(collection(db, "users_master"), orderBy("name")), async (snap) => {
-            const list: UserProfile[] = [];
-            snap.forEach(d => list.push({ id: d.id, ...d.data() } as UserProfile));
-            
-            // Check for Hardcoded Admin
-            const adminEmail = "nexura.management@gmail.com";
-            const adminExists = list.some(u => u.email === adminEmail);
-            if (!adminExists) {
-                const adminId = adminEmail.toLowerCase().replace(/[@.]/g, '_');
-                const isSuper = true;
-                const adminPerms: Record<string, boolean> = {};
-                ALL_KEYS.forEach(k => {
-                    adminPerms[k] = isSuper;
-                });
-                await setDoc(doc(db, "users_master", adminId), {
-                    name: "Nexura Management",
-                    email: adminEmail,
-                    password: "000000",
-                    role: "superadmin",
-                    permissions: adminPerms
-                });
-            }
-
-            // Proactive Migration: if any user has no permissions map, migrate them in background
-            const needsMigration = list.filter(u => !u.permissions);
-            if (needsMigration.length > 0) {
-                migrateUsersPermissions(needsMigration);
-            }
-
-            setUsers(list);
-            setLoading(false);
-        });
-
-        return () => {
-            unsubUsers();
-        };
-    }, []);
+    const { activeHotelCode } = useAuth();
+    const hotelCode = activeHotelCode;
 
     const migrateUsersPermissions = async (needsMigrationList: UserProfile[]) => {
         for (const u of needsMigrationList) {
@@ -97,7 +61,7 @@ export const useUsers = (menuItems: any[]) => {
             }
             
             try {
-                await updateDoc(doc(db, "users_master", u.id), {
+                await updateDoc(doc(getHotelCollection(db, "users_master"), u.id), {
                     permissions: initialPerms
                 });
             } catch (e) {
@@ -106,26 +70,66 @@ export const useUsers = (menuItems: any[]) => {
         }
     };
 
+    useEffect(() => {
+        // Listen to Users
+        const unsubUsers = onSnapshot(query(getHotelCollection(db, "users_master"), orderBy("name")), async (snap) => {
+            const list: UserProfile[] = [];
+            snap.forEach(d => list.push({ id: d.id, ...d.data() } as UserProfile));
+            
+            // Check for Hardcoded Admin
+            const adminEmail = "nexura.management@gmail.com";
+            const adminExists = list.some(u => u.email === adminEmail);
+            if (!adminExists) {
+                const adminId = adminEmail.toLowerCase().replace(/[@.]/g, '_');
+                const isSuper = true;
+                const adminPerms: Record<string, boolean> = {};
+                ALL_KEYS.forEach(k => {
+                    adminPerms[k] = isSuper;
+                });
+                await setDoc(doc(getHotelCollection(db, "users_master"), adminId), {
+                    name: "Nexura Management",
+                    email: adminEmail,
+                    password: "000000",
+                    role: "superadmin",
+                    permissions: adminPerms
+                });
+            }
+
+            // Proactive Migration: if any user has no permissions map, migrate them in background
+            const needsMigration = list.filter(u => !u.permissions);
+            if (needsMigration.length > 0) {
+                migrateUsersPermissions(needsMigration);
+            }
+
+            setUsers(list);
+            setLoading(false);
+        }, (err) => {
+            console.error("Firestore read error in useUsers:", err);
+            setLoading(false);
+        });
+
+        return () => {
+            unsubUsers();
+        };
+    }, []);
+
     const handleSaveUser = async (formData: any, editingUser: UserProfile | null) => {
         try {
-            if (editingUser) {
-                const userDoc = doc(db, "users_master", editingUser.id);
-                // Remove password from formData if it's there to avoid accidental overwrite
-                const { password, ...updateData } = formData;
-                await updateDoc(userDoc, updateData);
-                console.log("User updated successfully:", editingUser.id);
-            } else {
-                const newId = formData.email.toLowerCase().replace(/[@.]/g, '_');
-                const isSuper = formData.role === "superadmin" || formData.role?.toLowerCase() === "superadmin";
-                const defaultPerms: Record<string, boolean> = {};
-                ALL_KEYS.forEach(k => {
-                    defaultPerms[k] = isSuper;
-                });
-                await setDoc(doc(db, "users_master", newId), {
+            const method = editingUser ? "PUT" : "POST";
+            const response = await fetch("/api/users", {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
                     ...formData,
-                    permissions: defaultPerms
-                });
-                console.log("User created successfully:", newId);
+                    hotelCode,
+                }),
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || "Failed to save user");
             }
             return true;
         } catch (error) {
@@ -136,8 +140,24 @@ export const useUsers = (menuItems: any[]) => {
 
     const handleDeleteUser = async (id: string) => {
         try {
-            await deleteDoc(doc(db, "users_master", id));
-            console.log("User deleted successfully:", id);
+            const targetUser = users.find(u => u.id === id);
+            if (!targetUser) throw new Error("User not found");
+
+            const response = await fetch("/api/users", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email: targetUser.email,
+                    hotelCode,
+                }),
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || "Failed to delete user");
+            }
             return true;
         } catch (error) {
             console.error("Error deleting user:", error);
@@ -146,10 +166,39 @@ export const useUsers = (menuItems: any[]) => {
     };
 
     const togglePermission = async (userId: string, menuId: string, currentValue: boolean) => {
-        const userDoc = doc(db, "users_master", userId);
+        const userDoc = doc(getHotelCollection(db, "users_master"), userId);
         await updateDoc(userDoc, {
             [`permissions.${menuId}`]: !currentValue
         });
+    };
+
+    const handleChangePassword = async (userId: string, newPassword: string) => {
+        try {
+            const targetUser = users.find(u => u.id === userId);
+            if (!targetUser) throw new Error("User not found");
+
+            const response = await fetch("/api/users", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email: targetUser.email,
+                    password: newPassword,
+                    hotelCode,
+                }),
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || "Failed to change password");
+            }
+            console.log(`Password for user ${userId} has been changed successfully.`);
+            return true;
+        } catch (error) {
+            console.error("Error changing user password:", error);
+            throw error;
+        }
     };
 
     return {
@@ -157,7 +206,8 @@ export const useUsers = (menuItems: any[]) => {
         loading,
         handleSaveUser,
         handleDeleteUser,
-        togglePermission
+        togglePermission,
+        handleChangePassword
     };
 };
 

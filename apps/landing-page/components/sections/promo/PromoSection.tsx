@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { TicketPercent, CalendarDays, ArrowRight } from "lucide-react";
@@ -43,7 +44,7 @@ export const PromoSection = () => {
     useEffect(() => {
         const fetchPromo = async () => {
             try {
-                const docSnap = await getDoc(doc(db, "sections", "promo"));
+                const docSnap = await getDoc(doc(getHotelCollection(db, "sections"), "promo"));
                 if (docSnap.exists()) {
                     setPromo(docSnap.data() as PromoData);
                 }

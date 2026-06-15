@@ -1,5 +1,6 @@
 import { db } from "../../../lib/firebase";
-import { collection, addDoc, getDocs, deleteDoc } from "firebase/firestore";
+import { getHotelCollection } from "../../../lib/firestoreHelper";
+import { addDoc, getDocs, deleteDoc } from "firebase/firestore";
 
 const sampleProducts = [
     { name: "Coffee Latte", price: 35000, category: "Beverage", image: "https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=2037&auto=format&fit=crop" },
@@ -12,7 +13,7 @@ const sampleProducts = [
 
 export async function seedPOSProducts() {
     console.log("Seeding POS Products...");
-    const colRef = collection(db, "pos_products");
+    const colRef = getHotelCollection(db, "pos_products");
     
     // Clear existing
     const snap = await getDocs(colRef);

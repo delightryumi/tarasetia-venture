@@ -21,6 +21,7 @@ import { GuestDetailModal } from "../overview/GuestDetailModal";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import styles from "./ForecastStyles.module.css";
 
 // Sub-components
@@ -179,7 +180,7 @@ export const ForecastSection: React.FC = () => {
     const executeVoid = async () => {
         if (!bookingToVoid) return;
         try {
-            const hotelId = "bumi-anyom-resort";
+            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
             const checkInDate = bookingToVoid.checkInDate || bookingToVoid.checkIn;
             const checkOutDate = bookingToVoid.checkOutDate || bookingToVoid.checkOut;
             const isPOS = bookingToVoid.guestName?.startsWith("POS Order") || !!bookingToVoid.posItems || !!bookingToVoid.revenueType;
@@ -187,7 +188,7 @@ export const ForecastSection: React.FC = () => {
             
             const dates = getDatesBetween(checkInDate, checkOutDate, isAcc);
             for (const d of dates) {
-                const docRef = doc(db, "daily_revenue", `${hotelId}_${d}`);
+                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
@@ -219,7 +220,7 @@ export const ForecastSection: React.FC = () => {
     const executeCancel = async () => {
         if (!bookingToCancel) return;
         try {
-            const hotelId = "bumi-anyom-resort";
+            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
             const checkInDate = bookingToCancel.checkInDate || bookingToCancel.checkIn;
             const checkOutDate = bookingToCancel.checkOutDate || bookingToCancel.checkOut;
             const isPOS = bookingToCancel.guestName?.startsWith("POS Order") || !!bookingToCancel.posItems || !!bookingToCancel.revenueType;
@@ -234,7 +235,7 @@ export const ForecastSection: React.FC = () => {
             const cancelledByVal = user ? `${user.displayName} (${user.role || 'user'})` : "System";
 
             for (const d of dates) {
-                const docRef = doc(db, "daily_revenue", `${hotelId}_${d}`);
+                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
@@ -271,7 +272,7 @@ export const ForecastSection: React.FC = () => {
 
     const handleStatusUpdate = async (booking: any, field: string, value: string) => {
         try {
-            const hotelId = "bumi-anyom-resort";
+            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
             const checkInDate = booking.checkInDate || booking.checkIn;
             const checkOutDate = booking.checkOutDate || booking.checkOut;
             const isPOS = booking.guestName?.startsWith("POS Order") || !!booking.posItems || !!booking.revenueType;
@@ -279,7 +280,7 @@ export const ForecastSection: React.FC = () => {
             
             const dates = getDatesBetween(checkInDate, checkOutDate, isAcc);
             for (const d of dates) {
-                const docRef = doc(db, "daily_revenue", `${hotelId}_${d}`);
+                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];

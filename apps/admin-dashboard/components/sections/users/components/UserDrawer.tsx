@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { X, Plus, User, Mail, RefreshCw, Check, Lock, Key } from "lucide-react";
 import { UserProfile } from "../types";
+import { ConfirmModal } from "./ConfirmModal";
 import styles from "../UsersStyles.module.css";
 
 interface UserDrawerProps {
@@ -13,11 +14,13 @@ interface UserDrawerProps {
     roles: string[];
     onSave: () => void;
     isSaving?: boolean;
+    onChangePassword?: (userId: string, newPassword: string) => Promise<void>;
 }
 
 export const UserDrawer: React.FC<UserDrawerProps> = ({ 
-    isOpen, onClose, editingUser, formData, setFormData, roles, onSave, isSaving 
+    isOpen, onClose, editingUser, formData, setFormData, roles, onSave, isSaving, onChangePassword 
 }) => {
+
     return (
         <>
             <motion.div 
@@ -106,19 +109,7 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                         </div>
                     )}
 
-                    {editingUser && (
-                        <div style={{ paddingTop: '8px' }}>
-                            <button 
-                                onClick={() => alert("Password reset link sent to user email.")}
-                                className={styles.resetBtnCluster}
-                            >
-                                <div className={styles.resetIconBox}>
-                                    <Key size={12} />
-                                </div>
-                                <span>Reset User Password</span>
-                            </button>
-                        </div>
-                    )}
+
 
                     <div className={styles.drawerFormGroup} style={{ gap: '12px' }}>
                         <div className={styles.roleSelectHeader}>
@@ -167,7 +158,9 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                     </button>
                 </footer>
             </motion.div>
+
+            {/* ─── Custom Confirm Modal for Reset Password ─── */}
+            {/* Reset password modal removed - using direct change password UI */}
         </>
     );
 };
-

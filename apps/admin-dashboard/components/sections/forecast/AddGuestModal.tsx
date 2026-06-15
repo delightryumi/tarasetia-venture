@@ -6,6 +6,7 @@ import { X, Save, User, CreditCard, Home, MessageSquare, Globe, Info } from "luc
 import { db } from "@/lib/firebase";
 import { doc, setDoc, arrayUnion, collection, getDocs } from "firebase/firestore";
 import { toast } from "sonner";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 interface AddGuestModalProps {
     isOpen: boolean;
@@ -33,7 +34,7 @@ export const AddGuestModal: React.FC<AddGuestModalProps> = ({ isOpen, onClose, s
     useEffect(() => {
         const fetchRoomTypes = async () => {
             try {
-                const querySnapshot = await getDocs(collection(db, "roomTypes"));
+                const querySnapshot = await getDocs(getHotelCollection(db, "roomTypes"));
                 const types = querySnapshot.docs.map(doc => doc.data().name || doc.id);
                 setRoomTypes(types);
                 if (types.length > 0 && !formData.roomType) {
@@ -51,7 +52,7 @@ export const AddGuestModal: React.FC<AddGuestModalProps> = ({ isOpen, onClose, s
         setLoading(true);
 
         try {
-            const hotelId = "bumi-anyom-resort";
+            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
             const docId = `${hotelId}_${selectedDate}`;
             
             const checkInD = new Date(selectedDate);
@@ -85,7 +86,7 @@ export const AddGuestModal: React.FC<AddGuestModalProps> = ({ isOpen, onClose, s
                 cancelledAt: isCancelled ? todayStr : null
             };
 
-            const docRef = doc(db, "daily_revenue", docId);
+            const docRef = doc(getHotelCollection(db, "daily_revenue"), docId);
             await setDoc(docRef, {
                 entries: arrayUnion(newEntry),
                 lastUpdated: new Date().toISOString(),

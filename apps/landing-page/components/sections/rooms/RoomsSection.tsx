@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { LayoutGrid, List } from "lucide-react";
@@ -41,7 +42,7 @@ export const RoomsSection = () => {
     useEffect(() => {
         const fetchRooms = async () => {
             try {
-                const q = query(collection(db, "roomTypes"), orderBy("name"));
+                const q = query(getHotelCollection(db, "roomTypes"), orderBy("name"));
                 const querySnapshot = await getDocs(q);
                 const roomsData = querySnapshot.docs.map(doc => ({
                     id: doc.id,

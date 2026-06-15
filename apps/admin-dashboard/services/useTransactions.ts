@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface Transaction {
   amount: number;
@@ -41,7 +42,7 @@ export function useTransactions(month?: number, year?: number) {
         const endStr = `${currentYear}-${monthStr}-${lastDay}`;
 
         const q = query(
-          collection(db, "daily_revenue"),
+          getHotelCollection(db, "daily_revenue"),
           where("date", ">=", startStr),
           where("date", "<=", endStr)
         );
@@ -51,7 +52,7 @@ export function useTransactions(month?: number, year?: number) {
 
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          const hotelId = data.hotelId || "bumi-anyom-resort";
+          const hotelId = data.hotelId || "87241";
           const docDate = data.date || "-";
           
           (data.entries || []).forEach((t: any) => {

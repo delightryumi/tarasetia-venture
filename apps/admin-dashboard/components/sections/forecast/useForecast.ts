@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, doc, getDocs, query, where } from "firebase/firestore";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface ForecastStats {
     totalGrossRevenue: number;
@@ -44,7 +45,7 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
         setStats(prev => ({ ...prev, loading: true }));
         
         const fetchRooms = async () => {
-            const roomSnap = await getDocs(collection(db, "roomTypes"));
+            const roomSnap = await getDocs(getHotelCollection(db, "roomTypes"));
             let count = 0;
             roomSnap.forEach(d => {
                 const data = d.data();
@@ -53,7 +54,7 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
             return count;
         };
 
-        const hotelId = "bumi-anyom-resort";
+        const hotelId = localStorage.getItem("active_hotel_code") || "87241";
         
         const fetchData = async () => {
             const totalPhysicalRooms = await fetchRooms();
@@ -84,7 +85,7 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                 trendLabels = ['2024','2025','2026','2027','2028','2029','2030'];
             }
 
-            const q = query(collection(db, "daily_revenue"), where("date", ">=", startStr), where("date", "<=", endStr));
+            const q = query(getHotelCollection(db, "daily_revenue"), where("date", ">=", startStr), where("date", "<=", endStr));
             const snap = await getDocs(q);
             
             let gross = 0, walkin = 0, ota = 0, other = 0, nexura = 0, hotel = 0, roomsSold = 0, roomRevenue = 0;

@@ -8,6 +8,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useFooter } from "@/services/useFooter";
 import { useLandingSettings } from "@/services/useLandingSettings";
 import { formatExternalUrl } from "@/lib/utils";
+import { useHotel } from "@/context/HotelContext";
 
 if (typeof window !== "undefined") {
     gsap.registerPlugin(ScrollTrigger);
@@ -63,6 +64,11 @@ const LEGAL_COL = [
 export const FooterSection = () => {
     const { data, loading } = useFooter();
     const { bookingEngineUrl } = useLandingSettings();
+    const { hotelData } = useHotel();
+    const hotelName = hotelData?.name || "Bumi Anyom";
+    const nameParts = hotelName.split(" ");
+    const firstName = nameParts[0] || "";
+    const restName = nameParts.slice(1).join(" ") || "";
     const footerRef = useRef<HTMLElement>(null);
 
     useEffect(() => {
@@ -118,7 +124,7 @@ export const FooterSection = () => {
                     <div>
                         <Link href="/">
                             <h3 className="text-2xl font-extralight tracking-[-0.02em] uppercase leading-tight">
-                                Bumi <span className="italic text-[#788069]">Anyom</span>
+                                {firstName} <span className="italic text-[#788069]">{restName}</span>
                             </h3>
                         </Link>
                         <p className="text-[9px] font-bold tracking-[0.4em] uppercase text-white/20 mt-1">Manage by Nexura</p>
@@ -216,7 +222,7 @@ export const FooterSection = () => {
             {/* ── Bottom bar ─────────────────────────────────────────────── */}
             <div className="px-6 md:px-14 py-6 flex flex-col md:flex-row items-center justify-between gap-4 ft-item">
                 <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/15">
-                    © {new Date().getFullYear()} Bumi Anyom — Kembali Membumi
+                    © {new Date().getFullYear()} {hotelName}
                 </p>
 
                 <div className="flex items-center gap-6">

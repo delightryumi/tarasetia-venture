@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         day: '2-digit',
       });
       const entryDate = formatter.format(new Date(tx.createdAt));
-      const hotelId = 'bumi-anyom-resort';
+      const hotelId = '87241';
       const docId = `${hotelId}_${entryDate}`;
 
       // Build the standard revenue entry matching the dashboard's daily_revenue structure

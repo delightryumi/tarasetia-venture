@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { FooterSection } from "@/components/sections/footer/FooterSection";
 import {
@@ -51,7 +52,7 @@ export default function RoomsPage() {
     useEffect(() => {
         const fetchRooms = async () => {
             try {
-                const q = query(collection(db, "roomTypes"), orderBy("name"));
+                const q = query(getHotelCollection(db, "roomTypes"), orderBy("name"));
                 const snap = await getDocs(q);
                 setRooms(snap.docs.map(d => ({ id: d.id, ...d.data() })) as RoomType[]);
             } catch (err) {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { toast } from "sonner";
 import { HeroSlide } from "../../../../../types/hero"; // using relative path from apps/admin-dashboard/components/sections/hero
 
@@ -13,7 +14,7 @@ export const useHero = () => {
     useEffect(() => {
         const fetchHero = async () => {
             try {
-                const docRef = doc(db, "sections", "hero");
+                const docRef = doc(getHotelCollection(db, "sections"), "hero");
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
@@ -93,7 +94,7 @@ export const useHero = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await setDoc(doc(db, "sections", "hero"), {
+            await setDoc(doc(getHotelCollection(db, "sections"), "hero"), {
                 slides,
                 updatedAt: new Date().toISOString()
             }, { merge: true });

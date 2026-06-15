@@ -168,6 +168,29 @@
     align-items: center;
     justify-content: center;
     color: #9297a0;
+    background: #f8fafc;
+    gap: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .loadingContainer {
+        background: #262626;
+    }
+}
+
+/* Spinner */
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 4px solid #e2e8f0;
+    border-top: 4px solid #788069;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .loadingText {
@@ -799,6 +822,24 @@
     transition: all 0.2s ease;
 }
 
+.changePwdInput {
+    width: 100%;
+    height: 44px;
+    padding: 0 12px 0 38px;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #181d26;
+    transition: all 0.2s ease;
+}
+
+.changePwdInput:focus {
+    outline: none;
+    border-color: #181d26;
+    box-shadow: 0 0 0 3px rgba(24, 29, 38, 0.05);
+}
+
 .drawerInput:focus {
     outline: none;
     border-color: #181d26;
@@ -980,3 +1021,486 @@
     display: inline-block;
 }
 
+/* ─── Confirmation Modal (replaces native confirm/alert) ─── */
+.confirmOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 600;
+    background: rgba(24, 29, 38, 0.45);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.confirmPanel {
+    width: 100%;
+    max-width: 400px;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.confirmHeader {
+    padding: 24px 24px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.confirmIconBox {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: rgba(120, 128, 105, 0.08);
+    border: 1px solid rgba(120, 128, 105, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #788069;
+    flex-shrink: 0;
+}
+
+.confirmIconBoxDanger {
+    background: rgba(170, 45, 0, 0.06);
+    border-color: rgba(170, 45, 0, 0.12);
+    color: #aa2d00;
+}
+
+.confirmTitle {
+    font-size: 15px;
+    font-weight: 600;
+    color: #181d26;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+}
+
+.confirmBody {
+    padding: 16px 24px 24px;
+}
+
+.confirmMessage {
+    font-size: 13px;
+    color: #41454d;
+    line-height: 1.6;
+}
+
+.confirmNewPassword {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #dddddd;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #788069;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.confirmFooter {
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-top: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.confirmBtnCancel {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    color: #41454d;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.confirmBtnCancel:hover {
+    border-color: #9297a0;
+    color: #181d26;
+}
+
+.confirmBtnConfirm {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: #788069;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.confirmBtnConfirm:hover {
+    background: #6b7360;
+}
+
+.confirmBtnConfirm:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.confirmBtnDanger {
+    background: #aa2d00;
+}
+
+.confirmBtnDanger:hover {
+    background: #8e2500;
+}
+
+/* ─── Change Password Modal ─── */
+.changePwdModalPanel {
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 60px rgba(24, 29, 38, 0.12);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.changePwdModalHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 24px;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.changePwdModalIconBox {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #788069;
+    flex-shrink: 0;
+}
+
+.changePwdModalTitleGroup {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.changePwdModalTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #181d26;
+    letter-spacing: -0.01em;
+}
+
+.changePwdModalSub {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #9297a0;
+}
+
+.changePwdModalClose {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #dddddd;
+    background: #ffffff;
+    color: #9297a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.changePwdModalClose:hover {
+    background: #f8fafc;
+    border-color: #9297a0;
+    color: #181d26;
+}
+
+.changePwdModalBody {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.changePwdField {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.changePwdLabel {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #9297a0;
+}
+
+.changePwdInputRow {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+    background: #ffffff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+
+.changePwdInputRow:focus-within {
+    border-color: #788069;
+    box-shadow: 0 0 0 3px rgba(120, 128, 105, 0.1);
+}
+
+.changePwdInputRowError {
+    border-color: #d94f3d !important;
+    box-shadow: 0 0 0 3px rgba(217, 79, 61, 0.08) !important;
+}
+
+.changePwdInputRowSuccess {
+    border-color: #788069 !important;
+    box-shadow: 0 0 0 3px rgba(120, 128, 105, 0.12) !important;
+}
+
+.changePwdInputIcon {
+    padding: 0 12px;
+    color: #9297a0;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.changePwdInput2 {
+    flex: 1;
+    height: 44px;
+    padding: 0 8px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 13px;
+    color: #181d26;
+    font-family: var(--font-sans, -apple-system, sans-serif);
+}
+
+.changePwdInput2::placeholder {
+    color: #c0c4cc;
+}
+
+.changePwdEyeBtn {
+    width: 36px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    color: #9297a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.15s ease;
+}
+
+.changePwdEyeBtn:hover {
+    color: #181d26;
+}
+
+.changePwdHint {
+    font-size: 11px;
+    color: #c0a030;
+    padding-left: 2px;
+}
+
+.changePwdError {
+    font-size: 11px;
+    color: #d94f3d;
+    padding-left: 2px;
+    font-weight: 500;
+}
+
+.changePwdSuccess {
+    font-size: 11px;
+    color: #788069;
+    padding-left: 2px;
+    font-weight: 500;
+}
+
+.changePwdModalFooter {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid #eeeeee;
+    background: #fafafa;
+}
+
+.confirmBtnDisabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ─── Dark Mode Overrides ─── */
+/* Dropdown Actions Menu */
+.dropdownContainer {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdownMenu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(24, 29, 38, 0.08);
+    z-index: 100;
+    min-width: 150px;
+    display: flex;
+    flex-direction: column;
+    padding: 6px 0;
+    transform-origin: top right;
+}
+
+.dropdownItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    text-align: left;
+    color: #41454d;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.dropdownItem:hover {
+    background: #f8fafc;
+    color: #181d26;
+}
+
+.dropdownItemDanger {
+    color: #aa2d00;
+}
+
+.dropdownItemDanger:hover {
+    background: rgba(252, 171, 121, 0.1);
+    color: #aa2d00;
+}
+
+@media (prefers-color-scheme: dark) {
+    .container { color: #e8e8e8; }
+    .title { color: #e8e8e8; }
+    .header { border-bottom-color: #333; }
+    .tabGroup { background: #1e1e1e; border-color: #333; }
+    .tabButton { color: #888; }
+    .tabButtonActive { background: #2a2a2a; border-color: #444; color: #e8e8e8; }
+    .primaryButton { background: #e8e8e8; color: #181d26; }
+    .primaryButton:hover { background: #d0d0d0; }
+    .searchInput { background: #1e1e1e; border-color: #333; color: #e8e8e8; }
+    .searchInput:focus { border-color: #788069; box-shadow: 0 0 0 3px rgba(120,128,105,0.15); }
+    .userCard { background: #1e1e1e; border-color: #333; }
+    .userCard:hover { border-color: #555; }
+    .userName { color: #e8e8e8; }
+    .cardBody { border-top-color: #333; }
+    .cardFooter { border-top-color: #333; }
+    .cardDetailItem { color: #aaa; }
+    .iconButton { background: #1e1e1e; border-color: #333; color: #888; }
+    .iconButton:hover { color: #e8e8e8; border-color: #555; background: #2a2a2a; }
+    .lockBadge { background: #2a2a2a; border-color: #333; color: #888; }
+    .roleCard { background: #1e1e1e; border-color: #333; color: #e8e8e8; }
+    .roleCardHeader { background: #262626; }
+    .roleCardHeaderExpanded { border-bottom-color: #333; }
+    .roleIconContainer { background: #1e1e1e; border-color: #333; }
+    .roleLabel { color: #e8e8e8; }
+    .moduleBox { background: #1e1e1e; border-color: #333; }
+    .moduleHeader { border-bottom-color: #333; }
+    .moduleIcon { background: #262626; border-color: #333; }
+    .submenuRow:hover { background: #262626; }
+    .submenuLabel { color: #aaa; }
+    .roleCardFooter { background: #262626; border-top-color: #333; }
+    .drawerOverlay { background: rgba(0,0,0,0.5); }
+    .drawerPanel { background: #1e1e1e; border-left-color: #333; color: #e8e8e8; }
+    .drawerHeader { border-bottom-color: #333; }
+    .drawerHeaderMetaIcon { background: #262626; border-color: #333; }
+    .drawerTitle { color: #e8e8e8; }
+    .drawerCloseBtn { background: #1e1e1e; border-color: #333; }
+    .drawerCloseBtn:hover { color: #e8e8e8; border-color: #555; }
+    .drawerInput { background: #262626; border-color: #333; color: #e8e8e8; }
+    .drawerInput:focus { border-color: #788069; }
+    .drawerInput:disabled { background: #1a1a1a; }
+    .resetIconBox { border-color: #333; }
+    .levelBadge { background: #262626; border-color: #333; }
+    .roleSelectBtn { background: #262626; border-color: #333; color: #888; }
+    .roleSelectBtn:hover { border-color: #555; color: #ccc; }
+    .roleSelectBtnActive { background: #788069; border-color: #788069; color: #fff; }
+    .drawerFooter { background: #262626; border-top-color: #333; }
+    .submitBtn { background: #e8e8e8; color: #181d26; }
+    .submitBtn:hover { background: #d0d0d0; }
+    .cancelBtn { background: #1e1e1e; border-color: #333; color: #e8e8e8; }
+    .cancelBtn:hover { border-color: #555; color: #ccc; }
+    .confirmPanel { background: #1e1e1e; border-color: #333; }
+    .confirmTitle { color: #e8e8e8; }
+    .confirmMessage { color: #aaa; }
+    .confirmNewPassword { background: #262626; border-color: #333; }
+    .confirmFooter { background: #262626; border-top-color: #333; }
+    .confirmBtnCancel { background: #1e1e1e; border-color: #333; color: #ccc; }
+    .confirmBtnCancel:hover { border-color: #555; color: #e8e8e8; }
+    
+    .dropdownMenu {
+        background: #1e1e1e;
+        border-color: #333;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+    .dropdownItem {
+        color: #aaa;
+    }
+    .dropdownItem:hover {
+        background: #262626;
+        color: #e8e8e8;
+    }
+    .dropdownItemDanger {
+        color: #fcab79;
+    }
+    .dropdownItemDanger:hover {
+        background: rgba(252, 171, 121, 0.08);
+        color: #fcab79;
+    }
+}

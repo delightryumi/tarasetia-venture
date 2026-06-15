@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, MoonStar, Monitor, Power } from 'lucide-react';
+import { Sun, MoonStar, Monitor } from 'lucide-react';
 import styles from './ModuleActionButtons.module.css';
 
 interface ModuleActionButtonsProps {
@@ -10,7 +10,6 @@ interface ModuleActionButtonsProps {
   setShowGrid: (show: boolean) => void;
   theme: 'dark' | 'light' | 'system';
   changeTheme: (theme: 'dark' | 'light' | 'system') => void;
-  signOutUser: () => void;
 }
 
 export function ModuleActionButtons({
@@ -18,7 +17,6 @@ export function ModuleActionButtons({
   setShowGrid,
   theme,
   changeTheme,
-  signOutUser,
 }: ModuleActionButtonsProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -101,14 +99,7 @@ export function ModuleActionButtons({
         </AnimatePresence>
       </div>
  
-      {/* Logout button */}
-      <button
-        onClick={signOutUser}
-        className={styles.squareButton}
-        title="Sign Out"
-      >
-        <Power className="w-[1.15rem] h-[1.15rem] shrink-0" />
-      </button>
+
     </div>
   );
 }

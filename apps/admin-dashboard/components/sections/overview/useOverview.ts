@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase"; 
 import { collection, onSnapshot, doc, query, where } from "firebase/firestore";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface BookingEntry {
     guestName: string;
@@ -87,7 +88,7 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                 const endRange = getLocalDateString(endRangeDate);
                 
                 const q = query(
-                    collection(db, "daily_revenue"), 
+                    getHotelCollection(db, "daily_revenue"), 
                     where("date", ">=", startRange),
                     where("date", "<=", endRange)
                 );
@@ -227,7 +228,7 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
 
         initBookings();
 
-        const unsubRooms = onSnapshot(collection(db, "roomTypes"), (snapshot) => {
+        const unsubRooms = onSnapshot(getHotelCollection(db, "roomTypes"), (snapshot) => {
             let totalRooms = 0;
             const rTypes: any[] = [];
             snapshot.forEach(docSnap => {
@@ -256,15 +257,15 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
             });
         });
 
-        const unsubGallery = onSnapshot(collection(db, "gallery"), (snapshot) => {
+        const unsubGallery = onSnapshot(getHotelCollection(db, "gallery"), (snapshot) => {
             setStats(prev => ({ ...prev, galleryCount: snapshot.size }));
         });
 
-        const unsubAttractions = onSnapshot(collection(db, "attractions"), (snapshot) => {
+        const unsubAttractions = onSnapshot(getHotelCollection(db, "attractions"), (snapshot) => {
             setStats(prev => ({ ...prev, attractionsCount: snapshot.size }));
         });
 
-        const unsubSEO = onSnapshot(doc(db, "settings", "seo"), (snapshot) => {
+        const unsubSEO = onSnapshot(doc(getHotelCollection(db, "settings"), "seo"), (snapshot) => {
             setStats(prev => ({
                 ...prev,
                 seoConfigured: snapshot.exists(),

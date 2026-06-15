@@ -3,12 +3,13 @@ import {
 } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { ItemMaster } from "../../lib/purchasing/types";
+import { getHotelCollection } from "../../lib/firestoreHelper";
 
 const COLLECTION_NAME = "items";
 
 export const itemsService = {
   async getAll(): Promise<ItemMaster[]> {
-    const q = query(collection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
+    const q = query(getHotelCollection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
     const snap = await getDocs(q);
     return snap.docs
       .map(d => ({ id: d.id, ...d.data() } as ItemMaster))
@@ -16,14 +17,14 @@ export const itemsService = {
   },
 
   async getById(id: string): Promise<ItemMaster | null> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     const snap = await getDoc(docRef);
     if (!snap.exists() || snap.data().is_deleted) return null;
     return { id: snap.id, ...snap.data() } as ItemMaster;
   },
 
   async create(item: Omit<ItemMaster, "id" | "created_at" | "updated_at">): Promise<string> {
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+    const docRef = await addDoc(getHotelCollection(db, COLLECTION_NAME), {
       ...item,
       is_deleted: false,
       created_at: serverTimestamp(),
@@ -33,7 +34,7 @@ export const itemsService = {
   },
 
   async update(id: string, item: Partial<ItemMaster>): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await updateDoc(docRef, {
       ...item,
       updated_at: serverTimestamp()
@@ -41,7 +42,7 @@ export const itemsService = {
   },
 
   async softDelete(id: string): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await updateDoc(docRef, {
       is_deleted: true,
       updated_at: serverTimestamp()
@@ -49,7 +50,7 @@ export const itemsService = {
   },
 
   async delete(id: string): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await deleteDoc(docRef);
   },
 
@@ -76,7 +77,7 @@ export const itemsService = {
   },
 
   async getCategories(): Promise<string[]> {
-    const q = collection(db, "item_categories");
+    const q = getHotelCollection(db, "item_categories");
     const snap = await getDocs(q);
     return snap.docs.map(d => d.data().name as string);
   },
@@ -84,12 +85,12 @@ export const itemsService = {
   async addCategory(name: string): Promise<void> {
     const cleanName = name.trim();
     if (!cleanName) return;
-    const docRef = doc(db, "item_categories", cleanName.toLowerCase());
+    const docRef = doc(getHotelCollection(db, "item_categories"), cleanName.toLowerCase());
     await setDoc(docRef, { name: cleanName, created_at: serverTimestamp() });
   },
 
   async getUnits(): Promise<string[]> {
-    const q = collection(db, "item_units");
+    const q = getHotelCollection(db, "item_units");
     const snap = await getDocs(q);
     return snap.docs.map(d => d.data().name as string);
   },
@@ -97,7 +98,7 @@ export const itemsService = {
   async addUnit(name: string): Promise<void> {
     const cleanName = name.trim();
     if (!cleanName) return;
-    const docRef = doc(db, "item_units", cleanName.toLowerCase());
+    const docRef = doc(getHotelCollection(db, "item_units"), cleanName.toLowerCase());
     await setDoc(docRef, { name: cleanName, created_at: serverTimestamp() });
   }
 };

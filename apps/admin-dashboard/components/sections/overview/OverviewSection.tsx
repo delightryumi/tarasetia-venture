@@ -11,6 +11,7 @@ import { useOverview } from "./useOverview";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 // Modular Imports
 import styles from "./OverviewStyles.module.css";
@@ -92,14 +93,14 @@ export function OverviewSection() {
         // Allow status updates even in housekeeping view (they manage room status/remarks)
         console.log("handleStatusUpdate triggered", { item, field, value });
         try {
-            const hotelId = "bumi-anyom-resort";
+            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
             const checkInDate = item.checkInDate || item.checkIn;
             const checkOutDate = item.checkOutDate || item.checkOut;
             const isAcc = item.type === "accommodation" || (!item.type && item.guestName && !item.guestName.startsWith("POS Order") && !item.posItems && !item.revenueType);
             
             const dates = getDatesBetween(checkInDate, checkOutDate, isAcc);
             for (const d of dates) {
-                const docRef = doc(db, "daily_revenue", `${hotelId}_${d}`);
+                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
@@ -143,7 +144,7 @@ export function OverviewSection() {
     const executeVoid = async () => {
         if (!bookingToVoid) return;
         try {
-            const hotelId = "bumi-anyom-resort";
+            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
             const checkInDate = bookingToVoid.checkInDate || bookingToVoid.checkIn;
             const checkOutDate = bookingToVoid.checkOutDate || bookingToVoid.checkOut;
             const isPOS = bookingToVoid.guestName?.startsWith("POS Order") || !!bookingToVoid.posItems || !!bookingToVoid.revenueType;
@@ -151,7 +152,7 @@ export function OverviewSection() {
             
             const dates = getDatesBetween(checkInDate, checkOutDate, isAcc);
             for (const d of dates) {
-                const docRef = doc(db, "daily_revenue", `${hotelId}_${d}`);
+                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
@@ -174,13 +175,13 @@ export function OverviewSection() {
             // Cascade void if it has a bookingId
             const bookingId = bookingToVoid.bookingId;
             if (bookingId) {
-                const posQuery = query(collection(db, "pos_orders"), where("transactionId", "==", bookingId));
+                const posQuery = query(getHotelCollection(db, "pos_orders"), where("transactionId", "==", bookingId));
                 const posSnap = await getDocs(posQuery);
                 for (const d of posSnap.docs) {
                     await updateDoc(d.ref, { status: "VOID", isDeleted: true });
                 }
 
-                const revQuery = query(collection(db, "revenue_transactions"), where("transactionId", "==", bookingId));
+                const revQuery = query(getHotelCollection(db, "revenue_transactions"), where("transactionId", "==", bookingId));
                 const revSnap = await getDocs(revQuery);
                 for (const d of revSnap.docs) {
                     await updateDoc(d.ref, { status: "VOID", isDeleted: true });
@@ -196,7 +197,7 @@ export function OverviewSection() {
     const executeCancel = async () => {
         if (!bookingToCancel) return;
         try {
-            const hotelId = "bumi-anyom-resort";
+            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
             const checkInDate = bookingToCancel.checkInDate || bookingToCancel.checkIn;
             const checkOutDate = bookingToCancel.checkOutDate || bookingToCancel.checkOut;
             const isPOS = bookingToCancel.guestName?.startsWith("POS Order") || !!bookingToCancel.posItems || !!bookingToCancel.revenueType;
@@ -209,9 +210,9 @@ export function OverviewSection() {
             const dd = String(now.getDate()).padStart(2, '0');
             const todayStr = `${yyyy}-${mm}-${dd}`;
             const cancelledByVal = user ? `${user.displayName} (${user.role || 'user'})` : "System";
-
+ 
             for (const d of dates) {
-                const docRef = doc(db, "daily_revenue", `${hotelId}_${d}`);
+                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];

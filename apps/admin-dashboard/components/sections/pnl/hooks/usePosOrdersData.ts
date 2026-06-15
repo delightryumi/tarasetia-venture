@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase"; 
+import { getHotelCollection } from "@/lib/firestoreHelper"; 
 
 export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") => {
     const [loadingPOS, setLoadingPOS] = useState(false);
@@ -53,7 +54,7 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
             let taxTotalCalc = 0;
             
             // 1. Fetch settings and products
-            const posSettingsRef = doc(db, 'settings', 'pos');
+            const posSettingsRef = doc(getHotelCollection(db, 'settings'), 'pos');
             const posSettingsSnap = await getDoc(posSettingsRef);
             let serviceRate = 0;
             let taxRateIndividual = 10;
@@ -67,7 +68,7 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
               taxRate = serviceRate + taxRateIndividual + lostBreakageRate;
             }
             
-            const prodSnap = await getDocs(collection(db, 'pos_products'));
+            const prodSnap = await getDocs(getHotelCollection(db, 'pos_products'));
             const productMap: Record<string, { buyPrice: number; sellPrice: number; category: string; name?: string }> = {};
             prodSnap.forEach((d) => {
               productMap[d.id] = { 
@@ -79,7 +80,7 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
             });
 
             // 2. Fetch pos_orders
-            const posOrdersSnap = await getDocs(collection(db, "pos_orders"));
+            const posOrdersSnap = await getDocs(getHotelCollection(db, "pos_orders"));
             const fetchedPosOrders: any[] = [];
             posOrdersSnap.forEach((docSnap) => {
               const data = docSnap.data();

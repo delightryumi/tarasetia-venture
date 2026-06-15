@@ -12,6 +12,7 @@ import {
 import { db, storage } from "@/lib/firebase";
 import { ref, deleteObject } from "firebase/storage";
 import { toast } from "sonner";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface RoomImage {
     url: string;
@@ -63,7 +64,7 @@ export const useRoomTypes = () => {
     const [currentStep, setCurrentStep] = useState(1);
 
     useEffect(() => {
-        const q = query(collection(db, "roomTypes"), orderBy("name"));
+        const q = query(getHotelCollection(db, "roomTypes"), orderBy("name"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const types = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -82,7 +83,7 @@ export const useRoomTypes = () => {
 
         setSaving(true);
         try {
-            await addDoc(collection(db, "roomTypes"), {
+            await addDoc(getHotelCollection(db, "roomTypes"), {
                 name: newName,
                 description: newDesc,
                 images: newImages,
@@ -112,7 +113,7 @@ export const useRoomTypes = () => {
 
         setSaving(true);
         try {
-            const roomRef = doc(db, "roomTypes", editingRoom.id);
+            const roomRef = doc(getHotelCollection(db, "roomTypes"), editingRoom.id);
             await updateDoc(roomRef, {
                 name: newName,
                 description: newDesc,
@@ -204,7 +205,7 @@ export const useRoomTypes = () => {
                             }));
                         }
 
-                        await deleteDoc(doc(db, "roomTypes", id));
+                        await deleteDoc(doc(getHotelCollection(db, "roomTypes"), id));
                         toast.success(`${room.name} has been decommissioned.`);
                     } catch (err) {
                         console.error("Error deleting room type:", err);

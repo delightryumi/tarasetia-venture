@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { FooterSection } from "@/components/sections/footer/FooterSection";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,7 +41,7 @@ export default function GalleryPage() {
     useEffect(() => {
         const fetchGallery = async () => {
             try {
-                const q = query(collection(db, "gallery"), orderBy("createdAt", "desc"));
+                const q = query(getHotelCollection(db, "gallery"), orderBy("createdAt", "desc"));
                 const snap = await getDocs(q);
                 // In case some images don't have categories in DB, we'll assign them random ones from our list for visual variety
                 const data = snap.docs.map(d => ({ 

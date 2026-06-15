@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { collection, getDocs, doc, updateDoc, getDoc, arrayUnion, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { toast } from "sonner";
 
 /* ── Brand Colors ── */
@@ -87,7 +88,7 @@ export const AddTransactionModal = ({
     useEffect(() => {
         const fetchRoomTypes = async () => {
             try {
-                const snap = await getDocs(collection(db, "roomTypes"));
+                const snap = await getDocs(getHotelCollection(db, "roomTypes"));
                 setRoomTypes(snap.docs.map(d => ({ id: d.id, name: d.data().name })));
             } catch (err) {
                 console.error("Error fetching room types:", err);
@@ -125,7 +126,7 @@ export const AddTransactionModal = ({
 
         setSaving(true);
         try {
-            const hotelId = "bumi-anyom-resort";
+            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
             const dateStr = form.checkIn; 
             const docId = `${hotelId}_${dateStr}`;
             
@@ -149,7 +150,7 @@ export const AddTransactionModal = ({
                 timestamp: new Date().toISOString()
             };
 
-            const docRef = doc(db, "daily_revenue", docId);
+            const docRef = doc(getHotelCollection(db, "daily_revenue"), docId);
             const docSnap = await getDoc(docRef);
 
             if (docSnap.exists()) {

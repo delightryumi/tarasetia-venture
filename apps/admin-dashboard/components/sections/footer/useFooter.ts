@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { toast } from "sonner";
 
 export interface SocialLink {
@@ -26,7 +27,7 @@ export const useFooter = () => {
     useEffect(() => {
         const fetchFooter = async () => {
             try {
-                const docRef = doc(db, "settings", "footer");
+                const docRef = doc(getHotelCollection(db, "settings"), "footer");
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
@@ -84,7 +85,7 @@ export const useFooter = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await setDoc(doc(db, "settings", "footer"), {
+            await setDoc(doc(getHotelCollection(db, "settings"), "footer"), {
                 address,
                 phones,
                 email,

@@ -4,12 +4,13 @@ import {
 import { db } from "../../lib/firebase";
 import { DailyMarketList } from "../../lib/purchasing/types";
 import { generateDocNumber } from "../../lib/purchasing/utils";
+import { getHotelCollection } from "../../lib/firestoreHelper";
 
 const COLLECTION_NAME = "daily_market_lists";
 
 export const dmlService = {
   async getAll(): Promise<DailyMarketList[]> {
-    const q = query(collection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
+    const q = query(getHotelCollection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
     const snap = await getDocs(q);
     return snap.docs
       .map(d => ({ id: d.id, ...d.data() } as DailyMarketList))
@@ -17,7 +18,7 @@ export const dmlService = {
   },
 
   async getById(id: string): Promise<DailyMarketList | null> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     const snap = await getDoc(docRef);
     if (!snap.exists() || snap.data().is_deleted) return null;
     return { id: snap.id, ...snap.data() } as DailyMarketList;
@@ -25,7 +26,7 @@ export const dmlService = {
 
   async create(dml: Omit<DailyMarketList, "id" | "dml_number" | "created_at">): Promise<string> {
     const dmlNumber = await generateDocNumber("DML");
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+    const docRef = await addDoc(getHotelCollection(db, COLLECTION_NAME), {
       ...dml,
       dml_number: dmlNumber,
       is_deleted: false,
@@ -35,7 +36,7 @@ export const dmlService = {
   },
 
   async update(id: string, dml: Partial<DailyMarketList>): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await updateDoc(docRef, {
       ...dml,
       updated_at: serverTimestamp()
@@ -43,14 +44,14 @@ export const dmlService = {
   },
 
   async softDelete(id: string): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await updateDoc(docRef, {
       is_deleted: true
     });
   },
 
   async seedDemoDMLs(items: any[]): Promise<void> {
-    const q = query(collection(db, COLLECTION_NAME));
+    const q = query(getHotelCollection(db, COLLECTION_NAME));
     const snap = await getDocs(q);
     if (!snap.empty) return;
 
