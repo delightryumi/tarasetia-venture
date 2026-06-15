@@ -136,8 +136,8 @@ export default function ExpenseInput({ expenses, setExpenses }: ExpenseInputProp
                         : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
                     }`}
                   >
-                    <option value="SHARED">Shared (Investor + Nexura)</option>
-                    <option value="MANAGEMENT">Nexura Only (Internal)</option>
+                    <option value="SHARED">Shared (Investor + Management)</option>
+                    <option value="MANAGEMENT">Management Only (Internal)</option>
                   </select>
                 </div>
               </div>

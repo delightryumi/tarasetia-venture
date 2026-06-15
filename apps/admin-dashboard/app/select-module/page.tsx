@@ -33,14 +33,14 @@ import { BillingSuspendedModal } from '@/components/layout/BillingSuspendedModal
 import styles from './select-module.module.css';
 
 export default function SelectModulePage() {
-  const { 
-    user, 
-    loading: authLoading, 
+  const {
+    user,
+    loading: authLoading,
     signOutUser,
     activeHotelCode,
     activeHotelName,
     hotelsList,
-    setActiveHotelCode 
+    setActiveHotelCode
   } = useAuth();
   const router = useRouter();
   const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
@@ -110,10 +110,23 @@ export default function SelectModulePage() {
       document.documentElement.classList.remove('dark');
     }
 
+    // Listener to sync theme state on focus or local storage changes
+    const syncThemeState = () => {
+      const currentTheme = (localStorage.getItem('theme') as 'dark' | 'light' | 'system') || 'system';
+      setTheme(currentTheme);
+    };
+    window.addEventListener('focus', syncThemeState);
+    window.addEventListener('storage', syncThemeState);
+
     // Check if intro is requested
     const urlParams = new URLSearchParams(window.location.search);
     const isIntro = urlParams.get('intro') === 'true';
     setShowGrid(!isIntro);
+
+    return () => {
+      window.removeEventListener('focus', syncThemeState);
+      window.removeEventListener('storage', syncThemeState);
+    };
   }, []);
 
   const fetchPermissions = async () => {
@@ -126,15 +139,15 @@ export default function SelectModulePage() {
       const userDocId = user.email.toLowerCase().replace(/[@.]/g, '_');
       const isSuper = (user as any).role === "superadmin" || user.email.toLowerCase() === "nexura.management@gmail.com";
       const userSnap = await getDoc(
-        isSuper 
-          ? doc(db, "users_master", userDocId) 
+        isSuper
+          ? doc(db, "users_master", userDocId)
           : doc(getHotelCollection(db, "users_master"), userDocId)
       );
-      
+
       if (userSnap.exists()) {
         const userData = userSnap.data();
         const role = userData.role;
-        
+
         if (role === "superadmin") {
           setIsSuperadmin(true);
           setLoadingPerms(false);
@@ -163,6 +176,7 @@ export default function SelectModulePage() {
   const changeTheme = (newTheme: 'dark' | 'light' | 'system') => {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
+    document.cookie = `shared_theme=${newTheme}; path=/; max-age=31536000; SameSite=Lax`;
     let resolved = newTheme;
     if (newTheme === 'system') {
       resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -176,7 +190,7 @@ export default function SelectModulePage() {
 
   const hasAccess = (moduleKey: string) => {
     if (isSuperadmin) return true;
-    
+
     // Active modules restrictions if loaded (CPanel is always allowed for basic settings)
     if (activeModules !== null && moduleKey !== 'cpanel') {
       if (!activeModules.includes(moduleKey)) {
@@ -185,35 +199,35 @@ export default function SelectModulePage() {
     }
 
     if (!userPermissions) return false;
-    
+
     switch (moduleKey) {
       case 'pos':
-        return userPermissions['module_pos'] !== undefined 
-          ? !!userPermissions['module_pos'] 
+        return userPermissions['module_pos'] !== undefined
+          ? !!userPermissions['module_pos']
           : userPermissions['pos'] !== false;
       case 'front-office':
-        return userPermissions['module_front_office'] !== undefined 
-          ? !!userPermissions['module_front_office'] 
+        return userPermissions['module_front_office'] !== undefined
+          ? !!userPermissions['module_front_office']
           : (userPermissions['overview'] !== false || userPermissions['forecast'] !== false || userPermissions['invoice'] !== false);
       case 'housekeeping':
-        return userPermissions['module_housekeeping'] !== undefined 
-          ? !!userPermissions['module_housekeeping'] 
+        return userPermissions['module_housekeeping'] !== undefined
+          ? !!userPermissions['module_housekeeping']
           : (userPermissions['overview'] !== false || userPermissions['forecast'] !== false);
       case 'accounting':
-        return userPermissions['module_accounting'] !== undefined 
-          ? !!userPermissions['module_accounting'] 
+        return userPermissions['module_accounting'] !== undefined
+          ? !!userPermissions['module_accounting']
           : userPermissions['pnl'] !== false;
       case 'purchasing':
-        return userPermissions['module_purchasing'] !== undefined 
-          ? !!userPermissions['module_purchasing'] 
+        return userPermissions['module_purchasing'] !== undefined
+          ? !!userPermissions['module_purchasing']
           : userPermissions['purchasing'] !== false;
       case 'food-beverage':
-        return userPermissions['module_food_beverage'] !== undefined 
-          ? !!userPermissions['module_food_beverage'] 
+        return userPermissions['module_food_beverage'] !== undefined
+          ? !!userPermissions['module_food_beverage']
           : userPermissions['food-beverage'] !== false;
       case 'cpanel':
-        return userPermissions['module_cpanel'] !== undefined 
-          ? !!userPermissions['module_cpanel'] 
+        return userPermissions['module_cpanel'] !== undefined
+          ? !!userPermissions['module_cpanel']
           : userPermissions['users'] !== false;
       default:
         return false;
@@ -312,8 +326,8 @@ export default function SelectModulePage() {
   if (isHotelActive === false) {
     const formattedDueDate = nextDueDate
       ? new Date(nextDueDate).toLocaleDateString('id-ID', {
-          day: 'numeric', month: 'long', year: 'numeric',
-        })
+        day: 'numeric', month: 'long', year: 'numeric',
+      })
       : '-';
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-[#08080a] font-sans">
@@ -329,44 +343,47 @@ export default function SelectModulePage() {
   return (
     <div className={styles.container}>
       {/* Top Header Bar Container */}
-      <header className="w-full py-3.5 z-30 border-b border-slate-200/50 dark:border-zinc-800/45 bg-[#212121] dark:bg-zinc-950 select-none">
-        <div className="w-full flex justify-between items-center pl-[60px] pr-[60px] md:pl-[120px] md:pr-[120px] lg:pl-[180px] lg:pr-[180px]">
+      <header className={styles.headerBar}>
+        <div className={styles.headerInner}>
           {/* Left Side: Nexura Logo & Hotel Badge/Selector */}
-          <div className="flex items-center gap-4">
+          <div className={styles.logoArea}>
             <img
-              src="/channels/nexura-logo.png"
+              src="/channels/6.png"
               alt="Nexura Logo"
-              className="h-10 md:h-12 w-auto object-contain ml-4"
+              className={styles.logoImage}
             />
-            
+
             {/* Divider line */}
             {(activeHotelCode || isSuperadmin) && (
-              <div className="h-6 w-[1px] bg-zinc-800" />
+              <div className={styles.dividerLine} />
             )}
 
             {/* Hotel Selector / Badge */}
             {isSuperadmin ? (
-              <div className="relative flex items-center h-9 w-[260px] md:w-[320px] bg-white dark:bg-[#1a1a1c] border border-slate-300 dark:border-neutral-800 rounded-md overflow-hidden shadow-sm text-[13px] text-neutral-900 dark:text-neutral-200 transition-all">
+              <div className={`relative flex items-center h-9 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[13px] transition-all ${styles.hotelBadge}`}>
                 <select
                   value={activeHotelCode}
-                  onChange={(e) => setActiveHotelCode(e.target.value)}
-                  className="bg-transparent text-neutral-900 dark:text-neutral-200 border-none pr-10 py-1 text-[13px] font-medium focus:outline-none focus:ring-0 cursor-pointer appearance-none h-full w-full truncate rounded-md text-left"
+                  onChange={(e) => {
+                    setActiveHotelCode(e.target.value);
+                    window.location.reload();
+                  }}
+                  className={`border-none pr-10 py-1 text-[13px] font-medium focus:outline-none focus:ring-0 cursor-pointer appearance-none h-full w-full truncate rounded-[6px] text-left ${styles.hotelSelect}`}
                   style={{
                     backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239297a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'right 12px center',
                     backgroundSize: '16px',
-                    paddingLeft: '48px',
+                    paddingLeft: '12px',
                   }}
                 >
                   {hotelsList && hotelsList.length > 0 ? (
                     hotelsList.map((hotel) => (
-                      <option key={hotel.hotelCode} value={hotel.hotelCode} className="bg-white dark:bg-[#1e1e1e] text-neutral-900 dark:text-white">
+                      <option key={hotel.hotelCode} value={hotel.hotelCode}>
                         [{hotel.hotelCode}] {hotel.name}
                       </option>
                     ))
                   ) : (
-                    <option value="87241" className="bg-white dark:bg-[#1e1e1e] text-neutral-900 dark:text-white">
+                    <option value="87241">
                       [87241] Bumi Anyom Resort
                     </option>
                   )}
@@ -374,9 +391,9 @@ export default function SelectModulePage() {
               </div>
             ) : (
               activeHotelCode && (
-                <div 
-                  className="flex items-center h-9 pr-3 w-[260px] md:w-[320px] bg-white dark:bg-[#1a1a1c] border border-slate-300 dark:border-neutral-800 rounded-md overflow-hidden shadow-sm text-neutral-900 dark:text-neutral-200 text-[13px] font-semibold"
-                  style={{ paddingLeft: '48px' }}
+                <div
+                  className={`flex items-center h-9 pr-3 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[13px] font-semibold ${styles.hotelBadge}`}
+                  style={{ paddingLeft: '12px' }}
                 >
                   <span className="truncate w-full text-left">
                     [{activeHotelCode}] {activeHotelName || 'Bumi Anyom Resort'}
@@ -409,11 +426,11 @@ export default function SelectModulePage() {
                 {isMenuOpen && (
                   <>
                     {/* Backdrop */}
-                    <div 
+                    <div
                       className={styles.backdrop}
                       onClick={() => setIsMenuOpen(false)}
                     />
-                    
+
                     {/* Dropdown Menu */}
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95, y: 8 }}
@@ -422,6 +439,33 @@ export default function SelectModulePage() {
                       transition={{ duration: 0.15 }}
                       className={styles.dropdownMenu}
                     >
+                      {/* User Login Info Profile Card */}
+                      {(() => {
+                        const userName = user?.displayName || user?.email?.split('@')[0] || "Administrator";
+                        return (
+                          <div className={styles.menuUserCard}>
+                            <div 
+                              className="w-10 h-10 rounded-full overflow-hidden border border-[#8d7a52]/40 flex-shrink-0 flex items-center justify-center"
+                              style={{ backgroundColor: ['rgba(141, 122, 82, 0.15)', 'rgba(120, 128, 105, 0.15)', '#f3e8ff', '#e0e7ff', '#dcfce7', '#fee2e2', '#fef3c7'][((userName || "U").charCodeAt(0) || 0) % 7] }}
+                            >
+                              <img 
+                                src={`/avatar/memo_${((((userName || "U").charCodeAt(0) || 0) + 5) % 35) + 1}.png`} 
+                                alt={userName}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className={`truncate ${styles.menuUserName}`}>{userName}</span>
+                              <span className={`truncate ${styles.menuUserEmail}`}>{user?.email}</span>
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                <span className="text-[8px] text-emerald-500 dark:text-emerald-400 font-bold uppercase tracking-widest">System Live</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
                       {hasAccess('cpanel') && (
                         <>
                           <button

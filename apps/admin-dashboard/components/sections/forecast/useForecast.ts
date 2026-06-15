@@ -5,7 +5,7 @@ import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface ForecastStats {
     totalGrossRevenue: number;
-    salesPayAtNexura: number;
+    salesPayAtTransfer: number;
     salesPayAtHotel: number;
     walkInRevenue: number;
     otaRevenue: number;
@@ -26,7 +26,7 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [stats, setStats] = useState<ForecastStats>({
         totalGrossRevenue: 0,
-        salesPayAtNexura: 0,
+        salesPayAtTransfer: 0,
         salesPayAtHotel: 0,
         walkInRevenue: 0,
         otaRevenue: 0,
@@ -88,7 +88,7 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
             const q = query(getHotelCollection(db, "daily_revenue"), where("date", ">=", startStr), where("date", "<=", endStr));
             const snap = await getDocs(q);
             
-            let gross = 0, walkin = 0, ota = 0, other = 0, nexura = 0, hotel = 0, roomsSold = 0, roomRevenue = 0;
+            let gross = 0, walkin = 0, ota = 0, other = 0, transferAmt = 0, hotel = 0, roomsSold = 0, roomRevenue = 0;
             let currentEntries: any[] = [];
             
             const buckets: Record<string, any> = {};
@@ -136,16 +136,16 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                                 else other += amount;
                             }
 
-                            const cashAmt = Number(e.payHotel || e.paidCash || e.paidAmount1 || 0);
-                            const digitalAmt = Number(e.payNexura || e.paidTransfer || e.paidAmount2 || 0);
-                            
-                            if (cashAmt > 0 || digitalAmt > 0) {
-                                hotel += cashAmt;
-                                nexura += digitalAmt;
-                            } else {
-                                if (e.paymentStatus === "Pay at Nexura") nexura += amount;
-                                if (e.paymentStatus === "Pay at Hotel") hotel += amount;
-                            }
+                             const cashAmt = Number(e.payHotel || e.paidCash || e.paidAmount1 || 0);
+                             const digitalAmt = Number(e.payTransfer || e.payNexura || e.paidTransfer || e.paidAmount2 || 0);
+                             
+                             if (cashAmt > 0 || digitalAmt > 0) {
+                                 hotel += cashAmt;
+                                 transferAmt += digitalAmt;
+                             } else {
+                                 if (e.paymentStatus === "Pay at Nexura" || e.paymentStatus === "Virtual Payment / OTA") transferAmt += amount;
+                                 if (e.paymentStatus === "Pay at Hotel") hotel += amount;
+                             }
 
                             if (isAcc) {
                                 roomsSold += 1;
@@ -196,7 +196,7 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                 const rep = { ...group[0] };
                 rep.amount = group.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
                 rep.payHotel = group.reduce((sum, item) => sum + (Number(item.payHotel || item.paidCash || item.paidAmount1) || 0), 0);
-                rep.payNexura = group.reduce((sum, item) => sum + (Number(item.payNexura || item.paidTransfer || item.paidAmount2) || 0), 0);
+                 rep.payTransfer = group.reduce((sum, item) => sum + (Number(item.payTransfer || item.payNexura || item.paidTransfer || item.paidAmount2) || 0), 0);
                 resolvedEntries.push(rep);
             });
 
@@ -226,7 +226,7 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
 
             setStats({
                 totalGrossRevenue: gross,
-                salesPayAtNexura: nexura,
+                salesPayAtTransfer: transferAmt,
                 salesPayAtHotel: hotel,
                 walkInRevenue: walkin,
                 otaRevenue: ota,

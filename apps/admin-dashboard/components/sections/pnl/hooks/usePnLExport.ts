@@ -49,8 +49,8 @@ export function usePnLExport({
             { "Section / Metric": "VAT Input", Description: "Value Added Tax input", Amount: -pnlResult.card11_VAT },
             { "Section / Metric": "Service Charge", Description: "F&B service charge collection", Amount: -(pnlResult.summaryServiceCharge || 0) },
             { "Section / Metric": "Lost & Breakage", Description: "F&B lost & breakage deduction", Amount: -(pnlResult.summaryLostBreakage || 0) },
-            { "Section / Metric": "Management Fee", Description: "Nexura management fee", Amount: -pnlResult.card9_FeeGross },
-            { "Section / Metric": "NET PROFIT NEXURA", Description: "Earnings Before Interest & Tax (EBITDA)", Amount: pnlResult.card12_ReconOwner },
+            { "Section / Metric": "Management Fee", Description: "Hotel management fee", Amount: -pnlResult.card9_FeeGross },
+            { "Section / Metric": "NET PROFIT", Description: "Earnings Before Interest & Tax (EBITDA)", Amount: pnlResult.card12_ReconOwner },
         ];
 
         const expensesData = expenses.map((e) => ({
@@ -71,7 +71,7 @@ export function usePnLExport({
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData),  "Financial Summary");
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expensesData), "Detailed Expenses");
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(investorData), "Investor Shares");
-        XLSX.writeFile(wb, `Nexura_PnL_Audit_${viewMode}_${month}.xlsx`);
+        XLSX.writeFile(wb, `PnL_Audit_${viewMode}_${month}.xlsx`);
     };
 
     const handleExportPDF = () => {
@@ -83,7 +83,7 @@ export function usePnLExport({
         
         // Title block
         doc.setFontSize(18);
-        doc.text("Nexura Financial Report - Statement of Profit & Loss", 14, 20);
+        doc.text("Financial Report - Statement of Profit & Loss", 14, 20);
         doc.setFontSize(10);
         doc.text(`Periode: ${viewMode === "monthly" ? month : year} | Exported: ${new Date().toLocaleString()}`, 14, 28);
 
@@ -132,7 +132,7 @@ export function usePnLExport({
                 ["Service Charge",           formatIDR(-(pnlResult.summaryServiceCharge || 0))],
                 ["Lost & Breakage",          formatIDR(-(pnlResult.summaryLostBreakage || 0))],
                 ["Management Fee",           formatIDR(-pnlResult.card9_FeeGross)],
-                ["NET PROFIT NEXURA",        formatIDR(pnlResult.card12_ReconOwner)],
+                ["NET PROFIT",        formatIDR(pnlResult.card12_ReconOwner)],
             ],
             theme: "striped",
             headStyles: { fillColor: [120, 128, 105] },
@@ -170,7 +170,7 @@ export function usePnLExport({
             headStyles: { fillColor: [60, 60, 60] },
         });
 
-        doc.save(`Nexura_PnL_Report_${month}.pdf`);
+        doc.save(`PnL_Report_${month}.pdf`);
     };
 
     const handleExportDrillExcel = () => {

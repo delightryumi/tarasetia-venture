@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Activity } from "lucide-react";
+import { Activity, Globe } from "lucide-react";
 import styles from "../ForecastStyles.module.css";
 
 const SAGE = "#788069";
@@ -34,9 +34,8 @@ export function ChannelPerformance({
         { name: "Trip.com", file: "trip.png", color: "#1890ff" },
         { name: "Expedia", file: "expedia.png", color: "#fbc02d" },
         { name: "MG Bedbank", file: "mg.png", color: "#6c3483" },
-        { name: "Nexura Sales", file: "nexura.png", color: SAGE },
         { name: "Walk-in", file: "walk_in.png", color: "#2e7d32" },
-        { name: "Booking Engine", file: "nexura.png", color: SAGE },
+        { name: "Booking Engine", file: "globe", color: SAGE },
     ].map((ch) => {
         const channelEntries = stats.entries.filter((e: any) => e.channel === ch.name);
         const revenue = channelEntries.reduce((acc: number, e: any) => acc + (Number(e.amount) || 0), 0);
@@ -62,7 +61,7 @@ export function ChannelPerformance({
                             <Activity size={15} />
                         </div>
                         <div className={styles.headerMeta}>
-                            <span className={styles.headerSubtitle}>Nexura Analytics</span>
+                            <span className={styles.headerSubtitle}>Forecast Analytics</span>
                             <h2 className={styles.headerTitle} style={{ fontSize: "13px" }}>
                                 Channel <span style={{ color: "#788069" }}>Performance</span>
                             </h2>
@@ -81,7 +80,7 @@ export function ChannelPerformance({
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.35, delay: i * 0.05, ease: "easeOut" }}
                             whileHover={{ scale: 1.015, y: -2 }}
-                            className={`${styles.channelCard} ${i === 10 ? styles.channelCardSpan : ""}`}
+                            className={`${styles.channelCard} ${i === 9 ? styles.channelCardSpan : ""}`}
                         >
                             {/* Accent glow background */}
                             <div
@@ -94,12 +93,16 @@ export function ChannelPerformance({
                                 className={styles.cardIconBox}
                                 style={{ backgroundColor: `${ch.color}10`, borderColor: `${ch.color}20`, width: "44px", height: "44px", flexShrink: 0 }}
                             >
-                                <img
-                                    src={`/channels/${ch.file}`}
-                                    alt={ch.name}
-                                    style={{ width: "28px", height: "28px", objectFit: "contain" }}
-                                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                                />
+                                {ch.file === "globe" ? (
+                                    <Globe size={20} style={{ color: ch.color }} />
+                                ) : (
+                                    <img
+                                        src={`/channels/${ch.file}`}
+                                        alt={ch.name}
+                                        style={{ width: "28px", height: "28px", objectFit: "contain" }}
+                                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                    />
+                                )}
                             </div>
 
                             {/* Content: full width, 3 rows */}

@@ -379,9 +379,18 @@ export const UsersSection: React.FC = () => {
                 onConfirm={async (password) => {
                     if (passwordChangeTarget) {
                         setIsChangingPassword(true);
-                        await handleChangePassword(passwordChangeTarget.id, password);
-                        setIsChangingPassword(false);
-                        setPasswordChangeTarget(null);
+                        try {
+                            await handleChangePassword(passwordChangeTarget.id, password);
+                            toast.success("Password Changed", {
+                                description: "Password berhasil diperbarui.",
+                                className: "luxury-toast",
+                            });
+                            setPasswordChangeTarget(null);
+                        } catch (error: any) {
+                            toast.error(error.message || "Gagal mengubah password.");
+                        } finally {
+                            setIsChangingPassword(false);
+                        }
                     }
                 }}
                 onCancel={() => setPasswordChangeTarget(null)}

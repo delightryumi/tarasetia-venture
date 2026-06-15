@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { BedDouble } from "lucide-react";
+import { BedDouble, Globe } from "lucide-react";
 import { RoomStatusBadge, GuestStatusBadge } from "./StatusPickers";
 import styles from "./OverviewStyles.module.css";
 
@@ -15,9 +15,8 @@ const CHANNELS = [
     { name: "Trip.com", logo: "/channels/trip.png" },
     { name: "Expedia", logo: "/channels/expedia.png" },
     { name: "MG Bedbank", logo: "/channels/mg.png" },
-    { name: "Nexura Sales", logo: "/channels/nexura.png" },
     { name: "Walk-in", logo: "/channels/walk_in.png" },
-    { name: "Booking Engine", logo: "/channels/nexura.png" },
+    { name: "Booking Engine", logo: "/channels/walk_in.png" },
 ];
 
 export const getChannelLogo = (name: string) => {
@@ -59,8 +58,12 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                         >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
-                                    <div className={styles.guestAvatar}>
-                                        <img src={getChannelLogo(item.channel)} alt="" className={styles.guestAvatarImg} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
+                                    <div className={styles.guestAvatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        {item.channel === "Booking Engine" ? (
+                                            <Globe size={14} className="text-stone-400 dark:text-stone-500" />
+                                        ) : (
+                                            <img src={getChannelLogo(item.channel)} alt="" className={styles.guestAvatarImg} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
+                                        )}
                                     </div>
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <div className={styles.guestMainInfo}>

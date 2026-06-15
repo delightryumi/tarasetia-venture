@@ -2,10 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { 
-  LucideIcon, 
-  Lock
-} from 'lucide-react';
+import { LucideIcon, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Inter } from 'next/font/google';
 
@@ -29,85 +26,95 @@ interface ModuleBentoGridProps {
   menus: MenuItem[];
 }
 
-// --- Luxury Corporate Card Component ---
-const LuxuryBentoCard = ({ item, isCenteredMobile }: { item: MenuItem; isCenteredMobile?: boolean }) => {
+// Per-module accent color palette — enterprise style
+const MODULE_ACCENTS: Record<string, { icon: string; bg: string; bgDark: string; border: string }> = {
+  'POS':          { icon: '#e05252', bg: 'rgba(224,82,82,0.08)',    bgDark: 'rgba(224,82,82,0.12)',    border: '#e05252' },
+  'Front Office': { icon: '#3b82f6', bg: 'rgba(59,130,246,0.08)',   bgDark: 'rgba(59,130,246,0.12)',   border: '#3b82f6' },
+  'House Keeping':{ icon: '#14b8a6', bg: 'rgba(20,184,166,0.08)',   bgDark: 'rgba(20,184,166,0.12)',   border: '#14b8a6' },
+  'Food & Beverage':{ icon: '#f97316', bg: 'rgba(249,115,22,0.08)', bgDark: 'rgba(249,115,22,0.12)',   border: '#f97316' },
+  'Purchasing':   { icon: '#8b5cf6', bg: 'rgba(139,92,246,0.08)',   bgDark: 'rgba(139,92,246,0.12)',   border: '#8b5cf6' },
+  'Accounting':   { icon: '#22c55e', bg: 'rgba(34,197,94,0.08)',    bgDark: 'rgba(34,197,94,0.12)',    border: '#22c55e' },
+  'Superadmin':   { icon: '#f59e0b', bg: 'rgba(245,158,11,0.08)',   bgDark: 'rgba(245,158,11,0.12)',   border: '#f59e0b' },
+};
+
+const getAccent = (title: string) =>
+  MODULE_ACCENTS[title] ?? { icon: '#6b7280', bg: 'rgba(107,114,128,0.08)', bgDark: 'rgba(107,114,128,0.12)', border: '#6b7280' };
+
+// --- Enterprise Card Component ---
+const EnterpriseCard = ({ item, isCenteredMobile }: { item: MenuItem; isCenteredMobile?: boolean }) => {
   const [isHovered, setIsHovered] = useState(false);
   const Icon = item.icon;
+  const accent = getAccent(item.title);
 
-  const CardContent = (
-    <div className="relative w-full h-full rounded-lg overflow-hidden select-none transition-all duration-300">
-      
-      {/* Background layer matching Nexura branding */}
-      <div 
-        className={cn(
-          "absolute inset-0 z-0 transition-all duration-300 rounded-lg",
-          item.active
-            ? "bg-white border border-[#e6dfd8]/40 dark:bg-zinc-900 dark:border-white/10"
-            : "bg-[#FAF6F0]/30 border border-dashed border-[#e6dfd8]/30 dark:bg-zinc-900/30 dark:border-white/5",
-          item.active && isHovered && "bg-white border-[#c5a880]/30 dark:bg-zinc-850 dark:border-[#c5a880]/30 shadow-[0_8px_25px_rgba(197,168,128,0.06)]"
-        )}
-      />
+  const sizeClass = isCenteredMobile
+    ? 'w-[calc(50%-6px)] sm:w-[140px]'
+    : 'w-full sm:w-[140px]';
 
-      {/* Brand prefix indicator dot (Gold/Maroon) */}
-      {item.active && (
-        <span className={cn(
-          "absolute top-2.5 left-2.5 w-1 h-1 rounded-full bg-[#c5a880] transition-colors duration-300",
-          isHovered && "bg-[#8d7a52] dark:bg-[#c5a880]"
-        )} />
+  const CardInner = (
+    <div
+      className={cn(
+        'relative w-full rounded-xl overflow-hidden select-none transition-all duration-250 flex flex-col items-center justify-center text-center gap-3 p-4',
+        'h-[110px] sm:h-[140px]',
+        inter.className,
+        // Light mode base
+        'bg-white border border-neutral-200/80',
+        // Dark mode base
+        'dark:bg-neutral-900 dark:border-neutral-800/60',
+        item.active
+          ? 'cursor-pointer'
+          : 'opacity-55 cursor-not-allowed',
       )}
-
+      style={{
+        // Elevated shadow on hover
+        boxShadow: item.active && isHovered
+          ? '0 8px 24px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)'
+          : '0 1px 3px rgba(0,0,0,0.06)',
+        // Top accent stripe on hover
+        borderTopColor: item.active && isHovered ? accent.border : undefined,
+        borderTopWidth: item.active && isHovered ? '2px' : '1px',
+        transform: item.active && isHovered ? 'translateY(-3px)' : 'none',
+      }}
+    >
       {/* Lock badge */}
       {!item.active && (
         <div className="absolute top-2.5 right-2.5 z-20">
-          <Lock className="w-3 h-3 text-neutral-400 dark:text-zinc-650" />
+          <Lock className="w-3 h-3 text-neutral-400 dark:text-neutral-600" />
         </div>
       )}
 
-      {/* Content layout */}
-      <div 
-        className={cn(
-          "relative z-10 h-full w-full p-2 sm:p-3 flex flex-col items-center justify-center text-center gap-1.5 sm:gap-2",
-          inter.className
-        )}
+      {/* Icon box — large, accent bg */}
+      <div
+        className="flex items-center justify-center rounded-xl w-12 h-12 sm:w-14 sm:h-14 shrink-0 transition-all duration-250"
+        style={{
+          backgroundColor: isHovered
+            ? accent.bg
+            : 'transparent',
+          color: item.active ? accent.icon : '#9ca3af',
+        }}
       >
-        {/* Icon container */}
-        <div
-          className={cn(
-            'flex items-center justify-center rounded-xl shrink-0 transition-all duration-350 border w-10 h-10 sm:w-12 sm:h-12 relative overflow-hidden',
-            item.active
-              ? 'bg-[#FAF6F0] border-[#e6dfd8]/40 text-[#8d7a52] dark:bg-zinc-950 dark:border-white/10 dark:text-[#c5a880]'
-              : 'bg-[#FAF6F0]/20 border-transparent text-neutral-450/40 dark:bg-zinc-950/20 dark:text-zinc-650'
-          )}
-          style={item.active && isHovered ? {
-            backgroundColor: '#8d7a52',
-            borderColor: '#8d7a52',
-            color: '#ffffff',
-            transform: 'scale(1.04)',
-          } : {}}
-        >
-          {/* Dark Mode Specific Overwrite for Hover */}
-          {item.active && isHovered && (
-            <div className="absolute inset-0 bg-[#c5a880] border-[#c5a880] text-[#09090b] hidden dark:block" />
-          )}
-          <Icon strokeWidth={1.25} className="w-5 h-5 sm:w-6 h-6 relative z-20 dark:group-hover:text-[#09090b]" />
-        </div>
+        <Icon
+          strokeWidth={1.5}
+          className="w-6 h-6 sm:w-7 sm:h-7 transition-transform duration-250"
+          style={{ transform: item.active && isHovered ? 'scale(1.10)' : 'scale(1)' }}
+        />
+      </div>
 
-        {/* Text metadata */}
-        <div className="flex flex-col items-center w-full gap-0.5 sm:mt-0.5">
-          <h3
-            className={cn(
-              'text-[9px] sm:text-[10px] font-bold tracking-[0.1em] uppercase transition-colors duration-300',
-              item.active
-                ? 'text-[#1A1C14] dark:text-[#faf9f5] group-hover:text-[#8d7a52] dark:group-hover:text-[#c5a880]'
-                : 'text-neutral-400 dark:text-zinc-600'
-            )}
-          >
-            {item.title}
-          </h3>
-          <p className="text-[7.5px] sm:text-[8.5px] leading-relaxed font-normal text-neutral-600 dark:text-neutral-400 line-clamp-2 max-w-[110px]">
-            {item.description}
-          </p>
-        </div>
+      {/* Title + Description */}
+      <div className="flex flex-col items-center gap-0.5">
+        <h3
+          className={cn(
+            'text-[11px] sm:text-[12px] font-bold tracking-wide leading-tight transition-colors duration-250',
+            item.active
+              ? 'text-neutral-800 dark:text-neutral-100'
+              : 'text-neutral-400 dark:text-neutral-600',
+          )}
+          style={{ color: item.active && isHovered ? accent.icon : undefined }}
+        >
+          {item.title}
+        </h3>
+        <p className="text-[8.5px] sm:text-[9.5px] font-normal text-neutral-500 dark:text-neutral-500 leading-tight line-clamp-1 max-w-[110px]">
+          {item.subtitle}
+        </p>
       </div>
     </div>
   );
@@ -117,68 +124,74 @@ const LuxuryBentoCard = ({ item, isCenteredMobile }: { item: MenuItem; isCentere
       href={item.href}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={cn(
-        "group block relative rounded-lg cursor-pointer transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98] h-[105px] sm:h-[135px]",
-        isCenteredMobile ? "w-[calc(50%-6px)] sm:w-[130px]" : "w-full sm:w-[130px]"
-      )}
+      className={cn('block relative rounded-xl', sizeClass)}
     >
-      {CardContent}
+      {CardInner}
     </Link>
   ) : (
-    <div 
-      className={cn(
-        "relative rounded-lg opacity-60 cursor-not-allowed h-[105px] sm:h-[135px]",
-        isCenteredMobile ? "w-[calc(50%-6px)] sm:w-[130px]" : "w-full sm:w-[130px]"
-      )}
-    >
-      {CardContent}
+    <div className={cn('relative rounded-xl', sizeClass)}>
+      {CardInner}
     </div>
   );
 };
 
+// --- Divider with label ---
+const RowDivider = ({ label }: { label?: string }) =>
+  label ? (
+    <div className="flex items-center gap-3 w-full max-w-[620px] px-1">
+      <div className="flex-1 h-[1px] bg-neutral-200 dark:bg-neutral-800" />
+      <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-neutral-400 dark:text-neutral-600 whitespace-nowrap">
+        {label}
+      </span>
+      <div className="flex-1 h-[1px] bg-neutral-200 dark:bg-neutral-800" />
+    </div>
+  ) : null;
+
 // --- Main Grid Container ---
 export function ModuleBentoGrid({ menus }: ModuleBentoGridProps) {
-  const splitIndex = menus.length === 8 ? 4 : 3;
+  const splitIndex = menus.length >= 7 ? 4 : 3;
   const firstRow = menus.slice(0, splitIndex);
   const secondRow = menus.slice(splitIndex);
   const isOdd = menus.length % 2 !== 0;
 
   return (
-    <div className="w-full max-w-5xl mx-auto z-10 p-2 sm:p-4">
-      {/* Desktop Layout: 4 top, 4 bottom for 8 cards; otherwise 3 top, 4 bottom */}
-      <div className={cn("hidden sm:flex sm:flex-col sm:items-center sm:gap-5", inter.className)}>
+    <div className={cn('w-full max-w-3xl mx-auto z-10 px-2 sm:px-4', inter.className)}>
+      {/* ─── Desktop Layout ─── */}
+      <div className="hidden sm:flex sm:flex-col sm:items-center gap-4">
         {/* Row 1 */}
-        <div className="flex justify-center gap-5 w-full">
+        <div className="flex justify-center gap-4 w-full">
           {firstRow.map((item, idx) => (
-            <div key={item.title + idx} className="w-auto flex justify-center relative">
-              <LuxuryBentoCard item={item} />
-            </div>
+            <EnterpriseCard key={item.title + idx} item={item} />
           ))}
         </div>
-        {/* Row 2 */}
-        <div className="flex justify-center gap-5 w-full">
-          {secondRow.map((item, idx) => (
-            <div key={item.title + idx} className="w-auto flex justify-center relative">
-              <LuxuryBentoCard item={item} />
+
+        {secondRow.length > 0 && (
+          <>
+            <RowDivider />
+            {/* Row 2 */}
+            <div className="flex justify-center gap-4 w-full">
+              {secondRow.map((item, idx) => (
+                <EnterpriseCard key={item.title + idx + 'r2'} item={item} />
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
 
-      {/* Mobile Layout: 2-column grid */}
-      <div className={cn("grid grid-cols-2 gap-3.5 w-full sm:hidden", inter.className)}>
+      {/* ─── Mobile Layout: 2-column grid ─── */}
+      <div className="grid grid-cols-2 gap-3 w-full sm:hidden">
         {menus.map((item, idx) => {
           const isLast = idx === menus.length - 1;
           const shouldBeCentered = isLast && isOdd;
           return (
-            <div 
-              key={item.title + 'mob' + idx} 
+            <div
+              key={item.title + 'mob' + idx}
               className={cn(
-                "w-full flex justify-center relative",
-                shouldBeCentered ? "col-span-2 flex justify-center w-full" : ""
+                'w-full flex justify-center',
+                shouldBeCentered ? 'col-span-2 flex justify-center' : ''
               )}
             >
-              <LuxuryBentoCard item={item} isCenteredMobile={shouldBeCentered} />
+              <EnterpriseCard item={item} isCenteredMobile={shouldBeCentered} />
             </div>
           );
         })}

@@ -158,7 +158,7 @@ export default function POSCartSidebar({
                 <img
                   src={item.product.image}
                   alt={item.product.name}
-                  className="w-8 h-8 rounded-lg object-cover bg-slate-100 dark:bg-neutral-850 shrink-0"
+                  className="w-8 h-8 rounded-lg object-cover bg-slate-100 dark:bg-neutral-800 shrink-0"
                 />
                 <div className="min-w-0">
                   <h4 className="text-xs font-semibold text-neutral-700 dark:text-neutral-200 truncate font-sans">

@@ -75,12 +75,14 @@ export const ForecastSection: React.FC = () => {
                 title = "Sales Pay at Hotel";
                 break;
             case "Nexura":
+            case "Virtual":
             case "Sales Pay at Nexura":
+            case "Sales (Virtual / OTA)":
                 filtered = stats.entries.filter((e: any) => {
-                    const digitalAmt = Number(e.payNexura || e.paidTransfer || e.paidAmount2 || 0);
-                    return digitalAmt > 0 || e.paymentStatus === "Pay at Nexura";
+                    const digitalAmt = Number(e.payTransfer || e.payNexura || e.paidTransfer || e.paidAmount2 || 0);
+                    return digitalAmt > 0 || e.paymentStatus === "Pay at Nexura" || e.paymentStatus === "Virtual Payment / OTA" || e.paymentStatus === "Virtual / OTA";
                 });
-                title = "Sales Pay at Nexura";
+                title = "Sales (Virtual / OTA)";
                 break;
             case "WalkIn":
             case "Walk-in Revenue":
@@ -451,13 +453,13 @@ export const ForecastSection: React.FC = () => {
                                 onClick={() => handleCardClick("Hotel")}
                             />
                             <SummaryCard
-                                label="Sales (Pay at Nexura)"
+                                label="Sales (Virtual / OTA)"
                                 icon={<CreditCard size={18} />}
                                 accent="#8b5cf6"
-                                value={stats.salesPayAtNexura}
+                                value={stats.salesPayAtTransfer}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
-                                onClick={() => handleCardClick("Nexura")}
+                                onClick={() => handleCardClick("Virtual")}
                             />
                             <SummaryCard
                                 label="Walk-in Revenue"

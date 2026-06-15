@@ -8,14 +8,12 @@ interface BillingExpirationBannerProps {
   hotelName: string;
   formattedDueDate: string;
   onDismiss: () => void;
-  alertMessage?: string;
 }
 
 export function BillingExpirationBanner({
   hotelName,
   formattedDueDate,
   onDismiss,
-  alertMessage,
 }: BillingExpirationBannerProps) {
   return (
     <motion.div
@@ -49,19 +47,13 @@ export function BillingExpirationBanner({
             Pemberitahuan Masa Aktif
           </p>
           <p className="text-[13px] text-neutral-600 dark:text-neutral-400 leading-[1.8]">
-            {alertMessage ? (
-              <span className="whitespace-pre-line">{alertMessage}</span>
-            ) : (
-              <>
-                Layanan CRS untuk{' '}
-                <strong className="font-semibold text-neutral-900 dark:text-white">
-                  {hotelName}
-                </strong>{' '}
-                akan dinonaktifkan dalam{' '}
-                <strong className="font-semibold text-neutral-900 dark:text-white">3 hari</strong>{' '}
-                pada <span className="font-medium text-neutral-800 dark:text-neutral-200">{formattedDueDate}</span>. Harap segera koordinasikan pembayaran tagihan sebelum masa aktif habis.
-              </>
-            )}
+            Layanan CRS untuk{' '}
+            <strong className="font-semibold text-neutral-900 dark:text-white">
+              {hotelName}
+            </strong>{' '}
+            akan dinonaktifkan dalam{' '}
+            <strong className="font-semibold text-neutral-900 dark:text-white">3 hari</strong>{' '}
+            pada <span className="font-medium text-neutral-800 dark:text-neutral-200">{formattedDueDate}</span>. Harap segera koordinasikan pembayaran tagihan sebelum masa aktif habis.
           </p>
         </div>
 

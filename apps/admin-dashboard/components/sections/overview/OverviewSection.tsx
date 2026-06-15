@@ -277,7 +277,7 @@ export function OverviewSection() {
                             <PlusCircle size={15} />
                         </div>
                         <div className={styles.headerMeta}>
-                            <span className={styles.headerSubtitle}>Nexura Operational</span>
+                            <span className={styles.headerSubtitle}>Operational Status</span>
                             <h1 className={styles.headerTitle}>
                                 Command <span style={{ color: SAGE }}>Center</span>
                             </h1>

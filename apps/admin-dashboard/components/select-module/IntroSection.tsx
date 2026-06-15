@@ -44,15 +44,7 @@ export const IntroSection: React.FC<IntroSectionProps> = ({ onOpenClick }) => {
 
 
 
-      {/* Modern Uppercase Enterprise Subtitle */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-neutral-200/60 dark:border-neutral-800/40 bg-neutral-100/40 dark:bg-neutral-900/30 backdrop-blur-sm text-[10px] font-bold tracking-[0.25em] text-neutral-500 dark:text-neutral-450 uppercase mb-8 z-10"
-      >
-        Welcome to Nexura Workspace
-      </motion.div>
+
 
       {/* Typewriter Effect Text Section */}
       <div className="w-full max-w-3xl z-10" style={{ minHeight: '140px', marginBottom: '24px' }}>

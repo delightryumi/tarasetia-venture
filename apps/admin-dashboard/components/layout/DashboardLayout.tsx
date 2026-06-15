@@ -205,65 +205,69 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     const isSuperadminPage = pathname === "/superadmin";
 
     return (
-        <div className={`dashboard-wrapper ${isCollapsed ? "collapsed" : ""} ${!isCollapsed ? "mobile-open" : ""} ${isSuperadminPage ? "no-sidebar" : ""}`}>
+        <div className="flex flex-col min-h-screen bg-transparent select-none">
             {!isSuperadminPage && (
-                <Sidebar
-                    isCollapsed={isCollapsed}
-                    setIsCollapsed={setIsCollapsed}
-                />
-            )}
-            {/* Mobile Overlay */}
-            {!isCollapsed && !isSuperadminPage && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-                    onClick={() => setIsCollapsed(true)}
-                />
-            )}
-            <main 
-                className="main-content"
-                style={isSuperadminPage ? { marginLeft: 0, maxWidth: "100vw", width: "100%" } : undefined}
-            >
-                {pathname !== "/forecast/add" && !isSuperadminPage && (
-                    <div className="dashboard-top-bar">
+                <header className="dashboard-top-bar">
+                    <div className="dashboard-top-bar-inner">
                         <StatusWidget 
                             onMenuClick={() => setIsCollapsed(false)} 
                             isCollapsed={isCollapsed}
                             onToggleSidebar={() => setIsCollapsed(!isCollapsed)}
                         />
                     </div>
+                </header>
+            )}
+
+            <div className={`dashboard-wrapper ${isCollapsed ? "collapsed" : ""} ${!isCollapsed ? "mobile-open" : ""} ${isSuperadminPage ? "no-sidebar" : ""}`}>
+                {!isSuperadminPage && (
+                    <Sidebar
+                        isCollapsed={isCollapsed}
+                        setIsCollapsed={setIsCollapsed}
+                    />
                 )}
+                {/* Mobile Overlay */}
+                {!isCollapsed && !isSuperadminPage && (
+                    <div
+                        className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                        onClick={() => setIsCollapsed(true)}
+                    />
+                )}
+                <main 
+                    className="main-content"
+                    style={isSuperadminPage ? { marginLeft: 0, maxWidth: "100vw", width: "100%" } : undefined}
+                >
+                    <div className="main-scroll-container">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={pathname}
+                                ref={containerRef}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.3 }}
+                                className="section-wrapper"
+                            >
+                                {children}
+                            </motion.div>
+                        </AnimatePresence>
 
-                <div className="main-scroll-container">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={pathname}
-                            ref={containerRef}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.3 }}
-                            className="section-wrapper"
-                        >
-                            {children}
-                        </motion.div>
-                    </AnimatePresence>
-
-                    <footer className="dashboard-footer-clean">
-                        <a
-                            href={poweredByLink?.startsWith('http') ? poweredByLink : `https://${poweredByLink || "nexuragroups.com"}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="powered-by-link"
-                        >
-                            <span className="text-light">Powered by</span>
-                            <span className="text-brand">{poweredByText || "Nexura Global Hospitality"}</span>
-                            <ExternalLink size={12} className="link-icon" />
-                        </a>
-                    </footer>
-                </div>
-            </main>
-            {!isSuperadminPage && <MobileBottomNav />}
-            <BillingAlertModal />
+                        <footer className="dashboard-footer-clean">
+                            <a
+                                href={poweredByLink?.startsWith('http') ? poweredByLink : `https://${poweredByLink || "tarasetia.com"}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="powered-by-link"
+                            >
+                                <span className="text-light">Powered by</span>
+                                <span className="text-brand">{poweredByText || "Tarasetia Venture"}</span>
+                                <ExternalLink size={12} className="link-icon" />
+                            </a>
+                        </footer>
+                    </div>
+                </main>
+                {!isSuperadminPage && <MobileBottomNav />}
+                <BillingAlertModal />
+            </div>
         </div>
     );
 };

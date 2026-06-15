@@ -39,10 +39,10 @@ export function ModuleActionButtons({
           title="Change theme"
         >
           {/* Rotate transitions matching POS exactly */}
-          <Sun className={`w-[1.15rem] h-[1.15rem] text-amber-500 absolute transition-all duration-300 transform ${
+          <Sun className={`w-[1.15rem] h-[1.15rem] absolute transition-all duration-300 transform ${
             theme === 'light' ? 'rotate-0 scale-100' : 'rotate-95 scale-0'
           }`} />
-          <MoonStar className={`w-[1.15rem] h-[1.15rem] text-indigo-400 dark:text-neutral-200 absolute transition-all duration-300 transform ${
+          <MoonStar className={`w-[1.15rem] h-[1.15rem] absolute transition-all duration-300 transform ${
             theme === 'dark' ? 'rotate-0 scale-100' : '-rotate-95 scale-0'
           }`} />
           <Monitor className={`w-[1.15rem] h-[1.15rem] absolute transition-all duration-300 transform ${

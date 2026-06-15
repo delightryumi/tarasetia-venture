@@ -37,11 +37,16 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({
       <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center gap-6 md:gap-7 mb-32 md:mb-40 mt-8 md:mt-0">
         
         {/* Header Section with Title */}
-        <div className="text-center flex flex-col items-center gap-2 max-w-2xl px-4 mt-6">
-          {/* Title and Subtitle */}
-          <h1 className="text-3xl sm:text-4xl font-normal text-[#1A1C14] dark:text-[#faf9f5] tracking-tight font-serif leading-snug">
-            Select <span className="font-serif italic font-light text-[#8d7a52] dark:text-[#e2d6b5]">Workspace</span> Module
+        <div className="text-center flex flex-col items-center gap-1.5 max-w-2xl px-4 mt-4">
+          <p className="text-[9px] font-bold tracking-[0.25em] uppercase text-neutral-400 dark:text-neutral-500">
+            Workspace
+          </p>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight leading-snug" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+            Select Module
           </h1>
+          <p className="text-xs text-neutral-500 dark:text-neutral-500 font-normal">
+            Choose a module to access the workspace
+          </p>
         </div>
 
         {/* Bento Menu grid cards */}

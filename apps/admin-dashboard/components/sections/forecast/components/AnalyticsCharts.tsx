@@ -38,7 +38,7 @@ export function AnalyticsCharts({ stats, viewMode, formatCurrency }: AnalyticsCh
                             <Pie
                                 data={[
                                     { name: 'Hotel Collect', value: stats.salesPayAtHotel || 0 },
-                                    { name: 'Nexura Collect', value: stats.salesPayAtNexura || 0 },
+                                    { name: 'Virtual / OTA', value: stats.salesPayAtTransfer || 0 },
                                     { name: 'Other Income', value: stats.otherRevenue || 0 }
                                 ]}
                                 cx="50%" cy="50%"

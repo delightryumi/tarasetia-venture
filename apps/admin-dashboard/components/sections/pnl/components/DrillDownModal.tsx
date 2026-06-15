@@ -74,9 +74,9 @@ export default function DrillDownModal({
               { id: 't-stay', title: `${t.checkInDate} — ${t.checkOutDate}`, subtitle: 'Stay Duration', amount: 0, tag: 'DATES', category: 'META', excludeFromTotal: true },
               { id: 't-info', title: `${t.channel} Details`, subtitle: `Booking ID: ${t.bookingId || 'N/A'} | Room: ${t.roomType || 'N/A'}`, amount: 0, tag: 'INFO', category: 'META', excludeFromTotal: true },
               { id: 't-gross', title: isGrouped ? 'Total Gross Amount' : 'Gross Amount (Tagihan)', subtitle: 'Original booking price', amount: totals.gross, tag: 'EXPECTED', category: 'FINANCE' },
-              { id: 't-fee', title: `Management Fee (${t.feePercentage || 0}%)`, subtitle: 'Nexura Service Fee', amount: totals.fee, isNegative: true, tag: 'DEDUCTION', category: 'FINANCE', excludeFromTotal: true },
+              { id: 't-fee', title: `Management Fee (${t.feePercentage || 0}%)`, subtitle: 'Service Fee', amount: totals.fee, isNegative: true, tag: 'DEDUCTION', category: 'FINANCE', excludeFromTotal: true },
               { id: 't-cash', title: 'Payment: Cash (Hotel)', subtitle: 'Received directly by hotel', amount: totals.paidCash, tag: 'PAYMENT', category: 'FINANCE', isNegative: false },
-              { id: 't-trf', title: 'Payment: Transfer (Nexura)', subtitle: 'Received via Nexura Desk', amount: totals.paidTransfer, tag: 'PAYMENT', category: 'FINANCE', isNegative: false },
+              { id: 't-trf', title: 'Payment: Transfer (Virtual / OTA)', subtitle: 'Received via Virtual Desk', amount: totals.paidTransfer, tag: 'PAYMENT', category: 'FINANCE', isNegative: false },
               { id: 't-gap', title: 'Resulting GAP', subtitle: totals.gap === 0 ? 'Matched Perfectly' : 'Discrepancy Found', amount: totals.gap, isNegative: totals.gap < 0, tag: 'RESULT', category: 'FINANCE', excludeFromTotal: true },
           ];
           finalDetailTotal = totals.paidCash + totals.paidTransfer;
@@ -93,7 +93,7 @@ export default function DrillDownModal({
           finalDetailItems = [
               { id: 'g-header', title: 'Total Revenue Basis', subtitle: `Total POS Gross Revenue (100%)`, amount: b.gross, tag: 'BASIS TOTAL', category: 'META', excludeFromTotal: true },
               { id: 'g-cash', title: 'Sales Pay at Hotel (Cash)', subtitle: `POS Card 2 Basis: ${formatIDR(b.cash)}`, amount: b.gopCash, tag: 'GOP SHARE', category: 'GOP_CONFIG', metaData: { isEditableGOP: true, gopCategory: 'cash', pct: b.pctCash } },
-              { id: 'g-trf', title: 'Sales Pay at Nexura (Trf)', subtitle: `POS Card 3 Basis: ${formatIDR(b.transfer)}`, amount: b.gopTrf, tag: 'GOP SHARE', category: 'GOP_CONFIG', metaData: { isEditableGOP: true, gopCategory: 'transfer', pct: b.pctTrf } },
+              { id: 'g-trf', title: 'Sales Virtual Payment (Trf)', subtitle: `POS Card 3 Basis: ${formatIDR(b.transfer)}`, amount: b.gopTrf, tag: 'GOP SHARE', category: 'GOP_CONFIG', metaData: { isEditableGOP: true, gopCategory: 'transfer', pct: b.pctTrf } },
               { id: 'g-walk', title: 'Walk-in Revenue', subtitle: `POS Card 4 Basis: ${formatIDR(b.walkIn)}`, amount: b.gopWalkIn, tag: 'GOP SHARE', category: 'GOP_CONFIG', metaData: { isEditableGOP: true, gopCategory: 'walkIn', pct: b.pctWalkIn } },
               { id: 'g-ota', title: 'OTA Revenue (Net)', subtitle: `POS Card 5 Basis: ${formatIDR(b.ota)}`, amount: b.gopOTA, tag: 'GOP SHARE', category: 'GOP_CONFIG', metaData: { isEditableGOP: true, gopCategory: 'ota', pct: b.pctOTA } },
           ];

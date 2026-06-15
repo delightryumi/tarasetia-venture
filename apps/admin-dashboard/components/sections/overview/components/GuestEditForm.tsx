@@ -18,9 +18,8 @@ const CHANNELS = [
     { name: "Trip.com", logo: "/channels/trip.png" },
     { name: "Expedia", logo: "/channels/expedia.png" },
     { name: "MG Bedbank", logo: "/channels/mg.png" },
-    { name: "Nexura Sales", logo: "/channels/nexura.png" },
     { name: "Walk-in", logo: "/channels/walk_in.png" },
-    { name: "Booking Engine", logo: "/channels/nexura.png" },
+    { name: "Booking Engine", logo: "globe" },
 ];
 
 export function GuestEditForm({ formData, setFormData, roomTypes }: GuestEditFormProps) {
@@ -119,7 +118,7 @@ export function GuestEditForm({ formData, setFormData, roomTypes }: GuestEditFor
                     
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         <NexuraInputLabel label="Pay at Hotel (Cash/Transfer to Hotel)" type="number" value={formData.payHotel} onChange={(v: string) => setFormData({...formData, payHotel: Number(v)})} />
-                        <NexuraInputLabel label="Pay at Nexura (OTA / VCC)" type="number" value={formData.payNexura} onChange={(v: string) => setFormData({...formData, payNexura: Number(v)})} />
+                        <NexuraInputLabel label="Virtual Payment / OTA" type="number" value={formData.payTransfer} onChange={(v: string) => setFormData({...formData, payTransfer: Number(v)})} />
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

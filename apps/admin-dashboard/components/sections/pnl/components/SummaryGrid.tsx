@@ -163,7 +163,7 @@ export function SummaryGrid({
               <Activity size={20} />
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest">GOP Nexura</p>
+              <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest">GOP</p>
               <h4 className="text-xl font-semibold text-slate-900 font-mono-jb">{formatIDR(pnlResult.card6_GOP)}</h4>
             </div>
           </div>

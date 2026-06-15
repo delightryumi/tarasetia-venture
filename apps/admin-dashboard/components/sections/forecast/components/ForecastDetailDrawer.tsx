@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
-import { LogOut, Coffee, FileText, TrendingUp, X } from "lucide-react";
+import { LogOut, Coffee, FileText, TrendingUp, X, Globe } from "lucide-react";
 import styles from "../ForecastStyles.module.css";
 
 const SAGE = "#788069";
@@ -18,15 +18,14 @@ const getChannelIcon = (channel?: string, source?: string) => {
     const c = (channel || source || "").toLowerCase();
     if (c.includes("agoda")) return "/channels/agoda.png";
     if (c.includes("airbnb")) return "/channels/airbnb.png";
-    if (c.includes("booking")) return "/channels/booking_com.png";
+    if (c.includes("booking.com") || (c.includes("booking") && !c.includes("engine"))) return "/channels/booking_com.png";
     if (c.includes("expedia")) return "/channels/expedia.png";
     if (c.includes("mg")) return "/channels/mg.png";
     if (c.includes("tiket")) return "/channels/tiket_com.png";
     if (c.includes("traveloka")) return "/channels/traveloka.png";
     if (c.includes("trip")) return "/channels/trip.png";
     if (c.includes("walk") || c === "internal" || c.includes("front")) return "/channels/walk_in.png";
-    if (c.includes("nexura")) return "/channels/nexura.png";
-    return null;
+    return "globe";
 };
 
 export const ForecastDetailDrawer: React.FC<ForecastDetailDrawerProps> = ({ title, entries, summary, onClose, formatCurrency }) => {
@@ -117,10 +116,12 @@ export const ForecastDetailDrawer: React.FC<ForecastDetailDrawerProps> = ({ titl
                                 >
                                     <div style={{ display: "flex", alignItems: "center", gap: "12px", overflow: "hidden" }}>
                                         <div className={styles.guestAvatar}>
-                                            {channelIcon ? (
+                                            {channelIcon === "globe" ? (
+                                                <Globe size={14} style={{ color: "var(--f-sage)" }} />
+                                            ) : channelIcon ? (
                                                 <img src={channelIcon} alt="channel" className={styles.guestAvatarImg} />
                                             ) : (
-                                                item.type === 'other_income' ? <Coffee size={14} style={{ color: "var(--f-sage)" }} /> : <FileText size={14} style={{ color: "var(--f-sage)" }} />
+                                                item.type === 'other_income' ? <Coffee size={14} style={{ color: "var(--f-sage)" }} /> : <Globe size={14} style={{ color: "var(--f-sage)" }} />
                                             )}
                                         </div>
                                         <div style={{ display: "flex", flexDirection: "column", gap: "4px", overflow: "hidden" }}>

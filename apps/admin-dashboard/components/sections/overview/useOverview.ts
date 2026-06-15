@@ -158,7 +158,7 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         // Aggregate accommodation amounts across all nights of the stay
                         rep.amount = group.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
                         rep.payHotel = group.reduce((sum, item) => sum + (Number(item.payHotel || item.paidCash || item.paidAmount1) || 0), 0);
-                        rep.payNexura = group.reduce((sum, item) => sum + (Number(item.payNexura || item.paidTransfer || item.paidAmount2) || 0), 0);
+                        rep.payTransfer = group.reduce((sum, item) => sum + (Number(item.payTransfer || item.payNexura || item.paidTransfer || item.paidAmount2) || 0), 0);
                         
                         resolvedAccommodation.push(rep);
                     });

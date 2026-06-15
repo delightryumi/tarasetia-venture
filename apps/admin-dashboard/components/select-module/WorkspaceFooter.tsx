@@ -51,7 +51,7 @@ export const WorkspaceFooter: React.FC<WorkspaceFooterProps> = () => {
       {/* Right side: Copyright */}
       <div className="text-[11px] text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
         <span className="font-sans font-light tracking-normal text-slate-400 dark:text-zinc-500">Powered by</span>
-        <span className="font-serif italic font-light tracking-wide text-slate-700 dark:text-zinc-300">© 2026 Nexura Global Hospitality.</span>
+        <span className="font-serif italic font-light tracking-wide text-slate-700 dark:text-zinc-300">© 2026 Tarasetia Venture.</span>
         <span className="font-sans font-light tracking-normal opacity-80 text-slate-400 dark:text-zinc-500">All rights reserved.</span>
       </div>
     </footer>

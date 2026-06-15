@@ -110,7 +110,7 @@ export function GuestListDrawer({ isOpen, onClose, date, roomType, bookings, onA
                 {/* Footer */}
                 <div style={{ borderTop: '1px solid var(--f-hairline)', paddingTop: '16px', marginTop: 'auto' }}>
                     <p className={styles.guestSubtext} style={{ color: 'var(--f-light-muted)', fontSize: '8px', textAlign: 'center', margin: 0 }}>
-                        Nexura Operational Ledger View
+                        Operational Ledger View
                     </p>
                 </div>
             </div>

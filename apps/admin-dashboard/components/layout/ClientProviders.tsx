@@ -10,7 +10,24 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window === 'undefined') return;
+
+    const syncTheme = () => {
+      // 1. Read shared_theme cookie
+      const match = document.cookie.match(/(?:^|; )shared_theme=([^;]*)/);
+      const cookieTheme = match ? match[1] : null;
+
+      // 2. If cookie exists, sync to localStorage
+      if (cookieTheme && (cookieTheme === 'light' || cookieTheme === 'dark' || cookieTheme === 'system')) {
+        const localTheme = localStorage.getItem('theme');
+        if (localTheme !== cookieTheme) {
+          localStorage.setItem('theme', cookieTheme);
+          // Dispatch storage event so other stateful components in this tab update
+          window.dispatchEvent(new Event('storage'));
+        }
+      }
+
+      // 3. Resolve and apply the class to HTML element
       const savedTheme = localStorage.getItem('theme') || 'dark';
       let resolved = savedTheme;
       if (savedTheme === 'system') {
@@ -21,7 +38,19 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
       } else {
         document.documentElement.classList.remove('dark');
       }
-    }
+    };
+
+    // Run on mount
+    syncTheme();
+
+    // Listen for focus & storage events
+    window.addEventListener('focus', syncTheme);
+    window.addEventListener('storage', syncTheme);
+
+    return () => {
+      window.removeEventListener('focus', syncTheme);
+      window.removeEventListener('storage', syncTheme);
+    };
   }, [pathname]);
 
   return (

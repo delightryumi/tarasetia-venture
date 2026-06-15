@@ -12,8 +12,8 @@ export interface TransactionInput {
 
 export interface SummaryResult {
   gross: number;
-  nexuraSalesCash: number;
-  nexuraSalesTransfer: number;
+  virtualSalesCash: number;
+  virtualSalesTransfer: number;
   walkInTotal: number;
   otaTotal: number;
   fee: number;
@@ -47,7 +47,7 @@ export const calculateTransaction = (row: any) => {
   
   const otaChannels = [
     "Traveloka", "Booking.com", "Tiket.com", "Agoda", "Trip.com", 
-    "Expedia", "Airbnb", "Booking Engine", "Nexura Sales", "MG Bedbank"
+    "Expedia", "Airbnb", "Booking Engine", "MG Bedbank"
   ];
   const isOta = otaChannels.includes(row.channel);
 
@@ -71,15 +71,15 @@ export const calculateTransaction = (row: any) => {
 
   // Cash/transfer breakdown
   const ownerCash = cash;
-  const nexuraCash = realTransfer;
+  const virtualCash = realTransfer;
 
-  return { gross, gap, displayFee, fee, isLoss, isOta, ownerPenalty, ownerCash, nexuraCash };
+  return { gross, gap, displayFee, fee, isLoss, isOta, ownerPenalty, ownerCash, virtualCash };
 };
 
 export const calculateSummary = (transactions: any[]): SummaryResult => {
   let gross = 0;
-  let nexuraSalesCash = 0;
-  let nexuraSalesTransfer = 0;
+  let virtualSalesCash = 0;
+  let virtualSalesTransfer = 0;
   let walkInTotal = 0;
   let otaTotal = 0;
   let fee = 0;
@@ -94,12 +94,12 @@ export const calculateSummary = (transactions: any[]): SummaryResult => {
     const cash = Number(tx.paidCash) || 0;
     const transfer = Number(tx.paidTransfer) || 0;
 
-    nexuraSalesCash += cash;
-    nexuraSalesTransfer += transfer;
+    virtualSalesCash += cash;
+    virtualSalesTransfer += transfer;
 
     const otaChannels = [
       "Traveloka", "Booking.com", "Tiket.com", "Agoda", "Trip.com", 
-      "Expedia", "Airbnb", "Booking Engine", "Nexura Sales", "MG Bedbank"
+      "Expedia", "Airbnb", "Booking Engine", "MG Bedbank"
     ];
     if (otaChannels.includes(tx.channel)) {
         otaTotal += amount;
@@ -112,12 +112,12 @@ export const calculateSummary = (transactions: any[]): SummaryResult => {
     totalGap += gap;
   });
 
-  const finalReconcile = nexuraSalesTransfer - fee; 
+  const finalReconcile = virtualSalesTransfer - fee; 
 
   return {
     gross,
-    nexuraSalesCash,
-    nexuraSalesTransfer,
+    virtualSalesCash,
+    virtualSalesTransfer,
     walkInTotal,
     otaTotal,
     fee,

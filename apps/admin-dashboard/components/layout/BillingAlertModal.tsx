@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { AnimatePresence } from 'framer-motion';
 import { BillingSuspendedModal } from './BillingSuspendedModal';
 import { BillingExpirationBanner } from './BillingExpirationBanner';
+import { BillingCustomAlertBanner } from './BillingCustomAlertBanner';
 
 interface HotelBillingData {
   active: boolean;
@@ -26,6 +27,7 @@ export function BillingAlertModal() {
   const { user, activeHotelCode, signOutUser } = useAuth();
   const [hotelData, setHotelData] = useState<HotelBillingData | null>(null);
   const [isDismissedExpiration, setIsDismissedExpiration] = useState(false);
+  const [isDismissedCustomAlert, setIsDismissedCustomAlert] = useState(false);
 
   const isUserSuperadmin =
     user?.role === 'superadmin' ||
@@ -40,6 +42,9 @@ export function BillingAlertModal() {
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         setHotelData(docSnap.data() as HotelBillingData);
+        // Reset dismiss states when new updates are pulled from Firestore
+        setIsDismissedExpiration(false);
+        setIsDismissedCustomAlert(false);
       }
     }, (err) => {
       console.error('Error listening to hotel billing data:', err);
@@ -51,6 +56,7 @@ export function BillingAlertModal() {
 
   const showBilling = hotelData.active === false || !!hotelData.billing?.showBillingAlert;
   const showExpiration = !!hotelData.billing?.showExpirationAlert && !isDismissedExpiration;
+  const showCustomAlert = !!hotelData.billing?.alertMessage && hotelData.billing?.showCustomAlert !== false && !isDismissedCustomAlert;
 
   const formattedDueDate = hotelData.billing?.nextDueDate
     ? new Date(hotelData.billing.nextDueDate).toLocaleDateString('id-ID', {
@@ -77,7 +83,15 @@ export function BillingAlertModal() {
             hotelName={hotelData.name}
             formattedDueDate={formattedDueDate}
             onDismiss={() => setIsDismissedExpiration(true)}
-            alertMessage={hotelData.billing?.alertMessage}
+          />
+        )}
+
+        {/* ── CUSTOM ALERT BANNER ── */}
+        {!showBilling && showCustomAlert && (
+          <BillingCustomAlertBanner
+            alertMessage={hotelData.billing?.alertMessage || ''}
+            onDismiss={() => setIsDismissedCustomAlert(true)}
+            offsetTop={showExpiration}
           />
         )}
       </AnimatePresence>

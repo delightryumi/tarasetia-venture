@@ -235,7 +235,7 @@ export default function FinancialBreakdown({
 
             {/* SECTION 3: NET PROFIT */}
             <div className={styles.tableCard}>
-              <SectionHeader icon={Calculator} title="III. GOP & Net Profit Flow" subtitle="Nexura Profit Reconciliation" themeColor="emerald" />
+              <SectionHeader icon={Calculator} title="III. GOP & Net Profit Flow" subtitle="Profit Reconciliation" themeColor="emerald" />
               <div className={styles.tableScroll}>
                 <table className={styles.table}>
                   <thead>

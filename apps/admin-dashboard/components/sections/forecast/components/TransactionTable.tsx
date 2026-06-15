@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Activity, Search, Coffee, ChevronDown, Eye, Pencil, Trash2, CalendarX } from "lucide-react";
+import { Activity, Search, Coffee, ChevronDown, Eye, Pencil, Trash2, CalendarX, Globe } from "lucide-react";
 import { RoomStatusPicker } from "./RoomStatusPicker";
 import { GuestStatusPicker } from "./GuestStatusPicker";
 import styles from "../ForecastStyles.module.css";
@@ -63,7 +63,7 @@ export function TransactionTable({
                             <Activity size={15} />
                         </div>
                         <div className={styles.headerMeta}>
-                            <span className={styles.headerSubtitle}>Nexura Analytics</span>
+                            <span className={styles.headerSubtitle}>Forecast Analytics</span>
                             <h2 className={styles.headerTitle} style={{ fontSize: "13px" }}>
                                 Detail <span style={{ color: "#788069" }}>Transaksi</span>
                             </h2>
@@ -206,28 +206,33 @@ export function TransactionTable({
                                                     <div style={{ width: "32px", height: "32px", borderRadius: "6px", backgroundColor: "#ffffff", border: "1px solid var(--f-hairline)", padding: "4px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                                                         {entry.type === 'other_income' ? (
                                                             <Coffee size={14} style={{ color: "var(--f-light-muted)" }} />
-                                                        ) : (
-                                                            <img 
-                                                                src={
-                                                                    (() => {
-                                                                        const c = entry.channel || "";
-                                                                        const lower = c.toLowerCase();
-                                                                        if (lower.includes("traveloka")) return "/channels/traveloka.png";
-                                                                        if (lower.includes("booking.com")) return "/channels/booking_com.png";
-                                                                        if (lower.includes("tiket")) return "/channels/tiket_com.png";
-                                                                        if (lower.includes("agoda")) return "/channels/agoda.png";
-                                                                        if (lower.includes("airbnb")) return "/channels/airbnb.png";
-                                                                        if (lower.includes("trip")) return "/channels/trip.png";
-                                                                        if (lower.includes("expedia")) return "/channels/expedia.png";
-                                                                        if (lower.includes("mg")) return "/channels/mg.png";
-                                                                        if (lower.includes("walk")) return "/channels/walk_in.png";
-                                                                        return "/channels/nexura.png";
-                                                                    })()
-                                                                } 
-                                                                style={{ width: "20px", height: "20px", objectFit: "contain", opacity: 0.6 }}
-                                                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                                            />
-                                                        )}
+                                                        ) : (() => {
+                                                            const c = entry.channel || "";
+                                                            const lower = c.toLowerCase();
+                                                            if (lower.includes("booking engine") || lower.includes("engine") || (!lower.includes("traveloka") && !lower.includes("booking.com") && !lower.includes("tiket") && !lower.includes("agoda") && !lower.includes("airbnb") && !lower.includes("trip") && !lower.includes("expedia") && !lower.includes("mg") && !lower.includes("walk"))) {
+                                                                return <Globe size={14} style={{ color: "var(--f-light-muted)" }} />;
+                                                            }
+                                                            return (
+                                                                <img 
+                                                                    src={
+                                                                        (() => {
+                                                                            if (lower.includes("traveloka")) return "/channels/traveloka.png";
+                                                                            if (lower.includes("booking.com")) return "/channels/booking_com.png";
+                                                                            if (lower.includes("tiket")) return "/channels/tiket_com.png";
+                                                                            if (lower.includes("agoda")) return "/channels/agoda.png";
+                                                                            if (lower.includes("airbnb")) return "/channels/airbnb.png";
+                                                                            if (lower.includes("trip")) return "/channels/trip.png";
+                                                                            if (lower.includes("expedia")) return "/channels/expedia.png";
+                                                                            if (lower.includes("mg")) return "/channels/mg.png";
+                                                                            if (lower.includes("walk")) return "/channels/walk_in.png";
+                                                                            return "/channels/walk_in.png";
+                                                                        })()
+                                                                    } 
+                                                                    style={{ width: "20px", height: "20px", objectFit: "contain", opacity: 0.6 }}
+                                                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                                                />
+                                                            );
+                                                        })()}
                                                     </div>
                                                     <span className={styles.guestSubtext} style={{ margin: 0, fontWeight: 700, color: "var(--f-light-muted)" }}>{entry.channel || "Internal"}</span>
                                                 </div>

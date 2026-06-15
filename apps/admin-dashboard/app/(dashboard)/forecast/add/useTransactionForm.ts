@@ -24,9 +24,8 @@ export const CHANNELS = [
     { name: "Trip.com", color: "#1890ff", logo: "/channels/trip.png" },
     { name: "Expedia", color: "#fbc02d", logo: "/channels/expedia.png" },
     { name: "MG Bedbank", color: "#6c3483", logo: "/channels/mg.png" },
-    { name: "Nexura Sales", color: SAGE, logo: "/channels/nexura.png" },
     { name: "Walk-in", color: "#2e7d32", logo: "/channels/walk_in.png" },
-    { name: "Booking Engine", color: SAGE, logo: "/channels/nexura.png" },
+    { name: "Booking Engine", color: SAGE, logo: "globe" },
 ];
 
 export const OTHER_INCOME_TYPES = [
@@ -49,7 +48,7 @@ const INITIAL_FORM = {
     channel: "Walk-in",
     voucherCode: "",
     payHotel: "",
-    payNexura: "",
+    payTransfer: "",
     totalAmount: "",
     incomeType: "Other",
     note: "",
@@ -113,15 +112,15 @@ export const useTransactionForm = () => {
         ? (form.nightRates || []).reduce((acc, r) => acc + (Number(r) || 0), 0)
         : (Number(form.totalAmount) || 0);
         
-    const balance = totalGross - (Number(form.payHotel) || 0) - (Number(form.payNexura) || 0);
+    const balance = totalGross - (Number(form.payHotel) || 0) - (Number(form.payTransfer) || 0);
 
     useEffect(() => {
-        const isRestricted = !(form.channel === "Walk-in" || form.channel === "Nexura Sales");
+        const isRestricted = !(form.channel === "Walk-in");
         if (revenueType === "room" && isRestricted) {
             setForm(prev => ({ 
                 ...prev, 
                 payHotel: "0",
-                payNexura: totalGross.toString()
+                payTransfer: totalGross.toString()
             }));
         }
     }, [form.channel, revenueType, totalGross]);
@@ -130,7 +129,7 @@ export const useTransactionForm = () => {
         if (revenueType === "other") {
             setForm(prev => ({
                 ...prev,
-                payNexura: "0"
+                payTransfer: "0"
             }));
         }
     }, [revenueType]);
@@ -285,7 +284,7 @@ export const useTransactionForm = () => {
                 return null;
             }
             // Check for negative payments
-            if (Number(form.payHotel) < 0 || Number(form.payNexura) < 0) {
+            if (Number(form.payHotel) < 0 || Number(form.payTransfer) < 0) {
                 toast.error("Payment amount cannot be negative");
                 return null;
             }
@@ -299,7 +298,7 @@ export const useTransactionForm = () => {
                 toast.error("Total Amount must be greater than 0");
                 return null;
             }
-            if (Number(form.payHotel) < 0 || Number(form.payNexura) < 0) {
+            if (Number(form.payHotel) < 0 || Number(form.payTransfer) < 0) {
                 toast.error("Payment amount cannot be negative");
                 return null;
             }
@@ -320,7 +319,7 @@ export const useTransactionForm = () => {
         if (revenueType === "room") {
             const startD = new Date(form.checkIn);
             let remainingPayHotel = Number(form.payHotel) || 0;
-            let remainingPayNexura = Number(form.payNexura) || 0;
+            let remainingPayTransfer = Number(form.payTransfer) || 0;
 
             for (let i = 0; i < nights; i++) {
                 const currentDate = new Date(startD);
@@ -331,16 +330,16 @@ export const useTransactionForm = () => {
                 const ratio = totalGross > 0 ? nightlyRate / totalGross : 0;
                 
                 let dailyPayHotel = 0;
-                let dailyPayNexura = 0;
+                let dailyPayTransfer = 0;
                 
                 if (i === nights - 1) {
                     dailyPayHotel = remainingPayHotel;
-                    dailyPayNexura = remainingPayNexura;
+                    dailyPayTransfer = remainingPayTransfer;
                 } else {
                     dailyPayHotel = Math.round((Number(form.payHotel) || 0) * ratio);
-                    dailyPayNexura = Math.round((Number(form.payNexura) || 0) * ratio);
+                    dailyPayTransfer = Math.round((Number(form.payTransfer) || 0) * ratio);
                     remainingPayHotel -= dailyPayHotel;
-                    remainingPayNexura -= dailyPayNexura;
+                    remainingPayTransfer -= dailyPayTransfer;
                 }
 
                 transactionEntries.push({
@@ -357,11 +356,11 @@ export const useTransactionForm = () => {
                     voucherCode: form.voucherCode,
                     amount: nightlyRate,
                     payHotel: dailyPayHotel,
-                    payNexura: dailyPayNexura,
+                    payTransfer: dailyPayTransfer,
                     paidCash: dailyPayHotel,
                     paidAmount1: dailyPayHotel,
-                    paidTransfer: dailyPayNexura,
-                    paidAmount2: dailyPayNexura,
+                    paidTransfer: dailyPayTransfer,
+                    paidAmount2: dailyPayTransfer,
                     paymentStatus: balance === 0 ? "PAID" : "UNPAID",
                     source: form.channel === "Walk-in" ? "Walk-in" : "OTA",
                     status: "CONFIRMED",
@@ -381,11 +380,11 @@ export const useTransactionForm = () => {
                 checkOutDate: form.checkIn,
                 amount: Number(form.totalAmount),
                 payHotel: Number(form.payHotel) || 0,
-                payNexura: Number(form.payNexura) || 0,
+                payTransfer: Number(form.payTransfer) || 0,
                 paidCash: Number(form.payHotel) || 0,
                 paidAmount1: Number(form.payHotel) || 0,
-                paidTransfer: Number(form.payNexura) || 0,
-                paidAmount2: Number(form.payNexura) || 0,
+                paidTransfer: Number(form.payTransfer) || 0,
+                paidAmount2: Number(form.payTransfer) || 0,
                 paymentStatus: balance === 0 ? "PAID" : "UNPAID",
                 source: "Walk-in", // Other income is generally considered walk-in
                 status: "CONFIRMED",
@@ -476,7 +475,7 @@ export const useTransactionForm = () => {
 
     const updateForm = (field: string, value: any) => {
         let finalValue = value;
-        if (["payHotel", "payNexura", "totalAmount"].includes(field)) {
+        if (["payHotel", "payTransfer", "totalAmount"].includes(field)) {
             const num = Number(value);
             if (!isNaN(num) && num < 0) {
                 finalValue = 0;

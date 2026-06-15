@@ -116,8 +116,10 @@ export async function PUT(request: Request) {
     if (role) updateData.role = role;
     if (permissions) updateData.permissions = permissions;
 
-    const userDocRef = adminDb.doc(`hotels/${hotelCode}/users_master/${docId}`);
-    await userDocRef.update(updateData);
+    if (Object.keys(updateData).length > 0) {
+      const userDocRef = adminDb.doc(`hotels/${hotelCode}/users_master/${docId}`);
+      await userDocRef.update(updateData);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

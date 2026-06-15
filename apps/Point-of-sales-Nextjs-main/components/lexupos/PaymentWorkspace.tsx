@@ -175,7 +175,7 @@ export default function PaymentWorkspace({
                     ? 'opacity-40 cursor-not-allowed border-neutral-200 dark:border-white/[0.05] bg-neutral-105 text-neutral-400'
                     : 'cursor-pointer ' + (revenueType === 'alacarte'
                       ? 'border-neutral-800 bg-neutral-100 dark:border-white dark:bg-zinc-800 text-neutral-800 dark:text-white shadow-sm'
-                      : 'border-neutral-200 bg-white hover:bg-neutral-50 dark:border-white/[0.05] dark:bg-zinc-900/50 dark:hover:bg-zinc-850 text-neutral-500')
+                      : 'border-neutral-200 bg-white hover:bg-neutral-50 dark:border-white/[0.05] dark:bg-zinc-900/50 dark:hover:bg-zinc-800 text-neutral-500')
                 }`}
               >
                 <span>A la Carte</span>
@@ -186,7 +186,7 @@ export default function PaymentWorkspace({
                 className={`py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                   revenueType === 'banquet'
                     ? 'border-neutral-800 bg-neutral-100 dark:border-white dark:bg-zinc-800 text-neutral-800 dark:text-white shadow-sm'
-                    : 'border-neutral-200 bg-white hover:bg-neutral-50 dark:border-white/[0.05] dark:bg-zinc-900/50 dark:hover:bg-zinc-850 text-neutral-500'
+                    : 'border-neutral-200 bg-white hover:bg-neutral-50 dark:border-white/[0.05] dark:bg-zinc-900/50 dark:hover:bg-zinc-800 text-neutral-500'
                 }`}
               >
                 <span>Banquet</span>

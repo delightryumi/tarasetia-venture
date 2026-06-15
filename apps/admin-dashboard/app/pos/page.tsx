@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function POSPage() {
-  const { user } = useAuth();
+  const { user, activeHotelCode } = useAuth();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -53,7 +53,8 @@ export default function POSPage() {
             username: authUserObj.email?.split('@')[0],
             email: authUserObj.email,
             role: authUserObj.role || 'WORKER',
-            restoId: 'default-resto'
+            restoId: 'default-resto',
+            hotelCode: activeHotelCode || authUserObj.hotelCode || '87241'
           };
           params.set('user', JSON.stringify(posUserObj));
         } catch (e) {
@@ -69,7 +70,8 @@ export default function POSPage() {
           username: email.split('@')[0],
           email: email,
           role: user.role || 'WORKER',
-          restoId: 'default-resto'
+          restoId: 'default-resto',
+          hotelCode: activeHotelCode || user.hotelCode || '87241'
         };
         params.set('user', JSON.stringify(posUserObj));
       }
@@ -92,7 +94,7 @@ export default function POSPage() {
         window.location.href = `${basePosUrl}/home#${params.toString()}`;
       }
     }
-  }, [user]);
+  }, [user, activeHotelCode]);
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-zinc-950 text-white font-sans">

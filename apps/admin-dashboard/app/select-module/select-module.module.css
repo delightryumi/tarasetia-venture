@@ -8,12 +8,14 @@
   font-family: var(--font-sans, sans-serif);
   z-index: 0;
   user-select: none;
-  background-color: #f8fafc; /* Professional Flat Corporate Light */
+  background-color: #f8fafc;
+  /* Professional Flat Corporate Light */
   transition: background-color 0.4s ease;
 }
 
 :global(.dark) .container {
-  background-color: #09090b; /* Professional Flat Corporate Dark */
+  background-color: #09090b;
+  /* Professional Flat Corporate Dark */
 }
 
 /* Soft Ambient Nexura Glows */
@@ -27,7 +29,8 @@
 }
 
 .blob1 {
-  background-color: rgba(107, 29, 47, 0.06); /* Nexura Maroon Red Accent */
+  background-color: rgba(107, 29, 47, 0.06);
+  /* Nexura Maroon Red Accent */
   width: 700px;
   height: 700px;
   top: -15%;
@@ -36,7 +39,8 @@
 }
 
 .blob2 {
-  background-color: rgba(197, 168, 128, 0.05); /* Nexura Satin Gold Accent */
+  background-color: rgba(197, 168, 128, 0.05);
+  /* Nexura Satin Gold Accent */
   width: 800px;
   height: 800px;
   bottom: -20%;
@@ -45,7 +49,8 @@
 }
 
 .blob3 {
-  background-color: rgba(250, 246, 240, 0.5); /* Cream Haze */
+  background-color: rgba(250, 246, 240, 0.5);
+  /* Cream Haze */
   width: 600px;
   height: 600px;
   top: 30%;
@@ -53,59 +58,140 @@
 }
 
 :global(.dark) .blob3 {
-  background-color: rgba(26, 28, 20, 0.4); /* Obsidian Black Haze */
+  background-color: rgba(26, 28, 20, 0.4);
+  /* Obsidian Black Haze */
 }
 
 @keyframes floatSlow {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(40px, 60px) scale(1.05); }
-  100% { transform: translate(-30px, 40px) scale(0.95); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(40px, 60px) scale(1.05);
+  }
+
+  100% {
+    transform: translate(-30px, 40px) scale(0.95);
+  }
 }
 
 @keyframes floatSlowReverse {
-  0% { transform: translate(0, 0) scale(0.95); }
-  50% { transform: translate(-60px, -40px) scale(1.05); }
-  100% { transform: translate(40px, 50px) scale(1); }
+  0% {
+    transform: translate(0, 0) scale(0.95);
+  }
+
+  50% {
+    transform: translate(-60px, -40px) scale(1.05);
+  }
+
+  100% {
+    transform: translate(40px, 50px) scale(1);
+  }
+}
+
+/* Modular Header Layout */
+.headerBar {
+  width: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  z-index: 30;
+  border-bottom: none;
+  background-color: #181818;
+  user-select: none;
+}
+
+:global(.dark) .headerBar {
+  background-color: #181818;
+}
+
+.headerInner {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 768px) {
+  .headerInner {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .headerInner {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+.logoArea {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logoImage {
+  height: 24px;
+  width: auto;
+  object-fit: contain;
+  margin-left: 0;
+}
+
+@media (min-width: 768px) {
+  .logoImage {
+    height: 28px;
+  }
+}
+
+.dividerLine {
+  height: 24px;
+  width: 1px;
+  background-color: #2e2e30;
+}
+
+:global(.dark) .dividerLine {
+  background-color: #27272a;
 }
 
 /* Hamburger Menu & Dropdown Styles */
 .menuWrapper {
   position: relative;
   z-index: 50;
-  margin-right: 16px;
+  margin-right: 0;
 }
 
 .menuButton {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background-color: #212121;
-  color: #a3a3a3;
+  border: none;
+  background-color: #282828;
+  color: #c2c2c2;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 :global(.dark) .menuButton {
-  border-color: rgba(255, 255, 255, 0.08);
-  background-color: #1a1a1c;
-  color: #737373;
+  background-color: #282828;
+  color: #c2c2c2;
 }
 
 .menuButton:hover {
-  background-color: #2e2e30;
+  background-color: #333333;
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.15);
 }
 
 :global(.dark) .menuButton:hover {
-  background-color: #262628;
-  color: #e4e4e7;
-  border-color: rgba(255, 255, 255, 0.15);
+  background-color: #333333;
+  color: #ffffff;
 }
 
 .menuButton:focus {
@@ -176,17 +262,20 @@
 .dropdownIcon {
   width: 16px;
   height: 16px;
-  color: #8d7a52; /* gold color */
+  color: #8d7a52;
+  /* gold color */
   transition: color 0.15s ease;
   flex-shrink: 0;
 }
 
 .dropdownItem:hover .dropdownIcon {
-  color: #aa2d00; /* coral color on hover */
+  color: #aa2d00;
+  /* coral color on hover */
 }
 
 :global(.dark) .dropdownItem:hover .dropdownIcon {
-  color: #f5e9d4; /* cream gold on hover dark */
+  color: #f5e9d4;
+  /* cream gold on hover dark */
 }
 
 .dropdownDivider {
@@ -201,7 +290,8 @@
 
 .dropdownItemDanger {
   composes: dropdownItem;
-  color: #aa2d00; /* coral/red */
+  color: #aa2d00;
+  /* coral/red */
 }
 
 :global(.dark) .dropdownItemDanger {
@@ -226,3 +316,69 @@
   color: #f87171;
 }
 
+/* Hotel selector & badge dark mode contrast */
+.hotelBadge {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  transition: all 0.2s ease;
+}
+
+:global(.dark) .hotelBadge {
+  background-color: #222225;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f4f4f5 !important;
+}
+
+:global(.dark) .hotelBadge span {
+  color: #f4f4f5 !important;
+}
+
+/* Hamburger dropdown user profile card styling */
+.menuUserCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: none;
+}
+
+:global(.dark) .menuUserCard {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.menuUserName {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+:global(.dark) .menuUserName {
+  color: #f4f4f5 !important;
+}
+
+.menuUserEmail {
+  font-size: 10px;
+  color: #64748b;
+}
+
+:global(.dark) .menuUserEmail {
+  color: #a1a1aa !important;
+}
+
+.hotelSelect {
+  color: #0f172a;
+  background-color: transparent;
+}
+
+:global(.dark) .hotelSelect {
+  color: #f4f4f5 !important;
+}
+
+:global(.dark) .hotelSelect option {
+  background-color: #1c1c1e;
+  color: #f4f4f5;
+}

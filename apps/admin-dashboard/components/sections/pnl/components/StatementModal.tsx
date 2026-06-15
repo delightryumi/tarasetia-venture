@@ -124,7 +124,7 @@ export default function StatementModal({
                 </div>
                 <div className="mt-4 p-4 border border-slate-900 bg-slate-50 rounded-xl flex justify-between items-center">
                     <div>
-                        <p className="font-semibold text-lg text-slate-900 uppercase tracking-widest">Net Profit Nexura</p>
+                        <p className="font-semibold text-lg text-slate-900 uppercase tracking-widest">Net Profit</p>
                         <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold">EBITDA (Earnings Before Interest & Tax)</p>
                     </div>
                     <p className="text-2xl font-semibold text-slate-900 tracking-tighter font-mono-jb">{formatIDR(profitNexura)}</p>

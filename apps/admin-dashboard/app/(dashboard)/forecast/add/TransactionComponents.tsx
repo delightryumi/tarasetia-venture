@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, ArrowRight, BedDouble, Calendar as CalendarIcon, Package } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight, BedDouble, Calendar as CalendarIcon, Package, Globe } from "lucide-react";
 import { CHANNELS } from "./useTransactionForm";
 import styles from "./TransactionFormStyles.module.css";
 
@@ -134,7 +134,11 @@ export function ChannelSelect({ value, onChange }: { value: string, onChange: (v
             >
                 <div className="flex items-center gap-3 flex-1">
                     <div style={{ width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <img src={selectedChannel.logo} alt="" className="max-w-[14px] max-h-[14px] object-contain" />
+                        {selectedChannel.logo === "globe" ? (
+                            <Globe size={14} className="text-stone-400" />
+                        ) : (
+                            <img src={selectedChannel.logo} alt="" className="max-w-[14px] max-h-[14px] object-contain" />
+                        )}
                     </div>
                     <span className={styles.popoverItemText} style={{ color: 'var(--f-body)' }}>{selectedChannel.name}</span>
                 </div>
@@ -164,7 +168,11 @@ export function ChannelSelect({ value, onChange }: { value: string, onChange: (v
                                 }}
                             >
                                 <div style={{ width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <img src={channel.logo} alt="" className="max-w-[14px] max-h-[14px] object-contain" style={{ filter: value === channel.name ? 'brightness(10)' : 'none' }} />
+                                    {channel.logo === "globe" ? (
+                                        <Globe size={14} className={value === channel.name ? 'text-white' : 'text-stone-400'} />
+                                    ) : (
+                                        <img src={channel.logo} alt="" className="max-w-[14px] max-h-[14px] object-contain" style={{ filter: value === channel.name ? 'brightness(10)' : 'none' }} />
+                                    )}
                                 </div>
                                 <span className={styles.popoverItemText}>{channel.name}</span>
                             </button>
@@ -286,7 +294,7 @@ export function OtherIncomeTypeSelect({ value, options, onChange }: { value: str
     );
 }
 
-export const NexuraInput = ({ label, value, onChange, placeholder, type = "text", isAmount = false, icon: Icon, disabled = false }: any) => {
+export const TerminalInput = ({ label, value, onChange, placeholder, type = "text", isAmount = false, icon: Icon, disabled = false }: any) => {
     return (
         <div className={styles.formGroup} style={{ opacity: disabled ? 0.4 : 1, pointerEvents: disabled ? 'none' : 'auto' }}>
             {label && <label className={styles.inputLabel}>{label}</label>}

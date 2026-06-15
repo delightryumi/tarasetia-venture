@@ -51,7 +51,7 @@ export const PNLCharts: React.FC<PNLChartsProps> = ({
                                     <Pie
                                         data={[
                                             { name: 'Hotel Collect', value: pnlResult?.card3_RevHotelCollect || 0 },
-                                            { name: 'Nexura Collect', value: pnlResult?.card3_RevNexuraCollect || 0 },
+                                            { name: 'Online/Transfer Collect', value: pnlResult?.card3_RevNexuraCollect || 0 },
                                             { name: 'Other Revenue', value: pnlResult?.card5_OtherRevenue || 0 }
                                         ]}
                                         cx="50%" cy="50%"

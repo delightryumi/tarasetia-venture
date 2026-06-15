@@ -38,7 +38,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
         guestName: '',
         totalAmount: 0,
         payHotel: 0,
-        payNexura: 0,
+        payTransfer: 0,
         checkIn: '',
         checkOut: '',
         roomTypeId: '',
@@ -69,7 +69,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 ...guest,
                 totalAmount: guest.totalAmount || guest.amount || 0,
                 payHotel: guest.payHotel ?? guest.paidCash ?? guest.amount ?? 0,
-                payNexura: guest.payNexura ?? guest.paidTransfer ?? 0,
+                payTransfer: guest.payTransfer ?? guest.payNexura ?? guest.paidTransfer ?? 0,
                 checkIn: guest.checkInDate || guest.checkIn || '',
                 checkOut: guest.checkOutDate || guest.checkOut || '',
                 roomTypeId: guest.roomTypeId || '',
@@ -162,10 +162,10 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             
             const totalAmount = Number(formData.totalAmount) || 0;
             const payHotel = Number(formData.payHotel) || 0;
-            const payNexura = Number(formData.payNexura) || 0;
+            const payTransfer = Number(formData.payTransfer) || 0;
             
             let remainingPayHotel = payHotel;
-            let remainingPayNexura = payNexura;
+            let remainingPayTransfer = payTransfer;
 
             const isNowCancelled = formData.status === "CANCELLED" || formData.paymentStatus === "CANCELLED" || formData.status === "CANCEL" || formData.paymentStatus === "CANCEL";
             const now = new Date();
@@ -182,16 +182,16 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 const nightlyRate = Math.round(totalAmount / nights);
                 
                 let dailyPayHotel = 0;
-                let dailyPayNexura = 0;
+                let dailyPayTransfer = 0;
                 
                 if (i === nights - 1) {
                     dailyPayHotel = remainingPayHotel;
-                    dailyPayNexura = remainingPayNexura;
+                    dailyPayTransfer = remainingPayTransfer;
                 } else {
                     dailyPayHotel = Math.round(payHotel / nights);
-                    dailyPayNexura = Math.round(payNexura / nights);
+                    dailyPayTransfer = Math.round(payTransfer / nights);
                     remainingPayHotel -= dailyPayHotel;
-                    remainingPayNexura -= dailyPayNexura;
+                    remainingPayTransfer -= dailyPayTransfer;
                 }
                 
                 newEntries.push({
@@ -204,11 +204,11 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                     effectiveDate: dateStr,
                     amount: nightlyRate,
                     payHotel: dailyPayHotel,
-                    payNexura: dailyPayNexura,
+                    payTransfer: dailyPayTransfer,
                     paidCash: dailyPayHotel,
                     paidAmount1: dailyPayHotel,
-                    paidTransfer: dailyPayNexura,
-                    paidAmount2: dailyPayNexura,
+                    paidTransfer: dailyPayTransfer,
+                    paidAmount2: dailyPayTransfer,
                     paymentStatus: isNowCancelled ? "CANCELLED" : formData.paymentStatus,
                     status: isNowCancelled ? "CANCELLED" : formData.status,
                     cancelledAt: cancelledAtVal,

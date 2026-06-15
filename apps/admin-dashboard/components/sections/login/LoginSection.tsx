@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLogin } from "./useLogin";
-import { Mail, Lock, Building } from "lucide-react";
+import { Mail, Lock, Building, Eye, EyeOff } from "lucide-react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import "./login.css";
@@ -9,7 +9,7 @@ const LeftPanel = React.memo(() => {
     return (
         <div className="panels-container">
             <div className="panel left-panel">
-                <img src="/channels/nexura-logo.png" alt="Nexura Logo" className="hero-logo" />
+                <img src="/channels/2.png" alt="Tarasetia Venture Logo" className="hero-logo" />
                 <div className="panel-content">
                     <h3><span>Property</span> Management System</h3>
                     <p>
@@ -26,6 +26,7 @@ export const LoginSection = () => {
     const { email, setEmail, password, setPassword, hotelCode, setHotelCode, error, loading, handleLogin } =
         useLogin();
 
+    const [showPassword, setShowPassword] = useState(false);
     const [mode, setMode] = useState<'login' | 'reset-password'>('login');
     const [resetEmail, setResetEmail] = useState("");
     const [resetError, setResetError] = useState("");
@@ -82,7 +83,7 @@ export const LoginSection = () => {
                         /* ===== SIGN IN FORM ===== */
                         <form className="sign-in-form" onSubmit={handleLogin}>
                             <h2 className="auth-title">Sign In</h2>
-                            <p className="auth-subtitle">Welcome back to Nexura Global Hospitality</p>
+                            <p className="auth-subtitle">Welcome back to Tara</p>
 
                             {error && <div className="auth-error">{error}</div>}
 
@@ -111,18 +112,36 @@ export const LoginSection = () => {
                                     disabled={loading}
                                 />
                             </div>
-                            <div className="input-field">
+                            <div className="input-field" style={{ position: "relative" }}>
                                 <span className="input-icon">
                                     <Lock size={20} />
                                 </span>
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     placeholder="Password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     disabled={loading}
+                                    style={{ paddingRight: "44px" }}
                                 />
+                                <span 
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={{
+                                        position: 'absolute',
+                                        right: '16px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        cursor: 'pointer',
+                                        color: '#9DA68E',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        zIndex: 10
+                                    }}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </span>
                             </div>
 
                             <div className="forgot-password-link" style={{ textAlign: 'right', marginTop: '4px', width: '100%', maxWidth: '380px' }}>
@@ -188,7 +207,7 @@ export const LoginSection = () => {
                                     setResetEmail("");
                                 }} 
                                 style={{ cursor: 'pointer', fontSize: '13px', color: '#181d26', marginTop: '20px', fontWeight: 600, textDecoration: 'underline' }}
-                            >
+                              >
                                 Back to Sign In
                             </span>
                         </form>
@@ -197,7 +216,7 @@ export const LoginSection = () => {
 
                 {/* Bottom Copyright */}
                 <div className="auth-footer">
-                    <p>© {new Date().getFullYear()} Nexura Global Hospitality. All rights reserved.</p>
+                    <p>© {new Date().getFullYear()} Tarasetia Venture. All rights reserved.</p>
                 </div>
             </div>
 

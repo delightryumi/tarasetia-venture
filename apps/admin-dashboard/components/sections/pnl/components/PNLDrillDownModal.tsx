@@ -95,7 +95,7 @@ export function PNLDrillDownModal({
                                 <div>
                                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
                                         <span style={{ fontSize: 10, fontWeight: 500, padding: "2px 9px", borderRadius: 99, textTransform: "uppercase", letterSpacing: "0.05em", background: "var(--f-income-bg)", color: "var(--f-income-color)", border: T.border }}>
-                                            Nexura Audit
+                                            Audit
                                         </span>
                                         <span style={{ fontSize: 10, fontWeight: 400, padding: "2px 9px", borderRadius: 99, fontFamily: T.mono, background: T.surface2, color: T.textSec, border: T.border }}>
                                             {month}

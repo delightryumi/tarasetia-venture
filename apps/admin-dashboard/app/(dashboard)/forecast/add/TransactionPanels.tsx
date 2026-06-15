@@ -11,7 +11,8 @@ import {
     ShieldCheck,
     AlertCircle,
     Receipt,
-    BedDouble
+    BedDouble,
+    Globe
 } from "lucide-react";
 import styles from "./TransactionFormStyles.module.css";
 import { CHANNELS } from "./useTransactionForm";
@@ -21,7 +22,7 @@ import {
     ChannelSelect,
     RoomTypeSelect,
     OtherIncomeTypeSelect,
-    NexuraInput,
+    TerminalInput,
     TypeCard,
     DateCard
 } from "./TransactionComponents";
@@ -151,14 +152,14 @@ export function TransactionEntryForm({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <SectionTitle number="01" label="Informasi Guest & Durasi Menginap" />
                         <div className={styles.formGrid}>
-                            <NexuraInput 
+                            <TerminalInput 
                                 label="Nama Tamu (Guest Name)"
                                 value={form.guestName}
                                 onChange={(val: string) => updateForm("guestName", val)}
                                 placeholder="CONTOH: BUDI SANTOSO"
                                 icon={User}
                             />
-                            <NexuraInput 
+                            <TerminalInput 
                                 label="Nama Staff (Staff Name)"
                                 value={form.staffName}
                                 onChange={(val: string) => updateForm("staffName", val)}
@@ -193,7 +194,7 @@ export function TransactionEntryForm({
                                     onChange={(val: string) => updateRoom(0, "roomTypeId", val)}
                                 />
                             </div>
-                            <NexuraInput 
+                            <TerminalInput 
                                 label="Nomor Kamar (Room Number)"
                                 value={form.rooms[0].roomNumber}
                                 onChange={(val: string) => updateRoom(0, "roomNumber", val)}
@@ -213,7 +214,7 @@ export function TransactionEntryForm({
                                 const dateLabel = currentD.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
                                 const label = nights > 1 ? `Room Rate Malam ${idx + 1} (${dateLabel})` : "Total Room Rate per Malam";
                                 return (
-                                    <NexuraInput 
+                                    <TerminalInput 
                                         key={idx}
                                         label={label}
                                         value={form.nightRates[idx] ?? ""}
@@ -228,7 +229,7 @@ export function TransactionEntryForm({
 
                         <SectionTitle number="03" label="Rincian Pembayaran & Pendapatan Bersih" />
                         <div className={styles.formGrid} style={{ rowGap: '12px' }}>
-                            <NexuraInput 
+                            <TerminalInput 
                                 label="Pembayaran Cash di Hotel (Pay at Hotel)"
                                 value={form.payHotel}
                                 onChange={(val: string) => updateForm("payHotel", Number(val))}
@@ -236,10 +237,10 @@ export function TransactionEntryForm({
                                 type="number"
                                 isAmount={true}
                             />
-                            <NexuraInput 
-                                label="Pembayaran Virtual / OTA (Pay at Nexura)"
-                                value={form.payNexura}
-                                onChange={(val: string) => updateForm("payNexura", Number(val))}
+                            <TerminalInput 
+                                label="Pembayaran Virtual / OTA (Debit, QRIS, dsb.)"
+                                value={form.payTransfer}
+                                onChange={(val: string) => updateForm("payTransfer", Number(val))}
                                 placeholder="0"
                                 type="number"
                                 isAmount={true}
@@ -260,14 +261,14 @@ export function TransactionEntryForm({
                                     onChange={(val: string) => updateForm("incomeType", val)}
                                 />
                             </div>
-                            <NexuraInput 
+                            <TerminalInput 
                                 label="Keterangan (Description)"
                                 value={form.guestName}
                                 onChange={(val: string) => updateForm("guestName", val)}
                                 placeholder="CONTOH: SEWA SEPEDA MOTOR / EXTRA BED"
                                 icon={User}
                             />
-                            <NexuraInput 
+                            <TerminalInput 
                                 label="Nama Staff (Staff Name)"
                                 value={form.staffName}
                                 onChange={(val: string) => updateForm("staffName", val)}
@@ -284,7 +285,7 @@ export function TransactionEntryForm({
                                 onChange={(val: string) => updateForm("checkIn", val)}
                                 type="check-in"
                             />
-                            <NexuraInput 
+                            <TerminalInput 
                                 label="Total Harga (Total Amount)"
                                 value={form.totalAmount}
                                 onChange={(val: string) => {
@@ -301,7 +302,7 @@ export function TransactionEntryForm({
 
                 {/* General Notes for both */}
                 <div style={{ paddingTop: '8px' }}>
-                    <NexuraInput 
+                    <TerminalInput 
                         label="Catatan Tambahan (Optional Notes)"
                         value={form.note}
                         onChange={(val: string) => updateForm("note", val)}
@@ -399,7 +400,13 @@ export function ReviewSidebar({
                                     <div className={styles.draftCardRow}>
                                         <span className={styles.draftLabel}>Channel</span>
                                         <div className="flex items-center gap-2">
-                                            {currentChannel?.logo && <img src={currentChannel.logo} className="w-3.5 h-3.5 object-contain opacity-60" alt="" />}
+                                            {currentChannel?.logo && (
+                                                currentChannel.logo === "globe" ? (
+                                                    <Globe size={14} className="text-stone-400 opacity-60" />
+                                                ) : (
+                                                    <img src={currentChannel.logo} className="w-3.5 h-3.5 object-contain opacity-60" alt="" />
+                                                )
+                                            )}
                                             <span className={styles.draftValue}>{form.channel}</span>
                                         </div>
                                     </div>
@@ -419,8 +426,8 @@ export function ReviewSidebar({
                                 </div>
                                 {revenueType === 'room' && (
                                     <div className={styles.draftAmountRow}>
-                                        <span>Pay at Nexura</span>
-                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(form.payNexura || 0)}</span>
+                                        <span>Virtual Payment / OTA</span>
+                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(form.payTransfer || 0)}</span>
                                     </div>
                                 )}
                                 <div className={styles.draftTotalRow}>
@@ -445,12 +452,12 @@ export function ReviewSidebar({
                                     <span className={styles.summaryBreakdownValue}>Rp {formatCurrency(queue.reduce((acc, item) => acc + item.payHotel, 0) + (Number(form.payHotel) || 0))}</span>
                                 </div>
                                 <div className={styles.summaryBreakdownRow}>
-                                    <span className={styles.summaryBreakdownLabel}>Total Pay at Nexura</span>
-                                    <span className={styles.summaryBreakdownValue}>Rp {formatCurrency(queue.reduce((acc, item) => acc + item.payNexura, 0) + (Number(form.payNexura) || 0))}</span>
+                                    <span className={styles.summaryBreakdownLabel}>Total Virtual Payment / OTA</span>
+                                    <span className={styles.summaryBreakdownValue}>Rp {formatCurrency(queue.reduce((acc, item) => acc + item.payTransfer, 0) + (Number(form.payTransfer) || 0))}</span>
                                 </div>
                                 <div className={styles.summaryBalanceRow}>
                                     <span className={styles.summaryBalanceLabel}>Balance</span>
-                                    <span className={styles.summaryBalanceValue}>Rp {formatCurrency((queue.reduce((acc, item) => acc + item.amount, 0) + totalGross) - (queue.reduce((acc, item) => acc + item.payHotel, 0) + (Number(form.payHotel) || 0)) - (queue.reduce((acc, item) => acc + item.payNexura, 0) + (Number(form.payNexura) || 0)))}</span>
+                                    <span className={styles.summaryBalanceValue}>Rp {formatCurrency((queue.reduce((acc, item) => acc + item.amount, 0) + totalGross) - (queue.reduce((acc, item) => acc + item.payHotel, 0) + (Number(form.payHotel) || 0)) - (queue.reduce((acc, item) => acc + item.payTransfer, 0) + (Number(form.payTransfer) || 0)))}</span>
                                 </div>
                             </div>
                         </div>
@@ -527,7 +534,13 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                                         <td className={styles.tableCell}>
                                             <div className={styles.detailCellInner}>
                                                 <div className={styles.detailCellRow1}>
-                                                    {channelLogo && <img src={channelLogo} className="w-4 h-4 object-contain opacity-60" alt="" />}
+                                                    {channelLogo && (
+                                                        channelLogo === "globe" ? (
+                                                            <Globe className="w-4 h-4 opacity-60 mr-1 flex-shrink-0" />
+                                                        ) : (
+                                                            <img src={channelLogo} className="w-4 h-4 object-contain opacity-60" alt="" />
+                                                        )
+                                                    )}
                                                     <span className={styles.guestNameText}>{item.guestName || "-"}</span>
                                                 </div>
                                                 <div className={styles.detailCellRow2}>
@@ -572,15 +585,13 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
             <div className={styles.footerBranding}>
                 <div className={styles.footerBrandingLine} />
                 <a 
-                    href="https://nexuragroups.com" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
+                    href="#" 
                     className={styles.footerLink}
                 >
                     <span className={styles.footerTitle}>Institutional Terminal</span>
                     <div className={styles.footerMeta}>
                         <span>Powered by</span>
-                        <span className={styles.footerBrandText}>Nexura Global Hospitality</span>
+                        <span className={styles.footerBrandText}>Tarasetia Venture</span>
                     </div>
                 </a>
             </div>

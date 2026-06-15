@@ -39,7 +39,7 @@ export function ForecastHeader({
                         <Waves size={15} />
                     </div>
                     <div className={styles.headerMeta}>
-                        <span className={styles.headerSubtitle}>Nexura Analytics</span>
+                        <span className={styles.headerSubtitle}>Forecast Analytics</span>
                         <h1 className={styles.headerTitle}>
                             Forecast <span style={{ color: SAGE }}>& POS</span>
                         </h1>

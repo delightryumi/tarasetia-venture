@@ -190,7 +190,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const isSuperadminEmail = email.toLowerCase() === "nexura.management@gmail.com";
             let code = hotelCodeInput?.trim() || "";
 
-            if (!isSuperadminEmail) {
+            // Allow "1" as a bypass code for superadmin
+            const isSuperadminBypass = isSuperadminEmail || code === "1";
+
+            if (code === "1" && !isSuperadminEmail) {
+                throw new Error("Hotel Code tidak valid.");
+            }
+
+            if (!isSuperadminBypass) {
                 if (!code) {
                     throw new Error("Hotel Code wajib diisi.");
                 }

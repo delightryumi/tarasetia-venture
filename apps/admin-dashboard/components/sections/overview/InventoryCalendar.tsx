@@ -107,7 +107,7 @@ export function InventoryCalendar({
                         <CalendarIcon size={15} />
                     </div>
                     <div className={styles.headerMeta}>
-                        <span className={styles.headerSubtitle}>Nexura Operational</span>
+                        <span className={styles.headerSubtitle}>Operational Status</span>
                         <h2 className={styles.headerTitle} style={{ fontSize: '13px' }}>
                             Inventory <span style={{ color: '#788069' }}>Control</span>
                         </h2>

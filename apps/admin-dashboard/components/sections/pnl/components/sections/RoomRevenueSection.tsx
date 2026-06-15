@@ -36,7 +36,7 @@ export function RoomRevenueSection({ pnlResult, loading, rise, onCardClick }: Ro
                         onClick={onCardClick}
                     />
                     <SummaryCard
-                        label="Revenue Nexura Collect"
+                        label="Revenue Online/Transfer Collect"
                         icon={<Sparkles size={18} />}
                         accent="#8b5cf6"
                         value={pnlResult?.card3_RevNexuraCollect || 0}

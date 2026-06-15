@@ -259,7 +259,7 @@ export default function ChartOne({ defaultStartDate, defaultEndDate }: ChartOneP
                   setStartDate(JakartaToday);
                   setEndDate(JakartaToday);
                 }}
-                className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-850 dark:hover:bg-zinc-800 text-neutral-700 dark:text-neutral-300 rounded-lg transition-all"
+                className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-neutral-700 dark:text-neutral-300 rounded-lg transition-all"
               >
                 Hari ini
               </button>
@@ -271,7 +271,7 @@ export default function ChartOne({ defaultStartDate, defaultEndDate }: ChartOneP
                   setStartDate(firstDay);
                   setEndDate(lastDay);
                 }}
-                className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-850 dark:hover:bg-zinc-800 text-neutral-700 dark:text-neutral-300 rounded-lg transition-all"
+                className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-neutral-700 dark:text-neutral-300 rounded-lg transition-all"
               >
                 Bulan ini
               </button>

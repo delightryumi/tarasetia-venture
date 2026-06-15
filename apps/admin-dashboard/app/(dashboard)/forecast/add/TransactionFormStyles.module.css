@@ -45,9 +45,9 @@
 
   font-family: var(--f-font);
   color: var(--f-ink);
-  background-color: var(--f-canvas);
+  background-color: transparent;
   color-scheme: var(--f-color-scheme);
-  min-height: 100vh;
+  min-height: auto;
   -webkit-font-smoothing: antialiased;
 }
 

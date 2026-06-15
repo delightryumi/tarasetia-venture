@@ -28,7 +28,7 @@
   --f-expense-bg: #fcebeb;
   --f-expense-color: #a32d2d;
 
-  --sidebar-width: 240px;
+  --sidebar-width: 200px;
 }
 
 @theme inline {
@@ -384,6 +384,8 @@ td {
 /* Force page roots to be transparent to show the main body gradient background */
 [class*="overviewRoot"],
 .overviewRoot,
+[class*="forecastTerminalRoot"],
+.forecastTerminalRoot,
 .mainContainer,
 [class*="mainContainer"] {
   background-color: transparent !important;

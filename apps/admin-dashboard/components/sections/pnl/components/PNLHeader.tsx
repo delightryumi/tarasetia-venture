@@ -39,7 +39,7 @@ export const PNLHeader: React.FC<PNLHeaderProps> = ({
                     <div className="w-8 h-8 rounded-md flex items-center justify-center transition-transform hover:rotate-12" style={{ backgroundColor: `${PEACH}30`, color: SAGE }}>
                         <PieChart size={14} />
                     </div>
-                    <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">Nexura Audit Core</span>
+                    <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">Audit Core</span>
                 </div>
                 <h1 className="text-2xl md:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
                     Global <span style={{ color: SAGE }}>PnL Reports</span>
