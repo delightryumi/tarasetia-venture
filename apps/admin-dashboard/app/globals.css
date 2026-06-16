@@ -14,6 +14,18 @@
   --border-light: rgba(141, 122, 82, 0.12);
   --rich-black: #212121;
 
+  /* Sidebar Theme variables */
+  --sidebar-bg: #faf8f4;
+  --sidebar-border: rgba(141, 122, 82, 0.06);
+  --sidebar-text: #41454d;
+  --sidebar-link-bg: transparent;
+  --sidebar-link-border: transparent;
+  --sidebar-link-hover-bg: #f3efe6;
+  --sidebar-link-hover-border: #dddddd;
+  --sidebar-link-hover-text: #181d26;
+  --sidebar-link-active-bg: #181d26;
+  --sidebar-link-active-text: #ffffff;
+
   /* Legacy aliases for backwards compatibility */
   --terracotta: var(--peach);
   --terracotta-light: var(--peach-light);
@@ -438,6 +450,17 @@ textarea {
   --f-income-color: #34d399 !important;
   --f-expense-bg: rgba(239, 68, 68, 0.15) !important;
   --f-expense-color: #f87171 !important;
+  /* Sidebar Theme variables */
+  --sidebar-bg: #18181b !important;
+  --sidebar-border: rgba(255, 255, 255, 0.03) !important;
+  --sidebar-text: #a1a1aa !important;
+  --sidebar-link-bg: transparent !important;
+  --sidebar-link-border: transparent !important;
+  --sidebar-link-hover-bg: #2b2b2b !important;
+  --sidebar-link-hover-border: rgba(255, 255, 255, 0.08) !important;
+  --sidebar-link-hover-text: #ffffff !important;
+  --sidebar-link-active-bg: #ffffff !important;
+  --sidebar-link-active-text: #181d26 !important;
 }
 
 .dark .card,
@@ -493,6 +516,21 @@ input[type="date"].dateInput {
   height: 28px !important;
 }
 
+/* Dark mode overrides for calendar/date inputs in overview/forecast/invoice cards */
+.dark input[type="date"],
+.dark [class*="overviewRoot"] input[type="date"],
+.dark .overviewRoot input[type="date"],
+.dark [class*="card"] input[type="date"],
+.dark .card input[type="date"],
+.dark [class*="invoice"] input[type="date"],
+.dark .dateInput,
+.dark input[type="date"].dateInput {
+  background-color: #2a2a2a !important;
+  color: #faf8f5 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color-scheme: dark !important;
+}
+
 /* Smooth Transitions & Premium Hover Shadows */
 .card,
 .builder-box-clean,
@@ -510,7 +548,8 @@ input[type="date"].dateInput {
   body * {
     visibility: hidden !important;
   }
-  [class*="printInvoiceContainer"], [class*="printInvoiceContainer"] * {
+  [class*="printInvoiceContainer"], [class*="printInvoiceContainer"] *,
+  [class*="printCheckinContainer"], [class*="printCheckinContainer"] * {
     visibility: visible !important;
   }
   [class*="printInvoiceContainer"] {
@@ -520,5 +559,26 @@ input[type="date"].dateInput {
     width: 100% !important;
     padding: 0 !important;
   }
+  [class*="printCheckinContainer"] {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+  }
+}
+
+
+/* Soften all sidebar borders */
+aside, aside * {
+  border-color: var(--sidebar-border) !important;
+}
+
+/* Force light input override for Attendance Module */
+.force-light-input,
+.dark .force-light-input {
+  background-color: #ffffff !important;
+  color: #1c1c1e !important;
+  color-scheme: light !important;
+  border-color: #e5e5ea !important;
 }
 
