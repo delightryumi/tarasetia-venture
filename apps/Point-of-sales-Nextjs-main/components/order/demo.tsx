@@ -39,7 +39,7 @@ export function Orders() {
       } else {
         const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
         if (isLocal) {
-          dashboardUrl = 'http://localhost:3000/select-module';
+          dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ? `${process.env.NEXT_PUBLIC_DASHBOARD_URL}/select-module` : 'http://localhost:3000/select-module';
         } else if (hostname.includes('-3001.')) {
           dashboardUrl = `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         }

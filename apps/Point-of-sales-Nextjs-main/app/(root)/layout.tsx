@@ -412,7 +412,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
       if (isLocal) {
-        return 'http://localhost:3000/select-module';
+        return process.env.NEXT_PUBLIC_DASHBOARD_URL ? `${process.env.NEXT_PUBLIC_DASHBOARD_URL}/select-module` : 'http://localhost:3000/select-module';
       }
 
       if (hostname.includes('-3001.')) {
@@ -459,7 +459,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
       if (isLocal) {
-        return 'http://localhost:3000/login';
+        return process.env.NEXT_PUBLIC_DASHBOARD_URL ? `${process.env.NEXT_PUBLIC_DASHBOARD_URL}/login` : 'http://localhost:3000/login';
       }
 
       if (hostname.includes('-3001.')) {

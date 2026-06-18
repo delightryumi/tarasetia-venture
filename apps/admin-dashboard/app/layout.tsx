@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard | Bumi Anyom",
-  description: "Bumi Anyom Property Management System",
+  title: "Partner Dashboard | MyTara",
+  description: "MyTara Central Reservation System",
 };
 
 export default function RootLayout({

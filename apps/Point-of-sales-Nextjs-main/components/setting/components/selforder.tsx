@@ -237,7 +237,7 @@ export default function SelfOrderCard() {
   };
 
   const handleGenerateQR = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001';
+    const origin = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_POS_URL || 'http://localhost:3001');
     const orderUrl = `${origin}/self-order/${hotelCode}?table=${selectedTable}`;
     setGeneratedUrl(orderUrl);
   };
