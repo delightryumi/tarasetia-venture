@@ -104,7 +104,6 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
           categoryId: data.category || '',
           imageUrl: data.image || '',
           stock: data.stock || 0,
-          stock: data.stock || 0,
           isAvailable: (data.stock || 0) > 0,
           addons: data.addons || [],
           ...data
@@ -149,7 +148,7 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
 
 
   const handleSubmitOrder = async () => {
-    if (!customerName.trim() || !tableNumber.trim()) {
+    if (!customerName.trim() || !tableNumber?.trim()) {
       alert("Mohon isi Nama Pemesan dan No. Meja terlebih dahulu.");
       return;
     }

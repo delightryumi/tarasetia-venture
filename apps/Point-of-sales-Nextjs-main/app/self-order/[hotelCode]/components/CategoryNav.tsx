@@ -4,7 +4,7 @@ interface CategoryNavProps {
   categories: any[];
   activeCategory: string | null;
   onSelectCategory: (categoryId: string) => void;
-  categoriesRef: React.RefObject<HTMLDivElement>;
+  categoriesRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export default function CategoryNav({ categories, activeCategory, onSelectCategory, categoriesRef }: CategoryNavProps) {
