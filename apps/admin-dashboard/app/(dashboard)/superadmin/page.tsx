@@ -27,6 +27,7 @@ import { SuperadminTabs } from "./SuperadminTabs";
 import { RegistryKpiCards, BillingKpiCards } from "./KpiCards";
 import { RegistryTable } from "./RegistryTable";
 import { BillingTable } from "./BillingTable";
+import { SystemCredentialsNotes } from "./SystemCredentialsNotes";
 import { HotelFormModal } from "./HotelFormModal";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { BulkAlertModal } from "./BulkAlertModal";
@@ -61,6 +62,7 @@ export default function SuperadminPage() {
   // ── Hotel form (add/edit) ──
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSendingLink, setIsSendingLink] = useState(false);
   const [currentHotelCode, setCurrentHotelCode] = useState("");
   const [name, setName] = useState("");
   const [hotelCode, setHotelCode] = useState("");
@@ -170,7 +172,7 @@ export default function SuperadminPage() {
       },
       (err) => {
         console.error("Firestore read error:", err);
-        setError("Gagal memuat daftar hotel.");
+        setError("Gagal memuat daftar partner.");
         setLoading(false);
       }
     );
@@ -243,11 +245,11 @@ export default function SuperadminPage() {
         active: newActive,
         suspendedAt: newActive ? null : new Date().toISOString(),
       });
-      setSuccessMsg(`Status hotel "${hotel.name}" berhasil diperbarui.`);
+      setSuccessMsg(`Status partner "${hotel.name}" berhasil diperbarui.`);
       setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
       console.error(err);
-      setError("Gagal merubah status hotel.");
+      setError("Gagal merubah status partner.");
     }
   };
 
@@ -255,8 +257,8 @@ export default function SuperadminPage() {
     setIsEditing(false);
     const randomId = Math.floor(10000 + Math.random() * 90000).toString();
     setHotelCode(randomId); setName(""); setDomain(""); setSubdomain("");
-    setAddress(""); setPhone(""); setEmail(""); setPlan("custom");
-    setActiveModules(["pos", "cpanel-only"]); setCycle("monthly");
+    setAddress(""); setPhone(""); setEmail(""); setPlan("startup");
+    setActiveModules(["pos", "hrd", "cpanel-only"]); setCycle("monthly");
     setBillingStatus("paid");
     setNextDueDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
     setShowBillingAlert(false); setShowExpirationAlert(false);
@@ -270,15 +272,22 @@ export default function SuperadminPage() {
     setAddress(hotel.address || ""); setPhone(hotel.phone || ""); setEmail(hotel.email || "");
     setPlan(hotel.billing?.plan || "custom");
     let modules = hotel.billing?.activeModules || [];
+    
+    // Legacy migration
     if (modules.includes("cpanel")) {
       modules = modules.filter((m) => m !== "cpanel");
-      if (hotel.billing?.plan === "basic") { if (!modules.includes("cpanel-only")) modules.push("cpanel-only"); }
+      if (hotel.billing?.plan === "basic" || hotel.billing?.plan === "startup") { if (!modules.includes("cpanel-only")) modules.push("cpanel-only"); }
       else { if (!modules.includes("cpanel-full")) modules.push("cpanel-full"); }
     }
+    
     if (modules.length === 0) {
-      modules = (hotel.billing?.plan || "basic") === "basic"
-        ? ["pos", "cpanel-only"]
-        : ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "cpanel-full"];
+      if (hotel.billing?.plan === "basic" || hotel.billing?.plan === "startup") {
+        modules = ["pos", "hrd", "cpanel-only"];
+      } else if (hotel.billing?.plan === "bisnis") {
+        modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"];
+      } else {
+        modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-full"];
+      }
     }
     setActiveModules(modules);
     setCycle(hotel.billing?.cycle || "monthly");
@@ -287,6 +296,36 @@ export default function SuperadminPage() {
     setShowBillingAlert(!!hotel.billing?.showBillingAlert);
     setShowExpirationAlert(!!hotel.billing?.showExpirationAlert);
     setIsModalOpen(true);
+  };
+
+  const handleSendLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !plan) {
+      toast.error("Email dan Paket harus diisi.");
+      return;
+    }
+    
+    setIsSendingLink(true);
+    try {
+      const res = await fetch("/api/hotels/onboarding/send-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), plan, activeModules }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal mengirim link onboarding.");
+      }
+      
+      toast.success(data.message || "Link onboarding terkirim!");
+      setIsModalOpen(false);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Terjadi kesalahan saat mengirim link.");
+    } finally {
+      setIsSendingLink(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -324,7 +363,7 @@ export default function SuperadminPage() {
               "stock-opname": true, items: true, suppliers: true, "purchase-order": true,
               "food-beverage-product": true,
               pos_home: true, pos_lexupos: true, pos_cashier: true, pos_product: true,
-              pos_records: true, pos_settings: true, pos_technologies: true,
+              pos_records: true, pos_settings: true, pos_self_order: true,
             },
           }, { merge: true });
         }
@@ -521,6 +560,8 @@ export default function SuperadminPage() {
           onAddHotel={openAddModal}
         />
 
+        <SystemCredentialsNotes />
+
         <SuperadminTabs activeTab={activeMainTab} onChange={setActiveMainTab} />
 
         {activeMainTab === "registry" ? (
@@ -583,6 +624,8 @@ export default function SuperadminPage() {
             nextDueDate={nextDueDate} setNextDueDate={setNextDueDate}
             activeModules={activeModules} setActiveModules={setActiveModules}
             onSubmit={handleSubmit}
+            onSendLink={handleSendLink}
+            isSendingLink={isSendingLink}
             onClose={() => setIsModalOpen(false)}
           />
         )}

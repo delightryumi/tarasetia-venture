@@ -11,8 +11,8 @@ import {
 import { SummaryCard } from "./SummaryCard";
 import styles from "../ForecastStyles.module.css";
 
-const PEACH = "#8d7a52";
-const SAGE = "#788069";
+const PEACH = "#3b82f6"; // Dynamic corporate blue
+const SAGE = "#181d26";  // Charcoal theme
 
 interface AnalyticsChartsProps {
     stats: any;
@@ -48,9 +48,9 @@ export function AnalyticsCharts({ stats, viewMode, formatCurrency }: AnalyticsCh
                                 dataKey="value"
                                 animationDuration={1500}
                             >
-                                <Cell fill="#8d7a52" />
-                                <Cell fill="#788069" />
-                                <Cell fill="#1A1C14" />
+                                <Cell fill={PEACH} />
+                                <Cell fill={SAGE} />
+                                <Cell fill="#a8a29e" />
                             </Pie>
                             <Tooltip 
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
@@ -69,9 +69,9 @@ export function AnalyticsCharts({ stats, viewMode, formatCurrency }: AnalyticsCh
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                             data={[
-                                { name: 'OTA', value: stats.otaRevenue || 0, fill: '#788069' },
-                                { name: 'Walk-in', value: stats.walkInRevenue || 0, fill: '#8d7a52' },
-                                { name: 'Other', value: stats.otherRevenue || 0, fill: '#1A1C14' }
+                                { name: 'OTA', value: stats.otaRevenue || 0, fill: SAGE },
+                                { name: 'Walk-in', value: stats.walkInRevenue || 0, fill: PEACH },
+                                { name: 'Other', value: stats.otherRevenue || 0, fill: '#a8a29e' }
                             ]}
                         >
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -99,11 +99,11 @@ export function AnalyticsCharts({ stats, viewMode, formatCurrency }: AnalyticsCh
                     </h3>
                     <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#788069" }}></div>
+                            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: SAGE }}></div>
                             <span className={styles.headerSubtitle} style={{ fontSize: "8px" }}>Gross Revenue</span>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#8d7a52" }}></div>
+                            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: PEACH }}></div>
                             <span className={styles.headerSubtitle} style={{ fontSize: "8px" }}>OCC %</span>
                         </div>
                     </div>

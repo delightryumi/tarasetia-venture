@@ -7,7 +7,7 @@ import { RoomStatusPicker } from "./RoomStatusPicker";
 import { GuestStatusPicker } from "./GuestStatusPicker";
 import styles from "../ForecastStyles.module.css";
 
-const SAGE = "#788069";
+
 
 const rise = {
     hidden: { opacity: 0, y: 12 },
@@ -59,19 +59,19 @@ export function TransactionTable({
             <div className={styles.card} style={{ overflow: "hidden", padding: 0 }}>
                 <div className={styles.cardHeader} style={{ padding: "24px 24px 16px 24px", borderBottom: "1px solid var(--f-hairline)", marginBottom: 0 }}>
                     <div className={styles.cardHeaderLeft}>
-                        <div className={styles.headerBadge} style={{ backgroundColor: "#dfd3b2", color: "#8d7a52" }}>
+                        <div className={styles.headerBadge} style={{ backgroundColor: 'var(--sidebar-link-active-bg)', color: 'var(--sidebar-link-active-text)' }}>
                             <Activity size={15} />
                         </div>
                         <div className={styles.headerMeta}>
                             <span className={styles.headerSubtitle}>Forecast Analytics</span>
                             <h2 className={styles.headerTitle} style={{ fontSize: "13px" }}>
-                                Detail <span style={{ color: "#788069" }}>Transaksi</span>
+                                Detail <span style={{ color: 'var(--sidebar-link-active-bg)' }}>Transaksi</span>
                             </h2>
                             {activeFilter && (
                                 <button 
                                     onClick={() => setActiveFilter(null)}
                                     className={styles.guestSubtext}
-                                    style={{ color: SAGE, cursor: "pointer", border: "none", background: "transparent", padding: 0, textDecoration: "underline", textAlign: "left", fontWeight: "bold" }}
+                                    style={{ color: 'var(--sidebar-link-active-bg)', cursor: "pointer", border: "none", background: "transparent", padding: 0, textDecoration: "underline", textAlign: "left", fontWeight: "bold" }}
                                 >
                                     Showing {activeFilter === 'other_income' ? 'Other Revenue' : activeFilter} — Clear Filter
                                 </button>

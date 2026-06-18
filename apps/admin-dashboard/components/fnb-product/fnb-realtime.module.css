@@ -1,0 +1,1038 @@
+/* ================================================================
+   REALTIME POS MONITOR — Modular Classes
+   FoodBeverageRealtimeTab.tsx
+   ================================================================ */
+
+/* ── Alert Bar ── */
+.rtAlertBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #059669;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.rtAlertDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+  flex-shrink: 0;
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes ping {
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+
+.rtAlertText {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: "SF Pro Text", -apple-system, sans-serif;
+}
+
+/* ── Two-Column Grid Layout ── */
+.rtGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .rtGrid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* ── Shared Panel Card (same as canvasCard but white) ── */
+.rtPanel {
+  background: #ffffff;
+  border: 1px solid #f5f5f4;
+  border-radius: 18px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+  transition: box-shadow 0.3s ease;
+}
+
+/* ── Panel Header ── */
+.rtPanelHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f5f5f4;
+  flex-wrap: wrap;
+}
+
+.rtPanelTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rtLiveDot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.rtLiveDotInner {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+}
+
+.rtLiveDotPing {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #34d399;
+  opacity: 0.6;
+  animation: ping 1.2s cubic-bezier(0,0,0.2,1) infinite;
+}
+
+.rtLiveDotCore {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+.rtLiveLabel {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #a8a29e;
+  font-family: "SF Pro Text", -apple-system, sans-serif;
+}
+
+.rtPanelTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1c1917;
+  letter-spacing: -0.02em;
+  margin: 0;
+  font-family: "Outfit", -apple-system, sans-serif;
+}
+
+/* ── Status Legend Badges ── */
+.rtLegend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.rtLegendBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: "SF Pro Text", -apple-system, sans-serif;
+  border: 1px solid transparent;
+}
+
+.rtLegendBadgeOccupied {
+  background: rgba(209, 250, 229, 0.5);
+  border-color: rgba(110, 231, 183, 0.4);
+  color: #065f46;
+}
+
+.rtLegendBadgeEmpty {
+  background: rgba(254, 226, 226, 0.5);
+  border-color: rgba(252, 165, 165, 0.4);
+  color: #991b1b;
+}
+
+.rtLegendDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.rtLegendDotOccupied { background: #10b981; }
+.rtLegendDotEmpty { background: #ef4444; }
+
+/* ── Table Grid ── */
+.rtTableGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 480px) { .rtTableGrid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 768px) { .rtTableGrid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1280px) { .rtTableGrid { grid-template-columns: repeat(5, 1fr); } }
+
+/* ── Table Card Button ── */
+.rtTableCard {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  text-align: left;
+  cursor: pointer;
+  height: 96px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.18s ease;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: "SF Pro Text", -apple-system, sans-serif;
+}
+
+.rtTableCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.rtTableCard:active {
+  transform: scale(0.97);
+}
+
+.rtTableCardOccupied {
+  background: rgba(209, 250, 229, 0.7);
+  border-color: rgba(110, 231, 183, 0.5);
+}
+
+.rtTableCardOccupied:hover {
+  border-color: #10b981;
+}
+
+.rtTableCardEmpty {
+  background: rgba(254, 226, 226, 0.7);
+  border-color: rgba(252, 165, 165, 0.5);
+}
+
+.rtTableCardEmpty:hover {
+  border-color: #ef4444;
+}
+
+.rtTableCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  gap: 4px;
+}
+
+.rtTableName {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.rtTableNameOccupied { color: #064e3b; }
+.rtTableNameEmpty { color: #7f1d1d; }
+
+.rtStatusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.rtStatusDotOccupied {
+  background: #059669;
+  animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite;
+}
+
+.rtStatusDotEmpty { background: #dc2626; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.rtTableCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.rtTableGuest {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #065f46;
+  overflow: hidden;
+}
+
+.rtTableGuestName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.rtTableBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.rtTableAmount {
+  font-size: 11px;
+  font-weight: 500;
+  color: #065f46;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.rtBadge {
+  font-size: 8px;
+  font-weight: 500;
+  padding: 2px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  flex-shrink: 0;
+  color: #ffffff;
+}
+
+.rtBadgePaid { background: #059669; }
+.rtBadgeUnpaid {
+  background: #f59e0b;
+  border: 1px solid #fbbf24;
+  animation: pulse 1.5s ease infinite;
+}
+
+.rtTableEmpty {
+  font-size: 10px;
+  font-weight: 500;
+  color: #991b1b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 6px;
+}
+
+/* ── Loading / Empty States ── */
+.rtLoadingState {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 60px 24px;
+  color: #a8a29e;
+}
+
+.rtLoadingText {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-family: "SF Pro Text", -apple-system, sans-serif;
+  animation: pulse 2s ease infinite;
+}
+
+.rtEmptyState {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 60px 24px;
+  text-align: center;
+  border: 2px dashed rgba(120, 128, 105, 0.15);
+  border-radius: 12px;
+}
+
+.rtEmptyText {
+  font-size: 11px;
+  font-weight: 500;
+  color: #a8a29e;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: "SF Pro Text", -apple-system, sans-serif;
+}
+
+/* ── Right Panel Feed Section ── */
+.rtFeedSubtitle {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #a8a29e;
+  margin-bottom: 4px;
+  font-family: "SF Pro Text", -apple-system, sans-serif;
+}
+
+.rtFeedTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1c1917;
+  letter-spacing: -0.02em;
+  margin: 0;
+  font-family: "Outfit", -apple-system, sans-serif;
+}
+
+/* ── Feed Tab Switcher (iOS segmented style) ── */
+.rtFeedTabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  background: #f5f5f4;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(120, 128, 105, 0.1);
+}
+
+.rtFeedTab {
+  padding: 7px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: #a8a29e;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: "SF Pro Text", -apple-system, sans-serif;
+  line-height: 1;
+}
+
+.rtFeedTab:hover { color: #44403c; }
+
+.rtFeedTabActive {
+  background: #ffffff;
+  color: #1c1917;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  border: 1px solid rgba(120, 128, 105, 0.1);
+}
+
+/* ── Feed Item Cards ── */
+.rtFeedContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 480px;
+  padding-right: 4px;
+}
+
+.rtFeedContainer::-webkit-scrollbar { width: 4px; }
+.rtFeedContainer::-webkit-scrollbar-track { background: transparent; }
+.rtFeedContainer::-webkit-scrollbar-thumb { background: rgba(120, 128, 105,0.15); border-radius: 99px; }
+
+.rtFeedCard {
+  padding: 12px 14px;
+  background: #faf8f4;
+  border: 1px solid rgba(120, 128, 105, 0.1);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rtFeedCard:hover {
+  background: #ffffff;
+  border-color: #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+  transform: translateX(2px);
+}
+
+.rtFeedCardCompleted {
+  cursor: default;
+}
+
+.rtFeedCardCompleted:hover {
+  transform: none;
+  border-color: rgba(120, 128, 105, 0.1);
+  box-shadow: none;
+}
+
+.rtFeedCardRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.rtFeedCardInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-right: 12px;
+  flex: 1;
+}
+
+.rtFeedCardTableName {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1c1917;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+
+.rtFeedCardGuest {
+  font-size: 10px;
+  color: #78716c;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.rtFeedCardAmount {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1c1917;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+
+.rtFeedCardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid rgba(120, 128, 105, 0.1);
+  font-size: 9px;
+  font-weight: 500;
+  color: #a8a29e;
+  font-family: "SF Pro Text", -apple-system, sans-serif;
+}
+
+.rtFeedCardTime {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+}
+
+.rtFeedBadgeHeld {
+  background: rgba(254, 243, 199, 0.8);
+  color: #92400e;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 8px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rtFeedBadgePaid {
+  background: rgba(209, 250, 229, 0.8);
+  color: #065f46;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 8px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rtFeedEmpty {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 48px 16px;
+  text-align: center;
+  color: #a8a29e;
+}
+
+.rtFeedEmptyText {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: "SF Pro Text", -apple-system, sans-serif;
+}
+
+/* ── Detail Modal ── */
+.rtModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.rtModalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+}
+
+.rtModalCard {
+  background: #ffffff;
+  border: 1px solid #f5f5f4;
+  width: 100%;
+  max-width: 440px;
+  border-radius: 18px;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.15);
+  padding: 28px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  font-family: "SF Pro Text", -apple-system, sans-serif;
+}
+
+.rtModalCloseBtn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f5f5f4;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #78716c;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rtModalCloseBtn:hover {
+  background: #e7e5e4;
+  color: #1c1917;
+}
+
+.rtModalHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  padding-right: 40px;
+  border-bottom: 1px solid #f5f5f4;
+}
+
+.rtModalSubtitle {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #a8a29e;
+}
+
+.rtModalTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1c1917;
+  letter-spacing: -0.02em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Outfit", -apple-system, sans-serif;
+}
+
+.rtModalBody {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.rtModalInfoBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #faf8f4;
+  border: 1px solid rgba(120, 128, 105, 0.1);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.rtModalInfoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.rtModalInfoLabel {
+  font-weight: 500;
+  color: #a8a29e;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+}
+
+.rtModalInfoValue {
+  font-weight: 500;
+  color: #1c1917;
+  text-transform: uppercase;
+}
+
+.rtModalNotesRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(120, 128, 105, 0.1);
+  font-size: 11px;
+}
+
+.rtModalNotesText {
+  color: #44403c;
+  font-style: italic;
+}
+
+.rtItemsLabel {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #a8a29e;
+  margin-bottom: 6px;
+}
+
+.rtItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid rgba(120, 128, 105, 0.1);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+  background: #faf8f4;
+}
+
+.rtItemsList::-webkit-scrollbar { width: 4px; }
+.rtItemsList::-webkit-scrollbar-thumb { background: rgba(120, 128, 105,0.15); border-radius: 99px; }
+
+.rtItemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(120, 128, 105, 0.08);
+}
+
+.rtItemRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.rtItemInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-right: 12px;
+  flex: 1;
+}
+
+.rtItemName {
+  font-weight: 500;
+  color: #1c1917;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rtItemMeta {
+  font-size: 10px;
+  color: #a8a29e;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.rtItemTotal {
+  font-weight: 500;
+  color: #1c1917;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.rtTotalsSection {
+  border-top: 1px solid rgba(120, 128, 105, 0.12);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.rtTotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.rtTotalLabel {
+  font-weight: 500;
+  color: #a8a29e;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+}
+
+.rtTotalValue {
+  font-weight: 500;
+  color: #44403c;
+  font-variant-numeric: tabular-nums;
+}
+
+.rtTotalDiscount {
+  color: #f43f5e;
+}
+
+.rtGrandTotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid rgba(120, 128, 105, 0.12);
+  margin-top: 4px;
+}
+
+.rtGrandTotalLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1c1917;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: "Outfit", -apple-system, sans-serif;
+}
+
+.rtGrandTotalValue {
+  font-size: 18px;
+  font-weight: 500;
+  color: #059669;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  font-family: "Outfit", -apple-system, sans-serif;
+}
+
+.rtStatusFooter {
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 1px solid transparent;
+}
+
+.rtStatusFooterPaid {
+  background: rgba(209, 250, 229, 0.4);
+  color: #065f46;
+  border-color: rgba(110, 231, 183, 0.3);
+}
+
+.rtStatusFooterUnpaid {
+  background: rgba(254, 243, 199, 0.4);
+  color: #92400e;
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.rtModalEmptyWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+}
+
+.rtModalEmptyBox {
+  width: 100%;
+  padding: 32px 20px;
+  text-align: center;
+  border: 1px dashed rgba(120, 128, 105, 0.15);
+  border-radius: 10px;
+  background: #faf8f4;
+}
+
+.rtModalEmptyText {
+  font-size: 12px;
+  color: #a8a29e;
+  font-weight: 500;
+}
+
+.rtModalCloseAction {
+  width: 100%;
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: #1c1917;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: "SF Pro Text", -apple-system, sans-serif;
+}
+
+.rtModalCloseAction:hover { background: #000000; }
+.rtModalCloseAction:active { transform: scale(0.98); }
+
+/* ── Dark Mode Overrides ── */
+:global(.dark) .rtAlertBar { background: #047857; }
+:global(.dark) .rtPanel {
+  background: #1a1a1a;
+  border-color: #262626;
+  box-shadow: none;
+}
+:global(.dark) .rtPanelHeader { border-bottom-color: #262626; }
+:global(.dark) .rtPanelTitle { color: #faf8f5; }
+:global(.dark) .rtLiveLabel { color: #71717a; }
+:global(.dark) .rtLegendBadgeOccupied {
+  background: rgba(6, 78, 59, 0.3);
+  border-color: rgba(4, 120, 87, 0.4);
+  color: #6ee7b7;
+}
+:global(.dark) .rtLegendBadgeEmpty {
+  background: rgba(127, 29, 29, 0.3);
+  border-color: rgba(185, 28, 28, 0.4);
+  color: #fca5a5;
+}
+:global(.dark) .rtTableCardOccupied {
+  background: rgba(6, 78, 59, 0.25);
+  border-color: rgba(4, 120, 87, 0.4);
+}
+:global(.dark) .rtTableCardEmpty {
+  background: rgba(127, 29, 29, 0.25);
+  border-color: rgba(185, 28, 28, 0.4);
+}
+:global(.dark) .rtTableNameOccupied { color: #6ee7b7; }
+:global(.dark) .rtTableNameEmpty { color: #fca5a5; }
+:global(.dark) .rtTableGuest { color: #a7f3d0; }
+:global(.dark) .rtTableAmount { color: #6ee7b7; }
+:global(.dark) .rtTableEmpty { color: #fca5a5; }
+:global(.dark) .rtEmptyState { border-color: rgba(143, 134, 119, 0.1); }
+:global(.dark) .rtEmptyText { color: #71717a; }
+:global(.dark) .rtLoadingText { color: #71717a; }
+:global(.dark) .rtFeedSubtitle { color: #71717a; }
+:global(.dark) .rtFeedTitle { color: #faf8f5; }
+:global(.dark) .rtFeedTabs {
+  background: rgba(224, 209, 185, 0.04);
+  border-color: rgba(143, 134, 119, 0.1);
+}
+:global(.dark) .rtFeedTab { color: #71717a; }
+:global(.dark) .rtFeedTab:hover { color: #d4d4d8; }
+:global(.dark) .rtFeedTabActive {
+  background: #262626;
+  color: #faf8f5;
+  border-color: #333333;
+}
+:global(.dark) .rtFeedCard {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(143, 134, 119, 0.1);
+}
+:global(.dark) .rtFeedCard:hover {
+  background: #262626;
+  border-color: #059669;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.1);
+}
+:global(.dark) .rtFeedCardTableName { color: #faf8f5; }
+:global(.dark) .rtFeedCardGuest { color: #71717a; }
+:global(.dark) .rtFeedCardAmount { color: #faf8f5; }
+:global(.dark) .rtFeedCardFooter { color: #52525b; border-top-color: rgba(143, 134, 119, 0.1); }
+:global(.dark) .rtFeedBadgeHeld {
+  background: rgba(120, 53, 15, 0.3);
+  color: #fbbf24;
+}
+:global(.dark) .rtFeedBadgePaid {
+  background: rgba(6, 78, 59, 0.3);
+  color: #6ee7b7;
+}
+:global(.dark) .rtFeedEmpty { color: #71717a; }
+:global(.dark) .rtModalCard {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+:global(.dark) .rtModalHeader { border-bottom-color: #262626; }
+:global(.dark) .rtModalTitle { color: #faf8f5; }
+:global(.dark) .rtModalSubtitle { color: #71717a; }
+:global(.dark) .rtModalCloseBtn {
+  background: #262626;
+  color: #a1a1aa;
+}
+:global(.dark) .rtModalCloseBtn:hover { background: #333333; color: #faf8f5; }
+:global(.dark) .rtModalInfoBox {
+  background: #1f1f1f;
+  border-color: #333333;
+}
+:global(.dark) .rtModalInfoLabel { color: #71717a; }
+:global(.dark) .rtModalInfoValue { color: #faf8f5; }
+:global(.dark) .rtModalNotesText { color: #a1a1aa; }
+:global(.dark) .rtItemsList {
+  background: #1f1f1f;
+  border-color: #333333;
+}
+:global(.dark) .rtItemRow { border-bottom-color: rgba(143, 134, 119, 0.08); }
+:global(.dark) .rtItemName { color: #faf8f5; }
+:global(.dark) .rtItemMeta { color: #71717a; }
+:global(.dark) .rtItemTotal { color: #faf8f5; }
+:global(.dark) .rtTotalsSection { border-top-color: #333333; }
+:global(.dark) .rtTotalLabel { color: #71717a; }
+:global(.dark) .rtTotalValue { color: #d4d4d8; }
+:global(.dark) .rtGrandTotalRow { border-top-color: #333333; }
+:global(.dark) .rtGrandTotalLabel { color: #faf8f5; }
+:global(.dark) .rtStatusFooterPaid {
+  background: rgba(6, 78, 59, 0.2);
+  color: #6ee7b7;
+  border-color: rgba(4, 120, 87, 0.3);
+}
+:global(.dark) .rtStatusFooterUnpaid {
+  background: rgba(120, 53, 15, 0.2);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.25);
+}
+:global(.dark) .rtModalEmptyBox {
+  background: #1f1f1f;
+  border-color: rgba(143, 134, 119, 0.1);
+}
+:global(.dark) .rtModalEmptyText { color: #71717a; }
+:global(.dark) .rtModalCloseAction { background: #faf8f5; color: #1c1917; }
+:global(.dark) .rtModalCloseAction:hover { background: #ffffff; }

@@ -13,11 +13,25 @@ interface UsePnLExportOptions {
     year:         string;
     selectedDrillDownTitle?: string;
     drillItems?:  PnLDetailedItem[];
+    rawTransactions?: any[];
+    posOrders?: any[];
+    payrollDetails?: any[];
+    startingBalance?: number;
+    fixedAssetsValue?: number;
+    customIncomes?: any[];
+    nonCommissionRevenue?: any[];
 }
 
 export function usePnLExport({
     pnlResult, expenses, viewMode, month, year,
     selectedDrillDownTitle, drillItems,
+    rawTransactions = [],
+    posOrders = [],
+    payrollDetails = [],
+    startingBalance = 0,
+    fixedAssetsValue = 0,
+    customIncomes = [],
+    nonCommissionRevenue = [],
 }: UsePnLExportOptions) {
 
     const handleExportExcel = () => {
@@ -67,10 +81,249 @@ export function usePnLExport({
             Payout: i.amount
         }));
 
+        // Compute General Ledger data
+        const formatRef = (prefix: string, rawRef: string) => {
+            if (!rawRef) return `${prefix}-GEN`;
+            const clean = rawRef.trim();
+            if (clean.length >= 20 && !clean.includes('/') && !clean.includes('-')) {
+                return `${prefix}-${clean.slice(0, 7).toUpperCase()}`;
+            }
+            if (clean.includes('-')) {
+                const parts = clean.split('-');
+                const docId = parts[0];
+                if (docId.length >= 20) {
+                    return `${prefix}-${docId.slice(0, 7).toUpperCase()}`;
+                }
+            }
+            return clean.toUpperCase();
+        };
+
+        const startingBal = startingBalance || 0;
+        const list: any[] = [];
+        const [yStr, mStr] = month.split('-');
+        const firstDay = new Date(parseInt(yStr), parseInt(mStr) - 1, 1, 0, 0, 0);
+
+        list.push({
+            date: firstDay,
+            description: "Saldo Awal (Modal / Kas & Bank)",
+            ref: "BAL-START",
+            coa: "301-000",
+            type: "debit",
+            amount: startingBal,
+            isStartingBalance: true
+        });
+
+        (rawTransactions || []).forEach(t => {
+            if (t.isDeleted || t.status === "cancelled" || t.status === "no-show") return;
+            const amt = t.totalPrice || t.amount || 0;
+            if (amt > 0) {
+                list.push({
+                    date: new Date(t.createdAt || t.date || new Date()),
+                    description: `Penerimaan Kamar - ${t.guestName || "Tamu"}`,
+                    ref: formatRef("FO", t.bookingId || t.id),
+                    coa: "401-000",
+                    type: "debit",
+                    amount: amt
+                });
+            }
+        });
+
+        (posOrders || []).forEach(o => {
+            const amt = o.amount || 0;
+            if (amt > 0) {
+                list.push({
+                    date: new Date(o.date || new Date()),
+                    description: `Penerimaan POS - ${o.description || "Penjualan F&B"}`,
+                    ref: formatRef("POS", o.id),
+                    coa: "402-000",
+                    type: "debit",
+                    amount: amt
+                });
+            }
+        });
+
+        (customIncomes || []).forEach(ci => {
+            if (ci.amount > 0) {
+                list.push({
+                    date: new Date(ci.date || new Date()),
+                    description: ci.description || "Pendapatan Lainnya",
+                    ref: "INC-CUST",
+                    coa: "409-000",
+                    type: "debit",
+                    amount: ci.amount
+                });
+            }
+        });
+
+        (nonCommissionRevenue || []).forEach(nc => {
+            if (nc.amount > 0) {
+                list.push({
+                    date: new Date(nc.date || new Date()),
+                    description: nc.description || "Pendapatan Non-Komisi",
+                    ref: "INC-NC",
+                    coa: "408-000",
+                    type: "debit",
+                    amount: nc.amount
+                });
+            }
+        });
+
+        (expenses || []).forEach(ex => {
+            if (ex.amount > 0) {
+                list.push({
+                    date: new Date(ex.date || new Date()),
+                    description: `Beban Operasional - ${ex.category || "Biaya"} (${ex.description || "Pengeluaran"})`,
+                    ref: "EXP-" + (ex.id?.slice(0,5) || "MANUAL"),
+                    coa: "502-000",
+                    type: "credit",
+                    amount: ex.amount
+                });
+            }
+        });
+
+        const payrollSum = (payrollDetails || []).reduce((sum, p) => sum + (p.totalPay || p.totalPayrollExpense || p.amount || 0), 0);
+        if (payrollSum > 0) {
+            const lastDay = new Date(parseInt(yStr), parseInt(mStr), 0).getDate();
+            const dateVal = new Date(parseInt(yStr), parseInt(mStr) - 1, lastDay, 23, 59, 59);
+            
+            if (payrollDetails && payrollDetails.length > 0) {
+                payrollDetails.forEach(p => {
+                    const amt = p.totalPay || p.totalPayrollExpense || p.amount || 0;
+                    if (amt > 0) {
+                        list.push({
+                            date: dateVal,
+                            description: `Beban Gaji Karyawan - ${p.name || p.staffName || "Karyawan"}`,
+                            ref: `PAY-${p.staffId || "STAFF"}`,
+                            coa: "501-000",
+                            type: "credit",
+                            amount: amt
+                        });
+                    }
+                });
+            } else {
+                list.push({
+                    date: dateVal,
+                    description: "Beban Gaji Karyawan (Total)",
+                    ref: "PAY-TOTAL",
+                    coa: "501-000",
+                    type: "credit",
+                    amount: payrollSum
+                });
+            }
+        }
+
+        list.sort((a, b) => {
+            if (a.isStartingBalance) return -1;
+            if (b.isStartingBalance) return 1;
+            return a.date.getTime() - b.date.getTime();
+        });
+
+        let balanceAccum = 0;
+        const entriesWithBalance = list.map(e => {
+            if (e.type === "debit") balanceAccum += e.amount;
+            else balanceAccum -= e.amount;
+            return { ...e, balance: balanceAccum };
+        });
+
+        const ledgerExcelData = entriesWithBalance.map((e) => ({
+            Tanggal: e.date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+            "Kode Akun (COA)": e.coa,
+            Ref: e.ref,
+            Keterangan: e.description,
+            "Debit (Masuk)": e.isStartingBalance ? null : (e.type === "debit" ? e.amount : null),
+            "Kredit (Keluar)": e.isStartingBalance ? null : (e.type === "credit" ? e.amount : null),
+            Saldo: e.balance
+        }));
+
+        const investorPayouts = (pnlResult.investorDistributions || []).reduce((sum, i) => sum + (i.amount || 0), 0);
+        const netIncome = pnlResult.card12_ReconOwner || 0;
+
+        // Accounts Receivable (Piutang Usaha)
+        const accountsReceivable = (rawTransactions || []).filter(t => {
+            if (t.isDeleted || t.status === "cancelled" || t.status === "no-show") return false;
+            const status = (t.paymentStatus || "").toLowerCase();
+            return !status.includes("lunas") && !status.includes("paid");
+        }).reduce((sum, t) => sum + (t.amount || 0), 0);
+
+        // Kewajiban (Liabilities)
+        const vatLiability = pnlResult.card11_VAT || 0;
+        const scLiability = pnlResult.summaryServiceCharge || 0;
+        const lbLiability = pnlResult.summaryLostBreakage || 0;
+        const feeLiability = pnlResult.card9_FeeGross || 0;
+
+        // Remaining Liabilities (Sisa Kewajiban setelah Pelunasan)
+        const sisaVat = Math.max(0, vatLiability - vatPaid);
+        const sisaFee = Math.max(0, feeLiability - feePaid);
+        const sisaSc = Math.max(0, scLiability - scPaid);
+        const sisaLb = Math.max(0, lbLiability - lbPaid);
+        const totalLiabilities = sisaVat + sisaFee + sisaSc + sisaLb;
+
+        const gop = pnlResult.card7_TotalGOP || 0;
+        const totalPaid = vatPaid + feePaid + scPaid + lbPaid;
+
+        // Cash and Bank
+        const cashAndBank = startingBal + gop - investorPayouts - accountsReceivable - fixedAssetsValue - totalPaid;
+        
+        const totalAssetsLancar = cashAndBank + accountsReceivable;
+        const totalAssets = totalAssetsLancar + fixedAssetsValue;
+        
+        const equity = startingBal + netIncome - investorPayouts;
+        const totalLiabilitiesEquity = totalLiabilities + equity;
+        const endingBalance = cashAndBank;
+
+        const balanceSheetAOA = [
+            ["NERACA (BALANCE SHEET)"],
+            [`Periode Akhir: ${month}`],
+            [],
+            ["AKTIVA (ASSETS)", "", "", "KEWAJIBAN & EKUITAS (LIABILITIES & EQUITY)"],
+            ["Aktiva Lancar", "", "", "Kewajiban (Liabilities)"],
+            ["  Kas & Bank", cashAndBank, "", "  Hutang Operasional (Management Fee)", sisaFee],
+            ["  Piutang Usaha", accountsReceivable, "", "  Pajak Terhutang (VAT / PB1)", sisaVat],
+            ["Total Aktiva Lancar", totalAssetsLancar, "", "  Hutang Service Charge Karyawan", sisaSc],
+            ["", "", "", "  Cadangan Kehilangan & Kerusakan", sisaLb],
+            ["Aktiva Tetap", "", "", "Total Kewajiban", totalLiabilities],
+            ["  Inventaris & Peralatan", fixedAssetsValue, "", ""],
+            ["", "", "", "Ekuitas (Equity)"],
+            ["", "", "", "  Modal Awal / Saldo Laba Bulan Lalu", startingBal],
+            ["", "", "", "  Laba (Rugi) Tahun Berjalan", netIncome],
+            ["", "", "", "  Distribusi Laba Investor (Dividen)", -investorPayouts],
+            ["", "", "", "Total Ekuitas", equity],
+            ["TOTAL AKTIVA", totalAssets, "", "TOTAL KEWAJIBAN & EKUITAS", totalLiabilitiesEquity]
+        ];
+        const balanceSheetSheet = XLSX.utils.aoa_to_sheet(balanceSheetAOA);
+
+        const cashFlowAOA = [
+            ["LAPORAN ARUS KAS (CASH FLOW)"],
+            ["Cash Flow Statement (Metode Langsung)"],
+            [`Periode Akhir: ${month}`],
+            [],
+            ["Arus Kas dari Aktivitas Operasional"],
+            ["  Penerimaan Kas dari Pelanggan (Total Revenue - Piutang)", (pnlResult.totalRevenue || 0) - accountsReceivable],
+            ["  Pembayaran Kas untuk Beban Operasional", -(pnlResult.card8_TotalExpenses || 0)],
+            ["Kas Bersih dari Aktivitas Operasi", gop - accountsReceivable],
+            [],
+            ["Arus Kas dari Aktivitas Investasi"],
+            ["  Pembelian Inventaris & Peralatan (Aktiva Tetap)", -fixedAssetsValue],
+            ["Kas Bersih dari Aktivitas Investasi", -fixedAssetsValue],
+            [],
+            ["Arus Kas dari Aktivitas Pendanaan"],
+            ["  Pembayaran Dividen / Distribusi Investor", -investorPayouts],
+            ["Kas Bersih dari Aktivitas Pendanaan", -investorPayouts],
+            [],
+            ["Ringkasan Arus Kas"],
+            ["  Kenaikan (Penurunan) Kas Bersih", (gop - accountsReceivable) - fixedAssetsValue - investorPayouts],
+            ["  Saldo Kas Awal Periode", startingBal],
+            ["Saldo Kas Akhir Periode", endingBalance]
+        ];
+        const cashFlowSheet = XLSX.utils.aoa_to_sheet(cashFlowAOA);
+
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData),  "Financial Summary");
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expensesData), "Detailed Expenses");
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(investorData), "Investor Shares");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ledgerExcelData), "Buku Besar (Ledger)");
+        XLSX.utils.book_append_sheet(wb, balanceSheetSheet, "Neraca (Balance Sheet)");
+        XLSX.utils.book_append_sheet(wb, cashFlowSheet, "Arus Kas (Cash Flow)");
         XLSX.writeFile(wb, `PnL_Audit_${viewMode}_${month}.xlsx`);
     };
 
@@ -168,6 +421,264 @@ export function usePnLExport({
             ]),
             theme: "grid",
             headStyles: { fillColor: [60, 60, 60] },
+        });
+
+        // Compute data for Ledger, Balance Sheet, Cash Flow
+        const formatRef = (prefix: string, rawRef: string) => {
+            if (!rawRef) return `${prefix}-GEN`;
+            const clean = rawRef.trim();
+            if (clean.length >= 20 && !clean.includes('/') && !clean.includes('-')) {
+                return `${prefix}-${clean.slice(0, 7).toUpperCase()}`;
+            }
+            if (clean.includes('-')) {
+                const parts = clean.split('-');
+                const docId = parts[0];
+                if (docId.length >= 20) {
+                    return `${prefix}-${docId.slice(0, 7).toUpperCase()}`;
+                }
+            }
+            return clean.toUpperCase();
+        };
+
+        const startingBal = startingBalance || 0;
+        const list: any[] = [];
+        const [yStr, mStr] = month.split('-');
+        const firstDay = new Date(parseInt(yStr), parseInt(mStr) - 1, 1, 0, 0, 0);
+
+        list.push({
+            date: firstDay,
+            description: "Saldo Awal (Modal / Kas & Bank)",
+            ref: "BAL-START",
+            coa: "301-000",
+            type: "debit",
+            amount: startingBal,
+            isStartingBalance: true
+        });
+
+        (rawTransactions || []).forEach(t => {
+            if (t.isDeleted || t.status === "cancelled" || t.status === "no-show") return;
+            const amt = t.totalPrice || t.amount || 0;
+            if (amt > 0) {
+                list.push({
+                    date: new Date(t.createdAt || t.date || new Date()),
+                    description: `Penerimaan Kamar - ${t.guestName || "Tamu"}`,
+                    ref: formatRef("FO", t.bookingId || t.id),
+                    coa: "401-000",
+                    type: "debit",
+                    amount: amt
+                });
+            }
+        });
+
+        (posOrders || []).forEach(o => {
+            const amt = o.amount || 0;
+            if (amt > 0) {
+                list.push({
+                    date: new Date(o.date || new Date()),
+                    description: `Penerimaan POS - ${o.description || "Penjualan F&B"}`,
+                    ref: formatRef("POS", o.id),
+                    coa: "402-000",
+                    type: "debit",
+                    amount: amt
+                });
+            }
+        });
+
+        (customIncomes || []).forEach(ci => {
+            if (ci.amount > 0) {
+                list.push({
+                    date: new Date(ci.date || new Date()),
+                    description: ci.description || "Pendapatan Lainnya",
+                    ref: "INC-CUST",
+                    coa: "409-000",
+                    type: "debit",
+                    amount: ci.amount
+                });
+            }
+        });
+
+        (nonCommissionRevenue || []).forEach(nc => {
+            if (nc.amount > 0) {
+                list.push({
+                    date: new Date(nc.date || new Date()),
+                    description: nc.description || "Pendapatan Non-Komisi",
+                    ref: "INC-NC",
+                    coa: "408-000",
+                    type: "debit",
+                    amount: nc.amount
+                });
+            }
+        });
+
+        (expenses || []).forEach(ex => {
+            if (ex.amount > 0) {
+                list.push({
+                    date: new Date(ex.date || new Date()),
+                    description: `Beban Operasional - ${ex.category || "Biaya"} (${ex.description || "Pengeluaran"})`,
+                    ref: "EXP-" + (ex.id?.slice(0,5) || "MANUAL"),
+                    coa: "502-000",
+                    type: "credit",
+                    amount: ex.amount
+                });
+            }
+        });
+
+        const payrollSum = (payrollDetails || []).reduce((sum, p) => sum + (p.totalPay || p.totalPayrollExpense || p.amount || 0), 0);
+        if (payrollSum > 0) {
+            const lastDay = new Date(parseInt(yStr), parseInt(mStr), 0).getDate();
+            const dateVal = new Date(parseInt(yStr), parseInt(mStr) - 1, lastDay, 23, 59, 59);
+            
+            if (payrollDetails && payrollDetails.length > 0) {
+                payrollDetails.forEach(p => {
+                    const amt = p.totalPay || p.totalPayrollExpense || p.amount || 0;
+                    if (amt > 0) {
+                        list.push({
+                            date: dateVal,
+                            description: `Beban Gaji Karyawan - ${p.name || p.staffName || "Karyawan"}`,
+                            ref: `PAY-${p.staffId || "STAFF"}`,
+                            coa: "501-000",
+                            type: "credit",
+                            amount: amt
+                        });
+                    }
+                });
+            } else {
+                list.push({
+                    date: dateVal,
+                    description: "Beban Gaji Karyawan (Total)",
+                    ref: "PAY-TOTAL",
+                    coa: "501-000",
+                    type: "credit",
+                    amount: payrollSum
+                });
+            }
+        }
+
+        list.sort((a, b) => {
+            if (a.isStartingBalance) return -1;
+            if (b.isStartingBalance) return 1;
+            return a.date.getTime() - b.date.getTime();
+        });
+
+        let balanceAccum = 0;
+        const entriesWithBalance = list.map(e => {
+            if (e.type === "debit") balanceAccum += e.amount;
+            else balanceAccum -= e.amount;
+            return { ...e, balance: balanceAccum };
+        });
+
+        const investorPayouts = (pnlResult.investorDistributions || []).reduce((sum, i) => sum + (i.amount || 0), 0);
+        const netIncome = pnlResult.card12_ReconOwner || 0;
+        const cashAndBank = startingBal + netIncome - investorPayouts;
+        const totalAssets = cashAndBank;
+        const equity = startingBal + netIncome - investorPayouts;
+        const totalLiabilitiesEquity = equity;
+        const endingBalance = startingBal + netIncome - investorPayouts;
+
+        // Section VI: Buku Besar (General Ledger)
+        doc.addPage();
+        doc.setFontSize(14);
+        doc.setFont("Helvetica", "bold");
+        doc.text("VI. Buku Besar (General Ledger)", 14, 20);
+        doc.setFontSize(10);
+        doc.setFont("Helvetica", "normal");
+        doc.text(`Periode: ${month}`, 14, 26);
+
+        autoTable(doc, {
+            startY: 30,
+            head:   [["Tanggal", "COA", "Ref", "Keterangan", "Debit", "Kredit", "Saldo"]],
+            body:   entriesWithBalance.map((e) => [
+                e.date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+                e.coa,
+                e.ref,
+                e.description,
+                e.isStartingBalance ? "-" : (e.type === "debit" ? formatIDR(e.amount) : "-"),
+                e.isStartingBalance ? "-" : (e.type === "credit" ? formatIDR(e.amount) : "-"),
+                formatIDR(e.balance)
+            ]),
+            theme: "striped",
+            headStyles: { fillColor: [24, 29, 38] },
+        });
+
+        // Section VII: Neraca (Balance Sheet)
+        doc.addPage();
+        doc.setFontSize(14);
+        doc.setFont("Helvetica", "bold");
+        doc.text("VII. Neraca (Balance Sheet)", 14, 20);
+        doc.setFontSize(10);
+        doc.setFont("Helvetica", "normal");
+        doc.text(`Periode Akhir: ${month}`, 14, 26);
+
+        autoTable(doc, {
+            startY: 32,
+            head: [["Aktiva (Assets)", "Jumlah"]],
+            body: [
+                ["Aktiva Lancar", ""],
+                ["  Kas & Bank", formatIDR(cashAndBank)],
+                ["  Piutang Usaha", formatIDR(accountsReceivable)],
+                ["Total Aktiva Lancar", formatIDR(totalAssetsLancar)],
+                ["Aktiva Tetap", ""],
+                ["  Inventaris & Peralatan", formatIDR(fixedAssetsValue)],
+                ["TOTAL AKTIVA", formatIDR(totalAssets)]
+            ],
+            theme: "grid",
+            headStyles: { fillColor: [24, 29, 38] },
+            columnStyles: { 1: { halign: "right" } }
+        });
+
+        autoTable(doc, {
+            startY: (doc as any).lastAutoTable.finalY + 10,
+            head: [["Kewajiban & Ekuitas (Liabilities & Equity)", "Jumlah"]],
+            body: [
+                ["Kewajiban (Liabilities)", ""],
+                ["  Hutang Operasional (Management Fee)", formatIDR(sisaFee)],
+                ["  Pajak Terhutang (VAT / PB1)", formatIDR(sisaVat)],
+                ["  Hutang Service Charge Karyawan", formatIDR(sisaSc)],
+                ["  Cadangan Kehilangan & Kerusakan", formatIDR(sisaLb)],
+                ["Total Kewajiban", formatIDR(totalLiabilities)],
+                ["Ekuitas (Equity)", ""],
+                ["  Modal Awal / Saldo Laba Bulan Lalu", formatIDR(startingBal)],
+                ["  Laba (Rugi) Tahun Berjalan", formatIDR(netIncome)],
+                ["  Distribusi Laba Investor (Dividen)", `-${formatIDR(investorPayouts)}`],
+                ["Total Ekuitas", formatIDR(equity)],
+                ["TOTAL KEWAJIBAN & EKUITAS", formatIDR(totalLiabilitiesEquity)]
+            ],
+            theme: "grid",
+            headStyles: { fillColor: [24, 29, 38] },
+            columnStyles: { 1: { halign: "right" } }
+        });
+
+        // Section VIII: Laporan Arus Kas (Cash Flow)
+        doc.addPage();
+        doc.setFontSize(14);
+        doc.setFont("Helvetica", "bold");
+        doc.text("VIII. Laporan Arus Kas (Cash Flow)", 14, 20);
+        doc.setFontSize(10);
+        doc.setFont("Helvetica", "normal");
+        doc.text(`Periode: ${month} (Metode Langsung)`, 14, 26);
+
+        autoTable(doc, {
+            startY: 32,
+            head: [["Aktivitas / Deskripsi", "Jumlah"]],
+            body: [
+                ["Arus Kas dari Aktivitas Operasional", ""],
+                ["  Penerimaan Kas dari Pelanggan (Total Revenue - Piutang)", formatIDR((pnlResult?.totalRevenue || 0) - accountsReceivable)],
+                ["  Pembayaran Kas untuk Beban Operasional", `-${formatIDR(pnlResult?.card8_TotalExpenses || 0)}`],
+                ["Kas Bersih dari Aktivitas Operasi", formatIDR(gop - accountsReceivable)],
+                ["Arus Kas dari Aktivitas Investasi", ""],
+                ["  Pembelian Inventaris & Peralatan (Aktiva Tetap)", `-${formatIDR(fixedAssetsValue)}`],
+                ["Kas Bersih dari Aktivitas Investasi", `-${formatIDR(fixedAssetsValue)}`],
+                ["Arus Kas dari Aktivitas Pendanaan", ""],
+                ["  Pembayaran Dividen / Distribusi Investor", `-${formatIDR(investorPayouts)}`],
+                ["Kas Bersih dari Aktivitas Pendanaan", `-${formatIDR(investorPayouts)}`],
+                ["Ringkasan", ""],
+                ["  Kenaikan (Penurunan) Kas Bersih", formatIDR((gop - accountsReceivable) - fixedAssetsValue - investorPayouts)],
+                ["  Saldo Kas Awal Periode", formatIDR(startingBal)],
+                ["Saldo Kas Akhir Periode", formatIDR(endingBalance)]
+            ],
+            theme: "grid",
+            headStyles: { fillColor: [24, 29, 38] },
+            columnStyles: { 1: { halign: "right" } }
         });
 
         doc.save(`PnL_Report_${month}.pdf`);

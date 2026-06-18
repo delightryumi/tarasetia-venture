@@ -20,7 +20,7 @@ import { db } from "@/lib/firebase";
 export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const { user, loading, activeHotelCode, signOutUser, activeHotelName } = useAuth();
     const router = useRouter();
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const { poweredByText, poweredByLink } = useFooter();
     const containerRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
@@ -29,8 +29,9 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     const [nextDueDate, setNextDueDate] = useState<string>("");
 
     React.useEffect(() => {
-        if (!activeHotelCode || (user && (user.role === "superadmin" || user.email.toLowerCase() === "nexura.management@gmail.com"))) {
-            setActiveModules(null); // Superadmin always has full access
+        // Superadmin tanpa preview hotel — skip Firestore query
+        if (!activeHotelCode || activeHotelCode === "0") {
+            setActiveModules(null);
             setIsHotelActive(true);
             return;
         }
@@ -38,7 +39,12 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                setIsHotelActive(data.active !== false);
+                // Superadmin tidak perlu dicek status aktif hotel yang sedang di-preview
+                if (user?.role === "superadmin") {
+                    setIsHotelActive(true);
+                } else {
+                    setIsHotelActive(data.active !== false);
+                }
                 setNextDueDate(data.billing?.nextDueDate || "");
                 let modules = data.billing?.activeModules || [];
                 // Map old cpanel key to cpanel-full or cpanel-only
@@ -253,13 +259,13 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
 
                         <footer className="dashboard-footer-clean">
                             <a
-                                href={poweredByLink?.startsWith('http') ? poweredByLink : `https://${poweredByLink || "tarasetia.com"}`}
+                                href={poweredByLink?.startsWith('http') ? poweredByLink : `https://${poweredByLink || "setaraventure.com"}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="powered-by-link"
                             >
                                 <span className="text-light">Powered by</span>
-                                <span className="text-brand">{poweredByText || "Tarasetia Venture"}</span>
+                                <span className="text-brand">{poweredByText || "Setara Venture"}</span>
                                 <ExternalLink size={12} className="link-icon" />
                             </a>
                         </footer>

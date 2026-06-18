@@ -21,7 +21,7 @@
 
 .primary {
   background: var(--p-primary);
-  color: var(--p-on-dark);
+  color: var(--p-primary-text, var(--p-on-dark));
 }
 .primary:active { background: var(--p-primary-active); transform: scale(0.98); }
 

@@ -1,7 +1,9 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { getDocs, doc, getDoc } from 'firebase/firestore';
+import { cookies } from 'next/headers';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export const fetchRecords = async ({
   take = 5,
@@ -29,8 +31,12 @@ export const fetchRecords = async ({
       endDate = today;
     }
 
+    const cookieStore = await cookies();
+    const hotelCode = cookieStore.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+    console.log("[fetchRecords] hotelCode from cookie:", hotelCode);
+
     // Fetch tax settings
-    const posSettingsRef = doc(db, 'settings', 'pos');
+    const posSettingsRef = doc(getHotelCollection(db, 'settings', hotelCode), 'pos');
     const posSettingsSnap = await getDoc(posSettingsRef);
     let taxRate = 10;
     if (posSettingsSnap.exists()) {
@@ -38,7 +44,7 @@ export const fetchRecords = async ({
       taxRate = Number(sData.service || 0) + Number(sData.tax || 0) + Number(sData.lostBreakage || 0);
     }
 
-    const snap = await getDocs(collection(db, 'pos_orders'));
+    const snap = await getDocs(getHotelCollection(db, 'pos_orders', hotelCode));
     let transactions: any[] = [];
 
     snap.forEach((docSnap) => {
@@ -90,6 +96,8 @@ export const fetchRecords = async ({
         customerName: data.customerName || '',
         tableNumber: data.tableNumber || '',
         cashierName: data.cashierName || '',
+        isCompliment: !!data.isCompliment,
+        complimentValue: Number(data.complimentValue || 0),
       });
     });
 
@@ -139,6 +147,7 @@ export const fetchRecords = async ({
     }
 
     const total = transactions.length;
+    console.log(`[fetchRecords] Found ${total} transactions after filtering for hotelCode ${hotelCode}`);
     const paginated = transactions.slice(skip, skip + take);
 
     return {

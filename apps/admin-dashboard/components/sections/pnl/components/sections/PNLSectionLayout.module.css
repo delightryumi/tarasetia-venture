@@ -37,6 +37,10 @@
   margin: 0;
 }
 
+.sectionTitleHighlight {
+  color: var(--sage, #788069);
+}
+
 @media (min-width: 768px) {
   .sectionTitle {
     font-size: 30px;

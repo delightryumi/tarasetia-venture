@@ -24,7 +24,7 @@ export function FnBPerformanceSection({ pnlResult, loading, rise, onCardClick }:
         <div className={styles.sectionWrapper}>
             <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>
-                    <Activity size={28} /> F&B <span style={{ color: "#788069" }}>Performance</span>
+                    <Activity size={28} /> F&B <span className={styles.sectionTitleHighlight}>Performance</span>
                 </h2>
                 <p className={styles.sectionSubtitle}>Revenue Vs Expenses Analysis</p>
             </div>

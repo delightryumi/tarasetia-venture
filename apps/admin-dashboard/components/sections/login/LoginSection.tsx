@@ -9,7 +9,7 @@ const LeftPanel = React.memo(() => {
     return (
         <div className="panels-container">
             <div className="panel left-panel">
-                <img src="/channels/2.png" alt="Tarasetia Venture Logo" className="hero-logo" />
+                <img src="/channels/2.png" alt="Setara Venture Logo" className="hero-logo" />
                 <div className="panel-content">
                     <h3><span>Property</span> Management System</h3>
                     <p>
@@ -93,7 +93,7 @@ export const LoginSection = () => {
                                 </span>
                                 <input
                                     type="text"
-                                    placeholder="Hotel Code (e.g. 87241)"
+                                    placeholder="Partner Code (e.g. 87241)"
                                     value={hotelCode}
                                     onChange={(e) => setHotelCode(e.target.value)}
                                     disabled={loading}
@@ -216,7 +216,7 @@ export const LoginSection = () => {
 
                 {/* Bottom Copyright */}
                 <div className="auth-footer">
-                    <p>© {new Date().getFullYear()} Tarasetia Venture. All rights reserved.</p>
+                    <p>© {new Date().getFullYear()} Setara Venture. All rights reserved.</p>
                 </div>
             </div>
 

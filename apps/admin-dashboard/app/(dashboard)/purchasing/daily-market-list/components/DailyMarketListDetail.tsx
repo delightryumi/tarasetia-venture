@@ -16,6 +16,7 @@ interface DailyMarketListDetailProps {
   onApprove: () => void;
   onDelete: () => void;
   onPrint: () => void;
+  onUpdatePaymentStatus?: (itemIndex: number, status: string) => void;
 }
 
 const slideInRight = {
@@ -31,7 +32,8 @@ export default function DailyMarketListDetail({
   onVerify,
   onApprove,
   onDelete,
-  onPrint
+  onPrint,
+  onUpdatePaymentStatus
 }: DailyMarketListDetailProps) {
   return (
     <AnimatePresence>
@@ -84,10 +86,33 @@ export default function DailyMarketListDetail({
               </div>
               <div className={s.detailItems}>
                 {selectedDml.items.map((item: any, idx: number) => (
-                  <div key={idx} className={s.detailItem}>
-                    <div>
+                  <div key={idx} className={s.detailItem} style={{ alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <div className={s.detailItemName}>{item.name}</div>
                       <div className={s.detailItemNote}>{item.category}{item.supplier_name ? ` · ${item.supplier_name}` : ''}</div>
+                      <div style={{ marginTop: 6 }}>
+                        <select
+                          value={item.paymentStatus || 'paid'}
+                          onChange={(e) => onUpdatePaymentStatus && onUpdatePaymentStatus(idx, e.target.value)}
+                          className={s.filterSelect}
+                          style={{ 
+                            padding: '1px 6px', 
+                            fontSize: '11px', 
+                            height: '22px', 
+                            minWidth: '85px', 
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            borderRadius: '4px',
+                            background: (item.paymentStatus || 'paid') === 'tempo' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                            color: (item.paymentStatus || 'paid') === 'tempo' ? '#ef4444' : '#10b981',
+                            border: `1px solid ${(item.paymentStatus || 'paid') === 'tempo' ? '#ef4444' : '#10b981'}`,
+                            outline: 'none'
+                          }}
+                        >
+                          <option value="paid" style={{ color: '#10b981', background: 'var(--p-canvas)' }}>Paid</option>
+                          <option value="tempo" style={{ color: '#ef4444', background: 'var(--p-canvas)' }}>Tempo</option>
+                        </select>
+                      </div>
                     </div>
                     <div className={s.detailItemQty}>
                       {item.qty_ordered} {item.unit} · {formatRupiah(item.unit_price || 0)}

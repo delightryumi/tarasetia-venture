@@ -6,6 +6,7 @@ import {
   updateDoc, arrayUnion, arrayRemove, query, where
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 import { toast } from 'react-toastify';
 import { Plus, Trash2, Pencil, Check, X, Loader2, Tag, Layers, Lock, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,10 +28,18 @@ import {
 const PROTECTED_CATEGORIES = ['BANQUET', 'FOOD', 'BEVERAGE'];
 const VALID_PASSWORDS = ['admin123', 'owner123'];
 
+const PNL_TARGET_OPTIONS = [
+  { value: 'FOOD', label: 'F&B Food (Makanan)' },
+  { value: 'BEVERAGE', label: 'F&B Beverage (Minuman)' },
+  { value: 'BANQUET', label: 'F&B Banquet (Event)' },
+  { value: 'OTHER', label: 'Other Income & Expense' }
+];
+
 interface Category {
   id: string;
   name: string;
   subcategories: string[];
+  pnlTarget?: 'FOOD' | 'BEVERAGE' | 'BANQUET' | 'OTHER';
 }
 
 // ─── Admin Password Dialog ────────────────────────────────────────────────────
@@ -119,8 +128,10 @@ export default function CategorySubcategoryPanel() {
 
   // Category state
   const [newCat, setNewCat] = useState('');
+  const [newCatPnlTarget, setNewCatPnlTarget] = useState<'FOOD' | 'BEVERAGE' | 'BANQUET' | 'OTHER'>('FOOD');
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editingCatName, setEditingCatName] = useState('');
+  const [editingCatPnlTarget, setEditingCatPnlTarget] = useState<'FOOD' | 'BEVERAGE' | 'BANQUET' | 'OTHER'>('FOOD');
   const [selectedCat, setSelectedCat] = useState<Category | null>(null);
 
   // Subcategory state
@@ -141,11 +152,12 @@ export default function CategorySubcategoryPanel() {
   const loadCategories = async () => {
     setLoading(true);
     try {
-      const snap = await getDocs(collection(db, 'pos_categories'));
+      const snap = await getDocs(getHotelCollection(db, 'pos_categories'));
       const fetched: Category[] = snap.docs.map(d => ({
         id: d.id,
         name: d.data().name,
         subcategories: d.data().subcategories || [],
+        pnlTarget: d.data().pnlTarget || (d.data().name === 'FOOD' ? 'FOOD' : d.data().name === 'BEVERAGE' ? 'BEVERAGE' : d.data().name === 'BANQUET' ? 'BANQUET' : 'FOOD')
       }));
       const sorted = fetched.sort((a, b) => a.name.localeCompare(b.name));
       setCategories(sorted);
@@ -179,13 +191,15 @@ export default function CategorySubcategoryPanel() {
       toast.warning('Kategori sudah ada!');
       return;
     }
+    const resolvedPnlTarget = trimmed === 'FOOD' ? 'FOOD' : trimmed === 'BEVERAGE' ? 'BEVERAGE' : trimmed === 'BANQUET' ? 'BANQUET' : newCatPnlTarget;
     try {
-      const ref = await addDoc(collection(db, 'pos_categories'), {
+      const ref = await addDoc(getHotelCollection(db, 'pos_categories'), {
         name: trimmed,
         subcategories: [],
+        pnlTarget: resolvedPnlTarget,
         createdAt: new Date(),
       });
-      setCategories(prev => [...prev, { id: ref.id, name: trimmed, subcategories: [] }]
+      setCategories(prev => [...prev, { id: ref.id, name: trimmed, subcategories: [], pnlTarget: resolvedPnlTarget }]
         .sort((a, b) => a.name.localeCompare(b.name)));
       setNewCat('');
       toast.success('Kategori berhasil ditambahkan.');
@@ -206,20 +220,34 @@ export default function CategorySubcategoryPanel() {
 
   const doSaveEditCategory = async (cat: Category) => {
     const trimmed = editingCatName.trim().toUpperCase();
-    if (!trimmed || trimmed === cat.name) { setEditingCatId(null); return; }
-    if (categories.some(c => c.id !== cat.id && c.name === trimmed)) {
+    const hasNameChanged = trimmed && trimmed !== cat.name;
+    const hasPnlTargetChanged = editingCatPnlTarget !== cat.pnlTarget;
+
+    if (!hasNameChanged && !hasPnlTargetChanged) { setEditingCatId(null); return; }
+
+    if (hasNameChanged && categories.some(c => c.id !== cat.id && c.name === trimmed)) {
       toast.warning('Nama kategori sudah digunakan!');
       return;
     }
     setLoadingId(cat.id);
     try {
-      await updateDoc(doc(db, 'pos_categories', cat.id), { name: trimmed });
-      const q = query(collection(db, 'pos_products'), where('category', '==', cat.name));
-      const snap = await getDocs(q);
-      await Promise.all(snap.docs.map(d => updateDoc(doc(db, 'pos_products', d.id), { category: trimmed })));
-      setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, name: trimmed } : c)
+      const updatePayload: any = {};
+      if (hasNameChanged) updatePayload.name = trimmed;
+      if (hasPnlTargetChanged) updatePayload.pnlTarget = editingCatPnlTarget;
+
+      await updateDoc(doc(getHotelCollection(db, 'pos_categories'), cat.id), updatePayload);
+
+      if (hasNameChanged) {
+        const q = query(getHotelCollection(db, 'pos_products'), where('category', '==', cat.name));
+        const snap = await getDocs(q);
+        await Promise.all(snap.docs.map(d => updateDoc(doc(getHotelCollection(db, 'pos_products'), d.id), { category: trimmed })));
+      }
+
+      setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, name: hasNameChanged ? trimmed : c.name, pnlTarget: editingCatPnlTarget } : c)
         .sort((a, b) => a.name.localeCompare(b.name)));
-      if (selectedCat?.id === cat.id) setSelectedCat(prev => prev ? { ...prev, name: trimmed } : null);
+      if (selectedCat?.id === cat.id) {
+        setSelectedCat(prev => prev ? { ...prev, name: hasNameChanged ? trimmed : prev.name, pnlTarget: editingCatPnlTarget } : null);
+      }
       toast.success('Kategori berhasil diperbarui.');
       setEditingCatId(null);
     } catch {
@@ -230,25 +258,37 @@ export default function CategorySubcategoryPanel() {
   };
 
   const handleSaveEditCategory = (cat: Category) => {
-    const trimmed = editingCatName.trim();
-    if (!trimmed || trimmed.toUpperCase() === cat.name) { setEditingCatId(null); return; }
-    requireAdmin(
-      'Edit Nama Kategori',
-      `Anda akan mengubah nama kategori "${cat.name}" menjadi "${trimmed.toUpperCase()}". Ini akan mengupdate semua produk terkait.`,
-      () => doSaveEditCategory(cat)
-    );
+    const trimmed = editingCatName.trim().toUpperCase();
+    const hasNameChanged = trimmed && trimmed !== cat.name;
+    const hasPnlTargetChanged = editingCatPnlTarget !== cat.pnlTarget;
+
+    if (!hasNameChanged && !hasPnlTargetChanged) { setEditingCatId(null); return; }
+
+    if (hasNameChanged) {
+      requireAdmin(
+        'Edit Kategori',
+        `Anda akan mengubah nama kategori "${cat.name}" menjadi "${trimmed}". Ini akan mengupdate semua produk terkait.`,
+        () => doSaveEditCategory(cat)
+      );
+    } else {
+      requireAdmin(
+        'Ubah Target P&L',
+        `Anda akan mengubah target alokasi P&L untuk kategori "${cat.name}" menjadi "${editingCatPnlTarget}".`,
+        () => doSaveEditCategory(cat)
+      );
+    }
   };
 
   const doDeleteCategory = async (cat: Category) => {
     setLoadingId(cat.id);
     try {
-      const q = query(collection(db, 'pos_products'), where('category', '==', cat.name));
+      const q = query(getHotelCollection(db, 'pos_products'), where('category', '==', cat.name));
       const snap = await getDocs(q);
       if (!snap.empty) {
         toast.error(`Kategori "${cat.name}" masih digunakan oleh ${snap.size} produk!`);
         return;
       }
-      await deleteDoc(doc(db, 'pos_categories', cat.id));
+      await deleteDoc(doc(getHotelCollection(db, 'pos_categories'), cat.id));
       setCategories(prev => prev.filter(c => c.id !== cat.id));
       if (selectedCat?.id === cat.id) setSelectedCat(null);
       toast.success(`Kategori "${cat.name}" dihapus.`);
@@ -278,7 +318,7 @@ export default function CategorySubcategoryPanel() {
     }
     setLoadingId(selectedCat.id);
     try {
-      await updateDoc(doc(db, 'pos_categories', selectedCat.id), { subcategories: arrayUnion(trimmed) });
+      await updateDoc(doc(getHotelCollection(db, 'pos_categories'), selectedCat.id), { subcategories: arrayUnion(trimmed) });
       const updated: Category = { ...selectedCat, subcategories: [...selectedCat.subcategories, trimmed].sort() };
       setCategories(prev => prev.map(c => c.id === selectedCat.id ? updated : c));
       setSelectedCat(updated);
@@ -304,7 +344,7 @@ export default function CategorySubcategoryPanel() {
     if (!selectedCat) return;
     setLoadingId(selectedCat.id);
     try {
-      await updateDoc(doc(db, 'pos_categories', selectedCat.id), { subcategories: arrayRemove(subName) });
+      await updateDoc(doc(getHotelCollection(db, 'pos_categories'), selectedCat.id), { subcategories: arrayRemove(subName) });
       const updated: Category = { ...selectedCat, subcategories: selectedCat.subcategories.filter(s => s !== subName) };
       setCategories(prev => prev.map(c => c.id === selectedCat.id ? updated : c));
       setSelectedCat(updated);
@@ -353,17 +393,33 @@ export default function CategorySubcategoryPanel() {
           </div>
 
           {/* Add Category */}
-          <div className="flex gap-2 px-4 py-3 border-b border-neutral-100 dark:border-white/[0.04]">
-            <Input
-              placeholder="Tambah kategori baru..."
-              value={newCat}
-              onChange={e => setNewCat(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleAddCategory()}
-              className="h-8 text-xs"
-            />
-            <Button onClick={handleAddCategory} size="sm" className="h-8 bg-neutral-800 hover:bg-neutral-700 text-white text-xs shrink-0">
-              <Plus className="w-3.5 h-3.5 mr-1" /> Add
-            </Button>
+          <div className="flex flex-col gap-2 px-4 py-3 border-b border-neutral-100 dark:border-white/[0.04]">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Tambah kategori baru..."
+                value={newCat}
+                onChange={e => setNewCat(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddCategory()}
+                className="h-8 text-xs flex-1"
+              />
+              <Button onClick={handleAddCategory} size="sm" className="h-8 bg-neutral-800 hover:bg-neutral-700 text-white text-xs shrink-0">
+                <Plus className="w-3.5 h-3.5 mr-1" /> Add
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-[10px] font-semibold text-neutral-500 shrink-0">P&L Target:</Label>
+              <select
+                value={newCatPnlTarget}
+                onChange={e => setNewCatPnlTarget(e.target.value as any)}
+                className="h-7 px-2 text-[10px] font-medium rounded-[6px] bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.1] text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer flex-1 animate-none outline-none"
+              >
+                {PNL_TARGET_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Category List */}
@@ -392,23 +448,40 @@ export default function CategorySubcategoryPanel() {
                       >
                         <td className="px-4 py-2.5">
                           {editingCatId === cat.id ? (
-                            <Input
-                              value={editingCatName}
-                              onChange={e => setEditingCatName(e.target.value)}
-                              onKeyDown={e => e.key === 'Enter' && handleSaveEditCategory(cat)}
-                              className="h-7 text-xs"
-                              autoFocus
-                              onClick={e => e.stopPropagation()}
-                            />
+                            <div className="flex flex-col gap-2" onClick={e => e.stopPropagation()}>
+                              <Input
+                                value={editingCatName}
+                                onChange={e => setEditingCatName(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleSaveEditCategory(cat)}
+                                className="h-7 text-xs"
+                                autoFocus
+                              />
+                              <select
+                                value={editingCatPnlTarget}
+                                onChange={e => setEditingCatPnlTarget(e.target.value as any)}
+                                className="h-7 px-2 text-[10px] rounded-[6px] bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.1] text-neutral-800 dark:text-neutral-200 focus:outline-none"
+                              >
+                                {PNL_TARGET_OPTIONS.map(opt => (
+                                  <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
                           ) : (
-                            <div className="flex items-center gap-1.5">
-                              {locked && <Lock className="w-3 h-3 text-amber-500 shrink-0" />}
-                              <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-200">{cat.name}</span>
-                              {locked && (
-                                <Badge variant="outline" className="text-[9px] px-1.5 py-0 text-amber-600 border-amber-300 dark:border-amber-700 dark:text-amber-400">
-                                  Protected
-                                </Badge>
-                              )}
+                            <div className="flex flex-col gap-0.5">
+                              <div className="flex items-center gap-1.5">
+                                {locked && <Lock className="w-3 h-3 text-amber-500 shrink-0" />}
+                                <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-200">{cat.name}</span>
+                                {locked && (
+                                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 text-amber-600 border-amber-300 dark:border-amber-700 dark:text-amber-400">
+                                    Protected
+                                  </Badge>
+                                )}
+                              </div>
+                              <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-medium">
+                                Target P&L: {cat.pnlTarget || (cat.name === 'FOOD' ? 'FOOD' : cat.name === 'BEVERAGE' ? 'BEVERAGE' : cat.name === 'BANQUET' ? 'BANQUET' : 'FOOD')}
+                              </span>
                             </div>
                           )}
                         </td>
@@ -429,7 +502,7 @@ export default function CategorySubcategoryPanel() {
                               </span>
                             ) : (
                               <>
-                                <Button size="icon" variant="ghost" className="h-6 w-6 text-neutral-400 hover:text-neutral-700" onClick={() => { setEditingCatId(cat.id); setEditingCatName(cat.name); }} disabled={loadingId === cat.id}><Pencil className="w-3 h-3" /></Button>
+                                <Button size="icon" variant="ghost" className="h-6 w-6 text-neutral-400 hover:text-neutral-700" onClick={() => { setEditingCatId(cat.id); setEditingCatName(cat.name); setEditingCatPnlTarget(cat.pnlTarget || (cat.name === 'FOOD' ? 'FOOD' : cat.name === 'BEVERAGE' ? 'BEVERAGE' : cat.name === 'BANQUET' ? 'BANQUET' : 'FOOD')); }} disabled={loadingId === cat.id}><Pencil className="w-3 h-3" /></Button>
                                 <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" onClick={() => handleDeleteCategory(cat)} disabled={loadingId === cat.id}><Trash2 className="w-3 h-3" /></Button>
                               </>
                             )}

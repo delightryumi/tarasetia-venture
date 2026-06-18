@@ -233,6 +233,13 @@ export default function DrillDownModal({
                                                             <div className="flex items-center gap-1">
                                                                 <input 
                                                                     type="number" 
+                                                                    min="0"
+                                                                    onWheel={(e) => e.currentTarget.blur()}
+                                                                    onKeyDown={(e) => {
+                                                                      if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
+                                                                        e.preventDefault();
+                                                                      }
+                                                                    }}
                                                                     value={dItem.metaData.pct}
                                                                     onChange={(e) => onGopChange(activeItem!.id, Number(e.target.value), dItem.metaData.gopCategory)}
                                                                     className="w-12 bg-slate-50 border border-slate-200 rounded-md text-center text-xs font-semibold text-slate-900 outline-none focus:border-slate-900 py-1"

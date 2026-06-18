@@ -63,6 +63,7 @@ export interface GlobalPnLResult {
   expBeverageAlacarte?: number;
   expFoodBanquet?: number;
   expBeverageBanquet?: number;
+  expPayroll?: number;
 
   posGrossRevenue?: number;
   posNettRevenue?: number;
@@ -74,6 +75,8 @@ export interface GlobalPnLResult {
   posTaxRateIndividual?: number;
   posLostBreakageRate?: number;
   posTaxRateCombined?: number;
+  posComplimentValue?: number;
+  foComplimentValue?: number;
 
   summaryServiceCharge?: number;
   summaryLostBreakage?: number;

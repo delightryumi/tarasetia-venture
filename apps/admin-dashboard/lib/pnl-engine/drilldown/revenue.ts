@@ -59,6 +59,22 @@ export function getRevenueDrillDown(cardId: string, ctx: DrillDownContext): any[
           }));
       }
       break;
+    case "Room Compliment":
+      {
+        items = rawTransactions
+          .filter(t => t.isCompliment)
+          .map(t => ({
+            id: t.bookingId || Math.random().toString(),
+            type: 'income',
+            source: t.channel || 'Ledger',
+            description: `${t.guestName || 'Guest'} - ${t.complimentReason || 'Compliment'}`,
+            department: 'Rooms',
+            docType: 'Room Compliment',
+            amount: Number(t.complimentValue) || 0,
+            date: t.effectiveDate || t.date || 'N/A'
+          }));
+      }
+      break;
     case "Revenue Room":
     case "Room Revenue":
       {

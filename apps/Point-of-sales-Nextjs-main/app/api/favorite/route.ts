@@ -2,10 +2,15 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { cookies } from 'next/headers';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export async function GET() {
   try {
-    const revSnap = await getDocs(collection(db, 'daily_revenue'));
+    const cookieStore = await cookies();
+    const hotelCode = cookieStore.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+
+    const revSnap = await getDocs(getHotelCollection(db, 'daily_revenue', hotelCode));
     const salesCount: Record<string, number> = {};
 
     // Process legacy data
@@ -26,7 +31,7 @@ export async function GET() {
     });
 
     // Process new data from pos_orders
-    const posOrdersSnap = await getDocs(collection(db, 'pos_orders'));
+    const posOrdersSnap = await getDocs(getHotelCollection(db, 'pos_orders', hotelCode));
     posOrdersSnap.forEach((docSnap) => {
       const data = docSnap.data();
       const isBanquet = data.revenueType === 'banquet' || String(data.category || '').toLowerCase().includes('banquet');
@@ -59,7 +64,7 @@ export async function GET() {
     // Fetch details from pos_products
     const productDetails = await Promise.all(
       topProductIds.map(async (productId) => {
-        const productRef = doc(db, 'pos_products', productId);
+        const productRef = doc(getHotelCollection(db, 'pos_products', hotelCode), productId);
         const productSnap = await getDoc(productRef);
         
         if (productSnap.exists()) {

@@ -1,0 +1,288 @@
+/* POS dark card background style */
+.forestCard {
+  background: #1e1e1e; /* SF Ink background */
+  color: #ffffff;
+  border-radius: 18px;
+  padding: 40px;
+  border: 1px solid rgba(143, 134, 119, 0.12);
+}
+
+.forestTitle {
+  font-family: "Outfit", sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  letter-spacing: -0.015em;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* White editorial cards */
+.canvasCard {
+  background: #faf8f4;
+  border: 1px solid rgba(120, 128, 105, 0.12);
+  border-radius: 18px;
+  padding: 40px;
+}
+
+.canvasTitle {
+  font-family: "Outfit", sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  letter-spacing: -0.015em;
+  color: var(--rich-black);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(120, 128, 105, 0.12);
+  padding-bottom: 16px;
+}
+
+/* Stat Grid */
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+/* Apple product-mockup style stat card */
+.statCard {
+  padding: 24px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  height: 140px;
+  position: relative;
+  overflow: hidden;
+  background: #faf8f4;
+  border: 1px solid rgba(120, 128, 105, 0.12);
+  color: var(--rich-black);
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--sage, #788069);
+  box-shadow: 0 6px 20px rgba(120, 128, 105, 0.08);
+}
+
+.statCard:active {
+  transform: scale(0.96);
+}
+
+.statLabel {
+  font-family: "SF Pro Text", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #787466;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+}
+
+.statVal {
+  font-family: "Outfit", sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.statIcon {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  opacity: 0.12;
+  color: var(--rich-black);
+}
+
+/* Apple style stat cards colored content indicators */
+.peachCard {
+  border-left: 4px solid #fcab79; /* Peach strip */
+}
+.mintCard {
+  border-left: 4px solid #8d9a86; /* Mint/Sage strip */
+}
+.creamCard {
+  border-left: 4px solid var(--sage, #788069); /* Gold/Cream strip */
+}
+.yellowCard {
+  border-left: 4px solid var(--sage, #788069); /* Nexura Gold strip */
+}
+
+/* Deductions (soft gray card style) */
+.softCard {
+  background: #f5f2eb;
+  color: var(--rich-black);
+  border: 1px solid rgba(120, 128, 105, 0.12);
+}
+.softCard .statIcon {
+  color: #787466;
+}
+
+/* High contrast blue/dark highlight card */
+.darkCard {
+  background: var(--sage, #788069); /* Nexura Gold background */
+  color: #ffffff;
+  border: 1px solid var(--sage, #788069);
+}
+.darkCard .statLabel {
+  color: rgba(255, 255, 255, 0.85);
+}
+.darkCard .statVal {
+  color: #ffffff;
+}
+.darkCard .statIcon {
+  color: #ffffff;
+  opacity: 0.2;
+}
+
+/* VS Card performance style */
+.vsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 640px) {
+  .vsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vsCard {
+  background: #faf8f4;
+  border: 1px solid rgba(120, 128, 105, 0.12);
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.vsCard:hover {
+  border-color: var(--sage, #788069);
+  box-shadow: 0 8px 24px rgba(120, 128, 105, 0.08);
+  transform: translateY(-2px);
+}
+
+.vsCard:active {
+  transform: scale(0.97);
+}
+
+.vsCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vsCardTitle {
+  font-family: "Outfit", sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--rich-black);
+}
+
+.vsBadge {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.vsValues {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  border-top: 1px solid rgba(120, 128, 105, 0.12);
+  border-bottom: 1px solid rgba(120, 128, 105, 0.12);
+  padding: 16px 0;
+}
+
+.vsValGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vsValLabel {
+  font-size: 11px;
+  color: #787466;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.vsVal {
+  font-family: "Outfit", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--rich-black);
+}
+
+.vsProgressContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vsProgressHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.vsProgressLabel {
+  color: #787466;
+  font-weight: 500;
+}
+
+.vsProgressVal {
+  font-weight: 600;
+  color: var(--rich-black);
+}
+
+.vsProgressBarBg {
+  height: 6px;
+  background: #f5f2eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.vsProgressBarFill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.4s ease;
+}
+
+/* Margin health text colors */
+.healthHealthy { color: var(--sage, #788069); }
+.healthWarning { color: var(--sage, #788069); }
+.healthCritical { color: #ef4444; }
+
+.emptyBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+  border: 1px dashed rgba(120, 128, 105, 0.12);
+  border-radius: 14px;
+  background: #f5f2eb;
+  color: #787466;
+  gap: 12px;
+}
+
+.emptyText {
+  font-size: 14px;
+}

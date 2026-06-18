@@ -2,6 +2,7 @@ import axios from 'axios';
 import { localDb } from './dexie';
 import { db } from './firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { getHotelCollection } from './firestoreHelper';
 
 /**
  * Downloads products from the Firebase Firestore backend
@@ -14,7 +15,7 @@ export async function syncProductsFromServer(restoId: string) {
   }
 
   try {
-    const q = query(collection(db, "pos_products"), orderBy("name"));
+    const q = query(getHotelCollection(db, "pos_products"), orderBy("name"));
     const snap = await getDocs(q);
     const localProducts: any[] = [];
 
@@ -28,16 +29,18 @@ export async function syncProductsFromServer(restoId: string) {
         stock: Number(data.stock) || 0,
         cat: data.category || 'General',
         subcategory: data.subcategory || '',
-        image: data.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60'
+        image: data.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60',
+        description: data.description || '',
+        addons: data.addons || []
       });
     });
 
+    // Update the local database
+    await localDb.products.clear();
     if (localProducts.length > 0) {
-      // Update the local database
-      await localDb.products.clear();
       await localDb.products.bulkPut(localProducts);
-      console.log('Successfully synced products from Firebase to local IndexedDB:', localProducts.length);
     }
+    console.log('Successfully synced products from Firebase to local IndexedDB:', localProducts.length);
   } catch (error) {
     console.error('Failed to sync products from Firebase:', error);
   }

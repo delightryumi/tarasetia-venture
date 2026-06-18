@@ -21,42 +21,45 @@ interface ShopnameCardProps {
   storeId: string | null;
   addressProp: string;
   phoneProp: string;
+  tablesProp?: string;
 }
 
-const ShopnameCard: React.FC<ShopnameCardProps> = ({ storeName, storeId, addressProp, phoneProp }) => {
+const ShopnameCard: React.FC<ShopnameCardProps> = ({ storeName, storeId, addressProp, phoneProp, tablesProp }) => {
   const [editableStoreName, setEditableStoreName] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
+  const [tables, setTables] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setEditableStoreName(storeName ?? '');
     setAddress(addressProp ?? '');
     setPhone(phoneProp ?? '');
-  }, [storeName, addressProp, phoneProp]);
+    setTables(tablesProp ?? '10');
+  }, [storeName, addressProp, phoneProp, tablesProp]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditableStoreName(e.target.value);
   };
 
   const handleSave = async () => {
-    // Save address and phone to localStorage
-    localStorage.setItem('shop_info', JSON.stringify({ address, phone }));
+    // Save address, phone and tables to localStorage
+    localStorage.setItem('shop_info', JSON.stringify({ address, phone, tables }));
 
     // Check if the user is online
     const isOnline = navigator.onLine;
 
     if (!isOnline) {
-      toast.success('Address & Phone saved locally. Offline for store name update.');
+      toast.success('Information saved locally. Offline for store name update.');
       return;
     }
 
     if (!storeId) {
-      toast.success('Address & Phone saved locally.');
+      toast.success('Information saved locally.');
       return;
     }
 
-    if (editableStoreName === storeName && address === addressProp && phone === phoneProp) {
+    if (editableStoreName === storeName && address === addressProp && phone === phoneProp && tables === tablesProp) {
       toast.success('Store information updated successfully.');
       return;
     }
@@ -68,6 +71,7 @@ const ShopnameCard: React.FC<ShopnameCardProps> = ({ storeName, storeId, address
         storeName: editableStoreName,
         address,
         phone,
+        tables,
       });
 
       await axios.patch(`/api/shopdata/${storeId}`, validatedData);
@@ -91,27 +95,35 @@ const ShopnameCard: React.FC<ShopnameCardProps> = ({ storeName, storeId, address
     <Card className="my-5">
       <CardHeader>
         <CardTitle>Store Information</CardTitle>
-        <CardDescription>Used to identify your store name, address, and phone for receipts.</CardDescription>
+        <CardDescription>Used to identify your store name, address, phone, and tables config.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="flex flex-col sm:flex-row gap-4 w-full">
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Store Name</label>
-            <Input value={editableStoreName} onChange={handleInputChange} />
+        <form className="flex flex-col gap-4 w-full">
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Store Name</label>
+              <Input value={editableStoreName} onChange={handleInputChange} />
+            </div>
+            <div className="flex flex-col gap-1.5 flex-[1.5]">
+              <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Complete Address</label>
+              <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Kawasan Creative Hub, Suite 101" />
+            </div>
           </div>
-          <div className="flex flex-col gap-1.5 flex-[1.5]">
-            <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Complete Address</label>
-            <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Kawasan Creative Hub, Suite 101" />
-          </div>
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Phone Number</label>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. +62 811 2719 990" />
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Phone Number</label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. +62 811 2719 990" />
+            </div>
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Registered Tables</label>
+              <Input value={tables} onChange={(e) => setTables(e.target.value)} placeholder="e.g. 15 or 1,2,3,VIP-1,VIP-2" />
+            </div>
           </div>
         </form>
       </CardContent>
       <CardFooter className="border-t px-6 py-4">
         <Button
-          className="text-white"
+          className="bg-stone-900 text-white hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 transition-colors"
           onClick={handleSave}
           disabled={isLoading}
         >

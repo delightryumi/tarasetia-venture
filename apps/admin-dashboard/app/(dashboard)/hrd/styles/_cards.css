@@ -1,0 +1,58 @@
+/* _cards.css */
+.card {
+  background: var(--s-surface-card);
+  border: 1px solid var(--s-hairline);
+  border-radius: var(--s-radius-lg);
+  margin-bottom: var(--s-space-lg);
+  overflow: hidden;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s-space-lg) var(--s-space-xl);
+  border-bottom: 1px solid var(--s-hairline);
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--s-ink);
+  margin: 0;
+}
+
+.cardBody {
+  padding: var(--s-space-xl);
+}
+
+/* KPI row */
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--s-space-md);
+  margin-bottom: var(--s-space-xl);
+}
+
+.kpiCard {
+  background: var(--s-surface-card);
+  border: 1px solid var(--s-hairline);
+  border-radius: var(--s-radius-md);
+  padding: var(--s-space-lg);
+}
+
+.kpiLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--s-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.kpiValue {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--s-ink);
+  letter-spacing: -0.5px;
+}

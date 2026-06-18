@@ -23,6 +23,7 @@ const initFirebaseAdmin = () => {
         clientEmail,
         privateKey: formattedKey,
       }),
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
     console.log("Firebase Admin SDK initialized successfully via Service Account.");
   } catch (error: any) {

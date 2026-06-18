@@ -212,6 +212,13 @@ export function SummaryGrid({
                       type="number" 
                       value={vatPercentage} 
                       onChange={(e) => setVatPercentage(Number(e.target.value))}
+                      min="0"
+                      onWheel={(e) => e.currentTarget.blur()}
+                      onKeyDown={(e) => {
+                          if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
+                              e.preventDefault();
+                          }
+                      }}
                       className="w-12 text-xl font-semibold text-slate-900 bg-transparent border-b border-slate-200 focus:border-slate-900 outline-none p-0"
                    />
                    <span className="text-sm font-semibold text-slate-400">%</span>

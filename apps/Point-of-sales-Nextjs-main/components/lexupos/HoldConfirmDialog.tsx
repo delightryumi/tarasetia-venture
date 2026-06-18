@@ -25,7 +25,7 @@ export default function HoldConfirmDialog({
 }: HoldConfirmDialogProps) {
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-2xl">
+      <AlertDialogContent className="bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-xl">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-neutral-800 dark:text-neutral-200">
             Konfirmasi Hold Order

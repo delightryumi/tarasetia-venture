@@ -47,6 +47,34 @@ export function getExpenseDrillDown(cardId: string, ctx: DrillDownContext): any[
           docType: e.id?.startsWith('sr-') ? 'SR' : (e.id?.startsWith('dml-') ? 'DML' : (e.id?.startsWith('pr-') ? 'PR' : 'Add Expense')),
         }));
       break;
+    case "Payroll Expenses":
+      if (ctx.payrollDetails) {
+        items = ctx.payrollDetails.map(p => ({
+          id: p.staffId || Math.random().toString(),
+          type: 'expense',
+          source: 'payroll_summary',
+          description: `Gaji: ${p.staffName} (${p.position || p.employmentType})`,
+          amount: Math.max(0, (p.grossSalary || 0) + (p.overtimePay || 0) - (p.lateDeduction || 0) - (p.absenceDeduction || 0)),
+          date: p.month || 'N/A',
+          department: 'HRD',
+          docType: 'Payroll'
+        }));
+      }
+      break;
+    case "Operational Expenses":
+      items = expenses
+        .filter(e => e && ((e.department || "").toLowerCase() === 'front office' || (e.department || "").toLowerCase() === 'purchasing' || ((e.department || "").toLowerCase() !== 'housekeeping' && !e.description?.toLowerCase().includes('banquet') && !e.description?.toLowerCase().includes('food') && !e.description?.toLowerCase().includes('beverage'))))
+        .map(e => ({
+          id: e.id || Math.random().toString(),
+          type: 'expense',
+          source: 'expense_item',
+          description: e.description || e.name || 'Operational Expense',
+          amount: e.amount,
+          date: e.date || 'N/A',
+          department: e.department,
+          docType: e.id?.startsWith('sr-') ? 'SR' : (e.id?.startsWith('dml-') ? 'DML' : (e.id?.startsWith('pr-') ? 'PR' : 'Manual'))
+        }));
+      break;
     case "Total Operational Expenses":
       {
         const hk = expenses
@@ -132,7 +160,21 @@ export function getExpenseDrillDown(cardId: string, ctx: DrillDownContext): any[
             docType: e.id?.startsWith('sr-') ? 'SR' : (e.id?.startsWith('dml-') ? 'DML' : (e.id?.startsWith('pr-') ? 'PR' : 'Manual'))
           }));
 
-        items = [...hk, ...fbExpenses, ...foPurchasing, ...otherManual];
+        let payrolls: any[] = [];
+        if (ctx.payrollDetails) {
+          payrolls = ctx.payrollDetails.map(p => ({
+            id: p.staffId || Math.random().toString(),
+            type: 'expense',
+            source: 'payroll_summary',
+            description: `Gaji: ${p.staffName} (${p.position || p.employmentType})`,
+            amount: Math.max(0, (p.grossSalary || 0) + (p.overtimePay || 0) - (p.lateDeduction || 0) - (p.absenceDeduction || 0)),
+            date: p.month || 'N/A',
+            department: 'HRD',
+            docType: 'Payroll'
+          }));
+        }
+
+        items = [...hk, ...fbExpenses, ...foPurchasing, ...otherManual, ...payrolls];
       }
       break;
     default:

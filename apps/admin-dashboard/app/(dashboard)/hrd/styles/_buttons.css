@@ -1,0 +1,90 @@
+/* _buttons.css */
+.btnPrimary {
+  padding: 9px 18px;
+  background: var(--s-primary-btn-bg);
+  color: var(--s-primary-btn-text);
+  border: none;
+  border-radius: var(--s-radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btnPrimary:hover { opacity: 0.85; }
+.btnPrimary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btnSecondary {
+  padding: 9px 18px;
+  background: var(--s-secondary-btn-bg);
+  color: var(--s-secondary-btn-text);
+  border: 1px solid var(--s-secondary-btn-border);
+  border-radius: var(--s-radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btnSecondary:hover { opacity: 0.8; }
+
+.btnDanger {
+  padding: 9px 18px;
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  border-radius: var(--s-radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btnDanger:hover { background: #fef2f2; }
+
+.btnApprove {
+  padding: 6px 14px;
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--s-radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnReject {
+  padding: 6px 14px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: var(--s-radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Buttons danger custom states */
+:global(.dark) .btnDanger {
+  color: #f87171 !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+:global(.dark) .btnDanger:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.btnDangerSolid {
+  padding: 9px 18px;
+  background: #dc2626;
+  color: #ffffff;
+  border: 1px solid #dc2626;
+  border-radius: var(--s-radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btnDangerSolid:hover { opacity: 0.9; }
+
+:global(.dark) .btnDangerSolid {
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: #ffffff !important;
+}

@@ -23,13 +23,13 @@ export const SuperadminPageHeader: React.FC<SuperadminPageHeaderProps> = ({
           Superadmin CRS Portal
         </h1>
         <p className={styles.subtitle}>
-          Registry terpusat, pengawasan billing, dan aktivasi sistem hotel.
+          Registry terpusat, pengawasan billing, dan aktivasi sistem partner.
         </p>
       </div>
       <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
         <button onClick={onAddHotel} className={styles.btnPrimary}>
           <Plus size={16} />
-          Registrasi Hotel Baru
+          Registrasi Partner Baru
         </button>
       </div>
     </header>

@@ -223,11 +223,12 @@ export default function FinancialBreakdown({
                     </tr>
                   </thead>
                   <tbody>
-                    <TableRow label="Housekeeping Expenses" subLabel="Guest supplies, laundry & linen costs" value={val_expHousekeeping} isNegative />
-                    <TableRow label="Total F&B A la Carte Expenses" subLabel="A la carte kitchen, bar & beverage raw materials" value={val_expAlacarte} isNegative />
-                    <TableRow label="Total Banquet Expenses" subLabel="Event banquet catering & external sourcing costs" value={val_expBanquet} isNegative />
-                    <TableRow label="Operational Expenses" subLabel="Purchasing, general office, administrative & utilities" value={val_expOperational} isNegative />
-                    <TableRow label="Total Operational Expenses" subLabel="Sum of all operational departmental costs" value={val_card8_TotalExpenses} isTotal={true} />
+                     <TableRow label="Housekeeping Expenses" subLabel="Guest supplies, laundry & linen costs" value={val_expHousekeeping} isNegative />
+                     <TableRow label="Total F&B A la Carte Expenses" subLabel="A la carte kitchen, bar & beverage raw materials" value={val_expAlacarte} isNegative />
+                     <TableRow label="Total Banquet Expenses" subLabel="Event banquet catering & external sourcing costs" value={val_expBanquet} isNegative />
+                     <TableRow label="Operational Expenses" subLabel="Purchasing, general office, administrative & utilities" value={val_expOperational} isNegative />
+                     <TableRow label="Compliment Deductions" subLabel="POS complimentary items given to guests" value={pnlResult.posComplimentValue || 0} isNegative />
+                     <TableRow label="Total Operational Expenses" subLabel="Sum of all operational departmental costs" value={val_card8_TotalExpenses + (pnlResult.posComplimentValue || 0)} isTotal={true} />
                   </tbody>
                 </table>
               </div>
@@ -246,13 +247,14 @@ export default function FinancialBreakdown({
                     </tr>
                   </thead>
                   <tbody>
-                    <TableRow label="Total GOP" subLabel="Gross operating profit (Revenues - Expenses)" value={val_card7_TotalGOP} highlight />
-                    <TableRow label="VAT Input" subLabel="Value-added tax deductions" rate={`${vatPercentage}%`} value={val_card11_VAT} isNegative />
-                    <TableRow label="Service Charge" subLabel="Staff service charge allocations" rate={`${serviceChargePercentage}%`} value={val_summaryServiceCharge} isNegative />
-                    <TableRow label="Lost & Breakage" subLabel="Asset shrinkage buffer" rate={`${lostBreakagePercentage}%`} value={val_summaryLostBreakage} isNegative />
-                    <TableRow label="Management Fee - Room" subLabel="Room management system fee" rate={`${mgmtFeeRoomPercentage}%`} value={val_card9_FeeGrossRoom} isNegative />
-                    <TableRow label="Management Fee - F&B" subLabel="Food & beverage management fee" rate={`${mgmtFeeFnbPercentage}%`} value={val_card9_FeeGrossFnb} isNegative />
-                    <TableRow label="Net Profit (Recon Owner)" subLabel="Final owner reconciliation settlement" value={val_card12_ReconOwner} isTotal={true} />
+                     <TableRow label="Total GOP" subLabel="Gross operating profit (Revenues - Expenses)" value={val_card7_TotalGOP} highlight />
+                     <TableRow label="VAT Input" subLabel="Value-added tax deductions" rate={`${vatPercentage}%`} value={val_card11_VAT} isNegative />
+                     <TableRow label="Service Charge" subLabel="Staff service charge allocations" rate={`${serviceChargePercentage}%`} value={val_summaryServiceCharge} isNegative />
+                     <TableRow label="Lost & Breakage" subLabel="Asset shrinkage buffer" rate={`${lostBreakagePercentage}%`} value={val_summaryLostBreakage} isNegative />
+                     <TableRow label="Management Fee - Room" subLabel="Room management system fee" rate={`${mgmtFeeRoomPercentage}%`} value={val_card9_FeeGrossRoom} isNegative />
+                     <TableRow label="Management Fee - F&B" subLabel="Food & beverage management fee" rate={`${mgmtFeeFnbPercentage}%`} value={val_card9_FeeGrossFnb} isNegative />
+                     <TableRow label="Compliment Deductions" subLabel="POS complimentary items given to guests" value={pnlResult.posComplimentValue || 0} isNegative />
+                     <TableRow label="Net Profit (Recon Owner)" subLabel="Final owner reconciliation settlement" value={val_card12_ReconOwner} isTotal={true} />
                   </tbody>
                 </table>
               </div>
@@ -308,7 +310,15 @@ export default function FinancialBreakdown({
                       <p className={`${styles.mgmtStatValNegative} ${styles.fontMonoJb}`}>-{formatIDR(retainedEarningsValue)}</p>
                       <div className={styles.retainedInputWrap}>
                         <input 
-                          type="number" min="0" max="100"
+                          type="number" 
+                          min="0" 
+                          max="100"
+                          onWheel={(e) => e.currentTarget.blur()}
+                          onKeyDown={(e) => {
+                            if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
+                              e.preventDefault();
+                            }
+                          }}
                           value={retainedPercent}
                           onChange={(e) => setRetainedPercent(Number(e.target.value))}
                           className={styles.retainedInput}

@@ -103,7 +103,7 @@ function ItemsPageContent() {
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const lowStockItems = useMemo(() => items.filter(i => i.current_stock <= i.min_stock && i.is_active), [items]);
+  const lowStockItems = useMemo(() => items.filter(i => i.current_stock <= i.min_stock && i.is_active && (i.procurement_module || 'SR') !== 'DML'), [items]);
 
   const openCreate = () => { 
     setForm({ 
@@ -527,7 +527,7 @@ function ItemsPageContent() {
 
 export default function ItemsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#ffffff' }}><div style={{ width: '48px', height: '48px', border: '2px solid rgba(0,0,0,0.05)', borderTopColor: '#788069', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#ffffff' }}><div style={{ width: '48px', height: '48px', border: '2px solid rgba(0,0,0,0.05)', borderTopColor: 'var(--sidebar-link-active-bg, #181d26)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>}>
       <ItemsPageContent />
     </Suspense>
   );

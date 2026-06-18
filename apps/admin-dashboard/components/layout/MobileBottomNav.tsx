@@ -5,7 +5,8 @@ import {
     BarChart2, TrendingUp, ShoppingCart, FileText, 
     PieChart, FileImage, Home, Layout, Info, 
     Grid, Settings, MapPin, Gift, Package, 
-    Search, Users, LogOut, Coffee, ClipboardList 
+    Search, Users, LogOut, Coffee, ClipboardList, Camera,
+    Activity, BookOpen
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
@@ -21,7 +22,7 @@ export const MobileBottomNav = () => {
     const [activeModules, setActiveModules] = useState<string[] | null>(null);
 
     useEffect(() => {
-        if (!activeHotelCode || (user && (user.role === "superadmin" || user.email.toLowerCase() === "nexura.management@gmail.com"))) {
+        if (!activeHotelCode) {
             setActiveModules(null);
             return;
         }
@@ -45,7 +46,7 @@ export const MobileBottomNav = () => {
                     if (plan === 'basic') {
                         modules = ['pos', 'cpanel-only'];
                     } else {
-                        modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'cpanel-full'];
+                        modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'hrd', 'cpanel-full'];
                     }
                 }
                 setActiveModules(modules);
@@ -72,6 +73,8 @@ export const MobileBottomNav = () => {
         activeSection = "purchase-order";
     } else if (pathParts[1] === "food-beverage" && pathParts[2] === "product") {
         activeSection = "food-beverage-product";
+    } else if (pathParts[1] === "food-beverage" && pathParts[2] === "realtime") {
+        activeSection = "food-beverage-realtime";
     } else {
         activeSection = pathParts[1] || "overview";
     }
@@ -160,10 +163,12 @@ export const MobileBottomNav = () => {
 
     const allNavItems = [
         { id: "overview", label: "Overview", icon: <BarChart2 size={20} /> },
+        { id: "digital-checkin", label: "Digital Check-in", icon: <Camera size={20} /> },
         { id: "forecast", label: "Forecast", icon: <TrendingUp size={20} /> },
         { id: "pos", label: "POS Terminal", icon: <ShoppingCart size={20} /> },
         { id: "invoice", label: "Invoice", icon: <FileText size={20} /> },
         { id: "pnl", label: "PNL", icon: <PieChart size={20} /> },
+        { id: "statements", label: "Laporan Keuangan", icon: <BookOpen size={20} /> },
         { id: "logo", label: "Logo", icon: <FileImage size={20} /> },
         { id: "hero", label: "Hero", icon: <Home size={20} /> },
         { id: "room-type", label: "Rooms", icon: <Layout size={20} /> },
@@ -175,6 +180,7 @@ export const MobileBottomNav = () => {
         { id: "packages", label: "Packages", icon: <Package size={20} /> },
         { id: "seo", label: "SEO", icon: <Search size={20} /> },
         { id: "users", label: "Users", icon: <Users size={20} /> },
+        { id: "hrd", label: "HRD", icon: <ClipboardList size={20} /> },
         { id: "purchasing", label: "Dasbor", icon: <Home size={20} /> },
         { id: "store-requisition", label: "SR", icon: <FileText size={20} /> },
         { id: "purchase-requisition", label: "PR", icon: <ShoppingCart size={20} /> },
@@ -184,6 +190,7 @@ export const MobileBottomNav = () => {
         { id: "suppliers", label: "Supplier", icon: <Users size={20} /> },
         { id: "purchase-order", label: "PO List", icon: <ClipboardList size={20} /> },
         { id: "food-beverage-product", label: "Products", icon: <Coffee size={20} /> },
+        { id: "food-beverage-realtime", label: "POS Real-time", icon: <Activity size={20} /> },
     ];
 
     const getFilteredNavItems = () => {
@@ -194,7 +201,8 @@ export const MobileBottomNav = () => {
                 "accounting": "module_accounting",
                 "food-beverage": "module_food_beverage",
                 "purchasing": "module_purchasing",
-                "cpanel": "module_cpanel"
+                "cpanel": "module_cpanel",
+                "hrd": "module_hrd"
             };
             const moduleKey = moduleMap[activeModule];
             if (moduleKey && userPermissions[moduleKey] === false) {
@@ -204,13 +212,15 @@ export const MobileBottomNav = () => {
 
         let items = allNavItems;
         if (activeModule === "front-office") {
-            items = allNavItems.filter(item => ["overview", "forecast", "invoice", "purchase-order"].includes(item.id));
+            items = allNavItems.filter(item => ["overview", "digital-checkin", "forecast", "invoice", "purchase-order"].includes(item.id));
         } else if (activeModule === "housekeeping") {
             items = allNavItems.filter(item => ["overview", "forecast", "purchase-order"].includes(item.id));
         } else if (activeModule === "accounting") {
-            items = allNavItems.filter(item => ["pnl", "purchase-order"].includes(item.id));
+            items = allNavItems.filter(item => ["pnl", "statements", "purchase-order"].includes(item.id));
         } else if (activeModule === "food-beverage") {
-            items = allNavItems.filter(item => ["food-beverage-product"].includes(item.id));
+            items = allNavItems.filter(item => ["food-beverage-product", "food-beverage-realtime"].includes(item.id));
+        } else if (activeModule === "hrd") {
+            items = allNavItems.filter(item => ["hrd"].includes(item.id));
         } else if (activeModule === "purchasing") {
             items = allNavItems.filter(item => [
                 "purchasing", "store-requisition", "purchase-requisition", 
@@ -283,6 +293,10 @@ export const MobileBottomNav = () => {
                                         router.push(`/${activeModule}/purchase-order`);
                                     } else if (item.id === "food-beverage-product") {
                                         router.push(`/food-beverage/product?module=food-beverage`);
+                                    } else if (item.id === "food-beverage-realtime") {
+                                        router.push(`/food-beverage/realtime?module=food-beverage`);
+                                    } else if (item.id === "statements") {
+                                        router.push(`/statements?module=accounting`);
                                     } else {
                                         router.push(`/${item.id}`);
                                     }

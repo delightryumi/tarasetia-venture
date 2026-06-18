@@ -1,7 +1,9 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { getDocs, query, orderBy } from 'firebase/firestore';
+import { cookies } from 'next/headers';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export const fetchProduct = async ({
   take = 5,
@@ -13,7 +15,10 @@ export const fetchProduct = async ({
   skip: number;
 }) => {
   try {
-    const q = query(collection(db, 'pos_products'), orderBy('name', 'asc'));
+    const cookieStore = await cookies();
+    const hotelCode = cookieStore.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+
+    const q = query(getHotelCollection(db, 'pos_products', hotelCode), orderBy('name', 'asc'));
     const snap = await getDocs(q);
 
     let results = snap.docs.map((docSnap) => {

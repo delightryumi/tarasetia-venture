@@ -49,6 +49,7 @@ export default function PurchaseRequisitionForm({
   const [department, setDepartment] = useState(DEPARTMENTS[0]);
   const [fbCategory, setFbCategory] = useState(FB_CATEGORIES[0]);
   const [eventCategory, setEventCategory] = useState(EVENT_CATEGORIES[0]);
+  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'tempo'>('paid');
   const [prItems, setPrItems] = useState<{ item_id: string; qty: number; estimated_price: number; supplier_id: string }[]>([]);
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function PurchaseRequisitionForm({
         : (initialData.delivery_date ? new Date(initialData.delivery_date).toISOString().split('T')[0] : '');
       setDeliveryDate(formattedDate);
       setDepartment(initialData.department || DEPARTMENTS[0]);
+      setPaymentStatus(initialData.paymentStatus || 'paid');
       
       const loadedFbCat = initialData.fb_category || FB_CATEGORIES[0];
       let loadedEvCat = initialData.event_category || EVENT_CATEGORIES[0];
@@ -85,6 +87,7 @@ export default function PurchaseRequisitionForm({
       setDepartment(DEPARTMENTS[0]);
       setFbCategory(FB_CATEGORIES[0]);
       setEventCategory(EVENT_CATEGORIES[0]);
+      setPaymentStatus('paid');
       setNotes('');
       setPrItems([]);
     }
@@ -125,6 +128,7 @@ export default function PurchaseRequisitionForm({
       delivery_date: deliveryDate ? new Date(deliveryDate) : null,
       notes,
       order_date: orderDate,
+      paymentStatus,
       ...extraData
     };
 

@@ -88,7 +88,7 @@ export default function LogoCard() {
             />
             <Button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-stone-900 text-white hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 transition-colors"
             >
               <Upload className="w-4 h-4" />
               Upload Logo

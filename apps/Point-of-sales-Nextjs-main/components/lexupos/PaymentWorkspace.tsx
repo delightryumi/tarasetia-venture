@@ -45,6 +45,7 @@ export default function PaymentWorkspace({
   setRevenueType
 }: PaymentWorkspaceProps) {
   const { formatCurrency, symbol } = useCurrency();
+  const [staticQris, setStaticQris] = React.useState<string | null>(null);
   
   const hasBanquetItem = cart.some(
     (item) => item.product.category?.toUpperCase() === 'BANQUET'
@@ -55,6 +56,21 @@ export default function PaymentWorkspace({
       setRevenueType('banquet');
     }
   }, [hasBanquetItem, revenueType, setRevenueType]);
+
+  React.useEffect(() => {
+    if (payableAmount === 0 && paymentMethod !== 'compliment') {
+      setPaymentMethod('compliment');
+    } else if (payableAmount > 0 && paymentMethod === 'compliment') {
+      setPaymentMethod('cash');
+    }
+  }, [payableAmount, paymentMethod, setPaymentMethod]);
+
+  React.useEffect(() => {
+    const savedQris = localStorage.getItem('staticQris');
+    if (savedQris) {
+      setStaticQris(savedQris);
+    }
+  }, []);
 
   const calculatedChange = () => {
     const cashVal = parseFloat(cashAmount) || 0;
@@ -68,15 +84,15 @@ export default function PaymentWorkspace({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row flex-1 h-full min-w-0 overflow-y-auto lg:overflow-hidden bg-neutral-50/30 dark:bg-zinc-950/30">
+    <div className="flex flex-col lg:flex-row-reverse flex-1 h-full min-w-0 overflow-y-auto lg:overflow-hidden bg-neutral-50/30 dark:bg-zinc-950/30">
       
-      {/* Left Side: Transaction Review */}
-      <div className="flex-1 flex flex-col min-w-0 p-5 lg:p-8 shrink-0 lg:overflow-y-auto thin-scrollbar">
+      {/* Visual Right Side (Review Transaksi) */}
+      <div className="w-full lg:w-[420px] xl:w-[460px] flex flex-col min-w-0 p-5 lg:p-8 shrink-0 lg:overflow-y-auto thin-scrollbar border-b lg:border-b-0 lg:border-l border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-950 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] z-10">
         <Button
           variant="ghost"
           size="sm"
           onClick={onBackToPOS}
-          className="self-start text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white flex items-center gap-1.5 text-xs font-semibold px-2 py-1 mb-4 border border-neutral-200 dark:border-white/10 rounded-xl"
+          className="self-start text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white flex items-center gap-1.5 text-xs font-semibold px-2 py-1 mb-4 border border-neutral-200 dark:border-white/10 rounded-[6px]"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Kembali ke POS</span>
@@ -91,13 +107,13 @@ export default function PaymentWorkspace({
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 bg-neutral-100 dark:bg-zinc-800/50 border border-neutral-200 dark:border-white/[0.05] rounded-md px-2 py-1">
+            <div className="flex items-center gap-1.5 bg-neutral-100 dark:bg-zinc-800/50 border border-neutral-200 dark:border-white/[0.05] rounded-[4px] px-2 py-1">
               <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">Pelanggan:</span>
               <span className="text-[10px] font-semibold text-neutral-700 dark:text-neutral-300">
                 {customerName.trim() || 'Walk-in Customer'}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 bg-neutral-100 dark:bg-zinc-800/50 border border-neutral-200 dark:border-white/[0.05] rounded-md px-2 py-1">
+            <div className="flex items-center gap-1.5 bg-neutral-100 dark:bg-zinc-800/50 border border-neutral-200 dark:border-white/[0.05] rounded-[4px] px-2 py-1">
               <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">Meja:</span>
               <span className="text-[10px] font-semibold text-neutral-700 dark:text-neutral-300">
                 {tableNumber.trim() || 'Take Away'}
@@ -107,7 +123,7 @@ export default function PaymentWorkspace({
         </div>
 
         {notes.trim() && (
-          <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl px-4 py-3 text-xs shrink-0 mb-6">
+          <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-[10px] px-4 py-3 text-xs shrink-0 mb-6">
             <span className="text-[10px] text-amber-600 dark:text-amber-400 block font-bold uppercase tracking-widest mb-1">Catatan Pesanan</span>
             <span className="font-semibold text-amber-800 dark:text-amber-200">
               {notes.trim()}
@@ -116,14 +132,14 @@ export default function PaymentWorkspace({
         )}
 
         {/* Compact Item Summary on Mobile */}
-        <div className="flex lg:hidden items-center justify-between bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.05] rounded-xl p-3 shadow-sm mb-4 shrink-0">
+        <div className="flex lg:hidden items-center justify-between bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.05] rounded-[10px] p-3 shadow-sm mb-4 shrink-0">
           <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">Total Item</span>
           <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
             {cart.reduce((sum, item) => sum + item.quantity, 0)} Pcs ({formatCurrency(subtotal)})
           </span>
         </div>
 
-        <div className="hidden lg:flex flex-1 overflow-y-auto bg-white dark:bg-zinc-900/50 border border-neutral-200/80 dark:border-white/[0.05] rounded-2xl p-5 flex flex-col gap-4 thin-scrollbar shadow-sm">
+        <div className="hidden lg:flex flex-1 overflow-y-auto bg-neutral-50 dark:bg-zinc-900/50 border border-neutral-200/80 dark:border-white/[0.05] rounded-[10px] p-5 flex flex-col gap-4 thin-scrollbar shadow-sm">
           {cart.map((item) => (
             <div 
               key={item.product.id}
@@ -154,8 +170,8 @@ export default function PaymentWorkspace({
         </div>
       </div>
 
-      {/* Right Side: Configuration, Review, and Checkout */}
-      <div className="w-full lg:w-[420px] xl:w-[460px] shrink-0 flex flex-col lg:h-full border-t lg:border-t-0 lg:border-l border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-950 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] overflow-y-auto thin-scrollbar">
+      {/* Visual Left Side (Configuration & Checkout) */}
+      <div className="flex-1 flex flex-col lg:h-full overflow-y-auto thin-scrollbar">
         
         {/* TOP LOCKED SECTION: Revenue Type & Payment Method */}
         <div className="p-4 pb-4 flex flex-col gap-4 shrink-0 z-10 border-b border-neutral-200 dark:border-white/[0.05]">
@@ -170,7 +186,7 @@ export default function PaymentWorkspace({
                 type="button"
                 onClick={() => !hasBanquetItem && setRevenueType('alacarte')}
                 disabled={hasBanquetItem}
-                className={`py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-1.5 px-3 rounded-[6px] border text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 ${
                   hasBanquetItem
                     ? 'opacity-40 cursor-not-allowed border-neutral-200 dark:border-white/[0.05] bg-neutral-105 text-neutral-400'
                     : 'cursor-pointer ' + (revenueType === 'alacarte'
@@ -183,7 +199,7 @@ export default function PaymentWorkspace({
               <button
                 type="button"
                 onClick={() => setRevenueType('banquet')}
-                className={`py-1.5 px-3 rounded-lg border text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                className={`py-1.5 px-3 rounded-[6px] border text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                   revenueType === 'banquet'
                     ? 'border-neutral-800 bg-neutral-100 dark:border-white dark:bg-zinc-800 text-neutral-800 dark:text-white shadow-sm'
                     : 'border-neutral-200 bg-white hover:bg-neutral-50 dark:border-white/[0.05] dark:bg-zinc-900/50 dark:hover:bg-zinc-800 text-neutral-500'
@@ -203,7 +219,7 @@ export default function PaymentWorkspace({
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => setPaymentMethod('cash')}
-                className={`p-2.5 rounded-lg border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                className={`p-2.5 rounded-[6px] border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   paymentMethod === 'cash'
                     ? 'border-neutral-800 bg-neutral-100 dark:border-white dark:bg-zinc-800 shadow-sm'
                     : 'border-neutral-200 bg-white hover:bg-neutral-50 dark:border-white/[0.1] dark:bg-zinc-900/50 dark:hover:bg-zinc-800'
@@ -215,7 +231,7 @@ export default function PaymentWorkspace({
 
               <button
                 onClick={() => setPaymentMethod('qris')}
-                className={`p-2.5 rounded-lg border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                className={`p-2.5 rounded-[6px] border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   paymentMethod === 'qris'
                     ? 'border-neutral-800 bg-neutral-100 dark:border-white dark:bg-zinc-800 shadow-sm'
                     : 'border-neutral-200 bg-white hover:bg-neutral-50 dark:border-white/[0.1] dark:bg-zinc-900/50 dark:hover:bg-zinc-800'
@@ -227,7 +243,7 @@ export default function PaymentWorkspace({
 
               <button
                 onClick={() => setPaymentMethod('card')}
-                className={`p-2.5 rounded-lg border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                className={`p-2.5 rounded-[6px] border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   paymentMethod === 'card'
                     ? 'border-neutral-800 bg-neutral-100 dark:border-white dark:bg-zinc-800 shadow-sm'
                     : 'border-neutral-200 bg-white hover:bg-neutral-50 dark:border-white/[0.1] dark:bg-zinc-900/50 dark:hover:bg-zinc-800'
@@ -244,23 +260,23 @@ export default function PaymentWorkspace({
         <div className="p-5 mt-auto border-t border-neutral-200 dark:border-white/[0.05] flex flex-col gap-5 bg-white dark:bg-zinc-950 z-10 flex-1">
           
           <div className={`grid gap-3 ${discount > 0 ? 'grid-cols-4' : 'grid-cols-3'}`}>
-            <div className="bg-neutral-50 dark:bg-zinc-900/50 p-3 rounded-xl border border-neutral-100 dark:border-white/[0.05]">
+            <div className="bg-neutral-50 dark:bg-zinc-900/50 p-3 rounded-[10px] border border-neutral-100 dark:border-white/[0.05]">
               <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Subtotal</span>
               <span className="text-xs font-black text-neutral-700 dark:text-neutral-200">{formatCurrency(subtotal)}</span>
             </div>
             {discount > 0 && (
               <>
-                <div className="bg-red-50/50 dark:bg-red-950/20 p-3 rounded-xl border border-red-100 dark:border-red-900/30">
+                <div className="bg-red-50/50 dark:bg-red-950/20 p-3 rounded-[10px] border border-red-100 dark:border-red-900/30">
                   <span className="text-[9px] font-bold uppercase tracking-widest text-red-400 block mb-1.5">Diskon</span>
                   <span className="text-xs font-black text-red-500">-{formatCurrency(discount)}</span>
                 </div>
-                <div className="bg-neutral-50 dark:bg-zinc-900/50 p-3 rounded-xl border border-neutral-100 dark:border-white/[0.05]">
+                <div className="bg-neutral-50 dark:bg-zinc-900/50 p-3 rounded-[10px] border border-neutral-100 dark:border-white/[0.05]">
                   <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Setelah Diskon</span>
                   <span className="text-xs font-black text-neutral-700 dark:text-neutral-200">{formatCurrency(subtotal - discount)}</span>
                 </div>
               </>
             )}
-            <div className="bg-neutral-50 dark:bg-zinc-900/50 p-3 rounded-xl border border-neutral-100 dark:border-white/[0.05]">
+            <div className="bg-neutral-50 dark:bg-zinc-900/50 p-3 rounded-[10px] border border-neutral-100 dark:border-white/[0.05]">
               <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Pajak ({subtotal - discount > 0 ? Math.round((tax / (subtotal - discount)) * 100) : 10}%)</span>
               <span className="text-xs font-black text-neutral-700 dark:text-neutral-200">{formatCurrency(tax)}</span>
             </div>
@@ -272,7 +288,7 @@ export default function PaymentWorkspace({
           </div>
 
           {/* Dynamic input content */}
-          <div className="bg-neutral-50 dark:bg-zinc-900 rounded-2xl border border-neutral-200 dark:border-white/[0.05] p-5 flex flex-col gap-4 min-h-[160px] justify-center">
+          <div className="bg-neutral-50 dark:bg-zinc-900 rounded-[10px] border border-neutral-200 dark:border-white/[0.05] p-5 flex flex-col gap-4 min-h-[160px] justify-center">
             {paymentMethod === 'cash' && (
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
@@ -290,14 +306,14 @@ export default function PaymentWorkspace({
                         const val = e.target.value.replace(/[^0-9.]/g, '');
                         setCashAmount(val);
                       }}
-                      className="pl-14 h-12 bg-white dark:bg-black border-neutral-200 dark:border-white/[0.2] rounded-xl text-lg text-neutral-800 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-800 dark:focus:ring-white font-black"
+                      className="pl-14 h-12 bg-white dark:bg-black border-neutral-200 dark:border-white/[0.2] rounded-[6px] text-lg text-neutral-800 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-800 dark:focus:ring-white font-black"
                     />
                   </div>
                   <div className="flex gap-2 justify-end mt-1">
                     <button
                       type="button"
                       onClick={() => setCashAmount(payableAmount.toString())}
-                      className="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors"
+                      className="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-[6px] bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors"
                     >
                       Uang Pas
                     </button>
@@ -306,9 +322,9 @@ export default function PaymentWorkspace({
 
                 {/* Change calculator display */}
                 <div className="pt-3 border-t border-dashed border-neutral-300 dark:border-white/[0.1] flex justify-between items-center">
-                  <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Kembalian:</span>
+                  <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Uang Kembali:</span>
                   {isCashInsufficient() ? (
-                    <span className="text-[10px] text-red-500 font-bold bg-red-100 dark:bg-red-950/50 px-2.5 py-1 rounded-md uppercase tracking-wider">
+                    <span className="text-[10px] text-red-500 font-bold bg-red-100 dark:bg-red-950/50 px-2.5 py-1 rounded-[4px] uppercase tracking-wider">
                       Uang Kurang
                     </span>
                   ) : (
@@ -321,14 +337,32 @@ export default function PaymentWorkspace({
             )}
 
             {paymentMethod === 'qris' && (
-              <div className="flex flex-col items-center justify-center text-center gap-2">
-                <QrCode className="w-12 h-12 text-neutral-400" />
-                <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest mt-2">
-                  Menunggu Scan QRIS
-                </span>
-                <span className="text-[10px] text-neutral-400 max-w-[220px]">
-                  Silakan arahkan kamera pelanggan ke kode QR yang tersedia di meja kasir.
-                </span>
+              <div className="flex flex-col items-center justify-center text-center gap-4">
+                {staticQris ? (
+                  <>
+                    <img 
+                      src={staticQris} 
+                      alt="QRIS Code" 
+                      className="w-80 h-80 lg:w-96 lg:h-96 object-contain bg-white p-3 rounded-2xl border-2 border-neutral-200 shadow-sm"
+                    />
+                    <span className="text-xs text-neutral-500 font-bold uppercase tracking-widest mt-2">
+                      Menunggu Pelanggan Membayar
+                    </span>
+                    <span className="text-[10px] text-neutral-400 max-w-[220px]">
+                      Arahkan tamu untuk memindai QRIS ini. Klik "Konfirmasi Pembayaran" HANYA JIKA uang sudah masuk.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <QrCode className="w-12 h-12 text-neutral-400" />
+                    <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest mt-2">
+                      Gambar QRIS Belum Diatur
+                    </span>
+                    <span className="text-[10px] text-neutral-400 max-w-[220px]">
+                      Silakan upload gambar QRIS toko Anda di menu Pengaturan terlebih dahulu.
+                    </span>
+                  </>
+                )}
               </div>
             )}
 
@@ -345,13 +379,25 @@ export default function PaymentWorkspace({
                 </span>
               </div>
             )}
+
+            {paymentMethod === 'compliment' && (
+              <div className="flex flex-col items-center justify-center text-center gap-2">
+                <CheckCircle2 className="w-12 h-12 text-purple-500" />
+                <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold uppercase tracking-widest mt-2">
+                  Full Compliment Order
+                </span>
+                <span className="text-[10px] text-neutral-400 max-w-[220px]">
+                  Tagihan order ini adalah Rp 0 (Semua item bertanda compliment).
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Confirm Payment Action Footer */}
           <Button
             onClick={onConfirmPayment}
             disabled={paymentMethod === 'cash' && isCashInsufficient()}
-            className={`w-full h-14 mt-auto rounded-2xl text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 border-none shadow-xl transition-all ${
+            className={`w-full h-14 mt-auto rounded-[6px] bg-[#181d26] hover:bg-[#0d1218] text-white dark:bg-white dark:text-[#181d26] dark:hover:bg-neutral-100 text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 border-none shadow-sm transition-all ${
               paymentMethod === 'cash' && isCashInsufficient()
                 ? 'bg-neutral-300 dark:bg-neutral-800 cursor-not-allowed text-neutral-500 shadow-none'
                 : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-emerald-500/20 active:scale-[0.98]'

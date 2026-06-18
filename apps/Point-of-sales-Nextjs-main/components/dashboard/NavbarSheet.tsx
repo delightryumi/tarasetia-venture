@@ -30,6 +30,10 @@ export function NavbarSheet() {
         if (isLocal) {
           return 'http://localhost:3000/select-module';
         }
+
+        if (hostname.includes('-3001.')) {
+          return `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
+        }
       }
 
       let url = 'https://pms.bumianyom.com/select-module';
@@ -43,6 +47,8 @@ export function NavbarSheet() {
           const parts = hostname.split('--');
           parts[0] = 'bumianyom-web-1';
           url = `${protocol}//${parts.join('--')}/select-module`;
+        } else if (hostname.includes('-3001.')) {
+          url = `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         } else {
           url = `https://pms.bumianyom.com/select-module`;
         }
@@ -75,6 +81,8 @@ export function NavbarSheet() {
         const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
         if (isLocal) {
           dashboardUrl = 'http://localhost:3000/select-module';
+        } else if (hostname.includes('-3001.')) {
+          dashboardUrl = `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         }
       }
     }
@@ -91,6 +99,8 @@ export function NavbarSheet() {
           const parts = hostname.split('--');
           parts[0] = 'bumianyom-web-1';
           dashboardUrl = `${protocol}//${parts.join('--')}/select-module`;
+        } else if (hostname.includes('-3001.')) {
+          dashboardUrl = `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         } else {
           dashboardUrl = `https://pms.bumianyom.com/select-module`;
         }

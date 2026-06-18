@@ -75,6 +75,13 @@ export default function InvestorInput({ investors, setInvestors, finalNetProfit 
               <div className="w-24 relative">
                 <input
                   type="number"
+                  min="0"
+                  onWheel={(e) => e.currentTarget.blur()}
+                  onKeyDown={(e) => {
+                    if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
+                        e.preventDefault();
+                    }
+                  }}
                   value={pct}
                   onChange={(e) => handleChange(index, "percentage", Number(e.target.value))}
                   className="w-full pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-right outline-none focus:border-slate-900 transition-all font-mono-jb"

@@ -15,11 +15,13 @@ interface UseDrillDownOptions {
     serviceChargePercentage: number;
     lostBreakagePercentage:  number;
     month:                   string;
+    payrollDetails?:         any[];
 }
 
 export function useDrillDown({
     pnlResult, rawTransactions, customIncomes, expenses, posOrders,
     vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage,
+    payrollDetails
 }: UseDrillDownOptions) {
     const [selectedDrillDown,    setSelectedDrillDown]    = React.useState<DrillDownData | null>(null);
     const [isDrillDownModalOpen, setIsDrillDownModalOpen] = React.useState(false);
@@ -31,6 +33,7 @@ export function useDrillDown({
         let drillDown = getDrillDownData(
             cardId, rawTransactions, customIncomes, expenses, posOrders,
             vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage,
+            payrollDetails
         );
 
         if (drillDown && drillDown.items) {
@@ -56,7 +59,11 @@ export function useDrillDown({
 
         setSelectedDrillDown(drillDown);
         setDrillDownSearchQuery("");
-        setDrillDownTab("all");
+        if (cardId === "Compliment Deductions") {
+          setDrillDownTab("expense"); // Auto-show expenses for compliment deductions
+        } else {
+          setDrillDownTab("all");
+        }
         setIsDrillDownModalOpen(true);
     };
 

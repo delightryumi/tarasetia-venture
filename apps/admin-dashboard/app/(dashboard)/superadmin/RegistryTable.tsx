@@ -22,7 +22,7 @@ export const RegistryTable: React.FC<RegistryTableProps> = ({
     <div className={styles.tableHeader}>
       <h2 className={styles.tableTitle}>
         <Sparkles size={16} style={{ color: "#d9a441" }} />
-        Registry Tenant CRS
+        Registry Partner CRS
       </h2>
     </div>
 
@@ -30,7 +30,7 @@ export const RegistryTable: React.FC<RegistryTableProps> = ({
       <table className={styles.table}>
         <thead>
           <tr className={styles.tableHead}>
-            <th>Nama Hotel &amp; Kode</th>
+            <th>Nama Partner &amp; Kode</th>
             <th>Domain &amp; Subdomain</th>
             <th>Layanan &amp; Billing</th>
             <th>Status Langganan</th>
@@ -109,7 +109,7 @@ export const RegistryTable: React.FC<RegistryTableProps> = ({
                     onClick={() => onDelete(hotel)}
                     className={styles.actionBtn}
                     style={{ color: "#dc2626", borderColor: "rgba(220, 38, 38, 0.15)" }}
-                    title="Hapus Hotel Secara Permanen"
+                    title="Hapus Partner Secara Permanen"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -120,7 +120,7 @@ export const RegistryTable: React.FC<RegistryTableProps> = ({
           {hotels.length === 0 && (
             <tr>
               <td colSpan={6} style={{ padding: "32px", textAlign: "center", color: "var(--s-muted)" }}>
-                Belum ada hotel terdaftar. Klik &quot;Registrasi Hotel Baru&quot; untuk memulai.
+                Belum ada partner terdaftar. Klik &quot;Registrasi Partner Baru&quot; untuk memulai.
               </td>
             </tr>
           )}

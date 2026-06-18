@@ -23,8 +23,8 @@ import { VoidConfirmModal } from "./VoidConfirmModal";
 import { CancelConfirmModal } from "./CancelConfirmModal";
 import { GuestListDrawer } from "./GuestListDrawer";
 
-const SAGE = "#788069";
-const PEACH = "#8d7a52";
+const SAGE = "var(--sidebar-link-active-bg, #181d26)";
+const PEACH = "var(--sidebar-link-active-bg, #181d26)";
 const RICH_BLACK = "#1A1C14";
 
 export function OverviewSection() {
@@ -273,13 +273,13 @@ export function OverviewSection() {
             <header className={styles.header}>
                 <div className={styles.headerInner}>
                     <div className={styles.headerLeft}>
-                        <div className={styles.headerBadge} style={{ backgroundColor: PEACH, color: '#ffffff' }}>
+                        <div className={styles.headerBadge} style={{ backgroundColor: PEACH, color: 'var(--sidebar-link-active-text, #ffffff)' }}>
                             <PlusCircle size={15} />
                         </div>
                         <div className={styles.headerMeta}>
                             <span className={styles.headerSubtitle}>Operational Status</span>
                             <h1 className={styles.headerTitle}>
-                                Command <span style={{ color: SAGE }}>Center</span>
+                                Command Center
                             </h1>
                         </div>
                     </div>
@@ -361,7 +361,7 @@ export function OverviewSection() {
                         <button 
                             onClick={() => setIsCalendarOpen(!isCalendarOpen)}
                             className={styles.btnIcon}
-                            style={isCalendarOpen ? { backgroundColor: SAGE, color: '#ffffff', borderColor: SAGE, height: '36px', width: '36px', borderRadius: '8px' } : { height: '36px', width: '36px', borderRadius: '8px' }}
+                            style={isCalendarOpen ? { backgroundColor: SAGE, color: 'var(--sidebar-link-active-text, #ffffff)', borderColor: SAGE, height: '36px', width: '36px', borderRadius: '8px' } : { height: '36px', width: '36px', borderRadius: '8px' }}
                             title={isCalendarOpen ? "Close Calendar" : "Open Calendar"}
                         >
                             <Calendar size={16} />

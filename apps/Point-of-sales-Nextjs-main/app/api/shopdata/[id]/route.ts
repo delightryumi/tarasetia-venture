@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
+import { cookies } from 'next/headers';
+
 export const PATCH = async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -9,7 +11,12 @@ export const PATCH = async (
   try {
     const { id } = await params;
     const body = await request.json();
-    const posSettingsRef = doc(db, 'settings', 'pos');
+    
+    // Read hotelCode from cookies
+    const cookieStore = await cookies();
+    const hotelCode = cookieStore.get('hotelCode')?.value || "87241";
+
+    const posSettingsRef = doc(db, 'hotels', hotelCode, 'settings', 'pos');
 
     const updateData: Record<string, any> = {};
 
@@ -30,6 +37,9 @@ export const PATCH = async (
     }
     if ('phone' in body) {
       updateData.phone = body.phone;
+    }
+    if ('tables' in body) {
+      updateData.tables = body.tables;
     }
 
     if (Object.keys(updateData).length > 0) {

@@ -1,0 +1,351 @@
+/* ─── Confirmation Modal (replaces native confirm/alert) ─── */
+.confirmOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 600;
+    background: rgba(24, 29, 38, 0.45);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.confirmPanel {
+    width: 100%;
+    max-width: 400px;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.confirmHeader {
+    padding: 24px 24px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.confirmIconBox {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: rgba(120, 128, 105, 0.08);
+    border: 1px solid rgba(120, 128, 105, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #788069;
+    flex-shrink: 0;
+}
+
+.confirmIconBoxDanger {
+    background: rgba(170, 45, 0, 0.06);
+    border-color: rgba(170, 45, 0, 0.12);
+    color: #aa2d00;
+}
+
+.confirmTitle {
+    font-size: 15px;
+    font-weight: 600;
+    color: #181d26;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+}
+
+.confirmBody {
+    padding: 16px 24px 24px;
+}
+
+.confirmMessage {
+    font-size: 13px;
+    color: #41454d;
+    line-height: 1.6;
+}
+
+.confirmNewPassword {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #dddddd;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #788069;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.confirmFooter {
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-top: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.confirmBtnCancel {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    color: #41454d;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.confirmBtnCancel:hover {
+    border-color: #9297a0;
+    color: #181d26;
+}
+
+.confirmBtnConfirm {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: #788069;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.confirmBtnConfirm:hover {
+    background: #6b7360;
+}
+
+.confirmBtnConfirm:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.confirmBtnDanger {
+    background: #aa2d00;
+}
+
+.confirmBtnDanger:hover {
+    background: #8e2500;
+}
+
+/* ─── Change Password Modal ─── */
+.changePwdModalPanel {
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 60px rgba(24, 29, 38, 0.12);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.changePwdModalHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 24px;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.changePwdModalIconBox {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #788069;
+    flex-shrink: 0;
+}
+
+.changePwdModalTitleGroup {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.changePwdModalTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #181d26;
+    letter-spacing: -0.01em;
+}
+
+.changePwdModalSub {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #9297a0;
+}
+
+.changePwdModalClose {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #dddddd;
+    background: #ffffff;
+    color: #9297a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.changePwdModalClose:hover {
+    background: #f8fafc;
+    border-color: #9297a0;
+    color: #181d26;
+}
+
+.changePwdModalBody {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.changePwdField {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.changePwdLabel {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #9297a0;
+}
+
+.changePwdInputRow {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+    background: #ffffff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+
+.changePwdInputRow:focus-within {
+    border-color: #788069;
+    box-shadow: 0 0 0 3px rgba(120, 128, 105, 0.1);
+}
+
+.changePwdInputRowError {
+    border-color: #d94f3d !important;
+    box-shadow: 0 0 0 3px rgba(217, 79, 61, 0.08) !important;
+}
+
+.changePwdInputRowSuccess {
+    border-color: #788069 !important;
+    box-shadow: 0 0 0 3px rgba(120, 128, 105, 0.12) !important;
+}
+
+.changePwdInputIcon {
+    padding: 0 12px;
+    color: #9297a0;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.changePwdInput2 {
+    flex: 1;
+    height: 44px;
+    padding: 0 8px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 13px;
+    color: #181d26;
+    font-family: var(--font-sans, -apple-system, sans-serif);
+}
+
+.changePwdInput2::placeholder {
+    color: #c0c4cc;
+}
+
+.changePwdEyeBtn {
+    width: 36px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    color: #9297a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.15s ease;
+}
+
+.changePwdEyeBtn:hover {
+    color: #181d26;
+}
+
+.changePwdHint {
+    font-size: 11px;
+    color: #c0a030;
+    padding-left: 2px;
+}
+
+.changePwdError {
+    font-size: 11px;
+    color: #d94f3d;
+    padding-left: 2px;
+    font-weight: 500;
+}
+
+.changePwdSuccess {
+    font-size: 11px;
+    color: #788069;
+    padding-left: 2px;
+    font-weight: 500;
+}
+
+.changePwdModalFooter {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid #eeeeee;
+    background: #fafafa;
+}
+
+.confirmBtnDisabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}

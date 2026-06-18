@@ -1,0 +1,45 @@
+/* _modal.css */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal {
+  background: var(--s-canvas);
+  border-radius: var(--s-radius-lg);
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalHeader {
+  padding: var(--s-space-lg) var(--s-space-xl);
+  border-bottom: 1px solid var(--s-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--s-ink);
+  margin: 0;
+}
+
+.modalBody { padding: var(--s-space-xl); }
+
+.modalFooter {
+  padding: var(--s-space-lg) var(--s-space-xl);
+  border-top: 1px solid var(--s-hairline);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-space-sm);
+}

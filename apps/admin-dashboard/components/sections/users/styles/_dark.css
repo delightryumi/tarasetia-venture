@@ -1,0 +1,84 @@
+/* Dark Mode Global Overrides */
+    :global(.dark) .container { color: #e8e8e8; }
+    :global(.dark) .title { color: #e8e8e8; }
+    :global(.dark) .header { border-bottom-color: #333; }
+    :global(.dark) .tabGroup { background: #1e1e1e; border-color: #333; }
+    :global(.dark) .tabButton { color: #888; }
+    :global(.dark) .tabButtonActive { background: #2a2a2a; border-color: #444; color: #e8e8e8; }
+    :global(.dark) .primaryButton { background: #e8e8e8; color: #181d26; }
+    :global(.dark) .primaryButton:hover { background: #d0d0d0; }
+    :global(.dark) .searchInput { background: #1e1e1e; border-color: #333; color: #e8e8e8; }
+    :global(.dark) .searchInput:focus { border-color: #788069; box-shadow: 0 0 0 3px rgba(120,128,105,0.15); }
+    :global(.dark) .userCard { background: #1e1e1e; border-color: #333; }
+    :global(.dark) .userCard:hover { border-color: #555; }
+    :global(.dark) .userName { color: #e8e8e8; }
+    :global(.dark) .cardBody { border-top-color: #333; }
+    :global(.dark) .cardFooter { border-top-color: #333; }
+    :global(.dark) .cardDetailItem { color: #aaa; }
+    :global(.dark) .iconButton { background: #1e1e1e; border-color: #333; color: #888; }
+    :global(.dark) .iconButton:hover { color: #e8e8e8; border-color: #555; background: #2a2a2a; }
+    :global(.dark) .lockBadge { background: #2a2a2a; border-color: #333; color: #888; }
+    :global(.dark) .roleCard { background: #1e1e1e; border-color: #333; color: #e8e8e8; }
+    :global(.dark) .roleCardHeader { background: #262626; }
+    :global(.dark) .roleCardHeaderExpanded { border-bottom-color: #333; }
+    :global(.dark) .roleIconContainer { background: #1e1e1e; border-color: #333; }
+    :global(.dark) .roleLabel { color: #e8e8e8; }
+    :global(.dark) .moduleBox { background: #1e1e1e; border-color: #333; }
+    :global(.dark) .moduleHeader { border-bottom-color: #333; }
+    :global(.dark) .moduleIcon { background: #262626; border-color: #333; }
+    :global(.dark) .submenuRow:hover { background: #262626; }
+    :global(.dark) .submenuLabel { color: #aaa; }
+    :global(.dark) .roleCardFooter { background: #262626; border-top-color: #333; }
+    :global(.dark) .drawerOverlay { background: rgba(0,0,0,0.5); }
+    :global(.dark) .drawerPanel { background: #1e1e1e; border-left-color: #333; color: #e8e8e8; }
+    :global(.dark) .drawerHeader { border-bottom-color: #333; }
+    :global(.dark) .drawerHeaderMetaIcon { background: #262626; border-color: #333; }
+    :global(.dark) .drawerTitle { color: #e8e8e8; }
+    :global(.dark) .drawerCloseBtn { background: #1e1e1e; border-color: #333; }
+    :global(.dark) .drawerCloseBtn:hover { color: #e8e8e8; border-color: #555; }
+    :global(.dark) .drawerInput { background: #262626; border-color: #333; color: #e8e8e8; }
+    :global(.dark) .drawerInput:focus { border-color: #788069; }
+    :global(.dark) .drawerInput:disabled { background: #1a1a1a; }
+    :global(.dark) .resetIconBox { border-color: #333; }
+    :global(.dark) .levelBadge { background: #262626; border-color: #333; }
+    :global(.dark) .roleSelectBtn { background: #262626; border-color: #333; color: #888; }
+    :global(.dark) .roleSelectBtn:hover { border-color: #555; color: #ccc; }
+    :global(.dark) .roleSelectBtnActive { background: #788069; border-color: #788069; color: #fff; }
+    :global(.dark) .drawerFooter { background: #262626; border-top-color: #333; }
+    :global(.dark) .submitBtn { background: #e8e8e8; color: #181d26; }
+    :global(.dark) .submitBtn:hover { background: #d0d0d0; }
+    :global(.dark) .cancelBtn { background: #1e1e1e; border-color: #333; color: #e8e8e8; }
+    :global(.dark) .cancelBtn:hover { border-color: #555; color: #ccc; }
+    :global(.dark) .confirmPanel { background: #1e1e1e; border-color: #333; }
+    :global(.dark) .confirmTitle { color: #e8e8e8; }
+    :global(.dark) .confirmMessage { color: #aaa; }
+    :global(.dark) .confirmNewPassword { background: #262626; border-color: #333; }
+    :global(.dark) .confirmFooter { background: #262626; border-top-color: #333; }
+    :global(.dark) .confirmBtnCancel { background: #1e1e1e; border-color: #333; color: #ccc; }
+    :global(.dark) .confirmBtnCancel:hover { border-color: #555; color: #e8e8e8; }
+    
+    :global(.dark) .dropdownMenu {
+        background: #1e1e1e;
+        border-color: #333;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+    :global(.dark) .dropdownItem {
+        color: #aaa;
+    }
+    :global(.dark) .dropdownItem:hover {
+        background: #262626;
+        color: #e8e8e8;
+    }
+    :global(.dark) .dropdownItemDanger {
+        color: #fcab79;
+    }
+    :global(.dark) .dropdownItemDanger:hover {
+        background: rgba(252, 171, 121, 0.08);
+        color: #fcab79;
+    }
+    
+    :global(.dark) .toggleBtnOff { background-color: #3f3f46 !important; }
+    :global(.dark) .toggleBtnSubOff { background-color: #3f3f46 !important; }
+    :global(.dark) .toggleCircle { background-color: #1e1e1e; }
+    :global(.dark) .toggleCircleSub { background-color: #1e1e1e; }
+    :global(.dark) .toggleIconOff { color: #52525b; }

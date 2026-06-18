@@ -35,6 +35,8 @@ interface Recordsdata {
   customerName?: string;
   tableNumber?: string;
   cashierName?: string;
+  isCompliment?: boolean;
+  complimentValue?: number;
 }
 
 export async function Records(props: PageProps) {
@@ -79,6 +81,8 @@ export async function Records(props: PageProps) {
     customerName: item.customerName || '',
     tableNumber: item.tableNumber || '',
     cashierName: item.cashierName || '',
+    isCompliment: !!item.isCompliment,
+    complimentValue: Number(item.complimentValue || 0),
   }));
   return (
     <Card x-chunk="dashboard-06-chunk-0" className="h-full flex flex-col">

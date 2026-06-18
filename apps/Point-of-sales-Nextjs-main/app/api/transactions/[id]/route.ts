@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, doc, updateDoc, orderBy, limit, deleteDoc, where, getDoc } from 'firebase/firestore';
+import { query, getDocs, doc, updateDoc, orderBy, limit, deleteDoc, where, getDoc } from 'firebase/firestore';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 
 // GET request handler to fetch onSaleProducts by transactionId from Firestore daily_revenue
 export async function GET(
@@ -10,21 +11,30 @@ export async function GET(
   const { id } = await params;
 
   try {
+    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+
     const q = query(
-      collection(db, 'pos_orders'),
+      getHotelCollection(db, 'pos_orders', hotelCode),
       where('transactionId', '==', id),
       limit(1)
     );
     const snap = await getDocs(q);
 
+    let docData;
     if (snap.empty) {
-      return NextResponse.json(
-        { message: 'Transaction not found in pos_orders' },
-        { status: 404 }
-      );
+      // Fallback: try fetching by document ID directly (for older transactions)
+      const docRef = doc(getHotelCollection(db, 'pos_orders', hotelCode), id);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        return NextResponse.json(
+          { message: 'Transaction not found in pos_orders' },
+          { status: 404 }
+        );
+      }
+      docData = docSnap.data();
+    } else {
+      docData = snap.docs[0].data();
     }
-
-    const docData = snap.docs[0].data();
 
     const items = (docData.items || []).map((item: any) => ({
       id: item.id,
@@ -72,19 +82,20 @@ export const PATCH = async (
 
 // DELETE request handler to delete a transaction from Firestore daily_revenue
 export const DELETE = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) => {
   const { id } = await params;
   try {
+    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
     let transactionDate: string | null = null;
 
     // 1. Try to find the transaction date in pos_orders first
-    const posOrdersQuery = query(collection(db, 'pos_orders'), where('transactionId', '==', id));
+    const posOrdersQuery = query(getHotelCollection(db, 'pos_orders', hotelCode), where('transactionId', '==', id));
     const posOrdersSnap = await getDocs(posOrdersQuery);
     
     // Also fetch from revenue_transactions just in case
-    const revQuery = query(collection(db, 'revenue_transactions'), where('transactionId', '==', id));
+    const revQuery = query(getHotelCollection(db, 'revenue_transactions', hotelCode), where('transactionId', '==', id));
     const revSnap = await getDocs(revQuery);
 
     // Extract transactionDate
@@ -120,14 +131,13 @@ export const DELETE = async (
 
     // 2. If we determined the transaction date, we can load the specific daily_revenue doc directly!
     if (transactionDate) {
-      const hotelId = '87241';
-      const docId = `${hotelId}_${transactionDate}`;
-      const docRef = doc(db, 'daily_revenue', docId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const entries = docSnap.data().entries || [];
+      const dailyRevDocId = `${hotelCode}_${transactionDate}`;
+      const dailyRef = doc(getHotelCollection(db, 'daily_revenue', hotelCode), dailyRevDocId);
+      const snapDaily = await getDoc(dailyRef);
+      if (snapDaily.exists()) {
+        const entries = snapDaily.data().entries || [];
         const updatedEntries = entries.filter((e: any) => e.bookingId !== id);
-        await updateDoc(docRef, {
+        await updateDoc(dailyRef, {
           entries: updatedEntries,
         });
         deleted = true;
@@ -136,7 +146,7 @@ export const DELETE = async (
 
     // 3. Fallback: If no date could be found, or direct document delete didn't happen, scan daily_revenue
     if (!deleted) {
-      const dailyRevSnap = await getDocs(collection(db, 'daily_revenue'));
+      const dailyRevSnap = await getDocs(getHotelCollection(db, 'daily_revenue', hotelCode));
       for (const docSnap of dailyRevSnap.docs) {
         const entries = docSnap.data().entries || [];
         const index = entries.findIndex((e: any) => e.bookingId === id);

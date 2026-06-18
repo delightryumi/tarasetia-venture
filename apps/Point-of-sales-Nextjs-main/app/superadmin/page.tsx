@@ -71,6 +71,8 @@ export default function SuperadminPage() {
           const parts = hostname.split('--');
           parts[0] = 'bumianyom-web-1';
           loginGatewayUrl = `${protocol}//${parts.join('--')}`;
+        } else if (hostname.includes('-3001.')) {
+          loginGatewayUrl = `${protocol}//${hostname.replace('-3001.', '-3000.')}`;
         } else {
           loginGatewayUrl = `${protocol}//${hostname.replace('pos.', 'pms.').replace(':3001', ':3000')}`;
         }
@@ -178,6 +180,8 @@ export default function SuperadminPage() {
         const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
         if (isLocal) {
           dashboardUrl = 'http://localhost:3000/select-module';
+        } else if (hostname.includes('-3001.')) {
+          dashboardUrl = `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         }
       }
     }
@@ -194,6 +198,8 @@ export default function SuperadminPage() {
           const parts = hostname.split('--');
           parts[0] = 'bumianyom-web-1';
           dashboardUrl = `${protocol}//${parts.join('--')}/select-module`;
+        } else if (hostname.includes('-3001.')) {
+          dashboardUrl = `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         } else {
           dashboardUrl = `https://pms.bumianyom.com/select-module`;
         }

@@ -1,17 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db as firestoreDb } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 
 export const PATCH = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) => {
   try {
     const { id } = await params;
+    const hotelCode = request.cookies.get('hotelCode')?.value || "87241";
     const body = await request.json();
 
-    // Sync the updated product to Firebase Firestore
-    await setDoc(doc(firestoreDb, 'pos_products', String(id)), {
+    // Sync the updated product to Firebase Firestore under the hotel-specific subcollection
+    await setDoc(doc(firestoreDb, 'hotels', hotelCode, 'pos_products', String(id)), {
       name: body.productName,
       price: Number(body.sellPrice),
       buyPrice: Number(body.buyPrice),
@@ -19,6 +20,8 @@ export const PATCH = async (
       category: body.category,
       subcategory: body.subcategory || '',
       image: body.imageProduct || '',
+      description: body.description || '',
+      addons: body.addons || []
     }, { merge: true });
 
     // Return the updated product structure matching the frontend's expectations
@@ -44,13 +47,15 @@ export const PATCH = async (
 
 // Handler function for DELETE request
 export const DELETE = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) => {
   try {
     const { id } = await params;
-    // Sync deletion to Firebase Firestore
-    await deleteDoc(doc(firestoreDb, 'pos_products', String(id)));
+    const hotelCode = request.cookies.get('hotelCode')?.value || "87241";
+
+    // Sync deletion to Firebase Firestore under the hotel-specific subcollection
+    await deleteDoc(doc(firestoreDb, 'hotels', hotelCode, 'pos_products', String(id)));
 
     return NextResponse.json({ success: true, id: id }, { status: 200 });
   } catch (error: any) {

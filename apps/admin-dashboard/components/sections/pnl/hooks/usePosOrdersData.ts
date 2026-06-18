@@ -10,10 +10,12 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
     const [posRevBanquet, setPosRevBanquet] = useState(0);
     const [posRevFood, setPosRevFood] = useState(0);
     const [posRevBeverage, setPosRevBeverage] = useState(0);
+    const [posRevOther, setPosRevOther] = useState(0);
     const [posExpAlacarte, setPosExpAlacarte] = useState(0);
     const [posExpBanquet, setPosExpBanquet] = useState(0);
     const [posExpFood, setPosExpFood] = useState(0);
     const [posExpBeverage, setPosExpBeverage] = useState(0);
+    const [posExpOther, setPosExpOther] = useState(0);
     const [posOrders, setPosOrders] = useState<any[]>([]);
 
     const [posGrossRevenue, setPosGrossRevenue] = useState(0);
@@ -22,6 +24,7 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
     const [posTaxAmount, setPosTaxAmount] = useState(0);
     const [posLostBreakageAmount, setPosLostBreakageAmount] = useState(0);
     const [posTotalServiceTax, setPosTotalServiceTax] = useState(0);
+    const [posComplimentValue, setPosComplimentValue] = useState(0);
 
     const [posServiceRate, setPosServiceRate] = useState(10);
     const [posTaxRateIndividual, setPosTaxRateIndividual] = useState(10);
@@ -47,14 +50,33 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
             let banquetCalc = 0;
             let foodRevCalc = 0;
             let bevRevCalc = 0;
+            let otherRevCalc = 0;
             let alacarteExpCalc = 0;
             let banquetExpCalc = 0;
             let foodExpCalc = 0;
             let bevExpCalc = 0;
+            let otherExpCalc = 0;
             let taxTotalCalc = 0;
             
-            // 1. Fetch settings and products
-            const posSettingsRef = doc(getHotelCollection(db, 'settings'), 'pos');
+            // 0. Resolve hotelCode
+            let hotelCode = '';
+            if (typeof window !== 'undefined') {
+              try {
+                const activeCode = localStorage.getItem('active_hotel_code');
+                if (activeCode) {
+                  hotelCode = activeCode;
+                } else {
+                  const storedUser = localStorage.getItem('auth_user');
+                  if (storedUser) {
+                    const parsed = JSON.parse(storedUser);
+                    hotelCode = parsed.hotelCode || '';
+                  }
+                }
+              } catch (e) {}
+            }
+
+            // 1. Fetch settings, categories, and products
+            const posSettingsRef = doc(getHotelCollection(db, 'settings', hotelCode), 'pos');
             const posSettingsSnap = await getDoc(posSettingsRef);
             let serviceRate = 0;
             let taxRateIndividual = 10;
@@ -68,7 +90,15 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
               taxRate = serviceRate + taxRateIndividual + lostBreakageRate;
             }
             
-            const prodSnap = await getDocs(getHotelCollection(db, 'pos_products'));
+            const catSnap = await getDocs(getHotelCollection(db, 'pos_categories', hotelCode));
+            const categoryPnlMap: Record<string, string> = {};
+            catSnap.forEach((doc) => {
+              const name = (doc.data().name || '').toLowerCase().trim();
+              const pnlTarget = doc.data().pnlTarget || (name === 'food' ? 'FOOD' : name === 'beverage' ? 'BEVERAGE' : name === 'banquet' ? 'BANQUET' : 'FOOD');
+              categoryPnlMap[name] = pnlTarget;
+            });
+
+            const prodSnap = await getDocs(getHotelCollection(db, 'pos_products', hotelCode));
             const productMap: Record<string, { buyPrice: number; sellPrice: number; category: string; name?: string }> = {};
             prodSnap.forEach((d) => {
               productMap[d.id] = { 
@@ -80,7 +110,7 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
             });
 
             // 2. Fetch pos_orders
-            const posOrdersSnap = await getDocs(getHotelCollection(db, "pos_orders"));
+            const posOrdersSnap = await getDocs(getHotelCollection(db, "pos_orders", hotelCode));
             const fetchedPosOrders: any[] = [];
             posOrdersSnap.forEach((docSnap) => {
               const data = docSnap.data();
@@ -98,8 +128,10 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                 
                 let orderFoodRev = 0;
                 let orderBevRev = 0;
+                let orderOtherRev = 0;
                 let orderFoodExp = 0;
                 let orderBevExp = 0;
+                let orderOtherExp = 0;
 
                 const isBanquet = data.revenueType === 'banquet' || String(data.category || '').toLowerCase().includes('banquet');
 
@@ -128,26 +160,36 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                     const finalSell = nettSell + tax;
                     
                     const prodInfo = productMap[item.id] || { buyPrice: 0, category: "", name: item.name || "Item" };
-                    const buyPrice = 0; // Disabled as per user request (hotel setup)
+                    const buyPrice = 0; 
                     
-                    sellPriceTotal += finalSell; // Accumulate GROSS revenue (includes tax)
+                    sellPriceTotal += finalSell; 
                     cogsTotal += buyPrice;
                     taxTotalCalc += tax;
 
-                    let itemCategory: 'food' | 'beverage' | 'banquet' = 'food';
-                    if (isBanquet) {
+                    const prodCatName = (prodInfo.category || '').toLowerCase().trim();
+                    const resolvedTarget = categoryPnlMap[prodCatName] || 
+                      (prodCatName.includes('drink') || prodCatName.includes('beverage') || prodCatName.includes('minuman') ? 'BEVERAGE' : 
+                       prodCatName.includes('banquet') ? 'BANQUET' : 'FOOD');
+
+                    let itemCategory: 'food' | 'beverage' | 'banquet' | 'other' = 'food';
+                    if (isBanquet || resolvedTarget === 'BANQUET') {
                       itemCategory = 'banquet';
-                    } else if (prodInfo.category.includes('drink') || prodInfo.category.includes('beverage') || prodInfo.category.includes('minuman')) {
+                    } else if (resolvedTarget === 'BEVERAGE') {
                       itemCategory = 'beverage';
+                    } else if (resolvedTarget === 'OTHER') {
+                      itemCategory = 'other';
                     }
 
                     if (!isBanquet) {
-                      if (prodInfo.category.includes('drink') || prodInfo.category.includes('beverage') || prodInfo.category.includes('minuman')) {
-                          orderBevRev += finalSell;
-                          orderBevExp += buyPrice;
+                      if (itemCategory === 'beverage') {
+                        orderBevRev += finalSell;
+                        orderBevExp += buyPrice;
+                      } else if (itemCategory === 'other') {
+                        orderOtherRev += finalSell;
+                        orderOtherExp += buyPrice;
                       } else {
-                          orderFoodRev += finalSell;
-                          orderFoodExp += buyPrice;
+                        orderFoodRev += finalSell;
+                        orderFoodExp += buyPrice;
                       }
                     }
 
@@ -155,8 +197,10 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                   if (itemDiscount > 0) {
                     desc += ` (Termasuk Diskon -Rp${Math.round(itemDiscount).toLocaleString('id-ID')})`;
                   }
+                  if (item.isCompliment) {
+                    desc += ` [COMPLIMENT: ${item.complimentReason || 'Service Recovery'}]`;
+                  }
 
-                  // Push consolidated POS item with tax/nett breakdown
                   fetchedPosOrders.push({
                       id: `${orderId}-${item.id}`,
                       type: 'income',
@@ -164,12 +208,15 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                       description: desc,
                       department: 'Food & Beverage',
                       docType: isBanquet ? 'Banquet' : 'POS Order',
-                      amount: nettSell + tax,
-                      nettAmount: nettSell,
-                      taxAmount: tax,
+                      amount: item.isCompliment ? 0 : (nettSell + tax),
+                      nettAmount: item.isCompliment ? 0 : nettSell,
+                      taxAmount: item.isCompliment ? 0 : tax,
                       date: docDateStr,
                       category: itemCategory,
-                      discount: itemDiscount > 0 ? itemDiscount : undefined
+                      discount: itemDiscount > 0 ? itemDiscount : undefined,
+                      isCompliment: item.isCompliment || false,
+                      complimentReason: item.complimentReason || undefined,
+                      originalPrice: item.isCompliment ? ((item.originalPrice || prodInfo.sellPrice || 0) * qty) : undefined
                   });
                 });
                 } else if (data.quantity !== undefined || data.price !== undefined) {
@@ -182,26 +229,36 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                     const finalSell = nettSell + tax;
                     
                     const prodInfo = productMap[data.id || ""] || { buyPrice: 0, category: "" };
-                    const buyPrice = 0; // Disabled as per user request (hotel setup)
+                    const buyPrice = 0; 
                     
-                    sellPriceTotal += finalSell; // Accumulate GROSS
+                    sellPriceTotal += finalSell;
                     cogsTotal += buyPrice;
                     taxTotalCalc += tax;
                     
-                    let itemCategory: 'food' | 'beverage' | 'banquet' = 'food';
-                    if (isBanquet) {
+                    const prodCatName = (prodInfo.category || '').toLowerCase().trim();
+                    const resolvedTarget = categoryPnlMap[prodCatName] || 
+                      (prodCatName.includes('drink') || prodCatName.includes('beverage') || prodCatName.includes('minuman') ? 'BEVERAGE' : 
+                       prodCatName.includes('banquet') ? 'BANQUET' : 'FOOD');
+
+                    let itemCategory: 'food' | 'beverage' | 'banquet' | 'other' = 'food';
+                    if (isBanquet || resolvedTarget === 'BANQUET') {
                       itemCategory = 'banquet';
-                    } else if (prodInfo.category.includes('drink') || prodInfo.category.includes('beverage') || prodInfo.category.includes('minuman')) {
+                    } else if (resolvedTarget === 'BEVERAGE') {
                       itemCategory = 'beverage';
+                    } else if (resolvedTarget === 'OTHER') {
+                      itemCategory = 'other';
                     }
 
                     if (!isBanquet) {
-                      if (prodInfo.category.includes('drink') || prodInfo.category.includes('beverage') || prodInfo.category.includes('minuman')) {
-                          orderBevRev += finalSell;
-                          orderBevExp += buyPrice;
+                      if (itemCategory === 'beverage') {
+                        orderBevRev += finalSell;
+                        orderBevExp += buyPrice;
+                      } else if (itemCategory === 'other') {
+                        orderOtherRev += finalSell;
+                        orderOtherExp += buyPrice;
                       } else {
-                          orderFoodRev += finalSell;
-                          orderFoodExp += buyPrice;
+                        orderFoodRev += finalSell;
+                        orderFoodExp += buyPrice;
                       }
                     }
 
@@ -209,8 +266,10 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                     if (itemDiscount > 0) {
                       desc += ` (Termasuk Diskon -Rp${Math.round(itemDiscount).toLocaleString('id-ID')})`;
                     }
+                    if (data.isCompliment) {
+                      desc += ` [COMPLIMENT: ${data.complimentReason || 'Service Recovery'}]`;
+                    }
 
-                    // Push consolidated POS item with tax/nett breakdown
                     fetchedPosOrders.push({
                       id: orderId,
                       type: 'income',
@@ -218,12 +277,15 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                       description: desc,
                       department: 'Food & Beverage',
                       docType: isBanquet ? 'Banquet' : 'POS Order',
-                      amount: nettSell + tax,
-                      nettAmount: nettSell,
-                      taxAmount: tax,
+                      amount: data.isCompliment ? 0 : (nettSell + tax),
+                      nettAmount: data.isCompliment ? 0 : nettSell,
+                      taxAmount: data.isCompliment ? 0 : tax,
                       date: docDateStr,
                       category: itemCategory,
-                      discount: itemDiscount > 0 ? itemDiscount : undefined
+                      discount: itemDiscount > 0 ? itemDiscount : undefined,
+                      isCompliment: data.isCompliment || false,
+                      complimentReason: data.complimentReason || undefined,
+                      originalPrice: data.isCompliment ? ((data.originalPrice || prodInfo.sellPrice || 0) * qty) : undefined
                     });
                   } catch (err) {
                     console.error("Error processing POS item:", err);
@@ -234,14 +296,16 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                   banquetCalc += sellPriceTotal;
                   banquetExpCalc += cogsTotal;
                 } else {
-                  alacarteCalc += sellPriceTotal;
-                  alacarteExpCalc += cogsTotal;
+                  alacarteCalc += (orderFoodRev + orderBevRev);
+                  alacarteExpCalc += (orderFoodExp + orderBevExp);
                 }
                 
                 foodRevCalc += orderFoodRev;
                 bevRevCalc += orderBevRev;
+                otherRevCalc += orderOtherRev;
                 foodExpCalc += orderFoodExp;
                 bevExpCalc += orderBevExp;
+                otherExpCalc += orderOtherExp;
               }
             });
             
@@ -251,64 +315,72 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
             setPosRevBanquet(banquetCalc);
             setPosRevFood(foodRevCalc);
             setPosRevBeverage(bevRevCalc);
+            setPosRevOther(otherRevCalc);
             setPosExpAlacarte(alacarteExpCalc);
             setPosExpBanquet(banquetExpCalc);
             setPosExpFood(foodExpCalc);
             setPosExpBeverage(bevExpCalc);
+            setPosExpOther(otherExpCalc);
 
-            const posNett = alacarteCalc + banquetCalc; // alacarteCalc and banquetCalc are NETT (wait, no, they accumulate finalSell which is Gross)
-            // Wait, we reverted it back to accumulating finalSell! So alacarteCalc is Gross.
-            const grossRevenue = alacarteCalc + banquetCalc; 
-            const nettRevenue = grossRevenue - taxTotalCalc;
-            const serviceCharge = taxRate > 0 ? (taxTotalCalc * serviceRate) / taxRate : 0;
-            const taxAmount = taxRate > 0 ? (taxTotalCalc * taxRateIndividual) / taxRate : 0;
-            const lostBreakageAmount = taxRate > 0 ? (taxTotalCalc * lostBreakageRate) / taxRate : 0;
-            const totalServiceTax = serviceCharge + taxAmount + lostBreakageAmount;
+             const grossRevenue = alacarteCalc + banquetCalc + otherRevCalc; 
+             const nettRevenue = grossRevenue - taxTotalCalc;
+             const serviceCharge = taxRate > 0 ? (taxTotalCalc * serviceRate) / taxRate : 0;
+             const taxAmount = taxRate > 0 ? (taxTotalCalc * taxRateIndividual) / taxRate : 0;
+             const lostBreakageAmount = taxRate > 0 ? (taxTotalCalc * lostBreakageRate) / taxRate : 0;
+             const totalServiceTax = serviceCharge + taxAmount + lostBreakageAmount;
 
-            setPosGrossRevenue(grossRevenue);
-            setPosNettRevenue(nettRevenue);
-            setPosServiceCharge(serviceCharge);
-            setPosTaxAmount(taxAmount);
-            setPosLostBreakageAmount(lostBreakageAmount);
-            setPosTotalServiceTax(totalServiceTax);
+             const complimentsSum = fetchedPosOrders
+               .filter(o => o.isCompliment)
+               .reduce((sum, o) => sum + (o.originalPrice || 0), 0);
 
-            setPosServiceRate(serviceRate);
-            setPosTaxRateIndividual(taxRateIndividual);
-            setPosLostBreakageRate(lostBreakageRate);
-            setPosTaxRateCombined(taxRate);
+             setPosGrossRevenue(grossRevenue);
+             setPosNettRevenue(nettRevenue);
+             setPosServiceCharge(serviceCharge);
+             setPosTaxAmount(taxAmount);
+             setPosLostBreakageAmount(lostBreakageAmount);
+             setPosTotalServiceTax(totalServiceTax);
+             setPosComplimentValue(complimentsSum);
 
-        } catch (error) {
-            console.error("Error fetching POS data:", error);
-        } finally {
-            setLoadingPOS(false);
-        }
-    };
+             setPosServiceRate(serviceRate);
+             setPosTaxRateIndividual(taxRateIndividual);
+             setPosLostBreakageRate(lostBreakageRate);
+             setPosTaxRateCombined(taxRate);
 
-    useEffect(() => {
-        fetchPOSData();
-    }, [month, viewMode]);
+         } catch (error) {
+             console.error("Error fetching POS data:", error);
+         } finally {
+             setLoadingPOS(false);
+         }
+     };
 
-    return {
-        loadingPOS,
-        posOrders,
-        posRevAlacarte,
-        posRevBanquet,
-        posRevFood,
-        posRevBeverage,
-        posExpAlacarte,
-        posExpBanquet,
-        posExpFood,
-        posExpBeverage,
-        posGrossRevenue,
-        posNettRevenue,
-        posServiceCharge,
-        posTaxAmount,
-        posLostBreakageAmount,
-        posTotalServiceTax,
-        posServiceRate,
-        posTaxRateIndividual,
-        posLostBreakageRate,
-        posTaxRateCombined,
-        refetchPOSData: fetchPOSData
-    };
-};
+     useEffect(() => {
+         fetchPOSData();
+     }, [month, viewMode]);
+
+     return {
+         loadingPOS,
+         posOrders,
+         posRevAlacarte,
+         posRevBanquet,
+         posRevFood,
+         posRevBeverage,
+         posRevOther,
+         posExpAlacarte,
+         posExpBanquet,
+         posExpFood,
+         posExpBeverage,
+         posExpOther,
+         posGrossRevenue,
+         posNettRevenue,
+         posServiceCharge,
+         posTaxAmount,
+         posLostBreakageAmount,
+         posTotalServiceTax,
+         posComplimentValue,
+         posServiceRate,
+         posTaxRateIndividual,
+         posLostBreakageRate,
+         posTaxRateCombined,
+         refetchPOSData: fetchPOSData
+     };
+ };

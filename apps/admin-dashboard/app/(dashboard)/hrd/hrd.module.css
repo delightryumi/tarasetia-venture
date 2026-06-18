@@ -1,0 +1,11 @@
+/* hrd.module.css — HRD & Attendance Portal Styles */
+
+@import "./styles/_layout.css";
+@import "./styles/_tabs.css";
+@import "./styles/_cards.css";
+@import "./styles/_buttons.css";
+@import "./styles/_table.css";
+@import "./styles/_badges.css";
+@import "./styles/_forms.css";
+@import "./styles/_modal.css";
+@import "./styles/_feedback.css";

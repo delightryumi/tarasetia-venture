@@ -70,7 +70,7 @@
 }
 
 .titleAccent {
-  color: #788069;
+  color: var(--sage, #788069);
 }
 
 .subtitle {
@@ -92,8 +92,8 @@
   padding: 0 24px;
   border-radius: 12px;
   border: 1px solid rgba(229, 231, 235, 0.4);
-  background: #8d7a52;
-  color: #ffffff;
+  background: var(--sage, #181d26);
+  color: var(--sidebar-link-active-text, #ffffff);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -212,14 +212,14 @@
 
 .input:focus {
   background: #ffffff;
-  border-color: #788069;
-  box-shadow: 0 0 0 3px rgba(120, 128, 105, 0.12);
+  border-color: var(--sage, #788069);
+  box-shadow: 0 0 0 3px rgba(24, 29, 38, 0.08);
 }
 
 .select:focus {
   background: #ffffff;
-  border-color: #788069;
-  box-shadow: 0 0 0 3px rgba(120, 128, 105, 0.12);
+  border-color: var(--sage, #788069);
+  box-shadow: 0 0 0 3px rgba(24, 29, 38, 0.08);
 }
 
 /* Category input wrapper */
@@ -376,8 +376,8 @@
   padding: 0 36px;
   border-radius: 10px;
   border: none;
-  background: #788069;
-  color: #ffffff;
+  background: var(--sage, #788069);
+  color: var(--sidebar-link-active-text, #ffffff);
   font-size: 11px;
   font-weight: 600;
   font-family: inherit;
@@ -385,7 +385,7 @@
   letter-spacing: 0.1em;
   cursor: pointer;
   transition: filter 0.15s, transform 0.15s;
-  box-shadow: 0 4px 12px rgba(120, 128, 105, 0.3);
+  box-shadow: 0 4px 12px rgba(24, 29, 38, 0.15);
 }
 
 .saveBtn:hover    { filter: brightness(1.08); }
@@ -494,33 +494,33 @@
 .tdFirstEditing {
   padding: 14px 20px 14px 28px;
   border-radius: 10px 0 0 10px;
-  background: rgba(120, 128, 105, 0.07);
+  background: rgba(24, 29, 38, 0.03);
   vertical-align: middle;
   font-size: 12px;
-  border-top: 1px solid rgba(120, 128, 105, 0.2);
-  border-bottom: 1px solid rgba(120, 128, 105, 0.2);
-  border-left: 1px solid rgba(120, 128, 105, 0.2);
+  border-top: 1px solid rgba(24, 29, 38, 0.1);
+  border-bottom: 1px solid rgba(24, 29, 38, 0.1);
+  border-left: 1px solid rgba(24, 29, 38, 0.1);
 }
 
 .tdMidEditing {
   padding: 14px 20px;
-  background: rgba(120, 128, 105, 0.07);
+  background: rgba(24, 29, 38, 0.03);
   vertical-align: middle;
   font-size: 12px;
-  border-top: 1px solid rgba(120, 128, 105, 0.2);
-  border-bottom: 1px solid rgba(120, 128, 105, 0.2);
+  border-top: 1px solid rgba(24, 29, 38, 0.1);
+  border-bottom: 1px solid rgba(24, 29, 38, 0.1);
 }
 
 .tdLastEditing {
   padding: 14px 20px;
   border-radius: 0 10px 10px 0;
-  background: rgba(120, 128, 105, 0.07);
+  background: rgba(24, 29, 38, 0.03);
   vertical-align: middle;
   text-align: center;
   font-size: 12px;
-  border-top: 1px solid rgba(120, 128, 105, 0.2);
-  border-bottom: 1px solid rgba(120, 128, 105, 0.2);
-  border-right: 1px solid rgba(120, 128, 105, 0.2);
+  border-top: 1px solid rgba(24, 29, 38, 0.1);
+  border-bottom: 1px solid rgba(24, 29, 38, 0.1);
+  border-right: 1px solid rgba(24, 29, 38, 0.1);
 }
 
 /* ── Cell content helpers ── */
@@ -551,7 +551,7 @@
   transition: color 0.15s;
 }
 
-.rowGroup:hover .catIconBox { color: #788069; }
+.rowGroup:hover .catIconBox { color: var(--sage, #788069); }
 
 .catLabel {
   font-size: 11px;
@@ -643,8 +643,8 @@
 
 .cellInput:focus,
 .cellSelect:focus {
-  border-color: #788069;
-  box-shadow: 0 0 0 2px rgba(120, 128, 105, 0.15);
+  border-color: var(--sage, #788069);
+  box-shadow: 0 0 0 2px rgba(24, 29, 38, 0.1);
 }
 
 .cellInputRight { text-align: right; }
@@ -734,7 +734,7 @@
   transition: opacity 0.15s, background 0.15s, color 0.15s;
 }
 .rowGroup:hover .iconBtnEdit { opacity: 1; }
-.iconBtnEdit:hover { background: #f8fafc; color: #788069; }
+.iconBtnEdit:hover { background: #f8fafc; color: var(--sage, #788069); }
 
 .iconBtnDel {
   opacity: 0;
@@ -853,13 +853,14 @@
 }
 
 :global(.dark) .addBtn {
-  background: #404040 !important;
-  border-color: #52525b !important;
-  color: #f4f4f5 !important;
+  background: var(--sage, #ffffff) !important;
+  border-color: var(--sage, #ffffff) !important;
+  color: var(--sidebar-link-active-text, #181d26) !important;
 }
 
 :global(.dark) .addBtn:hover {
-  background: #52525b !important;
+  background: var(--sidebar-link-hover-bg, #2b2b2b) !important;
+  color: var(--sidebar-link-hover-text, #ffffff) !important;
 }
 
 :global(.dark) .formCard {

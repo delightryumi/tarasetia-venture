@@ -32,7 +32,7 @@ export default function PurchasingOverviewPage() {
   const { dmls } = useDailyMarketList();
 
   const lowStockItems = useMemo(
-    () => items.filter(i => i.current_stock <= i.min_stock && i.is_active),
+    () => items.filter(i => i.current_stock <= i.min_stock && i.is_active && (i.procurement_module || 'SR') !== 'DML'),
     [items]
   );
 

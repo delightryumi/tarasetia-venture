@@ -1,8 +1,8 @@
 /* Root Variables for a Modern Nature Palette */
 :root {
-    --invoice-sage: var(--sage);
-    --invoice-sage-light: rgba(141, 122, 82, 0.06);
-    --invoice-sage-accent: var(--sage-light);
+    --invoice-sage: var(--sidebar-link-active-bg, #181d26);
+    --invoice-sage-light: var(--sidebar-link-hover-bg, #f3efe6);
+    --invoice-sage-accent: var(--sidebar-link-active-bg, #181d26);
     --invoice-pure-white: #faf8f4;
     --invoice-off-white: transparent;
     --invoice-black: var(--rich-black);
@@ -423,14 +423,16 @@
 }
 
 .btn-invoice-action.primary-peach {
-    background: var(--peach);
-    color: var(--invoice-pure-white);
-    border-color: var(--peach);
+    background: var(--sidebar-link-active-bg, #181d26);
+    color: var(--sidebar-link-active-text, #ffffff);
+    border-color: var(--sidebar-link-active-bg, #181d26);
 }
 
 .btn-invoice-action.primary-peach:hover {
-    background: var(--peach-dark);
-    box-shadow: 0 4px 12px rgba(141, 122, 82, 0.4);
+    background: var(--sidebar-link-hover-bg, #f3efe6);
+    color: var(--sidebar-link-hover-text, #181d26);
+    border-color: var(--sidebar-link-hover-border, #dddddd);
+    box-shadow: none;
 }
 
 .btn-invoice-action.primary {

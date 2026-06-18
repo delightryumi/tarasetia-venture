@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { LogOut, Coffee, FileText, TrendingUp, X, Globe } from "lucide-react";
 import styles from "../ForecastStyles.module.css";
 
-const SAGE = "#788069";
+
 
 interface ForecastDetailDrawerProps {
     title: string;
@@ -152,7 +152,7 @@ export const ForecastDetailDrawer: React.FC<ForecastDetailDrawerProps> = ({ titl
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "13px", fontWeight: 800, marginTop: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                         <span>Grand Total</span>
-                        <span style={{ color: SAGE }}>
+                        <span style={{ color: 'var(--sidebar-link-active-bg)' }}>
                             Rp {formatCurrency(entries.reduce((acc, e) => acc + (Number(e.amount) || 0), 0))}
                         </span>
                     </div>

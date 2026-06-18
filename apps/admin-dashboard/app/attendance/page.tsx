@@ -21,8 +21,9 @@ export default function AttendancePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [shift, setShift] = useState<Shift | null>(null);
   const [loadingShift, setLoadingShift] = useState(true);
-  const [announcement, setAnnouncement] = useState<{ title: string; text: string } | null>(null);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
   const [companyName, setCompanyName] = useState<string>("");
+  const [casualAlert, setCasualAlert] = useState<string | null>(null);
   
   const [staffSession, setStaffSession] = useState<Staff | null>(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
@@ -99,17 +100,57 @@ export default function AttendancePage() {
     validateAndRefreshSession();
   }, [prefillHotelCode]);
 
-  // Fetch shift karyawan hari ini
+  // Fetch shift karyawan hari ini (termasuk override jadwal)
   useEffect(() => {
     const fetchShift = async () => {
       if (!staffSession) return;
       const hotelCode = staffSession.hotelCode || prefillHotelCode;
       if (!hotelCode) return;
       try {
-        const shiftRef = doc(db, `hotels/${hotelCode}/shifts/${staffSession.shiftId}`);
-        const shiftSnap = await getDoc(shiftRef);
-        if (shiftSnap.exists()) {
-          setShift({ id: shiftSnap.id, ...shiftSnap.data() } as Shift);
+        let activeShiftId: string | null = null;
+        
+        // 1. Cek apakah ada jadwal override hari ini
+        const schedRef = doc(db, `hotels/${hotelCode}/staff/${staffSession.id}/schedules/${today}`);
+        const schedSnap = await getDoc(schedRef);
+        
+        if (schedSnap.exists()) {
+          activeShiftId = schedSnap.data().shiftId;
+        }
+
+        // Jika belum ada jadwal diplot
+        if (!activeShiftId) {
+          setShift({ id: "NONE", name: "Belum Ada Jadwal", startTime: "--:--", endTime: "--:--" } as Shift);
+          setLoadingShift(false);
+          return;
+        }
+
+        // Cek libur besok
+        const tomorrowDate = new Date();
+        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+        const tmrw = tomorrowDate.toISOString().split("T")[0];
+        
+        const tmrwRef = doc(db, `hotels/${hotelCode}/staff/${staffSession.id}/schedules/${tmrw}`);
+        const tmrwSnap = await getDoc(tmrwRef);
+        const isTmrwOff = tmrwSnap.exists() && tmrwSnap.data().shiftId === "OFF";
+
+        // 2. Jika override adalah OFF, set shift sintetis libur
+        if (activeShiftId === "OFF") {
+          setShift({ id: "OFF", name: "Libur (OFF)", startTime: "--:--", endTime: "--:--" } as Shift);
+          setCasualAlert("Santai aja, hari ini kamu libur. Selamat beristirahat! 🏖️");
+        } else {
+          // 3. Ambil data shift (default atau override id valid)
+          if (activeShiftId) {
+            const shiftRef = doc(db, `hotels/${hotelCode}/shifts/${activeShiftId}`);
+            const shiftSnap = await getDoc(shiftRef);
+            if (shiftSnap.exists()) {
+              setShift({ id: shiftSnap.id, ...shiftSnap.data() } as Shift);
+            }
+          }
+          if (isTmrwOff) {
+            setCasualAlert("Pstt.. jangan lupa besok kamu libur! Asik kan? 🙌");
+          } else {
+            setCasualAlert(null);
+          }
         }
       } catch (err) {
         console.error("Error fetching shift:", err);
@@ -122,25 +163,26 @@ export default function AttendancePage() {
     }
   }, [staffSession, prefillHotelCode]);
 
-  // Fetch announcement
+  // Fetch announcements
   useEffect(() => {
-    const fetchAnnouncement = async () => {
+    const fetchAnnouncements = async () => {
       if (!staffSession) return;
       const hotelCode = staffSession.hotelCode || prefillHotelCode;
       if (!hotelCode) return;
       try {
-        const docRef = doc(db, `hotels/${hotelCode}/settings/announcement`);
-        const snap = await getDoc(docRef);
-        if (snap.exists() && snap.data().active) {
-          setAnnouncement({
-            title: snap.data().title || "PENGUMUMAN",
-            text: snap.data().text || "",
-          });
-        } else {
-          setAnnouncement(null);
-        }
+        const q = query(collection(db, `hotels/${hotelCode}/announcements`), where("active", "==", true));
+        const snap = await getDocs(q);
+        const data: any[] = [];
+        snap.forEach(d => {
+          const ann = d.data();
+          if (ann.target === "all" || (ann.target === "specific" && Array.isArray(ann.targetStaffIds) && ann.targetStaffIds.includes(staffSession.id))) {
+            data.push({ id: d.id, ...ann });
+          }
+        });
+        data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setAnnouncements(data);
       } catch (err) {
-        console.error("Error fetching announcement:", err);
+        console.error("Error fetching announcements:", err);
       }
     };
 
@@ -166,7 +208,7 @@ export default function AttendancePage() {
     };
 
     if (staffSession) {
-      fetchAnnouncement();
+      fetchAnnouncements();
       fetchCompany();
     }
   }, [staffSession, prefillHotelCode]);
@@ -394,6 +436,25 @@ export default function AttendancePage() {
           </div>
         </header>
 
+        {/* Casual Alert Banner */}
+        {casualAlert && (
+          <div style={{ padding: "16px 20px 0", textAlign: "center", animation: "slideDownFade 0.6s ease-out forwards" }}>
+            <style>{`
+              @keyframes slideDownFade {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+              }
+              @keyframes softPulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.02); }
+              }
+            `}</style>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: casualAlert.includes("hari ini") ? "#dc2626" : "#047857", animation: "softPulse 3s infinite ease-in-out", display: "inline-block", letterSpacing: "0.2px" }}>
+              {casualAlert}
+            </span>
+          </div>
+        )}
+
         {/* Company Name Banner */}
         {companyName && (
           <div style={{ padding: "16px 20px 0", textAlign: "left" }}>
@@ -408,20 +469,32 @@ export default function AttendancePage() {
           <ShiftStatusBadge shift={shift} loading={loadingShift} today={today} />
         </div>
 
-        {/* Announcement Banner */}
-        {announcement && (
-          <div style={{ padding: "16px 20px 12px" }}>
-            <div style={{ background: "rgba(217, 119, 6, 0.08)", border: "1px solid rgba(217, 119, 6, 0.15)", borderRadius: "12px", padding: "14px 16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
-                <span style={{ fontSize: "14px" }}>📢</span>
-                <span style={{ fontSize: "11px", fontWeight: 700, color: "#d97706", letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                  {announcement.title}
-                </span>
-              </div>
-              <p style={{ margin: 0, fontSize: "13px", color: "#4b5563", lineHeight: 1.4, fontWeight: 500, whiteSpace: "pre-line" }}>
-                {announcement.text}
-              </p>
-            </div>
+
+        {/* Announcement Banners */}
+        {announcements.length > 0 && (
+          <div style={{ padding: "16px 20px 12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+            {announcements.map(ann => {
+              const isWarning = ann.type === "warning";
+              const isSuccess = ann.type === "success";
+              const bg = isWarning ? "rgba(220, 38, 38, 0.08)" : isSuccess ? "rgba(22, 163, 74, 0.08)" : "rgba(37, 99, 235, 0.08)";
+              const border = isWarning ? "rgba(220, 38, 38, 0.15)" : isSuccess ? "rgba(22, 163, 74, 0.15)" : "rgba(37, 99, 235, 0.15)";
+              const textColor = isWarning ? "#dc2626" : isSuccess ? "#16a34a" : "#2563eb";
+              const icon = isWarning ? "⚠️" : isSuccess ? "✅" : "📢";
+
+              return (
+                <div key={ann.id} style={{ background: bg, border: `1px solid ${border}`, borderRadius: "12px", padding: "14px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
+                    <span style={{ fontSize: "14px" }}>{icon}</span>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: textColor, letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                      {ann.title}
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: "13px", color: "#4b5563", lineHeight: 1.4, fontWeight: 500, whiteSpace: "pre-line" }}>
+                    {ann.text}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         )}
 

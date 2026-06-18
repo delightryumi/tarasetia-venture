@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db as firestoreDb } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
-export const POST = async (request: Request) => {
+export const POST = async (request: NextRequest) => {
   try {
+    const hotelCode = request.cookies.get('hotelCode')?.value || "87241";
     const body = await request.json();
 
     if (!body.productId || typeof body.stock !== 'number') {
@@ -13,7 +14,7 @@ export const POST = async (request: Request) => {
       );
     }
 
-    const docRef = doc(firestoreDb, 'pos_products', body.productId);
+    const docRef = doc(firestoreDb, 'hotels', hotelCode, 'pos_products', body.productId);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {

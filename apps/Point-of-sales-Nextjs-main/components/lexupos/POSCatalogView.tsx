@@ -95,13 +95,13 @@ export default function POSCatalogView({
       {/* Header & Search */}
       <div className="flex items-center justify-start gap-3 mb-4 shrink-0">
         <div className="relative max-w-xs w-full sm:w-64">
-          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-neutral-500" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
           <Input
             type="text"
             placeholder="Cari produk / subkategori..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-xl text-neutral-600 dark:text-neutral-200 text-xs h-8.5"
+            className="pl-11 pr-4 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-[6px] text-neutral-600 dark:text-neutral-200 text-xs h-11"
           />
         </div>
       </div>
@@ -113,7 +113,7 @@ export default function POSCatalogView({
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full h-9 px-3 rounded-xl bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.1] text-xs font-bold text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            className="w-full h-9 px-3 rounded-[6px] bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.1] text-xs font-bold text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>
@@ -137,7 +137,7 @@ export default function POSCatalogView({
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-full text-[11px] font-bold whitespace-nowrap transition-all duration-200 text-center flex items-center justify-center cursor-pointer ${
+              className={`px-4 py-2 rounded-[6px] text-[11px] font-bold whitespace-nowrap transition-all duration-200 text-center flex items-center justify-center cursor-pointer ${
                 selectedCategory === cat
                   ? 'bg-neutral-800 text-white border border-neutral-800 dark:bg-white dark:text-black dark:border-white shadow-sm'
                   : 'bg-white dark:bg-zinc-900 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/[0.1] hover:bg-neutral-50 dark:hover:bg-neutral-800'
@@ -157,7 +157,7 @@ export default function POSCatalogView({
             <select
               value={selectedSubcategory}
               onChange={(e) => setSelectedSubcategory(e.target.value)}
-              className="w-full h-8 px-3 rounded-xl bg-neutral-100 dark:bg-zinc-800 border border-neutral-200 dark:border-white/[0.08] text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+              className="w-full h-8 px-3 rounded-[6px] bg-neutral-100 dark:bg-zinc-800 border border-neutral-200 dark:border-white/[0.08] text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
             >
               {subcategories.map((sub) => (
                 <option key={sub} value={sub}>
@@ -182,9 +182,9 @@ export default function POSCatalogView({
               <button
                 key={sub}
                 onClick={() => setSelectedSubcategory(sub)}
-                className={`px-3 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                className={`px-3 py-1 rounded-[6px] text-[10px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   selectedSubcategory === sub
-                    ? 'bg-blue-600 text-white shadow-sm'
+                    ? 'bg-neutral-900 dark:bg-white text-white dark:text-black shadow-sm'
                     : 'bg-neutral-100 dark:bg-zinc-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-white/[0.08] hover:bg-neutral-200 dark:hover:bg-zinc-700'
                 }`}
               >
@@ -196,12 +196,12 @@ export default function POSCatalogView({
       )}
 
       {/* ── Product Grid ─────────────────────────────────────────────────────── */}
-      <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto thin-scrollbar flex-1 pr-1 ${!hasSubcategories ? 'mt-3' : ''}`}>
+      <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 overflow-y-auto thin-scrollbar flex-1 pr-1 ${!hasSubcategories ? 'mt-3' : ''}`}>
         {filteredProducts.map((product) => (
           <div
             key={product.id}
             onClick={() => onAddToCart(product)}
-            className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.1] rounded-2xl p-2 md:p-2.5 flex flex-col justify-between cursor-pointer hover:shadow-xl hover:bg-neutral-50 dark:hover:bg-neutral-800/40 hover:-translate-y-1 transition-all duration-305 group"
+            className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.1] rounded-[10px] p-2 md:p-2.5 flex flex-col justify-between cursor-pointer hover:shadow-xl hover:bg-neutral-50 dark:hover:bg-neutral-800/40 hover:-translate-y-1 transition-all duration-305 group"
           >
             <div className="relative h-20 xs:h-24 md:h-auto md:aspect-square w-full rounded-xl overflow-hidden bg-slate-200/50 dark:bg-neutral-950 mb-1.5 md:mb-2.5 shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -232,7 +232,7 @@ export default function POSCatalogView({
                 <span className="text-[11px] md:text-xs font-bold text-neutral-800 dark:text-white truncate max-w-[70%]">
                   {formatCurrency(product.price)}
                 </span>
-                <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-white/[0.1] group-hover:bg-blue-500 group-hover:text-white flex items-center justify-center text-neutral-500 dark:text-neutral-400 transition-colors shrink-0">
+                <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-white/[0.1] group-hover:bg-neutral-900 dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black flex items-center justify-center text-neutral-500 dark:text-neutral-400 transition-colors shrink-0">
                   <Plus className="w-2.5 h-2.5 md:w-3 md:h-3" />
                 </div>
               </div>

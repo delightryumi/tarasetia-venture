@@ -1,12 +1,14 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 
 // Handler function for GET request to fetch product stocks
 export async function GET(request: NextRequest) {
   try {
-    // Fetch product stocks from Firestore pos_products collection
-    const snap = await getDocs(collection(db, 'pos_products'));
+    const hotelCode = request.cookies.get('hotelCode')?.value || "87241";
+    // Fetch product stocks from Firestore pos_products collection under the hotel subcollection
+    const snap = await getDocs(getHotelCollection(db, 'pos_products', hotelCode));
     
     const productStocks = snap.docs.map((docSnap) => {
       const data = docSnap.data();

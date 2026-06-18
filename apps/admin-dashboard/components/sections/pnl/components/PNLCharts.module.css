@@ -53,7 +53,7 @@
 }
 
 .titleAccent {
-  color: #788069;
+  color: var(--sage, #788069);
 }
 
 .subtitle {
@@ -142,7 +142,7 @@
 }
 
 .legendDotActive {
-  background: #788069;
+  background: var(--sage, #788069);
 }
 
 /* ── Chart heights ── */
@@ -172,7 +172,7 @@
 }
 
 .pnlScrollbar::-webkit-scrollbar-thumb:hover {
-  background: #788069;
+  background: var(--sage, #788069);
 }
 
 /* Animations matching forecast rise */

@@ -57,7 +57,7 @@ export default function SelectModulePage() {
 
 
   useEffect(() => {
-    if (!activeHotelCode || isSuperadmin) {
+    if (!activeHotelCode || activeHotelCode === "0") {
       setActiveModules(null);
       setIsHotelActive(true);
       return;
@@ -84,7 +84,7 @@ export default function SelectModulePage() {
           if (plan === 'basic') {
             modules = ['pos', 'cpanel-only'];
           } else {
-            modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'cpanel-full'];
+            modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'hrd', 'cpanel-full'];
           }
         }
         setActiveModules(modules);
@@ -94,6 +94,15 @@ export default function SelectModulePage() {
     });
     return () => unsubscribe();
   }, [activeHotelCode, isSuperadmin]);
+
+  // Skip Firestore hotel query saat superadmin tanpa preview
+  useEffect(() => {
+    if (isSuperadmin && (!activeHotelCode || activeHotelCode === "0")) {
+      setActiveModules(null);
+      setIsHotelActive(true);
+    }
+  }, [isSuperadmin, activeHotelCode]);
+
 
   useEffect(() => {
     setMounted(true);
@@ -135,13 +144,17 @@ export default function SelectModulePage() {
       return;
     }
 
+    // Fallback cepat: jika AuthContext sudah konfirmasi superadmin
+    if ((user as any).role === "superadmin") {
+      setIsSuperadmin(true);
+      setLoadingPerms(false);
+      return;
+    }
+
     try {
       const userDocId = user.email.toLowerCase().replace(/[@.]/g, '_');
-      const isSuper = (user as any).role === "superadmin" || user.email.toLowerCase() === "nexura.management@gmail.com";
       const userSnap = await getDoc(
-        isSuper
-          ? doc(db, "users_master", userDocId)
-          : doc(getHotelCollection(db, "users_master"), userDocId)
+        doc(getHotelCollection(db, "users_master"), userDocId)
       );
 
       if (userSnap.exists()) {
@@ -189,14 +202,14 @@ export default function SelectModulePage() {
   };
 
   const hasAccess = (moduleKey: string) => {
-    if (isSuperadmin) return true;
-
     // Active modules restrictions if loaded (CPanel is always allowed for basic settings)
     if (activeModules !== null && moduleKey !== 'cpanel') {
       if (!activeModules.includes(moduleKey)) {
         return false;
       }
     }
+
+    if (isSuperadmin) return true;
 
     if (!userPermissions) return false;
 
@@ -229,6 +242,10 @@ export default function SelectModulePage() {
         return userPermissions['module_cpanel'] !== undefined
           ? !!userPermissions['module_cpanel']
           : userPermissions['users'] !== false;
+      case 'hrd':
+        return userPermissions['module_hrd'] !== undefined
+          ? !!userPermissions['module_hrd']
+          : userPermissions['hrd'] !== false;
       default:
         return false;
     }
@@ -241,7 +258,7 @@ export default function SelectModulePage() {
       description: 'Open terminal register & sell',
       href: '/pos',
       active: hasAccess('pos'),
-      icon: Banknote,
+      icon: 'point_of_sale',
       colSpan: 1 as const,
     },
     {
@@ -250,7 +267,7 @@ export default function SelectModulePage() {
       description: 'Reservations & guest services',
       href: '/overview?module=front-office',
       active: hasAccess('front-office'),
-      icon: Building2,
+      icon: 'domain',
       colSpan: 1 as const,
     },
     {
@@ -259,7 +276,7 @@ export default function SelectModulePage() {
       description: 'Room checkouts & maintenance',
       href: '/overview?module=housekeeping',
       active: hasAccess('housekeeping'),
-      icon: BedDouble,
+      icon: 'cleaning_services',
       colSpan: 1 as const,
     },
     {
@@ -268,7 +285,7 @@ export default function SelectModulePage() {
       description: 'Restaurant, room service & kitchen',
       href: '/food-beverage/product?module=food-beverage',
       active: hasAccess('food-beverage'),
-      icon: Coffee,
+      icon: 'restaurant',
       colSpan: 1 as const,
     },
     {
@@ -277,7 +294,7 @@ export default function SelectModulePage() {
       description: 'Suppliers, orders & materials',
       href: '/purchasing',
       active: hasAccess('purchasing'),
-      icon: ShoppingBag,
+      icon: 'inventory',
       colSpan: 1 as const,
     },
     {
@@ -286,7 +303,16 @@ export default function SelectModulePage() {
       description: 'Balances, reports & audits',
       href: '/pnl?module=accounting',
       active: hasAccess('accounting'),
-      icon: Calculator,
+      icon: 'calculate',
+      colSpan: 1 as const,
+    },
+    {
+      title: 'HRD & Absensi',
+      subtitle: 'Staff & Shift',
+      description: 'Manage staff, attendance & payroll',
+      href: '/hrd?module=hrd',
+      active: hasAccess('hrd'),
+      icon: 'badge',
       colSpan: 1 as const,
     },
   ];
@@ -296,10 +322,10 @@ export default function SelectModulePage() {
     menus.push({
       title: 'Superadmin',
       subtitle: 'Central Registry',
-      description: 'Manage hotel tenants & systems',
+      description: 'Manage hotel partners & systems',
       href: '/superadmin',
       active: true,
-      icon: ShieldAlert,
+      icon: 'admin_panel_settings',
       colSpan: 1 as const,
     });
   }
@@ -355,48 +381,45 @@ export default function SelectModulePage() {
 
             {/* Divider line */}
             {(activeHotelCode || isSuperadmin) && (
-              <div className={styles.dividerLine} />
+              <div className={`${styles.dividerLine} hidden sm:block`} />
             )}
 
             {/* Hotel Selector / Badge */}
             {isSuperadmin ? (
-              <div className={`relative flex items-center h-9 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[13px] transition-all ${styles.hotelBadge}`}>
+              <div className={`relative hidden sm:flex items-center h-9 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[13px] transition-all ${styles.hotelBadge}`}>
                 <select
                   value={activeHotelCode}
                   onChange={(e) => {
                     setActiveHotelCode(e.target.value);
                     window.location.reload();
                   }}
-                  className={`border-none pr-10 py-1 text-[13px] font-medium focus:outline-none focus:ring-0 cursor-pointer appearance-none h-full w-full truncate rounded-[6px] text-left ${styles.hotelSelect}`}
+                  className={`border-none pr-8 sm:pr-10 py-1 text-[11px] sm:text-[13px] font-medium focus:outline-none focus:ring-0 cursor-pointer appearance-none h-full w-full truncate rounded-[6px] text-left ${styles.hotelSelect}`}
                   style={{
                     backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239297a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
                     backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 12px center',
+                    backgroundPosition: 'right 8px center',
                     backgroundSize: '16px',
                     paddingLeft: '12px',
                   }}
                 >
-                  {hotelsList && hotelsList.length > 0 ? (
+                  <option value="0">— Superadmin (tidak ada preview) —</option>
+                  {hotelsList && hotelsList.length > 0 && (
                     hotelsList.map((hotel) => (
                       <option key={hotel.hotelCode} value={hotel.hotelCode}>
                         [{hotel.hotelCode}] {hotel.name}
                       </option>
                     ))
-                  ) : (
-                    <option value="87241">
-                      [87241] Bumi Anyom Resort
-                    </option>
                   )}
                 </select>
               </div>
             ) : (
               activeHotelCode && (
                 <div
-                  className={`flex items-center h-9 pr-3 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[13px] font-semibold ${styles.hotelBadge}`}
-                  style={{ paddingLeft: '12px' }}
+                  className={`hidden sm:flex items-center h-9 pr-3 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[11px] sm:text-[13px] font-semibold ${styles.hotelBadge}`}
+                  style={{ paddingLeft: '8px' }}
                 >
-                  <span className="truncate w-full text-left">
-                    [{activeHotelCode}] {activeHotelName || 'Bumi Anyom Resort'}
+                  <span className="truncate w-full text-left" style={{ paddingLeft: '4px' }}>
+                    [{activeHotelCode || "0"}] {activeHotelName || 'Memuat...'}
                   </span>
                 </div>
               )
@@ -466,6 +489,14 @@ export default function SelectModulePage() {
                         );
                       })()}
 
+                      {/* Active Hotel Info (Mobile only) */}
+                      <div className="px-3 py-2 bg-[#f8fafc] dark:bg-white/[0.03] rounded-[10px] mb-2 flex flex-col gap-0.5 border-t border-slate-200 dark:border-white/[0.08] pt-2 mt-1 sm:hidden">
+                        <span className="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest">Active Hotel</span>
+                        <span className="text-xs font-semibold text-neutral-850 dark:text-[#f4f4f5] truncate">
+                          [{activeHotelCode || "0"}] {activeHotelName || 'Memuat...'}
+                        </span>
+                      </div>
+
                       {hasAccess('cpanel') && (
                         <>
                           <button
@@ -528,10 +559,10 @@ export default function SelectModulePage() {
       </div>
 
       {/* Main viewport body content */}
-      <div className={`flex-grow flex flex-col items-center relative overflow-y-auto overflow-x-hidden w-full h-full z-10 ${showGrid ? 'justify-start md:justify-center pt-8 pb-32 md:py-0' : 'justify-center pt-8 md:py-0'}`}>
+      <div className={`flex-grow flex flex-col items-center relative overflow-hidden w-full h-full z-10 ${showGrid ? 'justify-start md:justify-center' : 'justify-center'}`}>
         {showGrid ? (
           <WorkspaceSection
-            menus={menus}
+            menus={menus.filter(m => m.active)}
             user={user}
             isSuperadmin={isSuperadmin}
             onRefresh={fetchPermissions}

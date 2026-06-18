@@ -29,6 +29,15 @@ export const productSchema = z
     imageProduct: z
       .string()
       .optional(),
+    description: z
+      .string()
+      .optional(),
+    addons: z
+      .array(z.object({
+        name: z.string().min(1),
+        price: z.number().min(0)
+      }))
+      .optional(),
   })
   .refine(
     (data) =>
@@ -61,6 +70,7 @@ export const shopnameSchema = z.object({
     .min(2, 'Store Name min 2 characters'),
   address: z.string().optional(),
   phone: z.string().optional(),
+  tables: z.string().optional(),
 });
 export const restockSchema = z.object({
   category: z.string().min(1, 'Category must be selected'),

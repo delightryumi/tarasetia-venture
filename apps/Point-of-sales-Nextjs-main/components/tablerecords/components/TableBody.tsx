@@ -26,6 +26,8 @@ interface Recordsdata {
   customerName?: string;
   tableNumber?: string;
   cashierName?: string;
+  isCompliment?: boolean;
+  complimentValue?: number;
 }
 
 interface TableBodyRecordsProps {
@@ -75,11 +77,15 @@ const TableBodyRecords: React.FC<TableBodyRecordsProps> = ({ data }) => {
                 {item.discount && item.discount > 0 ? `-${formatCurrency(item.discount)}` : '-'}
               </TableCell>
               <TableCell className="p-4 text-right font-bold text-neutral-800 dark:text-neutral-200 whitespace-nowrap">
-                {item.totalAmount ? formatCurrency(parseFloat(item.totalAmount)) : 'N/A'}
+                {item.isCompliment ? (
+                  <span className="text-purple-600 dark:text-purple-400 text-xs tracking-wider">COMPLIMENT ({formatCurrency(item.complimentValue || 0)})</span>
+                ) : (
+                  item.totalAmount ? formatCurrency(parseFloat(item.totalAmount)) : 'N/A'
+                )}
               </TableCell>
               <TableCell className="p-4 text-center uppercase font-bold text-[10px] whitespace-nowrap">
-                <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800">
-                  {item.paymentMethod}
+                <Badge variant="outline" className={item.isCompliment ? "bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800" : "bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"}>
+                  {item.isCompliment ? 'COMPLIMENT' : item.paymentMethod}
                 </Badge>
               </TableCell>
               <TableCell className="p-4 text-center capitalize font-semibold text-[10px] whitespace-nowrap">

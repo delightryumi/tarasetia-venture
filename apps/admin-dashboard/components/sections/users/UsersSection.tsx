@@ -8,12 +8,14 @@ import {
     FileImage, Home as HomeIcon, Layout as LayoutIcon, 
     Info, Grid, Settings as SettingsIcon, MapPin, 
     Gift, Package, Users, ShoppingCart, Banknote, Building2,
-    BedDouble, Coffee, ShoppingBag, Calculator, Store, User as UserIcon, Archive, Star
+    BedDouble, Coffee, ShoppingBag, Calculator, Store, User as UserIcon, Archive, Star,
+    Camera, ClipboardList
 } from "lucide-react";
 
 import { toast } from "sonner";
 import { useUsers, ROLES } from "./useUsers";
 import { UserCard } from "./components/UserCard";
+import { useAuth } from "@/context/AuthContext";
 import { RoleCard } from "./components/RoleCard";
 import { UserDrawer } from "./components/UserDrawer";
 import { ConfirmModal } from "./components/ConfirmModal";
@@ -51,7 +53,7 @@ const PERMISSION_TREE: PermissionModule[] = [
             { id: "pos_product", label: "Product", icon: <Package size={14} /> },
             { id: "pos_records", label: "Records", icon: <Archive size={14} /> },
             { id: "pos_settings", label: "Settings", icon: <SettingsIcon size={14} /> },
-            { id: "pos_technologies", label: "Technologies", icon: <Star size={14} /> },
+            { id: "pos_self_order", label: "Self-Ordering", icon: <ShoppingCart size={14} /> },
         ]
     },
     {
@@ -60,6 +62,7 @@ const PERMISSION_TREE: PermissionModule[] = [
         icon: <Building2 size={14} />,
         submenus: [
             { id: "overview", label: "Overview", icon: <LayoutDashboard size={14} /> },
+            { id: "digital-checkin", label: "Digital Check-in", icon: <Camera size={14} /> },
             { id: "forecast", label: "Forecast", icon: <TrendingUp size={14} /> },
             { id: "invoice", label: "Create Invoice", icon: <FileText size={14} /> },
             { id: "purchase-order", label: "Purchase Order", icon: <FileText size={14} /> },
@@ -107,6 +110,14 @@ const PERMISSION_TREE: PermissionModule[] = [
         ]
     },
     {
+        id: "module_hrd",
+        label: "HRD & Absensi",
+        icon: <ClipboardList size={14} />,
+        submenus: [
+            { id: "hrd", label: "Dashboard HRD", icon: <ClipboardList size={14} /> },
+        ]
+    },
+    {
         id: "module_cpanel",
         label: "CPanel (System Admin)",
         icon: <SettingsIcon size={14} />,
@@ -137,8 +148,9 @@ const rise = {
 };
 
 export const UsersSection: React.FC = () => {
+    const { user: authUser } = useAuth();
     const { 
-        users, loading, 
+        users, loading, activeModules,
         handleSaveUser, handleDeleteUser, togglePermission,
         handleChangePassword
     } = useUsers([]);
@@ -243,6 +255,28 @@ export const UsersSection: React.FC = () => {
         (u.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
         (u.email || "").toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const safeActiveModules = activeModules || [];
+
+    const filteredPermissionTree = PERMISSION_TREE.map(mod => {
+        if (mod.id === "module_cpanel") {
+            const hasFull = safeActiveModules.includes("cpanel-full");
+            const hasOnly = safeActiveModules.includes("cpanel-only");
+            if (!hasFull && !hasOnly) return null;
+            if (hasFull) return mod;
+            if (hasOnly) {
+                return {
+                    ...mod,
+                    submenus: mod.submenus.filter(s => ["users", "logo"].includes(s.id))
+                };
+            }
+        }
+        
+        const mappedId = mod.id.replace("module_", "").replace("_", "-");
+        if (safeActiveModules.includes(mappedId)) return mod;
+        
+        return null;
+    }).filter(Boolean) as PermissionModule[];
 
     return (
         <div className={styles.container}>
@@ -350,7 +384,7 @@ export const UsersSection: React.FC = () => {
                             <RoleCard 
                                 key={u.id}
                                 user={u}
-                                permissionTree={PERMISSION_TREE}
+                                permissionTree={filteredPermissionTree}
                                 onToggle={togglePermission}
                             />
                         ))}

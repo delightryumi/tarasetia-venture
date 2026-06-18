@@ -4,14 +4,15 @@ import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 const ALL_KEYS = [
     // Modules
     "module_pos", "module_front_office", "module_housekeeping", 
-    "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel",
+    "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel", "module_hrd",
     // Submenus
     "overview", "forecast", "invoice", "pnl", "logo", "hero", "room-type", 
     "about", "gallery", "footer", "attractions", "promo", "packages", "seo", "users",
     "purchasing", "store-requisition", "purchase-requisition", "daily-market-list", 
     "stock-opname", "items", "suppliers", "purchase-order", "food-beverage-product",
     // POS submenus
-    "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings", "pos_technologies"
+    "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings",
+    "hrd"
 ];
 
 // POST: Create User & Set Claims

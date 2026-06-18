@@ -74,26 +74,34 @@ export default function DailyMarketListPrint({ selectedDml }: DailyMarketListPri
           {(() => {
             const itemsList = selectedDml.items as any[];
             const grouped: Record<string, any[]> = {};
-            itemsList.forEach(item => { const cat = item.category || 'Uncategorized'; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(item); });
+            itemsList.forEach(item => { 
+              const cat = item.category || 'Uncategorized'; 
+              if (!grouped[cat]) grouped[cat] = []; 
+              grouped[cat].push(item); 
+            });
             let counter = 0;
-            return Object.keys(grouped).sort().flatMap(cat => [
-              <tr key={`pcat-${cat}`}>
-                <td colSpan={6} style={{ background: '#222', color: '#fff', fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '5px 10px', border: 'none' }}>{cat}</td>
-              </tr>,
-              ...grouped[cat].map(item => { 
-                counter++; 
-                return (
-                  <tr key={`p-${counter}`}>
-                    <td style={{ textAlign: 'center' }}>{counter}</td>
-                    <td style={{ paddingLeft: 16 }}>{item.name}<br/><span style={{ fontSize: 9, color: '#666' }}>{item.supplier_name}</span></td>
-                    <td style={{ textAlign: 'center' }}>{item.unit}</td>
-                    <td style={{ textAlign: 'right' }}>{item.qty_ordered}</td>
-                    <td style={{ textAlign: 'right' }}>{formatRupiah(item.unit_price || 0)}</td>
-                    <td style={{ textAlign: 'right' }}>{formatRupiah(item.total || (item.qty_ordered * (item.unit_price || 0)))}</td>
-                  </tr>
-                ); 
-              })
-            ]);
+            const categories = Object.keys(grouped).sort();
+            return categories.map(cat => (
+              <React.Fragment key={`group-${cat}`}>
+                <tr key={`pcat-${cat}`}>
+                  <td colSpan={6} style={{ background: '#222', color: '#fff', fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '5px 10px', border: 'none' }}>{cat}</td>
+                </tr>
+                {grouped[cat].map(item => { 
+                  counter++; 
+                  const itemIndex = counter;
+                  return (
+                    <tr key={`p-${itemIndex}`}>
+                      <td style={{ textAlign: 'center' }}>{itemIndex}</td>
+                      <td style={{ paddingLeft: 16 }}>{item.name}<br/><span style={{ fontSize: 9, color: '#666' }}>{item.supplier_name}</span></td>
+                      <td style={{ textAlign: 'center' }}>{item.unit}</td>
+                      <td style={{ textAlign: 'right' }}>{item.qty_ordered}</td>
+                      <td style={{ textAlign: 'right' }}>{formatRupiah(item.unit_price || 0)}</td>
+                      <td style={{ textAlign: 'right' }}>{formatRupiah(item.total || (item.qty_ordered * (item.unit_price || 0)))}</td>
+                    </tr>
+                  ); 
+                })}
+              </React.Fragment>
+            ));
           })()}
         </tbody>
         <tfoot>

@@ -20,12 +20,22 @@ import {
 import axios from 'axios';
 import { collection, getDocs, addDoc, deleteDoc, doc, query, where, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 import { ChevronDown, ChevronRight, X, Pencil, Check } from 'lucide-react';
+
+const PNL_TARGET_OPTIONS = [
+  { value: 'FOOD', label: 'F&B Food (Makanan)' },
+  { value: 'BEVERAGE', label: 'F&B Beverage (Minuman)' },
+  { value: 'BANQUET', label: 'F&B Banquet (Event)' },
+  { value: 'OTHER', label: 'Other Income & Expense' }
+];
 
 export default function ManageCategoryComponent() {
   const [open, setOpen] = useState(false);
-  const [categories, setCategories] = useState<{ id: string; name: string; subcategories: string[] }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; subcategories: string[]; pnlTarget?: string }[]>([]);
   const [newCat, setNewCat] = useState('');
+  const [newCatPnlTarget, setNewCatPnlTarget] = useState<'FOOD' | 'BEVERAGE' | 'BANQUET' | 'OTHER'>('FOOD');
+  const [editingCatPnlTarget, setEditingCatPnlTarget] = useState<'FOOD' | 'BEVERAGE' | 'BANQUET' | 'OTHER'>('FOOD');
   const [loadingCategory, setLoadingCategory] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
@@ -42,11 +52,12 @@ export default function ManageCategoryComponent() {
   const loadCategories = async () => {
     setIsFetching(true);
     try {
-      const snap = await getDocs(collection(db, 'pos_categories'));
+      const snap = await getDocs(getHotelCollection(db, 'pos_categories'));
       const fetchedCats = snap.docs.map(doc => ({
         id: doc.id,
         name: doc.data().name,
-        subcategories: doc.data().subcategories || []
+        subcategories: doc.data().subcategories || [],
+        pnlTarget: doc.data().pnlTarget || (doc.data().name === 'FOOD' ? 'FOOD' : doc.data().name === 'BEVERAGE' ? 'BEVERAGE' : doc.data().name === 'BANQUET' ? 'BANQUET' : 'FOOD')
       }));
       setCategories(fetchedCats.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (error) {
@@ -67,13 +78,16 @@ export default function ManageCategoryComponent() {
       return;
     }
 
+    const resolvedPnlTarget = trimmed === 'FOOD' ? 'FOOD' : trimmed === 'BEVERAGE' ? 'BEVERAGE' : trimmed === 'BANQUET' ? 'BANQUET' : newCatPnlTarget;
+
     try {
-      const docRef = await addDoc(collection(db, 'pos_categories'), {
+      const docRef = await addDoc(getHotelCollection(db, 'pos_categories'), {
         name: trimmed,
         subcategories: [],
+        pnlTarget: resolvedPnlTarget,
         createdAt: new Date()
       });
-      setCategories([...categories, { id: docRef.id, name: trimmed, subcategories: [] }].sort((a, b) => a.name.localeCompare(b.name)));
+      setCategories([...categories, { id: docRef.id, name: trimmed, subcategories: [], pnlTarget: resolvedPnlTarget }].sort((a, b) => a.name.localeCompare(b.name)));
       setNewCat('');
       toast.success('Kategori berhasil ditambahkan.');
     } catch (error) {
@@ -86,13 +100,13 @@ export default function ManageCategoryComponent() {
     setLoadingCategory(catId);
     try {
       // Fetch products to see if this category is in use
-      const q = query(collection(db, 'pos_products'), where('category', '==', catName));
+      const q = query(getHotelCollection(db, 'pos_products'), where('category', '==', catName));
       const snap = await getDocs(q);
       
       if (!snap.empty) {
         toast.error(`Kategori "${catName}" sedang digunakan oleh produk! Tidak dapat dihapus.`);
       } else {
-        await deleteDoc(doc(db, 'pos_categories', catId));
+        await deleteDoc(doc(getHotelCollection(db, 'pos_categories'), catId));
         setCategories(categories.filter(c => c.id !== catId));
         toast.success(`Kategori "${catName}" berhasil dihapus.`);
       }
@@ -104,40 +118,48 @@ export default function ManageCategoryComponent() {
     }
   };
 
-  const handleSaveEditCategory = async (catId: string, oldName: string) => {
+  const handleSaveEditCategory = async (catId: string, oldName: string, currentPnlTarget?: string) => {
     const trimmed = editingCatName.trim().toUpperCase();
-    if (!trimmed || trimmed === oldName) {
+    const hasNameChanged = trimmed && trimmed !== oldName;
+    const hasPnlTargetChanged = editingCatPnlTarget !== currentPnlTarget;
+
+    if (!hasNameChanged && !hasPnlTargetChanged) {
       setEditingCatId(null);
       return;
     }
     
     // Check if new name already exists
-    if (categories.some(c => c.id !== catId && c.name === trimmed)) {
+    if (hasNameChanged && categories.some(c => c.id !== catId && c.name === trimmed)) {
       toast.warning('Kategori dengan nama tersebut sudah ada!');
       return;
     }
 
     setLoadingCategory(catId);
     try {
-      // 1. Update category doc
-      const catRef = doc(db, 'pos_categories', catId);
-      await updateDoc(catRef, { name: trimmed });
+      const catRef = doc(getHotelCollection(db, 'pos_categories'), catId);
+      const updatePayload: any = {};
+      if (hasNameChanged) updatePayload.name = trimmed;
+      if (hasPnlTargetChanged) updatePayload.pnlTarget = editingCatPnlTarget;
+
+      await updateDoc(catRef, updatePayload);
       
-      // 2. Cascade update to all products using this category
-      const q = query(collection(db, 'pos_products'), where('category', '==', oldName));
-      const snap = await getDocs(q);
-      const updatePromises = snap.docs.map(d => updateDoc(doc(db, 'pos_products', d.id), { category: trimmed }));
-      await Promise.all(updatePromises);
+      if (hasNameChanged) {
+        // Cascade update to all products using this category
+        const q = query(getHotelCollection(db, 'pos_products'), where('category', '==', oldName));
+        const snap = await getDocs(q);
+        const updatePromises = snap.docs.map(d => updateDoc(doc(getHotelCollection(db, 'pos_products'), d.id), { category: trimmed }));
+        await Promise.all(updatePromises);
+      }
       
       setCategories(categories.map(c => 
-        c.id === catId ? { ...c, name: trimmed } : c
+        c.id === catId ? { ...c, name: hasNameChanged ? trimmed : c.name, pnlTarget: editingCatPnlTarget } : c
       ).sort((a, b) => a.name.localeCompare(b.name)));
       
-      toast.success('Nama kategori berhasil diperbarui.');
+      toast.success('Kategori berhasil diperbarui.');
       setEditingCatId(null);
     } catch (error) {
       console.error('Error updating category:', error);
-      toast.error('Gagal memperbarui nama kategori.');
+      toast.error('Gagal memperbarui kategori.');
     } finally {
       setLoadingCategory(null);
     }
@@ -149,7 +171,7 @@ export default function ManageCategoryComponent() {
     
     setLoadingCategory(catId);
     try {
-      const catRef = doc(db, 'pos_categories', catId);
+      const catRef = doc(getHotelCollection(db, 'pos_categories'), catId);
       await updateDoc(catRef, {
         subcategories: arrayUnion(trimmed)
       });
@@ -171,7 +193,7 @@ export default function ManageCategoryComponent() {
     setLoadingCategory(catId);
     try {
       // In a real scenario, you might want to check if subcategory is in use by products
-      const catRef = doc(db, 'pos_categories', catId);
+      const catRef = doc(getHotelCollection(db, 'pos_categories'), catId);
       await updateDoc(catRef, {
         subcategories: arrayRemove(subcatName)
       });
@@ -208,17 +230,33 @@ export default function ManageCategoryComponent() {
           <DialogTitle>Manage Categories</DialogTitle>
         </DialogHeader>
         
-        <div className="flex items-center gap-2 mt-2">
-          <Input 
-            placeholder="New Category Name (e.g. SNACKS)" 
-            value={newCat} 
-            onChange={(e) => setNewCat(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            className="flex-1"
-          />
-          <Button onClick={handleAdd} size="sm" className="bg-neutral-800 text-white">
-            <Plus className="w-4 h-4 mr-1" /> Add
-          </Button>
+        <div className="flex flex-col gap-2 mt-2">
+          <div className="flex items-center gap-2">
+            <Input 
+              placeholder="New Category Name (e.g. SNACKS)" 
+              value={newCat} 
+              onChange={(e) => setNewCat(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              className="flex-1"
+            />
+            <Button onClick={handleAdd} size="sm" className="bg-neutral-800 text-white">
+              <Plus className="w-4 h-4 mr-1" /> Add
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] font-semibold text-neutral-500 shrink-0">P&L Target:</label>
+            <select
+              value={newCatPnlTarget}
+              onChange={e => setNewCatPnlTarget(e.target.value as any)}
+              className="h-8 px-2 text-xs rounded-[6px] bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.1] text-neutral-800 dark:text-neutral-200 focus:outline-none flex-1 outline-none"
+            >
+              {PNL_TARGET_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="mt-4 flex flex-col gap-2 max-h-[50vh] overflow-y-auto thin-scrollbar p-1">
@@ -239,35 +277,53 @@ export default function ManageCategoryComponent() {
                     </Button>
                     
                     {editingCatId === cat.id ? (
-                      <div className="flex items-center gap-1 w-full mr-2">
-                        <Input 
-                          value={editingCatName}
-                          onChange={(e) => setEditingCatName(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleSaveEditCategory(cat.id, cat.name)}
-                          className="h-7 text-xs flex-1"
-                          autoFocus
-                        />
-                        <Button 
-                          size="icon" 
-                          variant="ghost"
-                          className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50 shrink-0"
-                          onClick={() => handleSaveEditCategory(cat.id, cat.name)}
-                          disabled={loadingCategory === cat.id}
+                      <div className="flex flex-col gap-2 w-full mr-2">
+                        <div className="flex items-center gap-1 w-full">
+                          <Input 
+                            value={editingCatName}
+                            onChange={(e) => setEditingCatName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSaveEditCategory(cat.id, cat.name, cat.pnlTarget)}
+                            className="h-7 text-xs flex-1"
+                            autoFocus
+                          />
+                          <Button 
+                            size="icon" 
+                            variant="ghost"
+                            className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50 shrink-0"
+                            onClick={() => handleSaveEditCategory(cat.id, cat.name, cat.pnlTarget)}
+                            disabled={loadingCategory === cat.id}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="icon" 
+                            variant="ghost"
+                            className="h-7 w-7 text-neutral-400 shrink-0"
+                            onClick={() => setEditingCatId(null)}
+                            disabled={loadingCategory === cat.id}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <select
+                          value={editingCatPnlTarget}
+                          onChange={e => setEditingCatPnlTarget(e.target.value as any)}
+                          className="h-7 px-2 text-[10px] rounded-[6px] bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.1] text-neutral-800 dark:text-neutral-200 focus:outline-none outline-none"
                         >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost"
-                          className="h-7 w-7 text-neutral-400 shrink-0"
-                          onClick={() => setEditingCatId(null)}
-                          disabled={loadingCategory === cat.id}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                          {PNL_TARGET_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     ) : (
-                      <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">{cat.name}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">{cat.name}</span>
+                        <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-medium">
+                          P&L Target: {cat.pnlTarget || (cat.name === 'FOOD' ? 'FOOD' : cat.name === 'BEVERAGE' ? 'BEVERAGE' : cat.name === 'BANQUET' ? 'BANQUET' : 'FOOD')}
+                        </span>
+                      </div>
                     )}
                   </div>
                   
@@ -280,6 +336,7 @@ export default function ManageCategoryComponent() {
                         onClick={() => {
                           setEditingCatId(cat.id);
                           setEditingCatName(cat.name);
+                          setEditingCatPnlTarget((cat.pnlTarget || (cat.name === 'FOOD' ? 'FOOD' : cat.name === 'BEVERAGE' ? 'BEVERAGE' : cat.name === 'BANQUET' ? 'BANQUET' : 'FOOD')) as any);
                         }}
                         className="h-7 w-7 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                       >

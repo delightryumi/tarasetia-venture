@@ -29,6 +29,13 @@ function RateInput({ value, onChange }: { value: number; onChange: (v: number) =
         <div className="flex items-center gap-2 bg-stone-50 dark:bg-[#1c1917] rounded-lg px-2 border border-stone-100 dark:border-stone-800 group-hover:border-stone-200 dark:group-hover:border-stone-700 transition-colors">
             <input
                 type="number"
+                min="0"
+                onWheel={(e) => e.currentTarget.blur()}
+                onKeyDown={(e) => {
+                    if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
+                        e.preventDefault();
+                    }
+                }}
                 className="w-8 bg-transparent outline-none text-[10px] font-bold text-stone-900 dark:text-stone-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-center"
                 value={value}
                 onChange={(e) => onChange(Number(e.target.value))}
@@ -50,7 +57,7 @@ export function ExecutiveSummarySection({
         <div className={styles.sectionWrapper}>
             <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>
-                    <TrendingUp size={28} /> Executive <span style={{ color: "#788069" }}>Summary</span>
+                    <TrendingUp size={28} /> Executive <span className={styles.sectionTitleHighlight}>Summary</span>
                 </h2>
                 <p className={styles.sectionSubtitle}>Overall PnL Conclusion</p>
             </div>
@@ -156,6 +163,16 @@ export function ExecutiveSummarySection({
                         icon={<Receipt size={18} />}
                         accent="#ef4444"
                         value={pnlResult?.expOperational || 0}
+                        loading={loading}
+                        variants={rise}
+                        bgVariant="expense"
+                        onClick={onCardClick}
+                    />
+                    <SummaryCard
+                        label="Payroll Expenses"
+                        icon={<Receipt size={18} />}
+                        accent="#ef4444"
+                        value={pnlResult?.expPayroll || 0}
                         loading={loading}
                         variants={rise}
                         bgVariant="expense"

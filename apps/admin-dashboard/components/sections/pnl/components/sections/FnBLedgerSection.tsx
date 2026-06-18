@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Store, Percent, Hotel, Wallet } from "lucide-react";
+import { Store, Percent, Hotel, Wallet, Gift } from "lucide-react";
 import { GlobalPnLResult } from "@/lib/pnl-utils";
 import { SummaryCard } from "../shared/SummaryCard";
 
@@ -20,7 +20,7 @@ export function FnBLedgerSection({ pnlResult, loading, rise, onCardClick }: FnBL
         <div className={styles.sectionWrapper}>
             <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>
-                    <Store size={28} /> F&B <span style={{ color: "#788069" }}>Ledger</span>
+                    <Store size={28} /> F&B <span className={styles.sectionTitleHighlight}>Ledger</span>
                 </h2>
                 <p className={styles.sectionSubtitle}>Food & Beverage Breakdown</p>
             </div>
@@ -65,6 +65,15 @@ export function FnBLedgerSection({ pnlResult, loading, rise, onCardClick }: FnBL
                     />
 
                     {/* POS-derived deductions (display only, no click) */}
+                    <SummaryCard
+                        label="Compliment Deductions"
+                        icon={<Gift size={18} />}
+                        accent="#ef4444"
+                        value={pnlResult?.posComplimentValue || 0}
+                        loading={loading}
+                        variants={rise}
+                        onClick={onCardClick}
+                    />
                     <SummaryCard
                         label={`Service Charge (${pnlResult?.posServiceRate || 0}%)`}
                         icon={<Percent size={18} />}

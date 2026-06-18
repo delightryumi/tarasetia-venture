@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import styles from "./superadmin.module.css";
-import { HotelMasterDoc } from "./types";
+import { Loader2 } from "lucide-react";
 
 const ALL_MODULES = [
   { id: "pos", label: "Point of Sales (POS)" },
@@ -11,9 +11,17 @@ const ALL_MODULES = [
   { id: "food-beverage", label: "Food & Beverage" },
   { id: "purchasing", label: "Purchasing" },
   { id: "accounting", label: "Accounting" },
+  { id: "hrd", label: "HRD & Absensi" },
   { id: "cpanel-only", label: "CPanel Only (User & Logo)" },
   { id: "cpanel-full", label: "CPanel Full (Landing Page)" },
+  { id: "pos-self-order", label: "Self-Ordering" },
 ];
+
+const PACKAGE_PRESETS: Record<string, string[]> = {
+  startup: ["pos", "hrd", "cpanel-only"],
+  bisnis: ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"],
+  enterprise: ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-full", "pos-self-order"],
+};
 
 interface HotelFormModalProps {
   isEditing: boolean;
@@ -30,6 +38,8 @@ interface HotelFormModalProps {
   nextDueDate: string; setNextDueDate: (v: string) => void;
   activeModules: string[]; setActiveModules: (v: string[]) => void;
   onSubmit: (e: React.FormEvent) => void;
+  onSendLink?: (e: React.FormEvent) => void;
+  isSendingLink?: boolean;
   onClose: () => void;
 }
 
@@ -46,117 +56,192 @@ export const HotelFormModal: React.FC<HotelFormModalProps> = ({
   billingStatus, setBillingStatus,
   nextDueDate, setNextDueDate,
   activeModules, setActiveModules,
-  onSubmit, onClose,
-}) => (
-  <div className={styles.modalOverlay}>
-    <div className={styles.modal}>
-      <header className={styles.modalHeader}>
-        <h3 className={styles.modalTitle}>
-          {isEditing ? `Edit Konfigurasi: ${name}` : "Registrasi Hotel Baru"}
-        </h3>
-        <button onClick={onClose} className={styles.modalCloseBtn}>&times;</button>
-      </header>
+  onSubmit, onSendLink, isSendingLink, onClose,
+}) => {
+  const [activeTab, setActiveTab] = useState<"link" | "manual">(isEditing ? "manual" : "link");
 
-      <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-        <div className={styles.modalBody}>
-          <div className={styles.formGrid}>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Kode Hotel (ID Unik)</label>
-              <input type="text" required disabled value={hotelCode} placeholder="Auto-generated 5-digit ID" className={styles.formInput} />
-            </div>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Nama Hotel</label>
-              <input type="text" required placeholder="misal: Bumi Anyom Resort" value={name} onChange={e => setName(e.target.value)} className={styles.formInput} />
-            </div>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Domain Utama Custom</label>
-              <input type="text" placeholder="misal: resort.bumianyom.com" value={domain} onChange={e => setDomain(e.target.value)} className={styles.formInput} />
-            </div>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Subdomain CRS Cadangan</label>
-              <input type="text" placeholder="Auto: {kode-hotel}.crs.local" value={subdomain} onChange={e => setSubdomain(e.target.value)} className={styles.formInput} />
-            </div>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Email Kontak</label>
-              <input type="email" placeholder="email@hotel.com" value={email} onChange={e => setEmail(e.target.value)} className={styles.formInput} />
-            </div>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>No. Telepon</label>
-              <input type="text" placeholder="+62..." value={phone} onChange={e => setPhone(e.target.value)} className={styles.formInput} />
-            </div>
+  const handlePlanChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedPlan = e.target.value;
+    setPlan(selectedPlan);
+    if (PACKAGE_PRESETS[selectedPlan]) {
+      setActiveModules(PACKAGE_PRESETS[selectedPlan]);
+    }
+  };
+
+  const handleModuleToggle = (modId: string) => {
+    setActiveModules(prev =>
+      prev.includes(modId) ? prev.filter(id => id !== modId) : [...prev, modId]
+    );
+  };
+
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modal}>
+        <header className={styles.modalHeader}>
+          <h3 className={styles.modalTitle}>
+            {isEditing ? `Edit Konfigurasi: ${name}` : "Registrasi Partner Baru"}
+          </h3>
+          <button onClick={onClose} className={styles.modalCloseBtn}>&times;</button>
+        </header>
+
+        {!isEditing && (
+          <div className={styles.tabsContainer} style={{ padding: "0 24px", marginBottom: 0, backgroundColor: "var(--s-surface-soft)" }}>
+            <button
+              type="button"
+              onClick={() => setActiveTab("link")}
+              className={`${styles.tabBtn} ${activeTab === "link" ? styles.tabBtnActive : ""}`}
+            >
+              Kirim Link Onboarding
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("manual")}
+              className={`${styles.tabBtn} ${activeTab === "manual" ? styles.tabBtnActive : ""}`}
+            >
+              Registrasi Manual
+            </button>
           </div>
+        )}
 
-          <div className={styles.formGridFull}>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Alamat Lengkap</label>
-              <textarea placeholder="Alamat lengkap hotel..." value={address} onChange={e => setAddress(e.target.value)} className={styles.formTextarea} />
+        {activeTab === "link" && !isEditing ? (
+          <form onSubmit={onSendLink} style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+            <div className={styles.modalBody} style={{ padding: "24px 32px" }}>
+              <div style={{ marginBottom: "24px", color: "#6b7280", fontSize: "14px", lineHeight: "1.5" }}>
+                Kirimkan link satu kali pakai ke email klien. Klien akan mengisi sendiri nama usaha, alamat, dan menyetujui kontrak layanan. Akun akan terbuat otomatis setelah klien melengkapi form.
+              </div>
+              <div className={styles.formGrid}>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Email Klien (Tujuan)</label>
+                  <input type="email" required placeholder="email@klien.com" value={email} onChange={e => setEmail(e.target.value)} className={styles.formInput} />
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Paket Berlangganan</label>
+                  <select value={plan} onChange={handlePlanChange} className={styles.formSelect}>
+                    <option value="startup">Startup</option>
+                    <option value="bisnis">Bisnis</option>
+                    <option value="enterprise">Enterprise</option>
+                  </select>
+                </div>
+              </div>
+              
+              {plan && PACKAGE_PRESETS[plan] && (
+                <div style={{ marginTop: "24px" }}>
+                  <label className={styles.formLabel}>Modul yang akan aktif ({plan.toUpperCase()}):</label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "8px" }}>
+                    {PACKAGE_PRESETS[plan].map(mod => (
+                      <span key={mod} style={{ background: "#e0f2fe", color: "#0369a1", padding: "4px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: 500 }}>
+                        {mod}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+            <footer className={styles.modalFooter}>
+              <button type="button" onClick={onClose} className={styles.btnSecondary}>Batal</button>
+              <button type="submit" disabled={isSendingLink || !email || !plan} className={styles.btnPrimary} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {isSendingLink ? <Loader2 size={16} className="animate-spin" /> : null}
+                {isSendingLink ? "Mengirim..." : "Kirim Link via Email"}
+              </button>
+            </footer>
+          </form>
+        ) : (
+          <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+            <div className={styles.modalBody}>
+              <div className={styles.formGrid}>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Kode Partner (ID Unik)</label>
+                  <input type="text" required disabled value={hotelCode} placeholder="Auto-generated 5-digit ID" className={styles.formInput} />
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Nama Partner</label>
+                  <input type="text" required placeholder="misal: Bumi Anyom Resort" value={name} onChange={e => setName(e.target.value)} className={styles.formInput} />
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Domain Utama Custom</label>
+                  <input type="text" placeholder="misal: resort.bumianyom.com" value={domain} onChange={e => setDomain(e.target.value)} className={styles.formInput} />
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Subdomain CRS Cadangan</label>
+                  <input type="text" placeholder="Auto: {kode-hotel}.crs.local" value={subdomain} onChange={e => setSubdomain(e.target.value)} className={styles.formInput} />
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Email Kontak</label>
+                  <input type="email" placeholder="email@hotel.com" value={email} onChange={e => setEmail(e.target.value)} className={styles.formInput} />
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>No. Telepon</label>
+                  <input type="text" placeholder="+62..." value={phone} onChange={e => setPhone(e.target.value)} className={styles.formInput} />
+                </div>
+              </div>
 
-          <div className={styles.modalDivider} />
+              <div className={styles.formGridFull}>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Alamat Lengkap</label>
+                  <textarea placeholder="Alamat lengkap hotel..." value={address} onChange={e => setAddress(e.target.value)} className={styles.formTextarea} />
+                </div>
+              </div>
 
-          <div className={styles.formGrid}>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Siklus Tagihan</label>
-              <select value={cycle} onChange={e => setCycle(e.target.value)} className={styles.formSelect}>
-                <option value="monthly">Bulanan (Monthly)</option>
-                <option value="yearly">Tahunan (Yearly)</option>
-              </select>
-            </div>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Status Tagihan</label>
-              <select value={billingStatus} onChange={e => setBillingStatus(e.target.value)} className={styles.formSelect}>
-                <option value="paid">Paid (Lunas)</option>
-                <option value="grace-period">Grace Period (Masa Tenggang)</option>
-                <option value="overdue">Overdue (Nunggak)</option>
-              </select>
-            </div>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Tanggal Jatuh Tempo Berikutnya</label>
-              <input type="date" required value={nextDueDate} onChange={e => setNextDueDate(e.target.value)} className={styles.formInput} />
-            </div>
-          </div>
+              <div className={styles.sectionDivider} />
 
-          {/* Active Modules */}
-          <div className={styles.formGridFull} style={{ marginTop: "16px", marginBottom: "16px" }}>
-            <div className={styles.formField}>
-              <label className={styles.formLabel} style={{ marginBottom: "12px", fontWeight: "bold" }}>Modul Aktif Tenant</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 rounded-md border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/10">
-                {ALL_MODULES.map((mod) => (
-                  <label key={mod.id} className="flex items-center gap-2.5 cursor-pointer text-xs select-none">
-                    <input
-                      type="checkbox"
-                      checked={activeModules.includes(mod.id)}
-                      onChange={(e) => {
-                        let updated = [...activeModules];
-                        if (e.target.checked) {
-                          updated.push(mod.id);
-                          if (mod.id === "cpanel-only") updated = updated.filter(id => id !== "cpanel-full");
-                          else if (mod.id === "cpanel-full") updated = updated.filter(id => id !== "cpanel-only");
-                        } else {
-                          updated = updated.filter(id => id !== mod.id);
-                        }
-                        setActiveModules(updated);
-                      }}
-                      style={{ width: "16px", height: "16px", cursor: "pointer" }}
-                    />
-                    <span className="text-neutral-700 dark:text-neutral-300 font-medium">{mod.label}</span>
-                  </label>
-                ))}
+              <div className={styles.formGrid}>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Paket Berlangganan</label>
+                  <select value={plan} onChange={handlePlanChange} className={styles.formSelect}>
+                    <option value="startup">Startup</option>
+                    <option value="bisnis">Bisnis</option>
+                    <option value="enterprise">Enterprise</option>
+                    <option value="custom">Custom Plan</option>
+                  </select>
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Siklus Tagihan</label>
+                  <select value={cycle} onChange={e => setCycle(e.target.value)} className={styles.formSelect}>
+                    <option value="monthly">Bulanan</option>
+                    <option value="yearly">Tahunan</option>
+                  </select>
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Status Pembayaran</label>
+                  <select value={billingStatus} onChange={e => setBillingStatus(e.target.value)} className={styles.formSelect}>
+                    <option value="paid">Lunas (Paid)</option>
+                    <option value="unpaid">Belum Lunas (Unpaid)</option>
+                  </select>
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Jatuh Tempo Selanjutnya</label>
+                  <input type="date" value={nextDueDate} onChange={e => setNextDueDate(e.target.value)} className={styles.formInput} />
+                </div>
+              </div>
+
+              <div className={styles.sectionDivider} />
+              
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Hak Akses Modul Aktif</label>
+                <div className={styles.modulesGrid}>
+                  {ALL_MODULES.map(mod => (
+                    <label key={mod.id} className={styles.moduleCheckbox}>
+                      <input
+                        type="checkbox"
+                        checked={activeModules.includes(mod.id)}
+                        onChange={() => handleModuleToggle(mod.id)}
+                      />
+                      <span>{mod.label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div className={styles.modalFooter}>
-          <button type="button" onClick={onClose} className={styles.btnSecondary} style={{ height: "38px", fontSize: "13px", padding: "0 16px" }}>
-            Batal
-          </button>
-          <button type="submit" className={styles.btnPrimary} style={{ height: "38px", fontSize: "13px", padding: "0 16px" }}>
-            Simpan Konfigurasi
-          </button>
-        </div>
-      </form>
+            <footer className={styles.modalFooter}>
+              <button type="button" onClick={onClose} className={styles.btnSecondary}>Batal</button>
+              <button type="submit" className={styles.btnPrimary}>
+                {isEditing ? "Simpan Perubahan" : "Simpan Registrasi"}
+              </button>
+            </footer>
+          </form>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};

@@ -1,5 +1,5 @@
 .container {
-  height: 100vh;
+  height: 100dvh;
   width: 100vw;
   position: relative;
   display: flex;
@@ -131,7 +131,13 @@
 .logoArea {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
+}
+
+@media (min-width: 768px) {
+  .logoArea {
+    gap: 16px;
+  }
 }
 
 .logoImage {
@@ -250,7 +256,7 @@
 }
 
 .dropdownItem:hover {
-  background-color: #f5e9d4;
+  background-color: #f1f5f9;
   color: #181d26;
 }
 
@@ -262,20 +268,20 @@
 .dropdownIcon {
   width: 16px;
   height: 16px;
-  color: #8d7a52;
-  /* gold color */
+  color: #71717a;
+  /* neutral gray */
   transition: color 0.15s ease;
   flex-shrink: 0;
 }
 
 .dropdownItem:hover .dropdownIcon {
-  color: #aa2d00;
-  /* coral color on hover */
+  color: #181d26;
+  /* dark ink on hover */
 }
 
 :global(.dark) .dropdownItem:hover .dropdownIcon {
-  color: #f5e9d4;
-  /* cream gold on hover dark */
+  color: #ffffff;
+  /* white on hover dark */
 }
 
 .dropdownDivider {

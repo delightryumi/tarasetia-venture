@@ -49,12 +49,14 @@ export default function DailyMarketListForm({
   const [fbCategory, setFbCategory] = useState(FB_CATEGORIES[0]);
   const [eventCategory, setEventCategory] = useState(EVENT_CATEGORIES[0]);
   const [notes, setNotes] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'tempo'>('paid');
   const [dmlItems, setDmlItems] = useState<{ item_id: string; qty_ordered: number; unit_price: number; supplier_id: string }[]>([]);
 
   useEffect(() => {
     if (initialData) {
       setNotes(initialData.notes || '');
       setDepartment(initialData.department || DEPARTMENTS[0]);
+      setPaymentStatus(initialData.paymentStatus || 'paid');
       
       const loadedFbCat = initialData.fb_category || FB_CATEGORIES[0];
       let loadedEvCat = initialData.event_category || EVENT_CATEGORIES[0];
@@ -83,6 +85,7 @@ export default function DailyMarketListForm({
       setDepartment(DEPARTMENTS[0]);
       setFbCategory(FB_CATEGORIES[0]);
       setEventCategory(EVENT_CATEGORIES[0]);
+      setPaymentStatus('paid');
       setDmlItems([]);
     }
   }, [initialData, items, suppliers, isOpen]);
@@ -124,6 +127,7 @@ export default function DailyMarketListForm({
       notes,
       order_date: orderDate,
       delivery_date: deliveryDate ? new Date(deliveryDate) : null,
+      paymentStatus,
       ...extraData
     };
 

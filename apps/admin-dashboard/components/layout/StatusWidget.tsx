@@ -60,12 +60,14 @@ export const StatusWidget = () => {
     const fetchPermissions = async () => {
         if (!user?.email) return;
         try {
+            // Fast path: AuthContext sudah konfirmasi superadmin
+            if ((user as any).role === "superadmin") {
+                setIsSuperadmin(true);
+                return;
+            }
             const userDocId = user.email.toLowerCase().replace(/[@.]/g, '_');
-            const isSuper = user.role === "superadmin" || user.email.toLowerCase() === "nexura.management@gmail.com";
             const userSnap = await getDoc(
-                isSuper
-                    ? doc(db, "users_master", userDocId)
-                    : doc(getHotelCollection(db, "users_master"), userDocId)
+                doc(getHotelCollection(db, "users_master"), userDocId)
             );
             if (userSnap.exists()) {
                 const userData = userSnap.data();
@@ -80,6 +82,7 @@ export const StatusWidget = () => {
             console.error("Error fetching permissions in StatusWidget:", err);
         }
     };
+
 
     useEffect(() => {
         fetchPermissions();
@@ -116,48 +119,46 @@ export const StatusWidget = () => {
 
                 {/* Divider line */}
                 {(activeHotelCode || isSuperadmin) && (
-                    <div className={styles.dividerLine} />
+                    <div className={`${styles.dividerLine} hidden sm:block`} />
                 )}
 
                 {/* Hotel Selector / Badge */}
                 {isSuperadmin ? (
-                    <div className={`relative flex items-center h-9 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[13px] transition-all ${styles.hotelBadge}`}>
+                    <div className={`relative hidden sm:flex items-center h-9 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[13px] transition-all ${styles.hotelBadge}`}>
                         <select
                             value={activeHotelCode}
                             onChange={(e) => {
                                 setActiveHotelCode(e.target.value);
                                 window.location.reload();
                             }}
-                            className={`border-none pr-10 py-1 text-[13px] font-medium focus:outline-none focus:ring-0 cursor-pointer appearance-none h-full w-full truncate rounded-[6px] text-left ${styles.hotelSelect}`}
+                            className={`border-none pr-8 sm:pr-10 py-1 text-[11px] sm:text-[13px] font-medium focus:outline-none focus:ring-0 cursor-pointer appearance-none h-full w-full truncate rounded-[6px] text-left ${styles.hotelSelect}`}
                             style={{
                                 backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239297a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
                                 backgroundRepeat: 'no-repeat',
-                                backgroundPosition: 'right 12px center',
+                                backgroundPosition: 'right 8px center',
                                 backgroundSize: '16px',
                                 paddingLeft: '12px',
                             }}
                         >
-                            {hotelsList && hotelsList.length > 0 ? (
+                            {/* Opsi default Superadmin */}
+                            <option value="0">— Superadmin (tidak ada preview) —</option>
+                            {hotelsList && hotelsList.length > 0 && (
                                 hotelsList.map((hotel) => (
                                     <option key={hotel.hotelCode} value={hotel.hotelCode}>
                                         [{hotel.hotelCode}] {hotel.name}
                                     </option>
                                 ))
-                            ) : (
-                                <option value="87241">
-                                    [87241] Bumi Anyom Resort
-                                </option>
                             )}
                         </select>
                     </div>
                 ) : (
                     activeHotelCode && (
                         <div
-                            className={`flex items-center h-9 pr-3 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[13px] font-semibold ${styles.hotelBadge}`}
-                            style={{ paddingLeft: '12px' }}
+                            className={`hidden sm:flex items-center h-9 pr-3 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[11px] sm:text-[13px] font-semibold ${styles.hotelBadge}`}
+                            style={{ paddingLeft: '8px' }}
                         >
-                            <span className="truncate w-full text-left">
-                                [{activeHotelCode}] {activeHotelName || 'Bumi Anyom Resort'}
+                            <span className="truncate w-full text-left" style={{ paddingLeft: '4px' }}>
+                                [{activeHotelCode || "0"}] {activeHotelName || 'Memuat...'}
                             </span>
                         </div>
                     )
@@ -165,7 +166,7 @@ export const StatusWidget = () => {
             </div>
 
             {/* Right Side: Theme Switcher & Hamburger Menu */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3">
                 <ModuleActionButtons
                     showGrid={false}
                     setShowGrid={() => {}}
@@ -220,6 +221,16 @@ export const StatusWidget = () => {
                                                 <span className="text-[8px] text-emerald-500 dark:text-emerald-400 font-bold uppercase tracking-widest">System Live</span>
                                             </div>
                                         </div>
+                                    </div>
+
+                                    {/* Active Hotel Info (Mobile only) */}
+                                    <div className="px-3 py-2 bg-[#f8fafc] dark:bg-white/[0.03] rounded-[10px] mb-2 flex flex-col gap-0.5 border-t border-[var(--f-hairline)] pt-2 mt-1 sm:hidden">
+                                        <span className="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest">Active Hotel</span>
+                                        <span className="text-xs font-semibold text-neutral-850 dark:text-[#f4f4f5] truncate">
+                                            {activeHotelCode === "0" || !activeHotelCode
+                                                ? "Superadmin"
+                                                : `[${activeHotelCode}] ${activeHotelName || '—'}`}
+                                        </span>
                                     </div>
 
                                     {hasAccess('cpanel') && (

@@ -44,7 +44,7 @@ export function GuestListDrawer({ isOpen, onClose, date, roomType, bookings, onA
                     </p>
                     
                     {bookings.map((booking, idx) => (
-                        <div key={idx} className={styles.card} style={{ padding: '16px', gap: '12px', border: '1px solid var(--f-hairline)', backgroundColor: '#fffbf9' }}>
+                        <div key={idx} className={styles.card} style={{ padding: '16px', gap: '12px', border: '1px solid var(--f-hairline)', backgroundColor: 'var(--f-surface-soft)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                 <div className={styles.guestAvatar}>
                                     <img 

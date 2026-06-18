@@ -46,7 +46,7 @@ export const BillingTable: React.FC<BillingTableProps> = ({
       <div className={styles.tableHeader} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
         <h2 className={styles.tableTitle}>
           <Sparkles size={16} style={{ color: "#d9a441" }} />
-          Daftar Billing &amp; Jatuh Tempo Tenant
+          Daftar Billing &amp; Jatuh Tempo Partner
         </h2>
         <button
           onClick={onOpenBulkAlert}
@@ -198,7 +198,7 @@ export const BillingTable: React.FC<BillingTableProps> = ({
             {hotels.length === 0 && (
               <tr>
                 <td colSpan={8} style={{ padding: "32px", textAlign: "center", color: "var(--s-muted)" }}>
-                  Belum ada hotel terdaftar.
+                  Belum ada partner terdaftar.
                 </td>
               </tr>
             )}
@@ -215,12 +215,12 @@ export const BillingTable: React.FC<BillingTableProps> = ({
           <h2 className={styles.tableTitle}>
             {selectedHotelForBilling
               ? `Riwayat Pembayaran & Invoice: ${selectedHotelForBilling.name}`
-              : "Riwayat Pembayaran & Invoice Tenant"}
+              : "Riwayat Pembayaran & Invoice Partner"}
           </h2>
         </div>
 
         <div className="flex items-center gap-3">
-          <span style={{ fontSize: "12px", color: "var(--s-muted)", fontWeight: "500" }}>Pilih Tenant:</span>
+          <span style={{ fontSize: "12px", color: "var(--s-muted)", fontWeight: "500" }}>Pilih Partner:</span>
           <select
             value={selectedHotelForBilling?.hotelCode || ""}
             onChange={(e) => {

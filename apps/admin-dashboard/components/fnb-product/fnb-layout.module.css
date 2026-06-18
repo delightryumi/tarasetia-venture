@@ -1,0 +1,384 @@
+/* fnb-product.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: transparent;
+  min-height: 100%;
+}
+
+/* Page Header */
+.headerWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(120, 128, 105, 0.12);
+}
+
+.headerTitleSec {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  font-family: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 34px;
+  font-weight: 600;
+  color: var(--rich-black);
+  margin: 0;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.subtitle {
+  font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  color: #787466;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Apple Pill-Style Tab Bar */
+.tabsContainer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f5f2eb;
+  padding: 4px;
+  border-radius: 8px;
+  width: fit-content;
+  margin-bottom: 32px;
+  border: 1px solid rgba(120, 128, 105, 0.12);
+}
+
+.tabBtn {
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #787466;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.tabBtn:hover {
+  color: var(--sage, #788069);
+}
+
+.tabActive {
+  color: #ffffff !important;
+  background: var(--sage, #788069) !important; /* Nexura Gold/Peach */
+  box-shadow: 0 4px 10px rgba(120, 128, 105, 0.25);
+}
+
+/* Sub-toggle for Daily vs Monthly view (iOS segmented control style) */
+.toggleContainer {
+  display: flex;
+  align-items: center;
+  background: #f5f2eb;
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid rgba(120, 128, 105, 0.12);
+  width: fit-content;
+}
+
+.toggleBtn {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #787466;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  font-family: "SF Pro Text", sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.toggleBtn:hover {
+  color: var(--sage, #788069);
+}
+
+.toggleActive {
+  color: var(--sage, #788069) !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(120, 128, 105, 0.08);
+}
+
+/* Filter Card Panel */
+.filterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #faf8f5;
+  padding: 16px 24px;
+  border-radius: 18px;
+  border: 1px solid rgba(120, 128, 105, 0.12);
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filterLabel {
+  font-family: "SF Pro Text", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #787466;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filterInput {
+  height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-family: "SF Pro Text", sans-serif;
+  color: var(--rich-black);
+  background: #ffffff;
+  border: 1px solid rgba(120, 128, 105, 0.12);
+  border-radius: 8px; /* Pill input */
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.filterInput:focus {
+  border-color: var(--sage, #788069);
+  box-shadow: 0 0 0 3px rgba(120, 128, 105, 0.15);
+}
+
+.clearBtn {
+  height: 38px;
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(120, 128, 105, 0.12);
+  color: var(--rich-black);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: "SF Pro Text", sans-serif;
+}
+
+.clearBtn:hover {
+  background: #f5f2eb;
+  border-color: var(--sage, #788069);
+}
+
+/* ── POS/Apple Signature Layout ── */
+.signatureLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  margin-bottom: 48px;
+}
+
+/* ── Mobile Responsive Enhancements ── */
+@media (max-width: 768px) {
+  .tabsContainer {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding: 6px;
+    border-radius: 12px;
+    scrollbar-width: none;
+  }
+  .tabsContainer::-webkit-scrollbar {
+    display: none;
+  }
+  .tabBtn {
+    padding: 6px 12px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+}
+
+/* ── Dark Mode Overrides ── */
+:global(.dark) .headerWrapper {
+  border-bottom-color: rgba(143, 134, 119, 0.12);
+}
+
+:global(.dark) .title {
+  color: #faf8f5;
+}
+
+:global(.dark) .subtitle {
+  color: #aab4a2;
+}
+
+:global(.dark) .tabsContainer {
+  background: rgba(224, 209, 185, 0.04);
+  border-color: rgba(143, 134, 119, 0.12);
+}
+
+:global(.dark) .tabBtn {
+  color: #aab4a2;
+}
+
+:global(.dark) .tabBtn:hover {
+  color: #ffffff;
+}
+
+:global(.dark) .tabActive {
+  background: var(--sage, #788069) !important;
+  color: #151513 !important;
+  box-shadow: 0 4px 10px rgba(120, 128, 105, 0.25);
+}
+
+:global(.dark) .toggleContainer {
+  background: rgba(224, 209, 185, 0.04);
+  border-color: rgba(143, 134, 119, 0.12);
+}
+
+:global(.dark) .toggleBtn {
+  color: #aab4a2;
+}
+
+:global(.dark) .toggleBtn:hover {
+  color: #ffffff;
+}
+
+:global(.dark) .toggleActive {
+  background: rgba(224, 209, 185, 0.1) !important;
+  color: var(--sage, #788069) !important;
+}
+
+:global(.dark) .filterBar {
+  background: rgba(224, 209, 185, 0.02);
+  border-color: rgba(143, 134, 119, 0.12);
+}
+
+:global(.dark) .filterLabel {
+  color: #8d9884;
+}
+
+:global(.dark) .filterInput,
+:global(.dark) .clearBtn,
+:global(.dark) .datepickerTrigger {
+  background: #1e1e1e;
+  border-color: rgba(143, 134, 119, 0.12);
+  color: #e4e4e7;
+}
+
+:global(.dark) .filterInput:focus,
+:global(.dark) .datepickerTrigger:hover,
+:global(.dark) .clearBtn:hover {
+  border-color: var(--sage, #788069);
+  background: #262626;
+}
+
+:global(.dark) .forestCard {
+  background: #1e1e1e;
+  border-color: rgba(143, 134, 119, 0.12);
+}
+
+:global(.dark) .canvasCard {
+  background: #262626;
+  border-color: rgba(143, 134, 119, 0.12);
+}
+
+:global(.dark) .canvasTitle {
+  color: #faf8f5;
+  border-bottom-color: rgba(143, 134, 119, 0.12);
+}
+
+:global(.dark) .statCard {
+  background: #262626;
+  border-color: rgba(143, 134, 119, 0.12);
+  color: #faf8f5;
+}
+
+:global(.dark) .statCard:hover {
+  border-color: var(--sage, #788069);
+}
+
+:global(.dark) .statLabel {
+  color: #8d9884;
+}
+
+:global(.dark) .statIcon {
+  color: #faf8f5;
+}
+
+:global(.dark) .softCard {
+  background: #1e1e1e;
+  color: #faf8f5;
+  border-color: rgba(143, 134, 119, 0.12);
+}
+
+:global(.dark) .softCard .statIcon {
+  color: #aab4a2;
+}
+
+:global(.dark) .vsCard {
+  background: #262626;
+  border-color: rgba(143, 134, 119, 0.12);
+}
+
+:global(.dark) .vsCard:hover {
+  border-color: var(--sage, #788069);
+}
+
+:global(.dark) .vsCardTitle {
+  color: #faf8f5;
+}
+
+:global(.dark) .vsValues {
+  border-top-color: rgba(143, 134, 119, 0.12);
+  border-bottom-color: rgba(143, 134, 119, 0.12);
+}
+
+:global(.dark) .vsVal {
+  color: #faf8f5;
+}
+
+:global(.dark) .vsProgressVal {
+  color: #faf8f5;
+}
+
+:global(.dark) .vsProgressBarBg {
+  background: #1e1e1e;
+}
+
+:global(.dark) .emptyBox {
+  background: #1e1e1e;
+  border-color: rgba(143, 134, 119, 0.12);
+  color: #aab4a2;
+}
+
+:global(.dark) .datepickerDropdown {
+  background-color: #262626;
+  border-color: rgba(143, 134, 119, 0.12);
+}
+
+:global(.dark) .datepickerHeader {
+  color: #8d9884;
+}

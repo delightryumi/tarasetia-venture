@@ -36,11 +36,6 @@ export const NAVBAR_ITEMS: NavItem[] = [
     icon: <Archive className="h-4 w-4" />,
   },
   {
-    title: 'Waiting List',
-    path: '/waiting-list',
-    icon: <ShoppingCart className="h-4 w-4" />,
-  },
-  {
     title: 'Settings',
     path: '/settings',
     icon: <Settings className="h-4 w-4" />,

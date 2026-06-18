@@ -1,0 +1,63 @@
+/* _badges.css */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badgeHadir   { background: #dcfce7; color: #16a34a; }
+.badgeTerlambat { background: #fef3c7; color: #d97706; }
+.badgeAlpa    { background: #fee2e2; color: #dc2626; }
+.badgeIzin    { background: #dbeafe; color: #2563eb; }
+.badgeSakit   { background: #f3e8ff; color: #9333ea; }
+.badgeCuti    { background: #e0f2fe; color: #0284c7; }
+.badgePending { background: #fef3c7; color: #d97706; }
+
+/* Badges shift & statuses (Dark mode) */
+.badgeShift {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+:global(.dark) .badgeShift {
+  background: rgba(3, 105, 161, 0.15) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.2) !important;
+}
+
+:global(.dark) .badgeHadir {
+  background: rgba(22, 163, 74, 0.15) !important;
+  color: #4ade80 !important;
+}
+:global(.dark) .badgeTerlambat {
+  background: rgba(217, 119, 6, 0.15) !important;
+  color: #fbbf24 !important;
+}
+:global(.dark) .badgeAlpa {
+  background: rgba(220, 38, 38, 0.15) !important;
+  color: #f87171 !important;
+}
+:global(.dark) .badgeIzin {
+  background: rgba(37, 99, 235, 0.15) !important;
+  color: #60a5fa !important;
+}
+:global(.dark) .badgeSakit {
+  background: rgba(147, 51, 234, 0.15) !important;
+  color: #c084fc !important;
+}
+:global(.dark) .badgeCuti {
+  background: rgba(2, 132, 199, 0.15) !important;
+  color: #38bdf8 !important;
+}
+:global(.dark) .badgePending {
+  background: rgba(217, 119, 6, 0.15) !important;
+  color: #fbbf24 !important;
+}

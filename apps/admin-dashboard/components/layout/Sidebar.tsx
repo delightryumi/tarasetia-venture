@@ -13,7 +13,8 @@ import {
     BarChart2, FileImage, Home, Layout, Coffee,
     Info, Grid, Settings, LogOut, FileText,
     MapPin, Gift, Package, Search, ChevronLeft, Menu,
-    TrendingUp, PieChart, Users, ShoppingCart, ClipboardList
+    TrendingUp, PieChart, Users, ShoppingCart, ClipboardList, Camera,
+    Activity, BookOpen
 } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
@@ -21,13 +22,12 @@ import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import React, { useEffect, useRef, useState } from "react";
 
-/* ── Types ── */
 export type SectionType =
-    | "overview" | "logo" | "hero" | "room-type"
+    | "overview" | "logo" | "hero" | "room-type" | "digital-checkin"
     | "about" | "gallery" | "footer"
     | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "pnl" | "users" | "superadmin"
     | "purchasing" | "store-requisition" | "purchase-requisition" | "daily-market-list" | "stock-opname" | "items" | "suppliers"
-    | "purchase-order" | "food-beverage-product";
+    | "purchase-order" | "food-beverage-product" | "food-beverage-realtime" | "hrd" | "statements";
 
 interface SidebarProps {
     isCollapsed: boolean;
@@ -44,93 +44,38 @@ function DockNavItem({
     icon,
     label,
     isActive,
-    mouseY,
     onClick,
 }: {
     icon: React.ReactNode;
     label: string;
     isActive: boolean;
-    mouseY: MotionValue<number>;
+    mouseY?: MotionValue<number>;
     onClick: () => void;
 }) {
-    const ref = useRef<HTMLDivElement>(null);
-    const [hovered, setHovered] = useState(false);
-    const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
-
-    const distanceFromMouse = useTransform(mouseY, (val) => {
-        const r = ref.current?.getBoundingClientRect();
-        if (!r) return DISTANCE;
-        return val - r.y - r.height / 2;
-    });
-
-    const sizeRaw = useTransform(
-        distanceFromMouse,
-        [-DISTANCE, 0, DISTANCE],
-        [BASE_SIZE, MAGNIFIED_SIZE, BASE_SIZE]
-    );
-    const size = useSpring(sizeRaw, DOCK_SPRING);
-
-    const handleHoverStart = () => {
-        if (ref.current) {
-            const r = ref.current.getBoundingClientRect();
-            setTooltipPos({ top: r.top + r.height / 2, left: r.right + 12 });
-        }
-        setHovered(true);
-    };
-
     return (
-        <motion.div
-            ref={ref}
-            style={{ width: size, height: size }}
-            onHoverStart={handleHoverStart}
-            onHoverEnd={() => setHovered(false)}
+        <button
             onClick={onClick}
-            tabIndex={0}
-            role="button"
-            className="relative inline-flex items-center justify-center cursor-pointer outline-none"
+            className={`
+                w-[76px] h-[76px] px-1 rounded-[8px] flex flex-col items-center justify-center gap-1
+                transition-all duration-200 border border-transparent outline-none
+                ${isActive
+                    ? "bg-[var(--sidebar-link-active-bg)] text-[var(--sidebar-link-active-text)] shadow-none"
+                    : "text-[var(--sidebar-text)]/60 hover:text-[var(--sidebar-link-hover-text)] hover:bg-[var(--sidebar-link-hover-bg)] hover:border-[var(--sidebar-link-hover-border)]"
+                }
+            `}
         >
-            {/* The square item box */}
-            <div
-                className={`
-                    w-full h-full rounded-[10px] flex items-center justify-center
-                    border transition-colors duration-200
-                    ${isActive
-                        ? "bg-[var(--peach)] border-[var(--peach)] text-white shadow-[0_4px_16px_rgba(141,122,82,0.25)]"
-                        : "text-[var(--rich-black)]/60 dark:text-white/60 hover:text-[var(--rich-black)] dark:hover:text-white hover:border-[var(--peach)]/25"
-                    }
-                `}
-                style={isActive ? undefined : {
-                    backgroundColor: "rgba(141, 122, 82, 0.04)",
-                    borderColor: "rgba(141, 122, 82, 0.08)",
-                }}
-            >
+            <div className="sidebar-dock-icon">
                 {icon}
             </div>
-
-            {/* Floating label — fixed position to escape scroll clipping */}
-            <AnimatePresence>
-                {hovered && (
-                    <motion.div
-                        initial={{ opacity: 0, x: -4 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -4 }}
-                        transition={{ duration: 0.15 }}
-                        className="px-2.5 py-1 rounded-md border text-white text-xs font-semibold whitespace-nowrap pointer-events-none"
-                        style={{
-                            position: "fixed",
-                            top: tooltipPos.top,
-                            left: tooltipPos.left,
-                            transform: "translateY(-50%)",
-                            zIndex: 9999,
-                            backgroundColor: "var(--sage, #788069)",
-                            borderColor: "rgba(255,255,255,0.15)",
-                        }}
-                    >
-                        {label}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </motion.div>
+            <span 
+                className="text-[9px] text-center font-bold tracking-tight leading-tight w-full truncate block"
+                style={{
+                    color: isActive ? "var(--sidebar-link-active-text)" : "var(--sidebar-text)",
+                }}
+            >
+                {label}
+            </span>
+        </button>
     );
 }
 
@@ -156,6 +101,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         activeSection = "purchase-order";
     } else if (pathParts[1] === "food-beverage" && pathParts[2] === "product") {
         activeSection = "food-beverage-product";
+    } else if (pathParts[1] === "food-beverage" && pathParts[2] === "realtime") {
+        activeSection = "food-beverage-realtime";
     } else {
         activeSection = (pathParts[1] as SectionType) || "overview";
     }
@@ -183,7 +130,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const [activeModules, setActiveModules] = useState<string[] | null>(null);
 
     useEffect(() => {
-        if (!activeHotelCode || isSuperadmin) {
+        if (!activeHotelCode) {
             setActiveModules(null);
             return;
         }
@@ -207,7 +154,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     if (plan === 'basic') {
                         modules = ['pos', 'cpanel-only'];
                     } else {
-                        modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'cpanel-full'];
+                        modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'hrd', 'cpanel-full'];
                     }
                 }
                 setActiveModules(modules);
@@ -256,10 +203,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     const allNavItems: { id: SectionType; label: string; icon: React.ReactNode }[] = [
         { id: "overview", label: "Overview", icon: <BarChart2 size={18} strokeWidth={2} /> },
+        { id: "digital-checkin", label: "Digital Check-in", icon: <Camera size={18} strokeWidth={2} /> },
         { id: "forecast", label: "Forecast", icon: <TrendingUp size={18} strokeWidth={2} /> },
         { id: "pos", label: "POS Terminal", icon: <ShoppingCart size={18} strokeWidth={2} /> },
         { id: "invoice", label: "Create Invoice", icon: <FileText size={18} strokeWidth={2} /> },
         { id: "pnl", label: "PNL Statement", icon: <PieChart size={18} strokeWidth={2} /> },
+        { id: "statements", label: "Laporan Keuangan", icon: <BookOpen size={18} strokeWidth={2} /> },
         { id: "logo", label: "Logo (Light/Dark)", icon: <FileImage size={18} strokeWidth={2} /> },
         { id: "hero", label: "Hero Management", icon: <Home size={18} strokeWidth={2} /> },
         { id: "room-type", label: "Room Categories", icon: <Layout size={18} strokeWidth={2} /> },
@@ -272,6 +221,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: "packages", label: "Custom Packages", icon: <Package size={18} strokeWidth={2} /> },
         { id: "seo", label: "SEO & Metadata", icon: <Search size={18} strokeWidth={2} /> },
         { id: "users", label: "User Management", icon: <Users size={18} strokeWidth={2} /> },
+        { id: "hrd", label: "HRD & Absensi", icon: <ClipboardList size={18} strokeWidth={2} /> },
 
         { id: "purchasing", label: "Dasbor", icon: <Home size={18} strokeWidth={2} /> },
         { id: "store-requisition", label: "Store Requisition", icon: <FileText size={18} strokeWidth={2} /> },
@@ -282,6 +232,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: "suppliers", label: "Supplier", icon: <Users size={18} strokeWidth={2} /> },
         { id: "purchase-order", label: "Purchase Order", icon: <ClipboardList size={18} strokeWidth={2} /> },
         { id: "food-beverage-product", label: "F&B Product", icon: <Coffee size={18} strokeWidth={2} /> },
+        { id: "food-beverage-realtime", label: "POS Real-time", icon: <Activity size={18} strokeWidth={2} /> },
     ];
 
     const [activeModule, setActiveModule] = useState<string>("front-office");
@@ -291,6 +242,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             if (pathname.startsWith('/purchasing')) {
                 localStorage.setItem("active_module", "purchasing");
                 setActiveModule("purchasing");
+                return;
+            }
+            if (pathname.startsWith('/hrd')) {
+                localStorage.setItem("active_module", "hrd");
+                setActiveModule("hrd");
                 return;
             }
             if (pathname.startsWith('/front-office')) {
@@ -338,7 +294,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 "accounting": "module_accounting",
                 "food-beverage": "module_food_beverage",
                 "purchasing": "module_purchasing",
-                "cpanel": "module_cpanel"
+                "cpanel": "module_cpanel",
+                "hrd": "module_hrd"
             };
             const moduleKey = moduleMap[activeModule];
             if (moduleKey && userPermissions[moduleKey] === false) {
@@ -348,13 +305,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         let items = allNavItems;
         if (activeModule === "front-office") {
-            items = allNavItems.filter(item => ["overview", "forecast", "invoice", "purchase-order"].includes(item.id));
+            items = allNavItems.filter(item => ["overview", "digital-checkin", "forecast", "invoice", "purchase-order"].includes(item.id));
         } else if (activeModule === "housekeeping") {
             items = allNavItems.filter(item => ["overview", "forecast", "purchase-order"].includes(item.id));
         } else if (activeModule === "accounting") {
-            items = allNavItems.filter(item => ["pnl", "purchase-order"].includes(item.id));
+            items = allNavItems.filter(item => ["pnl", "statements", "purchase-order"].includes(item.id));
         } else if (activeModule === "food-beverage") {
-            items = allNavItems.filter(item => ["food-beverage-product"].includes(item.id));
+            items = allNavItems.filter(item => ["food-beverage-product", "food-beverage-realtime", "purchase-order"].includes(item.id));
+        } else if (activeModule === "hrd") {
+            items = allNavItems.filter(item => ["hrd"].includes(item.id));
         } else if (activeModule === "purchasing") {
             items = allNavItems.filter(item => [
                 "purchasing", "store-requisition", "purchase-requisition", 
@@ -460,13 +419,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         aria-label="Navigation dock"
                     >
                         <DockNavItem
-                            icon={<Grid size={18} className="text-[var(--peach)]" />}
+                            icon={<Grid size={18} className="text-[var(--sidebar-link-active-bg)]" />}
                             label="Pilih Modul"
                             isActive={false}
                             mouseY={mouseY}
                             onClick={() => router.push('/select-module')}
                         />
-                        <div className="w-8 h-px my-1" style={{ backgroundColor: "rgba(141, 122, 82, 0.15)" }} />
+                        <div className="w-8 h-px my-1" style={{ backgroundColor: "var(--sidebar-border)" }} />
 
                         {navItems.map((item) => (
                             <DockNavItem
@@ -484,6 +443,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                         router.push(`/${activeModule}/purchase-order`);
                                     } else if (item.id === "food-beverage-product") {
                                         router.push(`/food-beverage/product?module=food-beverage`);
+                                    } else if (item.id === "food-beverage-realtime") {
+                                        router.push(`/food-beverage/realtime?module=food-beverage`);
+                                    } else if (item.id === "statements") {
+                                        router.push(`/statements?module=accounting`);
                                     } else {
                                         router.push(`/${item.id}`);
                                     }
@@ -494,7 +457,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                         {/* ── Divider ── */}
                         {activeModule !== "cpanel" && (
-                            <div className="w-8 h-px my-1" style={{ backgroundColor: "rgba(141, 122, 82, 0.15)" }} />
+                            <div className="w-8 h-px my-1" style={{ backgroundColor: "var(--sidebar-border)" }} />
                         )}
  
                         {/* ── Sign Out inside the dock ── */}
@@ -515,48 +478,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <motion.button
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        whileHover={{ scale: 1.03, backgroundColor: "rgba(141, 122, 82, 0.15)", color: "var(--peach)" }}
                         whileTap={{ scale: 0.97 }}
-                        className="nav-item border border-[var(--peach)]/30 text-[var(--peach)] mb-4"
+                        className="nav-item select-module-btn"
                         onClick={() => router.push('/select-module')}
                     >
-                        <Grid size={18} className="text-[var(--peach)]" />
-                        <span className="nav-label font-bold text-[var(--peach)]">Pilih Modul</span>
+                        <Grid size={18} className="nav-gold-icon" />
+                        <span className="nav-label font-bold nav-gold-label">Pilih Modul</span>
                     </motion.button>
 
                     {navItems.map((item) => (
                         <motion.button
                             key={item.id}
                             initial={{ opacity: 0, y: 10 }}
-                            animate={{
-                                opacity: 1,
-                                y: 0,
-                                backgroundColor:
-                                    activeSection === item.id
-                                        ? "var(--peach)"
-                                        : "rgba(141, 122, 82, 0.04)",
-                                color:
-                                    activeSection === item.id
-                                        ? "#ffffff"
-                                        : "rgba(33, 33, 33, 0.6)",
-                                boxShadow:
-                                    activeSection === item.id
-                                        ? "0 8px 20px rgba(141, 122, 82, 0.25)"
-                                        : "none",
-                            }}
-                            whileHover={{
-                                scale: 1.03,
-                                backgroundColor:
-                                    activeSection === item.id
-                                        ? "var(--peach)"
-                                        : "rgba(141, 122, 82, 0.08)",
-                                color:
-                                    activeSection === item.id
-                                        ? "#ffffff"
-                                        : "var(--rich-black)",
-                            }}
+                            animate={{ opacity: 1, y: 0 }}
                             whileTap={{ scale: 0.97 }}
-                            transition={{ type: "spring", stiffness: 300, damping: 24 }}
+                            transition={{ duration: 0.2 }}
                             className={`nav-item ${activeSection === item.id ? "active" : ""}`}
                             onClick={() => {
                                 if (item.id === "purchasing") {
@@ -567,6 +503,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     router.push(`/${activeModule}/purchase-order`);
                                 } else if (item.id === "food-beverage-product") {
                                     router.push(`/food-beverage/product?module=food-beverage`);
+                                } else if (item.id === "food-beverage-realtime") {
+                                    router.push(`/food-beverage/realtime?module=food-beverage`);
+                                } else if (item.id === "statements") {
+                                    router.push(`/statements?module=accounting`);
                                 } else {
                                     router.push(`/${item.id}`);
                                 }
@@ -574,13 +514,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             }}
                         >
                             {item.icon}
-                            <motion.span
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="nav-label truncate"
-                            >
+                            <span className="nav-label truncate">
                                 {item.label}
-                            </motion.span>
+                            </span>
                         </motion.button>
                     ))}
                 </nav>
@@ -589,15 +525,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Footer / Logout — only shown in expanded mode */}
             {!isCollapsed && activeModule !== "cpanel" && (
                 <div className="sidebar-footer">
-                    <motion.button
-                        whileHover={{ scale: 1.05, backgroundColor: "rgba(220, 38, 38, 0.1)", color: "#dc2626" }}
-                        whileTap={{ scale: 0.95 }}
-                        className="logout-button hover:border-red-500/30"
+                    <button
+                        className="logout-button"
                         onClick={handleLogout}
                     >
-                        <LogOut size={20} />
+                        <LogOut size={18} />
                         <span>Keluar</span>
-                    </motion.button>
+                    </button>
                 </div>
             )}
         </motion.aside>

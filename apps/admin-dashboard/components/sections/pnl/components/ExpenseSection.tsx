@@ -247,10 +247,16 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                         <label className={s.label}>Amount (IDR)</label>
                         <input
                           type="number"
+                          min="0"
+                          onWheel={(e) => e.currentTarget.blur()}
+                          onKeyDown={(e) => {
+                            if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
+                              e.preventDefault();
+                            }
+                          }}
                           placeholder="0"
                           className={s.input}
                           value={row.amount || ""}
-                          onWheel={e => e.currentTarget.blur()}
                           onChange={e => patchRow(idx, { amount: Number(e.target.value) })}
                         />
                       </div>
@@ -280,7 +286,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
 
                 <div className={s.formActions}>
                   <button className={s.addRowBtn} onClick={addRow}>
-                    <Plus size={14} style={{ color: "var(--es-sage)" }} />
+                    <Plus size={14} style={{ color: "var(--sage)" }} />
                     Add Another Row
                   </button>
 
@@ -418,9 +424,15 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                             {isEditing ? (
                               <input
                                 type="number"
+                                min="0"
+                                onWheel={(e) => e.currentTarget.blur()}
+                                onKeyDown={(e) => {
+                                  if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
+                                    e.preventDefault();
+                                  }
+                                }}
                                 className={`${s.cellInput} ${s.cellInputRight}`}
                                 value={editData?.amount || ""}
-                                onWheel={e => e.currentTarget.blur()}
                                 onChange={e => setEditData(d => d ? { ...d, amount: Number(e.target.value) } : null)}
                               />
                             ) : (

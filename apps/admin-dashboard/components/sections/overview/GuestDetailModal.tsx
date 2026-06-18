@@ -27,7 +27,18 @@ interface GuestDetailModalProps {
     onSave?: () => void;
 }
 
-
+const cleanUndefined = (obj: any): any => {
+    if (!obj || typeof obj !== "object") return obj;
+    const cleaned = { ...obj };
+    Object.keys(cleaned).forEach(key => {
+        if (cleaned[key] === undefined) {
+            delete cleaned[key];
+        } else if (cleaned[key] && typeof cleaned[key] === "object" && !cleaned[key].toDate) {
+            cleaned[key] = cleanUndefined(cleaned[key]);
+        }
+    });
+    return cleaned;
+};
 
 export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, onSave }: GuestDetailModalProps) {
     const { user } = useAuth();
@@ -223,11 +234,12 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 const dateStr = entry.effectiveDate || entry.checkInDate;
                 const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${dateStr}`);
                 const docSnap = await getDoc(docRef);
+                const cleanedEntry = cleanUndefined(entry);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
-                    await updateDoc(docRef, { entries: [...entries, entry], date: dateStr });
+                    await updateDoc(docRef, { entries: [...entries, cleanedEntry], date: dateStr });
                 } else {
-                    await setDoc(docRef, { entries: [entry], date: dateStr });
+                    await setDoc(docRef, { entries: [cleanedEntry], date: dateStr });
                 }
             }
 
@@ -262,9 +274,9 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                              e.checkOutDate === guest.checkOutDate && 
                              e.roomNumber === guest.roomNumber);
                         if (isMatch) {
-                            return { ...e, status: "VOID", paymentStatus: "VOID" };
+                            return cleanUndefined({ ...e, status: "VOID", paymentStatus: "VOID" });
                         }
-                        return e;
+                        return cleanUndefined(e);
                     });
                     await updateDoc(docRef, { entries: mapped, date: d });
                 }
@@ -309,15 +321,15 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                              e.checkOutDate === guest.checkOutDate && 
                              e.roomNumber === guest.roomNumber);
                         if (isMatch) {
-                            return { 
+                            return cleanUndefined({ 
                                 ...e, 
                                 status: "CANCELLED", 
                                 paymentStatus: "CANCELLED",
                                 cancelledAt: todayStr,
                                 cancelledBy: cancelledByVal
-                            };
+                            });
                         }
-                        return e;
+                        return cleanUndefined(e);
                     });
                     await updateDoc(docRef, { entries: mapped, date: d });
                 }

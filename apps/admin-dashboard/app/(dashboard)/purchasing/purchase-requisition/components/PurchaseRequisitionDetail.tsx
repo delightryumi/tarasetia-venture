@@ -16,6 +16,7 @@ interface PurchaseRequisitionDetailProps {
   onReceive: () => void;
   onDelete: () => void;
   onPrint: () => void;
+  onUpdatePaymentStatus?: (itemIndex: number, status: string) => void;
 }
 
 const slideInRight = {
@@ -31,7 +32,8 @@ export default function PurchaseRequisitionDetail({
   onApprove,
   onReceive,
   onDelete,
-  onPrint
+  onPrint,
+  onUpdatePaymentStatus
 }: PurchaseRequisitionDetailProps) {
   return (
     <AnimatePresence>
@@ -93,12 +95,40 @@ export default function PurchaseRequisitionDetail({
 
               <div className={s.detailItems}>
                 {(selectedPr.items ?? []).map((item: any, idx: number) => (
-                  <div key={idx} className={s.detailItem}>
-                    <div>
+                  <div key={idx} className={s.detailItem} style={{ alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <div className={s.detailItemName}>{item.name}</div>
                       <div className={s.detailItemNote}>{item.supplier_name}</div>
+                      <div style={{ marginTop: 6 }}>
+                        <select
+                          value={item.paymentStatus || 'paid'}
+                          onChange={(e) => onUpdatePaymentStatus && onUpdatePaymentStatus(idx, e.target.value)}
+                          className={s.filterSelect}
+                          style={{ 
+                            padding: '1px 6px', 
+                            fontSize: '11px', 
+                            height: '22px', 
+                            minWidth: '85px', 
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            borderRadius: '4px',
+                            background: (item.paymentStatus || 'paid') === 'tempo' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                            color: (item.paymentStatus || 'paid') === 'tempo' ? '#ef4444' : '#10b981',
+                            border: `1px solid ${(item.paymentStatus || 'paid') === 'tempo' ? '#ef4444' : '#10b981'}`,
+                            outline: 'none'
+                          }}
+                        >
+                          <option value="paid" style={{ color: '#10b981', background: 'var(--p-canvas)' }}>Paid</option>
+                          <option value="tempo" style={{ color: '#ef4444', background: 'var(--p-canvas)' }}>Tempo</option>
+                        </select>
+                      </div>
                     </div>
-                    <div className={s.detailItemQty}>{item.qty} {item.unit} · {formatRupiah(item.estimated_price)}</div>
+                    <div className={s.detailItemQty}>
+                      {item.qty} {item.unit} · {formatRupiah(item.estimated_price)}
+                      <div style={{ fontSize: 11, color: 'var(--p-muted)', marginTop: 2 }}>
+                        Total: {formatRupiah(item.total || (item.qty * (item.estimated_price || 0)))}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

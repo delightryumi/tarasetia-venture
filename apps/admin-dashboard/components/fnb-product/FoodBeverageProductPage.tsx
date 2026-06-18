@@ -5,7 +5,10 @@ import { Plus, Coffee, Store, Percent, Hotel, Wallet, Activity, Calendar, Chevro
 import { motion, AnimatePresence } from 'framer-motion';
 import { PButton } from '@/components/purchasing/ui/PButton';
 import s from '@/app/(dashboard)/purchasing/shared-page.module.css';
-import ds from './fnb-product.module.css';
+import layoutDs from './fnb-layout.module.css';
+import datepickerDs from './fnb-datepicker.module.css';
+import cardsDs from './fnb-cards.module.css';
+const ds = { ...layoutDs, ...datepickerDs, ...cardsDs };
 import '@/components/purchasing/shell/purchasing-tokens.css';
 
 // PNL Components + Hooks
@@ -18,9 +21,8 @@ import { processPnLData } from '@/lib/pnl-logic';
 // Subcomponents
 import FoodBeverageLedgerTab from './FoodBeverageLedgerTab';
 import FoodBeveragePerformanceTab from './FoodBeveragePerformanceTab';
-import { FnbPurchaseOrderSection, FnbPurchaseOrderSectionRef } from './FnbPurchaseOrderSection';
 
-const TABS = ['ledger', 'performance', 'dml', 'sr', 'pr'] as const;
+const TABS = ['ledger', 'performance'] as const;
 type Tab = typeof TABS[number];
 
 const fadeUp = {
@@ -58,9 +60,6 @@ export default function FoodBeverageProductPage() {
   
   // ── Toggle View: Daily vs Monthly ──
   const [viewScale, setViewScale] = useState<'daily' | 'monthly'>('monthly');
-
-  // Ref for the PO Section
-  const poSectionRef = useRef<FnbPurchaseOrderSectionRef>(null);
 
   // ── Custom Picker States ──
   const [showMonthPicker, setShowMonthPicker] = useState(false);
@@ -304,6 +303,7 @@ export default function FoodBeverageProductPage() {
   const tabLabels: Record<Tab, string> = {
     'ledger': 'F&B Ledger',
     'performance': 'F&B Performance',
+    'realtime': 'POS Real-time',
     'dml': 'Daily Market List',
     'sr': 'Store Requisition',
     'pr': 'Purchase Requisition',
@@ -312,6 +312,7 @@ export default function FoodBeverageProductPage() {
   const tabDescriptions: Record<Tab, string> = {
     'ledger': 'Analisis dan pemetaan data laporan pendapatan F&B serta potongan pajak/layanan.',
     'performance': 'Perbandingan performa penjualan makanan/minuman dengan pengeluarannya.',
+    'realtime': 'Monitor status denah meja aktif dan pesanan masuk POS secara digital & real-time.',
     'dml': 'Buat dan pantau daily market list untuk kebutuhan operasional dapur/restoran.',
     'sr': 'Ajukan permintaan stok bahan/barang dari gudang utama ke outlet F&B.',
     'pr': 'Ajukan permintaan pengadaan bahan baku ke vendor atau pihak ketiga eksternal.',
@@ -340,22 +341,24 @@ export default function FoodBeverageProductPage() {
 
         {/* Tab switcher (Apple Pill Style) */}
         <div className={ds.tabsContainer}>
-          {TABS.map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`${ds.tabBtn} ${activeTab === tab ? ds.tabActive : ''}`}
+            <button 
+              className={`${ds.tabBtn} ${activeTab === 'ledger' ? ds.tabActive : ''}`}
+              onClick={() => setActiveTab('ledger')}
             >
-              {tab === 'ledger' && <Store size={14} />}
-              {tab === 'performance' && <Activity size={14} />}
-              {tabLabels[tab]}
+              <Store size={14} /> Ledger Overview
             </button>
-          ))}
-        </div>
+            <button 
+              className={`${ds.tabBtn} ${activeTab === 'performance' ? ds.tabActive : ''}`}
+              onClick={() => setActiveTab('performance')}
+            >
+              <Activity size={14} /> Category Performance
+            </button>
+          </div>
 
         {/* Filter Bar (Dynamic depending on active tab) */}
-        <div className={ds.filterBar}>
-          {['ledger', 'performance'].includes(activeTab) ? (
+        {activeTab !== 'realtime' && (
+          <div className={ds.filterBar}>
+            {['ledger', 'performance'].includes(activeTab) ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: 16 }}>
               {/* Daily / Monthly Toggle */}
               <div className={ds.toggleContainer}>
@@ -637,6 +640,7 @@ export default function FoodBeverageProductPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Tab Contents */}
         <div className={ds.signatureLayout}>
@@ -655,14 +659,6 @@ export default function FoodBeverageProductPage() {
               loading={pnlLoading}
               onCardClick={drillDown.handleCardClick}
               viewScale={viewScale}
-            />
-          )}
-
-          {['dml', 'sr', 'pr'].includes(activeTab) && (
-            <FnbPurchaseOrderSection
-              ref={poSectionRef}
-              activeTab={activeTab as 'dml' | 'sr' | 'pr'}
-              dateFilter={dateFilter}
             />
           )}
         </div>

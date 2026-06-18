@@ -77,7 +77,7 @@
 }
 
 .titleAccent {
-  color: #788069;
+  color: var(--sage, #788069);
 }
 
 .subtitle {
@@ -641,7 +641,7 @@
 
 /* Settlement CTA box */
 .settlementCard {
-  background: #1A1C14;
+  background: var(--sidebar-link-active-bg, #181d26);
   padding: 32px;
   border-radius: 16px;
   text-align: center;
@@ -652,7 +652,7 @@
 .settlementMeta {
   font-size: 10px;
   font-weight: 750;
-  color: #787069;
+  color: #a8a29e;
   text-transform: uppercase;
   letter-spacing: 0.4em;
   margin-bottom: 16px;
@@ -662,13 +662,13 @@
 .settlementAmount {
   font-size: 36px;
   font-weight: 800;
-  color: #dfd3b2;
+  color: var(--sidebar-link-active-text, #ffffff);
   letter-spacing: -0.03em;
   margin: 0 0 24px 0;
 }
 
 .settlementBtn {
-  background: #8d7a52;
+  background: var(--peach, #3b82f6);
   color: #ffffff;
   border: none;
   padding: 16px 40px;
@@ -679,15 +679,15 @@
   letter-spacing: 0.25em;
   cursor: pointer;
   transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
-  box-shadow: 0 4px 14px rgba(141, 122, 82, 0.2);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.2);
   display: inline-flex;
   align-items: center;
   gap: 12px;
 }
 
 .settlementBtn:hover {
-  background: #736342;
-  box-shadow: 0 6px 20px rgba(141, 122, 82, 0.35);
+  background: var(--peach-dark, #2563eb);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
 }
 
 .settlementBtn:active {
@@ -820,4 +820,13 @@
 
 :global(.dark) .labelMain {
   color: #f4f4f5 !important;
+}
+
+:global(.dark) .settlementBtn {
+  background: var(--peach, #3b82f6) !important;
+  color: #ffffff !important;
+}
+
+:global(.dark) .settlementBtn:hover {
+  background: var(--peach-dark, #2563eb) !important;
 }

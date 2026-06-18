@@ -1,0 +1,255 @@
+/* Container Layout */
+.container {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 32px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    font-family: var(--font-sans, -apple-system, sans-serif);
+    color: #181d26;
+}
+
+/* Header & Tabs */
+.header {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #dddddd;
+}
+
+@media (min-width: 1024px) {
+    .header {
+        flex-direction: row;
+        align-items: flex-end;
+    }
+}
+
+.headerTitleSec {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.subTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #9297a0;
+}
+
+.title {
+    font-size: 36px;
+    font-weight: 450;
+    letter-spacing: -0.02em;
+    color: #181d26;
+    line-height: 1.1;
+}
+
+.titleHighlight {
+    font-weight: 500;
+    color: #788069;
+}
+
+.headerActions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+}
+
+.tabGroup {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #dddddd;
+}
+
+.tabButton {
+    height: 36px;
+    padding: 0 20px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border: none;
+    background: transparent;
+    color: #9297a0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tabButtonActive {
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    color: #181d26;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.primaryButton {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: #181d26;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.primaryButton:hover {
+    background: #0d1218;
+}
+
+/* Search Bar */
+.searchWrapper {
+    position: relative;
+    max-width: 400px;
+    width: 100%;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9297a0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.searchInput {
+    width: 100%;
+    height: 40px;
+    padding: 0 16px 0 42px;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #181d26;
+    transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: #181d26;
+    box-shadow: 0 0 0 3px rgba(24, 29, 38, 0.05);
+}
+
+.usersTabContent {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.loadingContainer {
+    height: 256px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9297a0;
+    background: #f8fafc;
+    gap: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .loadingContainer {
+        background: #262626;
+    }
+}
+
+/* Spinner */
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 4px solid #e2e8f0;
+    border-top: 4px solid #788069;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loadingText {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    animation: loadingPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes loadingPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}
+
+/* Grids */
+.userGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.roleGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 32px;
+}
+
+/* Custom scrollbar utility */
+.customScrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.customScrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.customScrollbar::-webkit-scrollbar-thumb {
+    background: #e0e2e6;
+    border-radius: 10px;
+}
+
+.customScrollbar::-webkit-scrollbar-thumb:hover {
+    background: #788069;
+}
+
+.pointerEventsAuto {
+    pointer-events: auto;
+}
+
+.pointerEventsNone {
+    pointer-events: none;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.animateSpin {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}

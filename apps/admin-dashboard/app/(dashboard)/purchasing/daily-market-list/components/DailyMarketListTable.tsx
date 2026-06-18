@@ -56,6 +56,27 @@ export default function DailyMarketListTable({
             filteredDmls.map((dml: any) => {
               const dateObj = dml.date?.toDate ? dml.date.toDate() : new Date(dml.date);
               const dmlSuppliers = Array.from(new Set((dml.items ?? []).map((i: any) => i.supplier_name))).filter(Boolean);
+              const itemsList = dml.items || [];
+              const hasTempo = itemsList.some((i: any) => i.paymentStatus === 'tempo');
+              const hasPaid = itemsList.some((i: any) => (i.paymentStatus || 'paid') === 'paid');
+              
+              let badgeText = 'PAID';
+              let badgeBg = 'rgba(16, 185, 129, 0.08)';
+              let badgeColor = '#10b981';
+              let badgeBorder = 'rgba(16, 185, 129, 0.2)';
+              
+              if (hasTempo && hasPaid) {
+                badgeText = 'MIXED';
+                badgeBg = 'rgba(245, 158, 11, 0.08)';
+                badgeColor = '#f59e0b';
+                badgeBorder = 'rgba(245, 158, 11, 0.2)';
+              } else if (hasTempo) {
+                badgeText = 'TEMPO';
+                badgeBg = 'rgba(239, 68, 68, 0.08)';
+                badgeColor = '#ef4444';
+                badgeBorder = 'rgba(239, 68, 68, 0.2)';
+              }
+
               return (
                 <tr 
                   key={dml.id} 
@@ -63,7 +84,31 @@ export default function DailyMarketListTable({
                   onClick={() => setSelectedDml(dml)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <td className={s.tdPrimary}>{dml.dml_number}</td>
+                   <td className={s.tdPrimary}>
+                     <div>{dml.dml_number}</div>
+                      <span style={{ 
+                        fontSize: 10, 
+                        fontWeight: 700, 
+                        padding: '2px 8px', 
+                        borderRadius: 12, 
+                        background: badgeBg,
+                        color: badgeColor,
+                        border: `1px solid ${badgeBorder}`,
+                        marginTop: 4,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}>
+                        <span style={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: '50%',
+                          background: badgeColor,
+                          display: 'inline-block'
+                        }} />
+                        {badgeText}
+                      </span>
+                   </td>
                   <td>{dateObj.toLocaleDateString('id-ID')}</td>
                   <td className={s.tdMuted}>{dml.submitted_by_name || dml.submitted_by}</td>
                   <td className={s.tdMuted}>{dmlSuppliers.join(', ') || '—'}</td>

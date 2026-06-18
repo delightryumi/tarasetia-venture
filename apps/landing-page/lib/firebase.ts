@@ -12,6 +12,8 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+import { getAuth } from "firebase/auth";
+
 // Prevent duplicate initialization in Next.js dev mode (HMR)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
@@ -21,4 +23,7 @@ const db = getFirestore(app);
 // Storage
 const storage = getStorage(app);
 
-export { app, db, storage };
+// Auth
+const auth = getAuth(app);
+
+export { app, db, storage, auth };

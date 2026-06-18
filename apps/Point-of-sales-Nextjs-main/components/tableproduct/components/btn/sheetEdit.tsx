@@ -38,8 +38,12 @@ type Data = {
     stock: number;
     price: number;
     imageProduct?: string | null;
+    description?: string;
+    addons?: {name: string, price: number}[];
   };
 };
+
+import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export function SheetEdit({
   open,
@@ -64,6 +68,8 @@ export function SheetEdit({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [subSearchTerm, setSubSearchTerm] = useState<string>('');
   const [imageProductUrl, setImageProductUrl] = useState(data.productstock.imageProduct || '');
+  const [description, setDescription] = useState(data.productstock.description || '');
+  const [addons, setAddons] = useState<{name: string, price: number}[]>(data.productstock.addons || []);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<{ [key: string]: string }>({});
 
@@ -85,7 +91,7 @@ export function SheetEdit({
     if (open) {
       const loadCategories = async () => {
         try {
-          const catSnap = await getDocs(collection(db, 'pos_categories'));
+          const catSnap = await getDocs(getHotelCollection(db, 'pos_categories'));
           const dbCats = catSnap.docs.map(doc => ({
             name: doc.data().name,
             subcategories: doc.data().subcategories || []
@@ -141,6 +147,8 @@ export function SheetEdit({
       setCategories(data.productstock.cat ?? '');
       setSubcategories(data.productstock.subcategory ?? '');
       setImageProductUrl(data.productstock.imageProduct || '');
+      setDescription(data.productstock.description || '');
+      setAddons(data.productstock.addons || []);
     }
   }, [
     open,
@@ -149,6 +157,8 @@ export function SheetEdit({
     data.productstock.stock,
     data.productstock.cat,
     data.productstock.imageProduct,
+    data.productstock.description,
+    data.productstock.addons,
   ]);
 
   const handleCancel = () => {
@@ -175,7 +185,9 @@ export function SheetEdit({
       stockProductNumber === data.productstock.stock &&
       categoryProduct === data.productstock.cat &&
       subcategoryProduct === (data.productstock.subcategory || '') &&
-      imageProductUrl === (data.productstock.imageProduct || '')
+      imageProductUrl === (data.productstock.imageProduct || '') &&
+      description === (data.productstock.description || '') &&
+      JSON.stringify(addons) === JSON.stringify(data.productstock.addons || [])
     ) {
       toast.info('No changes made.');
       setLoading(false);
@@ -192,6 +204,8 @@ export function SheetEdit({
         category: categoryProduct,
         subcategory: subcategoryProduct === 'none' ? undefined : (subcategoryProduct || undefined),
         imageProduct: imageProductUrl || undefined,
+        description: description,
+        addons: addons,
       });
 
       // Send validated data using axios
@@ -219,7 +233,7 @@ export function SheetEdit({
 
   return (
     <Sheet open={open}>
-      <SheetContent>
+      <SheetContent className="overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Edit product</SheetTitle>
           <SheetDescription>
@@ -265,6 +279,8 @@ export function SheetEdit({
               }}
               className="col-span-3"
               type="number"
+              onWheel={(e) => e.currentTarget.blur()}
+              onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
             />
             {error?.sellPrice && (
               <div className="col-start-2 col-span-3 text-red-500">
@@ -283,6 +299,8 @@ export function SheetEdit({
               }}
               className="col-span-3"
               type="number"
+              onWheel={(e) => e.currentTarget.blur()}
+              onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
             />
             {error?.stockProduct && (
               <div className="col-start-2 col-span-3 text-red-500">
@@ -411,6 +429,69 @@ export function SheetEdit({
                 </div>
               )}
             </div>
+
+            <Label htmlFor="description" className="text-right">
+              Description
+            </Label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Product description..."
+              className="col-span-3 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+
+            <Label className="text-right">
+              Add-ons (Modifiers)
+            </Label>
+            <div className="col-span-3 flex flex-col gap-2">
+              {addons.map((addon, index) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <Input
+                    placeholder="Name (e.g. Extra Shot)"
+                    value={addon.name}
+                    onChange={(e) => {
+                      const newAddons = [...addons];
+                      newAddons[index].name = e.target.value;
+                      setAddons(newAddons);
+                    }}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Price (e.g. 5000)"
+                    value={addon.price}
+                    onChange={(e) => {
+                      const newAddons = [...addons];
+                      newAddons[index].price = parseInt(e.target.value) || 0;
+                      setAddons(newAddons);
+                    }}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    size="sm" 
+                    onClick={() => {
+                      const newAddons = [...addons];
+                      newAddons.splice(index, 1);
+                      setAddons(newAddons);
+                    }}
+                  >
+                    <Cross2Icon className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAddons([...addons, { name: '', price: 0 }])}
+              >
+                + Add Modifier
+              </Button>
+            </div>
+
           </div>
         </div>
         <SheetFooter>
@@ -419,7 +500,7 @@ export function SheetEdit({
               onClick={handleEdit}
               type="submit"
               disabled={loading}
-              className="text-gray-100"
+              className="bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-black dark:hover:bg-neutral-200"
             >
               {loading ? (
                 <>

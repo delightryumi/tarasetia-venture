@@ -1,0 +1,146 @@
+/* statements.module.css */
+
+/* Typography */
+.fontHaas { font-family: "Haas", sans-serif; }
+.fontDisplay { font-family: "Haas Groot Disp", "Haas", sans-serif; }
+.fontMono { font-family: "Inter Display", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+
+/* Base Surfaces */
+.surfaceCanvas { background-color: #ffffff; color: #333840; }
+:global(.dark) .surfaceCanvas { background-color: #1a1a1a; color: #f4f4f5; }
+
+.surfaceDark { background-color: #181d26; color: #ffffff; }
+
+.surfaceSoft { background-color: #f8fafc; }
+:global(.dark) .surfaceSoft { background-color: #262626; }
+
+.surfaceStrong { background-color: #e0e2e6; }
+:global(.dark) .surfaceStrong { background-color: #3f3f46; }
+
+/* Padding & Spacing */
+.sectionPadding { padding: 96px 0; }
+.cardPaddingLg { padding: 32px; }
+.cardPaddingXl { padding: 48px; }
+.cardPaddingMd { padding: 24px; }
+.gapMd { gap: 16px; }
+.gapLg { gap: 24px; }
+
+/* Borders & Rounded */
+.roundedSm { border-radius: 6px; }
+.roundedMd { border-radius: 10px; }
+.roundedLg { border-radius: 12px; }
+
+.borderHairline { border: 1px solid #dddddd; }
+:global(.dark) .borderHairline { border: 1px solid #333333; }
+
+.borderStrong { border: 1px solid #9297a0; }
+:global(.dark) .borderStrong { border: 1px solid #52525b; }
+
+/* Custom Buttons */
+.buttonPrimary {
+    background-color: #181d26; color: #ffffff; font-family: "Haas", sans-serif; font-weight: 500; font-size: 16px; padding: 16px 24px; border-radius: 12px; border: none; cursor: pointer; transition: background-color 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.buttonPrimary:hover:not(:disabled) { background-color: #0d1218; }
+.buttonPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
+:global(.dark) .buttonPrimary { background-color: #f4f4f5; color: #181d26; }
+:global(.dark) .buttonPrimary:hover:not(:disabled) { background-color: #e4e4e7; }
+
+.buttonSecondary {
+    background-color: #ffffff; color: #181d26; font-family: "Haas", sans-serif; font-weight: 500; font-size: 16px; padding: 16px 24px; border-radius: 12px; border: 1px solid #dddddd; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.buttonSecondary:hover { border-color: #9297a0; }
+:global(.dark) .buttonSecondary { background-color: #262626; color: #f4f4f5; border: 1px solid #333333; }
+:global(.dark) .buttonSecondary:hover { border-color: #52525b; }
+
+/* Tabs */
+.tabButton {
+    background-color: #ffffff; color: #41454d; font-family: "Haas", sans-serif; font-weight: 500; font-size: 14px; padding: 12px 24px; border-radius: 12px; border: 1px solid #dddddd; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px;
+}
+.tabButtonActive {
+    background-color: #181d26; color: #ffffff; border-color: #181d26;
+}
+:global(.dark) .tabButton { background-color: #1a1a1a; color: #a1a1aa; border: 1px solid #262626; }
+:global(.dark) .tabButtonActive { background-color: #262626; color: #f4f4f5; border-color: #333333; }
+
+/* Excel-like Table for General Ledger */
+.excelTableWrapper { width: 100%; overflow-x: auto; border: 1px solid #cbd5e1; background-color: #ffffff; border-radius: 6px; }
+:global(.dark) .excelTableWrapper { border: 1px solid #333333; background-color: #1a1a1a; }
+
+.excelTable { width: 100%; border-collapse: collapse; font-family: "Haas", sans-serif; font-size: 11px; color: #333840; }
+:global(.dark) .excelTable { color: #d4d4d8; }
+
+.excelTable th { background-color: #f1f5f9; color: #181d26; font-weight: 600; padding: 4px 8px; border: 1px solid #cbd5e1; text-align: left; white-space: nowrap; position: sticky; top: 0; z-index: 10; }
+:global(.dark) .excelTable th { background-color: #1e293b; color: #f4f4f5; border: 1px solid #475569; }
+
+.excelTable td { padding: 4px 8px; border: 1px solid #e2e8f0; vertical-align: middle; }
+:global(.dark) .excelTable td { border: 1px solid #2d2d30; }
+
+.excelTable tbody tr:nth-child(even) { background-color: #f8fafc; }
+:global(.dark) .excelTable tbody tr:nth-child(even) { background-color: #1a1a1a; }
+
+.excelTable tbody tr:nth-child(odd) { background-color: #ffffff; }
+:global(.dark) .excelTable tbody tr:nth-child(odd) { background-color: #161616; }
+
+.excelTable tbody tr:hover { background-color: #f1f5f9; }
+:global(.dark) .excelTable tbody tr:hover { background-color: #242427; }
+
+.excelAmountDebit { color: #006400; font-family: "Inter Display", monospace; text-align: right; }
+:global(.dark) .excelAmountDebit { color: #34d399; }
+
+.excelAmountCredit { color: #aa2d00; font-family: "Inter Display", monospace; text-align: right; }
+:global(.dark) .excelAmountCredit { color: #f87171; }
+
+.excelBalance { font-weight: 500; color: #181d26; text-align: right; font-family: "Inter Display", monospace; }
+:global(.dark) .excelBalance { color: #f4f4f5; }
+
+/* Inputs */
+.inputField { background-color: #ffffff; color: #181d26; font-family: "Haas", sans-serif; font-size: 14px; padding: 12px 16px; border: 1px solid #dddddd; border-radius: 6px; height: 44px; width: 100%; outline: none; transition: border-color 0.2s ease; }
+.inputField:focus { border-color: #458fff; }
+:global(.dark) .inputField { background-color: #262626; color: #f4f4f5; border: 1px solid #333333; }
+:global(.dark) .inputField:focus { border-color: #a1a1aa; }
+
+/* Typography Helpers */
+.titleLg { font-family: "Haas", sans-serif; font-size: 24px; font-weight: 400; line-height: 1.35; letter-spacing: 0.12px; color: #181d26; }
+:global(.dark) .titleLg { color: #f4f4f5; }
+
+.displayMd { font-family: "Haas Groot Disp", "Haas", sans-serif; font-size: 32px; font-weight: 400; line-height: 1.2; color: #181d26; }
+:global(.dark) .displayMd { color: #f4f4f5; }
+
+.bodyText { font-family: "Haas", sans-serif; font-size: 14px; color: #333840; line-height: 1.25; }
+:global(.dark) .bodyText { color: #d4d4d8; }
+
+.captionText { font-family: "Haas", sans-serif; font-size: 14px; font-weight: 500; color: #41454d; line-height: 1.35; letter-spacing: 0.16px; }
+:global(.dark) .captionText { color: #a1a1aa; }
+
+/* Layout Elements */
+.cardSurface { background-color: #ffffff; border-radius: 10px; padding: 32px; border: 1px solid #dddddd; }
+:global(.dark) .cardSurface { background-color: #1a1a1a; border: 1px solid #262626; }
+
+.cardSurfaceSoft { background-color: #f8fafc; border-radius: 10px; padding: 32px; border: 1px solid #dddddd; }
+:global(.dark) .cardSurfaceSoft { background-color: #1a1a1a; border: 1px solid #262626; }
+
+.flexBetween { display: flex; justify-content: space-between; align-items: center; }
+.flexColumn { display: flex; flex-direction: column; }
+
+/* Divider */
+.divider { border-top: 1px solid #dddddd; margin: 16px 0; }
+:global(.dark) .divider { border-top: 1px solid #333333; }
+
+.dividerStrong { border-top: 2px solid #181d26; margin: 16px 0; }
+:global(.dark) .dividerStrong { border-top: 2px solid #f4f4f5; }
+
+/* Local Dark Overrides for specific hardcoded colors left in components */
+.textSuccess { color: #006400; }
+:global(.dark) .textSuccess { color: #34d399; }
+
+.textDanger { color: #aa2d00; }
+:global(.dark) .textDanger { color: #f87171; }
+
+.borderDarkToLight { border-color: #181d26 !important; }
+:global(.dark) .borderDarkToLight { border-color: #f4f4f5 !important; }
+
+.bgSoftDarkToLight { background-color: #f8fafc !important; }
+:global(.dark) .bgSoftDarkToLight { background-color: #262626 !important; }
+
+.textDarkToLight { color: #181d26 !important; }
+:global(.dark) .textDarkToLight { color: #f4f4f5 !important; }

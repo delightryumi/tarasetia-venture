@@ -29,7 +29,11 @@ export function processPnLData(
   posExpFood: number = 0,
   posExpBeverage: number = 0,
   serviceChargePercentage: number = 10,
-  lostBreakagePercentage: number = 1
+  lostBreakagePercentage: number = 1,
+  posComplimentValue: number = 0,
+  posRevOther: number = 0,
+  posExpOther: number = 0,
+  payrollExpense: number = 0
 ): PnLCalculationResult {
   const ledgerRevenue = transactions.reduce((sum, t) => sum + t.amount, 0);
   const totalExtraIncome = customIncomes.reduce((sum, t) => sum + t.amount, 0);
@@ -158,12 +162,8 @@ export function processPnLData(
       
       return !isHk && !isFB && !isFOorPurchasing;
     })
-    .reduce((sum, e) => sum + e.amount, 0);
+    .reduce((sum, e) => sum + e.amount, 0) + posExpOther;
 
-  const totalOperationalExpenses = expHousekeeping + expAlacarte + expBanquet + expFrontOfficeAndPurchasing + otherManualExpenses;
-  
-  const expOperational = expFrontOfficeAndPurchasing + otherManualExpenses;
-  
   const isAccommodation = (t: any) => {
       const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
       return !isPOS && (t.type === "accommodation" || (!t.type && t.guestName));
@@ -172,6 +172,14 @@ export function processPnLData(
       const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
       return !isPOS && !isAccommodation(t);
   };
+
+  const foComplimentValue = transactions
+    .filter(t => t.isCompliment)
+    .reduce((sum, t) => sum + (Number(t.complimentValue) || 0), 0);
+
+  const totalOperationalExpenses = expHousekeeping + expAlacarte + expBanquet + expFrontOfficeAndPurchasing + otherManualExpenses + payrollExpense + foComplimentValue + posComplimentValue;
+  
+  const expOperational = expFrontOfficeAndPurchasing + otherManualExpenses;
 
   const ledgerRoomRevenue = transactions
     .filter(isAccommodation)
@@ -188,7 +196,6 @@ export function processPnLData(
   const arr = roomsSold ? ledgerRoomRevenue / roomsSold : 0;
   const revPar = roomsAvailable ? ledgerRoomRevenue / roomsAvailable : 0;
 
-  
   const revenueHotelCollect = transactions
     .filter(isAccommodation)
     .reduce((sum, t) => sum + (Number(t.paidCash) || 0), 0);
@@ -201,9 +208,10 @@ export function processPnLData(
     .filter(isFOOtherIncome)
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const otherRevenueTotal = totalExtraIncome + ledgerOtherIncome;
+  const otherRevenueTotal = totalExtraIncome + ledgerOtherIncome + posRevOther;
   
-  const totalRevenue = ledgerRoomRevenue + posRevAlacarte + posRevBanquet + otherRevenueTotal;
+  const vatBase = ledgerRoomRevenue + posRevAlacarte + posRevBanquet + otherRevenueTotal;
+  const totalRevenue = vatBase + foComplimentValue + posComplimentValue;
   
   const revFoodAlacarte = posRevFood;
   const revBeverageAlacarte = posRevBeverage;
@@ -216,7 +224,7 @@ export function processPnLData(
     card3_RevHotelCollect: revenueHotelCollect,
     card3_RevNexuraCollect: revenueNexuraCollect,
     card4_PenaltyFee: 0,
-    card5_OtherRevenue: otherRevenueTotal,
+    card5_OtherRevenue: otherRevenueTotal + foComplimentValue + posComplimentValue, // Include compliments in other/total category breakdown
     card6_GOP: totalRevenue - totalOperationalExpenses, 
     card7_TotalGOP: 0, 
     card8_TotalExpenses: totalOperationalExpenses,
@@ -224,7 +232,7 @@ export function processPnLData(
     card9_FeeGrossFnb: (revTotalFnb + revBanquetRevenue) * (mgmtFeeFnbPercentage / 100),
     card9_FeeGross: (ledgerRoomRevenue * (mgmtFeeRoomPercentage / 100)) + ((revTotalFnb + revBanquetRevenue) * (mgmtFeeFnbPercentage / 100)),
     card10_GAP: 0,
-    card11_VAT: totalRevenue * (vatPercentage / 100),
+    card11_VAT: vatBase * (vatPercentage / 100), // VAT is calculated based on cash / non-compliment transactions
     card12_ReconOwner: 0, 
     revRoom: ledgerRoomRevenue,
     revFoodAlacarte: revFoodAlacarte,
@@ -243,6 +251,7 @@ export function processPnLData(
     expBeverageAlacarte: beverageAlacarteExp,
     expFoodBanquet: foodBanquetExp,
     expBeverageBanquet: beverageBanquetExp,
+    expPayroll: payrollExpense,
     netProfit: 0,
     gopBasis: totalRevenue,
     gopFee: (ledgerRoomRevenue * (mgmtFeeRoomPercentage / 100)) + ((revTotalFnb + revBanquetRevenue) * (mgmtFeeFnbPercentage / 100)),
@@ -252,8 +261,8 @@ export function processPnLData(
       share: inv.percentage || inv.share || 0,
       amount: 0 
     })),
-    summaryServiceCharge: totalRevenue * (serviceChargePercentage / 100),
-    summaryLostBreakage: totalRevenue * (lostBreakagePercentage / 100),
+    summaryServiceCharge: vatBase * (serviceChargePercentage / 100), // Service charge is calculated based on cash / non-compliment
+    summaryLostBreakage: vatBase * (lostBreakagePercentage / 100), // Lost breakage based on cash / non-compliment
     summaryServiceChargeRate: serviceChargePercentage,
     summaryLostBreakageRate: lostBreakagePercentage,
   // KPI metrics
@@ -262,6 +271,8 @@ export function processPnLData(
   revPar
   };
 
+  pnlResult.posComplimentValue = posComplimentValue;
+  pnlResult.foComplimentValue = foComplimentValue;
   pnlResult.card7_TotalGOP = pnlResult.card1_TotalRevenue - pnlResult.card8_TotalExpenses;
   pnlResult.card12_ReconOwner = pnlResult.card7_TotalGOP 
     - (pnlResult.card11_VAT || 0) 
@@ -275,7 +286,7 @@ export function processPnLData(
     amount: pnlResult.netProfit * ((dist.share || 0) / 100)
   }));
 
-  const operationalManualExpenses = expHousekeeping + foodAlacarteExp + foodBanquetExp + beverageAlacarteExp + beverageBanquetExp + otherManualExpenses;
+  const operationalManualExpenses = expHousekeeping + foodAlacarteExp + foodBanquetExp + beverageAlacarteExp + beverageBanquetExp + otherManualExpenses + payrollExpense;
 
   return {
     pnlResult,

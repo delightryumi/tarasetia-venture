@@ -27,7 +27,7 @@ export async function sendWelcomeEmail({ toEmail, hotelCode, hotelName, defaultP
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Selamat Datang di Nexura CRS</title>
+      <title>Selamat Datang di Setara Venture CRS</title>
       <style>
         body {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -129,13 +129,13 @@ export async function sendWelcomeEmail({ toEmail, hotelCode, hotelName, defaultP
     <body>
       <div class="container">
         <div class="header">
-          <img src="https://firebasestorage.googleapis.com/v0/b/crs-nexura.appspot.com/o/public%2Fnexura-logo.png?alt=media" alt="Nexura Logo" class="logo">
+          <img src="${dashboardUrl}/channels/6.png" alt="Setara Venture Logo" class="logo">
         </div>
         <div class="content">
-          <h1>Selamat Datang di Nexura Global Hospitality</h1>
+          <h1>Selamat Datang di Setara Venture</h1>
           <p>Halo,</p>
           <p>
-            Sistem Central Reservation System (CRS) untuk properti hotel Anda, <strong>${hotelName}</strong>, telah berhasil diregistrasikan di platform Nexura.
+            Sistem Central Reservation System (CRS) untuk properti hotel Anda, <strong>${hotelName}</strong>, telah berhasil diregistrasikan di platform Setara Venture.
           </p>
           <p>Berikut adalah rincian kredensial akun administrator Anda untuk masuk ke sistem:</p>
           
@@ -167,8 +167,8 @@ export async function sendWelcomeEmail({ toEmail, hotelCode, hotelName, defaultP
           </div>
         </div>
         <div class="footer">
-          <p>© ${new Date().getFullYear()} Nexura Global Hospitality. All rights reserved.</p>
-          <p>Butuh bantuan? Hubungi kami di <a href="mailto:nexura.management@gmail.com">nexura.management@gmail.com</a></p>
+          <p>© ${new Date().getFullYear()} Setara Venture. All rights reserved.</p>
+          <p>Butuh bantuan? Hubungi kami di <a href="mailto:admin@setaraventure.com">admin@setaraventure.com</a></p>
         </div>
       </div>
     </body>
@@ -185,7 +185,7 @@ export async function sendWelcomeEmail({ toEmail, hotelCode, hotelName, defaultP
     },
     body: JSON.stringify({
       sender: {
-        name: "Nexura Global Hospitality",
+        name: "Setara Venture",
         email: fromEmail
       },
       to: [
@@ -193,7 +193,97 @@ export async function sendWelcomeEmail({ toEmail, hotelCode, hotelName, defaultP
           email: toEmail
         }
       ],
-      subject: `[Nexura CRS] Akun Administrator CRS - ${hotelName}`,
+      subject: `[Setara Venture CRS] Akun Administrator CRS - ${hotelName}`,
+      htmlContent: emailHtml
+    })
+  });
+
+  if (!response.ok) {
+    const errData = await response.json();
+    console.error("Gagal mengirim email via Brevo API:", errData);
+    throw new Error(errData.message || "Gagal mengirim email via Brevo REST API");
+  }
+
+  const resData = await response.json();
+  console.log("Email sukses terkirim via Brevo REST API! Message ID:", resData.messageId);
+  return true;
+}
+
+interface SendOnboardingEmailParams {
+  toEmail: string;
+  token: string;
+  planName: string;
+}
+
+export async function sendOnboardingEmail({ toEmail, token, planName }: SendOnboardingEmailParams) {
+  const pass = process.env.SMTP_PASS; // Brevo API/SMTP Key
+  const fromEmail = process.env.SMTP_FROM_EMAIL || "delightryumi@gmail.com";
+
+  if (!pass) {
+    console.warn("SMTP_PASS (Brevo API Key) tidak dikonfigurasi. Pengiriman email diabaikan.");
+    return false;
+  }
+
+  const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3000";
+  const onboardingLink = `${dashboardUrl}/onboarding/${token}`;
+
+  const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Registrasi Setara Venture CRS</title>
+      <style>
+        body { font-family: 'Inter', sans-serif; background-color: #faf8f4; color: #333840; margin: 0; padding: 0; }
+        .container { max-width: 650px; margin: 40px auto; background: #ffffff; border: 1px solid #e6dfd8; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 25px rgba(141, 122, 82, 0.05); }
+        .header { background-color: #181d26; padding: 32px; text-align: center; border-bottom: 4px solid #c5a880; }
+        .logo { height: 40px; width: auto; }
+        .content { padding: 40px; }
+        h1 { font-size: 22px; font-weight: 500; color: #181d26; margin-top: 0; margin-bottom: 24px; font-family: Georgia, serif; }
+        p { font-size: 14px; line-height: 1.6; color: #41454d; margin-bottom: 20px; }
+        .highlight-box { background-color: #faf8f4; border: 1px solid #e6dfd8; border-radius: 12px; padding: 24px; margin: 28px 0; text-align: center;}
+        .btn { display: inline-block; background-color: #181d26; color: #ffffff !important; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-size: 14px; font-weight: 500; text-align: center; margin-top: 10px; box-shadow: 0 4px 12px rgba(24, 29, 38, 0.1); }
+        .footer { background-color: #f8fafc; padding: 24px; text-align: center; font-size: 12px; color: #a1a1aa; border-top: 1px solid #e6dfd8; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <img src="${appUrl}/channels/6.png" alt="Setara Venture Logo" class="logo">
+        </div>
+        <div class="content">
+          <h1>Selesaikan Pendaftaran Anda</h1>
+          <p>Halo,</p>
+          <p>Terima kasih telah memilih <strong>Setara Venture CRS</strong> (Paket: <strong>${planName.toUpperCase()}</strong>).</p>
+          <p>Silakan klik tautan khusus di bawah ini untuk melengkapi profil bisnis Anda (Nama Usaha, Alamat, dll.) dan mendapatkan akses kredensial ke Dashboard.</p>
+          
+          <div class="highlight-box">
+            <a href="${onboardingLink}" class="btn">Lengkapi Pendaftaran Akun</a>
+            <p style="font-size: 11px; margin-top: 16px; color: #6b7280;">Atau salin tautan berikut ke browser Anda:<br/><a href="${onboardingLink}">${onboardingLink}</a></p>
+          </div>
+          
+          <p>Tautan ini bersifat rahasia dan hanya berlaku untuk 1 kali pendaftaran.</p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} Setara Venture.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  console.log("Mengirim email onboarding via Brevo REST API...");
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "accept": "application/json",
+      "api-key": pass,
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      sender: { name: "Setara Venture", email: fromEmail },
+      to: [{ email: toEmail }],
+      subject: `[Setara Venture CRS] Lengkapi Pendaftaran Akun - Paket ${planName.toUpperCase()}`,
       htmlContent: emailHtml
     })
   });

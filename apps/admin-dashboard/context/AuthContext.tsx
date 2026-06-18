@@ -8,11 +8,13 @@ import { doc, getDoc, collection, onSnapshot } from "firebase/firestore";
 const SUPERADMIN_PERMISSIONS_FALLBACK = [
     "module_pos", "module_front_office", "module_housekeeping", 
     "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel",
+    "module_hrd",
     "overview", "forecast", "invoice", "pnl", "logo", "hero", "room-type", 
     "about", "gallery", "footer", "attractions", "promo", "packages", "seo", "users",
     "purchasing", "store-requisition", "purchase-requisition", "daily-market-list", 
     "stock-opname", "items", "suppliers", "purchase-order", "food-beverage-product",
-    "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings", "pos_technologies"
+    "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings",
+    "hrd"
 ];
 
 interface CustomUser {
@@ -62,18 +64,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const storedCode = localStorage.getItem("active_hotel_code");
         if (storedCode) {
             setActiveHotelCodeState(storedCode);
-        } else if (user) {
-            if (user.role === "superadmin") {
-                setActiveHotelCodeState("87241");
-            } else if (user.hotelCode) {
-                setActiveHotelCodeState(user.hotelCode);
-            }
+        } else if (user?.hotelCode) {
+            setActiveHotelCodeState(user.hotelCode);
         }
     }, [user]);
 
     // Fetch active hotel details
     useEffect(() => {
-        if (!activeHotelCode) {
+        // Superadmin tanpa preview hotel → tampilkan label tetap
+        if (user?.role === "superadmin" && (!activeHotelCode || activeHotelCode === "0")) {
+            setActiveHotelName("Superadmin");
+            return;
+        }
+        if (!activeHotelCode || activeHotelCode === "0") {
             setActiveHotelName("");
             return;
         }
@@ -88,7 +91,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.error("Error fetching active hotel name:", err);
             setActiveHotelName("");
         });
-    }, [activeHotelCode]);
+    }, [activeHotelCode, user?.role]);
 
     // Fetch hotels list if superadmin
     useEffect(() => {
@@ -96,7 +99,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const unsubscribe = onSnapshot(collection(db, "hotels"), (snapshot) => {
                 const list: any[] = [];
                 snapshot.forEach((doc) => {
-                    list.push(doc.data());
+                    list.push({ ...doc.data(), hotelCode: doc.id });
                 });
                 setHotelsList(list);
             });
@@ -125,13 +128,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const storedUser = localStorage.getItem("auth_user");
             if (storedUser) {
                 try {
-                    setUser(JSON.parse(storedUser));
+                    const parsed = JSON.parse(storedUser);
+                    // Migrasi: jika superadmin masih menyimpan code lama "87241", reset ke "0"
+                    if (parsed.role === "superadmin") {
+                        if (parsed.hotelCode === "87241" || !parsed.hotelCode) {
+                            parsed.hotelCode = "0";
+                        }
+                        const savedActiveCode = localStorage.getItem("active_hotel_code");
+                        if (!savedActiveCode) {
+                            localStorage.setItem("active_hotel_code", parsed.hotelCode);
+                            setActiveHotelCodeState(parsed.hotelCode);
+                        } else {
+                            setActiveHotelCodeState(savedActiveCode);
+                            parsed.hotelCode = savedActiveCode; // Sync user object with active code
+                        }
+                        localStorage.setItem("auth_user", JSON.stringify(parsed));
+                    } else {
+                        const savedActiveCode = localStorage.getItem("active_hotel_code");
+                        if (savedActiveCode) {
+                            setActiveHotelCodeState(savedActiveCode);
+                        }
+                    }
+
+                    setUser(parsed);
                     setLoading(false);
                     return;
                 } catch (e) {
                     localStorage.removeItem("auth_user");
                 }
             }
+
 
             // Fallback to Firebase Auth
             const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
@@ -143,10 +169,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     let role = claims.role as string || "";
                     let hotelCode = claims.hotelCode as string || "";
                     
-                    const isSuperadminEmail = email.toLowerCase() === "nexura.management@gmail.com";
+                    const isSuperadminEmail = email.toLowerCase() === "admin@setara.co.id";
                     if (isSuperadminEmail) {
                         role = "superadmin";
-                        hotelCode = "87241";
+                        hotelCode = "0";
                     }
 
                     // Fallback lookup from Firestore if claims aren't set yet
@@ -187,13 +213,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const loginWithFirestore = async (email: string, password: string, hotelCodeInput?: string): Promise<boolean> => {
         try {
-            const isSuperadminEmail = email.toLowerCase() === "nexura.management@gmail.com";
+            const isSuperadminEmail = email.toLowerCase() === "admin@setara.co.id";
             let code = hotelCodeInput?.trim() || "";
 
-            // Allow "1" as a bypass code for superadmin
-            const isSuperadminBypass = isSuperadminEmail || code === "1";
+            // Allow "0" as a bypass code for superadmin
+            const isSuperadminBypass = isSuperadminEmail || code === "0";
 
-            if (code === "1" && !isSuperadminEmail) {
+            if (code === "0" && !isSuperadminEmail) {
                 throw new Error("Hotel Code tidak valid.");
             }
 
@@ -238,7 +264,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // If still no role or hotelCode, set defaults or raise error
             if (isSuperadminEmail) {
                 role = "superadmin";
-                hotelCode = "87241";
+                hotelCode = "0";
             } else {
                 if (!role || !hotelCode) {
                     throw new Error("Akun Anda belum dikonfigurasi dengan benar. Hubungi Admin.");
@@ -266,8 +292,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setActiveHotelCodeState(code);
                 localStorage.setItem("active_hotel_code", code);
             } else {
-                setActiveHotelCodeState("87241");
-                localStorage.setItem("active_hotel_code", "87241");
+                // Superadmin: reset ke "0" (tidak terikat hotel manapun)
+                setActiveHotelCodeState("0");
+                localStorage.setItem("active_hotel_code", "0");
+                setActiveHotelName("Superadmin");
             }
             return true;
         } catch (e: any) {

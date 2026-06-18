@@ -91,6 +91,13 @@ export default function InputTable({ title, icon, color, items, setItems }: Inpu
                   </span>
                   <input
                     type="number"
+                    min="0"
+                    onWheel={(e) => e.currentTarget.blur()}
+                    onKeyDown={(e) => {
+                      if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
+                        e.preventDefault();
+                      }
+                    }}
                     value={item.amount === 0 ? "" : item.amount}
                     onChange={(e) => {
                       const n = [...items];

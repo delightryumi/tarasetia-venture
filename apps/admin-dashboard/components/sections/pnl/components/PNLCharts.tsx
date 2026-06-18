@@ -20,7 +20,7 @@ interface PNLChartsProps {
     formatIDR: (v: number) => string;
 }
 
-const SAGE = "#788069";
+const SAGE = "var(--sage)";
 
 export const PNLCharts: React.FC<PNLChartsProps> = ({
     viewMode, pnlResult, yearTrendData, multiYearTrendData, monthStr, yearStr, formatIDR
@@ -62,9 +62,9 @@ export const PNLCharts: React.FC<PNLChartsProps> = ({
                                         animationBegin={0}
                                         animationDuration={1500}
                                     >
-                                        <Cell fill="#8d7a52" />
-                                        <Cell fill="#788069" />
-                                        <Cell fill="#1A1C14" />
+                                        <Cell fill="var(--peach, #3b82f6)" />
+                                        <Cell fill="var(--sage, #181d26)" />
+                                        <Cell fill="var(--foreground, #1c1917)" />
                                     </Pie>
                                     <Tooltip 
                                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
@@ -83,7 +83,7 @@ export const PNLCharts: React.FC<PNLChartsProps> = ({
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart
                                     data={[
-                                        { name: 'Gross', value: pnlResult?.card1_TotalRevenue || 0, fill: '#788069' },
+                                        { name: 'Gross', value: pnlResult?.card1_TotalRevenue || 0, fill: 'var(--sage, #181d26)' },
                                         { name: 'Expenses', value: pnlResult?.card8_TotalExpenses || 0, fill: '#ef4444' },
                                         { name: 'VAT', value: pnlResult?.card11_VAT || 0, fill: '#f59e0b' },
                                         { name: 'Mgmt Fee', value: pnlResult?.card9_FeeGross || 0, fill: '#6366f1' },
@@ -100,7 +100,7 @@ export const PNLCharts: React.FC<PNLChartsProps> = ({
                                     />
                                     <Bar dataKey="value" radius={[6, 6, 0, 0]} animationDuration={2000}>
                                         {[
-                                            { fill: '#788069' },
+                                            { fill: 'var(--sage, #181d26)' },
                                             { fill: '#ef4444' },
                                             { fill: '#f59e0b' },
                                             { fill: '#6366f1' },
@@ -168,15 +168,15 @@ export const PNLCharts: React.FC<PNLChartsProps> = ({
 
                     {/* Trajectory Analysis (Monthly Trajectory in Yearly Mode) */}
                     {viewMode === "yearly" && (
-                        <div className={`${styles.chartCard} lg:col-span-2`} style={{ borderTop: "4px solid #788069" }}>
+                        <div className={`${styles.chartCard} lg:col-span-2`} style={{ borderTop: `4px solid ${SAGE}` }}>
                             <h3 className={styles.chartTitleWithMargin}>Revenue Trajectory ({yearStr})</h3>
                             <div className={styles.chartContainer350}>
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={yearTrendData}>
                                         <defs>
                                             <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#788069" stopOpacity={0.1}/>
-                                                <stop offset="95%" stopColor="#788069" stopOpacity={0}/>
+                                                <stop offset="5%" stopColor={SAGE} stopOpacity={0.1}/>
+                                                <stop offset="95%" stopColor={SAGE} stopOpacity={0}/>
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -186,7 +186,7 @@ export const PNLCharts: React.FC<PNLChartsProps> = ({
                                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
                                             formatter={(value: any) => formatIDR(Number(value) || 0)}
                                         />
-                                        <Area type="monotone" dataKey="revenue" stroke="#788069" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" animationDuration={2500} />
+                                        <Area type="monotone" dataKey="revenue" stroke={SAGE} strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" animationDuration={2500} />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>

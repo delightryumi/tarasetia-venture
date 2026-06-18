@@ -2,20 +2,20 @@
 
 .overviewRoot {
   /* ── Design Tokens ── */
-  --f-sage: #788069;
-  --f-sage-light: #9da68e;
-  --f-sage-dark: #5c6351;
-  --f-sage-bg: #f3f5f0;
-  --f-sage-border: #e2e6dd;
+  --f-sage: var(--sidebar-link-active-bg, #181d26);
+  --f-sage-light: var(--sidebar-text, #41454d);
+  --f-sage-dark: var(--sidebar-link-hover-text, #181d26);
+  --f-sage-bg: var(--sidebar-link-hover-bg, #f3efe6);
+  --f-sage-border: var(--sidebar-border, #dddddd);
 
-  --f-peach: #8d7a52;
-  --f-peach-dark: #736342;
+  --f-peach: var(--sidebar-link-active-bg, #181d26);
+  --f-peach-dark: var(--sidebar-link-hover-text, #181d26);
   --f-rich-black: #1a1c14;
 
   --f-canvas: #ffffff;
   --f-surface: #faf9f6;
   --f-surface-soft: #f5f5f4;
-  --f-hairline: #e7e5e4;
+  --f-hairline: var(--sidebar-border, rgba(0, 0, 0, 0.06));
   
   --f-ink: #1c1917;
   --f-body: #44403c;
@@ -761,15 +761,15 @@
   --f-canvas: #1a1a1a;
   --f-surface: #1f1f1f;
   --f-surface-soft: #262626;
-  --f-hairline: #333333;
+  --f-hairline: var(--sidebar-border, rgba(255, 255, 255, 0.03));
   
   --f-ink: #f4f4f5;
   --f-body: #a1a1aa;
   --f-muted: #71717a;
   --f-light-muted: #52525b;
 
-  --f-sage-bg: #2b2e25;
-  --f-sage-border: #3b4033;
+  --f-sage-bg: var(--sidebar-link-hover-bg, #2b2e25);
+  --f-sage-border: var(--sidebar-border, #3b4033);
 }
 
 :global(.dark) .headerBadge,

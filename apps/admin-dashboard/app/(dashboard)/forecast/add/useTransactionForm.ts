@@ -52,7 +52,22 @@ const INITIAL_FORM = {
     totalAmount: "",
     incomeType: "Other",
     note: "",
-    staffName: ""
+    staffName: "",
+    isCompliment: false,
+    complimentReason: ""
+};
+
+const cleanUndefined = (obj: any): any => {
+    if (!obj || typeof obj !== "object") return obj;
+    const cleaned = { ...obj };
+    Object.keys(cleaned).forEach(key => {
+        if (cleaned[key] === undefined) {
+            delete cleaned[key];
+        } else if (cleaned[key] && typeof cleaned[key] === "object" && !cleaned[key].toDate) {
+            cleaned[key] = cleanUndefined(cleaned[key]);
+        }
+    });
+    return cleaned;
 };
 
 export const useTransactionForm = () => {
@@ -116,23 +131,39 @@ export const useTransactionForm = () => {
 
     useEffect(() => {
         const isRestricted = !(form.channel === "Walk-in");
-        if (revenueType === "room" && isRestricted) {
-            setForm(prev => ({ 
-                ...prev, 
-                payHotel: "0",
-                payTransfer: totalGross.toString()
-            }));
+        if (revenueType === "room") {
+            if (form.isCompliment) {
+                setForm(prev => ({ 
+                    ...prev, 
+                    payHotel: "0",
+                    payTransfer: "0"
+                }));
+            } else if (isRestricted) {
+                setForm(prev => ({ 
+                    ...prev, 
+                    payHotel: "0",
+                    payTransfer: totalGross.toString()
+                }));
+            }
         }
-    }, [form.channel, revenueType, totalGross]);
+    }, [form.channel, revenueType, totalGross, form.isCompliment]);
 
     useEffect(() => {
         if (revenueType === "other") {
-            setForm(prev => ({
-                ...prev,
-                payTransfer: "0"
-            }));
+            if (form.isCompliment) {
+                setForm(prev => ({
+                    ...prev,
+                    payHotel: "0",
+                    payTransfer: "0"
+                }));
+            } else {
+                setForm(prev => ({
+                    ...prev,
+                    payTransfer: "0"
+                }));
+            }
         }
-    }, [revenueType]);
+    }, [revenueType, form.isCompliment]);
 
     // Fetch Allotment & Current Bookings
     useEffect(() => {
@@ -276,6 +307,7 @@ export const useTransactionForm = () => {
             if (!form.checkOut) { toast.error("Check-out Date is required"); return null; }
             if (form.checkOut <= form.checkIn) { toast.error("Check-out Date must be after Check-in Date"); return null; }
             if (!form.rooms[0]?.roomTypeId) { toast.error("Room Category is required"); return null; }
+            if (form.isCompliment && !form.complimentReason) { toast.error("Alasan Compliment wajib diisi"); return null; }
             
             // Check for negative room rates
             const hasNegativeRate = (form.nightRates || []).some(r => Number(r) < 0);
@@ -290,7 +322,8 @@ export const useTransactionForm = () => {
             }
         } else {
             const amountVal = Number(form.totalAmount);
-            if (isNaN(amountVal) || amountVal === 0 || form.totalAmount === "") {
+            if (form.isCompliment && !form.complimentReason) { toast.error("Alasan Compliment wajib diisi"); return null; }
+            if (!form.isCompliment && (isNaN(amountVal) || amountVal === 0 || form.totalAmount === "")) {
                 toast.error("Total Amount is required");
                 return null;
             }
@@ -341,6 +374,14 @@ export const useTransactionForm = () => {
                     remainingPayHotel -= dailyPayHotel;
                     remainingPayTransfer -= dailyPayTransfer;
                 }
+                
+                const finalAmount = form.isCompliment ? 0 : nightlyRate;
+                const finalPayHotel = form.isCompliment ? 0 : dailyPayHotel;
+                const finalPayTransfer = form.isCompliment ? 0 : dailyPayTransfer;
+
+                const dailyPaid = finalPayHotel + finalPayTransfer;
+                const dailyBalance = Math.max(0, finalAmount - dailyPaid);
+                const dailyStatus = form.isCompliment ? "Lunas" : (dailyBalance === 0 ? "Lunas" : (dailyPaid > 0 ? "DP / Partial" : "Belum Bayar"));
 
                 transactionEntries.push({
                     type: "accommodation",
@@ -354,22 +395,33 @@ export const useTransactionForm = () => {
                     nights: 1,
                     channel: form.channel,
                     voucherCode: form.voucherCode,
-                    amount: nightlyRate,
-                    payHotel: dailyPayHotel,
-                    payTransfer: dailyPayTransfer,
-                    paidCash: dailyPayHotel,
-                    paidAmount1: dailyPayHotel,
-                    paidTransfer: dailyPayTransfer,
-                    paidAmount2: dailyPayTransfer,
-                    paymentStatus: balance === 0 ? "PAID" : "UNPAID",
+                    amount: finalAmount,
+                    payHotel: finalPayHotel,
+                    payTransfer: finalPayTransfer,
+                    paidCash: finalPayHotel,
+                    paidAmount1: finalPayHotel,
+                    paidTransfer: finalPayTransfer,
+                    paidAmount2: finalPayTransfer,
+                    paymentStatus: dailyStatus,
                     source: form.channel === "Walk-in" ? "Walk-in" : "OTA",
-                    status: "CONFIRMED",
+                    status: form.channel === "Walk-in" ? "CONFIRMED" : "CONFIRMED", // Aligning reservation statuses
                     staffName: form.staffName,
                     note: form.note,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    isCompliment: form.isCompliment,
+                    complimentReason: form.isCompliment ? form.complimentReason : undefined,
+                    complimentValue: form.isCompliment ? nightlyRate : undefined
                 });
             }
         } else {
+            const finalAmount = form.isCompliment ? 0 : Number(form.totalAmount);
+            const finalPayHotel = form.isCompliment ? 0 : (Number(form.payHotel) || 0);
+            const finalPayTransfer = form.isCompliment ? 0 : (Number(form.payTransfer) || 0);
+
+            const totalPaid = finalPayHotel + finalPayTransfer;
+            const incomeBalance = Math.max(0, finalAmount - totalPaid);
+            const incomeStatus = form.isCompliment ? "Lunas" : (incomeBalance === 0 ? "Lunas" : (totalPaid > 0 ? "DP / Partial" : "Belum Bayar"));
+
             transactionEntries = [{
                 type: "other_income",
                 guestName: form.guestName, // This stores the description for other income
@@ -378,17 +430,20 @@ export const useTransactionForm = () => {
                 staffName: form.staffName || "System",
                 checkInDate: form.checkIn,
                 checkOutDate: form.checkIn,
-                amount: Number(form.totalAmount),
-                payHotel: Number(form.payHotel) || 0,
-                payTransfer: Number(form.payTransfer) || 0,
-                paidCash: Number(form.payHotel) || 0,
-                paidAmount1: Number(form.payHotel) || 0,
-                paidTransfer: Number(form.payTransfer) || 0,
-                paidAmount2: Number(form.payTransfer) || 0,
-                paymentStatus: balance === 0 ? "PAID" : "UNPAID",
+                amount: finalAmount,
+                payHotel: finalPayHotel,
+                payTransfer: finalPayTransfer,
+                paidCash: finalPayHotel,
+                paidAmount1: finalPayHotel,
+                paidTransfer: finalPayTransfer,
+                paidAmount2: finalPayTransfer,
+                paymentStatus: incomeStatus,
                 source: "Walk-in", // Other income is generally considered walk-in
                 status: "CONFIRMED",
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                isCompliment: form.isCompliment,
+                complimentReason: form.isCompliment ? form.complimentReason : undefined,
+                complimentValue: form.isCompliment ? Number(form.totalAmount) : undefined
             }];
         }
 
@@ -449,15 +504,16 @@ export const useTransactionForm = () => {
                 const docId = `${hotelId}_${dateStr}`;
                 const docRef = doc(getHotelCollection(db, "daily_revenue"), docId);
                 const docSnap = await getDoc(docRef);
+                const cleanedEntries = transactionEntries.map(e => cleanUndefined(e));
 
                 if (docSnap.exists()) {
                     await updateDoc(docRef, { 
-                        entries: arrayUnion(...transactionEntries),
+                        entries: arrayUnion(...cleanedEntries),
                         date: dateStr
                     });
                 } else {
                     await setDoc(docRef, { 
-                        entries: transactionEntries,
+                        entries: cleanedEntries,
                         date: dateStr
                     });
                 }

@@ -2,9 +2,11 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export async function GET(req: NextRequest) {
   try {
+    const hotelCode = req.cookies.get('hotelCode')?.value || "87241";
     const { searchParams } = new URL(req.url);
     const start = searchParams.get('start');
     const end = searchParams.get('end');
@@ -22,7 +24,7 @@ export async function GET(req: NextRequest) {
     endDate.setUTCHours(23, 59, 59, 999);
 
     // Fetch tax, service, and lostBreakage rates
-    const posSettingsRef = doc(db, 'settings', 'pos');
+    const posSettingsRef = doc(getHotelCollection(db, 'settings', hotelCode), 'pos');
     const posSettingsSnap = await getDoc(posSettingsRef);
     let taxRate = 10;
     if (posSettingsSnap.exists()) {
@@ -34,7 +36,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 1. Fetch product definitions for dynamic classification mapping
-    const prodSnap = await getDocs(collection(db, 'pos_products'));
+    const prodSnap = await getDocs(getHotelCollection(db, 'pos_products', hotelCode));
     const productMap: Record<string, { category: string; subcategory: string }> = {};
     prodSnap.forEach((d) => {
       const data = d.data();
@@ -45,7 +47,7 @@ export async function GET(req: NextRequest) {
     });
 
     // 2. Fetch subcategories definitions for fallback matching
-    const subcatSnap = await getDocs(collection(db, 'pos_subcategories'));
+    const subcatSnap = await getDocs(getHotelCollection(db, 'pos_subcategories', hotelCode));
     const subcatToParentMap: Record<string, string> = {};
     subcatSnap.forEach((d) => {
       const data = d.data();
@@ -83,7 +85,7 @@ export async function GET(req: NextRequest) {
       };
     };
 
-    const snap = await getDocs(collection(db, 'pos_orders'));
+    const snap = await getDocs(getHotelCollection(db, 'pos_orders', hotelCode));
 
     const dailyCategoryQty: Record<string, Record<string, number>> = {};
     const allCategoriesSet = new Set<string>();

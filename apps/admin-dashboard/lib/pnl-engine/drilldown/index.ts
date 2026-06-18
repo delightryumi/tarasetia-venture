@@ -10,6 +10,7 @@ export interface DrillDownContext {
   mgmtFeePercentage: number;
   serviceChargePercentage: number;
   lostBreakagePercentage: number;
+  payrollDetails?: any[];
 }
 
 import { getRevenueDrillDown } from './revenue';
@@ -27,7 +28,8 @@ export function getDrillDownData(
   vatPercentage: number = 0,
   mgmtFeePercentage: number = 0,
   serviceChargePercentage: number = 0,
-  lostBreakagePercentage: number = 0
+  lostBreakagePercentage: number = 0,
+  payrollDetails: any[] = []
 ): DrillDownData {
   let items: any[] = [];
   let title = cardId;
@@ -39,8 +41,9 @@ export function getDrillDownData(
   else if (cardId.startsWith("Management Fee")) normalizedCardId = "Management Fee";
   else if (cardId === "Room Revenue") normalizedCardId = "Revenue Room";
   else if (cardId === "Total Banquet Revenue") normalizedCardId = "Banquet Revenue";
+  else if (cardId === "Compliment Deductions") normalizedCardId = "Compliment Deductions";
 
-  const ctx: DrillDownContext = { rawTransactions, customIncomes, expenses, posOrders, vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage };
+  const ctx: DrillDownContext = { rawTransactions, customIncomes, expenses, posOrders, vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage, payrollDetails };
   
   let result = getRevenueDrillDown(normalizedCardId, ctx);
   if (result) { items = result; }

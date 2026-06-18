@@ -20,7 +20,7 @@ export const RegistryKpiCards: React.FC<RegistryKpiProps> = ({ totalHotels, acti
   <section className={styles.kpiGrid}>
     <div className={styles.kpiCard}>
       <div>
-        <div className={styles.kpiLabel}>Total Tenant</div>
+        <div className={styles.kpiLabel}>Total Partner</div>
         <div className={styles.kpiValue}>{totalHotels}</div>
       </div>
       <div className={styles.kpiIcon}><Building2 size={20} /></div>

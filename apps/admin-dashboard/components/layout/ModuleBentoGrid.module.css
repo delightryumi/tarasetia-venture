@@ -1,17 +1,284 @@
+/* Enterprise Corporate Hotel PMS Card Grid Styles - Pure Flat Design */
+
 .gridContainer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  column-gap: 24px;
-  row-gap: 48px; /* High vertical gap on desktop to separate rows clearly */
   width: 100%;
-  padding: 16px 0;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.5rem 0;
 }
 
-@media (max-width: 640px) {
-  .gridContainer {
-    row-gap: 20px; /* Closer gap on mobile for compact viewing */
-    column-gap: 16px;
-    padding: 8px 0;
+/* Mobile Layout: 2-column grid for better use of space */
+.mobileLayout {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0 0.5rem;
+}
+
+.mobileLayout .cardWrapper {
+  width: 100%;
+  max-width: none;
+}
+
+/* Card ganjil terakhir di mobile: rentangkan penuh */
+.mobileLayout .cardWrapper:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+/* Desktop Layout: uses flex rows on desktop for perfect symmetry */
+.desktopLayout {
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap; /* allow wrapping to prevent overflow on tablets */
+  gap: 1rem;
+  justify-content: center;
+  width: 100%;
+}
+
+.desktopLayout .cardWrapper {
+  text-decoration: none;
+  display: block;
+  width: 220px; /* High-density compact width */
+  flex-shrink: 0; /* Prevent card deformation */
+}
+
+/* Responsive breakpoint switching desktop layout on */
+@media (min-width: 640px) {
+  .mobileLayout {
+    display: none;
+  }
+  .desktopLayout {
+    display: flex;
   }
 }
+
+/* Card Container - Pure Flat Design */
+.card {
+  background: #ffffff; /* Clean Neutral White Background */
+  border: 1px solid transparent; /* No Border */
+  border-radius: 6px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  min-height: 135px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: none; /* Completely flat */
+  cursor: pointer;
+}
+
+.card:hover {
+  border-color: var(--accent-border); /* Elegant border-only shift on hover */
+  background: #f8fafc; /* Extremely subtle slate tint shift for feedback */
+}
+
+/* Card Body Area */
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* On very small screens, make card padding smaller */
+@media (max-width: 380px) {
+  .card {
+    padding: 0.75rem;
+  }
+  .iconWrapper {
+    width: 36px;
+    height: 36px;
+  }
+  .title {
+    font-size: 0.8rem;
+  }
+  .subtitle {
+    font-size: 0.7rem;
+  }
+}
+
+/* Header Row: Icon and Title aligned side-by-side */
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--accent-bg-glow, #f1f5f9); /* Slightly cooler default icon background */
+  color: var(--accent-color);
+  transition: transform 0.2s ease;
+}
+
+.icon {
+  width: 22px;
+  height: 22px;
+}
+
+.card:hover .iconWrapper {
+  transform: scale(1.03);
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.02rem;
+  min-width: 0; /* Enable text truncation inside flex child */
+}
+
+.categoryBadge {
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #71717a; /* Clean Gray color in Light theme */
+  line-height: 1;
+}
+
+.title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #181d26; /* Ink color in Light theme */
+  margin: 0;
+  letter-spacing: -0.01em;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card:hover .title {
+  color: var(--accent-color);
+}
+
+/* Subtitle / Description */
+.subtitle {
+  font-size: 0.775rem;
+  color: #41454d; /* Muted Ink body color in Light theme */
+  line-height: 1.4;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Card Footer: Action Links */
+.cardFooter {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: none; /* Seamless, clean look without divider lines */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.actionLink {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #181d26; /* Ink color */
+  font-size: 0.725rem;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.arrowIcon {
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.card:hover .actionLink {
+  color: var(--accent-color);
+}
+
+.card:hover .arrowIcon {
+  transform: translateX(3px);
+  color: var(--accent-color);
+}
+
+/* Locked / Disabled State */
+.lockedLink {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #9ca3af;
+  font-size: 0.725rem;
+  font-weight: 500;
+}
+
+.lockIcon {
+  color: #9ca3af;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.disabled:hover {
+  border-color: transparent;
+  background: #ffffff;
+}
+
+/* --- Dark Mode Support --- */
+
+:global(.dark) .card {
+  background: #262626; /* Elevated Dark Slate Background */
+  border-color: transparent; /* No Border */
+  box-shadow: none;
+}
+
+:global(.dark) .card:hover {
+  border-color: var(--accent-border);
+  background: #2b2b2b; /* Subtle feedback tint on dark */
+}
+
+:global(.dark) .title {
+  color: #ffffff;
+}
+
+:global(.dark) .categoryBadge {
+  color: #a79570; /* Muted Cream/Gold in Dark theme */
+}
+
+:global(.dark) .subtitle {
+  color: #a1a1aa;
+}
+
+:global(.dark) .actionLink {
+  color: #e4e4e7;
+}
+
+:global(.dark) .card:hover .actionLink {
+  color: var(--accent-color);
+}
+
+:global(.dark) .iconWrapper {
+  background: var(--accent-bg-glow, #27272a);
+}
+
+:global(.dark) .lockedLink,
+:global(.dark) .lockIcon {
+  color: #71717a;
+}
+
+:global(.dark) .disabled:hover {
+  border-color: transparent;
+  background: #262626;
+}
+
+

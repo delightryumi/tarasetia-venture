@@ -1,0 +1,51 @@
+/* ─── Dark Mode Overrides ─── */
+/* Dropdown Actions Menu */
+.dropdownContainer {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdownMenu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(24, 29, 38, 0.08);
+    z-index: 100;
+    min-width: 150px;
+    display: flex;
+    flex-direction: column;
+    padding: 6px 0;
+    transform-origin: top right;
+}
+
+.dropdownItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    text-align: left;
+    color: #41454d;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.dropdownItem:hover {
+    background: #f8fafc;
+    color: #181d26;
+}
+
+.dropdownItemDanger {
+    color: #aa2d00;
+}
+
+.dropdownItemDanger:hover {
+    background: rgba(252, 171, 121, 0.1);
+    color: #aa2d00;
+}

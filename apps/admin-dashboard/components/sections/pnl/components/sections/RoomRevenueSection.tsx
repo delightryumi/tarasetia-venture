@@ -20,7 +20,7 @@ export function RoomRevenueSection({ pnlResult, loading, rise, onCardClick }: Ro
         <div className={styles.sectionWrapper}>
             <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>
-                    <Hotel size={28} /> Room <span style={{ color: "#788069" }}>Revenue</span>
+                    <Hotel size={28} /> Room <span className={styles.sectionTitleHighlight}>Revenue</span>
                 </h2>
                 <p className={styles.sectionSubtitle}>Accommodation & Misc Income</p>
             </div>
@@ -49,6 +49,15 @@ export function RoomRevenueSection({ pnlResult, loading, rise, onCardClick }: Ro
                         icon={<Hotel size={18} />}
                         accent="#3b82f6"
                         value={pnlResult?.revRoom || 0}
+                        loading={loading}
+                        variants={rise}
+                        onClick={onCardClick}
+                    />
+                    <SummaryCard
+                        label="Room Compliment"
+                        icon={<Hotel size={18} />}
+                        accent="#ef4444"
+                        value={pnlResult?.foComplimentValue || 0}
                         loading={loading}
                         variants={rise}
                         onClick={onCardClick}

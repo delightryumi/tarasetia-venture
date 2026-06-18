@@ -5,8 +5,11 @@ import { doc, getDoc } from 'firebase/firestore';
 
 export async function GET(req: NextRequest) {
   try {
-    // Attempt to read POS shop settings from Firestore settings/pos
-    const posSettingsRef = doc(db, 'settings', 'pos');
+    // Read hotelCode from cookies
+    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+
+    // Attempt to read POS shop settings from Firestore under hotels/{hotelCode}/settings/pos
+    const posSettingsRef = doc(db, 'hotels', hotelCode, 'settings', 'pos');
     const posSettingsSnap = await getDoc(posSettingsRef);
 
     let shopData = {
@@ -17,6 +20,7 @@ export async function GET(req: NextRequest) {
       lostBreakage: 0,
       address: 'Bumi Anyom Resort, Indonesia',
       phone: '+62 123-4567-890',
+      tables: '10',
     };
 
     if (posSettingsSnap.exists()) {
@@ -29,10 +33,11 @@ export async function GET(req: NextRequest) {
         lostBreakage: (data.lostBreakage !== undefined && data.lostBreakage !== null && !isNaN(Number(data.lostBreakage))) ? Number(data.lostBreakage) : 0,
         address: data.address || shopData.address,
         phone: data.phone || shopData.phone,
+        tables: data.tables || '10',
       };
     } else {
       // Fallback: Check if we can read from footer settings for branding
-      const footerSettingsRef = doc(db, 'settings', 'footer');
+      const footerSettingsRef = doc(db, 'hotels', hotelCode, 'settings', 'footer');
       const footerSettingsSnap = await getDoc(footerSettingsRef);
       if (footerSettingsSnap.exists()) {
         const fData = footerSettingsSnap.data();
@@ -55,6 +60,7 @@ export async function GET(req: NextRequest) {
       lostBreakage: 0,
       address: 'Bumi Anyom Resort, Indonesia',
       phone: '+62 123-4567-890',
+      tables: '10',
     };
     return NextResponse.json({ data: fallbackData }, { status: 200 });
   }

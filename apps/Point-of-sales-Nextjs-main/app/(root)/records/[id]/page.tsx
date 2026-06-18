@@ -17,6 +17,7 @@ import { useEffect, useRef, useState } from 'react';
 import { TransactionData } from '@/types/transaction';
 import { useRouter, useParams } from 'next/navigation';
 import { useCurrency } from '@/hooks/useCurrency';
+import ThermalReceipt, { ReceiptItemData } from '@/components/shared/ThermalReceipt';
 
 // ─── Helper: Group items by Category → Subcategory ───────────────────────────
 function groupItems(data: TransactionData[]) {
@@ -56,15 +57,17 @@ export default function DetailPage() {
   const tax   = nettTotal * (taxRate / 100);
   const total = nettTotal + tax;
 
-  // Category totals
-  const grouped = groupItems(transactionData);
-  const sortedCats = Object.keys(grouped).sort();
-  const categoryTotals: Record<string, number> = {};
-  sortedCats.forEach(cat => {
-    categoryTotals[cat] = Object.values(grouped[cat])
-      .flat()
-      .reduce((acc, item) => acc + item.product.sellprice * item.quantity, 0);
-  });
+  // Map transactionData to ReceiptItemData
+  const receiptItems: ReceiptItemData[] = transactionData.map(item => ({
+    id: item.id,
+    name: item.product?.productstock?.name || 'Item',
+    category: item.product?.productstock?.cat || 'Lainnya',
+    subcategory: item.product?.productstock?.subcategory || '—',
+    price: item.product?.sellprice || 0,
+    quantity: item.quantity,
+    isCompliment: item.isCompliment,
+    complimentReason: item.complimentReason,
+  }));
 
   // ── Print ───────────────────────────────────────────────────────────────────
   const handlePrint = () => {
@@ -119,18 +122,7 @@ export default function DetailPage() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="w-full h-full">
-      <style jsx>{`
-        @media screen { .printable-receipt { display: none !important; } }
-        @media print {
-          @page { size: 80mm auto; margin: 0; }
-          .printable-receipt {
-            display: block !important;
-            width: 80mm; max-width: 80mm;
-            padding: 6mm; background: white; color: black;
-          }
-        }
-      `}</style>
+    <div className="w-full h-full relative">
 
       {/* ═══════════════════════════════════════════════════════════════════════
           SCREEN VIEW
@@ -162,184 +154,35 @@ export default function DetailPage() {
             {shopPhone   && <p className="text-xs text-neutral-500">Tlp: {shopPhone}</p>}
           </div>
 
-          {/* Grouped Items — Category → Subcategory */}
-          <div className="font-semibold mb-3 text-neutral-700 dark:text-neutral-300">Order Details</div>
-          <div className="flex flex-col gap-4">
-            {sortedCats.map((cat, ci) => (
-              <div key={cat}>
-                {/* Category header */}
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-black uppercase tracking-widest text-neutral-800 dark:text-white">
-                    {cat}
-                  </span>
-                  <span className="text-xs font-semibold text-neutral-500">
-                    {formatCurrency(categoryTotals[cat])}
-                  </span>
-                </div>
-
-                {/* Subcategory groups */}
-                <div className="flex flex-col gap-2 pl-3 border-l-2 border-neutral-200 dark:border-white/[0.1]">
-                  {Object.keys(grouped[cat]).sort().map(sub => (
-                    <div key={sub}>
-                      {sub !== '—' && (
-                        <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-1">
-                          {sub}
-                        </p>
-                      )}
-                      {grouped[cat][sub].map((item, i) => (
-                        <div key={i} className="flex items-center justify-between py-1">
-                          <span className="text-muted-foreground text-sm">
-                            {item.product?.productstock?.name || 'Item'}
-                            <span className="ml-1 text-xs">x{item.quantity}</span>
-                          </span>
-                          <span className="text-sm font-medium">
-                            {formatCurrency((item.product?.sellprice || 0) * item.quantity)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-                {ci < sortedCats.length - 1 && <Separator className="mt-3" />}
-              </div>
-            ))}
+          <div className="font-semibold mb-3 text-neutral-700 dark:text-neutral-300">Pratinjau Struk</div>
+          
+          <div className="border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 p-4 flex justify-center">
+             <ThermalReceipt
+                shopInfo={{ name: shopName, address: shopAddress, phone: shopPhone }}
+                transactionInfo={{ id, date: saleDate, customerName: 'Walk-in Customer', paymentMethod: transactionData[0]?.paymethod || transactionData[0]?.paymentMethod || 'TUNAI' }}
+                items={receiptItems}
+                totals={{
+                  subtotal, discount, taxRate, taxAmount: tax, payableAmount: total
+                }}
+                className="shadow-sm border border-neutral-200"
+             />
           </div>
 
-          <Separator className="my-4" />
-
-          {/* Totals */}
-          <ul className="grid gap-2 text-sm">
-            <li className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span>{formatCurrency(subtotal)}</span>
-            </li>
-            {discount > 0 && (
-              <>
-                <li className="flex justify-between text-red-500">
-                  <span className="text-muted-foreground text-red-400">Discount</span>
-                  <span>-{formatCurrency(discount)}</span>
-                </li>
-                <li className="flex justify-between font-semibold text-neutral-600 dark:text-neutral-400">
-                  <span className="text-muted-foreground">Setelah Diskon</span>
-                  <span>{formatCurrency(subtotal - discount)}</span>
-                </li>
-              </>
-            )}
-            <li className="flex justify-between">
-              <span className="text-muted-foreground">Service TAX ({taxRate}%)</span>
-              <span>{formatCurrency(tax)}</span>
-            </li>
-            <li className="flex justify-between font-bold text-base pt-1 border-t border-neutral-200 dark:border-white/[0.1] mt-1">
-              <span>Total</span>
-              <span>{formatCurrency(total)}</span>
-            </li>
-          </ul>
         </CardContent>
-
-        <CardFooter className="border-t bg-muted/50 px-6 py-3 mt-auto text-xs text-neutral-400">
-          {sortedCats.map(cat => (
-            <Badge key={cat} variant="outline" className="mr-1 text-[10px]">{cat}: {formatCurrency(categoryTotals[cat])}</Badge>
-          ))}
-        </CardFooter>
       </Card>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          THERMAL PRINT TEMPLATE (hidden on screen)
+          THERMAL PRINT TEMPLATE (hidden on screen, only block on print)
       ════════════════════════════════════════════════════════════════════════ */}
-      <div
-        ref={componentRef}
-        className="printable-receipt"
-        style={{ fontFamily: 'Courier New, Courier, monospace' }}
-      >
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-          <h2 style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', margin: 0 }}>{shopName}</h2>
-          {shopAddress && <p style={{ fontSize: '9px', margin: '2px 0 0' }}>{shopAddress}</p>}
-          {shopPhone   && <p style={{ fontSize: '9px', margin: '1px 0 0' }}>Tlp: {shopPhone}</p>}
-        </div>
-        <div style={{ borderTop: '1px dashed black', margin: '6px 0' }} />
-
-        {/* Transaction info */}
-        <div style={{ fontSize: '9px', display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '6px' }}>
-          {[
-            ['No. Transaksi', id],
-            ['Tanggal', saleDate],
-            ['Pelanggan', 'Walk-in Customer'],
-          ].map(([label, value]) => (
-            <div key={label} style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>{label}:</span>
-              <span style={{ fontWeight: 'bold' }}>{value}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ borderTop: '1px dashed black', margin: '6px 0' }} />
-
-        {/* Grouped items */}
-        {sortedCats.map(cat => (
-          <div key={cat} style={{ marginBottom: '6px' }}>
-            {/* Category label */}
-            <div style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px dotted #888', paddingBottom: '2px', marginBottom: '4px' }}>
-              {cat}
-            </div>
-
-            {/* Subcategory groups */}
-            {Object.keys(grouped[cat]).sort().map(sub => (
-              <div key={sub} style={{ marginBottom: '4px' }}>
-                {sub !== '—' && (
-                  <div style={{ fontSize: '8px', textTransform: 'uppercase', color: '#555', marginLeft: '4px', marginBottom: '2px', letterSpacing: '0.5px' }}>
-                    {sub}
-                  </div>
-                )}
-                {grouped[cat][sub].map((item, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginLeft: '8px', marginBottom: '2px' }}>
-                    <div>
-                      <div style={{ fontWeight: 'bold' }}>{item.product?.productstock?.name}</div>
-                      <div style={{ fontSize: '8px', color: '#444' }}>{item.quantity} x {formatCurrency(item.product?.sellprice || 0)}</div>
-                    </div>
-                    <span style={{ fontWeight: 'bold' }}>{formatCurrency((item.product?.sellprice || 0) * item.quantity)}</span>
-                  </div>
-                ))}
-              </div>
-            ))}
-
-            {/* Category subtotal */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#555', borderTop: '1px dotted #aaa', paddingTop: '2px', marginTop: '2px' }}>
-              <span>Subtotal {cat}</span>
-              <span style={{ fontWeight: 'bold' }}>{formatCurrency(categoryTotals[cat])}</span>
-            </div>
-          </div>
-        ))}
-
-        <div style={{ borderTop: '1px dashed black', margin: '6px 0' }} />
-
-        {/* Totals */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '9px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Subtotal:</span><span>{formatCurrency(subtotal)}</span>
-          </div>
-          {discount > 0 && (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Discount:</span><span>-{formatCurrency(discount)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
-                <span>Setelah Diskon:</span><span>{formatCurrency(subtotal - discount)}</span>
-              </div>
-            </>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Service TAX ({taxRate}%):</span><span>{formatCurrency(tax)}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '11px', borderTop: '1px dashed black', paddingTop: '4px', marginTop: '2px' }}>
-            <span>TOTAL:</span><span>{formatCurrency(total)}</span>
-          </div>
-        </div>
-
-        <div style={{ borderTop: '1px dashed black', margin: '8px 0' }} />
-        <div style={{ textAlign: 'center', fontSize: '8px', fontStyle: 'italic', lineHeight: 1.5 }}>
-          <p>Terima kasih atas kunjungan Anda!</p>
-          <p>Struk ini adalah bukti pembayaran sah.</p>
-        </div>
+      <div className="hidden print:block w-full">
+         <ThermalReceipt
+            shopInfo={{ name: shopName, address: shopAddress, phone: shopPhone }}
+            transactionInfo={{ id, date: saleDate, customerName: 'Walk-in Customer', paymentMethod: transactionData[0]?.paymethod || transactionData[0]?.paymentMethod || 'TUNAI' }}
+            items={receiptItems}
+            totals={{
+              subtotal, discount, taxRate, taxAmount: tax, payableAmount: total
+            }}
+         />
       </div>
     </div>
   );

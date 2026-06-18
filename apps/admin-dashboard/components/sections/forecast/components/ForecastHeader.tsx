@@ -5,8 +5,7 @@ import { Waves, Download, FileText, LayoutDashboard, TrendingUp } from "lucide-r
 import { CustomDatePicker } from "../CustomDatePicker";
 import styles from "../ForecastStyles.module.css";
 
-const PEACH = "#8d7a52";
-const SAGE = "#788069";
+
 
 interface ForecastHeaderProps {
     viewMode: "daily" | "monthly" | "yearly";
@@ -35,13 +34,13 @@ export function ForecastHeader({
         <header className={styles.header}>
             <div className={styles.headerInner}>
                 <div className={styles.headerLeft}>
-                    <div className={styles.headerBadge} style={{ backgroundColor: `${PEACH}30`, color: SAGE }}>
+                    <div className={styles.headerBadge} style={{ backgroundColor: 'var(--sidebar-link-active-bg)', color: 'var(--sidebar-link-active-text)' }}>
                         <Waves size={15} />
                     </div>
                     <div className={styles.headerMeta}>
                         <span className={styles.headerSubtitle}>Forecast Analytics</span>
                         <h1 className={styles.headerTitle}>
-                            Forecast <span style={{ color: SAGE }}>& POS</span>
+                            Forecast <span style={{ color: 'var(--sidebar-link-active-bg)' }}>& POS</span>
                         </h1>
                     </div>
                 </div>

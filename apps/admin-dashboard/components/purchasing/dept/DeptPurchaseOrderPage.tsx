@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useDailyMarketList } from '@/hooks/purchasing/useDailyMarketList';
 import { useStoreRequisition } from '@/hooks/purchasing/useStoreRequisition';
@@ -16,6 +16,7 @@ import { dmlService } from '@/services/purchasing/dmlService';
 import s from '@/app/(dashboard)/purchasing/shared-page.module.css';
 import ds from './dept-purchase-order.module.css';
 import '@/components/purchasing/shell/purchasing-tokens.css';
+import overviewStyles from '@/components/sections/overview/OverviewStyles.module.css';
 
 // Existing table + form + print (reused from purchasing)
 import DailyMarketListTable from '@/app/(dashboard)/purchasing/daily-market-list/components/DailyMarketListTable';
@@ -257,27 +258,39 @@ export default function DeptPurchaseOrderPage({ department, title }: DeptPurchas
     <motion.div variants={fadeUp} initial="hidden" animate="visible" className="purchasing-root">
       <div className={s.printHideRoot}>
         {/* Header */}
-        <div className={ds.headerWrapper}>
-          <div className={ds.headerTitleSec}>
-            <h1 className={ds.title}>{title}</h1>
-            <p className={ds.subtitle}>{tabDescriptions[activeTab]}</p>
+        <header className={`${overviewStyles.header} no-print !mb-8`}>
+          <div className={overviewStyles.headerInner} style={{ padding: 0 }}>
+            <div className={overviewStyles.headerLeft}>
+              <div className={overviewStyles.headerBadge} style={{ backgroundColor: 'var(--sidebar-link-active-bg)', color: 'var(--sidebar-link-active-text)' }}>
+                <FileText size={15} />
+              </div>
+              <div className={overviewStyles.headerMeta}>
+                <span className={overviewStyles.headerSubtitle}>{tabDescriptions[activeTab]}</span>
+                <h1 className={overviewStyles.headerTitle}>
+                  {department} <span style={{ color: 'var(--sidebar-link-active-bg)' }}>Purchase Orders</span>
+                </h1>
+              </div>
+            </div>
+
+            <div className={overviewStyles.headerRight}>
+              {activeTab === 'DML' && (
+                <PButton onClick={() => { setSelectedDmlForForm(null); setDmlFormOpen(true); }}>
+                  <Plus size={16} strokeWidth={2} /> Generate DML
+                </PButton>
+              )}
+              {activeTab === 'Store Requisition' && (
+                <PButton onClick={() => { setSelectedSrForForm(null); setSrFormOpen(true); }}>
+                  <Plus size={16} strokeWidth={2} /> New SR
+                </PButton>
+              )}
+              {activeTab === 'Purchase Requisition' && (
+                <PButton onClick={() => { setSelectedPrForForm(null); setPrFormOpen(true); }}>
+                  <Plus size={16} strokeWidth={2} /> New PR
+                </PButton>
+              )}
+            </div>
           </div>
-          {activeTab === 'DML' && (
-            <PButton onClick={() => { setSelectedDmlForForm(null); setDmlFormOpen(true); }}>
-              <Plus size={16} strokeWidth={2} /> Generate DML
-            </PButton>
-          )}
-          {activeTab === 'Store Requisition' && (
-            <PButton onClick={() => { setSelectedSrForForm(null); setSrFormOpen(true); }}>
-              <Plus size={16} strokeWidth={2} /> New SR
-            </PButton>
-          )}
-          {activeTab === 'Purchase Requisition' && (
-            <PButton onClick={() => { setSelectedPrForForm(null); setPrFormOpen(true); }}>
-              <Plus size={16} strokeWidth={2} /> New PR
-            </PButton>
-          )}
-        </div>
+        </header>
 
         {/* Tabs */}
         <div className={ds.tabsContainer}>

@@ -1,0 +1,308 @@
+/* Drawer styles */
+.drawerOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(24, 29, 38, 0.3);
+    backdrop-filter: blur(1px);
+}
+
+.drawerPanel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
+    width: 100%;
+    max-width: 440px;
+    background: #ffffff;
+    border-left: 1px solid #dddddd;
+    z-index: 501;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-sans, -apple-system, sans-serif);
+    color: #181d26;
+}
+
+.drawerHeader {
+    padding: 24px;
+    border-bottom: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.drawerHeaderTitleCluster {
+    display: flex;
+    flex-direction: column;
+}
+
+.drawerHeaderMeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.drawerHeaderMetaIcon {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: #f8fafc;
+    border: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9297a0;
+}
+
+.drawerHeaderMetaText {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #9297a0;
+}
+
+.drawerTitle {
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: #181d26;
+}
+
+.drawerTitleHighlight {
+    font-weight: 600;
+    color: #788069;
+}
+
+.drawerCloseBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid #dddddd;
+    background: #ffffff;
+    color: #9297a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.drawerCloseBtn:hover {
+    color: #181d26;
+    border-color: #9297a0;
+}
+
+.drawerBody {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.drawerFormGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.drawerFormLabel {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #9297a0;
+    padding-left: 2px;
+}
+
+.drawerInputWrapper {
+    position: relative;
+}
+
+.drawerInputIcon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9297a0;
+    pointer-events: none;
+}
+
+.drawerInput {
+    width: 100%;
+    height: 44px;
+    padding: 0 12px 0 38px;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #181d26;
+    transition: all 0.2s ease;
+}
+
+.changePwdInput {
+    width: 100%;
+    height: 44px;
+    padding: 0 12px 0 38px;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #181d26;
+    transition: all 0.2s ease;
+}
+
+.changePwdInput:focus {
+    outline: none;
+    border-color: #181d26;
+    box-shadow: 0 0 0 3px rgba(24, 29, 38, 0.05);
+}
+
+.drawerInput:focus {
+    outline: none;
+    border-color: #181d26;
+    box-shadow: 0 0 0 3px rgba(24, 29, 38, 0.05);
+}
+
+.drawerInput:disabled {
+    opacity: 0.5;
+    background: #f8fafc;
+    cursor: not-allowed;
+}
+
+.resetBtnCluster {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 9px;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #788069;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    width: fit-content;
+}
+
+.resetIconBox {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.roleSelectHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 2px;
+    margin-bottom: 4px;
+}
+
+.levelBadge {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #788069;
+    background: #f8fafc;
+    border: 1px solid #dddddd;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.roleButtonGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.roleSelectBtn {
+    height: 38px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    color: #9297a0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.roleSelectBtn:hover {
+    border-color: #9297a0;
+    color: #41454d;
+}
+
+.roleSelectBtnActive {
+    background: #181d26;
+    border-color: #181d26;
+    color: #ffffff;
+}
+
+.drawerFooter {
+    padding: 24px;
+    background: #f8fafc;
+    border-top: 1px solid #dddddd;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.submitBtn {
+    width: 100%;
+    height: 44px;
+    background: #181d26;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.submitBtn:hover {
+    background: #0d1218;
+}
+
+.submitBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.cancelBtn {
+    width: 100%;
+    height: 44px;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    color: #181d26;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cancelBtn:hover {
+    color: #41454d;
+    border-color: #9297a0;
+}

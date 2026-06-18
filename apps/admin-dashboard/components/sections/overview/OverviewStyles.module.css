@@ -2,14 +2,14 @@
 
 .overviewRoot {
   /* ── Design Tokens ── */
-  --f-sage: #788069;
-  --f-sage-light: #9da68e;
-  --f-sage-dark: #5c6351;
-  --f-sage-bg: #f3f5f0;
-  --f-sage-border: #e2e6dd;
+  --f-sage: var(--sidebar-link-active-bg, #181d26);
+  --f-sage-light: var(--sidebar-text, #41454d);
+  --f-sage-dark: var(--sidebar-link-hover-text, #181d26);
+  --f-sage-bg: var(--sidebar-link-hover-bg, #f3efe6);
+  --f-sage-border: var(--sidebar-border, #dddddd);
 
-  --f-peach: #8d7a52;
-  --f-peach-dark: #736342;
+  --f-peach: var(--sidebar-link-active-bg, #181d26);
+  --f-peach-dark: var(--sidebar-link-hover-text, #181d26);
   --f-rich-black: #1a1c14;
 
   --f-canvas: #ffffff;
@@ -172,14 +172,14 @@
 
 .toggleBtnActive {
   background-color: var(--f-peach);
-  color: #ffffff;
+  color: var(--sidebar-link-active-text) !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* ── Buttons ── */
 .btnPrimary {
   background-color: var(--f-sage);
-  color: var(--f-canvas);
+  color: var(--sidebar-link-active-text) !important;
   border: none;
   border-radius: var(--f-radius-sm);
   font-size: 11px;
@@ -873,8 +873,8 @@
   --f-muted: #71717a;
   --f-light-muted: #52525b;
 
-  --f-sage-bg: #2b2e25;
-  --f-sage-border: #3b4033;
+  --f-sage-bg: var(--sidebar-link-hover-bg, #2b2b2b);
+  --f-sage-border: var(--sidebar-border, rgba(255, 255, 255, 0.08));
 }
 
 /* Hardcoded overrides for dark mode */
@@ -899,7 +899,8 @@
 }
 
 :global(.dark) .toggleBtnActive {
-  color: #1a1c14; /* contrast for peach */
+  color: var(--sidebar-link-active-text) !important;
+  background-color: var(--sidebar-link-active-bg) !important;
 }
 
 /* Calendar Dynamic Cells */

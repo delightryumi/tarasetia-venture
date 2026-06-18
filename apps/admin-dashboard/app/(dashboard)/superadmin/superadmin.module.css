@@ -1096,3 +1096,31 @@
   color: #f4f4f5;
 }
 
+/* ── Module Checkboxes ── */
+.modulesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--s-space-md);
+  margin-top: var(--s-space-xs);
+  padding: var(--s-space-md);
+  background: var(--s-surface-soft);
+  border: 1px solid var(--s-hairline);
+  border-radius: var(--s-radius-md);
+}
+
+.moduleCheckbox {
+  display: flex;
+  align-items: center;
+  gap: var(--s-space-xs);
+  font-size: 13px;
+  color: var(--s-body);
+  cursor: pointer;
+  user-select: none;
+}
+
+.moduleCheckbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #c5a880;
+  cursor: pointer;
+}

@@ -26,6 +26,9 @@ export function MobileBottomNav() {
         if (isLocal) {
           return 'http://localhost:3000/select-module';
         }
+        if (hostname.includes('-3001.')) {
+          return `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
+        }
         if (hostname.startsWith('pos.')) {
           return `${protocol}//${hostname.replace('pos.', 'pms.')}/select-module`;
         }
@@ -33,6 +36,9 @@ export function MobileBottomNav() {
           const parts = hostname.split('--');
           parts[0] = 'bumianyom-web-1';
           return `${protocol}//${parts.join('--')}/select-module`;
+        }
+        if (hostname.includes('-3001.')) {
+          return `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         }
       }
       return 'https://pms.bumianyom.com/select-module';

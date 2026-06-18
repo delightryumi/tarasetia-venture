@@ -28,6 +28,8 @@ import { toast } from 'react-toastify';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
+import { getHotelCollection } from '@/lib/firestoreHelper';
+
 export function SheetRestock({
   open,
   onClose,
@@ -55,12 +57,12 @@ export function SheetRestock({
     if (open) {
       const loadData = async () => {
         try {
-          const snap = await getDocs(collection(db, 'pos_products'));
+          const snap = await getDocs(getHotelCollection(db, 'pos_products'));
           const prods = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           setProducts(prods);
           
           let dbCats: string[] = [];
-          const catSnap = await getDocs(collection(db, 'pos_categories'));
+          const catSnap = await getDocs(getHotelCollection(db, 'pos_categories'));
           dbCats = catSnap.docs.map(doc => doc.data().name);
           
           const prodCats = prods.map((p: any) => p.category);

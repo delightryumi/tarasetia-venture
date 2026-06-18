@@ -25,6 +25,9 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
         if (isLocal) {
           return `${protocol}//${hostname}:3001`;
         }
+        if (hostname.includes('-3000.')) {
+          return `${protocol}//${hostname.replace('-3000.', '-3001.')}`;
+        }
         if (hostname.startsWith('pms.')) {
           return `${protocol}//${hostname.replace('pms.', 'pos.')}`;
         }
@@ -65,13 +68,15 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
       if (storedUser) {
         try {
           const authUserObj = JSON.parse(storedUser);
+          const localHotelCode = localStorage.getItem('active_hotel_code');
           const posUserObj = {
             id: authUserObj.uid,
             name: authUserObj.displayName,
             username: authUserObj.email?.split('@')[0],
             email: authUserObj.email,
             role: authUserObj.role || 'WORKER',
-            restoId: 'default-resto'
+            restoId: 'default-resto',
+            hotelCode: localHotelCode || authUserObj.hotelCode || '87241'
           };
           params.set('user', JSON.stringify(posUserObj));
         } catch (e) {
@@ -80,13 +85,15 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
       } else if (user) {
         const email = user.email || '';
         const name = user.displayName || email.split('@')[0];
+        const localHotelCode = localStorage.getItem('active_hotel_code');
         const posUserObj = {
           id: user.uid,
           name: name,
           username: email.split('@')[0],
           email: email,
           role: user.role || 'WORKER',
-          restoId: 'default-resto'
+          restoId: 'default-resto',
+          hotelCode: localHotelCode || user.hotelCode || '87241'
         };
         params.set('user', JSON.stringify(posUserObj));
       }

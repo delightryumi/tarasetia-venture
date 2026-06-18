@@ -126,7 +126,7 @@ const TaxrateCard: React.FC<TaxrateCardProps> = ({ tax, service, lostBreakage, s
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
           <Button
-            className="text-white"
+            className="bg-stone-900 text-white hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 transition-colors"
             onClick={handleSave}
             disabled={isLoading}
           >

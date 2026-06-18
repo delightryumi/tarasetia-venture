@@ -103,6 +103,13 @@ export default function ExpenseInput({ expenses, setExpenses }: ExpenseInputProp
                     </span>
                     <input
                       type="number"
+                      min="0"
+                      onWheel={(e) => e.currentTarget.blur()}
+                      onKeyDown={(e) => {
+                        if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
+                          e.preventDefault();
+                        }
+                      }}
                       value={item.amount === 0 ? "" : item.amount}
                       onChange={(e) => {
                         const n = [...expenses];

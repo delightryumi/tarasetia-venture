@@ -3,6 +3,7 @@ import { Plus, Trash2, Printer, Calculator, FileText, User, Mail, CreditCard, Ca
 import { useInvoice } from "./useInvoice";
 import { InvoicePreview } from "./InvoicePreview";
 import { motion, AnimatePresence } from "framer-motion";
+import overviewStyles from "../overview/OverviewStyles.module.css";
 import "./invoice.css";
 
 export const InvoiceSection = () => {
@@ -24,34 +25,40 @@ export const InvoiceSection = () => {
     if (loading) return (
         <div className="flex items-center justify-center min-h-screen bg-off-white">
             <div className="text-center">
-                <div className="w-12 h-12 border-4 border-sage border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-sage font-medium">Loading Invoice System...</p>
+                <div className="w-12 h-12 border-4 border-[var(--sidebar-link-active-bg)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-[var(--sidebar-text)] font-semibold uppercase text-xs tracking-wider animate-pulse">Loading Invoice System...</p>
             </div>
         </div>
     );
 
     return (
         <section className="min-h-screen bg-transparent">
-            <header className="content-header no-print flex justify-between items-end mb-8">
-                <div>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-sage/10 rounded-lg text-sage">
-                            <FileText size={24} />
+            <header className={`${overviewStyles.header} no-print`}>
+                <div className={overviewStyles.headerInner}>
+                    <div className={overviewStyles.headerLeft}>
+                        <div className={overviewStyles.headerBadge} style={{ backgroundColor: 'var(--sidebar-link-active-bg)', color: 'var(--sidebar-link-active-text)' }}>
+                            <FileText size={15} />
                         </div>
-                        <h1 className="content-title">Invoice Creator</h1>
+                        <div className={overviewStyles.headerMeta}>
+                            <span className={overviewStyles.headerSubtitle}>Document Generator</span>
+                            <h1 className={overviewStyles.headerTitle}>
+                                Invoice <span style={{ color: 'var(--sidebar-link-active-bg)' }}>Creator</span>
+                            </h1>
+                        </div>
                     </div>
-                    <p className="content-subtitle">Craft professional, nature-inspired documents for Bumi Anyom Resort.</p>
-                </div>
-                <div className="flex gap-4" style={{ marginRight: '1.5cm' }}>
-                    <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handlePrint}
-                        className="btn-invoice-action primary-peach"
-                    >
-                        <Printer size={18} />
-                        Print Receipt
-                    </motion.button>
+
+                    <div className={overviewStyles.headerRight}>
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={handlePrint}
+                            className="btn-invoice-action primary-peach"
+                            style={{ height: '36px', padding: '0 16px', borderRadius: '8px', fontSize: '12px' }}
+                        >
+                            <Printer size={16} />
+                            Print Receipt
+                        </motion.button>
+                    </div>
                 </div>
             </header>
 
@@ -73,12 +80,12 @@ export const InvoiceSection = () => {
                                     <input 
                                         type="text" 
                                         placeholder="Cari nama tamu (min. 2 huruf)..."
-                                        className="w-full h-11 px-4 bg-[#fbf9f4] dark:bg-[#1a1a1a] border border-[rgba(141,122,82,0.12)] dark:border-[#333333] rounded-xl text-sm outline-none focus:border-sage focus:ring-1 focus:ring-sage transition-all shadow-sm dark:text-white"
+                                        className="w-full h-11 px-4 bg-[#fbf9f4] dark:bg-[#1a1a1a] border border-[rgba(141,122,82,0.12)] dark:border-[#333333] rounded-xl text-sm outline-none focus:border-[var(--sidebar-link-active-bg)] focus:ring-1 focus:ring-[var(--sidebar-link-active-bg)] transition-all shadow-sm dark:text-white"
                                         onChange={(e) => searchTransactions(e.target.value)}
                                     />
                                     {searching && (
                                         <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                                            <div className="w-4 h-4 border-2 border-sage border-t-transparent rounded-full animate-spin" />
+                                            <div className="w-4 h-4 border-2 border-[var(--sidebar-link-active-bg)] border-t-transparent rounded-full animate-spin" />
                                         </div>
                                     )}
                                 </div>
@@ -204,7 +211,7 @@ export const InvoiceSection = () => {
                                 </div>
                                 <button 
                                     onClick={addItem}
-                                    className="p-1.5 bg-sage text-white rounded-lg hover:bg-sage-accent transition-colors shadow-sm"
+                                    className="p-1.5 bg-[var(--sidebar-link-active-bg)] text-[var(--sidebar-link-active-text)] rounded-lg hover:opacity-90 transition-all shadow-sm"
                                     title="Add Item"
                                 >
                                     <Plus size={18} />

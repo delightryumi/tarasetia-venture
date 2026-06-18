@@ -229,22 +229,51 @@ export function TransactionEntryForm({
 
                         <SectionTitle number="03" label="Rincian Pembayaran & Pendapatan Bersih" />
                         <div className={styles.formGrid} style={{ rowGap: '12px' }}>
-                            <TerminalInput 
-                                label="Pembayaran Cash di Hotel (Pay at Hotel)"
-                                value={form.payHotel}
-                                onChange={(val: string) => updateForm("payHotel", Number(val))}
-                                placeholder="0"
-                                type="number"
-                                isAmount={true}
-                            />
-                            <TerminalInput 
-                                label="Pembayaran Virtual / OTA (Debit, QRIS, dsb.)"
-                                value={form.payTransfer}
-                                onChange={(val: string) => updateForm("payTransfer", Number(val))}
-                                placeholder="0"
-                                type="number"
-                                isAmount={true}
-                            />
+                            <div className={styles.colSpan2} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--f-surface)', border: '1px solid var(--f-hairline)', borderRadius: '8px' }}>
+                                <input 
+                                    type="checkbox" 
+                                    id="isComplimentRoom"
+                                    checked={!!form.isCompliment}
+                                    onChange={(e) => updateForm("isCompliment", e.target.checked)}
+                                    style={{ width: '16px', height: '16px', accentColor: 'var(--f-sage)' }}
+                                />
+                                <label htmlFor="isComplimentRoom" style={{ fontSize: '12px', fontWeight: '600', color: 'var(--f-foreground)', cursor: 'pointer' }}>
+                                    Tandai sebagai Compliment (Kompensasi / Gratis)
+                                </label>
+                            </div>
+                            
+                            {form.isCompliment && (
+                                <div className={styles.colSpan2}>
+                                    <TerminalInput 
+                                        label="Alasan Compliment (Wajib)"
+                                        value={form.complimentReason}
+                                        onChange={(val: string) => updateForm("complimentReason", val)}
+                                        placeholder="CONTOH: KELUARGA OWNER / KOMPENSASI AC RUSAK"
+                                        icon={AlertCircle}
+                                    />
+                                </div>
+                            )}
+
+                            {!form.isCompliment && (
+                                <>
+                                    <TerminalInput 
+                                        label="Pembayaran Cash di Hotel (Pay at Hotel)"
+                                        value={form.payHotel}
+                                        onChange={(val: string) => updateForm("payHotel", Number(val))}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                    <TerminalInput 
+                                        label="Pembayaran Virtual / OTA (Debit, QRIS, dsb.)"
+                                        value={form.payTransfer}
+                                        onChange={(val: string) => updateForm("payTransfer", Number(val))}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                </>
+                            )}
                         </div>
                     </div>
                 ) : (
@@ -277,8 +306,33 @@ export function TransactionEntryForm({
                             />
                         </div>
 
-                        <SectionTitle number="02" label="Tanggal & Metode Pembayaran" />
+                        <SectionTitle number="02" label="Tanggal & Pembayaran" />
                         <div className={styles.formGrid} style={{ rowGap: '12px' }}>
+                            <div className={styles.colSpan2} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--f-surface)', border: '1px solid var(--f-hairline)', borderRadius: '8px' }}>
+                                <input 
+                                    type="checkbox" 
+                                    id="isComplimentOther"
+                                    checked={!!form.isCompliment}
+                                    onChange={(e) => updateForm("isCompliment", e.target.checked)}
+                                    style={{ width: '16px', height: '16px', accentColor: 'var(--f-sage)' }}
+                                />
+                                <label htmlFor="isComplimentOther" style={{ fontSize: '12px', fontWeight: '600', color: 'var(--f-foreground)', cursor: 'pointer' }}>
+                                    Tandai sebagai Compliment (Kompensasi / Gratis)
+                                </label>
+                            </div>
+
+                            {form.isCompliment && (
+                                <div className={styles.colSpan2}>
+                                    <TerminalInput 
+                                        label="Alasan Compliment (Wajib)"
+                                        value={form.complimentReason}
+                                        onChange={(val: string) => updateForm("complimentReason", val)}
+                                        placeholder="CONTOH: KELUARGA OWNER / KOMPENSASI"
+                                        icon={AlertCircle}
+                                    />
+                                </div>
+                            )}
+
                             <DateCard 
                                 label="Tanggal Transaksi"
                                 value={form.checkIn}
@@ -419,19 +473,27 @@ export function ReviewSidebar({
                                 </div>
                             )}
 
+                            {form.isCompliment && (
+                                <div className={styles.draftNote}>
+                                    <p className={styles.draftNoteText} style={{ color: '#ef4444' }}>
+                                        COMPLIMENT: {form.complimentReason || 'Alasan belum diisi'}
+                                    </p>
+                                </div>
+                            )}
+
                             <div className={styles.draftAmountSection}>
                                 <div className={styles.draftAmountRow}>
                                     <span>Pay at Hotel</span>
-                                    <span className={styles.draftAmountValue}>Rp {formatCurrency(form.payHotel || 0)}</span>
+                                    <span className={styles.draftAmountValue}>Rp {formatCurrency(form.isCompliment ? 0 : (form.payHotel || 0))}</span>
                                 </div>
                                 {revenueType === 'room' && (
                                     <div className={styles.draftAmountRow}>
                                         <span>Virtual Payment / OTA</span>
-                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(form.payTransfer || 0)}</span>
+                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(form.isCompliment ? 0 : (form.payTransfer || 0))}</span>
                                     </div>
                                 )}
                                 <div className={styles.draftTotalRow}>
-                                    <span>Total Gross</span>
+                                    <span>Total Gross {form.isCompliment && "(Compliment Value)"}</span>
                                     <span className={styles.draftTotalValue}>Rp {formatCurrency(totalGross || 0)}</span>
                                 </div>
                             </div>
@@ -511,14 +573,17 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                         <tr>
                             <th className={styles.tableCell}>Date</th>
                             <th className={styles.tableCell}>Guest Detail</th>
-                            <th className={styles.tableCell} style={{ textAlign: 'right' }}>Amount</th>
-                            <th className={styles.tableCell} style={{ textAlign: 'center', width: '128px' }}>Action</th>
+                            <th className={styles.tableCell} style={{ textAlign: 'right' }}>Total</th>
+                            <th className={styles.tableCell} style={{ textAlign: 'right' }}>Paid</th>
+                            <th className={styles.tableCell} style={{ textAlign: 'right' }}>Balance</th>
+                            <th className={styles.tableCell} style={{ textAlign: 'center', width: '100px' }}>Status</th>
+                            <th className={styles.tableCell} style={{ textAlign: 'center', width: '80px' }}>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {queue.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className={styles.tableCell} style={{ padding: '40px 20px', textAlign: 'center' }}>
+                                <td colSpan={7} className={styles.tableCell} style={{ padding: '40px 20px', textAlign: 'center' }}>
                                     <div className={styles.tableEmptyState}>
                                         <AlertCircle size={32} strokeWidth={1.5} />
                                         <p className={styles.tableEmptyText}>No items in queue</p>
@@ -528,9 +593,14 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                         ) : (
                             queue.map((item, idx) => {
                                 const channelLogo = CHANNELS.find(c => c.name === item.channel)?.logo;
+                                const paidCash = item.payHotel || 0;
+                                const paidTransfer = item.payTransfer || 0;
+                                const totalPaid = paidCash + paidTransfer;
+                                const balanceVal = Math.max(0, (item.amount || 0) - totalPaid);
+
                                 return (
                                     <tr key={idx} className={styles.tableRow} onClick={() => setModalData({ type: 'queueItem', data: item })}>
-                                        <td className={`${styles.tableCell} ${styles.dateCell}`}>{item.checkInDate}</td>
+                                        <td className={`${styles.tableCell} ${styles.dateCell}`}>{item.effectiveDate || item.checkInDate}</td>
                                         <td className={styles.tableCell}>
                                             <div className={styles.detailCellInner}>
                                                 <div className={styles.detailCellRow1}>
@@ -553,11 +623,68 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                                                             <span className={styles.channelTagText}>{item.channel}</span>
                                                         </>
                                                     )}
+                                                    {item.isCompliment && (
+                                                        <>
+                                                            <span className={styles.bulletSeparator} />
+                                                            <span className={styles.channelTagText} style={{ backgroundColor: '#fee2e2', color: '#ef4444', borderColor: '#fecaca' }}>COMPLIMENT</span>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>
                                         <td className={styles.tableCell} style={{ textAlign: 'right', fontFamily: 'var(--f-font-mono)', fontWeight: '700' }}>
-                                            Rp {formatCurrency(item.amount)}
+                                            Rp {item.isCompliment ? 0 : formatCurrency(item.amount)}
+                                        </td>
+                                        <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                                            <div className="flex flex-col items-end">
+                                                <span className="font-mono font-bold text-stone-850 dark:text-stone-150">
+                                                    Rp {item.isCompliment ? 0 : formatCurrency(totalPaid)}
+                                                </span>
+                                                {!item.isCompliment && (paidCash > 0 || paidTransfer > 0) && (
+                                                    <span className="text-[9px] text-stone-400 font-medium uppercase tracking-wider">
+                                                        {paidCash > 0 && `Cash: Rp ${formatCurrency(paidCash)}`}
+                                                        {paidCash > 0 && paidTransfer > 0 && " | "}
+                                                        {paidTransfer > 0 && `Trf: Rp ${formatCurrency(paidTransfer)}`}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                                            <span className={`font-mono font-bold ${balanceVal > 0 && !item.isCompliment ? 'text-amber-600 dark:text-amber-400' : 'text-stone-500'}`}>
+                                                Rp {item.isCompliment ? 0 : formatCurrency(balanceVal)}
+                                            </span>
+                                        </td>
+                                        <td className={styles.tableCell} style={{ textAlign: 'center' }}>
+                                            {(() => {
+                                                const status = item.paymentStatus || (item.isCompliment ? "Lunas" : (balanceVal === 0 ? "Lunas" : (totalPaid > 0 ? "DP / Partial" : "Belum Bayar")));
+                                                
+                                                if (item.isCompliment) {
+                                                    return (
+                                                        <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30">
+                                                            COMP
+                                                        </span>
+                                                    );
+                                                }
+                                                if (status === "Lunas" || status === "PAID") {
+                                                    return (
+                                                        <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30">
+                                                            LUNAS
+                                                        </span>
+                                                    );
+                                                }
+                                                if (status === "DP / Partial" || status === "PARTIAL") {
+                                                    return (
+                                                        <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-amber-50 text-amber-600 border border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30">
+                                                            DP
+                                                        </span>
+                                                    );
+                                                }
+                                                return (
+                                                    <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-red-50 text-red-600 border border-red-100 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30">
+                                                        BELUM BAYAR
+                                                    </span>
+                                                );
+                                            })()}
                                         </td>
                                         <td className={styles.tableCell} style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                                             <button onClick={() => removeFromQueue(idx)} className={styles.tableActionBtn}>
@@ -572,7 +699,7 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                     {queue.length > 0 && (
                         <tfoot style={{ backgroundColor: 'rgba(250, 250, 249, 0.5)' }}>
                             <tr>
-                                <td colSpan={4} className={styles.tableCell} style={{ fontSize: '9px', fontWeight: '500', color: 'var(--f-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'right' }}>
+                                <td colSpan={7} className={styles.tableCell} style={{ fontSize: '9px', fontWeight: '500', color: 'var(--f-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'right' }}>
                                     Total Items: {queue.length}
                                 </td>
                             </tr>
@@ -591,7 +718,7 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                     <span className={styles.footerTitle}>Institutional Terminal</span>
                     <div className={styles.footerMeta}>
                         <span>Powered by</span>
-                        <span className={styles.footerBrandText}>Tarasetia Venture</span>
+                        <span className={styles.footerBrandText}>Setara Venture</span>
                     </div>
                 </a>
             </div>

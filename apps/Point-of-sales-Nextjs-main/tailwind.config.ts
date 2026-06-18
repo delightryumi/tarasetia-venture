@@ -43,6 +43,18 @@ module.exports = {
         secondarychart: '#80CAEE',
         'meta-4': '#313D4A',
         boxdark: '#24303F',
+        
+        // Starbucks Design Tokens
+        'sb-green': '#006241',
+        'sb-accent': '#00754A',
+        'sb-house': '#1E3932',
+        'sb-uplift': '#2b5148',
+        'sb-light': '#d4e9e2',
+        'sb-gold': '#cba258',
+        'sb-canvas': '#f2f0eb',
+        'sb-ceramic': '#edebe9',
+        'sb-text': 'rgba(0,0,0,0.87)',
+        'sb-text-soft': 'rgba(0,0,0,0.58)',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

@@ -55,6 +55,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     const updatedUser = { ...user, hotelCode: newCode };
     setUser(updatedUser);
     localStorage.setItem('user', JSON.stringify(updatedUser));
+    localStorage.setItem('active_hotel_code', newCode); // Sync back to dashboard
+    document.cookie = `hotelCode=${newCode}; path=/; max-age=31536000; SameSite=Lax`;
     window.location.reload();
   };
 
@@ -64,14 +66,32 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     try {
       const parsedUser = JSON.parse(userJson);
       setUser(parsedUser);
-      const isSuper =
+    const isSuper =
         parsedUser?.role?.toLowerCase() === 'superadmin' ||
         parsedUser?.role?.toLowerCase() === 'super admin' ||
-        parsedUser?.email?.toLowerCase() === 'nexura.management@gmail.com';
+        parsedUser?.email?.toLowerCase() === 'nexura.management@gmail.com' ||
+        parsedUser?.email?.toLowerCase() === 'admin@setara.co.id';  // email superadmin baru
       setIsSuperadmin(isSuper);
 
       const hotelCode = parsedUser?.hotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
-      if (!hotelCode) return;
+      // Superadmin tanpa preview hotel — skip query Firestore
+      if (!hotelCode || hotelCode === "0") {
+        setIsHotelActive(true);
+        if (isSuper) {
+          // Tetap load daftar hotel untuk dropdown
+          const unsubscribeHotels = onSnapshot(collection(db, "hotels"), (snapshot) => {
+            const list: any[] = [];
+            snapshot.forEach((d) => {
+              const data = d.data();
+              list.push({ ...data, hotelCode: d.id });
+            });
+            list.sort((a, b) => String(a.hotelCode).localeCompare(String(b.hotelCode)));
+            setHotelsList(list);
+          });
+          return () => unsubscribeHotels();
+        }
+        return;
+      }
 
       const docRef = doc(db, 'hotels', hotelCode);
       const unsubscribe = onSnapshot(docRef, (docSnap) => {
@@ -97,9 +117,11 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       if (isSuper) {
         unsubscribeHotels = onSnapshot(collection(db, "hotels"), (snapshot) => {
           const list: any[] = [];
-          snapshot.forEach((doc) => {
-            list.push(doc.data());
+          snapshot.forEach((d) => {
+            const data = d.data();
+            list.push({ ...data, hotelCode: d.id });
           });
+          list.sort((a, b) => String(a.hotelCode).localeCompare(String(b.hotelCode)));
           setHotelsList(list);
         });
       }
@@ -125,38 +147,97 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   const { formatCurrency } = useCurrency();
   const [heldOrders, setHeldOrders] = useState<any[]>([]);
-  const [openList, setOpenList] = useState(false);
+  const [isListOpen, setOpenList] = useState(false);
+  const alarmAudioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  const getNotificationSound = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('pos_sound_choice') || '/sounds/notification.mp3';
+    }
+    return '/sounds/notification.mp3';
+  };
+
+  useEffect(() => {
+    const handleSoundChange = () => {
+      if (alarmAudioRef.current) {
+        alarmAudioRef.current.pause();
+        alarmAudioRef.current = null;
+      }
+    };
+    window.addEventListener('soundChanged', handleSoundChange);
+    return () => window.removeEventListener('soundChanged', handleSoundChange);
+  }, []);
 
   useEffect(() => {
     const userJson = localStorage.getItem('user');
     let restoId = 'default-resto';
+    let hotelCode = '87241';
     if (userJson) {
       try {
         const user = JSON.parse(userJson);
         restoId = user.restoId || 'default-resto';
+        hotelCode = user.hotelCode || '87241';
       } catch (e) {}
     }
 
     const q = query(
-      collection(db, 'pos_held_orders'),
+      collection(db, 'hotels', hotelCode, 'pos_held_orders'),
       where('restoId', '==', restoId)
     );
 
+    let isInitial = true;
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const orders = snapshot.docs.map(doc => ({
         ...doc.data(),
         id: doc.id
       }));
       setHeldOrders(orders);
+
+      if (isInitial) {
+        isInitial = false;
+        return;
+      }
+
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const data = change.doc.data();
+          
+          let isFresh = true;
+          if (data.createdAt) {
+             const createdTime = new Date(data.createdAt).getTime();
+             // Only alert if the order was created within the last 30 seconds
+             if (Date.now() - createdTime > 30000) {
+                 isFresh = false;
+             }
+          }
+
+          if (isFresh && data.source === 'Self-Order Tamu' && data.status === 'PENDING') {
+            toast.info(`🔔 Pesanan Mandiri Tamu Baru: ${data.customerName || 'Tamu'} (${data.tableNumber || 'Meja -'})`, {
+              position: "top-right",
+              autoClose: 5000,
+            });
+             try {
+              const audioPath = getNotificationSound();
+              const audio = new Audio(audioPath);
+              audio.volume = 0.6;
+              audio.play().catch(err => console.log('Audio autoplay blocked or failed:', err));
+            } catch (e) {
+              console.error('Audio play error:', e);
+            }
+          }
+        }
+      });
     });
 
     return () => unsubscribe();
   }, []);
 
+
   const handleRestore = async (order: any) => {
     try {
+      const hotelCode = user?.hotelCode || '87241';
       localStorage.setItem('restored_held_order', JSON.stringify(order));
-      await deleteDoc(doc(db, 'pos_held_orders', order.id));
+      await deleteDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', order.id));
       await localDb.heldOrders.delete(order.id);
       window.dispatchEvent(new Event('restore_held_order'));
       toast.success(`Mengembalikan pesanan untuk ${order.customerName || 'Guest'} ke POS`);
@@ -175,7 +256,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       return;
     }
     try {
-      await deleteDoc(doc(db, 'pos_held_orders', orderId));
+      const hotelCode = user?.hotelCode || '87241';
+      await deleteDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', orderId));
       await localDb.heldOrders.delete(orderId);
       toast.info(`Pesanan held untuk "${customerName}" berhasil dihapus.`);
     } catch (err) {
@@ -210,6 +292,12 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       let dataUpdated = false;
       if (userParam) {
         localStorage.setItem('user', userParam);
+        try {
+          const parsedU = JSON.parse(userParam);
+          if (parsedU.hotelCode) {
+            document.cookie = `hotelCode=${parsedU.hotelCode}; path=/; max-age=31536000; SameSite=Lax`;
+          }
+        } catch (e) {}
         dataUpdated = true;
       }
       if (restoNameParam) {
@@ -231,8 +319,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
       // Clean the URL immediately to remove sensitive query parameters/hash from address bar, history, and referrer logs
       if (dataUpdated && (window.location.hash || window.location.search)) {
-        const cleanUrl = window.location.pathname;
-        window.history.replaceState({}, document.title, cleanUrl);
+        window.location.href = window.location.pathname;
+        return;
       }
     }
 
@@ -248,6 +336,12 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       user = JSON.parse(userJson);
       if (typeof user !== 'object' || user === null) {
         throw new Error('Invalid user format');
+      }
+      
+      // ALWAS SYNC COOKIE FROM LOCAL STORAGE IF WE HAVE A VALID SESSION
+      // This ensures server components (like /records) can read the correct hotelCode
+      if (user.hotelCode) {
+        document.cookie = `hotelCode=${user.hotelCode}; path=/; max-age=31536000; SameSite=Lax`;
       }
     } catch (e) {
       console.error('Invalid user session JSON, clearing storage:', e);
@@ -320,6 +414,10 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       if (isLocal) {
         return 'http://localhost:3000/select-module';
       }
+
+      if (hostname.includes('-3001.')) {
+        return `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
+      }
     }
 
     let url = 'https://pms.bumianyom.com/select-module';
@@ -333,6 +431,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         const parts = hostname.split('--');
         parts[0] = 'bumianyom-web-1';
         url = `${protocol}//${parts.join('--')}/select-module`;
+      } else if (hostname.includes('-3001.')) {
+        url = `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
       } else {
         url = `https://pms.bumianyom.com/select-module`;
       }
@@ -361,6 +461,10 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       if (isLocal) {
         return 'http://localhost:3000/login';
       }
+
+      if (hostname.includes('-3001.')) {
+        return `${protocol}//${hostname.replace('-3001.', '-3000.')}/login`;
+      }
     }
 
     let url = 'https://pms.bumianyom.com/login';
@@ -374,6 +478,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         const parts = hostname.split('--');
         parts[0] = 'bumianyom-web-1';
         url = `${protocol}//${parts.join('--')}/login`;
+      } else if (hostname.includes('-3001.')) {
+        url = `${protocol}//${hostname.replace('-3001.', '-3000.')}/login`;
       } else {
         url = `https://pms.bumianyom.com/login`;
       }
@@ -384,7 +490,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const [dashboardUrl, setDashboardUrl] = useState('https://pms.bumianyom.com/select-module');
   const [loginGatewayUrl, setLoginGatewayUrl] = useState('https://pms.bumianyom.com/login');
   const [isMounted, setIsMounted] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   useEffect(() => {
     setDashboardUrl(getDashboardUrl());
@@ -392,8 +498,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     setIsMounted(true);
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pos_sidebar_collapsed');
-      if (saved === 'true') {
-        setIsCollapsed(true);
+      if (saved === 'false') {
+        setIsCollapsed(false);
       }
     }
   }, []);
@@ -450,7 +556,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <div className="bg-background text-foreground h-screen overflow-hidden flex flex-col relative">
       {/* Header spanning 100% width across the top */}
-      <header className="flex h-14 shrink-0 items-center justify-between gap-4 py-2.5 px-4 lg:px-6 sticky top-0 z-20 bg-[#181818] border-none w-full select-none">
+      <header className="flex h-14 shrink-0 items-center justify-between gap-4 py-2.5 px-4 lg:px-6 sticky top-0 z-20 bg-[#181818] border-none w-full select-none print:hidden">
         {/* Left Side: Logo & Hotel Badge */}
         <div className="flex items-center gap-4">
           <img
@@ -459,12 +565,12 @@ const RootLayout = ({ children }: RootLayoutProps) => {
             className="h-6 md:h-7 w-auto object-contain"
           />
           
-          <div className="h-6 w-px bg-[#2e2e30]" />
+          <div className="h-6 w-px bg-[#2e2e30] hidden sm:block" />
           
           {isSuperadmin ? (
-            <div className="relative flex items-center h-9 w-[260px] md:w-[320px] bg-white dark:bg-[#222225] border border-slate-300 dark:border-white/[0.08] rounded-[6px] overflow-hidden shadow-sm text-neutral-900 dark:text-[#f4f4f5] text-[13px] font-semibold transition-all">
+            <div className="relative hidden sm:flex items-center h-9 w-[260px] md:w-[320px] bg-white dark:bg-[#222225] border border-slate-300 dark:border-white/[0.08] rounded-[6px] overflow-hidden shadow-sm text-neutral-900 dark:text-[#f4f4f5] text-[13px] font-semibold transition-all">
               <select
-                value={user?.hotelCode || "87241"}
+                value={user?.hotelCode || "0"}
                 onChange={(e) => handleHotelChange(e.target.value)}
                 className="border-none pr-10 py-1 text-[13px] font-semibold focus:outline-none focus:ring-0 cursor-pointer appearance-none h-full w-full truncate rounded-[6px] text-left bg-transparent text-neutral-900 dark:text-[#f4f4f5]"
                 style={{
@@ -475,51 +581,36 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                   paddingLeft: '12px',
                 }}
               >
-                {hotelsList && hotelsList.length > 0 ? (
+                <option value="0" className="bg-white dark:bg-[#1c1c1e] text-neutral-900 dark:text-[#f4f4f5]">
+                  — Superadmin (tidak ada preview) —
+                </option>
+                {hotelsList && hotelsList.length > 0 && (
                   hotelsList.map((hotel) => (
                     <option key={hotel.hotelCode} value={hotel.hotelCode} className="bg-white dark:bg-[#1c1c1e] text-neutral-900 dark:text-[#f4f4f5]">
                       [{hotel.hotelCode}] {hotel.name}
                     </option>
                   ))
-                ) : (
-                  <option value="87241" className="bg-white dark:bg-[#1c1c1e] text-neutral-900 dark:text-[#f4f4f5]">
-                    [87241] Bumi Anyom Resort
-                  </option>
                 )}
               </select>
             </div>
           ) : (
-            <div className="flex items-center h-9 px-3 w-[260px] md:w-[320px] bg-white dark:bg-[#222225] border border-slate-300 dark:border-white/[0.08] rounded-[6px] overflow-hidden shadow-sm text-neutral-900 dark:text-[#f4f4f5] text-[13px] font-semibold">
+            <div className="hidden sm:flex items-center h-9 px-3 w-[260px] md:w-[320px] bg-white dark:bg-[#222225] border border-slate-300 dark:border-white/[0.08] rounded-[6px] overflow-hidden shadow-sm text-neutral-900 dark:text-[#f4f4f5] text-[13px] font-semibold">
               <span className="truncate w-full text-left text-neutral-900 dark:text-[#f4f4f5]">
-                [{user?.hotelCode || "87241"}] {hotelName || "Bumi Anyom Resort"}
+                [{user?.hotelCode || "0"}] {hotelName || "Memuat..."}
               </span>
             </div>
           )}
         </div>
         
-        {/* Right Side: Waiting List (Cart), Theme Switcher (ModeToggle), Hamburger Menu */}
+        {/* Right Side: Theme Switcher (ModeToggle), Hamburger Menu */}
         <div className="flex items-center gap-3">
-          {/* Quick Access Waiting List Icon Button */}
-          <Link
-            href="/waiting-list"
-            className="relative rounded-[8px] bg-[#282828] text-[#c2c2c2] hover:bg-[#333333] hover:text-white transition-all shadow-sm active:scale-95 cursor-pointer flex items-center justify-center h-8 w-8 border-none shrink-0"
-            title="Daftar Tunggu (Waiting List)"
-          >
-            <ShoppingCart className="h-4.5 w-4.5" />
-            {heldOrders.length > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white font-extrabold text-[8px] rounded-full w-4.5 h-4.5 flex items-center justify-center border border-white dark:border-zinc-950 shadow-sm animate-pulse">
-                {heldOrders.length}
-              </span>
-            )}
-          </Link>
-          
           <ModeToggle />
 
           {/* Hamburger Dropdown Menu exactly matching Select Module */}
           <div className="relative z-50">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="w-8 h-8 rounded-[8px] bg-[#282828] text-[#c2c2c2] hover:bg-[#333333] hover:text-white transition-all shadow-sm active:scale-95 flex items-center justify-center cursor-pointer border-none focus:outline-none shrink-0"
+              className="w-8 h-8 rounded-[12px] bg-[#282828] text-[#c2c2c2] hover:bg-[#333333] hover:text-white transition-all shadow-sm active:scale-95 flex items-center justify-center cursor-pointer border-none focus:outline-none shrink-0"
               title="Menu CPanel & Akun"
             >
               <Menu className="h-4.5 w-4.5" />
@@ -540,15 +631,15 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 8 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute right-0 mt-2 w-[220px] bg-white dark:bg-[#121212] border border-slate-200 dark:border-white/[0.08] rounded-[8px] shadow-lg p-2 z-50 flex flex-col gap-1"
+                    className="absolute right-0 mt-2 w-[220px] bg-white dark:bg-[#121212] border border-slate-200 dark:border-white/[0.08] rounded-[12px] shadow-lg p-2 z-50 flex flex-col gap-1"
                   >
                     {/* User Login Info Profile Card */}
                     {(() => {
                       const userName = user?.displayName || user?.email?.split('@')[0] || "Administrator";
                       return (
-                        <div className="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-white/[0.03] rounded-[8px] mb-2 border-none">
+                        <div className="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-white/[0.03] rounded-[10px] mb-2 border-none">
                           <div 
-                            className="w-10 h-10 rounded-full overflow-hidden border border-[#8d7a52]/40 flex-shrink-0 flex items-center justify-center"
+                            className="w-10 h-10 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-700 flex-shrink-0 flex items-center justify-center"
                             style={{ backgroundColor: ['rgba(141, 122, 82, 0.15)', 'rgba(120, 128, 105, 0.15)', '#f3e8ff', '#e0e7ff', '#dcfce7', '#fee2e2', '#fef3c7'][((userName || "U").charCodeAt(0) || 0) % 7] }}
                           >
                             <img 
@@ -569,6 +660,14 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                       );
                     })()}
 
+                    {/* Active Hotel Info (Mobile only) */}
+                    <div className="px-3 py-2 bg-neutral-50 dark:bg-white/[0.03] rounded-[10px] mb-2 flex flex-col gap-0.5 border-t border-slate-200 dark:border-white/[0.08] pt-2 mt-1 sm:hidden">
+                      <span className="text-[9px] text-neutral-500 dark:text-[#a1a1aa] font-bold uppercase tracking-widest">Active Hotel</span>
+                      <span className="text-xs font-bold text-neutral-800 dark:text-[#f4f4f5] truncate">
+                        [{user?.hotelCode || "0"}] {hotelName || "Memuat..."}
+                      </span>
+                    </div>
+
                     {(() => {
                       const isSuper = user?.role?.toLowerCase() === 'superadmin' || user?.role?.toLowerCase() === 'super admin' || user?.email?.toLowerCase() === 'nexura.management@gmail.com';
                       const hasAccessCPanel = canAccess('module_cpanel') || canAccess('cpanel') || isSuper;
@@ -579,9 +678,9 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                               setIsMenuOpen(false);
                               router.push(dashboardUrl.replace('/select-module', '') + '/logo?module=cpanel');
                             }}
-                            className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-[#8d7a52]/10 dark:hover:bg-[#8d7a52]/15 rounded-[6px] border-none cursor-pointer flex items-center gap-3 transition-all duration-150 bg-transparent font-sans"
+                            className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-[6px] border-none cursor-pointer flex items-center gap-3 transition-all duration-150 bg-transparent font-sans"
                           >
-                            <Settings className="w-4 h-4 text-[#8d7a52]" />
+                            <Settings className="w-4 h-4 text-neutral-800 dark:text-neutral-200" />
                             <span>CPanel</span>
                           </button>
 
@@ -590,9 +689,9 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                               setIsMenuOpen(false);
                               router.push(dashboardUrl.replace('/select-module', '') + '/users?module=cpanel');
                             }}
-                            className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-[#8d7a52]/10 dark:hover:bg-[#8d7a52]/15 rounded-[6px] border-none cursor-pointer flex items-center gap-3 transition-all duration-150 bg-transparent font-sans"
+                            className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-[6px] border-none cursor-pointer flex items-center gap-3 transition-all duration-150 bg-transparent font-sans"
                           >
-                            <Users className="w-4 h-4 text-[#8d7a52]" />
+                            <Users className="w-4 h-4 text-neutral-800 dark:text-neutral-200" />
                             <span>User Settings</span>
                           </button>
 
@@ -622,11 +721,13 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       {/* Main body of layout containing sidebar & children */}
       <div className="flex flex-1 overflow-hidden relative w-full">
         {/* Sidebar */}
-        <Sidebar 
-          isCollapsed={isCollapsed} 
-          onToggleCollapse={handleToggleCollapse} 
-          storeName={storeName} 
-        />
+        <div className="print:hidden h-full">
+          <Sidebar 
+            isCollapsed={isCollapsed} 
+            onToggleCollapse={handleToggleCollapse} 
+            storeName={storeName} 
+          />
+        </div>
 
         {/* Main Content Area */}
         <div 
@@ -634,9 +735,9 @@ const RootLayout = ({ children }: RootLayoutProps) => {
             isCollapsed ? "md:pl-[140px]" : "md:pl-[280px]"
           }`}
         >
-          <main className={`flex-1 ${isLexuPos ? 'overflow-hidden p-0 pb-[56px] md:pb-0' : 'overflow-y-auto p-4 lg:p-6 pb-[72px] md:pb-0'} bg-slate-50 dark:bg-zinc-900/10`}>
+          <main className={`flex-1 ${isLexuPos ? 'overflow-hidden p-0 pb-[56px] md:pr-5 md:pt-5 md:pb-5' : 'overflow-y-auto p-4 lg:p-6 pb-[72px] md:pb-0'} bg-slate-50 dark:bg-zinc-900/10 print:p-0 print:bg-white`}>
             <div
-              className={`flex flex-col flex-1 ${isLexuPos ? 'h-full rounded-none overflow-hidden' : 'rounded-lg min-h-full'}`}
+              className={`flex flex-col flex-1 ${isLexuPos ? 'h-full rounded-none md:rounded-xl overflow-hidden' : 'rounded-lg min-h-full'} print:p-0 print:m-0`}
               x-chunk="dashboard-02-chunk-1"
             >
               {rbacLoading ? (
@@ -659,9 +760,12 @@ const RootLayout = ({ children }: RootLayoutProps) => {
               )}
             </div>
           </main>
-          <MobileBottomNav />
+          <div className="print:hidden">
+            <MobileBottomNav />
+          </div>
         </div>
       </div>
+
     </div>
   );
 };

@@ -14,7 +14,7 @@ export const SuperadminTabs: React.FC<SuperadminTabsProps> = ({ activeTab, onCha
       onClick={() => onChange("registry")}
       className={`${styles.tabBtn} ${activeTab === "registry" ? styles.tabBtnActive : ""}`}
     >
-      Registry Tenant
+      Registry Partner
     </button>
     <button
       onClick={() => onChange("billing")}

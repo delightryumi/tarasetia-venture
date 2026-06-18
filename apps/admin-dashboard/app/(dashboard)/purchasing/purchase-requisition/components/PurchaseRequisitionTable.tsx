@@ -60,6 +60,27 @@ export default function PurchaseRequisitionTable({
             filteredPrs.map((pr: any) => {
               const sups = Array.from(new Set((pr.items ?? []).map((i: any) => i.supplier_name))).filter(Boolean);
               const dateObj = pr.created_at?.toDate ? pr.created_at.toDate() : new Date(pr.created_at);
+              const itemsList = pr.items || [];
+              const hasTempo = itemsList.some((i: any) => i.paymentStatus === 'tempo');
+              const hasPaid = itemsList.some((i: any) => (i.paymentStatus || 'paid') === 'paid');
+              
+              let badgeText = 'PAID';
+              let badgeBg = 'rgba(16, 185, 129, 0.08)';
+              let badgeColor = '#10b981';
+              let badgeBorder = 'rgba(16, 185, 129, 0.2)';
+              
+              if (hasTempo && hasPaid) {
+                badgeText = 'MIXED';
+                badgeBg = 'rgba(245, 158, 11, 0.08)';
+                badgeColor = '#f59e0b';
+                badgeBorder = 'rgba(245, 158, 11, 0.2)';
+              } else if (hasTempo) {
+                badgeText = 'TEMPO';
+                badgeBg = 'rgba(239, 68, 68, 0.08)';
+                badgeColor = '#ef4444';
+                badgeBorder = 'rgba(239, 68, 68, 0.2)';
+              }
+
               return (
                 <tr 
                   key={pr.id} 
@@ -67,7 +88,31 @@ export default function PurchaseRequisitionTable({
                   onClick={() => setSelectedPr(pr)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <td className={s.tdPrimary}>{pr.pr_number}</td>
+                   <td className={s.tdPrimary}>
+                     <div>{pr.pr_number}</div>
+                      <span style={{ 
+                        fontSize: 10, 
+                        fontWeight: 700, 
+                        padding: '2px 8px', 
+                        borderRadius: 12, 
+                        background: badgeBg,
+                        color: badgeColor,
+                        border: `1px solid ${badgeBorder}`,
+                        marginTop: 4,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}>
+                        <span style={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: '50%',
+                          background: badgeColor,
+                          display: 'inline-block'
+                        }} />
+                        {badgeText}
+                      </span>
+                   </td>
                   <td className={s.tdMuted}>{dateObj.toLocaleDateString('id-ID')}</td>
                   <td>
                     {pr.department || '—'}

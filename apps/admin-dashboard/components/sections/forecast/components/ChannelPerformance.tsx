@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Activity, Globe } from "lucide-react";
 import styles from "../ForecastStyles.module.css";
 
-const SAGE = "#788069";
+
 
 const rise = {
     hidden: { opacity: 0, y: 12 },
@@ -57,13 +57,13 @@ export function ChannelPerformance({
             <div className={styles.card} style={{ overflow: "hidden", padding: 0 }}>
                 <div className={styles.cardHeader} style={{ padding: "24px 24px 16px 24px", borderBottom: "1px solid var(--f-hairline)", marginBottom: 0 }}>
                     <div className={styles.cardHeaderLeft}>
-                        <div className={styles.headerBadge} style={{ backgroundColor: "#dfd3b2", color: "#8d7a52" }}>
+                        <div className={styles.headerBadge} style={{ backgroundColor: 'var(--sidebar-link-active-bg)', color: 'var(--sidebar-link-active-text)' }}>
                             <Activity size={15} />
                         </div>
                         <div className={styles.headerMeta}>
                             <span className={styles.headerSubtitle}>Forecast Analytics</span>
                             <h2 className={styles.headerTitle} style={{ fontSize: "13px" }}>
-                                Channel <span style={{ color: "#788069" }}>Performance</span>
+                                Channel <span style={{ color: 'var(--sidebar-link-active-bg)' }}>Performance</span>
                             </h2>
                         </div>
                     </div>
@@ -148,8 +148,8 @@ export function ChannelPerformance({
                 {/* Footer */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", borderTop: "1px solid var(--f-hairline)", backgroundColor: "var(--f-surface)" }}>
                     <span className={styles.guestSubtext}></span>
-                    <span className={styles.guestSubtext} style={{ color: SAGE, fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: SAGE, display: "inline-block", animation: "pulse 2s infinite" }} />
+                    <span className={styles.guestSubtext} style={{ color: 'var(--sidebar-link-active-bg)', fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: 'var(--sidebar-link-active-bg)', display: "inline-block", animation: "pulse 2s infinite" }} />
                         Live Analytics
                     </span>
                 </div>

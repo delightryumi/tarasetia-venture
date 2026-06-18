@@ -26,15 +26,15 @@
     --radius: 1rem;
 
     /* Sidebar Theme variables */
-    --sidebar-bg: #ebe7d7;
-    --sidebar-border: rgba(141, 122, 82, 0.15);
-    --sidebar-text: #57534e;
-    --sidebar-link-bg: #f5f2eb;
-    --sidebar-link-border: #e1d9c3;
-    --sidebar-link-hover-bg: #eae5d5;
-    --sidebar-link-hover-border: #d2c8b0;
-    --sidebar-link-hover-text: #8d7a52;
-    --sidebar-link-active-bg: #8d7a52;
+    --sidebar-bg: #faf8f4;
+    --sidebar-border: rgba(141, 122, 82, 0.06);
+    --sidebar-text: #41454d;
+    --sidebar-link-bg: transparent;
+    --sidebar-link-border: transparent;
+    --sidebar-link-hover-bg: #f3efe6;
+    --sidebar-link-hover-border: #dddddd;
+    --sidebar-link-hover-text: #181d26;
+    --sidebar-link-active-bg: #181d26;
     --sidebar-link-active-text: #ffffff;
 
     /* Dynamic overrides for Tailwind colors */
@@ -124,16 +124,16 @@
     --ring: 41 26% 44%;
 
     /* Sidebar Theme variables */
-    --sidebar-bg: #151513;
-    --sidebar-border: rgba(224, 209, 185, 0.1);
-    --sidebar-text: #E0D1B9;
-    --sidebar-link-bg: rgba(224, 209, 185, 0.04);
-    --sidebar-link-border: rgba(224, 209, 185, 0.08);
-    --sidebar-link-hover-bg: rgba(224, 209, 185, 0.1);
-    --sidebar-link-hover-border: rgba(224, 209, 185, 0.2);
-    --sidebar-link-hover-text: #E0D1B9;
-    --sidebar-link-active-bg: #958A7A;
-    --sidebar-link-active-text: #151513;
+    --sidebar-bg: #18181b;
+    --sidebar-border: rgba(255, 255, 255, 0.03);
+    --sidebar-text: #a1a1aa;
+    --sidebar-link-bg: transparent;
+    --sidebar-link-border: transparent;
+    --sidebar-link-hover-bg: #2b2b2b;
+    --sidebar-link-hover-border: rgba(255, 255, 255, 0.08);
+    --sidebar-link-hover-text: #ffffff;
+    --sidebar-link-active-bg: #ffffff;
+    --sidebar-link-active-text: #181d26;
 
     /* Dynamic overrides for Tailwind colors */
     --white: 0 0% 100%;
@@ -385,4 +385,23 @@
 .dark .border-border,
 .dark [class*="border-white"] {
   border-color: rgba(143, 134, 119, 0.12) !important;
+}
+
+/* Soften all sidebar borders */
+aside, aside * {
+  border-color: var(--sidebar-border) !important;
+}
+
+/* Sidebar Dock Icon Styles to prevent squashing */
+.sidebar-dock-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-dock-icon svg {
+  width: 20px !important;
+  height: 20px !important;
+  stroke-width: 1.5px !important;
 }

@@ -34,9 +34,7 @@ import { VoidConfirmModal } from "../overview/VoidConfirmModal";
 import { CancelConfirmModal } from "../overview/CancelConfirmModal";
 import { ForecastDetailDrawer } from "./components/ForecastDetailDrawer";
 
-/* ── Brand Colors ── */
-const PEACH = "#8d7a52";
-const SAGE = "#788069";
+
 
 /* ── Animations ── */
 const stagger = {

@@ -263,6 +263,7 @@
   border: 1px solid var(--p-hairline);
   border-radius: var(--p-radius-md);
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .detailItem {

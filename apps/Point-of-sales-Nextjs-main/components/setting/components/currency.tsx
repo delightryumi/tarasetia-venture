@@ -73,7 +73,7 @@ export default function CurrencyCard() {
         <p className="text-xs text-muted-foreground">
           Perubahan ini akan diterapkan di seluruh sistem kasir.
         </p>
-        <Button onClick={handleSave}>Simpan Perubahan</Button>
+        <Button onClick={handleSave} className="bg-stone-900 text-white hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 transition-colors">Simpan Perubahan</Button>
       </CardFooter>
     </Card>
   );

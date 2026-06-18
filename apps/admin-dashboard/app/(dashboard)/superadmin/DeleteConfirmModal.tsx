@@ -52,7 +52,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
 
           <div className={styles.formField}>
             <label className={styles.formLabel} style={{ textTransform: "none", fontSize: "11px", fontWeight: "bold", color: "#991b1b" }}>
-              Ketik kode hotel <span className="font-mono font-bold">&quot;{hotelToDelete.hotelCode}&quot;</span> untuk mengonfirmasi:
+              Ketik kode partner <span className="font-mono font-bold">&quot;{hotelToDelete.hotelCode}&quot;</span> untuk mengonfirmasi:
             </label>
             <input
               type="text"

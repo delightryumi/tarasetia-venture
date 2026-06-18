@@ -10,6 +10,9 @@ export interface PushPnLParams {
   description?: string;
   fbCategory?: string | null;
   eventCategory?: string | null;
+  paymentStatus?: 'paid' | 'pending' | 'tempo';
+  paymentDate?: string;
+  items?: any[];
 }
 
 export async function pushCostToPnL({
@@ -20,7 +23,10 @@ export async function pushCostToPnL({
   date,
   description,
   fbCategory,
-  eventCategory
+  eventCategory,
+  paymentStatus = 'paid',
+  paymentDate,
+  items
 }: PushPnLParams) {
   // 1. Get the month key (YYYY-MM)
   let month = "";
@@ -37,8 +43,6 @@ export async function pushCostToPnL({
     month = new Date().toISOString().slice(0, 7);
   }
 
-
-  const expenseName = `${department} - ${docNum}`;
   const expenseDate = date && typeof date === 'string' ? date : new Date().toISOString().split('T')[0];
 
   try {
@@ -50,23 +54,78 @@ export async function pushCostToPnL({
       existingExpenses = docSnap.data().expenses || [];
     }
 
-    // Filter out any previous entry with this docId to avoid duplicates
-    const cleanedExpenses = existingExpenses.filter((e: any) => e.id !== docId);
+    // Filter out any previous entry with this docId (including split ones) to avoid duplicates
+    const cleanedExpenses = existingExpenses.filter((e: any) => 
+      e.id !== docId && 
+      e.id !== `${docId}_paid` && 
+      e.id !== `${docId}_tempo`
+    );
 
-    // Add new expense entry
-    const newExpense = {
-      id: docId,
-      name: expenseName,
-      amount: Number(amount) || 0,
-      category: department,
-      date: expenseDate,
-      description: description || `Pushed from ${docNum} (${department})`,
-      fbCategory: fbCategory || null,
-      eventCategory: eventCategory || null,
-      department: department
+    const newExpensesToPush: any[] = [];
+
+    const getItemCost = (item: any) => {
+      if (typeof item.total === 'number') return item.total;
+      const qty = Number(item.qty_ordered || item.qty || 0);
+      const price = Number(item.unit_price || item.estimated_price || 0);
+      return qty * price;
     };
 
-    const updatedExpenses = [...cleanedExpenses, newExpense];
+    if (items && items.length > 0) {
+      const tempoItems = items.filter(i => (i.paymentStatus || 'paid') === 'tempo');
+      const paidItems = items.filter(i => (i.paymentStatus || 'paid') !== 'tempo');
+
+      const tempoTotal = tempoItems.reduce((sum, i) => sum + getItemCost(i), 0);
+      const paidTotal = paidItems.reduce((sum, i) => sum + getItemCost(i), 0);
+
+      if (paidTotal > 0) {
+        newExpensesToPush.push({
+          id: `${docId}_paid`,
+          name: `${department} - ${docNum} (PAID)`,
+          amount: Number(paidTotal),
+          category: department,
+          date: expenseDate,
+          description: description || `Pushed from ${docNum} (PAID)`,
+          fbCategory: fbCategory || null,
+          eventCategory: eventCategory || null,
+          department: department,
+          paymentStatus: 'paid',
+          paymentDate: expenseDate
+        });
+      }
+
+      if (tempoTotal > 0) {
+        newExpensesToPush.push({
+          id: `${docId}_tempo`,
+          name: `${department} - ${docNum} (TEMPO)`,
+          amount: Number(tempoTotal),
+          category: department,
+          date: expenseDate,
+          description: description || `Pushed from ${docNum} (TEMPO)`,
+          fbCategory: fbCategory || null,
+          eventCategory: eventCategory || null,
+          department: department,
+          paymentStatus: 'tempo',
+          paymentDate: paymentDate || null
+        });
+      }
+    } else {
+      // Fallback to single entry
+      newExpensesToPush.push({
+        id: docId,
+        name: `${department} - ${docNum}`,
+        amount: Number(amount) || 0,
+        category: department,
+        date: expenseDate,
+        description: description || `Pushed from ${docNum} (${department})`,
+        fbCategory: fbCategory || null,
+        eventCategory: eventCategory || null,
+        department: department,
+        paymentStatus: paymentStatus,
+        paymentDate: paymentDate || (paymentStatus === 'paid' ? expenseDate : null)
+      });
+    }
+
+    const updatedExpenses = [...cleanedExpenses, ...newExpensesToPush];
     await setDoc(docRef, { expenses: updatedExpenses }, { merge: true });
     console.log(`Successfully pushed expense for ${docNum} to P&L report for month ${month}`);
   } catch (error) {
@@ -96,7 +155,11 @@ export async function removeCostFromPnL(docId: string, date: any) {
 
     if (docSnap.exists()) {
       const existingExpenses = docSnap.data().expenses || [];
-      const updatedExpenses = existingExpenses.filter((e: any) => e.id !== docId);
+      const updatedExpenses = existingExpenses.filter((e: any) => 
+        e.id !== docId && 
+        e.id !== `${docId}_paid` && 
+        e.id !== `${docId}_tempo`
+      );
       await setDoc(docRef, { expenses: updatedExpenses }, { merge: true });
       console.log(`Successfully removed expense ${docId} from P&L report for month ${month}`);
     }

@@ -1,15 +1,15 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-    PieChart, LayoutDashboard, TrendingUp, Download, FileText, Calendar, ChevronDown 
+    PieChart, LayoutDashboard, TrendingUp, Download, FileText, Calendar, ChevronDown, BookOpen
 } from "lucide-react";
 import { MONTHS, YEARS } from "../usePnL";
 
 interface PNLHeaderProps {
     viewMode: "monthly" | "yearly";
     setViewMode: (m: "monthly" | "yearly") => void;
-    displayMode: "cards" | "charts";
-    setDisplayMode: (m: "cards" | "charts") => void;
+    displayMode: "cards" | "charts" | "statements";
+    setDisplayMode: (m: "cards" | "charts" | "statements") => void;
     month: string;
     setMonth: (m: string) => void;
     showDatePicker: boolean;
@@ -17,16 +17,16 @@ interface PNLHeaderProps {
     onExportExcel: () => void;
     onExportPDF: () => void;
     rise: any;
+    hideDisplayMode?: boolean;
 }
 
-const PEACH = "#dfd3b2";
-const SAGE = "#788069";
-const RICH_BLACK = "#1A1C14";
+const PEACH = "var(--sidebar-link-active-bg)";
+const RICH_BLACK = "var(--sidebar-link-active-text)";
 
 export const PNLHeader: React.FC<PNLHeaderProps> = ({
     viewMode, setViewMode, displayMode, setDisplayMode,
     month, setMonth, showDatePicker, setShowDatePicker,
-    onExportExcel, onExportPDF, rise
+    onExportExcel, onExportPDF, rise, hideDisplayMode = false
 }) => {
     const [y, mStr] = month.split('-');
     const dateObj = new Date(parseInt(y), parseInt(mStr)-1);
@@ -36,13 +36,13 @@ export const PNLHeader: React.FC<PNLHeaderProps> = ({
         <motion.header variants={rise} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-stone-100">
             <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-3.5 mb-1">
-                    <div className="w-8 h-8 rounded-md flex items-center justify-center transition-transform hover:rotate-12" style={{ backgroundColor: `${PEACH}30`, color: SAGE }}>
+                    <div className="w-8 h-8 rounded-md flex items-center justify-center transition-transform hover:rotate-12 bg-stone-100 dark:bg-[#262626] text-stone-850 dark:text-stone-100">
                         <PieChart size={14} />
                     </div>
                     <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">Audit Core</span>
                 </div>
                 <h1 className="text-2xl md:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-                    Global <span style={{ color: SAGE }}>PnL Reports</span>
+                    Global <span className="text-[var(--sage)]">{hideDisplayMode ? "Financial Statements" : "PnL Reports"}</span>
                 </h1>
             </div>
 
@@ -64,22 +64,24 @@ export const PNLHeader: React.FC<PNLHeaderProps> = ({
                     </button>
                 </div>
 
-                <div className="flex p-1 bg-stone-100 dark:bg-[#1a1a1a] rounded-xl border border-stone-200/40 dark:border-[#262626] ml-2">
-                    <button
-                        onClick={() => setDisplayMode("cards")}
-                        className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${displayMode === "cards" ? "bg-white dark:bg-[#262626] shadow-sm text-stone-900 dark:text-[#f4f4f5]" : "text-stone-400 hover:text-stone-600 dark:text-[#a1a1aa] dark:hover:text-[#f4f4f5] dark:hover:bg-[#1f1f1f]"}`}
-                        title="Card View"
-                    >
-                        <LayoutDashboard size={16} />
-                    </button>
-                    <button
-                        onClick={() => setDisplayMode("charts")}
-                        className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${displayMode === "charts" ? "bg-white dark:bg-[#262626] shadow-sm text-stone-900 dark:text-[#f4f4f5]" : "text-stone-400 hover:text-stone-600 dark:text-[#a1a1aa] dark:hover:text-[#f4f4f5] dark:hover:bg-[#1f1f1f]"}`}
-                        title="Analytics View"
-                    >
-                        <TrendingUp size={16} />
-                    </button>
-                </div>
+                {!hideDisplayMode && (
+                    <div className="flex p-1 bg-stone-100 dark:bg-[#1a1a1a] rounded-xl border border-stone-200/40 dark:border-[#262626] ml-2">
+                        <button
+                            onClick={() => setDisplayMode("cards")}
+                            className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${displayMode === "cards" ? "bg-white dark:bg-[#262626] shadow-sm text-stone-900 dark:text-[#f4f4f5]" : "text-stone-400 hover:text-stone-600 dark:text-[#a1a1aa] dark:hover:text-[#f4f4f5] dark:hover:bg-[#1f1f1f]"}`}
+                            title="Card View"
+                        >
+                            <LayoutDashboard size={16} />
+                        </button>
+                        <button
+                            onClick={() => setDisplayMode("charts")}
+                            className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${displayMode === "charts" ? "bg-white dark:bg-[#262626] shadow-sm text-stone-900 dark:text-[#f4f4f5]" : "text-stone-400 hover:text-stone-600 dark:text-[#a1a1aa] dark:hover:text-[#f4f4f5] dark:hover:bg-[#1f1f1f]"}`}
+                            title="Analytics View"
+                        >
+                            <TrendingUp size={16} />
+                        </button>
+                    </div>
+                )}
 
                 <div className="flex items-center gap-2 border-l border-stone-200 dark:border-[#262626] pl-4 ml-2">
                     <button 

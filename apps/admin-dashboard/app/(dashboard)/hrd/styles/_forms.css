@@ -1,0 +1,120 @@
+/* _forms.css */
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--s-space-md);
+}
+
+.formLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--s-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.formInput {
+  padding: 8px 14px;
+  height: 40px;
+  border: 1px solid var(--s-secondary-btn-border);
+  border-radius: var(--s-radius-sm);
+  font-size: 14px;
+  background: var(--s-canvas);
+  color: var(--s-ink);
+  font-family: var(--s-font);
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+input[type="date"].formInput,
+input[type="month"].formInput,
+input[type="time"].formInput {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: var(--s-ink);
+}
+
+/* Fix for native date/month pickers — force consistent height, padding & vertical centering */
+.page input[type="date"].dateInput,
+.page input[type="month"].dateInput,
+.page input.dateInput,
+.dateInput {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  height: 40px !important;
+  line-height: normal !important;
+  padding: 8px 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  background: var(--s-canvas) !important;
+  color: var(--s-ink) !important;
+  border: 1px solid var(--s-secondary-btn-border) !important;
+  border-radius: var(--s-radius-sm) !important;
+  font-family: var(--s-font) !important;
+  box-sizing: border-box !important;
+  color-scheme: dark !important;
+}
+
+:global(:root:not(.dark)) .page input[type="date"].dateInput,
+:global(:root:not(.dark)) .page input[type="month"].dateInput,
+:global(:root:not(.dark)) .page input.dateInput,
+:global(:root:not(.dark)) .dateInput {
+  color-scheme: light !important;
+}
+
+:global(.dark) .page input[type="date"].dateInput,
+:global(.dark) .page input[type="month"].dateInput,
+:global(.dark) .page input.dateInput {
+  background-color: var(--s-canvas) !important;
+  color: var(--s-ink) !important;
+  border: 1px solid var(--s-secondary-btn-border) !important;
+  color-scheme: dark !important;
+}
+
+/* Internal shadow DOM alignment styling for Chrome/Safari */
+.dateInput::-webkit-datetime-edit {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  height: 100% !important;
+}
+
+.dateInput::-webkit-datetime-edit-fields-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.dateInput::-webkit-datetime-edit-text,
+.dateInput::-webkit-datetime-edit-month-field,
+.dateInput::-webkit-datetime-edit-day-field,
+.dateInput::-webkit-datetime-edit-year-field {
+  padding: 0 !important;
+  margin: 0 !important;
+  display: inline-block !important;
+}
+
+.dateInput::-webkit-calendar-picker-indicator {
+  cursor: pointer !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.formGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-space-md);
+}

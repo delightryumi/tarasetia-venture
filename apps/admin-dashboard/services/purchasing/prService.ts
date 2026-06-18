@@ -59,20 +59,23 @@ export const prService = {
 
     if (items.length === 0 || suppliers.length === 0) return;
 
+    const itemTarget = items[2] || items[0];
+    const supplierTarget = suppliers[1] || suppliers[0];
+
     const demoPR: Omit<PurchaseRequisition, "id" | "pr_number" | "created_at" | "updated_at"> = {
       linked_sr_id: null,
       linked_sr_number: null,
       status: "submitted",
       items: [
         {
-          item_id: items[2].id || "3",
-          name: items[2].name,
-          unit: items[2].unit,
+          item_id: itemTarget.id || "3",
+          name: itemTarget.name,
+          unit: itemTarget.unit,
           qty: 10,
           estimated_price: 320000,
           actual_price: 0,
-          supplier_id: suppliers[1].id || "2",
-          supplier_name: suppliers[1].name
+          supplier_id: supplierTarget.id || "2",
+          supplier_name: supplierTarget.name
         }
       ],
       total_estimated: 3200000,

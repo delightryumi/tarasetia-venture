@@ -225,6 +225,22 @@ export function getOtherDrillDown(cardId: string, ctx: DrillDownContext): any[] 
           }));
       }
       break;
+    case "Compliment Deductions":
+      {
+        items = posOrders
+          .filter(o => o.isCompliment)
+          .map(o => ({
+            id: o.id || Math.random().toString(),
+            type: 'expense',
+            source: o.source || 'POS',
+            description: o.description || 'Complimentary Item',
+            department: o.department || 'Food & Beverage',
+            docType: 'Compliment',
+            amount: o.originalPrice || 0,
+            date: o.date || 'N/A'
+          }));
+      }
+      break;
     default:
       return null;
   }

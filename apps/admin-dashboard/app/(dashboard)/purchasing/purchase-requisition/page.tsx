@@ -142,7 +142,8 @@ export default function PurchaseRequisitionPage() {
           date: pr.order_date || pr.created_at,
           description: pr.notes || `Purchase Requisition ${pr.pr_number}`,
           fbCategory: pr.fb_category || null,
-          eventCategory: pr.event_category || null
+          eventCategory: pr.event_category || null,
+          items: pr.items || []
         });
       }
 
@@ -169,6 +170,42 @@ export default function PurchaseRequisitionPage() {
       setSelectedPr(null);
     } catch (err: any) {
       toast.error(err.message || 'Failed to process goods receipt.');
+    }
+  };
+
+  const handleUpdatePaymentStatus = async (itemIndex: number, status: string) => {
+    if (!selectedPr) return;
+    try {
+      const updatedItems = [...(selectedPr.items || [])];
+      if (updatedItems[itemIndex]) {
+        updatedItems[itemIndex] = {
+          ...updatedItems[itemIndex],
+          paymentStatus: status
+        };
+      }
+      
+      await updatePR(selectedPr.id, { items: updatedItems });
+      
+      const newPr = { ...selectedPr, items: updatedItems };
+      setSelectedPr(newPr);
+
+      if (newPr.status === 'approved' || newPr.status === 'received') {
+        await pushCostToPnL({
+          docId: `pr-${newPr.id}`,
+          docNum: newPr.pr_number,
+          department: newPr.department || 'General',
+          amount: newPr.total_estimated || 0,
+          date: newPr.order_date || newPr.created_at,
+          description: newPr.notes || `Purchase Requisition ${newPr.pr_number}`,
+          fbCategory: newPr.fb_category || null,
+          eventCategory: newPr.event_category || null,
+          items: updatedItems
+        });
+      }
+      
+      toast.success('Tipe pembayaran item berhasil diperbarui');
+    } catch (e: any) {
+      toast.error(e.message || 'Gagal mengupdate tipe pembayaran');
     }
   };
 
@@ -224,6 +261,7 @@ export default function PurchaseRequisitionPage() {
             onReceive={() => handleReceive(selectedPr)}
             onDelete={() => handleDeleteClick(selectedPr.id)}
             onPrint={handlePrint}
+            onUpdatePaymentStatus={handleUpdatePaymentStatus}
           />
         </div>
 
@@ -247,7 +285,7 @@ export default function PurchaseRequisitionPage() {
       </div>
 
       {/* Printable Template (hidden on screen) */}
-      <PurchaseRequisitionPrint selectedPr={selectedPr} />
+      {selectedPr && <PurchaseRequisitionPrint selectedPr={selectedPr} />}
     </motion.div>
   );
 }

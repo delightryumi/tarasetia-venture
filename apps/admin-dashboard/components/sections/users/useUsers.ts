@@ -9,7 +9,6 @@ import { getHotelCollection } from "@/lib/firestoreHelper";
 import { useAuth } from "@/context/AuthContext";
 
 export const ROLES = [
-    "superadmin", 
     "General Manager", 
     "House Keeping", 
     "Purchasing", 
@@ -21,19 +20,21 @@ export const ROLES = [
 const ALL_KEYS = [
     // Modules
     "module_pos", "module_front_office", "module_housekeeping", 
-    "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel",
+    "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel", "module_hrd",
     // Submenus
     "overview", "forecast", "invoice", "pnl", "logo", "hero", "room-type", 
     "about", "gallery", "footer", "attractions", "promo", "packages", "seo", "users",
     "purchasing", "store-requisition", "purchase-requisition", "daily-market-list", 
     "stock-opname", "items", "suppliers", "purchase-order", "food-beverage-product",
     // POS submenus
-    "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings", "pos_technologies"
+    "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings",
+    "hrd"
 ];
 
 export const useUsers = (menuItems: any[]) => {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
+    const [activeModules, setActiveModules] = useState<string[]>([]);
     const { activeHotelCode } = useAuth();
     const hotelCode = activeHotelCode;
 
@@ -87,7 +88,7 @@ export const useUsers = (menuItems: any[]) => {
                     adminPerms[k] = isSuper;
                 });
                 await setDoc(doc(getHotelCollection(db, "users_master"), adminId), {
-                    name: "Nexura Management",
+                    name: "Setara Management",
                     email: adminEmail,
                     password: "000000",
                     role: "superadmin",
@@ -101,17 +102,54 @@ export const useUsers = (menuItems: any[]) => {
                 migrateUsersPermissions(needsMigration);
             }
 
-            setUsers(list);
+            // Hide superadmin users from the client UI list
+            const clientVisibleUsers = list.filter(u => u.role?.toLowerCase() !== "superadmin");
+            setUsers(clientVisibleUsers);
             setLoading(false);
         }, (err) => {
             console.error("Firestore read error in useUsers:", err);
             setLoading(false);
         });
 
+        // Listen to Hotel active modules
+        let unsubHotel = () => {};
+        if (hotelCode) {
+            unsubHotel = onSnapshot(doc(db, "hotels", hotelCode), (snap) => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    let modules = data.billing?.activeModules || [];
+                    // Map old cpanel key to cpanel-full or cpanel-only
+                    if (modules.includes('cpanel')) {
+                        modules = modules.filter(m => m !== 'cpanel');
+                        const plan = data.billing?.plan || 'enterprise';
+                        if (plan === 'startup') {
+                            if (!modules.includes('cpanel-only')) modules.push('cpanel-only');
+                        } else {
+                            if (!modules.includes('cpanel-full')) modules.push('cpanel-full');
+                        }
+                    }
+                    if (modules.length === 0) {
+                        const plan = data.billing?.plan || 'enterprise';
+                        if (plan === 'startup') {
+                            modules = ["pos", "hrd", "cpanel-only"];
+                        } else if (plan === 'bisnis') {
+                            modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"];
+                        } else {
+                            modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-full"];
+                        }
+                    }
+                    setActiveModules(modules);
+                } else {
+                    setActiveModules(["pos", "hrd", "cpanel-only"]); // Fallback
+                }
+            });
+        }
+
         return () => {
             unsubUsers();
+            unsubHotel();
         };
-    }, []);
+    }, [hotelCode]);
 
     const handleSaveUser = async (formData: any, editingUser: UserProfile | null) => {
         try {
@@ -204,6 +242,7 @@ export const useUsers = (menuItems: any[]) => {
     return {
         users,
         loading,
+        activeModules,
         handleSaveUser,
         handleDeleteUser,
         togglePermission,

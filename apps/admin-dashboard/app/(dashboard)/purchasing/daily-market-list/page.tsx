@@ -137,7 +137,8 @@ export default function DailyMarketListPage() {
             date: formData.order_date,
             description: formData.notes || `Daily Market List ${freshDoc.dml_number}`,
             fbCategory: formData.department === 'Food & Beverage' ? formData.fb_category : null,
-            eventCategory: formData.department === 'Food & Beverage' ? formData.event_category : null
+            eventCategory: formData.department === 'Food & Beverage' ? formData.event_category : null,
+            items: freshDoc.items || []
           });
         }
       } else if (targetStatus === 'draft' && targetId) {
@@ -166,7 +167,8 @@ export default function DailyMarketListPage() {
         date: dml.order_date || dml.date,
         description: dml.notes || `Daily Market List ${dml.dml_number}`,
         fbCategory: dml.fb_category || null,
-        eventCategory: dml.event_category || null
+        eventCategory: dml.event_category || null,
+        items: dml.items || []
       });
 
       toast.success('Daily Market List verified and submitted.');
@@ -187,6 +189,42 @@ export default function DailyMarketListPage() {
       setSelectedDml(null);
     } catch (err: any) {
       toast.error(err.message || 'Failed to approve Daily Market List.');
+    }
+  };
+
+  const handleUpdatePaymentStatus = async (itemIndex: number, status: string) => {
+    if (!selectedDml) return;
+    try {
+      const updatedItems = [...(selectedDml.items || [])];
+      if (updatedItems[itemIndex]) {
+        updatedItems[itemIndex] = {
+          ...updatedItems[itemIndex],
+          paymentStatus: status
+        };
+      }
+      
+      await updateDML(selectedDml.id, { items: updatedItems });
+      
+      const newDml = { ...selectedDml, items: updatedItems };
+      setSelectedDml(newDml);
+
+      if (newDml.status === 'submitted' || newDml.status === 'approved') {
+        await pushCostToPnL({
+          docId: `dml-${newDml.id}`,
+          docNum: newDml.dml_number,
+          department: newDml.department || 'Food & Beverage',
+          amount: newDml.total_cost || 0,
+          date: newDml.order_date || newDml.date,
+          description: newDml.notes || `Daily Market List ${newDml.dml_number}`,
+          fbCategory: newDml.fb_category || null,
+          eventCategory: newDml.event_category || null,
+          items: updatedItems
+        });
+      }
+      
+      toast.success('Tipe pembayaran item berhasil diperbarui');
+    } catch (e: any) {
+      toast.error(e.message || 'Gagal mengupdate tipe pembayaran');
     }
   };
 
@@ -240,6 +278,7 @@ export default function DailyMarketListPage() {
             onApprove={() => handleApprove(selectedDml)}
             onDelete={() => handleDeleteClick(selectedDml.id)}
             onPrint={handlePrint}
+            onUpdatePaymentStatus={handleUpdatePaymentStatus}
           />
         </div>
 
@@ -263,7 +302,7 @@ export default function DailyMarketListPage() {
       </div>
 
       {/* Printable Template (hidden on screen) */}
-      <DailyMarketListPrint selectedDml={selectedDml} />
+      {selectedDml && <DailyMarketListPrint selectedDml={selectedDml} />}
     </motion.div>
   );
 }

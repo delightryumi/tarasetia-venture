@@ -21,9 +21,9 @@ export const useLogin = () => {
         } catch (err: any) {
             console.error(err);
             setError(
-                err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password"
-                    ? "Email, Password, atau Hotel Code salah."
-                    : err.message || "Failed to login. Please try again."
+                err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.message === "Invalid Hotel Code"
+                    ? "Email, Password, atau Partner Code salah."
+                    : "Gagal login. Silakan coba lagi."
             );
         } finally {
             setLoading(false);

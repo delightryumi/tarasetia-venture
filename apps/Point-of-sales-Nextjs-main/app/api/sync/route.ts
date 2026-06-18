@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, query, where, getDocs } from 'firebase/firestore';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 
 interface SyncItem {
   productId: string;
@@ -19,8 +20,9 @@ interface SyncTransaction {
   items: SyncItem[];
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const hotelId = req.cookies.get('hotelCode')?.value || '87241';
     const { transactions }: { transactions: SyncTransaction[] } = await req.json();
 
     if (!transactions || !Array.isArray(transactions)) {
@@ -42,7 +44,6 @@ export async function POST(req: Request) {
         day: '2-digit',
       });
       const entryDate = formatter.format(new Date(tx.createdAt));
-      const hotelId = '87241';
       const docId = `${hotelId}_${entryDate}`;
 
       // Build the standard revenue entry matching the dashboard's daily_revenue structure
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
         }))
       };
 
-      const docRef = doc(db, 'daily_revenue', docId);
+      const docRef = doc(getHotelCollection(db, 'daily_revenue', hotelId), docId);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
@@ -84,14 +85,14 @@ export async function POST(req: Request) {
       // Append transaction to the active cashier shift in Firestore if one exists
       try {
         const shiftQuery = query(
-          collection(db, 'cashier_shifts'),
+          getHotelCollection(db, 'cashier_shifts', hotelId),
           where('status', '==', 'open'),
           where('restoId', '==', tx.restoId || 'default-resto')
         );
         const shiftSnap = await getDocs(shiftQuery);
         if (!shiftSnap.empty) {
           const shiftDoc = shiftSnap.docs[0];
-          const shiftRef = doc(db, 'cashier_shifts', shiftDoc.id);
+          const shiftRef = doc(getHotelCollection(db, 'cashier_shifts', hotelId), shiftDoc.id);
           const currentShiftData = shiftDoc.data();
           const existingTx = (currentShiftData.transactions || []).find((t: any) => t.id === tx.id);
           if (!existingTx) {
@@ -112,7 +113,7 @@ export async function POST(req: Request) {
       // Decrement stock in Firestore pos_products
       for (const item of tx.items) {
         try {
-          const productRef = doc(db, 'pos_products', item.productId);
+          const productRef = doc(getHotelCollection(db, 'pos_products', hotelId), item.productId);
           const productSnap = await getDoc(productRef);
           if (productSnap.exists()) {
             const currentStock = Number(productSnap.data().stock || 0);

@@ -1,23 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { getDocs, doc, getDoc } from 'firebase/firestore';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export async function GET(req: NextRequest) {
   try {
+    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+
     // 1. Fetch live product stock from Firestore
-    const productsSnap = await getDocs(collection(db, 'pos_products'));
+    const productsSnap = await getDocs(getHotelCollection(db, 'pos_products', hotelCode));
     let totalStockCount = 0;
     productsSnap.forEach(d => {
       totalStockCount += Number(d.data().stock || 0);
     });
 
     // 2. Fetch live POS sales entries from Firestore pos_orders for today
-    const ordersSnap = await getDocs(collection(db, 'pos_orders'));
+    const ordersSnap = await getDocs(getHotelCollection(db, 'pos_orders', hotelCode));
     let totalSalesAmount = 0;
     let totalQtyCount = 0;
     
     // Fetch tax rate to calculate gross income with tax correctly
-    const posSettingsRef = doc(db, 'settings', 'pos');
+    const posSettingsRef = doc(getHotelCollection(db, 'settings', hotelCode), 'pos');
     const posSettingsSnap = await getDoc(posSettingsRef);
     const taxRate = posSettingsSnap.exists() ? (Number(posSettingsSnap.data().tax) ?? 10) : 10;
     

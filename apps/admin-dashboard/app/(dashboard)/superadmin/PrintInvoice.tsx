@@ -48,7 +48,7 @@ export const PrintInvoice: React.FC<PrintInvoiceProps> = ({ invoice }) => (
       </thead>
       <tbody>
         <tr>
-          <td>Layanan Multi-Hotel CRS Cloud Workspace - Plan: {invoice.plan}</td>
+          <td>Layanan Multi-Partner CRS Cloud Workspace - Plan: {invoice.plan}</td>
           <td style={{ textTransform: "capitalize" }}>{invoice.cycle}</td>
           <td>
             {new Date(invoice.billingPeriodStart).toLocaleDateString("id-ID")} s/d{" "}

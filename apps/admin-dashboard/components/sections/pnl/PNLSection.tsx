@@ -14,6 +14,7 @@ import { PNLDrillDownModal } from "./components/PNLDrillDownModal";
 import { useDrillDown }      from "./hooks/useDrillDown";
 import { usePnLExport }      from "./hooks/usePnLExport";
 import FinancialBreakdown    from "./components/FinancialBreakdown";
+import { FinancialStatements } from "./components/statements/FinancialStatements";
 import "./PNLStyles.css";
 
 /* ── Animations ── */
@@ -42,8 +43,11 @@ export function PNLSection() {
         showDatePicker, setShowDatePicker,
         fetchData, updateVat, updateMgmtFee,
         updateMgmtFeeRoom, updateMgmtFeeFnb,
-        updateServiceCharge, updateLostBreakage,
+        updateServiceCharge, updateLostBreakage, updateStartingBalance,
         rawTransactions, customIncomes, posOrders, nonCommissionRevenue,
+        startingBalance, fixedAssetsValue, updateFixedAssetsValue,
+        vatPaid, updateVatPaid, feePaid, updateFeePaid, scPaid, updateScPaid, lbPaid, updateLbPaid,
+        payrollDetails
     } = usePnL();
 
     const [retainedPercent, setRetainedPercent] = React.useState(0);
@@ -61,7 +65,7 @@ export function PNLSection() {
     const drillDown = useDrillDown({
         pnlResult, rawTransactions, customIncomes, expenses, posOrders,
         vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage,
-        month,
+        month, payrollDetails
     });
 
     /* ── Export handlers ── */
@@ -69,6 +73,17 @@ export function PNLSection() {
         pnlResult, expenses, viewMode, month, year: y,
         selectedDrillDownTitle: drillDown.selectedDrillDown?.title,
         drillItems: drillDown.modalData?.filtered,
+        rawTransactions,
+        posOrders,
+        payrollDetails,
+        startingBalance,
+        fixedAssetsValue,
+        vatPaid,
+        feePaid,
+        scPaid,
+        lbPaid,
+        customIncomes,
+        nonCommissionRevenue,
     });
 
     return (
@@ -177,8 +192,8 @@ export function PNLSection() {
                     <p className="text-stone-500 dark:text-[#a1a1aa] animate-pulse font-medium">Memuat data Profit & Loss...</p>
                 </div>
             ) : (
-                <div className="bg-white dark:bg-[#1a1a1a] border border-stone-100 dark:border-[#262626] rounded-2xl p-10 text-center shadow-xl shadow-stone-200/20 dark:shadow-none">
-                    <div className="w-16 h-16 bg-stone-50 dark:bg-[#1f1f1f] rounded-2xl flex items-center justify-center mx-auto mb-6 text-stone-300 dark:text-[#a1a1aa]">
+                <div className="bg-white dark:bg-[#1a1a1a] border border-stone-100 dark:border-[#262626] rounded-[10px] p-10 text-center shadow-xl shadow-stone-200/20 dark:shadow-none">
+                    <div className="w-16 h-16 bg-stone-50 dark:bg-[#1f1f1f] rounded-[10px] flex items-center justify-center mx-auto mb-6 text-stone-300 dark:text-[#a1a1aa]">
                         <Receipt size={32} />
                     </div>
                     <h3 className="text-xl font-bold text-stone-800 dark:text-stone-100 mb-2 uppercase tracking-tight">Annual Expense Audit</h3>

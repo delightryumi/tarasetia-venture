@@ -28,6 +28,8 @@ import { toast } from 'react-toastify';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
+import { getHotelCollection } from '@/lib/firestoreHelper';
+
 export function SheetAdd({
   open,
   onClose,
@@ -43,6 +45,8 @@ export function SheetAdd({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [subSearchTerm, setSubSearchTerm] = useState<string>('');
   const [imageProductUrl, setImageProductUrl] = useState('');
+  const [description, setDescription] = useState('');
+  const [addons, setAddons] = useState<{name: string, price: number}[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<{ [key: string]: string }>({});
   const stockProductNumber = parseFloat(stockProduct) || 0;
@@ -62,7 +66,7 @@ export function SheetAdd({
     if (open) {
       const loadCategories = async () => {
         try {
-          const catSnap = await getDocs(collection(db, 'pos_categories'));
+          const catSnap = await getDocs(getHotelCollection(db, 'pos_categories'));
           const dbCats = catSnap.docs.map(doc => ({
             name: doc.data().name,
             subcategories: doc.data().subcategories || []
@@ -113,6 +117,8 @@ export function SheetAdd({
       setCategories('');
       setSubcategories('');
       setImageProductUrl('');
+      setDescription('');
+      setAddons([]);
     }
   }, [open]);
   const handleCancel = () => {
@@ -140,6 +146,8 @@ export function SheetAdd({
         category: categoryProduct,
         subcategory: subcategoryProduct === 'none' ? undefined : (subcategoryProduct || undefined),
         imageProduct: imageProductUrl || undefined,
+        description: description,
+        addons: addons,
       });
 
       // Send validated data using axios
@@ -171,7 +179,7 @@ export function SheetAdd({
 
   return (
     <Sheet open={open}>
-      <SheetContent>
+      <SheetContent className="overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Add product</SheetTitle>
           <SheetDescription>Add your product here.</SheetDescription>
@@ -215,6 +223,8 @@ export function SheetAdd({
               }}
               className="col-span-3"
               type="number"
+              onWheel={(e) => e.currentTarget.blur()}
+              onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
             />
             {error?.sellPrice && (
               <div className="col-start-2 col-span-3 text-red-500">
@@ -233,6 +243,8 @@ export function SheetAdd({
               }}
               className="col-span-3"
               type="number"
+              onWheel={(e) => e.currentTarget.blur()}
+              onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
             />
             {error?.stockProduct && (
               <div className="col-start-2 col-span-3 text-red-500">
@@ -361,6 +373,68 @@ export function SheetAdd({
                 </div>
               )}
             </div>
+
+            <Label htmlFor="description" className="text-right">
+              Description
+            </Label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Product description..."
+              className="col-span-3 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+
+            <Label className="text-right">
+              Add-ons (Modifiers)
+            </Label>
+            <div className="col-span-3 flex flex-col gap-2">
+              {addons.map((addon, index) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <Input
+                    placeholder="Name (e.g. Extra Shot)"
+                    value={addon.name}
+                    onChange={(e) => {
+                      const newAddons = [...addons];
+                      newAddons[index].name = e.target.value;
+                      setAddons(newAddons);
+                    }}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Price (e.g. 5000)"
+                    value={addon.price}
+                    onChange={(e) => {
+                      const newAddons = [...addons];
+                      newAddons[index].price = parseInt(e.target.value) || 0;
+                      setAddons(newAddons);
+                    }}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    size="sm" 
+                    onClick={() => {
+                      const newAddons = [...addons];
+                      newAddons.splice(index, 1);
+                      setAddons(newAddons);
+                    }}
+                  >
+                    <Cross2Icon className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAddons([...addons, { name: '', price: 0 }])}
+              >
+                + Add Modifier
+              </Button>
+            </div>
           </div>
         </div>
         <SheetFooter>
@@ -369,7 +443,7 @@ export function SheetAdd({
               onClick={handleAdd}
               type="submit"
               disabled={loading}
-              className="text-gray-100"
+              className="bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-black dark:hover:bg-neutral-200"
             >
               {loading ? (
                 <>
