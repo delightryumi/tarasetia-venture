@@ -70,9 +70,9 @@ export function Setting() {
   }, []);
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <div className="flex min-h-[calc(100vh_-_theme(spacing.16))] flex-1 flex-col gap-4 bg-muted/40 p-4 md:gap-8 md:p-10">
-        <div className="mx-auto grid w-full max-w-6xl items-start gap-6 ">
+    <div className="flex min-h-screen w-full flex-col bg-neutral-100/50 dark:bg-black">
+      <div className="flex flex-1 flex-col p-4 md:p-8">
+        <div className="mx-auto w-full max-w-6xl bg-neutral-50 dark:bg-[#0f0f11] p-6 md:p-10 rounded-[28px] shadow-lg border border-neutral-200 dark:border-neutral-800/60">
           <div className="grid gap-6">
             <ShopnameCard storeName={storeName} storeId={storeId} addressProp={address} phoneProp={phone} tablesProp={tables} />
             <TaxrateCard tax={taxRate} service={serviceRate} lostBreakage={lostBreakageRate} storeId={storeId} />

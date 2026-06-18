@@ -15,8 +15,8 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
       
       // Determine target POS base url dynamically
       const getPosUrl = () => {
-        if (hostname === 'pms.bumianyom.com') {
-          return `${protocol}//pos.bumianyom.com`;
+        if (hostname === 'live.mytara.id') {
+          return `${protocol}//point.mytara.id`;
         }
         if (process.env.NEXT_PUBLIC_POS_URL) {
           return process.env.NEXT_PUBLIC_POS_URL;

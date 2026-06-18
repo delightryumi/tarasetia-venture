@@ -403,8 +403,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const getDashboardUrl = () => {
     if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
-      if (hostname === 'pos.bumianyom.com') {
-        return `${protocol}//pms.bumianyom.com/select-module`;
+      if (hostname === 'point.mytara.id') {
+        return `${protocol}//live.mytara.id/select-module`;
       }
 
       const storedUrl = localStorage.getItem('dashboard_url');
@@ -420,7 +420,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       }
     }
 
-    let url = 'https://pms.bumianyom.com/select-module';
+    let url = 'https://live.mytara.id/select-module';
     if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
       url = process.env.NEXT_PUBLIC_DASHBOARD_URL;
     } else if (typeof window !== 'undefined') {
@@ -434,7 +434,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       } else if (hostname.includes('-3001.')) {
         url = `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
       } else {
-        url = `https://pms.bumianyom.com/select-module`;
+        url = `https://live.mytara.id/select-module`;
       }
     }
     
@@ -448,8 +448,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const getLoginGatewayUrl = () => {
     if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
-      if (hostname === 'pos.bumianyom.com') {
-        return `${protocol}//pms.bumianyom.com/login`;
+      if (hostname === 'point.mytara.id') {
+        return `${protocol}//live.mytara.id/login`;
       }
 
       const storedUrl = localStorage.getItem('dashboard_url');
@@ -467,7 +467,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       }
     }
 
-    let url = 'https://pms.bumianyom.com/login';
+    let url = 'https://live.mytara.id/login';
     if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
       url = process.env.NEXT_PUBLIC_DASHBOARD_URL.replace('/select-module', '') + '/login';
     } else if (typeof window !== 'undefined') {
@@ -481,14 +481,14 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       } else if (hostname.includes('-3001.')) {
         url = `${protocol}//${hostname.replace('-3001.', '-3000.')}/login`;
       } else {
-        url = `https://pms.bumianyom.com/login`;
+        url = `https://live.mytara.id/login`;
       }
     }
     return url;
   };
 
-  const [dashboardUrl, setDashboardUrl] = useState('https://pms.bumianyom.com/select-module');
-  const [loginGatewayUrl, setLoginGatewayUrl] = useState('https://pms.bumianyom.com/login');
+  const [dashboardUrl, setDashboardUrl] = useState('https://live.mytara.id/select-module');
+  const [loginGatewayUrl, setLoginGatewayUrl] = useState('https://live.mytara.id/login');
   const [isMounted, setIsMounted] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
 

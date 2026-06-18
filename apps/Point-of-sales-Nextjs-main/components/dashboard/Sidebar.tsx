@@ -24,14 +24,14 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, storeName }: Si
   const { canAccess } = useRBAC();
   const mouseY = useMotionValue(Infinity);
 
-  const [dashboardUrl, setDashboardUrl] = React.useState('https://pms.bumianyom.com/select-module');
+  const [dashboardUrl, setDashboardUrl] = React.useState('https://live.mytara.id/select-module');
 
   React.useEffect(() => {
     const getDashboardUrl = () => {
       if (typeof window !== 'undefined') {
         const { protocol, hostname } = window.location;
-        if (hostname === 'pos.bumianyom.com') {
-          return `${protocol}//pms.bumianyom.com/select-module`;
+        if (hostname === 'point.mytara.id') {
+          return `${protocol}//live.mytara.id/select-module`;
         }
         const storedUrl = localStorage.getItem('dashboard_url');
         if (storedUrl) return storedUrl;
@@ -43,7 +43,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, storeName }: Si
           return `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         }
       }
-      let url = 'https://pms.bumianyom.com/select-module';
+      let url = 'https://live.mytara.id/select-module';
       if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
         url = process.env.NEXT_PUBLIC_DASHBOARD_URL;
       } else if (typeof window !== 'undefined') {
@@ -57,7 +57,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, storeName }: Si
         } else if (hostname.includes('-3001.')) {
           url = `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         } else {
-          url = `https://pms.bumianyom.com/select-module`;
+          url = `https://live.mytara.id/select-module`;
         }
       }
       if (!url.endsWith('/select-module')) {

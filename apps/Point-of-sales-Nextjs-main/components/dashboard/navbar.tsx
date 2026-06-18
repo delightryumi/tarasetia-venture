@@ -13,14 +13,14 @@ function Navbar({ isCollapsed = false }: { isCollapsed?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const { canAccess } = useRBAC();
-  const [dashboardUrl, setDashboardUrl] = React.useState('https://pms.bumianyom.com/select-module');
+  const [dashboardUrl, setDashboardUrl] = React.useState('https://live.mytara.id/select-module');
 
   React.useEffect(() => {
     const getDashboardUrl = () => {
       if (typeof window !== 'undefined') {
         const { protocol, hostname } = window.location;
-        if (hostname === 'pos.bumianyom.com') {
-          return `${protocol}//pms.bumianyom.com/select-module`;
+        if (hostname === 'point.mytara.id') {
+          return `${protocol}//live.mytara.id/select-module`;
         }
 
         const storedUrl = localStorage.getItem('dashboard_url');
@@ -36,7 +36,7 @@ function Navbar({ isCollapsed = false }: { isCollapsed?: boolean }) {
         }
       }
 
-      let url = 'https://pms.bumianyom.com/select-module';
+      let url = 'https://live.mytara.id/select-module';
       if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
         url = process.env.NEXT_PUBLIC_DASHBOARD_URL;
       } else if (typeof window !== 'undefined') {
@@ -50,7 +50,7 @@ function Navbar({ isCollapsed = false }: { isCollapsed?: boolean }) {
         } else if (hostname.includes('-3001.')) {
           url = `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         } else {
-          url = `https://pms.bumianyom.com/select-module`;
+          url = `https://live.mytara.id/select-module`;
         }
       }
       
@@ -75,8 +75,8 @@ function Navbar({ isCollapsed = false }: { isCollapsed?: boolean }) {
     
     if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
-      if (hostname === 'pos.bumianyom.com') {
-        dashboardUrl = `${protocol}//pms.bumianyom.com/select-module`;
+      if (hostname === 'point.mytara.id') {
+        dashboardUrl = `${protocol}//live.mytara.id/select-module`;
       } else {
         const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
         if (isLocal) {
@@ -88,7 +88,7 @@ function Navbar({ isCollapsed = false }: { isCollapsed?: boolean }) {
     }
 
     if (!dashboardUrl) {
-      dashboardUrl = 'https://pms.bumianyom.com/select-module';
+      dashboardUrl = 'https://live.mytara.id/select-module';
       if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
         dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL;
       } else if (typeof window !== 'undefined') {
@@ -102,7 +102,7 @@ function Navbar({ isCollapsed = false }: { isCollapsed?: boolean }) {
         } else if (hostname.includes('-3001.')) {
           dashboardUrl = `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         } else {
-          dashboardUrl = `https://pms.bumianyom.com/select-module`;
+          dashboardUrl = `https://live.mytara.id/select-module`;
         }
       }
     }

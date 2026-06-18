@@ -98,26 +98,22 @@ const ShopnameCard: React.FC<ShopnameCardProps> = ({ storeName, storeId, address
         <CardDescription>Used to identify your store name, address, phone, and tables config.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="flex flex-col gap-4 w-full">
-          <div className="flex flex-col sm:flex-row gap-4 w-full">
-            <div className="flex flex-col gap-1.5 flex-1">
-              <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Store Name</label>
-              <Input value={editableStoreName} onChange={handleInputChange} />
-            </div>
-            <div className="flex flex-col gap-1.5 flex-[1.5]">
-              <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Complete Address</label>
-              <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Kawasan Creative Hub, Suite 101" />
-            </div>
+        <form className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Store Name</label>
+            <Input value={editableStoreName} onChange={handleInputChange} />
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 w-full">
-            <div className="flex flex-col gap-1.5 flex-1">
-              <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Phone Number</label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. +62 811 2719 990" />
-            </div>
-            <div className="flex flex-col gap-1.5 flex-1">
-              <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Registered Tables</label>
-              <Input value={tables} onChange={(e) => setTables(e.target.value)} placeholder="e.g. 15 or 1,2,3,VIP-1,VIP-2" />
-            </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Complete Address</label>
+            <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Kawasan Creative Hub, Suite 101" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Phone Number</label>
+            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. +62 811 2719 990" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Registered Tables</label>
+            <Input value={tables} onChange={(e) => setTables(e.target.value)} placeholder="e.g. 15 or 1,2,3,VIP-1,VIP-2" />
           </div>
         </form>
       </CardContent>

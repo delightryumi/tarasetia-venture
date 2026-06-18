@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Plus, Trash, QrCode, UploadCloud, Printer } from 'lucide-react';
+import { Plus, Trash, QrCode, UploadCloud, Printer, Download } from 'lucide-react';
 
 interface PromoBanner {
   id: string;
@@ -286,25 +286,8 @@ export default function SelfOrderCard() {
 
   return (
     <div className="w-full">
-      {/* Hidden Print Area for Thermal QR */}
-      {generatedUrl && (
-        <div className="hidden print:flex flex-col items-center justify-start bg-white text-black pt-8 pb-4 px-2 w-[80mm] mx-auto text-center" style={{ width: '80mm' }}>
-          <h2 className="text-sm font-black mb-1 uppercase tracking-widest">Pemesanan Mandiri</h2>
-          <h1 className="text-3xl font-black mb-4 border-y-2 border-black border-dashed py-2 w-full uppercase">MEJA {selectedTable}</h1>
-          <img 
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(generatedUrl)}`} 
-            alt="Meja QR Code" 
-            className="w-48 h-48 mx-auto mb-4 object-contain"
-          />
-          <p className="text-xs font-bold">Silakan scan QR code di atas<br/>menggunakan kamera HP Anda<br/>untuk melihat menu & memesan.</p>
-          <div className="mt-6 border-t border-dashed border-neutral-400 w-full pt-2">
-            <span className="text-[10px] font-mono">{hotelCode} - Setara Venture</span>
-          </div>
-        </div>
-      )}
-
-      {/* Main UI - Hidden on Print */}
-      <Card className="my-5 relative overflow-hidden print:hidden">
+      {/* Main UI */}
+      <Card className="my-5 relative overflow-hidden">
       {/* Visual Overlay for Non-Enterprise */}
       {!isEnterprise && (
         <div className="absolute inset-0 bg-stone-900/5 dark:bg-stone-950/20 backdrop-blur-[1.5px] z-10 flex flex-col items-center justify-center p-6 text-center select-none">
@@ -367,12 +350,22 @@ export default function SelfOrderCard() {
             
             {/* Global QR */}
             {globalUrl && (
-              <div className="w-28 h-28 bg-white p-2 rounded-lg border shadow-sm flex items-center justify-center shrink-0">
-                <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(globalUrl)}`} 
-                  alt="Global QR Code" 
-                  className="w-full h-full object-contain"
-                />
+              <div className="flex flex-col items-center gap-2 shrink-0">
+                <div className="w-28 h-28 bg-white p-2 rounded-lg border shadow-sm flex items-center justify-center">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(globalUrl)}`} 
+                    alt="Global QR Code" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <a 
+                  href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(globalUrl)}`}
+                  target="_blank"
+                  download="QR-Global-Setara.png"
+                  className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 hover:text-stone-900 dark:hover:text-white transition-colors flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-md"
+                >
+                  <Download size={12} /> Unduh QR
+                </a>
               </div>
             )}
           </div>
@@ -514,23 +507,29 @@ export default function SelfOrderCard() {
 
             {generatedUrl && (
               <div className="p-4 bg-muted/20 border rounded-lg flex flex-col sm:flex-row gap-6 items-center">
-                {/* QR Image using standard qrserver API */}
-                <div className="w-32 h-32 bg-white p-2 rounded-lg border shadow-sm flex items-center justify-center shrink-0">
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(generatedUrl)}`} 
-                    alt="Meja QR Code" 
-                    className="w-full h-full object-contain"
-                  />
+                <div className="flex flex-col items-center gap-2 shrink-0">
+                  <div className="w-32 h-32 bg-white p-2 rounded-lg border shadow-sm flex items-center justify-center">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(generatedUrl)}`} 
+                      alt={`Meja ${selectedTable} QR Code`} 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <a 
+                    href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(generatedUrl)}`}
+                    target="_blank"
+                    download={`QR-Meja-${selectedTable}-Setara.png`}
+                    className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 hover:text-stone-900 dark:hover:text-white transition-colors flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-md"
+                  >
+                    <Download size={12} /> Unduh QR
+                  </a>
                 </div>
                 <div className="space-y-2 min-w-0 w-full">
                   <span className="text-xs font-bold text-emerald-600 block">Link Meja {selectedTable} Berhasil Dibuat!</span>
                   <span className="text-[10px] font-mono select-all break-all block p-2 bg-neutral-100 dark:bg-white/[0.03] border rounded">{generatedUrl}</span>
                   <p className="text-[10px] text-muted-foreground leading-normal mb-2">
-                    Klik tombol di bawah ini untuk mencetak QR ke printer thermal kasir, atau salin tautan untuk mading restoran.
+                    Unduh gambar QR di samping dan cetak untuk ditempelkan di atas meja {selectedTable}. Tamu bisa langsung memesan setelah melakukan scan.
                   </p>
-                  <Button size="sm" variant="outline" onClick={() => window.print()} className="mt-2 text-xs font-bold flex items-center gap-2 h-8">
-                    <Printer size={14} /> Print ke Thermal Kasir
-                  </Button>
                 </div>
               </div>
             )}

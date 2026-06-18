@@ -9,14 +9,14 @@ import { ArrowLeft } from 'lucide-react';
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { canAccess } = useRBAC();
-  const [dashboardUrl, setDashboardUrl] = React.useState('https://pms.bumianyom.com/select-module');
+  const [dashboardUrl, setDashboardUrl] = React.useState('https://live.mytara.id/select-module');
 
   React.useEffect(() => {
     const getDashboardUrl = () => {
       if (typeof window !== 'undefined') {
         const { protocol, hostname } = window.location;
-        if (hostname === 'pos.bumianyom.com') {
-          return `${protocol}//pms.bumianyom.com/select-module`;
+        if (hostname === 'point.mytara.id') {
+          return `${protocol}//live.mytara.id/select-module`;
         }
 
         const storedUrl = localStorage.getItem('dashboard_url');
@@ -41,7 +41,7 @@ export function MobileBottomNav() {
           return `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         }
       }
-      return 'https://pms.bumianyom.com/select-module';
+      return 'https://live.mytara.id/select-module';
     };
     setDashboardUrl(getDashboardUrl());
   }, []);

@@ -59,8 +59,8 @@ export default function SuperadminPage() {
     const userJson = localStorage.getItem('user');
     if (!userJson) {
       let loginGatewayUrl = '';
-      if (typeof window !== 'undefined' && window.location.hostname === 'pos.bumianyom.com') {
-        loginGatewayUrl = `${window.location.protocol}//pms.bumianyom.com`;
+      if (typeof window !== 'undefined' && window.location.hostname === 'point.mytara.id') {
+        loginGatewayUrl = `${window.location.protocol}//live.mytara.id`;
       } else if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
         loginGatewayUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL.replace('/select-module', '');
       } else if (typeof window !== 'undefined') {
@@ -174,8 +174,8 @@ export default function SuperadminPage() {
     
     if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
-      if (hostname === 'pos.bumianyom.com') {
-        dashboardUrl = `${protocol}//pms.bumianyom.com/select-module`;
+      if (hostname === 'point.mytara.id') {
+        dashboardUrl = `${protocol}//live.mytara.id/select-module`;
       } else {
         const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
         if (isLocal) {
@@ -187,7 +187,7 @@ export default function SuperadminPage() {
     }
 
     if (!dashboardUrl) {
-      dashboardUrl = 'https://pms.bumianyom.com/select-module';
+      dashboardUrl = 'https://live.mytara.id/select-module';
       if (process.env.NEXT_PUBLIC_DASHBOARD_URL) {
         dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL;
       } else if (typeof window !== 'undefined') {
@@ -201,7 +201,7 @@ export default function SuperadminPage() {
         } else if (hostname.includes('-3001.')) {
           dashboardUrl = `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         } else {
-          dashboardUrl = `https://pms.bumianyom.com/select-module`;
+          dashboardUrl = `https://live.mytara.id/select-module`;
         }
       }
     }

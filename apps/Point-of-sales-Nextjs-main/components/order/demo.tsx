@@ -34,8 +34,8 @@ export function Orders() {
     
     if (typeof window !== 'undefined') {
       const { protocol, hostname } = window.location;
-      if (hostname === 'pos.bumianyom.com') {
-        dashboardUrl = `${protocol}//pms.bumianyom.com/select-module`;
+      if (hostname === 'point.mytara.id') {
+        dashboardUrl = `${protocol}//live.mytara.id/select-module`;
       } else {
         const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
         if (isLocal) {
@@ -59,7 +59,7 @@ export function Orders() {
         } else if (hostname.includes('-3001.')) {
           dashboardUrl = `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
         } else {
-          dashboardUrl = 'https://pms.bumianyom.com/select-module';
+          dashboardUrl = 'https://live.mytara.id/select-module';
         }
       }
     }
