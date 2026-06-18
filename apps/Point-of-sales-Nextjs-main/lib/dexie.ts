@@ -9,6 +9,8 @@ export interface LocalProduct {
   cat: string; // matches CatProduct enum or category name
   subcategory?: string; // subcategory within the category
   image?: string;
+  description?: string;
+  addons?: any[];
 }
 
 export interface LocalTransaction {
