@@ -9,6 +9,9 @@ import 'react-toastify/dist/ReactToastify.css';
 export const metadata: Metadata = {
   title: 'POS Terminal | MyTara',
   description: 'MyTara Point of Sales System',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default async function RootLayout({
