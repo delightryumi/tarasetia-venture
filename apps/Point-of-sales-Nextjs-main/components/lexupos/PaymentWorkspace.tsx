@@ -349,7 +349,7 @@ export default function PaymentWorkspace({
                       Menunggu Pelanggan Membayar
                     </span>
                     <span className="text-[10px] text-neutral-400 max-w-[220px]">
-                      Arahkan tamu untuk memindai QRIS ini. Klik "Konfirmasi Pembayaran" HANYA JIKA uang sudah masuk.
+                      Arahkan tamu untuk memindai QRIS ini. Klik &quot;Konfirmasi Pembayaran&quot; HANYA JIKA uang sudah masuk.
                     </span>
                   </>
                 ) : (

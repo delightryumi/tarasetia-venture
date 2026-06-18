@@ -180,7 +180,7 @@ export default function POSCartSidebar({
                     )}
                     {item.note && (
                       <p className="text-[10px] text-orange-500 italic mt-0.5 leading-tight">
-                        "{item.note}"
+                        &quot;{item.note}&quot;
                       </p>
                     )}
                     <p className="text-[9px] text-neutral-500 font-medium mt-0.5 font-sans flex items-center gap-1">

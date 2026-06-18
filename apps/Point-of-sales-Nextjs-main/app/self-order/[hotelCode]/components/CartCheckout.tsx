@@ -191,7 +191,7 @@ export default function CartCheckout({
                             )}
                             {item.note && (
                               <span className="text-[12px] text-sb-accent mt-1 bg-sb-accent/5 px-2 py-0.5 rounded-sm self-start inline-block">
-                                "{item.note}"
+                                &quot;{item.note}&quot;
                               </span>
                             )}
                           </div>
