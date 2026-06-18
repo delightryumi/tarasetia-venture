@@ -113,7 +113,7 @@ export function useLexuPos() {
   let rawSubcats: string[] = [];
   if (selectedCategory === 'All') {
     const definedSubcats = customCategories.flatMap(c => c.subcategories);
-    const productSubcats = dynamicProducts.map(p => p.subcategory).filter(Boolean);
+    const productSubcats = dynamicProducts.map(p => p.subcategory).filter(Boolean) as string[];
     rawSubcats = [...definedSubcats, ...productSubcats];
   } else {
     const matchedCat = customCategories.find(
@@ -125,7 +125,7 @@ export function useLexuPos() {
       const subcategorySource = dynamicProducts.filter(
         p => p.category.toLowerCase() === selectedCategory.toLowerCase()
       );
-      rawSubcats = subcategorySource.map(p => p.subcategory).filter(Boolean);
+      rawSubcats = subcategorySource.map(p => p.subcategory).filter(Boolean) as string[];
     }
   }
   const dynamicSubcategories = ['All', ...Array.from(new Set(rawSubcats)).filter(Boolean).sort()];
