@@ -17,4 +17,8 @@ export interface TransactionData {
   product: Product;
   saledate?: string | Date;
   discount?: number;
+  isCompliment?: boolean;
+  complimentReason?: string;
+  paymethod?: string;
+  paymentMethod?: string;
 }
