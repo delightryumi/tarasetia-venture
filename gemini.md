@@ -270,6 +270,17 @@ Berikut adalah rencana pengembangan lanjutan yang belum diimplementasikan di env
     - **Pembongkaran Blokade *Infinite Loop***: Menghapus mekanisme pencegat *session* (`checkSession` pada `AuthContext.tsx`) yang secara paksa menimpa *cache* pemilihan hotel superadmin kembali ke *fallback* "0". Perbaikan ini memberi kemampuan penjelajahan modul tenant (*preview*) sepenuhnya tanpa terkunci di halaman asal.
     - **Hak Akses Tanpa Batas (*God Mode*) di Pengaturan POS**: Mengukuhkan kekebalan khusus (bypass) di komponen `/components/setting/components/selforder.tsx` agar superadmin kebal terhadap batasan paywall berlangganan "Enterprise" milik tenant.
     - **Normalisasi Teks Pemuatan Data (*Loading Fallback*)**: Menyapu bersih sisa noda *hardcode* nama "Bumi Anyom Resort" yang tayang sekilas selama sistem membaca basis data pada komponen tajuk *header* (baik di Admin maupun POS) dan membakukannya menjadi `"Memuat..."` bergaya *neutral multi-tenant*.
+- [x] **Pembersihan Total Hardcode Domain Statis**: Menyapu bersih semua jejak referensi *hardcode* domain lama (`pos.bumianyom.com` dan `pms.bumianyom.com`) di seluruh ekosistem (Admin Dashboard & POS), dan menggantinya dengan sistem resolusi domain dinamis yang mengarah pada infrastruktur resmi Setara Venture (`point.mytara.id` dan `live.mytara.id`).
+- [x] **Perbaikan Rendering Favicon Production**: Mendefinisikan ulang *property* `icons` secara eksplisit pada lapisan Metadata Layout utama di `admin-dashboard` dan `Point-of-sales-Nextjs-main` untuk membasmi *bug* hilangnya Favicon saat aplikasi di-*deploy* ke Firebase App Hosting.
+- [x] **Zero-Tolerance Audit untuk TypeScript & Next.js 15 ESLint (POS)**: Menyelesaikan rentetan kegagalan *deploy* di infrastruktur Cloud Build dengan melakukan audit *build* lokal berulang kali hingga hijau 100%, meliputi:
+    - Melakukan eskapasi *HTML Entities* (`&quot;`) untuk mengamankan karakter kutip ganda pada `CartCheckout.tsx`, `POSCartSidebar.tsx`, dan `PaymentWorkspace.tsx`.
+    - Menginjeksi properti tipe data yang hilang (`description`, `addons`) ke dalam basis antarmuka IndexedDB `LocalProduct` (`lib/dexie.ts`).
+    - Menyempurnakan pemaksaan tipe spesifik (*Type Assertion* `as string[]`) pada operasi `filter(Boolean)` guna mematuhi aturan strict mode penyaringan subkategori POS (`useLexuPos.ts`).
+    - Mengintegrasikan atribut `isCompliment`, `complimentReason`, `paymethod`, dan `paymentMethod` secara resmi ke dalam konstruktor tipe `TransactionData` untuk melindungi rendering di halaman cetak rekam jejak kasir (`records/[id]/page.tsx`).
+    - Menghapus deklarasi kunci duplikat (`stock`) di dalam *Object Literal* yang diatur ketat oleh kompiler mutakhir Next.js (`self-order/[hotelCode]/page.tsx`).
+    - Merancang perlindungan *Null Safety* (`?.trim()`) pada variabel `tableNumber` untuk mencegah *Runtime Crash* saat pemesanan nirkabel tamu.
+    - Merestrukturisasi parameter React `useRef` menggunakan definisi generik mutakhir `RefObject<HTMLDivElement | null>` agar serasi dengan standar baru modul `CategoryNav`.
+- [x] **Pemantapan Arsitektur Landing Page & Company Profile**: Mendokumentasikan keputusan strategis bahwa modul Landing Page (port 3002) sepenuhnya digerakkan oleh *Dynamic Host Binding* dan bebas-*deploy* hingga terbit pesanan modul, serta merestui pemisahan `mytara.id` sebagai sub-proyek *Company Profile* Next.js ringan yang independen demi keandalan bisnis SaaS.
 
 ---
 
