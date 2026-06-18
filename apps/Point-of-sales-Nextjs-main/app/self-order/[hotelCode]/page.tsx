@@ -15,8 +15,8 @@ import SuccessScreen from './components/SuccessScreen';
 import ProductDetailModal from './components/ProductDetailModal';
 import { CartItem } from './components/ProductGrid';
 
-export default function GuestSelfOrderingPage({ params }: { params: { hotelCode: string } }) {
-  const unwrappedParams = React.use(params as unknown as Promise<{ hotelCode: string }>);
+export default function GuestSelfOrderingPage({ params }: { params: Promise<{ hotelCode: string }> }) {
+  const unwrappedParams = React.use(params);
   const hotelCode = unwrappedParams.hotelCode;
 
   // Global State
