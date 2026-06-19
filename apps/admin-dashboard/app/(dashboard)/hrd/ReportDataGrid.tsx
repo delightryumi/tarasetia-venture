@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./hrd.module.css";
 import type { AttendanceLog, Staff } from "./types";
 
@@ -12,14 +12,32 @@ interface Props {
 }
 
 export function ReportDataGrid({ filteredLogs, staffs, periodLabel, onDetailClick }: Props) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Reset to page 1 whenever filter or logs change (by length or item IDs)
+  const logsSerialized = `${filteredLogs.length}:${filteredLogs.map(l => l.id).join(",")}`;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [logsSerialized]);
+
   // Sort logs by date (newest first) then by staffName
   const sortedLogs = [...filteredLogs].sort((a, b) => b.date.localeCompare(a.date) || a.staffName.localeCompare(b.staffName));
+
+  const totalPages = Math.ceil(sortedLogs.length / itemsPerPage);
+  const paginatedLogs = sortedLogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const startRange = sortedLogs.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const endRange = Math.min(sortedLogs.length, currentPage * itemsPerPage);
 
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
         <p className={styles.cardTitle}>Laporan Absensi — {periodLabel}</p>
-        <span style={{ fontSize: 12, color: "var(--s-muted)" }}>{sortedLogs.length} log absensi</span>
+        <span style={{ fontSize: 12, color: "var(--s-muted)" }}>
+          Menampilkan {startRange}-{endRange} dari {sortedLogs.length} log absensi
+        </span>
       </div>
 
       {sortedLogs.length === 0 ? (
@@ -46,7 +64,7 @@ export function ReportDataGrid({ filteredLogs, staffs, periodLabel, onDetailClic
               </tr>
             </thead>
             <tbody>
-              {sortedLogs.map((log) => {
+              {paginatedLogs.map((log) => {
                 const staff = staffs.find((s) => s.id === log.staffId);
                 const formatTime = (isoString?: string) => {
                   if (!isoString) return "—";
@@ -99,6 +117,50 @@ export function ReportDataGrid({ filteredLogs, staffs, periodLabel, onDetailClic
               })}
             </tbody>
           </table>
+
+          {totalPages > 1 && (
+            <div className={styles.pagination}>
+              <button 
+                className={styles.pageBtn} 
+                disabled={currentPage === 1} 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              >
+                &lt; Prev
+              </button>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                if (
+                  page === 1 || 
+                  page === totalPages || 
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <button 
+                      key={page} 
+                      className={`${styles.pageBtn} ${currentPage === page ? styles.pageBtnActive : ''}`} 
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (
+                  page === currentPage - 2 || 
+                  page === currentPage + 2
+                ) {
+                  return <span key={page} className={styles.pageEllipsis}>...</span>;
+                }
+                return null;
+              })}
+
+              <button 
+                className={styles.pageBtn} 
+                disabled={currentPage === totalPages} 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              >
+                Next &gt;
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -152,7 +152,7 @@ export const ForecastDetailDrawer: React.FC<ForecastDetailDrawerProps> = ({ titl
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "13px", fontWeight: 800, marginTop: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                         <span>Grand Total</span>
-                        <span style={{ color: 'var(--sidebar-link-active-bg)' }}>
+                        <span style={{ color: 'var(--f-ink)' }}>
                             Rp {formatCurrency(entries.reduce((acc, e) => acc + (Number(e.amount) || 0), 0))}
                         </span>
                     </div>

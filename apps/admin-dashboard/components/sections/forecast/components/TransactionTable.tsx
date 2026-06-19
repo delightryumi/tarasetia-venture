@@ -132,7 +132,7 @@ export function TransactionTable({
                                         <tr 
                                             key={i} 
                                             className={`${styles.tableRow} ${isCancelled ? styles.cancelledRow : ""}`}
-                                            style={i % 2 === 0 ? { backgroundColor: "#ffffff" } : { backgroundColor: "#fbf9f4" }}
+                                            style={i % 2 === 0 ? { backgroundColor: "var(--f-canvas)" } : { backgroundColor: "var(--f-surface)" }}
                                         >
                                             {/* Guest Name */}
                                             <td className={styles.tableCell}>
@@ -203,7 +203,7 @@ export function TransactionTable({
                                             {/* Channel */}
                                             <td className={styles.tableCell}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                                    <div style={{ width: "32px", height: "32px", borderRadius: "6px", backgroundColor: "#ffffff", border: "1px solid var(--f-hairline)", padding: "4px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                    <div style={{ width: "32px", height: "32px", borderRadius: "6px", backgroundColor: "var(--f-canvas)", border: "1px solid var(--f-hairline)", padding: "4px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                                                         {entry.type === 'other_income' ? (
                                                             <Coffee size={14} style={{ color: "var(--f-light-muted)" }} />
                                                         ) : (() => {

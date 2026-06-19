@@ -422,7 +422,8 @@ td {
 .datepicker-dropdown,
 .upload-dropzone,
 .preview-container,
-[class*="SummaryCard_card"],
+[class*="SummaryCard_summaryCard"],
+[class*="SummaryCard_card"]:not([class*="Label"]):not([class*="Value"]):not([class*="IconBox"]),
 [class*="VsCard_card"],
 [class*="_kpiCard"]:not([class*="Dark"]):not([class*="dark"]),
 [class*="_sectionCard"] {
@@ -480,7 +481,8 @@ textarea {
 .dark .datepicker-dropdown,
 .dark .upload-dropzone,
 .dark .preview-container,
-.dark [class*="SummaryCard_card"],
+.dark [class*="SummaryCard_summaryCard"],
+.dark [class*="SummaryCard_card"]:not([class*="Label"]):not([class*="Value"]):not([class*="IconBox"]),
 .dark [class*="VsCard_card"],
 .dark [class*="_kpiCard"]:not([class*="Dark"]):not([class*="dark"]),
 .dark [class*="_sectionCard"] {

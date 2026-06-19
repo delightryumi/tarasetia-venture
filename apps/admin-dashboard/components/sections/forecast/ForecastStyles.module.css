@@ -808,3 +808,32 @@
 :global(.dark) .tableRow:hover {
   background-color: var(--f-surface-soft) !important;
 }
+
+:global(.dark) .rightDrawer {
+  background-color: var(--f-canvas) !important;
+  border-left-color: var(--f-hairline) !important;
+}
+
+:global(.dark) .cardHeader {
+  border-bottom-color: var(--f-hairline) !important;
+}
+
+:global(.dark) .guestItem {
+  background-color: var(--f-surface-soft) !important;
+  border-color: var(--f-hairline) !important;
+}
+
+:global(.dark) .guestItem:hover {
+  background-color: var(--f-surface) !important;
+  border-color: var(--f-muted) !important;
+}
+
+:global(.dark) .paymentLunas {
+  background-color: #064e3b !important;
+  color: #34d399 !important;
+}
+
+:global(.dark) .paymentPending {
+  background-color: #78350f !important;
+  color: #fbbf24;
+}

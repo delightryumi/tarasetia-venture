@@ -9,3 +9,52 @@
 @import "./styles/_forms.css";
 @import "./styles/_modal.css";
 @import "./styles/_feedback.css";
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--s-hairline);
+}
+
+.pageBtn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--s-secondary-btn-border);
+  background: var(--s-secondary-btn-bg);
+  color: var(--s-secondary-btn-text);
+  border-radius: var(--s-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pageBtn:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageBtnActive {
+  background: var(--s-primary-btn-bg) !important;
+  color: var(--s-primary-btn-text) !important;
+  border-color: var(--s-primary-btn-bg) !important;
+}
+
+.pageEllipsis {
+  font-size: 13px;
+  color: var(--s-muted);
+  padding: 0 4px;
+}

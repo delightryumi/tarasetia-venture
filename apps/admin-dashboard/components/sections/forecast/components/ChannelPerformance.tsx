@@ -35,7 +35,7 @@ export function ChannelPerformance({
         { name: "Expedia", file: "expedia.png", color: "#fbc02d" },
         { name: "MG Bedbank", file: "mg.png", color: "#6c3483" },
         { name: "Walk-in", file: "walk_in.png", color: "#2e7d32" },
-        { name: "Booking Engine", file: "globe", color: SAGE },
+        { name: "Booking Engine", file: "globe", color: "#788069" },
     ].map((ch) => {
         const channelEntries = stats.entries.filter((e: any) => e.channel === ch.name);
         const revenue = channelEntries.reduce((acc: number, e: any) => acc + (Number(e.amount) || 0), 0);
@@ -80,7 +80,7 @@ export function ChannelPerformance({
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.35, delay: i * 0.05, ease: "easeOut" }}
                             whileHover={{ scale: 1.015, y: -2 }}
-                            className={`${styles.channelCard} ${i === 9 ? styles.channelCardSpan : ""}`}
+                            className={styles.channelCard}
                         >
                             {/* Accent glow background */}
                             <div
