@@ -66,7 +66,7 @@ export const useRBAC = () => {
         }
       } catch (e) {}
 
-      if (currentRole && (currentRole.toLowerCase() === 'superadmin' || currentRole.toLowerCase() === 'super admin')) {
+      if (currentRole && (currentRole.toLowerCase() === 'superadmin' || currentRole.toLowerCase() === 'super admin' || currentRole.toLowerCase() === 'admin')) {
         setLoading(false);
       }
 
@@ -84,7 +84,8 @@ export const useRBAC = () => {
           localStorage.setItem(`permissions_${userEmail}`, JSON.stringify(newPermissions));
         } else {
           setPermissions({});
-          localStorage.removeItem(`permissions_${userEmail}`);
+          // Store empty permissions in cache to prevent slow load next time
+          localStorage.setItem(`permissions_${userEmail}`, JSON.stringify({}));
         }
         setLoading(false);
       },
@@ -99,7 +100,7 @@ export const useRBAC = () => {
 
   const canAccess = (menuId: string | undefined): boolean => {
     if (!menuId) return true; // If no id is provided, assume it's publicly accessible
-    if (role && (role.toLowerCase() === 'superadmin' || role.toLowerCase() === 'super admin')) return true; // Superadmin always has access
+    if (role && (role.toLowerCase() === 'superadmin' || role.toLowerCase() === 'super admin' || role.toLowerCase() === 'admin')) return true; // Superadmin and admin always have access
     return !!permissions[menuId];
   };
 

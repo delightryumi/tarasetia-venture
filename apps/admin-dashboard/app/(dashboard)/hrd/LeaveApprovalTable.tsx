@@ -67,9 +67,9 @@ export function LeaveApprovalTable({ hotelCode }: Props) {
   return (
     <>
       <div className={styles.card}>
-        <div className={styles.cardHeader}>
+        <div className={styles.cardHeader} style={{ flexWrap: "wrap", gap: "12px" }}>
           <p className={styles.cardTitle}>Pengajuan Karyawan</p>
-          <div style={{ display: "flex", gap: 4 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {(["pending", "approved", "rejected"] as const).map((f) => (
               <button
                 key={f}

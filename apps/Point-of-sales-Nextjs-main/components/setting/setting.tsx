@@ -71,9 +71,9 @@ export function Setting() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-neutral-100/50 dark:bg-black">
-      <div className="flex flex-1 flex-col p-4 md:p-8">
-        <div className="mx-auto w-full max-w-6xl bg-neutral-50 dark:bg-[#0f0f11] p-6 md:p-10 rounded-[28px] shadow-lg border border-neutral-200 dark:border-neutral-800/60">
-          <div className="grid gap-6">
+      <div className="flex flex-1 flex-col p-2 sm:p-4 md:p-8">
+        <div className="mx-auto w-full max-w-6xl bg-neutral-50 dark:bg-[#0f0f11] p-4 sm:p-6 md:p-10 rounded-2xl md:rounded-[28px] shadow-lg border border-neutral-200 dark:border-neutral-800/60 overflow-x-hidden">
+          <div className="grid grid-cols-1 gap-4 md:gap-6 min-w-0 w-full">
             <ShopnameCard storeName={storeName} storeId={storeId} addressProp={address} phoneProp={phone} tablesProp={tables} />
             <TaxrateCard tax={taxRate} service={serviceRate} lostBreakage={lostBreakageRate} storeId={storeId} />
             <SelfOrderCard />

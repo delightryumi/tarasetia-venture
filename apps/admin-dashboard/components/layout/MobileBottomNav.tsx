@@ -264,20 +264,20 @@ export const MobileBottomNav = () => {
                 initial={{ y: 80, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                className="pointer-events-auto flex items-center bg-[#121212]/95 dark:bg-[#121212]/95 h-[68px] border-t border-white/[0.08] w-full shadow-[0_-8px_30px_rgba(0,0,0,0.5)] backdrop-blur-md overflow-x-auto bottom-nav-scroll pb-[env(safe-area-inset-bottom)]"
+                className="pointer-events-auto flex items-center bg-white/95 dark:bg-zinc-950/95 h-[68px] border-t border-neutral-200 dark:border-white/[0.08] w-full shadow-[0_-4px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.5)] backdrop-blur-md overflow-x-auto bottom-nav-scroll pb-[env(safe-area-inset-bottom)]"
             >
                 <div className="flex items-center justify-around w-full px-2 min-w-max md:min-w-0 md:justify-center md:gap-6">
                     {/* Pilih Modul Button */}
                     <button
                         onClick={() => router.push('/select-module')}
-                        className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] flex-shrink-0 text-white/50 hover:text-white transition-all duration-300"
+                        className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] flex-shrink-0 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-all duration-300"
                         title="Pilih Modul"
                     >
-                        <Grid size={18} className="text-[#dfd3b2]" />
-                        <span className="text-[9px] font-normal tracking-wide text-white/50">Modul</span>
+                        <Grid size={18} />
+                        <span className="text-[9px] font-normal tracking-wide">Modul</span>
                     </button>
 
-                    <div className="w-px h-6 bg-white/10 flex-shrink-0 mx-1" />
+                    <div className="w-px h-6 bg-neutral-200 dark:bg-white/10 flex-shrink-0 mx-1" />
 
                     {navItems.map((item) => {
                         const isActive = activeSection === item.id;
@@ -301,21 +301,15 @@ export const MobileBottomNav = () => {
                                         router.push(`/${item.id}`);
                                     }
                                 }}
-                                className={`
-                                    flex flex-col items-center justify-center gap-1 min-w-[55px] px-3 h-[54px] flex-shrink-0 transition-all duration-200
-                                    ${isActive 
-                                        ? 'text-[#dfd3b2]' 
-                                        : 'text-white/50 hover:text-white'
-                                    }
-                                `}
+                                className={`flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] flex-shrink-0 transition-all duration-300 relative ${isActive ? "text-[#8d7a52] dark:text-[#dfd3b2] font-bold" : "text-neutral-500 dark:text-neutral-400 font-normal hover:text-neutral-700 dark:hover:text-neutral-300"}`}
                             >
                                 <div className="flex items-center justify-center shrink-0">
                                     {React.cloneElement(item.icon as React.ReactElement, { 
                                         size: 18, 
-                                        strokeWidth: isActive ? 2 : 1.8 
+                                        strokeWidth: isActive ? 2.2 : 1.8 
                                     })}
                                 </div>
-                                <span className={`text-[9px] font-normal tracking-wide whitespace-nowrap transition-colors duration-200 ${isActive ? 'text-[#dfd3b2]' : 'text-white/50'}`}>
+                                <span className="text-[9px] tracking-wide whitespace-nowrap transition-colors duration-200">
                                     {item.label}
                                 </span>
                             </button>
@@ -324,14 +318,14 @@ export const MobileBottomNav = () => {
 
                     {activeModule !== "cpanel" && (
                         <>
-                            <div className="w-px h-6 bg-white/10 flex-shrink-0 mx-1" />
+                            <div className="w-px h-6 bg-neutral-200 dark:bg-white/10 flex-shrink-0 mx-1" />
                             <button
                                 onClick={signOutUser}
-                                className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] flex-shrink-0 text-white/40 hover:text-rose-450 transition-all duration-300"
+                                className="flex flex-col items-center justify-center gap-1 min-w-[55px] h-[54px] flex-shrink-0 text-neutral-500 dark:text-neutral-400 hover:text-rose-500 dark:hover:text-rose-450 transition-all duration-300"
                                 title="Keluar"
                             >
                                 <LogOut size={18} />
-                                <span className="text-[9px] font-normal tracking-wide text-white/40">Keluar</span>
+                                <span className="text-[9px] font-normal tracking-wide">Keluar</span>
                             </button>
                         </>
                     )}

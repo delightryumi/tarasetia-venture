@@ -5,27 +5,28 @@
   max-width: 1100px;
   margin: 0 auto;
   padding: 0.5rem 0;
+  box-sizing: border-box;
 }
 
-/* Mobile Layout: 2-column grid for better use of space */
+/* Mobile Layout: Strict 2-column grid per user request */
 .mobileLayout {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* minmax(0, 1fr) ensures it can shrink infinitely */
+  gap: 0.5rem;
   width: 100%;
-  padding: 0 0.5rem;
+  padding: 0 1rem; /* 16px padding on left/right */
+  box-sizing: border-box;
 }
 
 .mobileLayout .cardWrapper {
   width: 100%;
-  max-width: none;
+  min-width: 0; /* CRITICAL: allows card to shrink below intrinsic content width */
 }
 
-/* Card ganjil terakhir di mobile: rentangkan penuh */
+/* Card ganjil terakhir di mobile biarkan menyesuaikan kolom kiri, atau rentangkan.
+   Karena user minta 2x4, biarkan mengikuti grid biasa (tidak direntangkan). */
 .mobileLayout .cardWrapper:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
-  max-width: 260px;
-  margin: 0 auto;
+  /* Default behavior, sits in first column */
 }
 
 /* Desktop Layout: uses flex rows on desktop for perfect symmetry */
@@ -61,10 +62,10 @@
   }
 }
 
-/* Card Container - Pure Flat Design */
+/* Card Container - Premium Light Design */
 .card {
-  background: #ffffff; /* Clean Neutral White Background */
-  border: 1px solid transparent; /* No Border */
+  background: #ffffff; /* Crisp white to contrast with slate background */
+  border: 1px solid rgba(0, 0, 0, 0.05); /* Very subtle border to define edge */
   border-radius: 6px;
   padding: 1rem;
   display: flex;
@@ -75,7 +76,7 @@
   height: 100%;
   min-height: 135px;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: none; /* Completely flat */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02); /* Premium soft drop shadow */
   cursor: pointer;
 }
 
@@ -91,20 +92,51 @@
   gap: 0.5rem;
 }
 
-/* On very small screens, make card padding smaller */
-@media (max-width: 380px) {
+/* On mobile screens, make card padding smaller and add edge padding */
+@media (max-width: 639px) {
+  .mobileLayout {
+    width: 100%;
+    padding: 0 0.5rem; /* Parent WorkspaceSection has px-4 (1rem). Adding 0.5rem makes total 1.5rem (24px) */
+    gap: 0.5rem; /* Clean gap */
+  }
   .card {
-    padding: 0.75rem;
+    padding: 0.6rem; /* Kurangi padding dalam */
+    min-height: 105px; /* Perkecil tinggi minimum card */
+    border-radius: 8px; /* Lebih presisi */
+  }
+  .cardBody {
+    gap: 0.35rem; /* Jarak antar elemen dalam card lebih rapat */
   }
   .iconWrapper {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+  .icon {
+    width: 16px;
+    height: 16px;
   }
   .title {
-    font-size: 0.8rem;
+    font-size: 0.75rem; /* Perkecil teks judul */
   }
   .subtitle {
-    font-size: 0.7rem;
+    font-size: 0.625rem; /* Perkecil deskripsi */
+    line-height: 1.2;
+  }
+  .categoryBadge {
+    font-size: 0.45rem;
+    margin-bottom: 2px;
+  }
+  .cardFooter {
+    margin-top: 0.4rem;
+    padding-top: 0.4rem;
+  }
+  .actionLink, .lockedLink {
+    font-size: 0.625rem;
+  }
+  .arrowIcon, .lockIcon {
+    width: 10px;
+    height: 10px;
   }
 }
 

@@ -19,7 +19,7 @@ export function SystemCredentialsNotes() {
         Catatan Kredensial Sistem
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "var(--s-space-lg)" }}>
+      <div className={styles.formGrid} style={{ gap: "var(--s-space-lg)" }}>
 
         {/* Superadmin Card */}
         <div className={styles.kpiCard} style={{ flexDirection: "column", alignItems: "flex-start", gap: "var(--s-space-lg)" }}>

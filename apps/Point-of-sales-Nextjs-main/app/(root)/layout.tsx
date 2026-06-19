@@ -559,11 +559,17 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       <header className="flex h-14 shrink-0 items-center justify-between gap-4 py-2.5 px-4 lg:px-6 sticky top-0 z-20 bg-[#181818] border-none w-full select-none print:hidden">
         {/* Left Side: Logo & Hotel Badge */}
         <div className="flex items-center gap-4">
-          <img
-            src="/channels/6.png"
-            alt="Nexura Logo"
-            className="h-6 md:h-7 w-auto object-contain"
-          />
+          <button
+            onClick={() => window.location.href = dashboardUrl}
+            className="border-none bg-transparent p-0 m-0 cursor-pointer flex items-center transition-opacity hover:opacity-80 active:scale-95"
+            title="Kembali ke Dashboard Utama"
+          >
+            <img
+              src="/channels/6.png"
+              alt="Nexura Logo"
+              className="h-6 md:h-7 w-auto object-contain"
+            />
+          </button>
           
           <div className="h-6 w-px bg-[#2e2e30] hidden sm:block" />
           
@@ -663,9 +669,28 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                     {/* Active Hotel Info (Mobile only) */}
                     <div className="px-3 py-2 bg-neutral-50 dark:bg-white/[0.03] rounded-[10px] mb-2 flex flex-col gap-0.5 border-t border-slate-200 dark:border-white/[0.08] pt-2 mt-1 sm:hidden">
                       <span className="text-[9px] text-neutral-500 dark:text-[#a1a1aa] font-bold uppercase tracking-widest">Active Hotel</span>
-                      <span className="text-xs font-bold text-neutral-800 dark:text-[#f4f4f5] truncate">
-                        [{user?.hotelCode || "0"}] {hotelName || "Memuat..."}
-                      </span>
+                      {isSuperadmin ? (
+                        <select
+                          value={user?.hotelCode || "0"}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => handleHotelChange(e.target.value)}
+                          className="w-full mt-1 border border-slate-300 dark:border-white/[0.08] rounded-[6px] py-1 px-2 text-xs bg-white dark:bg-[#1c1c1e] text-neutral-900 dark:text-[#f4f4f5] focus:outline-none"
+                          style={{ pointerEvents: 'auto' }}
+                        >
+                          <option value="0">— Superadmin (tidak ada preview) —</option>
+                          {hotelsList && hotelsList.length > 0 && (
+                            hotelsList.map((hotel) => (
+                              <option key={hotel.hotelCode} value={hotel.hotelCode}>
+                                [{hotel.hotelCode}] {hotel.name}
+                              </option>
+                            ))
+                          )}
+                        </select>
+                      ) : (
+                        <span className="text-xs font-bold text-neutral-800 dark:text-[#f4f4f5] truncate">
+                          [{user?.hotelCode || "0"}] {hotelName || "Memuat..."}
+                        </span>
+                      )}
                     </div>
 
                     {(() => {

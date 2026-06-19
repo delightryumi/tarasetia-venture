@@ -94,12 +94,12 @@ export function LiveMonitorTable({ hotelCode }: Props) {
       </div>
 
       <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <p className={styles.cardTitle}>
+        <div className={styles.cardHeader} style={{ flexWrap: "nowrap" }}>
+          <p className={styles.cardTitle} style={{ flex: 1, paddingRight: 12, lineHeight: 1.4 }}>
             Absensi Hari Ini —{" "}
             {new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </p>
-          <span style={{ fontSize: 11, color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "3px 8px", borderRadius: 20 }}>
+          <span style={{ fontSize: 11, color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "3px 8px", borderRadius: 20, whiteSpace: "nowrap", flexShrink: 0 }}>
             🔴 Live
           </span>
         </div>

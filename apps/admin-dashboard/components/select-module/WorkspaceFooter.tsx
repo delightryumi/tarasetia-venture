@@ -36,7 +36,7 @@ export const WorkspaceFooter: React.FC<WorkspaceFooterProps> = () => {
       <div className="text-[10px] flex items-center gap-1.5 font-mono text-slate-500 dark:text-zinc-400 min-w-0 overflow-hidden">
         <span className="font-sans font-medium text-slate-400 dark:text-zinc-500 hidden sm:inline">System Time</span>
         <span className="opacity-40 text-slate-300 dark:text-zinc-700 hidden sm:inline">•</span>
-        <span className="font-semibold text-slate-700 dark:text-zinc-200 tabular-nums">
+        <span className="font-semibold text-slate-700 dark:text-white tabular-nums">
           {mounted ? formattedTime : '--:--:--'}
         </span>
         <span className="text-[9px] text-slate-400 dark:text-zinc-500 font-medium">

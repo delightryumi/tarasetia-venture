@@ -166,7 +166,7 @@ export const StatusWidget = () => {
             </div>
 
             {/* Right Side: Theme Switcher & Hamburger Menu */}
-            <div className="flex items-center gap-1.5 sm:gap-3">
+            <div className="flex items-center gap-3">
                 <ModuleActionButtons
                     showGrid={false}
                     setShowGrid={() => {}}

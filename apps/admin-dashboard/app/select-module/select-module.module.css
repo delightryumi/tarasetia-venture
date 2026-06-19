@@ -388,3 +388,7 @@
   background-color: #1c1c1e;
   color: #f4f4f5;
 }
+.headerBar, .headerInner {
+  box-sizing: border-box !important;
+}
+

@@ -28,6 +28,12 @@
   color: var(--s-body);
 }
 
+@media (max-width: 768px) {
+  .page {
+    padding: var(--s-space-md);
+  }
+}
+
 :global(.dark) .page {
   --s-canvas: #181d26;
   --s-surface-card: #262626;

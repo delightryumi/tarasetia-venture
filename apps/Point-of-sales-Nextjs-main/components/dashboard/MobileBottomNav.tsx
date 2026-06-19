@@ -51,21 +51,20 @@ export function MobileBottomNav() {
     return canAccess(key);
   });
 
-  // Limit to 5 primary items for bottom navigation bar on mobile
-  const primaryItems = visibleItems.slice(0, 5);
+  const primaryItems = visibleItems;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-white/95 dark:bg-zinc-950/95 border-t border-neutral-200 dark:border-white/[0.08] backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-[env(safe-area-inset-bottom)]">
-      <div className="flex items-center justify-around h-14 px-2">
+    <div className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-white/95 dark:bg-zinc-950/95 border-t border-neutral-200 dark:border-white/[0.08] backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-[env(safe-area-inset-bottom)] overflow-x-auto no-scrollbar">
+      <div className="flex items-center justify-start sm:justify-around h-14 px-2 min-w-max w-full">
         {primaryItems.map((item) => {
           const isActive = pathname === item.path;
           return (
             <Link
               key={item.path}
               href={item.path}
-              className={`flex flex-col items-center justify-center gap-0.5 min-w-[50px] px-2 h-full transition-all duration-200 ${
+              className={`flex flex-col items-center justify-center gap-0.5 min-w-[50px] px-2 h-[54px] flex-shrink-0 transition-all duration-200 ${
                 isActive
-                  ? 'text-blue-600 dark:text-blue-400 font-bold'
+                  ? 'text-[#8d7a52] dark:text-[#dfd3b2] font-bold'
                   : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
               }`}
             >

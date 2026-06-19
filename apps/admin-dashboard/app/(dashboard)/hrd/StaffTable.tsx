@@ -126,9 +126,11 @@ export function StaffTable({ hotelCode, shifts }: Props) {
   return (
     <div>
       <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <p className={styles.cardTitle}>Daftar Karyawan ({staffList.filter(s => s.isActive !== false).length} aktif)</p>
-          <button className={styles.btnPrimary} onClick={handleAdd}>+ Tambah Staf</button>
+        <div className={styles.cardHeader} style={{ flexWrap: "nowrap", gap: "8px" }}>
+          <p className={styles.cardTitle} style={{ flex: 1, fontSize: "clamp(12px, 3.5vw, 14px)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            Daftar Karyawan ({staffList.filter(s => s.isActive !== false).length} aktif)
+          </p>
+          <button className={styles.btnPrimary} style={{ whiteSpace: "nowrap", padding: "6px 12px", fontSize: "12px", flexShrink: 0 }} onClick={handleAdd}>+ Tambah Staf</button>
         </div>
 
         {/* Search */}

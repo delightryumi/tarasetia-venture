@@ -42,6 +42,12 @@
   color: var(--s-body);
 }
 
+@media (max-width: 768px) {
+  .page {
+    padding: var(--s-space-md);
+  }
+}
+
 /* Dark Mode Overrides */
 :global(.dark) .page {
   --s-canvas: #181d26;
@@ -115,6 +121,12 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.02);
 }
 
+@media (max-width: 768px) {
+  .kpiCard {
+    padding: var(--s-space-md);
+  }
+}
+
 .kpiLabel {
   font-size: 11px;
   font-weight: 600;
@@ -129,6 +141,12 @@
   font-weight: 400;
   color: var(--s-ink);
   line-height: 1.2;
+}
+
+@media (max-width: 768px) {
+  .kpiValue {
+    font-size: 24px;
+  }
 }
 
 .kpiIcon {
@@ -155,6 +173,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+  .tableHeader {
+    padding: var(--s-space-md);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-space-md);
+  }
 }
 
 .tableTitle {
@@ -186,6 +213,7 @@
   letter-spacing: 0.05em;
   background: var(--s-surface-soft);
   border-bottom: 1px solid var(--s-hairline);
+  white-space: nowrap;
 }
 
 .tableBody tr {
@@ -210,6 +238,16 @@
   font-size: 14px;
   color: var(--s-body);
   vertical-align: middle;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .tableHead th {
+    padding: var(--s-space-sm) var(--s-space-md);
+  }
+  .tableBody td {
+    padding: var(--s-space-sm) var(--s-space-md);
+  }
 }
 
 .tdPrimary {
@@ -1124,3 +1162,90 @@
   accent-color: #c5a880;
   cursor: pointer;
 }
+
+/* -- Tabs & Utilities -- */
+.tabsContainer {
+  display: flex;
+  gap: var(--s-space-sm);
+  margin-bottom: var(--s-space-xl);
+  border-bottom: 1px solid var(--s-hairline);
+  padding-bottom: var(--s-space-xs);
+  overflow-x: auto;
+}
+
+.tabBtn {
+  padding: var(--s-space-sm) var(--s-space-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--s-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tabBtn:hover {
+  color: var(--s-ink);
+}
+
+.tabBtnActive {
+  color: var(--s-ink);
+  border-bottom-color: var(--s-ink);
+}
+
+.headerSpacer {
+  height: 64px;
+}
+
+
+@media (max-width: 768px) {
+  .page {
+    padding: var(--s-space-md);
+  }
+  .tableCard {
+    padding: var(--s-space-md);
+    border-radius: var(--s-radius-md);
+  }
+}
+
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 24px !important;
+    flex-wrap: wrap;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .formGrid { grid-template-columns: 1fr; }
+  .tableHeader { flex-direction: column; align-items: flex-start !important; }
+}
+
+
+@media (max-width: 768px) {
+  .page {
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    padding-left: var(--s-space-md) !important;
+    padding-right: var(--s-space-md) !important;
+    overflow-x: hidden !important;
+  }
+  .title, .subtitle, .kpiLabel, .tdPrimary, .tdMono {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+  }
+  .kpiCard, .tableCard {
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+  }
+  .headerBar, .headerInner {
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+}
+

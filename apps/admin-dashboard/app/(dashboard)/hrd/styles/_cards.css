@@ -15,6 +15,13 @@
   border-bottom: 1px solid var(--s-hairline);
 }
 
+@media (max-width: 768px) {
+  .cardHeader {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
 .cardTitle {
   font-size: 14px;
   font-weight: 600;

@@ -69,11 +69,11 @@ export default function CurrencyCard() {
           </Select>
         </div>
       </CardContent>
-      <CardFooter className="border-t px-6 py-4 flex justify-between items-center">
+      <CardFooter className="border-t px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <p className="text-xs text-muted-foreground">
           Perubahan ini akan diterapkan di seluruh sistem kasir.
         </p>
-        <Button onClick={handleSave} className="bg-stone-900 text-white hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 transition-colors">Simpan Perubahan</Button>
+        <Button onClick={handleSave} className="bg-stone-900 text-white hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 transition-colors w-full sm:w-auto">Simpan Perubahan</Button>
       </CardFooter>
     </Card>
   );

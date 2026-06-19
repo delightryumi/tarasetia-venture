@@ -202,22 +202,28 @@
 
 /* ── Mobile Responsive Enhancements ── */
 @media (max-width: 768px) {
+  .title {
+    font-size: 24px;
+  }
+  .subtitle {
+    font-size: 13px;
+  }
   .tabsContainer {
     width: 100%;
-    overflow-x: auto;
-    white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
+    display: flex;
+    justify-content: center;
     padding: 6px;
     border-radius: 12px;
-    scrollbar-width: none;
-  }
-  .tabsContainer::-webkit-scrollbar {
-    display: none;
   }
   .tabBtn {
-    padding: 6px 12px;
+    padding: 8px 8px;
     font-size: 12px;
-    flex-shrink: 0;
+    flex: 1 1 0px;
+    width: 50%;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.2;
   }
 }
 
@@ -382,3 +388,98 @@
 :global(.dark) .datepickerHeader {
   color: #8d9884;
 }
+/* -- Mobile Overrides -- */
+@media (max-width: 768px) {
+  .headerWrapper {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .tabsContainer {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 4px;
+    justify-content: center;
+  }
+
+  .tabBtn {
+    justify-content: center;
+    text-align: center;
+    font-size: 11px;
+    padding: 8px 4px;
+    white-space: normal;
+    line-height: 1.2;
+    flex-direction: column;
+    gap: 4px;
+    height: 100%;
+  }
+
+  .tabBtn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .filterBar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .toggleContainer {
+    width: 100%;
+    display: flex;
+  }
+
+  .toggleBtn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .filterGroup {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .datepickerTrigger {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+
+/* Force equal width for tabs */
+.tabsContainer {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+}
+
+.tabBtn {
+  justify-content: center;
+  text-align: center;
+}
+
+
+.tabsContainer {
+  width: 100%;
+}
+.tabBtn {
+  flex: 1;
+  justify-content: center;
+  text-align: center;
+}
+@media (max-width: 768px) {
+  .tabBtn {
+    font-size: 11px;
+    padding: 8px 4px;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+

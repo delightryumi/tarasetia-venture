@@ -9,7 +9,7 @@ const LeftPanel = React.memo(() => {
     return (
         <div className="panels-container">
             <div className="panel left-panel">
-                <img src="/channels/2.png" alt="Setara Venture Logo" className="hero-logo" />
+                <img src="/channels/1.png" alt="Setara Venture Logo" className="hero-logo" />
                 <div className="panel-content">
                     <h3><span>Property</span> Management System</h3>
                     <p>
@@ -74,7 +74,8 @@ export const LoginSection = () => {
         <div className="auth-container">
             <div className="forms-container">
                 {/* Top Logo */}
-                <div className="auth-header">
+                <div className="auth-header mobile-only-logo">
+                    <img src="/channels/1.png" alt="Setara Venture Logo" className="mobile-auth-logo" />
                 </div>
 
                 {/* Form in the center */}

@@ -492,9 +492,31 @@ export default function SelectModulePage() {
                       {/* Active Hotel Info (Mobile only) */}
                       <div className="px-3 py-2 bg-[#f8fafc] dark:bg-white/[0.03] rounded-[10px] mb-2 flex flex-col gap-0.5 border-t border-slate-200 dark:border-white/[0.08] pt-2 mt-1 sm:hidden">
                         <span className="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest">Active Hotel</span>
-                        <span className="text-xs font-semibold text-neutral-850 dark:text-[#f4f4f5] truncate">
-                          [{activeHotelCode || "0"}] {activeHotelName || 'Memuat...'}
-                        </span>
+                        {isSuperadmin ? (
+                          <select
+                            value={activeHotelCode}
+                            onChange={(e) => {
+                              setActiveHotelCode(e.target.value);
+                              window.location.reload();
+                            }}
+                            className="w-full mt-1 border border-slate-300 dark:border-white/[0.08] rounded-[6px] py-1 px-2 text-xs bg-white dark:bg-[#1c1c1e] text-neutral-900 dark:text-[#f4f4f5] focus:outline-none"
+                          >
+                            <option value="0">— Superadmin (tidak ada preview) —</option>
+                            {hotelsList && hotelsList.length > 0 && (
+                              hotelsList.map((hotel) => (
+                                <option key={hotel.hotelCode} value={hotel.hotelCode}>
+                                  [{hotel.hotelCode}] {hotel.name}
+                                </option>
+                              ))
+                            )}
+                          </select>
+                        ) : (
+                          <span className="text-xs font-semibold text-neutral-850 dark:text-[#f4f4f5] truncate">
+                            {activeHotelCode === "0" || !activeHotelCode
+                              ? "Superadmin"
+                              : `[${activeHotelCode}] ${activeHotelName || '—'}`}
+                          </span>
+                        )}
                       </div>
 
                       {hasAccess('cpanel') && (

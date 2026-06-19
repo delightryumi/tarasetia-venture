@@ -248,7 +248,7 @@
     overflow: hidden;
     width: 100%;
     background: transparent;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: margin-left 0.5s cubic-bezier(0.4, 0, 0.2, 1), width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dashboard-top-bar {
@@ -522,13 +522,28 @@
         width: 100% !important;
     }
 
+    .dashboard-wrapper {
+        display: flex;
+        flex-direction: column;
+        overflow-x: clip;
+        width: 100%;
+    }
+
     .dashboard-top-bar {
-        padding: 10px 20px;
+        padding: 10px 0;
+        position: sticky;
+        top: 0;
+    }
+
+    .main-content {
+        height: auto !important;
+        overflow: visible !important;
     }
 
     .main-scroll-container {
         padding: 20px;
-        padding-bottom: 100px;
+        padding-bottom: 140px;
+        overflow: visible !important;
     }
 
     .sidebar.collapsed {
@@ -1186,19 +1201,23 @@ body.full-window-mode .main-scroll-container {
 
 /* Dark Mode Overrides for Footer Branding */
 .dark .dashboard-footer-clean {
-    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-top-color: rgba(255,255,255,0.05);
 }
 
-.dark .text-light {
-    color: #a3a3a3 !important;
+.dark .dashboard-footer-clean .powered-by-link:hover {
+    background: rgba(255,255,255,0.05);
 }
 
-.dark .text-brand {
-    color: #e5e5e5 !important;
+.dark .dashboard-footer-clean .text-light {
+    color: #a1a1aa; /* zinc-400 */
 }
 
-.dark .link-icon {
-    color: #a3a3a3 !important;
+.dark .dashboard-footer-clean .text-brand {
+    color: #ffffff !important;
+}
+
+.dark .dashboard-footer-clean .link-icon {
+    color: #71717a; /* zinc-500 */
 }
 
 /* Sidebar Dock Icon Styles to prevent squashing */

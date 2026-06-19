@@ -27,14 +27,15 @@
 }
 
 .sectionTitle {
-  font-size: 24px;
-  font-weight: 900;
+  font-size: 18px; /* Reduced for mobile to prevent 3 lines */
+  font-weight: 800;
   color: #1c1917; /* stone-900 */
-  letter-spacing: -0.025em;
+  letter-spacing: -0.015em;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   margin: 0;
+  line-height: 1.3;
 }
 
 .sectionTitleHighlight {
@@ -43,7 +44,8 @@
 
 @media (min-width: 768px) {
   .sectionTitle {
-    font-size: 30px;
+    font-size: 24px;
+    font-weight: 900;
   }
 }
 
@@ -64,6 +66,17 @@
   box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
   width: 100%;
   box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .sectionWrapper {
+    padding: 20px;
+    border-radius: 20px;
+  }
+  .innerContainer {
+    padding: 16px;
+    border-radius: 16px;
+  }
 }
 
 /* --- Dark Mode Overrides --- */

@@ -2,11 +2,13 @@
 .tabsContainer {
   display: flex;
   width: 100%;
-  justify-content: space-between;
-  gap: 2px;
+  justify-content: flex-start;
+  gap: 16px;
   margin-bottom: var(--s-space-xl);
   border-bottom: 1px solid var(--s-hairline);
   padding-bottom: 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tabsContainer::-webkit-scrollbar {
@@ -20,6 +22,16 @@
   font-size: 11.5px;
   font-weight: 500;
   color: var(--s-muted);
+}
+
+@media (max-width: 768px) {
+  .tabBtn {
+    flex: 0 0 auto;
+    padding: 10px 16px;
+  }
+}
+
+.tabBtn {
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;

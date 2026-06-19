@@ -118,3 +118,9 @@ input[type="time"].formInput {
   grid-template-columns: 1fr 1fr;
   gap: var(--s-space-md);
 }
+
+@media (max-width: 768px) {
+  .formGrid2 {
+    grid-template-columns: 1fr;
+  }
+}

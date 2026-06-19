@@ -286,3 +286,21 @@
 .emptyText {
   font-size: 14px;
 }
+
+@media (max-width: 768px) {
+  .forestCard, .canvasCard {
+    padding: 20px;
+  }
+  .statCard {
+    padding: 16px;
+    height: auto;
+    min-height: 120px;
+  }
+  .statLabel {
+    font-size: 11px;
+  }
+  .statVal {
+    font-size: 18px;
+  }
+}
+

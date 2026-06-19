@@ -333,7 +333,7 @@ export default function SelfOrderCard() {
               <p className="text-[10px] text-neutral-500 mb-2 leading-relaxed">
                 Tamu bisa mengakses menu pemesanan langsung dari link di bawah ini (tanpa QR meja). Cetak QR ini untuk dipajang di kasir atau pintu masuk.
               </p>
-              <span className="text-[11px] font-mono select-all bg-white dark:bg-stone-900 px-2 py-1 rounded border inline-block text-neutral-700 dark:text-neutral-300 mb-3">
+              <span className="text-[11px] font-mono select-all break-all whitespace-pre-wrap bg-white dark:bg-stone-900 px-2 py-1 rounded border inline-block text-neutral-700 dark:text-neutral-300 mb-3 max-w-full">
                 {globalUrl || 'Memuat...'}
               </span>
               <div className="flex gap-2">
@@ -371,10 +371,9 @@ export default function SelfOrderCard() {
           </div>
         )}
 
-        {/* Payment Configuration */}
         <div className="space-y-2">
           <label className="text-xs font-bold text-neutral-600 dark:text-neutral-300 uppercase tracking-wider">Metode Pembayaran Tamu</label>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-center gap-2 p-3 bg-muted/20 border rounded-lg cursor-pointer select-none" onClick={() => togglePayment('cashier')}>
               <input type="checkbox" checked={paymentsAllowed.includes('cashier')} readOnly className="accent-stone-900" />
               <div>

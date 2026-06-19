@@ -4,7 +4,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, Settings, Users, LogOut } from "lucide-react";
 import { ModuleActionButtons } from "@/components/layout/ModuleActionButtons";
-import styles from "./superadmin.module.css";
+import styles from "@/app/select-module/select-module.module.css";
 import { HotelMasterDoc } from "./types";
 
 interface SuperadminHeaderProps {
