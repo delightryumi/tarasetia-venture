@@ -155,6 +155,26 @@ export function useDrillDown({
         return                                        { color: "bg-rose-50 text-rose-600 border border-rose-100",           text: `Critical (>${costConfig.warningThreshold}%)` };
     }, [fbPerformanceData, costConfig]);
 
+    /* ── KPI card detection ── */
+    const isKpiCard = React.useMemo(() => {
+        if (!selectedDrillDown) return false;
+        return ["OCC", "ARR", "RevPAR"].includes(selectedDrillDown.title);
+    }, [selectedDrillDown]);
+
+    const kpiData = React.useMemo(() => {
+        if (!selectedDrillDown || !isKpiCard || !pnlResult) return null;
+        return {
+            occ: pnlResult.occ || 0,
+            arr: pnlResult.arr || 0,
+            revPar: pnlResult.revPar || 0,
+            roomsAvailable: pnlResult.roomsAvailable || 0,
+            roomsSold: pnlResult.roomsSold || 0,
+            totalRooms: pnlResult.totalRooms || 0,
+            daysInPeriod: pnlResult.daysInPeriod || 0,
+            ledgerRoomRevenue: pnlResult.ledgerRoomRevenue || 0,
+        };
+    }, [selectedDrillDown, isKpiCard, pnlResult]);
+
     return {
         /* state */
         selectedDrillDown, isDrillDownModalOpen,
@@ -164,5 +184,6 @@ export function useDrillDown({
         handleCardClick, closeModal,
         /* derived */
         modalData, isFbPerformanceCard, fbPerformanceData, costConfig, modalBadgeInfo,
+        isKpiCard, kpiData,
     };
 }

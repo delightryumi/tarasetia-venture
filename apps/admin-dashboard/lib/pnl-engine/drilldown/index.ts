@@ -42,6 +42,8 @@ export function getDrillDownData(
   else if (cardId === "Room Revenue") normalizedCardId = "Revenue Room";
   else if (cardId === "Total Banquet Revenue") normalizedCardId = "Banquet Revenue";
   else if (cardId === "Compliment Deductions") normalizedCardId = "Compliment Deductions";
+  else if (cardId === "Revenue Online/Transfer Collect") normalizedCardId = "Revenue Nexura Collect";
+  else if (cardId === "OCC" || cardId === "ARR" || cardId === "RevPAR") normalizedCardId = "Revenue Room";
 
   const ctx: DrillDownContext = { rawTransactions, customIncomes, expenses, posOrders, vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage, payrollDetails };
   

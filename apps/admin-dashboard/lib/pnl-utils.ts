@@ -100,6 +100,11 @@ export interface GlobalPnLResult {
   occ?: number; // Occupancy %
   arr?: number; // Average Room Rate
   revPar?: number; // Revenue per Available Room
+  roomsAvailable?: number;
+  roomsSold?: number;
+  totalRooms?: number;
+  daysInPeriod?: number;
+  ledgerRoomRevenue?: number;
 }
 
 export interface PnLDetailedItem {

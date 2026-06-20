@@ -83,7 +83,7 @@
   position: relative;
   background: transparent !important;
   border-bottom: none !important;
-  padding: 0;
+  padding: 24px 0 0 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -109,6 +109,12 @@
 }
 
 .headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.actionGroup {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -723,32 +729,41 @@
 @media (max-width: 768px) {
   .mainContainer {
     padding: 16px;
-    gap: 24px;
+    gap: 16px;
+  }
+  
+  .card {
+    padding: 16px;
+    gap: 16px;
   }
   
   .cardHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 16px !important;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 0 !important;
   }
   
   .cardHeaderLeft {
-    width: 100%;
+    width: auto;
   }
   
   .cardHeader :global(.headerRight) {
-    width: 100%;
-    justify-content: flex-start;
-    gap: 12px;
-    flex-wrap: wrap;
+    width: auto;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: nowrap;
   }
   
   .cardHeader :global(.headerRight) > div {
     border-right: none !important;
     margin-right: 0 !important;
     padding-right: 0 !important;
-    text-align: left !important;
+    text-align: right !important;
+  }
+  
+  .guestItem {
+    padding: 12px 8px;
   }
   
   .calendarHeader {
@@ -798,6 +813,15 @@
     flex: 1;
     text-align: center;
     padding: 0 8px;
+  }
+  
+  .actionGroup {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .actionGroup button {
+    flex: 1;
   }
   
   .calendarNav {

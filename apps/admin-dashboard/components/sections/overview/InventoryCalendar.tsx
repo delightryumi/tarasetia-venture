@@ -169,21 +169,25 @@ export function InventoryCalendar({
 
                     <div className={styles.vDivider} style={{ height: '18px', margin: '0 4px' }} />
 
-                    <button onClick={handlePrevMonth} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', boxShadow: 'none' }} title="Previous Month">
-                        <ChevronLeft size={14} />
-                    </button>
-                    <div style={{ textAlign: 'center', minWidth: '100px' }}>
-                        <p className={styles.calendarMonthName} style={{ margin: 0, fontSize: '10px' }}>
-                            {format(viewDate, 'MMMM yyyy')}
-                        </p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%' }}>
+                        <button onClick={handlePrevMonth} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', boxShadow: 'none' }} title="Previous Month">
+                            <ChevronLeft size={14} />
+                        </button>
+                        <div style={{ textAlign: 'center', minWidth: '100px' }}>
+                            <p className={styles.calendarMonthName} style={{ margin: 0, fontSize: '10px' }}>
+                                {format(viewDate, 'MMMM yyyy')}
+                            </p>
+                        </div>
+                        <button onClick={handleNextMonth} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', boxShadow: 'none' }} title="Next Month">
+                            <ChevronRight size={14} />
+                        </button>
+                        
+                        <div className={styles.vDivider} style={{ height: '18px', margin: '0 8px' }} />
+                        
+                        <button onClick={handleToday} className={styles.btnIcon} style={{ height: '28px', borderRadius: '6px', fontSize: '9px', fontWeight: 700, padding: '0 8px', border: 'none', boxShadow: 'none', width: 'auto' }}>
+                            Today
+                        </button>
                     </div>
-                    <button onClick={handleNextMonth} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', boxShadow: 'none' }} title="Next Month">
-                        <ChevronRight size={14} />
-                    </button>
-                    <div className={styles.vDivider} style={{ height: '18px', margin: '0 4px' }} />
-                    <button onClick={handleToday} className={styles.btnIcon} style={{ height: '28px', borderRadius: '6px', fontSize: '9px', fontWeight: 700, padding: '0 8px', border: 'none', boxShadow: 'none', width: 'auto' }}>
-                        Today
-                    </button>
                 </div>
             </div>
 

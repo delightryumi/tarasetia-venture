@@ -340,48 +340,48 @@ export function OverviewSection() {
 
                         <div className={styles.vDivider} />
 
-                        <button
-                            onClick={() => {
-                                if (isReadOnly) {
-                                    alert('Add transaction is not allowed in housekeeping view.');
-                                } else {
-                                    router.push(`/forecast/add?date=${startDate}&module=${currentModule}`);
-                                }
-                            }}
-                            className={styles.btnPrimary}
-                            title="Add Transaction"
-                            style={{ height: '36px', width: '36px', borderRadius: '8px' }}
-                            disabled={isReadOnly}
-                        >
-                            <PlusCircle size={16} />
-                        </button>
+                        <div className={styles.actionGroup}>
+                            <button
+                                onClick={() => {
+                                    if (isReadOnly) {
+                                        alert('Add transaction is not allowed in housekeeping view.');
+                                    } else {
+                                        router.push(`/forecast/add?date=${startDate}&module=${currentModule}`);
+                                    }
+                                }}
+                                className={styles.btnPrimary}
+                                title="Add Transaction"
+                                style={{ height: '36px', width: '36px', borderRadius: '8px' }}
+                                disabled={isReadOnly}
+                            >
+                                <PlusCircle size={16} />
+                            </button>
 
-                        <div className={styles.vDivider} />
-
-                        <button 
-                            onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                            className={styles.btnIcon}
-                            style={isCalendarOpen ? { backgroundColor: SAGE, color: 'var(--sidebar-link-active-text, #ffffff)', borderColor: SAGE, height: '36px', width: '36px', borderRadius: '8px' } : { height: '36px', width: '36px', borderRadius: '8px' }}
-                            title={isCalendarOpen ? "Close Calendar" : "Open Calendar"}
-                        >
-                            <Calendar size={16} />
-                        </button>
-                        <button 
-                            onClick={handleExportExcel}
-                            className={styles.btnIcon}
-                            style={{ height: '36px', width: '36px', borderRadius: '8px' }}
-                            title="Export to Excel"
-                        >
-                            <Download size={16} />
-                        </button>
-                        <button 
-                            onClick={handleExportPDF}
-                            className={styles.btnIcon}
-                            style={{ height: '36px', width: '36px', borderRadius: '8px' }}
-                            title="Export to PDF"
-                        >
-                            <FileText size={16} />
-                        </button>
+                            <button 
+                                onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                                className={styles.btnIcon}
+                                style={isCalendarOpen ? { backgroundColor: SAGE, color: 'var(--sidebar-link-active-text, #ffffff)', borderColor: SAGE, height: '36px', width: '36px', borderRadius: '8px' } : { height: '36px', width: '36px', borderRadius: '8px' }}
+                                title={isCalendarOpen ? "Close Calendar" : "Open Calendar"}
+                            >
+                                <Calendar size={16} />
+                            </button>
+                            <button 
+                                onClick={handleExportExcel}
+                                className={styles.btnIcon}
+                                style={{ height: '36px', width: '36px', borderRadius: '8px' }}
+                                title="Export to Excel"
+                            >
+                                <Download size={16} />
+                            </button>
+                            <button 
+                                onClick={handleExportPDF}
+                                className={styles.btnIcon}
+                                style={{ height: '36px', width: '36px', borderRadius: '8px' }}
+                                title="Export to PDF"
+                            >
+                                <FileText size={16} />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>

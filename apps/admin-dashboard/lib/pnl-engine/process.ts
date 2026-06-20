@@ -268,7 +268,12 @@ export function processPnLData(
   // KPI metrics
   occ,
   arr,
-  revPar
+  revPar,
+  roomsAvailable,
+  roomsSold,
+  totalRooms,
+  daysInPeriod,
+  ledgerRoomRevenue
   };
 
   pnlResult.posComplimentValue = posComplimentValue;

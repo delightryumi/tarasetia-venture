@@ -176,6 +176,8 @@ export function PNLSection() {
                 fbPerformanceData={drillDown.fbPerformanceData}
                 costConfig={drillDown.costConfig}
                 modalBadgeInfo={drillDown.modalBadgeInfo}
+                isKpiCard={drillDown.isKpiCard}
+                kpiData={drillDown.kpiData}
                 drillDownSearchQuery={drillDown.drillDownSearchQuery}
                 setDrillDownSearchQuery={drillDown.setDrillDownSearchQuery}
                 drillDownTab={drillDown.drillDownTab}

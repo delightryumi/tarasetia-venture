@@ -42,6 +42,17 @@ interface PNLDrillDownModalProps {
     } | null;
     costConfig:      { costLabel: string; healthyThreshold: number; warningThreshold: number };
     modalBadgeInfo:  { color: string; text: string };
+    isKpiCard?: boolean;
+    kpiData?: {
+        occ: number;
+        arr: number;
+        revPar: number;
+        roomsAvailable: number;
+        roomsSold: number;
+        totalRooms: number;
+        daysInPeriod: number;
+        ledgerRoomRevenue: number;
+    } | null;
     drillDownSearchQuery: string;
     setDrillDownSearchQuery: (q: string) => void;
     drillDownTab:     "all" | "income" | "expense";
@@ -53,6 +64,7 @@ interface PNLDrillDownModalProps {
 export function PNLDrillDownModal({
     isOpen, onClose, selectedDrillDown, modalData,
     isFbPerformanceCard, fbPerformanceData, costConfig, modalBadgeInfo,
+    isKpiCard, kpiData,
     drillDownSearchQuery, setDrillDownSearchQuery,
     drillDownTab, setDrillDownTab,
     onExportDrillExcel, month,
@@ -190,6 +202,92 @@ export function PNLDrillDownModal({
                                         {modalBadgeInfo.text}
                                     </div>
                                 </div>
+                            </div>
+                        ) : isKpiCard && kpiData ? (
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, padding: "18px 28px", background: T.surface2, borderBottom: T.border, flexShrink: 0 }}>
+                                {/* Formula Card */}
+                                <div style={{ background: T.surface, border: T.border, borderRadius: 12, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                                        <TrendingUp size={16} className="text-blue-600" />
+                                        <span style={{ fontSize: 11, fontWeight: 700, color: T.textSec, textTransform: "uppercase", letterSpacing: "0.05em" }}>{selectedDrillDown.title} Formula</span>
+                                    </div>
+                                    
+                                    {selectedDrillDown.title === "OCC" && (
+                                        <>
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textPri }}>
+                                                <span className="flex-1">Rooms Sold</span>
+                                                <span style={{ fontFamily: T.mono }}>{kpiData.roomsSold}</span>
+                                            </div>
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textSec }}>
+                                                <span className="flex-1">Rooms Available</span>
+                                                <span style={{ fontFamily: T.mono }}>÷ {kpiData.roomsAvailable}</span>
+                                            </div>
+                                            <div style={{ borderTop: "1px dashed var(--f-hairline)", margin: "4px 0" }} />
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "var(--f-income-color)" }}>
+                                                <span className="flex-1">Occupancy Rate</span>
+                                                <span style={{ fontFamily: T.mono }}>{kpiData.occ.toFixed(1)}%</span>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {selectedDrillDown.title === "ARR" && (
+                                        <>
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textPri }}>
+                                                <span className="flex-1">Total Room Revenue</span>
+                                                <span style={{ fontFamily: T.mono }}>{formatIDR(kpiData.ledgerRoomRevenue)}</span>
+                                            </div>
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textSec }}>
+                                                <span className="flex-1">Rooms Sold</span>
+                                                <span style={{ fontFamily: T.mono }}>÷ {kpiData.roomsSold}</span>
+                                            </div>
+                                            <div style={{ borderTop: "1px dashed var(--f-hairline)", margin: "4px 0" }} />
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "var(--f-income-color)" }}>
+                                                <span className="flex-1">Average Room Rate</span>
+                                                <span style={{ fontFamily: T.mono }}>{formatIDR(kpiData.arr)}</span>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {selectedDrillDown.title === "RevPAR" && (
+                                        <>
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textPri }}>
+                                                <span className="flex-1">Total Room Revenue</span>
+                                                <span style={{ fontFamily: T.mono }}>{formatIDR(kpiData.ledgerRoomRevenue)}</span>
+                                            </div>
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textSec }}>
+                                                <span className="flex-1">Rooms Available</span>
+                                                <span style={{ fontFamily: T.mono }}>÷ {kpiData.roomsAvailable}</span>
+                                            </div>
+                                            <div style={{ borderTop: "1px dashed var(--f-hairline)", margin: "4px 0" }} />
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "var(--f-income-color)" }}>
+                                                <span className="flex-1">RevPAR</span>
+                                                <span style={{ fontFamily: T.mono }}>{formatIDR(kpiData.revPar)}</span>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Period Details Card */}
+                                <div style={{ background: T.surface, border: T.border, borderRadius: 12, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                                        <Hash size={16} className="text-indigo-600" />
+                                        <span style={{ fontSize: 11, fontWeight: 700, color: T.textSec, textTransform: "uppercase", letterSpacing: "0.05em" }}>Period Variables</span>
+                                    </div>
+                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textPri }}>
+                                        <span className="flex-1">Total Physical Rooms</span>
+                                        <span style={{ fontFamily: T.mono }}>{kpiData.totalRooms}</span>
+                                    </div>
+                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textSec }}>
+                                        <span className="flex-1">Days in Period</span>
+                                        <span style={{ fontFamily: T.mono }}>× {kpiData.daysInPeriod}</span>
+                                    </div>
+                                    <div style={{ borderTop: "1px dashed var(--f-hairline)", margin: "4px 0" }} />
+                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: T.textPri }}>
+                                        <span className="flex-1">Total Rooms Available</span>
+                                        <span style={{ fontFamily: T.mono }}>{kpiData.roomsAvailable}</span>
+                                    </div>
+                                </div>
+
                             </div>
                         ) : (
                             <div
