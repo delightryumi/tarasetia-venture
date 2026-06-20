@@ -1,33 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { adminStorage } from '@/lib/firebaseAdmin';
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const file = formData.get('file') as Blob | null;
+    const file = formData.get('file') as File;
+    const hotelCode = formData.get('hotelCode') as string;
 
     if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+      return NextResponse.json({ error: 'File is required.' }, { status: 400 });
+    }
+    if (!hotelCode) {
+      return NextResponse.json({ error: 'hotelCode is required.' }, { status: 400 });
     }
 
-    // Safe extraction of file extension from MIME type
-    const fileExtension = file.type ? file.type.split('/')[1] : 'png';
-    const cleanExtension = fileExtension.split('+')[0] || 'png'; // e.g. svg+xml -> svg
-    const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${cleanExtension}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    
+    // Upload path
+    const timestamp = Date.now();
+    const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
+    const filename = `hotels/${hotelCode}/products/${timestamp}-${cleanFileName}`;
+    
+    const bucket = adminStorage.bucket();
+    const fileRef = bucket.file(filename);
 
-    const storageRef = ref(storage, `products/${filename}`);
-    const arrayBuffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-
-    await uploadBytes(storageRef, uint8Array, {
-      contentType: file.type || 'image/png',
+    await fileRef.save(buffer, {
+      metadata: {
+        contentType: file.type,
+      },
+      public: true,
     });
 
-    const fileUrl = await getDownloadURL(storageRef);
-    return NextResponse.json({ url: fileUrl });
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
+
+    return NextResponse.json({ url: publicUrl }, { status: 200 });
   } catch (error: any) {
-    console.error('Error handling upload to Firebase Storage:', error);
-    return NextResponse.json({ error: 'Upload failed: ' + error.message }, { status: 500 });
+    console.error('File upload failed:', error);
+    return NextResponse.json({ error: 'File upload failed: ' + error.message }, { status: 500 });
   }
 }

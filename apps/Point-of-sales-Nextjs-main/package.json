@@ -40,6 +40,8 @@
     "decimal.js": "^10.4.3",
     "dexie": "^4.4.2",
     "dexie-react-hooks": "^4.4.0",
+    "firebase": "^11.4.0",
+    "firebase-admin": "^14.0.0",
     "framer-motion": "^11.1.8",
     "is-online": "^10.0.0",
     "lucide-react": "^0.378.0",
@@ -58,8 +60,7 @@
     "tailwindcss-animate": "^1.0.7",
     "use-debounce": "^10.0.0",
     "uuid": "^9.0.1",
-    "zod": "^3.23.8",
-    "firebase": "^11.4.0"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",

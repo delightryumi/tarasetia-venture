@@ -3,6 +3,7 @@ import { useLogin } from "./useLogin";
 import { Mail, Lock, Building, Eye, EyeOff } from "lucide-react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 import "./login.css";
 
 const LeftPanel = React.memo(() => {
@@ -81,87 +82,93 @@ export const LoginSection = () => {
                 {/* Form in the center */}
                 <div className="signin-signup">
                     {mode === 'login' ? (
-                        /* ===== SIGN IN FORM ===== */
-                        <form className="sign-in-form" onSubmit={handleLogin}>
-                            <h2 className="auth-title">Sign In</h2>
-                            <p className="auth-subtitle">Welcome back to Tara</p>
+                        <>
+                            {/* ===== SIGN IN FORM ===== */}
+                            <form className="sign-in-form" onSubmit={handleLogin}>
+                                <h2 className="auth-title">Sign In</h2>
+                                <p className="auth-subtitle">Welcome back to Tara</p>
 
-                            {error && <div className="auth-error">{error}</div>}
+                                {error && <div className="auth-error">{error}</div>}
 
-                            <div className="input-field">
-                                <span className="input-icon">
-                                    <Building size={20} />
-                                </span>
-                                <input
-                                    type="text"
-                                    placeholder="Partner Code (e.g. 87241)"
-                                    value={hotelCode}
-                                    onChange={(e) => setHotelCode(e.target.value)}
-                                    disabled={loading}
-                                />
-                            </div>
-                            <div className="input-field">
-                                <span className="input-icon">
-                                    <Mail size={20} />
-                                </span>
-                                <input
-                                    type="email"
-                                    placeholder="Email Address"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    disabled={loading}
-                                />
-                            </div>
-                            <div className="input-field" style={{ position: "relative" }}>
-                                <span className="input-icon">
-                                    <Lock size={20} />
-                                </span>
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    placeholder="Password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    disabled={loading}
-                                    style={{ paddingRight: "44px" }}
-                                />
-                                <span 
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    style={{
-                                        position: 'absolute',
-                                        right: '16px',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        cursor: 'pointer',
-                                        color: '#9DA68E',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        zIndex: 10
-                                    }}
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </span>
-                            </div>
+                                <div className="input-field">
+                                    <span className="input-icon">
+                                        <Building size={20} />
+                                    </span>
+                                    <input
+                                        type="text"
+                                        placeholder="Partner Code (e.g. 87241)"
+                                        value={hotelCode}
+                                        onChange={(e) => setHotelCode(e.target.value)}
+                                        disabled={loading}
+                                    />
+                                </div>
+                                <div className="input-field">
+                                    <span className="input-icon">
+                                        <Mail size={20} />
+                                    </span>
+                                    <input
+                                        type="email"
+                                        placeholder="Email Address"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                        disabled={loading}
+                                    />
+                                </div>
+                                <div className="input-field" style={{ position: "relative" }}>
+                                    <span className="input-icon">
+                                        <Lock size={20} />
+                                    </span>
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        disabled={loading}
+                                        style={{ paddingRight: "44px" }}
+                                    />
+                                    <span 
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '16px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            cursor: 'pointer',
+                                            color: '#9DA68E',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            zIndex: 10
+                                        }}
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </span>
+                                </div>
 
-                            <div className="forgot-password-link" style={{ textAlign: 'right', marginTop: '4px', width: '100%', maxWidth: '380px' }}>
-                                <span 
-                                    onClick={() => {
-                                        setMode('reset-password');
-                                        setResetError("");
-                                        setResetSuccess("");
-                                    }} 
-                                    style={{ cursor: 'pointer', fontSize: '12px', color: '#8d7a52', fontWeight: 550 }}
-                                >
-                                    Forgot Password?
-                                </span>
-                            </div>
+                                <div className="forgot-password-link" style={{ textAlign: 'right', marginTop: '4px', width: '100%', maxWidth: '380px' }}>
+                                    <span 
+                                        onClick={() => {
+                                            setMode('reset-password');
+                                            setResetError("");
+                                            setResetSuccess("");
+                                        }} 
+                                        style={{ cursor: 'pointer', fontSize: '12px', color: '#8d7a52', fontWeight: 550 }}
+                                    >
+                                        Forgot Password?
+                                    </span>
+                                </div>
 
-                            <button type="submit" className="auth-btn solid" disabled={loading} style={{ marginTop: '16px' }}>
-                                {loading ? "Signing in..." : "Sign In"}
-                            </button>
-                        </form>
+                                <button type="submit" className="auth-btn solid" disabled={loading} style={{ marginTop: '16px' }}>
+                                    {loading ? "Signing in..." : "Sign In"}
+                                </button>
+                            </form>
+                            
+                            <div className="w-full">
+                                <InstallAppButton />
+                            </div>
+                        </>
                     ) : (
                         /* ===== RESET PASSWORD FORM ===== */
                         <form className="sign-in-form" onSubmit={handleResetPassword}>

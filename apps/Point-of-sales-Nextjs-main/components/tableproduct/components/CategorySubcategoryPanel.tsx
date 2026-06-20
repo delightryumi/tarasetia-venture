@@ -145,6 +145,8 @@ export default function CategorySubcategoryPanel() {
     onConfirm: () => void;
   }>({ open: false, title: '', description: '', onConfirm: () => {} });
 
+  const isSeeding = useRef(false);
+
   useEffect(() => {
     loadCategories();
   }, []);
@@ -153,29 +155,56 @@ export default function CategorySubcategoryPanel() {
     setLoading(true);
     try {
       const snap = await getDocs(getHotelCollection(db, 'pos_categories'));
-      const fetched: Category[] = snap.docs.map(d => ({
+      let fetched: Category[] = snap.docs.map(d => ({
         id: d.id,
         name: d.data().name,
         subcategories: d.data().subcategories || [],
         pnlTarget: d.data().pnlTarget || (d.data().name === 'FOOD' ? 'FOOD' : d.data().name === 'BEVERAGE' ? 'BEVERAGE' : d.data().name === 'BANQUET' ? 'BANQUET' : 'FOOD')
       }));
 
+      // Deduplication & Cleanup
+      const uniqueNames = new Set<string>();
+      const duplicatesToDelete: string[] = [];
+      const deduplicated: Category[] = [];
+
+      for (const cat of fetched) {
+        if (uniqueNames.has(cat.name.toUpperCase())) {
+          duplicatesToDelete.push(cat.id);
+        } else {
+          uniqueNames.add(cat.name.toUpperCase());
+          deduplicated.push(cat);
+        }
+      }
+
+      if (duplicatesToDelete.length > 0) {
+        duplicatesToDelete.forEach(async (id) => {
+          try {
+            await deleteDoc(doc(getHotelCollection(db, 'pos_categories'), id));
+          } catch(e) { console.error("Error deleting duplicate:", e); }
+        });
+      }
+
+      fetched = deduplicated;
+
       // Auto-seed protected categories if they are missing
-      const existingNames = fetched.map(f => f.name.toUpperCase());
-      for (const pcat of PROTECTED_CATEGORIES) {
-        if (!existingNames.includes(pcat)) {
-          const newDocRef = await addDoc(getHotelCollection(db, 'pos_categories'), {
-            name: pcat,
-            subcategories: [],
-            pnlTarget: pcat,
-            createdAt: new Date(),
-          });
-          fetched.push({
-            id: newDocRef.id,
-            name: pcat,
-            subcategories: [],
-            pnlTarget: pcat as any
-          });
+      if (!isSeeding.current) {
+        isSeeding.current = true;
+        const existingNames = fetched.map(f => f.name.toUpperCase());
+        for (const pcat of PROTECTED_CATEGORIES) {
+          if (!existingNames.includes(pcat)) {
+            const newDocRef = await addDoc(getHotelCollection(db, 'pos_categories'), {
+              name: pcat,
+              subcategories: [],
+              pnlTarget: pcat,
+              createdAt: new Date(),
+            });
+            fetched.push({
+              id: newDocRef.id,
+              name: pcat,
+              subcategories: [],
+              pnlTarget: pcat as any
+            });
+          }
         }
       }
 

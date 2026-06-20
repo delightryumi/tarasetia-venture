@@ -556,7 +556,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <div className="bg-background text-foreground h-screen overflow-hidden flex flex-col relative">
       {/* Header spanning 100% width across the top */}
-      <header className="flex h-14 shrink-0 items-center justify-between gap-4 py-2.5 px-4 lg:px-6 sticky top-0 z-20 bg-[#181818] border-none w-full select-none print:hidden">
+      <header className="flex h-14 shrink-0 items-center justify-between gap-4 py-2.5 px-4 lg:px-6 sticky top-0 z-20 bg-white/65 dark:bg-[#181818]/65 backdrop-blur-md border-b border-black/5 dark:border-white/5 w-full select-none print:hidden">
         {/* Left Side: Logo & Hotel Badge */}
         <div className="flex items-center gap-4">
           <button
@@ -567,7 +567,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
             <img
               src="/channels/6.png"
               alt="Nexura Logo"
-              className="h-6 md:h-7 w-auto object-contain"
+              className="h-6 md:h-7 w-auto object-contain dark:invert-0 invert transition-all duration-300"
             />
           </button>
           
@@ -616,10 +616,10 @@ const RootLayout = ({ children }: RootLayoutProps) => {
           <div className="relative z-50">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="w-8 h-8 rounded-[12px] bg-[#282828] text-[#c2c2c2] hover:bg-[#333333] hover:text-white transition-all shadow-sm active:scale-95 flex items-center justify-center cursor-pointer border-none focus:outline-none shrink-0"
+              className="w-8 h-8 rounded-[8px] bg-[#282828] text-[#c2c2c2] hover:bg-[#333333] hover:text-white transition-all shadow-sm active:scale-95 flex items-center justify-center cursor-pointer border-none focus:outline-none shrink-0"
               title="Menu CPanel & Akun"
             >
-              <Menu className="h-4.5 w-4.5" />
+              <Menu className="w-[1.15rem] h-[1.15rem]" />
             </button>
 
             <AnimatePresence>

@@ -119,22 +119,24 @@ export function SheetEdit({
 
     setUploadingImage(true);
     try {
-      const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-      const { storage } = await import('@/lib/firebase');
-      
-      const fileExtension = file.type ? file.type.split('/')[1] : 'png';
-      const cleanExtension = fileExtension.split('+')[0] || 'png';
-      const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${cleanExtension}`;
-      
-      const storageRef = ref(storage, `products/${filename}`);
-      const arrayBuffer = await file.arrayBuffer();
-      
-      await uploadBytes(storageRef, arrayBuffer, {
-        contentType: file.type || 'image/png',
+      let hotelCode = '87241';
+      const userJson = localStorage.getItem('user');
+      if (userJson) {
+        try {
+          const user = JSON.parse(userJson);
+          if (user.hotelCode) hotelCode = user.hotelCode;
+        } catch(e) {}
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('hotelCode', hotelCode);
+
+      const response = await axios.post('/api/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      const fileUrl = await getDownloadURL(storageRef);
-      setImageProductUrl(fileUrl);
+      setImageProductUrl(response.data.url);
       toast.success('Image uploaded successfully');
     } catch (err) {
       console.error(err);

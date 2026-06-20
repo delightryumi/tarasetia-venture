@@ -106,29 +106,42 @@ export function useLexuPos() {
     addons: lp.addons || []
   }));
 
-  const allRawCats = [...customCategories.map(c => c.name), ...dynamicProducts.map(p => p.category)];
-  const validCats = Array.from(new Set(allRawCats)).filter(c => typeof c === 'string' && c.trim() !== '');
+  const allRawCats = [...customCategories.map(c => c.name)];
+  const uniqueCatsMap = new Map<string, string>();
+  allRawCats.forEach(c => {
+    if (typeof c === 'string' && c.trim() !== '') {
+      const upper = c.toUpperCase();
+      if (!uniqueCatsMap.has(upper)) {
+        uniqueCatsMap.set(upper, c);
+      }
+    }
+  });
+  const validCats = Array.from(uniqueCatsMap.values());
   const dynamicCategories = ['All', ...validCats.sort()];
 
   let rawSubcats: string[] = [];
   if (selectedCategory === 'All') {
     const definedSubcats = customCategories.flatMap(c => c.subcategories);
-    const productSubcats = dynamicProducts.map(p => p.subcategory).filter(Boolean) as string[];
-    rawSubcats = [...definedSubcats, ...productSubcats];
+    rawSubcats = [...definedSubcats];
   } else {
     const matchedCat = customCategories.find(
       c => c.name.toLowerCase() === selectedCategory.toLowerCase()
     );
     if (matchedCat) {
       rawSubcats = matchedCat.subcategories;
-    } else {
-      const subcategorySource = dynamicProducts.filter(
-        p => p.category.toLowerCase() === selectedCategory.toLowerCase()
-      );
-      rawSubcats = subcategorySource.map(p => p.subcategory).filter(Boolean) as string[];
     }
   }
-  const dynamicSubcategories = ['All', ...Array.from(new Set(rawSubcats)).filter(Boolean).sort()];
+
+  const uniqueSubCatsMap = new Map<string, string>();
+  rawSubcats.forEach(s => {
+    if (typeof s === 'string' && s.trim() !== '') {
+      const upper = s.toUpperCase();
+      if (!uniqueSubCatsMap.has(upper)) {
+        uniqueSubCatsMap.set(upper, s);
+      }
+    }
+  });
+  const dynamicSubcategories = ['All', ...Array.from(uniqueSubCatsMap.values()).sort()];
 
   useEffect(() => {
     const userJson = localStorage.getItem('user');

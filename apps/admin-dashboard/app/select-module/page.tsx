@@ -259,6 +259,7 @@ export default function SelectModulePage() {
       href: '/pos',
       active: hasAccess('pos'),
       icon: 'point_of_sale',
+      image: '/images/modules/pos.png',
       colSpan: 1 as const,
     },
     {
@@ -268,6 +269,7 @@ export default function SelectModulePage() {
       href: '/overview?module=front-office',
       active: hasAccess('front-office'),
       icon: 'domain',
+      image: '/images/modules/fo.png',
       colSpan: 1 as const,
     },
     {
@@ -277,6 +279,7 @@ export default function SelectModulePage() {
       href: '/overview?module=housekeeping',
       active: hasAccess('housekeeping'),
       icon: 'cleaning_services',
+      image: '/images/modules/hk.png',
       colSpan: 1 as const,
     },
     {
@@ -286,6 +289,7 @@ export default function SelectModulePage() {
       href: '/food-beverage/product?module=food-beverage',
       active: hasAccess('food-beverage'),
       icon: 'restaurant',
+      image: '/images/modules/fb.png',
       colSpan: 1 as const,
     },
     {
@@ -295,6 +299,7 @@ export default function SelectModulePage() {
       href: '/purchasing',
       active: hasAccess('purchasing'),
       icon: 'inventory',
+      image: '/images/modules/purchasing.png',
       colSpan: 1 as const,
     },
     {
@@ -304,6 +309,7 @@ export default function SelectModulePage() {
       href: '/pnl?module=accounting',
       active: hasAccess('accounting'),
       icon: 'calculate',
+      image: '/images/modules/accounting.png',
       colSpan: 1 as const,
     },
     {
@@ -313,6 +319,7 @@ export default function SelectModulePage() {
       href: '/hrd?module=hrd',
       active: hasAccess('hrd'),
       icon: 'badge',
+      image: '/images/modules/hrd.png',
       colSpan: 1 as const,
     },
   ];
@@ -326,6 +333,7 @@ export default function SelectModulePage() {
       href: '/superadmin',
       active: true,
       icon: 'admin_panel_settings',
+      image: '/images/modules/superadmin.png',
       colSpan: 1 as const,
     });
   }
@@ -581,7 +589,7 @@ export default function SelectModulePage() {
       </div>
 
       {/* Main viewport body content */}
-      <div className={`flex-grow flex flex-col items-center relative overflow-hidden w-full h-full z-10 ${showGrid ? 'justify-start md:justify-center' : 'justify-center'}`}>
+      <div className={`flex-grow flex flex-col items-center relative overflow-hidden w-full h-full z-10 pt-[80px] pb-8 ${showGrid ? 'justify-start md:justify-center' : 'justify-center'}`}>
         {showGrid ? (
           <WorkspaceSection
             menus={menus.filter(m => m.active)}
