@@ -159,6 +159,26 @@ export default function CategorySubcategoryPanel() {
         subcategories: d.data().subcategories || [],
         pnlTarget: d.data().pnlTarget || (d.data().name === 'FOOD' ? 'FOOD' : d.data().name === 'BEVERAGE' ? 'BEVERAGE' : d.data().name === 'BANQUET' ? 'BANQUET' : 'FOOD')
       }));
+
+      // Auto-seed protected categories if they are missing
+      const existingNames = fetched.map(f => f.name.toUpperCase());
+      for (const pcat of PROTECTED_CATEGORIES) {
+        if (!existingNames.includes(pcat)) {
+          const newDocRef = await addDoc(getHotelCollection(db, 'pos_categories'), {
+            name: pcat,
+            subcategories: [],
+            pnlTarget: pcat,
+            createdAt: new Date(),
+          });
+          fetched.push({
+            id: newDocRef.id,
+            name: pcat,
+            subcategories: [],
+            pnlTarget: pcat as any
+          });
+        }
+      }
+
       const sorted = fetched.sort((a, b) => a.name.localeCompare(b.name));
       setCategories(sorted);
       if (selectedCat) {
