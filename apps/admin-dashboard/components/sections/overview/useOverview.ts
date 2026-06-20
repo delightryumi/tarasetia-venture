@@ -238,7 +238,8 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                 rTypes.push({
                     id: docSnap.id,
                     name: data.name,
-                    allotment: count
+                    allotment: count,
+                    physicalRooms: data.physicalRooms || []
                 });
             });
             

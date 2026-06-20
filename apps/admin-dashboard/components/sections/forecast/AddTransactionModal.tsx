@@ -34,6 +34,7 @@ const RICH_BLACK = "#1A1C14";
 interface RoomType {
     id: string;
     name: string;
+    physicalRooms?: string[];
 }
 
 const CHANNELS = [
@@ -89,7 +90,11 @@ export const AddTransactionModal = ({
         const fetchRoomTypes = async () => {
             try {
                 const snap = await getDocs(getHotelCollection(db, "roomTypes"));
-                setRoomTypes(snap.docs.map(d => ({ id: d.id, name: d.data().name })));
+                setRoomTypes(snap.docs.map(d => ({ 
+                    id: d.id, 
+                    name: d.data().name,
+                    physicalRooms: d.data().physicalRooms || []
+                })));
             } catch (err) {
                 console.error("Error fetching room types:", err);
             }
@@ -309,19 +314,42 @@ export const AddTransactionModal = ({
                                                     <span className="text-[9px] font-medium uppercase tracking-[0.2em] ml-0.5" style={{ color: SAGE }}>Room Type</span>
                                                     <select 
                                                         value={form.roomTypeId}
-                                                        onChange={e => updateForm("roomTypeId", e.target.value)}
+                                                        onChange={e => {
+                                                            updateForm("roomTypeId", e.target.value);
+                                                            updateForm("roomNumber", ""); // Reset room number when type changes
+                                                        }}
                                                         className="w-full h-11 px-4 rounded-lg bg-stone-50 dark:bg-[#1f1f1f] border border-stone-100 dark:border-[#333333] outline-none text-[11px] font-normal uppercase tracking-widest appearance-none cursor-pointer hover:bg-white dark:hover:bg-[#262626] transition-all text-stone-900 dark:text-[#f4f4f5]"
                                                     >
                                                         <option value="">CHOOSE TYPE</option>
                                                         {roomTypes.map(r => <option key={r.id} value={r.id}>{r.name.toUpperCase()}</option>)}
                                                     </select>
                                                 </div>
-                                                <NexuraInput 
-                                                    label="Room ID" 
-                                                    placeholder="101"
-                                                    value={form.roomNumber}
-                                                    onChange={v => updateForm("roomNumber", v)}
-                                                />
+                                                {(() => {
+                                                    const selectedRoomTypeObj = roomTypes.find(r => r.id === form.roomTypeId);
+                                                    const availableRooms = selectedRoomTypeObj?.physicalRooms || [];
+                                                    return availableRooms.length > 0 ? (
+                                                        <div className="space-y-3">
+                                                            <span className="text-[9px] font-medium uppercase tracking-[0.2em] ml-0.5" style={{ color: SAGE }}>Room ID</span>
+                                                            <select 
+                                                                value={form.roomNumber}
+                                                                onChange={e => updateForm("roomNumber", e.target.value)}
+                                                                className="w-full h-11 px-4 rounded-lg bg-stone-50 dark:bg-[#1f1f1f] border border-stone-100 dark:border-[#333333] outline-none text-[11px] font-normal uppercase tracking-widest appearance-none cursor-pointer hover:bg-white dark:hover:bg-[#262626] transition-all text-stone-900 dark:text-[#f4f4f5]"
+                                                            >
+                                                                <option value="">CHOOSE ROOM</option>
+                                                                {availableRooms.map((roomName: string, idx: number) => (
+                                                                    <option key={idx} value={roomName}>{roomName}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    ) : (
+                                                        <NexuraInput 
+                                                            label="Room ID" 
+                                                            placeholder="101"
+                                                            value={form.roomNumber}
+                                                            onChange={(v: string) => updateForm("roomNumber", v)}
+                                                        />
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
 

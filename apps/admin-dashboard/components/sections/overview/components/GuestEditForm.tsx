@@ -59,7 +59,8 @@ export function GuestEditForm({ formData, setFormData, roomTypes }: GuestEditFor
                                 setFormData({
                                     ...formData, 
                                     roomTypeId: selectedId,
-                                    roomType: selectedRoom ? selectedRoom.name : formData.roomType
+                                    roomType: selectedRoom ? selectedRoom.name : formData.roomType,
+                                    roomNumber: "" // Reset room number
                                 });
                             }}
                             style={{
@@ -79,7 +80,38 @@ export function GuestEditForm({ formData, setFormData, roomTypes }: GuestEditFor
                             {roomTypes.map(r => <option key={r.id} value={r.id}>{r.name.toUpperCase()}</option>)}
                         </select>
                     </div>
-                    <NexuraInputLabel label="Room Number" value={formData.roomNumber} onChange={(v: string) => setFormData({...formData, roomNumber: v})} />
+                    {(() => {
+                        const selectedRoomTypeObj = roomTypes.find(r => r.id === formData.roomTypeId);
+                        const availableRooms = selectedRoomTypeObj?.physicalRooms || [];
+                        return availableRooms.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <label className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>Room Number</label>
+                                <select
+                                    value={formData.roomNumber}
+                                    onChange={e => setFormData({...formData, roomNumber: e.target.value})}
+                                    style={{
+                                        width: '100%',
+                                        height: '40px',
+                                        padding: '0 12px',
+                                        borderRadius: '6px',
+                                        border: '1px solid var(--f-hairline)',
+                                        backgroundColor: 'var(--f-surface)',
+                                        fontSize: '11px',
+                                        color: 'var(--f-body)',
+                                        outline: 'none',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value=""></option>
+                                    {availableRooms.map((roomName: string, idx: number) => (
+                                        <option key={idx} value={roomName}>{roomName}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        ) : (
+                            <NexuraInputLabel label="Room Number" value={formData.roomNumber} onChange={(v: string) => setFormData({...formData, roomNumber: v})} />
+                        );
+                    })()}
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <label className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>Channel Source</label>

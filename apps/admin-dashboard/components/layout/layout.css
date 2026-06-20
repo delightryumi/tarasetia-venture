@@ -257,7 +257,7 @@
     padding-bottom: 10px;
     background: #181818;
     border-bottom: none;
-    z-index: 20;
+    z-index: 60;
     flex-shrink: 0;
     position: relative;
     user-select: none;

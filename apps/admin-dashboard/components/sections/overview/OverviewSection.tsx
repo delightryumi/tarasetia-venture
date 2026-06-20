@@ -68,8 +68,6 @@ export function OverviewSection() {
     const [isEditing, setIsEditing] = React.useState(false);
     const [bookingToVoid, setBookingToVoid] = React.useState<any>(null);
     const [bookingToCancel, setBookingToCancel] = React.useState<any>(null);
-    const [isCalendarOpen, setIsCalendarOpen] = React.useState(true);
-    const [calendarContext, setCalendarContext] = React.useState<{ bookings: any[], date: string, type: string } | null>(null);
 
     const dash = loading ? "—" : null;
 
@@ -358,14 +356,6 @@ export function OverviewSection() {
                             </button>
 
                             <button 
-                                onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                                className={styles.btnIcon}
-                                style={isCalendarOpen ? { backgroundColor: SAGE, color: 'var(--sidebar-link-active-text, #ffffff)', borderColor: SAGE, height: '36px', width: '36px', borderRadius: '8px' } : { height: '36px', width: '36px', borderRadius: '8px' }}
-                                title={isCalendarOpen ? "Close Calendar" : "Open Calendar"}
-                            >
-                                <Calendar size={16} />
-                            </button>
-                            <button 
                                 onClick={handleExportExcel}
                                 className={styles.btnIcon}
                                 style={{ height: '36px', width: '36px', borderRadius: '8px' }}
@@ -423,30 +413,6 @@ export function OverviewSection() {
                     onExportExcel={handleExportExcel}
                     onExportPDF={handleExportPDF}
                 />
-
-                {/* SECTION 3: INVENTORY CALENDAR */}
-                {isCalendarOpen && (
-                    <div className={styles.twoColumnLayout}>
-                        <div style={{ flex: 1, width: '100%', minWidth: 0 }}>
-                            <InventoryCalendar 
-                                targetDate={isTodayActive ? 'today' : (isTomorrowActive ? 'tomorrow' : 'today')}
-                                data={dailyData} 
-                                roomTypes={roomTypesData}
-                                totalRooms={roomStatus.total} 
-                                onDateSelect={(date) => router.push(`/forecast/add?date=${date}&module=${currentModule}`)}
-                                onCellClick={(bookings, date, type) => setCalendarContext({ bookings, date, type })}
-                            />
-                        </div>
-                        <GuestListDrawer 
-                            isOpen={!!calendarContext}
-                            onClose={() => setCalendarContext(null)}
-                            date={calendarContext?.date || ""}
-                            roomType={calendarContext?.type || ""}
-                            bookings={calendarContext?.bookings || []}
-                            onAdd={(date) => router.push(`/forecast/add?date=${date}&module=${currentModule}`)}
-                        />
-                    </div>
-                )}
             </main>
 
             {/* Right Drawer Overlay Popup */}

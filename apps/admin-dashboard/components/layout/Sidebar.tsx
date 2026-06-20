@@ -25,7 +25,7 @@ import React, { useEffect, useRef, useState } from "react";
 export type SectionType =
     | "overview" | "logo" | "hero" | "room-type" | "digital-checkin"
     | "about" | "gallery" | "footer"
-    | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "pnl" | "users" | "superadmin"
+    | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "pnl" | "users" | "superadmin" | "inventory-control"
     | "purchasing" | "store-requisition" | "purchase-requisition" | "daily-market-list" | "stock-opname" | "items" | "suppliers"
     | "purchase-order" | "food-beverage-product" | "food-beverage-realtime" | "hrd" | "statements";
 
@@ -205,6 +205,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: "overview", label: "Overview", icon: <BarChart2 size={18} strokeWidth={2} /> },
         { id: "digital-checkin", label: "Digital Check-in", icon: <Camera size={18} strokeWidth={2} /> },
         { id: "forecast", label: "Forecast", icon: <TrendingUp size={18} strokeWidth={2} /> },
+        { id: "inventory-control", label: "Inventory Control", icon: <Grid size={18} strokeWidth={2} /> },
         { id: "pos", label: "POS Terminal", icon: <ShoppingCart size={18} strokeWidth={2} /> },
         { id: "invoice", label: "Create Invoice", icon: <FileText size={18} strokeWidth={2} /> },
         { id: "pnl", label: "PNL Statement", icon: <PieChart size={18} strokeWidth={2} /> },
@@ -305,9 +306,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         let items = allNavItems;
         if (activeModule === "front-office") {
-            items = allNavItems.filter(item => ["overview", "digital-checkin", "forecast", "invoice", "purchase-order"].includes(item.id));
+            items = allNavItems.filter(item => ["overview", "digital-checkin", "forecast", "inventory-control", "invoice", "purchase-order"].includes(item.id));
         } else if (activeModule === "housekeeping") {
-            items = allNavItems.filter(item => ["overview", "forecast", "purchase-order"].includes(item.id));
+            items = allNavItems.filter(item => ["overview", "forecast", "inventory-control", "purchase-order"].includes(item.id));
         } else if (activeModule === "accounting") {
             items = allNavItems.filter(item => ["pnl", "statements", "purchase-order"].includes(item.id));
         } else if (activeModule === "food-beverage") {

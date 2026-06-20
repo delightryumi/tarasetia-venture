@@ -209,6 +209,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     }
 
     const isSuperadminPage = pathname === "/superadmin";
+    const hideSidebar = isSuperadminPage || pathname === "/inventory-control";
 
     return (
         <div className="flex flex-col min-h-screen bg-transparent select-none">
@@ -224,15 +225,15 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                 </header>
             )}
 
-            <div className={`dashboard-wrapper ${isCollapsed ? "collapsed" : ""} ${!isCollapsed ? "mobile-open" : ""} ${isSuperadminPage ? "no-sidebar" : ""}`}>
-                {!isSuperadminPage && (
+            <div className={`dashboard-wrapper ${isCollapsed ? "collapsed" : ""} ${!isCollapsed ? "mobile-open" : ""} ${hideSidebar ? "no-sidebar" : ""}`}>
+                {!hideSidebar && (
                     <Sidebar
                         isCollapsed={isCollapsed}
                         setIsCollapsed={setIsCollapsed}
                     />
                 )}
                 {/* Mobile Overlay */}
-                {!isCollapsed && !isSuperadminPage && (
+                {!isCollapsed && !hideSidebar && (
                     <div
                         className="fixed inset-0 bg-black/50 z-40 lg:hidden"
                         onClick={() => setIsCollapsed(true)}
@@ -240,7 +241,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                 )}
                 <main 
                     className="main-content"
-                    style={isSuperadminPage ? { marginLeft: 0, maxWidth: "100vw", width: "100%" } : undefined}
+                    style={hideSidebar ? { marginLeft: 0, maxWidth: "100vw", width: "100%" } : undefined}
                 >
                     <div className="main-scroll-container">
                         <AnimatePresence mode="wait">
