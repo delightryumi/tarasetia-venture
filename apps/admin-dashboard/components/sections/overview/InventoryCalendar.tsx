@@ -327,37 +327,38 @@ export function InventoryCalendar({
             <div style={{ display: 'flex', flexDirection: 'column', zIndex: 40, borderBottom: '1px solid var(--f-hairline)', backgroundColor: 'var(--f-surface)' }}>
                 <div className={styles.calendarHeader} style={{ flexWrap: 'wrap', gap: '16px', padding: '16px 20px', borderBottom: '1px solid var(--f-hairline)' }}>
                 <div className={styles.cardHeaderLeft}>
-                    <div className={styles.headerBadge} style={{ backgroundColor: '#788069', color: '#ffffff' }}>
+                    <div className={styles.headerBadge} style={{ backgroundColor: 'var(--foreground)', color: 'var(--f-canvas)' }}>
                         <CalendarIcon size={15} />
                     </div>
                     <div className={styles.headerMeta}>
                         <span className={styles.headerSubtitle}>Tape Chart</span>
                         <h2 className={styles.headerTitle} style={{ fontSize: '13px' }}>
-                            Inventory <span style={{ color: '#788069' }}>Gantt</span>
+                            Inventory <span style={{ color: 'var(--f-muted)' }}>Gantt</span>
                         </h2>
                     </div>
                 </div>
 
                 <div className={styles.calendarNav} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '4px 12px', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span className={styles.guestSubtext} style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-light-muted)' }}>FROM</span>
-                        <input 
-                            type="date" 
-                            value={startDate} 
-                            onChange={(e) => {
-                                if (e.target.value) {
-                                    setStartDate(e.target.value);
-                                    setViewDate(new Date(e.target.value));
-                                }
-                            }}
-                            style={{ 
-                                padding: '4px 8px', border: '1px solid var(--f-hairline)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--f-font-mono)', outline: 'none', height: '28px', backgroundColor: 'var(--f-surface)', colorScheme: 'inherit'
-                            }} 
-                        />
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span className={styles.guestSubtext} style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-light-muted)' }}>TO</span>
-                        <input 
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span className={styles.guestSubtext} style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-light-muted)' }}>FROM</span>
+                            <input 
+                                type="date" 
+                                value={startDate} 
+                                onChange={(e) => {
+                                    if (e.target.value) {
+                                        setStartDate(e.target.value);
+                                        setViewDate(new Date(e.target.value));
+                                    }
+                                }}
+                                style={{ 
+                                    padding: '4px 8px', border: '1px solid var(--f-hairline)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--f-font-mono)', outline: 'none', height: '28px', backgroundColor: 'var(--f-surface)', colorScheme: 'inherit'
+                                }} 
+                            />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span className={styles.guestSubtext} style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-light-muted)' }}>TO</span>
+                            <input 
                             type="date" 
                             value={endDate} 
                             onChange={(e) => {
@@ -375,28 +376,32 @@ export function InventoryCalendar({
                             }} 
                         />
                     </div>
+                </div>
+                
+                <div className={`${styles.vDivider} hidden md:block`} style={{ height: '18px', margin: '0 4px' }} />
                     
-                    <div className={styles.vDivider} style={{ height: '18px', margin: '0 4px' }} />
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button onClick={handlePrevMonth} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--f-hairline)', boxShadow: 'none' }} title="Previous Month">
-                            <ChevronLeft size={14} />
-                        </button>
-                        <div style={{ textAlign: 'center', minWidth: '100px', fontWeight: 700, letterSpacing: '0.05em' }}>
-                            <span style={{ fontSize: '11px', textTransform: 'uppercase' }}>
-                                {format(viewDate, 'MMMM yyyy')}
-                            </span>
-                        </div>
-                        <button onClick={handleNextMonth} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--f-hairline)', boxShadow: 'none' }} title="Next Month">
-                            <ChevronRight size={14} />
-                        </button>
-                        <button onClick={handleToday} className={styles.btnIcon} style={{ height: '28px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, padding: '0 12px', border: '1px solid var(--f-hairline)', boxShadow: 'none', width: 'auto', marginLeft: '4px' }}>
-                            Today
-                        </button>
-                        
-                        <div className={styles.vDivider} style={{ height: '18px', margin: '0 4px' }} />
-                        <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-light-muted)' }}>SCROLL</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <button onClick={handlePrevMonth} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--f-hairline)', boxShadow: 'none' }} title="Previous Month">
+                                <ChevronLeft size={14} />
+                            </button>
+                            <div style={{ textAlign: 'center', minWidth: '90px', fontWeight: 700, letterSpacing: '0.05em' }}>
+                                <span style={{ fontSize: '11px', textTransform: 'uppercase' }}>
+                                    {format(viewDate, 'MMMM yyyy')}
+                                </span>
+                            </div>
+                            <button onClick={handleNextMonth} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--f-hairline)', boxShadow: 'none' }} title="Next Month">
+                                <ChevronRight size={14} />
+                            </button>
+                            <button onClick={handleToday} className={styles.btnIcon} style={{ height: '28px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, padding: '0 12px', border: '1px solid var(--f-hairline)', boxShadow: 'none', width: 'auto', marginLeft: '4px' }}>
+                                Today
+                            </button>
+                        </div>
+                        
+                        <div className={`${styles.vDivider} hidden md:block`} style={{ height: '18px', margin: '0 4px' }} />
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-light-muted)', marginRight: '4px' }}>SCROLL</span>
                             <button onClick={handleScrollLeft} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--f-hairline)', boxShadow: 'none', backgroundColor: 'var(--f-surface)' }} title="Scroll Left">
                                 <ChevronLeft size={14} />
                             </button>
@@ -406,8 +411,8 @@ export function InventoryCalendar({
                         </div>
 
                         {onAddTransaction && (
-                            <>
-                                <div className={styles.vDivider} style={{ height: '18px', margin: '0 4px' }} />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <div className={`${styles.vDivider} hidden md:block`} style={{ height: '18px', margin: '0 4px' }} />
                                 <button 
                                     onClick={onAddTransaction} 
                                     className="gantt-btn-primary" 
@@ -417,7 +422,7 @@ export function InventoryCalendar({
                                     <PlusCircle size={14} />
                                     <span>Add Transaction</span>
                                 </button>
-                            </>
+                            </div>
                         )}
                     </div>
                 </div>
