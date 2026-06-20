@@ -164,6 +164,7 @@ export const MobileBottomNav = () => {
     const allNavItems = [
         { id: "overview", label: "Overview", icon: <BarChart2 size={20} /> },
         { id: "digital-checkin", label: "Digital Check-in", icon: <Camera size={20} /> },
+        { id: "inventory-control", label: "Inventory", icon: <Grid size={20} /> },
         { id: "forecast", label: "Forecast", icon: <TrendingUp size={20} /> },
         { id: "pos", label: "POS Terminal", icon: <ShoppingCart size={20} /> },
         { id: "invoice", label: "Invoice", icon: <FileText size={20} /> },
@@ -212,9 +213,9 @@ export const MobileBottomNav = () => {
 
         let items = allNavItems;
         if (activeModule === "front-office") {
-            items = allNavItems.filter(item => ["overview", "digital-checkin", "forecast", "invoice", "purchase-order"].includes(item.id));
+            items = allNavItems.filter(item => ["overview", "inventory-control", "digital-checkin", "forecast", "invoice", "purchase-order"].includes(item.id));
         } else if (activeModule === "housekeeping") {
-            items = allNavItems.filter(item => ["overview", "forecast", "purchase-order"].includes(item.id));
+            items = allNavItems.filter(item => ["overview", "inventory-control", "forecast", "purchase-order"].includes(item.id));
         } else if (activeModule === "accounting") {
             items = allNavItems.filter(item => ["pnl", "statements", "purchase-order"].includes(item.id));
         } else if (activeModule === "food-beverage") {
@@ -297,6 +298,8 @@ export const MobileBottomNav = () => {
                                         router.push(`/food-beverage/realtime?module=food-beverage`);
                                     } else if (item.id === "statements") {
                                         router.push(`/statements?module=accounting`);
+                                    } else if (item.id === "inventory-control") {
+                                        router.push(`/inventory-control?module=${activeModule}`);
                                     } else {
                                         router.push(`/${item.id}`);
                                     }
