@@ -165,9 +165,7 @@ export const LoginSection = () => {
                                 </button>
                             </form>
                             
-                            <div className="w-full">
-                                <InstallAppButton />
-                            </div>
+                            <InstallAppButton />
                         </>
                     ) : (
                         /* ===== RESET PASSWORD FORM ===== */

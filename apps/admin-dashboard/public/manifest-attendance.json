@@ -6,7 +6,7 @@
   "description": "Portal Absensi Karyawan Tara",
   "start_url": "/attendance",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#F54B1E",
   "theme_color": "#000000",
   "icons": [
     {
