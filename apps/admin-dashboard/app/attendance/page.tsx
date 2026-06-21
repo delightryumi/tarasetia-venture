@@ -11,6 +11,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import type { Shift, Staff } from "../(dashboard)/hrd/types";
 import styles from "./attendance.module.css";
+import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 
 export default function AttendancePage() {
   const router = useRouter();
@@ -371,6 +372,7 @@ export default function AttendancePage() {
                 Lupa PIN Akses?
               </button>
             </form>
+            <InstallAppButton appName="Tara Absensi" />
             <p style={{ textAlign: 'center', fontSize: '12px', color: '#9ca3af', marginTop: '24px', lineHeight: 1.5 }}>
               Sistem akan mencatat lokasi GPS Anda.<br/>Pastikan GPS / Lokasi pada perangkat aktif.
             </p>

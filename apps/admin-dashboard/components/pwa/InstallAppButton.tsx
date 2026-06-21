@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Download } from "lucide-react";
 import styles from "./InstallAppButton.module.css";
 
-export const InstallAppButton = () => {
+export const InstallAppButton = ({ appName = "Tara App" }: { appName?: string }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export const InstallAppButton = () => {
         className={styles.button}
       >
         <Download size={16} strokeWidth={2.5} className={styles.icon} />
-        <span>Install Tara App</span>
+        <span>Install {appName}</span>
       </button>
     </div>
   );

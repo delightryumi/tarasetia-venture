@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 export const metadata: Metadata = {
   title: "Absensi Karyawan",
   description: "Halaman clock in/out karyawan",
+  manifest: "/attendance/manifest.json",
 };
 
 // Layout isolasi — tidak menggunakan DashboardLayout (tanpa sidebar)
