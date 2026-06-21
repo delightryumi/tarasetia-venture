@@ -14,24 +14,23 @@ interface Props {
 
 export function FlexibleShiftPlanner({ hotelCode, shifts }: Props) {
   const { user } = useAuth();
-  const getStartOfWeek = (date: Date) => {
-    const d = new Date(date);
-    const day = d.getDay() || 7;
-    d.setDate(d.getDate() - day + 1);
+  const getStartOfToday = () => {
+    const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d;
   };
-  const getEndOfWeek = (date: Date) => {
-    const d = getStartOfWeek(date);
-    d.setDate(d.getDate() + 6);
+  const getEndDefault = (date: Date) => {
+    const d = new Date(date);
+    d.setDate(d.getDate() + 13);
+    d.setHours(23, 59, 59, 999);
     return d;
   };
   const [viewMode, setViewMode] = useState<"weekly" | "custom">("weekly");
   const [unsavedChanges, setUnsavedChanges] = useState<{ [key: string]: string }>({});
   const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error", text: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [startDate, setStartDate] = useState<Date>(() => getStartOfWeek(new Date()));
-  const [endDate, setEndDate] = useState<Date>(() => getEndOfWeek(new Date()));
+  const [startDate, setStartDate] = useState<Date>(() => getStartOfToday());
+  const [endDate, setEndDate] = useState<Date>(() => getEndDefault(getStartOfToday()));
 
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [schedules, setSchedules] = useState<{ [staffId_date: string]: string }>({}); // value = shiftId or "OFF"
@@ -51,7 +50,10 @@ export function FlexibleShiftPlanner({ hotelCode, shifts }: Props) {
 
   const toYMD = (d: Date) => {
     if (!d || isNaN(d.getTime())) return "";
-    return d.toISOString().split("T")[0];
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   useEffect(() => {
@@ -103,33 +105,31 @@ export function FlexibleShiftPlanner({ hotelCode, shifts }: Props) {
 
   const handlePrev = () => {
     if (viewMode === "weekly") {
-      setStartDate(prev => { const d = new Date(prev); d.setDate(d.getDate() - 7); return d; });
-      setEndDate(prev => { const d = new Date(prev); d.setDate(d.getDate() - 7); return d; });
+      setStartDate(prev => { const d = new Date(prev); d.setDate(d.getDate() - 14); return d; });
+      setEndDate(prev => { const d = new Date(prev); d.setDate(d.getDate() - 14); return d; });
     }
   };
 
   const handleNext = () => {
     if (viewMode === "weekly") {
-      setStartDate(prev => { const d = new Date(prev); d.setDate(d.getDate() + 7); return d; });
-      setEndDate(prev => { const d = new Date(prev); d.setDate(d.getDate() + 7); return d; });
+      setStartDate(prev => { const d = new Date(prev); d.setDate(d.getDate() + 14); return d; });
+      setEndDate(prev => { const d = new Date(prev); d.setDate(d.getDate() + 14); return d; });
     }
   };
 
   const handleToday = () => {
-    const today = new Date();
+    const today = getStartOfToday();
     setStartDate(today);
-    const end = new Date(today);
-    end.setDate(today.getDate() + 6);
-    setEndDate(end);
+    setEndDate(getEndDefault(today));
     setViewMode("weekly");
   };
 
   const handleModeChange = (mode: "weekly" | "custom") => {
     setViewMode(mode);
-    const today = new Date();
+    const today = getStartOfToday();
     if (mode === "weekly") {
-      setStartDate(getStartOfWeek(today));
-      setEndDate(getEndOfWeek(today));
+      setStartDate(today);
+      setEndDate(getEndDefault(today));
     }
   };
 
@@ -175,8 +175,19 @@ export function FlexibleShiftPlanner({ hotelCode, shifts }: Props) {
   };
 
   const formatDayName = (d: Date) => {
-    const days = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+    const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
     return days[d.getDay()];
+  };
+
+  const formatShortDate = (d: Date) => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+    return `${d.getDate()} ${months[d.getMonth()]}`;
+  };
+
+  const formatFullDate = (d: Date) => {
+    if (!d || isNaN(d.getTime())) return "";
+    const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
   return (
@@ -217,8 +228,8 @@ export function FlexibleShiftPlanner({ hotelCode, shifts }: Props) {
           ) : (
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <button onClick={handlePrev} className={styles.btnSecondary} style={{ padding: "4px 8px" }}>&larr; Prev</button>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--s-ink)", minWidth: 150, textAlign: "center" }}>
-                {toYMD(startDate)} s/d {toYMD(endDate)}
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--s-ink)", minWidth: 250, textAlign: "center" }}>
+                {formatFullDate(startDate)} - {formatFullDate(endDate)}
               </span>
               <button onClick={handleNext} className={styles.btnSecondary} style={{ padding: "4px 8px" }}>Next &rarr;</button>
             </div>
@@ -286,8 +297,21 @@ export function FlexibleShiftPlanner({ hotelCode, shifts }: Props) {
                   <th style={{ minWidth: 150 }}>Karyawan</th>
                   {days.map(d => (
                     <th key={toYMD(d)} style={{ textAlign: "center", minWidth: 120 }}>
-                      <div>{formatDayName(d)}</div>
-                      <div style={{ fontSize: 10, color: "var(--s-muted)", fontWeight: 400 }}>{toYMD(d).slice(5)}</div>
+                      <div style={{ 
+                        fontSize: 12, 
+                        fontWeight: 600, 
+                        color: d.getDay() === 0 ? "#dc2626" : d.getDay() === 6 ? "#ea580c" : "var(--s-ink)" 
+                      }}>
+                        {formatDayName(d)}
+                      </div>
+                      <div style={{ 
+                        fontSize: 11, 
+                        color: d.getDay() === 0 ? "#f87171" : d.getDay() === 6 ? "#fb923c" : "var(--s-muted)", 
+                        fontWeight: 500, 
+                        marginTop: 4 
+                      }}>
+                        {formatShortDate(d)}
+                      </div>
                     </th>
                   ))}
                 </tr>

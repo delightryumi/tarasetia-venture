@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDocs, query, where, deleteDoc } from 'firebase/firestore';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 
 interface TransactionLog {
   id: string;
@@ -55,7 +56,7 @@ export default function CashierHistoryPage() {
   const loadShiftHistory = async (restoId: string) => {
     try {
       const q = query(
-        collection(db, 'cashier_shifts'),
+        getHotelCollection(db, 'cashier_shifts'),
         where('status', '==', 'closed'),
         where('restoId', '==', restoId)
       );
@@ -147,7 +148,7 @@ export default function CashierHistoryPage() {
     }
 
     try {
-      await deleteDoc(doc(db, 'cashier_shifts', shiftToDelete.id));
+      await deleteDoc(doc(getHotelCollection(db, 'cashier_shifts'), shiftToDelete.id));
       toast.success('Riwayat shift berhasil dihapus.');
       setIsDeleteOpen(false);
       setShiftToDelete(null);

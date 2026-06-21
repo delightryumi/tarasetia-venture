@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Sparkles, Globe, Layers, Calendar, CheckCircle, Edit, Trash2 } from "lucide-react";
+import { Sparkles, Globe, Layers, Calendar, CheckCircle, Edit, Trash2, Link } from "lucide-react";
 import styles from "./superadmin.module.css";
 import { HotelMasterDoc } from "./types";
 
@@ -10,6 +10,7 @@ interface RegistryTableProps {
   onEdit: (hotel: HotelMasterDoc) => void;
   onDelete: (hotel: HotelMasterDoc) => void;
   onToggleActive: (hotel: HotelMasterDoc) => void;
+  onMergeAccess: (hotel: HotelMasterDoc) => void;
 }
 
 export const RegistryTable: React.FC<RegistryTableProps> = ({
@@ -17,6 +18,7 @@ export const RegistryTable: React.FC<RegistryTableProps> = ({
   onEdit,
   onDelete,
   onToggleActive,
+  onMergeAccess,
 }) => (
   <section className={styles.tableCard}>
     <div className={styles.tableHeader}>
@@ -102,6 +104,14 @@ export const RegistryTable: React.FC<RegistryTableProps> = ({
               </td>
               <td>
                 <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => onMergeAccess(hotel)}
+                    className={styles.actionBtn}
+                    style={{ color: "#0ea5e9", borderColor: "rgba(14, 165, 233, 0.15)" }}
+                    title="Gabungkan Akses Bisnis"
+                  >
+                    <Link size={14} />
+                  </button>
                   <button onClick={() => onEdit(hotel)} className={styles.actionBtn} title="Edit Konfigurasi">
                     <Edit size={14} />
                   </button>

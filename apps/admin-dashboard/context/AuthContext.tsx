@@ -23,6 +23,7 @@ interface CustomUser {
     displayName: string;
     role?: string;
     hotelCode?: string;
+    allowedOutlets?: string[];
 }
 
 interface AuthContextType {
@@ -93,13 +94,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
     }, [activeHotelCode, user?.role]);
 
-    // Fetch hotels list if superadmin
+    // Fetch hotels list if superadmin or has multiple allowedOutlets
     useEffect(() => {
         if (user && user.role === "superadmin") {
             const unsubscribe = onSnapshot(collection(db, "hotels"), (snapshot) => {
                 const list: any[] = [];
                 snapshot.forEach((doc) => {
                     list.push({ ...doc.data(), hotelCode: doc.id });
+                });
+                setHotelsList(list);
+            });
+            return () => unsubscribe();
+        } else if (user && user.allowedOutlets && user.allowedOutlets.length > 1) {
+            const unsubscribe = onSnapshot(collection(db, "hotels"), (snapshot) => {
+                const list: any[] = [];
+                snapshot.forEach((doc) => {
+                    if (user.allowedOutlets?.includes(doc.id)) {
+                        list.push({ ...doc.data(), hotelCode: doc.id });
+                    }
                 });
                 setHotelsList(list);
             });
@@ -168,6 +180,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     
                     let role = claims.role as string || "";
                     let hotelCode = claims.hotelCode as string || "";
+                    let allowedOutlets = claims.allowedOutlets as string[] || [];
                     
                     const isSuperadminEmail = email.toLowerCase() === "admin@setara.co.id";
                     if (isSuperadminEmail) {
@@ -189,12 +202,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         }
                     }
 
+                    if (!allowedOutlets.includes(hotelCode) && hotelCode) {
+                        allowedOutlets = [...allowedOutlets, hotelCode];
+                    }
+
                     const customUser: CustomUser = {
                         uid: fbUser.uid,
                         email: email,
                         displayName: fbUser.displayName || email.split("@")[0],
                         role,
                         hotelCode,
+                        allowedOutlets,
                     };
                     
                     localStorage.setItem("auth_user", JSON.stringify(customUser));
@@ -249,6 +267,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             let role = claims.role as string || "";
             let hotelCode = claims.hotelCode as string || "";
+            let allowedOutlets = claims.allowedOutlets as string[] || [];
 
             // Fallback lookup from Firestore if claims aren't set yet
             if (!isSuperadminEmail && (!role || !hotelCode)) {
@@ -261,6 +280,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
             }
 
+            if (!allowedOutlets.includes(hotelCode) && hotelCode) {
+                allowedOutlets = [...allowedOutlets, hotelCode];
+            }
+
             // If still no role or hotelCode, set defaults or raise error
             if (isSuperadminEmail) {
                 role = "superadmin";
@@ -270,10 +293,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     throw new Error("Akun Anda belum dikonfigurasi dengan benar. Hubungi Admin.");
                 }
                 // Verify hotelCode claim matches input hotelCode (unless user is superadmin)
-                if (role !== "superadmin" && hotelCode !== code) {
-                    // Sign out because claims don't match input hotelCode
-                    await fbSignOut(auth);
-                    throw new Error("Anda tidak terdaftar di hotel ini.");
+                if (role !== "superadmin") {
+                    if (allowedOutlets.length > 0 && !allowedOutlets.includes(code)) {
+                        await fbSignOut(auth);
+                        throw new Error("Anda tidak terdaftar di outlet ini.");
+                    } else if (allowedOutlets.length === 0 && hotelCode !== code) {
+                        await fbSignOut(auth);
+                        throw new Error("Anda tidak terdaftar di outlet ini.");
+                    }
                 }
             }
 
@@ -282,7 +309,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 email: email,
                 displayName: fbUser.displayName || email.split("@")[0],
                 role,
-                hotelCode,
+                hotelCode: role !== "superadmin" ? code : "0", // Gunakan code yg diinput sbg hotelCode aktif saat login
+                allowedOutlets,
             };
 
             localStorage.setItem("auth_user", JSON.stringify(customUser));

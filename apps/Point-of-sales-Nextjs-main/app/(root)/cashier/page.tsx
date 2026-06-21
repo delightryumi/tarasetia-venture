@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button';
 import { useCurrency } from '@/hooks/useCurrency';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, updateDoc, doc, getDocs, query, where, deleteDoc, onSnapshot, arrayUnion } from 'firebase/firestore';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 
 interface TransactionLog {
   id: string;
@@ -109,7 +110,7 @@ export default function CashierPage() {
   const loadActiveShift = async (restoId: string) => {
     try {
       const q = query(
-        collection(db, 'cashier_shifts'),
+        getHotelCollection(db, 'cashier_shifts'),
         where('status', '==', 'open'),
         where('restoId', '==', restoId)
       );
@@ -132,7 +133,7 @@ export default function CashierPage() {
   const loadShiftHistory = async (restoId: string) => {
     try {
       const q = query(
-        collection(db, 'cashier_shifts'),
+        getHotelCollection(db, 'cashier_shifts'),
         where('status', '==', 'closed'),
         where('restoId', '==', restoId)
       );
@@ -173,7 +174,7 @@ export default function CashierPage() {
   useEffect(() => {
     if (!activeShift?.id) return;
 
-    const unsub = onSnapshot(doc(db, 'cashier_shifts', activeShift.id), (docSnap) => {
+    const unsub = onSnapshot(doc(getHotelCollection(db, 'cashier_shifts'), activeShift.id), (docSnap) => {
       if (docSnap.exists()) {
         const data = { id: docSnap.id, ...docSnap.data() } as ShiftData;
         setActiveShift(data);
@@ -213,7 +214,7 @@ export default function CashierPage() {
     };
 
     try {
-      const docRef = await addDoc(collection(db, 'cashier_shifts'), newShift);
+      const docRef = await addDoc(getHotelCollection(db, 'cashier_shifts'), newShift);
       const shiftData = { id: docRef.id, ...newShift } as ShiftData;
       setActiveShift(shiftData);
       localStorage.setItem('active_shift', JSON.stringify(shiftData));
@@ -290,7 +291,7 @@ export default function CashierPage() {
     
     try {
       const updatedFlows = (activeShift.cashFlows || []).filter(c => c.id !== cashFlowToDelete);
-      const shiftRef = doc(db, 'cashier_shifts', activeShift.id);
+      const shiftRef = doc(getHotelCollection(db, 'cashier_shifts'), activeShift.id);
       await updateDoc(shiftRef, { cashFlows: updatedFlows });
       toast.success('Entri arus kas dihapus.');
       
@@ -318,7 +319,7 @@ export default function CashierPage() {
     }
 
     try {
-      const shiftRef = doc(db, 'cashier_shifts', activeShift.id);
+      const shiftRef = doc(getHotelCollection(db, 'cashier_shifts'), activeShift.id);
       
       if (editingCashFlowId) {
         const updatedFlows = (activeShift.cashFlows || []).map(c => 
@@ -363,7 +364,7 @@ export default function CashierPage() {
     }
 
     try {
-      const shiftRef = doc(db, 'cashier_shifts', activeShift.id);
+      const shiftRef = doc(getHotelCollection(db, 'cashier_shifts'), activeShift.id);
       const closingData = {
         closedAt: new Date().toISOString(),
         countedCash: countedCashVal,
@@ -423,7 +424,7 @@ export default function CashierPage() {
     }
 
     try {
-      await deleteDoc(doc(db, 'cashier_shifts', shiftToDelete.id));
+      await deleteDoc(doc(getHotelCollection(db, 'cashier_shifts'), shiftToDelete.id));
       toast.success('Riwayat shift berhasil dihapus.');
       setIsDeleteOpen(false);
       setShiftToDelete(null);

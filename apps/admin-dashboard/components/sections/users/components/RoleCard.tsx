@@ -14,6 +14,10 @@ interface RoleCardProps {
 export const RoleCard: React.FC<RoleCardProps> = ({ user, permissionTree, onToggle }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
+    // If user is admin or superadmin, their permissions are implicitly fully open
+    // based on the purchased package. We lock the toggles to prevent mismatch.
+    const isLockedAdmin = user.role?.toLowerCase() === "admin" || user.role?.toLowerCase() === "superadmin";
+
     return (
         <div className={styles.roleCard}>
             <header 
@@ -58,19 +62,24 @@ export const RoleCard: React.FC<RoleCardProps> = ({ user, permissionTree, onTogg
                                                 <div className={styles.moduleIcon}>
                                                     {mod.icon}
                                                 </div>
-                                                <span className={styles.moduleLabel}>{mod.label}</span>
+                                                <span className={styles.moduleLabel}>
+                                                    {mod.label} 
+                                                    {isLockedAdmin && <span style={{fontSize: "10px", marginLeft: "6px", color: "#8d7a52", fontWeight: 600}}>(Full Access)</span>}
+                                                </span>
                                             </div>
                                             
                                             <button 
                                                 type="button"
+                                                disabled={isLockedAdmin}
                                                 onClick={(e) => {
+                                                    if (isLockedAdmin) return;
                                                     e.stopPropagation(); // Avoid triggering accordion close
                                                     onToggle(user.id, mod.id, isModuleEnabled);
                                                 }}
-                                                className={`${styles.toggleBtn} ${isModuleEnabled ? styles.toggleBtnOn : styles.toggleBtnOff}`}
+                                                className={`${styles.toggleBtn} ${isModuleEnabled || isLockedAdmin ? styles.toggleBtnOn : styles.toggleBtnOff} ${isLockedAdmin ? "opacity-50 cursor-not-allowed" : ""}`}
                                             >
                                                 <div className={styles.toggleCircle}>
-                                                    {isModuleEnabled ? (
+                                                    {isModuleEnabled || isLockedAdmin ? (
                                                         <Check size={6} className={styles.toggleIconOn} />
                                                     ) : (
                                                         <X size={6} className={styles.toggleIconOff} />
@@ -98,15 +107,16 @@ export const RoleCard: React.FC<RoleCardProps> = ({ user, permissionTree, onTogg
                                                         
                                                         <button 
                                                             type="button"
-                                                            disabled={!isModuleEnabled}
+                                                            disabled={(!isModuleEnabled && !isLockedAdmin) || isLockedAdmin}
                                                             onClick={(e) => {
+                                                                if (isLockedAdmin) return;
                                                                 e.stopPropagation(); // Avoid triggering accordion close
                                                                 onToggle(user.id, sub.id, isSubEnabled);
                                                             }}
-                                                            className={`${styles.toggleBtnSub} ${isSubEnabled ? styles.toggleBtnSubOn : styles.toggleBtnSubOff}`}
+                                                            className={`${styles.toggleBtnSub} ${isSubEnabled || isLockedAdmin ? styles.toggleBtnSubOn : styles.toggleBtnSubOff} ${isLockedAdmin ? "opacity-50 cursor-not-allowed" : ""}`}
                                                         >
                                                             <div className={styles.toggleCircleSub}>
-                                                                {isSubEnabled ? (
+                                                                {isSubEnabled || isLockedAdmin ? (
                                                                     <Check size={5} className={styles.toggleIconOn} />
                                                                 ) : (
                                                                     <X size={5} className={styles.toggleIconOff} />

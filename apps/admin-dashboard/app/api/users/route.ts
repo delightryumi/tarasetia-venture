@@ -33,8 +33,17 @@ export async function POST(request: Request) {
       const existingUser = await adminAuth.getUserByEmail(cleanEmail);
       uid = existingUser.uid;
       
+      const currentClaims = existingUser.customClaims || {};
+      let allowedOutlets: string[] = Array.isArray(currentClaims.allowedOutlets) 
+        ? [...currentClaims.allowedOutlets] 
+        : (currentClaims.hotelCode ? [currentClaims.hotelCode as string] : []);
+      
+      if (!allowedOutlets.includes(hotelCode)) {
+        allowedOutlets.push(hotelCode);
+      }
+
       // Update custom claims
-      await adminAuth.setCustomUserClaims(uid, { role, hotelCode });
+      await adminAuth.setCustomUserClaims(uid, { ...currentClaims, role, hotelCode, allowedOutlets });
     } catch (err: any) {
       if (err.code === "auth/user-not-found") {
         // Create new Firebase Auth user
@@ -46,7 +55,7 @@ export async function POST(request: Request) {
         uid = newUser.uid;
         
         // Set custom claims
-        await adminAuth.setCustomUserClaims(uid, { role, hotelCode });
+        await adminAuth.setCustomUserClaims(uid, { role, hotelCode, allowedOutlets: [hotelCode] });
       } else {
         throw err;
       }

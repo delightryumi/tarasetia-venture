@@ -17,12 +17,13 @@ export function ShiftStatusBadge({ shift, loading, today }: Props) {
     );
   }
 
-  if (!shift || shift.id === "NONE" || shift.id === "OFF") {
+  if (!shift || shift.id === "NONE" || shift.id === "OFF" || shift.id === "NOT_FOUND") {
     const isOff = shift?.id === "OFF";
+    const isNotFound = shift?.id === "NOT_FOUND";
     const bg = isOff ? "#d1fae5" : "#fef3c7";
     const border = isOff ? "#a7f3d0" : "#fde68a";
     const color = isOff ? "#065f46" : "#92400e";
-    const message = isOff ? "Jadwal hari ini: Libur (OFF)" : shift?.id === "NONE" ? "Anda belum memiliki jadwal untuk hari ini." : "Shift belum diatur. Hubungi HRD.";
+    const message = isOff ? "Jadwal hari ini: Libur (OFF)" : isNotFound ? "Shift tidak ditemukan di database. Hubungi HRD." : shift?.id === "NONE" ? "Anda belum memiliki jadwal untuk hari ini." : "Shift belum diatur. Hubungi HRD.";
     
     return (
       <div style={{ padding: "8px 12px", background: bg, border: `1px solid ${border}`, borderRadius: 8, fontSize: 12, color: color, display: "flex", alignItems: "center", gap: 8 }}>

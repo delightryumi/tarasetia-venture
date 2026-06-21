@@ -288,7 +288,14 @@ export function ClockInOutCard({ staffId, hotelCode, today, shift, loadingShift 
       {/* Action buttons */}
       {step === "idle" && (
         <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-          {!hasClockedIn && (
+          {/* Jika belum ada jadwal shift sama sekali */}
+          {(!shift || shift.id === "NONE" || shift.id === "NOT_FOUND") && !loadingShift && !hasClockedIn && (
+            <div style={{ flex: 1, padding: 14, background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, color: "#b91c1c", fontWeight: 600, fontSize: 14, textAlign: 'center' }}>
+              Belum ada jadwal shift hari ini
+            </div>
+          )}
+
+          {!hasClockedIn && shift && shift.id !== "NONE" && shift.id !== "OFF" && shift.id !== "NOT_FOUND" && (
             <button
               onClick={() => handleStartClock("clock_in")}
               disabled={!!loadingShift}

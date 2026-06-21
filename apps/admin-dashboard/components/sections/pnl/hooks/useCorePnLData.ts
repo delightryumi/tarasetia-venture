@@ -29,7 +29,7 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
         setLoadingCore(true);
         try {
             // Fetch properties (hotels)
-            const propertiesSnap = await getDocs(collection(db, "properties"));
+            const propertiesSnap = await getDocs(collection(db, "hotels"));
             const hotelList: HotelMaster[] = [];
             propertiesSnap.forEach((docSnap) => {
                 const d = docSnap.data();

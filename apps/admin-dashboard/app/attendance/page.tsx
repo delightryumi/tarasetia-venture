@@ -8,7 +8,7 @@ import { AttendanceHistory } from "./components/AttendanceHistory";
 import { LeaveRequestForm } from "./components/LeaveRequestForm";
 import { ShiftStatusBadge } from "./components/ShiftStatusBadge";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import type { Shift, Staff } from "../(dashboard)/hrd/types";
 import styles from "./attendance.module.css";
 import { InstallAppButton } from "@/components/pwa/InstallAppButton";
@@ -44,7 +44,8 @@ export default function AttendancePage() {
   const [loginError, setLoginError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   // Setup dynamic greeting based on Jakarta time
   useEffect(() => {
@@ -101,67 +102,88 @@ export default function AttendancePage() {
     validateAndRefreshSession();
   }, [prefillHotelCode]);
 
-  // Fetch shift karyawan hari ini (termasuk override jadwal)
+  // Fetch shift karyawan hari ini (termasuk override jadwal) secara REAL-TIME
   useEffect(() => {
-    const fetchShift = async () => {
-      if (!staffSession) return;
-      const hotelCode = staffSession.hotelCode || prefillHotelCode;
-      if (!hotelCode) return;
-      try {
-        let activeShiftId: string | null = null;
-        
-        // 1. Cek apakah ada jadwal override hari ini
-        const schedRef = doc(db, `hotels/${hotelCode}/staff/${staffSession.id}/schedules/${today}`);
-        const schedSnap = await getDoc(schedRef);
-        
-        if (schedSnap.exists()) {
-          activeShiftId = schedSnap.data().shiftId;
-        }
+    if (!staffSession) return;
+    const hotelCode = staffSession.hotelCode || prefillHotelCode;
+    if (!hotelCode) return;
 
-        // Jika belum ada jadwal diplot
-        if (!activeShiftId) {
-          setShift({ id: "NONE", name: "Belum Ada Jadwal", startTime: "--:--", endTime: "--:--" } as Shift);
-          setLoadingShift(false);
-          return;
-        }
+    let unsubToday: (() => void) | null = null;
+    let unsubTmrw: (() => void) | null = null;
+    let unsubShift: (() => void) | null = null;
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    let isTmrwOff = false;
+    let currentShiftId: string | null = null;
 
-        // Cek libur besok
-        const tomorrowDate = new Date();
-        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-        const tmrw = tomorrowDate.toISOString().split("T")[0];
-        
-        const tmrwRef = doc(db, `hotels/${hotelCode}/staff/${staffSession.id}/schedules/${tmrw}`);
-        const tmrwSnap = await getDoc(tmrwRef);
-        const isTmrwOff = tmrwSnap.exists() && tmrwSnap.data().shiftId === "OFF";
-
-        // 2. Jika override adalah OFF, set shift sintetis libur
-        if (activeShiftId === "OFF") {
-          setShift({ id: "OFF", name: "Libur (OFF)", startTime: "--:--", endTime: "--:--" } as Shift);
-          setCasualAlert("Santai aja, hari ini kamu libur. Selamat beristirahat! 🏖️");
-        } else {
-          // 3. Ambil data shift (default atau override id valid)
-          if (activeShiftId) {
-            const shiftRef = doc(db, `hotels/${hotelCode}/shifts/${activeShiftId}`);
-            const shiftSnap = await getDoc(shiftRef);
-            if (shiftSnap.exists()) {
-              setShift({ id: shiftSnap.id, ...shiftSnap.data() } as Shift);
-            }
-          }
-          if (isTmrwOff) {
-            setCasualAlert("Pstt.. jangan lupa besok kamu libur! Asik kan? 🙌");
-          } else {
-            setCasualAlert(null);
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching shift:", err);
-      } finally {
-        setLoadingShift(false);
+    const updateAlert = () => {
+      if (currentShiftId === "OFF") {
+        setCasualAlert("Santai aja, hari ini kamu libur. Selamat beristirahat! 🏖️");
+      } else if (isTmrwOff) {
+        setCasualAlert("Pstt.. jangan lupa besok kamu libur! Asik kan? 🙌");
+      } else {
+        setCasualAlert(null);
       }
     };
-    if (staffSession) {
-      fetchShift();
-    }
+
+    const tomorrowDate = new Date();
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tmrw = `${tomorrowDate.getFullYear()}-${String(tomorrowDate.getMonth() + 1).padStart(2, '0')}-${String(tomorrowDate.getDate()).padStart(2, '0')}`;
+
+    // Listen to tomorrow's schedule
+    const tmrwRef = doc(db, `hotels/${hotelCode}/staff/${staffSession.id}/schedules/${tmrw}`);
+    unsubTmrw = onSnapshot(tmrwRef, (tmrwSnap) => {
+      isTmrwOff = tmrwSnap.exists() && tmrwSnap.data()?.shiftId === "OFF";
+      updateAlert();
+    });
+
+    // Listen to today's schedule
+    const schedRef = doc(db, `hotels/${hotelCode}/staff/${staffSession.id}/schedules/${today}`);
+    unsubToday = onSnapshot(schedRef, (schedSnap) => {
+      let currentShiftId: string | null = null;
+      if (schedSnap.exists()) {
+        currentShiftId = schedSnap.data()?.shiftId || null;
+      }
+
+      if (!currentShiftId) {
+        setShift({ id: "NONE", name: "Belum Ada Jadwal", startTime: "--:--", endTime: "--:--" } as Shift);
+        setLoadingShift(false);
+        return;
+      }
+
+      if (currentShiftId === "OFF") {
+        setShift({ id: "OFF", name: "Libur (OFF)", startTime: "--:--", endTime: "--:--" } as Shift);
+        updateAlert();
+        setLoadingShift(false);
+        if (unsubShift) {
+          unsubShift();
+          unsubShift = null;
+        }
+      } else {
+        updateAlert();
+        // Listen to the specific shift details
+        if (unsubShift) unsubShift();
+        const shiftRef = doc(db, `hotels/${hotelCode}/shifts/${currentShiftId}`);
+        unsubShift = onSnapshot(shiftRef, (shiftSnap) => {
+          if (shiftSnap.exists()) {
+            setShift({ id: shiftSnap.id, ...shiftSnap.data() } as Shift);
+          } else {
+            // Shift tidak ditemukan di database (mungkin dihapus)
+            setShift({ id: "NOT_FOUND", name: "Shift Tidak Ditemukan", startTime: "--:--", endTime: "--:--" } as Shift);
+          }
+          setLoadingShift(false);
+        });
+      }
+    }, (err) => {
+      console.error("Error fetching realtime shift:", err);
+      setLoadingShift(false);
+    });
+
+    return () => {
+      if (unsubToday) unsubToday();
+      if (unsubTmrw) unsubTmrw();
+      if (unsubShift) unsubShift();
+    };
   }, [staffSession, prefillHotelCode]);
 
   // Fetch announcements
@@ -225,13 +247,22 @@ export default function AttendancePage() {
 
     try {
       const staffRef = collection(db, `hotels/${prefillHotelCode}/staff`);
-      const q = query(staffRef, where("nik", "==", loginNik.trim()), where("pin", "==", loginPin.trim()));
+      const q = query(staffRef, where("nik", "==", loginNik.trim()));
       const snap = await getDocs(q);
 
       if (snap.empty) {
         setLoginError("NIK atau PIN salah.");
       } else {
         const staffDoc = snap.docs[0];
+        const rawPin = staffDoc.data().pin;
+        // Konversi pin dari firestore ke string (jaga-jaga jika ter-save sbg angka)
+        const pinString = rawPin ? rawPin.toString().trim() : "";
+        
+        if (pinString !== loginPin.trim()) {
+           setLoginError("NIK atau PIN salah.");
+           return;
+        }
+
         const staffData = { id: staffDoc.id, ...staffDoc.data() } as Staff;
         
         if (staffData.isActive === false) {
@@ -270,11 +301,16 @@ export default function AttendancePage() {
     setIsChangingPin(true);
     try {
       const hotelCode = staffSession.hotelCode || prefillHotelCode;
-      const { doc, getDoc, updateDoc } = await import("firebase/firestore");
+      const { doc, getDoc } = await import("firebase/firestore");
       const ref = doc(db, `hotels/${hotelCode}/staff/${staffSession.id}`);
       const snap = await getDoc(ref);
       if (snap.exists() && snap.data()?.pin === oldPin) {
-        await updateDoc(ref, { pin: newPin });
+        const res = await fetch("/api/staff", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: staffSession.id, hotelCode, pin: newPin })
+        });
+        if (!res.ok) throw new Error("API error");
         alert("PIN berhasil diubah!");
         setShowPinModal(false);
         setOldPin(""); setNewPin(""); setConfirmPin("");

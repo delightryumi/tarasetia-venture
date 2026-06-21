@@ -123,7 +123,7 @@ export const StatusWidget = () => {
                 )}
 
                 {/* Hotel Selector / Badge */}
-                {isSuperadmin ? (
+                {isSuperadmin || (user?.allowedOutlets && user.allowedOutlets.length > 1) ? (
                     <div className={`relative hidden sm:flex items-center h-9 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[13px] transition-all ${styles.hotelBadge}`}>
                         <select
                             value={activeHotelCode}
@@ -141,7 +141,7 @@ export const StatusWidget = () => {
                             }}
                         >
                             {/* Opsi default Superadmin */}
-                            <option value="0">— Superadmin (tidak ada preview) —</option>
+                            {isSuperadmin && <option value="0">— Superadmin (tidak ada preview) —</option>}
                             {hotelsList && hotelsList.length > 0 && (
                                 hotelsList.map((hotel) => (
                                     <option key={hotel.hotelCode} value={hotel.hotelCode}>

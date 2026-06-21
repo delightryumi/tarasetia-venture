@@ -10,11 +10,17 @@ export const InstallAppButton = ({ appName = "Tara App" }: { appName?: string })
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
+    // Check if it was captured globally before this component mounted
+    if (typeof window !== "undefined" && (window as any).deferredPWAInstallPrompt) {
+      setDeferredPrompt((window as any).deferredPWAInstallPrompt);
+    }
+
     // Tangkap event instalasi PWA
     const handleBeforeInstallPrompt = (e: Event) => {
       console.log(`[PWA] beforeinstallprompt fired for: ${appName}`);
       e.preventDefault();
       setDeferredPrompt(e);
+      (window as any).deferredPWAInstallPrompt = e;
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);

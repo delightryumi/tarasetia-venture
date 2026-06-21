@@ -249,7 +249,7 @@ export async function sendOnboardingEmail({ toEmail, token, planName }: SendOnbo
     <body>
       <div class="container">
         <div class="header">
-          <img src="${appUrl}/channels/6.png" alt="Setara Venture Logo" class="logo">
+          <img src="${dashboardUrl}/channels/6.png" alt="Setara Venture Logo" class="logo">
         </div>
         <div class="content">
           <h1>Selesaikan Pendaftaran Anda</h1>

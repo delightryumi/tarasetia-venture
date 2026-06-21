@@ -77,8 +77,17 @@ export async function POST(request: Request) {
       // Check if user already exists
       const existingUser = await adminAuth.getUserByEmail(email);
       uid = existingUser.uid;
+      
+      const currentClaims = existingUser.customClaims || {};
+      let allowedOutlets: string[] = Array.isArray(currentClaims.allowedOutlets) 
+        ? [...currentClaims.allowedOutlets] 
+        : (currentClaims.hotelCode ? [currentClaims.hotelCode as string] : []);
+      
+      if (!allowedOutlets.includes(hotelCode)) {
+        allowedOutlets.push(hotelCode);
+      }
       // Set custom claims for existing user
-      await adminAuth.setCustomUserClaims(uid, { role: "admin", hotelCode });
+      await adminAuth.setCustomUserClaims(uid, { ...currentClaims, role: "admin", hotelCode, allowedOutlets });
     } catch (err: any) {
       if (err.code === "auth/user-not-found") {
         // Create new Auth user
@@ -89,7 +98,7 @@ export async function POST(request: Request) {
         });
         uid = newUser.uid;
         // Set custom claims
-        await adminAuth.setCustomUserClaims(uid, { role: "admin", hotelCode });
+        await adminAuth.setCustomUserClaims(uid, { role: "admin", hotelCode, allowedOutlets: [hotelCode] });
       } else {
         throw err;
       }

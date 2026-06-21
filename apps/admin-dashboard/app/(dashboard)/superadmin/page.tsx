@@ -33,6 +33,7 @@ import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { BulkAlertModal } from "./BulkAlertModal";
 import { AddPaymentModal } from "./AddPaymentModal";
 import { PrintInvoice } from "./PrintInvoice";
+import { MergeAccessModal } from "./MergeAccessModal";
 import styles from "./superadmin.module.css";
 
 export default function SuperadminPage() {
@@ -78,6 +79,7 @@ export default function SuperadminPage() {
   const [showBillingAlert, setShowBillingAlert] = useState(false);
   const [showExpirationAlert, setShowExpirationAlert] = useState(false);
   const [activeModules, setActiveModules] = useState<string[]>([]);
+  const [mergeAccessHotel, setMergeAccessHotel] = useState<HotelMasterDoc | null>(null);
 
   // ── Delete modal ──
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -576,6 +578,7 @@ export default function SuperadminPage() {
             onEdit={openEditModal}
             onDelete={openDeleteConfirm}
             onToggleActive={handleToggleActive}
+            onMergeAccess={(hotel) => setMergeAccessHotel(hotel)}
           />
         )}
 
@@ -656,6 +659,13 @@ export default function SuperadminPage() {
             onClose={() => setIsBulkAlertModalOpen(false)}
           />
         )}
+
+        <MergeAccessModal
+          isOpen={!!mergeAccessHotel}
+          onClose={() => setMergeAccessHotel(null)}
+          hotels={hotels}
+          initialEmail={mergeAccessHotel?.email || ""}
+        />
 
         {isAddPaymentOpen && selectedHotelForBilling && (
           <AddPaymentModal

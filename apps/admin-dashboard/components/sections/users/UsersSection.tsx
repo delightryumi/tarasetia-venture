@@ -403,6 +403,7 @@ export const UsersSection: React.FC = () => {
                 onSave={onSave}
                 isSaving={isSaving}
                 onChangePassword={onChangePassword}
+                authUser={authUser}
             />
 
             {/* ─── Change Password Modal ─── */}

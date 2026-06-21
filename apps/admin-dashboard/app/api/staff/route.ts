@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, phone, nik, position, division, shiftId, hotelCode, employmentType, payrollConfig } = body;
 
-    if (!name || !phone || !nik || !position || !division || !shiftId || !hotelCode) {
+    if (!name || !phone || !nik || !position || !division || !hotelCode) {
       return NextResponse.json({ error: "Semua field wajib diisi" }, { status: 400 });
     }
 
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       pin,
       position: position.trim(),
       division: division.trim(),
-      shiftId,
+      shiftId: shiftId || "",
       hotelCode,
       employmentType: employmentType || "staff",
       payrollConfig: payrollConfig || null,
@@ -70,6 +70,7 @@ export async function PUT(request: Request) {
     if (isActive !== undefined) updateData.isActive = isActive;
     if (employmentType !== undefined) updateData.employmentType = employmentType;
     if (payrollConfig !== undefined) updateData.payrollConfig = payrollConfig;
+    if (body.pin !== undefined) updateData.pin = body.pin;
 
     const staffRef = adminDb.doc(`hotels/${hotelCode}/staff/${uid}`);
     await staffRef.update(updateData);

@@ -15,11 +15,17 @@ interface UserDrawerProps {
     onSave: () => void;
     isSaving?: boolean;
     onChangePassword?: (userId: string, newPassword: string) => Promise<void>;
+    authUser?: any;
 }
 
 export const UserDrawer: React.FC<UserDrawerProps> = ({ 
-    isOpen, onClose, editingUser, formData, setFormData, roles, onSave, isSaving, onChangePassword 
+    isOpen, onClose, editingUser, formData, setFormData, roles, onSave, isSaving, onChangePassword, authUser
 }) => {
+    
+    // Check if the role selection should be locked
+    const isEditingAdmin = editingUser?.role?.toLowerCase() === "admin" || formData.role?.toLowerCase() === "admin";
+    const isSuperadminLoggedIn = authUser?.role?.toLowerCase() === "superadmin";
+    const lockRoleSelection = isEditingAdmin && !isSuperadminLoggedIn;
 
     return (
         <>
@@ -123,14 +129,32 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                                     <button 
                                         key={role}
                                         type="button"
+                                        disabled={lockRoleSelection}
                                         onClick={() => setFormData({...formData, role})}
-                                        className={`${styles.roleSelectBtn} ${isSelected ? styles.roleSelectBtnActive : ""}`}
+                                        className={`${styles.roleSelectBtn} ${isSelected ? styles.roleSelectBtnActive : ""} ${lockRoleSelection ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                         {role}
                                     </button>
                                 );
                             })}
+                            
+                            {/* If the current role is 'admin' and not in the roles list, show it as an active locked button */}
+                            {formData.role?.toLowerCase() === "admin" && !roles.includes(formData.role) && (
+                                <button 
+                                    key="admin"
+                                    type="button"
+                                    disabled={lockRoleSelection}
+                                    className={`${styles.roleSelectBtn} ${styles.roleSelectBtnActive} ${lockRoleSelection ? "opacity-50 cursor-not-allowed" : ""}`}
+                                >
+                                    Admin (Owner)
+                                </button>
+                            )}
                         </div>
+                        {lockRoleSelection && (
+                            <p style={{fontSize: "11px", color: "#ef4444", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px"}}>
+                                <Lock size={10} /> Hanya Superadmin yang dapat mengubah Role Admin.
+                            </p>
+                        )}
                     </div>
                 </div>
 

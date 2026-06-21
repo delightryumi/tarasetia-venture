@@ -20,8 +20,8 @@ export async function POST(request: Request) {
     console.log("- SMTP_PASS:", process.env.SMTP_PASS ? "TERSEDIA (Panjang: " + process.env.SMTP_PASS.length + ")" : "UNDEFINED / KOSONG");
     console.log("- SMTP_FROM_EMAIL:", process.env.SMTP_FROM_EMAIL);
 
-    // Generate password default yang aman dan unik: Nexura[hotelCode]!
-    const defaultPassword = `Nexura${hotelCode}!`;
+    // Generate password default yang aman dan unik: Setara[hotelCode]!
+    const defaultPassword = `Setara${hotelCode}!`;
 
     let uid = "";
     let alreadyExists = false;
@@ -32,20 +32,31 @@ export async function POST(request: Request) {
       uid = existingUser.uid;
       alreadyExists = true;
 
+      // Ambil existing claims
+      const currentClaims = existingUser.customClaims || {};
+      let allowedOutlets: string[] = Array.isArray(currentClaims.allowedOutlets) 
+        ? [...currentClaims.allowedOutlets] 
+        : (currentClaims.hotelCode ? [currentClaims.hotelCode as string] : []);
+      
+      // Tambahkan outlet baru jika belum ada
+      if (!allowedOutlets.includes(hotelCode)) {
+        allowedOutlets.push(hotelCode);
+      }
+
       // Set custom claims for existing user
-      await adminAuth.setCustomUserClaims(uid, { role: "admin", hotelCode });
+      await adminAuth.setCustomUserClaims(uid, { ...currentClaims, role: "admin", hotelCode, allowedOutlets });
     } catch (err: any) {
       if (err.code === "auth/user-not-found") {
         // Create new Auth user
         const newUser = await adminAuth.createUser({
           email: email.trim(),
           password: defaultPassword,
-          displayName: `${hotelName || "Hotel"} Admin`,
+          displayName: `${hotelName || "Outlet"} Admin`,
         });
         uid = newUser.uid;
 
         // Set custom claims
-        await adminAuth.setCustomUserClaims(uid, { role: "admin", hotelCode });
+        await adminAuth.setCustomUserClaims(uid, { role: "admin", hotelCode, allowedOutlets: [hotelCode] });
       } else {
         throw err;
       }

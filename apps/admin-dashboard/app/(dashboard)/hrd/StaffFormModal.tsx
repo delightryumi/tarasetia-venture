@@ -17,6 +17,7 @@ export function StaffFormModal({ hotelCode, shifts, editTarget, onClose }: Props
     name:     editTarget?.name || "",
     phone:    editTarget?.phone || "",
     nik:      editTarget?.nik || "",
+    pin:      editTarget?.pin || "",
     position: editTarget?.position || "",
     division: editTarget?.division || "",
     isActive: editTarget !== undefined ? editTarget?.isActive ?? true : true,
@@ -151,6 +152,23 @@ export function StaffFormModal({ hotelCode, shifts, editTarget, onClose }: Props
                 {!isEdit && <span style={{ fontSize: 11, color: "var(--s-muted)" }}>Gunakan NIK ini untuk masuk ke portal absen. PIN 6-digit akan dibuatkan otomatis.</span>}
               </div>
 
+              {isEdit && (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>PIN Akses (6 digit) *</label>
+                  <input
+                    className={styles.formInput}
+                    value={form.pin}
+                    onChange={(e) => set("pin", e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    required
+                    minLength={6}
+                    maxLength={6}
+                    pattern="\d{6}"
+                    placeholder="123456"
+                  />
+                  <span style={{ fontSize: 11, color: "var(--s-muted)" }}>Anda dapat mengubah PIN akses karyawan di sini.</span>
+                </div>
+              )}
+
               <div className={styles.formGrid2}>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Jabatan/Posisi *</label>
@@ -162,13 +180,15 @@ export function StaffFormModal({ hotelCode, shifts, editTarget, onClose }: Props
                 </div>
               </div>
 
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Status Staf</label>
-                    <div style={{ marginTop: 8 }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                        <input type="checkbox" checked={form.isActive} onChange={(e) => set("isActive", e.target.checked)} />
-                        Aktif
-                      </label>
+                  <div className={styles.formGrid2}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Status Staf</label>
+                      <div style={{ marginTop: 8 }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                          <input type="checkbox" checked={form.isActive} onChange={(e) => set("isActive", e.target.checked)} />
+                          Aktif
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </>

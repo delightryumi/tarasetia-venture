@@ -46,9 +46,12 @@ export function StaffTable({ hotelCode, shifts }: Props) {
   const confirmResetPin = async () => {
     if (!resetTarget || newPin.length !== 6) return;
     try {
-      const { doc, updateDoc } = await import("firebase/firestore");
-      const ref = doc(db, `hotels/${hotelCode}/staff/${resetTarget.id}`);
-      await updateDoc(ref, { pin: newPin });
+      const res = await fetch("/api/staff", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: resetTarget.id, hotelCode, pin: newPin }),
+      });
+      if (!res.ok) throw new Error("Gagal mereset PIN");
       toast.success(`PIN untuk ${resetTarget.name} berhasil direset.`);
       setResetTarget(null);
     } catch (e) {
