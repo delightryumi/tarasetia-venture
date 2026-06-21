@@ -18,6 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Partner Dashboard | MyTara",
   description: "MyTara Central Reservation System",
+  manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
   },
