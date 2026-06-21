@@ -2,6 +2,8 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: 'tara-dashboard',
+    scope: '/',
     name: 'Tara',
     short_name: 'Tara',
     description: 'Manajemen Properti & Kasir Terpusat',

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   return NextResponse.json({
+    id: "tara-attendance",
     name: "Tara Absensi",
     short_name: "Tara Absensi",
     description: "Portal Absensi Karyawan Tara",
