@@ -311,9 +311,9 @@ export default function AttendancePage() {
     return (
       <div className={styles.wrapper}>
         <div className={styles.page} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px' }}>
-          <div className={styles.card} style={{ padding: '36px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', margin: 0 }}>
+          <div style={{ background: '#ffffff', padding: '36px 24px', borderRadius: '16px', width: '100%', margin: 0, boxShadow: '0 20px 40px rgba(141, 122, 82, 0.08), 0 1px 3px rgba(141, 122, 82, 0.04)', border: '1px solid rgba(141, 122, 82, 0.12)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ marginBottom: 20 }}>
-              <img src="/channels/1.png" alt="Setara Venture" style={{ height: 42, objectFit: 'contain' }} />
+               <img src="/channels/1.png" alt="Setara Venture" style={{ height: 42, objectFit: 'contain' }} />
             </div>
             <h1 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', color: '#111827', letterSpacing: '-0.5px' }}>
               Portal Absensi
@@ -334,6 +334,7 @@ export default function AttendancePage() {
                   required
                   value={loginNik}
                   onChange={(e) => setLoginNik(e.target.value)}
+                  className="force-light-input"
                   style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e5e7eb', outline: 'none', background: '#f9fafb', transition: 'all 0.2s', fontSize: '14px' }}
                   placeholder="Masukkan NIK"
                   onFocus={(e) => { e.target.style.borderColor = '#181d26'; e.target.style.background = '#fff'; }}
@@ -348,6 +349,7 @@ export default function AttendancePage() {
                   maxLength={6}
                   value={loginPin}
                   onChange={(e) => setLoginPin(e.target.value)}
+                  className="force-light-input"
                   style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e5e7eb', outline: 'none', letterSpacing: '4px', background: '#f9fafb', transition: 'all 0.2s', fontSize: '16px', fontWeight: 600, textAlign: 'center' }}
                   placeholder="••••••"
                   onFocus={(e) => { e.target.style.borderColor = '#181d26'; e.target.style.background = '#fff'; }}
