@@ -342,83 +342,87 @@ export default function AttendancePage() {
     );
   }
 
-  // Jika belum login, tampilkan form PIN
   if (!staffSession) {
     return (
       <div className={styles.wrapper}>
-        <div className={styles.page} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ background: '#ffffff', padding: '36px 24px', borderRadius: '16px', width: '100%', margin: 0, boxShadow: '0 20px 40px rgba(141, 122, 82, 0.08), 0 1px 3px rgba(141, 122, 82, 0.04)', border: '1px solid rgba(141, 122, 82, 0.12)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ marginBottom: 20 }}>
-               <img src="/channels/1.png" alt="Setara Venture" style={{ height: 42, objectFit: 'contain' }} />
+        <div className={styles.page} style={{ display: 'flex', flexDirection: 'column', padding: '20px', minHeight: '100dvh' }}>
+          
+          <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+            <div style={{ background: '#ffffff', padding: '36px 24px', borderRadius: '16px', width: '100%', margin: 0, boxShadow: '0 20px 40px rgba(141, 122, 82, 0.08), 0 1px 3px rgba(141, 122, 82, 0.04)', border: '1px solid rgba(141, 122, 82, 0.12)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ marginBottom: 20 }}>
+                 <img src="/channels/1.png" alt="Setara Venture" style={{ height: 42, objectFit: 'contain' }} />
+              </div>
+              <h1 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', color: '#111827', letterSpacing: '-0.5px' }}>
+                Portal Absensi
+              </h1>
+              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '24px', textAlign: 'center' }}>
+                Silakan masuk menggunakan NIK dan PIN Anda
+              </p>
+              {loginError && (
+                <div style={{ width: '100%', background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '13px', textAlign: 'center', fontWeight: 500 }}>
+                  {loginError}
+                </div>
+              )}
+              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>ID Karyawan (NIK)</label>
+                  <input
+                    type="text"
+                    required
+                    value={loginNik}
+                    onChange={(e) => setLoginNik(e.target.value)}
+                    className="force-light-input"
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e5e7eb', outline: 'none', background: '#f9fafb', transition: 'all 0.2s', fontSize: '14px' }}
+                    placeholder="Masukkan NIK"
+                    onFocus={(e) => { e.target.style.borderColor = '#181d26'; e.target.style.background = '#fff'; }}
+                    onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>PIN Akses (6 digit)</label>
+                  <input
+                    type="password"
+                    required
+                    maxLength={6}
+                    value={loginPin}
+                    onChange={(e) => setLoginPin(e.target.value)}
+                    className="force-light-input"
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e5e7eb', outline: 'none', letterSpacing: '4px', background: '#f9fafb', transition: 'all 0.2s', fontSize: '16px', fontWeight: 600, textAlign: 'center' }}
+                    placeholder="••••••"
+                    onFocus={(e) => { e.target.style.borderColor = '#181d26'; e.target.style.background = '#fff'; }}
+                    onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isLoggingIn}
+                  style={{ width: '100%', background: '#111827', color: '#fff', padding: '14px', borderRadius: '10px', fontWeight: 600, fontSize: '15px', cursor: isLoggingIn ? 'not-allowed' : 'pointer', marginTop: '8px', border: 'none', transition: 'background 0.2s' }}
+                  onMouseOver={(e) => { if (!isLoggingIn) e.currentTarget.style.background = '#1f2937'; }}
+                  onMouseOut={(e) => { if (!isLoggingIn) e.currentTarget.style.background = '#111827'; }}
+                >
+                  {isLoggingIn ? 'Memeriksa...' : 'Masuk Absensi'}
+                </button>
+                
+                <button 
+                  type="button" 
+                  onClick={() => setLoginError("Lupa PIN? Silakan hubungi tim HRD / Administrator hotel untuk mereset PIN Anda.")}
+                  style={{ background: 'transparent', border: 'none', color: '#6b7280', fontSize: '13px', fontWeight: 500, cursor: 'pointer', marginTop: '4px', textDecoration: 'underline', textUnderlineOffset: '2px' }}
+                >
+                  Lupa PIN Akses?
+                </button>
+              </form>
+              <InstallAppButton appName="Tara Absensi" />
+              <p style={{ textAlign: 'center', fontSize: '12px', color: '#9ca3af', marginTop: '24px', lineHeight: 1.5 }}>
+                Sistem akan mencatat lokasi GPS Anda.<br/>Pastikan GPS / Lokasi pada perangkat aktif.
+              </p>
             </div>
-            <h1 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', color: '#111827', letterSpacing: '-0.5px' }}>
-              Portal Absensi
-            </h1>
-            <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '24px', textAlign: 'center' }}>
-              Silakan masuk menggunakan NIK dan PIN Anda
-            </p>
-            {loginError && (
-              <div style={{ width: '100%', background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '13px', textAlign: 'center', fontWeight: 500 }}>
-                {loginError}
-              </div>
-            )}
-            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>ID Karyawan (NIK)</label>
-                <input
-                  type="text"
-                  required
-                  value={loginNik}
-                  onChange={(e) => setLoginNik(e.target.value)}
-                  className="force-light-input"
-                  style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e5e7eb', outline: 'none', background: '#f9fafb', transition: 'all 0.2s', fontSize: '14px' }}
-                  placeholder="Masukkan NIK"
-                  onFocus={(e) => { e.target.style.borderColor = '#181d26'; e.target.style.background = '#fff'; }}
-                  onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>PIN Akses (6 digit)</label>
-                <input
-                  type="password"
-                  required
-                  maxLength={6}
-                  value={loginPin}
-                  onChange={(e) => setLoginPin(e.target.value)}
-                  className="force-light-input"
-                  style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e5e7eb', outline: 'none', letterSpacing: '4px', background: '#f9fafb', transition: 'all 0.2s', fontSize: '16px', fontWeight: 600, textAlign: 'center' }}
-                  placeholder="••••••"
-                  onFocus={(e) => { e.target.style.borderColor = '#181d26'; e.target.style.background = '#fff'; }}
-                  onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isLoggingIn}
-                style={{ width: '100%', background: '#111827', color: '#fff', padding: '14px', borderRadius: '10px', fontWeight: 600, fontSize: '15px', cursor: isLoggingIn ? 'not-allowed' : 'pointer', marginTop: '8px', border: 'none', transition: 'background 0.2s' }}
-                onMouseOver={(e) => { if (!isLoggingIn) e.currentTarget.style.background = '#1f2937'; }}
-                onMouseOut={(e) => { if (!isLoggingIn) e.currentTarget.style.background = '#111827'; }}
-              >
-                {isLoggingIn ? 'Memeriksa...' : 'Masuk Absensi'}
-              </button>
-              
-              <button 
-                type="button" 
-                onClick={() => setLoginError("Lupa PIN? Silakan hubungi tim HRD / Administrator hotel untuk mereset PIN Anda.")}
-                style={{ background: 'transparent', border: 'none', color: '#6b7280', fontSize: '13px', fontWeight: 500, cursor: 'pointer', marginTop: '4px', textDecoration: 'underline', textUnderlineOffset: '2px' }}
-              >
-                Lupa PIN Akses?
-              </button>
-            </form>
-            <InstallAppButton appName="Tara Absensi" />
-            <p style={{ textAlign: 'center', fontSize: '12px', color: '#9ca3af', marginTop: '24px', lineHeight: 1.5 }}>
-              Sistem akan mencatat lokasi GPS Anda.<br/>Pastikan GPS / Lokasi pada perangkat aktif.
-            </p>
           </div>
-          <div style={{ position: 'absolute', bottom: 20, left: 0, right: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+
+          <div style={{ paddingBottom: '10px', paddingTop: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
             <span style={{ fontSize: 10, color: '#9ca3af', letterSpacing: 1, textTransform: 'lowercase', fontWeight: 600 }}>powered by</span>
             <img src="/channels/1.png" alt="Setara Venture" style={{ height: 24, objectFit: 'contain', filter: 'grayscale(1) opacity(0.6)' }} />
           </div>
+
         </div>
       </div>
     );
