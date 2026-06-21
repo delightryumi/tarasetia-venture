@@ -10,22 +10,25 @@ export const InstallAppButton = ({ appName = "Tara App" }: { appName?: string })
   useEffect(() => {
     // Tangkap event instalasi PWA
     const handleBeforeInstallPrompt = (e: Event) => {
+      console.log(`[PWA] beforeinstallprompt fired for: ${appName}`);
       e.preventDefault();
       setDeferredPrompt(e);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
+    // Cek jika app sudah terinstal via standalone display mode
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      console.log(`[PWA] ${appName} is already running as an installed standalone app.`);
+    }
+
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [appName]);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      alert("Aplikasi PWA ini sudah terinstal, atau browser Anda tidak mendukung.");
-      return;
-    }
+    if (!deferredPrompt) return;
     
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
@@ -34,6 +37,11 @@ export const InstallAppButton = ({ appName = "Tara App" }: { appName?: string })
       setDeferredPrompt(null);
     }
   };
+
+  // Jangan tampilkan tombol jika PWA tidak/belum siap diinstal pada browser ini
+  if (!deferredPrompt) {
+    return null;
+  }
 
   return (
     <div className={styles.container}>
