@@ -310,8 +310,8 @@ export default function AttendancePage() {
   if (!staffSession) {
     return (
       <div className={styles.wrapper}>
-        <div className={styles.page} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', boxShadow: 'none' }}>
-          <div style={{ background: '#fff', padding: '36px 28px', borderRadius: '24px', width: '90%', maxWidth: '380px', boxShadow: '0 20px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div className={styles.page} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px' }}>
+          <div className={styles.card} style={{ padding: '36px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', margin: 0 }}>
             <div style={{ marginBottom: 20 }}>
               <img src="/channels/1.png" alt="Setara Venture" style={{ height: 42, objectFit: 'contain' }} />
             </div>
