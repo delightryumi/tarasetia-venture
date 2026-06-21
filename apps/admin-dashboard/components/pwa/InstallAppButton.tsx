@@ -6,7 +6,13 @@ import styles from "./InstallAppButton.module.css";
 
 import { toast } from "sonner";
 
-export const InstallAppButton = ({ appName = "Tara App" }: { appName?: string }) => {
+export const InstallAppButton = ({ 
+  appName = "Tara App", 
+  variant = "secondary" 
+}: { 
+  appName?: string; 
+  variant?: "secondary" | "on-dark" 
+}) => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
@@ -54,12 +60,14 @@ export const InstallAppButton = ({ appName = "Tara App" }: { appName?: string })
     }
   };
 
+  const buttonClass = `${styles.button} ${variant === "on-dark" ? styles.onDark : styles.secondary}`;
+
   return (
     <div className={styles.container}>
       <button
         onClick={handleInstallClick}
         type="button"
-        className={styles.button}
+        className={buttonClass}
       >
         <Download size={16} strokeWidth={2.5} className={styles.icon} />
         <span>Install {appName}</span>

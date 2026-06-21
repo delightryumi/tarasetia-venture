@@ -15,8 +15,17 @@ export function QrCodeDisplay({ hotelCode }: Props) {
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-    const base = window.location.origin;
-    const attendanceUrl = `${base}/attendance?h=${hotelCode}`;
+    const { protocol, hostname, port } = window.location;
+    let attendanceUrl = "";
+
+    // Jika sedang live di domain production, gunakan subdomain staff.mytara.id
+    if (hostname.includes("live.mytara.id")) {
+      attendanceUrl = `https://staff.mytara.id/?h=${hotelCode}`;
+    } else {
+      // Fallback untuk testing lokal
+      const base = port ? `${protocol}//${hostname}:${port}` : `${protocol}//${hostname}`;
+      attendanceUrl = `${base}/attendance?h=${hotelCode}`;
+    }
     setUrl(attendanceUrl);
   }, [hotelCode]);
 

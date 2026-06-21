@@ -586,8 +586,12 @@ aside, aside * {
 }
 
 /* Force light input override for Attendance Module */
-.force-light-input,
-.dark .force-light-input {
+input.force-light-input,
+.dark input.force-light-input,
+select.force-light-input,
+.dark select.force-light-input,
+textarea.force-light-input,
+.dark textarea.force-light-input {
   background-color: #ffffff !important;
   color: #1c1c1e !important;
   color-scheme: light !important;

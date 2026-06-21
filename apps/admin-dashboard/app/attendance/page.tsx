@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Clock, FileText, History, Menu } from "lucide-react";
+import { Clock, FileText, History, Menu, Eye, EyeOff } from "lucide-react";
 import { ClockInOutCard } from "./components/ClockInOutCard";
 import { AttendanceHistory } from "./components/AttendanceHistory";
 import { LeaveRequestForm } from "./components/LeaveRequestForm";
@@ -37,12 +37,16 @@ export default function AttendancePage() {
   const [confirmPin, setConfirmPin] = useState("");
   const [pinError, setPinError] = useState("");
   const [isChangingPin, setIsChangingPin] = useState(false);
+  const [showOldPin, setShowOldPin] = useState(false);
+  const [showNewPin, setShowNewPin] = useState(false);
+  const [showConfirmPin, setShowConfirmPin] = useState(false);
 
   // Login form state
   const [loginNik, setLoginNik] = useState("");
   const [loginPin, setLoginPin] = useState("");
   const [loginError, setLoginError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showLoginPin, setShowLoginPin] = useState(false);
 
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -210,8 +214,7 @@ export default function AttendancePage() {
     };
 
     const fetchCompany = async () => {
-      if (!staffSession) return;
-      const hotelCode = staffSession.hotelCode || prefillHotelCode;
+      const hotelCode = staffSession?.hotelCode || prefillHotelCode;
       if (!hotelCode) return;
       try {
         const docRef = doc(db, `hotels/${hotelCode}/settings/company`);
@@ -232,6 +235,8 @@ export default function AttendancePage() {
 
     if (staffSession) {
       fetchAnnouncements();
+    }
+    if (staffSession || prefillHotelCode) {
       fetchCompany();
     }
   }, [staffSession, prefillHotelCode]);
@@ -345,60 +350,107 @@ export default function AttendancePage() {
   if (!staffSession) {
     return (
       <div className={styles.wrapper}>
-        <div className={styles.page} style={{ display: 'flex', flexDirection: 'column', padding: '20px', minHeight: '100dvh' }}>
+        <div className={styles.page} style={{ display: 'flex', flexDirection: 'column', padding: '20px', minHeight: '100dvh', background: '#f9fafb' }}>
           
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-            <div style={{ background: '#ffffff', padding: '36px 24px', borderRadius: '16px', width: '100%', margin: 0, boxShadow: '0 20px 40px rgba(141, 122, 82, 0.08), 0 1px 3px rgba(141, 122, 82, 0.04)', border: '1px solid rgba(141, 122, 82, 0.12)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ background: 'linear-gradient(135deg, #FF9933 0%, #F54B1E 100%)', padding: '36px 24px', borderRadius: '16px', width: '100%', margin: 0, boxShadow: '0 25px 50px -12px rgba(245, 75, 30, 0.25), 0 8px 24px rgba(0, 0, 0, 0.1)', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ marginBottom: 20 }}>
-                 <img src="/channels/1.png" alt="Setara Venture" style={{ height: 42, objectFit: 'contain' }} />
+                 <img src="/channels/1.png" alt="Setara Venture" style={{ height: 42, objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
               </div>
-              <h1 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', color: '#111827', letterSpacing: '-0.5px' }}>
-                Portal Absensi
+              <h1 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', color: '#ffffff', letterSpacing: '-0.5px' }}>
+                {companyName || "Portal Absensi"}
               </h1>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '24px', textAlign: 'center' }}>
+              <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.85)', marginBottom: '24px', textAlign: 'center' }}>
                 Silakan masuk menggunakan NIK dan PIN Anda
               </p>
               {loginError && (
-                <div style={{ width: '100%', background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '13px', textAlign: 'center', fontWeight: 500 }}>
+                <div style={{ width: '100%', background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.3)', color: '#ffffff', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '13px', textAlign: 'center', fontWeight: 500 }}>
                   {loginError}
                 </div>
               )}
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>ID Karyawan (NIK)</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#ffffff', marginBottom: '6px' }}>ID Karyawan (NIK)</label>
                   <input
                     type="text"
                     required
                     value={loginNik}
                     onChange={(e) => setLoginNik(e.target.value)}
                     className="force-light-input"
-                    style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e5e7eb', outline: 'none', background: '#f9fafb', transition: 'all 0.2s', fontSize: '14px' }}
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.2)', outline: 'none', background: '#ffffff', color: '#111827', transition: 'all 0.2s', fontSize: '14px' }}
                     placeholder="Masukkan NIK"
-                    onFocus={(e) => { e.target.style.borderColor = '#181d26'; e.target.style.background = '#fff'; }}
-                    onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
+                    onFocus={(e) => { e.target.style.borderColor = '#1a1c14'; }}
+                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)'; }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>PIN Akses (6 digit)</label>
-                  <input
-                    type="password"
-                    required
-                    maxLength={6}
-                    value={loginPin}
-                    onChange={(e) => setLoginPin(e.target.value)}
-                    className="force-light-input"
-                    style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e5e7eb', outline: 'none', letterSpacing: '4px', background: '#f9fafb', transition: 'all 0.2s', fontSize: '16px', fontWeight: 600, textAlign: 'center' }}
-                    placeholder="••••••"
-                    onFocus={(e) => { e.target.style.borderColor = '#181d26'; e.target.style.background = '#fff'; }}
-                    onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.background = '#f9fafb'; }}
-                  />
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#ffffff', marginBottom: '6px' }}>PIN Akses (6 digit)</label>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <input
+                      type={showLoginPin ? "text" : "password"}
+                      required
+                      maxLength={6}
+                      value={loginPin}
+                      onChange={(e) => setLoginPin(e.target.value.replace(/\D/g, ''))}
+                      className="force-light-input"
+                      style={{ width: '100%', padding: '12px 40px 12px 16px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.2)', outline: 'none', letterSpacing: (!showLoginPin && loginPin) ? '4px' : 'normal', background: '#ffffff', color: '#111827', transition: 'all 0.2s', fontSize: '14px', textAlign: 'left' }}
+                      placeholder="Masukkan PIN"
+                      onFocus={(e) => { e.target.style.borderColor = '#1a1c14'; }}
+                      onBlur={(e) => { e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)'; }}
+                    />
+                    <span 
+                      onClick={() => setShowLoginPin(!showLoginPin)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        cursor: 'pointer',
+                        color: '#9ca3af',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10
+                      }}
+                    >
+                      {showLoginPin ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </span>
+                  </div>
                 </div>
                 <button
                   type="submit"
                   disabled={isLoggingIn}
-                  style={{ width: '100%', background: '#111827', color: '#fff', padding: '14px', borderRadius: '10px', fontWeight: 600, fontSize: '15px', cursor: isLoggingIn ? 'not-allowed' : 'pointer', marginTop: '8px', border: 'none', transition: 'background 0.2s' }}
-                  onMouseOver={(e) => { if (!isLoggingIn) e.currentTarget.style.background = '#1f2937'; }}
-                  onMouseOut={(e) => { if (!isLoggingIn) e.currentTarget.style.background = '#111827'; }}
+                  style={{ 
+                    width: '100%', 
+                    background: '#1A1C14', 
+                    color: '#ffffff', 
+                    height: '50px', 
+                    borderRadius: '12px', 
+                    fontWeight: 600, 
+                    fontSize: '13px', 
+                    textTransform: 'uppercase',
+                    letterSpacing: '2px',
+                    cursor: isLoggingIn ? 'not-allowed' : 'pointer', 
+                    marginTop: '16px', 
+                    border: '1px solid #1A1C14', 
+                    transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)' 
+                  }}
+                  onMouseOver={(e) => { 
+                    if (!isLoggingIn) {
+                      e.currentTarget.style.background = '#C5A880'; 
+                      e.currentTarget.style.borderColor = '#C5A880'; 
+                      e.currentTarget.style.color = '#1A1C14';
+                      e.currentTarget.style.boxShadow = '0 10px 25px rgba(197, 168, 128, 0.25)';
+                    }
+                  }}
+                  onMouseOut={(e) => { 
+                    if (!isLoggingIn) {
+                      e.currentTarget.style.background = '#1A1C14'; 
+                      e.currentTarget.style.borderColor = '#1A1C14'; 
+                      e.currentTarget.style.color = '#ffffff';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }
+                  }}
                 >
                   {isLoggingIn ? 'Memeriksa...' : 'Masuk Absensi'}
                 </button>
@@ -406,13 +458,13 @@ export default function AttendancePage() {
                 <button 
                   type="button" 
                   onClick={() => setLoginError("Lupa PIN? Silakan hubungi tim HRD / Administrator hotel untuk mereset PIN Anda.")}
-                  style={{ background: 'transparent', border: 'none', color: '#6b7280', fontSize: '13px', fontWeight: 500, cursor: 'pointer', marginTop: '4px', textDecoration: 'underline', textUnderlineOffset: '2px' }}
+                  style={{ background: 'transparent', border: 'none', color: '#ffffff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', marginTop: '4px', textDecoration: 'underline', textUnderlineOffset: '2px', opacity: 0.9 }}
                 >
                   Lupa PIN Akses?
                 </button>
               </form>
-              <InstallAppButton appName="Tara Absensi" />
-              <p style={{ textAlign: 'center', fontSize: '12px', color: '#9ca3af', marginTop: '24px', lineHeight: 1.5 }}>
+              <InstallAppButton appName="Tara Absensi" variant="on-dark" />
+              <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255, 255, 255, 0.85)', marginTop: '24px', lineHeight: 1.5 }}>
                 Sistem akan mencatat lokasi GPS Anda.<br/>Pastikan GPS / Lokasi pada perangkat aktif.
               </p>
             </div>
@@ -422,7 +474,6 @@ export default function AttendancePage() {
             <span style={{ fontSize: 10, color: '#9ca3af', letterSpacing: 1, textTransform: 'lowercase', fontWeight: 600 }}>powered by</span>
             <img src="/channels/1.png" alt="Setara Venture" style={{ height: 24, objectFit: 'contain', filter: 'grayscale(1) opacity(0.6)' }} />
           </div>
-
         </div>
       </div>
     );
@@ -602,15 +653,72 @@ export default function AttendancePage() {
               <form onSubmit={handleChangePin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div>
                   <label style={{ fontSize: 11, color: '#a1a1aa', fontWeight: 600, textTransform: 'uppercase', marginBottom: 6, display: 'block' }}>PIN Lama</label>
-                  <input type="password" required maxLength={6} value={oldPin} onChange={(e) => setOldPin(e.target.value.replace(/\D/g, ''))} style={{ width: '100%', padding: '10px 12px', background: '#1c1c1e', border: '1px solid #27272a', borderRadius: 8, color: '#fff', letterSpacing: 4 }} />
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <input type={showOldPin ? "text" : "password"} required maxLength={6} value={oldPin} onChange={(e) => setOldPin(e.target.value.replace(/\D/g, ''))} style={{ width: '100%', padding: '10px 40px 10px 12px', background: '#1c1c1e', border: '1px solid #27272a', borderRadius: 8, color: '#fff', letterSpacing: (!showOldPin && oldPin) ? '4px' : 'normal', textAlign: 'left' }} placeholder="PIN Lama" />
+                    <span 
+                      onClick={() => setShowOldPin(!showOldPin)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        cursor: 'pointer',
+                        color: '#a1a1aa',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10
+                      }}
+                    >
+                      {showOldPin ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </span>
+                  </div>
                 </div>
                 <div>
                   <label style={{ fontSize: 11, color: '#a1a1aa', fontWeight: 600, textTransform: 'uppercase', marginBottom: 6, display: 'block' }}>PIN Baru</label>
-                  <input type="password" required maxLength={6} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))} style={{ width: '100%', padding: '10px 12px', background: '#1c1c1e', border: '1px solid #27272a', borderRadius: 8, color: '#fff', letterSpacing: 4 }} />
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <input type={showNewPin ? "text" : "password"} required maxLength={6} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))} style={{ width: '100%', padding: '10px 40px 10px 12px', background: '#1c1c1e', border: '1px solid #27272a', borderRadius: 8, color: '#fff', letterSpacing: (!showNewPin && newPin) ? '4px' : 'normal', textAlign: 'left' }} placeholder="PIN Baru" />
+                    <span 
+                      onClick={() => setShowNewPin(!showNewPin)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        cursor: 'pointer',
+                        color: '#a1a1aa',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10
+                      }}
+                    >
+                      {showNewPin ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </span>
+                  </div>
                 </div>
                 <div>
                   <label style={{ fontSize: 11, color: '#a1a1aa', fontWeight: 600, textTransform: 'uppercase', marginBottom: 6, display: 'block' }}>Konfirmasi PIN Baru</label>
-                  <input type="password" required maxLength={6} value={confirmPin} onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))} style={{ width: '100%', padding: '10px 12px', background: '#1c1c1e', border: '1px solid #27272a', borderRadius: 8, color: '#fff', letterSpacing: 4 }} />
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <input type={showConfirmPin ? "text" : "password"} required maxLength={6} value={confirmPin} onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))} style={{ width: '100%', padding: '10px 40px 10px 12px', background: '#1c1c1e', border: '1px solid #27272a', borderRadius: 8, color: '#fff', letterSpacing: (!showConfirmPin && confirmPin) ? '4px' : 'normal', textAlign: 'left' }} placeholder="Konfirmasi PIN" />
+                    <span 
+                      onClick={() => setShowConfirmPin(!showConfirmPin)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        cursor: 'pointer',
+                        color: '#a1a1aa',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10
+                      }}
+                    >
+                      {showConfirmPin ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </span>
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                   <button type="button" onClick={() => { setShowPinModal(false); setPinError(""); setOldPin(""); setNewPin(""); setConfirmPin(""); }} style={{ flex: 1, padding: 12, borderRadius: 8, background: '#1c1c1e', color: '#fff', border: '1px solid #27272a' }}>Batal</button>
