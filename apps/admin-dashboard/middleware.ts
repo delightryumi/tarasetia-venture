@@ -11,10 +11,10 @@ export function middleware(request: NextRequest) {
     hostname === "staff.localhost";
 
   if (isStaffDomain) {
-    // 1. Root "/" → rewrite ke /attendance (parameter ?h= akan otomatis terbawa)
+    // 1. Root "/" → redirect ke /attendance (parameter ?h= akan otomatis terbawa)
     if (url.pathname === "/") {
       url.pathname = "/attendance";
-      return NextResponse.rewrite(url);
+      return NextResponse.redirect(url);
     }
 
     // 2. Manifest absensi
