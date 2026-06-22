@@ -213,19 +213,18 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
 
     return (
         <div className="flex flex-col min-h-screen bg-transparent select-none">
-            {!isSuperadminPage && (
-                <header className="dashboard-top-bar">
-                    <div className="dashboard-top-bar-inner">
-                        <StatusWidget 
-                            onMenuClick={() => setIsCollapsed(false)} 
-                            isCollapsed={isCollapsed}
-                            onToggleSidebar={() => setIsCollapsed(!isCollapsed)}
-                        />
-                    </div>
-                </header>
-            )}
-
             <div className={`dashboard-wrapper ${isCollapsed ? "collapsed" : ""} ${!isCollapsed ? "mobile-open" : ""} ${hideSidebar ? "no-sidebar" : ""}`}>
+                {!isSuperadminPage && (
+                    <header className="dashboard-top-bar">
+                        <div className="dashboard-top-bar-inner">
+                            <StatusWidget 
+                                onMenuClick={() => setIsCollapsed(false)} 
+                                isCollapsed={isCollapsed}
+                                onToggleSidebar={() => setIsCollapsed(!isCollapsed)}
+                            />
+                        </div>
+                    </header>
+                )}
                 {!hideSidebar && (
                     <Sidebar
                         isCollapsed={isCollapsed}

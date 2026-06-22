@@ -17,7 +17,7 @@ export function DockNavItem({
   icon,
   label,
   isActive,
-  mouseY, // Retained to preserve signature compatibility
+  mouseY,
   onClick,
   href,
   isExternal,
@@ -27,26 +27,19 @@ export function DockNavItem({
       onClick={onClick}
       tabIndex={0}
       role="button"
+      title={label}
       className={`
-        w-[76px] h-[76px] px-1 rounded-[8px] flex flex-col items-center justify-center gap-1
-        transition-all duration-200 border border-transparent outline-none cursor-pointer
+        w-10 h-10 rounded-full flex items-center justify-center
+        transition-all duration-200 border-none outline-none cursor-pointer
         ${isActive
-          ? "bg-[var(--sidebar-link-active-bg)] text-[var(--sidebar-link-active-text)] shadow-none"
-          : "text-[var(--sidebar-text)]/60 hover:text-[var(--sidebar-link-hover-text)] hover:bg-[var(--sidebar-link-hover-bg)] hover:border-[var(--sidebar-link-hover-border)]"
+          ? "bg-[var(--sidebar-link-active-bg)] text-[var(--sidebar-link-active-text)]"
+          : "text-[var(--sidebar-text)]/60 hover:text-[var(--sidebar-link-hover-text)] hover:bg-[var(--sidebar-link-hover-bg)]"
         }
       `}
     >
-      <div className="sidebar-dock-icon">
+      <div className="sidebar-dock-icon flex items-center justify-center">
         {icon}
       </div>
-      <span
-        className="text-[9px] text-center font-bold tracking-tight leading-tight w-full truncate block"
-        style={{
-          color: isActive ? "var(--sidebar-link-active-text)" : "var(--sidebar-text)",
-        }}
-      >
-        {label}
-      </span>
     </motion.div>
   );
 

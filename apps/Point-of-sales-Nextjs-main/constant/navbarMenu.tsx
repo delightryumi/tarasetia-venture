@@ -1,43 +1,43 @@
 import {
-  Home,
+  House,
   Package,
   ShoppingCart,
   Archive,
-  Settings,
-  Store,
+  Gear,
+  Storefront,
   User,
-} from 'lucide-react';
+} from '@phosphor-icons/react';
 import { NavItem } from '@/types/Navbar';
 
 export const NAVBAR_ITEMS: NavItem[] = [
   {
     title: 'Home',
     path: '/home',
-    icon: <Home className="h-4 w-4" />,
+    icon: <House size={18} weight="bold" />,
   },
   {
     title: 'LexuPos',
     path: '/lexupos',
-    icon: <Store className="h-4 w-4" />,
+    icon: <Storefront size={18} weight="bold" />,
   },
   {
     title: 'Cashier',
     path: '/cashier',
-    icon: <User className="h-4 w-4" />,
+    icon: <User size={18} weight="bold" />,
   },
   {
     title: 'Product',
     path: '/product',
-    icon: <Package className="h-4 w-4" />,
+    icon: <Package size={18} weight="bold" />,
   },
   {
     title: 'Records',
     path: '/records',
-    icon: <Archive className="h-4 w-4" />,
+    icon: <Archive size={18} weight="bold" />,
   },
   {
     title: 'Settings',
     path: '/settings',
-    icon: <Settings className="h-4 w-4" />,
+    icon: <Gear size={18} weight="bold" />,
   },
 ];

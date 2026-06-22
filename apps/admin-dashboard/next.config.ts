@@ -9,7 +9,8 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
-  output: "standalone", 
+  // output: "standalone", 
+  transpilePackages: ["@phosphor-icons/react"],
   eslint: {
     ignoreDuringBuilds: true,
   },

@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Grid } from 'lucide-react';
+import { SquaresFour } from '@phosphor-icons/react';
 
 interface SidebarNavExpandedProps {
   dashboardUrl: string;
@@ -18,43 +18,37 @@ export function SidebarNavExpanded({
 }: SidebarNavExpandedProps) {
   return (
     <nav
-      className="flex flex-col gap-1.5 flex-grow overflow-y-auto overflow-x-hidden px-[3px] py-[10px] -mx-[3px]"
+      className="flex flex-col gap-1.5 flex-grow overflow-y-auto overflow-x-hidden px-3"
       style={{ scrollbarWidth: "none" }}
     >
       {/* Pilih Modul button — matching admin dashboard style exactly */}
-      <motion.a
-        href={dashboardUrl}
+      <motion.button
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         whileTap={{ scale: 0.97 }}
-        className="flex items-center gap-3 px-3 py-2 rounded-[6px] text-sm font-bold cursor-pointer border whitespace-nowrap transition-all bg-transparent text-[var(--sidebar-text)] border-[var(--sidebar-border)] hover:bg-[var(--sidebar-link-hover-bg)] hover:border-[var(--sidebar-link-hover-border)] hover:text-[var(--sidebar-link-hover-text)] mb-2"
+        onClick={() => { window.location.href = dashboardUrl; }}
+        className="pos-nav-item select-module-btn border border-[var(--sidebar-border)] mb-2"
       >
-        <Grid size={18} className="text-[var(--sidebar-text)]" />
+        <SquaresFour size={18} className="text-[var(--sidebar-text)]" weight="bold" />
         <span>Pilih Modul</span>
-      </motion.a>
+      </motion.button>
 
       {/* Navigation items — motion.button with spring animations */}
       {visibleItems.map((item) => {
         const active = pathname === item.path;
         return (
-          <motion.div
+          <motion.button
             key={item.path}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             whileTap={{ scale: 0.97 }}
             transition={{ duration: 0.2 }}
-            className={`rounded-[6px] border cursor-pointer transition-all duration-200
-              ${active 
-                ? 'bg-[var(--sidebar-link-active-bg)] border-[var(--sidebar-link-active-bg)] text-[var(--sidebar-link-active-text)]' 
-                : 'bg-transparent border-transparent text-[var(--sidebar-text)] hover:bg-[var(--sidebar-link-hover-bg)] hover:border-[var(--sidebar-link-hover-border)] hover:text-[var(--sidebar-link-hover-text)]'
-              }`}
+            className={`pos-nav-item ${active ? 'active' : ''}`}
             onClick={() => router.push(item.path)}
           >
-            <div className="flex items-center gap-3 px-3 py-2 text-sm font-semibold whitespace-nowrap">
-              <span className="flex-shrink-0">{item.icon}</span>
-              <span className="truncate">{item.title}</span>
-            </div>
-          </motion.div>
+            <span className="flex-shrink-0">{item.icon}</span>
+            <span className="truncate">{item.title}</span>
+          </motion.button>
         );
       })}
     </nav>

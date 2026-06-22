@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { LogOut } from 'lucide-react';
+import { SignOut } from '@phosphor-icons/react';
 
 interface SidebarFooterExpandedProps {
   handleLogout: () => void;
@@ -26,7 +26,7 @@ export function SidebarFooterExpanded({
           color: "var(--sidebar-text)",
         }}
       >
-        <LogOut size={18} />
+        <SignOut size={18} weight="bold" />
         <span>Keluar</span>
       </button>
     </div>

@@ -15,16 +15,17 @@
   --rich-black: #212121;
 
   /* Sidebar Theme variables */
-  --sidebar-bg: #faf8f4;
-  --sidebar-border: rgba(141, 122, 82, 0.06);
-  --sidebar-text: #41454d;
+  --sidebar-bg: #f5f5f7;
+  --sidebar-border: #e5e5e7;
+  --sidebar-text: #515154;
   --sidebar-link-bg: transparent;
   --sidebar-link-border: transparent;
-  --sidebar-link-hover-bg: #f3efe6;
-  --sidebar-link-hover-border: #dddddd;
-  --sidebar-link-hover-text: #181d26;
-  --sidebar-link-active-bg: #181d26;
-  --sidebar-link-active-text: #ffffff;
+  --sidebar-link-hover-bg: rgba(0, 0, 0, 0.05);
+  --sidebar-link-hover-border: transparent;
+  --sidebar-link-hover-text: #1d1d1f;
+  --sidebar-link-active-bg: rgba(0, 0, 0, 0.08);
+  --sidebar-link-active-text: #1d1d1f;
+  --sidebar-active-indicator: #0071e3;
 
   /* Legacy aliases for backwards compatibility */
   --terracotta: var(--peach);
@@ -462,16 +463,17 @@ textarea {
   --f-expense-bg: rgba(239, 68, 68, 0.15) !important;
   --f-expense-color: #f87171 !important;
   /* Sidebar Theme variables */
-  --sidebar-bg: #18181b !important;
-  --sidebar-border: rgba(255, 255, 255, 0.03) !important;
+  --sidebar-bg: #1c1c1e !important;
+  --sidebar-border: #2c2c2e !important;
   --sidebar-text: #a1a1aa !important;
   --sidebar-link-bg: transparent !important;
   --sidebar-link-border: transparent !important;
-  --sidebar-link-hover-bg: #2b2b2b !important;
-  --sidebar-link-hover-border: rgba(255, 255, 255, 0.08) !important;
+  --sidebar-link-hover-bg: rgba(255, 255, 255, 0.06) !important;
+  --sidebar-link-hover-border: transparent !important;
   --sidebar-link-hover-text: #ffffff !important;
-  --sidebar-link-active-bg: #ffffff !important;
-  --sidebar-link-active-text: #181d26 !important;
+  --sidebar-link-active-bg: rgba(255, 255, 255, 0.12) !important;
+  --sidebar-link-active-text: #ffffff !important;
+  --sidebar-active-indicator: #0a84ff !important;
 }
 
 .dark .card,

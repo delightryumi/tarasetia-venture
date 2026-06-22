@@ -2,7 +2,7 @@
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, useMotionValue } from 'framer-motion';
-import { Grid, LogOut } from 'lucide-react';
+import { SquaresFour, SignOut } from '@phosphor-icons/react';
 import { NAVBAR_ITEMS } from '@/constant/navbarMenu';
 import { useRBAC } from '@/hooks/useRBAC';
 
@@ -80,7 +80,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, storeName }: Si
 
   const sidebarVariants = {
     expanded: {
-      width: "240px",
+      width: "200px",
       transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
     },
     collapsed: {
@@ -91,15 +91,18 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, storeName }: Si
 
   return (
     <motion.aside
-      className="hidden md:flex flex-col fixed left-5 top-[76px] bottom-5 z-50 overflow-visible"
+      className={`hidden md:flex flex-col fixed left-0 top-[56px] bottom-0 z-50 overflow-visible ${isCollapsed ? 'collapsed' : ''}`}
       initial="expanded"
       animate={isCollapsed ? "collapsed" : "expanded"}
       variants={sidebarVariants}
       style={{
         backgroundColor: "var(--sidebar-bg)",
         borderColor: "var(--sidebar-border)",
-        borderWidth: "1px",
-        borderRadius: "12px",
+        borderRightWidth: "0px",
+        borderLeftWidth: "0px",
+        borderTopWidth: "0px",
+        borderBottomWidth: "0px",
+        borderRadius: "0px",
         boxShadow: "none",
         padding: isCollapsed ? "24px 0" : "20px 12px",
         overflowY: "hidden",
@@ -129,13 +132,12 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, storeName }: Si
           >
             {/* Pilih Modul */}
             <DockNavItem
-              icon={<Grid size={18} className="text-[var(--sidebar-text)]" />}
+              icon={<SquaresFour size={18} className="text-[var(--sidebar-text)]" weight="bold" />}
               label="Pilih Modul"
               isActive={false}
               mouseY={mouseY}
               onClick={() => { window.location.href = dashboardUrl; }}
             />
-            <div className="w-8 h-px my-1" style={{ backgroundColor: "var(--sidebar-border)" }} />
 
             {/* Nav items */}
             {visibleItems.map((item) => (
@@ -149,33 +151,35 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, storeName }: Si
                 onClick={() => router.push(item.path)}
               />
             ))}
-
-            {/* Divider */}
-            <div className="w-8 h-px my-1" style={{ backgroundColor: "var(--sidebar-border)" }} />
-
-            {/* Logout */}
-            <DockNavItem
-              icon={<LogOut size={18} />}
-              label="Keluar"
-              isActive={false}
-              mouseY={mouseY}
-              onClick={handleLogout}
-            />
           </motion.nav>
         </div>
       ) : (
-        /* Expanded Mode navigation and footer */
-        <>
-          <SidebarNavExpanded
-            dashboardUrl={dashboardUrl}
-            visibleItems={visibleItems}
-            pathname={pathname}
-            router={router}
-          />
-          <SidebarFooterExpanded
-            handleLogout={handleLogout}
-          />
-        </>
+        /* Expanded Mode navigation */
+        <SidebarNavExpanded
+          dashboardUrl={dashboardUrl}
+          visibleItems={visibleItems}
+          pathname={pathname}
+          router={router}
+        />
+      )}
+
+      {/* Footer section at the very bottom */}
+      {isCollapsed ? (
+        <div className="flex items-center justify-center py-2 border-t-0 mt-auto" style={{ borderTop: "none" }}>
+          <button
+            onClick={handleLogout}
+            title="Keluar"
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 border-none outline-none cursor-pointer text-[var(--sidebar-text)]/60 hover:text-[var(--sidebar-link-hover-text)] hover:bg-[var(--sidebar-link-hover-bg)]"
+          >
+            <div className="sidebar-dock-icon flex items-center justify-center">
+              <SignOut size={18} weight="bold" />
+            </div>
+          </button>
+        </div>
+      ) : (
+        <SidebarFooterExpanded
+          handleLogout={handleLogout}
+        />
       )}
     </motion.aside>
   );

@@ -26,16 +26,17 @@
     --radius: 1rem;
 
     /* Sidebar Theme variables */
-    --sidebar-bg: #faf8f4;
-    --sidebar-border: rgba(141, 122, 82, 0.06);
-    --sidebar-text: #41454d;
+    --sidebar-bg: #f5f5f7;
+    --sidebar-border: #e5e5e7;
+    --sidebar-text: #515154;
     --sidebar-link-bg: transparent;
     --sidebar-link-border: transparent;
-    --sidebar-link-hover-bg: #f3efe6;
-    --sidebar-link-hover-border: #dddddd;
-    --sidebar-link-hover-text: #181d26;
-    --sidebar-link-active-bg: #181d26;
-    --sidebar-link-active-text: #ffffff;
+    --sidebar-link-hover-bg: rgba(0, 0, 0, 0.05);
+    --sidebar-link-hover-border: transparent;
+    --sidebar-link-hover-text: #1d1d1f;
+    --sidebar-link-active-bg: rgba(0, 0, 0, 0.08);
+    --sidebar-link-active-text: #1d1d1f;
+    --sidebar-active-indicator: #0071e3;
 
     /* Dynamic overrides for Tailwind colors */
     --white: 0 0% 100%;
@@ -124,16 +125,17 @@
     --ring: 41 26% 44%;
 
     /* Sidebar Theme variables */
-    --sidebar-bg: #18181b;
-    --sidebar-border: rgba(255, 255, 255, 0.03);
+    --sidebar-bg: #1c1c1e;
+    --sidebar-border: #2c2c2e;
     --sidebar-text: #a1a1aa;
     --sidebar-link-bg: transparent;
     --sidebar-link-border: transparent;
-    --sidebar-link-hover-bg: #2b2b2b;
-    --sidebar-link-hover-border: rgba(255, 255, 255, 0.08);
+    --sidebar-link-hover-bg: rgba(255, 255, 255, 0.06);
+    --sidebar-link-hover-border: transparent;
     --sidebar-link-hover-text: #ffffff;
-    --sidebar-link-active-bg: #ffffff;
-    --sidebar-link-active-text: #181d26;
+    --sidebar-link-active-bg: rgba(255, 255, 255, 0.12);
+    --sidebar-link-active-text: #ffffff;
+    --sidebar-active-indicator: #0a84ff;
 
     /* Dynamic overrides for Tailwind colors */
     --white: 0 0% 100%;
@@ -404,4 +406,97 @@ aside, aside * {
   width: 20px !important;
   height: 20px !important;
   stroke-width: 1.5px !important;
+}
+
+/* Sidebar absolute toggle button */
+.sidebar-toggle {
+  position: fixed !important;
+  left: 188px !important;
+  top: 84px !important;
+  background-color: var(--sidebar-bg) !important;
+  border: 1px solid var(--sidebar-border) !important;
+  color: var(--sidebar-text) !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, border-color 0.2s ease !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+  z-index: 100 !important;
+  cursor: pointer !important;
+}
+
+aside.collapsed .sidebar-toggle {
+  left: 88px !important;
+}
+
+.sidebar-toggle:hover {
+  background-color: var(--sidebar-link-hover-bg) !important;
+  color: var(--sidebar-link-hover-text) !important;
+  border-color: var(--sidebar-border) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Active item right-side vertical strip */
+.pos-nav-active-item {
+  position: relative;
+}
+
+.pos-nav-active-item::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background-color: var(--sidebar-active-indicator);
+  border-radius: 2px;
+}
+
+/* Sidebar Nav Item matches Port 3000 exactly */
+.pos-nav-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  color: var(--sidebar-text) !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  font-size: 0.9rem !important;
+  white-space: nowrap !important;
+  position: relative !important;
+  border: none !important;
+  text-align: left !important;
+  background: transparent !important;
+  width: 100% !important;
+}
+
+.pos-nav-item:hover {
+  background: var(--sidebar-link-hover-bg) !important;
+  color: var(--sidebar-link-hover-text) !important;
+  border-color: transparent !important;
+}
+
+.pos-nav-item.active {
+  background: var(--sidebar-link-active-bg) !important;
+  color: var(--sidebar-link-active-text) !important;
+  border-color: transparent !important;
+}
+
+.pos-nav-item.active::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background-color: var(--sidebar-active-indicator);
+  border-radius: 2px;
 }
