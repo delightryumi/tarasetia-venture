@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
-import { getStorage } from "firebase-admin/storage";
+import { adminDb, adminStorage } from "@/lib/firebaseAdmin";
 
 function generatePIN() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -106,7 +105,7 @@ export async function DELETE(request: Request) {
     }
 
     const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
-    const bucket = bucketName ? getStorage().bucket(bucketName) : null;
+    const bucket = bucketName ? adminStorage.bucket(bucketName) : null;
 
     // 1. Cari & hapus log presensi (attendance logs) dan foto selfie terkait (looping 6 bulan terakhir untuk menghindari kebutuhan index collectionGroup)
     const monthsToCheck: string[] = [];

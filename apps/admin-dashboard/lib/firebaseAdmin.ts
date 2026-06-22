@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import { getStorage, Storage } from "firebase-admin/storage";
 
 const initFirebaseAdmin = () => {
   if (admin.getApps().length > 0) {
@@ -42,6 +43,11 @@ const getAdminDb = () => {
   return getFirestore();
 };
 
+const getAdminStorage = () => {
+  initFirebaseAdmin();
+  return getStorage();
+};
+
 export const adminAuth = new Proxy({} as admin.auth.Auth, {
   get(target, prop, receiver) {
     const instance = getAdminAuth();
@@ -56,6 +62,17 @@ export const adminAuth = new Proxy({} as admin.auth.Auth, {
 export const adminDb = new Proxy({} as admin.firestore.Firestore, {
   get(target, prop, receiver) {
     const instance = getAdminDb();
+    const value = Reflect.get(instance, prop);
+    if (typeof value === "function") {
+      return value.bind(instance);
+    }
+    return value;
+  }
+});
+
+export const adminStorage = new Proxy({} as Storage, {
+  get(target, prop, receiver) {
+    const instance = getAdminStorage();
     const value = Reflect.get(instance, prop);
     if (typeof value === "function") {
       return value.bind(instance);

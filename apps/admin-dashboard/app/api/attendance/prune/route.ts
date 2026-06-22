@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
-import { getStorage } from "firebase-admin/storage";
+import { adminDb, adminStorage } from "@/lib/firebaseAdmin";
 
 function getStoragePathFromUrl(url: string, bucketName: string): string | null {
   try {
@@ -27,7 +26,7 @@ export async function GET(request: Request) {
     if (!bucketName) {
       throw new Error("Storage bucket name is not configured.");
     }
-    const bucket = getStorage().bucket(bucketName);
+    const bucket = adminStorage.bucket(bucketName);
 
     // Calculate threshold (3 months ago)
     const thresholdDate = new Date();

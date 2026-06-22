@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
-import { getStorage } from "firebase-admin/storage";
+import { adminAuth, adminDb, adminStorage } from "@/lib/firebaseAdmin";
 
 // Helper: hitung jarak antara 2 koordinat GPS (Haversine formula) dalam meter
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -50,7 +49,7 @@ export async function POST(request: Request) {
     if (!bucketName) {
       throw new Error("Storage bucket name is not configured.");
     }
-    const bucket = getStorage().bucket(bucketName);
+    const bucket = adminStorage.bucket(bucketName);
     const fileName = `attendance/${hotelCode}/${date}/${staffId}_${type}_${Date.now()}.jpg`;
     const file = bucket.file(fileName);
     const base64Data = selfieBase64.replace(/^data:image\/\w+;base64,/, "");
