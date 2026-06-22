@@ -12,6 +12,14 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // 0. Redirect staff domain to /attendance if they wander into other pages
+    const hostname = window.location.hostname;
+    const isStaff = hostname.startsWith("staff.") || hostname === "staff.localhost";
+    if (isStaff && pathname !== "/attendance" && pathname !== "/api/manifest-attendance" && pathname !== "/manifest-attendance.json") {
+      window.location.replace(`/attendance${window.location.search}`);
+      return;
+    }
+
     const syncTheme = () => {
       // 1. Read shared_theme cookie
       const match = document.cookie.match(/(?:^|; )shared_theme=([^;]*)/);
