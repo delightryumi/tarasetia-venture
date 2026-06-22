@@ -169,7 +169,7 @@ export const useTransactionForm = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const rSnap = await getDocs(getHotelCollection(db, "roomTypes"));
+                const rSnap = await getDocs(getHotelCollection(db, "roomTypes", activeHotelCode));
                 const types = rSnap.docs.map(d => ({ id: d.id, ...d.data() }));
                 setRoomTypes(types);
                 
@@ -183,7 +183,7 @@ export const useTransactionForm = () => {
                     });
                 }
 
-                const bSnap = await getDocs(getHotelCollection(db, "daily_revenue"));
+                const bSnap = await getDocs(getHotelCollection(db, "daily_revenue", activeHotelCode));
                 const allBookings = bSnap.docs.flatMap(d => d.data().entries || []);
                 const uniqueBookings = allBookings.filter((e: any, idx: number, self: any[]) => 
                     self.findIndex(t => t.timestamp === e.timestamp) === idx
@@ -194,7 +194,7 @@ export const useTransactionForm = () => {
             }
         };
         fetchData();
-    }, []);
+    }, [activeHotelCode]);
 
     // Sync nightRates with nights
     useEffect(() => {
@@ -307,6 +307,7 @@ export const useTransactionForm = () => {
             if (!form.checkOut) { toast.error("Check-out Date is required"); return null; }
             if (form.checkOut <= form.checkIn) { toast.error("Check-out Date must be after Check-in Date"); return null; }
             if (!form.rooms[0]?.roomTypeId) { toast.error("Room Category is required"); return null; }
+            if (!form.rooms[0]?.roomNumber) { toast.error("Room Number is required"); return null; }
             if (form.isCompliment && !form.complimentReason) { toast.error("Alasan Compliment wajib diisi"); return null; }
             
             // Check for negative room rates
@@ -540,6 +541,75 @@ export const useTransactionForm = () => {
         setForm(prev => ({ ...prev, [field]: finalValue }));
     };
 
+    const getAvailableRoomNumbers = useCallback((roomTypeId: string) => {
+        const type = roomTypes.find(rt => rt.id === roomTypeId);
+        if (!type) return [];
+        const allPhysicalRooms = (type.physicalRooms || []).map((r: any) => {
+            if (!r) return "";
+            if (typeof r === "string") return r;
+            return r.number || r.name || "";
+        }).filter(Boolean);
+
+        // Pad with generic room numbers up to allotment if empty or less than allotment
+        const allotment = parseInt(type.roomCount) || parseInt(type.totalRooms) || parseInt(type.allotment) || 0;
+        let genericCounter = 1;
+        while (allPhysicalRooms.length < allotment) {
+            let newNumber = `${genericCounter}`;
+            while (allPhysicalRooms.includes(newNumber)) {
+                genericCounter++;
+                newNumber = `${genericCounter}`;
+            }
+            allPhysicalRooms.push(newNumber);
+        }
+        
+        if (!form.checkIn || !form.checkOut || form.checkOut <= form.checkIn) {
+            return allPhysicalRooms;
+        }
+
+        const startD = new Date(form.checkIn);
+        const endD = new Date(form.checkOut);
+
+        const occupiedRooms = new Set<string>();
+        
+        for (let d = new Date(startD); d < endD; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0];
+            
+            occupancy.forEach(e => {
+                if (e.type !== 'accommodation' || e.status?.toUpperCase() === 'CANCELLED' || e.status?.toUpperCase() === 'CANCEL') return;
+                if (e.roomType?.toLowerCase() !== type.name?.toLowerCase()) return;
+                
+                let isOccupiedOnDate = false;
+                if (e.effectiveDate) {
+                    isOccupiedOnDate = (e.effectiveDate === dateStr);
+                } else {
+                    isOccupiedOnDate = (dateStr >= e.checkInDate && dateStr < e.checkOutDate);
+                }
+
+                if (isOccupiedOnDate && e.roomNumber) {
+                    occupiedRooms.add(e.roomNumber.toString().toUpperCase().trim());
+                }
+            });
+
+            queue.forEach(item => {
+                if (item.type !== 'accommodation' || item.status?.toUpperCase() === 'CANCELLED' || item.status?.toUpperCase() === 'CANCEL') return;
+                if (item.roomType?.toLowerCase() !== type.name?.toLowerCase()) return;
+                
+                let isOccupiedOnDate = false;
+                if (item.effectiveDate) {
+                    isOccupiedOnDate = (item.effectiveDate === dateStr);
+                } else {
+                    isOccupiedOnDate = (dateStr >= item.checkInDate && dateStr < item.checkOutDate);
+                }
+
+                if (isOccupiedOnDate && item.roomNumber) {
+                    occupiedRooms.add(item.roomNumber.toString().toUpperCase().trim());
+                }
+            });
+        }
+
+        return allPhysicalRooms.filter((r: string) => !occupiedRooms.has(r.toString().toUpperCase().trim()));
+    }, [form.checkIn, form.checkOut, roomTypes, occupancy, queue]);
+
     return {
         form,
         roomTypes,
@@ -557,6 +627,7 @@ export const useTransactionForm = () => {
         removeRoom,
         updateRoom,
         isAvailable,
+        getAvailableRoomNumbers,
         router,
         handleCancel,
         queue,

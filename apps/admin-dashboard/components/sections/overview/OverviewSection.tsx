@@ -250,7 +250,7 @@ export function OverviewSection() {
 
     const handleExportPDF = () => {
         const doc = new jsPDF();
-        doc.text("Daily Audit Ledger - Bumi Anyom Resort", 14, 15);
+        doc.text("Daily Audit Ledger", 14, 15);
         autoTable(doc, {
             startY: 20,
             head: [['Guest', 'Room', 'Channel', 'Amount', 'Status']],
@@ -380,14 +380,14 @@ export function OverviewSection() {
                 {/* SECTION 1: MOVEMENT GRID */}
                 <section className={styles.statGrid}>
                     <StatCard 
-                        accent={SAGE} icon={<LogIn size={18} />} 
+                        accent="#212121" icon={<LogIn size={18} />} 
                         label={isTodayActive ? "Check In Today" : (isTomorrowActive ? "Check In Tomorrow" : `Check In (${startDate} to ${endDate})`)} 
                         count={dash || checkInCount} items={todayCheckIns}
                         onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
                         onStatusUpdate={handleStatusUpdate}
                     />
                     <StatCard 
-                        accent={PEACH} icon={<Calendar size={18} />} 
+                        accent="#ef4444" icon={<Calendar size={18} />} 
                         label={isTodayActive ? "Check Out Today" : (isTomorrowActive ? "Check Out Tomorrow" : `Check Out (${startDate} to ${endDate})`)} 
                         count={dash || checkOutCount} items={todayCheckOuts}
                         onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}

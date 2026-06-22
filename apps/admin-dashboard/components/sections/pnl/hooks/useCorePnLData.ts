@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase"; 
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { HotelMaster } from "@/lib/pnl-logic";
 import { PnlIncomeItem, PnlExpenseItem, InvestorItem } from "@/lib/pnl-utils";
 
@@ -45,7 +46,7 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
 
             // Fetch global PnL reports
             if (viewMode === "monthly") {
-                const docRef = doc(db, "global_pnl_reports", month);
+                const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data();
@@ -92,7 +93,7 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
                 let latestScPaid = 0;
                 let latestLbPaid = 0;
 
-                const pnlQ = query(collection(db, "global_pnl_reports"), 
+                const pnlQ = query(getHotelCollection(db, "global_pnl_reports"), 
                             where("__name__", ">=", `${y}-01`), 
                             where("__name__", "<=", `${y}-12`));
                 const pnlSnap = await getDocs(pnlQ);
@@ -171,55 +172,55 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
     const updateVat = async (val: number) => {
         setVatPercentage(val);
         try {
-            const docRef = doc(db, "global_pnl_reports", month);
-            await updateDoc(docRef, { vatPercentage: val });
+            const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
+            await setDoc(docRef, { vatPercentage: val }, { merge: true });
         } catch (error) { console.error("Failed to save VAT:", error); }
     };
 
     const updateMgmtFee = async (val: number) => {
         setMgmtFeePercentage(val);
         try {
-            const docRef = doc(db, "global_pnl_reports", month);
-            await updateDoc(docRef, { mgmtFeePercentage: val });
+            const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
+            await setDoc(docRef, { mgmtFeePercentage: val }, { merge: true });
         } catch (error) { console.error("Failed to save Fee:", error); }
     };
 
     const updateMgmtFeeRoom = async (val: number) => {
         setMgmtFeeRoomPercentage(val);
         try {
-            const docRef = doc(db, "global_pnl_reports", month);
-            await updateDoc(docRef, { mgmtFeeRoomPercentage: val });
+            const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
+            await setDoc(docRef, { mgmtFeeRoomPercentage: val }, { merge: true });
         } catch (error) { console.error("Failed to save Room Fee:", error); }
     };
 
     const updateMgmtFeeFnb = async (val: number) => {
         setMgmtFeeFnbPercentage(val);
         try {
-            const docRef = doc(db, "global_pnl_reports", month);
-            await updateDoc(docRef, { mgmtFeeFnbPercentage: val });
+            const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
+            await setDoc(docRef, { mgmtFeeFnbPercentage: val }, { merge: true });
         } catch (error) { console.error("Failed to save F&B Fee:", error); }
     };
 
     const updateServiceCharge = async (val: number) => {
         setServiceChargePercentage(val);
         try {
-            const docRef = doc(db, "global_pnl_reports", month);
-            await updateDoc(docRef, { serviceChargePercentage: val });
+            const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
+            await setDoc(docRef, { serviceChargePercentage: val }, { merge: true });
         } catch (error) { console.error("Failed to save Service Charge:", error); }
     };
 
     const updateLostBreakage = async (val: number) => {
         setLostBreakagePercentage(val);
         try {
-            const docRef = doc(db, "global_pnl_reports", month);
-            await updateDoc(docRef, { lostBreakagePercentage: val });
+            const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
+            await setDoc(docRef, { lostBreakagePercentage: val }, { merge: true });
         } catch (error) { console.error("Failed to save Lost Breakage:", error); }
     };
 
     const updateStartingBalance = async (val: number) => {
         setStartingBalance(val);
         try {
-            const docRef = doc(db, "global_pnl_reports", month);
+            const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
             await setDoc(docRef, { startingBalance: val }, { merge: true });
         } catch (error) { console.error("Failed to save Starting Balance:", error); }
     };
@@ -227,7 +228,7 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
     const updateFixedAssetsValue = async (val: number) => {
         setFixedAssetsValue(val);
         try {
-            const docRef = doc(db, "global_pnl_reports", month);
+            const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
             await setDoc(docRef, { fixedAssetsValue: val }, { merge: true });
         } catch (error) { console.error("Failed to save Fixed Assets Value:", error); }
     };
@@ -235,7 +236,7 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
     const updateVatPaid = async (val: number) => {
         setVatPaid(val);
         try {
-            const docRef = doc(db, "global_pnl_reports", month);
+            const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
             await setDoc(docRef, { vatPaid: val }, { merge: true });
         } catch (error) { console.error("Failed to save VAT Paid:", error); }
     };
@@ -243,7 +244,7 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
     const updateFeePaid = async (val: number) => {
         setFeePaid(val);
         try {
-            const docRef = doc(db, "global_pnl_reports", month);
+            const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
             await setDoc(docRef, { feePaid: val }, { merge: true });
         } catch (error) { console.error("Failed to save Fee Paid:", error); }
     };
@@ -251,7 +252,7 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
     const updateScPaid = async (val: number) => {
         setScPaid(val);
         try {
-            const docRef = doc(db, "global_pnl_reports", month);
+            const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
             await setDoc(docRef, { scPaid: val }, { merge: true });
         } catch (error) { console.error("Failed to save Service Charge Paid:", error); }
     };
@@ -259,7 +260,7 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
     const updateLbPaid = async (val: number) => {
         setLbPaid(val);
         try {
-            const docRef = doc(db, "global_pnl_reports", month);
+            const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
             await setDoc(docRef, { lbPaid: val }, { merge: true });
         } catch (error) { console.error("Failed to save Lost & Breakage Paid:", error); }
     };
@@ -268,8 +269,8 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
         const updated = { ...hotelGopPercentages, [hotelId]: val };
         setHotelGopPercentages(updated);
         try {
-            const docRef = doc(db, "global_pnl_reports", month);
-            await updateDoc(docRef, { hotelGopPercentages: updated });
+            const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
+            await setDoc(docRef, { hotelGopPercentages: updated }, { merge: true });
         } catch (error) { console.error("Failed to save Hotel GOP:", error); }
     };
 

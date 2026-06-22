@@ -8,7 +8,7 @@
     flex-direction: column;
     gap: 48px;
     font-family: var(--font-sans, -apple-system, sans-serif);
-    color: var(--color-neutral-900);
+    color: #181d26;
 }
 
 /* Header & Tabs */
@@ -18,7 +18,7 @@
     justify-content: space-between;
     gap: 24px;
     padding-bottom: 32px;
-    border-bottom: 1px solid var(--color-neutral-200);
+    border-bottom: 1px solid #dddddd;
 }
 
 @media (min-width: 1024px) {
@@ -42,21 +42,21 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.2em;
-    color: var(--color-sage);
+    color: #9297a0;
 }
 
 .title {
     font-size: 36px;
     font-weight: 450;
     letter-spacing: -0.02em;
-    color: var(--color-neutral-900);
+    color: #181d26;
     line-height: 1.1;
 }
 
 /* Light mode: title highlight = hitam tebal */
 .titleHighlight {
     font-weight: 600;
-    color: var(--color-neutral-900);
+    color: #181d26;
 }
 
 .headerActions {
@@ -71,9 +71,9 @@
     align-items: center;
     gap: 10px;
     padding: 4px;
-    background: var(--color-neutral-100);
+    background: #f8fafc;
     border-radius: 10px;
-    border: 1px solid var(--color-neutral-200);
+    border: 1px solid #dddddd;
 }
 
 .tabButton {
@@ -86,15 +86,15 @@
     letter-spacing: 0.1em;
     border: none;
     background: transparent;
-    color: var(--color-sage);
+    color: #9297a0;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .tabButtonActive {
-    background: var(--color-neutral-50);
-    border: 1px solid var(--color-neutral-200);
-    color: var(--color-neutral-900);
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    color: #181d26;
     box-shadow: 0 2px 4px rgba(0,0,0,0.04);
 }
 
@@ -106,8 +106,8 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    background: var(--color-neutral-900);
-    color: var(--color-neutral-50);
+    background: #181d26;
+    color: #ffffff;
     border: none;
     cursor: pointer;
     display: flex;
@@ -117,7 +117,7 @@
 }
 
 .primaryButton:hover {
-    background: var(--color-neutral-950);
+    background: #0d1218;
 }
 
 /* Search Bar */
@@ -132,7 +132,7 @@
     left: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--color-sage);
+    color: #9297a0;
     pointer-events: none;
     display: flex;
     align-items: center;
@@ -143,17 +143,17 @@
     width: 100%;
     height: 40px;
     padding: 0 16px 0 42px;
-    background: var(--color-neutral-50);
-    border: 1px solid var(--color-neutral-200);
+    background: #ffffff;
+    border: 1px solid #dddddd;
     border-radius: 6px;
     font-size: 13px;
-    color: var(--color-neutral-900);
+    color: #181d26;
     transition: all 0.2s ease;
 }
 
 .searchInput:focus {
     outline: none;
-    border-color: var(--color-neutral-900);
+    border-color: #181d26;
     box-shadow: 0 0 0 3px rgba(24, 29, 38, 0.05);
 }
 
@@ -168,8 +168,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-sage);
-    background: var(--color-neutral-100);
+    color: #9297a0;
+    background: #f8fafc;
     gap: 12px;
 }
 
@@ -177,8 +177,8 @@
 .spinner {
     width: 32px;
     height: 32px;
-    border: 4px solid var(--color-neutral-200);
-    border-top: 4px solid var(--color-neutral-900);
+    border: 4px solid #e2e8f0;
+    border-top: 4px solid #181d26;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -224,12 +224,12 @@
 }
 
 .customScrollbar::-webkit-scrollbar-thumb {
-    background: var(--color-neutral-300);
+    background: #e0e2e6;
     border-radius: 10px;
 }
 
 .customScrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--color-sage);
+    background: #9297a0;
 }
 
 .pointerEventsAuto {

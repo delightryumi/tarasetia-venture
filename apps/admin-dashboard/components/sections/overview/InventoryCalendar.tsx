@@ -293,7 +293,7 @@ export function InventoryCalendar({
         const s = booking.status?.toUpperCase() || '';
 
         if (gs === 'arriving') return '#3b82f6'; // Blue
-        if (gs === 'checked_in' || s === 'CHECKED_IN' || rs === 'occupied') return '#10b981'; // Green
+        if (gs === 'checked_in' || s === 'CHECKED_IN' || rs === 'occupied') return '#212121'; // Black/Charcoal
         if (gs === 'checked_out' || s === 'CHECKED_OUT') return '#71717a'; // Gray
         if (gs === 'no_show') return '#ef4444'; // Red
         
@@ -327,7 +327,7 @@ export function InventoryCalendar({
             <div style={{ display: 'flex', flexDirection: 'column', zIndex: 40, borderBottom: '1px solid var(--f-hairline)', backgroundColor: 'var(--f-surface)' }}>
                 <div className={styles.calendarHeader} style={{ flexWrap: 'wrap', gap: '16px', padding: '16px 20px', borderBottom: '1px solid var(--f-hairline)' }}>
                 <div className={styles.cardHeaderLeft}>
-                    <div className={styles.headerBadge} style={{ backgroundColor: 'var(--foreground)', color: 'var(--f-canvas)' }}>
+                    <div className={styles.headerBadge} style={{ backgroundColor: 'var(--foreground)', color: '#ffffff' }}>
                         <CalendarIcon size={15} />
                     </div>
                     <div className={styles.headerMeta}>
@@ -382,7 +382,7 @@ export function InventoryCalendar({
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <button onClick={handlePrevMonth} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--f-hairline)', boxShadow: 'none' }} title="Previous Month">
+                            <button onClick={handlePrevMonth} className="gantt-nav-btn" style={{ width: '28px', height: '28px', border: '1px solid var(--f-hairline)', boxShadow: 'none' }} title="Previous Month">
                                 <ChevronLeft size={14} />
                             </button>
                             <div style={{ textAlign: 'center', minWidth: '90px', fontWeight: 700, letterSpacing: '0.05em' }}>
@@ -390,10 +390,10 @@ export function InventoryCalendar({
                                     {format(viewDate, 'MMMM yyyy')}
                                 </span>
                             </div>
-                            <button onClick={handleNextMonth} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--f-hairline)', boxShadow: 'none' }} title="Next Month">
+                            <button onClick={handleNextMonth} className="gantt-nav-btn" style={{ width: '28px', height: '28px', border: '1px solid var(--f-hairline)', boxShadow: 'none' }} title="Next Month">
                                 <ChevronRight size={14} />
                             </button>
-                            <button onClick={handleToday} className={styles.btnIcon} style={{ height: '28px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, padding: '0 12px', border: '1px solid var(--f-hairline)', boxShadow: 'none', width: 'auto', marginLeft: '4px' }}>
+                            <button onClick={handleToday} className="gantt-nav-btn" style={{ height: '28px', fontSize: '11px', fontWeight: 600, padding: '0 12px', border: '1px solid var(--f-hairline)', boxShadow: 'none', width: 'auto', marginLeft: '4px' }}>
                                 Today
                             </button>
                         </div>
@@ -402,10 +402,10 @@ export function InventoryCalendar({
                         
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-light-muted)', marginRight: '4px' }}>SCROLL</span>
-                            <button onClick={handleScrollLeft} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--f-hairline)', boxShadow: 'none', backgroundColor: 'var(--f-surface)' }} title="Scroll Left">
+                            <button onClick={handleScrollLeft} className="gantt-nav-btn" style={{ width: '28px', height: '28px', border: '1px solid var(--f-hairline)', boxShadow: 'none' }} title="Scroll Left">
                                 <ChevronLeft size={14} />
                             </button>
-                            <button onClick={handleScrollRight} className={styles.btnIcon} style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--f-hairline)', boxShadow: 'none', backgroundColor: 'var(--f-surface)' }} title="Scroll Right">
+                            <button onClick={handleScrollRight} className="gantt-nav-btn" style={{ width: '28px', height: '28px', border: '1px solid var(--f-hairline)', boxShadow: 'none' }} title="Scroll Right">
                                 <ChevronRight size={14} />
                             </button>
                         </div>
@@ -416,7 +416,7 @@ export function InventoryCalendar({
                                 <button 
                                     onClick={onAddTransaction} 
                                     className="gantt-btn-primary" 
-                                    style={{ height: '28px', borderRadius: '6px', padding: '0 12px', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--foreground)', color: 'var(--f-canvas)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '11px' }}
+                                    style={{ height: '28px', borderRadius: '6px', padding: '0 12px', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--foreground)', color: '#ffffff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '11px' }}
                                     title="Add Transaction"
                                 >
                                     <PlusCircle size={14} />
@@ -429,27 +429,27 @@ export function InventoryCalendar({
             </div>
 
             {/* Legend Area */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', padding: '8px 20px', backgroundColor: 'var(--f-canvas)', alignItems: 'center', borderBottom: '1px solid var(--f-hairline)' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', padding: '8px 20px', backgroundColor: 'var(--f-surface)', alignItems: 'center', borderBottom: '1px solid var(--f-hairline)' }}>
                 <span style={{ fontSize: '9px', fontWeight: 800, color: 'var(--f-muted)', letterSpacing: '0.1em', marginRight: '4px' }}>STATUS TAMU:</span>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: '#8b5cf6' }} />
+                    <div className="gantt-legend-dot status-confirmed" />
                     <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--foreground)', opacity: 0.8 }}>Confirmed</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: '#3b82f6' }} />
+                    <div className="gantt-legend-dot status-arriving" />
                     <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--foreground)', opacity: 0.8 }}>Arriving</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: '#10b981' }} />
+                    <div className="gantt-legend-dot status-in-house" />
                     <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--foreground)', opacity: 0.8 }}>In House</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: '#71717a' }} />
+                    <div className="gantt-legend-dot status-checked-out" />
                     <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--foreground)', opacity: 0.8 }}>Checked Out</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: '#eab308' }} />
+                    <div className="gantt-legend-dot status-pending" />
                     <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--foreground)', opacity: 0.8 }}>Pending / DP</span>
                 </div>
 
@@ -465,7 +465,7 @@ export function InventoryCalendar({
                     <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--foreground)', opacity: 0.8 }}>Maintenance</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Sparkle size={14} weight="fill" color="#10b981" />
+                    <Sparkle size={14} weight="fill" color="#212121" />
                     <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--foreground)', opacity: 0.8 }}>Clean</span>
                 </div>
             </div>
@@ -487,7 +487,7 @@ export function InventoryCalendar({
                                 <span>{group.typeName} <span style={{ opacity: 0.5, fontWeight: 500 }}>({group.allotment})</span></span>
                                 {editingTypeId === group.typeId ? (
                                     <div style={{ display: 'flex', gap: '4px' }}>
-                                        <button onClick={handleEditSave} className={styles.btnIcon} style={{ width: '24px', height: '24px', color: 'var(--sage)' }} title="Save"><Check size={14} /></button>
+                                        <button onClick={handleEditSave} className={styles.btnIcon} style={{ width: '24px', height: '24px', color: 'var(--color-neutral-900, #212121)' }} title="Save"><Check size={14} /></button>
                                         <button onClick={handleEditCancel} className={styles.btnIcon} style={{ width: '24px', height: '24px', color: '#ef4444' }} title="Cancel"><X size={14} /></button>
                                     </div>
                                 ) : (
@@ -539,8 +539,8 @@ export function InventoryCalendar({
                             const isActive = isSameDay(day, activeDate);
                             return (
                                 <div key={idx} className={`gantt-date-cell ${isActive ? 'is-today' : ''} ${isEnd && !isActive ? 'is-weekend' : ''}`}>
-                                    <span className="gantt-date-day" style={{ color: isEnd && !isActive ? '#fca5a5' : '' }}>{format(day, 'EEE')}</span>
-                                    <span className="gantt-date-num" style={{ color: isEnd && !isActive ? '#ef4444' : '' }}>{format(day, 'dd')}</span>
+                                    <span className="gantt-date-day">{format(day, 'EEE')}</span>
+                                    <span className="gantt-date-num">{format(day, 'dd')}</span>
                                 </div>
                             );
                         })}
@@ -590,8 +590,8 @@ export function InventoryCalendar({
                                                 return (
                                                     <div 
                                                         key={`${booking.bookingId || booking.timestamp}-${bIdx}`} 
-                                                        className={`gantt-booking-block`}
-                                                        style={{ left: `${leftPct}%`, width: `calc(${widthPct}% - 4px)`, backgroundColor: bgColor }}
+                                                        className={`gantt-booking-block status-${statusTxt.toLowerCase().replace(/\./g, '').replace(/[^a-z0-9]/g, '-')}`}
+                                                        style={{ left: `${leftPct}%`, width: `calc(${widthPct}% - 4px)` }}
                                                         onClick={() => onCellClick && onCellClick([booking], booking.checkInDate, group.typeName)}
                                                         title={`${booking.guestName} | Status: ${statusTxt} | ${booking.checkInDate} to ${booking.checkOutDate}`}
                                                     >
@@ -609,7 +609,7 @@ export function InventoryCalendar({
                                                                 <Wrench size={16} weight="fill" color="#fca5a5" style={{ marginLeft: '4px', flexShrink: 0 }} title="Maintenance" />
                                                             )}
                                                             {booking.roomStatus?.toLowerCase() === 'clean' && (
-                                                                <Sparkle size={16} weight="fill" color="#a7f3d0" style={{ marginLeft: '4px', flexShrink: 0 }} title="Clean" />
+                                                                <Sparkle size={16} weight="fill" color="#ffffff" style={{ marginLeft: '4px', flexShrink: 0 }} title="Clean" />
                                                             )}
 
                                                             <span className="gantt-booking-name">{booking.guestName || "Guest"}</span>

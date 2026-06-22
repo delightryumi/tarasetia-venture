@@ -141,7 +141,7 @@ export default function OnboardingPage() {
             <input 
               type="text" 
               required
-              placeholder="Contoh: Bumi Anyom Resort"
+              placeholder="Contoh: Grand Sunset Resort"
               className={styles.input}
               value={businessName}
               onChange={(e) => setBusinessName(e.target.value)}

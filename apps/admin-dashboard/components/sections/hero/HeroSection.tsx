@@ -190,7 +190,7 @@ export const HeroSection = () => {
                             </span>
                         </div>
                         <h2 className="text-white font-bold text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.1] drop-shadow-2xl max-w-4xl">
-                            {activeSlide.title || "Welcome to Bumi Anyom"}
+                            {activeSlide.title || "Welcome to Our Resort"}
                         </h2>
                         <p className="mt-4 text-white/80 text-sm sm:text-base md:text-lg font-light leading-relaxed max-w-2xl drop-shadow-md">
                             {activeSlide.subtitle || "Experience luxury in the heart of nature."}
@@ -310,7 +310,7 @@ export const HeroSection = () => {
                             type="text"
                             value={activeSlide.title || ""}
                             onChange={(e) => updateActiveSlide({ title: e.target.value })}
-                            placeholder="e.g. Welcome to Bumi Anyom"
+                            placeholder="e.g. Welcome to Our Resort"
                             className="input-clean font-bold"
                         />
                     </div>

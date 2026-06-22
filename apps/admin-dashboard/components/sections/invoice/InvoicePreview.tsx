@@ -40,11 +40,10 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
                 <div className="invoice-header">
                     <div className="logo-section">
                         {branding.darkLogo ? (
-                            <img src={branding.darkLogo} alt="Bumi Anyom Logo" className="invoice-logo" />
+                            <img src={branding.darkLogo} alt="Partner Logo" className="invoice-logo" />
                         ) : (
-                            <h2 className="brand-title">BUMI ANYOM</h2>
+                            <h2 className="brand-title">{branding.companyName || 'PARTNER'}</h2>
                         )}
-                        <p className="invoice-subtitle" style={{ fontSize: '10pt', letterSpacing: '0.1em', marginTop: '4px', paddingLeft: '15px' }}>Manage By Nexura</p>
                     </div>
                     <div className="title-section" style={{ textAlign: 'right' }}>
                         <h1 className="brand-title" style={{ fontSize: '24pt', fontWeight: 200, margin: 0 }}>
@@ -108,10 +107,10 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
                     <div className="info-card" style={{ textAlign: 'right' }}>
                         <h4>From</h4>
                         <p style={{ fontSize: '12pt', fontWeight: 600, color: 'var(--rich-black)', margin: '0 0 8px 0' }}>
-                            Bumi Anyom Resort
+                            {branding.companyName || 'Partner Property'}
                         </p>
                         <p style={{ fontSize: '10pt', color: '#706c64', lineHeight: '1.6', maxWidth: '120mm' }}>
-                            {branding.address || 'Jl. Bumi Anyom No. 1, Temanggung'}<br />
+                            {branding.address || 'Alamat properti belum diisi'}<br />
                             Central Java, Indonesia
                         </p>
                         <div style={{ marginTop: '12px', fontSize: '9pt', color: '#9fa392' }}>
@@ -164,16 +163,16 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
                 {/* Footer */}
                 <div className="footer-section">
                     <div className="thank-you">
-                        {notes || 'Thank you for choosing Bumi Anyom Resort. We look forward to your next visit.'}
+                        {notes || 'Terima kasih atas kepercayaan Anda. Kami berharap dapat melayani Anda kembali.'}
                     </div>
                     <div className="signatory">
                         <p>Authorized Signatory</p>
                         <div className="sig-line" />
-                        <p style={{ marginTop: '4px', fontWeight: 600 }}>Bumi Anyom Resort</p>
+                        <p style={{ marginTop: '4px', fontWeight: 600 }}>{branding.companyName || 'Management'}</p>
                     </div>
                     <div className="branding-footer">
-                        <p>www.bumianyom.com</p>
-                        <p>Temanggung • Central Java • Indonesia</p>
+                        <p>{branding.website || ''}</p>
+                        <p>{branding.address ? branding.address.split(',').slice(-1)[0]?.trim() : 'Indonesia'}</p>
                     </div>
                 </div>
             </div>

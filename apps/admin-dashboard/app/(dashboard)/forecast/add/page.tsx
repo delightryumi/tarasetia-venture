@@ -31,7 +31,8 @@ function AddTransactionContent() {
         addToQueue,
         removeFromQueue,
         commitTransactions,
-        handleCancel
+        handleCancel,
+        getAvailableRoomNumbers
     } = useTransactionForm();
 
     return (
@@ -74,6 +75,7 @@ function AddTransactionContent() {
                                         updateForm({ incomeType: "" });
                                     }}
                                     onSubmit={addToQueue}
+                                    getAvailableRoomNumbers={getAvailableRoomNumbers}
                                 />
                             </div>
 

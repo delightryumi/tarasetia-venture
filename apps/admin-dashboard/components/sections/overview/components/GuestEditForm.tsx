@@ -149,35 +149,58 @@ export function GuestEditForm({ formData, setFormData, roomTypes }: GuestEditFor
                     <NexuraInputLabel label="Total Gross Amount" type="number" value={formData.totalAmount} onChange={(v: string) => setFormData({...formData, totalAmount: Number(v)})} />
                     
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <NexuraInputLabel label="Pay at Hotel (Cash/Transfer to Hotel)" type="number" value={formData.payHotel} onChange={(v: string) => setFormData({...formData, payHotel: Number(v)})} />
+                        <div style={{ position: 'relative' }}>
+                            <NexuraInputLabel label="Pay at Hotel (Cash/Transfer to Hotel)" type="number" value={formData.payHotel} onChange={(v: string) => setFormData({...formData, payHotel: Number(v)})} />
+                            <button
+                                type="button"
+                                title="Auto-fill with remaining balance to settle full payment"
+                                onClick={() => {
+                                    const diff = Number(formData.totalAmount || 0) - Number(formData.payTransfer || 0);
+                                    if (diff >= 0) setFormData({...formData, payHotel: diff, paymentStatus: 'Lunas', status: 'Lunas'});
+                                }}
+                                style={{
+                                    position: 'absolute', right: '4px', bottom: '8px',
+                                    height: '24px', padding: '0 8px', fontSize: '9px', fontWeight: 700,
+                                    borderRadius: '4px', backgroundColor: 'var(--color-primary, var(--f-sage))', color: 'var(--color-white, #fff)',
+                                    border: 'none', cursor: 'pointer', zIndex: 10
+                                }}
+                            >
+                                FULL AMOUNT
+                            </button>
+                        </div>
                         <NexuraInputLabel label="Virtual Payment / OTA" type="number" value={formData.payTransfer} onChange={(v: string) => setFormData({...formData, payTransfer: Number(v)})} />
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <label className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>Payment Status</label>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                            {["Lunas", "Belum Bayar", "DP / Partial", "CANCELLED"].map(s => (
-                                <button 
-                                    key={s}
-                                    type="button"
-                                    onClick={() => setFormData({...formData, paymentStatus: s, status: s})}
-                                    style={{
-                                        height: '36px',
-                                        fontSize: '9px',
-                                        fontWeight: 700,
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.05em',
-                                        borderRadius: '6px',
-                                        cursor: 'pointer',
-                                        border: '1px solid var(--f-hairline)',
-                                        backgroundColor: formData.paymentStatus === s ? 'var(--f-sage)' : 'var(--f-canvas)',
-                                        color: formData.paymentStatus === s ? '#ffffff' : 'var(--f-muted)',
-                                        transition: 'all 0.15s'
-                                    }}
-                                >
-                                    {s}
-                                </button>
-                            ))}
+                            {["Lunas", "Belum Bayar", "DP / Partial", "CANCELLED"].map(s => {
+                                const isDisabled = s === "Lunas" && (Number(formData.payHotel || 0) + Number(formData.payTransfer || 0) < Number(formData.totalAmount || 0));
+                                return (
+                                    <button 
+                                        key={s}
+                                        type="button"
+                                        disabled={isDisabled}
+                                        onClick={() => setFormData({...formData, paymentStatus: s, status: s})}
+                                        style={{
+                                            height: '36px',
+                                            fontSize: '9px',
+                                            fontWeight: 700,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                            borderRadius: '6px',
+                                            cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                            border: '1px solid var(--f-hairline)',
+                                            backgroundColor: formData.paymentStatus === s ? 'var(--f-sage)' : 'var(--f-canvas)',
+                                            color: formData.paymentStatus === s ? '#ffffff' : (isDisabled ? 'var(--f-hairline)' : 'var(--f-muted)'),
+                                            opacity: isDisabled ? 0.5 : 1,
+                                            transition: 'all 0.15s'
+                                        }}
+                                    >
+                                        {s}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

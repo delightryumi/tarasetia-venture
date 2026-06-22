@@ -2,13 +2,13 @@
     :global(.dark) .container { color: #e8e8e8; }
     :global(.dark) .title { color: #e8e8e8; }
     /* Dark mode: title highlight = putih */
-    :global(.dark) .titleHighlight { color: var(--color-neutral-50); font-weight: 700; }
+    :global(.dark) .titleHighlight { color: #ffffff; font-weight: 700; }
     :global(.dark) .subTitle { color: #666; }
     :global(.dark) .header { border-bottom-color: #333; }
     :global(.dark) .tabGroup { background: #1e1e1e; border-color: #333; }
     :global(.dark) .tabButton { color: #888; }
     :global(.dark) .tabButtonActive { background: #2a2a2a; border-color: #444; color: #e8e8e8; }
-    :global(.dark) .primaryButton { background: #e8e8e8; color: var(--color-neutral-900); }
+    :global(.dark) .primaryButton { background: #e8e8e8; color: #181d26; }
     :global(.dark) .primaryButton:hover { background: #d0d0d0; }
     :global(.dark) .searchInput { background: #1e1e1e; border-color: #333; color: #e8e8e8; }
     :global(.dark) .searchInput:focus { border-color: #555; box-shadow: 0 0 0 3px rgba(255,255,255,0.05); }
@@ -54,9 +54,9 @@
     :global(.dark) .roleSelectBtn { background: #262626; border-color: #333; color: #888; }
     :global(.dark) .roleSelectBtn:hover { border-color: #555; color: #ccc; }
     /* Dark mode: active role = putih */
-    :global(.dark) .roleSelectBtnActive { background: #e8e8e8; border-color: #e8e8e8; color: var(--color-neutral-900); }
+    :global(.dark) .roleSelectBtnActive { background: #e8e8e8; border-color: #e8e8e8; color: #181d26; }
     :global(.dark) .drawerFooter { background: #262626; border-top-color: #333; }
-    :global(.dark) .submitBtn { background: #e8e8e8; color: var(--color-neutral-900); }
+    :global(.dark) .submitBtn { background: #e8e8e8; color: #181d26; }
     :global(.dark) .submitBtn:hover { background: #d0d0d0; }
     :global(.dark) .cancelBtn { background: #1e1e1e; border-color: #333; color: #e8e8e8; }
     :global(.dark) .cancelBtn:hover { border-color: #555; color: #ccc; }
@@ -87,8 +87,8 @@
     :global(.dark) .toggleBtnOff { background-color: #3f3f46 !important; }
     :global(.dark) .toggleBtnSubOff { background-color: #3f3f46 !important; }
     /* Circle ON dark = hitam (kontras dengan putih background toggle) */
-    :global(.dark) .toggleBtnOn .toggleCircle { background-color: var(--color-neutral-900); }
-    :global(.dark) .toggleBtnSubOn .toggleCircleSub { background-color: var(--color-neutral-900); }
+    :global(.dark) .toggleBtnOn .toggleCircle { background-color: #181d26; }
+    :global(.dark) .toggleBtnSubOn .toggleCircleSub { background-color: #181d26; }
     :global(.dark) .toggleCircle { background-color: #2a2a2a; }
     :global(.dark) .toggleCircleSub { background-color: #2a2a2a; }
     /* Icon ON dark = putih agar kontras di dalam circle hitam */

@@ -42,7 +42,7 @@ export const SuccessReceipt: React.FC<SuccessReceiptProps> = ({
             <div className="space-y-2">
                 <h3 className="apple-display-md text-[#0F0F12]">Pembayaran Berhasil!</h3>
                 <p className="apple-body text-[#7a7a7a]">
-                    Transaksi atas nama <span className="apple-body-strong text-[#0F0F12]">{displayCustomerName}</span> telah dicatat ke dalam sistem akuntansi Bumi Anyom.
+                    Transaksi atas nama <span className="apple-body-strong text-[#0F0F12]">{displayCustomerName}</span> telah berhasil dicatat ke dalam sistem.
                 </p>
             </div>
 

@@ -92,7 +92,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
                         <div className="text-center hidden md:block">
                             <h2 className="apple-tagline text-[#0F0F12]">Penyelesaian Pembayaran</h2>
-                            <span className="apple-fine-print block mt-0.5">Sistem Kasir Terpadu Bumi Anyom Resort</span>
+                            <span className="apple-fine-print block mt-0.5">Sistem Kasir Terpadu — Setara Venture</span>
                         </div>
 
                         {/* Inline Customer & Table Badge */}
@@ -124,7 +124,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
                                 <div className="space-y-2">
                                     <h3 className="apple-display-md text-[#0F0F12]">Pembayaran Berhasil!</h3>
-                                    <p className="apple-body text-[#7a7a7a]">Transaksi atas nama <span className="apple-body-strong text-[#0F0F12]">{displayCustomerName}</span> telah dicatat ke dalam sistem akuntansi Bumi Anyom.</p>
+                                    <p className="apple-body text-[#7a7a7a]">Transaksi atas nama <span className="apple-body-strong text-[#0F0F12]">{displayCustomerName}</span> telah berhasil dicatat ke dalam sistem.</p>
                                 </div>
 
                                 <div className="bg-[#f6f6f8] rounded-[18px] p-6 max-w-md mx-auto border border-[#e0e0e0] space-y-3 text-left shadow-sm">

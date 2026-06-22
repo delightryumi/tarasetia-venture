@@ -94,7 +94,8 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
           });
           
           setHeldOrders(prev => {
-            if (prev.length > 0 && orders.length > prev.length) {
+            const hasNewOrder = orders.some(o => o.id && !prev.some(p => p.id === o.id));
+            if (prev.length > 0 && hasNewOrder) {
               setNewOrderAlert(true);
               if (audioAlert) {
                 audioAlert.play().catch(e => console.log('Audio playback block:', e));
@@ -128,7 +129,8 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
             return new Date(o.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }) === todayStr;
           });
           setCompletedOrders(prev => {
-            if (prev.length > 0 && orders.length > prev.length) {
+            const hasNewOrder = orders.some(o => o.id && !prev.some(p => p.id === o.id));
+            if (prev.length > 0 && hasNewOrder) {
               setNewOrderAlert(true);
               if (audioAlert) {
                 audioAlert.play().catch(e => console.log('Audio playback block:', e));
@@ -376,7 +378,12 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                 completedOrders.map((order, i) => (
                   <div
                     key={order.id || i}
+                    onClick={() => {
+                      setSelectedTable(order.tableNumber ? `Meja ${order.tableNumber.replace(/^(meja|table)\s*/i, '')}` : `Transaksi #${order.id?.slice(-8) || i}`);
+                      setSelectedOrder(order);
+                    }}
                     className={`${ds.rtFeedCard} ${ds.rtFeedCardCompleted}`}
+                    style={{ cursor: 'pointer' }}
                   >
                     <div className={ds.rtFeedCardRow}>
                       <div className={ds.rtFeedCardInfo}>
@@ -454,31 +461,46 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                   {/* Item List */}
                   <span className={ds.rtItemsLabel}>Daftar Item Menu</span>
                   <div className={ds.rtItemsList}>
-                    {selectedOrder.cart && selectedOrder.cart.map((item: any, idx: number) => (
-                      <div key={idx} className={ds.rtItemRow}>
-                        <div className={ds.rtItemInfo}>
-                          <span className={ds.rtItemName}>{item.product?.name || item.name || 'Menu Item'}</span>
-                          <span className={ds.rtItemMeta}>
-                            {item.quantity} × {formatIDR(item.product?.price || item.price || 0)}
-                          </span>
-                        </div>
-                        <span className={ds.rtItemTotal}>
-                          {formatIDR((item.product?.price || item.price || 0) * item.quantity)}
-                        </span>
-                      </div>
-                    ))}
+                    {(() => {
+                      const itemsList = selectedOrder.cart || selectedOrder.items || selectedOrder.products || [];
+                      if (itemsList.length === 0) {
+                        return <span className={ds.rtModalEmptyText} style={{ padding: '8px 0', fontSize: '13px' }}>Tidak ada item terdaftar</span>;
+                      }
+                      return itemsList.map((item: any, idx: number) => {
+                        const name = item.product?.productstock?.name || item.product?.name || item.name || 'Menu Item';
+                        const quantity = item.quantity ?? item.qty ?? item.count ?? 0;
+                        const price = item.product?.sellprice ?? item.product?.price ?? item.price ?? 0;
+                        return (
+                          <div key={idx} className={ds.rtItemRow}>
+                            <div className={ds.rtItemInfo}>
+                              <span className={ds.rtItemName}>{name}</span>
+                              <span className={ds.rtItemMeta}>
+                                {quantity} × {formatIDR(price)}
+                              </span>
+                            </div>
+                            <span className={ds.rtItemTotal}>
+                              {formatIDR(price * quantity)}
+                            </span>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
 
                   {/* Totals */}
                   <div className={ds.rtTotalsSection}>
                     <div className={ds.rtTotalRow}>
                       <span className={ds.rtTotalLabel}>Subtotal</span>
-                      <span className={ds.rtTotalValue}>{formatIDR(selectedOrder.subtotal || 0)}</span>
+                      <span className={ds.rtTotalValue}>
+                        {formatIDR(selectedOrder.subtotal || selectedOrder.totalAmount || selectedOrder.payableAmount || 0)}
+                      </span>
                     </div>
-                    {selectedOrder.tax > 0 && (
+                    {((selectedOrder.tax || 0) + (selectedOrder.serviceCharge || 0)) > 0 && (
                       <div className={ds.rtTotalRow}>
                         <span className={ds.rtTotalLabel}>Pajak &amp; Layanan</span>
-                        <span className={ds.rtTotalValue}>{formatIDR(selectedOrder.tax || 0)}</span>
+                        <span className={ds.rtTotalValue}>
+                          {formatIDR((selectedOrder.tax || 0) + (selectedOrder.serviceCharge || 0))}
+                        </span>
                       </div>
                     )}
                     {selectedOrder.discount > 0 && (
@@ -490,14 +512,14 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                     <div className={ds.rtGrandTotalRow}>
                       <span className={ds.rtGrandTotalLabel}>Total Tagihan</span>
                       <span className={ds.rtGrandTotalValue}>
-                        {formatIDR(selectedOrder.payableAmount || selectedOrder.subtotal || 0)}
+                        {formatIDR(selectedOrder.payableAmount || selectedOrder.totalAmount || selectedOrder.subtotal || 0)}
                       </span>
                     </div>
                   </div>
 
                   {/* Status Footer */}
-                  <div className={`${ds.rtStatusFooter} ${selectedOrder.isPaidDirectly ? ds.rtStatusFooterPaid : ds.rtStatusFooterUnpaid}`}>
-                    Status: {selectedOrder.isPaidDirectly ? 'Sudah Dibayar (Lunas)' : 'Belum Dibayar (Pending)'}
+                  <div className={`${ds.rtStatusFooter} ${selectedOrder.isPaidDirectly || selectedOrder.paymentStatus === 'Lunas' ? ds.rtStatusFooterPaid : ds.rtStatusFooterUnpaid}`}>
+                    Status: {selectedOrder.isPaidDirectly || selectedOrder.paymentStatus === 'Lunas' ? 'Sudah Dibayar (Lunas)' : 'Belum Dibayar (Pending)'}
                   </div>
                 </div>
               ) : (

@@ -73,7 +73,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         parsedUser?.email?.toLowerCase() === 'admin@setara.co.id';  // email superadmin baru
       setIsSuperadmin(isSuper);
 
-      const hotelCode = parsedUser?.hotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+      const hotelCode = parsedUser?.hotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "1";
       // Superadmin tanpa preview hotel — skip query Firestore
       if (!hotelCode || hotelCode === "0") {
         setIsHotelActive(true);
@@ -171,12 +171,12 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   useEffect(() => {
     const userJson = localStorage.getItem('user');
     let restoId = 'default-resto';
-    let hotelCode = '87241';
+    let hotelCode = '1';
     if (userJson) {
       try {
         const user = JSON.parse(userJson);
         restoId = user.restoId || 'default-resto';
-        hotelCode = user.hotelCode || '87241';
+        hotelCode = user.hotelCode || '1';
       } catch (e) {}
     }
 
@@ -235,7 +235,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   const handleRestore = async (order: any) => {
     try {
-      const hotelCode = user?.hotelCode || '87241';
+      const hotelCode = user?.hotelCode || '1';
       localStorage.setItem('restored_held_order', JSON.stringify(order));
       await deleteDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', order.id));
       await localDb.heldOrders.delete(order.id);
@@ -256,7 +256,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       return;
     }
     try {
-      const hotelCode = user?.hotelCode || '87241';
+      const hotelCode = user?.hotelCode || '1';
       await deleteDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', orderId));
       await localDb.heldOrders.delete(orderId);
       toast.info(`Pesanan held untuk "${customerName}" berhasil dihapus.`);

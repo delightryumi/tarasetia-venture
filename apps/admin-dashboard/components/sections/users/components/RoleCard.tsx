@@ -9,9 +9,10 @@ interface RoleCardProps {
     user: UserProfile;
     permissionTree: PermissionModule[];
     onToggle: (userId: string, menuId: string, current: boolean) => void;
+    onToggleModule: (userId: string, moduleId: string, subMenuIds: string[], current: boolean) => void;
 }
 
-export const RoleCard: React.FC<RoleCardProps> = ({ user, permissionTree, onToggle }) => {
+export const RoleCard: React.FC<RoleCardProps> = ({ user, permissionTree, onToggle, onToggleModule }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     // If user is admin or superadmin, their permissions are implicitly fully open
@@ -73,8 +74,10 @@ export const RoleCard: React.FC<RoleCardProps> = ({ user, permissionTree, onTogg
                                                 disabled={isLockedAdmin}
                                                 onClick={(e) => {
                                                     if (isLockedAdmin) return;
-                                                    e.stopPropagation(); // Avoid triggering accordion close
-                                                    onToggle(user.id, mod.id, isModuleEnabled);
+                                                    e.stopPropagation();
+                                                    // Auto-ON all submenus when enabling module
+                                                    const subIds = mod.submenus.map(s => s.id);
+                                                    onToggleModule(user.id, mod.id, subIds, isModuleEnabled);
                                                 }}
                                                 className={`${styles.toggleBtn} ${isModuleEnabled || isLockedAdmin ? styles.toggleBtnOn : styles.toggleBtnOff} ${isLockedAdmin ? "opacity-50 cursor-not-allowed" : ""}`}
                                             >

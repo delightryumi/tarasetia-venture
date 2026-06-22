@@ -32,7 +32,7 @@ export const fetchRecords = async ({
     }
 
     const cookieStore = await cookies();
-    const hotelCode = cookieStore.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+    const hotelCode = cookieStore.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "1";
     console.log("[fetchRecords] hotelCode from cookie:", hotelCode);
 
     // Fetch tax settings

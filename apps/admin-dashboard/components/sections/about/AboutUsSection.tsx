@@ -38,7 +38,7 @@ export const AboutUsSection = () => {
                     </div>
                     <h1 className="content-title">About Us</h1>
                 </div>
-                <p className="content-subtitle">Tell the story of Bumi Anyom for your visitors with luxury and warmth.</p>
+                <p className="content-subtitle">Tell the story of your property for your visitors with luxury and warmth.</p>
             </header>
 
             {message && <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="success-toast">{message}</motion.div>}

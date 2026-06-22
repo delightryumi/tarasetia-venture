@@ -13,6 +13,7 @@ export interface InvoiceItem {
 }
 
 export interface BrandingData {
+    companyName?: string;
     lightLogo: string;
     darkLogo: string;
     address: string;
@@ -22,6 +23,7 @@ export interface BrandingData {
 
 export const useInvoice = () => {
     const [branding, setBranding] = useState<BrandingData>({
+        companyName: "",
         lightLogo: "",
         darkLogo: "",
         address: "",
@@ -43,7 +45,7 @@ export const useInvoice = () => {
     const [items, setItems] = useState<InvoiceItem[]>([
         { id: '1', description: 'Room Stay', quantity: 1, rate: 0 }
     ]);
-    const [notes, setNotes] = useState("Terima kasih atas kunjungan Anda di Bumi Anyom Resort.");
+    const [notes, setNotes] = useState("Terima kasih atas kepercayaan Anda. Kami berharap dapat melayani Anda kembali.");
 
     const searchTransactions = async (queryStr: string) => {
         if (!queryStr || queryStr.length < 2) {
@@ -101,12 +103,33 @@ export const useInvoice = () => {
 
                 const darkLogoBase64 = darkLogoUrl ? await getBase64Image(darkLogoUrl) : "";
 
+                let activeCode = "";
+                if (typeof window !== "undefined") {
+                    activeCode = localStorage.getItem("active_hotel_code") || "";
+                }
+                let companyName = "Partner Property";
+                let hotelAddress = "";
+                let hotelPhone = "";
+                let hotelEmail = "";
+
+                if (activeCode && activeCode !== "0") {
+                    const hotelDoc = await getDoc(doc(db, "hotels", activeCode));
+                    if (hotelDoc.exists()) {
+                        const hData = hotelDoc.data();
+                        companyName = hData.name || "Partner Property";
+                        hotelAddress = hData.address || "";
+                        hotelPhone = hData.phone || "";
+                        hotelEmail = hData.email || "";
+                    }
+                }
+
                 setBranding({
+                    companyName,
                     lightLogo: logoData.lightLogo || "",
                     darkLogo: darkLogoBase64 || darkLogoUrl,
-                    address: footerData.address || "",
-                    phones: footerData.phones || [],
-                    email: footerData.email || ""
+                    address: hotelAddress || footerData.address || "",
+                    phones: hotelPhone ? [hotelPhone] : (footerData.phones || []),
+                    email: hotelEmail || footerData.email || ""
                 });
             } catch (err) {
                 console.error("Error fetching data for invoice:", err);
@@ -134,7 +157,7 @@ export const useInvoice = () => {
                 quantity: 1,
                 rate: Number(entry.amount) || 0
             }]);
-            setNotes(`Terima kasih telah menginap di Bumi Anyom Resort. Kamar: ${entry.roomNumber || '-'}`);
+            setNotes(`Terima kasih telah menginap bersama kami. Kamar: ${entry.roomNumber || '-'}`);
         } else {
             setItems([{
                 id: '1',

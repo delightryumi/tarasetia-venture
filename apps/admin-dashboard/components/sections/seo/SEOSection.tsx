@@ -45,7 +45,7 @@ export const SEOSection = () => {
                                     className="input-clean font-bold"
                                     value={seo.title}
                                     onChange={(e) => updateSEO("title", e.target.value)}
-                                    placeholder="Ex: Bumi Anyom | Luxury Resort & Villa"
+                                    placeholder="Ex: Nama Partner | Luxury Resort & Villa"
                                 />
                                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
                                     <span className="text-slate-400">Optimal: 50-60 chars</span>
@@ -250,7 +250,7 @@ export const SEOSection = () => {
                                     )}
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-sm font-medium text-[#202124] leading-tight">Bumi Anyom</span>
+                                    <span className="text-sm font-medium text-[#202124] leading-tight">{seo.siteTitle?.split('|')[0]?.trim() || 'Partner'}</span>
                                     <span className="text-xs text-[#5f6368] leading-tight flex items-center gap-1">
                                         {seo.canonicalUrl || "https://bumianyom.id"}
                                         <span className="text-[10px]">› ...</span>
@@ -260,12 +260,12 @@ export const SEOSection = () => {
 
                             {/* Title */}
                             <div className="text-[#1a0dab] text-[20px] font-normal leading-tight pt-1 hover:underline cursor-pointer">
-                                {seo.title || "Luxury Resort & Villa in Bali | Bumi Anyom"}
+                                {seo.title || "Luxury Resort & Villa | Partner Property"}
                             </div>
 
                             {/* Snippet */}
                             <div className="text-[#4d5156] text-sm leading-[1.58] pt-1">
-                                {seo.description || "Experience the ultimate luxury stay at Bumi Anyom. Our resort offers premium villas, world-class amenities, and breathtaking views for your perfect holiday."}
+                                {seo.description || "Experience the ultimate luxury stay at our resort. Offering premium villas, world-class amenities, and breathtaking views for your perfect holiday."}
                             </div>
                         </div>
                     </BentoCard>

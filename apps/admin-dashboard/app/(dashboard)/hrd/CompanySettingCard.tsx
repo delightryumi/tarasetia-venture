@@ -81,7 +81,7 @@ export function CompanySettingCard({ hotelCode }: { hotelCode: string }) {
             className={styles.formInput}
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
-            placeholder="Contoh: PT Bumi Anyom"
+            placeholder="Contoh: PT Setara Venture"
             disabled={loading}
           />
         </div>

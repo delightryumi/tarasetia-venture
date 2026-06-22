@@ -1,5 +1,7 @@
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
+import { PnlIncomeItem, PnlExpenseItem } from "../pnl-utils";
 
 export interface PushPnLParams {
   docId: string; // e.g. 'dml-xxxx', 'pr-yyyy', 'sr-zzzz'
@@ -46,7 +48,7 @@ export async function pushCostToPnL({
   const expenseDate = date && typeof date === 'string' ? date : new Date().toISOString().split('T')[0];
 
   try {
-    const docRef = doc(db, "global_pnl_reports", month);
+    const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
     const docSnap = await getDoc(docRef);
 
     let existingExpenses: any[] = [];
@@ -150,7 +152,7 @@ export async function removeCostFromPnL(docId: string, date: any) {
   }
 
   try {
-    const docRef = doc(db, "global_pnl_reports", month);
+    const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {

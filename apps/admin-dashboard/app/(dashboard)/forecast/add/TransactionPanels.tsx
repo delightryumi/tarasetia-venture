@@ -24,7 +24,8 @@ import {
     OtherIncomeTypeSelect,
     TerminalInput,
     TypeCard,
-    DateCard
+    DateCard,
+    RoomNumberSelect
 } from "./TransactionComponents";
 
 const formatCurrency = (val: number) => new Intl.NumberFormat("id-ID").format(val);
@@ -115,6 +116,7 @@ interface TransactionEntryFormProps {
     updateNightRate: (idx: number, rate: any) => void;
     onCancel: () => void;
     onSubmit: () => void;
+    getAvailableRoomNumbers: (roomTypeId: string) => string[];
 }
 
 export function TransactionEntryForm({
@@ -125,12 +127,14 @@ export function TransactionEntryForm({
     updateRoom,
     updateNightRate,
     onCancel,
-    onSubmit
+    onSubmit,
+    getAvailableRoomNumbers
 }: TransactionEntryFormProps) {
   const [modalData, setModalData] = useState<{ type: string; data: any } | null>(null);
     const startD = form.checkIn ? new Date(form.checkIn) : null;
     const endD = form.checkOut ? new Date(form.checkOut) : null;
     const nights = (startD && endD && endD > startD) ? Math.ceil((endD.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24)) : 1;
+    const availableRooms = getAvailableRoomNumbers(form.rooms[0].roomTypeId || "");
 
     return (
         <div className={styles.card}>
@@ -191,16 +195,20 @@ export function TransactionEntryForm({
                                 <RoomTypeSelect 
                                     value={form.rooms[0].roomTypeId}
                                     options={roomTypes}
-                                    onChange={(val: string) => updateRoom(0, "roomTypeId", val)}
+                                    onChange={(val: string) => {
+                                        updateRoom(0, "roomTypeId", val);
+                                        updateRoom(0, "roomNumber", ""); // reset room number when type changes
+                                    }}
                                 />
                             </div>
-                            <TerminalInput 
-                                label="Nomor Kamar (Room Number)"
-                                value={form.rooms[0].roomNumber}
-                                onChange={(val: string) => updateRoom(0, "roomNumber", val)}
-                                placeholder="CONTOH: 102 atau 205"
-                                icon={BedDouble}
-                            />
+                            <div className={styles.formGroup}>
+                                <label className={styles.inputLabel}>Nomor Kamar (Room Number)</label>
+                                <RoomNumberSelect 
+                                    value={form.rooms[0].roomNumber}
+                                    options={availableRooms}
+                                    onChange={(val: string) => updateRoom(0, "roomNumber", val)}
+                                />
+                            </div>
                             <div className={styles.formGroup}>
                                 <label className={styles.inputLabel}>Saluran Pemesanan (Channel)</label>
                                 <ChannelSelect 
@@ -637,7 +645,7 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                                         </td>
                                         <td className={styles.tableCell} style={{ textAlign: 'right' }}>
                                             <div className="flex flex-col items-end">
-                                                <span className="font-mono font-bold text-stone-850 dark:text-stone-150">
+                                                <span className="font-mono font-bold text-stone-900 dark:text-stone-100">
                                                     Rp {item.isCompliment ? 0 : formatCurrency(totalPaid)}
                                                 </span>
                                                 {!item.isCompliment && (paidCash > 0 || paidTransfer > 0) && (

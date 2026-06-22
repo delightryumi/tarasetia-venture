@@ -61,7 +61,7 @@ export default function POSPage() {
             email: authUserObj.email,
             role: authUserObj.role || 'WORKER',
             restoId: 'default-resto',
-            hotelCode: activeHotelCode || localHotelCode || authUserObj.hotelCode || '87241'
+            hotelCode: activeHotelCode || localHotelCode || authUserObj.hotelCode || '1'
           };
           params.set('user', JSON.stringify(posUserObj));
         } catch (e) {
@@ -79,7 +79,7 @@ export default function POSPage() {
           email: email,
           role: user.role || 'WORKER',
           restoId: 'default-resto',
-          hotelCode: activeHotelCode || localHotelCode || user.hotelCode || '87241'
+          hotelCode: activeHotelCode || localHotelCode || user.hotelCode || '1'
         };
         params.set('user', JSON.stringify(posUserObj));
       }

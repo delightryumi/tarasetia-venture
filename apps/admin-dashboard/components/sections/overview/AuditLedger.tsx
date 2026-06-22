@@ -31,13 +31,13 @@ export function AuditLedger({
         <section className={styles.card} style={{ overflow: 'hidden', padding: 0 }}>
             <div className={styles.cardHeader} style={{ padding: '24px 24px 16px 24px', borderBottom: '1px solid var(--f-hairline)', marginBottom: 0 }}>
                 <div className={styles.cardHeaderLeft}>
-                    <div className={styles.headerBadge} style={{ backgroundColor: '#dfd3b2', color: '#8d7a52' }}>
+                    <div className={styles.headerBadge} style={{ backgroundColor: 'var(--color-neutral-200, rgba(141, 122, 82, 0.12))', color: 'var(--color-neutral-900, #212121)' }}>
                         <Activity size={15} />
                     </div>
                     <div className={styles.headerMeta}>
-                        <span className={styles.headerSubtitle}>Nexura Operational</span>
+                        <span className={styles.headerSubtitle}>Setara Operational</span>
                         <h2 className={styles.headerTitle} style={{ fontSize: '13px' }}>
-                            Detail <span style={{ color: '#788069' }}>Transaksi</span>
+                            Detail <span style={{ color: 'var(--color-neutral-900, #212121)' }}>Transaksi</span>
                         </h2>
                     </div>
                 </div>
@@ -46,7 +46,7 @@ export function AuditLedger({
                     <div style={{ textAlign: 'right', marginRight: '16px', borderRight: '1px solid var(--f-hairline)', paddingRight: '16px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                         <span className={styles.headerSubtitle} style={{ fontSize: '8px' }}>Ledger Status</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--color-neutral-900, #212121)' }} />
                             <span className={styles.guestSubtext} style={{ color: 'var(--f-ink)', fontSize: '9px', fontWeight: 700 }}>{bookings.length} Active Entries</span>
                         </div>
                     </div>
@@ -106,7 +106,7 @@ export function AuditLedger({
                                                     justifyContent: "center", 
                                                     padding: 0,
                                                     flexShrink: 0,
-                                                    backgroundColor: ['rgba(141, 122, 82, 0.15)', 'rgba(120, 128, 105, 0.15)', '#f3e8ff', '#e0e7ff', '#dcfce7', '#fee2e2', '#fef3c7'][((((booking.guestName || "O").charCodeAt(0) || 0) + (booking.amount || 0)) % 7)] 
+                                                    backgroundColor: ['rgba(141, 122, 82, 0.15)', 'rgba(120, 128, 105, 0.15)', 'rgba(141, 122, 82, 0.08)', 'rgba(120, 128, 105, 0.08)', 'var(--f-surface-soft)', 'rgba(0, 0, 0, 0.04)', 'rgba(0, 0, 0, 0.02)'][((((booking.guestName || "O").charCodeAt(0) || 0) + (booking.amount || 0)) % 7)] 
                                                 }}
                                             >
                                                 <img 
@@ -131,16 +131,16 @@ export function AuditLedger({
                                             <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0 }}>Until {booking.checkOutDate || "---"}</p>
                                         </div>
                                     </td>
-                                    <td className={styles.tableCell}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    <td className={styles.tableCell} style={{ padding: '20px 16px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                             <div style={{ display: 'flex' }}>
-                                                <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: 'var(--f-surface-soft)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--f-hairline)' }}>
-                                                    {booking.roomType || "Service"}
+                                                <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: 'var(--f-surface-soft)', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--f-hairline)', fontSize: '9px', letterSpacing: '0.05em' }}>
+                                                    {(booking.roomType || "Service").toUpperCase()}
                                                 </span>
                                             </div>
                                             {booking.roomNumber && (
-                                                <span className={styles.guestSubtext} style={{ color: 'var(--f-sage)', fontWeight: 700, fontSize: '9px' }}>
-                                                    Room {booking.roomNumber}
+                                                <span className={styles.guestSubtext} style={{ color: 'var(--f-sage)', fontWeight: 800, fontSize: '10px', letterSpacing: '0.05em', marginLeft: '2px' }}>
+                                                    {booking.roomNumber.toUpperCase().startsWith('ROOM') ? booking.roomNumber.toUpperCase() : `ROOM ${booking.roomNumber.toUpperCase()}`}
                                                 </span>
                                             )}
                                             {isAcc && (
@@ -162,7 +162,7 @@ export function AuditLedger({
                                     <td className={styles.tableCell}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                             <p className={styles.guestAmount} style={{ margin: 0 }}>Rp {Number(booking.amount).toLocaleString('id-ID')}</p>
-                                            <p className={`${styles.paymentBadge} ${booking.paymentStatus?.includes('Lunas') || !booking.paymentStatus ? styles.paymentLunas : styles.paymentPending}`} style={{ margin: 0, width: 'fit-content' }}>
+                                            <p className={`${styles.paymentBadge} ${booking.paymentStatus?.includes('Lunas') ? styles.paymentLunas : styles.paymentPending}`} style={{ margin: 0, width: 'fit-content' }}>
                                                 {booking.paymentStatus || 'Pending'}
                                             </p>
                                         </div>

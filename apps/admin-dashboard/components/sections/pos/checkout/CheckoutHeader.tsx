@@ -32,7 +32,7 @@ export const CheckoutHeader: React.FC<CheckoutHeaderProps> = ({
 
             <div className="text-center hidden md:block">
                 <h2 className="apple-tagline text-[#0F0F12]">Penyelesaian Pembayaran</h2>
-                <span className="apple-fine-print block mt-0.5">Sistem Kasir Terpadu Bumi Anyom Resort</span>
+                <span className="apple-fine-print block mt-0.5">Sistem Kasir Terpadu — Setara Venture</span>
             </div>
 
             {/* Inline Customer & Table Badge */}

@@ -81,8 +81,8 @@
 
 .tabActive {
   color: #ffffff !important;
-  background: var(--sage, #788069) !important; /* Nexura Gold/Peach */
-  box-shadow: 0 4px 10px rgba(120, 128, 105, 0.25);
+  background: #1c1c1e !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 /* Sub-toggle for Daily vs Monthly view (iOS segmented control style) */
@@ -254,9 +254,9 @@
 }
 
 :global(.dark) .tabActive {
-  background: var(--sage, #788069) !important;
-  color: #151513 !important;
-  box-shadow: 0 4px 10px rgba(120, 128, 105, 0.25);
+  background: #ffffff !important;
+  color: #121212 !important;
+  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1);
 }
 
 :global(.dark) .toggleContainer {
@@ -393,6 +393,8 @@
   .headerWrapper {
     flex-direction: column;
     align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
   }
 
   .title {
@@ -405,23 +407,26 @@
     grid-template-columns: 1fr 1fr;
     padding: 4px;
     justify-content: center;
+    border-radius: 10px;
   }
 
   .tabBtn {
     justify-content: center;
     text-align: center;
     font-size: 11px;
-    padding: 8px 4px;
-    white-space: normal;
-    line-height: 1.2;
-    flex-direction: column;
-    gap: 4px;
+    padding: 8px 6px;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
     height: 100%;
   }
 
   .tabBtn svg {
-    width: 16px;
-    height: 16px;
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
   }
 
   .filterBar {
@@ -453,33 +458,44 @@
   }
 }
 
-
-/* Force equal width for tabs */
+/* Flexbox Tabs layout with scroll support for mobile */
 .tabsContainer {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr;
+  display: flex !important;
+  align-items: center;
+  gap: 4px;
+  background: #f5f2eb;
+  padding: 4px;
+  border-radius: 8px;
+  width: max-content;
+  max-width: 100%;
+  margin-bottom: 32px;
+  border: 1px solid rgba(120, 128, 105, 0.12);
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+
+.tabsContainer::-webkit-scrollbar {
+  display: none; /* WebKit */
 }
 
 .tabBtn {
+  flex: 1 0 auto;
   justify-content: center;
   text-align: center;
+  padding: 8px 18px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-
-.tabsContainer {
-  width: 100%;
-}
-.tabBtn {
-  flex: 1;
-  justify-content: center;
-  text-align: center;
-}
 @media (max-width: 768px) {
+  .tabsContainer {
+    width: 100%;
+  }
   .tabBtn {
-    font-size: 11px;
-    padding: 8px 4px;
-    flex-direction: column;
-    gap: 2px;
+    padding: 8px 12px;
+    font-size: 11.5px;
   }
 }
-

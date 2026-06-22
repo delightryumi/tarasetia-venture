@@ -13,10 +13,8 @@ interface GeneralLedgerProps {
     month: string;
     startingBalance: number;
     formatIDR: (val: number) => string;
-    vatPaid?: number;
-    feePaid?: number;
-    scPaid?: number;
-    lbPaid?: number;
+    formatIDR: (val: number) => string;
+    pnlResult?: any;
 }
 
 interface LedgerEntry {
@@ -30,8 +28,7 @@ interface LedgerEntry {
 }
 
 export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
-    rawTransactions, expenses, customIncomes, nonCommissionRevenue, posOrders, payrollDetails, month, startingBalance, formatIDR,
-    vatPaid = 0, feePaid = 0, scPaid = 0, lbPaid = 0
+    rawTransactions, expenses, customIncomes, nonCommissionRevenue, posOrders, payrollDetails, month, startingBalance, formatIDR, pnlResult
 }) => {
     const [selectedCoa, setSelectedCoa] = useState<string>("ALL");
     const [page, setPage] = useState(1);
@@ -110,6 +107,7 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
             const refCode = formatRef("FO", t.bookingId || t.id);
             const dateVal = new Date(t.createdAt || t.date || new Date());
             const isRoom = t.type === "accommodation" || (!t.type && !t.incomeCategory);
+            const isPelunasan = t.type === "pelunasan_ar" || t.isPelunasan;
             const revenueCoa = isRoom ? "401-000" : "409-000";
             const revenueLabel = isRoom ? "Kamar" : "Lainnya";
 
@@ -135,26 +133,86 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
                         amount: compVal
                     });
                 }
-            } else {
-                const amt = t.totalPrice || t.amount || 0;
-                if (amt > 0) {
+            } else if (isPelunasan) {
+                const payAmt = (Number(t.payHotel) || 0) + (Number(t.payTransfer) || 0) + (Number(t.paidCash) || 0) + (Number(t.paidTransfer) || 0);
+                if (payAmt > 0) {
                     // Debit: Kas & Bank
+                    list.push({
+                        date: dateVal,
+                        description: `Kas Masuk - ${t.guestName || "Pelunasan Tagihan"}`,
+                        ref: refCode,
+                        coa: "101-000",
+                        type: "debit",
+                        amount: payAmt
+                    });
+                    // Credit: Piutang Tamu
+                    list.push({
+                        date: dateVal,
+                        description: `${t.guestName || "Pelunasan Tagihan"}`,
+                        ref: refCode,
+                        coa: "102-000",
+                        type: "credit",
+                        amount: payAmt
+                    });
+                } else if (payAmt < 0) {
+                    // Reversal (Negative payment to correct check-in date)
+                    // Credit: Kas & Bank
+                    list.push({
+                        date: dateVal,
+                        description: `Koreksi Tanggal Pelunasan - ${t.guestName || "Tamu"}`,
+                        ref: refCode,
+                        coa: "101-000",
+                        type: "credit",
+                        amount: Math.abs(payAmt)
+                    });
+                    // Debit: Piutang Tamu
+                    list.push({
+                        date: dateVal,
+                        description: `Koreksi Tanggal Pelunasan - ${t.guestName || "Tamu"}`,
+                        ref: refCode,
+                        coa: "102-000",
+                        type: "debit",
+                        amount: Math.abs(payAmt)
+                    });
+                }
+            } else {
+                const totalRev = t.totalPrice || t.amount || 0;
+                const payAmt = (Number(t.payHotel) || 0) + (Number(t.payTransfer) || 0) + (Number(t.paidCash) || 0) + (Number(t.paidTransfer) || 0);
+                const arAmt = Math.max(0, totalRev - payAmt);
+
+                if (payAmt > 0) {
+                    // Debit: Kas & Bank (Hanya yang dibayar / DP)
                     list.push({
                         date: dateVal,
                         description: `Kas Masuk - Penerimaan ${revenueLabel} (${t.guestName || "Tamu"})`,
                         ref: refCode,
                         coa: "101-000",
                         type: "debit",
-                        amount: amt
+                        amount: payAmt
                     });
-                    // Credit: Pendapatan Kamar / Lainnya
+                }
+
+                if (arAmt > 0) {
+                    // Debit: Piutang Tamu (Belum dibayar)
+                    list.push({
+                        date: dateVal,
+                        description: `Piutang Tamu - ${revenueLabel} (${t.guestName || "Tamu"})`,
+                        ref: refCode,
+                        coa: "102-000",
+                        type: "debit",
+                        amount: arAmt
+                    });
+                }
+
+                if (totalRev > 0) {
+                    // Credit: Pendapatan Kamar / Lainnya (Diakui full)
                     list.push({
                         date: dateVal,
                         description: `Penerimaan ${revenueLabel} - ${t.guestName || "Tamu"}`,
                         ref: refCode,
                         coa: revenueCoa,
                         type: "credit",
-                        amount: amt
+                        amount: totalRev
                     });
                 }
             }
@@ -351,83 +409,87 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
             }
         }
 
-        // 8. Tax / Fee Payments
+        // 8. Tax / Fee Payments (Dinamis dari P&L)
         const lastDay = new Date(parseInt(y), parseInt(m), 0).getDate();
         const paymentDate = new Date(parseInt(y), parseInt(m) - 1, lastDay, 23, 59, 58);
 
-        if (vatPaid > 0) {
+        const vatLiab = pnlResult?.card11_VAT || 0;
+        if (vatLiab > 0) {
             list.push({
                 date: paymentDate,
-                description: "Pembayaran Pajak PPN Terutang",
+                description: "Beban Pajak PPN (Dinamis P&L)",
                 ref: "TAX-VAT",
                 coa: "502-000",
                 type: "debit",
-                amount: vatPaid
+                amount: vatLiab
             });
             list.push({
                 date: paymentDate,
-                description: "Kas Keluar - Pembayaran Pajak PPN",
+                description: "Kas Keluar - Pajak PPN",
                 ref: "TAX-VAT",
                 coa: "101-000",
                 type: "credit",
-                amount: vatPaid
+                amount: vatLiab
             });
         }
 
-        if (feePaid > 0) {
+        const feeLiab = pnlResult?.card9_FeeGross || 0;
+        if (feeLiab > 0) {
             list.push({
                 date: paymentDate,
-                description: "Pembayaran Management Fee",
+                description: "Beban Management Fee (Dinamis P&L)",
                 ref: "PAY-MGMT",
                 coa: "502-000",
                 type: "debit",
-                amount: feePaid
+                amount: feeLiab
             });
             list.push({
                 date: paymentDate,
-                description: "Kas Keluar - Pembayaran Management Fee",
+                description: "Kas Keluar - Management Fee",
                 ref: "PAY-MGMT",
                 coa: "101-000",
                 type: "credit",
-                amount: feePaid
+                amount: feeLiab
             });
         }
 
-        if (scPaid > 0) {
+        const scLiab = pnlResult?.summaryServiceCharge || 0;
+        if (scLiab > 0) {
             list.push({
                 date: paymentDate,
-                description: "Pembayaran Service Charge Karyawan",
+                description: "Beban Service Charge (Dinamis P&L)",
                 ref: "PAY-SC",
                 coa: "502-000",
                 type: "debit",
-                amount: scPaid
+                amount: scLiab
             });
             list.push({
                 date: paymentDate,
-                description: "Kas Keluar - Pembayaran Service Charge",
+                description: "Kas Keluar - Service Charge",
                 ref: "PAY-SC",
                 coa: "101-000",
                 type: "credit",
-                amount: scPaid
+                amount: scLiab
             });
         }
 
-        if (lbPaid > 0) {
+        const lbLiab = pnlResult?.summaryLostBreakage || 0;
+        if (lbLiab > 0) {
             list.push({
                 date: paymentDate,
-                description: "Pembayaran Beban Lost & Breakage",
+                description: "Beban Lost & Breakage (Dinamis P&L)",
                 ref: "PAY-LB",
                 coa: "502-000",
                 type: "debit",
-                amount: lbPaid
+                amount: lbLiab
             });
             list.push({
                 date: paymentDate,
-                description: "Kas Keluar - Pembayaran Lost & Breakage",
+                description: "Kas Keluar - Lost & Breakage",
                 ref: "PAY-LB",
                 coa: "101-000",
                 type: "credit",
-                amount: lbPaid
+                amount: lbLiab
             });
         }
 
@@ -447,7 +509,7 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
             return 0;
         });
         return list;
-    }, [rawTransactions, expenses, customIncomes, nonCommissionRevenue, posOrders, payrollDetails, month, startingBalance, vatPaid, feePaid, scPaid, lbPaid]);
+    }, [rawTransactions, expenses, customIncomes, nonCommissionRevenue, posOrders, payrollDetails, month, startingBalance, pnlResult]);
 
     // Running Balance Calculation per COA
     const { entriesWithBalance, runningBalances } = useMemo(() => {
@@ -539,7 +601,7 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
                             <th>Keterangan</th>
                             <th style={{ textAlign: "right" }}>Debit (Masuk)</th>
                             <th style={{ textAlign: "right" }}>Kredit (Keluar)</th>
-                            <th style={{ textAlign: "right" }}>Saldo</th>
+                            {selectedCoa !== "ALL" && <th style={{ textAlign: "right" }}>Saldo</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -557,9 +619,11 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
                                 <td className={styles.excelAmountCredit}>
                                     {entry.type === "credit" ? formatIDR(entry.amount) : "-"}
                                 </td>
-                                <td className={styles.excelBalance}>
-                                    {formatIDR(entry.balance)}
-                                </td>
+                                {selectedCoa !== "ALL" && (
+                                    <td style={{ textAlign: "right", fontWeight: 500 }}>
+                                        {formatIDR(entry.balance)}
+                                    </td>
+                                )}
                             </tr>
                         )) : (
                             <tr>

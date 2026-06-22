@@ -7,8 +7,9 @@ import {
   Edit2, Check, X, Tag, Calendar as CalendarIcon,
   AlertCircle, Save, Minus, Zap, Monitor, Users, ChevronDown,
 } from "lucide-react";
-import { doc, setDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 import { PnlExpenseItem, formatIDR } from "@/lib/pnl-utils";
 import s from "./ExpenseSection.module.css";
 
@@ -96,7 +97,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
         id: Math.random().toString(36).substr(2, 9) + Date.now(),
       } as PnlExpenseItem));
 
-      const docRef = doc(db, "global_pnl_reports", month);
+      const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
       await setDoc(docRef, { expenses: [...expenses, ...newEntries] }, { merge: true });
       setNewRows([{ category: "", department: "", description: "", amount: 0, date: today() }]);
       setIsAdding(false);
@@ -121,7 +122,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
     setLoading(true);
     try {
       const updated = expenses.map(e => e.id === editingId ? editData : e);
-      await setDoc(doc(db, "global_pnl_reports", month), { expenses: updated }, { merge: true });
+      await setDoc(doc(getHotelCollection(db, "global_pnl_reports"), month), { expenses: updated }, { merge: true });
       setEditingId(null);
       setEditData(null);
       onRefresh();
@@ -138,7 +139,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
     setLoading(true);
     try {
       const updated = expenses.filter(e => e.id !== id);
-      await setDoc(doc(db, "global_pnl_reports", month), { expenses: updated }, { merge: true });
+      await setDoc(doc(getHotelCollection(db, "global_pnl_reports"), month), { expenses: updated }, { merge: true });
       onRefresh();
     } catch (err) {
       console.error(err);

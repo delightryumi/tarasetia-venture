@@ -162,11 +162,6 @@ export const Header = ({ forceScrolledState = false }: { forceScrolledState?: bo
                   {firstName} <span className="font-light">{restName}</span>
                 </span>
               )}
-              <span className={`text-[6px] md:text-[7px] font-bold uppercase tracking-[0.25em] block leading-none mt-1.5 pl-2 transition-colors duration-300 ${
-                (isScrolled || mobileMenuOpen) ? 'text-[#1a1a1a]/40' : 'text-white/50'
-              }`}>
-                manage by nexura
-              </span>
             </Link>
           </Magnetic>
 

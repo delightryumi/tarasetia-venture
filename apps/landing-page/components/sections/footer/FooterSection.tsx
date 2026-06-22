@@ -127,7 +127,6 @@ export const FooterSection = () => {
                                 {firstName} <span className="italic text-[#788069]">{restName}</span>
                             </h3>
                         </Link>
-                        <p className="text-[9px] font-bold tracking-[0.4em] uppercase text-white/20 mt-1">Manage by Nexura</p>
                     </div>
                     <p className="text-[12px] font-light text-white/40 leading-relaxed">
                         Merajut keselarasan raga dengan alam. Tempat di mana waktu tak lagi dikejar, namun dirasakan.

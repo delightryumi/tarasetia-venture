@@ -1,3 +1,25 @@
+:root {
+    --status-confirmed: #8b5cf6;
+    --status-confirmed-text: #ffffff;
+    --status-arriving: #3b82f6;
+    --status-arriving-text: #ffffff;
+    --status-in-house: #212121;
+    --status-in-house-text: #ffffff;
+    --status-checked-out: #71717a;
+    --status-checked-out-text: #ffffff;
+    --status-pending: #eab308;
+    --status-pending-text: #212121;
+    --status-no-show: #ef4444;
+    --status-no-show-text: #ffffff;
+    --status-maint: #ef4444;
+    --status-maint-text: #ffffff;
+}
+
+.dark {
+    --status-in-house: #faf8f4;
+    --status-in-house-text: #212121;
+}
+
 .gantt-container {
     display: flex;
     flex-direction: column;
@@ -42,7 +64,7 @@
     position: sticky;
     left: 0;
     z-index: 20;
-    background-color: var(--f-surface);
+    background-color: var(--f-canvas);
     border-right: 1px solid var(--f-hairline);
     min-width: 140px;
     width: 140px;
@@ -103,7 +125,7 @@
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid var(--f-hairline);
-    background-color: var(--f-surface);
+    background-color: var(--f-canvas);
     box-sizing: border-box;
 }
 
@@ -148,7 +170,7 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    background-color: var(--f-canvas);
+    background-color: var(--f-surface);
     box-sizing: border-box;
 }
 
@@ -314,31 +336,62 @@
 
 /* Status Colors */
 .gantt-booking-block.status-confirmed {
-    background-color: var(--sage); /* Setara Sage */
+    background-color: var(--status-confirmed);
+    color: var(--status-confirmed-text);
     border: 1px solid rgba(0,0,0,0.1);
 }
 
-.gantt-booking-block.status-pending {
-    background-color: #eab308; /* yellow-500 */
+.gantt-booking-block.status-arriving {
+    background-color: var(--status-arriving);
+    color: var(--status-arriving-text);
     border: 1px solid rgba(0,0,0,0.1);
 }
 
-.gantt-booking-block.status-checked-in {
-    background-color: var(--terracotta); /* Setara Terracotta */
+.gantt-booking-block.status-in-house {
+    background-color: var(--status-in-house);
+    color: var(--status-in-house-text);
     border: 1px solid rgba(0,0,0,0.1);
 }
 
 .gantt-booking-block.status-checked-out {
-    background-color: #64748b; /* slate-500 */
+    background-color: var(--status-checked-out);
+    color: var(--status-checked-out-text);
     border: 1px solid rgba(0,0,0,0.1);
-    opacity: 0.8;
+    opacity: 0.85;
 }
 
-.gantt-booking-block.status-canceled {
-    background-color: #ef4444; /* red-500 */
+.gantt-booking-block.status-pending {
+    background-color: var(--status-pending);
+    color: var(--status-pending-text);
     border: 1px solid rgba(0,0,0,0.1);
-    opacity: 0.5;
 }
+
+.gantt-booking-block.status-no-show {
+    background-color: var(--status-no-show);
+    color: var(--status-no-show-text);
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.gantt-booking-block.status-maint {
+    background-color: var(--status-maint);
+    color: var(--status-maint-text);
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+/* Legend dots styling */
+.gantt-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+.gantt-legend-dot.status-confirmed { background-color: var(--status-confirmed); }
+.gantt-legend-dot.status-arriving { background-color: var(--status-arriving); }
+.gantt-legend-dot.status-in-house { background-color: var(--status-in-house); }
+.gantt-legend-dot.status-checked-out { background-color: var(--status-checked-out); }
+.gantt-legend-dot.status-pending { background-color: var(--status-pending); }
+.gantt-legend-dot.status-no-show { background-color: var(--status-no-show); }
+
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
@@ -356,3 +409,27 @@
         padding-left: 12px;
     }
 }
+
+/* Nav buttons premium styling */
+.gantt-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid var(--f-hairline);
+    background-color: var(--f-canvas);
+    color: var(--foreground);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s;
+}
+
+.gantt-nav-btn:hover {
+    background-color: var(--f-surface-soft);
+    border-color: var(--f-border);
+}
+

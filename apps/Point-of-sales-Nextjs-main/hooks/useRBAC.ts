@@ -44,11 +44,11 @@ export const useRBAC = () => {
       console.log('RBAC role set to:', currentRole);
       console.log('RBAC user email:', userEmail);
 
-      let hotelCode = "87241";
+      let hotelCode = "1";
       if (userJson) {
         try {
           const user = JSON.parse(userJson);
-          hotelCode = user?.hotelCode || "87241";
+          hotelCode = user?.hotelCode || "1";
         } catch (e) {}
       }
 

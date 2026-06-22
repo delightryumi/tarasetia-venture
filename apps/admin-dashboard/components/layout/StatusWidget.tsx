@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Menu, Settings, Users, LogOut } from "lucide-react";
+import { Menu, Settings, Users, LogOut, Building2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,6 +23,7 @@ export const StatusWidget = () => {
     const { user, signOutUser, activeHotelCode, activeHotelName, hotelsList, setActiveHotelCode } = useAuth();
     const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
     const [isSuperadmin, setIsSuperadmin] = useState(false);
+    const [userRole, setUserRole] = useState<string>("");
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('system');
 
@@ -72,6 +73,7 @@ export const StatusWidget = () => {
             if (userSnap.exists()) {
                 const userData = userSnap.data();
                 const role = userData.role;
+                setUserRole(role || "");
                 if (role === "superadmin") {
                     setIsSuperadmin(true);
                     return;
@@ -86,7 +88,7 @@ export const StatusWidget = () => {
 
     useEffect(() => {
         fetchPermissions();
-    }, [user]);
+    }, [user, activeHotelCode]);
 
     const hasAccess = (moduleKey: string) => {
         if (isSuperadmin) return true;
@@ -256,6 +258,19 @@ export const StatusWidget = () => {
                                                 <Users className={styles.dropdownIcon} />
                                                 <span>User Settings</span>
                                             </button>
+
+                                            {(user?.role === "admin" || userRole === "admin") && (
+                                                <button
+                                                    onClick={() => {
+                                                        setIsMenuOpen(false);
+                                                        router.push('/profile?module=cpanel');
+                                                    }}
+                                                    className={styles.dropdownItem}
+                                                >
+                                                    <Building2 className={styles.dropdownIcon} />
+                                                    <span>Profile Settings</span>
+                                                </button>
+                                            )}
 
                                             <div className={styles.dropdownDivider} />
                                         </>

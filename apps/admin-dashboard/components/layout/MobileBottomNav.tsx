@@ -87,6 +87,11 @@ export const MobileBottomNav = () => {
                 setActiveModule("purchasing");
                 return;
             }
+            if (pathname.startsWith('/hrd')) {
+                localStorage.setItem("active_module", "hrd");
+                setActiveModule("hrd");
+                return;
+            }
             if (pathname.startsWith('/front-office')) {
                 localStorage.setItem("active_module", "front-office");
                 setActiveModule("front-office");
@@ -219,7 +224,7 @@ export const MobileBottomNav = () => {
         } else if (activeModule === "accounting") {
             items = allNavItems.filter(item => ["pnl", "statements", "purchase-order"].includes(item.id));
         } else if (activeModule === "food-beverage") {
-            items = allNavItems.filter(item => ["food-beverage-product", "food-beverage-realtime"].includes(item.id));
+            items = allNavItems.filter(item => ["food-beverage-product", "food-beverage-realtime", "purchase-order"].includes(item.id));
         } else if (activeModule === "hrd") {
             items = allNavItems.filter(item => ["hrd"].includes(item.id));
         } else if (activeModule === "purchasing") {

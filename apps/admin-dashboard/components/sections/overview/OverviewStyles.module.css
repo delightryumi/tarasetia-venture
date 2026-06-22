@@ -2,25 +2,25 @@
 
 .overviewRoot {
   /* ── Design Tokens ── */
-  --f-sage: var(--sidebar-link-active-bg, #181d26);
-  --f-sage-light: var(--sidebar-text, #41454d);
-  --f-sage-dark: var(--sidebar-link-hover-text, #181d26);
-  --f-sage-bg: var(--sidebar-link-hover-bg, #f3efe6);
-  --f-sage-border: var(--sidebar-border, #dddddd);
+  --f-sage: var(--color-neutral-900, #212121);
+  --f-sage-light: var(--color-neutral-700, #383838);
+  --f-sage-dark: var(--color-neutral-950, #1a1a1a);
+  --f-sage-bg: var(--color-neutral-100, #f7f5f0);
+  --f-sage-border: var(--color-neutral-200, rgba(141, 122, 82, 0.12));
 
-  --f-peach: var(--sidebar-link-active-bg, #181d26);
-  --f-peach-dark: var(--sidebar-link-hover-text, #181d26);
-  --f-rich-black: #1a1c14;
+  --f-peach: var(--color-neutral-900, #212121);
+  --f-peach-dark: var(--color-neutral-950, #1a1a1a);
+  --f-rich-black: var(--color-neutral-900, #212121);
 
-  --f-canvas: #ffffff;
-  --f-surface: #faf9f6;
-  --f-surface-soft: #f5f5f4;
-  --f-hairline: #e7e5e4;
+  --f-canvas: transparent;
+  --f-surface: var(--color-neutral-50);
+  --f-surface-soft: var(--color-neutral-100);
+  --f-hairline: var(--color-neutral-200);
   
-  --f-ink: #1c1917;
-  --f-body: #44403c;
-  --f-muted: #78716c;
-  --f-light-muted: #a8a29e;
+  --f-ink: var(--color-neutral-900);
+  --f-body: var(--color-neutral-700);
+  --f-muted: var(--color-neutral-700, #383838);
+  --f-light-muted: var(--color-neutral-400, #a8a29e);
   
   --f-radius-sm: 6px;
   --f-radius-md: 10px;
@@ -35,7 +35,7 @@
 
   font-family: var(--f-font);
   color: var(--f-ink);
-  background-color: var(--f-canvas);
+  background-color: var(--f-surface);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
@@ -177,15 +177,15 @@
 }
 
 .toggleBtnActive {
-  background-color: var(--f-peach);
-  color: var(--sidebar-link-active-text) !important;
+  background-color: var(--color-neutral-900, #212121);
+  color: #ffffff !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* ── Buttons ── */
 .btnPrimary {
   background-color: var(--f-sage);
-  color: var(--sidebar-link-active-text) !important;
+  color: var(--color-neutral-50, #faf8f5) !important;
   border: none;
   border-radius: var(--f-radius-sm);
   font-size: 11px;
@@ -207,7 +207,7 @@
 }
 
 .btnSecondary {
-  background-color: var(--f-canvas);
+  background-color: var(--f-surface);
   color: var(--f-muted);
   border: 1px solid var(--f-hairline);
   border-radius: var(--f-radius-sm);
@@ -260,7 +260,7 @@
   height: 40px;
   border-radius: var(--f-radius-sm);
   border: 1px solid var(--f-hairline);
-  background-color: var(--f-canvas);
+  background-color: var(--f-surface);
   color: var(--f-muted);
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
@@ -286,9 +286,9 @@
 }
 
 .btnIconSuccess:hover {
-  color: #10b981;
-  background-color: #ecfdf5;
-  border-color: #a7f3d0;
+  color: var(--color-sage-dark, #6c7664);
+  background-color: rgba(141, 152, 132, 0.1);
+  border-color: var(--color-neutral-200, rgba(141, 122, 82, 0.12));
 }
 
 .vDivider {
@@ -318,7 +318,7 @@
 
 /* ── Card Styling ── */
 .card {
-  background-color: var(--f-canvas);
+  background-color: var(--f-surface);
   border: 1px solid var(--f-hairline);
   border-radius: var(--f-radius-lg);
   padding: 24px;
@@ -352,7 +352,7 @@
   align-items: center;
   justify-content: center;
   border: 1px solid var(--f-hairline);
-  background-color: var(--f-canvas);
+  background-color: var(--f-surface);
 }
 
 .cardLabel {
@@ -401,7 +401,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px;
-  background-color: var(--f-canvas);
+  background-color: var(--f-surface);
   border: 1px solid var(--f-hairline);
   border-radius: var(--f-radius-md);
   cursor: pointer;
@@ -488,8 +488,8 @@
 }
 
 .paymentLunas {
-  background-color: #ecfdf5;
-  color: #10b981;
+  background-color: rgba(141, 152, 132, 0.15); /* Soft sage background */
+  color: var(--color-sage-dark, #6c7664);
 }
 
 .paymentPending {
@@ -555,7 +555,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: var(--f-canvas);
+  background-color: var(--f-surface);
   padding: 4px;
   border-radius: var(--f-radius-md);
   border: 1px solid var(--f-hairline);
@@ -620,7 +620,7 @@
   position: sticky;
   left: 0;
   z-index: 10;
-  background-color: var(--f-canvas);
+  background-color: var(--f-surface);
   border-bottom: 1px solid var(--f-hairline);
   border-right: 1px solid var(--f-hairline);
   padding: 16px;
@@ -689,7 +689,7 @@
   width: 100%;
   max-width: 480px;
   height: 100vh;
-  background-color: var(--f-canvas);
+  background-color: var(--f-surface);
   border-left: 1px solid var(--f-hairline);
   box-shadow: -8px 0 32px rgba(0, 0, 0, 0.08);
   z-index: 200;

@@ -1,4 +1,4 @@
-# Dokumentasi Pengembangan & Rencana Multi-Hotel CRS (Nexura Global Hospitality)
+# Dokumentasi Pengembangan & Rencana Multi-Partner CRS (Setara Venture)
 
 Dokumen ini mencatat status terakhir pengerjaan sistem dan memetakan rencana detail pengembangan sistem menjadi **Multi-Hotel Central Reservation System (CRS)** dengan satu basis kode logika, namun basis data yang terisolasi per hotel.
 Tolong jangan jalankan pnpm dev, pnpm build dan push ke git sebelum saya perintahkan
@@ -26,8 +26,8 @@ Berikut adalah perbaikan, optimasi, dan fitur baru yang telah diterapkan dan dip
 *   **Superadmin CRS Portal**: Membuat halaman khusus superadmin (`/superadmin`) untuk mendaftarkan tenant hotel baru, mengedit metadata hotel, dan menonaktifkan/mengaktifkan status sistem secara instan.
 *   **Inisialisasi Master Hotel**: Menjalankan script `seed_hotels.mjs` untuk mengonfigurasi default metadata hotel pertama `bumi-anyom-resort` di project baru `crs-nexura`.
 *   **Format ID Hotel Baru (5 Digit Acak)**: ID/Kode hotel baru sekarang secara otomatis digenerate sebagai angka 5 digit acak (`Math.floor(10000 + Math.random() * 90000)`) dan kolom input kuncinya dinonaktifkan (`disabled={true}`) agar tidak bisa dimanipulasi secara manual.
-*   **Migrasi Kode Hotel Bumi Anyom (ke ID 87241)**: Kode hotel untuk Bumi Anyom Resort berhasil diganti dari `"bumi-anyom-resort"` menjadi kode 5 digit acak `"87241"`. Seluruh referensi kode fallback di codebase Next.js telah diupdate, dan data Firestore (termasuk dokumen master, sub-koleksi operasional, dan ID dokumen `daily_revenue`) telah dimigrasi sepenuhnya ke ID baru tersebut.
-*   **Autentikasi Multi-Hotel & Dropdown Superadmin**: Memperluas `AuthContext.tsx` dan login form (`LoginSection.tsx`) agar mendukung input `hotelCode` serta pengecekan status keaktifan hotel (`active === true`). Menampilkan informasi nama hotel yang aktif diawali kode hotel (misal: `[87241] Bumi Anyom Resort`) pada bagian header aplikasi (`StatusWidget.tsx`). Menyediakan dropdown selector dinamis khusus untuk role `superadmin` agar dapat berpindah CRS tenant secara real-time.
+*   **Migrasi Kode Hotel Bumi Anyom (ke ID 87241)**: Kode hotel untuk Bumi Anyom Resort (partner pertama) berhasil diganti dari `"bumi-anyom-resort"` menjadi kode 5 digit acak `"87241"`. Seluruh referensi kode fallback di codebase Next.js telah diupdate, dan data Firestore telah dimigrasi.
+*   **Autentikasi Multi-Hotel & Dropdown Superadmin**: Memperluas `AuthContext.tsx` dan login form agar mendukung input `hotelCode` serta pengecekan status keaktifan hotel. Menampilkan informasi nama hotel yang aktif diawali kode hotel (misal: `[87241] Nama Partner`) pada bagian header aplikasi. Menyediakan dropdown selector dinamis khusus untuk role `superadmin` agar dapat berpindah CRS tenant secara real-time.
 *   **Penghapusan Berantai Tenant (Cascade Delete)**: Penambahan fitur penghapusan berantai di Superadmin Portal yang secara rekursif membersihkan seluruh sub-koleksi operasional milik hotel target di Firestore sebelum menghapus dokumen induk hotel. Fitur ini diproteksi dengan modal konfirmasi destruktif yang mengharuskan penulisan ulang kode hotel secara tepat.
 *   **Pendaftaran Admin & Welcome Email via Brevo HTTPS**: Pendaftaran hotel baru secara otomatis memicu pembuatan akun administrator baru di Firebase Auth secara server-side (melalui REST API tanpa mengganggu sesi superadmin klien), memetakan data profil `/users_master` ter-modular dengan status full permissions, serta mengapalkan email sambutan HTML premium berisi kredensial login temporer (Link Dashboard, Kode Hotel, Email, & Password) memanfaatkan HTTPS REST API Brevo (Port 443) untuk menghindari pemblokiran port SMTP pada cloud server.
 *   **Pemulihan Akun (Forgot Password)**: Mengintegrasikan tautan "Forgot Password?" di halaman login yang membuka form reset password client-side, terintegrasi langsung dengan Firebase Authentication `sendPasswordResetEmail` untuk memicu email pemulihan resmi secara instan.
@@ -65,7 +65,8 @@ Berikut adalah perbaikan, optimasi, dan fitur baru yang telah diterapkan dan dip
 *   **Sistem Pemesanan Mandiri Tamu (Guest Self-Ordering GrabFood Style) & Live Audio Alert Kasir/F&B**:
     - **Guest Self-Ordering Web App (`/cafe-resto`)**: Berhasil mentransformasi halaman cafe-resto menjadi antarmuka pemesanan mandiri tamu (GrabFood/GoFood style) dengan promo slider horizontal, navigasi kategori smooth-scroll, keranjang mengambang bawah (floating cart), checkout drawer terintegrasi nomor meja, serta metode pembayaran kasir / transfer BCA lengkap dengan upload bukti transfer langsung ke Firebase Storage.
     - **Live Audio Alert & Toast Notifikasi**: Berhasil menambahkan listener `onSnapshot` yang mendeteksi pesanan mandiri tamu baru (`Self-Order Tamu` dengan status `PENDING`) pada POS Cashier layout (`Point-of-sales-Nextjs-main/app/(root)/layout.tsx`) dan F&B monitor tab (`admin-dashboard`), memutar bel notifikasi chime secara instan, menampilkan toast visual secara real-time, serta mengisolasi path Firestore per hotel partner `/hotels/{hotelCode}/pos_held_orders` untuk keamanan multi-tenant.
-*   **Penyelesaian Isu Lintas Tenant Superadmin & Interkoneksi POS**: Mengganti pengambilan data list hotel di `onSnapshot` menggunakan ID dokumen (`doc.id`) alih-alih `doc.data().hotelCode` yang tidak utuh, menjamin daftar *partner* Setara Venture muncul sempurna di dropdown Superadmin pada port 3000 dan 3001. Membongkar blokade *infinite loop* (override `active_hotel_code` secara paksa) pada `AuthContext.tsx` sehingga superadmin dapat menjelajahi modul tenant secara bebas tanpa terkunci di halaman profil bawaan. Memberikan hak akses tanpa batas (*God Mode*) di pengaturan `/components/setting/components/selforder.tsx` POS agar superadmin kebal terhadap batasan paywall berlangganan "Enterprise". Menyapu bersih noda *hardcode* teks "Bumi Anyom Resort" yang berkelebat sepersekian detik di komponen tajuk *header* saat memuat data, serta membakukannya menjadi `"Memuat..."` yang lebih elegan dan *neutral multi-tenant*.
+*   **Penyelesaian Isu Lintas Tenant Superadmin & Interkoneksi POS**: Mengganti pengambilan data list hotel di `onSnapshot` menggunakan ID dokumen (`doc.id`), menjamin daftar *partner* Setara Venture muncul sempurna di dropdown Superadmin. Memberikan hak akses tanpa batas (*God Mode*) di POS agar superadmin kebal terhadap batasan paywall. Menyapu bersih noda *hardcode* teks "Bumi Anyom Resort" di seluruh komponen, dan membakukannya menjadi desain *neutral multi-tenant* (Partner Property).
+*   **Dynamic Middleware Subdomain Absensi**: Middleware sekarang secara dinamis mendukung akses via `staff.mytara.id/?h=KODE_HOTEL` untuk semua partner. Tidak ada lagi hardcode di level middleware. Penambahan partner baru langsung aktif tanpa perlu redeploy.
 ---
 
 ## 2. Arsitektur Multi-Hotel CRS (Roadmap)
@@ -77,13 +78,13 @@ Struktur database master akan memiliki satu koleksi utama bernama `hotels` sebag
 
 ```text
 /hotels (Koleksi Master)
-  ├── [hotelCode: 87241] (Dokumen Hotel A)
-  │     ├── name: "Bumi Anyom Resort"
+  ├── [hotelCode: 87241] (Dokumen Partner A)
+  │     ├── name: "Partner Property Name"
   │     ├── active: true
-  │     ├── domain: "resort.bumianyom.com"
+  │     ├── domain: "resort.partner.com"
   │     ├── billingStatus: "paid"
   │     └── ... metadata hotel
-  │     /* Sub-koleksi Data Operasional Hotel A */
+  │     /* Sub-koleksi Data Operasional Partner A */
   │     ├── roomTypes (Koleksi)
   │     ├── packages (Koleksi)
   │     ├── pos_orders (Koleksi)
@@ -280,7 +281,9 @@ Berikut adalah rencana pengembangan lanjutan yang belum diimplementasikan di env
     - Menghapus deklarasi kunci duplikat (`stock`) di dalam *Object Literal* yang diatur ketat oleh kompiler mutakhir Next.js (`self-order/[hotelCode]/page.tsx`).
     - Merancang perlindungan *Null Safety* (`?.trim()`) pada variabel `tableNumber` untuk mencegah *Runtime Crash* saat pemesanan nirkabel tamu.
     - Merestrukturisasi parameter React `useRef` menggunakan definisi generik mutakhir `RefObject<HTMLDivElement | null>` agar serasi dengan standar baru modul `CategoryNav`.
-- [x] **Pemantapan Arsitektur Landing Page & Company Profile**: Mendokumentasikan keputusan strategis bahwa modul Landing Page (port 3002) sepenuhnya digerakkan oleh *Dynamic Host Binding* dan bebas-*deploy* hingga terbit pesanan modul, serta merestui pemisahan `mytara.id` sebagai sub-proyek *Company Profile* Next.js ringan yang independen demi keandalan bisnis SaaS.
+- [x] **Pembersihan Total Hardcode Spesifik Partner (Bumi Anyom -> Setara Venture)**: Menyapu bersih semua jejak referensi *hardcode* teks "Bumi Anyom" di seluruh komponen PDF Print, form, dropdown superadmin, dan UI menjadi generic "Partner Property" atau terhubung langsung secara dinamis dengan nama properti dari Firestore.
+- [x] **Dynamic Middleware Routing untuk Subdomain Absensi**: Memperbarui middleware `admin-dashboard` untuk mem-bypass deteksi subdomain statis dan beralih menggunakan param `?h=` sepenuhnya untuk akses via `staff.mytara.id/?h=KODE_HOTEL`, memastikan otomatisasi penambahan tenant baru tanpa perlu *redeploy* kode.
+- [x] **Pemantapan Arsitektur Landing Page & Company Profile**: Mendokumentasikan keputusan strategis bahwa modul Landing Page (port 3002) sepenuhnya digerakkan oleh *Dynamic Host Binding* dan bebas-*deploy* hingga terbit pesanan modul.
 
 ---
 

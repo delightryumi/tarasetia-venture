@@ -5,23 +5,34 @@ export function middleware(request: NextRequest) {
   const hostname = request.nextUrl.hostname;
   const url = request.nextUrl.clone();
 
-  // Deteksi subdomain absensi (di live maupun local testing)
-  const isAttendanceDomain =
-    hostname === "staff.mytara.id" ||
-    hostname === "staff.localhost" ||
-    hostname.endsWith(".staff.localhost");
+  // Cek apakah ini domain khusus staff (contoh: staff.mytara.id, staff.localhost)
+  const isStaffDomain =
+    hostname.startsWith("staff.") ||
+    hostname === "staff.localhost";
 
-  if (isAttendanceDomain) {
-    // 1. Jika membuka root "/", belokkan secara internal ke "/attendance"
+  if (isStaffDomain) {
+    // 1. Root "/" → rewrite ke /attendance (parameter ?h= akan otomatis terbawa)
     if (url.pathname === "/") {
       url.pathname = "/attendance";
       return NextResponse.rewrite(url);
     }
 
-    // 2. Jika memuat manifest absensi, belokkan ke API dynamic manifest
+    // 2. Manifest absensi
     if (url.pathname === "/manifest-attendance.json") {
       url.pathname = "/api/manifest-attendance";
       return NextResponse.rewrite(url);
+    }
+
+    // 3. Blokir akses ke halaman admin dashboard agar staff tidak bisa nyasar
+    const isAdminRoute =
+      url.pathname.startsWith("/select-module") ||
+      url.pathname.startsWith("/login") ||
+      url.pathname.startsWith("/superadmin") ||
+      url.pathname.startsWith("/(dashboard)");
+
+    if (isAdminRoute) {
+      url.pathname = "/attendance";
+      return NextResponse.redirect(url);
     }
   }
 
@@ -36,5 +47,8 @@ export const config = {
     "/",
     "/manifest-attendance.json",
     "/attendance/:path*",
+    "/select-module",
+    "/login",
+    "/superadmin/:path*",
   ],
 };

@@ -25,7 +25,7 @@ export function getHotelCollection(
 
   // Fallback to environment variable or default
   if (!code) {
-    code = process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+    code = process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
   }
 
   // If code is "root", return the root collection for backwards compatibility / local testing

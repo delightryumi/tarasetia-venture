@@ -358,7 +358,7 @@ export const ForecastSection: React.FC = () => {
         const doc = new jsPDF('l', 'mm', 'a4');
         
         doc.setFontSize(16);
-        doc.text(`Detailed Forecast Report - Bumi Anyom Resort`, 14, 15);
+        doc.text(`Detailed Forecast Report`, 14, 15);
         doc.setFontSize(9);
         doc.text(`Periode: ${formatDate(selectedDate)} | Exported: ${new Date().toLocaleString('id-ID')}`, 14, 22);
 

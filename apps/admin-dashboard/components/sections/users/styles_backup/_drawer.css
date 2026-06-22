@@ -14,18 +14,18 @@
     height: 100vh;
     width: 100%;
     max-width: 440px;
-    background: var(--color-neutral-50);
-    border-left: 1px solid var(--color-neutral-200);
+    background: #ffffff;
+    border-left: 1px solid #dddddd;
     z-index: 501;
     display: flex;
     flex-direction: column;
     font-family: var(--font-sans, -apple-system, sans-serif);
-    color: var(--color-neutral-900);
+    color: #181d26;
 }
 
 .drawerHeader {
     padding: 24px;
-    border-bottom: 1px solid var(--color-neutral-200);
+    border-bottom: 1px solid #dddddd;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -47,12 +47,12 @@
     width: 18px;
     height: 18px;
     border-radius: 4px;
-    background: var(--color-neutral-100);
-    border: 1px solid var(--color-neutral-200);
+    background: #f8fafc;
+    border: 1px solid #dddddd;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-sage);
+    color: #9297a0;
 }
 
 .drawerHeaderMetaText {
@@ -60,14 +60,14 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: var(--color-sage);
+    color: #9297a0;
 }
 
 .drawerTitle {
     font-size: 20px;
     font-weight: 400;
     letter-spacing: -0.01em;
-    color: var(--color-neutral-900);
+    color: #181d26;
 }
 
 .drawerTitleHighlight {
@@ -79,9 +79,9 @@
     width: 32px;
     height: 32px;
     border-radius: 6px;
-    border: 1px solid var(--color-neutral-200);
-    background: var(--color-neutral-50);
-    color: var(--color-sage);
+    border: 1px solid #dddddd;
+    background: #ffffff;
+    color: #9297a0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -90,8 +90,8 @@
 }
 
 .drawerCloseBtn:hover {
-    color: var(--color-neutral-900);
-    border-color: var(--color-sage);
+    color: #181d26;
+    border-color: #9297a0;
 }
 
 .drawerBody {
@@ -114,7 +114,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: var(--color-sage);
+    color: #9297a0;
     padding-left: 2px;
 }
 
@@ -127,7 +127,7 @@
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--color-sage);
+    color: #9297a0;
     pointer-events: none;
 }
 
@@ -135,11 +135,11 @@
     width: 100%;
     height: 44px;
     padding: 0 12px 0 38px;
-    background: var(--color-neutral-50);
-    border: 1px solid var(--color-neutral-200);
+    background: #ffffff;
+    border: 1px solid #dddddd;
     border-radius: 6px;
     font-size: 13px;
-    color: var(--color-neutral-900);
+    color: #181d26;
     transition: all 0.2s ease;
 }
 
@@ -147,29 +147,29 @@
     width: 100%;
     height: 44px;
     padding: 0 12px 0 38px;
-    background: var(--color-neutral-50);
-    border: 1px solid var(--color-neutral-200);
+    background: #ffffff;
+    border: 1px solid #dddddd;
     border-radius: 6px;
     font-size: 13px;
-    color: var(--color-neutral-900);
+    color: #181d26;
     transition: all 0.2s ease;
 }
 
 .changePwdInput:focus {
     outline: none;
-    border-color: var(--color-neutral-900);
+    border-color: #181d26;
     box-shadow: 0 0 0 3px rgba(24, 29, 38, 0.05);
 }
 
 .drawerInput:focus {
     outline: none;
-    border-color: var(--color-neutral-900);
+    border-color: #181d26;
     box-shadow: 0 0 0 3px rgba(24, 29, 38, 0.05);
 }
 
 .drawerInput:disabled {
     opacity: 0.5;
-    background: var(--color-neutral-100);
+    background: #f8fafc;
     cursor: not-allowed;
 }
 
@@ -193,7 +193,7 @@
     width: 28px;
     height: 28px;
     border-radius: 6px;
-    border: 1px solid var(--color-neutral-200);
+    border: 1px solid #dddddd;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -213,8 +213,8 @@
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: #788069;
-    background: var(--color-neutral-100);
-    border: 1px solid var(--color-neutral-200);
+    background: #f8fafc;
+    border: 1px solid #dddddd;
     padding: 2px 8px;
     border-radius: 4px;
 }
@@ -232,28 +232,28 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    background: var(--color-neutral-50);
-    border: 1px solid var(--color-neutral-200);
-    color: var(--color-sage);
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    color: #9297a0;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .roleSelectBtn:hover {
-    border-color: var(--color-sage);
+    border-color: #9297a0;
     color: #41454d;
 }
 
 .roleSelectBtnActive {
-    background: var(--color-neutral-900);
-    border-color: var(--color-neutral-900);
-    color: var(--color-neutral-50);
+    background: #181d26;
+    border-color: #181d26;
+    color: #ffffff;
 }
 
 .drawerFooter {
     padding: 24px;
-    background: var(--color-neutral-100);
-    border-top: 1px solid var(--color-neutral-200);
+    background: #f8fafc;
+    border-top: 1px solid #dddddd;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -262,8 +262,8 @@
 .submitBtn {
     width: 100%;
     height: 44px;
-    background: var(--color-neutral-900);
-    color: var(--color-neutral-50);
+    background: #181d26;
+    color: #ffffff;
     border: none;
     border-radius: 12px;
     font-size: 11px;
@@ -279,7 +279,7 @@
 }
 
 .submitBtn:hover {
-    background: var(--color-neutral-950);
+    background: #0d1218;
 }
 
 .submitBtn:disabled {
@@ -290,9 +290,9 @@
 .cancelBtn {
     width: 100%;
     height: 44px;
-    background: var(--color-neutral-50);
-    border: 1px solid var(--color-neutral-200);
-    color: var(--color-neutral-900);
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    color: #181d26;
     border-radius: 12px;
     font-size: 10px;
     font-weight: 600;
@@ -304,5 +304,5 @@
 
 .cancelBtn:hover {
     color: #41454d;
-    border-color: var(--color-sage);
+    border-color: #9297a0;
 }

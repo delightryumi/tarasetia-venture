@@ -2,24 +2,24 @@
 
 .forecastTerminalRoot {
   /* ── Design Tokens ── */
-  --f-sage: var(--sidebar-link-active-bg, #181d26);
-  --f-sage-light: var(--sidebar-text, #41454d);
-  --f-sage-dark: var(--sidebar-link-hover-text, #181d26);
-  --f-sage-bg: var(--sidebar-link-hover-bg, #f3efe6);
-  --f-sage-border: var(--sidebar-border, #dddddd);
+  --f-sage: #212121;
+  --f-sage-light: #444444;
+  --f-sage-dark: #111111;
+  --f-sage-bg: #f5f6f3;
+  --f-sage-border: rgba(120, 128, 105, 0.15);
 
   --f-terracotta: #b35e46;
   --f-terracotta-light: #e89c7d;
   --f-terracotta-dark: #8c3f2d;
   --f-terracotta-bg: #fdf5f2;
-  --f-terracotta-border: #f7eae5;
+  --f-terracotta-border: rgba(179, 94, 70, 0.12);
 
   --f-canvas: #ffffff;
   --f-surface: #faf9f6;
   --f-surface-soft: #f5f5f4;
-  --f-hairline: var(--sidebar-border, rgba(0, 0, 0, 0.06));
+  --f-hairline: rgba(0, 0, 0, 0.06);
   
-  --f-ink: #1c1917;
+  --f-ink: #212121;
   --f-body: #44403c;
   --f-muted: #78716c;
   --f-light-muted: #a8a29e;
@@ -55,7 +55,7 @@
   --f-canvas: #121212;
   --f-surface: #1e1e1e;
   --f-surface-soft: #2a2a2a;
-  --f-hairline: var(--sidebar-border, rgba(255, 255, 255, 0.03));
+  --f-hairline: rgba(255, 255, 255, 0.08);
   
   --f-ink: #f5f5f5;
   --f-body: #d4d4d4;
@@ -64,11 +64,11 @@
   
   --f-color-scheme: dark;
   
-  --f-sage-bg: var(--sidebar-link-hover-bg, #1f241a);
-  --f-sage-border: var(--sidebar-border, #313829);
+  --f-sage-bg: #22261e;
+  --f-sage-border: rgba(120, 128, 105, 0.25);
   
-  --f-terracotta-bg: #2b1b16;
-  --f-terracotta-border: #3f2720;
+  --f-terracotta-bg: #2d201a;
+  --f-terracotta-border: rgba(179, 94, 70, 0.25);
   
   --f-input-bg: rgba(255, 255, 255, 0.05);
   --f-card-bg: rgba(255, 255, 255, 0.02);

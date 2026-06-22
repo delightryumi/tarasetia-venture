@@ -9,7 +9,7 @@ import "./POSStyles.css";
 
 /**
  * Nexura POS Section - Main Orchestrator
- * High-Fidelity Terminal Interface for Bumi Anyom Resort
+ * High-Fidelity Terminal Interface — Setara Venture CRS
  */
 export const POSSection: React.FC = () => {
     const {

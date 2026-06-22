@@ -6,7 +6,7 @@ import { doc, getDoc } from 'firebase/firestore';
 export async function GET(req: NextRequest) {
   try {
     // Read hotelCode from cookies
-    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "1";
 
     // Attempt to read POS shop settings from Firestore under hotels/{hotelCode}/settings/pos
     const posSettingsRef = doc(db, 'hotels', hotelCode, 'settings', 'pos');

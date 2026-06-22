@@ -243,6 +243,62 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 }
             }
 
+            // 4. Generate Pelunasan & Reversal entries if there's a positive payment
+            const oldPayHotel = Number(guest.payHotel || guest.paidCash || 0);
+            const oldPayTransfer = Number(guest.payTransfer || guest.paidTransfer || 0);
+            const diffPayHotel = payHotel - oldPayHotel;
+            const diffPayTransfer = payTransfer - oldPayTransfer;
+
+            if (diffPayHotel > 0 || diffPayTransfer > 0) {
+                const pelunasanEntries = [];
+                // Reversal entry (backdated to checkIn date to reduce that day's cash flow)
+                pelunasanEntries.push({
+                    id: `rev_${Date.now()}_1`,
+                    type: "pelunasan_reversal",
+                    guestName: `Koreksi Tanggal Pelunasan - ${formData.guestName}`,
+                    amount: 0,
+                    payHotel: -diffPayHotel,
+                    payTransfer: -diffPayTransfer,
+                    paidCash: -diffPayHotel,
+                    paidTransfer: -diffPayTransfer,
+                    effectiveDate: formData.checkIn,
+                    timestamp: new Date().toISOString(),
+                    refBookingId: guest.bookingId || guest.id || "",
+                    isPelunasan: true,
+                    isHidden: true
+                });
+
+                // Actual Pelunasan entry (on today's date)
+                pelunasanEntries.push({
+                    id: `pel_${Date.now()}_2`,
+                    type: "pelunasan_ar",
+                    guestName: `Pelunasan Piutang - ${formData.guestName}`,
+                    amount: 0,
+                    payHotel: diffPayHotel,
+                    payTransfer: diffPayTransfer,
+                    paidCash: diffPayHotel,
+                    paidTransfer: diffPayTransfer,
+                    effectiveDate: todayStr,
+                    timestamp: new Date().toISOString(),
+                    refBookingId: guest.bookingId || guest.id || "",
+                    isPelunasan: true,
+                    isHidden: true
+                });
+
+                for (const entry of pelunasanEntries) {
+                    const dateStr = entry.effectiveDate;
+                    const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${dateStr}`);
+                    const docSnap = await getDoc(docRef);
+                    const cleanedEntry = cleanUndefined(entry);
+                    if (docSnap.exists()) {
+                        const entries = docSnap.data().entries || [];
+                        await updateDoc(docRef, { entries: [...entries, cleanedEntry], date: dateStr }, { merge: true });
+                    } else {
+                        await setDoc(docRef, { entries: [cleanedEntry], date: dateStr }, { merge: true });
+                    }
+                }
+            }
+
             toast.success("Transaction updated successfully");
             if (onSave) onSave();
             onClose();

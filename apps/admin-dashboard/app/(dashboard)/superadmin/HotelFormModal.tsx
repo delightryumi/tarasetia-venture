@@ -155,7 +155,7 @@ export const HotelFormModal: React.FC<HotelFormModalProps> = ({
                 </div>
                 <div className={styles.formField}>
                   <label className={styles.formLabel}>Nama Partner</label>
-                  <input type="text" required placeholder="misal: Bumi Anyom Resort" value={name} onChange={e => setName(e.target.value)} className={styles.formInput} />
+                  <input type="text" required placeholder="misal: Grand Sunset Resort" value={name} onChange={e => setName(e.target.value)} className={styles.formInput} />
                 </div>
                 <div className={styles.formField}>
                   <label className={styles.formLabel}>Domain Utama Custom</label>

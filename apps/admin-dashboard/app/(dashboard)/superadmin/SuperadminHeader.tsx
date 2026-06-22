@@ -77,7 +77,7 @@ export const SuperadminHeader: React.FC<SuperadminHeaderProps> = ({
                     </option>
                   ))
                 ) : (
-                  <option value="87241">[87241] Bumi Anyom Resort</option>
+                  <option value="" disabled>Memuat daftar partner...</option>
                 )}
               </select>
             </div>

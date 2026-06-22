@@ -343,7 +343,7 @@ export const TerminalInput = ({ label, value, onChange, placeholder, type = "tex
 
 export const TypeCard = ({ label, description, icon: Icon, onClick }: any) => {
     const isRoom = label.toLowerCase().includes("room");
-    const activeColor = isRoom ? '#5c6351' : '#b35e46';
+    const activeColor = isRoom ? 'var(--f-ink, #212121)' : 'var(--f-terracotta, #b35e46)';
     
     return (
         <button 
@@ -363,7 +363,7 @@ export const TypeCard = ({ label, description, icon: Icon, onClick }: any) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: isRoom ? '#e2e6dd' : '#f7eae5',
+                        backgroundColor: isRoom ? 'rgba(120, 128, 105, 0.15)' : 'rgba(179, 94, 70, 0.15)',
                         color: activeColor
                     }}
                 >
@@ -434,3 +434,64 @@ export const DateCard = ({ label, value, onChange, type }: any) => {
         </div>
     );
 };
+
+export function RoomNumberSelect({ value, options, onChange }: { value: string, options: string[], onChange: (v: string) => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    useClickOutside(containerRef, () => setIsOpen(false), isOpen);
+
+    return (
+        <div className="relative" ref={containerRef}>
+            <button 
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className={styles.inputWrapper}
+                style={{ width: '100%', height: '40px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}
+            >
+                <div className="flex items-center gap-3 flex-1">
+                    <BedDouble size={16} className="text-stone-400" />
+                    <span className={styles.popoverItemText} style={{ color: 'var(--f-body)' }}>
+                        {value || 'Pilih Nomor Kamar'}
+                    </span>
+                </div>
+                <ChevronRight size={14} className={`text-stone-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-90' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        className={styles.popover}
+                    >
+                        {options.length === 0 ? (
+                            <div className="p-3 text-[11px] text-red-500 font-bold text-center">
+                                Tidak ada kamar tersedia
+                            </div>
+                        ) : (
+                            options.map((option) => (
+                                <button
+                                    key={option}
+                                    type="button"
+                                    onClick={() => {
+                                        onChange(option);
+                                        setIsOpen(false);
+                                    }}
+                                    className={styles.popoverItem}
+                                    style={{
+                                        backgroundColor: value === option ? 'var(--f-sage)' : '',
+                                        color: value === option ? '#ffffff' : 'var(--f-body)'
+                                    }}
+                                >
+                                    <BedDouble size={16} style={{ color: value === option ? '#ffffff' : 'var(--f-muted)' }} />
+                                    <span className={styles.popoverItemText}>{option}</span>
+                                </button>
+                            ))
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}

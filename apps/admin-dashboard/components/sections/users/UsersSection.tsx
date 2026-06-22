@@ -9,7 +9,7 @@ import {
     Info, Grid, Settings as SettingsIcon, MapPin, 
     Gift, Package, Users, ShoppingCart, Banknote, Building2,
     BedDouble, Coffee, ShoppingBag, Calculator, Store, User as UserIcon, Archive, Star,
-    Camera, ClipboardList
+    Camera, ClipboardList, Layers, BarChart2, Zap
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -64,8 +64,9 @@ const PERMISSION_TREE: PermissionModule[] = [
             { id: "overview", label: "Overview", icon: <LayoutDashboard size={14} /> },
             { id: "digital-checkin", label: "Digital Check-in", icon: <Camera size={14} /> },
             { id: "forecast", label: "Forecast", icon: <TrendingUp size={14} /> },
+            { id: "inventory-control", label: "Inventory Control", icon: <Layers size={14} /> },
             { id: "invoice", label: "Create Invoice", icon: <FileText size={14} /> },
-            { id: "purchase-order", label: "Purchase Order", icon: <FileText size={14} /> },
+            { id: "purchase-order", label: "Purchase Order", icon: <ShoppingCart size={14} /> },
         ]
     },
     {
@@ -75,7 +76,8 @@ const PERMISSION_TREE: PermissionModule[] = [
         submenus: [
             { id: "overview", label: "Overview", icon: <LayoutDashboard size={14} /> },
             { id: "forecast", label: "Forecast", icon: <TrendingUp size={14} /> },
-            { id: "purchase-order", label: "Purchase Order", icon: <FileText size={14} /> },
+            { id: "inventory-control", label: "Inventory Control", icon: <Layers size={14} /> },
+            { id: "purchase-order", label: "Purchase Order", icon: <ShoppingCart size={14} /> },
         ]
     },
     {
@@ -84,6 +86,8 @@ const PERMISSION_TREE: PermissionModule[] = [
         icon: <Coffee size={14} />,
         submenus: [
             { id: "food-beverage-product", label: "F&B Product", icon: <Coffee size={14} /> },
+            { id: "food-beverage-realtime", label: "POS Real-time", icon: <Zap size={14} /> },
+            { id: "purchase-order", label: "Purchase Order", icon: <ShoppingCart size={14} /> },
         ]
     },
     {
@@ -105,8 +109,9 @@ const PERMISSION_TREE: PermissionModule[] = [
         label: "Accounting",
         icon: <Calculator size={14} />,
         submenus: [
-            { id: "pnl", label: "PNL Statement", icon: <PieChart size={14} /> },
-            { id: "purchase-order", label: "Purchase Order", icon: <FileText size={14} /> },
+            { id: "pnl", label: "P&L Statement", icon: <PieChart size={14} /> },
+            { id: "statements", label: "Laporan Keuangan", icon: <BarChart2 size={14} /> },
+            { id: "purchase-order", label: "Purchase Order", icon: <ShoppingCart size={14} /> },
         ]
     },
     {
@@ -151,7 +156,7 @@ export const UsersSection: React.FC = () => {
     const { user: authUser } = useAuth();
     const { 
         users, loading, activeModules,
-        handleSaveUser, handleDeleteUser, togglePermission,
+        handleSaveUser, handleDeleteUser, togglePermission, toggleModulePermission,
         handleChangePassword
     } = useUsers([]);
 
@@ -386,6 +391,7 @@ export const UsersSection: React.FC = () => {
                                 user={u}
                                 permissionTree={filteredPermissionTree}
                                 onToggle={togglePermission}
+                                onToggleModule={toggleModulePermission}
                             />
                         ))}
                     </motion.section>

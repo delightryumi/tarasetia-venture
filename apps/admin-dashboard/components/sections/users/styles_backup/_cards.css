@@ -1,7 +1,7 @@
 /* UserCard styles */
 .userCard {
-    background: var(--color-neutral-50);
-    border: 1px solid var(--color-neutral-200);
+    background: #ffffff;
+    border: 1px solid #dddddd;
     border-radius: 10px;
     padding: 24px;
     display: flex;
@@ -12,7 +12,7 @@
 }
 
 .userCard:hover {
-    border-color: var(--color-sage);
+    border-color: #9297a0;
     box-shadow: 0 4px 16px rgba(0,0,0,0.04);
 }
 
@@ -33,8 +33,8 @@
     height: 40px;
     border-radius: 6px;
     overflow: hidden;
-    border: 1px solid var(--color-neutral-200);
-    background: var(--color-neutral-100);
+    border: 1px solid #dddddd;
+    background: #f8fafc;
 }
 
 .avatarImage {
@@ -59,7 +59,7 @@
 .userName {
     font-size: 15px;
     font-weight: 500;
-    color: var(--color-neutral-900);
+    color: #181d26;
     line-height: 1.3;
 }
 
@@ -68,7 +68,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: var(--color-sage);
+    color: #9297a0;
     margin-top: 2px;
 }
 
@@ -82,9 +82,9 @@
     width: 32px;
     height: 32px;
     border-radius: 6px;
-    border: 1px solid var(--color-neutral-200);
-    background: var(--color-neutral-50);
-    color: var(--color-sage);
+    border: 1px solid #dddddd;
+    background: #ffffff;
+    color: #9297a0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -93,9 +93,9 @@
 }
 
 .iconButton:hover {
-    color: var(--color-neutral-900);
-    border-color: var(--color-sage);
-    background: var(--color-neutral-100);
+    color: #181d26;
+    border-color: #9297a0;
+    background: #f8fafc;
 }
 
 .iconButtonDanger:hover {
@@ -107,8 +107,8 @@
 .lockBadge {
     padding: 4px 8px;
     border-radius: 4px;
-    background: var(--color-neutral-100);
-    border: 1px solid var(--color-neutral-200);
+    background: #f8fafc;
+    border: 1px solid #dddddd;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -116,7 +116,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--color-sage);
+    color: #9297a0;
 }
 
 .cardBody {
@@ -145,7 +145,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: var(--color-sage);
+    color: #9297a0;
 }
 
 .footerLeftActive {
@@ -159,7 +159,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--color-neutral-900);
+    background: #181d26;
 }
 
 .mailIcon {
@@ -174,13 +174,13 @@
 
 /* RoleCard styles */
 .roleCard {
-    background: var(--color-neutral-50);
-    border: 1px solid var(--color-neutral-200);
+    background: #ffffff;
+    border: 1px solid #dddddd;
     border-radius: 10px;
     display: flex;
     flex-direction: column;
     height: 100%;
-    color: var(--color-neutral-900);
+    color: #181d26;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.01);
 }
@@ -188,25 +188,25 @@
 .roleCardHeader {
     padding: 20px;
     border-bottom: 1px solid transparent;
-    background: var(--color-neutral-100);
+    background: #f8fafc;
     transition: all 0.25s ease;
 }
 
 .roleCardHeaderExpanded {
-    border-bottom-color: var(--color-neutral-200);
+    border-bottom-color: #dddddd;
 }
 
 .chevronContainer {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-sage);
+    color: #9297a0;
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .chevronExpanded {
     transform: rotate(180deg);
-    color: var(--color-neutral-900);
+    color: #181d26;
 }
 
 .roleHeaderCluster {
@@ -219,12 +219,12 @@
     width: 36px;
     height: 36px;
     border-radius: 6px;
-    background: var(--color-neutral-50);
-    border: 1px solid var(--color-neutral-200);
+    background: #ffffff;
+    border: 1px solid #dddddd;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-sage);
+    color: #9297a0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.02);
 }
 
@@ -233,7 +233,7 @@
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--color-neutral-900);
+    color: #181d26;
 }
 
 .roleSubtitle {
@@ -241,7 +241,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: var(--color-sage);
+    color: #9297a0;
     margin-top: 2px;
 }
 
@@ -256,10 +256,10 @@
 }
 
 .moduleBox {
-    border: 1px solid var(--color-neutral-200);
+    border: 1px solid #dddddd;
     border-radius: 8px;
     padding: 16px;
-    background: var(--color-neutral-50);
+    background: #ffffff;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -283,18 +283,18 @@
     width: 26px;
     height: 26px;
     border-radius: 4px;
-    background: var(--color-neutral-100);
-    border: 1px solid var(--color-neutral-200);
+    background: #f8fafc;
+    border: 1px solid #dddddd;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-sage);
+    color: #9297a0;
 }
 
 .moduleLabel {
     font-size: 12px;
     font-weight: 650;
-    color: var(--color-neutral-900);
+    color: #181d26;
 }
 
 .submenuContainer {
@@ -319,7 +319,7 @@
 }
 
 .submenuRow:hover {
-    background: var(--color-neutral-100);
+    background: #f8fafc;
 }
 
 .submenuLabelCluster {
@@ -329,7 +329,7 @@
 }
 
 .submenuIcon {
-    color: var(--color-sage);
+    color: #9297a0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -359,12 +359,12 @@
 }
 
 .toggleBtnOff {
-    background-color: var(--color-neutral-300) !important;
+    background-color: #e0e2e6 !important;
 }
 
 /* Light mode ON = hitam */
 .toggleBtnOn {
-    background-color: var(--color-neutral-900) !important;
+    background-color: #181d26 !important;
 }
 
 .toggleCircle {
@@ -374,7 +374,7 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background-color: var(--color-neutral-50);
+    background-color: #ffffff;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
@@ -387,12 +387,12 @@
 }
 
 .toggleIconOn {
-    color: var(--color-neutral-900);
+    color: #181d26;
     font-weight: bold;
 }
 
 .toggleIconOff {
-    color: var(--color-sage);
+    color: #9297a0;
 }
 
 /* ── Submenu Toggle Button (smaller) ── */
@@ -411,12 +411,12 @@
 }
 
 .toggleBtnSubOff {
-    background-color: var(--color-neutral-200) !important;
+    background-color: #e2e8f0 !important;
 }
 
 /* Light mode ON = hitam */
 .toggleBtnSubOn {
-    background-color: var(--color-neutral-900) !important;
+    background-color: #181d26 !important;
 }
 
 .toggleCircleSub {
@@ -426,7 +426,7 @@
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background-color: var(--color-neutral-50);
+    background-color: #ffffff;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
@@ -440,8 +440,8 @@
 
 .roleCardFooter {
     padding: 16px 20px;
-    border-top: 1px solid var(--color-neutral-200);
-    background: var(--color-neutral-100);
+    border-top: 1px solid #dddddd;
+    background: #f8fafc;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -449,11 +449,11 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: var(--color-sage);
+    color: #9297a0;
 }
 
 .footerDivider {
     width: 32px;
     height: 1px;
-    background: var(--color-neutral-200);
+    background: #dddddd;
 }

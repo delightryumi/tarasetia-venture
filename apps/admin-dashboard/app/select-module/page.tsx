@@ -45,6 +45,7 @@ export default function SelectModulePage() {
   const router = useRouter();
   const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [userRole, setUserRole] = useState<string>("");
   const [loadingPerms, setLoadingPerms] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('system');
@@ -160,6 +161,7 @@ export default function SelectModulePage() {
       if (userSnap.exists()) {
         const userData = userSnap.data();
         const role = userData.role;
+        setUserRole(role || "");
 
         if (role === "superadmin") {
           setIsSuperadmin(true);
@@ -178,7 +180,7 @@ export default function SelectModulePage() {
 
   useEffect(() => {
     fetchPermissions();
-  }, [user]);
+  }, [user, activeHotelCode]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -550,6 +552,19 @@ export default function SelectModulePage() {
                             <Users className={styles.dropdownIcon} />
                             <span>User Settings</span>
                           </button>
+
+                          {(user?.role === "admin" || userRole === "admin") && (
+                            <button
+                              onClick={() => {
+                                setIsMenuOpen(false);
+                                router.push('/profile?module=cpanel');
+                              }}
+                              className={styles.dropdownItem}
+                            >
+                              <Building2 className={styles.dropdownIcon} />
+                              <span>Profile Settings</span>
+                            </button>
+                          )}
 
                           <div className={styles.dropdownDivider} />
                         </>

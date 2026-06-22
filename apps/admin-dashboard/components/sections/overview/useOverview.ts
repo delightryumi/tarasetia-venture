@@ -111,7 +111,7 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         allDays.push({ ...data, date: docDate });
 
                         const entries = (data.entries || [])
-                            .filter((e: any) => e.status !== "VOID" && e.status !== "VOIDED")
+                            .filter((e: any) => e.status !== "VOID" && e.status !== "VOIDED" && !e.isHidden && e.type !== "pelunasan_ar" && e.type !== "pelunasan_reversal" && !e.isPelunasan)
                             .map((e: any) => ({ 
                                 ...e, 
                                 _docId: docSnap.id,

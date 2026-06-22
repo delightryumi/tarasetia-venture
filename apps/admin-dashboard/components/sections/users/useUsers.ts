@@ -21,13 +21,21 @@ const ALL_KEYS = [
     // Modules
     "module_pos", "module_front_office", "module_housekeeping", 
     "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel", "module_hrd",
-    // Submenus
-    "overview", "forecast", "invoice", "pnl", "logo", "hero", "room-type", 
-    "about", "gallery", "footer", "attractions", "promo", "packages", "seo", "users",
+    // Front Office & Housekeeping
+    "overview", "digital-checkin", "forecast", "inventory-control", "invoice", "purchase-order",
+    // Accounting
+    "pnl", "statements",
+    // CPanel
+    "logo", "hero", "room-type", "about", "gallery", "footer", 
+    "attractions", "promo", "packages", "seo", "users",
+    // Purchasing
     "purchasing", "store-requisition", "purchase-requisition", "daily-market-list", 
-    "stock-opname", "items", "suppliers", "purchase-order", "food-beverage-product",
+    "stock-opname", "items", "suppliers",
+    // Food & Beverage
+    "food-beverage-product", "food-beverage-realtime",
     // POS submenus
-    "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings",
+    "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings", "pos_self_order",
+    // HRD
     "hrd"
 ];
 
@@ -62,7 +70,7 @@ export const useUsers = (menuItems: any[]) => {
             }
             
             try {
-                await updateDoc(doc(getHotelCollection(db, "users_master"), u.id), {
+                await updateDoc(doc(getHotelCollection(db, "users_master", hotelCode), u.id), {
                     permissions: initialPerms
                 });
             } catch (e) {
@@ -72,8 +80,9 @@ export const useUsers = (menuItems: any[]) => {
     };
 
     useEffect(() => {
+        if (!hotelCode) return;
         // Listen to Users
-        const unsubUsers = onSnapshot(query(getHotelCollection(db, "users_master"), orderBy("name")), async (snap) => {
+        const unsubUsers = onSnapshot(query(getHotelCollection(db, "users_master", hotelCode), orderBy("name")), async (snap) => {
             const list: UserProfile[] = [];
             snap.forEach(d => list.push({ id: d.id, ...d.data() } as UserProfile));
             
@@ -87,7 +96,7 @@ export const useUsers = (menuItems: any[]) => {
                 ALL_KEYS.forEach(k => {
                     adminPerms[k] = isSuper;
                 });
-                await setDoc(doc(getHotelCollection(db, "users_master"), adminId), {
+                await setDoc(doc(getHotelCollection(db, "users_master", hotelCode), adminId), {
                     name: "Setara Management",
                     email: adminEmail,
                     password: "000000",
@@ -204,10 +213,30 @@ export const useUsers = (menuItems: any[]) => {
     };
 
     const togglePermission = async (userId: string, menuId: string, currentValue: boolean) => {
-        const userDoc = doc(getHotelCollection(db, "users_master"), userId);
+        const userDoc = doc(getHotelCollection(db, "users_master", hotelCode), userId);
         await updateDoc(userDoc, {
             [`permissions.${menuId}`]: !currentValue
         });
+    };
+
+    // Toggle module + auto-ON all submenus when enabling, just toggle module when disabling
+    const toggleModulePermission = async (
+        userId: string,
+        moduleId: string,
+        subMenuIds: string[],
+        currentValue: boolean
+    ) => {
+        const userDoc = doc(getHotelCollection(db, "users_master", hotelCode), userId);
+        const updates: Record<string, boolean> = {
+            [`permissions.${moduleId}`]: !currentValue,
+        };
+        // Auto-ON all submenus when enabling the module
+        if (!currentValue) {
+            subMenuIds.forEach((subId) => {
+                updates[`permissions.${subId}`] = true;
+            });
+        }
+        await updateDoc(userDoc, updates);
     };
 
     const handleChangePassword = async (userId: string, newPassword: string) => {
@@ -246,6 +275,7 @@ export const useUsers = (menuItems: any[]) => {
         handleSaveUser,
         handleDeleteUser,
         togglePermission,
+        toggleModulePermission,
         handleChangePassword
     };
 };

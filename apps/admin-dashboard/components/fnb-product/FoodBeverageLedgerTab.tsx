@@ -29,7 +29,7 @@ export default function FoodBeverageLedgerTab({ activePnLStats, loading, onCardC
             value={activePnLStats?.revFoodAlacarte || 0}
             loading={loading}
             icon={<Store size={18} />}
-            accent="#14b8a6"
+            accent="#788069"
             bgVariant="revenue"
             onClick={onCardClick}
           />
@@ -75,7 +75,7 @@ export default function FoodBeverageLedgerTab({ activePnLStats, loading, onCardC
             value={activePnLStats?.posTaxAmount || 0}
             loading={loading}
             icon={<Percent size={18} />}
-            accent="#10b981"
+            accent="#788069"
             bgVariant="amber"
           />
           <SummaryCard 
@@ -109,7 +109,7 @@ export default function FoodBeverageLedgerTab({ activePnLStats, loading, onCardC
             value={activePnLStats?.posNettRevenue || 0}
             loading={loading}
             icon={<Wallet size={18} />}
-            accent="#10b981"
+            accent="#788069"
             bgVariant="revenue"
           />
         </div>

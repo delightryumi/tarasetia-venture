@@ -237,7 +237,7 @@ export function PrivacyPolicyPrint({ checkin }: PrivacyPolicyPrintProps) {
                     <p style={{ fontSize: '10px', color: '#aaa', marginBottom: '6px', fontStyle: 'italic' }}>[ Logo Hotel ]</p>
                 )}
                 <p style={s.eyebrow}>Hotel Property ID: {activeHotelCode}</p>
-                <h1 style={s.hotelName}>{hotelInfo?.name || "Bumi Anyom Resort & Spa"}</h1>
+                <h1 style={s.hotelName}>{hotelInfo?.name || "Partner Property"}</h1>
                 <p style={s.hotelContact}>
                     {hotelInfo?.address || "Jl. Raya Selemadeg Timur, Bali, Indonesia"} &nbsp;·&nbsp; Tel: {hotelInfo?.phone || "+62 (0)361 000 0000"} &nbsp;·&nbsp; {hotelInfo?.email || "reservasi@bumianyom.com"}
                 </p>
@@ -387,7 +387,7 @@ export function PrivacyPolicyPrint({ checkin }: PrivacyPolicyPrintProps) {
                     <div style={s.sigMeta}>
                         <p style={s.sigName}>{checkin.staffName || "Front Desk Officer"}</p>
                         <p style={s.sigNote}>Petugas Front Office</p>
-                        <p style={s.sigNote}>{hotelInfo?.name || "Bumi Anyom Resort & Spa"}</p>
+                        <p style={s.sigNote}>{hotelInfo?.name || "Partner Property"}</p>
                         <p style={s.sigNote}>{today}</p>
                     </div>
                 </div>

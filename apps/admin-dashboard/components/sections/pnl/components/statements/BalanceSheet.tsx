@@ -69,6 +69,8 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
         const status = (t.paymentStatus || "").toLowerCase();
         return !status.includes("lunas") && !status.includes("paid");
     }).reduce((sum, t) => {
+        const isPelunasan = t.type === "pelunasan_ar" || t.isPelunasan;
+        if (isPelunasan) return sum; // Ignore pelunasan_ar in AR calculation
         const paidCash = Number(t.paidCash || t.paidAmount1 || t.payHotel || 0);
         const paidTransfer = Number(t.paidTransfer || t.paidAmount2 || t.payTransfer || 0);
         const unpaid = Math.max(0, (t.amount || 0) - paidCash - paidTransfer);
@@ -84,24 +86,24 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
     const investorPayouts = (pnlResult?.investorDistributions || []).reduce((sum, i) => sum + (i.amount || 0), 0);
     const netIncome = pnlResult?.card12_ReconOwner || 0;
     
-    // Accrued Liabilities (Kewajiban Akrual Periode Ini)
+    // Accrued Liabilities (Kewajiban Akrual Periode Ini) - Dinamis dari PnL
     const vatLiability = pnlResult?.card11_VAT || 0;
     const scLiability = pnlResult?.summaryServiceCharge || 0;
     const lbLiability = pnlResult?.summaryLostBreakage || 0;
     const feeLiability = pnlResult?.card9_FeeGross || 0;
 
-    // Remaining Liabilities (Sisa Kewajiban setelah Pelunasan)
-    const sisaVat = Math.max(0, vatLiability - vatPaid);
-    const sisaFee = Math.max(0, feeLiability - feePaid);
-    const sisaSc = Math.max(0, scLiability - scPaid);
-    const sisaLb = Math.max(0, lbLiability - lbPaid);
-    const totalLiabilities = sisaVat + sisaFee + sisaSc + sisaLb + accountsPayable;
+    // Karena di-setting dinamis mengikuti PnL, asumsikan sudah diselesaikan (tercermin di Arus Kas otomatis)
+    const sisaVat = 0;
+    const sisaFee = 0;
+    const sisaSc = 0;
+    const sisaLb = 0;
+    const totalLiabilities = accountsPayable;
 
     const gop = pnlResult?.card7_TotalGOP || 0;
-    const totalPaid = vatPaid + feePaid + scPaid + lbPaid;
+    const totalDynamicPaid = vatLiability + feeLiability + scLiability + lbLiability;
 
-    // Cash and Bank calculation: startingBalance + GOP - investorPayouts - accountsReceivable - fixedAssetsValue - totalPaid + accountsPayable
-    const cashAndBank = startingBalance + gop - investorPayouts - accountsReceivable - fixedAssetsValue - totalPaid + accountsPayable;
+    // Cash and Bank calculation: startingBalance + GOP - investorPayouts - accountsReceivable - fixedAssetsValue - totalDynamicPaid + accountsPayable
+    const cashAndBank = startingBalance + gop - investorPayouts - accountsReceivable - fixedAssetsValue - totalDynamicPaid + accountsPayable;
     
     const totalAssetsLancar = cashAndBank + accountsReceivable;
     const totalAssets = totalAssetsLancar + fixedAssetsValue;
@@ -114,11 +116,7 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
         try {
             await Promise.all([
                 updateStartingBalance(Number(editBalance) || 0),
-                updateFixedAssetsValue(Number(editFixedAssets) || 0),
-                updateVatPaid(Number(editVatPaid) || 0),
-                updateFeePaid(Number(editFeePaid) || 0),
-                updateScPaid(Number(editScPaid) || 0),
-                updateLbPaid(Number(editLbPaid) || 0)
+                updateFixedAssetsValue(Number(editFixedAssets) || 0)
             ]);
         } catch (error) {
             console.error("Save error:", error);
@@ -142,9 +140,9 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
                 <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
                     <AlertCircle className={styles.textDarkToLight} size={20} style={{ marginTop: "4px" }} />
                     <div>
-                        <h4 className={styles.titleLg} style={{ fontSize: "16px", fontWeight: 500 }}>Konfigurasi Saldo & Pelunasan Kewajiban</h4>
+                        <h4 className={styles.titleLg} style={{ fontSize: "16px", fontWeight: 500 }}>Konfigurasi Saldo & Aktiva Tetap</h4>
                         <p className={styles.captionText} style={{ marginTop: "4px", maxWidth: "800px" }}>
-                            Gunakan panel ini untuk mencatat <b>Saldo Awal</b>, <b>Nilai Inventaris</b>, dan <b>Pelunasan Riil Pajak/Operasional</b>. Pembayaran kewajiban akan otomatis mengurangi kas hotel dan sisa hutang pada laporan Neraca periode <b>{month}</b> ini secara berpasangan (balance).
+                            Gunakan panel ini untuk mencatat <b>Saldo Awal</b> dan <b>Nilai Inventaris</b>. Pengeluaran dinamis (PPN, Management Fee, dll) akan otomatis dicatat berdasarkan pengaturan persentase di menu P&L.
                         </p>
                     </div>
                 </div>
@@ -190,128 +188,12 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
                     </div>
                 </div>
 
-                {/* Liability Settlements configuration */}
-                <div className={styles.flexColumn} style={{ gap: "12px" }}>
-                    <h5 className={styles.titleLg} style={{ fontSize: "14px", fontWeight: 500 }}>Catatan Realisasi / Pelunasan Kewajiban Bulan Ini</h5>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px" }}>
-                        
-                        {/* VAT Paid */}
-                        <div className={styles.flexColumn} style={{ gap: "6px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <label className={styles.captionText} style={{ fontWeight: 500, color: "var(--f-muted)" }}>Pajak VAT Disetor</label>
-                                <button 
-                                    onClick={() => setEditVatPaid(Math.floor(vatLiability).toString())}
-                                    className={styles.captionText} 
-                                    style={{ color: "var(--f-sage)", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}
-                                >
-                                    Setor Penuh
-                                </button>
-                            </div>
-                            <input 
-                                type="number"
-                                value={editVatPaid}
-                                onChange={(e) => setEditVatPaid(e.target.value)}
-                                min="0"
-                                onWheel={(e) => e.currentTarget.blur()}
-                                onKeyDown={(e) => {
-                                    if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
-                                        e.preventDefault();
-                                    }
-                                }}
-                                className={styles.inputField}
-                                style={{ fontFamily: '"Inter Display", monospace' }}
-                                placeholder="0"
-                            />
-                        </div>
-
-                        {/* Fee Paid */}
-                        <div className={styles.flexColumn} style={{ gap: "6px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <label className={styles.captionText} style={{ fontWeight: 500, color: "var(--f-muted)" }}>Management Fee Dibayar</label>
-                                <button 
-                                    onClick={() => setEditFeePaid(Math.floor(feeLiability).toString())}
-                                    className={styles.captionText} 
-                                    style={{ color: "var(--f-sage)", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}
-                                >
-                                    Setor Penuh
-                                </button>
-                            </div>
-                            <input 
-                                type="number"
-                                value={editFeePaid}
-                                onChange={(e) => setEditFeePaid(e.target.value)}
-                                min="0"
-                                onWheel={(e) => e.currentTarget.blur()}
-                                onKeyDown={(e) => {
-                                    if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
-                                        e.preventDefault();
-                                    }
-                                }}
-                                className={styles.inputField}
-                                style={{ fontFamily: '"Inter Display", monospace' }}
-                                placeholder="0"
-                            />
-                        </div>
-
-                        {/* SC Paid */}
-                        <div className={styles.flexColumn} style={{ gap: "6px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <label className={styles.captionText} style={{ fontWeight: 500, color: "var(--f-muted)" }}>Service Charge Dibagikan</label>
-                                <button 
-                                    onClick={() => setEditScPaid(Math.floor(scLiability).toString())}
-                                    className={styles.captionText} 
-                                    style={{ color: "var(--f-sage)", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}
-                                >
-                                    Setor Penuh
-                                </button>
-                            </div>
-                            <input 
-                                type="number"
-                                value={editScPaid}
-                                onChange={(e) => setEditScPaid(e.target.value)}
-                                min="0"
-                                onWheel={(e) => e.currentTarget.blur()}
-                                onKeyDown={(e) => {
-                                    if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
-                                        e.preventDefault();
-                                    }
-                                }}
-                                className={styles.inputField}
-                                style={{ fontFamily: '"Inter Display", monospace' }}
-                                placeholder="0"
-                            />
-                        </div>
-
-                        {/* LB Paid */}
-                        <div className={styles.flexColumn} style={{ gap: "6px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <label className={styles.captionText} style={{ fontWeight: 500, color: "var(--f-muted)" }}>Realisasi Lost/Breakage</label>
-                                <button 
-                                    onClick={() => setEditLbPaid(Math.floor(lbLiability).toString())}
-                                    className={styles.captionText} 
-                                    style={{ color: "var(--f-sage)", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}
-                                >
-                                    Setor Penuh
-                                </button>
-                            </div>
-                            <input 
-                                type="number"
-                                value={editLbPaid}
-                                onChange={(e) => setEditLbPaid(e.target.value)}
-                                min="0"
-                                onWheel={(e) => e.currentTarget.blur()}
-                                onKeyDown={(e) => {
-                                    if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
-                                        e.preventDefault();
-                                    }
-                                }}
-                                className={styles.inputField}
-                                style={{ fontFamily: '"Inter Display", monospace' }}
-                                placeholder="0"
-                            />
-                        </div>
-
-                    </div>
+                {/* Note: Liability Settlements removed to follow dynamic P&L mode */}
+                <div className={styles.flexColumn} style={{ gap: "12px", borderBottom: "1px dashed var(--f-border-soft)", paddingBottom: "20px" }}>
+                    <h5 className={styles.titleLg} style={{ fontSize: "14px", fontWeight: 500 }}>Catatan Realisasi Kewajiban Dinamis</h5>
+                    <p className={styles.captionText} style={{ fontStyle: "italic", color: "var(--f-sage)" }}>
+                        Sistem kini berjalan dalam mode dinamis (100% otomatis menyesuaikan persentase di P&L). Beban PPN, Management Fee, Service Charge, & Lost/Breakage otomatis mengurangi kas berjalan.
+                    </p>
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -389,33 +271,33 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
                             <div className={styles.flexBetween} style={{ padding: "8px 0" }}>
                                 <div>
                                     <span className={styles.bodyText} style={{ fontWeight: 500, display: "block" }}>Hutang Operasional (Management Fee)</span>
-                                    {feePaid > 0 && <span className={styles.captionText} style={{ color: "var(--f-sage)" }}>Disetor: {formatIDR(feePaid)}</span>}
+                                    <span className={styles.captionText} style={{ color: "var(--f-sage)" }}>Otomatis Diselesaikan (Dinamis)</span>
                                 </div>
-                                <span className={styles.excelBalance}>{formatIDR(sisaFee)}</span>
+                                <span className={styles.excelBalance}>{formatIDR(0)}</span>
                             </div>
                             
                             <div className={styles.flexBetween} style={{ padding: "8px 0" }}>
                                 <div>
                                     <span className={styles.bodyText} style={{ fontWeight: 500, display: "block" }}>Pajak Terhutang (VAT / PB1)</span>
-                                    {vatPaid > 0 && <span className={styles.captionText} style={{ color: "var(--f-sage)" }}>Disetor: {formatIDR(vatPaid)}</span>}
+                                    <span className={styles.captionText} style={{ color: "var(--f-sage)" }}>Otomatis Diselesaikan (Dinamis)</span>
                                 </div>
-                                <span className={styles.excelBalance}>{formatIDR(sisaVat)}</span>
+                                <span className={styles.excelBalance}>{formatIDR(0)}</span>
                             </div>
                             
                             <div className={styles.flexBetween} style={{ padding: "8px 0" }}>
                                 <div>
                                     <span className={styles.bodyText} style={{ fontWeight: 500, display: "block" }}>Hutang Service Charge Karyawan</span>
-                                    {scPaid > 0 && <span className={styles.captionText} style={{ color: "var(--f-sage)" }}>Disetor: {formatIDR(scPaid)}</span>}
+                                    <span className={styles.captionText} style={{ color: "var(--f-sage)" }}>Otomatis Diselesaikan (Dinamis)</span>
                                 </div>
-                                <span className={styles.excelBalance}>{formatIDR(sisaSc)}</span>
+                                <span className={styles.excelBalance}>{formatIDR(0)}</span>
                             </div>
                             
                             <div className={styles.flexBetween} style={{ padding: "8px 0" }}>
                                 <div>
                                     <span className={styles.bodyText} style={{ fontWeight: 500, display: "block" }}>Cadangan Kehilangan & Kerusakan</span>
-                                    {lbPaid > 0 && <span className={styles.captionText} style={{ color: "var(--f-sage)" }}>Direalisasikan: {formatIDR(lbPaid)}</span>}
+                                    <span className={styles.captionText} style={{ color: "var(--f-sage)" }}>Otomatis Diselesaikan (Dinamis)</span>
                                 </div>
-                                <span className={styles.excelBalance}>{formatIDR(sisaLb)}</span>
+                                <span className={styles.excelBalance}>{formatIDR(0)}</span>
                             </div>
                             
                             <div className={`${styles.flexBetween} ${styles.divider}`} style={{ paddingTop: "8px", marginTop: "8px" }}>

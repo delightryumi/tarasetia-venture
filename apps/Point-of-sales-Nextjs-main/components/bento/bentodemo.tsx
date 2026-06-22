@@ -15,7 +15,7 @@ import { Coffee, Users, Plus, Trash2, X, ClipboardList, CheckCircle } from 'luci
 
 // Live Tables Component
 function LiveTableGrid() {
-  const [hotelCode, setHotelCode] = useState<string>('87241');
+  const [hotelCode, setHotelCode] = useState<string>('1');
   const [tablesList, setTablesList] = useState<string[]>([]);
   const [heldOrders, setHeldOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -37,7 +37,20 @@ function LiveTableGrid() {
         const parts = value.split(`; ${name}=`);
         if (parts.length === 2) return parts.pop()?.split(';').shift();
       };
-      const code = getCookie('hotelCode') || localStorage.getItem('hotelCode') || '87241';
+      
+      let code = getCookie('hotelCode');
+      if (!code) {
+        const userJson = localStorage.getItem('user');
+        if (userJson) {
+          try {
+            const userObj = JSON.parse(userJson);
+            code = userObj.hotelCode;
+          } catch (e) {}
+        }
+      }
+      if (!code) {
+        code = localStorage.getItem('hotelCode') || '1';
+      }
       setHotelCode(code);
     }
   }, []);

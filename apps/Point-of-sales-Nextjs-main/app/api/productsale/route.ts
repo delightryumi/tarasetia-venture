@@ -6,7 +6,7 @@ import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export async function GET(req: NextRequest) {
   try {
-    const hotelCode = req.cookies.get('hotelCode')?.value || "87241";
+    const hotelCode = req.cookies.get('hotelCode')?.value || "1";
     const { searchParams } = new URL(req.url);
     const start = searchParams.get('start');
     const end = searchParams.get('end');

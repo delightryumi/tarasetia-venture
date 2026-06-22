@@ -159,7 +159,7 @@ export const GallerySection = () => {
                     </div>
                     <h1 className="content-title">Gallery</h1>
                 </div>
-                <p className="content-subtitle">Curate the visual story of luxury and comfort at Bumi Anyom.</p>
+                <p className="content-subtitle">Curate the visual story of your property for your guests.</p>
             </header>
 
             <BentoGrid className="lg:grid-cols-4">

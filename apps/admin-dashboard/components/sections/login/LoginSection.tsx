@@ -96,7 +96,7 @@ export const LoginSection = () => {
                                     </span>
                                     <input
                                         type="text"
-                                        placeholder="Partner Code (e.g. 87241)"
+                                        placeholder="Partner Code (e.g. 10001)"
                                         value={hotelCode}
                                         onChange={(e) => setHotelCode(e.target.value)}
                                         disabled={loading}

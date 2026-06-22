@@ -32,10 +32,21 @@ export const CashFlow: React.FC<CashFlowProps> = ({
         const status = (t.paymentStatus || "").toLowerCase();
         return !status.includes("lunas") && !status.includes("paid");
     }).reduce((sum, t) => {
+        const isPelunasan = t.type === "pelunasan_ar" || t.isPelunasan;
+        if (isPelunasan) return sum; // Ignore pelunasan_ar in AR calculation
         const paidCash = Number(t.paidCash || t.paidAmount1 || t.payHotel || 0);
         const paidTransfer = Number(t.paidTransfer || t.paidAmount2 || t.payTransfer || 0);
         const unpaid = Math.max(0, (t.amount || 0) - paidCash - paidTransfer);
         return sum + unpaid;
+    }, 0);
+
+    const pelunasanCash = (rawTransactions || []).filter(t => {
+        if (t.isDeleted || t.status === "cancelled" || t.status === "no-show") return false;
+        return t.type === "pelunasan_ar" || t.isPelunasan;
+    }).reduce((sum, t) => {
+        const paidCash = Number(t.paidCash || t.paidAmount1 || t.payHotel || 0);
+        const paidTransfer = Number(t.paidTransfer || t.paidAmount2 || t.payTransfer || 0);
+        return sum + paidCash + paidTransfer;
     }, 0);
 
     const accountsPayable = (expenses || []).filter((e: any) => {
@@ -44,10 +55,15 @@ export const CashFlow: React.FC<CashFlowProps> = ({
     }).reduce((sum, e) => sum + (e.amount || 0), 0);
 
     const investorPayouts = (pnlResult?.investorDistributions || []).reduce((sum, i) => sum + (i.amount || 0), 0);
-    const totalPaid = vatPaid + feePaid + scPaid + lbPaid;
+
+    const vatLiability = pnlResult?.card11_VAT || 0;
+    const feeLiability = pnlResult?.card9_FeeGross || 0;
+    const scLiability = pnlResult?.summaryServiceCharge || 0;
+    const lbLiability = pnlResult?.summaryLostBreakage || 0;
+    const totalDynamicPaid = vatLiability + feeLiability + scLiability + lbLiability;
     
-    const revenueReceived = (pnlResult?.card1_TotalRevenue || 0) - accountsReceivable;
-    const expensesPaid = (pnlResult?.card8_TotalExpenses || 0) - accountsPayable + totalPaid;
+    const revenueReceived = (pnlResult?.card1_TotalRevenue || 0) - accountsReceivable + pelunasanCash;
+    const expensesPaid = (pnlResult?.card8_TotalExpenses || 0) - accountsPayable + totalDynamicPaid;
     const netOperatingCash = revenueReceived - expensesPaid;
 
     
