@@ -258,14 +258,24 @@ export const useTransactionForm = () => {
 
                 // Count existing bookings for this room type on this date
                 const occupied = occupancy.filter(e => {
-                    if (e.type !== 'accommodation' || e.status?.toUpperCase() === 'CANCELLED' || e.status?.toUpperCase() === 'CANCEL') return false;
+                    const statusUpper = e.status?.toUpperCase();
+                    const paymentStatusUpper = e.paymentStatus?.toUpperCase();
+                    const isCancelled = statusUpper === 'CANCELLED' || 
+                                        statusUpper === 'CANCEL' || 
+                                        paymentStatusUpper === 'CANCELLED' || 
+                                        paymentStatusUpper === 'CANCEL' ||
+                                        statusUpper === 'VOID' ||
+                                        statusUpper === 'VOIDED' ||
+                                        e.isHidden;
+                    if (e.type !== 'accommodation' || isCancelled) return false;
                     if (e.roomType?.toLowerCase() !== type.name?.toLowerCase()) return false;
                     
-                    if (e.effectiveDate) {
-                        return e.effectiveDate === dateStr;
-                    } else {
+                    if (e.checkInDate && e.checkOutDate) {
                         return dateStr >= e.checkInDate && dateStr < e.checkOutDate;
+                    } else if (e.effectiveDate) {
+                        return e.effectiveDate === dateStr;
                     }
+                    return false;
                 }).reduce((acc, curr) => acc + (Number(curr.roomCount) || 1), 0);
 
                 const totalAllotment = parseInt(type.roomCount) || parseInt(type.totalRooms) || 0;
@@ -403,6 +413,8 @@ export const useTransactionForm = () => {
                     paidAmount1: finalPayHotel,
                     paidTransfer: finalPayTransfer,
                     paidAmount2: finalPayTransfer,
+                    initialPayHotel: finalPayHotel,
+                    initialPayTransfer: finalPayTransfer,
                     paymentStatus: dailyStatus,
                     source: form.channel === "Walk-in" ? "Walk-in" : "OTA",
                     status: form.channel === "Walk-in" ? "CONFIRMED" : "CONFIRMED", // Aligning reservation statuses
@@ -438,6 +450,8 @@ export const useTransactionForm = () => {
                 paidAmount1: finalPayHotel,
                 paidTransfer: finalPayTransfer,
                 paidAmount2: finalPayTransfer,
+                initialPayHotel: finalPayHotel,
+                initialPayTransfer: finalPayTransfer,
                 paymentStatus: incomeStatus,
                 source: "Walk-in", // Other income is generally considered walk-in
                 status: "CONFIRMED",
@@ -575,14 +589,23 @@ export const useTransactionForm = () => {
             const dateStr = d.toISOString().split('T')[0];
             
             occupancy.forEach(e => {
-                if (e.type !== 'accommodation' || e.status?.toUpperCase() === 'CANCELLED' || e.status?.toUpperCase() === 'CANCEL') return;
+                const statusUpper = e.status?.toUpperCase();
+                const paymentStatusUpper = e.paymentStatus?.toUpperCase();
+                const isCancelled = statusUpper === 'CANCELLED' || 
+                                    statusUpper === 'CANCEL' || 
+                                    paymentStatusUpper === 'CANCELLED' || 
+                                    paymentStatusUpper === 'CANCEL' ||
+                                    statusUpper === 'VOID' ||
+                                    statusUpper === 'VOIDED' ||
+                                    e.isHidden;
+                if (e.type !== 'accommodation' || isCancelled) return;
                 if (e.roomType?.toLowerCase() !== type.name?.toLowerCase()) return;
                 
                 let isOccupiedOnDate = false;
-                if (e.effectiveDate) {
-                    isOccupiedOnDate = (e.effectiveDate === dateStr);
-                } else {
+                if (e.checkInDate && e.checkOutDate) {
                     isOccupiedOnDate = (dateStr >= e.checkInDate && dateStr < e.checkOutDate);
+                } else if (e.effectiveDate) {
+                    isOccupiedOnDate = (e.effectiveDate === dateStr);
                 }
 
                 if (isOccupiedOnDate && e.roomNumber) {
@@ -591,14 +614,23 @@ export const useTransactionForm = () => {
             });
 
             queue.forEach(item => {
-                if (item.type !== 'accommodation' || item.status?.toUpperCase() === 'CANCELLED' || item.status?.toUpperCase() === 'CANCEL') return;
+                const statusUpper = item.status?.toUpperCase();
+                const paymentStatusUpper = item.paymentStatus?.toUpperCase();
+                const isCancelled = statusUpper === 'CANCELLED' || 
+                                    statusUpper === 'CANCEL' || 
+                                    paymentStatusUpper === 'CANCELLED' || 
+                                    paymentStatusUpper === 'CANCEL' ||
+                                    statusUpper === 'VOID' ||
+                                    statusUpper === 'VOIDED' ||
+                                    item.isHidden;
+                if (item.type !== 'accommodation' || isCancelled) return;
                 if (item.roomType?.toLowerCase() !== type.name?.toLowerCase()) return;
                 
                 let isOccupiedOnDate = false;
-                if (item.effectiveDate) {
-                    isOccupiedOnDate = (item.effectiveDate === dateStr);
-                } else {
+                if (item.checkInDate && item.checkOutDate) {
                     isOccupiedOnDate = (dateStr >= item.checkInDate && dateStr < item.checkOutDate);
+                } else if (item.effectiveDate) {
+                    isOccupiedOnDate = (item.effectiveDate === dateStr);
                 }
 
                 if (isOccupiedOnDate && item.roomNumber) {

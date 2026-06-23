@@ -29,6 +29,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Akun karyawan tidak ditemukan atau telah dinonaktifkan." }, { status: 403 });
     }
 
+    const staffData = staffSnap.data();
+    let resolvedShiftId = staffData?.shiftId || "";
+    try {
+      const overrideRef = adminDb.doc(`hotels/${hotelCode}/staff/${staffId}/schedules/${date}`);
+      const overrideSnap = await overrideRef.get();
+      if (overrideSnap.exists && overrideSnap.data()?.shiftId) {
+        resolvedShiftId = overrideSnap.data()?.shiftId;
+      }
+    } catch (err) {
+      console.error("Error fetching schedule override:", err);
+    }
+
+    let shiftData: any = null;
+    if (resolvedShiftId && resolvedShiftId !== "OFF" && resolvedShiftId !== "NONE" && resolvedShiftId !== "NOT_FOUND") {
+      try {
+        const shiftSnap = await adminDb.doc(`hotels/${hotelCode}/shifts/${resolvedShiftId}`).get();
+        if (shiftSnap.exists) {
+          shiftData = shiftSnap.data();
+        }
+      } catch (err) {
+        console.error("Error fetching shift doc:", err);
+      }
+    }
+
     // 1. Validasi GPS terhadap koordinat hotel
     const geoRef = adminDb.doc(`hotels/${hotelCode}/settings/attendance_geo`);
     const geoSnap = await geoRef.get();
@@ -69,12 +93,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Anda sudah Clock In hari ini." }, { status: 409 });
       }
 
-      // Ambil info shift untuk cek keterlambatan
-      const staffSnap = await adminDb.doc(`hotels/${hotelCode}/staff/${staffId}`).get();
-      const staffData = staffSnap.data();
-      const shiftSnap = await adminDb.doc(`hotels/${hotelCode}/shifts/${staffData?.shiftId}`).get();
-      const shiftData = shiftSnap.data();
-
       let status: "hadir" | "terlambat" = "hadir";
       let lateMinutes = 0;
       if (shiftData) {
@@ -98,7 +116,7 @@ export async function POST(request: Request) {
         staffId,
         staffName: staffData?.name || "",
         date,
-        shiftId: staffData?.shiftId || "",
+        shiftId: resolvedShiftId || "",
         clockIn: { time: now, selfieUrl, gps },
         durationMinutes: 0,
         status,
@@ -121,10 +139,6 @@ export async function POST(request: Request) {
       const durationMinutes = Math.round((clockOutTime.getTime() - clockInTime.getTime()) / 60000);
 
       // Hitung lembur
-      const staffSnap = await adminDb.doc(`hotels/${hotelCode}/staff/${staffId}`).get();
-      const staffData = staffSnap.data();
-      const shiftSnap = await adminDb.doc(`hotels/${hotelCode}/shifts/${staffData?.shiftId}`).get();
-      const shiftData = shiftSnap.data();
       let overtimeMinutes = 0;
       if (shiftData) {
         const minWorkMinutes = ((shiftData as any).minimumWorkHours ?? 8) * 60;

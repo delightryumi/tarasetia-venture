@@ -42,6 +42,7 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
     const coaNames: Record<string, string> = {
         "101-000": "Kas & Bank",
         "201-000": "Hutang Dagang (Accounts Payable)",
+        "202-000": "Pendapatan Diterima di Muka",
         "301-000": "Modal / Ekuitas",
         "401-000": "Pendapatan Kamar",
         "402-000": "Pendapatan POS (F&B)",
@@ -102,12 +103,105 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
         }
 
         // 2. Room Revenue & Other FO Incomes (including Compliment)
+        const isAccommodation = (tx: any) => {
+            const isPOS = tx.guestName?.startsWith("POS Order") || !!tx.posItems || !!tx.revenueType;
+            const isPelunasan = tx.type === "pelunasan_ar" || tx.type === "pelunasan_reversal" || tx.isPelunasan;
+            return !isPOS && !isPelunasan && (tx.type === "accommodation" || (!tx.type && tx.guestName));
+        };
+
+        const isTxIgnored = (tx: any) => {
+            if (!tx) return true;
+            if (tx.isDeleted) return true;
+            const status = (tx.status || "").toUpperCase();
+            const payStatus = (tx.paymentStatus || "").toUpperCase();
+            return (
+                status === "VOID" || 
+                status === "VOIDED" || 
+                status === "CANCEL" || 
+                status === "CANCELLED" || 
+                status === "NO-SHOW" ||
+                payStatus === "VOID" ||
+                payStatus === "VOIDED" ||
+                payStatus === "CANCEL" ||
+                payStatus === "CANCELLED"
+            );
+        };
+
+        // Gather all reversals to offset the consolidated accommodation payments using clean guest name and date
+        const reversalsByBooking: Record<string, { paidCash: number, paidTransfer: number }> = {};
         rawTransactions.forEach(t => {
-            if (t.isDeleted || t.status === "cancelled" || t.status === "no-show") return;
-            const refCode = formatRef("FO", t.bookingId || t.id);
-            const dateVal = new Date(t.createdAt || t.date || new Date());
-            const isRoom = t.type === "accommodation" || (!t.type && !t.incomeCategory);
+            if (isTxIgnored(t)) return;
+            if (t.type === "pelunasan_reversal") {
+                const cleanGuestName = (t.guestName || "")
+                    .replace(/^Koreksi Tanggal Pelunasan\s*-\s*/, "")
+                    .replace(/^Pelunasan Piutang\s*-\s*/, "")
+                    .trim()
+                    .toLowerCase();
+                const dateKey = t.effectiveDate || t.checkInDate || t.date;
+                const matchKey = `${cleanGuestName}_${dateKey}`;
+
+                if (!reversalsByBooking[matchKey]) {
+                    reversalsByBooking[matchKey] = { paidCash: 0, paidTransfer: 0 };
+                }
+                const paidCash = t.paidCash !== undefined ? Number(t.paidCash) : (t.paidAmount1 !== undefined ? Number(t.paidAmount1) : Number(t.payHotel || 0));
+                const paidTransfer = t.paidTransfer !== undefined ? Number(t.paidTransfer) : (t.paidAmount2 !== undefined ? Number(t.paidAmount2) : Number(t.payTransfer || 0));
+                reversalsByBooking[matchKey].paidCash += paidCash;
+                reversalsByBooking[matchKey].paidTransfer += paidTransfer;
+            }
+        });
+
+        const accGroups: Record<string, any[]> = {};
+        const otherTx: any[] = [];
+
+        rawTransactions.forEach(tx => {
+            if (isTxIgnored(tx)) return;
+            if (tx.type === "pelunasan_reversal") return; // Exclude reversals from direct display
+
+            if (isAccommodation(tx)) {
+                const key = tx.bookingId || tx.timestamp || `${tx.guestName}_${tx.checkInDate}_${tx.checkOutDate}_${tx.roomNumber}`;
+                if (!accGroups[key]) {
+                    accGroups[key] = [];
+                }
+                accGroups[key].push(tx);
+            } else {
+                otherTx.push(tx);
+            }
+        });
+
+        const consolidatedAccTransactions: any[] = [];
+        Object.values(accGroups).forEach(group => {
+            const rep = { ...group[0] };
+            rep.amount = group.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+            rep.payHotel = group.reduce((sum, item) => sum + (Number(item.payHotel) || 0), 0);
+            rep.payTransfer = group.reduce((sum, item) => sum + (Number(item.payTransfer) || 0), 0);
+            rep.paidCash = group.reduce((sum, item) => sum + (Number(item.paidCash) || 0), 0);
+            rep.paidTransfer = group.reduce((sum, item) => sum + (Number(item.paidTransfer) || 0), 0);
+            rep.complimentValue = group.reduce((sum, item) => sum + (Number(item.complimentValue) || 0), 0);
+            rep.totalPrice = rep.amount; // Ensure totalPrice reflects the aggregated amount
+
+            // Offset the payment amount by matching clean guest name and check-in date
+            const cleanGuestName = (rep.guestName || "").trim().toLowerCase();
+            const dateKey = rep.checkInDate || rep.effectiveDate || rep.date;
+            const matchKey = `${cleanGuestName}_${dateKey}`;
+
+            if (reversalsByBooking[matchKey]) {
+                rep.paidCash = Math.max(0, rep.paidCash + reversalsByBooking[matchKey].paidCash);
+                rep.paidTransfer = Math.max(0, rep.paidTransfer + reversalsByBooking[matchKey].paidTransfer);
+                rep.payHotel = rep.paidCash;
+                rep.payTransfer = rep.paidTransfer;
+            }
+
+            consolidatedAccTransactions.push(rep);
+        });
+
+        const processedTransactions = [...consolidatedAccTransactions, ...otherTx];
+
+        processedTransactions.forEach(t => {
+            if (isTxIgnored(t)) return;
+            const refCode = formatRef("FO", t.refBookingId || t.bookingId || t.id);
+            const dateVal = new Date(t.effectiveDate || t.checkInDate || t.createdAt || t.date || new Date());
             const isPelunasan = t.type === "pelunasan_ar" || t.isPelunasan;
+            const isRoom = t.type === "accommodation" || (!t.type && !t.incomeCategory) || (isPelunasan && !t.incomeCategory);
             const revenueCoa = isRoom ? "401-000" : "409-000";
             const revenueLabel = isRoom ? "Kamar" : "Lainnya";
 
@@ -126,7 +220,7 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
                     // Credit: Pendapatan Kamar / Lainnya
                     list.push({
                         date: dateVal,
-                        description: `Pendapatan Compliment - ${t.guestName || "Tamu"}`,
+                        description: `Pendapatan Compliment - ${t.guestName || "Tamu"}${t.roomType ? ` (${t.roomType})` : ""}`,
                         ref: refCode,
                         coa: revenueCoa,
                         type: "credit",
@@ -134,86 +228,99 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
                     });
                 }
             } else if (isPelunasan) {
-                const payAmt = (Number(t.payHotel) || 0) + (Number(t.payTransfer) || 0) + (Number(t.paidCash) || 0) + (Number(t.paidTransfer) || 0);
+                const paidCash = t.paidCash !== undefined ? Number(t.paidCash) : (t.paidAmount1 !== undefined ? Number(t.paidAmount1) : Number(t.payHotel || 0));
+                const paidTransfer = t.paidTransfer !== undefined ? Number(t.paidTransfer) : (t.paidAmount2 !== undefined ? Number(t.paidAmount2) : Number(t.payTransfer || 0));
+                const payAmt = paidCash + paidTransfer;
                 if (payAmt > 0) {
                     // Debit: Kas & Bank
                     list.push({
                         date: dateVal,
-                        description: `Kas Masuk - ${t.guestName || "Pelunasan Tagihan"}`,
+                        description: t.guestName?.startsWith("Kas Masuk") ? t.guestName : (t.guestName?.startsWith("Pelunasan") ? `Kas Masuk - ${t.guestName}` : `Kas Masuk - ${t.guestName || "Pelunasan Tagihan"}`),
                         ref: refCode,
                         coa: "101-000",
                         type: "debit",
                         amount: payAmt
                     });
-                    // Credit: Piutang Tamu
+                    // Credit: Pendapatan Kamar / Lainnya
                     list.push({
                         date: dateVal,
                         description: `${t.guestName || "Pelunasan Tagihan"}`,
                         ref: refCode,
-                        coa: "102-000",
+                        coa: revenueCoa,
                         type: "credit",
                         amount: payAmt
                     });
                 } else if (payAmt < 0) {
                     // Reversal (Negative payment to correct check-in date)
                     // Credit: Kas & Bank
+                    const cleanDesc = t.guestName?.startsWith("Koreksi Tanggal Pelunasan") ? t.guestName : `Koreksi Tanggal Pelunasan - ${t.guestName || "Tamu"}`;
                     list.push({
                         date: dateVal,
-                        description: `Koreksi Tanggal Pelunasan - ${t.guestName || "Tamu"}`,
+                        description: cleanDesc,
                         ref: refCode,
                         coa: "101-000",
                         type: "credit",
                         amount: Math.abs(payAmt)
                     });
-                    // Debit: Piutang Tamu
+                    // Debit: Pendapatan Kamar / Lainnya
                     list.push({
                         date: dateVal,
-                        description: `Koreksi Tanggal Pelunasan - ${t.guestName || "Tamu"}`,
+                        description: cleanDesc,
                         ref: refCode,
-                        coa: "102-000",
+                        coa: revenueCoa,
                         type: "debit",
                         amount: Math.abs(payAmt)
                     });
                 }
             } else {
                 const totalRev = t.totalPrice || t.amount || 0;
-                const payAmt = (Number(t.payHotel) || 0) + (Number(t.payTransfer) || 0) + (Number(t.paidCash) || 0) + (Number(t.paidTransfer) || 0);
-                const arAmt = Math.max(0, totalRev - payAmt);
+                const paidCash = t.paidCash !== undefined ? Number(t.paidCash) : (t.paidAmount1 !== undefined ? Number(t.paidAmount1) : Number(t.payHotel || 0));
+                const paidTransfer = t.paidTransfer !== undefined ? Number(t.paidTransfer) : (t.paidAmount2 !== undefined ? Number(t.paidAmount2) : Number(t.payTransfer || 0));
+                const payAmt = paidCash + paidTransfer;
 
                 if (payAmt > 0) {
-                    // Debit: Kas & Bank (Hanya yang dibayar / DP)
+                    // Debit: Kas & Bank (Kas Masuk dari DP)
                     list.push({
                         date: dateVal,
-                        description: `Kas Masuk - Penerimaan ${revenueLabel} (${t.guestName || "Tamu"})`,
+                        description: `Kas Masuk - DP ${revenueLabel} (${t.guestName || "Tamu"})`,
                         ref: refCode,
                         coa: "101-000",
                         type: "debit",
                         amount: payAmt
                     });
-                }
 
-                if (arAmt > 0) {
-                    // Debit: Piutang Tamu (Belum dibayar)
+                    // Credit: Pendapatan Diterima di Muka (DP Masuk)
                     list.push({
                         date: dateVal,
-                        description: `Piutang Tamu - ${revenueLabel} (${t.guestName || "Tamu"})`,
+                        description: `Uang Muka / DP ${revenueLabel} - ${t.guestName || "Tamu"}`,
                         ref: refCode,
-                        coa: "102-000",
-                        type: "debit",
-                        amount: arAmt
-                    });
-                }
-
-                if (totalRev > 0) {
-                    // Credit: Pendapatan Kamar / Lainnya (Diakui full)
-                    list.push({
-                        date: dateVal,
-                        description: `Penerimaan ${revenueLabel} - ${t.guestName || "Tamu"}`,
-                        ref: refCode,
-                        coa: revenueCoa,
+                        coa: "202-000",
                         type: "credit",
-                        amount: totalRev
+                        amount: payAmt
                     });
+
+                    // Debit: Pendapatan Diterima di Muka (Realisasi DP)
+                    const realizedDp = Math.min(payAmt, totalRev);
+                    if (realizedDp > 0) {
+                        list.push({
+                            date: dateVal,
+                            description: `Realisasi Uang Muka - ${t.guestName || "Tamu"}`,
+                            ref: refCode,
+                            coa: "202-000",
+                            type: "debit",
+                            amount: realizedDp
+                        });
+
+                        // Credit: Pendapatan Kamar / Lainnya (Diakui dari DP)
+                        list.push({
+                            date: dateVal,
+                            description: `Penerimaan ${revenueLabel} (DP) - ${t.guestName || "Tamu"}${t.roomType ? ` (${t.roomType})` : ""}`,
+                            ref: refCode,
+                            coa: revenueCoa,
+                            type: "credit",
+                            amount: realizedDp
+                        });
+                    }
                 }
             }
         });

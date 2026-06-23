@@ -1,12 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import styles from "../OverviewStyles.module.css";
 
 interface GuestEditFormProps {
     formData: any;
     setFormData: (val: any) => void;
     roomTypes: any[];
+    guest: any;
 }
 
 const CHANNELS = [
@@ -22,7 +23,9 @@ const CHANNELS = [
     { name: "Booking Engine", logo: "globe" },
 ];
 
-export function GuestEditForm({ formData, setFormData, roomTypes }: GuestEditFormProps) {
+export function GuestEditForm({ formData, setFormData, roomTypes, guest }: GuestEditFormProps) {
+    const [additionalCash, setAdditionalCash] = useState<number | "">("");
+    const [additionalTransfer, setAdditionalTransfer] = useState<number | "">("");
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Section 01: Identity */}
@@ -142,21 +145,110 @@ export function GuestEditForm({ formData, setFormData, roomTypes }: GuestEditFor
             <section>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                     <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: 'rgba(120, 128, 105, 0.08)', padding: '2px 6px', borderRadius: '4px' }}>03</span>
-                    <h3 className={styles.headerTitle} style={{ fontSize: '11px', margin: 0 }}>Financials</h3>
+                    <h3 className={styles.headerTitle} style={{ fontSize: '11px', margin: 0 }}>Financials & Settlement</h3>
                     <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--f-hairline)' }} />
                 </div>
+                
+                {/* Stay Info summary */}
+                {guest && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px', padding: '12px', backgroundColor: 'var(--f-surface-soft)', borderRadius: '6px', border: '1px solid var(--f-hairline)' }}>
+                        <div>
+                            <span className={styles.guestSubtext} style={{ fontSize: '9px', color: 'var(--f-muted)' }}>Total Tagihan</span>
+                            <div style={{ fontSize: '11px', fontWeight: 700 }}>Rp {Number(formData.totalAmount || 0).toLocaleString('id-ID')}</div>
+                        </div>
+                        <div>
+                            <span className={styles.guestSubtext} style={{ fontSize: '9px', color: 'var(--f-muted)' }}>Sudah Dibayar (DP)</span>
+                            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--f-sage)' }}>Rp {Number((guest.payHotel || guest.paidCash || 0) + (guest.payTransfer || guest.paidTransfer || 0)).toLocaleString('id-ID')}</div>
+                        </div>
+                        <div>
+                            <span className={styles.guestSubtext} style={{ fontSize: '9px', color: 'var(--f-muted)' }}>Sisa Tagihan</span>
+                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#b45309' }}>
+                                Rp {Math.max(0, Number(formData.totalAmount || 0) - Number((guest.payHotel || guest.paidCash || 0) + (guest.payTransfer || guest.paidTransfer || 0))).toLocaleString('id-ID')}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <NexuraInputLabel label="Total Gross Amount" type="number" value={formData.totalAmount} onChange={(v: string) => setFormData({...formData, totalAmount: Number(v)})} />
+                    <NexuraInputLabel label="Total Gross Amount (Total Tarif Kamar)" type="number" value={formData.totalAmount} onChange={(v: string) => setFormData({...formData, totalAmount: Number(v)})} />
                     
+                    {/* Additional Payment inputs */}
+                    {guest && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', backgroundColor: 'rgba(120, 128, 105, 0.05)', padding: '12px', borderRadius: '6px', border: '1px dashed var(--f-sage)' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-sage)' }}>Bayar Tambahan (Cash/TF)</span>
+                                <input
+                                    type="number"
+                                    placeholder="Nominal bayar..."
+                                    value={additionalCash}
+                                    onChange={(e) => {
+                                        const valStr = e.target.value;
+                                        setAdditionalCash(valStr === "" ? "" : Number(valStr));
+                                        const val = Number(valStr) || 0;
+                                        const newPayHotel = Number(guest.payHotel || guest.paidCash || 0) + val;
+                                        const totalPaid = newPayHotel + Number(formData.payTransfer || 0);
+                                        const totalAmt = Number(formData.totalAmount || 0);
+                                        const nextStatus = totalPaid >= totalAmt ? "Lunas" : (totalPaid > 0 ? "DP / Partial" : "Belum Bayar");
+                                        setFormData({
+                                            ...formData,
+                                            payHotel: newPayHotel,
+                                            paymentStatus: nextStatus,
+                                            status: nextStatus
+                                        });
+                                    }}
+                                    style={{
+                                        width: '100%', height: '40px', padding: '0 12px', borderRadius: '6px',
+                                        border: '1px solid var(--f-sage)', backgroundColor: 'var(--f-surface)',
+                                        fontSize: '11px', color: 'var(--f-body)', outline: 'none'
+                                    }}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-sage)' }}>Bayar Tambahan (OTA/Virtual)</span>
+                                <input
+                                    type="number"
+                                    placeholder="Nominal bayar..."
+                                    value={additionalTransfer}
+                                    onChange={(e) => {
+                                        const valStr = e.target.value;
+                                        setAdditionalTransfer(valStr === "" ? "" : Number(valStr));
+                                        const val = Number(valStr) || 0;
+                                        const newPayTransfer = Number(guest.payTransfer || guest.paidTransfer || 0) + val;
+                                        const totalPaid = Number(formData.payHotel || 0) + newPayTransfer;
+                                        const totalAmt = Number(formData.totalAmount || 0);
+                                        const nextStatus = totalPaid >= totalAmt ? "Lunas" : (totalPaid > 0 ? "DP / Partial" : "Belum Bayar");
+                                        setFormData({
+                                            ...formData,
+                                            payTransfer: newPayTransfer,
+                                            paymentStatus: nextStatus,
+                                            status: nextStatus
+                                        });
+                                    }}
+                                    style={{
+                                        width: '100%', height: '40px', padding: '0 12px', borderRadius: '6px',
+                                        border: '1px solid var(--f-sage)', backgroundColor: 'var(--f-surface)',
+                                        fontSize: '11px', color: 'var(--f-body)', outline: 'none'
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         <div style={{ position: 'relative' }}>
-                            <NexuraInputLabel label="Pay at Hotel (Cash/Transfer to Hotel)" type="number" value={formData.payHotel} onChange={(v: string) => setFormData({...formData, payHotel: Number(v)})} />
+                            <NexuraInputLabel label="Total Akumulasi Terbayar (Hotel)" type="number" value={formData.payHotel} onChange={(v: string) => setFormData({...formData, payHotel: Number(v)})} />
                             <button
                                 type="button"
                                 title="Auto-fill with remaining balance to settle full payment"
                                 onClick={() => {
                                     const diff = Number(formData.totalAmount || 0) - Number(formData.payTransfer || 0);
-                                    if (diff >= 0) setFormData({...formData, payHotel: diff, paymentStatus: 'Lunas', status: 'Lunas'});
+                                    if (diff >= 0) {
+                                        setFormData({...formData, payHotel: diff, paymentStatus: 'Lunas', status: 'Lunas'});
+                                        if (guest) {
+                                            const origPaidCash = Number(guest.payHotel || guest.paidCash || 0);
+                                            setAdditionalCash(Math.max(0, diff - origPaidCash));
+                                        }
+                                    }
                                 }}
                                 style={{
                                     position: 'absolute', right: '4px', bottom: '8px',
@@ -165,10 +257,10 @@ export function GuestEditForm({ formData, setFormData, roomTypes }: GuestEditFor
                                     border: 'none', cursor: 'pointer', zIndex: 10
                                 }}
                             >
-                                FULL AMOUNT
+                                LUNASKAN
                             </button>
                         </div>
-                        <NexuraInputLabel label="Virtual Payment / OTA" type="number" value={formData.payTransfer} onChange={(v: string) => setFormData({...formData, payTransfer: Number(v)})} />
+                        <NexuraInputLabel label="Total Akumulasi Terbayar (OTA)" type="number" value={formData.payTransfer} onChange={(v: string) => setFormData({...formData, payTransfer: Number(v)})} />
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

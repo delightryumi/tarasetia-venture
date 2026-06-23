@@ -63,9 +63,27 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
         setEditLbPaid(editLbPaid);
     }, [lbPaid]);
 
+    const isTxIgnored = (tx: any) => {
+        if (!tx) return true;
+        if (tx.isDeleted) return true;
+        const status = (tx.status || "").toUpperCase();
+        const payStatus = (tx.paymentStatus || "").toUpperCase();
+        return (
+            status === "VOID" || 
+            status === "VOIDED" || 
+            status === "CANCEL" || 
+            status === "CANCELLED" || 
+            status === "NO-SHOW" ||
+            payStatus === "VOID" ||
+            payStatus === "VOIDED" ||
+            payStatus === "CANCEL" ||
+            payStatus === "CANCELLED"
+        );
+    };
+
     // Accounts Receivable (Piutang Usaha): Net unpaid portion of bookings that are not fully paid
     const accountsReceivable = (rawTransactions || []).filter(t => {
-        if (t.isDeleted || t.status === "cancelled" || t.status === "no-show") return false;
+        if (isTxIgnored(t)) return false;
         const status = (t.paymentStatus || "").toLowerCase();
         return !status.includes("lunas") && !status.includes("paid");
     }).reduce((sum, t) => {

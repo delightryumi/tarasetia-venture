@@ -22,6 +22,24 @@ interface UsePnLExportOptions {
     nonCommissionRevenue?: any[];
 }
 
+const isTxIgnored = (tx: any) => {
+    if (!tx) return true;
+    if (tx.isDeleted) return true;
+    const status = (tx.status || "").toUpperCase();
+    const payStatus = (tx.paymentStatus || "").toUpperCase();
+    return (
+        status === "VOID" || 
+        status === "VOIDED" || 
+        status === "CANCEL" || 
+        status === "CANCELLED" || 
+        status === "NO-SHOW" ||
+        payStatus === "VOID" ||
+        payStatus === "VOIDED" ||
+        payStatus === "CANCEL" ||
+        payStatus === "CANCELLED"
+    );
+};
+
 export function usePnLExport({
     pnlResult, expenses, viewMode, month, year,
     selectedDrillDownTitle, drillItems,
@@ -114,7 +132,7 @@ export function usePnLExport({
         });
 
         (rawTransactions || []).forEach(t => {
-            if (t.isDeleted || t.status === "cancelled" || t.status === "no-show") return;
+            if (isTxIgnored(t)) return;
             const amt = t.totalPrice || t.amount || 0;
             if (amt > 0) {
                 list.push({
@@ -238,9 +256,8 @@ export function usePnLExport({
         const investorPayouts = (pnlResult.investorDistributions || []).reduce((sum, i) => sum + (i.amount || 0), 0);
         const netIncome = pnlResult.card12_ReconOwner || 0;
 
-        // Accounts Receivable (Piutang Usaha)
         const accountsReceivable = (rawTransactions || []).filter(t => {
-            if (t.isDeleted || t.status === "cancelled" || t.status === "no-show") return false;
+            if (isTxIgnored(t)) return false;
             const status = (t.paymentStatus || "").toLowerCase();
             return !status.includes("lunas") && !status.includes("paid");
         }).reduce((sum, t) => sum + (t.amount || 0), 0);
@@ -456,7 +473,7 @@ export function usePnLExport({
         });
 
         (rawTransactions || []).forEach(t => {
-            if (t.isDeleted || t.status === "cancelled" || t.status === "no-show") return;
+            if (isTxIgnored(t)) return;
             const amt = t.totalPrice || t.amount || 0;
             if (amt > 0) {
                 list.push({

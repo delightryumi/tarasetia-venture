@@ -43,8 +43,12 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
                 const hotelId = data.hotelId || "87241";
                 (data.entries || []).forEach((t: any) => {
                     // Skip cancelled or voided transactions
-                    const status = t.status?.toUpperCase?.();
-                    if (status === 'CANCELLED' || status === 'VOID' || status === 'VOIDED') {
+                    const status = (t.status || "").toUpperCase();
+                    const payStatus = (t.paymentStatus || "").toUpperCase();
+                    const isIgnored = t.isDeleted || 
+                        status === "VOID" || status === "VOIDED" || status === "CANCEL" || status === "CANCELLED" || status === "NO-SHOW" ||
+                        payStatus === "VOID" || payStatus === "VOIDED" || payStatus === "CANCEL" || payStatus === "CANCELLED";
+                    if (isIgnored) {
                         return; // ignore this entry
                     }
                     transactions.push({
@@ -76,6 +80,13 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
 
                 if (yearlyBuckets[yr] !== undefined) {
                     (data.entries || []).forEach((t: any) => {
+                        const status = (t.status || "").toUpperCase();
+                        const payStatus = (t.paymentStatus || "").toUpperCase();
+                        const isIgnored = t.isDeleted || 
+                            status === "VOID" || status === "VOIDED" || status === "CANCEL" || status === "CANCELLED" || status === "NO-SHOW" ||
+                            payStatus === "VOID" || payStatus === "VOIDED" || payStatus === "CANCEL" || payStatus === "CANCELLED";
+                        if (isIgnored) return;
+
                         const amt = (Number(t.amount) || 0);
                         yearlyBuckets[yr] += amt;
                         if (yrStr === currentYear && moIdx >= 0 && moIdx < 12) {

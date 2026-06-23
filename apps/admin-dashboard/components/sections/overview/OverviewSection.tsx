@@ -86,6 +86,42 @@ export function OverviewSection() {
         return dates;
     };
 
+    const getCascadeDates = (b: any) => {
+        const dates = new Set<string>();
+        const checkIn = b.checkInDate || b.checkIn;
+        const checkOut = b.checkOutDate || b.checkOut;
+        if (checkIn) dates.add(checkIn);
+        if (checkOut) dates.add(checkOut);
+        
+        const todayStr = new Date().toISOString().split('T')[0];
+        dates.add(todayStr);
+
+        if (b.timestamp) {
+            const tStr = typeof b.timestamp === 'string' && b.timestamp.includes('T')
+                ? b.timestamp.split('T')[0]
+                : new Date(b.timestamp).toISOString().split('T')[0];
+            dates.add(tStr);
+        }
+        if (b.createdAt) {
+            const cStr = typeof b.createdAt === 'string' && b.createdAt.includes('T')
+                ? b.createdAt.split('T')[0]
+                : new Date(b.createdAt).toISOString().split('T')[0];
+            dates.add(cStr);
+        }
+
+        const dateList = Array.from(dates).filter(Boolean).sort();
+        if (dateList.length > 1) {
+            const minDate = new Date(dateList[0]);
+            const maxDate = new Date(dateList[dateList.length - 1]);
+            const curr = new Date(minDate);
+            while (curr <= maxDate) {
+                dates.add(curr.toISOString().split('T')[0]);
+                curr.setDate(curr.getDate() + 1);
+            }
+        }
+        return Array.from(dates).sort();
+    };
+
 
     const handleStatusUpdate = async (item: any, field: string, value: string) => {
         // Allow status updates even in housekeeping view (they manage room status/remarks)
@@ -143,24 +179,42 @@ export function OverviewSection() {
         if (!bookingToVoid) return;
         try {
             const hotelId = localStorage.getItem("active_hotel_code") || "87241";
-            const checkInDate = bookingToVoid.checkInDate || bookingToVoid.checkIn;
-            const checkOutDate = bookingToVoid.checkOutDate || bookingToVoid.checkOut;
             const isPOS = bookingToVoid.guestName?.startsWith("POS Order") || !!bookingToVoid.posItems || !!bookingToVoid.revenueType;
             const isAcc = !isPOS && (bookingToVoid.type === "accommodation" || (!bookingToVoid.type && bookingToVoid.guestName));
-            
-            const dates = getDatesBetween(checkInDate, checkOutDate, isAcc);
+            const dates = getCascadeDates(bookingToVoid);
+
             for (const d of dates) {
                 const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     const mapped = entries.map((e: any) => {
-                        const isMatch = e.timestamp === bookingToVoid.timestamp || 
+                        const isMainMatch = e.timestamp === bookingToVoid.timestamp || 
                             (isAcc && 
                              e.guestName === bookingToVoid.guestName && 
                              e.checkInDate === bookingToVoid.checkInDate && 
                              e.checkOutDate === bookingToVoid.checkOutDate && 
                              e.roomNumber === bookingToVoid.roomNumber);
+
+                        let isMatch = isMainMatch;
+                        if (!isMatch && (e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal")) {
+                            if (bookingToVoid.timestamp && e.refTimestamp === bookingToVoid.timestamp) {
+                                isMatch = true;
+                            } else if (bookingToVoid.bookingId && e.refBookingId === bookingToVoid.bookingId) {
+                                isMatch = true;
+                            } else {
+                                const cleanEGuestName = (e.guestName || "")
+                                    .replace(/^Koreksi Tanggal Pelunasan\s*-\s*/i, "")
+                                    .replace(/^Pelunasan Piutang\s*-\s*/i, "")
+                                    .trim()
+                                    .toLowerCase();
+                                const cleanParentName = (bookingToVoid.guestName || "").trim().toLowerCase();
+                                if (cleanEGuestName === cleanParentName && cleanParentName !== "") {
+                                    isMatch = true;
+                                }
+                            }
+                        }
+
                         if (isMatch) {
                             return { ...e, status: "VOID", paymentStatus: "VOID" };
                         }
@@ -196,17 +250,10 @@ export function OverviewSection() {
         if (!bookingToCancel) return;
         try {
             const hotelId = localStorage.getItem("active_hotel_code") || "87241";
-            const checkInDate = bookingToCancel.checkInDate || bookingToCancel.checkIn;
-            const checkOutDate = bookingToCancel.checkOutDate || bookingToCancel.checkOut;
             const isPOS = bookingToCancel.guestName?.startsWith("POS Order") || !!bookingToCancel.posItems || !!bookingToCancel.revenueType;
             const isAcc = !isPOS && (bookingToCancel.type === "accommodation" || (!bookingToCancel.type && bookingToCancel.guestName));
-            
-            const dates = getDatesBetween(checkInDate, checkOutDate, isAcc);
-            const now = new Date();
-            const yyyy = now.getFullYear();
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const dd = String(now.getDate()).padStart(2, '0');
-            const todayStr = `${yyyy}-${mm}-${dd}`;
+            const dates = getCascadeDates(bookingToCancel);
+            const todayStr = new Date().toISOString().split('T')[0];
             const cancelledByVal = user ? `${user.displayName} (${user.role || 'user'})` : "System";
  
             for (const d of dates) {
@@ -215,12 +262,32 @@ export function OverviewSection() {
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     const mapped = entries.map((e: any) => {
-                        const isMatch = e.timestamp === bookingToCancel.timestamp || 
+                        const isMainMatch = e.timestamp === bookingToCancel.timestamp || 
                             (isAcc && 
                              e.guestName === bookingToCancel.guestName && 
                              e.checkInDate === bookingToCancel.checkInDate && 
                              e.checkOutDate === bookingToCancel.checkOutDate && 
                              e.roomNumber === bookingToCancel.roomNumber);
+
+                        let isMatch = isMainMatch;
+                        if (!isMatch && (e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal")) {
+                            if (bookingToCancel.timestamp && e.refTimestamp === bookingToCancel.timestamp) {
+                                isMatch = true;
+                            } else if (bookingToCancel.bookingId && e.refBookingId === bookingToCancel.bookingId) {
+                                isMatch = true;
+                            } else {
+                                const cleanEGuestName = (e.guestName || "")
+                                    .replace(/^Koreksi Tanggal Pelunasan\s*-\s*/i, "")
+                                    .replace(/^Pelunasan Piutang\s*-\s*/i, "")
+                                    .trim()
+                                    .toLowerCase();
+                                const cleanParentName = (bookingToCancel.guestName || "").trim().toLowerCase();
+                                if (cleanEGuestName === cleanParentName && cleanParentName !== "") {
+                                    isMatch = true;
+                                }
+                            }
+                        }
+
                         if (isMatch) {
                             return { 
                                 ...e, 
