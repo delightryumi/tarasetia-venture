@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -592,6 +592,201 @@ input.force-light-input,
 .dark input.force-light-input,
 select.force-light-input,
 .dark select.force-light-input,
+:root {
+  --f-canvas: #faf8f5 !important;
+  --f-surface: #f5f2eb !important;
+  --f-surface-soft: #ebe7d7 !important;
+  --f-hairline: rgba(141, 122, 82, 0.12) !important;
+}
+
+/* Force page roots to be transparent to show the main body gradient background */
+[class*="overviewRoot"],
+.overviewRoot,
+[class*="forecastTerminalRoot"],
+.forecastTerminalRoot,
+.mainContainer,
+[class*="mainContainer"] {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Force cards, panels, and modals to use the premium warm off-white background */
+.card,
+.builder-box-clean,
+.room-list-item-clean,
+.delete-modal-card,
+.datepicker-dropdown,
+.upload-dropzone,
+.preview-container,
+[class*="SummaryCard_summaryCard"],
+[class*="SummaryCard_card"]:not([class*="Label"]):not([class*="Value"]):not([class*="IconBox"]),
+[class*="VsCard_card"],
+[class*="_kpiCard"]:not([class*="Dark"]):not([class*="dark"]),
+[class*="_sectionCard"] {
+  background-color: #faf8f4 !important;
+  background: #faf8f4 !important;
+}
+
+/* Glassmorphic headers removed to allow clean transparent page headers */
+
+/* Overriding white text input background */
+.input-clean,
+.delete-modal-input,
+.datepicker-btn-inactive:hover,
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+select,
+textarea {
+  background-color: #fbf9f4 !important;
+  color-scheme: light !important;
+}
+
+
+/* ── Dark Mode Overrides ── */
+.dark {
+  --background: #121212 !important;
+  --foreground: #f5f5f4 !important;
+  --f-canvas: #212121 !important;
+  --f-surface: #1e1e1e !important;
+  --f-surface-soft: #2a2a2a !important;
+  --f-hairline: rgba(143, 134, 119, 0.12) !important;
+  --f-income-bg: rgba(16, 185, 129, 0.15) !important;
+  --f-income-color: #34d399 !important;
+  --f-expense-bg: rgba(239, 68, 68, 0.15) !important;
+  --f-expense-color: #f87171 !important;
+  /* Sidebar Theme variables */
+  --sidebar-bg: #1c1c1e !important;
+  --sidebar-border: #2c2c2e !important;
+  --sidebar-text: #a1a1aa !important;
+  --sidebar-link-bg: transparent !important;
+  --sidebar-link-border: transparent !important;
+  --sidebar-link-hover-bg: rgba(255, 255, 255, 0.06) !important;
+  --sidebar-link-hover-border: transparent !important;
+  --sidebar-link-hover-text: #ffffff !important;
+  --sidebar-link-active-bg: rgba(255, 255, 255, 0.12) !important;
+  --sidebar-link-active-text: #ffffff !important;
+  --sidebar-active-indicator: #0a84ff !important;
+}
+
+.dark .card,
+.dark .builder-box-clean,
+.dark .room-list-item-clean,
+.dark .delete-modal-card,
+.dark .datepicker-dropdown,
+.dark .upload-dropzone,
+.dark .preview-container,
+.dark [class*="SummaryCard_summaryCard"],
+.dark [class*="SummaryCard_card"]:not([class*="Label"]):not([class*="Value"]):not([class*="IconBox"]),
+.dark [class*="VsCard_card"],
+.dark [class*="_kpiCard"]:not([class*="Dark"]):not([class*="dark"]),
+.dark [class*="_sectionCard"] {
+  background-color: #262626 !important;
+  background: #262626 !important;
+}
+
+/* Dark mode glassmorphic headers removed */
+
+.dark .input-clean,
+.dark .delete-modal-input,
+.dark .datepicker-btn-inactive:hover,
+.dark input[type="text"],
+.dark input[type="number"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="date"],
+.dark select,
+.dark textarea {
+  background-color: #1e1e1e !important;
+  color: #e4e4e7 !important;
+  color-scheme: dark !important;
+}
+
+/* Force calendar/date inputs in light-themed containers (Overview, Forecast, Invoice cards) to render with light background & color scheme */
+input[type="date"],
+[class*="overviewRoot"] input[type="date"],
+.overviewRoot input[type="date"],
+[class*="card"] input[type="date"],
+.card input[type="date"],
+[class*="invoice"] input[type="date"],
+.dateInput,
+input[type="date"].dateInput {
+  border: 1px solid rgba(141, 122, 82, 0.15) !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  background-color: #fbf9f4 !important;
+  color: #1c1917 !important;
+  color-scheme: light !important;
+  font-family: var(--font-mono-jb), 'JetBrains Mono', monospace !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  height: 28px !important;
+}
+
+/* Dark mode overrides for calendar/date inputs in overview/forecast/invoice cards */
+.dark input[type="date"],
+.dark [class*="overviewRoot"] input[type="date"],
+.dark .overviewRoot input[type="date"],
+.dark [class*="card"] input[type="date"],
+.dark .card input[type="date"],
+.dark [class*="invoice"] input[type="date"],
+.dark .dateInput,
+.dark input[type="date"].dateInput {
+  background-color: #2a2a2a !important;
+  color: #faf8f5 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color-scheme: dark !important;
+}
+
+/* Smooth Transitions & Premium Hover Shadows */
+.card,
+.builder-box-clean,
+.room-list-item-clean {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.card:hover,
+.builder-box-clean:hover {
+  box-shadow: 0 10px 30px rgba(141, 122, 82, 0.08) !important;
+  border-color: rgba(141, 122, 82, 0.2) !important;
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  [class*="printInvoiceContainer"], [class*="printInvoiceContainer"] *,
+  [class*="printCheckinContainer"], [class*="printCheckinContainer"] * {
+    visibility: visible !important;
+  }
+  [class*="printInvoiceContainer"] {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+  [class*="printCheckinContainer"] {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+  }
+}
+
+
+/* Soften all sidebar borders */
+aside, aside * {
+  border-color: var(--sidebar-border) !important;
+}
+
+/* Force light input override for Attendance Module */
+input.force-light-input,
+.dark input.force-light-input,
+select.force-light-input,
+.dark select.force-light-input,
 textarea.force-light-input,
 .dark textarea.force-light-input {
   background-color: #ffffff !important;
@@ -600,3 +795,93 @@ textarea.force-light-input,
   border-color: #e5e5ea !important;
 }
 
+/* ── Audio Unlock Overlay (DESIGN.md Aligned) ── */
+.audio-unlock-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 640px) {
+  .audio-unlock-overlay {
+    padding: 32px;
+  }
+}
+
+.audio-unlock-card {
+  background-color: #181d26;
+  border-radius: 12px;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.audio-unlock-icon-container {
+  background-color: #4b3518;
+  width: 72px;
+  height: 72px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.audio-unlock-icon {
+  width: 36px;
+  height: 36px;
+  color: #f59e0b;
+}
+
+.audio-unlock-title {
+  font-size: 32px;
+  font-weight: 400;
+  margin-bottom: 16px;
+  color: #ffffff;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.audio-unlock-desc {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 48px;
+  line-height: 1.4;
+  max-width: 384px;
+}
+
+.audio-unlock-btn {
+  padding: 16px 24px;
+  background-color: #f59e0b;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 150ms ease;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+.audio-unlock-btn:hover {
+  background-color: #d97706;
+  transform: scale(1.05);
+}
+
+.audio-unlock-btn:active {
+  transform: scale(0.98);
+}

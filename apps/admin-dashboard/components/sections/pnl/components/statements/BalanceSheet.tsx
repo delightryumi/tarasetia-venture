@@ -81,14 +81,14 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
         );
     };
 
-    // Accounts Receivable (Piutang Usaha): Net unpaid portion of bookings that are not fully paid
-    const accountsReceivable = (rawTransactions || []).filter(t => {
+    // Deferred Revenue (Pendapatan Diterima Dimuka): Net unpaid portion of bookings that are not fully paid
+    const deferredRevenue = (rawTransactions || []).filter(t => {
         if (isTxIgnored(t)) return false;
         const status = (t.paymentStatus || "").toLowerCase();
         return !status.includes("lunas") && !status.includes("paid");
     }).reduce((sum, t) => {
         const isPelunasan = t.type === "pelunasan_ar" || t.isPelunasan;
-        if (isPelunasan) return sum; // Ignore pelunasan_ar in AR calculation
+        if (isPelunasan) return sum; // Ignore pelunasan_ar in calculation
         const paidCash = Number(t.paidCash || t.paidAmount1 || t.payHotel || 0);
         const paidTransfer = Number(t.paidTransfer || t.paidAmount2 || t.payTransfer || 0);
         const unpaid = Math.max(0, (t.amount || 0) - paidCash - paidTransfer);
@@ -115,18 +115,28 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
     const sisaFee = 0;
     const sisaSc = 0;
     const sisaLb = 0;
-    const totalLiabilities = accountsPayable;
+    const pelunasanCash = (rawTransactions || []).filter(t => {
+        if (isTxIgnored(t)) return false;
+        return t.type === "pelunasan_ar" || t.isPelunasan;
+    }).reduce((sum, t) => {
+        const paidCash = Number(t.paidCash || t.paidAmount1 || t.payHotel || 0);
+        const paidTransfer = Number(t.paidTransfer || t.paidAmount2 || t.payTransfer || 0);
+        return sum + paidCash + paidTransfer;
+    }, 0);
+
+    const totalLiabilities = accountsPayable + deferredRevenue;
 
     const gop = pnlResult?.card7_TotalGOP || 0;
     const totalDynamicPaid = vatLiability + feeLiability + scLiability + lbLiability;
 
-    // Cash and Bank calculation: startingBalance + GOP - investorPayouts - accountsReceivable - fixedAssetsValue - totalDynamicPaid + accountsPayable
-    const cashAndBank = startingBalance + gop - investorPayouts - accountsReceivable - fixedAssetsValue - totalDynamicPaid + accountsPayable;
+    // Cash and Bank calculation with deferredRevenue under Liabilities:
+    // To balance perfectly, cashAndBank = startingBalance + gop - investorPayouts - totalDynamicPaid + accountsPayable - fixedAssetsValue - deferredRevenue + pelunasanCash
+    const cashAndBank = startingBalance + gop - investorPayouts - totalDynamicPaid + accountsPayable - fixedAssetsValue - deferredRevenue + pelunasanCash;
     
-    const totalAssetsLancar = cashAndBank + accountsReceivable;
+    const totalAssetsLancar = cashAndBank + deferredRevenue;
     const totalAssets = totalAssetsLancar + fixedAssetsValue;
     
-    const equity = startingBalance + netIncome - investorPayouts;
+    const equity = startingBalance + netIncome - investorPayouts - deferredRevenue;
     const totalLiabilitiesEquity = totalLiabilities + equity;
 
     const handleSave = async () => {
@@ -248,8 +258,8 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
                                 <span className={styles.excelBalance}>{formatIDR(cashAndBank)}</span>
                             </div>
                             <div className={styles.flexBetween} style={{ padding: "8px 0" }}>
-                                <span className={styles.bodyText} style={{ fontWeight: 500 }}>Piutang Usaha</span>
-                                <span className={styles.excelBalance}>{formatIDR(accountsReceivable)}</span>
+                                <span className={styles.bodyText} style={{ fontWeight: 500 }}>Piutang Kamar (Tagihan Belum Lunas)</span>
+                                <span className={styles.excelBalance}>{formatIDR(deferredRevenue)}</span>
                             </div>
 
                             <div className={`${styles.flexBetween} ${styles.divider}`} style={{ paddingTop: "8px", marginTop: "8px" }}>
@@ -284,6 +294,13 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
                                     <span className={styles.bodyText} style={{ fontWeight: 500, display: "block" }}>Hutang Dagang (Pembelian Tempo)</span>
                                 </div>
                                 <span className={styles.excelBalance}>{formatIDR(accountsPayable)}</span>
+                            </div>
+
+                            <div className={styles.flexBetween} style={{ padding: "8px 0" }}>
+                                <div>
+                                    <span className={styles.bodyText} style={{ fontWeight: 500, display: "block" }}>Pendapatan Diterima Dimuka (DP)</span>
+                                </div>
+                                <span className={styles.excelBalance}>{formatIDR(deferredRevenue)}</span>
                             </div>
 
                             <div className={styles.flexBetween} style={{ padding: "8px 0" }}>
@@ -328,10 +345,16 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
                                 <span className={styles.bodyText} style={{ fontWeight: 500 }}>Modal Awal / Saldo Laba Bulan Lalu</span>
                                 <span className={styles.excelBalance}>{formatIDR(startingBalance)}</span>
                             </div>
-                            <div className={styles.flexBetween} style={{ padding: "8px 0" }}>
+                             <div className={styles.flexBetween} style={{ padding: "8px 0" }}>
                                 <span className={styles.bodyText} style={{ fontWeight: 500 }}>Laba (Rugi) Tahun Berjalan</span>
                                 <span className={`${styles.fontMono} ${netIncome < 0 ? styles.textDanger : styles.textSuccess}`} style={{ fontWeight: 500 }}>
                                     {formatIDR(netIncome)}
+                                </span>
+                            </div>
+                            <div className={styles.flexBetween} style={{ padding: "8px 0" }}>
+                                <span className={styles.bodyText} style={{ fontWeight: 500 }}>Pendapatan Ditangguhkan (Uang Muka)</span>
+                                <span className={`${styles.fontMono} ${styles.textDanger}`} style={{ fontWeight: 500 }}>
+                                    -{formatIDR(deferredRevenue)}
                                 </span>
                             </div>
                             {investorPayouts > 0 && (

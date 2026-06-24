@@ -148,6 +148,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const { formatCurrency } = useCurrency();
   const [heldOrders, setHeldOrders] = useState<any[]>([]);
   const [isListOpen, setOpenList] = useState(false);
+  const [isAudioUnlocked, setIsAudioUnlocked] = useState(false);
   const alarmAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const getNotificationSound = () => {
@@ -212,15 +213,53 @@ const RootLayout = ({ children }: RootLayoutProps) => {
           }
 
           if (isFresh && data.source === 'Self-Order Tamu' && data.status === 'PENDING') {
-            toast.info(`🔔 Pesanan Mandiri Tamu Baru: ${data.customerName || 'Tamu'} (${data.tableNumber || 'Meja -'})`, {
-              position: "top-right",
-              autoClose: 5000,
-            });
-             try {
-              const audioPath = getNotificationSound();
-              const audio = new Audio(audioPath);
-              audio.volume = 0.6;
-              audio.play().catch(err => console.log('Audio autoplay blocked or failed:', err));
+            try {
+              if (!alarmAudioRef.current) {
+                const audioPath = getNotificationSound();
+                alarmAudioRef.current = new Audio(audioPath);
+                alarmAudioRef.current.volume = 1.0;
+                alarmAudioRef.current.loop = true;
+              } else {
+                alarmAudioRef.current.loop = true;
+              }
+              
+              const playPromise = alarmAudioRef.current.play();
+              if (playPromise !== undefined) {
+                playPromise.catch(err => {
+                  console.log('Audio autoplay blocked or failed:', err);
+                  setIsAudioUnlocked(false);
+                  toast.warning(`Gagal memutar suara (${err.name || 'Error'}). Klik layar ini untuk mengizinkan browser memutar suara!`, {
+                    position: 'top-center',
+                    autoClose: false,
+                    onClick: () => {
+                      if (alarmAudioRef.current) {
+                        alarmAudioRef.current.play().catch(e => console.error('Still failed:', e));
+                      }
+                    }
+                  });
+                });
+              }
+
+              // Persistent toast
+              toast.info(
+                <div>
+                  <strong>🔔 Pesanan Mandiri Tamu Baru</strong><br/>
+                  {data.customerName || 'Tamu'} (Meja: {data.tableNumber || '-'})<br/>
+                  <span style={{fontSize: '0.8em', opacity: 0.8}}>Klik tombol X untuk mematikan alarm</span>
+                </div>, 
+                {
+                  position: "top-right",
+                  autoClose: false,
+                  closeOnClick: false, // Force them to click X or button
+                  draggable: false,
+                  onClose: () => {
+                    if (alarmAudioRef.current) {
+                      alarmAudioRef.current.pause();
+                      alarmAudioRef.current.currentTime = 0;
+                    }
+                  }
+                }
+              );
             } catch (e) {
               console.error('Audio play error:', e);
             }
@@ -553,8 +592,53 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     );
   }
 
+  const unlockAudioContext = () => {
+    try {
+      if (!alarmAudioRef.current) {
+        const audioPath = getNotificationSound();
+        alarmAudioRef.current = new Audio(audioPath);
+        alarmAudioRef.current.volume = 1.0;
+        alarmAudioRef.current.loop = true;
+      }
+      alarmAudioRef.current.play().then(() => {
+        alarmAudioRef.current.pause();
+        alarmAudioRef.current.currentTime = 0;
+        setIsAudioUnlocked(true);
+      }).catch((e) => {
+        console.error("Audio unlock failed:", e);
+        setIsAudioUnlocked(true);
+      });
+    } catch (e) {
+      setIsAudioUnlocked(true);
+    }
+  };
+
   return (
-    <div className="bg-background text-foreground h-screen overflow-hidden flex flex-col relative">
+    <div 
+      onClick={!isAudioUnlocked ? unlockAudioContext : undefined}
+      className="bg-background text-foreground h-screen overflow-hidden flex flex-col relative"
+    >
+      {!isAudioUnlocked && (
+        <div className="audio-unlock-overlay">
+          <div className="audio-unlock-card">
+            <div className="audio-unlock-icon-container">
+              <svg className="audio-unlock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            </div>
+            <h2 className="audio-unlock-title">Sistem Kasir & Dapur Siap</h2>
+            <p className="audio-unlock-desc">
+              Browser memerlukan interaksi pertama Anda. Klik tombol di bawah ini untuk mengaktifkan notifikasi alarm pesanan baru.
+            </p>
+            <button 
+              onClick={unlockAudioContext} 
+              className="audio-unlock-btn"
+            >
+              Mulai Sesi (Aktifkan Suara)
+            </button>
+          </div>
+        </div>
+      )}
       {/* Header spanning 100% width across the top */}
       <header className="flex h-14 shrink-0 items-center justify-between gap-4 py-2.5 px-4 lg:px-6 sticky top-0 z-20 bg-white/65 dark:bg-[#181818]/65 backdrop-blur-md border-b border-black/5 dark:border-white/5 w-full select-none print:hidden">
         {/* Left Side: Logo & Hotel Badge */}

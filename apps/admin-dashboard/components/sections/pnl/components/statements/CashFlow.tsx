@@ -45,13 +45,13 @@ export const CashFlow: React.FC<CashFlowProps> = ({
         );
     };
 
-    const accountsReceivable = (rawTransactions || []).filter(t => {
+    const deferredRevenue = (rawTransactions || []).filter(t => {
         if (isTxIgnored(t)) return false;
         const status = (t.paymentStatus || "").toLowerCase();
         return !status.includes("lunas") && !status.includes("paid");
     }).reduce((sum, t) => {
         const isPelunasan = t.type === "pelunasan_ar" || t.isPelunasan;
-        if (isPelunasan) return sum; // Ignore pelunasan_ar in AR calculation
+        if (isPelunasan) return sum; // Ignore pelunasan_ar in calculation
         const paidCash = Number(t.paidCash || t.paidAmount1 || t.payHotel || 0);
         const paidTransfer = Number(t.paidTransfer || t.paidAmount2 || t.payTransfer || 0);
         const unpaid = Math.max(0, (t.amount || 0) - paidCash - paidTransfer);
@@ -80,7 +80,7 @@ export const CashFlow: React.FC<CashFlowProps> = ({
     const lbLiability = pnlResult?.summaryLostBreakage || 0;
     const totalDynamicPaid = vatLiability + feeLiability + scLiability + lbLiability;
     
-    const revenueReceived = (pnlResult?.card1_TotalRevenue || 0) - accountsReceivable + pelunasanCash;
+    const revenueReceived = (pnlResult?.card1_TotalRevenue || 0) - deferredRevenue + pelunasanCash;
     const expensesPaid = (pnlResult?.card8_TotalExpenses || 0) - accountsPayable + totalDynamicPaid;
     const netOperatingCash = revenueReceived - expensesPaid;
 
@@ -105,7 +105,7 @@ export const CashFlow: React.FC<CashFlowProps> = ({
                     </h4>
                     <div className={styles.flexColumn} style={{ padding: "16px", borderLeft: "1px solid var(--sidebar-border)", borderRight: "1px solid var(--sidebar-border)", borderBottom: "1px solid var(--sidebar-border)", borderRadius: "0 0 10px 10px", gap: "12px" }}>
                         <div className={styles.flexBetween}>
-                            <span className={styles.bodyText}>Penerimaan Kas dari Pelanggan (Revenue Net of Receivables)</span>
+                            <span className={styles.bodyText}>Penerimaan Kas dari Pelanggan (Net Penerimaan Uang Muka)</span>
                             <span className={styles.excelBalance}>{formatIDR(revenueReceived)}</span>
                         </div>
                         <div className={styles.flexBetween}>

@@ -157,6 +157,10 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
             if (isTxIgnored(tx)) return;
             if (tx.type === "pelunasan_reversal") return; // Exclude reversals from direct display
 
+            // Exclude POS transactions (handled under COA 402-000)
+            const isPOS = tx.guestName?.startsWith("POS Order") || !!tx.posItems || !!tx.revenueType;
+            if (isPOS) return;
+
             if (isAccommodation(tx)) {
                 const key = tx.bookingId || tx.timestamp || `${tx.guestName}_${tx.checkInDate}_${tx.checkOutDate}_${tx.roomNumber}`;
                 if (!accGroups[key]) {

@@ -32,6 +32,7 @@ interface ReceiptDialogProps {
   cashAmount: string;
   cashierName?: string;
   onClose?: () => void;
+  transactionId?: string;
 }
 
 /**
@@ -67,7 +68,8 @@ export default function ReceiptDialog({
   payableAmount,
   cashAmount,
   cashierName = 'Kasir',
-  onClose
+  onClose,
+  transactionId = ''
 }: ReceiptDialogProps) {
   const { formatCurrency } = useCurrency();
   const [storeName, setStoreName] = React.useState('BUMI ANYOM RESORT');
@@ -121,22 +123,22 @@ export default function ReceiptDialog({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-xl max-w-sm max-h-[90vh] flex flex-col overflow-hidden p-0">
+      <AlertDialogContent className="bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-xl max-w-sm max-h-[90vh] flex flex-col overflow-hidden p-0 print:absolute print:left-0 print:top-0 print:transform-none print:border-none print:shadow-none print:w-full print:max-w-full print:h-auto print:max-h-none print:overflow-visible print:bg-white print:m-0 print:p-0">
         <div className="sr-only">
           <AlertDialogTitle>Struk Pembayaran</AlertDialogTitle>
           <AlertDialogDescription>Rincian struk belanja transaksi kasir.</AlertDialogDescription>
         </div>
 
         {/* ── Scrollable receipt body ── */}
-        <div className="flex-1 flex flex-col items-center text-center px-4 pt-5 pb-2 font-mono text-neutral-700 dark:text-neutral-300 overflow-y-auto thin-scrollbar">
+        <div className="flex-1 flex flex-col items-center text-center px-4 pt-5 pb-2 font-mono text-neutral-700 dark:text-neutral-300 overflow-y-auto thin-scrollbar print:p-0 print:block">
           {/* Success Icon */}
           <CheckCircle2 className="w-10 h-10 text-emerald-500 mb-4 shrink-0 print:hidden" />
 
           {/* Reusable Thermal Receipt Component */}
-          <div className="border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 p-4 flex justify-center w-full max-w-sm shadow-sm shrink-0">
+          <div className="border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 p-4 flex justify-center w-full max-w-sm shadow-sm shrink-0 print:p-0 print:bg-white print:border-none print:shadow-none print:w-full print:max-w-full print:mx-0 print:block">
             <ThermalReceipt
               shopInfo={{ name: storeName, address, phone }}
-              transactionInfo={{ id: 'NEW TRANSACTION', date: now, customerName, cashierName, paymentMethod }}
+              transactionInfo={{ id: transactionId || '—', date: now, customerName, cashierName, paymentMethod }}
               items={receiptItems}
               totals={{
                 subtotal, discount, 
@@ -146,7 +148,7 @@ export default function ReceiptDialog({
                 cashAmount: paymentMethod === 'cash' ? parseFloat(cashAmount) : undefined, 
                 changeAmount: paymentMethod === 'cash' ? calculatedChange() : undefined
               }}
-              className="shadow-sm border border-neutral-200 print:shadow-none print:border-none"
+              className="shadow-sm border border-neutral-200 print:shadow-none print:border-none print:w-full"
             />
           </div>
         </div>

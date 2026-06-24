@@ -5,7 +5,7 @@ import { localDb } from '@/lib/dexie';
 import { syncProductsFromServer } from '@/lib/dexie-sync';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, setDoc, deleteDoc, getDoc, updateDoc, arrayUnion, query, where, onSnapshot } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 
 const getOrGenerateTableNumber = async (hotelCode: string, inputTable: string): Promise<string> => {
@@ -92,6 +92,7 @@ export function useLexuPos() {
   const [selectedSubcategory, setSelectedSubcategory] = useState('All');
   const [isHoldConfirmOpen, setIsHoldConfirmOpen] = useState(false);
   const [activeHotelCode, setActiveHotelCode] = useState('87241');
+  const [transactionId, setTransactionId] = useState<string>('');
 
   const localProducts = useLiveQuery(() => localDb.products.toArray(), []) || [];
   
@@ -101,6 +102,7 @@ export function useLexuPos() {
     price: lp.price,
     category: lp.cat,
     subcategory: lp.subcategory || '',
+    pnlTarget: lp.pnlTarget || '',
     image: lp.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60',
     description: lp.description || '',
     addons: lp.addons || []
@@ -191,7 +193,38 @@ export function useLexuPos() {
       }
     };
     fetchShopTax();
+
+    // ── Sync active shift from Firestore across all devices ──
+    // This ensures PC-B can see the shift opened by PC-A
+    const unsubShift = onSnapshot(
+      query(getHotelCollection(db, 'cashier_shifts', hotelCode), where('status', '==', 'open')),
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const shiftDoc = snapshot.docs[0];
+          const shiftData = { id: shiftDoc.id, ...shiftDoc.data() };
+          const current = localStorage.getItem('active_shift');
+          // Only update if different (avoid overwriting local cashFlows)
+          if (!current) {
+            localStorage.setItem('active_shift', JSON.stringify(shiftData));
+          } else {
+            try {
+              const local = JSON.parse(current);
+              if (local.id !== shiftData.id) {
+                // Different shift opened, replace
+                localStorage.setItem('active_shift', JSON.stringify(shiftData));
+              }
+              // Same shift: keep local (it has more up-to-date cashFlows)
+            } catch { localStorage.setItem('active_shift', JSON.stringify(shiftData)); }
+          }
+        } else {
+          // No open shift — clear local
+          localStorage.removeItem('active_shift');
+        }
+      }
+    );
+    return () => unsubShift();
   }, []);
+
 
   useEffect(() => {
     const handleRestoreEvent = () => {
@@ -419,6 +452,9 @@ export function useLexuPos() {
         return;
       }
     }
+    // Generate transaction ID upfront so the receipt can display it immediately
+    const newTxId = `TRS-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    setTransactionId(newTxId);
     setIsReceiptOpen(true);
   };
 
@@ -427,7 +463,18 @@ export function useLexuPos() {
     
     if (typeof window !== 'undefined') {
       const activeShiftJson = localStorage.getItem('active_shift');
-      const transactionId = `TRS-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+      // Use pre-generated transactionId from executePayment
+
+      const userJson = localStorage.getItem('user');
+      let restoId = '';
+      let hotelCode = '87241';
+      if (userJson) {
+        try {
+          const user = JSON.parse(userJson);
+          restoId = user.restoId || '';
+          hotelCode = user.hotelCode || '87241';
+        } catch (e) {}
+      }
 
       if (activeShiftJson) {
         try {
@@ -441,21 +488,19 @@ export function useLexuPos() {
           };
           activeShift.transactions = [...(activeShift.transactions || []), newTransaction];
           localStorage.setItem('active_shift', JSON.stringify(activeShift));
+          
+          if (activeShift.id) {
+            const shiftRef = doc(getHotelCollection(db, 'cashier_shifts', hotelCode), activeShift.id);
+            updateDoc(shiftRef, {
+              transactions: arrayUnion(newTransaction)
+            }).catch(console.error);
+          }
         } catch (err) {
           console.error('Error saving shift transaction:', err);
         }
       }
 
-      const userJson = localStorage.getItem('user');
-      let restoId = '';
-      let hotelCode = '87241';
-      if (userJson) {
-        try {
-          const user = JSON.parse(userJson);
-          restoId = user.restoId || '';
-          hotelCode = user.hotelCode || '87241';
-        } catch (e) {}
-      }
+
 
       const localTx = {
         id: transactionId,
@@ -493,6 +538,20 @@ export function useLexuPos() {
       try {
         const finalTableNumber = await getOrGenerateTableNumber(hotelCode, tableNumber);
 
+        let currentShiftId = null;
+        let shiftCashierName = cashierName || 'Kasir';
+        if (typeof window !== 'undefined') {
+          const shiftJson = localStorage.getItem('active_shift');
+          if (shiftJson) {
+            try {
+              const parsedShift = JSON.parse(shiftJson);
+              currentShiftId = parsedShift.id;
+              // Use shift's cashierName (who opened shift), fallback to logged-in user
+              if (parsedShift.cashierName) shiftCashierName = parsedShift.cashierName;
+            } catch (e) {}
+          }
+        }
+
         const orderData = {
           items: cart.map(item => ({
             id: item.product.id,
@@ -500,6 +559,7 @@ export function useLexuPos() {
             price: item.isCompliment ? 0 : item.product.price,
             quantity: item.quantity,
             category: item.product.category,
+            pnlTarget: item.product.pnlTarget || '',
             image: item.product.image,
             isCompliment: item.isCompliment || false,
             complimentReason: item.complimentReason || null,
@@ -513,11 +573,13 @@ export function useLexuPos() {
           total: payableAmount,
           paymentMethod,
           customerName: customerName.trim() || 'Guest',
+          cashierName: shiftCashierName,
           tableNumber: finalTableNumber,
           notes: notes.trim() || '',
           timestamp: new Date(),
           revenueType: revenueType,
           transactionId: transactionId,
+          shiftId: currentShiftId,
           isCompliment: payableAmount === 0 && cart.length > 0 && cart.every(i => i.isCompliment),
           complimentValue: cart.reduce((sum, item) => sum + (item.isCompliment ? item.product.price * item.quantity : 0), 0)
         };
@@ -592,6 +654,7 @@ export function useLexuPos() {
     setRevenueType('alacarte');
     setStep('pos');
     setRestoredOrderId(null);
+    setTransactionId('');
     toast.success('Transaksi selesai!');
   };
 
@@ -649,6 +712,7 @@ export function useLexuPos() {
     handleProceed,
     executePayment,
     handleCloseReceipt,
-    checkActiveShift
+    checkActiveShift,
+    transactionId
   };
 }

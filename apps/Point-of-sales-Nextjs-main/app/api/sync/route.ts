@@ -80,6 +80,13 @@ export async function POST(req: NextRequest) {
           entries: arrayUnion(transactionEntry),
           date: entryDate
         });
+      } else {
+        // If the day's record does not exist, create it with the transaction entry
+        await setDoc(docRef, {
+          entries: [transactionEntry],
+          date: entryDate,
+          hotelId: hotelId
+        });
       }
 
       // Append transaction to the active cashier shift in Firestore if one exists

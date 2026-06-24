@@ -9,6 +9,7 @@ import {
   ShoppingBag, Clock, RefreshCw, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import ds from './fnb-realtime.module.css';
 
 interface FoodBeverageRealtimeTabProps {
@@ -26,6 +27,20 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
   const [activeFeedTab, setActiveFeedTab] = useState<'pending' | 'completed'>('pending');
   const [newOrderAlert, setNewOrderAlert] = useState<boolean>(false);
   const [audioAlert, setAudioAlert] = useState<HTMLAudioElement | null>(null);
+  const [isAudioUnlocked, setIsAudioUnlocked] = useState<boolean>(false);
+
+  const prevHeldOrdersIdsRef = React.useRef<string[]>([]);
+  const isInitialLoadRef = React.useRef(true);
+  const alarmAudioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  const getAudioInstance = () => {
+    if (!alarmAudioRef.current && typeof window !== 'undefined') {
+      alarmAudioRef.current = new Audio('/sounds/notification.mp3');
+      alarmAudioRef.current.volume = 1.0;
+      alarmAudioRef.current.loop = true;
+    }
+    return alarmAudioRef.current;
+  };
 
   // Get active hotel code on mount
   useEffect(() => {
@@ -37,12 +52,12 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
     }
   }, [hotelCode]);
 
-  // Setup audio helper for notification sound
+  // Setup audio helper for notification sound is now handled inline per-order
   useEffect(() => {
+    // Just warmup/preload the audio file so it's cached
     if (typeof window !== 'undefined') {
-      const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-600.wav');
-      audio.volume = 0.5;
-      setAudioAlert(audio);
+      const audio = new Audio('/sounds/notification.mp3');
+      audio.load();
     }
   }, []);
 
@@ -93,17 +108,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
             return { id: doc.id, ...data, createdAt };
           });
           
-          setHeldOrders(prev => {
-            const hasNewOrder = orders.some(o => o.id && !prev.some(p => p.id === o.id));
-            if (prev.length > 0 && hasNewOrder) {
-              setNewOrderAlert(true);
-              if (audioAlert) {
-                audioAlert.play().catch(e => console.log('Audio playback block:', e));
-              }
-              setTimeout(() => setNewOrderAlert(false), 5000);
-            }
-            return orders;
-          });
+          setHeldOrders(orders);
           setIsLoading(false);
         }, (err) => {
           console.error('Firestore held orders listener error:', err);
@@ -207,8 +212,119 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
     setSelectedOrder(table.activeOrder || null);
   };
 
+  // Safe and clean side-effect trigger for new orders
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (isInitialLoadRef.current) {
+      prevHeldOrdersIdsRef.current = heldOrders.map(o => o.id);
+      isInitialLoadRef.current = false;
+      return;
+    }
+
+    const newOrders = heldOrders.filter(o => o.id && !prevHeldOrdersIdsRef.current.includes(o.id));
+    prevHeldOrdersIdsRef.current = heldOrders.map(o => o.id);
+
+    newOrders.forEach(data => {
+      let isFresh = true;
+      if (data.createdAt) {
+        const createdTime = new Date(data.createdAt).getTime();
+        if (Date.now() - createdTime > 30000) {
+          isFresh = false;
+        }
+      }
+
+      if (isFresh) {
+        setNewOrderAlert(true);
+        setTimeout(() => setNewOrderAlert(false), 5000);
+
+        const audio = getAudioInstance();
+        if (audio) {
+          audio.volume = 1.0;
+          audio.loop = true;
+          
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(e => {
+              setIsAudioUnlocked(false);
+              console.log('Audio playback blocked or failed:', e);
+              toast.warning(`Gagal memutar alarm suara. Klik layar ini untuk mengizinkan!`, {
+                duration: 8000,
+                position: 'top-center',
+                onClick: () => {
+                  audio.play().catch(err => console.error('Still failed:', err));
+                }
+              });
+            });
+          }
+
+          // Persistent toast
+          toast.success(`🔔 Pesanan Baru: ${data.customerName || 'Tamu'} (Meja ${data.tableNumber || '-'})`, {
+            duration: Infinity,
+            position: 'top-right',
+            action: {
+              label: 'Matikan Alarm',
+              onClick: () => {
+                audio.pause();
+                audio.currentTime = 0;
+              }
+            },
+            onDismiss: () => {
+              audio.pause();
+              audio.currentTime = 0;
+            }
+          });
+        }
+      }
+    });
+  }, [heldOrders, isLoading]);
+
+  const unlockAudioContext = () => {
+    try {
+      const audio = getAudioInstance();
+      if (audio) {
+        audio.play().then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          setIsAudioUnlocked(true);
+        }).catch((e) => {
+          console.error("Audio unlock failed:", e);
+          setIsAudioUnlocked(true);
+        });
+      } else {
+        setIsAudioUnlocked(true);
+      }
+    } catch (e) {
+      setIsAudioUnlocked(true);
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+    <div 
+      onClick={!isAudioUnlocked ? unlockAudioContext : undefined}
+      style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%', position: 'relative' }}
+    >
+      {!isAudioUnlocked && (
+        <div className="audio-unlock-overlay">
+          <div className="audio-unlock-card">
+            <div className="audio-unlock-icon-container">
+              <svg className="audio-unlock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            </div>
+            <h2 className="audio-unlock-title">Pantauan Dapur Siap</h2>
+            <p className="audio-unlock-desc">
+              Browser memerlukan interaksi pertama Anda. Klik tombol di bawah ini untuk mengaktifkan notifikasi alarm pesanan baru.
+            </p>
+            <button 
+              onClick={unlockAudioContext} 
+              className="audio-unlock-btn"
+            >
+              Mulai Pantau (Aktifkan Suara)
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Alert Bar ── */}
       <AnimatePresence>

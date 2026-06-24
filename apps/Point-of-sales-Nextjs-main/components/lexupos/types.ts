@@ -4,6 +4,7 @@ export interface Product {
   price: number;
   category: string;
   subcategory?: string;
+  pnlTarget?: string;
   image: string;
   description?: string;
   addons?: {name: string, price: number}[];

@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -456,6 +456,97 @@ aside.collapsed .sidebar-toggle {
   border-radius: 2px;
 }
 
+/* ── Audio Unlock Overlay (DESIGN.md Aligned) ── */
+.audio-unlock-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 640px) {
+  .audio-unlock-overlay {
+    padding: 32px;
+  }
+}
+
+.audio-unlock-card {
+  background-color: #181d26;
+  border-radius: 12px;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.audio-unlock-icon-container {
+  background-color: #4b3518;
+  width: 72px;
+  height: 72px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.audio-unlock-icon {
+  width: 36px;
+  height: 36px;
+  color: #f59e0b;
+}
+
+.audio-unlock-title {
+  font-size: 32px;
+  font-weight: 400;
+  margin-bottom: 16px;
+  color: #ffffff;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.audio-unlock-desc {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 48px;
+  line-height: 1.4;
+  max-width: 384px;
+}
+
+.audio-unlock-btn {
+  padding: 16px 24px;
+  background-color: #f59e0b;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 150ms ease;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+.audio-unlock-btn:hover {
+  background-color: #d97706;
+  transform: scale(1.05);
+}
+
+.audio-unlock-btn:active {
+  transform: scale(0.98);
+}
+
 /* Sidebar Nav Item matches Port 3000 exactly */
 .pos-nav-item {
   display: flex !important;
@@ -500,3 +591,4 @@ aside.collapsed .sidebar-toggle {
   background-color: var(--sidebar-active-indicator);
   border-radius: 2px;
 }
+

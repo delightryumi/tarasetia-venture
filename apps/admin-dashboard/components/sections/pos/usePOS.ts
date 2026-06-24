@@ -84,6 +84,7 @@ export const usePOS = () => {
         if (cart.length === 0) return;
 
         try {
+            const transactionId = `TRS-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
             const orderData = {
                 items: cart,
                 subtotal,
@@ -93,7 +94,8 @@ export const usePOS = () => {
                 customerName: customerName || "Guest",
                 timestamp: serverTimestamp(),
                 staffId: auth.currentUser?.uid || "system",
-                staffName: auth.currentUser?.displayName || "Staff"
+                staffName: auth.currentUser?.displayName || "Staff",
+                transactionId: transactionId
             };
 
             // Save to POS Orders
@@ -103,10 +105,11 @@ export const usePOS = () => {
             await addDoc(getHotelCollection(db, "revenue_transactions"), {
                 date: new Date().toISOString().split('T')[0],
                 category: "Other Revenue", // Or F&B
-                description: `POS Order #${orderRef.id.slice(-6)} - ${customerName || 'Guest'}`,
+                description: `POS Order #${transactionId.slice(-6)} - ${customerName || 'Guest'}`,
                 amount: total,
                 type: "Nexura Collect",
-                timestamp: serverTimestamp()
+                timestamp: serverTimestamp(),
+                transactionId: transactionId
             });
 
             clearCart();

@@ -256,11 +256,27 @@ export function usePnLExport({
         const investorPayouts = (pnlResult.investorDistributions || []).reduce((sum, i) => sum + (i.amount || 0), 0);
         const netIncome = pnlResult.card12_ReconOwner || 0;
 
-        const accountsReceivable = (rawTransactions || []).filter(t => {
+        const deferredRevenue = (rawTransactions || []).filter(t => {
             if (isTxIgnored(t)) return false;
             const status = (t.paymentStatus || "").toLowerCase();
             return !status.includes("lunas") && !status.includes("paid");
-        }).reduce((sum, t) => sum + (t.amount || 0), 0);
+        }).reduce((sum, t) => {
+            const isPelunasan = t.type === "pelunasan_ar" || t.isPelunasan;
+            if (isPelunasan) return sum;
+            const paidCash = Number(t.paidCash || t.paidAmount1 || t.payHotel || 0);
+            const paidTransfer = Number(t.paidTransfer || t.paidAmount2 || t.payTransfer || 0);
+            const unpaid = Math.max(0, (t.amount || 0) - paidCash - paidTransfer);
+            return sum + unpaid;
+        }, 0);
+
+        const pelunasanCash = (rawTransactions || []).filter(t => {
+            if (isTxIgnored(t)) return false;
+            return t.type === "pelunasan_ar" || t.isPelunasan;
+        }).reduce((sum, t) => {
+            const paidCash = Number(t.paidCash || t.paidAmount1 || t.payHotel || 0);
+            const paidTransfer = Number(t.paidTransfer || t.paidAmount2 || t.payTransfer || 0);
+            return sum + paidCash + paidTransfer;
+        }, 0);
 
         // Kewajiban (Liabilities)
         const vatLiability = pnlResult.card11_VAT || 0;
@@ -273,18 +289,19 @@ export function usePnLExport({
         const sisaFee = Math.max(0, feeLiability - feePaid);
         const sisaSc = Math.max(0, scLiability - scPaid);
         const sisaLb = Math.max(0, lbLiability - lbPaid);
-        const totalLiabilities = sisaVat + sisaFee + sisaSc + sisaLb;
+        const totalLiabilities = sisaVat + sisaFee + sisaSc + sisaLb + deferredRevenue;
 
         const gop = pnlResult.card7_TotalGOP || 0;
         const totalPaid = vatPaid + feePaid + scPaid + lbPaid;
 
-        // Cash and Bank
-        const cashAndBank = startingBal + gop - investorPayouts - accountsReceivable - fixedAssetsValue - totalPaid;
+        // Cash and Bank calculation with deferredRevenue under Liabilities:
+        // cashAndBank = startingBal + gop - investorPayouts - totalPaid - deferredRevenue + pelunasanCash - fixedAssetsValue
+        const cashAndBank = startingBal + gop - investorPayouts - totalPaid - deferredRevenue + pelunasanCash - fixedAssetsValue;
         
-        const totalAssetsLancar = cashAndBank + accountsReceivable;
+        const totalAssetsLancar = cashAndBank + deferredRevenue;
         const totalAssets = totalAssetsLancar + fixedAssetsValue;
         
-        const equity = startingBal + netIncome - investorPayouts;
+        const equity = startingBal + netIncome - investorPayouts - deferredRevenue;
         const totalLiabilitiesEquity = totalLiabilities + equity;
         const endingBalance = cashAndBank;
 
@@ -295,14 +312,15 @@ export function usePnLExport({
             ["AKTIVA (ASSETS)", "", "", "KEWAJIBAN & EKUITAS (LIABILITIES & EQUITY)"],
             ["Aktiva Lancar", "", "", "Kewajiban (Liabilities)"],
             ["  Kas & Bank", cashAndBank, "", "  Hutang Operasional (Management Fee)", sisaFee],
-            ["  Piutang Usaha", accountsReceivable, "", "  Pajak Terhutang (VAT / PB1)", sisaVat],
+            ["  Piutang Kamar (Tagihan Belum Lunas)", deferredRevenue, "", "  Pajak Terhutang (VAT / PB1)", sisaVat],
             ["Total Aktiva Lancar", totalAssetsLancar, "", "  Hutang Service Charge Karyawan", sisaSc],
             ["", "", "", "  Cadangan Kehilangan & Kerusakan", sisaLb],
-            ["Aktiva Tetap", "", "", "Total Kewajiban", totalLiabilities],
-            ["  Inventaris & Peralatan", fixedAssetsValue, "", ""],
+            ["Aktiva Tetap", "", "", "  Pendapatan Diterima Dimuka (DP)", deferredRevenue],
+            ["  Inventaris & Peralatan", fixedAssetsValue, "", "Total Kewajiban", totalLiabilities],
             ["", "", "", "Ekuitas (Equity)"],
             ["", "", "", "  Modal Awal / Saldo Laba Bulan Lalu", startingBal],
             ["", "", "", "  Laba (Rugi) Tahun Berjalan", netIncome],
+            ["", "", "", "  Pendapatan Ditangguhkan (Uang Muka)", -deferredRevenue],
             ["", "", "", "  Distribusi Laba Investor (Dividen)", -investorPayouts],
             ["", "", "", "Total Ekuitas", equity],
             ["TOTAL AKTIVA", totalAssets, "", "TOTAL KEWAJIBAN & EKUITAS", totalLiabilitiesEquity]
@@ -315,9 +333,9 @@ export function usePnLExport({
             [`Periode Akhir: ${month}`],
             [],
             ["Arus Kas dari Aktivitas Operasional"],
-            ["  Penerimaan Kas dari Pelanggan (Total Revenue - Piutang)", (pnlResult.totalRevenue || 0) - accountsReceivable],
+            ["  Penerimaan Kas dari Pelanggan (Net Penerimaan Uang Muka)", (pnlResult.totalRevenue || 0) - deferredRevenue + pelunasanCash],
             ["  Pembayaran Kas untuk Beban Operasional", -(pnlResult.card8_TotalExpenses || 0)],
-            ["Kas Bersih dari Aktivitas Operasi", gop - accountsReceivable],
+            ["Kas Bersih dari Aktivitas Operasi", gop - deferredRevenue + pelunasanCash],
             [],
             ["Arus Kas dari Aktivitas Investasi"],
             ["  Pembelian Inventaris & Peralatan (Aktiva Tetap)", -fixedAssetsValue],
@@ -328,7 +346,7 @@ export function usePnLExport({
             ["Kas Bersih dari Aktivitas Pendanaan", -investorPayouts],
             [],
             ["Ringkasan Arus Kas"],
-            ["  Kenaikan (Penurunan) Kas Bersih", (gop - accountsReceivable) - fixedAssetsValue - investorPayouts],
+            ["  Kenaikan (Penurunan) Kas Bersih", (gop - deferredRevenue + pelunasanCash) - fixedAssetsValue - investorPayouts],
             ["  Saldo Kas Awal Periode", startingBal],
             ["Saldo Kas Akhir Periode", endingBalance]
         ];
@@ -586,11 +604,50 @@ export function usePnLExport({
 
         const investorPayouts = (pnlResult.investorDistributions || []).reduce((sum, i) => sum + (i.amount || 0), 0);
         const netIncome = pnlResult.card12_ReconOwner || 0;
-        const cashAndBank = startingBal + netIncome - investorPayouts;
-        const totalAssets = cashAndBank;
-        const equity = startingBal + netIncome - investorPayouts;
-        const totalLiabilitiesEquity = equity;
-        const endingBalance = startingBal + netIncome - investorPayouts;
+
+        const deferredRevenue = (rawTransactions || []).filter(t => {
+            if (isTxIgnored(t)) return false;
+            const status = (t.paymentStatus || "").toLowerCase();
+            return !status.includes("lunas") && !status.includes("paid");
+        }).reduce((sum, t) => {
+            const isPelunasan = t.type === "pelunasan_ar" || t.isPelunasan;
+            if (isPelunasan) return sum;
+            const paidCash = Number(t.paidCash || t.paidAmount1 || t.payHotel || 0);
+            const paidTransfer = Number(t.paidTransfer || t.paidAmount2 || t.payTransfer || 0);
+            const unpaid = Math.max(0, (t.amount || 0) - paidCash - paidTransfer);
+            return sum + unpaid;
+        }, 0);
+
+        const pelunasanCash = (rawTransactions || []).filter(t => {
+            if (isTxIgnored(t)) return false;
+            return t.type === "pelunasan_ar" || t.isPelunasan;
+        }).reduce((sum, t) => {
+            const paidCash = Number(t.paidCash || t.paidAmount1 || t.payHotel || 0);
+            const paidTransfer = Number(t.paidTransfer || t.paidAmount2 || t.payTransfer || 0);
+            return sum + paidCash + paidTransfer;
+        }, 0);
+
+        // Kewajiban (Liabilities)
+        const vatLiability = pnlResult.card11_VAT || 0;
+        const scLiability = pnlResult.summaryServiceCharge || 0;
+        const lbLiability = pnlResult.summaryLostBreakage || 0;
+        const feeLiability = pnlResult.card9_FeeGross || 0;
+
+        const sisaVat = Math.max(0, vatLiability - vatPaid);
+        const sisaFee = Math.max(0, feeLiability - feePaid);
+        const sisaSc = Math.max(0, scLiability - scPaid);
+        const sisaLb = Math.max(0, lbLiability - lbPaid);
+        const totalLiabilities = sisaVat + sisaFee + sisaSc + sisaLb + deferredRevenue;
+
+        const gop = pnlResult.card7_TotalGOP || 0;
+        const totalPaid = vatPaid + feePaid + scPaid + lbPaid;
+
+        const cashAndBank = startingBal + gop - investorPayouts - totalPaid - deferredRevenue + pelunasanCash - fixedAssetsValue;
+        const totalAssetsLancar = cashAndBank + deferredRevenue;
+        const totalAssets = totalAssetsLancar + fixedAssetsValue;
+        const equity = startingBal + netIncome - investorPayouts - deferredRevenue;
+        const totalLiabilitiesEquity = totalLiabilities + equity;
+        const endingBalance = cashAndBank;
 
         // Section VI: Buku Besar (General Ledger)
         doc.addPage();
@@ -632,7 +689,7 @@ export function usePnLExport({
             body: [
                 ["Aktiva Lancar", ""],
                 ["  Kas & Bank", formatIDR(cashAndBank)],
-                ["  Piutang Usaha", formatIDR(accountsReceivable)],
+                ["  Piutang Kamar (Tagihan Belum Lunas)", formatIDR(deferredRevenue)],
                 ["Total Aktiva Lancar", formatIDR(totalAssetsLancar)],
                 ["Aktiva Tetap", ""],
                 ["  Inventaris & Peralatan", formatIDR(fixedAssetsValue)],
@@ -652,10 +709,12 @@ export function usePnLExport({
                 ["  Pajak Terhutang (VAT / PB1)", formatIDR(sisaVat)],
                 ["  Hutang Service Charge Karyawan", formatIDR(sisaSc)],
                 ["  Cadangan Kehilangan & Kerusakan", formatIDR(sisaLb)],
+                ["  Pendapatan Diterima Dimuka (DP)", formatIDR(deferredRevenue)],
                 ["Total Kewajiban", formatIDR(totalLiabilities)],
                 ["Ekuitas (Equity)", ""],
                 ["  Modal Awal / Saldo Laba Bulan Lalu", formatIDR(startingBal)],
                 ["  Laba (Rugi) Tahun Berjalan", formatIDR(netIncome)],
+                ["  Pendapatan Ditangguhkan (Uang Muka)", `-${formatIDR(deferredRevenue)}`],
                 ["  Distribusi Laba Investor (Dividen)", `-${formatIDR(investorPayouts)}`],
                 ["Total Ekuitas", formatIDR(equity)],
                 ["TOTAL KEWAJIBAN & EKUITAS", formatIDR(totalLiabilitiesEquity)]
@@ -679,9 +738,9 @@ export function usePnLExport({
             head: [["Aktivitas / Deskripsi", "Jumlah"]],
             body: [
                 ["Arus Kas dari Aktivitas Operasional", ""],
-                ["  Penerimaan Kas dari Pelanggan (Total Revenue - Piutang)", formatIDR((pnlResult?.totalRevenue || 0) - accountsReceivable)],
+                ["  Penerimaan Kas dari Pelanggan (Net Penerimaan Uang Muka)", formatIDR((pnlResult?.totalRevenue || 0) - deferredRevenue + pelunasanCash)],
                 ["  Pembayaran Kas untuk Beban Operasional", `-${formatIDR(pnlResult?.card8_TotalExpenses || 0)}`],
-                ["Kas Bersih dari Aktivitas Operasi", formatIDR(gop - accountsReceivable)],
+                ["Kas Bersih dari Aktivitas Operasi", formatIDR(gop - deferredRevenue + pelunasanCash)],
                 ["Arus Kas dari Aktivitas Investasi", ""],
                 ["  Pembelian Inventaris & Peralatan (Aktiva Tetap)", `-${formatIDR(fixedAssetsValue)}`],
                 ["Kas Bersih dari Aktivitas Investasi", `-${formatIDR(fixedAssetsValue)}`],
@@ -689,7 +748,7 @@ export function usePnLExport({
                 ["  Pembayaran Dividen / Distribusi Investor", `-${formatIDR(investorPayouts)}`],
                 ["Kas Bersih dari Aktivitas Pendanaan", `-${formatIDR(investorPayouts)}`],
                 ["Ringkasan", ""],
-                ["  Kenaikan (Penurunan) Kas Bersih", formatIDR((gop - accountsReceivable) - fixedAssetsValue - investorPayouts)],
+                ["  Kenaikan (Penurunan) Kas Bersih", formatIDR((gop - deferredRevenue + pelunasanCash) - fixedAssetsValue - investorPayouts)],
                 ["  Saldo Kas Awal Periode", formatIDR(startingBal)],
                 ["Saldo Kas Akhir Periode", formatIDR(endingBalance)]
             ],
