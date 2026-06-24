@@ -43,26 +43,24 @@ export default function DetailModal({
       .catch(() => {});
   }, []);
 
-  // ── Compute payment breakdown from pos_orders (source of truth) ──
-  // Falls back to shift.transactions[] if pos_orders is empty
   const computeBreakdown = () => {
     if (detailTransactions.length > 0) {
-      let total = 0, cash = 0, qris = 0, card = 0, transfer = 0;
+      let total = 0, cash = 0, qris = 0, card = 0;
       detailTransactions.forEach(tx => {
+        if (tx.status === 'CANCELLED' || tx.status === 'VOID') return;
         const amt = tx.amount ?? tx.total ?? 0;
         const m = (tx.method ?? tx.paymentMethod ?? 'cash').toLowerCase();
         total += amt;
         if (m === 'cash' || m === 'tunai') cash += amt;
         else if (m === 'qris' || m === 'e-money' || m === 'emoney') qris += amt;
-        else if (m === 'card' || m === 'debit' || m === 'kredit' || m === 'credit') card += amt;
-        else if (m === 'transfer') transfer += amt;
+        else if (m === 'card' || m === 'debit' || m === 'kredit' || m === 'credit' || m === 'kartu' || m === 'transfer') card += amt;
         else qris += amt; // default non-cash to qris bucket
       });
-      return { total, cash, qris, card, transfer };
+      return { total, cash, qris, card };
     }
     // fallback: shift.transactions[]
     const fb = getSalesBreakdown(selectedHistoryShift);
-    return { ...fb, transfer: 0 };
+    return { ...fb };
   };
   const b = computeBreakdown();
 
@@ -73,6 +71,7 @@ export default function DetailModal({
   let otherTotal = 0;
 
   detailTransactions.forEach(tx => {
+    if (tx.status === 'CANCELLED' || tx.status === 'VOID') return;
     const isBanquet = tx.revenueType?.toLowerCase() === 'banquet' || 
                       (tx.category?.toLowerCase() || '').includes('banquet');
     if (isBanquet) {
@@ -123,11 +122,18 @@ export default function DetailModal({
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {detailTransactions.map((tx, idx) => (
-                <div key={idx} className="p-4 rounded-xl border border-neutral-200 dark:border-white/[0.05] bg-neutral-50 dark:bg-zinc-950/50 flex flex-col gap-3 hover:border-neutral-300 dark:hover:border-white/[0.1] transition-colors shadow-sm">
+               {detailTransactions.map((tx, idx) => {
+                const isCancelled = tx.status === 'CANCELLED' || tx.status === 'VOID';
+                return (
+                <div key={idx} className={`p-4 rounded-xl border border-neutral-200 dark:border-white/[0.05] bg-neutral-50 dark:bg-zinc-950/50 flex flex-col gap-3 hover:border-neutral-300 dark:hover:border-white/[0.1] transition-colors shadow-sm ${isCancelled ? 'line-through opacity-60 bg-red-500/5' : ''}`}>
                   <div className="flex justify-between items-start">
                     <div className="flex flex-col">
-                      <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">{tx.id}</span>
+                      <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-2">
+                        {tx.id}
+                        {isCancelled && (
+                          <span className="text-[9px] bg-red-600 text-white font-extrabold px-1.5 py-0.5 rounded tracking-wider uppercase font-mono">VOID</span>
+                        )}
+                      </span>
                       <span className="text-[10px] text-neutral-500 mt-0.5">{formatDate(tx.timestamp)}</span>
                     </div>
                     <div className="flex flex-col items-end">
@@ -152,7 +158,8 @@ export default function DetailModal({
                     )}
                   </div>
                 </div>
-              ))}
+              );
+              })}
               
               {/* Summary Block */}
               <div className="mt-2 mb-4 p-5 rounded-xl border-2 border-emerald-500/20 bg-emerald-500/5 dark:bg-emerald-500/10 flex flex-col shadow-sm">
@@ -169,15 +176,15 @@ export default function DetailModal({
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-neutral-600 dark:text-neutral-300 font-medium">Debit / Card:</span>
-                    <span className="font-bold text-neutral-800 dark:text-white">
-                      {formatMoney(b.card)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
                     <span className="text-neutral-600 dark:text-neutral-300 font-medium">QRIS / E-Money:</span>
                     <span className="font-bold text-neutral-800 dark:text-white">
                       {formatMoney(b.qris)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-neutral-600 dark:text-neutral-300 font-medium">Kartu / Transfer:</span>
+                    <span className="font-bold text-neutral-800 dark:text-white">
+                      {formatMoney(b.card)}
                     </span>
                   </div>
                 </div>

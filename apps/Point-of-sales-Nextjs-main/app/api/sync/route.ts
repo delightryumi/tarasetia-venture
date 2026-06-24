@@ -44,50 +44,56 @@ export async function POST(req: NextRequest) {
         day: '2-digit',
       });
       const entryDate = formatter.format(new Date(tx.createdAt));
-      const docId = `${hotelId}_${entryDate}`;
-
-      // Build the standard revenue entry matching the dashboard's daily_revenue structure
-      const transactionEntry = {
-        bookingId: tx.id,
-        guestName: `POS Order #${tx.id.slice(-6)}`,
-        amount: Number(tx.totalAmount),
-        paidAmount1: Number(tx.totalAmount),
-        paidAmount2: 0,
-        paymentStatus: 'Pay at Nexura',
-        isSplitBill: false,
-        source: 'Walk-in',
-        status: 'CONFIRMED',
-        type: 'other_income', // Mapped as other income for GOP and Other Revenue charts
-        timestamp: tx.createdAt,
-        channel: 'Walk-in',
-        roomType: '-',
-        paymentMethod: tx.paymentMethod || 'cash',
-        revenueType: tx.revenueType || 'alacarte',
-        posItems: tx.items.map(item => ({
-          productId: item.productId,
+      // Build the standard pos_orders structure
+      const orderData = {
+        transactionId: tx.id,
+        items: tx.items.map(item => ({
+          id: item.productId,
           name: item.name || 'Produk',
-          quantity: item.quantity,
           price: item.price || 0,
-        }))
+          quantity: item.quantity,
+          category: 'General',
+          pnlTarget: '',
+          image: '',
+          isCompliment: false,
+          complimentReason: null,
+          originalPrice: item.price || 0,
+          selectedAddons: [],
+          note: ''
+        })),
+        subtotal: Number(tx.totalAmount),
+        tax: 0,
+        discount: 0,
+        total: Number(tx.totalAmount),
+        paymentMethod: tx.paymentMethod || 'cash',
+        customerName: 'Guest',
+        cashierName: 'Kasir',
+        tableNumber: '-',
+        notes: 'Synced from Offline',
+        timestamp: new Date(tx.createdAt),
+        revenueType: tx.revenueType || 'alacarte',
+        shiftId: null,
+        isCompliment: false,
+        complimentValue: 0
       };
 
-      const docRef = doc(getHotelCollection(db, 'daily_revenue', hotelId), docId);
-      const docSnap = await getDoc(docRef);
+      // Write to pos_orders
+      const posOrderRef = doc(getHotelCollection(db, 'pos_orders', hotelId), tx.id);
+      await setDoc(posOrderRef, orderData);
 
-      if (docSnap.exists()) {
-        // If the day's record exists, append the new transaction to the entries array
-        await updateDoc(docRef, {
-          entries: arrayUnion(transactionEntry),
-          date: entryDate
-        });
-      } else {
-        // If the day's record does not exist, create it with the transaction entry
-        await setDoc(docRef, {
-          entries: [transactionEntry],
-          date: entryDate,
-          hotelId: hotelId
-        });
-      }
+      // Write to revenue_transactions
+      const revTxRef = doc(getHotelCollection(db, 'revenue_transactions', hotelId), tx.id);
+      await setDoc(revTxRef, {
+        date: entryDate,
+        category: tx.revenueType === 'banquet' ? 'Banquet Revenue' : 'Ala Carte Revenue',
+        description: `POS Order #${tx.id.slice(-6)} - Synced`,
+        amount: Number(tx.totalAmount),
+        type: tx.paymentMethod === 'compliment' ? 'Compliment' : 'Nexura Collect',
+        revenueType: tx.paymentMethod === 'compliment' ? 'compliment' : 'pos',
+        complimentValue: 0,
+        timestamp: new Date(tx.createdAt),
+        transactionId: tx.id
+      });
 
       // Append transaction to the active cashier shift in Firestore if one exists
       try {

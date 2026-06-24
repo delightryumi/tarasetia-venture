@@ -34,6 +34,7 @@ function groupItems(data: TransactionData[]) {
 
 export default function DetailPage() {
   const { formatCurrency } = useCurrency();
+  const [printMode, setPrintMode] = useState<'all' | 'kitchen' | 'bar'>('all');
 
   const [taxRate, setTaxRate]         = useState<number>(0);
   const [shopName, setShopName]       = useState<string>('BUMI ANYOM RESORT');
@@ -159,12 +160,21 @@ export default function DetailPage() {
           <div className="border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 p-4 flex justify-center">
              <ThermalReceipt
                 shopInfo={{ name: shopName, address: shopAddress, phone: shopPhone }}
-                transactionInfo={{ id, date: saleDate, customerName: 'Walk-in Customer', paymentMethod: transactionData[0]?.paymethod || transactionData[0]?.paymentMethod || 'TUNAI' }}
+                transactionInfo={{ 
+                  id, 
+                  date: saleDate, 
+                  customerName: 'Walk-in Customer', 
+                  paymentMethod: transactionData[0]?.paymethod || transactionData[0]?.paymentMethod || 'TUNAI',
+                  status: transactionData[0]?.status,
+                  cancelReason: transactionData[0]?.cancelReason
+                }}
                 items={receiptItems}
                 totals={{
                   subtotal, discount, taxRate, taxAmount: tax, payableAmount: total
                 }}
                 className="shadow-sm border border-neutral-200"
+                printMode={printMode}
+                onPrintModeChange={setPrintMode}
              />
           </div>
 
@@ -177,11 +187,19 @@ export default function DetailPage() {
       <div className="hidden print:block w-full">
          <ThermalReceipt
             shopInfo={{ name: shopName, address: shopAddress, phone: shopPhone }}
-            transactionInfo={{ id, date: saleDate, customerName: 'Walk-in Customer', paymentMethod: transactionData[0]?.paymethod || transactionData[0]?.paymentMethod || 'TUNAI' }}
+            transactionInfo={{ 
+              id, 
+              date: saleDate, 
+              customerName: 'Walk-in Customer', 
+              paymentMethod: transactionData[0]?.paymethod || transactionData[0]?.paymentMethod || 'TUNAI',
+              status: transactionData[0]?.status,
+              cancelReason: transactionData[0]?.cancelReason
+            }}
             items={receiptItems}
             totals={{
               subtotal, discount, taxRate, taxAmount: tax, payableAmount: total
             }}
+            printMode={printMode}
          />
       </div>
     </div>

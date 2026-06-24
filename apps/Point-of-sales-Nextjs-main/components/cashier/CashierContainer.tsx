@@ -16,8 +16,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useCurrency } from '@/hooks/useCurrency';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, updateDoc, doc, getDocs, query, where, deleteDoc, onSnapshot, arrayUnion, setDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, getDocs, query, where, deleteDoc, onSnapshot, arrayUnion, setDoc, getDoc } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
+import { localDb } from '@/lib/dexie';
 import { ShiftData } from './types';
 
 import OpenShiftPanel from './OpenShiftPanel';
@@ -146,10 +147,11 @@ export default function CashierContainer() {
                 const od = d.data();
                 return {
                   id: od.transactionId || d.id,
-                  amount: od.total ?? od.amount ?? 0,
+                  amount: (od.status === 'CANCELLED' || od.status === 'VOID') ? 0 : (od.total ?? od.amount ?? 0),
                   method: (od.paymentMethod ?? od.method ?? 'cash').toLowerCase(),
                   timestamp: od.timestamp?.toDate ? od.timestamp.toDate().toISOString() : (od.timestamp ?? new Date().toISOString()),
                   revenueType: od.revenueType ?? '',
+                  status: od.status || 'SUCCESS',
                 };
               });
               return { ...shift, transactions: patchedTxs };
@@ -177,61 +179,84 @@ export default function CashierContainer() {
       getHotelCollection(db, 'cashier_shifts', hotelCode),
       where('status', '==', 'open')
     );
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
+
+    let unsubscribeOrders: (() => void) | null = null;
+
+    const unsubscribeShifts = onSnapshot(q, (snapshot) => {
+      // Clean up previous orders listener if any
+      if (unsubscribeOrders) {
+        unsubscribeOrders();
+        unsubscribeOrders = null;
+      }
+
       if (!snapshot.empty) {
         const docSnap = snapshot.docs[0];
         const dbShift = { id: docSnap.id, ...docSnap.data() } as ShiftData;
-        
-        // ── Fetch pos_orders for this shift to get accurate transactions ──
-        try {
-          const ordersQ = query(
-            getHotelCollection(db, 'pos_orders', hotelCode),
-            where('shiftId', '==', dbShift.id)
-          );
-          const ordersSnap = await getDocs(ordersQ);
-          if (!ordersSnap.empty) {
-            const liveTransactions = ordersSnap.docs.map(d => {
-              const od = d.data();
-              return {
-                id: od.transactionId || d.id,
-                amount: od.total ?? od.amount ?? 0,
-                method: (od.paymentMethod ?? od.method ?? 'cash').toLowerCase(),
-                timestamp: od.timestamp?.toDate ? od.timestamp.toDate().toISOString() : (od.timestamp ?? new Date().toISOString()),
-                revenueType: od.revenueType ?? '',
-              };
+
+        // Set up real-time listener on pos_orders for this active shift
+        const ordersQ = query(
+          getHotelCollection(db, 'pos_orders', hotelCode),
+          where('shiftId', '==', dbShift.id)
+        );
+
+        unsubscribeOrders = onSnapshot(ordersQ, (ordersSnapshot) => {
+          const liveTransactions = ordersSnapshot.docs.map(d => {
+            const od = d.data();
+            return {
+              id: od.transactionId || d.id,
+              amount: (od.status === 'CANCELLED' || od.status === 'VOID') ? 0 : (od.total ?? od.amount ?? 0),
+              method: (od.paymentMethod ?? od.method ?? 'cash').toLowerCase(),
+              timestamp: od.timestamp?.toDate ? od.timestamp.toDate().toISOString() : (od.timestamp ?? new Date().toISOString()),
+              revenueType: od.revenueType ?? '',
+              status: od.status || 'SUCCESS',
+            };
+          });
+
+          // Merge transactions from dbShift and liveTransactions
+          const txMap = new Map<string, any>();
+          if (dbShift.transactions) {
+            dbShift.transactions.forEach((t: any) => {
+              txMap.set(t.id, {
+                id: t.id,
+                amount: (t.status === 'CANCELLED' || t.status === 'VOID') ? 0 : t.amount,
+                method: (t.method || 'cash').toLowerCase(),
+                timestamp: t.timestamp || new Date().toISOString(),
+                revenueType: t.revenueType || '',
+                status: t.status || 'SUCCESS'
+              });
             });
-            dbShift.transactions = liveTransactions;
           }
-        } catch (e) {
-          // Fallback: merge localStorage data
+          liveTransactions.forEach((t: any) => {
+            txMap.set(t.id, t);
+          });
+          const mergedTransactions = Array.from(txMap.values());
+
+          // Always merge cashFlows from localStorage
           const localStr = localStorage.getItem('active_shift');
+          let mergedFlows = dbShift.cashFlows || [];
           if (localStr) {
             try {
               const localShift = JSON.parse(localStr);
               if (localShift && localShift.id === dbShift.id) {
-                if ((localShift.transactions?.length || 0) > (dbShift.transactions?.length || 0)) {
-                  dbShift.transactions = localShift.transactions;
+                if ((localShift.cashFlows?.length || 0) > (dbShift.cashFlows?.length || 0)) {
+                  mergedFlows = localShift.cashFlows;
                 }
               }
-            } catch (err) {}
+            } catch (e) {}
           }
-        }
 
-        // Always merge cashFlows from localStorage (not stored in pos_orders)
-        const localStr = localStorage.getItem('active_shift');
-        if (localStr) {
-          try {
-            const localShift = JSON.parse(localStr);
-            if (localShift && localShift.id === dbShift.id) {
-              if ((localShift.cashFlows?.length || 0) > (dbShift.cashFlows?.length || 0)) {
-                dbShift.cashFlows = localShift.cashFlows;
-              }
-            }
-          } catch (e) {}
-        }
-        
-        setActiveShift(dbShift);
-        localStorage.setItem('active_shift', JSON.stringify(dbShift));
+          const updatedShift = {
+            ...dbShift,
+            transactions: mergedTransactions,
+            cashFlows: mergedFlows
+          };
+
+          setActiveShift(updatedShift);
+          localStorage.setItem('active_shift', JSON.stringify(updatedShift));
+        }, (ordersErr) => {
+          console.error('Error listening to pos_orders for active shift:', ordersErr);
+        });
+
       } else {
         setActiveShift(null);
         localStorage.removeItem('active_shift');
@@ -249,7 +274,10 @@ export default function CashierContainer() {
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
-      unsubscribe();
+      unsubscribeShifts();
+      if (unsubscribeOrders) {
+        unsubscribeOrders();
+      }
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
@@ -417,7 +445,7 @@ export default function CashierContainer() {
           ...d,
           id: d.transactionId || docSnap.id,
           // normalize
-          amount: d.total ?? d.amount ?? 0,
+          amount: (d.status === 'CANCELLED' || d.status === 'VOID') ? 0 : (d.total ?? d.amount ?? 0),
           method: (d.paymentMethod ?? d.method ?? 'cash').toLowerCase(),
         });
       });
@@ -471,10 +499,16 @@ export default function CashierContainer() {
     let total = 0, cash = 0, qris = 0, card = 0;
     if (shift.transactions) {
       shift.transactions.forEach(t => {
-        total += t.amount;
-        if (t.method === 'cash') cash += t.amount;
-        else if (t.method === 'qris') qris += t.amount;
-        else if (t.method === 'card') card += t.amount;
+        if (t.status === 'CANCELLED' || t.status === 'VOID') {
+          return;
+        }
+        const amt = t.amount;
+        const m = (t.method || '').toLowerCase().trim();
+        total += amt;
+        if (m === 'cash' || m === 'tunai') cash += amt;
+        else if (m === 'qris' || m === 'e-money' || m === 'emoney') qris += amt;
+        else if (m === 'card' || m === 'debit' || m === 'kredit' || m === 'credit' || m === 'transfer') card += amt;
+        else qris += amt;
       });
     }
     return { total, cash, qris, card };
@@ -489,8 +523,72 @@ export default function CashierContainer() {
 
     try {
       const { restoId, hotelCode } = getUserInfo();
+
+      // 1. Fetch all pos_orders linked to this shift
+      const ordersQ = query(
+        getHotelCollection(db, 'pos_orders', hotelCode),
+        where('shiftId', '==', shiftToDelete.id)
+      );
+      const ordersSnap = await getDocs(ordersQ);
+
+      // Cascade deletion for all linked orders/transactions
+      for (const orderDoc of ordersSnap.docs) {
+        const orderData = orderDoc.data();
+        const transactionId = orderData.transactionId || orderDoc.id;
+
+        // A. Delete from pos_orders
+        await deleteDoc(orderDoc.ref);
+
+        // B. Delete from revenue_transactions
+        const revQ = query(
+          getHotelCollection(db, 'revenue_transactions', hotelCode),
+          where('transactionId', '==', transactionId)
+        );
+        const revSnap = await getDocs(revQ);
+        for (const revDoc of revSnap.docs) {
+          await deleteDoc(revDoc.ref);
+        }
+
+        // C. Delete from daily_revenue entry matching transactionId
+        let transactionDate: string | null = null;
+        if (orderData.timestamp) {
+          const tDate = orderData.timestamp.toDate ? orderData.timestamp.toDate() : new Date(orderData.timestamp);
+          const formatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Jakarta',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          });
+          transactionDate = formatter.format(tDate);
+        }
+        if (transactionDate) {
+          const dailyRevDocId = `${hotelCode}_${transactionDate}`;
+          const dailyRef = doc(getHotelCollection(db, 'daily_revenue', hotelCode), dailyRevDocId);
+          const snapDaily = await getDoc(dailyRef);
+          if (snapDaily.exists()) {
+            const entries = snapDaily.data().entries || [];
+            const updatedEntries = entries.filter((e: any) => e.bookingId !== transactionId);
+            await updateDoc(dailyRef, {
+              entries: updatedEntries,
+            });
+          }
+        }
+
+        // D. Delete from local Dexie database if exists
+        try {
+          await localDb.transactions.delete(transactionId);
+          await localDb.transactionItems
+            .where('transactionId')
+            .equals(transactionId)
+            .delete();
+        } catch (dexieErr) {
+          console.warn('Error deleting shift transaction from Dexie:', dexieErr);
+        }
+      }
+
+      // 2. Finally, delete the shift document itself
       await deleteDoc(doc(getHotelCollection(db, 'cashier_shifts', hotelCode), shiftToDelete.id));
-      toast.success('Shift berhasil dihapus!');
+      toast.success('Shift dan semua transaksi terkait berhasil dihapus!');
       setIsDeleteOpen(false);
       setShiftToDelete(null);
       setPasswordInput('');
@@ -502,10 +600,11 @@ export default function CashierContainer() {
   };
 
   const calculateExpectedCash = () => {
-    const base = (activeShift?.houseBank || 0) + getSalesBreakdown(activeShift!).cash;
-    const flowsIn = activeShift?.cashFlows?.filter(c => c.type === 'in').reduce((acc, c) => acc + c.amount, 0) || 0;
-    const flowsOut = activeShift?.cashFlows?.filter(c => c.type === 'out').reduce((acc, c) => acc + c.amount, 0) || 0;
-    return base + flowsIn - flowsOut;
+    const houseBank = Number(activeShift?.houseBank || 0);
+    const cashSales = getSalesBreakdown(activeShift!).cash;
+    const flowsIn = activeShift?.cashFlows?.filter(c => c.type === 'in').reduce((acc, c) => acc + Number(c.amount || 0), 0) || 0;
+    const flowsOut = activeShift?.cashFlows?.filter(c => c.type === 'out').reduce((acc, c) => acc + Number(c.amount || 0), 0) || 0;
+    return houseBank + cashSales + flowsIn - flowsOut;
   };
 
   return (

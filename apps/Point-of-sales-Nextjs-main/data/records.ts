@@ -84,7 +84,9 @@ export const fetchRecords = async ({
         totalAmount: calculatedTotal,
         discount: dbDiscount,
         createdAt,
-        isComplete: true, // Assuming all pos_orders are confirmed
+        isComplete: data.status !== 'CANCELLED',
+        status: data.status || 'SUCCESS',
+        cancelReason: data.cancelReason || '',
         products: items.map((item: any) => ({
           id: item.id,
           productId: item.id,

@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
 
     ordersSnap.forEach(docSnap => {
       const data = docSnap.data();
+      if (data.status === 'CANCELLED' || data.status === 'VOID' || data.isDeleted === true) return;
       
       let orderDate: Date | null = null;
       if (data.timestamp && typeof data.timestamp.toDate === 'function') {

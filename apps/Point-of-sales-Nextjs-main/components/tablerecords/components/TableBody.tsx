@@ -28,6 +28,8 @@ interface Recordsdata {
   cashierName?: string;
   isCompliment?: boolean;
   complimentValue?: number;
+  status?: string;
+  cancelReason?: string;
 }
 
 interface TableBodyRecordsProps {
@@ -52,23 +54,32 @@ const TableBodyRecords: React.FC<TableBodyRecordsProps> = ({ data }) => {
     <TableBody>
       {loading
         ? Array.from({ length: 5 }).map((_, i) => <SkeletonRecords key={i} />)
-        : recordsData.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell className="font-medium pl-4 whitespace-nowrap">{item.id}</TableCell>
+        : recordsData.map((item, index) => (
+            <TableRow 
+              key={`${item.id}-${index}`} 
+              className={item.status === 'CANCELLED' ? 'line-through text-neutral-400 dark:text-neutral-600 opacity-65 bg-red-500/5' : ''}
+            >
+              <TableCell className="font-medium pl-4 whitespace-nowrap">
+                <div>{item.id}</div>
+                {item.status === 'CANCELLED' && item.cancelReason && (
+                  <div className="text-[10px] text-red-500 font-bold no-underline italic">Reason: {item.cancelReason}</div>
+                )}
+              </TableCell>
               <TableCell className="pl-4 font-semibold text-neutral-800 dark:text-neutral-200 whitespace-nowrap">{item.customerName || '-'}</TableCell>
               <TableCell className="pl-4 whitespace-nowrap">{item.tableNumber || '-'}</TableCell>
               <TableCell className="pl-4 text-neutral-600 dark:text-neutral-400 whitespace-nowrap">{item.cashierName || '-'}</TableCell>
               <TableCell className="text-center whitespace-nowrap">
-                <Badge
-                  variant="outline"
-                  className={
-                    item.isComplete
-                      ? 'bg-green-500 text-white'
-                      : 'bg-red-500 text-white'
-                  }
+                <span
+                  className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-bold tracking-wider ${
+                    item.status === 'CANCELLED'
+                      ? 'bg-rose-600 text-white border-rose-500'
+                      : item.isComplete
+                      ? 'bg-green-500 text-white border-green-400'
+                      : 'bg-red-500 text-white border-red-400'
+                  }`}
                 >
-                  {item.isComplete ? 'Complete' : 'Incomplete'}
-                </Badge>
+                  {item.status === 'CANCELLED' ? 'Cancelled' : item.isComplete ? 'Complete' : 'Incomplete'}
+                </span>
               </TableCell>
               <TableCell className="hidden md:table-cell text-center whitespace-nowrap">
                 {item.totalQuantity}
@@ -84,14 +95,14 @@ const TableBodyRecords: React.FC<TableBodyRecordsProps> = ({ data }) => {
                 )}
               </TableCell>
               <TableCell className="p-4 text-center uppercase font-bold text-[10px] whitespace-nowrap">
-                <Badge variant="outline" className={item.isCompliment ? "bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800" : "bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"}>
+                <span className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-bold tracking-wider ${item.isCompliment ? "bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800" : "bg-sky-50 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-800"}`}>
                   {item.isCompliment ? 'COMPLIMENT' : item.paymentMethod}
-                </Badge>
+                </span>
               </TableCell>
               <TableCell className="p-4 text-center capitalize font-semibold text-[10px] whitespace-nowrap">
-                <Badge variant="outline" className={item.revenueType === 'banquet' ? 'bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800' : 'bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800'}>
+                <span className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-bold tracking-wider ${item.revenueType === 'banquet' ? 'bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800' : 'bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800'}`}>
                   {item.revenueType === 'banquet' ? 'Banquet' : 'A la Carte'}
-                </Badge>
+                </span>
               </TableCell>
               <TableCell className="hidden md:table-cell pl-3 whitespace-nowrap">
                 {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}

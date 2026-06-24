@@ -30,6 +30,11 @@ function LiveTableGrid() {
   const [newTableName, setNewTableName] = useState<string>('');
   const [isSavingTableName, setIsSavingTableName] = useState<boolean>(false);
 
+  // Void/2FA states
+  const [adminPin, setAdminPin] = useState<string>('');
+  const [cancelReason, setCancelReason] = useState<string>('');
+  const [pinError, setPinError] = useState<string>('');
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const getCookie = (name: string) => {
@@ -213,19 +218,65 @@ function LiveTableGrid() {
 
   const handleClearTable = () => {
     if (!selectedOrder) return;
+    setAdminPin('');
+    setCancelReason('');
+    setPinError('');
     setIsConfirmClearOpen(true);
   };
 
   const handleConfirmClearTable = async () => {
     if (!selectedOrder) return;
+
+    // Validate PIN and Reason for unpaid tables
+    if (!selectedOrder.isPaidDirectly) {
+      if (!adminPin) {
+        setPinError('PIN Admin wajib diisi.');
+        return;
+      }
+      if (adminPin !== '1234' && adminPin !== hotelCode) {
+        setPinError('PIN Admin tidak valid.');
+        return;
+      }
+      if (!cancelReason.trim()) {
+        setPinError('Alasan pembatalan wajib diisi.');
+        return;
+      }
+    }
+
     setIsDeleting(true);
     try {
-      // Delete from Firestore
+      // Save void transaction if unpaid
+      if (!selectedOrder.isPaidDirectly) {
+        const orderId = selectedOrder.id || `void-${Date.now()}`;
+        const orderData = {
+          transactionId: orderId,
+          restoId: selectedOrder.restoId || 'default-resto',
+          customerName: selectedOrder.customerName || 'Guest',
+          tableNumber: selectedOrder.tableNumber || '',
+          cashierName: selectedOrder.cashierName || 'Kasir',
+          items: selectedOrder.cart || [],
+          subtotal: Number(selectedOrder.subtotal) || 0,
+          tax: Number(selectedOrder.tax) || 0,
+          discount: Number(selectedOrder.discount) || 0,
+          total: Number(selectedOrder.payableAmount || selectedOrder.subtotal || 0),
+          paymentMethod: selectedOrder.paymentMethod || 'cash',
+          revenueType: selectedOrder.revenueType || 'alacarte',
+          status: 'CANCELLED',
+          cancelReason: cancelReason.trim(),
+          timestamp: new Date(),
+        };
+        await setDoc(doc(db, 'hotels', hotelCode, 'pos_orders', orderId), orderData);
+      }
+
+      // Delete from Firestore pos_held_orders
       await deleteDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', selectedOrder.id));
-      // Delete from IndexedDB
+      // Delete from IndexedDB heldOrders
       await localDb.heldOrders.delete(selectedOrder.id);
 
-      toast.success(`Meja ${selectedTable} berhasil dikosongkan.`);
+      toast.success(selectedOrder.isPaidDirectly 
+        ? `Meja ${selectedTable} berhasil dikosongkan.`
+        : `Meja ${selectedTable} berhasil dibatalkan & dikosongkan.`
+      );
       setIsConfirmClearOpen(false);
       setIsModalOpen(false);
     } catch (err) {
@@ -503,9 +554,9 @@ function LiveTableGrid() {
                         Ubah & Tambah Orderan
                       </button>
                       <button
-                        disabled={isDeleting}
-                        onClick={handleClearTable}
-                        className="py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-900 dark:text-white font-black text-xs cursor-pointer border-none flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50"
+                        disabled={true}
+                        title="Meja belum lunas. Selesaikan pembayaran di kasir terlebih dahulu."
+                        className="py-3 px-4 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-600 font-black text-xs cursor-not-allowed border-none flex items-center justify-center gap-1.5 opacity-50"
                       >
                         <Trash2 size={14} />
                         Clear Table
@@ -553,9 +604,46 @@ function LiveTableGrid() {
               Konfirmasi Kosongkan Meja
             </h4>
             
-            <p className="text-xs text-neutral-600 dark:text-[#a1a1aa] leading-relaxed mb-6">
-              Apakah Anda yakin ingin membersihkan meja <strong className="text-neutral-800 dark:text-[#f4f4f5]">{selectedTable}</strong>? Pesanan aktif ini akan dihapus/dibatalkan secara permanen.
-            </p>
+            {selectedOrder && !selectedOrder.isPaidDirectly ? (
+              <div className="flex flex-col gap-3 mb-4">
+                <p className="text-xs text-neutral-600 dark:text-[#a1a1aa] leading-relaxed m-0">
+                  Meja <strong className="text-neutral-800 dark:text-[#f4f4f5]">{selectedTable}</strong> belum lunas. Memerlukan PIN Otorisasi Admin & alasan untuk membatalkan pesanan.
+                </p>
+                <div className="flex flex-col gap-1 text-left mt-2">
+                  <label className="text-[10px] font-black uppercase text-neutral-500 dark:text-zinc-400">PIN Admin (2FA)</label>
+                  <input
+                    type="password"
+                    value={adminPin}
+                    onChange={(e) => {
+                      setAdminPin(e.target.value);
+                      setPinError('');
+                    }}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-transparent dark:text-white focus:outline-none focus:border-red-500 font-sans"
+                    placeholder="Masukkan PIN Admin (e.g. 1234)"
+                  />
+                </div>
+                <div className="flex flex-col gap-1 text-left">
+                  <label className="text-[10px] font-black uppercase text-neutral-500 dark:text-zinc-400">Alasan Void</label>
+                  <textarea
+                    value={cancelReason}
+                    onChange={(e) => {
+                      setCancelReason(e.target.value);
+                      setPinError('');
+                    }}
+                    rows={2}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-transparent dark:text-white focus:outline-none focus:border-red-500 font-sans resize-none"
+                    placeholder="Contoh: Salah input pesanan"
+                  />
+                </div>
+                {pinError && (
+                  <span className="text-[10px] font-black text-red-500 text-left">{pinError}</span>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-neutral-600 dark:text-[#a1a1aa] leading-relaxed mb-6">
+                Apakah Anda yakin ingin membersihkan meja <strong className="text-neutral-800 dark:text-[#f4f4f5]">{selectedTable}</strong>? Pesanan aktif ini akan dihapus/dibatalkan secara permanen.
+              </p>
+            )}
 
             <div className="flex gap-3">
               <button
@@ -565,9 +653,9 @@ function LiveTableGrid() {
                 Batal
               </button>
               <button
-                disabled={isDeleting}
+                disabled={isDeleting || (!selectedOrder?.isPaidDirectly && (!adminPin || !cancelReason.trim()))}
                 onClick={handleConfirmClearTable}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs cursor-pointer border-none transition-all active:scale-[0.98] disabled:opacity-50"
+                className="flex-1 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs cursor-pointer border-none transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isDeleting ? 'Mengosongkan...' : 'Ya, Kosongkan'}
               </button>

@@ -34,6 +34,7 @@ export async function GET() {
     const posOrdersSnap = await getDocs(getHotelCollection(db, 'pos_orders', hotelCode));
     posOrdersSnap.forEach((docSnap) => {
       const data = docSnap.data();
+      if (data.status === 'CANCELLED' || data.status === 'VOID' || data.isDeleted === true) return;
       const isBanquet = data.revenueType === 'banquet' || String(data.category || '').toLowerCase().includes('banquet');
       
       if (!isBanquet) {

@@ -37,12 +37,14 @@ interface Recordsdata {
   cashierName?: string;
   isCompliment?: boolean;
   complimentValue?: number;
+  status?: string;
+  cancelReason?: string;
 }
 
 export async function Records(props: PageProps) {
   const searchParams = await props.searchParams;
   const pageNumber = Number(searchParams?.page || 1); // Get the page number. Default to 1 if not provided.
-  const take = 5;
+  const take = 10;
   const skip = (pageNumber - 1) * take;
   const search =
     typeof searchParams?.search === 'string'
@@ -83,6 +85,8 @@ export async function Records(props: PageProps) {
     cashierName: item.cashierName || '',
     isCompliment: !!item.isCompliment,
     complimentValue: Number(item.complimentValue || 0),
+    status: item.status || 'SUCCESS',
+    cancelReason: item.cancelReason || '',
   }));
   return (
     <Card x-chunk="dashboard-06-chunk-0" className="h-full flex flex-col">

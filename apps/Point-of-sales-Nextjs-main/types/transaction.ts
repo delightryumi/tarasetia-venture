@@ -21,4 +21,6 @@ export interface TransactionData {
   complimentReason?: string;
   paymethod?: string;
   paymentMethod?: string;
+  status?: string;
+  cancelReason?: string;
 }

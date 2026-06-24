@@ -119,6 +119,7 @@ export async function GET(req: NextRequest) {
     const posOrdersSnap = await getDocs(getHotelCollection(db, 'pos_orders', hotelCode));
     posOrdersSnap.forEach((docSnap) => {
       const data = docSnap.data();
+      if (data.status === 'CANCELLED' || data.status === 'VOID' || data.isDeleted === true) return;
       if (!data.timestamp) return;
 
       const docDate = typeof data.timestamp.toDate === 'function' 

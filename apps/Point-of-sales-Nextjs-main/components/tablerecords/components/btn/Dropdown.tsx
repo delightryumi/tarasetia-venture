@@ -10,7 +10,9 @@ import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { DeleteAlertDialog } from './alertDelete';
+import { VoidAlertDialog } from './alertVoid';
 import Link from 'next/link';
+
 type Products = {
   id: string;
   productId: string;
@@ -24,12 +26,19 @@ type Records = {
   createdAt: string;
   isComplete: boolean;
   products: Products[];
+  status?: string;
 };
 
 const Dropdown = ({ records }: { records: Records }) => {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [voidOpen, setVoidOpen] = useState(false);
+
   const handleDeleteClose = () => {
     setDeleteOpen(false);
+  };
+
+  const handleVoidClose = () => {
+    setVoidOpen(false);
   };
 
   return (
@@ -46,14 +55,24 @@ const Dropdown = ({ records }: { records: Records }) => {
           <DropdownMenuItem asChild>
             <Link href={`/records/${records.id}`}>View</Link>
           </DropdownMenuItem>
+          {records.status !== 'CANCELLED' && (
+            <DropdownMenuItem onClick={() => setVoidOpen(true)}>
+              Cancel Order
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
-            Delete
+            Void Order
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <DeleteAlertDialog
         open={deleteOpen}
         onClose={handleDeleteClose}
+        data={records}
+      />
+      <VoidAlertDialog
+        open={voidOpen}
+        onClose={handleVoidClose}
         data={records}
       />
     </>

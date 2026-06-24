@@ -58,26 +58,27 @@ export default function HistoryModal({
   // ── Compute payment breakdown from pos_orders (source of truth) ──
   const b = (() => {
     if (!isLoadingDetail && detailTransactions.length > 0) {
-      let total = 0, cash = 0, qris = 0, card = 0, transfer = 0;
+      let total = 0, cash = 0, qris = 0, card = 0;
       detailTransactions.forEach(tx => {
+        if (tx.status === 'CANCELLED' || tx.status === 'VOID') return;
         const amt = tx.amount ?? tx.total ?? 0;
         const m = (tx.method ?? tx.paymentMethod ?? 'cash').toLowerCase();
         total += amt;
         if (m === 'cash' || m === 'tunai') cash += amt;
         else if (m === 'qris' || m === 'e-money' || m === 'emoney') qris += amt;
-        else if (m === 'card' || m === 'debit' || m === 'kredit' || m === 'credit') card += amt;
-        else if (m === 'transfer') transfer += amt;
+        else if (m === 'card' || m === 'debit' || m === 'kredit' || m === 'credit' || m === 'transfer' || m === 'kartu') card += amt;
         else qris += amt;
       });
-      return { total, cash, qris, card, transfer };
+      return { total, cash, qris, card };
     }
     const fb = getSalesBreakdown(selectedHistoryShift);
-    return { ...fb, transfer: 0 };
+    return { ...fb };
   })();
 
   // ── Revenue breakdown by category ──
   let foodTotal = 0, beverageTotal = 0, banquetTotal = 0, otherTotal = 0;
   detailTransactions.forEach(tx => {
+    if (tx.status === 'CANCELLED' || tx.status === 'VOID') return;
     const isBanquet = tx.revenueType?.toLowerCase() === 'banquet' ||
                       (tx.category?.toLowerCase() || '').includes('banquet');
     if (isBanquet) {
@@ -249,7 +250,7 @@ export default function HistoryModal({
             <div className="row"><span className="lbl">Shift ID:</span><span className="val bold font-mono">{selectedHistoryShift.id || '-'}</span></div>
             <div className="row"><span className="lbl">Dibuka:</span><span className="val">{fmtShort(selectedHistoryShift.openedAt)}</span></div>
             <div className="row"><span className="lbl">Ditutup:</span><span className="val">{fmtShort(selectedHistoryShift.closedAt)}</span></div>
-            <div className="row"><span className="lbl">Total Transaksi:</span><span className="val">{detailTransactions.length} order</span></div>
+            <div className="row"><span className="lbl">Total Transaksi:</span><span className="val">{detailTransactions.filter(tx => tx.status !== 'CANCELLED' && tx.status !== 'VOID').length} order</span></div>
 
             <hr className="dash" />
 
@@ -271,15 +272,16 @@ export default function HistoryModal({
                 </thead>
                 <tbody>
                   {detailTransactions.map((tx, i) => {
-                    const amt = tx.amount ?? tx.total ?? 0;
+                    const isCancelled = tx.status === 'CANCELLED' || tx.status === 'VOID';
+                    const amt = isCancelled ? 0 : (tx.amount ?? tx.total ?? 0);
                     const m = fmtMethod(tx.method ?? tx.paymentMethod ?? 'cash');
                     const ts = tx.timestamp?.toDate ? tx.timestamp.toDate() : new Date(tx.timestamp || Date.now());
                     const timeStr = ts.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
                     const txId = (tx.transactionId || tx.id || '').slice(-6).toUpperCase();
                     return (
-                      <tr key={i}>
+                      <tr key={i} style={isCancelled ? { textDecoration: 'line-through' } : undefined}>
                         <td>{timeStr}</td>
-                        <td className="bold font-mono">...{txId}</td>
+                        <td className="bold font-mono">...{txId}{isCancelled && ' (VOID)'}</td>
                         <td className="center">{m}</td>
                         <td className="right bold">{formatMoney(amt)}</td>
                       </tr>
@@ -305,8 +307,7 @@ export default function HistoryModal({
                 <hr className="dot" />
                 <div className="row"><span className="lbl">Tunai / Cash:</span><span className="val">{formatMoney(b.cash)}</span></div>
                 <div className="row"><span className="lbl">QRIS / E-Money:</span><span className="val">{formatMoney(b.qris)}</span></div>
-                <div className="row"><span className="lbl">Debit / Kartu:</span><span className="val">{formatMoney(b.card)}</span></div>
-                {b.transfer > 0 && <div className="row"><span className="lbl">Transfer:</span><span className="val">{formatMoney(b.transfer)}</span></div>}
+                <div className="row"><span className="lbl">Kartu / Transfer:</span><span className="val">{formatMoney(b.card)}</span></div>
                 <hr className="dot" />
                 <div className="row bold">
                   <span className="lbl">Total Pendapatan Shift:</span>

@@ -114,6 +114,7 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
             const fetchedPosOrders: any[] = [];
             posOrdersSnap.forEach((docSnap) => {
               const data = docSnap.data();
+              if (data.status === 'CANCELLED' || data.status === 'VOID' || data.isDeleted === true) return;
               const orderId = data.transactionId || docSnap.id;
               
               let docDateStr: string = "";

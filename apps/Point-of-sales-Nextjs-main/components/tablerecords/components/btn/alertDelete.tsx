@@ -17,6 +17,7 @@ import { ReloadIcon } from '@radix-ui/react-icons';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'react-toastify';
+import { localDb } from '@/lib/dexie';
 
 type Data = {
   id: string;
@@ -47,15 +48,24 @@ export function DeleteAlertDialog({
     }
     setLoading(true);
     try {
+      // 1. Delete from local IndexedDB if exists
+      if (data.id) {
+        await localDb.transactions.delete(data.id);
+        await localDb.transactionItems
+          .where('transactionId')
+          .equals(data.id)
+          .delete();
+      }
+
       const response = await axios.delete(`/api/transactions/${data.id}`);
       setPasswordInput('');
       onClose();
       router.refresh();
-      toast.success('Transaksi berhasil dihapus.');
+      toast.success('Transaksi berhasil divoid (dihapus).');
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         console.error('Server Error:', error.response?.data);
-        toast.error('Gagal menghapus transaksi.');
+        toast.error('Gagal memvoid transaksi.');
       } else if (error instanceof Error) {
         console.error('Error:', error.message);
         toast.error(error.message);
@@ -73,12 +83,11 @@ export function DeleteAlertDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Are you absolutely sure want to delete ?
+            Apakah Anda yakin ingin melakukan Void Order?
           </AlertDialogTitle>
           <div className="text-sm text-muted-foreground space-y-4">
             <p>
-              This action cannot be undone. This will permanently delete the
-              transaction with Id: <span className="font-bold text-neutral-800 dark:text-neutral-100">{data.id}</span> from the server.
+              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus transaksi secara permanen (Void Order) dengan Id: <span className="font-bold text-neutral-800 dark:text-neutral-100">{data.id}</span> dari server.
             </p>
             <div className="flex flex-col gap-2 pt-2 border-t border-neutral-200 dark:border-white/[0.05]">
               <Label htmlFor="adminPassword" className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
@@ -108,7 +117,7 @@ export function DeleteAlertDialog({
                 Please wait
               </>
             ) : (
-              'Delete'
+              'Void Order'
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

@@ -196,7 +196,7 @@ export default function POSCatalogView({
       )}
 
       {/* ── Product Grid ─────────────────────────────────────────────────────── */}
-      <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 overflow-y-auto thin-scrollbar flex-1 pr-1 ${!hasSubcategories ? 'mt-3' : ''}`}>
+      <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 content-start overflow-y-auto thin-scrollbar flex-1 pr-1 ${!hasSubcategories ? 'mt-3' : ''}`}>
         {filteredProducts.map((product) => (
           <div
             key={product.id}

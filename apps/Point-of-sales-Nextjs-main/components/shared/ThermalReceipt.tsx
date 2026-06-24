@@ -28,6 +28,8 @@ export interface ThermalReceiptProps {
     customerName?: string;
     cashierName?: string;
     paymentMethod?: string;
+    status?: string;
+    cancelReason?: string;
   };
   items: ReceiptItemData[];
   totals: {
@@ -41,6 +43,8 @@ export interface ThermalReceiptProps {
   };
   className?: string;
   style?: React.CSSProperties;
+  printMode?: 'all' | 'kitchen' | 'bar';
+  onPrintModeChange?: (mode: 'all' | 'kitchen' | 'bar') => void;
 }
 
 export default function ThermalReceipt({
@@ -49,11 +53,18 @@ export default function ThermalReceipt({
   items,
   totals,
   className = '',
-  style
+  style,
+  printMode: controlledPrintMode,
+  onPrintModeChange
 }: ThermalReceiptProps) {
   const { formatCurrency } = useCurrency();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [printMode, setPrintMode] = useState<'all' | 'kitchen' | 'bar'>('all');
+  const [localPrintMode, setLocalPrintMode] = useState<'all' | 'kitchen' | 'bar'>('all');
+  
+  const printMode = controlledPrintMode ?? localPrintMode;
+  const setPrintMode = onPrintModeChange ?? setLocalPrintMode;
+  
+  const isCancelled = transactionInfo.status === 'CANCELLED' || transactionInfo.status === 'VOID';
 
   useEffect(() => {
     // Check if running in browser
@@ -224,6 +235,15 @@ export default function ThermalReceipt({
       
       <div className="border-t border-dashed border-black my-1.5" />
 
+      {isCancelled && (
+        <div className="w-full text-center font-bold text-[13px] border-4 border-black py-2.5 my-2.5 uppercase font-mono tracking-widest bg-neutral-100 text-black">
+          *** VOID / BATAL ***
+          {transactionInfo.cancelReason && (
+            <div className="text-[9px] mt-1.5 font-normal italic lowercase leading-tight">Alasan: {transactionInfo.cancelReason}</div>
+          )}
+        </div>
+      )}
+
       {/* Transaction Info */}
       <div className="text-[9px] flex flex-col gap-[2px] mb-1.5">
         <div className="flex justify-between">
@@ -276,53 +296,68 @@ export default function ThermalReceipt({
               {grouped[cat][sub].map((item, i) => {
                 const addonsTotal = item.selectedAddons ? item.selectedAddons.reduce((sum, a) => sum + a.price, 0) : 0;
                 const itemPrice = item.price + addonsTotal;
-                return (
-                <div key={i} className="flex justify-between items-start text-[10px] ml-2 mb-[2px]">
-                  <div className={printMode === 'all' ? "max-w-[70%]" : "w-full"}>
-                    <div className="font-bold leading-tight">
-                      {item.name}
-                      {item.isCompliment && (
-                        <span className="text-[8px] ml-1 bg-gray-200 text-gray-800 px-1 rounded-sm font-semibold">COMPLIMENT</span>
-                      )}
+                
+                if (printMode !== 'all') {
+                  return (
+                    <div key={i} className={`flex items-start text-[11px] gap-2 mb-2 pb-2 border-b border-dotted border-gray-400 last:border-b-0 ${isCancelled ? 'line-through text-neutral-500 opacity-70' : ''}`}>
+                      {/* Quantity box besar di sebelah kiri */}
+                      <div className="flex-shrink-0 bg-black text-white font-mono font-bold text-[16px] px-2 py-0.5 rounded text-center min-w-[36px]">
+                        {item.quantity}x
+                      </div>
+                      <div className="flex-grow">
+                        <div className="font-extrabold text-[12px] text-black uppercase leading-tight">
+                          {item.name}
+                          {item.isCompliment && (
+                            <span className="text-[8px] ml-1 bg-neutral-200 text-neutral-900 px-1 rounded-sm font-semibold">COMPLIMENT</span>
+                          )}
+                        </div>
+                        {item.selectedAddons && item.selectedAddons.length > 0 && (
+                          <div className="text-[9px] text-neutral-800 font-bold mt-[1px] pl-1 border-l-2 border-black">
+                            + {item.selectedAddons.map(a => a.name).join(', ')}
+                          </div>
+                        )}
+                        {item.note && (
+                          <div className="text-[9px] text-black font-extrabold mt-[2.5px] p-1.5 border-2 border-black rounded bg-neutral-50 leading-tight">
+                            Catatan: {item.note}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    {item.selectedAddons && item.selectedAddons.length > 0 && (
-                      <div className="text-[8px] text-gray-600 mt-[1px]">
-                        + {item.selectedAddons.map(a => a.name).join(', ')}
+                  );
+                }
+
+                return (
+                  <div key={i} className={`flex justify-between items-start text-[10px] ml-2 mb-[2px] ${isCancelled ? 'line-through text-neutral-500 opacity-70' : ''}`}>
+                    <div className="max-w-[70%]">
+                      <div className="font-bold leading-tight">
+                        {item.name}
+                        {item.isCompliment && (
+                          <span className="text-[8px] ml-1 bg-gray-200 text-gray-800 px-1 rounded-sm font-semibold">COMPLIMENT</span>
+                        )}
                       </div>
-                    )}
-                    {item.note && (
-                      <div className="text-[8px] italic text-gray-600 mt-[1px]">
-                        Catatan: {item.note}
-                      </div>
-                    )}
-                    {printMode === 'all' ? (
+                      {item.selectedAddons && item.selectedAddons.length > 0 && (
+                        <div className="text-[8px] text-gray-600 mt-[1px]">
+                          + {item.selectedAddons.map(a => a.name).join(', ')}
+                        </div>
+                      )}
+                      {item.note && (
+                        <div className="text-[8px] italic text-gray-600 mt-[1px]">
+                          Catatan: {item.note}
+                        </div>
+                      )}
                       <div className="text-[8px] text-gray-700 mt-[1px]">
                         {item.quantity} x {formatCurrency(itemPrice)}
                         {item.isCompliment && item.complimentReason && ` (${item.complimentReason})`}
                       </div>
-                    ) : (
-                      <div className="text-[11px] font-black text-black mt-[1.5px]">
-                        JUMLAH: {item.quantity}x
-                        {item.isCompliment && item.complimentReason && ` (${item.complimentReason})`}
-                      </div>
-                    )}
-                  </div>
-                  {printMode === 'all' && (
+                    </div>
                     <span className="font-bold whitespace-nowrap ml-2">
                       {item.isCompliment ? formatCurrency(0) : formatCurrency(itemPrice * item.quantity)}
                     </span>
-                  )}
-                </div>
+                  </div>
                 );
               })}
             </div>
           ))}
-          {printMode === 'all' && (
-            <div className="flex justify-between text-[9px] text-gray-700 border-t border-dotted border-gray-400 pt-[2px] mt-[2px]">
-              <span>Subtotal {cat}</span>
-              <span className="font-bold">{formatCurrency(categoryTotals[cat])}</span>
-            </div>
-          )}
         </div>
       ))}
 
@@ -386,6 +421,12 @@ export default function ThermalReceipt({
 
           <div className="border-t border-dashed border-black my-2" />
           
+          {isCancelled && (
+            <div className="w-full text-center font-bold text-[12px] border-2 border-black py-1.5 my-2.5 uppercase font-mono tracking-wider">
+              *** VOID / BATAL ***
+            </div>
+          )}
+
           <div className="text-center text-[8px] italic leading-relaxed text-gray-700 mb-3">
             <p className="m-0 font-medium">Terima kasih atas kunjungan Anda!</p>
             <p className="m-0 text-gray-500">Struk ini adalah bukti pembayaran sah.</p>
