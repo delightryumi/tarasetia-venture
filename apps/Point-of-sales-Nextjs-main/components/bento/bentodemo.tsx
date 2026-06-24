@@ -8,7 +8,7 @@ import DigitalClock from '../clock/clock';
 import ActiveShiftSummary from '../card/shiftsummary';
 import ChartOne from '../charts/chartone';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, onSnapshot, collection, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, collection, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { localDb } from '@/lib/dexie';
 import { toast } from 'react-toastify';
 import { Coffee, Users, Plus, Trash2, X, ClipboardList, CheckCircle } from 'lucide-react';
