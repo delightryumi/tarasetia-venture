@@ -8,6 +8,7 @@ export interface LocalProduct {
   stock: number;
   cat: string; // matches CatProduct enum or category name
   subcategory?: string; // subcategory within the category
+  pnlTarget?: string;
   image?: string;
   description?: string;
   addons?: any[];

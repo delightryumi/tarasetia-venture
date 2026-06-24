@@ -29,6 +29,7 @@ export async function syncProductsFromServer(restoId: string) {
         stock: Number(data.stock) || 0,
         cat: data.category || 'General',
         subcategory: data.subcategory || '',
+        pnlTarget: data.pnlTarget || '',
         image: data.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60',
         description: data.description || '',
         addons: data.addons || []
