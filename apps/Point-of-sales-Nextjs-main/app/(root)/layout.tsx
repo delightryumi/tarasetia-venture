@@ -223,43 +223,42 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                 alarmAudioRef.current.loop = true;
               }
               
-              const playPromise = alarmAudioRef.current.play();
-              if (playPromise !== undefined) {
-                playPromise.catch(err => {
-                  console.log('Audio autoplay blocked or failed:', err);
-                  setIsAudioUnlocked(false);
-                  toast.warning(`Gagal memutar suara (${err.name || 'Error'}). Klik layar ini untuk mengizinkan browser memutar suara!`, {
-                    position: 'top-center',
-                    autoClose: false,
-                    onClick: () => {
-                      if (alarmAudioRef.current) {
-                        alarmAudioRef.current.play().catch(e => console.error('Still failed:', e));
+              const audio = alarmAudioRef.current;
+              if (audio) {
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                  playPromise.catch(err => {
+                    console.log('Audio autoplay blocked or failed:', err);
+                    setIsAudioUnlocked(false);
+                    toast.warning(`Gagal memutar suara (${err.name || 'Error'}). Klik layar ini untuk mengizinkan browser memutar suara!`, {
+                      position: 'top-center',
+                      autoClose: false,
+                      onClick: () => {
+                        audio.play().catch(e => console.error('Still failed:', e));
                       }
-                    }
+                    });
                   });
-                });
-              }
+                }
 
-              // Persistent toast
-              toast.info(
-                <div>
-                  <strong>🔔 Pesanan Mandiri Tamu Baru</strong><br/>
-                  {data.customerName || 'Tamu'} (Meja: {data.tableNumber || '-'})<br/>
-                  <span style={{fontSize: '0.8em', opacity: 0.8}}>Klik tombol X untuk mematikan alarm</span>
-                </div>, 
-                {
-                  position: "top-right",
-                  autoClose: false,
-                  closeOnClick: false, // Force them to click X or button
-                  draggable: false,
-                  onClose: () => {
-                    if (alarmAudioRef.current) {
-                      alarmAudioRef.current.pause();
-                      alarmAudioRef.current.currentTime = 0;
+                // Persistent toast
+                toast.info(
+                  <div>
+                    <strong>🔔 Pesanan Mandiri Tamu Baru</strong><br/>
+                    {data.customerName || 'Tamu'} (Meja: {data.tableNumber || '-'})<br/>
+                    <span style={{fontSize: '0.8em', opacity: 0.8}}>Klik tombol X untuk mematikan alarm</span>
+                  </div>, 
+                  {
+                    position: "top-right",
+                    autoClose: false,
+                    closeOnClick: false, // Force them to click X or button
+                    draggable: false,
+                    onClose: () => {
+                      audio.pause();
+                      audio.currentTime = 0;
                     }
                   }
-                }
-              );
+                );
+              }
             } catch (e) {
               console.error('Audio play error:', e);
             }
@@ -600,14 +599,19 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         alarmAudioRef.current.volume = 1.0;
         alarmAudioRef.current.loop = true;
       }
-      alarmAudioRef.current.play().then(() => {
-        alarmAudioRef.current.pause();
-        alarmAudioRef.current.currentTime = 0;
+      const audio = alarmAudioRef.current;
+      if (audio) {
+        audio.play().then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          setIsAudioUnlocked(true);
+        }).catch((e) => {
+          console.error("Audio unlock failed:", e);
+          setIsAudioUnlocked(true);
+        });
+      } else {
         setIsAudioUnlocked(true);
-      }).catch((e) => {
-        console.error("Audio unlock failed:", e);
-        setIsAudioUnlocked(true);
-      });
+      }
     } catch (e) {
       setIsAudioUnlocked(true);
     }
