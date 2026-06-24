@@ -6,6 +6,7 @@ export interface TransactionLog {
   items?: any[];
   revenueType?: string;
   category?: string;
+  status?: string;
 }
 
 export interface CashFlowEntry {
