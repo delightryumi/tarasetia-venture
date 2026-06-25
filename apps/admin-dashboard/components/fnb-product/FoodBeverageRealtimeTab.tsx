@@ -472,7 +472,8 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                       <div className={ds.rtFeedCardInfo}>
                         <span className={ds.rtFeedCardTableName}>{order.tableNumber || 'Dine-In'}</span>
                         <span className={ds.rtFeedCardGuest}>{order.customerName || 'Guest'}</span>
-                              <span className={ds.rtFeedCardAmount}>
+                      </div>
+                      <span className={ds.rtFeedCardAmount}>
                         {formatIDR(order.payableAmount ?? order.subtotal ?? 0)}
                       </span>
                     </div>
