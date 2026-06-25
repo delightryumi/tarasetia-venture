@@ -25,6 +25,7 @@ interface LedgerEntry {
     type: "debit" | "credit";
     amount: number;
     isStartingBalance?: boolean;
+    isCancelled?: boolean;
 }
 
 export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
@@ -329,8 +330,9 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
             }
         });
 
-        // 3. POS Orders (F&B Sales)
+        // 3. POS Orders (F&B Sales) — exclude CANCELLED from ledger journaling
         (posOrders || []).forEach(o => {
+            if (o.isCancelled) return; // CANCELLED: shown separately below, not journalized
             const amt = o.amount || 0;
             if (amt > 0) {
                 const refCode = formatRef("POS", o.id);
@@ -717,12 +719,16 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
                     </thead>
                     <tbody>
                         {paginatedEntries.length > 0 ? paginatedEntries.map((entry, idx) => (
-                            <tr key={idx} style={getRowStyle(idx, entry)}>
+                            <tr key={idx} style={{
+                                ...getRowStyle(idx, entry),
+                                ...(entry.isCancelled ? { textDecoration: 'line-through', opacity: 0.5 } : {})
+                            }}>
                                 <td>{entry.date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                                 <td className={styles.fontMono} style={{ opacity: 0.8 }}>{entry.coa}</td>
                                 <td className={styles.fontMono} style={{ opacity: 0.8 }}>{entry.ref}</td>
                                 <td style={{ paddingLeft: entry.type === "credit" && selectedCoa === "ALL" ? "24px" : "8px" }}>
                                     {entry.type === "credit" && selectedCoa === "ALL" ? `↳ ${entry.description}` : entry.description}
+                                    {entry.isCancelled && <span style={{ marginLeft: 8, fontSize: 11, color: '#ef4444', fontWeight: 600 }}>[CANCEL]</span>}
                                 </td>
                                 <td className={styles.excelAmountDebit}>
                                     {entry.type === "debit" ? formatIDR(entry.amount) : "-"}

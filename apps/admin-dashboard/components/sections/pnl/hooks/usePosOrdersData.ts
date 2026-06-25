@@ -114,7 +114,9 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
             const fetchedPosOrders: any[] = [];
             posOrdersSnap.forEach((docSnap) => {
               const data = docSnap.data();
-              if (data.status === 'CANCELLED' || data.status === 'VOID' || data.isDeleted === true) return;
+              // VOID & soft-deleted: exclude entirely
+              if (data.status === 'VOID' || data.status === 'VOIDED' || data.isDeleted === true) return;
+              const isCancelledOrder = data.status === 'CANCELLED' || data.status === 'CANCEL';
               const orderId = data.transactionId || docSnap.id;
               
               let docDateStr: string = "";
@@ -124,6 +126,7 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
               }
 
               if (docDateStr >= startStr && docDateStr <= endStr) {
+                // CANCELLED: push to posOrders for display (strikethrough) but skip all revenue accumulation
                 let sellPriceTotal = 0;
                 let cogsTotal = 0;
                 
@@ -151,6 +154,38 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                     calcSubtotal += Number(item.price || 0) * Number(item.quantity || 0);
                   });
                   calcSubtotal = calcSubtotal || 1;
+
+                  // For CANCELLED orders: push each item as display-only (isCancelled) then skip
+                  if (isCancelledOrder) {
+                    items.forEach((item: any) => {
+                      const qty = Number(item.quantity || 0);
+                      const sellPrice = Number(item.price || 0) * qty;
+                      const nettSell = sellPrice;
+                      const prodInfo = productMap[item.id] || { buyPrice: 0, category: '', name: item.name || 'Item' };
+                      const prodCatName = (prodInfo.category || '').toLowerCase().trim();
+                      const resolvedTarget = categoryPnlMap[prodCatName] || 'FOOD';
+                      let itemCategory: 'food' | 'beverage' | 'banquet' | 'other' = 'food';
+                      if (resolvedTarget === 'BEVERAGE') itemCategory = 'beverage';
+                      else if (resolvedTarget === 'BANQUET') itemCategory = 'banquet';
+                      else if (resolvedTarget === 'OTHER') itemCategory = 'other';
+                      fetchedPosOrders.push({
+                        id: `${orderId}-${item.id}`,
+                        type: 'income',
+                        source: isBanquet ? 'POS - Banquet' : 'POS - Alacarte',
+                        description: `${data.customerName || 'Customer'} - ${prodInfo.name || item.name || 'POS Item'} (x${qty})`,
+                        department: 'Food & Beverage',
+                        docType: isBanquet ? 'Banquet' : 'POS Order',
+                        amount: nettSell,
+                        nettAmount: nettSell,
+                        taxAmount: 0,
+                        date: docDateStr,
+                        category: itemCategory,
+                        isCancelled: true,
+                        orderId: orderId,
+                      });
+                    });
+                    return; // skip revenue accumulation
+                  }
 
                   items.forEach((item: any) => {
                     const qty = Number(item.quantity || 0);
@@ -221,7 +256,28 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                   });
                 });
                 } else if (data.quantity !== undefined || data.price !== undefined) {
-                  try {
+                  // For CANCELLED single-item orders
+                  if (isCancelledOrder) {
+                    const qty = Number(data.quantity || 1);
+                    const sellPrice = Number(data.price || data.subtotal || 0) * (data.price ? qty : 1);
+                    const prodCatName = '';
+                    fetchedPosOrders.push({
+                      id: orderId,
+                      type: 'income',
+                      source: isBanquet ? 'POS - Banquet' : 'POS - Alacarte',
+                      description: `${data.customerName || 'Customer'} - ${data.name || 'POS Order'} (x${qty})`,
+                      department: 'Food & Beverage',
+                      docType: isBanquet ? 'Banquet' : 'POS Order',
+                      amount: sellPrice,
+                      nettAmount: sellPrice,
+                      taxAmount: 0,
+                      date: docDateStr,
+                      category: 'food',
+                      isCancelled: true,
+                      orderId: orderId,
+                    });
+                    // skip revenue accumulation
+                  } else { try {
                     const qty = Number(data.quantity || 1);
                     const sellPrice = Number(data.price || data.subtotal || 0) * (data.price ? qty : 1);
                     const tax = Number(data.tax || (sellPrice * (taxRate / 100)));
@@ -290,23 +346,25 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                     });
                   } catch (err) {
                     console.error("Error processing POS item:", err);
-                  }
+                  } } // end else { try }
                 }
 
-                if (isBanquet) {
-                  banquetCalc += sellPriceTotal;
-                  banquetExpCalc += cogsTotal;
-                } else {
-                  alacarteCalc += (orderFoodRev + orderBevRev);
-                  alacarteExpCalc += (orderFoodExp + orderBevExp);
+                // Only accumulate revenue/expense for non-cancelled orders
+                if (!isCancelledOrder) {
+                  if (isBanquet) {
+                    banquetCalc += sellPriceTotal;
+                    banquetExpCalc += cogsTotal;
+                  } else {
+                    alacarteCalc += (orderFoodRev + orderBevRev);
+                    alacarteExpCalc += (orderFoodExp + orderBevExp);
+                  }
+                  foodRevCalc += orderFoodRev;
+                  bevRevCalc += orderBevRev;
+                  otherRevCalc += orderOtherRev;
+                  foodExpCalc += orderFoodExp;
+                  bevExpCalc += orderBevExp;
+                  otherExpCalc += orderOtherExp;
                 }
-                
-                foodRevCalc += orderFoodRev;
-                bevRevCalc += orderBevRev;
-                otherRevCalc += orderOtherRev;
-                foodExpCalc += orderFoodExp;
-                bevExpCalc += orderBevExp;
-                otherExpCalc += orderOtherExp;
               }
             });
             

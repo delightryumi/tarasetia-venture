@@ -394,10 +394,14 @@ export function PNLDrillDownModal({
                                         ) : (
                                             modalData.filtered.map((item: PnLDetailedItem, index: number) => {
                                                 const isExpense = item.type === "expense";
+                                                const isCancelled = !!(item as any).isCancelled;
                                                 return (
                                                     <tr
                                                         key={item.id ?? index}
-                                                        style={{ borderBottom: T.border }}
+                                                        style={{
+                                                            borderBottom: T.border,
+                                                            ...(isCancelled ? { textDecoration: 'line-through', opacity: 0.45 } : {})
+                                                        }}
                                                         onMouseEnter={(e) => (e.currentTarget.style.background = T.surface2)}
                                                         onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                                                     >
@@ -406,12 +410,13 @@ export function PNLDrillDownModal({
                                                         <td style={{ padding: "13px 16px", fontSize: 13, color: T.textPri }}>
                                                             <div style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }} title={item.description}>
                                                                 {item.description}
+                                                                {isCancelled && <span style={{ marginLeft: 6, fontSize: 10, color: '#ef4444', fontWeight: 700, textDecoration: 'none' }}>[CANCEL]</span>}
                                                             </div>
-                                                            {item.taxAmount !== undefined && item.taxAmount > 0 && (
+                                                            {!isCancelled && item.taxAmount !== undefined && item.taxAmount > 0 && (
                                                                 <div style={{ fontSize: 10, color: T.textSec, marginTop: 4, display: "flex", gap: 8, alignItems: "center" }}>
                                                                     <span>DPP (Nett): {formatIDR(item.nettAmount || 0)}</span>
                                                                     <span style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--f-hairline, rgba(0,0,0,0.15))", display: "inline-block" }} />
-                                                                    <span>Tax, Service & PB1: {formatIDR(item.taxAmount)}</span>
+                                                                    <span>Tax, Service &amp; PB1: {formatIDR(item.taxAmount)}</span>
                                                                 </div>
                                                             )}
                                                         </td>
@@ -422,13 +427,8 @@ export function PNLDrillDownModal({
                                                         <td style={{ padding: "13px 16px", fontSize: 11, textAlign: "right", fontFamily: T.mono, color: "var(--f-expense-color)" }}>
                                                             {item.discount && item.discount > 0 ? `−${formatIDR(item.discount)}` : "—"}
                                                         </td>
-                                                        <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 500, textAlign: "right", fontFamily: T.mono, color: isExpense ? "var(--f-expense-color)" : "var(--f-income-color)" }}>
-                                                            <div>{isExpense ? "−" : "+"}{formatIDR(item.amount)}</div>
-                                                            {item.taxAmount !== undefined && item.taxAmount > 0 && (
-                                                                <div style={{ fontSize: 9, color: T.textSec, fontWeight: 400, marginTop: 4 }}>
-                                                                    Total Nota
-                                                                </div>
-                                                            )}
+                                                        <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 500, textAlign: "right", fontFamily: T.mono, color: isCancelled ? T.textSec : (isExpense ? "var(--f-expense-color)" : "var(--f-income-color)") }}>
+                                                            <div>{isCancelled ? "—" : (isExpense ? "−" : "+")}{!isCancelled && formatIDR(item.amount)}</div>
                                                         </td>
                                                         <td style={{ padding: "13px 16px", fontSize: 11, color: T.textSec, fontFamily: T.mono }}>{item.date ?? "N/A"}</td>
                                                     </tr>
@@ -449,12 +449,19 @@ export function PNLDrillDownModal({
                                 ) : (
                                     modalData.filtered.map((item: PnLDetailedItem, index: number) => {
                                         const isExpense = item.type === "expense";
+                                        const isCancelled = !!(item as any).isCancelled;
                                         return (
                                             <motion.div
                                                 key={item.id ?? index}
                                                 initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                                                 transition={{ duration: 0.18, delay: Math.min(index * 0.012, 0.25) }}
-                                                style={{ background: T.surface, border: T.border, borderRadius: T.radius, padding: 16 }}
+                                                style={{
+                                                    background: T.surface,
+                                                    border: T.border,
+                                                    borderRadius: T.radius,
+                                                    padding: 16,
+                                                    ...(isCancelled ? { textDecoration: 'line-through', opacity: 0.45 } : {})
+                                                }}
                                             >
                                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                                                     <SourcePill label={item.source ?? "—"} />
@@ -462,31 +469,17 @@ export function PNLDrillDownModal({
                                                 </div>
                                                 <p style={{ fontSize: 13, fontWeight: 500, color: T.textPri, marginBottom: 12, lineHeight: 1.4 }}>
                                                     {item.description}
-                                                    {item.taxAmount !== undefined && item.taxAmount > 0 && (
-                                                        <span style={{ display: "block", fontSize: 11, color: T.textSec, marginTop: 4, fontWeight: 400 }}>
-                                                            DPP (Nett): {formatIDR(item.nettAmount || 0)} · Tax, Service & PB1: {formatIDR(item.taxAmount)}
-                                                        </span>
-                                                    )}
+                                                    {isCancelled && <span style={{ marginLeft: 6, fontSize: 10, color: '#ef4444', fontWeight: 700, textDecoration: 'none' }}>[CANCEL]</span>}
                                                 </p>
                                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 12, borderTop: T.border }}>
                                                     <div>
                                                         <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>Department</p>
                                                         <p style={{ fontSize: 12, fontWeight: 500, color: T.textPri }}>{item.department ?? "—"}</p>
                                                     </div>
-                                                    {item.discount && item.discount > 0 && (
-                                                        <div style={{ textAlign: "right" }}>
-                                                            <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>Discount</p>
-                                                            <p style={{ fontSize: 12, fontWeight: 500, fontFamily: T.mono, color: "var(--f-expense-color)" }}>
-                                                                −{formatIDR(item.discount)}
-                                                            </p>
-                                                        </div>
-                                                    )}
                                                     <div style={{ textAlign: "right" }}>
-                                                        <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>
-                                                            {item.taxAmount !== undefined && item.taxAmount > 0 ? "Total Nota" : "Net amount"}
-                                                        </p>
-                                                        <p style={{ fontSize: 14, fontWeight: 500, fontFamily: T.mono, color: isExpense ? "var(--f-expense-color)" : "var(--f-income-color)" }}>
-                                                            {isExpense ? "−" : "+"}{formatIDR(item.amount)}
+                                                        <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>Amount</p>
+                                                        <p style={{ fontSize: 14, fontWeight: 500, fontFamily: T.mono, color: isCancelled ? T.textSec : (isExpense ? "var(--f-expense-color)" : "var(--f-income-color)") }}>
+                                                            {isCancelled ? "—" : (isExpense ? "−" : "+")}{!isCancelled && formatIDR(item.amount)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -496,9 +489,9 @@ export function PNLDrillDownModal({
                                 )}
                             </div>
                         </div>
-                        </div>
 
                         {/* ── FOOTER ── */}
+                        </div>{/* end scrollable body */}
                         {modalData.filtered.length > 0 && (
                             <div style={{ padding: "14px 28px", borderTop: T.border, background: T.surface2, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
                                 <span style={{ fontSize: 12, color: T.textSec }}>

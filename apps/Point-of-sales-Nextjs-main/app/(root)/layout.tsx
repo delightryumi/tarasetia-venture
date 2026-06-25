@@ -261,7 +261,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
              }
           }
 
-          if (isFresh && data.source === 'Self-Order Tamu' && data.status === 'PENDING') {
+          // Fire for ALL fresh new held orders (Self-Order Tamu OR outlet/cashier held)
+          if (isFresh) {
             try {
               if (!alarmAudioRef.current) {
                 const audioPath = getNotificationSound();
@@ -271,7 +272,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
               } else {
                 alarmAudioRef.current.loop = true;
               }
-              
+
               const audio = alarmAudioRef.current;
               if (audio) {
                 const playPromise = audio.play();
@@ -289,17 +290,20 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                   });
                 }
 
-                // Persistent toast
+                const isSelfOrder = data.source === 'Self-Order Tamu';
+                const label = isSelfOrder ? '🛎️ Self-Order Tamu Baru' : '🔔 Pesanan Held Baru';
+
+                // Persistent toast — dismiss stops alarm
                 toast.info(
                   <div>
-                    <strong>🔔 Pesanan Mandiri Tamu Baru</strong><br/>
+                    <strong>{label}</strong><br/>
                     {data.customerName || 'Tamu'} (Meja: {data.tableNumber || '-'})<br/>
                     <span style={{fontSize: '0.8em', opacity: 0.8}}>Klik tombol X untuk mematikan alarm</span>
-                  </div>, 
+                  </div>,
                   {
-                    position: "top-right",
+                    position: 'top-right',
                     autoClose: false,
-                    closeOnClick: false, // Force them to click X or button
+                    closeOnClick: false,
                     draggable: false,
                     onClose: () => {
                       audio.pause();

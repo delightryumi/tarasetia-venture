@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useLayoutEffect, useRef } from "react";
+import React, { useState, useLayoutEffect, useRef, useCallback } from "react";
 import { Sidebar } from "./Sidebar";
 import { StatusWidget } from "./StatusWidget";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { BillingAlertModal } from "./BillingAlertModal";
 import { BillingSuspendedModal } from "./BillingSuspendedModal";
+import { GlobalOrderNotifier } from "./GlobalOrderNotifier";
 import { motion, AnimatePresence } from "framer-motion";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Bell } from "lucide-react";
 import { useFooter } from "../sections/footer/useFooter";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -27,6 +28,8 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     const [activeModules, setActiveModules] = useState<string[] | null>(null);
     const [isHotelActive, setIsHotelActive] = useState<boolean | null>(null);
     const [nextDueDate, setNextDueDate] = useState<string>("");
+    const [orderBadge, setOrderBadge] = useState(0);
+    const handleBadgeChange = useCallback((count: number) => setOrderBadge(count), []);
 
     React.useEffect(() => {
         // Superadmin tanpa preview hotel — skip Firestore query
@@ -213,6 +216,13 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
 
     return (
         <div className="flex flex-col min-h-screen bg-transparent select-none">
+            {/* Global POS order notifier — active on every page */}
+            {activeHotelCode && activeHotelCode !== '0' && (
+                <GlobalOrderNotifier
+                    hotelCode={activeHotelCode}
+                    onBadgeChange={handleBadgeChange}
+                />
+            )}
             <div className={`dashboard-wrapper ${isCollapsed ? "collapsed" : ""} ${!isCollapsed ? "mobile-open" : ""} ${hideSidebar ? "no-sidebar" : ""}`}>
                 {!isSuperadminPage && (
                     <header className="dashboard-top-bar">
@@ -222,6 +232,47 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                                 isCollapsed={isCollapsed}
                                 onToggleSidebar={() => setIsCollapsed(!isCollapsed)}
                             />
+                            {/* Order notification badge */}
+                            {orderBadge > 0 && (
+                                <button
+                                    onClick={() => setOrderBadge(0)}
+                                    title={`${orderBadge} pesanan POS baru — klik untuk hapus notifikasi`}
+                                    style={{
+                                        position: 'relative',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        width: 36,
+                                        height: 36,
+                                        borderRadius: 10,
+                                        background: 'rgba(239,68,68,0.12)',
+                                        border: '1.5px solid rgba(239,68,68,0.35)',
+                                        cursor: 'pointer',
+                                        flexShrink: 0,
+                                        animation: 'pulse 1.5s ease-in-out infinite',
+                                    }}
+                                >
+                                    <Bell size={16} color="#ef4444" />
+                                    <span style={{
+                                        position: 'absolute',
+                                        top: -6,
+                                        right: -6,
+                                        minWidth: 18,
+                                        height: 18,
+                                        borderRadius: 9,
+                                        background: '#ef4444',
+                                        color: '#fff',
+                                        fontSize: 10,
+                                        fontWeight: 700,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        padding: '0 4px',
+                                        lineHeight: 1,
+                                        boxShadow: '0 0 0 2px white',
+                                    }}>{orderBadge > 99 ? '99+' : orderBadge}</span>
+                                </button>
+                            )}
                         </div>
                     </header>
                 )}

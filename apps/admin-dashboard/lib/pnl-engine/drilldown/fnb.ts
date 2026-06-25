@@ -61,9 +61,12 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
   const { rawTransactions, customIncomes, expenses, posOrders, vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage } = ctx;
 
   switch (cardId) {
-    case "Food A La Carte Revenue":
+    case "Food A La Carte Revenue": {
+      const normal    = posOrders.filter(o => o.category === 'food' && !o.isCancelled);
+      const cancelled = posOrders.filter(o => o.category === 'food' && o.isCancelled).map(o => ({ ...o, amount: 0 }));
       items = [
-        ...posOrders.filter(o => o.category === 'food'),
+        ...normal,
+        ...cancelled,
         ...customIncomes
           .filter(i => (i.category || "").toLowerCase().includes("food") && (i.name || "").toLowerCase().includes("a la carte"))
           .map(i => ({
@@ -79,9 +82,13 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
           }))
       ];
       break;
-    case "Beverage A La Carte Revenue":
+    }
+    case "Beverage A La Carte Revenue": {
+      const normal    = posOrders.filter(o => o.category === 'beverage' && !o.isCancelled);
+      const cancelled = posOrders.filter(o => o.category === 'beverage' && o.isCancelled).map(o => ({ ...o, amount: 0 }));
       items = [
-        ...posOrders.filter(o => o.category === 'beverage'),
+        ...normal,
+        ...cancelled,
         ...customIncomes
           .filter(i => (i.category || "").toLowerCase().includes("beverage") && (i.name || "").toLowerCase().includes("a la carte"))
           .map(i => ({
@@ -97,9 +104,13 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
           }))
       ];
       break;
-    case "Banquet Revenue":
+    }
+    case "Banquet Revenue": {
+      const normal    = posOrders.filter(o => o.category === 'banquet' && !o.isCancelled);
+      const cancelled = posOrders.filter(o => o.category === 'banquet' && o.isCancelled).map(o => ({ ...o, amount: 0 }));
       items = [
-        ...posOrders.filter(o => o.category === 'banquet'),
+        ...normal,
+        ...cancelled,
         ...customIncomes
           .filter(i => (i.name || "").toLowerCase().includes("banquet") || (i.category || "").toLowerCase().includes("banquet"))
           .map(i => ({
@@ -115,9 +126,13 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
           }))
       ];
       break;
-    case "Total F&B A la Carte Revenue":
+    }
+    case "Total F&B A la Carte Revenue": {
+      const normal    = posOrders.filter(o => (o.category === 'food' || o.category === 'beverage') && !o.isCancelled);
+      const cancelled = posOrders.filter(o => (o.category === 'food' || o.category === 'beverage') && o.isCancelled).map(o => ({ ...o, amount: 0 }));
       items = [
-        ...posOrders.filter(o => o.category === 'food' || o.category === 'beverage'),
+        ...normal,
+        ...cancelled,
         ...customIncomes
           .filter(i => ((i.category || "").toLowerCase().includes("food") || (i.category || "").toLowerCase().includes("beverage")) && !(i.name || "").toLowerCase().includes("banquet") && !(i.category || "").toLowerCase().includes("banquet"))
           .map(i => ({
@@ -133,10 +148,14 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
           }))
       ];
       break;
+    }
     case "Food A la Carte Performance":
       {
+        const normal    = posOrders.filter(o => o.category === 'food' && !o.isCancelled);
+        const cancelled = posOrders.filter(o => o.category === 'food' && o.isCancelled).map(o => ({ ...o, amount: 0 }));
         const incomes = [
-          ...posOrders.filter(o => o.category === 'food'),
+          ...normal,
+          ...cancelled,
           ...customIncomes
             .filter(i => (i.category || "").toLowerCase().includes("food") && (i.name || "").toLowerCase().includes("a la carte"))
             .map(i => ({
@@ -187,8 +206,11 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
       break;
     case "Banquet Performance":
       {
+        const normal    = posOrders.filter(o => o.category === 'banquet' && !o.isCancelled);
+        const cancelled = posOrders.filter(o => o.category === 'banquet' && o.isCancelled).map(o => ({ ...o, amount: 0 }));
         const incomes = [
-          ...posOrders.filter(o => o.category === 'banquet'),
+          ...normal,
+          ...cancelled,
           ...customIncomes
             .filter(i => (i.name || "").toLowerCase().includes("banquet") || (i.category || "").toLowerCase().includes("banquet"))
             .map(i => ({
@@ -236,8 +258,11 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
       break;
     case "Total F&B A la Carte Performance":
       {
+        const normal    = posOrders.filter(o => (o.category === 'food' || o.category === 'beverage') && !o.isCancelled);
+        const cancelled = posOrders.filter(o => (o.category === 'food' || o.category === 'beverage') && o.isCancelled).map(o => ({ ...o, amount: 0 }));
         const incomes = [
-          ...posOrders.filter(o => o.category === 'food' || o.category === 'beverage'),
+          ...normal,
+          ...cancelled,
           ...customIncomes
             .filter(i => ((i.category || "").toLowerCase().includes("food") || (i.category || "").toLowerCase().includes("beverage")) && (i.name || "").toLowerCase().includes("a la carte"))
             .map(i => ({
@@ -285,8 +310,11 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
       break;
     case "Beverage A la Carte Performance":
       {
+        const normal    = posOrders.filter(o => o.category === 'beverage' && !o.isCancelled);
+        const cancelled = posOrders.filter(o => o.category === 'beverage' && o.isCancelled).map(o => ({ ...o, amount: 0 }));
         const incomes = [
-          ...posOrders.filter(o => o.category === 'beverage'),
+          ...normal,
+          ...cancelled,
           ...customIncomes
             .filter(i => (i.category || "").toLowerCase().includes("beverage") && (i.name || "").toLowerCase().includes("a la carte"))
             .map(i => ({

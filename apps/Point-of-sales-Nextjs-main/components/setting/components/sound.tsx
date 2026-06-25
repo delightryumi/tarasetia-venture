@@ -100,7 +100,7 @@ export default function SoundSettingCard() {
           Nada Notifikasi Kasir
         </CardTitle>
         <CardDescription>
-          Kustomisasi nada dering/alarm yang berbunyi ketika tamu mengirimkan pesanan mandiri.
+          Kustomisasi nada alarm yang berbunyi saat ada pesanan baru. Berlaku di <strong>kasir POS</strong> maupun <strong>Admin Dashboard</strong> pada perangkat yang sama.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
