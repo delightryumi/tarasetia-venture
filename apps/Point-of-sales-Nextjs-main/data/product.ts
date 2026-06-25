@@ -18,7 +18,13 @@ export const fetchProduct = async ({
     const cookieStore = await cookies();
     const hotelCode = cookieStore.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
     if (!hotelCode || hotelCode === "87241") {
-      return { data: [], count: 0 };
+      return {
+        data: [],
+        metadata: {
+          hasNextPage: false,
+          totalPages: 0,
+        },
+      };
     }
 
     const q = query(getHotelCollection(db, 'pos_products', hotelCode), orderBy('name', 'asc'));
