@@ -299,6 +299,20 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
     }
   };
 
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      unlockAudioContext();
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+    window.addEventListener('click', handleFirstInteraction);
+    window.addEventListener('keydown', handleFirstInteraction);
+    return () => {
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+  }, []);
+
   return (
     <div 
       style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%', position: 'relative' }}

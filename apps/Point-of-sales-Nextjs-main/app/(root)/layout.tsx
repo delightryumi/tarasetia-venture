@@ -626,6 +626,20 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     }
   };
 
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      unlockAudioContext();
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+    window.addEventListener('click', handleFirstInteraction);
+    window.addEventListener('keydown', handleFirstInteraction);
+    return () => {
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+  }, []);
+
   return (
     <div 
       className="bg-background text-foreground h-screen overflow-hidden flex flex-col relative"
