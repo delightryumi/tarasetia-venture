@@ -396,13 +396,24 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                       </span>
                       <div className={ds.rtTableBottom}>
                         <span className={ds.rtTableAmount}>
-                          {formatIDR(table.activeOrder.payableAmount || table.activeOrder.subtotal || 0)}
+                          {formatIDR(table.activeOrder.payableAmount ?? table.activeOrder.subtotal ?? 0)}
                         </span>
-                        {table.activeOrder.isPaidDirectly ? (
-                          <span className={`${ds.rtBadge} ${ds.rtBadgePaid}`}>PAID</span>
-                        ) : (
-                          <span className={`${ds.rtBadge} ${ds.rtBadgeUnpaid}`}>UNPAID</span>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {table.activeOrder.payableAmount === 0 || table.activeOrder.paymentMethod === 'compliment' || table.activeOrder.discountPercent === 100 ? (
+                            <span className="text-[8px] bg-purple-600 text-white font-extrabold px-1 py-0.5 rounded-[4px] tracking-wide leading-none">
+                              COMP
+                            </span>
+                          ) : (table.activeOrder.discount > 0 || table.activeOrder.discountPercent > 0) ? (
+                            <span className="text-[8px] bg-red-600 text-white font-extrabold px-1 py-0.5 rounded-[4px] tracking-wide leading-none">
+                              DISC
+                            </span>
+                          ) : null}
+                          {table.activeOrder.isPaidDirectly ? (
+                            <span className={`${ds.rtBadge} ${ds.rtBadgePaid}`}>PAID</span>
+                          ) : (
+                            <span className={`${ds.rtBadge} ${ds.rtBadgeUnpaid}`}>UNPAID</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -461,9 +472,8 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                       <div className={ds.rtFeedCardInfo}>
                         <span className={ds.rtFeedCardTableName}>{order.tableNumber || 'Dine-In'}</span>
                         <span className={ds.rtFeedCardGuest}>{order.customerName || 'Guest'}</span>
-                      </div>
-                      <span className={ds.rtFeedCardAmount}>
-                        {formatIDR(order.payableAmount || order.subtotal || 0)}
+                              <span className={ds.rtFeedCardAmount}>
+                        {formatIDR(order.payableAmount ?? order.subtotal ?? 0)}
                       </span>
                     </div>
                     <div className={ds.rtFeedCardFooter}>
@@ -471,7 +481,18 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                         <Clock size={9} />
                         {order.createdAt ? new Date(order.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : 'Baru'}
                       </span>
-                      <span className={ds.rtFeedBadgeHeld}>Active Held</span>
+                      <div className="flex items-center gap-1.5">
+                        {order.payableAmount === 0 || order.paymentMethod === 'compliment' || order.discountPercent === 100 ? (
+                          <span className="text-[8px] bg-purple-600 text-white font-extrabold px-1.5 py-0.5 rounded-[4px] tracking-wide leading-none">
+                            COMPLIMENT
+                          </span>
+                        ) : (order.discount > 0 || order.discountPercent > 0) ? (
+                          <span className="text-[8px] bg-red-600 text-white font-extrabold px-1.5 py-0.5 rounded-[4px] tracking-wide leading-none">
+                            DISKON
+                          </span>
+                        ) : null}
+                        <span className={ds.rtFeedBadgeHeld}>Active Held</span>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -501,7 +522,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                         </span>
                       </div>
                       <span className={ds.rtFeedCardAmount}>
-                        {formatIDR(order.totalAmount || order.payableAmount || 0)}
+                        {formatIDR(order.totalAmount ?? order.payableAmount ?? 0)}
                       </span>
                     </div>
                     <div className={ds.rtFeedCardFooter}>
@@ -509,7 +530,18 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                         <Clock size={9} />
                         {order.createdAt ? new Date(order.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '—'}
                       </span>
-                      <span className={ds.rtFeedBadgePaid}>Paid ({order.paymentMethod || 'Cash'})</span>
+                      <div className="flex items-center gap-1.5">
+                        {order.totalAmount === 0 || order.payableAmount === 0 || order.paymentMethod === 'compliment' || order.discountPercent === 100 ? (
+                          <span className="text-[8px] bg-purple-600 text-white font-extrabold px-1.5 py-0.5 rounded-[4px] tracking-wide leading-none">
+                            COMPLIMENT
+                          </span>
+                        ) : (order.discount > 0 || order.discountPercent > 0) ? (
+                          <span className="text-[8px] bg-red-650 text-white font-extrabold px-1.5 py-0.5 rounded-[4px] tracking-wide leading-none">
+                            DISKON
+                          </span>
+                        ) : null}
+                        <span className={ds.rtFeedBadgePaid}>Paid ({order.paymentMethod || 'Cash'})</span>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -600,7 +632,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                     <div className={ds.rtTotalRow}>
                       <span className={ds.rtTotalLabel}>Subtotal</span>
                       <span className={ds.rtTotalValue}>
-                        {formatIDR(selectedOrder.subtotal || selectedOrder.totalAmount || selectedOrder.payableAmount || 0)}
+                        {formatIDR(selectedOrder.subtotal ?? selectedOrder.totalAmount ?? selectedOrder.payableAmount ?? 0)}
                       </span>
                     </div>
                     {((selectedOrder.tax || 0) + (selectedOrder.serviceCharge || 0)) > 0 && (
@@ -611,16 +643,18 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                         </span>
                       </div>
                     )}
-                    {selectedOrder.discount > 0 && (
+                    {(selectedOrder.discount > 0 || selectedOrder.discountPercent > 0) && (
                       <div className={ds.rtTotalRow}>
-                        <span className={`${ds.rtTotalLabel} ${ds.rtTotalDiscount}`}>Potongan Diskon</span>
-                        <span className={`${ds.rtTotalValue} ${ds.rtTotalDiscount}`}>-{formatIDR(selectedOrder.discount || 0)}</span>
+                        <span className={`${ds.rtTotalLabel} ${ds.rtTotalDiscount}`}>
+                          Potongan Diskon {selectedOrder.discountPercent > 0 ? `(${selectedOrder.discountPercent}%)` : ''}
+                        </span>
+                        <span className={`${ds.rtTotalValue} ${ds.rtTotalDiscount}`}>-{formatIDR(selectedOrder.discount ?? 0)}</span>
                       </div>
                     )}
                     <div className={ds.rtGrandTotalRow}>
                       <span className={ds.rtGrandTotalLabel}>Total Tagihan</span>
                       <span className={ds.rtGrandTotalValue}>
-                        {formatIDR(selectedOrder.payableAmount || selectedOrder.totalAmount || selectedOrder.subtotal || 0)}
+                        {formatIDR(selectedOrder.payableAmount ?? selectedOrder.totalAmount ?? selectedOrder.subtotal ?? 0)}
                       </span>
                     </div>
                   </div>

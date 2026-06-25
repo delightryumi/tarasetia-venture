@@ -258,7 +258,7 @@ function LiveTableGrid() {
           subtotal: Number(selectedOrder.subtotal) || 0,
           tax: Number(selectedOrder.tax) || 0,
           discount: Number(selectedOrder.discount) || 0,
-          total: Number(selectedOrder.payableAmount || selectedOrder.subtotal || 0),
+          total: Number(selectedOrder.payableAmount ?? selectedOrder.subtotal ?? 0),
           paymentMethod: selectedOrder.paymentMethod || 'cash',
           revenueType: selectedOrder.revenueType || 'alacarte',
           status: 'CANCELLED',
@@ -387,17 +387,28 @@ function LiveTableGrid() {
                     </span>
                     <div className="flex items-center justify-between w-full mt-1">
                       <span className="text-[11px] font-black text-emerald-750 dark:text-emerald-400">
-                        {formatCurrency(activeOrder.payableAmount || activeOrder.subtotal || 0)}
+                        {formatCurrency(activeOrder.payableAmount ?? activeOrder.subtotal ?? 0)}
                       </span>
-                      {activeOrder.isPaidDirectly ? (
-                        <span className="text-[8px] bg-emerald-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none">
-                          PAID
-                        </span>
-                      ) : (
-                        <span className="text-[8px] bg-amber-500 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)] border border-amber-400">
-                          UNPAID
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {activeOrder.payableAmount === 0 || activeOrder.paymentMethod === 'compliment' || activeOrder.discountPercent === 100 ? (
+                          <span className="text-[8px] bg-purple-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none">
+                            COMPLIMENT
+                          </span>
+                        ) : (activeOrder.discount > 0 || activeOrder.discountPercent > 0) ? (
+                          <span className="text-[8px] bg-red-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none">
+                            DISKON
+                          </span>
+                        ) : null}
+                        {activeOrder.isPaidDirectly ? (
+                          <span className="text-[8px] bg-emerald-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none">
+                            PAID
+                          </span>
+                        ) : (
+                          <span className="text-[8px] bg-amber-500 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)] border border-amber-400">
+                            UNPAID
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -519,16 +530,16 @@ function LiveTableGrid() {
                       <span className="text-neutral-800 dark:text-[#f4f4f5] font-semibold">{formatCurrency(selectedOrder.tax || 0)}</span>
                     </div>
                   )}
-                  {selectedOrder.discount > 0 && (
+                  {(selectedOrder.discount > 0 || selectedOrder.discountPercent > 0) && (
                     <div className="flex justify-between items-center text-xs text-red-500">
-                      <span>Diskon</span>
-                      <span>-{formatCurrency(selectedOrder.discount || 0)}</span>
+                      <span>Diskon {selectedOrder.discountPercent > 0 ? `(${selectedOrder.discountPercent}%)` : ''}</span>
+                      <span>-{formatCurrency(selectedOrder.discount ?? 0)}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center text-sm pt-2 border-t border-neutral-100 dark:border-zinc-800/80 mt-1">
                     <span className="text-neutral-800 dark:text-neutral-200 font-black">Total Tagihan</span>
                     <span className="text-stone-900 dark:text-white font-black text-base">
-                      {formatCurrency(selectedOrder.payableAmount || selectedOrder.subtotal || 0)}
+                      {formatCurrency(selectedOrder.payableAmount ?? selectedOrder.subtotal ?? 0)}
                     </span>
                   </div>
                   {/* Status Banner */}
