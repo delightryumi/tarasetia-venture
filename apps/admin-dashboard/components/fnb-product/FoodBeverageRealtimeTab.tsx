@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase';
 import { onSnapshot, doc, getDoc, query, orderBy, limit } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
@@ -33,14 +33,14 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
   const isInitialLoadRef = React.useRef(true);
   const alarmAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
-  const getAudioInstance = () => {
+  const getAudioInstance = useCallback(() => {
     if (!alarmAudioRef.current && typeof window !== 'undefined') {
       alarmAudioRef.current = new Audio('/sounds/notification.mp3');
       alarmAudioRef.current.volume = 1.0;
       alarmAudioRef.current.loop = true;
     }
     return alarmAudioRef.current;
-  };
+  }, []);
 
   // Get active hotel code on mount
   useEffect(() => {
@@ -279,7 +279,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
     });
   }, [heldOrders, isLoading]);
 
-  const unlockAudioContext = () => {
+  const unlockAudioContext = useCallback(() => {
     try {
       const audio = getAudioInstance();
       if (audio) {
@@ -297,7 +297,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
     } catch (e) {
       setIsAudioUnlocked(true);
     }
-  };
+  }, [getAudioInstance]);
 
   useEffect(() => {
     const handleFirstInteraction = () => {
@@ -311,7 +311,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
       window.removeEventListener('click', handleFirstInteraction);
       window.removeEventListener('keydown', handleFirstInteraction);
     };
-  }, []);
+  }, [unlockAudioContext]);
 
   return (
     <div 

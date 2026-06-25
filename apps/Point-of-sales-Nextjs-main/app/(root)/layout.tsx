@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import NextTopLoader from 'nextjs-toploader';
 interface RootLayoutProps {
   children: React.ReactNode;
@@ -160,12 +160,52 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const [isAudioUnlocked, setIsAudioUnlocked] = useState(true);
   const alarmAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
-  const getNotificationSound = () => {
+  const getNotificationSound = useCallback(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('pos_sound_choice') || '/sounds/notification.mp3';
     }
     return '/sounds/notification.mp3';
-  };
+  }, []);
+
+  const unlockAudioContext = useCallback(() => {
+    try {
+      if (!alarmAudioRef.current) {
+        const audioPath = getNotificationSound();
+        alarmAudioRef.current = new Audio(audioPath);
+        alarmAudioRef.current.volume = 1.0;
+        alarmAudioRef.current.loop = true;
+      }
+      const audio = alarmAudioRef.current;
+      if (audio) {
+        audio.play().then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          setIsAudioUnlocked(true);
+        }).catch((e) => {
+          console.error("Audio unlock failed:", e);
+          setIsAudioUnlocked(true);
+        });
+      } else {
+        setIsAudioUnlocked(true);
+      }
+    } catch (e) {
+      setIsAudioUnlocked(true);
+    }
+  }, [getNotificationSound]);
+
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      unlockAudioContext();
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+    window.addEventListener('click', handleFirstInteraction);
+    window.addEventListener('keydown', handleFirstInteraction);
+    return () => {
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+  }, [unlockAudioContext]);
 
   useEffect(() => {
     const handleSoundChange = () => {
@@ -600,45 +640,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     );
   }
 
-  const unlockAudioContext = () => {
-    try {
-      if (!alarmAudioRef.current) {
-        const audioPath = getNotificationSound();
-        alarmAudioRef.current = new Audio(audioPath);
-        alarmAudioRef.current.volume = 1.0;
-        alarmAudioRef.current.loop = true;
-      }
-      const audio = alarmAudioRef.current;
-      if (audio) {
-        audio.play().then(() => {
-          audio.pause();
-          audio.currentTime = 0;
-          setIsAudioUnlocked(true);
-        }).catch((e) => {
-          console.error("Audio unlock failed:", e);
-          setIsAudioUnlocked(true);
-        });
-      } else {
-        setIsAudioUnlocked(true);
-      }
-    } catch (e) {
-      setIsAudioUnlocked(true);
-    }
-  };
 
-  useEffect(() => {
-    const handleFirstInteraction = () => {
-      unlockAudioContext();
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('keydown', handleFirstInteraction);
-    };
-    window.addEventListener('click', handleFirstInteraction);
-    window.addEventListener('keydown', handleFirstInteraction);
-    return () => {
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('keydown', handleFirstInteraction);
-    };
-  }, []);
 
   return (
     <div 
