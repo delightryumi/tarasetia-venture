@@ -212,6 +212,14 @@ export const PATCH = async (
       }
     }
 
+    // E. Delete corresponding shadow held order to free up the table
+    try {
+      const shadowHeldId = `HLD-${resolvedTxId.replace('TRS-', '')}`;
+      await deleteDoc(doc(getHotelCollection(db, 'pos_held_orders', hotelCode), shadowHeldId));
+    } catch (e) {
+      console.error('Failed to clear shadow held order on void:', e);
+    }
+
     return NextResponse.json({ id: resolvedTxId, message: 'Transaction voided successfully' }, { status: 200 });
   } catch (error: any) {
     console.error('Error voiding transaction in Firestore:', error);
@@ -355,6 +363,14 @@ export const DELETE = async (
     for (const revDoc of revSnap.docs) {
       await deleteDoc(revDoc.ref);
       deleted = true;
+    }
+
+    // 6. Delete corresponding shadow held order to free up the table
+    try {
+      const shadowHeldId = `HLD-${resolvedTxId.replace('TRS-', '')}`;
+      await deleteDoc(doc(getHotelCollection(db, 'pos_held_orders', hotelCode), shadowHeldId));
+    } catch (e) {
+      console.error('Failed to clear shadow held order on delete:', e);
     }
 
     if (!deleted) {

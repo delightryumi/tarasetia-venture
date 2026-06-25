@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
 
     snap.forEach((docSnap) => {
       const data = docSnap.data();
-      if (data.status === 'CANCELLED' || data.status === 'VOID' || data.isDeleted === true) return;
+      if (data.status === 'CANCELLED' || data.status === 'VOID' || data.isDeleted === true || data.isCompliment === true) return;
       if (!data.timestamp) return;
 
       const docDate = typeof data.timestamp.toDate === 'function'
@@ -134,6 +134,7 @@ export async function GET(req: NextRequest) {
           }
 
           items.forEach((item: any) => {
+            if (item.isCompliment === true) return;
             const qty = Number(item.quantity || 0);
             const rawSellPrice = Number(item.price || 0) * qty;
             const itemDiscount = dbDiscount * (rawSellPrice / calcSubtotal);

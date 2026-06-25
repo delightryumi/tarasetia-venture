@@ -594,9 +594,9 @@ export function useLexuPos() {
           complimentValue: cart.reduce((sum, item) => sum + (item.isCompliment ? item.product.price * item.quantity : 0), 0)
         };
         
-        await addDoc(getHotelCollection(db, "pos_orders"), orderData);
+        await setDoc(doc(getHotelCollection(db, "pos_orders"), transactionId), orderData);
 
-        await addDoc(getHotelCollection(db, "revenue_transactions"), {
+        await setDoc(doc(getHotelCollection(db, "revenue_transactions"), transactionId), {
           date: new Intl.DateTimeFormat('en-CA', {
             timeZone: 'Asia/Jakarta',
             year: 'numeric',
@@ -612,6 +612,9 @@ export function useLexuPos() {
           timestamp: new Date(),
           transactionId: transactionId
         });
+
+        // Mark local db transaction as synced
+        await localDb.transactions.update(transactionId, { isSynced: 1 });
 
         if (restoredOrderId) {
           await deleteDoc(doc(getHotelCollection(db, 'pos_held_orders'), restoredOrderId));
