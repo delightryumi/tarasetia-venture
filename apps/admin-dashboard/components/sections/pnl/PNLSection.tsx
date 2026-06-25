@@ -14,7 +14,6 @@ import { PNLDrillDownModal } from "./components/PNLDrillDownModal";
 import { useDrillDown }      from "./hooks/useDrillDown";
 import { usePnLExport }      from "./hooks/usePnLExport";
 import FinancialBreakdown    from "./components/FinancialBreakdown";
-import { FinancialStatements } from "./components/statements/FinancialStatements";
 import "./PNLStyles.css";
 
 /* ── Animations ── */
