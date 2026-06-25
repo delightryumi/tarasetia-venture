@@ -49,7 +49,7 @@ export default function CashierContainer() {
   const [activeShift, setActiveShift] = useState<ShiftData | null>(null);
   const [shiftHistory, setShiftHistory] = useState<ShiftData[]>([]);
   const [cashierNameInput, setCashierNameInput] = useState('');
-  const [houseBankInput, setHouseBankInput] = useState('');
+  const [houseBankInput, setHouseBankInput] = useState('0');
   const [countedCashInput, setCountedCashInput] = useState('');
   const [closingNotes, setClosingNotes] = useState('');
   
@@ -312,7 +312,7 @@ export default function CashierContainer() {
       setActiveShift(shiftData);
       localStorage.setItem('active_shift', JSON.stringify(shiftData));
       setCashierNameInput('');
-      setHouseBankInput('');
+      setHouseBankInput('0');
       toast.success('Shift baru berhasil dibuka!');
     } catch (e) {
       console.error('Error opening shift:', e);

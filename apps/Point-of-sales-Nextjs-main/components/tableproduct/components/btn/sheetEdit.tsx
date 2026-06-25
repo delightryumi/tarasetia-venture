@@ -119,13 +119,18 @@ export function SheetEdit({
 
     setUploadingImage(true);
     try {
-      let hotelCode = '87241';
+      let hotelCode = '';
       const userJson = localStorage.getItem('user');
       if (userJson) {
         try {
           const user = JSON.parse(userJson);
           if (user.hotelCode) hotelCode = user.hotelCode;
         } catch(e) {}
+      }
+
+      if (!hotelCode || hotelCode === '87241') {
+        toast.error('Session error: Hotel Code is missing or invalid. Please log in again.');
+        return;
       }
 
       const formData = new FormData();

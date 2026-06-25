@@ -22,7 +22,13 @@ interface SyncTransaction {
 
 export async function POST(req: NextRequest) {
   try {
-    const hotelId = req.cookies.get('hotelCode')?.value || '87241';
+    const hotelId = req.cookies.get('hotelCode')?.value || req.headers.get('x-hotel-code');
+    if (!hotelId || hotelId === '87241') {
+      return NextResponse.json(
+        { error: 'Hotel Code is missing or invalid' },
+        { status: 400 }
+      );
+    }
     const { transactions }: { transactions: SyncTransaction[] } = await req.json();
 
     if (!transactions || !Array.isArray(transactions)) {

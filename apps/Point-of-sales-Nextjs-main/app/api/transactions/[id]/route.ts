@@ -11,7 +11,10 @@ export async function GET(
   const { id } = await params;
 
   try {
-    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
+    if (!hotelCode || hotelCode === "87241") {
+      return NextResponse.json({ error: "Hotel Code is missing or invalid" }, { status: 400 });
+    }
 
     const q = query(
       getHotelCollection(db, 'pos_orders', hotelCode),
@@ -74,7 +77,10 @@ export const PATCH = async (
 ) => {
   const { id } = await params;
   try {
-    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
+    if (!hotelCode || hotelCode === "87241") {
+      return NextResponse.json({ error: "Hotel Code is missing or invalid" }, { status: 400 });
+    }
     const body = await request.json();
     const reason = body.reason || 'Voided from Records';
 
@@ -220,7 +226,10 @@ export const DELETE = async (
 ) => {
   const { id } = await params;
   try {
-    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
+    if (!hotelCode || hotelCode === "87241") {
+      return NextResponse.json({ error: "Hotel Code is missing or invalid" }, { status: 400 });
+    }
     let transactionDate: string | null = null;
     let shiftId: string | null = null;
     let resolvedTxId = id;

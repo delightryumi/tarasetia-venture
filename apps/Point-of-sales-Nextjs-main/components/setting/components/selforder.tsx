@@ -27,7 +27,7 @@ interface PromoBanner {
 export default function SelfOrderCard() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const [hotelCode, setHotelCode] = useState('87241');
+  const [hotelCode, setHotelCode] = useState('');
   const [isEnterprise, setIsEnterprise] = useState(false);
   const [activePlan, setActivePlan] = useState('');
   
@@ -113,12 +113,12 @@ export default function SelfOrderCard() {
     const fetchHotelConfig = async () => {
       setIsPageLoading(true);
       try {
-        let code = '87241';
+        let code = '';
         let isSuper = false;
         const userJson = localStorage.getItem('user');
         if (userJson) {
           const parsed = JSON.parse(userJson);
-          code = parsed.hotelCode || '87241';
+          code = parsed.hotelCode || '';
           isSuper =
             parsed?.role?.toLowerCase() === 'superadmin' ||
             parsed?.role?.toLowerCase() === 'super admin' ||

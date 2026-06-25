@@ -8,7 +8,10 @@ import { getHotelCollection } from '@/lib/firestoreHelper';
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const hotelCode = cookieStore.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+    const hotelCode = cookieStore.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
+    if (!hotelCode || hotelCode === "87241") {
+      return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
+    }
 
     const revSnap = await getDocs(getHotelCollection(db, 'daily_revenue', hotelCode));
     const salesCount: Record<string, number> = {};

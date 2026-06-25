@@ -24,7 +24,10 @@ const generateUniqueId = async (hotelCode: string) => {
 // Handler function for POST request to create a new product in Firestore
 export const POST = async (request: NextRequest) => {
   try {
-    const hotelCode = request.cookies.get('hotelCode')?.value || "87241";
+    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
+    if (!hotelCode || hotelCode === "87241") {
+      return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
+    }
     const customId = await generateUniqueId(hotelCode);
     const body = await request.json();
 

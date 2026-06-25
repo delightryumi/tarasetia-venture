@@ -14,7 +14,10 @@ export const PATCH = async (
     
     // Read hotelCode from cookies
     const cookieStore = await cookies();
-    const hotelCode = cookieStore.get('hotelCode')?.value || "87241";
+    const hotelCode = cookieStore.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
+    if (!hotelCode || hotelCode === "87241") {
+      return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
+    }
 
     const posSettingsRef = doc(db, 'hotels', hotelCode, 'settings', 'pos');
 

@@ -91,7 +91,7 @@ export const HotelProvider = ({
     );
   }
 
-  const hotelCode = hotelData?.hotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+  const hotelCode = hotelData?.hotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "1";
 
   return (
     <HotelContext.Provider value={{ hotelCode, hotelData, loading }}>

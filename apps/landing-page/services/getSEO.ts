@@ -30,7 +30,7 @@ export const getSEO = async (): Promise<SEOData> => {
 
     try {
         const hotel = await getServerSideHotel();
-        const hotelCode = hotel?.hotelCode || "87241";
+        const hotelCode = hotel?.hotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "1";
         const docRef = doc(getHotelCollection(db, "settings", hotelCode), "seo");
         const docSnap = await getDoc(docRef);
 

@@ -52,7 +52,7 @@ export function useTransactions(month?: number, year?: number) {
 
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          const hotelId = data.hotelId || "87241";
+          const hotelId = data.hotelId || "";
           const docDate = data.date || "-";
           
           (data.entries || []).forEach((t: any) => {

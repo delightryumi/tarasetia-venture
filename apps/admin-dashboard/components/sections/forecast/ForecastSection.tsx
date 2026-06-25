@@ -43,7 +43,7 @@ const stagger = {
 };
 
 export const ForecastSection: React.FC = () => {
-    const { user } = useAuth();
+    const { user, activeHotelCode } = useAuth();
     const [viewMode, setViewMode] = useState<"daily" | "monthly" | "yearly">("daily");
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [activeFilter, setActiveFilter] = useState<string | null>(null);
@@ -216,7 +216,11 @@ export const ForecastSection: React.FC = () => {
     const executeVoid = async () => {
         if (!bookingToVoid) return;
         try {
-            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
+            const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
+            if (!hotelId) {
+                toast.error("Hotel Code is missing.");
+                return;
+            }
             const isPOS = bookingToVoid.guestName?.startsWith("POS Order") || !!bookingToVoid.posItems || !!bookingToVoid.revenueType;
             const isAcc = !isPOS && (bookingToVoid.type === "accommodation" || (!bookingToVoid.type && bookingToVoid.guestName));
             const dates = getCascadeDates(bookingToVoid);
@@ -274,7 +278,11 @@ export const ForecastSection: React.FC = () => {
     const executeCancel = async () => {
         if (!bookingToCancel) return;
         try {
-            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
+            const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
+            if (!hotelId) {
+                toast.error("Hotel Code is missing.");
+                return;
+            }
             const isPOS = bookingToCancel.guestName?.startsWith("POS Order") || !!bookingToCancel.posItems || !!bookingToCancel.revenueType;
             const isAcc = !isPOS && (bookingToCancel.type === "accommodation" || (!bookingToCancel.type && bookingToCancel.guestName));
             const dates = getCascadeDates(bookingToCancel);
@@ -339,7 +347,11 @@ export const ForecastSection: React.FC = () => {
 
     const handleStatusUpdate = async (booking: any, field: string, value: string) => {
         try {
-            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
+            const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
+            if (!hotelId) {
+                toast.error("Hotel Code is missing.");
+                return;
+            }
             const checkInDate = booking.checkInDate || booking.checkIn;
             const checkOutDate = booking.checkOutDate || booking.checkOut;
             const isPOS = booking.guestName?.startsWith("POS Order") || !!booking.posItems || !!booking.revenueType;

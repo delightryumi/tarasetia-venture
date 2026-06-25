@@ -38,9 +38,9 @@ export function getHotelCollection(
     return collection(db, collectionName);
   }
 
-  // Guard: if code is empty/falsy after all fallbacks, use default to avoid invalid path "hotels//collection"
-  if (!code || code.trim() === "") {
-    code = "87241";
+  // Guard: if code is empty/falsy, or matches invalid dummy code, throw an error to prevent data contamination
+  if (!code || code.trim() === "" || code === "87241") {
+    throw new Error(`Invalid Hotel Code "${code}". Action denied to prevent data contamination.`);
   }
 
   return collection(db, `hotels/${code}/${collectionName}`);

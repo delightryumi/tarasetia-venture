@@ -131,7 +131,11 @@ export const AddTransactionModal = ({
 
         setSaving(true);
         try {
-            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
+            const hotelId = localStorage.getItem("active_hotel_code") || "";
+            if (!hotelId || hotelId === "87241") {
+                toast.error("Hotel Code is missing or invalid.");
+                return;
+            }
             const dateStr = form.checkIn; 
             const docId = `${hotelId}_${dateStr}`;
             

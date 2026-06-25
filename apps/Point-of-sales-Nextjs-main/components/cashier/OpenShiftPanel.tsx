@@ -61,9 +61,19 @@ export default function OpenShiftPanel({
               id="houseBank"
               type="number"
               onWheel={(e) => (e.target as HTMLInputElement).blur()}
-              placeholder="100.00"
+              placeholder="0"
               value={houseBankInput}
               onChange={(e) => setHouseBankInput(e.target.value)}
+              onFocus={() => {
+                if (houseBankInput === '0') {
+                  setHouseBankInput('');
+                }
+              }}
+              onBlur={() => {
+                if (houseBankInput === '') {
+                  setHouseBankInput('0');
+                }
+              }}
               className="pl-12 h-10 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-xl text-sm font-semibold"
             />
           </div>

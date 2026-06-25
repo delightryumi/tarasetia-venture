@@ -91,7 +91,7 @@ export function useLexuPos() {
   const [taxRatePercent, setTaxRatePercent] = useState(10);
   const [selectedSubcategory, setSelectedSubcategory] = useState('All');
   const [isHoldConfirmOpen, setIsHoldConfirmOpen] = useState(false);
-  const [activeHotelCode, setActiveHotelCode] = useState('87241');
+  const [activeHotelCode, setActiveHotelCode] = useState('');
   const [transactionId, setTransactionId] = useState<string>('');
 
   const localProducts = useLiveQuery(() => localDb.products.toArray(), []) || [];
@@ -147,7 +147,7 @@ export function useLexuPos() {
 
   useEffect(() => {
     const userJson = localStorage.getItem('user');
-    let hotelCode = '87241';
+    let hotelCode = '';
     if (userJson) {
       try {
         const user = JSON.parse(userJson);
@@ -372,13 +372,18 @@ export function useLexuPos() {
   const handleHoldConfirm = async () => {
     const userJson = localStorage.getItem('user');
     let restoId = 'default-resto';
-    let hotelCode = '87241';
+    let hotelCode = '';
     if (userJson) {
       try {
         const user = JSON.parse(userJson);
         restoId = user.restoId || 'default-resto';
-        hotelCode = user.hotelCode || '87241';
+        hotelCode = user.hotelCode || '';
       } catch (e) {}
+    }
+
+    if (!hotelCode || hotelCode === '87241') {
+      toast.error("Gagal melakukan penundaan: Partner Code tidak valid.");
+      return;
     }
 
     const finalTableNumber = await getOrGenerateTableNumber(hotelCode, tableNumber);
@@ -467,13 +472,18 @@ export function useLexuPos() {
 
       const userJson = localStorage.getItem('user');
       let restoId = '';
-      let hotelCode = '87241';
+      let hotelCode = '';
       if (userJson) {
         try {
           const user = JSON.parse(userJson);
           restoId = user.restoId || '';
-          hotelCode = user.hotelCode || '87241';
+          hotelCode = user.hotelCode || '';
         } catch (e) {}
+      }
+
+      if (!hotelCode || hotelCode === '87241') {
+        toast.error("Gagal menyimpan transaksi: Partner Code tidak valid.");
+        return;
       }
 
       if (activeShiftJson) {

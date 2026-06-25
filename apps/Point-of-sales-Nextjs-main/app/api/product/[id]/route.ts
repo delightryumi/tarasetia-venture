@@ -8,7 +8,10 @@ export const PATCH = async (
 ) => {
   try {
     const { id } = await params;
-    const hotelCode = request.cookies.get('hotelCode')?.value || "87241";
+    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
+    if (!hotelCode || hotelCode === "87241") {
+      return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
+    }
     const body = await request.json();
 
     // Sync the updated product to Firebase Firestore under the hotel-specific subcollection
@@ -52,7 +55,10 @@ export const DELETE = async (
 ) => {
   try {
     const { id } = await params;
-    const hotelCode = request.cookies.get('hotelCode')?.value || "87241";
+    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
+    if (!hotelCode || hotelCode === "87241") {
+      return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
+    }
 
     // Sync deletion to Firebase Firestore under the hotel-specific subcollection
     await deleteDoc(doc(firestoreDb, 'hotels', hotelCode, 'pos_products', String(id)));

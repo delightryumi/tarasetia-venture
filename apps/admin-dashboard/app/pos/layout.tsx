@@ -79,7 +79,7 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
             email: authUserObj.email,
             role: authUserObj.role || 'WORKER',
             restoId: 'default-resto',
-            hotelCode: localHotelCode || authUserObj.hotelCode || '87241'
+            hotelCode: localHotelCode || authUserObj.hotelCode || ''
           };
           params.set('user', JSON.stringify(posUserObj));
         } catch (e) {
@@ -96,7 +96,7 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
           email: email,
           role: user.role || 'WORKER',
           restoId: 'default-resto',
-          hotelCode: localHotelCode || user.hotelCode || '87241'
+          hotelCode: localHotelCode || user.hotelCode || ''
         };
         params.set('user', JSON.stringify(posUserObj));
       }

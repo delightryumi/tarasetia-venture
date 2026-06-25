@@ -52,7 +52,12 @@ export const AddGuestModal: React.FC<AddGuestModalProps> = ({ isOpen, onClose, s
         setLoading(true);
 
         try {
-            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
+            const hotelId = localStorage.getItem("active_hotel_code") || "";
+            if (!hotelId || hotelId === "87241") {
+                toast.error("Hotel Code is missing or invalid.");
+                setLoading(false);
+                return;
+            }
             const docId = `${hotelId}_${selectedDate}`;
             
             const checkInD = new Date(selectedDate);

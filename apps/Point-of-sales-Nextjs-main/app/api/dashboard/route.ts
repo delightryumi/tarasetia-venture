@@ -5,7 +5,10 @@ import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export async function GET(req: NextRequest) {
   try {
-    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "87241";
+    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
+    if (!hotelCode || hotelCode === "87241") {
+      return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
+    }
 
     // 1. Fetch live product stock from Firestore
     const productsSnap = await getDocs(getHotelCollection(db, 'pos_products', hotelCode));

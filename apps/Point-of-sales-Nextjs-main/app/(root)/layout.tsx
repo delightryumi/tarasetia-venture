@@ -73,7 +73,16 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         parsedUser?.email?.toLowerCase() === 'admin@setara.co.id';  // email superadmin baru
       setIsSuperadmin(isSuper);
 
-      const hotelCode = parsedUser?.hotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "1";
+      const hotelCode = parsedUser?.hotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
+      if (hotelCode && hotelCode !== "0") {
+        const currentCookie = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('hotelCode='))
+          ?.split('=')[1];
+        if (currentCookie !== hotelCode) {
+          document.cookie = `hotelCode=${hotelCode}; path=/; max-age=31536000; SameSite=Lax`;
+        }
+      }
       // Superadmin tanpa preview hotel — skip query Firestore
       if (!hotelCode || hotelCode === "0") {
         setIsHotelActive(true);
@@ -148,7 +157,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const { formatCurrency } = useCurrency();
   const [heldOrders, setHeldOrders] = useState<any[]>([]);
   const [isListOpen, setOpenList] = useState(false);
-  const [isAudioUnlocked, setIsAudioUnlocked] = useState(false);
+  const [isAudioUnlocked, setIsAudioUnlocked] = useState(true);
   const alarmAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const getNotificationSound = () => {
@@ -619,30 +628,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   return (
     <div 
-      onClick={!isAudioUnlocked ? unlockAudioContext : undefined}
       className="bg-background text-foreground h-screen overflow-hidden flex flex-col relative"
     >
-      {!isAudioUnlocked && (
-        <div className="audio-unlock-overlay">
-          <div className="audio-unlock-card">
-            <div className="audio-unlock-icon-container">
-              <svg className="audio-unlock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-            </div>
-            <h2 className="audio-unlock-title">Sistem Kasir & Dapur Siap</h2>
-            <p className="audio-unlock-desc">
-              Browser memerlukan interaksi pertama Anda. Klik tombol di bawah ini untuk mengaktifkan notifikasi alarm pesanan baru.
-            </p>
-            <button 
-              onClick={unlockAudioContext} 
-              className="audio-unlock-btn"
-            >
-              Mulai Sesi (Aktifkan Suara)
-            </button>
-          </div>
-        </div>
-      )}
       {/* Header spanning 100% width across the top */}
       <header className="flex h-14 shrink-0 items-center justify-between gap-4 py-2.5 px-4 lg:px-6 sticky top-0 z-20 bg-white/65 dark:bg-[#181818]/65 backdrop-blur-md border-b border-black/5 dark:border-white/5 w-full select-none print:hidden">
         {/* Left Side: Logo & Hotel Badge */}

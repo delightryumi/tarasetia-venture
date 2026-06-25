@@ -8,6 +8,7 @@ import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useOverview } from "./useOverview";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
@@ -32,7 +33,7 @@ export function OverviewSection() {
     const searchParams = useSearchParams();
     const currentModule = searchParams.get("module") || "front-office";
     const isReadOnly = currentModule === "housekeeping"; // read‑only mode for housekeeping
-    const { user } = useAuth();
+    const { user, activeHotelCode } = useAuth();
     
     const todayStr = React.useMemo(() => {
         const d = new Date();
@@ -127,7 +128,11 @@ export function OverviewSection() {
         // Allow status updates even in housekeeping view (they manage room status/remarks)
         console.log("handleStatusUpdate triggered", { item, field, value });
         try {
-            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
+            const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
+            if (!hotelId) {
+                toast.error("Hotel Code is missing.");
+                return;
+            }
             const checkInDate = item.checkInDate || item.checkIn;
             const checkOutDate = item.checkOutDate || item.checkOut;
             const isAcc = item.type === "accommodation" || (!item.type && item.guestName && !item.guestName.startsWith("POS Order") && !item.posItems && !item.revenueType);
@@ -178,7 +183,11 @@ export function OverviewSection() {
     const executeVoid = async () => {
         if (!bookingToVoid) return;
         try {
-            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
+            const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
+            if (!hotelId) {
+                toast.error("Hotel Code is missing.");
+                return;
+            }
             const isPOS = bookingToVoid.guestName?.startsWith("POS Order") || !!bookingToVoid.posItems || !!bookingToVoid.revenueType;
             const isAcc = !isPOS && (bookingToVoid.type === "accommodation" || (!bookingToVoid.type && bookingToVoid.guestName));
             const dates = getCascadeDates(bookingToVoid);
@@ -249,7 +258,11 @@ export function OverviewSection() {
     const executeCancel = async () => {
         if (!bookingToCancel) return;
         try {
-            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
+            const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
+            if (!hotelId) {
+                toast.error("Hotel Code is missing.");
+                return;
+            }
             const isPOS = bookingToCancel.guestName?.startsWith("POS Order") || !!bookingToCancel.posItems || !!bookingToCancel.revenueType;
             const isAcc = !isPOS && (bookingToCancel.type === "accommodation" || (!bookingToCancel.type && bookingToCancel.guestName));
             const dates = getCascadeDates(bookingToCancel);

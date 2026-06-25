@@ -40,7 +40,7 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
             const transactions: ExtendedTransaction[] = [];
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                const hotelId = data.hotelId || "87241";
+                const hotelId = data.hotelId || "";
                 (data.entries || []).forEach((t: any) => {
                     // Skip cancelled or voided transactions
                     const status = (t.status || "").toUpperCase();

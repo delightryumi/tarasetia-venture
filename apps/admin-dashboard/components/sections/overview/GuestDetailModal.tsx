@@ -41,7 +41,7 @@ const cleanUndefined = (obj: any): any => {
 };
 
 export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, onSave }: GuestDetailModalProps) {
-    const { user } = useAuth();
+    const { user, activeHotelCode } = useAuth();
     const [isEditMode, setIsEditMode] = React.useState(initialEditing);
     const [showConfirmVoid, setShowConfirmVoid] = React.useState(false);
     const [showConfirmCancel, setShowConfirmCancel] = React.useState(false);
@@ -169,7 +169,11 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
     const handleSave = async () => {
         try {
-            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
+            const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
+            if (!hotelId) {
+                toast.error("Hotel Code is missing.");
+                return;
+            }
             const newSource = formData.channel === "Walk-in" ? "Walk-in" : "OTA";
 
             if (formData.type === "accommodation") {
@@ -350,7 +354,11 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
     const executeVoid = async () => {
         try {
-            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
+            const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
+            if (!hotelId) {
+                toast.error("Hotel Code is missing.");
+                return;
+            }
             const isPOS = guest.guestName?.startsWith("POS Order") || !!guest.posItems || !!guest.revenueType;
             const isAcc = !isPOS && (guest.type === "accommodation" || (!guest.type && guest.guestName));
             const dates = getCascadeDates(guest);
@@ -408,7 +416,11 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
     const executeCancel = async () => {
         try {
-            const hotelId = localStorage.getItem("active_hotel_code") || "87241";
+            const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
+            if (!hotelId) {
+                toast.error("Hotel Code is missing.");
+                return;
+            }
             const isPOS = guest.guestName?.startsWith("POS Order") || !!guest.posItems || !!guest.revenueType;
             const isAcc = !isPOS && (guest.type === "accommodation" || (!guest.type && guest.guestName));
             const dates = getCascadeDates(guest);

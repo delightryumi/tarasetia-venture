@@ -6,7 +6,10 @@ import { getHotelCollection } from '@/lib/firestoreHelper';
 // Handler function for GET request to fetch product stocks
 export async function GET(request: NextRequest) {
   try {
-    const hotelCode = request.cookies.get('hotelCode')?.value || "87241";
+    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
+    if (!hotelCode || hotelCode === "87241") {
+      return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
+    }
     // Fetch product stocks from Firestore pos_products collection under the hotel subcollection
     const snap = await getDocs(getHotelCollection(db, 'pos_products', hotelCode));
     

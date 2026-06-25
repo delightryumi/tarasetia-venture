@@ -54,7 +54,11 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
             return count;
         };
 
-        const hotelId = localStorage.getItem("active_hotel_code") || "87241";
+        const hotelId = localStorage.getItem("active_hotel_code") || "";
+        if (!hotelId || hotelId === "87241") {
+            setStats(prev => ({ ...prev, loading: false }));
+            return;
+        }
         
         const fetchData = async () => {
             const totalPhysicalRooms = await fetchRooms();

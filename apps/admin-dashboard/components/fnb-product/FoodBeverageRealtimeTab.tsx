@@ -27,7 +27,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
   const [activeFeedTab, setActiveFeedTab] = useState<'pending' | 'completed'>('pending');
   const [newOrderAlert, setNewOrderAlert] = useState<boolean>(false);
   const [audioAlert, setAudioAlert] = useState<HTMLAudioElement | null>(null);
-  const [isAudioUnlocked, setIsAudioUnlocked] = useState<boolean>(false);
+  const [isAudioUnlocked, setIsAudioUnlocked] = useState<boolean>(true);
 
   const prevHeldOrdersIdsRef = React.useRef<string[]>([]);
   const isInitialLoadRef = React.useRef(true);
@@ -47,7 +47,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
     if (hotelCode) {
       setActiveCode(hotelCode);
     } else if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '87241';
+      const stored = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
       setActiveCode(stored);
     }
   }, [hotelCode]);
@@ -301,30 +301,8 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
 
   return (
     <div 
-      onClick={!isAudioUnlocked ? unlockAudioContext : undefined}
       style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%', position: 'relative' }}
     >
-      {!isAudioUnlocked && (
-        <div className="audio-unlock-overlay">
-          <div className="audio-unlock-card">
-            <div className="audio-unlock-icon-container">
-              <svg className="audio-unlock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-            </div>
-            <h2 className="audio-unlock-title">Pantauan Dapur Siap</h2>
-            <p className="audio-unlock-desc">
-              Browser memerlukan interaksi pertama Anda. Klik tombol di bawah ini untuk mengaktifkan notifikasi alarm pesanan baru.
-            </p>
-            <button 
-              onClick={unlockAudioContext} 
-              className="audio-unlock-btn"
-            >
-              Mulai Pantau (Aktifkan Suara)
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ── Alert Bar ── */}
       <AnimatePresence>

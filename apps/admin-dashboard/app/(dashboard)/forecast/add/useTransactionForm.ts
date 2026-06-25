@@ -515,7 +515,10 @@ export const useTransactionForm = () => {
             });
 
             for (const [dateStr, transactionEntries] of Object.entries(entriesByDate)) {
-                const hotelId = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") : null) || "87241";
+                const hotelId = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") : null) || "";
+                if (!hotelId || hotelId === "87241") {
+                    throw new Error("Hotel Code is missing or invalid. Action denied to prevent data contamination.");
+                }
                 const docId = `${hotelId}_${dateStr}`;
                 const docRef = doc(getHotelCollection(db, "daily_revenue"), docId);
                 const docSnap = await getDoc(docRef);
