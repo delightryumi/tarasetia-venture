@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useCallback } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 
@@ -16,10 +16,28 @@ export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNot
   const isInitialRef = useRef(true);
   const badgeCountRef = useRef(0);
 
-  // Read sound path from localStorage (same key as POS Settings)
+  const posSoundUrlRef = useRef<string>('/sounds/notification.mp3');
+
+  useEffect(() => {
+    if (!hotelCode || hotelCode === '0') return;
+    const hotelRef = doc(db, 'hotels', hotelCode);
+    const unsub = onSnapshot(hotelRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.posSoundUrl && data.posSoundUrl !== posSoundUrlRef.current) {
+          posSoundUrlRef.current = data.posSoundUrl;
+          if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+          }
+        }
+      }
+    });
+    return () => unsub();
+  }, [hotelCode]);
+
   const getSoundPath = useCallback((): string => {
-    if (typeof window === 'undefined') return '/sounds/notification.mp3';
-    return localStorage.getItem('pos_sound_choice') || '/sounds/notification.mp3';
+    return posSoundUrlRef.current || '/sounds/notification.mp3';
   }, []);
 
   // Preload & unlock audio on first user interaction

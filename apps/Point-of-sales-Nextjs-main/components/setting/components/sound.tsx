@@ -10,7 +10,10 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-toastify';
-import { Volume2, Upload, Trash2, Play, Music } from 'lucide-react';
+import { Volume2, Upload, Trash2, Play, Music, Loader2 } from 'lucide-react';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '@/lib/firebase';
 
 const PRESETS = [
   { id: 'bell', name: 'Lonceng Bell (Default)', path: '/sounds/notification.mp3' },
@@ -21,17 +24,43 @@ const PRESETS = [
 export default function SoundSettingCard() {
   const [selectedSound, setSelectedSound] = useState<string>('/sounds/notification.mp3');
   const [customSoundName, setCustomSoundName] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [hotelCode, setHotelCode] = useState<string>('1');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const savedSound = localStorage.getItem('pos_sound_choice');
-    const savedName = localStorage.getItem('pos_sound_custom_name');
-    if (savedSound) {
-      setSelectedSound(savedSound);
+    let currentHotelCode = "1";
+    if (typeof window !== 'undefined') {
+      const userJson = localStorage.getItem('user');
+      if (userJson) {
+        try {
+          const user = JSON.parse(userJson);
+          if (user?.hotelCode) {
+            currentHotelCode = user.hotelCode;
+            setHotelCode(currentHotelCode);
+          }
+        } catch (e) {}
+      }
     }
-    if (savedName) {
-      setCustomSoundName(savedName);
-    }
+
+    const hotelRef = doc(db, `hotels/${currentHotelCode}`);
+    const unsubscribe = onSnapshot(hotelRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.posSoundUrl) {
+          setSelectedSound(data.posSoundUrl);
+        } else {
+          setSelectedSound('/sounds/notification.mp3'); // default
+        }
+        if (data.posSoundName) {
+          setCustomSoundName(data.posSoundName);
+        } else {
+          setCustomSoundName(null);
+        }
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handlePlaySound = (soundPathOrBase64: string) => {
@@ -47,18 +76,21 @@ export default function SoundSettingCard() {
     }
   };
 
-  const handleSelectPreset = (path: string) => {
-    setSelectedSound(path);
-    localStorage.setItem('pos_sound_choice', path);
-    localStorage.removeItem('pos_sound_custom_name');
-    setCustomSoundName(null);
-    toast.success('Nada preset berhasil diterapkan!');
-    handlePlaySound(path);
-    // Dispatch event so layout.tsx reloads audio immediately
-    window.dispatchEvent(new Event('soundChanged'));
+  const handleSelectPreset = async (path: string) => {
+    try {
+      const hotelRef = doc(db, `hotels/${hotelCode}`);
+      await updateDoc(hotelRef, {
+        posSoundUrl: path,
+        posSoundName: null
+      });
+      toast.success('Nada preset berhasil diterapkan ke semua perangkat!');
+      handlePlaySound(path);
+    } catch (e) {
+      toast.error('Gagal menyimpan pengaturan nada.');
+    }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -67,29 +99,47 @@ export default function SoundSettingCard() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64String = event.target?.result as string;
-      setSelectedSound(base64String);
-      setCustomSoundName(file.name);
-      localStorage.setItem('pos_sound_choice', base64String);
-      localStorage.setItem('pos_sound_custom_name', file.name);
-      toast.success('Nada kustom berhasil diunggah!');
-      handlePlaySound(base64String);
-      window.dispatchEvent(new Event('soundChanged'));
-    };
-    reader.readAsDataURL(file);
+    setIsUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'mp3';
+      // Use /attachments path to match user's open storage rules
+      const storageRef = ref(storage, `attachments/settings_${hotelCode}/pos_sound_${Date.now()}.${ext}`);
+      
+      await uploadBytes(storageRef, file);
+      const downloadUrl = await getDownloadURL(storageRef);
+
+      const hotelRef = doc(db, `hotels/${hotelCode}`);
+      await updateDoc(hotelRef, {
+        posSoundUrl: downloadUrl,
+        posSoundName: file.name
+      });
+
+      toast.success('Nada kustom berhasil diunggah ke semua perangkat!');
+      handlePlaySound(downloadUrl);
+    } catch (error) {
+      console.error('Error uploading sound:', error);
+      toast.error('Gagal mengunggah file nada.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
-  const handleResetToDefault = () => {
+  const handleResetToDefault = async () => {
     const defaultPath = '/sounds/notification.mp3';
-    setSelectedSound(defaultPath);
-    setCustomSoundName(null);
-    localStorage.setItem('pos_sound_choice', defaultPath);
-    localStorage.removeItem('pos_sound_custom_name');
-    toast.info('Kembali menggunakan nada default.');
-    handlePlaySound(defaultPath);
-    window.dispatchEvent(new Event('soundChanged'));
+    try {
+      const hotelRef = doc(db, `hotels/${hotelCode}`);
+      await updateDoc(hotelRef, {
+        posSoundUrl: defaultPath,
+        posSoundName: null
+      });
+      toast.info('Kembali menggunakan nada default di semua perangkat.');
+      handlePlaySound(defaultPath);
+    } catch (e) {
+      toast.error('Gagal mereset nada.');
+    }
   };
 
   return (
@@ -100,7 +150,7 @@ export default function SoundSettingCard() {
           Nada Notifikasi Kasir
         </CardTitle>
         <CardDescription>
-          Kustomisasi nada alarm yang berbunyi saat ada pesanan baru. Berlaku di <strong>kasir POS</strong> maupun <strong>Admin Dashboard</strong> pada perangkat yang sama.
+          Kustomisasi nada alarm yang berbunyi saat ada pesanan baru. Berlaku terpusat secara real-time untuk <strong>semua Kasir, Layar Kitchen, dan Admin Dashboard</strong>.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -151,10 +201,11 @@ export default function SoundSettingCard() {
             />
             <Button
               onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
               className="flex items-center gap-2 bg-stone-900 text-white hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 transition-colors"
             >
-              <Upload className="w-4 h-4" />
-              Unggah File Audio
+              {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              {isUploading ? 'Mengunggah...' : 'Unggah File Audio'}
             </Button>
             {customSoundName && (
               <div className="flex items-center gap-3 bg-neutral-100 p-2.5 rounded-xl border">
@@ -180,7 +231,7 @@ export default function SoundSettingCard() {
       </CardContent>
       <CardFooter className="border-t px-6 py-4">
         <p className="text-xs text-muted-foreground">
-          Pengaturan suara kustom disimpan secara lokal pada per-komputer kasir ini.
+          Pengaturan suara kustom disimpan di Cloud (Firebase Storage) dan akan tersinkronisasi ke seluruh terminal Kasir & Dapur secara real-time.
         </p>
       </CardFooter>
     </Card>

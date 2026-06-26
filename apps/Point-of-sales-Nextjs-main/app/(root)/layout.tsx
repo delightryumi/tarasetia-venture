@@ -49,6 +49,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [hotelsList, setHotelsList] = useState<any[]>([]);
+  const posSoundUrlRef = React.useRef<string>('/sounds/notification.mp3');
 
   const handleHotelChange = (newCode: string) => {
     if (!user) return;
@@ -117,6 +118,14 @@ const RootLayout = ({ children }: RootLayoutProps) => {
             setStoreName(data.name);
             localStorage.setItem('restoName', data.name);
           }
+          if (data.posSoundUrl && data.posSoundUrl !== posSoundUrlRef.current) {
+            posSoundUrlRef.current = data.posSoundUrl;
+            // Force reset audio instance so it picks up the new sound
+            if (alarmAudioRef.current) {
+              alarmAudioRef.current.pause();
+              alarmAudioRef.current = null;
+            }
+          }
         }
       }, (err) => {
         console.error('Error fetching hotel status in POS RootLayout:', err);
@@ -161,10 +170,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const alarmAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const getNotificationSound = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('pos_sound_choice') || '/sounds/notification.mp3';
-    }
-    return '/sounds/notification.mp3';
+    return posSoundUrlRef.current || '/sounds/notification.mp3';
   }, []);
 
   const unlockAudioContext = useCallback(() => {

@@ -32,10 +32,11 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
   const prevHeldOrdersIdsRef = React.useRef<string[]>([]);
   const isInitialLoadRef = React.useRef(true);
   const alarmAudioRef = React.useRef<HTMLAudioElement | null>(null);
+  const posSoundUrlRef = React.useRef<string>('/sounds/notification.mp3');
 
   const getAudioInstance = useCallback(() => {
     if (!alarmAudioRef.current && typeof window !== 'undefined') {
-      alarmAudioRef.current = new Audio('/sounds/notification.mp3');
+      alarmAudioRef.current = new Audio(posSoundUrlRef.current || '/sounds/notification.mp3');
       alarmAudioRef.current.volume = 1.0;
       alarmAudioRef.current.loop = true;
     }
@@ -67,6 +68,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
 
     let unsubHeld: any;
     let unsubCompleted: any;
+    let unsubHotelConfig: any;
 
     const fetchConfigAndListen = async () => {
       setIsLoading(true);
@@ -148,6 +150,21 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
           console.error('Firestore completed orders listener error:', err);
         });
 
+        // 4. Listen to posSoundUrl
+        const hotelRef = doc(db, 'hotels', activeCode);
+        unsubHotelConfig = onSnapshot(hotelRef, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data.posSoundUrl && data.posSoundUrl !== posSoundUrlRef.current) {
+              posSoundUrlRef.current = data.posSoundUrl;
+              if (alarmAudioRef.current) {
+                alarmAudioRef.current.pause();
+                alarmAudioRef.current = null;
+              }
+            }
+          }
+        });
+
       } catch (err) {
         console.error('Failed to init real-time listen:', err);
         setIsLoading(false);
@@ -159,6 +176,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
     return () => {
       if (unsubHeld) unsubHeld();
       if (unsubCompleted) unsubCompleted();
+      if (unsubHotelConfig) unsubHotelConfig();
     };
   }, [activeCode, audioAlert]);
 
