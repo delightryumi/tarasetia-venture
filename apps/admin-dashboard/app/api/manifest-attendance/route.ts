@@ -8,12 +8,22 @@ export async function GET(request: Request) {
     host.includes("staff.mytara.id") ||
     host.includes("staff.localhost");
 
+  const { searchParams } = new URL(request.url);
+  const h = searchParams.get("h");
+
+  // Jika diakses lewat subdomain, scope dan start_url adalah "/"
+  // Jika lewat domain utama/lainnya, scope dan start_url adalah "/attendance"
+  const scope = isAttendanceDomain ? "/" : "/attendance";
+  let start_url = isAttendanceDomain ? "/" : "/attendance";
+
+  if (h) {
+    start_url += `?h=${h}`;
+  }
+
   const manifest = {
     id: "tara-attendance",
-    // Jika diakses lewat subdomain, scope dan start_url adalah "/"
-    // Jika lewat domain utama/lainnya, scope dan start_url adalah "/attendance"
-    scope: isAttendanceDomain ? "/" : "/attendance",
-    start_url: isAttendanceDomain ? "/" : "/attendance",
+    scope,
+    start_url,
     name: "Tara Absensi",
     short_name: "Tara Absensi",
     description: "Portal Absensi Karyawan Tara",

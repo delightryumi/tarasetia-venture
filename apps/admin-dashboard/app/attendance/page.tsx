@@ -16,7 +16,42 @@ import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 export default function AttendancePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const prefillHotelCode = searchParams.get("h") || "";
+  const [prefillHotelCode, setPrefillHotelCode] = useState("");
+
+  // Ambil hotel code dari URL, jika tidak ada fallback ke localStorage (untuk PWA)
+  useEffect(() => {
+    let h = searchParams.get("h");
+
+    // Toleransi typo URL (misal: ?=h97456 atau ?h97456)
+    if (!h && typeof window !== "undefined") {
+      const match = window.location.search.match(/[?&]=?h=?(\d+)/i);
+      if (match && match[1]) {
+        h = match[1];
+      }
+    }
+
+    if (h) {
+      localStorage.setItem("tara_attendance_hotel", h);
+      setPrefillHotelCode(h);
+    } else {
+      const saved = localStorage.getItem("tara_attendance_hotel");
+      if (saved) {
+        setPrefillHotelCode(saved);
+        h = saved; // Pakai yang tersimpan untuk manifest
+      }
+    }
+
+    // Injeksi manifest dinamis agar membawa parameter ?h= saat PWA diinstal
+    if (typeof document !== "undefined") {
+      let manifestLink = document.querySelector('link[rel="manifest"]');
+      if (!manifestLink) {
+        manifestLink = document.createElement("link");
+        manifestLink.setAttribute("rel", "manifest");
+        document.head.appendChild(manifestLink);
+      }
+      manifestLink.setAttribute("href", h ? `/api/manifest-attendance?h=${h}` : `/api/manifest-attendance`);
+    }
+  }, [searchParams]);
 
   const [activeTab, setActiveTab] = useState<"absen" | "ajukan" | "riwayat">("absen");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -244,7 +279,7 @@ export default function AttendancePage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prefillHotelCode) {
-      setLoginError("Kode hotel tidak ditemukan pada URL (?h=...)");
+      setLoginError("Kode partner tidak ditemukan pada URL.");
       return;
     }
     setLoginError("");
@@ -457,7 +492,7 @@ export default function AttendancePage() {
                 
                 <button 
                   type="button" 
-                  onClick={() => setLoginError("Lupa PIN? Silakan hubungi tim HRD / Administrator hotel untuk mereset PIN Anda.")}
+                  onClick={() => setLoginError("Lupa PIN? Silakan hubungi tim HRD / Administrator partner untuk mereset PIN Anda.")}
                   style={{ background: 'transparent', border: 'none', color: '#ffffff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', marginTop: '4px', textDecoration: 'underline', textUnderlineOffset: '2px', opacity: 0.9 }}
                 >
                   Lupa PIN Akses?

@@ -47,15 +47,10 @@ export const InstallAppButton = ({
       // Cek jika app sudah terinstal via standalone display mode
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
       
-      if (isStandalone) {
-        toast.success(`Aplikasi ${appName} sudah terpasang dan sedang berjalan secara mandiri.`);
-      } else {
-        toast.info(
-          `Untuk memasang ${appName}:\n` +
-          `1. Di Chrome/Edge: Klik ikon instalasi (layar komputer + tanda panah) di sebelah kanan address bar browser Anda.\n` +
-          `2. Di Safari (iOS): Klik tombol Share (Bagikan) lalu pilih 'Add to Home Screen' (Tambah ke Layar Utama).`,
-          { duration: 8000 }
-        );
+      if (!isStandalone) {
+        // Fallback untuk browser yang tidak mendukung beforeinstallprompt secara otomatis (seperti iOS Safari)
+        // Kita hanya beritahu singkat, tanpa alert panjang yang mengganggu
+        toast.info(`Silakan gunakan menu 'Add to Home Screen' di browser Anda.`);
       }
     }
   };
