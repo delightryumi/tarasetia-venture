@@ -93,6 +93,8 @@ export function useLexuPos() {
   const [isHoldConfirmOpen, setIsHoldConfirmOpen] = useState(false);
   const [activeHotelCode, setActiveHotelCode] = useState('');
   const [transactionId, setTransactionId] = useState<string>('');
+  const [receiptStatus, setReceiptStatus] = useState<'PAID' | 'UNPAID'>('PAID');
+  const [heldOrderToPrint, setHeldOrderToPrint] = useState<any>(null);
 
   const localProducts = useLiveQuery(() => localDb.products.toArray(), []) || [];
   
@@ -425,6 +427,9 @@ export function useLexuPos() {
       await localDb.heldOrders.put(heldOrderData);
       await setDoc(doc(getHotelCollection(db, "pos_held_orders"), heldId), heldOrderData);
       toast.success(`Pesanan${nameStr}${tableStr} berhasil ditunda (Hold Order).`);
+      setHeldOrderToPrint(heldOrderData);
+      setReceiptStatus('UNPAID');
+      setIsReceiptOpen(true);
     } catch (err) {
       console.error("Failed to hold order:", err);
       toast.error("Gagal menunda pesanan. Silakan coba lagi.");
@@ -465,6 +470,12 @@ export function useLexuPos() {
 
   const handleCloseReceipt = async () => {
     setIsReceiptOpen(false);
+    
+    if (receiptStatus === 'UNPAID') {
+      setHeldOrderToPrint(null);
+      setReceiptStatus('PAID');
+      return;
+    }
     
     if (typeof window !== 'undefined') {
       const activeShiftJson = localStorage.getItem('active_shift');
@@ -726,6 +737,10 @@ export function useLexuPos() {
     executePayment,
     handleCloseReceipt,
     checkActiveShift,
-    transactionId
+    transactionId,
+    receiptStatus,
+    setReceiptStatus,
+    heldOrderToPrint,
+    setHeldOrderToPrint
   };
 }

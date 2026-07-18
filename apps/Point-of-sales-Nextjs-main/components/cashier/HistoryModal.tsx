@@ -79,13 +79,25 @@ export default function HistoryModal({
   let foodTotal = 0, beverageTotal = 0, banquetTotal = 0, otherTotal = 0;
   detailTransactions.forEach(tx => {
     if (tx.status === 'CANCELLED' || tx.status === 'VOID') return;
+    const isTxCompliment = !!tx.isCompliment || 
+                          (tx.method?.toLowerCase() === 'compliment') || 
+                          (tx.paymentMethod?.toLowerCase() === 'compliment');
+                          
     const isBanquet = tx.revenueType?.toLowerCase() === 'banquet' ||
                       (tx.category?.toLowerCase() || '').includes('banquet');
+
+    if (isTxCompliment) {
+      // Seluruh transaksi compliment diabaikan dari penjualan riil kasir
+      return;
+    }
+
     if (isBanquet) {
       banquetTotal += tx.amount ?? tx.total ?? 0;
     } else if (tx.items && Array.isArray(tx.items)) {
       tx.items.forEach((item: any) => {
-        const itemTotal = (item.originalPrice ?? item.price ?? 0) * (item.quantity || 1);
+        // Jika item individu bertanda compliment, harganya dihitung 0
+        const itemPrice = item.isCompliment ? 0 : (item.originalPrice ?? item.price ?? 0);
+        const itemTotal = itemPrice * (item.quantity || 1);
         const target = item.pnlTarget?.toUpperCase() || '';
         const cat = item.category?.toUpperCase() || '';
         if (target === 'FOOD' || (!target && cat === 'FOOD')) foodTotal += itemTotal;
@@ -264,10 +276,10 @@ export default function HistoryModal({
               <table className="tx-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '28%' }}>Waktu</th>
-                    <th style={{ width: '22%' }}>No.</th>
+                    <th style={{ width: '15%' }}>Waktu</th>
+                    <th style={{ width: '42%' }}>No. Transaksi</th>
                     <th className="center" style={{ width: '18%' }}>Metode</th>
-                    <th className="right" style={{ width: '32%' }}>Nominal</th>
+                    <th className="right" style={{ width: '25%' }}>Nominal</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -277,11 +289,11 @@ export default function HistoryModal({
                     const m = fmtMethod(tx.method ?? tx.paymentMethod ?? 'cash');
                     const ts = tx.timestamp?.toDate ? tx.timestamp.toDate() : new Date(tx.timestamp || Date.now());
                     const timeStr = ts.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
-                    const txId = (tx.transactionId || tx.id || '').slice(-6).toUpperCase();
+                    const txId = (tx.transactionId || tx.id || '').toUpperCase();
                     return (
                       <tr key={i} style={isCancelled ? { textDecoration: 'line-through' } : undefined}>
                         <td>{timeStr}</td>
-                        <td className="bold font-mono">...{txId}{isCancelled && ' (VOID)'}</td>
+                        <td className="bold font-mono" style={{ fontSize: '7.5px', wordBreak: 'break-all' }}>{txId}{isCancelled && ' (VOID)'}</td>
                         <td className="center">{m}</td>
                         <td className="right bold">{formatMoney(amt)}</td>
                       </tr>

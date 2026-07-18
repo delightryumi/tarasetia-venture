@@ -264,16 +264,29 @@ export default function ThermalReceipt({
             <span className="font-bold">{transactionInfo.cashierName}</span>
           </div>
         )}
-        {printMode === 'all' && transactionInfo.paymentMethod && (
+        {printMode === 'all' && (
           <div className="flex justify-between">
             <span>Metode:</span>
             <span className="font-bold uppercase">
-              {transactionInfo.paymentMethod === 'cash' ? 'TUNAI' : 
-               transactionInfo.paymentMethod === 'qris' ? 'QRIS' : 
-               transactionInfo.paymentMethod === 'card' ? 'KARTU' : 
-               transactionInfo.paymentMethod === 'compliment' ? 'COMPLIMENT' : 
-               transactionInfo.paymentMethod}
+              {transactionInfo.status === 'UNPAID' ? (
+                <span className="text-red-600 font-extrabold">BELUM BAYAR (UNPAID)</span>
+              ) : transactionInfo.paymentMethod === 'cash' ? (
+                'TUNAI'
+              ) : transactionInfo.paymentMethod === 'qris' ? (
+                'QRIS'
+              ) : transactionInfo.paymentMethod === 'card' ? (
+                'KARTU'
+              ) : transactionInfo.paymentMethod === 'compliment' ? (
+                'COMPLIMENT'
+              ) : (
+                transactionInfo.paymentMethod
+              )}
             </span>
+          </div>
+        )}
+        {transactionInfo.status === 'UNPAID' && (
+          <div className="w-full text-center font-extrabold text-[11px] border border-red-600 text-red-600 py-1 my-1.5 uppercase font-mono tracking-wider animate-pulse">
+            *** BELUM LUNAS / UNPAID ***
           </div>
         )}
       </div>
@@ -392,20 +405,27 @@ export default function ThermalReceipt({
               <span>{formatCurrency(totals.payableAmount)}</span>
             </div>
 
-            {transactionInfo.paymentMethod && (
-              <div className="flex justify-between pt-1 mt-1 text-neutral-800">
+            {transactionInfo.status === 'UNPAID' ? (
+              <div className="flex justify-between pt-1 mt-1 text-red-600">
                 <span>Tipe Pembayaran:</span>
-                <span className="font-bold uppercase">
-                  {transactionInfo.paymentMethod === 'cash' ? 'TUNAI' : 
-                   transactionInfo.paymentMethod === 'qris' ? 'QRIS' : 
-                   transactionInfo.paymentMethod === 'card' ? 'KARTU' : 
-                   transactionInfo.paymentMethod === 'compliment' ? 'COMPLIMENT' : 
-                   transactionInfo.paymentMethod}
-                </span>
+                <span className="font-black uppercase">BELUM BAYAR (UNPAID)</span>
               </div>
+            ) : (
+              transactionInfo.paymentMethod && (
+                <div className="flex justify-between pt-1 mt-1 text-neutral-800">
+                  <span>Tipe Pembayaran:</span>
+                  <span className="font-bold uppercase">
+                    {transactionInfo.paymentMethod === 'cash' ? 'TUNAI' : 
+                     transactionInfo.paymentMethod === 'qris' ? 'QRIS' : 
+                     transactionInfo.paymentMethod === 'card' ? 'KARTU' : 
+                     transactionInfo.paymentMethod === 'compliment' ? 'COMPLIMENT' : 
+                     transactionInfo.paymentMethod}
+                  </span>
+                </div>
+              )
             )}
 
-            {totals.cashAmount !== undefined && totals.changeAmount !== undefined && (
+            {transactionInfo.status !== 'UNPAID' && totals.cashAmount !== undefined && totals.changeAmount !== undefined && (
               <>
                 <div className="flex justify-between pt-1 mt-1 border-t border-dotted border-gray-400">
                   <span>Uang Diterima:</span>
@@ -427,10 +447,17 @@ export default function ThermalReceipt({
             </div>
           )}
 
-          <div className="text-center text-[8px] italic leading-relaxed text-gray-700 mb-3">
-            <p className="m-0 font-medium">Terima kasih atas kunjungan Anda!</p>
-            <p className="m-0 text-gray-500">Struk ini adalah bukti pembayaran sah.</p>
-          </div>
+          {transactionInfo.status === 'UNPAID' ? (
+            <div className="text-center text-[8px] italic leading-relaxed text-red-650 font-bold mb-3">
+              <p className="m-0">Pesanan belum dibayar / Unpaid Bill.</p>
+              <p className="m-0 text-red-500">Bukan merupakan bukti pembayaran sah.</p>
+            </div>
+          ) : (
+            <div className="text-center text-[8px] italic leading-relaxed text-gray-700 mb-3">
+              <p className="m-0 font-medium">Terima kasih atas kunjungan Anda!</p>
+              <p className="m-0 text-gray-500">Struk ini adalah bukti pembayaran sah.</p>
+            </div>
+          )}
 
           {/* Powered By Footer */}
           <div className="flex flex-col items-center justify-center mt-4 pt-2 border-t border-dotted border-gray-300">

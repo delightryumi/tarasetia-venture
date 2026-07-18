@@ -104,10 +104,10 @@ export default function SelfOrderCard() {
   };
   
   // Table QR generator state
-  const [selectedTable, setSelectedTable] = useState('1');
+  const [selectedTable, setSelectedTable] = useState('');
   const [generatedUrl, setGeneratedUrl] = useState('');
   const [globalUrl, setGlobalUrl] = useState('');
-  const [tablesCount, setTablesCount] = useState(10);
+  const [tablesList, setTablesList] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchHotelConfig = async () => {
@@ -145,13 +145,29 @@ export default function SelfOrderCard() {
         
         setIsEnterprise(isSuper || plan.toLowerCase() === 'enterprise');
 
-        // 2. Fetch tables count from pos settings
+        // 2. Fetch tables config from pos settings
         const posDocRef = doc(db, 'hotels', code, 'settings', 'pos');
         const posSnap = await getDoc(posDocRef);
+        let parsedTables: string[] = [];
         if (posSnap.exists()) {
           const posData = posSnap.data();
-          const count = parseInt(posData.tables) || 10;
-          setTablesCount(count);
+          const rawTables = posData.tables || '10';
+          if (/^\d+$/.test(rawTables.trim())) {
+            const count = parseInt(rawTables.trim()) || 10;
+            for (let i = 1; i <= count; i++) {
+              parsedTables.push(`Meja ${i}`);
+            }
+          } else {
+            parsedTables = rawTables.split(',').map((t: string) => t.trim()).filter(Boolean);
+          }
+        } else {
+          for (let i = 1; i <= 10; i++) {
+            parsedTables.push(`Meja ${i}`);
+          }
+        }
+        setTablesList(parsedTables);
+        if (parsedTables.length > 0) {
+          setSelectedTable(parsedTables[0]);
         }
 
         // 3. Fetch self order settings
@@ -494,8 +510,8 @@ export default function SelfOrderCard() {
                   onChange={e => { setSelectedTable(e.target.value); setGeneratedUrl(''); }} 
                   className="h-9 px-3 border rounded-lg text-xs font-bold bg-white dark:bg-stone-900 focus:outline-none"
                 >
-                  {Array.from({ length: tablesCount }).map((_, i) => (
-                    <option key={i+1} value={String(i+1)}>Meja {i+1}</option>
+                  {tablesList.map((tableName, i) => (
+                    <option key={i} value={tableName}>{tableName}</option>
                   ))}
                 </select>
               </div>

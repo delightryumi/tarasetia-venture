@@ -72,13 +72,25 @@ export default function DetailModal({
 
   detailTransactions.forEach(tx => {
     if (tx.status === 'CANCELLED' || tx.status === 'VOID') return;
+    const isTxCompliment = !!tx.isCompliment || 
+                          (tx.method?.toLowerCase() === 'compliment') || 
+                          (tx.paymentMethod?.toLowerCase() === 'compliment');
+                          
     const isBanquet = tx.revenueType?.toLowerCase() === 'banquet' || 
                       (tx.category?.toLowerCase() || '').includes('banquet');
+
+    if (isTxCompliment) {
+      // Seluruh transaksi compliment diabaikan dari penjualan riil kasir
+      return;
+    }
+
     if (isBanquet) {
       banquetTotal += tx.amount ?? tx.total ?? 0;
     } else if (tx.items && Array.isArray(tx.items)) {
       tx.items.forEach((item: any) => {
-        const itemTotal = (item.originalPrice ?? item.price ?? 0) * (item.quantity || 1);
+        // Jika item individu bertanda compliment, harganya dihitung 0
+        const itemPrice = item.isCompliment ? 0 : (item.originalPrice ?? item.price ?? 0);
+        const itemTotal = itemPrice * (item.quantity || 1);
         const target = item.pnlTarget?.toUpperCase() || '';
         const cat = item.category?.toUpperCase() || '';
         if (target === 'FOOD' || (!target && cat === 'FOOD')) foodTotal += itemTotal;

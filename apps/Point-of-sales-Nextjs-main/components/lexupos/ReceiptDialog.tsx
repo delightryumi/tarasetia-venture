@@ -33,6 +33,7 @@ interface ReceiptDialogProps {
   cashierName?: string;
   onClose?: () => void;
   transactionId?: string;
+  status?: 'PAID' | 'UNPAID';
 }
 
 /**
@@ -69,7 +70,8 @@ export default function ReceiptDialog({
   cashAmount,
   cashierName = 'Kasir',
   onClose,
-  transactionId = ''
+  transactionId = '',
+  status = 'PAID'
 }: ReceiptDialogProps) {
   const { formatCurrency } = useCurrency();
   const [storeName, setStoreName] = React.useState('BUMI ANYOM RESORT');
@@ -138,15 +140,22 @@ export default function ReceiptDialog({
           <div className="border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 p-4 flex justify-center w-full max-w-sm shadow-sm shrink-0 print:p-0 print:bg-white print:border-none print:shadow-none print:w-full print:max-w-full print:mx-0 print:block">
             <ThermalReceipt
               shopInfo={{ name: storeName, address, phone }}
-              transactionInfo={{ id: transactionId || '—', date: now, customerName, cashierName, paymentMethod }}
+              transactionInfo={{ 
+                id: transactionId || '—', 
+                date: now, 
+                customerName, 
+                cashierName, 
+                paymentMethod: status === 'UNPAID' ? 'unpaid' : paymentMethod,
+                status: status
+              }}
               items={receiptItems}
               totals={{
                 subtotal, discount, 
                 taxRate: subtotal - discount > 0 ? Math.round((tax / (subtotal - discount)) * 100) : 10, 
                 taxAmount: tax, 
                 payableAmount, 
-                cashAmount: paymentMethod === 'cash' ? parseFloat(cashAmount) : undefined, 
-                changeAmount: paymentMethod === 'cash' ? calculatedChange() : undefined
+                cashAmount: status === 'UNPAID' ? undefined : (paymentMethod === 'cash' ? parseFloat(cashAmount) : undefined), 
+                changeAmount: status === 'UNPAID' ? undefined : (paymentMethod === 'cash' ? calculatedChange() : undefined)
               }}
               className="shadow-sm border border-neutral-200 print:shadow-none print:border-none print:w-full"
             />

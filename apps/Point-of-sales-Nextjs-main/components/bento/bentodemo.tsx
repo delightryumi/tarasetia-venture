@@ -11,7 +11,8 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, onSnapshot, collection, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { localDb } from '@/lib/dexie';
 import { toast } from 'react-toastify';
-import { Coffee, Users, Plus, Trash2, X, ClipboardList, CheckCircle } from 'lucide-react';
+import { Coffee, Users, Plus, Trash2, X, ClipboardList, CheckCircle, Printer } from 'lucide-react';
+import ReceiptDialog from '../lexupos/ReceiptDialog';
 
 // Live Tables Component
 function LiveTableGrid() {
@@ -24,6 +25,7 @@ function LiveTableGrid() {
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState<boolean>(false);
   const [isConfirmClearOpen, setIsConfirmClearOpen] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [isEditingTableName, setIsEditingTableName] = useState<boolean>(false);
@@ -424,20 +426,20 @@ function LiveTableGrid() {
         </div>
       )}
 
-      {/* Table Detailed Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
           
-          <div className="bg-white dark:bg-[#161618] border border-slate-200 dark:border-white/[0.08] w-full max-w-md rounded-xl shadow-2xl p-6 z-10 flex flex-col relative overflow-hidden font-sans">
+          <div className="bg-white dark:bg-[#161618] border border-slate-200 dark:border-white/[0.08] w-full max-w-md rounded-xl shadow-2xl p-6 z-10 flex flex-col relative overflow-hidden font-sans max-h-[90vh]">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-zinc-800 text-neutral-500 dark:text-neutral-400 border-none cursor-pointer"
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-zinc-800 text-neutral-500 dark:text-neutral-400 border-none cursor-pointer z-10"
             >
               <X size={16} />
             </button>
 
-            <div className="flex flex-col gap-1.5 mb-5 border-b border-neutral-100 dark:border-zinc-800 pb-4 pr-8">
+            {/* Header section (fixed, won't scroll) */}
+            <div className="flex flex-col gap-1.5 mb-3 border-b border-neutral-100 dark:border-zinc-800 pb-2.5 pr-8 shrink-0">
               <span className="text-[10px] text-neutral-400 dark:text-zinc-500 font-bold uppercase tracking-wider">Detail Sesi Meja</span>
               {isEditingTableName ? (
                 <div className="flex items-center gap-2 mt-1">
@@ -482,127 +484,159 @@ function LiveTableGrid() {
               )}
             </div>
 
-            {selectedOrder ? (
-              <div className="flex-grow flex flex-col min-h-0">
-                {/* Guest Info */}
-                <div className="flex flex-col gap-2 bg-neutral-50 dark:bg-white/[0.02] border border-neutral-150 dark:border-white/[0.05] rounded-[10px] p-3 mb-4">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-neutral-500 dark:text-[#a1a1aa] font-medium">Nama Tamu</span>
-                    <span className="text-neutral-800 dark:text-[#f4f4f5] font-black">{selectedOrder.customerName || 'Guest'}</span>
-                  </div>
-                  {selectedOrder.notes && (
-                    <div className="flex flex-col gap-0.5 text-xs pt-1 border-t border-neutral-200/50 dark:border-zinc-800/50">
-                      <span className="text-neutral-500 dark:text-[#a1a1aa] font-medium">Catatan Meja</span>
-                      <span className="text-neutral-700 dark:text-neutral-300 italic">{selectedOrder.notes}</span>
+            {/* Scrollable body section */}
+            <div className="flex-1 overflow-y-auto pr-1 thin-scrollbar flex flex-col min-h-0">
+              {selectedOrder ? (
+                <div className="flex-grow flex flex-col min-h-0">
+                  {/* Guest Info */}
+                  <div className="flex flex-col gap-2 bg-neutral-50 dark:bg-white/[0.02] border border-neutral-150 dark:border-white/[0.05] rounded-[10px] p-3 mb-4 shrink-0">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-neutral-500 dark:text-[#a1a1aa] font-medium">Nama Tamu</span>
+                      <span className="text-neutral-800 dark:text-[#f4f4f5] font-black">{selectedOrder.customerName || 'Guest'}</span>
                     </div>
-                  )}
-                </div>
+                    {selectedOrder.notes && (
+                      <div className="flex flex-col gap-0.5 text-xs pt-1 border-t border-neutral-200/50 dark:border-zinc-800/50">
+                        <span className="text-neutral-500 dark:text-[#a1a1aa] font-medium">Catatan Meja</span>
+                        <span className="text-neutral-700 dark:text-neutral-300 italic">{selectedOrder.notes}</span>
+                      </div>
+                    )}
+                  </div>
 
-                {/* Items List */}
-                <span className="text-[10px] text-neutral-400 dark:text-zinc-500 font-bold uppercase tracking-wider mb-2">Item Pesanan</span>
-                <div className="flex-grow max-h-[160px] overflow-y-auto border border-neutral-100 dark:border-zinc-800/80 rounded-[10px] p-3 flex flex-col gap-2 mb-4 bg-transparent no-scrollbar">
-                  {selectedOrder.cart && selectedOrder.cart.map((item: any, idx: number) => (
-                    <div key={idx} className="flex justify-between items-start text-xs">
-                      <div className="flex flex-col min-w-0 pr-4">
-                        <span className="text-neutral-800 dark:text-[#f4f4f5] font-bold truncate">
-                          {item.product?.name || 'Item'}
-                        </span>
-                        <span className="text-[10px] text-neutral-500 dark:text-[#a1a1aa]">
-                          {item.quantity} x {formatCurrency(item.product?.price || 0)}
+                  {/* Items List (Internal scroll if item list is massive) */}
+                  <span className="text-[10px] text-neutral-400 dark:text-zinc-500 font-bold uppercase tracking-wider mb-2 shrink-0">Item Pesanan</span>
+                  <div className="max-h-[220px] overflow-y-auto border border-neutral-100 dark:border-zinc-800/80 rounded-[10px] p-3 flex flex-col gap-2 mb-4 bg-transparent thin-scrollbar shrink-0">
+                    {selectedOrder.cart && selectedOrder.cart.map((item: any, idx: number) => (
+                      <div key={idx} className="flex justify-between items-start text-xs">
+                        <div className="flex flex-col min-w-0 pr-4">
+                          <span className="text-neutral-800 dark:text-[#f4f4f5] font-bold truncate">
+                            {item.product?.name || 'Item'}
+                          </span>
+                          <span className="text-[10px] text-neutral-500 dark:text-[#a1a1aa]">
+                            {item.quantity} x {formatCurrency(item.product?.price || 0)}
+                          </span>
+                        </div>
+                        <span className="text-neutral-800 dark:text-[#f4f4f5] font-bold shrink-0">
+                          {formatCurrency((item.product?.price || 0) * item.quantity)}
                         </span>
                       </div>
-                      <span className="text-neutral-800 dark:text-[#f4f4f5] font-bold shrink-0">
-                        {formatCurrency((item.product?.price || 0) * item.quantity)}
+                    ))}
+                  </div>
+
+                  {/* Totals */}
+                  <div className="border-t border-neutral-100 dark:border-zinc-800 pt-3 flex flex-col gap-1.5 mb-5 shrink-0">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-neutral-500 dark:text-neutral-400 font-medium">Subtotal</span>
+                      <span className="text-neutral-800 dark:text-[#f4f4f5] font-semibold">{formatCurrency(selectedOrder.subtotal || 0)}</span>
+                    </div>
+                    {selectedOrder.tax > 0 && (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-neutral-500 dark:text-neutral-400 font-medium">Pajak & Layanan</span>
+                        <span className="text-neutral-800 dark:text-[#f4f4f5] font-semibold">{formatCurrency(selectedOrder.tax || 0)}</span>
+                      </div>
+                    )}
+                    {(selectedOrder.discount > 0 || selectedOrder.discountPercent > 0) && (
+                      <div className="flex justify-between items-center text-xs text-red-500">
+                        <span>Diskon {selectedOrder.discountPercent > 0 ? `(${selectedOrder.discountPercent}%)` : ''}</span>
+                        <span>-{formatCurrency(selectedOrder.discount ?? 0)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-neutral-100 dark:border-zinc-800/80 mt-1">
+                      <span className="text-neutral-800 dark:text-neutral-200 font-black">Total Tagihan</span>
+                      <span className="text-stone-900 dark:text-white font-black text-base">
+                        {formatCurrency(selectedOrder.payableAmount ?? selectedOrder.subtotal ?? 0)}
                       </span>
                     </div>
-                  ))}
-                </div>
-
-                {/* Totals */}
-                <div className="border-t border-neutral-100 dark:border-zinc-800 pt-3 flex flex-col gap-1.5 mb-6">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-neutral-500 dark:text-neutral-400 font-medium">Subtotal</span>
-                    <span className="text-neutral-800 dark:text-[#f4f4f5] font-semibold">{formatCurrency(selectedOrder.subtotal || 0)}</span>
+                    {/* Status Banner */}
+                    <div className={cn(
+                      "mt-3 p-2 rounded-[10px] text-center text-[10px] font-black uppercase tracking-wider leading-none shrink-0",
+                      selectedOrder.isPaidDirectly 
+                        ? "bg-emerald-500/10 text-emerald-650 dark:bg-emerald-500/20 dark:text-emerald-400"
+                        : "bg-amber-500/10 text-amber-650 dark:bg-amber-500/20 dark:text-amber-400"
+                    )}>
+                      {selectedOrder.isPaidDirectly ? "Pembayaran: PAID (Lunas)" : "Pembayaran: UNPAID (Belum Bayar)"}
+                    </div>
                   </div>
-                  {selectedOrder.tax > 0 && (
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-neutral-500 dark:text-neutral-400 font-medium">Pajak & Layanan</span>
-                      <span className="text-neutral-800 dark:text-[#f4f4f5] font-semibold">{formatCurrency(selectedOrder.tax || 0)}</span>
-                    </div>
-                  )}
-                  {(selectedOrder.discount > 0 || selectedOrder.discountPercent > 0) && (
-                    <div className="flex justify-between items-center text-xs text-red-500">
-                      <span>Diskon {selectedOrder.discountPercent > 0 ? `(${selectedOrder.discountPercent}%)` : ''}</span>
-                      <span>-{formatCurrency(selectedOrder.discount ?? 0)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center text-sm pt-2 border-t border-neutral-100 dark:border-zinc-800/80 mt-1">
-                    <span className="text-neutral-800 dark:text-neutral-200 font-black">Total Tagihan</span>
-                    <span className="text-stone-900 dark:text-white font-black text-base">
-                      {formatCurrency(selectedOrder.payableAmount ?? selectedOrder.subtotal ?? 0)}
+
+                  {/* Actions */}
+                  <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                    {!selectedOrder.isPaidDirectly ? (
+                      <>
+                        <button
+                          onClick={handleCheckout}
+                          className="flex-1 py-3 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 font-black text-xs cursor-pointer border-none flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-[0.98]"
+                        >
+                          <Plus size={14} />
+                          Ubah & Tambah Orderan
+                        </button>
+                        <button
+                          disabled={true}
+                          title="Meja belum lunas. Selesaikan pembayaran di kasir terlebih dahulu."
+                          className="py-3 px-4 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-600 font-black text-xs cursor-not-allowed border-none flex items-center justify-center gap-1.5 opacity-50"
+                        >
+                          <Trash2 size={14} />
+                          Clear Table
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        disabled={isDeleting}
+                        onClick={handleClearTable}
+                        className="w-full py-3 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 font-black text-xs cursor-pointer border-none flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-[0.98] disabled:opacity-50"
+                      >
+                        <CheckCircle size={14} />
+                        Selesai & Kosongkan Meja
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => setIsPrintDialogOpen(true)}
+                    className="w-full py-3 px-4 rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-neutral-800 dark:text-neutral-200 font-black text-xs cursor-pointer border border-neutral-200 dark:border-white/[0.08] flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-[0.98] mt-2 shrink-0 mb-2"
+                  >
+                    <Printer size={14} />
+                    Cetak Struk / KOT (Kitchen/Bar)
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  <div className="py-6 border border-dashed border-neutral-150 dark:border-zinc-800 rounded-xl flex flex-col justify-center items-center text-center p-4 gap-2.5 mb-6">
+                    <span className="text-xs text-neutral-500 dark:text-[#a1a1aa] font-semibold">
+                      Meja ini saat ini kosong (tidak ada pesanan aktif).
                     </span>
                   </div>
-                  {/* Status Banner */}
-                  <div className={cn(
-                    "mt-3 p-2 rounded-[10px] text-center text-[10px] font-black uppercase tracking-wider leading-none",
-                    selectedOrder.isPaidDirectly 
-                      ? "bg-emerald-500/10 text-emerald-650 dark:bg-emerald-500/20 dark:text-emerald-400"
-                      : "bg-amber-500/10 text-amber-650 dark:bg-amber-500/20 dark:text-amber-400"
-                  )}>
-                    {selectedOrder.isPaidDirectly ? "Pembayaran: PAID (Lunas)" : "Pembayaran: UNPAID (Belum Bayar)"}
-                  </div>
+                  <button
+                    onClick={handleOpenNewTable}
+                    className="w-full py-3 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 font-black text-xs cursor-pointer border-none flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-[0.98]"
+                  >
+                    <Plus size={14} />
+                    Buka Meja Baru
+                  </button>
                 </div>
-
-                {/* Actions */}
-                <div className="flex flex-col sm:flex-row gap-2">
-                  {!selectedOrder.isPaidDirectly ? (
-                    <>
-                      <button
-                        onClick={handleCheckout}
-                        className="flex-1 py-3 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 font-black text-xs cursor-pointer border-none flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-[0.98]"
-                      >
-                        <Plus size={14} />
-                        Ubah & Tambah Orderan
-                      </button>
-                      <button
-                        disabled={true}
-                        title="Meja belum lunas. Selesaikan pembayaran di kasir terlebih dahulu."
-                        className="py-3 px-4 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-600 font-black text-xs cursor-not-allowed border-none flex items-center justify-center gap-1.5 opacity-50"
-                      >
-                        <Trash2 size={14} />
-                        Clear Table
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      disabled={isDeleting}
-                      onClick={handleClearTable}
-                      className="w-full py-3 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 font-black text-xs cursor-pointer border-none flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-[0.98] disabled:opacity-50"
-                    >
-                      <CheckCircle size={14} />
-                      Selesai & Kosongkan Meja
-                    </button>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col">
-                <div className="py-6 border border-dashed border-neutral-150 dark:border-zinc-800 rounded-xl flex flex-col justify-center items-center text-center p-4 gap-2.5 mb-6">
-                  <span className="text-xs text-neutral-500 dark:text-[#a1a1aa] font-semibold">
-                    Meja ini saat ini kosong (tidak ada pesanan aktif).
-                  </span>
-                </div>
-                <button
-                  onClick={handleOpenNewTable}
-                  className="w-full py-3 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 font-black text-xs cursor-pointer border-none flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-[0.98]"
-                >
-                  <Plus size={14} />
-                  Buka Meja Baru
-                </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
+      )}
+
+      {isPrintDialogOpen && selectedOrder && (
+        <ReceiptDialog
+          isOpen={isPrintDialogOpen}
+          onOpenChange={setIsPrintDialogOpen}
+          customerName={selectedOrder.customerName || 'Guest'}
+          tableNumber={selectedOrder.tableNumber || selectedTable || ''}
+          notes={selectedOrder.notes || ''}
+          paymentMethod={selectedOrder.isPaidDirectly ? (selectedOrder.paymentMethod || 'cash') : 'unpaid'}
+          cart={selectedOrder.cart || []}
+          subtotal={selectedOrder.subtotal || 0}
+          tax={selectedOrder.tax || 0}
+          discount={selectedOrder.discount || 0}
+          payableAmount={selectedOrder.payableAmount ?? selectedOrder.subtotal ?? 0}
+          cashAmount={selectedOrder.isPaidDirectly ? (selectedOrder.cashAmount || '0') : '0'}
+          cashierName={selectedOrder.cashierName || 'Kasir'}
+          status={selectedOrder.isPaidDirectly ? 'PAID' : 'UNPAID'}
+          onClose={() => setIsPrintDialogOpen(false)}
+          transactionId={selectedOrder.id || ''}
+        />
       )}
 
       {/* Custom CSS Confirmation Modal for Clearing Table */}

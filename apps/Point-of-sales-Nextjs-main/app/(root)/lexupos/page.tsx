@@ -70,7 +70,11 @@ export default function LexuPosPage() {
     executePayment,
     handleCloseReceipt,
     checkActiveShift,
-    transactionId
+    transactionId,
+    receiptStatus,
+    setReceiptStatus,
+    heldOrderToPrint,
+    setHeldOrderToPrint
   } = useLexuPos();
 
   return (
@@ -99,19 +103,20 @@ export default function LexuPosPage() {
           <ReceiptDialog
             isOpen={isReceiptOpen}
             onOpenChange={setIsReceiptOpen}
-            customerName={customerName}
-            tableNumber={tableNumber}
-            notes={notes}
-            paymentMethod={paymentMethod}
-            cart={cart}
-            subtotal={subtotal}
-            tax={tax}
-            discount={discount}
-            payableAmount={payableAmount}
-            cashAmount={cashAmount}
-            cashierName={cashierName}
+            customerName={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.customerName : customerName}
+            tableNumber={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.tableNumber : tableNumber}
+            notes={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.notes : notes}
+            paymentMethod={receiptStatus === 'UNPAID' ? 'unpaid' : paymentMethod}
+            cart={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.cart : cart}
+            subtotal={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.subtotal : subtotal}
+            tax={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.tax : tax}
+            discount={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.discount : discount}
+            payableAmount={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.payableAmount : payableAmount}
+            cashAmount={receiptStatus === 'UNPAID' ? '0' : cashAmount}
+            cashierName={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.cashierName : cashierName}
+            status={receiptStatus}
             onClose={handleCloseReceipt}
-            transactionId={transactionId}
+            transactionId={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.id : transactionId}
           />
 
           <ProductDetailModalLexupos 
