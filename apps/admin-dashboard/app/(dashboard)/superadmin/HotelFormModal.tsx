@@ -207,6 +207,11 @@ export const HotelFormModal: React.FC<HotelFormModalProps> = ({
                     <option value="paid">Lunas (Paid)</option>
                     <option value="unpaid">Belum Lunas (Unpaid)</option>
                   </select>
+                  {isEditing && billingStatus === "paid" && (
+                    <p style={{ fontSize: 11, color: "#15803d", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                      ✓ Mengubah ke Lunas akan otomatis <strong>mengaktifkan kembali</strong> akses partner.
+                    </p>
+                  )}
                 </div>
                 <div className={styles.formField}>
                   <label className={styles.formLabel}>Jatuh Tempo Selanjutnya</label>

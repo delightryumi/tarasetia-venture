@@ -376,8 +376,19 @@ export default function SuperadminPage() {
         name: name.trim(), domain: domain.trim(),
         subdomain: subdomain.trim() || `${code}.crs.local`,
         address: address.trim(), phone: phone.trim(), email: email.trim(),
-        billing: { plan, cycle, status: billingStatus, nextDueDate: nextDueDate ? new Date(nextDueDate).toISOString() : new Date().toISOString(), showBillingAlert, showExpirationAlert, activeModules },
-        ...(isEditing ? {} : { active: true, createdAt: new Date().toISOString(), suspendedAt: null }),
+        billing: {
+          plan, cycle,
+          status: billingStatus,
+          nextDueDate: nextDueDate ? new Date(nextDueDate).toISOString() : new Date().toISOString(),
+          // Jika paid, paksa showBillingAlert false agar suspend modal hilang
+          showBillingAlert: billingStatus === "paid" ? false : showBillingAlert,
+          showExpirationAlert,
+          activeModules,
+        },
+        // Saat edit & paid: reaktifkan hotel + hapus flag suspend
+        ...(isEditing
+          ? (billingStatus === "paid" ? { active: true, suspendedAt: null } : {})
+          : { active: true, createdAt: new Date().toISOString(), suspendedAt: null }),
       };
 
       await setDoc(doc(db, "hotels", isEditing ? currentHotelCode : code), dataPayload, { merge: true });
