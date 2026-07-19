@@ -17,15 +17,17 @@ export default function PrintStyles() {
           margin: 0 !important;
           padding: 0 !important;
           background: #fff !important;
+          visibility: hidden !important;
         }
 
-        /* REMOVED: AGGRESSIVE PRINT ISOLATION */
-
         .receipt-print-wrapper {
-          position: static !important;
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
           width: 100% !important;
           max-width: 100% !important;
           margin: 0 !important;
+          padding: 4mm !important;
           -webkit-font-smoothing: none !important;
           -moz-osx-font-smoothing: none !important;
           text-rendering: optimizeSpeed !important;
@@ -33,8 +35,10 @@ export default function PrintStyles() {
           color: #000 !important;
           box-shadow: none !important;
           border: none !important;
+          visibility: visible !important;
         }
         .receipt-print-wrapper * {
+          visibility: visible !important;
           color: #000 !important;
           text-shadow: none !important;
           box-shadow: none !important;
