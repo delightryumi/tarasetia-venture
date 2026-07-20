@@ -23,4 +23,6 @@ export interface TransactionData {
   paymentMethod?: string;
   status?: string;
   cancelReason?: string;
+  tableNumber?: string;
+  table?: string;
 }
