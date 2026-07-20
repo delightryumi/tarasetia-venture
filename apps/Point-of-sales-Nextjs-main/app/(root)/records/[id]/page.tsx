@@ -166,7 +166,8 @@ export default function DetailPage() {
                   customerName: 'Walk-in Customer', 
                   paymentMethod: transactionData[0]?.paymethod || transactionData[0]?.paymentMethod || 'TUNAI',
                   status: transactionData[0]?.status,
-                  cancelReason: transactionData[0]?.cancelReason
+                  cancelReason: transactionData[0]?.cancelReason,
+                  tableName: transactionData[0]?.tableNumber || transactionData[0]?.table || undefined,
                 }}
                 items={receiptItems}
                 totals={{
@@ -193,7 +194,8 @@ export default function DetailPage() {
               customerName: 'Walk-in Customer', 
               paymentMethod: transactionData[0]?.paymethod || transactionData[0]?.paymentMethod || 'TUNAI',
               status: transactionData[0]?.status,
-              cancelReason: transactionData[0]?.cancelReason
+              cancelReason: transactionData[0]?.cancelReason,
+              tableName: transactionData[0]?.tableNumber || transactionData[0]?.table || undefined,
             }}
             items={receiptItems}
             totals={{

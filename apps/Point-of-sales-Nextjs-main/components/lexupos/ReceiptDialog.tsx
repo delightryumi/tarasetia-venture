@@ -146,7 +146,8 @@ export default function ReceiptDialog({
                 customerName, 
                 cashierName, 
                 paymentMethod: status === 'UNPAID' ? 'unpaid' : paymentMethod,
-                status: status
+                status: status,
+                tableName: tableNumber || undefined,
               }}
               items={receiptItems}
               totals={{
