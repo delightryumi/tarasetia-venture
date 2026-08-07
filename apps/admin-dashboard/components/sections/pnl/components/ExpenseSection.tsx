@@ -44,6 +44,7 @@ const rise = {
 
 /* ─────────────────────── types ─────────────────────── */
 interface ExpenseSectionProps {
+  isStartup?: boolean;
   month: string;
   expenses: PnlExpenseItem[];
   onRefresh: () => void;
@@ -53,10 +54,14 @@ interface ExpenseSectionProps {
    COMPONENT
    ═══════════════════════════════════════════════════════════ */
 export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
+  isStartup = false,
   month,
   expenses,
   onRefresh,
 }) => {
+  const activeDepartments = isStartup
+    ? DEPARTMENTS.filter(d => d !== "Housekeeping" && d !== "Front Office")
+    : DEPARTMENTS;
   const [isAdding,    setIsAdding]    = useState(false);
   const [editingId,   setEditingId]   = useState<string | null>(null);
   const [editData,    setEditData]    = useState<PnlExpenseItem | null>(null);
@@ -239,7 +244,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                           onChange={e => patchRow(idx, { department: e.target.value })}
                         >
                           <option value="">Select…</option>
-                          {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                          {activeDepartments.map(d => <option key={d} value={d}>{d}</option>)}
                         </select>
                       </div>
 
@@ -393,7 +398,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                                 onChange={e => setEditData(d => d ? { ...d, department: e.target.value } : null)}
                               >
                                 <option value="">Select…</option>
-                                {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                                {activeDepartments.map(d => <option key={d} value={d}>{d}</option>)}
                               </select>
                             ) : (
                               <div className={s.cellDept}>

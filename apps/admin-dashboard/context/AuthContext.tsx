@@ -231,7 +231,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const loginWithFirestore = async (email: string, password: string, hotelCodeInput?: string): Promise<boolean> => {
         try {
-            const isSuperadminEmail = email.toLowerCase() === "admin@setara.co.id";
+            const isSuperadminEmail = email.toLowerCase() === "superadmin@setara.co.id";
             let code = hotelCodeInput?.trim() || "";
 
             // Allow "0" as a bypass code for superadmin
@@ -246,14 +246,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     throw new Error("Hotel Code wajib diisi.");
                 }
 
-                // Verify hotel exists and is active
+                // Verify hotel exists
                 const hotelRef = doc(db, "hotels", code);
                 const hotelSnap = await getDoc(hotelRef);
                 if (!hotelSnap.exists()) {
                     throw new Error("Hotel tidak terdaftar.");
-                }
-                if (!hotelSnap.data().active) {
-                    throw new Error("Sistem ditangguhkan. Silakan hubungi administrator.");
                 }
             }
 

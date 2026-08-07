@@ -31,6 +31,7 @@ const rise = {
 ══════════════════════════════════════════════════════ */
 export function PNLSection() {
     const {
+        isStartup,
         viewMode, setViewMode,
         displayMode, setDisplayMode,
         month, setMonth,
@@ -105,6 +106,7 @@ export function PNLSection() {
             <AnimatePresence mode="wait">
                 {displayMode === "cards" ? (
                     <PNLSummaryCards
+                        isStartup={isStartup}
                         pnlResult={pnlResult}
                         loading={loading}
                         vatPercentage={vatPercentage}
@@ -141,6 +143,7 @@ export function PNLSection() {
 
                         {pnlResult && (
                             <FinancialBreakdown
+                                isStartup={isStartup}
                                 pnlResult={pnlResult}
                                 customIncomes={customIncomes}
                                 nonCommissionRevenue={nonCommissionRevenue}
@@ -187,7 +190,7 @@ export function PNLSection() {
 
             {/* Expense Input Section */}
             {viewMode === "monthly" ? (
-                <ExpenseSection month={month} expenses={expenses} onRefresh={fetchData} />
+                <ExpenseSection isStartup={isStartup} month={month} expenses={expenses} onRefresh={fetchData} />
             ) : loading ? (
                 <div className="bg-white dark:bg-[#1a1a1a] border border-stone-100 dark:border-[#262626] rounded-2xl p-10 text-center shadow-xl shadow-stone-200/20 dark:shadow-none">
                     <p className="text-stone-500 dark:text-[#a1a1aa] animate-pulse font-medium">Memuat data Profit & Loss...</p>

@@ -95,10 +95,10 @@ async function runReset() {
     await deleteCollection("users_master");
 
     // 3. SEEDING AKUN SUPERADMIN (Partner Code: 0)
-    console.log("Membuat akun SUPERADMIN (admin@setara.co.id)...");
+    console.log("Membuat akun SUPERADMIN (superadmin@setara.co.id)...");
     const superadminRecord = await adminAuth.createUser({
-      email: "admin@setara.co.id",
-      password: "222222",
+      email: "superadmin@setara.co.id",
+      password: "Agnesia27",
       displayName: "Master Superadmin",
     });
     await adminAuth.setCustomUserClaims(superadminRecord.uid, {
@@ -107,9 +107,9 @@ async function runReset() {
     });
     console.log("Superadmin Auth dibuat.");
 
-    const superadminDocId = "admin_setara_co_id";
+    const superadminDocId = "superadmin_setara_co_id";
     await adminDb.collection("users_master").doc(superadminDocId).set({
-      email: "admin@setara.co.id",
+      email: "superadmin@setara.co.id",
       name: "Master Superadmin",
       role: "superadmin",
       hotelCode: "0",

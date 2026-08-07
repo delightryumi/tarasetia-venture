@@ -123,7 +123,7 @@ export default function SelfOrderCard() {
             parsed?.role?.toLowerCase() === 'superadmin' ||
             parsed?.role?.toLowerCase() === 'super admin' ||
             parsed?.email?.toLowerCase() === 'nexura.management@gmail.com' ||
-            parsed?.email?.toLowerCase() === 'admin@setara.co.id';
+            parsed?.email?.toLowerCase() === 'superadmin@setara.co.id';
         }
         setHotelCode(code);
         

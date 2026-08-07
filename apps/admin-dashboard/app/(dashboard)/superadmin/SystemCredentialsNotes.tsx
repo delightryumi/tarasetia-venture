@@ -36,8 +36,8 @@ export function SystemCredentialsNotes() {
 
           {/* Rows */}
           <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "var(--s-space-sm)", borderTop: "1px solid var(--s-hairline)", paddingTop: "var(--s-space-md)" }}>
-            <Row label="Email" value="admin@setara.co.id" />
-            <Row label="Sandi" value="222222" mono />
+            <Row label="Email" value="superadmin@setara.co.id" />
+            <Row label="Sandi" value="Agnesia27" mono />
             <Row label="Partner Code" value="0" mono accent="#006241" />
           </div>
         </div>

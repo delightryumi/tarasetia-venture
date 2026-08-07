@@ -7,14 +7,56 @@ import { useFrontOfficeData, YEARS, MONTHS } from "./hooks/useFrontOfficeData";
 import { usePosOrdersData } from "./hooks/usePosOrdersData";
 import { usePayrollData } from "./hooks/usePayrollData";
 
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
+
 export { YEARS, MONTHS };
 
 export const usePnL = () => {
+    const { activeHotelCode } = useAuth();
+    const [isStartup, setIsStartup] = useState<boolean>(false);
     const [viewMode, setViewMode] = useState<"monthly" | "yearly">("monthly");
     const [displayMode, setDisplayMode] = useState<"cards" | "charts">("cards");
     const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
     const [pnlResult, setPnlResult] = useState<GlobalPnLResult | null>(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
+
+    useEffect(() => {
+        let codeToUse = activeHotelCode;
+        if ((!codeToUse || codeToUse === "0") && typeof window !== "undefined") {
+            const stored = localStorage.getItem("active_hotel_code");
+            if (stored && stored !== "0") {
+                codeToUse = stored;
+            }
+        }
+
+        if (!codeToUse || codeToUse === "0") {
+            setIsStartup(false);
+            return;
+        }
+
+        const docRef = doc(db, "hotels", codeToUse);
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const rawPlan = String(data.billing?.plan || data.plan || "").toLowerCase().trim();
+                const planStr = rawPlan.replace(/[\s_-]+/g, "");
+                const isStartupPlan = planStr === "startup" || planStr === "starup" || planStr === "basic";
+
+                const activeModules: string[] = data.billing?.activeModules || data.activeModules || [];
+                const hasFO = activeModules.includes("front-office") || activeModules.includes("overview") || activeModules.includes("forecast");
+                const hasHK = activeModules.includes("housekeeping");
+
+                const isStartupMode = isStartupPlan || (activeModules.length > 0 && !hasFO && !hasHK);
+                setIsStartup(isStartupMode);
+            }
+        }, (err) => {
+            console.error("Error listening to hotel doc in usePnL:", err);
+        });
+
+        return () => unsubscribe();
+    }, [activeHotelCode]);
 
     const {
         loadingCore,
@@ -167,6 +209,7 @@ export const usePnL = () => {
         ]);
 
     return {
+        isStartup,
         viewMode, setViewMode,
         displayMode, setDisplayMode,
         forecastLoading,

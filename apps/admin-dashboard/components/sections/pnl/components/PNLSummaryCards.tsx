@@ -8,6 +8,7 @@ import { FnBPerformanceSection }  from "./sections/FnBPerformanceSection";
 import { ExecutiveSummarySection } from "./sections/ExecutiveSummarySection";
 
 interface PNLSummaryCardsProps {
+    isStartup?:              boolean;
     pnlResult:               GlobalPnLResult | null;
     loading:                 boolean;
     vatPercentage:           number;
@@ -26,6 +27,7 @@ interface PNLSummaryCardsProps {
 }
 
 export const PNLSummaryCards: React.FC<PNLSummaryCardsProps> = ({
+    isStartup = false,
     pnlResult, loading, rise,
     vatPercentage, mgmtFeeRoomPercentage, mgmtFeeFnbPercentage, serviceChargePercentage, lostBreakagePercentage,
     onVatChange, onFeeRoomChange, onFeeFnbChange, onServiceChange, onLostChange,
@@ -33,10 +35,13 @@ export const PNLSummaryCards: React.FC<PNLSummaryCardsProps> = ({
 }) => {
     return (
         <div className="flex flex-col gap-10">
-            <RoomRevenueSection    pnlResult={pnlResult} loading={loading} rise={rise} onCardClick={onCardClick} />
+            {!isStartup && (
+                <RoomRevenueSection pnlResult={pnlResult} loading={loading} rise={rise} onCardClick={onCardClick} />
+            )}
             <FnBLedgerSection      pnlResult={pnlResult} loading={loading} rise={rise} onCardClick={onCardClick} />
             <FnBPerformanceSection pnlResult={pnlResult} loading={loading} rise={rise} onCardClick={onCardClick} />
             <ExecutiveSummarySection
+                isStartup={isStartup}
                 pnlResult={pnlResult} loading={loading} rise={rise}
                 vatPercentage={vatPercentage}
                 mgmtFeeRoomPercentage={mgmtFeeRoomPercentage}

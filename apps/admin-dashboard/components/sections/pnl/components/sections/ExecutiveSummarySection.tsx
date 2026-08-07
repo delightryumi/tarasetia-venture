@@ -7,6 +7,7 @@ import { GlobalPnLResult } from "@/lib/pnl-utils";
 import { SummaryCard } from "../shared/SummaryCard";
 
 interface ExecutiveSummarySectionProps {
+    isStartup?: boolean;
     pnlResult: GlobalPnLResult | null;
     loading: boolean;
     rise: any;
@@ -48,6 +49,7 @@ function RateInput({ value, onChange }: { value: number; onChange: (v: number) =
 import styles from "./PNLSectionLayout.module.css";
 
 export function ExecutiveSummarySection({
+    isStartup = false,
     pnlResult, loading, rise,
     vatPercentage, mgmtFeeRoomPercentage, mgmtFeeFnbPercentage, serviceChargePercentage, lostBreakagePercentage,
     onVatChange, onFeeRoomChange, onFeeFnbChange, onServiceChange, onLostChange,
@@ -66,16 +68,18 @@ export function ExecutiveSummarySection({
                 <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8 xl:gap-10">
 
                     {/* ── REVENUES ── */}
-                    <SummaryCard
-                        label="Room Revenue"
-                        icon={<Hotel size={18} />}
-                        accent="#10b981"
-                        value={pnlResult?.revRoom || 0}
-                        loading={loading}
-                        variants={rise}
-                        bgVariant="revenue"
-                        onClick={onCardClick}
-                    />
+                    {!isStartup && (
+                        <SummaryCard
+                            label="Room Revenue"
+                            icon={<Hotel size={18} />}
+                            accent="#10b981"
+                            value={pnlResult?.revRoom || 0}
+                            loading={loading}
+                            variants={rise}
+                            bgVariant="revenue"
+                            onClick={onCardClick}
+                        />
+                    )}
                     <SummaryCard
                         label="Total F&B A la Carte Revenue"
                         icon={<Store size={18} />}
@@ -128,16 +132,18 @@ export function ExecutiveSummarySection({
                     />
 
                     {/* ── EXPENSES ── */}
-                    <SummaryCard
-                        label="Housekeeping Expenses"
-                        icon={<Receipt size={18} />}
-                        accent="#ef4444"
-                        value={pnlResult?.expHousekeeping || 0}
-                        loading={loading}
-                        variants={rise}
-                        bgVariant="expense"
-                        onClick={onCardClick}
-                    />
+                    {!isStartup && (
+                        <SummaryCard
+                            label="Housekeeping Expenses"
+                            icon={<Receipt size={18} />}
+                            accent="#ef4444"
+                            value={pnlResult?.expHousekeeping || 0}
+                            loading={loading}
+                            variants={rise}
+                            bgVariant="expense"
+                            onClick={onCardClick}
+                        />
+                    )}
                     <SummaryCard
                         label="Total F&B A la Carte Expenses"
                         icon={<Receipt size={18} />}
@@ -220,16 +226,18 @@ export function ExecutiveSummarySection({
                         bgVariant="pink"
                         extra={<RateInput value={lostBreakagePercentage} onChange={onLostChange} />}
                     />
-                    <SummaryCard
-                        label={`Management Fee - Room (${mgmtFeeRoomPercentage}%)`}
-                        icon={<Wallet size={18} />}
-                        accent="#0ea5e9"
-                        value={pnlResult?.card9_FeeGrossRoom || 0}
-                        loading={loading}
-                        variants={rise}
-                        bgVariant="blue"
-                        extra={<RateInput value={mgmtFeeRoomPercentage} onChange={onFeeRoomChange} />}
-                    />
+                    {!isStartup && (
+                        <SummaryCard
+                            label={`Management Fee - Room (${mgmtFeeRoomPercentage}%)`}
+                            icon={<Wallet size={18} />}
+                            accent="#0ea5e9"
+                            value={pnlResult?.card9_FeeGrossRoom || 0}
+                            loading={loading}
+                            variants={rise}
+                            bgVariant="blue"
+                            extra={<RateInput value={mgmtFeeRoomPercentage} onChange={onFeeRoomChange} />}
+                        />
+                    )}
                     <SummaryCard
                         label={`Management Fee - F&B (${mgmtFeeFnbPercentage}%)`}
                         icon={<Wallet size={18} />}

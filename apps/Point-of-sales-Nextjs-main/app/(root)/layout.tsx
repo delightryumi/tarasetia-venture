@@ -71,7 +71,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         parsedUser?.role?.toLowerCase() === 'superadmin' ||
         parsedUser?.role?.toLowerCase() === 'super admin' ||
         parsedUser?.email?.toLowerCase() === 'nexura.management@gmail.com' ||
-        parsedUser?.email?.toLowerCase() === 'admin@setara.co.id';  // email superadmin baru
+        parsedUser?.email?.toLowerCase() === 'superadmin@setara.co.id';  // email superadmin baru
       setIsSuperadmin(isSuper);
 
       const hotelCode = parsedUser?.hotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";

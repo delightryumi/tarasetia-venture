@@ -11,6 +11,7 @@ import styles from "./FinancialBreakdown.module.css";
 
 // --- INTERFACES ---
 interface FinancialBreakdownProps {
+  isStartup?: boolean;
   pnlResult: GlobalPnLResult;
   customIncomes: PnlIncomeItem[];
   nonCommissionRevenue: PnlIncomeItem[];
@@ -126,6 +127,7 @@ const rise = {
 };
 
 export default function FinancialBreakdown({
+  isStartup = false,
   pnlResult, sharedExpensesTotal, mgmtExpensesTotal, vatPercentage,
   retainedPercent, setRetainedPercent, mgmtFeeRoomPercentage = 0, mgmtFeeFnbPercentage = 0,
   serviceChargePercentage = 0, lostBreakagePercentage = 0
@@ -200,7 +202,7 @@ export default function FinancialBreakdown({
                     </tr>
                   </thead>
                   <tbody>
-                    <TableRow label="Room Revenue" subLabel="Accommodation & lodging earnings" value={val_revRoom} />
+                    {!isStartup && <TableRow label="Room Revenue" subLabel="Accommodation & lodging earnings" value={val_revRoom} />}
                     <TableRow label="Total F&B A la Carte Revenue" subLabel="Outlet restaurant, bar & room service" value={val_revTotalFnb} />
                     <TableRow label="Total Banquet Revenue" subLabel="MICE events & corporate functions" value={val_revBanquet} />
                     <TableRow label="Other Revenue" subLabel="Miscellaneous manual & ledger collection" value={val_card5_Other} />
@@ -223,7 +225,7 @@ export default function FinancialBreakdown({
                     </tr>
                   </thead>
                   <tbody>
-                     <TableRow label="Housekeeping Expenses" subLabel="Guest supplies, laundry & linen costs" value={val_expHousekeeping} isNegative />
+                     {!isStartup && <TableRow label="Housekeeping Expenses" subLabel="Guest supplies, laundry & linen costs" value={val_expHousekeeping} isNegative />}
                      <TableRow label="Total F&B A la Carte Expenses" subLabel="A la carte kitchen, bar & beverage raw materials" value={val_expAlacarte} isNegative />
                      <TableRow label="Total Banquet Expenses" subLabel="Event banquet catering & external sourcing costs" value={val_expBanquet} isNegative />
                      <TableRow label="Operational Expenses" subLabel="Purchasing, general office, administrative & utilities" value={val_expOperational} isNegative />
@@ -251,7 +253,7 @@ export default function FinancialBreakdown({
                      <TableRow label="VAT Input" subLabel="Value-added tax deductions" rate={`${vatPercentage}%`} value={val_card11_VAT} isNegative />
                      <TableRow label="Service Charge" subLabel="Staff service charge allocations" rate={`${serviceChargePercentage}%`} value={val_summaryServiceCharge} isNegative />
                      <TableRow label="Lost & Breakage" subLabel="Asset shrinkage buffer" rate={`${lostBreakagePercentage}%`} value={val_summaryLostBreakage} isNegative />
-                     <TableRow label="Management Fee - Room" subLabel="Room management system fee" rate={`${mgmtFeeRoomPercentage}%`} value={val_card9_FeeGrossRoom} isNegative />
+                     {!isStartup && <TableRow label="Management Fee - Room" subLabel="Room management system fee" rate={`${mgmtFeeRoomPercentage}%`} value={val_card9_FeeGrossRoom} isNegative />}
                      <TableRow label="Management Fee - F&B" subLabel="Food & beverage management fee" rate={`${mgmtFeeFnbPercentage}%`} value={val_card9_FeeGrossFnb} isNegative />
                      <TableRow label="Compliment Deductions" subLabel="POS complimentary items given to guests" value={pnlResult.posComplimentValue || 0} isNegative />
                      <TableRow label="Net Profit (Recon Owner)" subLabel="Final owner reconciliation settlement" value={val_card12_ReconOwner} isTotal={true} />
