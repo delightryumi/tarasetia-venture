@@ -40,7 +40,7 @@ interface GRCPrintTemplateProps {
    Apple-grade Pixel-Perfect SVG Prohibition Badges (Exact 1:1 Proportions)
    ========================================================================= */
 
-function NoDurianIcon({ size = 30 }: { size?: number }) {
+function NoDurianIcon({ size = 32 }: { size?: number }) {
     return (
         <svg width={size} height={size} viewBox="0 0 100 100" fill="none" style={{ display: "block", flexShrink: 0 }}>
             <circle cx="50" cy="50" r="40" stroke="#dc2626" strokeWidth="7" fill="#ffffff" />
@@ -53,7 +53,7 @@ function NoDurianIcon({ size = 30 }: { size?: number }) {
     );
 }
 
-function NoPetsIcon({ size = 30 }: { size?: number }) {
+function NoPetsIcon({ size = 32 }: { size?: number }) {
     return (
         <svg width={size} height={size} viewBox="0 0 100 100" fill="none" style={{ display: "block", flexShrink: 0 }}>
             <circle cx="50" cy="50" r="40" stroke="#dc2626" strokeWidth="7" fill="#ffffff" />
@@ -63,7 +63,7 @@ function NoPetsIcon({ size = 30 }: { size?: number }) {
     );
 }
 
-function NoSmokingIcon({ size = 30 }: { size?: number }) {
+function NoSmokingIcon({ size = 32 }: { size?: number }) {
     return (
         <svg width={size} height={size} viewBox="0 0 100 100" fill="none" style={{ display: "block", flexShrink: 0 }}>
             <circle cx="50" cy="50" r="40" stroke="#dc2626" strokeWidth="7" fill="#ffffff" />
@@ -77,7 +77,7 @@ function NoSmokingIcon({ size = 30 }: { size?: number }) {
     );
 }
 
-function NoDownBedIcon({ size = 30 }: { size?: number }) {
+function NoDownBedIcon({ size = 32 }: { size?: number }) {
     return (
         <svg width={size} height={size} viewBox="0 0 100 100" fill="none" style={{ display: "block", flexShrink: 0 }}>
             <circle cx="50" cy="50" r="40" stroke="#dc2626" strokeWidth="7" fill="#ffffff" />
@@ -134,27 +134,27 @@ export function GRCPrintTemplate({ data }: GRCPrintTemplateProps) {
     const otaLabel = data.travelAgentName ? data.travelAgentName.toUpperCase() : "OTA";
 
     const labelStyle: React.CSSProperties = {
-        fontWeight: 600,
+        fontWeight: 700,
         textDecoration: "underline",
         textUnderlineOffset: "3px",
-        textDecorationThickness: "1px",
+        textDecorationThickness: "1.2px",
         textDecorationColor: "#1d1d1f",
         color: "#1d1d1f",
-        fontSize: "10px"
+        fontSize: "11px"
     };
 
     const subtitleStyle: React.CSSProperties = {
-        fontSize: "8.5px",
-        color: "#86868b",
-        marginTop: "2px",
-        fontWeight: 400
+        fontSize: "9.5px",
+        color: "#6c6c70",
+        marginTop: "1px",
+        fontWeight: 500
     };
 
     const valueStyle: React.CSSProperties = {
-        fontWeight: 600,
+        fontWeight: 700,
         marginLeft: "8px",
-        color: "#1d1d1f",
-        fontSize: "10.5px"
+        color: "#000000",
+        fontSize: "12px"
     };
 
     return (
@@ -163,18 +163,18 @@ export function GRCPrintTemplate({ data }: GRCPrintTemplateProps) {
             maxWidth: "760px",
             margin: "0 auto",
             backgroundColor: "#ffffff",
-            color: "#1d1d1f",
+            color: "#111113",
             fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif',
-            fontSize: "10px",
-            lineHeight: "1.5",
-            padding: "16px 20px",
+            fontSize: "11px",
+            lineHeight: "1.45",
+            padding: "8px 12px",
             boxSizing: "border-box",
             letterSpacing: "-0.01em"
         }}>
-            {/* Header: Dynamic Property Logo Center, Registration Form on Right with Generous Breathing Room */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "28px", paddingBottom: "6px" }}>
+            {/* Header: Dynamic Property Logo Center, Registration Form on Right */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "18px", paddingBottom: "4px" }}>
                 <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: "8px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#86868b" }}>
+                    <div style={{ fontSize: "9px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#86868b" }}>
                         Guest Registration
                     </div>
                 </div>
@@ -183,28 +183,28 @@ export function GRCPrintTemplate({ data }: GRCPrintTemplateProps) {
                         <img 
                             src={logoUrl} 
                             alt={activeHotelName || "Hotel Logo"} 
-                            style={{ maxHeight: "48px", maxWidth: "200px", objectFit: "contain", margin: "0 auto", display: "block" }} 
+                            style={{ maxHeight: "50px", maxWidth: "220px", objectFit: "contain", margin: "0 auto", display: "block" }} 
                         />
                     ) : (
-                        <h2 style={{ fontSize: "16px", fontWeight: 700, textTransform: "uppercase", margin: 0, letterSpacing: "0.04em", color: "#1d1d1f" }}>
+                        <h2 style={{ fontSize: "17px", fontWeight: 800, textTransform: "uppercase", margin: 0, letterSpacing: "0.04em", color: "#111113" }}>
                             {activeHotelName || hotelInfo?.name || "HOTEL PROPERTY"}
                         </h2>
                     )}
                 </div>
                 <div style={{ flex: 1, textAlign: "right" }}>
-                    <span style={{ fontSize: "13px", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: "3px", textDecorationThickness: "1.2px", color: "#1d1d1f" }}>
+                    <span style={{ fontSize: "14px", fontWeight: 800, textDecoration: "underline", textUnderlineOffset: "3px", textDecorationThickness: "1.5px", color: "#111113" }}>
                         Registration Form
                     </span>
                 </div>
             </div>
 
-            {/* Section 1: Room & Rate Details (Airy Apple Minimalist Spacing) */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "12px" }}>
+            {/* Section 1: Room & Rate Details */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "10px" }}>
                 {/* Row 1: No. Kamar | Harga Kamar | No Reservasi */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", columnGap: "24px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", columnGap: "20px" }}>
                     <div>
                         <span style={labelStyle}>No. Kamar</span>
-                        <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "11px" }}>{data.roomNumber || "-"}</span>
+                        <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "12.5px" }}>{data.roomNumber || "-"}</span>
                         <div style={subtitleStyle}>Room Number</div>
                     </div>
                     <div>
@@ -214,13 +214,13 @@ export function GRCPrintTemplate({ data }: GRCPrintTemplateProps) {
                     </div>
                     <div>
                         <span style={labelStyle}>No Reservasi</span>
-                        <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "10.5px" }}>{data.bookingId || "-"}</span>
+                        <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "11.5px" }}>{data.bookingId || "-"}</span>
                         <div style={subtitleStyle}>Reservation No</div>
                     </div>
                 </div>
 
                 {/* Row 2: Tipe Kamar | Kode Harga | Jumlah Tamu */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", columnGap: "24px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", columnGap: "20px" }}>
                     <div>
                         <span style={labelStyle}>Tipe Kamar</span>
                         <span style={valueStyle}>{data.roomType || "-"}</span>
@@ -233,13 +233,13 @@ export function GRCPrintTemplate({ data }: GRCPrintTemplateProps) {
                     </div>
                     <div>
                         <span style={labelStyle}>Jumlah Tamu</span>
-                        <span style={valueStyle}>{data.noOfPax || "1"}</span>
+                        <span style={valueStyle}>{data.noOfPax || "1"} Pax</span>
                         <div style={subtitleStyle}>No of Pax</div>
                     </div>
                 </div>
 
                 {/* Row 3: Peningkatan Kamar */}
-                <div style={{ display: "flex", gap: "32px", alignItems: "flex-start" }}>
+                <div style={{ display: "flex", gap: "28px", alignItems: "flex-start" }}>
                     <div>
                         <span style={labelStyle}>Peningkatan Kamar</span>
                         <div style={subtitleStyle}>Room Up grade</div>
@@ -258,14 +258,14 @@ export function GRCPrintTemplate({ data }: GRCPrintTemplateProps) {
             </div>
 
             {/* Hairline Divider */}
-            <div style={{ borderTop: "1px solid #d2d2d7", margin: "10px 0 12px 0" }} />
+            <div style={{ borderTop: "1px solid #c7c7cc", margin: "8px 0 10px 0" }} />
 
-            {/* Section 2: Guest Profile (2 Columns with Generous Column Gap) */}
-            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", rowGap: "10px", columnGap: "32px", marginBottom: "12px" }}>
+            {/* Section 2: Guest Profile (2 Columns) */}
+            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", rowGap: "8px", columnGap: "28px", marginBottom: "10px" }}>
                 {/* Row 1: Stay Period | Company */}
                 <div>
                     <span style={labelStyle}>Tgl Menginap</span>
-                    <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "10px" }}>{data.stayPeriod || "-"}</span>
+                    <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "11.5px" }}>{data.stayPeriod || "-"}</span>
                     <div style={subtitleStyle}>Stay Period</div>
                 </div>
                 <div>
@@ -277,7 +277,7 @@ export function GRCPrintTemplate({ data }: GRCPrintTemplateProps) {
                 {/* Row 2: Full Name | Nationality */}
                 <div>
                     <span style={labelStyle}>Nama Lengkap</span>
-                    <span style={{ ...valueStyle, textTransform: "uppercase", letterSpacing: "0.02em" }}>{data.guestName || "-"}</span>
+                    <span style={{ ...valueStyle, textTransform: "uppercase", letterSpacing: "0.02em", fontSize: "12.5px" }}>{data.guestName || "-"}</span>
                     <div style={subtitleStyle}>Full Name</div>
                 </div>
                 <div>
@@ -289,19 +289,19 @@ export function GRCPrintTemplate({ data }: GRCPrintTemplateProps) {
                 {/* Row 3: Phone | Identity No */}
                 <div>
                     <span style={labelStyle}>No Telp/Hp</span>
-                    <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "10px" }}>{data.phone || "-"}</span>
+                    <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "11.5px" }}>{data.phone || "-"}</span>
                     <div style={subtitleStyle}>Phone/Mobile</div>
                 </div>
                 <div>
                     <span style={labelStyle}>No Identitas</span>
-                    <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "10px" }}>{data.identityNo || "-"}</span>
+                    <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "11.5px" }}>{data.identityNo || "-"}</span>
                     <div style={subtitleStyle}>Identity No</div>
                 </div>
 
                 {/* Row 4: Address | Email */}
                 <div>
                     <span style={labelStyle}>Alamat</span>
-                    <span style={{ ...valueStyle, textTransform: "uppercase", fontSize: "9.5px", lineHeight: "1.4" }}>{data.address || "-"}</span>
+                    <span style={{ ...valueStyle, textTransform: "uppercase", fontSize: "11px", lineHeight: "1.35" }}>{data.address || "-"}</span>
                     <div style={subtitleStyle}>Address</div>
                 </div>
                 <div>
@@ -312,214 +312,201 @@ export function GRCPrintTemplate({ data }: GRCPrintTemplateProps) {
             </div>
 
             {/* Hairline Divider */}
-            <div style={{ borderTop: "1px solid #d2d2d7", margin: "10px 0 0 0" }} />
+            <div style={{ borderTop: "1px solid #c7c7cc", margin: "8px 0 0 0" }} />
 
             {/* Section 3: Payment Method & Signature Boxes (Clean Hairline Grid) */}
             <div style={{
                 display: "grid",
                 gridTemplateColumns: "1.4fr 1fr 1fr 1fr",
-                borderBottom: "1px solid #d2d2d7",
-                marginBottom: "12px"
+                borderBottom: "1px solid #c7c7cc",
+                marginBottom: "10px"
             }}>
                 {/* Column 1: Payment Method Checkbox List */}
-                <div style={{ padding: "8px 12px 8px 0" }}>
+                <div style={{ padding: "6px 10px 6px 0" }}>
                     <div style={labelStyle}>Pembayaran</div>
-                    <div style={{ ...subtitleStyle, marginBottom: "8px" }}>Payment Method</div>
+                    <div style={{ ...subtitleStyle, marginBottom: "6px" }}>Payment Method</div>
 
-                    {/* Checkboxes with Consistent Border Styling */}
+                    {/* Checkboxes */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
                         <div style={{ display: "flex", alignItems: "center" }}>
                             <div style={{
-                                width: "13px",
-                                height: "13px",
-                                borderTop: "1px solid #86868b",
-                                borderLeft: "1px solid #86868b",
-                                borderRight: "1px solid #86868b",
-                                borderBottom: "1px solid #86868b",
+                                width: "14px",
+                                height: "14px",
+                                border: "1.2px solid #636366",
                                 borderRadius: "2px",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                fontSize: "8px",
-                                fontWeight: 700,
-                                color: "#1d1d1f"
+                                fontSize: "9px",
+                                fontWeight: 800,
+                                color: "#000000"
                             }}>
                                 {data.paymentMethod === "personal" ? "✓" : ""}
                             </div>
-                            <span style={{ marginLeft: "8px", fontSize: "9px", color: "#1d1d1f" }}>Personal Account</span>
+                            <span style={{ marginLeft: "7px", fontSize: "10.5px", color: "#111113", fontWeight: 500 }}>Personal Account</span>
                         </div>
                         <div style={{ display: "flex", alignItems: "center" }}>
                             <div style={{
-                                width: "13px",
-                                height: "13px",
-                                borderTop: "1px solid #86868b",
-                                borderLeft: "1px solid #86868b",
-                                borderRight: "1px solid #86868b",
-                                borderBottom: "1px solid #86868b",
+                                width: "14px",
+                                height: "14px",
+                                border: "1.2px solid #636366",
                                 borderRadius: "2px",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                fontSize: "8px",
-                                fontWeight: 700,
-                                color: "#1d1d1f"
+                                fontSize: "9px",
+                                fontWeight: 800,
+                                color: "#000000"
                             }}>
                                 {data.paymentMethod === "company" ? "✓" : ""}
                             </div>
-                            <span style={{ marginLeft: "8px", fontSize: "9px", color: "#1d1d1f" }}>Company Account</span>
+                            <span style={{ marginLeft: "7px", fontSize: "10.5px", color: "#111113", fontWeight: 500 }}>Company Account</span>
                         </div>
                         <div style={{ display: "flex", alignItems: "center" }}>
                             <div style={{
-                                width: "13px",
-                                height: "13px",
-                                borderTop: "1px solid #86868b",
-                                borderLeft: "1px solid #86868b",
-                                borderRight: "1px solid #86868b",
-                                borderBottom: "1px solid #86868b",
+                                width: "14px",
+                                height: "14px",
+                                border: "1.2px solid #636366",
                                 borderRadius: "2px",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                fontSize: "8px",
-                                fontWeight: 700,
-                                color: "#1d1d1f"
+                                fontSize: "9px",
+                                fontWeight: 800,
+                                color: "#000000"
                             }}>
                                 {isOta ? "✓" : ""}
                             </div>
-                            <span style={{ marginLeft: "8px", fontSize: "9px", color: "#1d1d1f" }}>Travel Agent {isOta && data.travelAgentName ? `(${otaLabel})` : ""}</span>
+                            <span style={{ marginLeft: "7px", fontSize: "10.5px", color: "#111113", fontWeight: 500 }}>Travel Agent {isOta && data.travelAgentName ? `(${otaLabel})` : ""}</span>
                         </div>
                         <div style={{ display: "flex", alignItems: "center" }}>
                             <div style={{
-                                width: "13px",
-                                height: "13px",
-                                borderTop: "1px solid #86868b",
-                                borderLeft: "1px solid #86868b",
-                                borderRight: "1px solid #86868b",
-                                borderBottom: "1px solid #86868b",
+                                width: "14px",
+                                height: "14px",
+                                border: "1.2px solid #636366",
                                 borderRadius: "2px",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                fontSize: "8px",
-                                fontWeight: 700,
-                                color: "#1d1d1f"
+                                fontSize: "9px",
+                                fontWeight: 800,
+                                color: "#000000"
                             }}>
                                 {data.paymentMethod === "others" ? "✓" : ""}
                             </div>
-                            <span style={{ marginLeft: "8px", fontSize: "9px", color: "#1d1d1f" }}>Others ____________________</span>
+                            <span style={{ marginLeft: "7px", fontSize: "10.5px", color: "#111113", fontWeight: 500 }}>Others ____________</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Column 2: Checked In By */}
-                <div style={{ borderLeft: "1px solid #d2d2d7", padding: "8px 10px", display: "flex", flexDirection: "column", justifyContent: "space-between", textAlign: "center" }}>
-                    <div style={{ fontWeight: 600, fontSize: "9px", color: "#1d1d1f" }}>
+                <div style={{ borderLeft: "1px solid #c7c7cc", padding: "6px 8px", display: "flex", flexDirection: "column", justifyContent: "space-between", textAlign: "center" }}>
+                    <div style={{ fontWeight: 700, fontSize: "10.5px", color: "#111113" }}>
                         Checked In By
                     </div>
-                    <div style={{ height: "46px" }} />
-                    <div style={{ fontWeight: 600, fontSize: "8.5px", color: "#1d1d1f" }}>
+                    <div style={{ height: "42px" }} />
+                    <div style={{ fontWeight: 700, fontSize: "10px", color: "#111113" }}>
                         {data.checkedInBy || "FRONT OFFICE"}
                     </div>
                 </div>
 
                 {/* Column 3: Approved By */}
-                <div style={{ borderLeft: "1px solid #d2d2d7", padding: "8px 10px", display: "flex", flexDirection: "column", justifyContent: "space-between", textAlign: "center" }}>
-                    <div style={{ fontWeight: 600, fontSize: "9px", color: "#1d1d1f" }}>
+                <div style={{ borderLeft: "1px solid #c7c7cc", padding: "6px 8px", display: "flex", flexDirection: "column", justifyContent: "space-between", textAlign: "center" }}>
+                    <div style={{ fontWeight: 700, fontSize: "10.5px", color: "#111113" }}>
                         Approved By
                     </div>
-                    <div style={{ height: "46px" }} />
-                    <div style={{ fontSize: "8.5px", color: "#636366" }}>
+                    <div style={{ height: "42px" }} />
+                    <div style={{ fontSize: "9.5px", color: "#636366" }}>
                         {data.approvedBy || "Assistant Front Office Manager"}
                     </div>
                 </div>
 
                 {/* Column 4: Guest Signature */}
-                <div style={{ borderLeft: "1px solid #d2d2d7", padding: "8px 10px", display: "flex", flexDirection: "column", justifyContent: "space-between", textAlign: "center" }}>
+                <div style={{ borderLeft: "1px solid #c7c7cc", padding: "6px 8px", display: "flex", flexDirection: "column", justifyContent: "space-between", textAlign: "center" }}>
                     <div />
-                    <div style={{ height: "46px" }} />
-                    <div style={{ fontWeight: 700, fontSize: "9.5px", color: "#1d1d1f" }}>
+                    <div style={{ height: "42px" }} />
+                    <div style={{ fontWeight: 800, fontSize: "10.5px", color: "#111113" }}>
                         Guest Signature
                     </div>
                 </div>
             </div>
 
-            {/* Section 4: House Rules (Relaxed Line Height & Apple Muted Italic) */}
-            <div style={{ fontSize: "8.5px", lineHeight: "1.45", color: "#1d1d1f", marginBottom: "10px" }}>
-                <p style={{ margin: "0 0 2px 0" }}><strong>Jam Check Out Pukul 12.00/</strong> Check Out Time is 12 PM</p>
-                <p style={{ margin: "0 0 4px 0" }}><strong>Jam Check In Pukul 14.00/</strong> Check In Time is 2 PM</p>
+            {/* Section 4: House Rules */}
+            <div style={{ fontSize: "9.5px", lineHeight: "1.4", color: "#111113", marginBottom: "8px" }}>
+                <p style={{ margin: "0 0 2px 0" }}><strong>Jam Check Out Pukul 12.00 /</strong> <span style={{ color: "#6c6c70" }}><em>Check Out Time is 12 PM</em></span> &nbsp;|&nbsp; <strong>Jam Check In Pukul 14.00 /</strong> <span style={{ color: "#6c6c70" }}><em>Check In Time is 2 PM</em></span></p>
                 
                 <p style={{ margin: "0 0 1px 0" }}>
                     Silahkan menyimpan barang berharga Anda (paspor, uang, dan dokumen) di dalam brankas yang telah kami sediakan di dalam setiap kamar.
                 </p>
-                <p style={{ margin: "0 0 3px 0", color: "#86868b" }}>
-                    <em>Please keep your valuable things (passport, money and documents) in the safe deposit box that we provided in each room.</em>
+                <p style={{ margin: "0 0 2px 0", color: "#6c6c70" }}>
+                    <em>Please keep your valuable things (passport, money and documents) in the safe deposit box provided in each room.</em>
                 </p>
 
                 <p style={{ margin: "0 0 1px 0" }}>
-                    Saya setuju untuk membayar semua Tagihan selama saya menginap, dengan cara pembayaran seperti disebut diatas.
+                    Saya setuju untuk membayar semua tagihan selama saya menginap, dengan cara pembayaran seperti disebut diatas.
                 </p>
-                <p style={{ margin: "0 0 3px 0", color: "#86868b" }}>
-                    <em>I agree to pay all charges incured during my stay, and settle my account by above payment method.</em>
+                <p style={{ margin: "0 0 2px 0", color: "#6c6c70" }}>
+                    <em>I agree to pay all charges incurred during my stay, and settle my account by above payment method.</em>
                 </p>
 
                 <p style={{ margin: "0 0 1px 0" }}>
                     Hotel tidak bertanggung jawab atas barang-barang tamu yang ditinggalkan di kamar.
                 </p>
-                <p style={{ margin: "0 0 3px 0", color: "#86868b" }}>
+                <p style={{ margin: "0 0 2px 0", color: "#6c6c70" }}>
                     <em>Hotel will not be held responsible for any valuable left by the guest in the room.</em>
                 </p>
 
                 <p style={{ margin: "0 0 1px 0" }}>
                     <strong>Apabila menghilangkan kunci maka akan dikenakan denda Rp. 100.000 (seratus ribu rupiah)/kunci</strong>
                 </p>
-                <p style={{ margin: "0", color: "#86868b" }}>
+                <p style={{ margin: "0", color: "#6c6c70" }}>
                     <em>lost key chargeable at IDR 100.000/each</em>
                 </p>
             </div>
 
             {/* Section 5: Non Smoking Statement with 2 Top Vector Icons */}
-            <div style={{ borderTop: "1px solid #d2d2d7", paddingTop: "10px", marginTop: "8px" }}>
-                <div style={{ display: "flex", alignItems: "center", marginBottom: "8px", position: "relative" }}>
+            <div style={{ borderTop: "1px solid #c7c7cc", paddingTop: "8px", marginTop: "6px" }}>
+                <div style={{ display: "flex", alignItems: "center", marginBottom: "6px", position: "relative" }}>
                     {/* Top 2 Warning Icons on Left: No Durian & No Pets */}
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", position: "absolute", left: 0 }}>
-                        <NoDurianIcon size={30} />
-                        <NoPetsIcon size={30} />
+                        <NoDurianIcon size={32} />
+                        <NoPetsIcon size={32} />
                     </div>
 
                     {/* Centered Title */}
-                    <h4 style={{ width: "100%", textAlign: "center", fontSize: "10.5px", fontWeight: 700, margin: 0, letterSpacing: "0.06em", color: "#1d1d1f" }}>
+                    <h4 style={{ width: "100%", textAlign: "center", fontSize: "12px", fontWeight: 800, margin: 0, letterSpacing: "0.06em", color: "#111113" }}>
                         NON SMOKING STATEMENT
                     </h4>
                 </div>
 
-                {/* Statement Text with More Breathing Room */}
-                <div style={{ fontSize: "8.5px", lineHeight: "1.5", color: "#1d1d1f", marginTop: "8px" }}>
-                    <p style={{ margin: "0 0 2px 0" }}>Kamar yang Anda huni merupakan kamar bebas asap rokok dan akan kami jaga agar tetap demikian.</p>
-                    <p style={{ margin: "0 0 4px 0", color: "#86868b" }}><em>The room you will occupy is Non-Smoking Room & the room must remain 100% free from smoke.</em></p>
+                {/* Statement Text */}
+                <div style={{ fontSize: "9.5px", lineHeight: "1.4", color: "#111113", marginTop: "6px" }}>
+                    <p style={{ margin: "0 0 1px 0" }}>Kamar yang Anda huni merupakan kamar bebas asap rokok dan akan kami jaga agar tetap demikian.</p>
+                    <p style={{ margin: "0 0 3px 0", color: "#6c6c70" }}><em>The room you will occupy is Non-Smoking Room & must remain 100% free from smoke.</em></p>
 
-                    <p style={{ margin: "0 0 2px 0" }}><strong>Biaya perawatan kamar Rp 500.000 (lima ratus ribu rupiah) apabila merokok di kamar.</strong></p>
-                    <p style={{ margin: "0 0 4px 0", color: "#86868b" }}><em>Room Re-covery IDR 500.000 ( Fifty HundredThousand Rupiah ) if you are smoking in the room.</em></p>
+                    <p style={{ margin: "0 0 1px 0" }}><strong>Biaya perawatan kamar Rp 500.000 (lima ratus ribu rupiah) apabila merokok di kamar.</strong></p>
+                    <p style={{ margin: "0 0 3px 0", color: "#6c6c70" }}><em>Room recovery fee IDR 500.000 if smoking in the room.</em></p>
 
-                    <p style={{ margin: "0 0 2px 0" }}><strong>kami akan membebankan ke tamu jika tamu menurukan bed ke lantai sebesar harga Extra Bed Rp 250.000</strong></p>
-                    <p style={{ margin: "0 0 4px 0", color: "#86868b" }}><em>we will also charge guests if the guest drops the mattress onto the floor and for chargeable 1 Extra Bed IDR 250.000</em></p>
+                    <p style={{ margin: "0 0 1px 0" }}><strong>Kami akan membebankan biaya jika tamu menurunkan bed ke lantai sebesar harga Extra Bed Rp 250.000</strong></p>
+                    <p style={{ margin: "0 0 3px 0", color: "#6c6c70" }}><em>Charge for dropping mattress to the floor is equivalent to 1 Extra Bed IDR 250.000</em></p>
 
-                    <p style={{ margin: "0 0 2px 0" }}>Kami sangat menghargai kepedulian anda terhadap kesehatan. silahkan menanda tangani pernyataan persetujuan dibawah ini.</p>
-                    <p style={{ margin: "0 0 4px 0", color: "#86868b" }}><em>We highly appreciate your health concern. Therefore, please confirm your willingness below.</em></p>
+                    <p style={{ margin: "0 0 1px 0" }}>Kami sangat menghargai kepedulian Anda terhadap kesehatan. Silahkan menandatangani pernyataan persetujuan di bawah ini.</p>
+                    <p style={{ margin: "0 0 3px 0", color: "#6c6c70" }}><em>We appreciate your health concern. Please confirm your willingness below.</em></p>
 
-                    <p style={{ margin: "0" }}>Terima Kasih Atas Perhatiannya. / <span style={{ color: "#86868b" }}><em>Thank you for your kind attention.</em></span></p>
+                    <p style={{ margin: "0" }}>Terima Kasih Atas Perhatiannya. / <span style={{ color: "#6c6c70" }}><em>Thank you for your kind attention.</em></span></p>
                 </div>
             </div>
 
             {/* Bottom Section: 2 Left Stacked Icons (No Smoking & No Down Bed) & Final Guest Consent Signature */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "14px", paddingTop: "8px" }}>
-                {/* Left Column: 2 Stacked Prohibition Badges with Text & Generous Gap */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "14px", alignItems: "center", minWidth: "120px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "10px", paddingTop: "6px" }}>
+                {/* Left Column: 2 Stacked Prohibition Badges with Text */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center", minWidth: "120px" }}>
                     {/* Icon 3: Non Smoking Room Badge */}
                     <div style={{ textAlign: "center" }}>
                         <div style={{ display: "flex", justifyContent: "center" }}>
-                            <NoSmokingIcon size={30} />
+                            <NoSmokingIcon size={32} />
                         </div>
-                        <span style={{ fontSize: "8px", fontWeight: 600, display: "block", marginTop: "6px", color: "#1d1d1f", letterSpacing: "0.01em" }}>
+                        <span style={{ fontSize: "9px", fontWeight: 700, display: "block", marginTop: "4px", color: "#111113" }}>
                             Non Smoking Room
                         </span>
                     </div>
@@ -527,21 +514,21 @@ export function GRCPrintTemplate({ data }: GRCPrintTemplateProps) {
                     {/* Icon 4: Not allowed down bed Badge */}
                     <div style={{ textAlign: "center" }}>
                         <div style={{ display: "flex", justifyContent: "center" }}>
-                            <NoDownBedIcon size={30} />
+                            <NoDownBedIcon size={32} />
                         </div>
-                        <span style={{ fontSize: "8px", fontWeight: 600, display: "block", marginTop: "6px", color: "#1d1d1f", letterSpacing: "0.01em" }}>
+                        <span style={{ fontSize: "9px", fontWeight: 700, display: "block", marginTop: "4px", color: "#111113" }}>
                             Not allowed down bed
                         </span>
                     </div>
                 </div>
 
                 {/* Right Column: Guest Signature Block */}
-                <div style={{ textAlign: "center", minWidth: "280px", paddingBottom: "4px" }}>
-                    <div style={{ fontSize: "9px", fontWeight: 600, color: "#1d1d1f" }}>
+                <div style={{ textAlign: "center", minWidth: "290px", paddingBottom: "4px" }}>
+                    <div style={{ fontSize: "10px", fontWeight: 700, color: "#111113" }}>
                         Acknowledge and agreed / Mengetahui & menyetujui,
                     </div>
-                    <div style={{ height: "46px" }} />
-                    <div style={{ borderTop: "1px solid #1d1d1f", paddingTop: "3px", fontSize: "8.5px", color: "#3a3a3c" }}>
+                    <div style={{ height: "44px" }} />
+                    <div style={{ borderTop: "1.2px solid #111113", paddingTop: "4px", fontSize: "9.5px", color: "#3a3a3c", fontWeight: 600 }}>
                         (Guest’s name & signature / Nama terang & tanda tangan)
                     </div>
                 </div>
@@ -549,19 +536,19 @@ export function GRCPrintTemplate({ data }: GRCPrintTemplateProps) {
 
             {/* Printed Info */}
             <div style={{
-                marginTop: "12px",
+                marginTop: "10px",
                 paddingTop: "4px",
-                borderTop: "1px solid #f2f2f7",
+                borderTop: "1px solid #e5e5ea",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                fontSize: "7.5px",
+                fontSize: "8.5px",
                 color: "#8e8e93"
             }}>
                 <span>
                     Printed : {data.checkedInBy || "FRONT OFFICE"} on {data.printedAt || new Date().toLocaleString("id-ID")}
                 </span>
-                <span style={{ fontWeight: 500, color: "#636366" }}>
+                <span style={{ fontWeight: 600, color: "#636366" }}>
                     {activeHotelName || "Setara PMS Property"}
                 </span>
             </div>

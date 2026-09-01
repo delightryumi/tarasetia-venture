@@ -1,0 +1,1009 @@
+/* ==========================================================================
+   RoomTypeSection.module.css
+   Modular, Encapsulated CSS Architecture for Room Inventory
+   Inspired by Apple Pro & POS Design System
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
+
+.container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 32px 24px 80px 24px;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: #1a1a1e;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 36px 40px 90px 40px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    padding: 40px 64px 100px 64px;
+  }
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 28px;
+  margin-bottom: 36px;
+  border-bottom: 1px solid #e8e8ed;
+}
+
+@media (min-width: 640px) {
+  .header {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.headerContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.headerTag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8e8e93;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.headerTitle {
+  font-size: 26px;
+  font-weight: 800;
+  color: #111113;
+  letter-spacing: -0.03em;
+  margin: 0;
+  line-height: 1.2;
+}
+
+@media (min-width: 768px) {
+  .headerTitle {
+    font-size: 30px;
+  }
+}
+
+.headerSubtitle {
+  font-size: 13.5px;
+  font-weight: 400;
+  color: #6c6c70;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ── Buttons ── */
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #161618;
+  border: 1px solid #161618;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.btnPrimary:hover {
+  background-color: #000000;
+  border-color: #000000;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #3a3a3c;
+  background-color: #f2f2f7;
+  border: 1px solid #e5e5ea;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnSecondary:hover {
+  background-color: #e5e5ea;
+  color: #111113;
+}
+
+.btnBack {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #8e8e93;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 24px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: color 0.2s ease;
+}
+
+.btnBack:hover {
+  color: #111113;
+}
+
+/* ── Card Grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ── Catalog Card ── */
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: #ffffff;
+  border: 1px solid #e5e5ea;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.card:hover {
+  border-color: #d1d1d6;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px);
+}
+
+.cardImageWrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #f7f7f9;
+  margin-bottom: 18px;
+}
+
+.cardImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover .cardImage {
+  transform: scale(1.04);
+}
+
+.cardImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c7c7cc;
+}
+
+.cardUnitBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 10px;
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1c1c1e;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cardCategory {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8e8e93;
+}
+
+.cardBookingLink {
+  color: #8e8e93;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.cardBookingLink:hover {
+  color: #0071e3;
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: #111113;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px 0;
+  line-height: 1.3;
+}
+
+.cardDescription {
+  font-size: 12.5px;
+  color: #636366;
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Card Specs Bar ── */
+.cardSpecs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: #f7f7f9;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #3a3a3c;
+}
+
+.specItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.specDot {
+  color: #d1d1d6;
+}
+
+/* ── Physical Room Numbers Box ── */
+.roomNumbersBox {
+  padding: 12px 14px;
+  background-color: #f7f7f9;
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roomNumbersHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #636366;
+}
+
+.roomNumbersCount {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: #111113;
+}
+
+.roomChipsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.roomChip {
+  padding: 3px 8px;
+  background-color: #ffffff;
+  border: 1px solid #dcdce0;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #111113;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.roomChipMore {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #8e8e93;
+  align-self: center;
+  padding-left: 2px;
+}
+
+.roomEmptyNotice {
+  font-size: 11.5px;
+  font-style: italic;
+  color: #8e8e93;
+}
+
+/* ── Amenities ── */
+.amenitiesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.amenityChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  background-color: #f7f7f9;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #48484a;
+}
+
+.amenityMore {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #8e8e93;
+  align-self: center;
+  padding: 4px 6px;
+}
+
+/* ── Card Footer ── */
+.cardFooter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 16px;
+  margin-top: 18px;
+  border-top: 1px solid #f2f2f7;
+}
+
+.btnEdit {
+  flex: 1;
+  padding: 9px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #161618;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-align: center;
+}
+
+.btnEdit:hover {
+  background-color: #000000;
+}
+
+.btnDelete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background-color: transparent;
+  border: 1px solid #e5e5ea;
+  border-radius: 8px;
+  color: #8e8e93;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnDelete:hover {
+  color: #ff3b30;
+  border-color: #ffcdd2;
+  background-color: #fff5f5;
+}
+
+/* ── Empty State ── */
+.emptyState {
+  background-color: #ffffff;
+  border: 1px solid #e5e5ea;
+  border-radius: 16px;
+  padding: 60px 24px;
+  text-align: center;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.emptyIcon {
+  width: 52px;
+  height: 52px;
+  background-color: #f7f7f9;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px auto;
+  color: #8e8e93;
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: #111113;
+  margin: 0 0 6px 0;
+}
+
+.emptyDescription {
+  font-size: 13px;
+  color: #6c6c70;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+/* ── Stepper Navigation ── */
+.stepperNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px;
+  background-color: #f2f2f7;
+  border: 1px solid #e5e5ea;
+  border-radius: 12px;
+  width: fit-content;
+  margin: 0 auto 32px auto;
+}
+
+.stepBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8e8e93;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stepBtnActive {
+  background-color: #ffffff;
+  color: #111113;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.stepBtnCompleted {
+  color: #111113;
+}
+
+.stepNum {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #e5e5ea;
+  color: #8e8e93;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.stepNumActive {
+  background-color: #0071e3;
+  color: #ffffff;
+}
+
+.stepNumCompleted {
+  background-color: #34c759;
+  color: #ffffff;
+}
+
+/* ── Stepper Builder Box ── */
+.builderCard {
+  max-width: 860px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  border: 1px solid #e5e5ea;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .builderCard {
+    padding: 40px;
+  }
+}
+
+.builderHeader {
+  border-bottom: 1px solid #e5e5ea;
+  padding-bottom: 20px;
+  margin-bottom: 28px;
+}
+
+.builderTitle {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111113;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px 0;
+}
+
+.builderSubtitle {
+  font-size: 13px;
+  color: #6c6c70;
+  margin: 0;
+}
+
+/* ── Form Controls ── */
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+}
+
+@media (min-width: 640px) {
+  .formGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroupFull {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formLabel {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #636366;
+}
+
+.formInput {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: #111113;
+  background-color: #f7f7f9;
+  border: 1px solid #e5e5ea;
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.formInput:focus {
+  background-color: #ffffff;
+  border-color: #0071e3;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+}
+
+.formTextarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #111113;
+  background-color: #f7f7f9;
+  border: 1px solid #e5e5ea;
+  border-radius: 8px;
+  outline: none;
+  resize: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.formTextarea:focus {
+  background-color: #ffffff;
+  border-color: #0071e3;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+}
+
+.formSelect {
+  height: 44px;
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #111113;
+  background-color: #f7f7f9;
+  border: 1px solid #e5e5ea;
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+}
+
+.formRowFlex {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Sub-Panels (Room planner & Bed builder) ── */
+.subPanel {
+  padding: 20px;
+  background-color: #f7f7f9;
+  border: 1px solid #e5e5ea;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.subPanelHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+@media (min-width: 640px) {
+  .subPanelHeader {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.subPanelTitle {
+  font-size: 12.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #111113;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.subPanelSubtitle {
+  font-size: 12px;
+  color: #636366;
+  margin: 0;
+}
+
+.subPanelBadge {
+  padding: 3px 10px;
+  background-color: #ffffff;
+  border: 1px solid #dcdce0;
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #111113;
+  align-self: flex-start;
+}
+
+.inputButtonRow {
+  display: flex;
+  gap: 8px;
+}
+
+.chipsContainer {
+  padding: 12px;
+  background-color: #ffffff;
+  border: 1px solid #e5e5ea;
+  border-radius: 8px;
+  min-height: 46px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+}
+
+.tagChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background-color: #f7f7f9;
+  border: 1px solid #dcdce0;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #111113;
+}
+
+.tagChipDelete {
+  background: transparent;
+  border: none;
+  color: #8e8e93;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.tagChipDelete:hover {
+  color: #ff3b30;
+}
+
+/* ── Bed Config Rows ── */
+.bedConfigRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background-color: #ffffff;
+  border: 1px solid #e5e5ea;
+  border-radius: 8px;
+}
+
+.bedConfigInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bedConfigIcon {
+  width: 32px;
+  height: 32px;
+  background-color: #f7f7f9;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #111113;
+}
+
+.bedConfigName {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111113;
+  margin: 0;
+}
+
+.bedConfigSize {
+  font-size: 11px;
+  color: #8e8e93;
+  margin: 0;
+}
+
+/* ── Gallery Tiles ── */
+.galleryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.galleryTile {
+  aspect-ratio: 4 / 5;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  background-color: #f7f7f9;
+  border: 1px solid #e5e5ea;
+  transition: all 0.2s ease;
+}
+
+.galleryTile:hover {
+  border-color: #111113;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.galleryTileMain {
+  border: 2px solid #0071e3;
+  padding: 2px;
+  background-color: #ffffff;
+}
+
+.galleryMainBadge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0071e3;
+  text-align: center;
+  border-top: 1px solid #e5e5ea;
+}
+
+.galleryOverlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.galleryTile:hover .galleryOverlay {
+  opacity: 1;
+}
+
+.galleryBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1px solid #e5e5ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #111113;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  transition: transform 0.15s ease;
+}
+
+.galleryBtn:hover {
+  transform: scale(1.08);
+  border-color: #111113;
+}
+
+.galleryBtnActive {
+  background-color: #0071e3;
+  border-color: #0071e3;
+  color: #ffffff;
+}
+
+/* ── Amenities Grid ── */
+.amenityGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px 12px;
+}
+
+.amenityCard {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.amenityCard:hover {
+  background-color: #f7f7f9;
+}
+
+.amenityCardSelected {
+  background-color: #f2f2f7;
+}
+
+.amenityCardIcon {
+  width: 26px;
+  color: #8e8e93;
+  display: flex;
+  align-items: center;
+}
+
+.amenityCardSelected .amenityCardIcon {
+  color: #0071e3;
+}
+
+.amenityCardLabel {
+  flex: 1;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #3a3a3c;
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 8px;
+}
+
+.amenityCardSelected .amenityCardLabel {
+  color: #111113;
+  font-weight: 700;
+}
+
+.amenityCheckbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid #c7c7cc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  transition: all 0.15s ease;
+}
+
+.amenityCardSelected .amenityCheckbox {
+  background-color: #0071e3;
+  border-color: #0071e3;
+  color: #ffffff;
+}
+
+/* ── Stepper Footer ── */
+.stepperFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 24px;
+  margin-top: 28px;
+  border-top: 1px solid #e5e5ea;
+}

@@ -541,5 +541,7 @@
         box-shadow: none !important;
         border: none !important;
         transform: none !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
     }
 }

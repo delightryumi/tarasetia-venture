@@ -25,6 +25,12 @@ export interface BedConfig {
     size: string;
 }
 
+export interface PhysicalRoom {
+    id: string;
+    number: string;
+    name?: string;
+}
+
 export interface RoomType {
     id: string;
     name: string;
@@ -39,7 +45,9 @@ export interface RoomType {
     roomSizeValue?: number;
     roomSizeUnit?: string;
     roomCount?: number;
+    physicalRooms?: Array<PhysicalRoom | string>;
     createdAt?: string;
+    updatedAt?: string;
 }
 
 export const useRoomTypes = () => {
@@ -57,6 +65,7 @@ export const useRoomTypes = () => {
     const [newRoomSizeValue, setNewRoomSizeValue] = useState<number>(0);
     const [newRoomSizeUnit, setNewRoomSizeUnit] = useState<string>("m2");
     const [newRoomCount, setNewRoomCount] = useState<number>(1);
+    const [newPhysicalRooms, setNewPhysicalRooms] = useState<PhysicalRoom[]>([]);
 
     const [saving, setSaving] = useState(false);
     const [editingRoom, setEditingRoom] = useState<RoomType | null>(null);
@@ -83,6 +92,9 @@ export const useRoomTypes = () => {
 
         setSaving(true);
         try {
+            // Keep roomCount consistent with physicalRooms if set
+            const finalRoomCount = newPhysicalRooms.length > 0 ? Math.max(newRoomCount, newPhysicalRooms.length) : newRoomCount;
+
             await addDoc(getHotelCollection(db, "roomTypes"), {
                 name: newName,
                 description: newDesc,
@@ -93,12 +105,14 @@ export const useRoomTypes = () => {
                 capacity: newCapacity,
                 roomSizeValue: newRoomSizeValue,
                 roomSizeUnit: newRoomSizeUnit,
-                roomCount: newRoomCount,
+                roomCount: finalRoomCount,
+                physicalRooms: newPhysicalRooms,
                 createdAt: new Date().toISOString()
             });
             resetForm();
             setView('list');
             setCurrentStep(1);
+            toast.success("Room category created successfully");
         } catch (err) {
             console.error("Error adding room type:", err);
             toast.error("Failed to add room type. Please try again.");
@@ -113,6 +127,8 @@ export const useRoomTypes = () => {
 
         setSaving(true);
         try {
+            const finalRoomCount = newPhysicalRooms.length > 0 ? Math.max(newRoomCount, newPhysicalRooms.length) : newRoomCount;
+
             const roomRef = doc(getHotelCollection(db, "roomTypes"), editingRoom.id);
             await updateDoc(roomRef, {
                 name: newName,
@@ -124,13 +140,15 @@ export const useRoomTypes = () => {
                 capacity: newCapacity,
                 roomSizeValue: newRoomSizeValue,
                 roomSizeUnit: newRoomSizeUnit,
-                roomCount: newRoomCount,
+                roomCount: finalRoomCount,
+                physicalRooms: newPhysicalRooms,
                 updatedAt: new Date().toISOString()
             });
             resetForm();
             setEditingRoom(null);
             setView('list');
             setCurrentStep(1);
+            toast.success("Room category updated successfully");
         } catch (err) {
             console.error("Error updating room type:", err);
             toast.error("Failed to update room type settings.");
@@ -150,6 +168,7 @@ export const useRoomTypes = () => {
         setNewRoomSizeValue(0);
         setNewRoomSizeUnit("m2");
         setNewRoomCount(1);
+        setNewPhysicalRooms([]);
     };
 
     const startEditing = (room: RoomType) => {
@@ -167,6 +186,20 @@ export const useRoomTypes = () => {
         setNewRoomSizeUnit(room.roomSizeUnit || "m2");
         setNewRoomCount(room.roomCount || 1);
 
+        // Normalize physicalRooms
+        const loadedRooms: PhysicalRoom[] = (room.physicalRooms || []).map((r, idx) => {
+            if (typeof r === "string") {
+                return { id: `pr-${idx}-${Date.now()}`, number: r.trim(), name: `Room ${r.trim()}` };
+            }
+            return {
+                id: r.id || `pr-${idx}-${Date.now()}`,
+                number: r.number || "",
+                name: r.name || `Room ${r.number || ""}`
+            };
+        }).filter(r => r.number.trim() !== "");
+
+        setNewPhysicalRooms(loadedRooms);
+
         setView('stepper');
         setCurrentStep(1);
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -177,6 +210,93 @@ export const useRoomTypes = () => {
         resetForm();
         setView('list');
         setCurrentStep(1);
+    };
+
+    const addPhysicalRoom = (rawNumber: string) => {
+        const trimmed = rawNumber.trim();
+        if (!trimmed) return;
+
+        // Check if user entered range e.g. "101-105" or "101 - 105"
+        const rangeMatch = trimmed.match(/^(\d+)\s*[-–—]\s*(\d+)$/);
+        if (rangeMatch) {
+            const start = parseInt(rangeMatch[1]);
+            const end = parseInt(rangeMatch[2]);
+            if (start <= end && end - start <= 100) {
+                const newAdditions: PhysicalRoom[] = [];
+                const existingNumbers = new Set(newPhysicalRooms.map(r => r.number.toUpperCase()));
+                
+                for (let n = start; n <= end; n++) {
+                    const numStr = n.toString();
+                    if (!existingNumbers.has(numStr.toUpperCase())) {
+                        existingNumbers.add(numStr.toUpperCase());
+                        newAdditions.push({
+                            id: `pr-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                            number: numStr,
+                            name: `Room ${numStr}`
+                        });
+                    }
+                }
+                
+                if (newAdditions.length > 0) {
+                    const combined = [...newPhysicalRooms, ...newAdditions];
+                    setNewPhysicalRooms(combined);
+                    setNewRoomCount(Math.max(newRoomCount, combined.length));
+                    toast.success(`Added ${newAdditions.length} rooms (${start} - ${end})`);
+                }
+                return;
+            }
+        }
+
+        // Check if comma or space separated list e.g. "101, 102, 103"
+        if (trimmed.includes(",") || trimmed.includes(" ")) {
+            const tokens = trimmed.split(/[\s,]+/).map(t => t.trim()).filter(Boolean);
+            const newAdditions: PhysicalRoom[] = [];
+            const existingNumbers = new Set(newPhysicalRooms.map(r => r.number.toUpperCase()));
+
+            tokens.forEach(tok => {
+                if (!existingNumbers.has(tok.toUpperCase())) {
+                    existingNumbers.add(tok.toUpperCase());
+                    newAdditions.push({
+                        id: `pr-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                        number: tok,
+                        name: `Room ${tok}`
+                    });
+                }
+            });
+
+            if (newAdditions.length > 0) {
+                const combined = [...newPhysicalRooms, ...newAdditions];
+                setNewPhysicalRooms(combined);
+                setNewRoomCount(Math.max(newRoomCount, combined.length));
+                toast.success(`Added ${newAdditions.length} rooms`);
+            }
+            return;
+        }
+
+        // Single room number
+        const exists = newPhysicalRooms.some(r => r.number.toUpperCase() === trimmed.toUpperCase());
+        if (exists) {
+            toast.error(`Room number ${trimmed} already exists in this category`);
+            return;
+        }
+
+        const newRoomObj: PhysicalRoom = {
+            id: `pr-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+            number: trimmed,
+            name: `Room ${trimmed}`
+        };
+
+        const combined = [...newPhysicalRooms, newRoomObj];
+        setNewPhysicalRooms(combined);
+        setNewRoomCount(Math.max(newRoomCount, combined.length));
+    };
+
+    const removePhysicalRoom = (index: number) => {
+        const updated = newPhysicalRooms.filter((_, i) => i !== index);
+        setNewPhysicalRooms(updated);
+        if (updated.length > 0 && newRoomCount > updated.length) {
+            setNewRoomCount(updated.length);
+        }
     };
 
     const handleDelete = async (id: string) => {
@@ -240,6 +360,10 @@ export const useRoomTypes = () => {
         setNewRoomSizeUnit,
         newRoomCount,
         setNewRoomCount,
+        newPhysicalRooms,
+        setNewPhysicalRooms,
+        addPhysicalRoom,
+        removePhysicalRoom,
         saving,
         editingRoom,
         handleAdd,
