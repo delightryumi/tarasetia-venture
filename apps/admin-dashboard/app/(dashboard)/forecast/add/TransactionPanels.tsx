@@ -12,7 +12,12 @@ import {
     AlertCircle,
     Receipt,
     BedDouble,
-    Globe
+    Globe,
+    Phone,
+    Mail,
+    FileText,
+    MapPin,
+    Building
 } from "lucide-react";
 import styles from "./TransactionFormStyles.module.css";
 import { CHANNELS } from "./useTransactionForm";
@@ -154,7 +159,7 @@ export function TransactionEntryForm({
                 {revenueType === 'room' ? (
                     /* ROOM REVENUE ENTRY FORM */
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <SectionTitle number="01" label="Informasi Guest & Durasi Menginap" />
+                        <SectionTitle number="01" label="Informasi Tamu & Durasi Menginap" />
                         <div className={styles.formGrid}>
                             <TerminalInput 
                                 label="Nama Tamu (Guest Name)"
@@ -164,10 +169,25 @@ export function TransactionEntryForm({
                                 icon={User}
                             />
                             <TerminalInput 
-                                label="Nama Staff (Staff Name)"
+                                label="No. Reservasi / Booking ID"
+                                value={form.bookingId}
+                                onChange={(val: string) => updateForm("bookingId", val)}
+                                placeholder="CONTOH: S.26002290 / TRV-98214"
+                                icon={FileText}
+                            />
+                            <TerminalInput 
+                                label="Nama Staff (Staff In-Charge)"
                                 value={form.staffName}
                                 onChange={(val: string) => updateForm("staffName", val)}
                                 placeholder="CONTOH: ADI / SARI"
+                                icon={User}
+                            />
+                            <TerminalInput 
+                                label="Jumlah Tamu (No of Pax)"
+                                value={form.pax || 1}
+                                onChange={(val: string) => updateForm("pax", val)}
+                                placeholder="1"
+                                type="number"
                                 icon={User}
                             />
                             <div className={styles.colSpan2}>
@@ -188,7 +208,70 @@ export function TransactionEntryForm({
                             </div>
                         </div>
 
-                        <SectionTitle number="02" label="Kamar & Saluran Pemesanan (OTA / Channel)" />
+                        <SectionTitle number="02" label="Data Identitas & Registrasi GRC" />
+                        <div className={styles.formGrid} style={{ rowGap: '12px' }}>
+                            <TerminalInput 
+                                label="No. Identitas (NIK / Paspor)"
+                                value={form.nik}
+                                onChange={(val: string) => updateForm("nik", val)}
+                                placeholder="CONTOH: 3201234567890001"
+                                icon={FileText}
+                            />
+                            <TerminalInput 
+                                label="No. Telp / HP Tamu"
+                                value={form.phone}
+                                onChange={(val: string) => updateForm("phone", val)}
+                                placeholder="CONTOH: 088216012667"
+                                icon={Phone}
+                            />
+                            <TerminalInput 
+                                label="Kewarganegaraan (Nationality)"
+                                value={form.nationality}
+                                onChange={(val: string) => updateForm("nationality", val)}
+                                placeholder="INDONESIA"
+                                icon={Globe}
+                            />
+                            <TerminalInput 
+                                label="Email Tamu"
+                                value={form.email}
+                                onChange={(val: string) => updateForm("email", val)}
+                                placeholder="tamu@email.com"
+                                icon={Mail}
+                            />
+                            <div className={styles.colSpan2}>
+                                <TerminalInput 
+                                    label="Perusahaan / Instansi (Company)"
+                                    value={form.company}
+                                    onChange={(val: string) => updateForm("company", val)}
+                                    placeholder="PT / Instansi (opsional, default: -)"
+                                    icon={Building}
+                                />
+                            </div>
+                            <div className={styles.colSpan2}>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.inputLabel}>Alamat Lengkap Sesuai KTP (Address)</label>
+                                    <textarea
+                                        value={form.address}
+                                        onChange={(e) => updateForm("address", e.target.value)}
+                                        placeholder="ALAMAT LENGKAP TAMU..."
+                                        rows={2}
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 12px',
+                                            borderRadius: '8px',
+                                            border: '1px solid var(--f-hairline)',
+                                            backgroundColor: 'var(--f-surface)',
+                                            color: 'var(--f-foreground)',
+                                            fontSize: '12px',
+                                            outline: 'none',
+                                            resize: 'none'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <SectionTitle number="03" label="Kamar & Saluran Pemesanan (OTA / Channel)" />
                         <div className={styles.formGrid} style={{ rowGap: '12px' }}>
                             <div className={styles.formGroup}>
                                 <label className={styles.inputLabel}>Tipe Kamar (Room Type)</label>
@@ -216,6 +299,27 @@ export function TransactionEntryForm({
                                     onChange={(val: string) => updateForm("channel", val)}
                                 />
                             </div>
+                            <TerminalInput 
+                                label="Kode Harga (Rate Code)"
+                                value={form.rateCode}
+                                onChange={(val: string) => updateForm("rateCode", val)}
+                                placeholder="-"
+                                icon={FileText}
+                            />
+                            <TerminalInput 
+                                label="Upgrade Kamar Dari (From)"
+                                value={form.upgradeFrom}
+                                onChange={(val: string) => updateForm("upgradeFrom", val)}
+                                placeholder="Tipe awal (opsional)"
+                                icon={BedDouble}
+                            />
+                            <TerminalInput 
+                                label="Upgrade Kamar Ke (Room Type Upgrade)"
+                                value={form.upgradeTo}
+                                onChange={(val: string) => updateForm("upgradeTo", val)}
+                                placeholder="Tipe upgrade (opsional)"
+                                icon={BedDouble}
+                            />
                             {startD && Array.from({ length: nights }).map((_, idx) => {
                                 const currentD = new Date(startD);
                                 currentD.setDate(currentD.getDate() + idx);
@@ -235,7 +339,7 @@ export function TransactionEntryForm({
                             })}
                         </div>
 
-                        <SectionTitle number="03" label="Rincian Pembayaran & Pendapatan Bersih" />
+                        <SectionTitle number="04" label="Rincian Pembayaran & Pendapatan Bersih" />
                         <div className={styles.formGrid} style={{ rowGap: '12px' }}>
                             <div className={styles.colSpan2} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--f-surface)', border: '1px solid var(--f-hairline)', borderRadius: '8px' }}>
                                 <input 

@@ -1,9 +1,7 @@
 "use client";
 
-"use client";
-
 import React, { useCallback, useState } from "react";
-import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { toast } from "sonner";
@@ -12,8 +10,8 @@ import "./upload.css";
 interface ImageUploadProps {
     onUploadComplete: (url: string, path: string) => void;
     currentUrl?: string;
-    path: string; // e.g., "hero/background.jpg"
-    label?: string; // e.g., "this image"
+    path: string; // e.g., "branding/logo-light.png" or "attachments/..."
+    label?: string;
 }
 
 export const ImageUpload: React.FC<ImageUploadProps> = ({
@@ -28,6 +26,12 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     const [isUploading, setIsUploading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // Ensure all uploads match Firebase Security Rules for /attachments/{allPaths=**}
+    const getStoragePath = useCallback((rawPath: string) => {
+        const clean = rawPath.replace(/^\/+/, "");
+        return clean.startsWith("attachments/") ? clean : `attachments/${clean}`;
+    }, []);
+
     const handleFile = useCallback(async (file: File) => {
         if (!file.type.startsWith("image/")) {
             toast.error("Invalid file type. Please upload an image.");
@@ -35,7 +39,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         }
 
         setIsUploading(true);
-        const storageRef = ref(storage, path);
+        const resolvedPath = getStoragePath(path);
+        const storageRef = ref(storage, resolvedPath);
         const uploadTask = uploadBytesResumable(storageRef, file);
 
         uploadTask.on(
@@ -52,12 +57,13 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             async () => {
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
                 setPreviewUrl(downloadURL);
-                onUploadComplete(downloadURL, path);
+                onUploadComplete(downloadURL, resolvedPath);
                 setIsUploading(false);
                 setUploadProgress(0);
+                toast.success("Image uploaded successfully.");
             }
         );
-    }, [path, onUploadComplete]);
+    }, [path, onUploadComplete, getStoragePath]);
 
     const onDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -94,10 +100,11 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                 onClick: async () => {
                     setIsDeleting(true);
                     try {
-                        const storageRef = ref(storage, path);
+                        const resolvedPath = getStoragePath(path);
+                        const storageRef = ref(storage, resolvedPath);
                         await deleteObject(storageRef);
                         setPreviewUrl("");
-                        onUploadComplete("", path);
+                        onUploadComplete("", resolvedPath);
                         toast.success("Image removed.");
                     } catch (error: any) {
                         console.error("Deletion error:", error);

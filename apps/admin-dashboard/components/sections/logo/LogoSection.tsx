@@ -65,7 +65,7 @@ export const LogoSection = () => {
                     </div>
 
                     <ImageUpload
-                        path="branding/logo-light.png"
+                        path="attachments/branding/logo-light.png"
                         currentUrl={lightLogo}
                         onUploadComplete={(url, path) => {
                             setLightLogo(url);
@@ -92,7 +92,7 @@ export const LogoSection = () => {
                     </div>
 
                     <ImageUpload
-                        path="branding/logo-dark.png"
+                        path="attachments/branding/logo-dark.png"
                         currentUrl={darkLogo}
                         onUploadComplete={(url, path) => {
                             setDarkLogo(url);

@@ -86,7 +86,9 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
             // Compress the image before uploading
             const compressedFile = await compressImage(item.file);
 
-            const filePath = `${basePath}/${Date.now()}-${item.id}.jpg`;
+            const cleanBasePath = basePath.replace(/^\/+/, "");
+            const normalizedBase = cleanBasePath.startsWith("attachments/") ? cleanBasePath : `attachments/${cleanBasePath}`;
+            const filePath = `${normalizedBase}/${Date.now()}-${item.id}.jpg`;
             const storageRef = ref(storage, filePath);
             const uploadTask = uploadBytesResumable(storageRef, compressedFile);
 

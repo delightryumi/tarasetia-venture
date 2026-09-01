@@ -62,7 +62,7 @@ const PERMISSION_TREE: PermissionModule[] = [
         icon: <Building2 size={14} />,
         submenus: [
             { id: "overview", label: "Overview", icon: <LayoutDashboard size={14} /> },
-            { id: "digital-checkin", label: "Digital Check-in", icon: <Camera size={14} /> },
+            { id: "digital-checkin", label: "GRC (Guest Card)", icon: <FileText size={14} /> },
             { id: "forecast", label: "Forecast", icon: <TrendingUp size={14} /> },
             { id: "inventory-control", label: "Inventory Control", icon: <Layers size={14} /> },
             { id: "invoice", label: "Create Invoice", icon: <FileText size={14} /> },

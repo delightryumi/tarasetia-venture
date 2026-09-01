@@ -4,7 +4,8 @@ import {
     ChartPie, BookOpen, Image, Gear, MapPin,
     Gift, Package, Globe, Users, ClipboardText,
     Coffee, Pulse, Storefront, FileImage,
-    Notebook, UsersThree, Bed, Info, ShoppingCart
+    Notebook, UsersThree, Bed, Info, ShoppingCart,
+    IdentificationCard
 } from "@phosphor-icons/react";
 import { NavItemType } from "./types";
 import { SpringOptions } from "framer-motion";
@@ -16,7 +17,7 @@ export const DISTANCE = 200;
 
 export const allNavItems: NavItemType[] = [
     { id: "overview", label: "Overview", icon: <ChartPie size={18} weight="bold" /> },
-    { id: "digital-checkin", label: "Digital Check-in", icon: <Camera size={18} weight="bold" /> },
+    { id: "digital-checkin", label: "GRC (Guest Card)", icon: <IdentificationCard size={18} weight="bold" /> },
     { id: "forecast", label: "Forecast", icon: <TrendUp size={18} weight="bold" /> },
     { id: "inventory-control", label: "Inventory Control", icon: <SquaresFour size={18} weight="bold" /> },
     { id: "pos", label: "POS Terminal", icon: <Storefront size={18} weight="bold" /> },

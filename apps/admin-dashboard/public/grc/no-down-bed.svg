@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- White Background -->
+  <rect width="100" height="100" fill="#ffffff" />
+
+  <!-- Red prohibition circle (radius 34 matches the AI JPGs) -->
+  <circle cx="50" cy="50" r="34" fill="#ffffff" stroke="#dc2626" stroke-width="7" />
+  
+  <!-- Bed Icon -->
+  <g fill="#1a1a1a">
+    <!-- Headboard Posts -->
+    <rect x="31" y="36" width="3.5" height="28" rx="1" />
+    <rect x="65.5" y="36" width="3.5" height="28" rx="1" />
+    
+    <!-- Headboard Top Bar -->
+    <rect x="31" y="39" width="38" height="3.5" rx="0.8" />
+    
+    <!-- Pillows -->
+    <rect x="37" y="44" width="10" height="5.5" rx="1.5" fill="#1a1a1a" />
+    <rect x="53" y="44" width="10" height="5.5" rx="1.5" fill="#1a1a1a" />
+    
+    <!-- Mattress / Main Frame -->
+    <rect x="32" y="51" width="36" height="8.5" rx="1.5" />
+    
+    <!-- Footboard Rail -->
+    <rect x="31" y="56" width="38" height="3" rx="0.8" />
+  </g>
+  
+  <!-- Diagonal Red Slash (Matches AI JPGs angle & width) -->
+  <line x1="26" y1="26" x2="74" y2="74" stroke="#dc2626" stroke-width="7" stroke-linecap="round" />
+</svg>

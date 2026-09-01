@@ -36,10 +36,45 @@ export function GuestEditForm({ formData, setFormData, roomTypes, guest }: Guest
                     <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--f-hairline)' }} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <NexuraInputLabel label="Guest Name" value={formData.guestName} onChange={(v: string) => setFormData({...formData, guestName: v})} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <NexuraInputLabel label="Guest Name (Nama Lengkap)" value={formData.guestName} onChange={(v: string) => setFormData({...formData, guestName: v})} />
+                        <NexuraInputLabel label="Booking ID (No Reservasi)" value={formData.bookingId} onChange={(v: string) => setFormData({...formData, bookingId: v})} />
+                    </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         <NexuraInputLabel label="Check-in" type="date" value={formData.checkIn} onChange={(v: string) => setFormData({...formData, checkIn: v})} />
                         <NexuraInputLabel label="Check-out" type="date" value={formData.checkOut} onChange={(v: string) => setFormData({...formData, checkOut: v})} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <NexuraInputLabel label="No. Identitas (NIK / Paspor)" value={formData.nik || formData.identityNo || ""} onChange={(v: string) => setFormData({...formData, nik: v, identityNo: v})} />
+                        <NexuraInputLabel label="No. Telp / HP" value={formData.phone || ""} onChange={(v: string) => setFormData({...formData, phone: v})} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <NexuraInputLabel label="Warga Negara (Nationality)" value={formData.nationality || "INDONESIA"} onChange={(v: string) => setFormData({...formData, nationality: v})} />
+                        <NexuraInputLabel label="Email" type="email" value={formData.email || ""} onChange={(v: string) => setFormData({...formData, email: v})} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <NexuraInputLabel label="Perusahaan (Company)" value={formData.company || "-"} onChange={(v: string) => setFormData({...formData, company: v})} />
+                        <NexuraInputLabel label="Jumlah Tamu (Pax)" type="number" value={formData.pax || 1} onChange={(v: string) => setFormData({...formData, pax: Number(v)})} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>Alamat Lengkap Sesuai KTP (Address)</span>
+                        <textarea
+                            value={formData.address || ""}
+                            onChange={e => setFormData({...formData, address: e.target.value})}
+                            rows={2}
+                            style={{
+                                width: '100%',
+                                backgroundColor: 'var(--f-surface)',
+                                borderRadius: '6px',
+                                padding: '8px 12px',
+                                fontSize: '11px',
+                                color: 'var(--f-body)',
+                                outline: 'none',
+                                border: '1px solid var(--f-hairline)',
+                                resize: 'none'
+                            }}
+                            placeholder="Alamat lengkap tamu..."
+                        />
                     </div>
                 </div>
             </section>
@@ -138,6 +173,9 @@ export function GuestEditForm({ formData, setFormData, roomTypes, guest }: Guest
                         </select>
                     </div>
                     <NexuraInputLabel label="Staff In-Charge" value={formData.staffName} onChange={(v: string) => setFormData({...formData, staffName: v})} />
+                    <NexuraInputLabel label="Rate Code (Kode Harga)" value={formData.rateCode || "-"} onChange={(v: string) => setFormData({...formData, rateCode: v})} />
+                    <NexuraInputLabel label="Upgrade Kamar Dari" value={formData.upgradeFrom || ""} onChange={(v: string) => setFormData({...formData, upgradeFrom: v})} />
+                    <NexuraInputLabel label="Upgrade Kamar Ke" value={formData.upgradeTo || ""} onChange={(v: string) => setFormData({...formData, upgradeTo: v})} />
                 </div>
             </section>
 

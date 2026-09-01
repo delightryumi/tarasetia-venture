@@ -168,7 +168,7 @@ export const MobileBottomNav = () => {
 
     const allNavItems = [
         { id: "overview", label: "Overview", icon: <BarChart2 size={20} /> },
-        { id: "digital-checkin", label: "Digital Check-in", icon: <Camera size={20} /> },
+        { id: "digital-checkin", label: "GRC", icon: <FileText size={20} /> },
         { id: "inventory-control", label: "Inventory", icon: <Grid size={20} /> },
         { id: "forecast", label: "Forecast", icon: <TrendingUp size={20} /> },
         { id: "pos", label: "POS Terminal", icon: <ShoppingCart size={20} /> },

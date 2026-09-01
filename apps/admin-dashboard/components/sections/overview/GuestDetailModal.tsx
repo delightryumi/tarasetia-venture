@@ -3,11 +3,13 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { 
     Trash2,
     Save,
     User,
-    X
+    X,
+    Printer
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
@@ -41,6 +43,7 @@ const cleanUndefined = (obj: any): any => {
 };
 
 export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, onSave }: GuestDetailModalProps) {
+    const router = useRouter();
     const { user, activeHotelCode } = useAuth();
     const [isEditMode, setIsEditMode] = React.useState(initialEditing);
     const [showConfirmVoid, setShowConfirmVoid] = React.useState(false);
@@ -540,7 +543,21 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                         </>
                     ) : (
                         <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                            <button onClick={onClose} className={styles.btnSecondary} style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px' }}>Close</button>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button onClick={onClose} className={styles.btnSecondary} style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px' }}>Close</button>
+                                <button 
+                                    onClick={() => {
+                                        const bParam = guest.bookingId ? `&bookingId=${encodeURIComponent(guest.bookingId)}` : '';
+                                        const gParam = guest.guestName ? `&guestName=${encodeURIComponent(guest.guestName)}` : '';
+                                        router.push(`/digital-checkin?autoOpen=true${gParam}${bParam}`);
+                                    }} 
+                                    className={styles.btnSecondary} 
+                                    style={{ height: '36px', padding: '0 14px', fontSize: '10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
+                                    title="Buka form Guest Registration Card"
+                                >
+                                    <Printer size={13} /> Cetak GRC
+                                </button>
+                            </div>
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 <button onClick={() => setIsEditMode(true)} className={styles.btnIcon} style={{ height: '36px', padding: '0 16px', width: 'auto', fontSize: '10px', borderRadius: '8px', fontWeight: 700 }}>Modify</button>
                                 {guest.status !== "CANCELLED" && guest.status !== "CANCEL" && guest.status !== "VOID" && guest.status !== "VOIDED" && (
