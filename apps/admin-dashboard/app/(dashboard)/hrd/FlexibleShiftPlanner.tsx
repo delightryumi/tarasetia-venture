@@ -56,28 +56,38 @@ export function FlexibleShiftPlanner({ hotelCode, shifts }: Props) {
     return `${year}-${month}-${day}`;
   };
 
+  const startStr = toYMD(startDate);
+  const endStr = toYMD(endDate);
+
   useEffect(() => {
+    if (!hotelCode) return;
+    let isMounted = true;
+
     const fetchData = async () => {
       setLoading(true);
       try {
         // 1. Fetch Staff
         const qStaff = query(collection(db, `hotels/${hotelCode}/staff`), where("isActive", "==", true));
         const snapStaff = await getDocs(qStaff);
+        if (!isMounted) return;
         const stList = snapStaff.docs.map(d => ({ id: d.id, ...d.data() } as Staff));
         setStaffList(stList);
 
-        // 2. Fetch schedules for this week for all staff
-        // Note: Firestore doesn't allow easy sub-collection queries without collectionGroup
-        // To keep it simple, we fetch each staff's schedule sequentially (or parallel)
+        if (days.length === 0) {
+          setLoading(false);
+          return;
+        }
+
+        // 2. Fetch schedules for this period for all staff
         const schedMap: { [key: string]: string } = {};
-        const startDate = toYMD(days[0]);
-        const endDate = toYMD(days[6]);
+        const rangeStartStr = toYMD(days[0]);
+        const rangeEndStr = toYMD(days[days.length - 1]);
 
         await Promise.all(stList.map(async (staff) => {
           const qSched = query(
             collection(db, `hotels/${hotelCode}/staff/${staff.id}/schedules`),
-            where("date", ">=", startDate),
-            where("date", "<=", endDate)
+            where("date", ">=", rangeStartStr),
+            where("date", "<=", rangeEndStr)
           );
           const snapSched = await getDocs(qSched);
           snapSched.forEach(docSnap => {
@@ -85,6 +95,8 @@ export function FlexibleShiftPlanner({ hotelCode, shifts }: Props) {
             schedMap[`${staff.id}_${data.date}`] = data.shiftId;
           });
         }));
+
+        if (!isMounted) return;
 
         // Preserve local unsaved changes across navigations
         Object.entries(unsavedChanges).forEach(([k, v]) => {
@@ -96,12 +108,16 @@ export function FlexibleShiftPlanner({ hotelCode, shifts }: Props) {
       } catch (err) {
         console.error("Error fetching planner data:", err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchData();
-  }, [hotelCode, startDate, endDate]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [hotelCode, startStr, endStr]);
 
   const handlePrev = () => {
     if (viewMode === "weekly") {

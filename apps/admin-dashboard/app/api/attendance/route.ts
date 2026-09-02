@@ -98,15 +98,14 @@ export async function POST(request: Request) {
       if (shiftData) {
         const [shH, shM] = shiftData.startTime.split(":").map(Number);
         
-        // Buat string tanggal lokal Jakarta (format: YYYY-MM-DDTtt:mm:ss)
-        // new Date(now) adalah waktu server (UTC). Kita perlu membandingkannya dengan shiftStart lokal
-        const shiftStartWithTolerance = new Date(`${date}T${String(shH).padStart(2, "0")}:${String(shM + (shiftData.toleranceMinutes || 0)).padStart(2, "0")}:00`);
+        // Buat waktu mulai shift berstandar WIB (Asia/Jakarta +07:00)
+        const shiftStartOriginal = new Date(`${date}T${String(shH).padStart(2, "0")}:${String(shM).padStart(2, "0")}:00+07:00`);
+        const toleranceMs = (shiftData.toleranceMinutes || 0) * 60000;
+        const shiftStartWithTolerance = new Date(shiftStartOriginal.getTime() + toleranceMs);
         const nowTime = new Date(now);
         
-        if (nowTime > shiftStartWithTolerance) {
+        if (nowTime.getTime() > shiftStartWithTolerance.getTime()) {
           status = "terlambat";
-          
-          const shiftStartOriginal = new Date(`${date}T${String(shH).padStart(2, "0")}:${String(shM).padStart(2, "0")}:00`);
           const diffMs = nowTime.getTime() - shiftStartOriginal.getTime();
           lateMinutes = Math.max(0, Math.round(diffMs / 60000));
         }

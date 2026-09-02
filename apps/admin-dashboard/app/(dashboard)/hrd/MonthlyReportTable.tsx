@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
-import type { Staff, AttendanceLog } from "./types";
+import type { Staff, AttendanceLog, Shift } from "./types";
 import { ExportReportButton } from "./ExportReportButton";
 import { ManualCorrectionModal } from "./ManualCorrectionModal";
 import { StaffLogModal } from "./StaffLogModal";
@@ -13,9 +13,10 @@ import styles from "./hrd.module.css";
 
 interface Props {
   hotelCode: string;
+  shifts?: Shift[];
 }
 
-export function MonthlyReportTable({ hotelCode }: Props) {
+export function MonthlyReportTable({ hotelCode, shifts }: Props) {
   const now = new Date();
   const defaultDate = now.toISOString().split("T")[0];
   const defaultMonth = defaultDate.slice(0, 7);
@@ -165,6 +166,7 @@ export function MonthlyReportTable({ hotelCode }: Props) {
         <ReportDataGrid
           filteredLogs={filteredLogs}
           staffs={staffs}
+          shifts={shifts}
           periodLabel={periodLabel}
           onDetailClick={(name, staffId) => setDetailTarget({ name, staffId })}
         />
@@ -185,6 +187,7 @@ export function MonthlyReportTable({ hotelCode }: Props) {
         <StaffLogModal
           staffName={detailTarget.name}
           logs={allLogs.filter(l => l.staffId === detailTarget.staffId)}
+          shifts={shifts}
           onClose={() => setDetailTarget(null)}
         />
       )}

@@ -34,14 +34,14 @@ export function ManualCorrectionModal({ hotelCode, log, yyyyMM, onClose }: Props
     try {
       const overrides: any = { status };
       if (clockIn) {
-        const t = new Date(`${log.date}T${clockIn}:00`).toISOString();
+        const t = new Date(`${log.date}T${clockIn}:00+07:00`).toISOString();
         overrides["clockIn.time"] = t;
       }
       if (clockOut) {
-        const t = new Date(`${log.date}T${clockOut}:00`).toISOString();
+        const t = new Date(`${log.date}T${clockOut}:00+07:00`).toISOString();
         overrides["clockOut.time"] = t;
         if (clockIn) {
-          const dur = Math.round((new Date(`${log.date}T${clockOut}:00`).getTime() - new Date(`${log.date}T${clockIn}:00`).getTime()) / 60000);
+          const dur = Math.round((new Date(`${log.date}T${clockOut}:00+07:00`).getTime() - new Date(`${log.date}T${clockIn}:00+07:00`).getTime()) / 60000);
           overrides.durationMinutes = Math.max(0, dur);
         }
       }

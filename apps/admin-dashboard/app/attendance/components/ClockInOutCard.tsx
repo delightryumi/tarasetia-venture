@@ -47,15 +47,13 @@ export function ClockInOutCard({ staffId, hotelCode, today, shift, loadingShift 
   const hasClockedOut = !!log?.clockOut;
 
   const checkIfLate = (type: "clock_in" | "clock_out"): boolean => {
-    if (type !== "clock_in" || !shift) return false;
+    if (type !== "clock_in" || !shift || !shift.startTime) return false;
     try {
       const [shH, shM] = (shift.startTime as string).split(":").map(Number);
-      const tolerance = shift.toleranceMinutes || 0;
-      // Gunakan today (yyyy-mm-dd) + tambahkan 'T' agar parse sebagai local time
-      const shiftStart = new Date(`${today}T${String(shH).padStart(2,"0")}:${String(shM).padStart(2,"0")}:00`);
-      shiftStart.setMinutes(shiftStart.getMinutes() + tolerance);
-      const isLate = new Date() > shiftStart;
-      console.debug("[checkIfLate]", { shiftStart: shiftStart.toISOString(), now: new Date().toISOString(), isLate });
+      const shiftStart = new Date(`${today}T${String(shH).padStart(2, "0")}:${String(shM).padStart(2, "0")}:00+07:00`);
+      const toleranceMs = (shift.toleranceMinutes || 0) * 60000;
+      const deadline = new Date(shiftStart.getTime() + toleranceMs);
+      const isLate = new Date() > deadline;
       return isLate;
     } catch (e) {
       console.error("[checkIfLate] Error:", e);

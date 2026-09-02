@@ -119,21 +119,19 @@ export function PayrollTable({ hotelCode }: Props) {
         }
 
         // Hitung Keterlambatan aktual (menit)
-        if (log.status === "terlambat" && log.clockIn?.time) {
-          const shift = shifts.find(sh => sh.id === log.shiftId);
-          if (shift) {
-            const clockInDate = new Date(log.clockIn.time);
-            // shift.startTime is "HH:MM"
-            const [sh, sm] = shift.startTime.split(":").map(Number);
-            const expectedTime = new Date(log.clockIn.time);
-            expectedTime.setHours(sh, sm, 0, 0);
-            
-            let lateDiff = Math.floor((clockInDate.getTime() - expectedTime.getTime()) / 60000);
-            // Reduce by tolerance? Usually tolerance means "if <= 15m, not late. If > 15m, late by actual diff or diff-15?"
-            // Assuming standard: if status="terlambat", we charge for the full lateness or lateness minus tolerance.
-            // Let's charge full lateness to be safe, or just use actual diff.
-            if (lateDiff > 0) {
-              s.totalLateMinutes += lateDiff;
+        if (log.status === "terlambat") {
+          if (typeof log.lateMinutes === "number" && log.lateMinutes > 0) {
+            s.totalLateMinutes += log.lateMinutes;
+          } else if (log.clockIn?.time) {
+            const shift = shifts.find(sh => sh.id === log.shiftId);
+            if (shift && shift.startTime) {
+              const clockInDate = new Date(log.clockIn.time);
+              const [sh, sm] = shift.startTime.split(":").map(Number);
+              const expectedTime = new Date(`${log.date}T${String(sh).padStart(2, "0")}:${String(sm).padStart(2, "0")}:00+07:00`);
+              let lateDiff = Math.floor((clockInDate.getTime() - expectedTime.getTime()) / 60000);
+              if (lateDiff > 0) {
+                s.totalLateMinutes += lateDiff;
+              }
             }
           }
         }

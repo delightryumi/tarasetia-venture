@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot } from "firebase/firestore";
 import { HrdTabs, type HrdTab } from "./HrdTabs";
 import { LiveMonitorTable } from "./LiveMonitorTable";
 import { StaffTable } from "./StaffTable";
@@ -15,16 +17,35 @@ import { QrCodeDisplay } from "./QrCodeDisplay";
 import { FlexibleShiftPlanner } from "./FlexibleShiftPlanner";
 import { AnnouncementSettingCard } from "./AnnouncementSettingCard";
 import { CompanySettingCard } from "./CompanySettingCard";
-import type { Staff, Shift } from "./types";
+import type { Shift } from "./types";
 import styles from "./hrd.module.css";
 
 export default function HrdPage() {
   const { user, activeHotelCode } = useAuth();
   const [activeTab, setActiveTab] = useState<HrdTab>("monitor");
-  const [staffList, setStaffList] = useState<Staff[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
+  const [loadingShifts, setLoadingShifts] = useState(true);
 
   const hotelCode = activeHotelCode || (user as any)?.hotelCode || "";
+
+  // Single centralized listener for shifts shared across tabs
+  useEffect(() => {
+    if (!hotelCode) return;
+    const colRef = collection(db, `hotels/${hotelCode}/shifts`);
+    const unsub = onSnapshot(
+      colRef,
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Shift));
+        setShifts(list);
+        setLoadingShifts(false);
+      },
+      (err) => {
+        console.error("Error loading shifts in HrdPage:", err);
+        setLoadingShifts(false);
+      }
+    );
+    return () => unsub();
+  }, [hotelCode]);
 
   if (!hotelCode) {
     return (
@@ -46,7 +67,7 @@ export default function HrdPage() {
       <HrdTabs activeTab={activeTab} onChange={setActiveTab} />
 
       {/* Content */}
-      {activeTab === "monitor" && <LiveMonitorTable hotelCode={hotelCode} />}
+      {activeTab === "monitor" && <LiveMonitorTable hotelCode={hotelCode} shifts={shifts} />}
 
       {activeTab === "staf" && (
         <StaffTable
@@ -58,7 +79,8 @@ export default function HrdPage() {
       {activeTab === "shift" && (
         <ShiftTable
           hotelCode={hotelCode}
-          onShiftsLoaded={(list) => setShifts(list)}
+          shifts={shifts}
+          loading={loadingShifts}
         />
       )}
 
@@ -73,6 +95,7 @@ export default function HrdPage() {
       {activeTab === "laporan" && (
         <MonthlyReportTable
           hotelCode={hotelCode}
+          shifts={shifts}
         />
       )}
 
@@ -90,13 +113,6 @@ export default function HrdPage() {
             <GpsSettingCard hotelCode={hotelCode} />
           </div>
           <QrCodeDisplay hotelCode={hotelCode} />
-        </div>
-      )}
-
-      {/* Hidden ShiftTable listener to keep shifts in sync for StaffFormModal */}
-      {activeTab !== "shift" && (
-        <div style={{ display: "none" }}>
-          <ShiftTable hotelCode={hotelCode} onShiftsLoaded={(list) => setShifts(list)} />
         </div>
       )}
     </div>

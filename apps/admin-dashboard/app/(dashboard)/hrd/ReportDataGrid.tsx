@@ -2,17 +2,22 @@
 
 import React, { useState, useEffect } from "react";
 import styles from "./hrd.module.css";
-import type { AttendanceLog, Staff } from "./types";
+import type { AttendanceLog, Staff, Shift } from "./types";
+import { AttendancePhotoThumbnail } from "./AttendancePhotoThumbnail";
+import { AttendancePhotoModal, type AttendancePhotoModalData } from "./AttendancePhotoModal";
+import { formatLateBadge } from "./LiveMonitorTable";
 
 interface Props {
   filteredLogs: AttendanceLog[];
   staffs: Staff[];
+  shifts?: Shift[];
   periodLabel: string;
   onDetailClick: (name: string, staffId: string) => void;
 }
 
-export function ReportDataGrid({ filteredLogs, staffs, periodLabel, onDetailClick }: Props) {
+export function ReportDataGrid({ filteredLogs, staffs, shifts, periodLabel, onDetailClick }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [modalPhotoData, setModalPhotoData] = useState<AttendancePhotoModalData | null>(null);
   const itemsPerPage = 10;
 
   // Reset to page 1 whenever filter or logs change (by length or item IDs)
@@ -30,6 +35,28 @@ export function ReportDataGrid({ filteredLogs, staffs, periodLabel, onDetailClic
 
   const startRange = sortedLogs.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
   const endRange = Math.min(sortedLogs.length, currentPage * itemsPerPage);
+
+  const handleOpenPhoto = (
+    log: AttendanceLog,
+    type: "in" | "out",
+    staff?: Staff
+  ) => {
+    const event = type === "in" ? log.clockIn : log.clockOut;
+    if (!event?.selfieUrl) return;
+
+    setModalPhotoData({
+      photoUrl: event.selfieUrl,
+      staffName: log.staffName,
+      type,
+      date: log.date,
+      time: event.time,
+      status: log.status,
+      gps: event.gps,
+      lateReason: type === "in" ? log.correctionNote || (log as any).lateReason : undefined,
+      position: staff?.position,
+      division: staff?.division,
+    });
+  };
 
   return (
     <div className={styles.card}>
@@ -55,8 +82,8 @@ export function ReportDataGrid({ filteredLogs, staffs, periodLabel, onDetailClic
                 <th style={{ whiteSpace: "nowrap" }}>Jabatan</th>
                 <th style={{ whiteSpace: "nowrap" }}>Divisi</th>
                 <th style={{ whiteSpace: "nowrap" }}>Status</th>
-                <th style={{ whiteSpace: "nowrap" }}>Clock In</th>
-                <th style={{ whiteSpace: "nowrap" }}>Clock Out</th>
+                <th style={{ whiteSpace: "nowrap" }}>Clock In (Masuk)</th>
+                <th style={{ whiteSpace: "nowrap" }}>Clock Out (Pulang)</th>
                 <th style={{ whiteSpace: "nowrap" }}>Durasi (jam)</th>
                 <th style={{ whiteSpace: "nowrap" }}>Lembur (jam)</th>
                 <th style={{ whiteSpace: "nowrap" }}>Alasan</th>
@@ -66,6 +93,7 @@ export function ReportDataGrid({ filteredLogs, staffs, periodLabel, onDetailClic
             <tbody>
               {paginatedLogs.map((log) => {
                 const staff = staffs.find((s) => s.id === log.staffId);
+                const shift = shifts?.find((sh) => sh.id === (log.shiftId || staff?.shiftId));
                 const formatTime = (isoString?: string) => {
                   if (!isoString) return "—";
                   return new Date(isoString).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
@@ -87,13 +115,34 @@ export function ReportDataGrid({ filteredLogs, staffs, periodLabel, onDetailClic
                         styles.badgeCuti
                       }`}>
                         {log.status.toUpperCase()}
+                        {formatLateBadge(log, shift)}
                       </span>
                     </td>
-                    <td style={{ fontFamily: "monospace", fontSize: 13, whiteSpace: "nowrap" }}>
-                      {formatTime(log.clockIn?.time)}
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <AttendancePhotoThumbnail
+                          photoUrl={log.clockIn?.selfieUrl}
+                          staffName={log.staffName}
+                          type="in"
+                          onClick={() => handleOpenPhoto(log, "in", staff)}
+                        />
+                        <span style={{ fontFamily: "monospace", fontSize: 13 }}>
+                          {formatTime(log.clockIn?.time)}
+                        </span>
+                      </div>
                     </td>
-                    <td style={{ fontFamily: "monospace", fontSize: 13, whiteSpace: "nowrap" }}>
-                      {formatTime(log.clockOut?.time)}
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <AttendancePhotoThumbnail
+                          photoUrl={log.clockOut?.selfieUrl}
+                          staffName={log.staffName}
+                          type="out"
+                          onClick={() => handleOpenPhoto(log, "out", staff)}
+                        />
+                        <span style={{ fontFamily: "monospace", fontSize: 13 }}>
+                          {formatTime(log.clockOut?.time)}
+                        </span>
+                      </div>
                     </td>
                     <td>
                       {log.durationMinutes > 0 ? (log.durationMinutes / 60).toFixed(1) : "—"}
@@ -163,6 +212,12 @@ export function ReportDataGrid({ filteredLogs, staffs, periodLabel, onDetailClic
           )}
         </div>
       )}
+
+      {/* Full Photo Modal */}
+      <AttendancePhotoModal
+        data={modalPhotoData}
+        onClose={() => setModalPhotoData(null)}
+      />
     </div>
   );
 }

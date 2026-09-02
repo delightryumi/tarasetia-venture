@@ -9,26 +9,30 @@ import styles from "./hrd.module.css";
 
 interface Props {
   hotelCode: string;
+  shifts?: Shift[];
+  loading?: boolean;
   onShiftsLoaded?: (shifts: Shift[]) => void;
 }
 
-export function ShiftTable({ hotelCode, onShiftsLoaded }: Props) {
-  const [shifts, setShifts] = useState<Shift[]>([]);
-  const [loading, setLoading] = useState(true);
+export function ShiftTable({ hotelCode, shifts: propShifts, loading: propLoading, onShiftsLoaded }: Props) {
+  const [internalShifts, setInternalShifts] = useState<Shift[]>([]);
+  const [internalLoading, setInternalLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editTarget, setEditTarget] = useState<Shift | null>(null);
 
+  const shifts = propShifts !== undefined ? propShifts : internalShifts;
+  const loading = propLoading !== undefined ? propLoading : internalLoading;
+
   useEffect(() => {
-    if (!hotelCode) return;
+    if (!hotelCode || propShifts !== undefined) return;
     const colRef = collection(db, `hotels/${hotelCode}/shifts`);
     const unsub = onSnapshot(colRef, (snap) => {
       const list = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Shift));
-      setShifts(list);
-      onShiftsLoaded?.(list);
-      setLoading(false);
+      setInternalShifts(list);
+      setInternalLoading(false);
     });
     return () => unsub();
-  }, [hotelCode, onShiftsLoaded]);
+  }, [hotelCode, propShifts]);
 
   const handleDelete = async (s: Shift) => {
     if (!confirm(`Hapus shift "${s.name}"? Karyawan yang menggunakan shift ini perlu diperbarui.`)) return;
