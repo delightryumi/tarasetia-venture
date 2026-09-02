@@ -5,6 +5,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { useAuth } from "@/context/AuthContext";
+import styles from "./GRCPrintTemplate.module.css";
 
 export interface GRCData {
     roomNumber: string;
@@ -34,54 +35,55 @@ export interface GRCData {
 
 interface GRCPrintTemplateProps {
     data: GRCData;
+    paperSize?: "f4" | "a4";
 }
 
 /* =========================================================================
-   Apple-grade Pixel-Perfect SVG Prohibition Badges (Exact 1:1 Proportions)
+   Pixel-Perfect SVG Prohibition Badges (Large, Bold & Clean Pro Design)
    ========================================================================= */
 
-function NoDurianIcon({ size = 32 }: { size?: number }) {
+function NoDurianIcon({ size = 30 }: { size?: number }) {
     return (
         <svg width={size} height={size} viewBox="0 0 100 100" fill="none" style={{ display: "block", flexShrink: 0 }}>
-            <circle cx="50" cy="50" r="40" stroke="#dc2626" strokeWidth="7" fill="#ffffff" />
-            <g fill="#1d1d1f">
+            <circle cx="50" cy="50" r="40" stroke="#dc2626" strokeWidth="6.5" fill="#ffffff" />
+            <g fill="#0f172a">
                 <path d="M50 26c-1 0-2 1-2 3v2c-7 2-13 7-16 13-3 6-3 13 0 19 3 7 9 12 16 14 7-2 13-7 16-14 3-6 3-13 0-19-3-6-9-11-16-13v-2c0-2-1-3-2-3z" />
                 <path d="M48 24l2-5 2 5 4 1 3-3 2 5 5 1 1-5 4 4 5 3-2 5 5 3-3 4 4 5-5 2 1 5-5 1-1 5-4-2-4 4-3-4-5 2-1-5-5-1 1-5-5-2 3-5-3-4 5-3-2-5 5-3 1-5 5-1 2-5 3 3z" />
             </g>
-            <line x1="22" y1="22" x2="78" y2="78" stroke="#dc2626" strokeWidth="7" strokeLinecap="round" />
+            <line x1="22" y1="22" x2="78" y2="78" stroke="#dc2626" strokeWidth="6.5" strokeLinecap="round" />
         </svg>
     );
 }
 
-function NoPetsIcon({ size = 32 }: { size?: number }) {
+function NoPetsIcon({ size = 30 }: { size?: number }) {
     return (
         <svg width={size} height={size} viewBox="0 0 100 100" fill="none" style={{ display: "block", flexShrink: 0 }}>
-            <circle cx="50" cy="50" r="40" stroke="#dc2626" strokeWidth="7" fill="#ffffff" />
-            <path d="M34 40c-2-4-4-5-6-4-2 1-2 4 0 7l3 4v16c0 1 1 2 2 2h4c1 0 2-1 2-2v-9h14v9c0 1 1 2 2 2h4c1 0 2-1 2-2V57l7-9c2-2 1-4-1-5-2-1-5 0-7 2l-6 4v-7c0-2-2-4-4-4H42l-4-3c-2-2-5-1-6 2l2 4z" fill="#1d1d1f" />
-            <line x1="22" y1="22" x2="78" y2="78" stroke="#dc2626" strokeWidth="7" strokeLinecap="round" />
+            <circle cx="50" cy="50" r="40" stroke="#dc2626" strokeWidth="6.5" fill="#ffffff" />
+            <path d="M34 40c-2-4-4-5-6-4-2 1-2 4 0 7l3 4v16c0 1 1 2 2 2h4c1 0 2-1 2-2v-9h14v9c0 1 1 2 2 2h4c1 0 2-1 2-2V57l7-9c2-2 1-4-1-5-2-1-5 0-7 2l-6 4v-7c0-2-2-4-4-4H42l-4-3c-2-2-5-1-6 2l2 4z" fill="#0f172a" />
+            <line x1="22" y1="22" x2="78" y2="78" stroke="#dc2626" strokeWidth="6.5" strokeLinecap="round" />
         </svg>
     );
 }
 
-function NoSmokingIcon({ size = 32 }: { size?: number }) {
+function NoSmokingIcon({ size = 30 }: { size?: number }) {
     return (
         <svg width={size} height={size} viewBox="0 0 100 100" fill="none" style={{ display: "block", flexShrink: 0 }}>
-            <circle cx="50" cy="50" r="40" stroke="#dc2626" strokeWidth="7" fill="#ffffff" />
-            <rect x="25" y="47" width="34" height="8" rx="1.5" fill="#1d1d1f" />
+            <circle cx="50" cy="50" r="40" stroke="#dc2626" strokeWidth="6.5" fill="#ffffff" />
+            <rect x="25" y="47" width="34" height="8" rx="1.5" fill="#0f172a" />
             <rect x="61" y="47" width="14" height="8" rx="1.5" fill="#d97706" />
             <rect x="22" y="48.5" width="2" height="5" fill="#dc2626" />
-            <path d="M22 42c-4-4 0-8-3-12" stroke="#86868b" strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M28 42c-4-4 0-8-3-12" stroke="#86868b" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="22" y1="22" x2="78" y2="78" stroke="#dc2626" strokeWidth="7" strokeLinecap="round" />
+            <path d="M22 42c-4-4 0-8-3-12" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" />
+            <path d="M28 42c-4-4 0-8-3-12" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="22" y1="22" x2="78" y2="78" stroke="#dc2626" strokeWidth="6.5" strokeLinecap="round" />
         </svg>
     );
 }
 
-function NoDownBedIcon({ size = 32 }: { size?: number }) {
+function NoDownBedIcon({ size = 30 }: { size?: number }) {
     return (
         <svg width={size} height={size} viewBox="0 0 100 100" fill="none" style={{ display: "block", flexShrink: 0 }}>
-            <circle cx="50" cy="50" r="40" stroke="#dc2626" strokeWidth="7" fill="#ffffff" />
-            <g fill="#1d1d1f">
+            <circle cx="50" cy="50" r="40" stroke="#dc2626" strokeWidth="6.5" fill="#ffffff" />
+            <g fill="#0f172a">
                 <rect x="30" y="36" width="4" height="28" rx="1.5" />
                 <rect x="66" y="36" width="4" height="28" rx="1.5" />
                 <rect x="30" y="38" width="40" height="4" rx="1" />
@@ -90,15 +92,37 @@ function NoDownBedIcon({ size = 32 }: { size?: number }) {
                 <rect x="32" y="52" width="36" height="8" rx="2" />
                 <rect x="30" y="57" width="40" height="3" rx="1" />
             </g>
-            <line x1="22" y1="22" x2="78" y2="78" stroke="#dc2626" strokeWidth="7" strokeLinecap="round" />
+            <line x1="22" y1="22" x2="78" y2="78" stroke="#dc2626" strokeWidth="6.5" strokeLinecap="round" />
         </svg>
     );
 }
 
-export function GRCPrintTemplate({ data }: GRCPrintTemplateProps) {
-    const { activeHotelCode, activeHotelName } = useAuth();
+export function GRCPrintTemplate({ data, paperSize = "f4" }: GRCPrintTemplateProps) {
+    const { activeHotelCode, activeHotelName, user } = useAuth();
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [hotelInfo, setHotelInfo] = useState<{ name: string; address?: string; phone?: string } | null>(null);
+    const [systemTime, setSystemTime] = useState<string>("");
+
+    useEffect(() => {
+        const updateClock = () => {
+            const now = new Date();
+            const d = now.toLocaleDateString("id-ID", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            });
+            const t = now.toLocaleTimeString("id-ID", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false
+            }).replace(/\./g, ":");
+            setSystemTime(`${d}, ${t} WIB`);
+        };
+        updateClock();
+        const timer = setInterval(updateClock, 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     useEffect(() => {
         const fetchLogo = async () => {
@@ -132,425 +156,335 @@ export function GRCPrintTemplate({ data }: GRCPrintTemplateProps) {
 
     const isOta = data.paymentMethod === "travel_agent" || (data.travelAgentName && data.travelAgentName.toLowerCase() !== "walk-in");
     const otaLabel = data.travelAgentName ? data.travelAgentName.toUpperCase() : "OTA";
+    const paperClass = paperSize === "a4" ? styles.paperA4 : styles.paperF4;
+    const iconSize = paperSize === "a4" ? 26 : 30;
 
-    const labelStyle: React.CSSProperties = {
-        fontWeight: 700,
-        textDecoration: "underline",
-        textUnderlineOffset: "3px",
-        textDecorationThickness: "1.2px",
-        textDecorationColor: "#1d1d1f",
-        color: "#1d1d1f",
-        fontSize: "11px"
-    };
-
-    const subtitleStyle: React.CSSProperties = {
-        fontSize: "9.5px",
-        color: "#6c6c70",
-        marginTop: "1px",
-        fontWeight: 500
-    };
-
-    const valueStyle: React.CSSProperties = {
-        fontWeight: 700,
-        marginLeft: "8px",
-        color: "#000000",
-        fontSize: "12px"
-    };
+    const operatorName = user?.displayName || data.checkedInBy || "Front Office Staff";
+    const operatorEmail = user?.email ? ` (${user.email})` : "";
+    const activeTime = systemTime || data.printedAt || "Real-time WIB";
 
     return (
-        <div id="grc-printable-document" style={{
-            width: "100%",
-            maxWidth: "760px",
-            margin: "0 auto",
-            backgroundColor: "#ffffff",
-            color: "#111113",
-            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif',
-            fontSize: "11px",
-            lineHeight: "1.45",
-            padding: "8px 12px",
-            boxSizing: "border-box",
-            letterSpacing: "-0.01em"
-        }}>
-            {/* Header: Dynamic Property Logo Center, Registration Form on Right */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "18px", paddingBottom: "4px" }}>
-                <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: "9px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#86868b" }}>
-                        Guest Registration
+        <div id="grc-printable-document" className={`${styles.documentRoot} ${paperClass}`}>
+            {/* Top Soft Architectural Divider */}
+            <div className={styles.softHeaderDivider} />
+
+            {/* Pure Clean Centered Letterhead (Zero Clutter Left & Right) */}
+            <div className={styles.cleanLetterhead}>
+                {logoUrl ? (
+                    <img 
+                        src={logoUrl} 
+                        alt={activeHotelName || "Hotel Logo"} 
+                        className={styles.propertyLogo}
+                    />
+                ) : (
+                    <h2 className={styles.propertyTitleFallback}>
+                        {activeHotelName || hotelInfo?.name || "HOTEL PROPERTY"}
+                    </h2>
+                )}
+                {hotelInfo?.address && (
+                    <div className={styles.propertySubtitle}>
+                        {hotelInfo.address}
                     </div>
-                </div>
-                <div style={{ flex: 2, textAlign: "center" }}>
-                    {logoUrl ? (
-                        <img 
-                            src={logoUrl} 
-                            alt={activeHotelName || "Hotel Logo"} 
-                            style={{ maxHeight: "50px", maxWidth: "220px", objectFit: "contain", margin: "0 auto", display: "block" }} 
-                        />
-                    ) : (
-                        <h2 style={{ fontSize: "17px", fontWeight: 800, textTransform: "uppercase", margin: 0, letterSpacing: "0.04em", color: "#111113" }}>
-                            {activeHotelName || hotelInfo?.name || "HOTEL PROPERTY"}
-                        </h2>
-                    )}
-                </div>
-                <div style={{ flex: 1, textAlign: "right" }}>
-                    <span style={{ fontSize: "14px", fontWeight: 800, textDecoration: "underline", textUnderlineOffset: "3px", textDecorationThickness: "1.5px", color: "#111113" }}>
-                        Registration Form
-                    </span>
-                </div>
+                )}
             </div>
 
-            {/* Section 1: Room & Rate Details */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "10px" }}>
-                {/* Row 1: No. Kamar | Harga Kamar | No Reservasi */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", columnGap: "20px" }}>
-                    <div>
-                        <span style={labelStyle}>No. Kamar</span>
-                        <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "12.5px" }}>{data.roomNumber || "-"}</span>
-                        <div style={subtitleStyle}>Room Number</div>
-                    </div>
-                    <div>
-                        <span style={labelStyle}>Harga Kamar</span>
-                        <span style={valueStyle}>{formatCurrency(data.roomRate)}</span>
-                        <div style={subtitleStyle}>Room Rate</div>
-                    </div>
-                    <div>
-                        <span style={labelStyle}>No Reservasi</span>
-                        <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "11.5px" }}>{data.bookingId || "-"}</span>
-                        <div style={subtitleStyle}>Reservation No</div>
-                    </div>
+            {/* Official Document Title & Non-Wrapping 3-Column Metadata Block */}
+            <div className={styles.docHeaderBlock}>
+                <div className={styles.docTitleRow}>
+                    <h3 className={styles.docTitleMain}>Guest Registration Card</h3>
+                    <span className={styles.docTitleSub}>/ Formulir Registrasi Tamu</span>
                 </div>
-
-                {/* Row 2: Tipe Kamar | Kode Harga | Jumlah Tamu */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", columnGap: "20px" }}>
-                    <div>
-                        <span style={labelStyle}>Tipe Kamar</span>
-                        <span style={valueStyle}>{data.roomType || "-"}</span>
-                        <div style={subtitleStyle}>Room Type</div>
+                <div className={styles.docMetaGrid}>
+                    <div className={styles.docMetaLeft}>
+                        No. Dokumen: <strong className={styles.docCodeMono}>DOC-GRC/{paperSize.toUpperCase()}/{data.bookingId || "NEW"}</strong>
                     </div>
-                    <div>
-                        <span style={labelStyle}>Kode Harga</span>
-                        <span style={valueStyle}>{data.rateCode || "-"}</span>
-                        <div style={subtitleStyle}>Rate Code</div>
+                    <div className={styles.docMetaCenter}>
+                        Akun FO: <strong>{operatorName}</strong>
                     </div>
-                    <div>
-                        <span style={labelStyle}>Jumlah Tamu</span>
-                        <span style={valueStyle}>{data.noOfPax || "1"} Pax</span>
-                        <div style={subtitleStyle}>No of Pax</div>
-                    </div>
-                </div>
-
-                {/* Row 3: Peningkatan Kamar */}
-                <div style={{ display: "flex", gap: "28px", alignItems: "flex-start" }}>
-                    <div>
-                        <span style={labelStyle}>Peningkatan Kamar</span>
-                        <div style={subtitleStyle}>Room Up grade</div>
-                    </div>
-                    <div>
-                        <span style={labelStyle}>Dari :</span>
-                        <span style={valueStyle}>{data.upgradeFrom || "-"}</span>
-                        <div style={{ ...subtitleStyle, textDecoration: "underline", textUnderlineOffset: "2px" }}>From :</div>
-                    </div>
-                    <div>
-                        <span style={labelStyle}>Type Kamar :</span>
-                        <span style={valueStyle}>{data.upgradeTo || "-"}</span>
-                        <div style={{ ...subtitleStyle, textDecoration: "underline", textUnderlineOffset: "2px" }}>Room Type :</div>
+                    <div className={styles.docMetaRight}>
+                        Waktu Cetak: <strong>{activeTime}</strong>
                     </div>
                 </div>
             </div>
 
-            {/* Hairline Divider */}
-            <div style={{ borderTop: "1px solid #c7c7cc", margin: "8px 0 10px 0" }} />
+            {/* Section 1: Room & Rate Card (Precision Grid) */}
+            <div className={styles.sectionCard}>
+                <div className={styles.grid3Col}>
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>No. Kamar <small className={styles.fieldSubtitle}>/ Room Number</small></span>
+                        <span className={`${styles.fieldValue} ${styles.fieldValueMono} ${styles.fieldValueLarge}`}>
+                            {data.roomNumber || "-"}
+                        </span>
+                    </div>
 
-            {/* Section 2: Guest Profile (2 Columns) */}
-            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", rowGap: "8px", columnGap: "28px", marginBottom: "10px" }}>
-                {/* Row 1: Stay Period | Company */}
-                <div>
-                    <span style={labelStyle}>Tgl Menginap</span>
-                    <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "11.5px" }}>{data.stayPeriod || "-"}</span>
-                    <div style={subtitleStyle}>Stay Period</div>
-                </div>
-                <div>
-                    <span style={labelStyle}>Perusahaan</span>
-                    <span style={valueStyle}>{data.company || "-"}</span>
-                    <div style={subtitleStyle}>Company</div>
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>Harga Kamar <small className={styles.fieldSubtitle}>/ Room Rate</small></span>
+                        <span className={`${styles.fieldValue} ${styles.fieldValueLarge}`}>
+                            {formatCurrency(data.roomRate)}
+                        </span>
+                    </div>
+
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>No Reservasi <small className={styles.fieldSubtitle}>/ Reservation No</small></span>
+                        <span className={`${styles.fieldValue} ${styles.fieldValueMono}`}>
+                            {data.bookingId || "-"}
+                        </span>
+                    </div>
+
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>Tipe Kamar <small className={styles.fieldSubtitle}>/ Room Type</small></span>
+                        <span className={styles.fieldValue}>
+                            {data.roomType || "-"}
+                        </span>
+                    </div>
+
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>Kode Harga <small className={styles.fieldSubtitle}>/ Rate Code</small></span>
+                        <span className={styles.fieldValue}>
+                            {data.rateCode || "-"}
+                        </span>
+                    </div>
+
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>Jumlah Tamu <small className={styles.fieldSubtitle}>/ No of Pax</small></span>
+                        <span className={styles.fieldValue}>
+                            {data.noOfPax || "1"} Pax
+                        </span>
+                    </div>
                 </div>
 
-                {/* Row 2: Full Name | Nationality */}
-                <div>
-                    <span style={labelStyle}>Nama Lengkap</span>
-                    <span style={{ ...valueStyle, textTransform: "uppercase", letterSpacing: "0.02em", fontSize: "12.5px" }}>{data.guestName || "-"}</span>
-                    <div style={subtitleStyle}>Full Name</div>
-                </div>
-                <div>
-                    <span style={labelStyle}>Warga Negara</span>
-                    <span style={{ ...valueStyle, textTransform: "uppercase" }}>{data.nationality || "INDONESIA"}</span>
-                    <div style={subtitleStyle}>Nationality</div>
-                </div>
-
-                {/* Row 3: Phone | Identity No */}
-                <div>
-                    <span style={labelStyle}>No Telp/Hp</span>
-                    <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "11.5px" }}>{data.phone || "-"}</span>
-                    <div style={subtitleStyle}>Phone/Mobile</div>
-                </div>
-                <div>
-                    <span style={labelStyle}>No Identitas</span>
-                    <span style={{ ...valueStyle, fontFamily: '"SF Mono", Menlo, monospace', fontSize: "11.5px" }}>{data.identityNo || "-"}</span>
-                    <div style={subtitleStyle}>Identity No</div>
-                </div>
-
-                {/* Row 4: Address | Email */}
-                <div>
-                    <span style={labelStyle}>Alamat</span>
-                    <span style={{ ...valueStyle, textTransform: "uppercase", fontSize: "11px", lineHeight: "1.35" }}>{data.address || "-"}</span>
-                    <div style={subtitleStyle}>Address</div>
-                </div>
-                <div>
-                    <span style={labelStyle}>Email</span>
-                    <span style={valueStyle}>{data.email || "-"}</span>
-                    <div style={subtitleStyle}>Email</div>
+                {/* Upgrade Row */}
+                <div className={styles.upgradeRow}>
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>Peningkatan Kamar <small className={styles.fieldSubtitle}>/ Room Up-grade</small></span>
+                    </div>
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>Dari <small className={styles.fieldSubtitle}>/ From :</small></span>
+                        <span className={styles.fieldValue}>{data.upgradeFrom || "-"}</span>
+                    </div>
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>Type Kamar <small className={styles.fieldSubtitle}>/ Room Type :</small></span>
+                        <span className={styles.fieldValue}>{data.upgradeTo || "-"}</span>
+                    </div>
                 </div>
             </div>
 
-            {/* Hairline Divider */}
-            <div style={{ borderTop: "1px solid #c7c7cc", margin: "8px 0 0 0" }} />
+            {/* Section 2: Guest Details Card (Precision 2-Column Grid) */}
+            <div className={styles.sectionCard}>
+                <div className={styles.gridGuest}>
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>Tgl Menginap <small className={styles.fieldSubtitle}>/ Stay Period</small></span>
+                        <span className={`${styles.fieldValue} ${styles.fieldValueMono}`}>
+                            {data.stayPeriod || "-"}
+                        </span>
+                    </div>
 
-            {/* Section 3: Payment Method & Signature Boxes (Clean Hairline Grid) */}
-            <div style={{
-                display: "grid",
-                gridTemplateColumns: "1.4fr 1fr 1fr 1fr",
-                borderBottom: "1px solid #c7c7cc",
-                marginBottom: "10px"
-            }}>
-                {/* Column 1: Payment Method Checkbox List */}
-                <div style={{ padding: "6px 10px 6px 0" }}>
-                    <div style={labelStyle}>Pembayaran</div>
-                    <div style={{ ...subtitleStyle, marginBottom: "6px" }}>Payment Method</div>
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>Perusahaan <small className={styles.fieldSubtitle}>/ Company</small></span>
+                        <span className={styles.fieldValue}>
+                            {data.company || "-"}
+                        </span>
+                    </div>
 
-                    {/* Checkboxes */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                        <div style={{ display: "flex", alignItems: "center" }}>
-                            <div style={{
-                                width: "14px",
-                                height: "14px",
-                                border: "1.2px solid #636366",
-                                borderRadius: "2px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: "9px",
-                                fontWeight: 800,
-                                color: "#000000"
-                            }}>
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>Nama Lengkap <small className={styles.fieldSubtitle}>/ Full Name</small></span>
+                        <span className={`${styles.fieldValue} ${styles.fieldValueLarge}`} style={{ textTransform: "uppercase" }}>
+                            {data.guestName || "-"}
+                        </span>
+                    </div>
+
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>Warga Negara <small className={styles.fieldSubtitle}>/ Nationality</small></span>
+                        <span className={styles.fieldValue} style={{ textTransform: "uppercase" }}>
+                            {data.nationality || "INDONESIA"}
+                        </span>
+                    </div>
+
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>No Telp / HP <small className={styles.fieldSubtitle}>/ Phone</small></span>
+                        <span className={`${styles.fieldValue} ${styles.fieldValueMono}`}>
+                            {data.phone || "-"}
+                        </span>
+                    </div>
+
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>No Identitas <small className={styles.fieldSubtitle}>/ ID No (KTP / Pass)</small></span>
+                        <span className={`${styles.fieldValue} ${styles.fieldValueMono}`}>
+                            {data.identityNo || "-"}
+                        </span>
+                    </div>
+
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>Alamat Lengkap <small className={styles.fieldSubtitle}>/ Address</small></span>
+                        <span className={styles.fieldValue} style={{ textTransform: "uppercase", fontSize: "9.5pt", lineHeight: "1.25" }}>
+                            {data.address || "-"}
+                        </span>
+                    </div>
+
+                    <div className={styles.fieldBox}>
+                        <span className={styles.fieldLabel}>Email <small className={styles.fieldSubtitle}>/ Email Address</small></span>
+                        <span className={styles.fieldValue}>
+                            {data.email || "-"}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Section 3: Front Office Settlement Block (3-Column Clean Table) */}
+            <div className={styles.signatureTable}>
+                {/* Column 1: Payment Method */}
+                <div className={styles.paymentCol}>
+                    <span className={styles.fieldLabel}>Pembayaran <small className={styles.fieldSubtitle}>/ Payment Method</small></span>
+
+                    <div className={styles.checkboxList}>
+                        <div className={styles.checkboxItem}>
+                            <div className={styles.checkboxBox}>
                                 {data.paymentMethod === "personal" ? "✓" : ""}
                             </div>
-                            <span style={{ marginLeft: "7px", fontSize: "10.5px", color: "#111113", fontWeight: 500 }}>Personal Account</span>
+                            <span className={styles.checkboxLabel}>Personal Account</span>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center" }}>
-                            <div style={{
-                                width: "14px",
-                                height: "14px",
-                                border: "1.2px solid #636366",
-                                borderRadius: "2px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: "9px",
-                                fontWeight: 800,
-                                color: "#000000"
-                            }}>
+                        <div className={styles.checkboxItem}>
+                            <div className={styles.checkboxBox}>
                                 {data.paymentMethod === "company" ? "✓" : ""}
                             </div>
-                            <span style={{ marginLeft: "7px", fontSize: "10.5px", color: "#111113", fontWeight: 500 }}>Company Account</span>
+                            <span className={styles.checkboxLabel}>Company Account</span>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center" }}>
-                            <div style={{
-                                width: "14px",
-                                height: "14px",
-                                border: "1.2px solid #636366",
-                                borderRadius: "2px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: "9px",
-                                fontWeight: 800,
-                                color: "#000000"
-                            }}>
+                        <div className={styles.checkboxItem}>
+                            <div className={styles.checkboxBox}>
                                 {isOta ? "✓" : ""}
                             </div>
-                            <span style={{ marginLeft: "7px", fontSize: "10.5px", color: "#111113", fontWeight: 500 }}>Travel Agent {isOta && data.travelAgentName ? `(${otaLabel})` : ""}</span>
+                            <span className={styles.checkboxLabel}>
+                                Travel Agent {isOta && data.travelAgentName ? `(${otaLabel})` : ""}
+                            </span>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center" }}>
-                            <div style={{
-                                width: "14px",
-                                height: "14px",
-                                border: "1.2px solid #636366",
-                                borderRadius: "2px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: "9px",
-                                fontWeight: 800,
-                                color: "#000000"
-                            }}>
+                        <div className={styles.checkboxItem}>
+                            <div className={styles.checkboxBox}>
                                 {data.paymentMethod === "others" ? "✓" : ""}
                             </div>
-                            <span style={{ marginLeft: "7px", fontSize: "10.5px", color: "#111113", fontWeight: 500 }}>Others ____________</span>
+                            <span className={styles.checkboxLabel}>Others ____________</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Column 2: Checked In By */}
-                <div style={{ borderLeft: "1px solid #c7c7cc", padding: "6px 8px", display: "flex", flexDirection: "column", justifyContent: "space-between", textAlign: "center" }}>
-                    <div style={{ fontWeight: 700, fontSize: "10.5px", color: "#111113" }}>
-                        Checked In By
-                    </div>
-                    <div style={{ height: "42px" }} />
-                    <div style={{ fontWeight: 700, fontSize: "10px", color: "#111113" }}>
-                        {data.checkedInBy || "FRONT OFFICE"}
+                <div className={styles.sigCol}>
+                    <div className={styles.sigHeader}>Checked In By</div>
+                    <div className={styles.sigSpacer} />
+                    <div className={styles.sigFooter}>
+                        {data.checkedInBy || operatorName}
                     </div>
                 </div>
 
                 {/* Column 3: Approved By */}
-                <div style={{ borderLeft: "1px solid #c7c7cc", padding: "6px 8px", display: "flex", flexDirection: "column", justifyContent: "space-between", textAlign: "center" }}>
-                    <div style={{ fontWeight: 700, fontSize: "10.5px", color: "#111113" }}>
-                        Approved By
-                    </div>
-                    <div style={{ height: "42px" }} />
-                    <div style={{ fontSize: "9.5px", color: "#636366" }}>
+                <div className={styles.sigCol}>
+                    <div className={styles.sigHeader}>Approved By</div>
+                    <div className={styles.sigSpacer} />
+                    <div className={styles.sigFooter} style={{ fontSize: "8pt", color: "#64748b" }}>
                         {data.approvedBy || "Assistant Front Office Manager"}
                     </div>
                 </div>
-
-                {/* Column 4: Guest Signature */}
-                <div style={{ borderLeft: "1px solid #c7c7cc", padding: "6px 8px", display: "flex", flexDirection: "column", justifyContent: "space-between", textAlign: "center" }}>
-                    <div />
-                    <div style={{ height: "42px" }} />
-                    <div style={{ fontWeight: 800, fontSize: "10.5px", color: "#111113" }}>
-                        Guest Signature
-                    </div>
-                </div>
             </div>
 
-            {/* Section 4: House Rules */}
-            <div style={{ fontSize: "9.5px", lineHeight: "1.4", color: "#111113", marginBottom: "8px" }}>
-                <p style={{ margin: "0 0 2px 0" }}><strong>Jam Check Out Pukul 12.00 /</strong> <span style={{ color: "#6c6c70" }}><em>Check Out Time is 12 PM</em></span> &nbsp;|&nbsp; <strong>Jam Check In Pukul 14.00 /</strong> <span style={{ color: "#6c6c70" }}><em>Check In Time is 2 PM</em></span></p>
-                
-                <p style={{ margin: "0 0 1px 0" }}>
-                    Silahkan menyimpan barang berharga Anda (paspor, uang, dan dokumen) di dalam brankas yang telah kami sediakan di dalam setiap kamar.
+            {/* Section 4: House Rules Card */}
+            <div className={styles.houseRulesBox}>
+                <p className={styles.ruleParagraph}>
+                    <strong>• Jam Check Out 12.00 /</strong> <span className={styles.ruleSecondary}>Check Out 12 PM</span> &nbsp;|&nbsp; <strong>Jam Check In 14.00 /</strong> <span className={styles.ruleSecondary}>Check In 2 PM</span>.
                 </p>
-                <p style={{ margin: "0 0 2px 0", color: "#6c6c70" }}>
-                    <em>Please keep your valuable things (passport, money and documents) in the safe deposit box provided in each room.</em>
+                <p className={styles.ruleParagraph}>
+                    • Simpan barang berharga Anda (paspor, uang, dan dokumen) di safe deposit box kamar. Hotel tidak bertanggung jawab atas kehilangan di kamar.
+                    <br />
+                    <span className={styles.ruleSecondary}>Please store valuable items in the in-room safe deposit box. Hotel is not liable for loss in guest room.</span>
                 </p>
-
-                <p style={{ margin: "0 0 1px 0" }}>
-                    Saya setuju untuk membayar semua tagihan selama saya menginap, dengan cara pembayaran seperti disebut diatas.
+                <p className={styles.ruleParagraph}>
+                    • Saya setuju menyelesaikan seluruh biaya tagihan selama menginap dengan metode pembayaran di atas.
+                    <br />
+                    <span className={styles.ruleSecondary}>I agree to settle all charges incurred during stay by the selected payment method.</span>
                 </p>
-                <p style={{ margin: "0 0 2px 0", color: "#6c6c70" }}>
-                    <em>I agree to pay all charges incurred during my stay, and settle my account by above payment method.</em>
-                </p>
-
-                <p style={{ margin: "0 0 1px 0" }}>
-                    Hotel tidak bertanggung jawab atas barang-barang tamu yang ditinggalkan di kamar.
-                </p>
-                <p style={{ margin: "0 0 2px 0", color: "#6c6c70" }}>
-                    <em>Hotel will not be held responsible for any valuable left by the guest in the room.</em>
-                </p>
-
-                <p style={{ margin: "0 0 1px 0" }}>
-                    <strong>Apabila menghilangkan kunci maka akan dikenakan denda Rp. 100.000 (seratus ribu rupiah)/kunci</strong>
-                </p>
-                <p style={{ margin: "0", color: "#6c6c70" }}>
-                    <em>lost key chargeable at IDR 100.000/each</em>
+                <p style={{ margin: 0 }}>
+                    • <strong>Denda kehilangan kunci kamar Rp 100.000 / kunci.</strong> / <span className={styles.ruleSecondary}>Lost key fine IDR 100,000 / key.</span>
                 </p>
             </div>
 
-            {/* Section 5: Non Smoking Statement with 2 Top Vector Icons */}
-            <div style={{ borderTop: "1px solid #c7c7cc", paddingTop: "8px", marginTop: "6px" }}>
-                <div style={{ display: "flex", alignItems: "center", marginBottom: "6px", position: "relative" }}>
-                    {/* Top 2 Warning Icons on Left: No Durian & No Pets */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", position: "absolute", left: 0 }}>
-                        <NoDurianIcon size={32} />
-                        <NoPetsIcon size={32} />
-                    </div>
-
-                    {/* Centered Title */}
-                    <h4 style={{ width: "100%", textAlign: "center", fontSize: "12px", fontWeight: 800, margin: 0, letterSpacing: "0.06em", color: "#111113" }}>
-                        NON SMOKING STATEMENT
+            {/* Section 5: Policy Badges & Non-Smoking Card */}
+            <div className={styles.policySection}>
+                <div className={styles.policyHeader}>
+                    <h4 className={styles.policyTitle}>
+                        NON SMOKING & HOTEL PROPERTY POLICY
                     </h4>
                 </div>
 
-                {/* Statement Text */}
-                <div style={{ fontSize: "9.5px", lineHeight: "1.4", color: "#111113", marginTop: "6px" }}>
-                    <p style={{ margin: "0 0 1px 0" }}>Kamar yang Anda huni merupakan kamar bebas asap rokok dan akan kami jaga agar tetap demikian.</p>
-                    <p style={{ margin: "0 0 3px 0", color: "#6c6c70" }}><em>The room you will occupy is Non-Smoking Room & must remain 100% free from smoke.</em></p>
+                {/* 4-Column Large Policy Badges */}
+                <div className={styles.policyBadgesContainer}>
+                    <div className={styles.policyBadgeItem}>
+                        <div className={styles.policyBadgeIconWrap}>
+                            <NoSmokingIcon size={iconSize} />
+                        </div>
+                        <span className={styles.policyBadgeText}>No Smoking Room</span>
+                    </div>
 
-                    <p style={{ margin: "0 0 1px 0" }}><strong>Biaya perawatan kamar Rp 500.000 (lima ratus ribu rupiah) apabila merokok di kamar.</strong></p>
-                    <p style={{ margin: "0 0 3px 0", color: "#6c6c70" }}><em>Room recovery fee IDR 500.000 if smoking in the room.</em></p>
+                    <div className={styles.policyBadgeItem}>
+                        <div className={styles.policyBadgeIconWrap}>
+                            <NoDurianIcon size={iconSize} />
+                        </div>
+                        <span className={styles.policyBadgeText}>No Durian</span>
+                    </div>
 
-                    <p style={{ margin: "0 0 1px 0" }}><strong>Kami akan membebankan biaya jika tamu menurunkan bed ke lantai sebesar harga Extra Bed Rp 250.000</strong></p>
-                    <p style={{ margin: "0 0 3px 0", color: "#6c6c70" }}><em>Charge for dropping mattress to the floor is equivalent to 1 Extra Bed IDR 250.000</em></p>
+                    <div className={styles.policyBadgeItem}>
+                        <div className={styles.policyBadgeIconWrap}>
+                            <NoPetsIcon size={iconSize} />
+                        </div>
+                        <span className={styles.policyBadgeText}>No Pets Allowed</span>
+                    </div>
 
-                    <p style={{ margin: "0 0 1px 0" }}>Kami sangat menghargai kepedulian Anda terhadap kesehatan. Silahkan menandatangani pernyataan persetujuan di bawah ini.</p>
-                    <p style={{ margin: "0 0 3px 0", color: "#6c6c70" }}><em>We appreciate your health concern. Please confirm your willingness below.</em></p>
+                    <div className={styles.policyBadgeItem}>
+                        <div className={styles.policyBadgeIconWrap}>
+                            <NoDownBedIcon size={iconSize} />
+                        </div>
+                        <span className={styles.policyBadgeText}>No Down Bed</span>
+                    </div>
+                </div>
 
-                    <p style={{ margin: "0" }}>Terima Kasih Atas Perhatiannya. / <span style={{ color: "#6c6c70" }}><em>Thank you for your kind attention.</em></span></p>
+                {/* Policy Terms & Guest Confirmation */}
+                <div className={styles.policyTerms}>
+                    <p style={{ margin: "0 0 1.5px 0" }}>
+                        • Kamar bebas asap rokok. <strong>Biaya pemulihan kamar Rp 500.000 jika merokok di kamar.</strong> / <span className={styles.ruleSecondary}>Recovery fee IDR 500,000 if smoking in room.</span>
+                    </p>
+                    <p style={{ margin: "0 0 1.5px 0" }}>
+                        • <strong>Biaya extra bed (Rp 250.000) jika menurunkan kasur ke lantai.</strong> / <span className={styles.ruleSecondary}>Charge for dropping mattress is IDR 250,000.</span>
+                    </p>
+                    <p style={{ margin: 0 }}>
+                        • Terima kasih atas kepedulian Anda menjaga kenyamanan & kesehatan bersama. / <span className={styles.ruleSecondary}>Thank you for your cooperation.</span>
+                    </p>
                 </div>
             </div>
 
-            {/* Bottom Section: 2 Left Stacked Icons (No Smoking & No Down Bed) & Final Guest Consent Signature */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "10px", paddingTop: "6px" }}>
-                {/* Left Column: 2 Stacked Prohibition Badges with Text */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center", minWidth: "120px" }}>
-                    {/* Icon 3: Non Smoking Room Badge */}
-                    <div style={{ textAlign: "center" }}>
-                        <div style={{ display: "flex", justifyContent: "center" }}>
-                            <NoSmokingIcon size={32} />
-                        </div>
-                        <span style={{ fontSize: "9px", fontWeight: 700, display: "block", marginTop: "4px", color: "#111113" }}>
-                            Non Smoking Room
-                        </span>
-                    </div>
-
-                    {/* Icon 4: Not allowed down bed Badge */}
-                    <div style={{ textAlign: "center" }}>
-                        <div style={{ display: "flex", justifyContent: "center" }}>
-                            <NoDownBedIcon size={32} />
-                        </div>
-                        <span style={{ fontSize: "9px", fontWeight: 700, display: "block", marginTop: "4px", color: "#111113" }}>
-                            Not allowed down bed
-                        </span>
-                    </div>
-                </div>
-
-                {/* Right Column: Guest Signature Block */}
-                <div style={{ textAlign: "center", minWidth: "290px", paddingBottom: "4px" }}>
-                    <div style={{ fontSize: "10px", fontWeight: 700, color: "#111113" }}>
+            {/* Single Official Guest Consent Signature Row */}
+            <div className={styles.consentRow}>
+                <div className={styles.consentSigBox}>
+                    <div className={styles.consentSigTitle}>
                         Acknowledge and agreed / Mengetahui & menyetujui,
                     </div>
-                    <div style={{ height: "44px" }} />
-                    <div style={{ borderTop: "1.2px solid #111113", paddingTop: "4px", fontSize: "9.5px", color: "#3a3a3c", fontWeight: 600 }}>
+                    <div className={styles.consentSigSpacer} />
+                    <div className={styles.consentSigLine}>
                         (Guest’s name & signature / Nama terang & tanda tangan)
                     </div>
                 </div>
             </div>
 
-            {/* Printed Info */}
-            <div style={{
-                marginTop: "10px",
-                paddingTop: "4px",
-                borderTop: "1px solid #e5e5ea",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                fontSize: "8.5px",
-                color: "#8e8e93"
-            }}>
-                <span>
-                    Printed : {data.checkedInBy || "FRONT OFFICE"} on {data.printedAt || new Date().toLocaleString("id-ID")}
-                </span>
-                <span style={{ fontWeight: 600, color: "#636366" }}>
-                    {activeHotelName || "Setara PMS Property"}
-                </span>
+            {/* Pro Footer Bar */}
+            <div className={styles.footerAccent}>
+                <div className={styles.footerSoftLine} />
+                <div className={styles.footerContent}>
+                    <div className={styles.footerLeft}>
+                        <span className={styles.footerStampPill}>SYSTEM AUDIT TRACE</span>
+                        <span>
+                            Dicetak oleh: <strong>{operatorName}{operatorEmail}</strong> &nbsp;|&nbsp; Jam Sistem: <strong>{activeTime}</strong>
+                        </span>
+                    </div>
+                    <div className={styles.footerRight}>
+                        {activeHotelName || "Setara PMS Property Management"} · Form Size {paperSize.toUpperCase()}
+                    </div>
+                </div>
             </div>
         </div>
     );

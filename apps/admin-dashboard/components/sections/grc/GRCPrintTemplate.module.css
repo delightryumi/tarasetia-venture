@@ -1,0 +1,480 @@
+/* GRCPrintTemplate.module.css — Precision Physical Paper & Print Engine (Clean Luxury Letterhead) */
+
+.documentRoot {
+    background-color: #ffffff;
+    color: #0f172a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    box-sizing: border-box;
+    letter-spacing: -0.01em;
+    position: relative;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+/* ── Paper Profiles with Exact Physical Dimensions ── */
+.paperF4 {
+    width: 215mm;
+    height: 330mm;
+    padding: 7mm 12mm 6mm 12mm;
+    font-size: 9.5pt;
+    line-height: 1.4;
+}
+
+.paperA4 {
+    width: 210mm;
+    height: 297mm;
+    padding: 5mm 10mm 5mm 10mm;
+    font-size: 8.8pt;
+    line-height: 1.3;
+}
+
+/* ── Top Soft Architectural Hairline Accent ── */
+.softHeaderDivider {
+    width: 100%;
+    border-top: 1.5px solid #0f172a;
+    border-bottom: 0.8px solid #cbd5e1;
+    height: 3px;
+    margin-bottom: 3mm;
+}
+
+/* ── Pure Clean Left-Aligned Letterhead ── */
+.cleanLetterhead {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    text-align: left;
+    margin-bottom: 2.2mm;
+    padding-bottom: 1.5mm;
+}
+
+.propertyLogo {
+    max-height: 44px;
+    max-width: 240px;
+    object-fit: contain;
+    margin: 0 0 2px 0;
+    display: block;
+}
+
+.propertyTitleFallback {
+    font-size: 16pt;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin: 0;
+    letter-spacing: 0.05em;
+    color: #0f172a;
+    text-align: left;
+}
+
+.propertySubtitle {
+    font-size: 8pt;
+    color: #475569;
+    margin-top: 1.5px;
+    font-weight: 500;
+    line-height: 1.3;
+    text-align: left;
+    max-width: 650px;
+}
+
+/* ── Official Document Title & Metadata Block (Non-Wrapping 3-Column) ── */
+.docHeaderBlock {
+    border: 1.2px solid #cbd5e1;
+    border-radius: 5px;
+    background: #f8fafc;
+    padding: 2mm 3.5mm;
+    margin-bottom: 2.2mm;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5mm;
+}
+
+.docTitleRow {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 6px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 1.5mm;
+}
+
+.docTitleMain {
+    font-size: 11pt;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #0f172a;
+    margin: 0;
+}
+
+.docTitleSub {
+    font-size: 8pt;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.docMetaGrid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1.1fr;
+    align-items: center;
+    font-size: 7.8pt;
+    color: #334155;
+    white-space: nowrap;
+}
+
+.docMetaLeft {
+    text-align: left;
+}
+
+.docMetaCenter {
+    text-align: center;
+}
+
+.docMetaRight {
+    text-align: right;
+}
+
+.docCodeMono {
+    font-family: var(--grc-font-mono, monospace);
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* ── Typography & Field Helpers ── */
+.fieldBox {
+    display: flex;
+    flex-direction: column;
+}
+
+.fieldLabel {
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2.5px;
+    text-decoration-thickness: 1.2px;
+    text-decoration-color: #0f172a;
+    color: #0f172a;
+    font-size: 8.8pt;
+    line-height: 1.2;
+}
+
+.fieldSubtitle {
+    font-size: 7.8pt;
+    color: #64748b;
+    font-weight: 500;
+    font-style: italic;
+    text-decoration: none !important;
+    display: inline-block;
+    margin-left: 3px;
+}
+
+.fieldValue {
+    font-weight: 800;
+    color: #000000;
+    font-size: 10.5pt;
+    margin-top: 2px;
+    line-height: 1.25;
+}
+
+.fieldValueMono {
+    font-family: var(--grc-font-mono, "SF Mono", Menlo, Consolas, monospace);
+    font-size: 10.5pt;
+    letter-spacing: 0.02em;
+}
+
+.fieldValueLarge {
+    font-size: 12pt;
+    font-weight: 850;
+}
+
+/* ── Section 1: Room & Rate Grid Card ── */
+.sectionCard {
+    border: 1.2px solid #cbd5e1;
+    border-radius: 5px;
+    background: #ffffff;
+    padding: 2.2mm 3.5mm;
+    margin-bottom: 2.2mm;
+}
+
+.grid3Col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    column-gap: 5mm;
+    row-gap: 1.8mm;
+}
+
+.upgradeRow {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    column-gap: 5mm;
+    margin-top: 1.8mm;
+    padding-top: 1.8mm;
+    border-top: 1px dashed #cbd5e1;
+}
+
+/* ── Section 2: Guest Details Grid Card ── */
+.gridGuest {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    column-gap: 6mm;
+    row-gap: 1.8mm;
+}
+
+/* ── Section 3: Front Office Settlement Block (3-Column Clean Table) ── */
+.signatureTable {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    border: 1.2px solid #cbd5e1;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 2.2mm;
+}
+
+.paymentCol {
+    padding: 2.2mm 3.5mm;
+    background: #f8fafc;
+    border-right: 1.2px solid #cbd5e1;
+}
+
+.checkboxList {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2mm;
+    margin-top: 1.2mm;
+}
+
+.checkboxItem {
+    display: flex;
+    align-items: center;
+}
+
+.checkboxBox {
+    width: 12px;
+    height: 12px;
+    border: 1.3px solid #334155;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8pt;
+    font-weight: 900;
+    color: #000000;
+    background: #ffffff;
+    flex-shrink: 0;
+}
+
+.checkboxLabel {
+    margin-left: 6px;
+    font-size: 8.8pt;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.sigCol {
+    border-right: 1.2px solid #cbd5e1;
+    padding: 2.2mm 3.5mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: center;
+    background: #ffffff;
+}
+
+.sigCol:last-child {
+    border-right: none;
+}
+
+.sigHeader {
+    font-weight: 800;
+    font-size: 9pt;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.sigSpacer {
+    height: 18px;
+}
+
+.sigFooter {
+    font-size: 8.2pt;
+    color: #1e293b;
+    font-weight: 700;
+    border-top: 1px solid #cbd5e1;
+    padding-top: 1mm;
+}
+
+/* ── Section 4: House Rules ── */
+.houseRulesBox {
+    font-size: 7.8pt;
+    line-height: 1.32;
+    color: #0f172a;
+    margin-bottom: 2.2mm;
+    background: #f8fafc;
+    padding: 2mm 3.5mm;
+    border-radius: 5px;
+    border: 1.2px solid #e2e8f0;
+    border-left: 3mm solid #0f172a;
+}
+
+.ruleParagraph {
+    margin: 0 0 1.2mm 0;
+}
+
+.ruleSecondary {
+    color: #64748b;
+    font-style: italic;
+    font-size: 7.4pt;
+}
+
+/* ── Section 5: Policy Badges Bar (Clean Prominent Large Icons) ── */
+.policySection {
+    border: 1.2px solid #cbd5e1;
+    border-radius: 5px;
+    background: #ffffff;
+    padding: 2mm 3.5mm;
+    margin-bottom: 2mm;
+}
+
+.policyHeader {
+    text-align: center;
+    margin-bottom: 1.8mm;
+}
+
+.policyTitle {
+    font-size: 9.5pt;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    color: #0f172a;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.policyBadgesContainer {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2.5mm;
+    margin-bottom: 1.8mm;
+}
+
+.policyBadgeItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 1mm;
+    background: #f8fafc;
+    border: 1.2px solid #e2e8f0;
+    border-radius: 5px;
+    padding: 1.8mm 1mm;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.policyBadgeIconWrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 1.2px solid #e2e8f0;
+}
+
+.policyBadgeText {
+    font-size: 8pt;
+    font-weight: 800;
+    color: #0f172a;
+    white-space: nowrap;
+    text-transform: capitalize;
+}
+
+.policyTerms {
+    font-size: 7.8pt;
+    line-height: 1.3;
+    color: #0f172a;
+    border-top: 1px dashed #cbd5e1;
+    padding-top: 1.5mm;
+}
+
+/* ── Single Official Guest Consent Signature Row ── */
+.consentRow {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    margin-top: 3.5mm;
+    margin-bottom: 2mm;
+}
+
+.consentSigBox {
+    text-align: center;
+    min-width: 80mm;
+    padding-bottom: 0.5mm;
+}
+
+.consentSigTitle {
+    font-size: 8.8pt;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.consentSigSpacer {
+    height: 48px; /* Generous comfortable signing space */
+}
+
+.consentSigLine {
+    border-top: 1.4px solid #0f172a;
+    padding-top: 1.5mm;
+    font-size: 8.2pt;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+/* ── Pro Footer Bar ── */
+.footerAccent {
+    margin-top: 2mm;
+    padding-top: 1.5mm;
+    border-top: 1.2px solid #cbd5e1;
+    position: relative;
+}
+
+.footerSoftLine {
+    width: 100%;
+    border-top: 1px solid #cbd5e1;
+    margin-bottom: 1.5mm;
+}
+
+.footerContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 7.5pt;
+    color: #334155;
+}
+
+.footerLeft {
+    display: flex;
+    align-items: center;
+    gap: 2.5mm;
+    flex-wrap: wrap;
+}
+
+.footerRight {
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.footerStampPill {
+    display: inline-block;
+    padding: 1px 5px;
+    background: #0f172a;
+    color: #ffffff;
+    border-radius: 3px;
+    font-weight: 800;
+    font-size: 7pt;
+    letter-spacing: 0.06em;
+}

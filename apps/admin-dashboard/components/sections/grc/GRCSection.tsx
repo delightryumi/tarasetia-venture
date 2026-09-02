@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -66,8 +67,14 @@ export function GRCSection() {
     const [filterPeriod, setFilterPeriod] = useState<"today" | "upcoming" | "all">("today");
 
     // Modal & Print States
+    const [mounted, setMounted] = useState(false);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [grcData, setGrcData] = useState<GRCData | null>(null);
+    const [paperSize, setPaperSize] = useState<"f4" | "a4">("f4");
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const todayStr = useMemo(() => {
         const d = new Date();
@@ -335,7 +342,9 @@ export function GRCSection() {
                 </div>
                 <div className="grc-kpi-card">
                     <span className="grc-kpi-label">Format Cetak</span>
-                    <span className="grc-kpi-value" style={{ fontSize: "16px", color: "#006241" }}>Standard A4</span>
+                    <span className="grc-kpi-value" style={{ fontSize: "16px", color: "#006241" }}>
+                        {paperSize.toUpperCase()} {paperSize === "f4" ? "(Folio)" : "(Standard)"}
+                    </span>
                 </div>
             </div>
 
@@ -458,10 +467,10 @@ export function GRCSection() {
                                                     onClick={() => handleDirectPrintRow(guest)}
                                                     className="grc-btn-primary"
                                                     style={{ height: "34px", padding: "0 12px", fontSize: "11px", backgroundColor: "#006241" }}
-                                                    title="Cetak GRC Langsung (A4)"
+                                                    title="Cetak GRC Langsung (F4)"
                                                 >
                                                     <Printer size={13} />
-                                                    <span>Cetak A4</span>
+                                                    <span>Cetak F4</span>
                                                 </button>
                                             </div>
                                         </td>
@@ -473,7 +482,7 @@ export function GRCSection() {
                 </div>
             </div>
 
-            {/* Split Editor Modal & Live A4 Preview */}
+            {/* Split Editor Modal & Live F4 Preview */}
             <AnimatePresence>
                 {isEditorOpen && grcData && (
                     <div className="grc-modal-overlay">
@@ -494,19 +503,39 @@ export function GRCSection() {
                                             Guest Registration Card (GRC) Editor & Preview
                                         </h3>
                                         <p style={{ fontSize: "11px", color: "var(--grc-muted)", margin: "2px 0 0 0" }}>
-                                            Periksa dan lengkapi rincian kartu registrasi tamu sebelum mencetak.
+                                            Periksa dan lengkapi rincian kartu registrasi tamu sebelum mencetak (Format F4).
                                         </p>
                                     </div>
                                 </div>
 
-                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    {/* Paper Size Selector */}
+                                    <div className="grc-paper-toggle">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaperSize("f4")}
+                                            className={`grc-paper-toggle-btn ${paperSize === "f4" ? "active" : ""}`}
+                                            title="Ukuran Folio / F4 (215 × 330 mm)"
+                                        >
+                                            F4 (Folio)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaperSize("a4")}
+                                            className={`grc-paper-toggle-btn ${paperSize === "a4" ? "active" : ""}`}
+                                            title="Ukuran Standard A4 (210 × 297 mm)"
+                                        >
+                                            A4
+                                        </button>
+                                    </div>
+
                                     <button
                                         onClick={handlePrintGRC}
                                         className="grc-btn-primary"
                                         style={{ backgroundColor: "#006241", height: "36px", padding: "0 18px" }}
                                     >
                                         <Printer size={15} />
-                                        <span>Cetak GRC (A4)</span>
+                                        <span>Cetak GRC ({paperSize.toUpperCase()})</span>
                                     </button>
                                     <button
                                         onClick={() => setIsEditorOpen(false)}
@@ -756,9 +785,9 @@ export function GRCSection() {
 
                                 {/* Preview Right Pane */}
                                 <div className="grc-preview-pane">
-                                    <div className="grc-paper-wrapper">
+                                    <div className="grc-paper-wrapper" data-paper-size={paperSize}>
                                         <div className="grc-paper">
-                                            <GRCPrintTemplate data={grcData} />
+                                            <GRCPrintTemplate data={grcData} paperSize={paperSize} />
                                         </div>
                                     </div>
                                 </div>
@@ -768,11 +797,12 @@ export function GRCSection() {
                 )}
             </AnimatePresence>
 
-            {/* Always Rendered for Direct & Browser Native Print, Hidden on Screen */}
-            {grcData && (
-                <div className="grc-print-only-portal">
-                    <GRCPrintTemplate data={grcData} />
-                </div>
+            {/* Dedicated Warm Pre-Rendered Native Print Portal attached to document.body */}
+            {mounted && grcData && createPortal(
+                <div id="grc-native-print-sheet" data-paper-size={paperSize}>
+                    <GRCPrintTemplate data={grcData} paperSize={paperSize} />
+                </div>,
+                document.body
             )}
         </div>
     );

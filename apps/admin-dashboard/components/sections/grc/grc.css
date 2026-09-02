@@ -11,7 +11,7 @@
     --grc-body: var(--color-neutral-700, #334155);
     --grc-muted: var(--color-neutral-500, #64748b);
     --grc-font-mono: var(--font-mono-jb), 'JetBrains Mono', 'Courier New', monospace;
-    --grc-scale: 0.65;
+    --grc-scale: 0.72; /* Identical to Invoice preview scale */
 }
 
 /* ── Container & Header ── */
@@ -269,9 +269,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
-    background: rgba(15, 23, 42, 0.65);
-    backdrop-filter: blur(4px);
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(5px);
     overflow-y: auto;
 }
 
@@ -279,12 +279,12 @@
     background: var(--grc-surface);
     border-radius: 14px;
     width: 100%;
-    max-width: 1280px;
-    max-height: 94vh;
+    max-width: 1380px;
+    max-height: 96vh;
     display: flex;
     flex-direction: column;
     border: 1px solid var(--grc-hairline);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
     overflow: hidden;
 }
 
@@ -292,18 +292,19 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 24px;
+    padding: 14px 24px;
     background: var(--grc-surface-soft);
     border-bottom: 1px solid var(--grc-hairline);
+    gap: 16px;
 }
 
 .grc-modal-body {
     display: grid;
-    grid-template-columns: 460px 1fr;
-    gap: 24px;
-    padding: 24px;
+    grid-template-columns: 420px 1fr;
+    gap: 20px;
+    padding: 20px;
     overflow-y: auto;
-    background: #f1f5f9;
+    background: #e2e8f0;
 }
 
 @media (max-width: 1024px) {
@@ -312,17 +313,48 @@
     }
 }
 
+/* ── Paper Size Toggle Segmented Control ── */
+.grc-paper-toggle {
+    display: inline-flex;
+    padding: 3px;
+    background: #cbd5e1;
+    border-radius: 8px;
+    gap: 3px;
+    border: 1px solid #94a3b8;
+}
+
+.grc-paper-toggle-btn {
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.grc-paper-toggle-btn.active {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
 /* ── Editor Form Controls ── */
 .grc-form-pane {
     background: var(--grc-surface);
     border: 1px solid var(--grc-hairline);
     border-radius: 10px;
-    padding: 20px;
+    padding: 18px;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
     overflow-y: auto;
-    max-height: 76vh;
+    max-height: 82vh;
 }
 
 .grc-section-title {
@@ -389,38 +421,53 @@
     font-family: var(--grc-font-mono);
 }
 
-/* ── Live Preview A4 Paper ── */
+/* ── Live Preview Paper (Exact Physical Paper Fit) ── */
 .grc-preview-pane {
     display: flex;
     justify-content: center;
     align-items: flex-start;
     overflow-y: auto;
-    max-height: 76vh;
-    padding: 12px;
+    max-height: 82vh;
+    padding: 20px;
+    background: #cbd5e1;
+    border-radius: 10px;
 }
 
 .grc-paper-wrapper {
-    width: calc(210mm * var(--grc-scale));
-    height: calc(297mm * var(--grc-scale));
-    overflow: hidden;
+    margin: 0 auto;
     position: relative;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-    border-radius: 4px;
     flex-shrink: 0;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 20px 35px rgba(0, 0, 0, 0.18);
 }
 
-.grc-paper {
-    width: 210mm;
-    min-height: 297mm;
-    background: #ffffff;
-    padding: 12mm 16mm;
+.grc-paper-wrapper[data-paper-size="f4"] {
+    width: calc(215mm * var(--grc-scale));
+    height: calc(330mm * var(--grc-scale));
+}
+
+.grc-paper-wrapper[data-paper-size="f4"] .grc-paper {
+    width: 215mm;
+    height: 330mm;
     box-sizing: border-box;
     transform: scale(var(--grc-scale));
     transform-origin: top left;
-    color: #000000;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 10.5px;
-    line-height: 1.35;
+    background: #ffffff;
+}
+
+.grc-paper-wrapper[data-paper-size="a4"] {
+    width: calc(210mm * var(--grc-scale));
+    height: calc(297mm * var(--grc-scale));
+}
+
+.grc-paper-wrapper[data-paper-size="a4"] .grc-paper {
+    width: 210mm;
+    height: 297mm;
+    box-sizing: border-box;
+    transform: scale(var(--grc-scale));
+    transform-origin: top left;
+    background: #ffffff;
 }
 
 /* ── Buttons ── */
@@ -471,77 +518,89 @@
     border-color: var(--grc-muted);
 }
 
-.grc-print-only-portal {
-    display: none;
+/* ── Dedicated Warm Pre-Rendered Native Print Sheet (GPU Rendered, Screen Hidden) ── */
+#grc-native-print-sheet {
+    position: fixed !important;
+    top: -99999px !important;
+    left: -99999px !important;
+    width: 215mm !important;
+    height: 330mm !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: -9999 !important;
 }
 
-/* ── PRINT MEDIA RULES (Exact A4 Single Page) ── */
+#grc-native-print-sheet[data-paper-size="a4"] {
+    width: 210mm !important;
+    height: 297mm !important;
+}
+
+/* ── PRINT MEDIA RULES (Warm Pre-Rendered Isolation & Strict 1-Page Constraint) ── */
 @media print {
     @page {
-        size: A4 portrait;
-        margin: 5mm 8mm;
+        size: auto;
+        margin: 0mm;
     }
-    
-    /* Hide dashboard UI, navigation, sidebars, modal headers & toolbars */
-    nav, 
-    aside, 
-    header, 
-    footer,
-    .sidebar, 
-    .navbar, 
-    .grc-no-print,
-    .grc-modal-overlay,
-    .grc-modal-window,
-    .grc-modal-header, 
-    .grc-form-pane, 
-    .grc-toolbar, 
-    .grc-kpi-grid, 
-    .grc-header,
-    .grc-table-card {
+
+    html, body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Hide entire screen UI (dashboard, sidebar, modals, topbars) */
+    body > *:not(#grc-native-print-sheet) {
         display: none !important;
+        visibility: hidden !important;
     }
 
-    html, body, #__next, main, .main-content, .grc-root {
-        background: #ffffff !important;
-        color: #000000 !important;
-        margin: 0 !important;
-        padding: 0 !important;
+    /* Pop the warm pre-rendered sheet directly to the physical print page */
+    body > #grc-native-print-sheet,
+    body > #grc-native-print-sheet * {
+        visibility: visible !important;
+    }
+
+    body > #grc-native-print-sheet {
+        display: block !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
         width: 100% !important;
-        min-height: auto !important;
         height: auto !important;
-        overflow: visible !important;
-        display: block !important;
-        position: static !important;
-        transform: none !important;
-    }
-
-    .grc-print-only-portal {
-        display: block !important;
-        visibility: visible !important;
-        position: relative !important;
-        width: 100% !important;
-        max-width: 100% !important;
+        max-height: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
         background: #ffffff !important;
+        z-index: 9999999 !important;
+        overflow: hidden !important;
     }
 
-    .grc-print-only-portal * {
-        visibility: visible !important;
-    }
-
-    #grc-printable-document {
+    body > #grc-native-print-sheet #grc-printable-document {
         display: block !important;
         visibility: visible !important;
-        position: relative !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
+        margin: 0 auto !important;
         box-shadow: none !important;
         border: none !important;
-        transform: none !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+    }
+
+    body > #grc-native-print-sheet[data-paper-size="f4"] #grc-printable-document {
+        width: 215mm !important;
+        height: 330mm !important;
+    }
+
+    body > #grc-native-print-sheet[data-paper-size="a4"] #grc-printable-document {
+        width: 210mm !important;
+        height: 297mm !important;
     }
 }
