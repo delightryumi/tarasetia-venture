@@ -2,6 +2,8 @@
 
 import React from "react";
 import { type BrandingData, type InvoiceItem } from "./useInvoice";
+import { useAuth } from "@/context/AuthContext";
+import styles from "./InvoicePreview.module.css";
 
 interface InvoicePreviewProps {
     branding: BrandingData;
@@ -13,15 +15,26 @@ interface InvoicePreviewProps {
     clientName: string;
     clientDetails: string;
     items: InvoiceItem[];
+    taxRate?: number | string;
+    serviceRate?: number | string;
+    taxAmount?: number;
+    serviceAmount?: number;
     notes: string;
     subtotal: number;
     total: number;
+    operatorName?: string;
+    isPrintPortal?: boolean;
 }
 
 export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     branding, invoiceNumber, invoiceDate, dueDate, checkInDate, checkOutDate, clientName,
-    clientDetails, items, notes, subtotal, total
+    clientDetails, items, taxRate = 0, serviceRate = 0, taxAmount = 0, serviceAmount = 0,
+    notes, subtotal, total, operatorName, isPrintPortal = false
 }) => {
+    const { user, activeHotelName } = useAuth();
+    const effectiveOperator = operatorName || user?.displayName || user?.email?.split('@')[0] || "Front Office Staff";
+    const effectiveCompany = branding.companyName || activeHotelName || "Partner Property";
+
     const formatCurrency = (val: number) => {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
@@ -30,150 +43,182 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
         }).format(val);
     };
 
-    return (
-        <div className="invoice-scroll-wrapper">
-            <div className="invoice-paper" id="invoice-to-print">
-                {/* Accent Bar */}
-                <div className="invoice-accent-bar" />
+    const logoSrc = branding.logoUrl || branding.lightLogo || branding.darkLogo;
 
-                {/* Header */}
-                <div className="invoice-header">
-                    <div className="logo-section">
-                        {branding.darkLogo ? (
-                            <img src={branding.darkLogo} alt="Partner Logo" className="invoice-logo" />
+    return (
+        <div 
+            id={isPrintPortal ? "invoice-to-print-portal" : "invoice-to-print"}
+            className={`${styles.paper} printInvoiceContainer`}
+        >
+            {/* ── Top Architectural Dual Hairline Accent ── */}
+            <div className={styles.headerAccent} />
+
+            {/* ── Pro Header: Left Letterhead + Right Invoice Title ── */}
+            <div className={styles.headerRow}>
+                <div className={styles.letterhead}>
+                    {logoSrc ? (
+                        <img 
+                            src={logoSrc} 
+                            alt={effectiveCompany} 
+                            className={styles.logoImg} 
+                        />
+                    ) : (
+                        <h2 className={styles.brandTitle}>{effectiveCompany}</h2>
+                    )}
+                    <div className={styles.brandMeta}>
+                        {branding.address && <p className={styles.brandAddress}>{branding.address}</p>}
+                        <p className={styles.brandContacts}>
+                            {branding.phones && branding.phones.length > 0 && `Telp: ${branding.phones.join(', ')}`}
+                            {branding.phones && branding.phones.length > 0 && branding.email && ` • `}
+                            {branding.email && `Email: ${branding.email}`}
+                        </p>
+                    </div>
+                </div>
+
+                <div className={styles.titleBox}>
+                    <h1 className={styles.docTitle}>INVOICE</h1>
+                    <p className={styles.docSubtitle}>OFFICIAL GUEST FOLIO</p>
+                    <div className={styles.statusBadge}>
+                        <span>PAID IN FULL</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Metadata & Bill To Grid (Spacious 2-Column Box) ── */}
+            <div className={styles.infoGrid}>
+                <div className={styles.infoCard}>
+                    <div className={styles.cardLabel}>BILLED TO</div>
+                    <div className={styles.guestName}>{clientName || "VALUED GUEST"}</div>
+                    <div className={styles.guestDetails}>
+                        {clientDetails ? (
+                            <p>{clientDetails}</p>
                         ) : (
-                            <h2 className="brand-title">{branding.companyName || 'PARTNER'}</h2>
+                            <p className="text-slate-400 italic">Direct Guest (Tamu Langsung)</p>
                         )}
                     </div>
-                    <div className="title-section" style={{ textAlign: 'right' }}>
-                        <h1 className="brand-title" style={{ fontSize: '24pt', fontWeight: 200, margin: 0 }}>
-                            INVOICE
-                        </h1>
-                        <p className="invoice-subtitle">OFFICIAL RECEIPT</p>
-
-                        {/* Ultra-Wide Horizontal Detail Bar */}
-                        <div className="detail-box" style={{
-                            marginTop: '10mm',
-                            display: 'flex',
-                            width: '100%',
-                            borderTop: '1px solid var(--invoice-sage)',
-                            borderBottom: '1px solid var(--invoice-sage)',
-                            padding: '4mm 0',
-                            justifyContent: 'space-between'
-                        }}>
-                            <div className="detail-item" style={{ flex: 1, borderRight: '1px solid var(--invoice-border)', paddingRight: '4mm' }}>
-                                <span className="detail-label" style={{ marginBottom: '2px' }}>Reference No.</span>
-                                <span className="detail-value" style={{ fontSize: '10pt', fontWeight: 600 }}>#{invoiceNumber}</span>
-                            </div>
-                            <div className="detail-item" style={{ flex: 1, borderRight: '1px solid var(--invoice-border)', paddingLeft: '4mm', paddingRight: '4mm' }}>
-                                <span className="detail-label" style={{ marginBottom: '2px' }}>Date Issued</span>
-                                <span className="detail-value" style={{ fontSize: '10pt', fontWeight: 600 }}>{invoiceDate}</span>
-                            </div>
-                            {checkInDate && (
-                                <div className="detail-item" style={{ flex: 1, borderRight: '1px solid var(--invoice-border)', paddingLeft: '4mm', paddingRight: '4mm' }}>
-                                    <span className="detail-label" style={{ marginBottom: '2px' }}>Check‑In</span>
-                                    <span className="detail-value" style={{ fontSize: '10pt', fontWeight: 600 }}>{checkInDate}</span>
-                                </div>
-                            )}
-                            {checkOutDate && (
-                                <div className="detail-item" style={{ flex: 1, paddingLeft: '4mm' }}>
-                                    <span className="detail-label" style={{ marginBottom: '2px' }}>Check‑Out</span>
-                                    <span className="detail-value" style={{ fontSize: '10pt', fontWeight: 600 }}>{checkOutDate}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
                 </div>
 
-                {/* Guest & Resort Info */}
-                <div className="info-grid">
-                    <div className="info-card">
-                        <h4>Bill To</h4>
-                        <p style={{ fontSize: '22pt', fontWeight: 700, margin: '0 0 10px 0', color: 'var(--rich-black)' }}>
-                            {clientName || 'Valued Guest'}
-                        </p>
-                        <pre style={{
-                            font: 'inherit',
-                            whiteSpace: 'pre-wrap',
-                            margin: 0,
-                            color: '#5c5850',
-                            fontSize: '11pt',
-                            lineHeight: '1.7',
-                            maxWidth: '120mm'
-                        }}>
-                            {clientDetails || 'No address provided'}
-                        </pre>
+                <div className={`${styles.infoCard} ${styles.metaCard}`}>
+                    <div className={styles.metaRow}>
+                        <span className={styles.metaLabel}>Invoice No:</span>
+                        <span className={`${styles.metaValue} ${styles.mono}`}>#{invoiceNumber}</span>
                     </div>
-                    <div className="info-card" style={{ textAlign: 'right' }}>
-                        <h4>From</h4>
-                        <p style={{ fontSize: '12pt', fontWeight: 600, color: 'var(--rich-black)', margin: '0 0 8px 0' }}>
-                            {branding.companyName || 'Partner Property'}
-                        </p>
-                        <p style={{ fontSize: '10pt', color: '#706c64', lineHeight: '1.6', maxWidth: '120mm' }}>
-                            {branding.address || 'Alamat properti belum diisi'}<br />
-                            Central Java, Indonesia
-                        </p>
-                        <div style={{ marginTop: '12px', fontSize: '9pt', color: '#9fa392' }}>
-                            {branding.phones.join(' • ')}<br />
-                            {branding.email}
+                    <div className={styles.metaRow}>
+                        <span className={styles.metaLabel}>Issue Date:</span>
+                        <span className={styles.metaValue}>{invoiceDate}</span>
+                    </div>
+                    {(checkInDate || checkOutDate) && (
+                        <div className={styles.metaRow}>
+                            <span className={styles.metaLabel}>Stay Period:</span>
+                            <span className={`${styles.metaValue} ${styles.mono}`}>
+                                {checkInDate && checkOutDate 
+                                    ? `${checkInDate} — ${checkOutDate}` 
+                                    : checkInDate || checkOutDate}
+                            </span>
                         </div>
+                    )}
+                    <div className={styles.metaRow}>
+                        <span className={styles.metaLabel}>Issued By:</span>
+                        <span className={styles.metaValue}>{effectiveOperator}</span>
                     </div>
                 </div>
+            </div>
 
-                {/* Service Table */}
-                <table className="invoice-table-modern">
+            {/* ── Services & Line Items Table (Generous Row Heights) ── */}
+            <div className={styles.tableWrapper}>
+                <table className={styles.table}>
                     <thead>
                         <tr>
-                            <th className="invoice-col-desc">Service Description</th>
-                            <th className="invoice-col-qty">Qty</th>
-                            <th className="invoice-col-unit">Unit Rate</th>
-                            <th className="invoice-col-total">Total</th>
+                            <th style={{ width: '8%', textAlign: 'center' }}>NO</th>
+                            <th style={{ width: '46%', textAlign: 'left' }}>DESCRIPTION OF SERVICE</th>
+                            <th style={{ width: '12%', textAlign: 'center' }}>QTY</th>
+                            <th style={{ width: '17%', textAlign: 'right' }}>UNIT RATE</th>
+                            <th style={{ width: '17%', textAlign: 'right' }}>TOTAL (IDR)</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {items.map(item => (
-                            <tr key={item.id}>
-                                <td className="invoice-col-desc">
-                                    <p style={{ fontWeight: 600, marginBottom: '4px' }}>{item.description || 'General Service'}</p>
+                        {items.map((item, index) => (
+                            <tr key={item.id || index}>
+                                <td style={{ textAlign: 'center', color: '#94a3b8' }}>{index + 1}</td>
+                                <td>
+                                    <div className={styles.itemTitle}>{item.description || 'Room Stay & Hospitality Services'}</div>
                                 </td>
-                                <td className="invoice-col-qty">{item.quantity}</td>
-                                <td className="invoice-col-unit">{formatCurrency(item.rate)}</td>
-                                <td className="invoice-col-total" style={{ fontWeight: 700 }}>{formatCurrency(item.quantity * item.rate)}</td>
+                                <td style={{ textAlign: 'center', fontWeight: 600 }}>{item.quantity}</td>
+                                <td style={{ textAlign: 'right' }} className={styles.mono}>
+                                    {formatCurrency(item.rate)}
+                                </td>
+                                <td style={{ textAlign: 'right', fontWeight: 700 }} className={styles.mono}>
+                                    {formatCurrency(item.quantity * item.rate)}
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+            </div>
 
-                {/* Summary Block */}
-                <div className="summary-block">
-                    <div className="summary-row">
-                        <span>Subtotal</span>
-                        <span>{formatCurrency(subtotal)}</span>
-                    </div>
-                    <div className="summary-row">
-                        <span>Tax & Fees (0%)</span>
-                        <span>{formatCurrency(0)}</span>
-                    </div>
-                    <div className="summary-total">
-                        <span>Total Payable</span>
-                        <span>{formatCurrency(total)}</span>
-                    </div>
+            {/* ── Financial Summary & Payment Notes ── */}
+            <div className={styles.summarySection}>
+                <div className={styles.notesBox}>
+                    <div className={styles.notesLabel}>TERMS & NOTES</div>
+                    <p className={styles.notesText}>
+                        {notes || "Terima kasih atas kunjungan dan kepercayaan Anda. Bukti pembayaran ini sah dan tercatat pada sistem manajemen properti."}
+                    </p>
                 </div>
 
-                {/* Footer */}
-                <div className="footer-section">
-                    <div className="thank-you">
-                        {notes || 'Terima kasih atas kepercayaan Anda. Kami berharap dapat melayani Anda kembali.'}
+                <div className={styles.calcBox}>
+                    <div className={styles.calcLine}>
+                        <span>Subtotal</span>
+                        <span className={styles.mono}>{formatCurrency(subtotal)}</span>
                     </div>
-                    <div className="signatory">
-                        <p>Authorized Signatory</p>
-                        <div className="sig-line" />
-                        <p style={{ marginTop: '4px', fontWeight: 600 }}>{branding.companyName || 'Management'}</p>
+                    {Number(serviceRate) > 0 && (
+                        <div className={styles.calcLine}>
+                            <span>Service Charge ({serviceRate}%)</span>
+                            <span className={styles.mono}>{formatCurrency(serviceAmount)}</span>
+                        </div>
+                    )}
+                    {Number(taxRate) > 0 && (
+                        <div className={styles.calcLine}>
+                            <span>Pajak PB1 / Tax ({taxRate}%)</span>
+                            <span className={styles.mono}>{formatCurrency(taxAmount)}</span>
+                        </div>
+                    )}
+                    {Number(serviceRate) === 0 && Number(taxRate) === 0 && (
+                        <div className={styles.calcLine}>
+                            <span>Tax & Service (0%)</span>
+                            <span className={styles.mono}>{formatCurrency(0)}</span>
+                        </div>
+                    )}
+                    <div className={styles.totalLine}>
+                        <span>TOTAL PAYABLE</span>
+                        <span className={styles.totalAmount}>{formatCurrency(total)}</span>
                     </div>
-                    <div className="branding-footer">
-                        <p>{branding.website || ''}</p>
-                        <p>{branding.address ? branding.address.split(',').slice(-1)[0]?.trim() : 'Indonesia'}</p>
-                    </div>
+                </div>
+            </div>
+
+            {/* ── Dual Signatory Block ── */}
+            <div className={styles.signatureSection}>
+                <div className={styles.sigCol}>
+                    <p className={styles.sigTitle}>Guest Signature</p>
+                    <div className={styles.sigSpace} />
+                    <div className={styles.sigLine} />
+                    <p className={styles.sigPerson}>{clientName || "Valued Guest"}</p>
+                </div>
+
+                <div className={styles.sigCol}>
+                    <p className={styles.sigTitle}>Authorized Front Desk</p>
+                    <div className={styles.sigSpace} />
+                    <div className={styles.sigLine} />
+                    <p className={styles.sigPerson}>{effectiveOperator}</p>
+                </div>
+            </div>
+
+            {/* ── Bottom Verification Footer ── */}
+            <div className={styles.bottomFooter}>
+                <div className={styles.footerDivider} />
+                <div className={styles.footerContent}>
+                    <span>{effectiveCompany}</span>
+                    {branding.website && <span>{branding.website}</span>}
+                    <span>Computer-generated document by CRS Setara System</span>
                 </div>
             </div>
         </div>

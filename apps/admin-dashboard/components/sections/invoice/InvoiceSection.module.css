@@ -1,0 +1,353 @@
+/* InvoiceSection.module.css — Modular Form & Workspace Layout */
+
+.invoiceContainer {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 2rem;
+    padding: 1.5rem 2rem 4rem 2rem;
+    align-items: start;
+    background: transparent;
+}
+
+.invoiceFormCard {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+    font-family: var(--font-outfit), sans-serif;
+}
+
+.invoicePreviewCard {
+    background: #0f172a0d;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    padding: 2rem 1.5rem;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+    max-height: calc(100vh - 150px);
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+/* Scaled wrapper for on-screen preview */
+.previewScaleWrapper {
+    width: calc(210mm * 0.76);
+    height: calc(297mm * 0.76);
+    position: relative;
+    flex-shrink: 0;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.previewScaleWrapper > div {
+    transform: scale(0.76);
+    transform-origin: top left;
+}
+
+.formSection {
+    position: relative;
+    padding-bottom: 0.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.formSection:last-child {
+    margin-bottom: 0;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #0f172a;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.formGroupCustom {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.formGroupCustom label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.02em;
+    font-family: var(--font-outfit), sans-serif;
+}
+
+.formGroupCustom input,
+.formGroupCustom textarea {
+    padding: 12px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fbf9f4;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-family: var(--font-outfit), sans-serif;
+}
+
+.formGroupCustom input:focus,
+.formGroupCustom textarea:focus {
+    outline: none;
+    border-color: #0f172a;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+}
+
+.itemRow {
+    background: rgba(15, 23, 42, 0.02);
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.itemRow:hover {
+    border-color: #cbd5e1;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.itemInputLabel {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 6px;
+    display: block;
+    font-family: var(--font-outfit), sans-serif;
+}
+
+.itemInput {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 8px 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #0f172a;
+    font-family: var(--font-outfit), sans-serif;
+}
+
+.itemInput:focus {
+    outline: none;
+    border-bottom-color: #0f172a;
+}
+
+/* ── Remove number input spin buttons completely ── */
+.formGroupCustom input[type="number"]::-webkit-inner-spin-button,
+.formGroupCustom input[type="number"]::-webkit-outer-spin-button,
+.itemInput[type="number"]::-webkit-inner-spin-button,
+.itemInput[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+.formGroupCustom input[type="number"],
+.itemInput[type="number"] {
+    -moz-appearance: textfield !important;
+}
+
+/* Action Button */
+.btnInvoiceAction {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border: 1.5px solid #0f172a;
+    background: transparent;
+    color: #0f172a;
+}
+
+.primaryPeach {
+    background: var(--sidebar-link-active-bg, #0f172a);
+    color: var(--sidebar-link-active-text, #ffffff);
+    border-color: var(--sidebar-link-active-bg, #0f172a);
+}
+
+.primaryPeach:hover {
+    background: var(--sidebar-link-hover-bg, #1e293b);
+    color: #ffffff;
+}
+
+/* Guest Search / Verify */
+.verifyGuestSection {
+    background: rgba(15, 23, 42, 0.02) !important;
+    padding: 1.5rem !important;
+    border-radius: 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    margin-bottom: 2rem !important;
+}
+
+.verifyGuestSection .sectionHeader {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 1rem !important;
+}
+
+.verifyGuestContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.verifyHelperText {
+    font-size: 11px;
+    color: #94a3b8;
+    font-style: italic;
+    padding: 0 8px;
+    margin-top: 4px;
+}
+
+.verifyResultsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 160px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.verifyResultBtn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    text-align: left;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    width: 100%;
+}
+
+.verifyResultBtn:hover {
+    border-color: #0f172a;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.verifyResultInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.verifyResultName {
+    font-size: 11px;
+    font-weight: 600;
+    color: #0f172a;
+    text-transform: uppercase;
+}
+
+.verifyResultMeta {
+    font-size: 9px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.verifyResultValue {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.verifyResultAmount {
+    font-size: 11px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.verifyResultBadge {
+    font-size: 8px;
+    font-weight: 600;
+    color: #0f172a;
+    text-transform: uppercase;
+}
+
+/* Custom Scrollbar */
+.customScrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.customScrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.customScrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+
+.customScrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Dark Mode Overrides */
+:global(.dark) .invoicePreviewCard {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+:global(.dark) .invoiceFormCard {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+:global(.dark) .sectionHeader {
+    color: #f8fafc;
+    border-color: #334155;
+}
+
+:global(.dark) .verifyResultBtn {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+:global(.dark) .verifyResultName,
+:global(.dark) .verifyResultAmount {
+    color: #f8fafc;
+}
+
+:global(.dark) .formGroupCustom input,
+:global(.dark) .formGroupCustom textarea {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+    color-scheme: dark !important;
+}
+
+@media (max-width: 1024px) {
+    .invoiceContainer {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+        gap: 2rem;
+    }
+}

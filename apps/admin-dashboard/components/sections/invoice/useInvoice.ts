@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getHotelCollection } from "@/lib/firestoreHelper";
+import { useAuth } from "@/context/AuthContext";
 
 export interface InvoiceItem {
     id: string;
@@ -14,21 +15,26 @@ export interface InvoiceItem {
 
 export interface BrandingData {
     companyName?: string;
+    logoUrl: string;
     lightLogo: string;
     darkLogo: string;
     address: string;
     phones: string[];
     email: string;
+    website?: string;
 }
 
 export const useInvoice = () => {
+    const { activeHotelCode, activeHotelName, user } = useAuth();
     const [branding, setBranding] = useState<BrandingData>({
         companyName: "",
+        logoUrl: "",
         lightLogo: "",
         darkLogo: "",
         address: "",
         phones: [],
-        email: ""
+        email: "",
+        website: ""
     });
     const [transactions, setTransactions] = useState<any[]>([]);
     const [searching, setSearching] = useState(false);
@@ -45,6 +51,8 @@ export const useInvoice = () => {
     const [items, setItems] = useState<InvoiceItem[]>([
         { id: '1', description: 'Room Stay', quantity: 1, rate: 0 }
     ]);
+    const [taxRate, setTaxRate] = useState<number | string>(0);
+    const [serviceRate, setServiceRate] = useState<number | string>(0);
     const [notes, setNotes] = useState("Terima kasih atas kepercayaan Anda. Kami berharap dapat melayani Anda kembali.");
 
     const searchTransactions = async (queryStr: string) => {
@@ -76,13 +84,14 @@ export const useInvoice = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // 1. Fetch Branding
+                // 1. Fetch Branding from CPanel settings
                 const logoDoc = await getDoc(doc(getHotelCollection(db, "settings"), "landingPage"));
                 const footerDoc = await getDoc(doc(getHotelCollection(db, "settings"), "footer"));
                 const logoData = logoDoc.exists() ? logoDoc.data() : {};
                 const footerData = footerDoc.exists() ? footerDoc.data() : {};
 
-                const darkLogoUrl = logoData.darkLogo ? `${logoData.darkLogo}${logoData.darkLogo.includes('?') ? '&' : '?'}t=${Date.now()}` : "";
+                const rawLogoUrl = logoData.lightLogo || logoData.darkLogo || "";
+                const logoUrlWithTs = rawLogoUrl ? `${rawLogoUrl}${rawLogoUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : "";
 
                 // Function to convert image to Base64 to bypass CORS in html2canvas
                 const getBase64Image = async (url: string): Promise<string> => {
@@ -101,35 +110,40 @@ export const useInvoice = () => {
                     }
                 };
 
-                const darkLogoBase64 = darkLogoUrl ? await getBase64Image(darkLogoUrl) : "";
+                const logoBase64 = logoUrlWithTs ? await getBase64Image(logoUrlWithTs) : "";
 
-                let activeCode = "";
-                if (typeof window !== "undefined") {
+                let activeCode = activeHotelCode;
+                if (!activeCode && typeof window !== "undefined") {
                     activeCode = localStorage.getItem("active_hotel_code") || "";
                 }
-                let companyName = "Partner Property";
+
+                let companyName = activeHotelName || "Partner Property";
                 let hotelAddress = "";
                 let hotelPhone = "";
                 let hotelEmail = "";
+                let hotelWebsite = footerData.website || "";
 
                 if (activeCode && activeCode !== "0") {
                     const hotelDoc = await getDoc(doc(db, "hotels", activeCode));
                     if (hotelDoc.exists()) {
                         const hData = hotelDoc.data();
-                        companyName = hData.name || "Partner Property";
+                        companyName = hData.name || activeHotelName || "Partner Property";
                         hotelAddress = hData.address || "";
                         hotelPhone = hData.phone || "";
                         hotelEmail = hData.email || "";
+                        if (hData.website) hotelWebsite = hData.website;
                     }
                 }
 
                 setBranding({
                     companyName,
+                    logoUrl: logoBase64 || logoUrlWithTs || rawLogoUrl,
                     lightLogo: logoData.lightLogo || "",
-                    darkLogo: darkLogoBase64 || darkLogoUrl,
+                    darkLogo: logoData.darkLogo || "",
                     address: hotelAddress || footerData.address || "",
                     phones: hotelPhone ? [hotelPhone] : (footerData.phones || []),
-                    email: hotelEmail || footerData.email || ""
+                    email: hotelEmail || footerData.email || "",
+                    website: hotelWebsite
                 });
             } catch (err) {
                 console.error("Error fetching data for invoice:", err);
@@ -138,7 +152,7 @@ export const useInvoice = () => {
             }
         };
         fetchData();
-    }, []);
+    }, [activeHotelCode, activeHotelName]);
 
     const selectTransaction = (entry: any) => {
         // Clear previous items
@@ -185,9 +199,13 @@ export const useInvoice = () => {
         setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
     };
 
+    const numericTaxRate = Math.max(0, Number(taxRate) || 0);
+    const numericServiceRate = Math.max(0, Number(serviceRate) || 0);
+
     const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.rate), 0);
-    const tax = subtotal * 0; 
-    const total = subtotal + tax;
+    const serviceAmount = Math.round((subtotal * numericServiceRate) / 100);
+    const taxAmount = Math.round(((subtotal + serviceAmount) * numericTaxRate) / 100);
+    const total = subtotal + serviceAmount + taxAmount;
 
     const handlePrint = () => {
         window.print();
@@ -237,8 +255,12 @@ export const useInvoice = () => {
         clientName, setClientName,
         clientDetails, setClientDetails,
         items, addItem, removeItem, updateItem,
+        taxRate, setTaxRate,
+        serviceRate, setServiceRate,
         notes, setNotes,
-        subtotal, total, tax,
+        subtotal, total, tax: taxAmount,
+        taxAmount,
+        serviceAmount,
         handlePrint,
         handleDownload,
         transactions,

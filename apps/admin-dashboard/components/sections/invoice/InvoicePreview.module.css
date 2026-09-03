@@ -1,0 +1,409 @@
+/* InvoicePreview.module.css — Precision Physical Paper & Print Engine */
+
+/* ── A4 Paper Sheet (Spacious, Crisp & Balanced) ── */
+.paper {
+    width: 210mm;
+    min-height: 297mm;
+    box-sizing: border-box;
+    padding: 16mm 18mm 14mm 18mm;
+    background: #ffffff;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.09);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #0f172a;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Top Dual Hairline Accent ── */
+.headerAccent {
+    width: 100%;
+    border-top: 2.5px solid #0f172a;
+    border-bottom: 1px solid #cbd5e1;
+    height: 4px;
+    margin-bottom: 6mm;
+    flex-shrink: 0;
+}
+
+/* ── Header: Letterhead & Title ── */
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 7mm;
+    flex-shrink: 0;
+}
+
+.letterhead {
+    max-width: 58%;
+    display: flex;
+    flex-direction: column;
+}
+
+.logoImg {
+    max-height: 52px;
+    max-width: 260px;
+    object-fit: contain;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.brandTitle {
+    font-size: 16pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+}
+
+.brandMeta {
+    font-size: 8.5pt;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+.brandAddress {
+    margin: 0 0 2px 0;
+}
+
+.brandContacts {
+    margin: 0;
+    font-weight: 500;
+}
+
+.titleBox {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.docTitle {
+    font-size: 26pt;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1;
+}
+
+.docSubtitle {
+    font-size: 7.8pt;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin: 5px 0 8px 0;
+}
+
+.statusBadge {
+    display: inline-block;
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 7.5pt;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 3px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+/* ── Metadata & Bill To Grid (2-Column Spacious Box) ── */
+.infoGrid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 6mm;
+    margin-bottom: 6mm;
+    flex-shrink: 0;
+}
+
+.infoCard {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #f8fafc;
+    padding: 3.5mm 4.5mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.cardLabel {
+    font-size: 7.5pt;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 3px;
+}
+
+.guestName {
+    font-size: 11.5pt;
+    font-weight: 800;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    margin-bottom: 3px;
+}
+
+.guestDetails {
+    font-size: 8.5pt;
+    color: #475569;
+    line-height: 1.4;
+}
+
+.guestDetails p {
+    margin: 0;
+}
+
+.metaCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 3.5mm 4.5mm;
+    display: flex;
+    flex-direction: column;
+    gap: 2.2mm;
+}
+
+.metaRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8.5pt;
+}
+
+.metaLabel {
+    color: #64748b;
+    font-weight: 500;
+}
+
+.metaValue {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    letter-spacing: 0.01em;
+}
+
+/* ── Table: Generous Row Heights & Clean Borders ── */
+.tableWrapper {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 6mm;
+    flex-shrink: 0;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+}
+
+.table th {
+    background: #f8fafc;
+    padding: 8px 12px;
+    font-size: 7.8pt;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #475569;
+    border-bottom: 1.5px solid #cbd5e1;
+    border-right: 1px solid #f1f5f9;
+}
+
+.table th:last-child {
+    border-right: none;
+}
+
+.table td {
+    padding: 9px 12px;
+    font-size: 9pt;
+    color: #1e293b;
+    border-bottom: 1px solid #f1f5f9;
+    border-right: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.table td:last-child {
+    border-right: none;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.itemTitle {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* ── Financial Summary & Notes ── */
+.summarySection {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 6mm;
+    margin-bottom: 6mm;
+    flex-shrink: 0;
+}
+
+.notesBox {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #f8fafc;
+    padding: 3.5mm 4.5mm;
+    display: flex;
+    flex-direction: column;
+}
+
+.notesLabel {
+    font-size: 7.5pt;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.notesText {
+    font-size: 8.2pt;
+    color: #475569;
+    line-height: 1.45;
+    margin: 0;
+}
+
+.calcBox {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #ffffff;
+    padding: 3mm 4.5mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2.2mm;
+}
+
+.calcLine {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8.5pt;
+    color: #64748b;
+}
+
+.totalLine {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1.5px solid #0f172a;
+    padding-top: 5px;
+    margin-top: 2px;
+    font-size: 9.5pt;
+    font-weight: 900;
+    color: #0f172a;
+}
+
+.totalAmount {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11.5pt;
+    font-weight: 900;
+    color: #0f172a;
+}
+
+/* ── Dual Signatory Block ── */
+.signatureSection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8mm;
+    margin-bottom: 4mm;
+    flex-shrink: 0;
+}
+
+.sigCol {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #f8fafc;
+    padding: 3.5mm 4.5mm;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sigTitle {
+    font-size: 7.8pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #475569;
+    margin: 0;
+}
+
+.sigSpace {
+    height: 13mm;
+}
+
+.sigLine {
+    width: 48mm;
+    border-bottom: 1px solid #0f172a;
+    margin-bottom: 4px;
+}
+
+.sigPerson {
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+/* ── Bottom Footer & Verification ── */
+.bottomFooter {
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+.footerDivider {
+    border-top: 1px solid #e2e8f0;
+    margin-bottom: 2.5mm;
+}
+
+.footerContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 7.5pt;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* ── PRINT MEDIA RULES (Full Pure Isolation) ── */
+@media print {
+    .paper {
+        width: 210mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        padding: 16mm 18mm 14mm 18mm !important;
+        box-sizing: border-box !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        border: none !important;
+        transform: none !important;
+        margin: 0 auto !important;
+        visibility: visible !important;
+        display: flex !important;
+        flex-direction: column !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    .paper * {
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}

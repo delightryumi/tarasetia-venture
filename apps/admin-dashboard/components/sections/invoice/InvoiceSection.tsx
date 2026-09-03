@@ -1,12 +1,21 @@
-import React from "react";
-import { Plus, Trash2, Printer, Calculator, FileText, User, Mail, CreditCard, Calendar, Search } from "lucide-react";
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { Plus, Trash2, Printer, FileText, User, Mail, CreditCard, Calendar, Percent } from "lucide-react";
 import { useInvoice } from "./useInvoice";
 import { InvoicePreview } from "./InvoicePreview";
 import { motion, AnimatePresence } from "framer-motion";
 import overviewStyles from "../overview/OverviewStyles.module.css";
-import "./invoice.css";
+import styles from "./InvoiceSection.module.css";
 
 export const InvoiceSection = () => {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const {
         branding, loading,
         invoiceNumber, setInvoiceNumber,
@@ -17,19 +26,41 @@ export const InvoiceSection = () => {
         clientName, setClientName,
         clientDetails, setClientDetails,
         items, addItem, removeItem, updateItem,
+        taxRate, setTaxRate,
+        serviceRate, setServiceRate,
+        taxAmount, serviceAmount,
         notes, setNotes,
-        subtotal, total, handlePrint, handleDownload,
+        subtotal, total, handlePrint,
         transactions, selectTransaction, searchTransactions, searching
     } = useInvoice();
 
     if (loading) return (
-        <div className="flex items-center justify-center min-h-screen bg-off-white">
+        <div className="flex items-center justify-center min-h-screen bg-transparent">
             <div className="text-center">
                 <div className="w-12 h-12 border-4 border-[var(--sidebar-link-active-bg)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <p className="text-[var(--sidebar-text)] font-semibold uppercase text-xs tracking-wider animate-pulse">Loading Invoice System...</p>
             </div>
         </div>
     );
+
+    const previewProps = {
+        branding,
+        invoiceNumber,
+        invoiceDate,
+        dueDate,
+        checkInDate,
+        checkOutDate,
+        clientName,
+        clientDetails,
+        items,
+        taxRate,
+        serviceRate,
+        taxAmount,
+        serviceAmount,
+        notes,
+        subtotal,
+        total
+    };
 
     return (
         <section className="min-h-screen bg-transparent">
@@ -52,7 +83,7 @@ export const InvoiceSection = () => {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={handlePrint}
-                            className="btn-invoice-action primary-peach"
+                            className={`${styles.btnInvoiceAction} ${styles.primaryPeach}`}
                             style={{ height: '36px', padding: '0 16px', borderRadius: '8px', fontSize: '12px' }}
                         >
                             <Printer size={16} />
@@ -62,20 +93,19 @@ export const InvoiceSection = () => {
                 </div>
             </header>
 
-            <div className="invoice-container !pt-4">
+            <div className={`${styles.invoiceContainer} !pt-4`}>
                 {/* 
                   =======================================================
                   FORM SIDE (left)
                   =======================================================
                 */}
-                <div className="invoice-form-card custom-scrollbar">
-                    <div className="space-y-12">
-                        
-                        <section className="form-section verify-guest-section">
-                            <h3 className="section-header">
+                <div className={`${styles.invoiceFormCard} ${styles.customScrollbar}`}>
+                    <div>
+                        <section className={`${styles.formSection} ${styles.verifyGuestSection}`}>
+                            <h3 className={styles.sectionHeader}>
                                 Verify & Link Guest
                             </h3>
-                            <div className="verify-guest-container">
+                            <div className={styles.verifyGuestContainer}>
                                 <div className="relative">
                                     <input 
                                         type="text" 
@@ -90,21 +120,23 @@ export const InvoiceSection = () => {
                                     )}
                                 </div>
 
-                                <div className="verify-results-list custom-scrollbar">
-                                    {transactions.length === 0 && !searching && <p className="verify-helper-text">Ketik nama tamu untuk mencari data asli dari sistem...</p>}
+                                <div className={`${styles.verifyResultsList} ${styles.customScrollbar}`}>
+                                    {transactions.length === 0 && !searching && (
+                                        <p className={styles.verifyHelperText}>Ketik nama tamu untuk mencari data asli dari sistem...</p>
+                                    )}
                                     {transactions.map((tr, i) => (
                                         <button
                                             key={i}
                                             onClick={() => selectTransaction(tr)}
-                                            className="verify-result-btn"
+                                            className={styles.verifyResultBtn}
                                         >
-                                            <div className="verify-result-info">
-                                                <div className="verify-result-name">{tr.guestName || tr.incomeCategory}</div>
-                                                <div className="verify-result-meta">{tr.checkInDate || new Date(tr.timestamp).toLocaleDateString()} — {tr.channel || 'Internal'}</div>
+                                            <div className={styles.verifyResultInfo}>
+                                                <div className={styles.verifyResultName}>{tr.guestName || tr.incomeCategory}</div>
+                                                <div className={styles.verifyResultMeta}>{tr.checkInDate || new Date(tr.timestamp).toLocaleDateString()} — {tr.channel || 'Internal'}</div>
                                             </div>
-                                            <div className="verify-result-value">
-                                                <div className="verify-result-amount">Rp {Number(tr.amount).toLocaleString('id-ID')}</div>
-                                                <div className="verify-result-badge">{tr.type === 'accommodation' ? 'Stay' : 'Other'}</div>
+                                            <div className={styles.verifyResultValue}>
+                                                <div className={styles.verifyResultAmount}>Rp {Number(tr.amount).toLocaleString('id-ID')}</div>
+                                                <div className={styles.verifyResultBadge}>{tr.type === 'accommodation' ? 'Stay' : 'Other'}</div>
                                             </div>
                                         </button>
                                     ))}
@@ -113,13 +145,13 @@ export const InvoiceSection = () => {
                         </section>
                         
                         {/* 1. DOCUMENT BASIS */}
-                        <section className="form-section">
-                            <h3 className="section-header">
+                        <section className={styles.formSection}>
+                            <h3 className={styles.sectionHeader}>
                                 <FileText size={18} />
                                 Document Basis
                             </h3>
-                            <div className="form-grid">
-                                <div className="form-group-custom">
+                            <div className={styles.formGrid}>
+                                <div className={styles.formGroupCustom}>
                                     <label>Invoice Number</label>
                                     <input 
                                         type="text" 
@@ -128,7 +160,7 @@ export const InvoiceSection = () => {
                                         placeholder="INV-202X-001"
                                     />
                                 </div>
-                                <div className="form-group-custom">
+                                <div className={styles.formGroupCustom}>
                                     <label>Issued Date</label>
                                     <input 
                                         type="date" 
@@ -136,7 +168,7 @@ export const InvoiceSection = () => {
                                         onChange={(e) => setInvoiceDate(e.target.value)}
                                     />
                                 </div>
-                                <div className="form-group-custom">
+                                <div className={styles.formGroupCustom}>
                                     <label>Service Due Date</label>
                                     <input 
                                         type="date" 
@@ -146,8 +178,8 @@ export const InvoiceSection = () => {
                                 </div>
                             </div>
                             
-                            <div className="form-grid mt-6">
-                                <div className="form-group-custom">
+                            <div className={`${styles.formGrid} mt-6`}>
+                                <div className={styles.formGroupCustom}>
                                     <label>Check-In</label>
                                     <div className="relative">
                                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
@@ -159,7 +191,7 @@ export const InvoiceSection = () => {
                                         />
                                     </div>
                                 </div>
-                                <div className="form-group-custom">
+                                <div className={styles.formGroupCustom}>
                                     <label>Check-Out</label>
                                     <div className="relative">
                                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
@@ -175,13 +207,13 @@ export const InvoiceSection = () => {
                         </section>
 
                         {/* 2. RECIPIENT INFO */}
-                        <section className="form-section">
-                            <h3 className="section-header">
+                        <section className={styles.formSection}>
+                            <h3 className={styles.sectionHeader}>
                                 <User size={18} />
                                 Guest Details
                             </h3>
                             <div className="space-y-6">
-                                <div className="form-group-custom">
+                                <div className={styles.formGroupCustom}>
                                     <label>Guest Name</label>
                                     <input 
                                         type="text" 
@@ -190,7 +222,7 @@ export const InvoiceSection = () => {
                                         onChange={(e) => setClientName(e.target.value)}
                                     />
                                 </div>
-                                <div className="form-group-custom">
+                                <div className={styles.formGroupCustom}>
                                     <label>Address / Contact Details</label>
                                     <textarea 
                                         rows={3}
@@ -203,8 +235,8 @@ export const InvoiceSection = () => {
                         </section>
 
                         {/* 3. LINE ITEMS */}
-                        <section className="form-section">
-                            <div className="flex justify-between items-center section-header !border-none !mb-4">
+                        <section className={styles.formSection}>
+                            <div className={`flex justify-between items-center ${styles.sectionHeader} !border-none !mb-4`}>
                                 <div className="flex items-center gap-3">
                                     <CreditCard size={18} />
                                     <span>Services & Items</span>
@@ -226,35 +258,37 @@ export const InvoiceSection = () => {
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, scale: 0.95 }}
-                                            className="item-row"
+                                            className={styles.itemRow}
                                         >
                                             <div className="grid grid-cols-12 gap-3 items-end">
                                                 <div className="col-span-12 lg:col-span-6">
-                                                    <label className="item-input-label">Description</label>
+                                                    <label className={styles.itemInputLabel}>Description</label>
                                                     <input 
                                                         type="text" 
                                                         value={item.description} 
                                                         onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                                                        className="item-input"
+                                                        className={styles.itemInput}
                                                         placeholder="e.g. Deluxe Room Stay"
                                                     />
                                                 </div>
                                                 <div className="col-span-6 lg:col-span-2">
-                                                    <label className="item-input-label text-center">Qty</label>
+                                                    <label className={`${styles.itemInputLabel} text-center`}>Qty</label>
                                                     <input 
                                                         type="number" 
                                                         value={item.quantity} 
+                                                        onWheel={(e) => e.currentTarget.blur()}
                                                         onChange={(e) => updateItem(item.id, 'quantity', Number(e.target.value))}
-                                                        className="item-input text-center"
+                                                        className={`${styles.itemInput} text-center`}
                                                     />
                                                 </div>
                                                 <div className="col-span-6 lg:col-span-3">
-                                                    <label className="item-input-label text-right">Rate</label>
+                                                    <label className={`${styles.itemInputLabel} text-right`}>Rate</label>
                                                     <input 
                                                         type="number" 
                                                         value={item.rate} 
+                                                        onWheel={(e) => e.currentTarget.blur()}
                                                         onChange={(e) => updateItem(item.id, 'rate', Number(e.target.value))}
-                                                        className="item-input text-right"
+                                                        className={`${styles.itemInput} text-right`}
                                                     />
                                                 </div>
                                                 <div className="col-span-12 lg:col-span-1 flex justify-end lg:pb-2 mt-2 lg:mt-0">
@@ -279,14 +313,50 @@ export const InvoiceSection = () => {
                             </div>
                         </section>
 
-                        {/* 4. FOOTER NOTES */}
-                        <section className="form-section">
-                            <h3 className="section-header">
+                        {/* 4. DYNAMIC TAX & SERVICE CHARGE */}
+                        <section className={styles.formSection}>
+                            <h3 className={styles.sectionHeader}>
+                                <Percent size={18} />
+                                Tax & Service Charge
+                            </h3>
+                            <div className={styles.formGrid}>
+                                <div className={styles.formGroupCustom}>
+                                    <label>Service Charge (%)</label>
+                                    <input 
+                                        type="number" 
+                                        min="0"
+                                        max="100"
+                                        step="0.5"
+                                        value={serviceRate} 
+                                        onWheel={(e) => e.currentTarget.blur()}
+                                        onChange={(e) => setServiceRate(e.target.value)}
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div className={styles.formGroupCustom}>
+                                    <label>Pajak PB1 / Tax (%)</label>
+                                    <input 
+                                        type="number" 
+                                        min="0"
+                                        max="100"
+                                        step="0.5"
+                                        value={taxRate} 
+                                        onWheel={(e) => e.currentTarget.blur()}
+                                        onChange={(e) => setTaxRate(e.target.value)}
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 5. FOOTER NOTES */}
+                        <section className={styles.formSection}>
+                            <h3 className={styles.sectionHeader}>
                                 <Mail size={18} />
                                 Additional Notes
                             </h3>
 
-                            <div className="form-group-custom">
+                            <div className={styles.formGroupCustom}>
                                 <label>Footer Message</label>
                                 <textarea 
                                     rows={2}
@@ -296,7 +366,6 @@ export const InvoiceSection = () => {
                                 />
                             </div>
                         </section>
-
                     </div>
                 </div>
 
@@ -305,23 +374,20 @@ export const InvoiceSection = () => {
                   PREVIEW SIDE (right)
                   =======================================================
                 */}
-                <div className="invoice-preview-card custom-scrollbar">
-                    <InvoicePreview 
-                        branding={branding}
-                        invoiceNumber={invoiceNumber}
-                        invoiceDate={invoiceDate}
-                        dueDate={dueDate}
-                        checkInDate={checkInDate}
-                        checkOutDate={checkOutDate}
-                        clientName={clientName}
-                        clientDetails={clientDetails}
-                        items={items}
-                        notes={notes}
-                        subtotal={subtotal}
-                        total={total}
-                    />
+                <div className={`${styles.invoicePreviewCard} ${styles.customScrollbar}`}>
+                    <div className={styles.previewScaleWrapper}>
+                        <InvoicePreview {...previewProps} />
+                    </div>
                 </div>
             </div>
+
+            {/* Dedicated Native Print Portal attached to document.body (GRC Architecture) */}
+            {mounted && createPortal(
+                <div id="invoice-native-print-sheet">
+                    <InvoicePreview {...previewProps} isPrintPortal={true} />
+                </div>,
+                document.body
+            )}
         </section>
     );
 };
