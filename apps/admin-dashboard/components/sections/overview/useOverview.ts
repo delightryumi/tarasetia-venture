@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase"; 
-import { collection, onSnapshot, doc, query, where } from "firebase/firestore";
+import { onSnapshot, doc, query, where } from "firebase/firestore";
 import { getHotelCollection } from "@/lib/firestoreHelper";
+import { useAuth } from "@/context/AuthContext";
 
 export interface BookingEntry {
     guestName: string;
@@ -45,14 +46,8 @@ export interface OverviewStats {
     roomTypesData: any[];
 }
 
-const getLocalDateString = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 export const useOverview = (startDateStr: string, endDateStr: string) => {
+    const { activeHotelCode } = useAuth();
     const [stats, setStats] = useState<OverviewStats>({
         roomsCount: 0,
         galleryCount: 0,
@@ -74,21 +69,28 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
     });
 
     useEffect(() => {
+        if (!activeHotelCode || activeHotelCode === "0") {
+            setStats(prev => ({ ...prev, loading: false }));
+            return;
+        }
+
         let unsubDaily: any = null;
 
         const initBookings = async () => {
             try {
-                // Calculate dynamic Firestore query range to cover the selected dates plus padding
-                const startRangeDate = new Date(startDateStr);
-                startRangeDate.setDate(startRangeDate.getDate() - 30);
-                const startRange = getLocalDateString(startRangeDate);
-                
-                const endRangeDate = new Date(endDateStr);
-                endRangeDate.setDate(endRangeDate.getDate() + 15);
-                const endRange = getLocalDateString(endRangeDate);
-                
+                // Calculate dynamic Firestore query range with timezone-safe parsing
+                const [sY, sM, sD] = startDateStr.split('-').map(Number);
+                const startD = new Date(sY, (sM || 1) - 1, sD || 1);
+                startD.setDate(startD.getDate() - 60);
+                const startRange = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}-${String(startD.getDate()).padStart(2, '0')}`;
+
+                const [eY, eM, eD] = endDateStr.split('-').map(Number);
+                const endD = new Date(eY, (eM || 1) - 1, eD || 1);
+                endD.setDate(endD.getDate() + 30);
+                const endRange = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
+
                 const q = query(
-                    getHotelCollection(db, "daily_revenue"), 
+                    getHotelCollection(db, "daily_revenue", activeHotelCode), 
                     where("date", ">=", startRange),
                     where("date", "<=", endRange)
                 );
@@ -101,22 +103,26 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                     let todayTransactions: any[] = [];
                     let allDays: any[] = [];
                     
-                    const seenReservations = new Set<string>();
-                    
                     const allEntriesRaw: any[] = [];
                     
                     querySnapshot.forEach((docSnap) => {
                         const data = docSnap.data();
-                        const docDate = data.date || docSnap.id;
+                        const docDate = data.date || docSnap.id.replace(`${activeHotelCode}_`, "") || docSnap.id;
                         allDays.push({ ...data, date: docDate });
 
                         const entries = (data.entries || [])
                             .filter((e: any) => e.status !== "VOID" && e.status !== "VOIDED" && !e.isHidden && e.type !== "pelunasan_ar" && e.type !== "pelunasan_reversal" && !e.isPelunasan)
-                            .map((e: any) => ({ 
-                                ...e, 
-                                _docId: docSnap.id,
-                                _docDate: docDate
-                            }));
+                            .map((e: any) => {
+                                const checkInDate = e.checkInDate || e.checkIn || e.effectiveDate || docDate;
+                                const checkOutDate = e.checkOutDate || e.checkOut || "";
+                                return { 
+                                    ...e, 
+                                    checkInDate,
+                                    checkOutDate,
+                                    _docId: docSnap.id,
+                                    _docDate: docDate
+                                };
+                            });
                         allEntriesRaw.push(...entries);
                     });
 
@@ -128,7 +134,10 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         const isAccommodation = !isPOS && (e.type === "accommodation" || (!e.type && e.guestName));
                         
                         if (isAccommodation) {
-                            const key = e.bookingId || e.timestamp || `${e.guestName}_${e.checkInDate}_${e.checkOutDate}_${e.roomNumber}`;
+                            const roomIdent = e.roomNumber || e.roomTypeId || e.roomType || '';
+                            const key = e.bookingId 
+                                ? `${e.bookingId}_${roomIdent}_${e.checkInDate}_${e.checkOutDate}` 
+                                : `${e.guestName}_${roomIdent}_${e.checkInDate}_${e.checkOutDate}_${e.timestamp || ''}`;
                             if (!accommodationGroups[key]) {
                                 accommodationGroups[key] = [];
                             }
@@ -149,6 +158,8 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                             e.paymentStatus === "CANCEL"
                         );
                         
+                        group.sort((a, b) => (a._docDate || a.checkInDate || '').localeCompare(b._docDate || b.checkInDate || ''));
+
                         const rep = { ...group[0] };
                         if (isCancelled) {
                             rep.status = "CANCELLED";
@@ -160,6 +171,9 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         rep.payHotel = group.reduce((sum, item) => sum + (Number(item.payHotel || item.paidCash || item.paidAmount1) || 0), 0);
                         rep.payTransfer = group.reduce((sum, item) => sum + (Number(item.payTransfer || item.payNexura || item.paidTransfer || item.paidAmount2) || 0), 0);
                         
+                        rep.checkInDate = rep.checkInDate || rep.checkIn || group[0]._docDate;
+                        rep.checkOutDate = rep.checkOutDate || rep.checkOut || "";
+
                         resolvedAccommodation.push(rep);
                     });
 
@@ -204,6 +218,7 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                     setStats(prev => {
                         return {
                             ...prev,
+                            loading: false,
                             checkInCount: checkIn.length,
                             checkOutCount: checkOut.length,
                             cancelCount: cancels.length,
@@ -223,12 +238,13 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                 });
             } catch (err) {
                 console.error("Error fetching bookings for overview", err);
+                setStats(prev => ({ ...prev, loading: false }));
             }
         };
 
         initBookings();
 
-        const unsubRooms = onSnapshot(getHotelCollection(db, "roomTypes"), (snapshot) => {
+        const unsubRooms = onSnapshot(getHotelCollection(db, "roomTypes", activeHotelCode), (snapshot) => {
             let totalRooms = 0;
             const rTypes: any[] = [];
             snapshot.forEach(docSnap => {
@@ -258,15 +274,15 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
             });
         });
 
-        const unsubGallery = onSnapshot(getHotelCollection(db, "gallery"), (snapshot) => {
+        const unsubGallery = onSnapshot(getHotelCollection(db, "gallery", activeHotelCode), (snapshot) => {
             setStats(prev => ({ ...prev, galleryCount: snapshot.size }));
         });
 
-        const unsubAttractions = onSnapshot(getHotelCollection(db, "attractions"), (snapshot) => {
+        const unsubAttractions = onSnapshot(getHotelCollection(db, "attractions", activeHotelCode), (snapshot) => {
             setStats(prev => ({ ...prev, attractionsCount: snapshot.size }));
         });
 
-        const unsubSEO = onSnapshot(doc(getHotelCollection(db, "settings"), "seo"), (snapshot) => {
+        const unsubSEO = onSnapshot(doc(getHotelCollection(db, "settings", activeHotelCode), "seo"), (snapshot) => {
             setStats(prev => ({
                 ...prev,
                 seoConfigured: snapshot.exists(),
@@ -281,7 +297,7 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
             unsubSEO();
             if (unsubDaily) unsubDaily();
         };
-    }, [startDateStr, endDateStr]);
+    }, [activeHotelCode, startDateStr, endDateStr]);
 
     return stats;
 };

@@ -50,7 +50,7 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                         <p className={styles.noActivityText}>No activity</p>
                     </div>
                 ) : (
-                    items.slice(0, 5).map((item: any, idx: number) => (
+                    items.map((item: any, idx: number) => (
                         <button 
                             key={idx}
                             onClick={() => onItemClick?.(item)}

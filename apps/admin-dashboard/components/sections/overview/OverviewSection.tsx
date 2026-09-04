@@ -509,7 +509,7 @@ export function OverviewSection() {
                 )}
                 {selectedGuest && (
                     <GuestDetailModal 
-                        key={selectedGuest.timestamp || selectedGuest.bookingId || Math.random()}
+                        key={`${selectedGuest.bookingId || ''}_${selectedGuest.roomNumber || ''}_${selectedGuest.timestamp || ''}`}
                         guest={selectedGuest} 
                         isEditing={isEditing} 
                         onClose={() => setSelectedGuest(null)} 

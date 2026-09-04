@@ -131,7 +131,14 @@ export function InventoryCalendar({
         const seen = new Set();
         
         for (const e of entries) {
-            const key = e.timestamp || e.bookingId || `${e.guestName}_${e.checkInDate}_${e.roomNumber}`;
+            const checkInDate = e.checkInDate || e.checkIn || '';
+            const checkOutDate = e.checkOutDate || e.checkOut || '';
+            const roomIdent = e.roomNumber || e.roomTypeId || e.roomType || '';
+            const key = e.bookingId 
+                ? `${e.bookingId}_${roomIdent}_${checkInDate}_${checkOutDate}`
+                : (e.timestamp 
+                    ? `${e.timestamp}_${roomIdent}_${checkInDate}`
+                    : `${e.guestName}_${roomIdent}_${checkInDate}_${checkOutDate}`);
             if (!seen.has(key)) {
                 seen.add(key);
                 
@@ -141,8 +148,12 @@ export function InventoryCalendar({
                               e.status?.toUpperCase() !== 'VOID' && 
                               e.status?.toUpperCase() !== 'VOIDED';
                               
-                if (isAcc && e.checkInDate && e.checkOutDate) {
-                    uniqueBookings.push(e);
+                if (isAcc && checkInDate && checkOutDate) {
+                    uniqueBookings.push({
+                        ...e,
+                        checkInDate,
+                        checkOutDate
+                    });
                 }
             }
         }
@@ -154,13 +165,16 @@ export function InventoryCalendar({
     // Generate Rows dynamically per Room Type
     const groupedRows = useMemo(() => {
         return roomTypes.map(type => {
-            const typeBookings = allBookings.filter(b => b.roomType?.trim().toLowerCase() === type.name?.trim().toLowerCase());
+            const typeBookings = allBookings.filter(b => 
+                (b.roomTypeId && b.roomTypeId === type.id) ||
+                (b.roomType && type.name && b.roomType.trim().toLowerCase() === type.name.trim().toLowerCase())
+            );
             const physicalRooms = type.physicalRooms || [];
             
             // Collect unique known room numbers from bookings that might not be in physicalRooms
             const bookingRooms = Array.from(new Set(typeBookings.map(b => b.roomNumber).filter(Boolean))) as string[];
-            const mappedNumbers = physicalRooms.map((pr: any) => pr.number);
-            const unmappedRooms = bookingRooms.filter(r => !mappedNumbers.includes(r));
+            const mappedNumbers = physicalRooms.map((pr: any) => String(typeof pr === "object" ? (pr.number || pr.name || "") : pr).trim().toLowerCase());
+            const unmappedRooms = bookingRooms.filter(r => !mappedNumbers.includes(String(r).trim().toLowerCase()));
             
             const allotment = parseInt(type.allotment) || 0;
             const requiredRowCount = Math.max(allotment, physicalRooms.length + unmappedRooms.length);
@@ -168,14 +182,21 @@ export function InventoryCalendar({
             const rows: { id: string, label: string, number: string, bookings: any[] }[] = [];
             
             // 1. Add explicitly mapped physical rooms
-            physicalRooms.forEach((pr: any) => {
-                const rawName = pr.name || pr.number || '';
-                rows.push({ id: pr.id, label: rawName.replace(/^Room\s+/i, ''), number: pr.number, bookings: [] });
+            physicalRooms.forEach((pr: any, prIdx: number) => {
+                const rawNumber = String(typeof pr === "object" ? (pr.number || pr.name || "") : pr).trim();
+                const rawName = typeof pr === "object" ? (pr.name || pr.number || `Room ${prIdx + 1}`) : String(pr);
+                const rowId = typeof pr === "object" ? (pr.id || `pr-${prIdx}`) : `pr-${prIdx}`;
+                rows.push({ 
+                    id: rowId, 
+                    label: String(rawName).replace(/^Room\s+/i, ''), 
+                    number: rawNumber, 
+                    bookings: [] 
+                });
             });
             
             // 2. Add unmapped rooms found in bookings
             unmappedRooms.forEach(roomNo => {
-                rows.push({ id: `unmapped-${roomNo}`, label: roomNo, number: roomNo, bookings: [] });
+                rows.push({ id: `unmapped-${roomNo}`, label: String(roomNo), number: String(roomNo), bookings: [] });
             });
             
             // 3. Pad with generic rooms up to allotment
@@ -197,7 +218,11 @@ export function InventoryCalendar({
                 
                 // If it has a specific room number, try to put it there
                 if (booking.roomNumber) {
-                    const targetRow = rows.find(r => r.number === booking.roomNumber);
+                    const bRoom = String(booking.roomNumber).trim().toLowerCase();
+                    const targetRow = rows.find(r => 
+                        String(r.number).trim().toLowerCase() === bRoom || 
+                        String(r.label).trim().toLowerCase() === bRoom
+                    );
                     if (targetRow) {
                         // Check overlap
                         const hasOverlap = targetRow.bookings.some(b => 
