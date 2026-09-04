@@ -21,7 +21,13 @@ import { db } from "@/lib/firebase";
 export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const { user, loading, activeHotelCode, signOutUser, activeHotelName } = useAuth();
     const router = useRouter();
-    const [isCollapsed, setIsCollapsed] = useState(true);
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
+    React.useEffect(() => {
+        if (typeof window !== "undefined" && window.innerWidth <= 1024) {
+            setIsCollapsed(true);
+        }
+    }, []);
     const { poweredByText, poweredByLink } = useFooter();
     const containerRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();

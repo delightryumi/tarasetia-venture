@@ -141,9 +141,13 @@ export function GuestEditForm({ formData, setFormData, roomTypes, guest }: Guest
                                     }}
                                 >
                                     <option value=""></option>
-                                    {availableRooms.map((roomName: string, idx: number) => (
-                                        <option key={idx} value={roomName}>{roomName}</option>
-                                    ))}
+                                    {availableRooms.map((room: any, idx: number) => {
+                                        const roomNum = typeof room === "object" ? (room.number || room.name || "") : String(room);
+                                        const roomLabel = typeof room === "object" ? (room.name ? `${room.number} - ${room.name}` : room.number) : String(room);
+                                        return (
+                                            <option key={idx} value={roomNum}>{roomLabel || roomNum}</option>
+                                        );
+                                    })}
                                 </select>
                             </div>
                         ) : (
