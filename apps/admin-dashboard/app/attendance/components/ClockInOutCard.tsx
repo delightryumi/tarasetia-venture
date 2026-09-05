@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { db } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { SelfieCapture } from "./SelfieCapture";
 import { GpsValidator } from "./GpsValidator";
 import styles from "../attendance.module.css";
@@ -19,7 +19,8 @@ interface Props {
 type Step = "idle" | "selfie" | "late_reason" | "gps" | "submitting" | "done";
 
 export function ClockInOutCard({ staffId, hotelCode, today, shift, loadingShift }: Props) {
-  const [log, setLog] = useState<any>(null);
+  const [activeLog, setActiveLog] = useState<any>(null);
+  const [latestTodayLog, setLatestTodayLog] = useState<any>(null);
   const [loadingLog, setLoadingLog] = useState(true);
   const [step, setStep] = useState<Step>("idle");
   const [clockType, setClockType] = useState<"clock_in" | "clock_out">("clock_in");
@@ -30,21 +31,59 @@ export function ClockInOutCard({ staffId, hotelCode, today, shift, loadingShift 
   const [lateReason, setLateReason] = useState("");
 
   const yyyyMM = today.slice(0, 7);
-  const logId = `${staffId}_${today}`;
 
-  // Real-time listener untuk log hari ini
+  // Real-time listener untuk mencari sesi aktif dan sesi terkini hari ini
   useEffect(() => {
     if (!staffId || !hotelCode) return;
-    const logRef = doc(db, `hotels/${hotelCode}/attendance/${yyyyMM}/logs/${logId}`);
-    const unsub = onSnapshot(logRef, (snap) => {
-      setLog(snap.exists() ? snap.data() : null);
+    setLoadingLog(true);
+
+    const colRef = collection(db, `hotels/${hotelCode}/attendance/${yyyyMM}/logs`);
+    const q = query(colRef, where("staffId", "==", staffId));
+
+    const unsub = onSnapshot(q, async (snap) => {
+      const logsList = snap.docs.map((d) => ({ id: d.id, ...d.data() } as any));
+
+      // Cari sesi aktif yang belum di-Clock Out di bulan ini
+      let active = logsList.find((l) => l.clockIn?.time && (!l.clockOut || !l.clockOut.time));
+
+      // Jika tidak ada di bulan ini dan awal bulan, cek bulan kemarin untuk shift lintas bulan
+      if (!active) {
+        const currentD = new Date(today);
+        const prevD = new Date(currentD.getFullYear(), currentD.getMonth() - 1, 1);
+        const prevYyyyMM = `${prevD.getFullYear()}-${String(prevD.getMonth() + 1).padStart(2, "0")}`;
+        if (prevYyyyMM !== yyyyMM) {
+          try {
+            const prevColRef = collection(db, `hotels/${hotelCode}/attendance/${prevYyyyMM}/logs`);
+            const prevQ = query(prevColRef, where("staffId", "==", staffId));
+            const prevSnap = await getDocs(prevQ);
+            const prevLogs = prevSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any));
+            active = prevLogs.find((l) => l.clockIn?.time && (!l.clockOut || !l.clockOut.time));
+          } catch (e) {
+            console.error("Error checking previous month active log:", e);
+          }
+        }
+      }
+
+      setActiveLog(active || null);
+
+      // Cari log sesi terbaru hari ini (jika ada)
+      const todayLogs = logsList.filter((l) => l.date === today);
+      todayLogs.sort((a, b) => (b.clockIn?.time || "").localeCompare(a.clockIn?.time || ""));
+      setLatestTodayLog(todayLogs[0] || null);
+
+      setLoadingLog(false);
+    }, (err) => {
+      console.error("Error listening to staff attendance logs:", err);
       setLoadingLog(false);
     });
-    return () => unsub();
-  }, [staffId, hotelCode, yyyyMM, logId]);
 
-  const hasClockedIn = !!log?.clockIn;
-  const hasClockedOut = !!log?.clockOut;
+    return () => unsub();
+  }, [staffId, hotelCode, yyyyMM, today]);
+
+  const hasActiveSession = !!activeLog;
+  const displayLog = activeLog || latestTodayLog;
+  const hasClockedIn = !!displayLog?.clockIn;
+  const hasClockedOut = !!displayLog?.clockOut;
 
   const checkIfLate = (type: "clock_in" | "clock_out"): boolean => {
     if (type !== "clock_in" || !shift || !shift.startTime) return false;
@@ -100,6 +139,7 @@ export function ClockInOutCard({ staffId, hotelCode, today, shift, loadingShift 
           selfieBase64,
           date: today,
           lateReason: lateReason.trim(),
+          logId: activeLog?.id || undefined,
         }),
       });
       const data = await res.json();
@@ -156,7 +196,7 @@ export function ClockInOutCard({ staffId, hotelCode, today, shift, loadingShift 
           }}>
             <p style={{ color: hasClockedIn ? "#16a34a" : "#8e8e93", fontSize: 11, margin: "0 0 6px", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Clock In</p>
             <p style={{ color: hasClockedIn ? "#15803d" : "#c7c7cc", fontSize: 24, fontWeight: 700, margin: 0, letterSpacing: "-0.5px" }}>
-              {hasClockedIn ? new Date(log.clockIn.time).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(".", ":") : "--:--"}
+              {hasClockedIn ? new Date(displayLog.clockIn.time).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(".", ":") : "--:--"}
             </p>
           </div>
           {/* Status Clock Out */}
@@ -169,13 +209,13 @@ export function ClockInOutCard({ staffId, hotelCode, today, shift, loadingShift 
           }}>
             <p style={{ color: hasClockedOut ? "#3b82f6" : "#8e8e93", fontSize: 11, margin: "0 0 6px", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Clock Out</p>
             <p style={{ color: hasClockedOut ? "#1d4ed8" : "#c7c7cc", fontSize: 24, fontWeight: 700, margin: 0, letterSpacing: "-0.5px" }}>
-              {hasClockedOut ? new Date(log.clockOut.time).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(".", ":") : "--:--"}
+              {hasClockedOut ? new Date(displayLog.clockOut.time).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(".", ":") : "--:--"}
             </p>
           </div>
         </div>
 
         {/* Status badge */}
-        {log?.status && (
+        {displayLog?.status && (
           <div style={{ textAlign: "center", marginTop: 24 }}>
             <span style={{
               display: "inline-block",
@@ -184,21 +224,21 @@ export function ClockInOutCard({ staffId, hotelCode, today, shift, loadingShift 
               fontSize: 12,
               fontWeight: 700,
               letterSpacing: 0.5,
-              backgroundColor: log.status === "hadir" ? "#dcfce7" : log.status === "terlambat" ? "#ffedd5" : "#fee2e2",
-              color: log.status === "hadir" ? "#15803d" : log.status === "terlambat" ? "#c2410c" : "#b91c1c"
+              backgroundColor: displayLog.status === "hadir" ? "#dcfce7" : displayLog.status === "terlambat" ? "#ffedd5" : "#fee2e2",
+              color: displayLog.status === "hadir" ? "#15803d" : displayLog.status === "terlambat" ? "#c2410c" : "#b91c1c"
             }}>
-              {log.status.toUpperCase()}
-              {log.status === "terlambat" && log.lateMinutes ? (() => {
-                const mins = log.lateMinutes;
+              {hasActiveSession ? `${displayLog.status.toUpperCase()} (SEDANG BERTUGAS)` : displayLog.status.toUpperCase()}
+              {displayLog.status === "terlambat" && displayLog.lateMinutes ? (() => {
+                const mins = displayLog.lateMinutes;
                 if (mins < 60) return ` (${mins} MNT)`;
                 const hrs = Math.floor(mins / 60);
                 const rem = mins % 60;
                 return rem > 0 ? ` (${hrs} J ${rem} M)` : ` (${hrs} J)`;
               })() : ""}
             </span>
-            {log.status === "terlambat" && log.lateReason && (
+            {displayLog.status === "terlambat" && displayLog.lateReason && (
               <p style={{ fontSize: 12, color: "#8e8e93", fontStyle: "italic", margin: "12px 0 0" }}>
-                "{log.lateReason}"
+                "{displayLog.lateReason}"
               </p>
             )}
           </div>
@@ -285,36 +325,45 @@ export function ClockInOutCard({ staffId, hotelCode, today, shift, loadingShift 
 
       {/* Action buttons */}
       {step === "idle" && (
-        <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-          {/* Jika belum ada jadwal shift sama sekali */}
-          {(!shift || shift.id === "NONE" || shift.id === "NOT_FOUND") && !loadingShift && !hasClockedIn && (
-            <div style={{ flex: 1, padding: 14, background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, color: "#b91c1c", fontWeight: 600, fontSize: 14, textAlign: 'center' }}>
-              Belum ada jadwal shift hari ini
-            </div>
-          )}
-
-          {!hasClockedIn && shift && shift.id !== "NONE" && shift.id !== "OFF" && shift.id !== "NOT_FOUND" && (
-            <button
-              onClick={() => handleStartClock("clock_in")}
-              disabled={!!loadingShift}
-              className={styles.btnPrimary}
-              style={{ flex: 1, padding: "14px", borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: loadingShift ? "not-allowed" : "pointer", transition: '0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loadingShift ? 0.6 : 1 }}
-            >
-              <Play size={18} fill="currentColor" /> {loadingShift ? "Memuat shift..." : "Clock In"}
-            </button>
-          )}
-          {hasClockedIn && !hasClockedOut && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
+          {/* Jika ada sesi aktif yang belum Clock Out */}
+          {hasActiveSession && (
             <button
               onClick={() => handleStartClock("clock_out")}
-              style={{ flex: 1, padding: "14px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: "pointer", transition: '0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              style={{ width: "100%", padding: "14px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: "pointer", transition: '0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
               <Square size={18} fill="currentColor" /> Clock Out
             </button>
           )}
-          {hasClockedIn && hasClockedOut && (
-            <div style={{ flex: 1, padding: 14, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, color: "#16a34a", fontWeight: 600, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <CheckCircle2 size={18} /> Absensi selesai hari ini
-            </div>
+
+          {/* Jika tidak ada sesi aktif */}
+          {!hasActiveSession && (
+            <>
+              {latestTodayLog && (
+                <div style={{ padding: "10px 14px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, color: "#16a34a", fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <CheckCircle2 size={16} /> Sesi absensi sebelumnya selesai
+                </div>
+              )}
+
+              {/* Jika belum ada jadwal shift */}
+              {(!shift || shift.id === "NONE" || shift.id === "NOT_FOUND") && !loadingShift && !latestTodayLog && (
+                <div style={{ width: "100%", padding: 14, background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, color: "#b91c1c", fontWeight: 600, fontSize: 14, textAlign: 'center' }}>
+                  Belum ada jadwal shift hari ini
+                </div>
+              )}
+
+              {/* Tombol Clock In (selalu dapat diklik jika shift valid) */}
+              {shift && shift.id !== "NONE" && shift.id !== "OFF" && shift.id !== "NOT_FOUND" && (
+                <button
+                  onClick={() => handleStartClock("clock_in")}
+                  disabled={!!loadingShift}
+                  className={styles.btnPrimary}
+                  style={{ width: "100%", padding: "14px", borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: loadingShift ? "not-allowed" : "pointer", transition: '0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loadingShift ? 0.6 : 1 }}
+                >
+                  <Play size={18} fill="currentColor" /> {loadingShift ? "Memuat shift..." : (latestTodayLog ? "Clock In Sesi Baru" : "Clock In")}
+                </button>
+              )}
+            </>
           )}
         </div>
       )}

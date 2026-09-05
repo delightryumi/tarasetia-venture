@@ -23,9 +23,9 @@
   --sidebar-link-hover-bg: rgba(0, 0, 0, 0.05);
   --sidebar-link-hover-border: transparent;
   --sidebar-link-hover-text: #1d1d1f;
-  --sidebar-link-active-bg: rgba(0, 0, 0, 0.08);
-  --sidebar-link-active-text: #1d1d1f;
-  --sidebar-active-indicator: #0071e3;
+  --sidebar-link-active-bg: #181d26;
+  --sidebar-link-active-text: #ffffff;
+  --sidebar-active-indicator: transparent;
 
   /* Legacy aliases for backwards compatibility */
   --terracotta: var(--peach);

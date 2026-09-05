@@ -34,13 +34,13 @@ export function ForecastHeader({
         <header className={styles.header}>
             <div className={styles.headerInner}>
                 <div className={styles.headerLeft}>
-                    <div className={styles.headerBadge} style={{ backgroundColor: 'var(--sidebar-link-active-bg)', color: 'var(--sidebar-link-active-text)' }}>
+                    <div className={styles.headerBadge}>
                         <Waves size={15} />
                     </div>
                     <div className={styles.headerMeta}>
                         <span className={styles.headerSubtitle}>Forecast Analytics</span>
                         <h1 className={styles.headerTitle}>
-                            Forecast <span style={{ color: 'var(--sidebar-link-active-bg)' }}>& POS</span>
+                            Forecast <span style={{ color: '#8d7a52' }}>& POS</span>
                         </h1>
                     </div>
                 </div>
@@ -83,7 +83,7 @@ export function ForecastHeader({
                     {/* Export Dropdown */}
                     <button 
                         onClick={handleExportExcel}
-                        className={styles.btnIcon}
+                        className={`${styles.btnIcon} ${styles.btnIconExcel}`}
                         style={{ height: '36px', width: '36px', borderRadius: '8px' }}
                         title="Export to Excel"
                     >
@@ -91,7 +91,7 @@ export function ForecastHeader({
                     </button>
                     <button 
                         onClick={handleExportPDF}
-                        className={styles.btnIcon}
+                        className={`${styles.btnIcon} ${styles.btnIconPDF}`}
                         style={{ height: '36px', width: '36px', borderRadius: '8px' }}
                         title="Export to PDF"
                     >

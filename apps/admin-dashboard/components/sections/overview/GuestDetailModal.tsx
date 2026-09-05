@@ -559,7 +559,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                 </button>
                             </div>
                             <div style={{ display: 'flex', gap: '8px' }}>
-                                <button onClick={() => setIsEditMode(true)} className={styles.btnIcon} style={{ height: '36px', padding: '0 16px', width: 'auto', fontSize: '10px', borderRadius: '8px', fontWeight: 700 }}>Modify</button>
+                                <button onClick={() => setIsEditMode(true)} className={styles.btnSecondary} style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px', fontWeight: 700 }}>Modify</button>
                                 {guest.status !== "CANCELLED" && guest.status !== "CANCEL" && guest.status !== "VOID" && guest.status !== "VOIDED" && (
                                     <button 
                                         onClick={() => setShowConfirmCancel(true)} 

@@ -57,13 +57,13 @@ export function ChannelPerformance({
             <div className={styles.card} style={{ overflow: "hidden", padding: 0 }}>
                 <div className={styles.cardHeader} style={{ padding: "24px 24px 16px 24px", borderBottom: "1px solid var(--f-hairline)", marginBottom: 0 }}>
                     <div className={styles.cardHeaderLeft}>
-                        <div className={styles.headerBadge} style={{ backgroundColor: 'var(--sidebar-link-active-bg)', color: 'var(--sidebar-link-active-text)' }}>
+                        <div className={styles.headerBadge}>
                             <Activity size={15} />
                         </div>
                         <div className={styles.headerMeta}>
                             <span className={styles.headerSubtitle}>Forecast Analytics</span>
                             <h2 className={styles.headerTitle} style={{ fontSize: "13px" }}>
-                                Channel <span style={{ color: 'var(--sidebar-link-active-bg)' }}>Performance</span>
+                                Channel <span style={{ color: '#8d7a52' }}>Performance</span>
                             </h2>
                         </div>
                     </div>
@@ -129,14 +129,10 @@ export function ChannelPerformance({
                                 </div>
 
                                 {/* Row 3: Trx + Nominal side by side */}
-                                <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <span className={styles.datePickerLabel} style={{ fontSize: "8px" }}>Trx</span>
-                                        <span className={styles.guestSubtext} style={{ color: "var(--f-ink)", fontWeight: 700 }}>{ch.trxCount}</span>
-                                    </div>
-                                    <div className={styles.vDivider} style={{ height: "12px" }} />
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <span className={styles.datePickerLabel} style={{ fontSize: "8px" }}>Nominal</span>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                                    <span className={styles.guestSubtext}>{ch.trxCount} Bookings</span>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                        <span className={styles.guestSubtext}>Revenue:</span>
                                         <span className={styles.guestSubtext} style={{ color: "var(--f-ink)", fontWeight: 700 }}>Rp {formatCurrency(ch.revenue)}</span>
                                     </div>
                                 </div>
@@ -148,8 +144,8 @@ export function ChannelPerformance({
                 {/* Footer */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", borderTop: "1px solid var(--f-hairline)", backgroundColor: "var(--f-surface)" }}>
                     <span className={styles.guestSubtext}></span>
-                    <span className={styles.guestSubtext} style={{ color: 'var(--sidebar-link-active-bg)', fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: 'var(--sidebar-link-active-bg)', display: "inline-block", animation: "pulse 2s infinite" }} />
+                    <span className={styles.guestSubtext} style={{ color: '#181d26', fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: '#181d26', display: "inline-block", animation: "pulse 2s infinite" }} />
                         Live Analytics
                     </span>
                 </div>

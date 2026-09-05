@@ -59,19 +59,19 @@ export function TransactionTable({
             <div className={styles.card} style={{ overflow: "hidden", padding: 0 }}>
                 <div className={styles.cardHeader} style={{ padding: "24px 24px 16px 24px", borderBottom: "1px solid var(--f-hairline)", marginBottom: 0 }}>
                     <div className={styles.cardHeaderLeft}>
-                        <div className={styles.headerBadge} style={{ backgroundColor: 'var(--sidebar-link-active-bg)', color: 'var(--sidebar-link-active-text)' }}>
+                        <div className={styles.headerBadge}>
                             <Activity size={15} />
                         </div>
                         <div className={styles.headerMeta}>
                             <span className={styles.headerSubtitle}>Forecast Analytics</span>
                             <h2 className={styles.headerTitle} style={{ fontSize: "13px" }}>
-                                Detail <span style={{ color: 'var(--sidebar-link-active-bg)' }}>Transaksi</span>
+                                Detail <span style={{ color: '#8d7a52' }}>Transaksi</span>
                             </h2>
                             {activeFilter && (
                                 <button 
                                     onClick={() => setActiveFilter(null)}
                                     className={styles.guestSubtext}
-                                    style={{ color: 'var(--sidebar-link-active-bg)', cursor: "pointer", border: "none", background: "transparent", padding: 0, textDecoration: "underline", textAlign: "left", fontWeight: "bold" }}
+                                    style={{ color: '#181d26', cursor: "pointer", border: "none", background: "transparent", padding: 0, textDecoration: "underline", textAlign: "left", fontWeight: "bold" }}
                                 >
                                     Showing {activeFilter === 'other_income' ? 'Other Revenue' : activeFilter} — Clear Filter
                                 </button>
@@ -262,8 +262,8 @@ export function TransactionTable({
                                             {/* Action */}
                                             <td className={styles.tableCell} style={{ textAlign: "center" }}>
                                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                                                    <button onClick={() => setSelectedGuest(entry)} className={styles.btnIcon} style={{ width: "32px", height: "32px", borderRadius: "6px" }} title="View Details"><Eye size={14} /></button>
-                                                    <button onClick={() => handleEdit(entry)} className={styles.btnIcon} style={{ width: "32px", height: "32px", borderRadius: "6px" }} title="Edit"><Pencil size={14} /></button>
+                                                    <button onClick={() => setSelectedGuest(entry)} className={`${styles.btnIcon} ${styles.btnIconDetail}`} style={{ width: "32px", height: "32px", borderRadius: "6px" }} title="View Details"><Eye size={14} /></button>
+                                                    <button onClick={() => handleEdit(entry)} className={`${styles.btnIcon} ${styles.btnIconEdit}`} style={{ width: "32px", height: "32px", borderRadius: "6px" }} title="Edit"><Pencil size={14} /></button>
                                                     {!isCancelled && (
                                                         <button 
                                                             onClick={() => handleCancelClick?.(entry)} 

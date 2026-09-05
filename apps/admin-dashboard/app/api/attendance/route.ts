@@ -83,15 +83,55 @@ export async function POST(request: Request) {
 
     // 3. Simpan ke Firestore
     const yyyyMM = date.slice(0, 7); // yyyy-mm
-    const logId = `${staffId}_${date}`;
-    const logRef = adminDb.doc(`hotels/${hotelCode}/attendance/${yyyyMM}/logs/${logId}`);
-    const logSnap = await logRef.get();
     const now = new Date().toISOString();
 
-    if (type === "clock_in") {
-      if (logSnap.exists && logSnap.data()?.clockIn) {
-        return NextResponse.json({ error: "Anda sudah Clock In hari ini." }, { status: 409 });
+    // Helper: Cari sesi aktif yang belum di-Clock Out
+    async function findActiveSession() {
+      // 1. Cek bulan ini
+      const colRef = adminDb.collection(`hotels/${hotelCode}/attendance/${yyyyMM}/logs`);
+      const snap = await colRef.where("staffId", "==", staffId).get();
+      for (const doc of snap.docs) {
+        const data = doc.data();
+        if (data.clockIn?.time && (!data.clockOut || !data.clockOut.time)) {
+          return { ref: doc.ref, data: { id: doc.id, ...data }, yyyyMM };
+        }
       }
+
+      // 2. Cek bulan kemarin jika tanggal awal bulan (misal tgl 1 atau 2)
+      const currentD = new Date(date);
+      const prevD = new Date(currentD.getFullYear(), currentD.getMonth() - 1, 1);
+      const prevYyyyMM = `${prevD.getFullYear()}-${String(prevD.getMonth() + 1).padStart(2, "0")}`;
+      if (prevYyyyMM !== yyyyMM) {
+        const prevColRef = adminDb.collection(`hotels/${hotelCode}/attendance/${prevYyyyMM}/logs`);
+        const prevSnap = await prevColRef.where("staffId", "==", staffId).get();
+        for (const doc of prevSnap.docs) {
+          const data = doc.data();
+          if (data.clockIn?.time && (!data.clockOut || !data.clockOut.time)) {
+            return { ref: doc.ref, data: { id: doc.id, ...data }, yyyyMM: prevYyyyMM };
+          }
+        }
+      }
+
+      return null;
+    }
+
+    if (type === "clock_in") {
+      // Pastikan tidak ada sesi aktif yang menggantung
+      const active = await findActiveSession();
+      if (active) {
+        return NextResponse.json(
+          { error: "Anda masih memiliki sesi absensi aktif yang belum Clock Out. Silakan Clock Out terlebih dahulu." },
+          { status: 409 }
+        );
+      }
+
+      // Tentukan logId: gunakan format default jika belum ada, atau timestamp jika sudah pernah ada sesi di hari ini
+      const defaultLogId = `${staffId}_${date}`;
+      const defaultRef = adminDb.doc(`hotels/${hotelCode}/attendance/${yyyyMM}/logs/${defaultLogId}`);
+      const defaultSnap = await defaultRef.get();
+
+      const logId = defaultSnap.exists ? `${staffId}_${date}_${Date.now()}` : defaultLogId;
+      const logRef = adminDb.doc(`hotels/${hotelCode}/attendance/${yyyyMM}/logs/${logId}`);
 
       let status: "hadir" | "terlambat" = "hadir";
       let lateMinutes = 0;
@@ -112,6 +152,7 @@ export async function POST(request: Request) {
       }
 
       await logRef.set({
+        id: logId,
         staffId,
         staffName: staffData?.name || "",
         date,
@@ -126,29 +167,39 @@ export async function POST(request: Request) {
       }, { merge: true });
 
     } else if (type === "clock_out") {
-      if (!logSnap.exists || !logSnap.data()?.clockIn) {
-        return NextResponse.json({ error: "Anda belum Clock In hari ini." }, { status: 409 });
-      }
-      if (logSnap.data()?.clockOut) {
-        return NextResponse.json({ error: "Anda sudah Clock Out hari ini." }, { status: 409 });
+      const active = await findActiveSession();
+      if (!active) {
+        return NextResponse.json({ error: "Tidak ditemukan sesi Clock In aktif untuk di-Clock Out." }, { status: 409 });
       }
 
-      const clockInTime = new Date(logSnap.data()!.clockIn.time);
+      const targetLogRef = active.ref;
+      const targetLogData = active.data;
+      const clockInTime = new Date(targetLogData.clockIn.time);
       const clockOutTime = new Date(now);
-      const durationMinutes = Math.round((clockOutTime.getTime() - clockInTime.getTime()) / 60000);
+      const durationMinutes = Math.max(0, Math.round((clockOutTime.getTime() - clockInTime.getTime()) / 60000));
+
+      // Ambil data shift dari sesi yang bersangkutan jika berbeda
+      let sessionShift = shiftData;
+      if (targetLogData.shiftId && (!sessionShift || sessionShift.id !== targetLogData.shiftId)) {
+        try {
+          const sSnap = await adminDb.doc(`hotels/${hotelCode}/shifts/${targetLogData.shiftId}`).get();
+          if (sSnap.exists) sessionShift = sSnap.data();
+        } catch (err) {
+          console.error("Error fetching session shift doc:", err);
+        }
+      }
 
       // Hitung lembur
       let overtimeMinutes = 0;
-      if (shiftData) {
-        const minWorkMinutes = ((shiftData as any).minimumWorkHours ?? 8) * 60;
-        // Lembur dihitung jika durasi kerja riil melebihi masa jam kerja wajib (minWorkMinutes)
+      if (sessionShift) {
+        const minWorkMinutes = ((sessionShift as any).minimumWorkHours ?? 8) * 60;
         const extraMinutes = durationMinutes - minWorkMinutes;
         if (extraMinutes > 0) {
           overtimeMinutes = extraMinutes;
         }
       }
 
-      await logRef.update({
+      await targetLogRef.update({
         clockOut: { time: now, selfieUrl, gps },
         durationMinutes,
         overtimeMinutes,

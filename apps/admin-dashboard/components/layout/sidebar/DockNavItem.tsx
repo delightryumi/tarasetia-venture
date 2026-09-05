@@ -17,7 +17,7 @@ export function DockNavItem({
                 w-10 h-10 rounded-full flex items-center justify-center
                 transition-all duration-200 border-none outline-none cursor-pointer
                 ${isActive
-                    ? "bg-[var(--sidebar-link-active-bg)] text-[var(--sidebar-link-active-text)]"
+                    ? "bg-[#181d26] text-white shadow-sm"
                     : "text-[var(--sidebar-text)]/60 hover:text-[var(--sidebar-link-hover-text)] hover:bg-[var(--sidebar-link-hover-bg)]"
                 }
             `}

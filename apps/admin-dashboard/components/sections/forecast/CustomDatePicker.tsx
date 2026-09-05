@@ -90,9 +90,9 @@ function DailyCalendar({ value, onChange }: { value: string, onChange: (v: strin
                                     fontFamily: "var(--f-font-mono)",
                                     cursor: "pointer",
                                     transition: "all var(--f-duration-fast)",
-                                    border: isSel(day) ? "none" : (isToday(day) ? "1px solid var(--f-light-muted)" : "none"),
-                                    backgroundColor: isSel(day) ? "var(--f-sage)" : "transparent",
-                                    color: isSel(day) ? "#ffffff" : (isToday(day) ? "var(--f-sage)" : "var(--f-body)")
+                                    border: isSel(day) ? "none" : (isToday(day) ? "1px solid #181d26" : "none"),
+                                    backgroundColor: isSel(day) ? "#181d26" : (isToday(day) ? "var(--f-surface-soft)" : "transparent"),
+                                    color: isSel(day) ? "#ffffff" : (isToday(day) ? "#181d26" : "var(--f-body)")
                                 }}
                             >
                                 {day}
@@ -150,9 +150,9 @@ function MonthlyCalendar({ value, onChange }: { value: string, onChange: (v: str
                             fontWeight: 700,
                             cursor: "pointer",
                             transition: "all var(--f-duration-fast)",
-                            border: isSel(i) ? "none" : (isCurrentMonth(i) ? "1px solid var(--f-light-muted)" : "none"),
-                            backgroundColor: isSel(i) ? "var(--f-sage)" : "transparent",
-                            color: isSel(i) ? "#ffffff" : (isCurrentMonth(i) ? "var(--f-sage)" : "var(--f-body)")
+                            border: isSel(i) ? "none" : (isCurrentMonth(i) ? "1px solid #181d26" : "none"),
+                            backgroundColor: isSel(i) ? "#181d26" : (isCurrentMonth(i) ? "var(--f-surface-soft)" : "transparent"),
+                            color: isSel(i) ? "#ffffff" : (isCurrentMonth(i) ? "#181d26" : "var(--f-body)")
                         }}
                     >
                         {name.slice(0, 3)}
@@ -187,9 +187,9 @@ function YearlyCalendar({ value, onChange }: { value: string, onChange: (v: stri
                             fontFamily: "var(--f-font-mono)",
                             cursor: "pointer",
                             transition: "all var(--f-duration-fast)",
-                            border: currentYear === yr ? "none" : (today.getFullYear() === yr ? "1px solid var(--f-light-muted)" : "none"),
-                            backgroundColor: currentYear === yr ? "var(--f-sage)" : "transparent",
-                            color: currentYear === yr ? "#ffffff" : (today.getFullYear() === yr ? "var(--f-sage)" : "var(--f-body)")
+                            border: currentYear === yr ? "none" : (today.getFullYear() === yr ? "1px solid #181d26" : "none"),
+                            backgroundColor: currentYear === yr ? "#181d26" : (today.getFullYear() === yr ? "var(--f-surface-soft)" : "transparent"),
+                            color: currentYear === yr ? "#ffffff" : (today.getFullYear() === yr ? "#181d26" : "var(--f-body)")
                         }}
                     >
                         {yr}
@@ -237,17 +237,17 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ mode, value,
                     display: "flex", 
                     alignItems: "center", 
                     gap: "8px", 
-                    height: "46px", 
-                    padding: "0 16px", 
-                    borderRadius: "10px", 
-                    minWidth: "180px", 
+                    height: "36px", 
+                    padding: "0 14px", 
+                    borderRadius: "8px", 
+                    minWidth: "170px", 
                     justifyContent: "flex-start",
-                    backgroundColor: "var(--f-surface-soft)",
-                    borderColor: open ? "var(--f-light-muted)" : "var(--f-hairline)",
-                    boxShadow: "none"
+                    backgroundColor: "var(--f-canvas)",
+                    borderColor: open ? "#181d26" : "var(--f-hairline)",
+                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)"
                 }}
             >
-                <Calendar size={14} style={{ color: "var(--f-light-muted)", flexShrink: 0 }} />
+                <Calendar size={14} style={{ color: "#181d26", flexShrink: 0 }} />
                 <span className={styles.guestSubtext} style={{ color: "var(--f-ink)", fontSize: "11px", fontWeight: 700 }}>
                     {formatDisplay(value)}
                 </span>
