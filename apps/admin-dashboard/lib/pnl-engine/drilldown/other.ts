@@ -6,17 +6,20 @@ export function getOtherDrillDown(cardId: string, ctx: DrillDownContext): any[] 
   let items: any[] = [];
   const { rawTransactions, customIncomes, expenses, posOrders, vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage } = ctx;
 
+  const isAccommodation = (t: any) => {
+      const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+      const isPelunasan = t.isHidden || t.isPelunasan || t.type === "pelunasan_ar" || t.type === "pelunasan_reversal" || t.guestName?.startsWith("Koreksi Tanggal Pelunasan") || t.guestName?.startsWith("Pelunasan Piutang");
+      return !isPOS && !isPelunasan && (t.type === "accommodation" || (!t.type && t.guestName));
+  };
+  const isFOOtherIncome = (t: any) => {
+      const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+      const isPelunasan = t.isHidden || t.isPelunasan || t.type === "pelunasan_ar" || t.type === "pelunasan_reversal" || t.guestName?.startsWith("Koreksi Tanggal Pelunasan") || t.guestName?.startsWith("Pelunasan Piutang");
+      return !isPOS && !isPelunasan && !isAccommodation(t);
+  };
+
   switch (cardId) {
     case "Net Profit (Recon Owner)":
       {
-        const isAccommodation = (t: any) => {
-            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
-            return !isPOS && (t.type === "accommodation" || (!t.type && t.guestName));
-        };
-        const isFOOtherIncome = (t: any) => {
-            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
-            return !isPOS && !isAccommodation(t);
-        };
 
         const totalExtraIncome = customIncomes.reduce((sum, i) => sum + i.amount, 0);
         const ledgerRoomRevenue = rawTransactions.filter(isAccommodation).reduce((sum, t) => sum + t.amount, 0);

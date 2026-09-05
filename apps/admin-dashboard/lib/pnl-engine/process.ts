@@ -166,11 +166,13 @@ export function processPnLData(
 
   const isAccommodation = (t: any) => {
       const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
-      return !isPOS && (t.type === "accommodation" || (!t.type && t.guestName));
+      const isPelunasan = t.isHidden || t.isPelunasan || t.type === "pelunasan_ar" || t.type === "pelunasan_reversal" || t.guestName?.startsWith("Koreksi Tanggal Pelunasan") || t.guestName?.startsWith("Pelunasan Piutang");
+      return !isPOS && !isPelunasan && (t.type === "accommodation" || (!t.type && t.guestName));
   };
   const isFOOtherIncome = (t: any) => {
       const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
-      return !isPOS && !isAccommodation(t);
+      const isPelunasan = t.isHidden || t.isPelunasan || t.type === "pelunasan_ar" || t.type === "pelunasan_reversal" || t.guestName?.startsWith("Koreksi Tanggal Pelunasan") || t.guestName?.startsWith("Pelunasan Piutang");
+      return !isPOS && !isPelunasan && !isAccommodation(t);
   };
 
   const foComplimentValue = transactions

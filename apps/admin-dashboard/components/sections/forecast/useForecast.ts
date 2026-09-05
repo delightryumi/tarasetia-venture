@@ -117,6 +117,9 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                     if (isPOS) return;
                     if (e.status === "VOID" || e.status === "VOIDED") return;
 
+                    const isPelunasan = e.isHidden || e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal" || e.guestName?.startsWith("Koreksi Tanggal Pelunasan") || e.guestName?.startsWith("Pelunasan Piutang");
+                    if (isPelunasan) return;
+
                     const isCancelled = e.status === "CANCELLED" || e.status === "CANCEL";
 
                     if (!isCancelled) {

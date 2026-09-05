@@ -106,7 +106,7 @@ export const GeneralLedger: React.FC<GeneralLedgerProps> = ({
         // 2. Room Revenue & Other FO Incomes (including Compliment)
         const isAccommodation = (tx: any) => {
             const isPOS = tx.guestName?.startsWith("POS Order") || !!tx.posItems || !!tx.revenueType;
-            const isPelunasan = tx.type === "pelunasan_ar" || tx.type === "pelunasan_reversal" || tx.isPelunasan;
+            const isPelunasan = tx.type === "pelunasan_ar" || tx.type === "pelunasan_reversal" || tx.isPelunasan || tx.guestName?.startsWith("Koreksi Tanggal Pelunasan") || tx.guestName?.startsWith("Pelunasan Piutang");
             return !isPOS && !isPelunasan && (tx.type === "accommodation" || (!tx.type && tx.guestName));
         };
 

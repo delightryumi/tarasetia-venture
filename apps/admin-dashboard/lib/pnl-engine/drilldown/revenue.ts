@@ -16,13 +16,20 @@ export function getRevenueDrillDown(cardId: string, ctx: DrillDownContext): any[
   let items: any[] = [];
   const { rawTransactions, customIncomes, expenses, posOrders, vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage } = ctx;
 
+  const isAccommodation = (t: any) => {
+    const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+    const isPelunasan = t.isHidden || t.isPelunasan || t.type === "pelunasan_ar" || t.type === "pelunasan_reversal" || t.guestName?.startsWith("Koreksi Tanggal Pelunasan") || t.guestName?.startsWith("Pelunasan Piutang");
+    return !isPOS && !isPelunasan && (t.type === "accommodation" || (!t.type && t.guestName));
+  };
+  const isFOOtherIncome = (t: any) => {
+    const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+    const isPelunasan = t.isHidden || t.isPelunasan || t.type === "pelunasan_ar" || t.type === "pelunasan_reversal" || t.guestName?.startsWith("Koreksi Tanggal Pelunasan") || t.guestName?.startsWith("Pelunasan Piutang");
+    return !isPOS && !isPelunasan && !isAccommodation(t);
+  };
+
   switch (cardId) {
     case "Revenue Hotel Collect":
       {
-        const isAccommodation = (t: any) => {
-            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
-            return !isPOS && (t.type === "accommodation" || (!t.type && t.guestName));
-        };
         items = rawTransactions
           .filter(isAccommodation)
           .filter(t => (Number(t.paidCash) || 0) > 0)
@@ -40,10 +47,6 @@ export function getRevenueDrillDown(cardId: string, ctx: DrillDownContext): any[
       break;
     case "Revenue Nexura Collect":
       {
-        const isAccommodation = (t: any) => {
-            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
-            return !isPOS && (t.type === "accommodation" || (!t.type && t.guestName));
-        };
         items = rawTransactions
           .filter(isAccommodation)
           .filter(t => (Number(t.paidTransfer) || 0) > 0)
@@ -78,10 +81,6 @@ export function getRevenueDrillDown(cardId: string, ctx: DrillDownContext): any[
     case "Revenue Room":
     case "Room Revenue":
       {
-        const isAccommodation = (t: any) => {
-            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
-            return !isPOS && (t.type === "accommodation" || (!t.type && t.guestName));
-        };
         items = rawTransactions
           .filter(isAccommodation)
           .map(t => ({
@@ -98,14 +97,6 @@ export function getRevenueDrillDown(cardId: string, ctx: DrillDownContext): any[
       break;
     case "Other Revenue":
       {
-        const isAccommodation = (t: any) => {
-            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
-            return !isPOS && (t.type === "accommodation" || (!t.type && t.guestName));
-        };
-        const isFOOtherIncome = (t: any) => {
-            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
-            return !isPOS && !isAccommodation(t);
-        };
         const ledgerOther = rawTransactions
           .filter(isFOOtherIncome)
           .map(t => ({
@@ -133,14 +124,6 @@ export function getRevenueDrillDown(cardId: string, ctx: DrillDownContext): any[
       break;
     case "Total Gross Revenue":
       {
-        const isAccommodation = (t: any) => {
-            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
-            return !isPOS && (t.type === "accommodation" || (!t.type && t.guestName));
-        };
-        const isFOOtherIncome = (t: any) => {
-            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
-            return !isPOS && !isAccommodation(t);
-        };
         const isFnbOrBanquetCustomIncome = (i: PnlIncomeItem) => {
           const cat = (i.category || "").toLowerCase();
           const name = (i.name || "").toLowerCase();
