@@ -8,6 +8,7 @@ import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useOverview } from "./useOverview";
+import { useSettings } from "@/hooks/useSettings";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -28,12 +29,30 @@ const SAGE = "var(--sidebar-link-active-bg, #181d26)";
 const PEACH = "var(--sidebar-link-active-bg, #181d26)";
 const RICH_BLACK = "#1A1C14";
 
+const getBase64Image = async (url: string): Promise<string | null> => {
+    if (!url) return null;
+    if (url.startsWith("data:image")) return url;
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+        });
+    } catch {
+        return null;
+    }
+};
+
 export function OverviewSection() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentModule = searchParams.get("module") || "front-office";
     const isReadOnly = currentModule === "housekeeping"; // read‑only mode for housekeeping
-    const { user, activeHotelCode } = useAuth();
+    const { user, activeHotelCode, activeHotelName } = useAuth();
+    const { branding, pos } = useSettings();
     
     const todayStr = React.useMemo(() => {
         const d = new Date();
@@ -321,28 +340,530 @@ export function OverviewSection() {
         }
     };
 
-    const handleExportExcel = () => {
-        const worksheet = XLSX.utils.json_to_sheet(latestBookings);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Daily Audit");
-        XLSX.writeFile(workbook, `Daily_Audit_Ledger_${new Date().toISOString().split('T')[0]}.xlsx`);
+    const isTransferTransaction = (b: any) => {
+        const pm = (b.paymentMethod || "").toLowerCase();
+        const ps = (b.paymentStatus || "").toLowerCase();
+        const ch = (b.channel || "").toLowerCase();
+        const payTransfer = Number(b.payTransfer || b.payNexura || b.paidTransfer || b.paidAmount2 || 0);
+        const payHotel = Number(b.payHotel || b.paidCash || b.paidAmount1 || 0);
+
+        if (payTransfer > 0 && payHotel === 0) return true;
+        if (payHotel > 0 && payTransfer === 0) return false;
+        
+        if (
+            pm.includes("transfer") || 
+            ps.includes("transfer") || 
+            ps.includes("nexura") || 
+            pm.includes("card") || 
+            pm.includes("qris") || 
+            pm.includes("travel_agent") || 
+            ps.includes("bank") ||
+            ps.includes("virtual account")
+        ) {
+            return true;
+        }
+        if (
+            pm.includes("hotel") || 
+            ps.includes("hotel") || 
+            pm.includes("cash") || 
+            ps.includes("cash")
+        ) {
+            return false;
+        }
+        // Non-direct channels (OTAs like Agoda, Booking.com, Traveloka, Tiket.com)
+        if (ch && !["direct", "walk-in", "internal", "-"].includes(ch)) {
+            return true;
+        }
+        return false;
     };
 
-    const handleExportPDF = () => {
-        const doc = new jsPDF();
-        doc.text("Daily Audit Ledger", 14, 15);
-        autoTable(doc, {
-            startY: 20,
-            head: [['Guest', 'Room', 'Channel', 'Amount', 'Status']],
-            body: latestBookings.map(b => [
-                b.guestName || "General Sale",
-                b.roomNumber || "NA",
-                b.channel,
-                `Rp ${Number(b.amount).toLocaleString('id-ID')}`,
-                b.paymentStatus || 'Pending'
-            ]),
-        });
-        doc.save(`Detailed_Audit_Ledger_${new Date().toISOString().split('T')[0]}.pdf`);
+    const handleExportExcel = () => {
+        try {
+            const hotelName = pos?.name || activeHotelName || "HOTEL OPERATIONAL SYSTEM";
+            const sysTime = new Date().toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "medium" }) + " WIB";
+            const staffStr = user?.displayName || user?.email || "Front Desk Officer";
+            const periodStr = startDate === endDate ? startDate : `${startDate} s/d ${endDate}`;
+            const periodFileName = startDate === endDate ? startDate : `${startDate}_sd_${endDate}`;
+
+            const payHotelBookings = latestBookings.filter((b: any) => !isTransferTransaction(b));
+            const transferBookings = latestBookings.filter((b: any) => isTransferTransaction(b));
+
+            const subtotalPayHotel = payHotelBookings.reduce((sum: number, b: any) => {
+                const isCancelled = b.status === "CANCELLED" || b.status === "CANCEL" || b.status === "VOID" || b.status === "VOIDED";
+                return isCancelled ? sum : sum + (Number(b.amount) || 0);
+            }, 0);
+
+            const subtotalTransfer = transferBookings.reduce((sum: number, b: any) => {
+                const isCancelled = b.status === "CANCELLED" || b.status === "CANCEL" || b.status === "VOID" || b.status === "VOIDED";
+                return isCancelled ? sum : sum + (Number(b.amount) || 0);
+            }, 0);
+
+            const totalRevenue = subtotalPayHotel + subtotalTransfer;
+
+            const formatRows = (list: any[]) => list.map((b: any, index: number) => {
+                const entryTime = b.timestamp 
+                    ? (b.timestamp.includes('T') ? b.timestamp.replace('T', ' ').substring(0, 16) : new Date(b.timestamp).toLocaleString('id-ID'))
+                    : "-";
+                
+                const voucher = b.voucherCode || b.bookingId || b.voucher || (b.guestName?.startsWith("POS Order") ? "POS" : "WALK-IN");
+                const guest = b.guestName || "General Sale";
+                const roomType = (b.roomType || b.incomeCategory || b.type || "Standard");
+                const roomNo = b.roomNumber || "-";
+                const checkIn = b.checkInDate || "-";
+                const checkOut = b.checkOutDate || "-";
+                const channel = b.channel || "Direct";
+                
+                let paymentMethod = b.paymentMethod || b.settlement || "-";
+                if (!b.paymentMethod || b.paymentMethod === "personal" || b.paymentMethod === "others") {
+                    if (b.payHotel) paymentMethod = "Pay at Hotel / Cash";
+                    else if (b.payTransfer) paymentMethod = "Transfer";
+                    else paymentMethod = b.paymentStatus || "Cash / Direct";
+                }
+
+                const paymentStatus = b.paymentStatus || "Pending";
+                const amount = Number(b.amount || 0);
+                const staff = b.staffName || b.createdBy || b.inputBy || (user?.displayName || "System");
+                const resStatus = b.status || "CONFIRMED";
+                const note = b.note || b.remarks || "";
+
+                return [
+                    index + 1,
+                    entryTime,
+                    voucher,
+                    guest,
+                    roomType,
+                    roomNo,
+                    checkIn,
+                    checkOut,
+                    channel,
+                    paymentMethod,
+                    paymentStatus,
+                    amount,
+                    staff,
+                    resStatus,
+                    note
+                ];
+            });
+
+            const colWidths = [
+                { wch: 6 },  // No
+                { wch: 18 }, // Waktu
+                { wch: 22 }, // Voucher
+                { wch: 28 }, // Guest
+                { wch: 22 }, // Room Type
+                { wch: 12 }, // Room No
+                { wch: 14 }, // In
+                { wch: 14 }, // Out
+                { wch: 16 }, // Channel
+                { wch: 24 }, // Payment Method
+                { wch: 16 }, // Status Bayar
+                { wch: 20 }, // Total
+                { wch: 18 }, // Staff
+                { wch: 16 }, // Status
+                { wch: 30 }, // Note
+            ];
+
+            const tableHeaderRow = [
+                "No", "Waktu Input", "No. Voucher / ID", "Nama Tamu / Order", 
+                "Tipe Kamar / Kategori", "No. Kamar", "Tgl Check-In", "Tgl Check-Out", 
+                "Channel / Sumber", "Metode Pembayaran", "Status Pembayaran", 
+                "Total Tagihan (IDR)", "Staf Input", "Status Transaksi", "Catatan / Note"
+            ];
+
+            const workbook = XLSX.utils.book_new();
+
+            // ── Sheet 1: Master All Transactions (2 Sections) ──
+            const masterHeader = [
+                ["LAPORAN AUDIT & TRANSAKSI FRONT OFFICE — LENGKAP"],
+                [`Properti: ${hotelName.toUpperCase()}`],
+                [`Periode: ${periodStr} | Jam Sistem: ${sysTime} | Staf Cetak: ${staffStr}`],
+                [],
+                ["== 1. TRANSAKSI PAY AT HOTEL (CASH / BAYAR DI TEMPAT) =="],
+                tableHeaderRow,
+                ...formatRows(payHotelBookings),
+                [],
+                ["", "", "", "SUBTOTAL PAY AT HOTEL", "", "", "", "", "", "", "", subtotalPayHotel, "", "", ""],
+                [],
+                ["== 2. TRANSAKSI BANK TRANSFER & OTA (NON-CASH / SETTLEMENT) =="],
+                tableHeaderRow,
+                ...formatRows(transferBookings),
+                [],
+                ["", "", "", "SUBTOTAL TRANSFER & OTA", "", "", "", "", "", "", "", subtotalTransfer, "", "", ""],
+                [],
+                ["", "", "", "GRAND TOTAL ALL REVENUE", "", "", "", "", "", "", "", totalRevenue, "", "", ""]
+            ];
+            const wsMaster = XLSX.utils.aoa_to_sheet(masterHeader);
+            wsMaster['!cols'] = colWidths;
+            XLSX.utils.book_append_sheet(workbook, wsMaster, "All Ledger");
+
+            // ── Sheet 2: Pay at Hotel ──
+            const payHotelHeader = [
+                ["LAPORAN TRANSAKSI PAY AT HOTEL (CASH / DIRECT)"],
+                [`Properti: ${hotelName.toUpperCase()}`],
+                [`Periode: ${periodStr} | Jam Sistem: ${sysTime} | Staf Cetak: ${staffStr}`],
+                [],
+                tableHeaderRow,
+                ...formatRows(payHotelBookings),
+                [],
+                ["", "", "", "TOTAL PAY AT HOTEL", "", "", "", "", "", "", "", subtotalPayHotel, "", "", ""]
+            ];
+            const wsPayHotel = XLSX.utils.aoa_to_sheet(payHotelHeader);
+            wsPayHotel['!cols'] = colWidths;
+            XLSX.utils.book_append_sheet(workbook, wsPayHotel, "Pay at Hotel");
+
+            // ── Sheet 3: Transfer & OTA ──
+            const transferHeader = [
+                ["LAPORAN TRANSAKSI BANK TRANSFER & OTA (NON-CASH)"],
+                [`Properti: ${hotelName.toUpperCase()}`],
+                [`Periode: ${periodStr} | Jam Sistem: ${sysTime} | Staf Cetak: ${staffStr}`],
+                [],
+                tableHeaderRow,
+                ...formatRows(transferBookings),
+                [],
+                ["", "", "", "TOTAL TRANSFER & OTA", "", "", "", "", "", "", "", subtotalTransfer, "", "", ""]
+            ];
+            const wsTransfer = XLSX.utils.aoa_to_sheet(transferHeader);
+            wsTransfer['!cols'] = colWidths;
+            XLSX.utils.book_append_sheet(workbook, wsTransfer, "Transfer & OTA");
+
+            XLSX.writeFile(workbook, `Detailed_Audit_Ledger_${periodFileName}.xlsx`);
+            toast.success("Laporan Excel (2 Tabel Terpisah) berhasil di-export");
+        } catch (error) {
+            console.error("Excel Export error:", error);
+            toast.error("Gagal mengekspor Excel");
+        }
+    };
+
+    const handleExportPDF = async () => {
+        try {
+            const doc = new jsPDF({
+                orientation: "landscape",
+                unit: "mm",
+                format: "a4",
+            });
+
+            const hotelName = pos?.name || activeHotelName || "HOTEL OPERATIONAL SYSTEM";
+            const hotelAddress = pos?.address || "Front Office Department";
+            const hotelPhone = pos?.phone ? `Telp: ${pos.phone}` : "";
+            const periodStr = startDate === endDate ? startDate : `${startDate} s/d ${endDate}`;
+            const periodFileName = startDate === endDate ? startDate : `${startDate}_sd_${endDate}`;
+            const sysTime = new Date().toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "medium" }) + " WIB";
+            const staffStr = user?.displayName || user?.email || "Front Desk Officer";
+
+            // 1. Fetch CPanel Logo directly from settings/landingPage
+            let logoUrl = null;
+            try {
+                const hotelId = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") : "") || "";
+                const docRef = doc(getHotelCollection(db, "settings", hotelId), "landingPage");
+                const snap = await getDoc(docRef);
+                if (snap.exists()) {
+                    const d = snap.data();
+                    logoUrl = d.darkLogo || d.lightLogo || d.logoUrl || null;
+                }
+            } catch (e) {
+                console.warn("Could not fetch cpanel logo:", e);
+            }
+            if (!logoUrl) {
+                logoUrl = branding?.darkLogo || branding?.lightLogo || "/channels/nexura-logo.png";
+            }
+
+            let logoLoaded = false;
+            if (logoUrl) {
+                try {
+                    const base64Logo = await getBase64Image(logoUrl);
+                    if (base64Logo) {
+                        doc.addImage(base64Logo, "PNG", 14, 9, 24, 13);
+                        logoLoaded = true;
+                    }
+                } catch (e) {
+                    console.warn("Could not render cpanel logo in PDF", e);
+                }
+            }
+
+            const headerLeftX = logoLoaded ? 42 : 14;
+
+            // Property Name & Details
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(13);
+            doc.setTextColor(24, 29, 38);
+            doc.text(hotelName.toUpperCase(), headerLeftX, 15);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`${hotelAddress} ${hotelPhone ? " | " + hotelPhone : ""}`, headerLeftX, 20);
+
+            // Report Title & System Info Box (Right Side)
+            const rightBoxX = 185;
+            doc.setFillColor(248, 249, 250);
+            doc.roundedRect(rightBoxX, 7, 98, 22, 2, 2, "F");
+            doc.setDrawColor(220, 224, 230);
+            doc.roundedRect(rightBoxX, 7, 98, 22, 2, 2, "D");
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8.5);
+            doc.setTextColor(24, 29, 38);
+            doc.text("DAILY AUDIT & FRONT OFFICE LEDGER", rightBoxX + 4, 12);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(6.5);
+            doc.setTextColor(90, 95, 105);
+            doc.text(`Periode: ${periodStr}`, rightBoxX + 4, 16.5);
+            doc.text(`Jam Sistem: ${sysTime}`, rightBoxX + 4, 20.5);
+            doc.text(`Staf Cetak: ${staffStr} (Front Office)`, rightBoxX + 4, 24.5);
+
+            // 2. Separate Data into Pay at Hotel and Transfer
+            const payHotelBookings = latestBookings.filter((b: any) => !isTransferTransaction(b));
+            const transferBookings = latestBookings.filter((b: any) => isTransferTransaction(b));
+
+            const subtotalPayHotel = payHotelBookings.reduce((sum: number, b: any) => {
+                const isCancelled = b.status === "CANCELLED" || b.status === "CANCEL" || b.status === "VOID" || b.status === "VOIDED";
+                return isCancelled ? sum : sum + (Number(b.amount) || 0);
+            }, 0);
+
+            const subtotalTransfer = transferBookings.reduce((sum: number, b: any) => {
+                const isCancelled = b.status === "CANCELLED" || b.status === "CANCEL" || b.status === "VOID" || b.status === "VOIDED";
+                return isCancelled ? sum : sum + (Number(b.amount) || 0);
+            }, 0);
+
+            const totalRevenue = subtotalPayHotel + subtotalTransfer;
+
+            // Summary KPI Strip
+            doc.setFillColor(24, 29, 38);
+            doc.roundedRect(14, 31, 269, 9, 1.5, 1.5, "F");
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(6.5);
+            doc.setTextColor(255, 255, 255);
+            doc.text(`TOTAL TRANSAKSI: ${latestBookings.length}`, 18, 37);
+            doc.text(`PAY AT HOTEL: Rp ${subtotalPayHotel.toLocaleString("id-ID")} (${payHotelBookings.length})`, 68, 37);
+            doc.text(`TRANSFER & OTA: Rp ${subtotalTransfer.toLocaleString("id-ID")} (${transferBookings.length})`, 140, 37);
+            doc.text(`GRAND TOTAL: Rp ${totalRevenue.toLocaleString("id-ID")}`, 220, 37);
+
+            // Format Table Row helper
+            const buildTableRows = (list: any[]) => {
+                if (list.length === 0) {
+                    return [["-", "-", "-", "Tidak ada transaksi", "-", "-", "-", "-", "-", "-", "-", "Rp 0", "-", "-"]];
+                }
+                return list.map((b: any, index: number) => {
+                    const entryTime = b.timestamp 
+                        ? (b.timestamp.includes('T') ? b.timestamp.split('T')[1].substring(0, 5) : new Date(b.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }))
+                        : "-";
+                    
+                    const voucher = b.voucherCode || b.bookingId || b.voucher || (b.guestName?.startsWith("POS Order") ? "POS" : "WALK-IN");
+                    const guest = b.guestName || "General Sale";
+                    const roomType = (b.roomType || b.incomeCategory || b.type || "Standard").toUpperCase();
+                    const roomNo = b.roomNumber ? (b.roomNumber.toUpperCase().startsWith("ROOM") ? b.roomNumber : `RM ${b.roomNumber}`) : "-";
+                    const checkIn = b.checkInDate || "-";
+                    const checkOut = b.checkOutDate || "-";
+                    const channel = (b.channel || "Direct").toUpperCase();
+                    
+                    let paymentMethod = b.paymentMethod || b.settlement || "-";
+                    if (!b.paymentMethod || b.paymentMethod === "personal" || b.paymentMethod === "others") {
+                        if (b.payHotel) paymentMethod = "Pay at Hotel / Cash";
+                        else if (b.payTransfer) paymentMethod = "Transfer";
+                        else paymentMethod = b.paymentStatus || "Cash / Direct";
+                    }
+
+                    const paymentStatus = (b.paymentStatus || "Pending").toUpperCase();
+                    const amountFormatted = `Rp ${Number(b.amount || 0).toLocaleString("id-ID")}`;
+                    const staff = b.staffName || b.createdBy || b.inputBy || (user?.displayName || "System");
+                    const resStatus = (b.status || "CONFIRMED").toUpperCase();
+
+                    return [
+                        index + 1,
+                        entryTime,
+                        voucher,
+                        guest,
+                        roomType,
+                        roomNo,
+                        checkIn,
+                        checkOut,
+                        channel,
+                        paymentMethod,
+                        paymentStatus,
+                        amountFormatted,
+                        staff,
+                        resStatus
+                    ];
+                });
+            };
+
+            const sharedColumns = {
+                0: { cellWidth: 7, halign: 'center' as const },
+                1: { cellWidth: 11, halign: 'center' as const },
+                2: { cellWidth: 23 },
+                3: { cellWidth: 32 },
+                4: { cellWidth: 23 },
+                5: { cellWidth: 13, halign: 'center' as const },
+                6: { cellWidth: 16, halign: 'center' as const },
+                7: { cellWidth: 16, halign: 'center' as const },
+                8: { cellWidth: 18 },
+                9: { cellWidth: 24 },
+                10: { cellWidth: 18, halign: 'center' as const },
+                11: { cellWidth: 25, halign: 'right' as const },
+                12: { cellWidth: 23 },
+                13: { cellWidth: 18, halign: 'center' as const }
+            };
+
+            // ── TABLE 1: PAY AT HOTEL ──
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(7.5);
+            doc.setTextColor(24, 29, 38);
+            doc.text("1. TABEL TRANSAKSI PAY AT HOTEL (CASH / BAYAR DI TEMPAT)", 14, 45);
+
+            autoTable(doc, {
+                startY: 47,
+                head: [[
+                    "No", "Waktu", "No. Voucher / ID", "Nama Tamu / Order", "Tipe Kamar", 
+                    "No. Kamar", "Check In", "Check Out", "Channel", "Metode Bayar", 
+                    "Status Bayar", "Total Tagihan (IDR)", "Staf Input", "Status"
+                ]],
+                body: buildTableRows(payHotelBookings),
+                theme: "grid",
+                headStyles: {
+                    fillColor: [44, 62, 80],
+                    textColor: [255, 255, 255],
+                    fontSize: 6.5,
+                    fontStyle: "bold",
+                    halign: "center",
+                    cellPadding: 2
+                },
+                bodyStyles: {
+                    fontSize: 6,
+                    textColor: [40, 40, 40],
+                    cellPadding: 1.8,
+                    overflow: "linebreak"
+                },
+                columnStyles: sharedColumns,
+                alternateRowStyles: {
+                    fillColor: [250, 250, 250]
+                },
+                foot: [[
+                    "", "", "", "SUBTOTAL PAY AT HOTEL", "", "", "", "", "", "", "",
+                    `Rp ${subtotalPayHotel.toLocaleString("id-ID")}`, "", ""
+                ]],
+                footStyles: {
+                    fillColor: [235, 240, 245],
+                    textColor: [44, 62, 80],
+                    fontStyle: "bold",
+                    fontSize: 6.5,
+                    halign: "right"
+                }
+            });
+
+            // ── TABLE 2: TRANSFER & OTA ──
+            let currentY = (doc as any).lastAutoTable?.finalY || 100;
+            if (currentY > 150) {
+                doc.addPage();
+                currentY = 15;
+            } else {
+                currentY += 8;
+            }
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(7.5);
+            doc.setTextColor(24, 29, 38);
+            doc.text("2. TABEL TRANSAKSI BANK TRANSFER & OTA (NON-CASH / SETTLEMENT)", 14, currentY);
+
+            autoTable(doc, {
+                startY: currentY + 2,
+                head: [[
+                    "No", "Waktu", "No. Voucher / ID", "Nama Tamu / Order", "Tipe Kamar", 
+                    "No. Kamar", "Check In", "Check Out", "Channel", "Metode Bayar", 
+                    "Status Bayar", "Total Tagihan (IDR)", "Staf Input", "Status"
+                ]],
+                body: buildTableRows(transferBookings),
+                theme: "grid",
+                headStyles: {
+                    fillColor: [30, 58, 47],
+                    textColor: [255, 255, 255],
+                    fontSize: 6.5,
+                    fontStyle: "bold",
+                    halign: "center",
+                    cellPadding: 2
+                },
+                bodyStyles: {
+                    fontSize: 6,
+                    textColor: [40, 40, 40],
+                    cellPadding: 1.8,
+                    overflow: "linebreak"
+                },
+                columnStyles: sharedColumns,
+                alternateRowStyles: {
+                    fillColor: [250, 250, 250]
+                },
+                foot: [[
+                    "", "", "", "SUBTOTAL TRANSFER & OTA", "", "", "", "", "", "", "",
+                    `Rp ${subtotalTransfer.toLocaleString("id-ID")}`, "", ""
+                ]],
+                footStyles: {
+                    fillColor: [235, 245, 240],
+                    textColor: [30, 58, 47],
+                    fontStyle: "bold",
+                    fontSize: 6.5,
+                    halign: "right"
+                },
+                didDrawPage: (data) => {
+                    const pageCount = (doc as any).internal.getNumberOfPages();
+                    const pageCurrent = (doc as any).internal.getCurrentPageInfo().pageNumber;
+                    
+                    doc.setFontSize(5.5);
+                    doc.setFont("helvetica", "normal");
+                    doc.setTextColor(130, 130, 130);
+                    doc.text(
+                        `* Dokumen laporan resmi Front Office - Nexura Hospitality PMS | Dicetak otomatis pada ${sysTime}`,
+                        14,
+                        204
+                    );
+                    doc.text(
+                        `Halaman ${pageCurrent} dari ${pageCount}`,
+                        265,
+                        204
+                    );
+                }
+            });
+
+            // ── GRAND TOTAL BOX & SIGNATURES ──
+            const finalY = (doc as any).lastAutoTable?.finalY || 140;
+            let sigY = finalY + 7;
+            if (sigY > 165) {
+                doc.addPage();
+                sigY = 20;
+            }
+
+            // Grand Total summary banner
+            doc.setFillColor(245, 245, 247);
+            doc.roundedRect(14, sigY, 269, 8, 1, 1, "F");
+            doc.setDrawColor(210, 215, 220);
+            doc.roundedRect(14, sigY, 269, 8, 1, 1, "D");
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(7.5);
+            doc.setTextColor(24, 29, 38);
+            doc.text(`RINGKASAN TOTAL:  Pay at Hotel = Rp ${subtotalPayHotel.toLocaleString("id-ID")}  |  Transfer & OTA = Rp ${subtotalTransfer.toLocaleString("id-ID")}  |  GRAND TOTAL REVENUE = Rp ${totalRevenue.toLocaleString("id-ID")}`, 18, sigY + 5.5);
+
+            // Signature columns
+            const signTop = sigY + 12;
+            doc.setFontSize(6.5);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(60, 60, 60);
+
+            doc.text("Dibuat & Diperiksa Oleh:", 30, signTop);
+            doc.text("Diverifikasi Oleh:", 125, signTop);
+            doc.text("Disetujui Oleh:", 220, signTop);
+
+            doc.setFont("helvetica", "normal");
+            doc.text("( Front Office / Night Auditor )", 25, signTop + 14);
+            doc.text("( Duty Manager / Accounting )", 120, signTop + 14);
+            doc.text("( General Manager )", 220, signTop + 14);
+
+            doc.save(`Detailed_Audit_Ledger_${periodFileName}.pdf`);
+            toast.success("Laporan PDF (2 Tabel Terpisah) berhasil di-export");
+        } catch (error) {
+            console.error("PDF Export error:", error);
+            toast.error("Gagal mengekspor PDF");
+        }
     };
 
     return (
@@ -429,10 +950,11 @@ export function OverviewSection() {
                                 }}
                                 className={styles.btnPrimary}
                                 title="Add Transaction"
-                                style={{ height: '36px', width: '36px', borderRadius: '8px' }}
+                                style={{ height: '38px', padding: '0 16px', borderRadius: '8px', gap: '8px' }}
                                 disabled={isReadOnly}
                             >
-                                <PlusCircle size={16} />
+                                <PlusCircle size={18} />
+                                <span>Add Transaction</span>
                             </button>
 
                             <button 
