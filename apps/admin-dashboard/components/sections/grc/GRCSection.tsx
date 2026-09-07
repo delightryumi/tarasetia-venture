@@ -23,7 +23,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { getHotelCollection } from "@/lib/firestoreHelper";
-import { query, onSnapshot, limit } from "firebase/firestore";
+import { query, onSnapshot, where } from "firebase/firestore";
 import { GRCPrintTemplate, GRCData } from "./GRCPrintTemplate";
 import "./grc.css";
 
@@ -40,6 +40,7 @@ interface GuestEntryItem {
     paymentStatus?: string;
     checkInDate?: string;
     checkOutDate?: string;
+    isExtend?: boolean;
     timestamp?: any;
     staffName?: string;
     phone?: string;
@@ -52,6 +53,8 @@ interface GuestEntryItem {
     pax?: number;
     upgradeFrom?: string;
     upgradeTo?: string;
+    _docId?: string;
+    _docDate?: string;
 }
 
 export function GRCSection() {
@@ -84,78 +87,158 @@ export function GRCSection() {
         return `${yyyy}-${mm}-${dd}`;
     }, []);
 
-    // Load guest bookings from daily_revenue in real-time
+    // Load guest bookings from daily_revenue in real-time (Synchronized with Overview)
     useEffect(() => {
-        if (!activeHotelCode) {
+        if (!activeHotelCode || activeHotelCode === "0") {
             setLoading(false);
             return;
         }
 
         setLoading(true);
+
+        // Dynamic range query: -60 days to +30 days around today
+        const [sY, sM, sD] = todayStr.split('-').map(Number);
+        const startD = new Date(sY, (sM || 1) - 1, sD || 1);
+        startD.setDate(startD.getDate() - 60);
+        const startRange = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}-${String(startD.getDate()).padStart(2, '0')}`;
+
+        const endD = new Date(sY, (sM || 1) - 1, sD || 1);
+        endD.setDate(endD.getDate() + 30);
+        const endRange = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
+
         const q = query(
-            getHotelCollection(db, "daily_revenue"),
-            limit(60)
+            getHotelCollection(db, "daily_revenue", activeHotelCode),
+            where("date", ">=", startRange),
+            where("date", "<=", endRange)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const guestMap = new Map<string, GuestEntryItem>();
+            const allEntriesRaw: any[] = [];
 
-            snapshot.docs.forEach((docSnap) => {
+            snapshot.forEach((docSnap) => {
                 const data = docSnap.data();
-                const docDate = data.date || docSnap.id.replace(`${activeHotelCode}_`, "");
-                const docEntries = data.entries || [];
+                const docDate = data.date || docSnap.id.replace(`${activeHotelCode}_`, "") || docSnap.id;
 
-                docEntries.forEach((e: any, idx: number) => {
-                    if (e.status === "VOID" || e.status === "VOIDED" || e.isHidden) return;
-                    if (e.type && e.type !== "accommodation") return;
+                const docEntries = (data.entries || [])
+                    .filter((e: any) => e.status !== "VOID" && e.status !== "VOIDED" && !e.isHidden && e.type !== "pelunasan_ar" && e.type !== "pelunasan_reversal" && !e.isPelunasan)
+                    .map((e: any) => {
+                        const checkInDate = e.checkInDate || e.checkIn || e.effectiveDate || docDate;
+                        const checkOutDate = e.checkOutDate || e.checkOut || "";
+                        return {
+                            ...e,
+                            checkInDate,
+                            checkOutDate,
+                            _docId: docSnap.id,
+                            _docDate: docDate
+                        };
+                    });
+                allEntriesRaw.push(...docEntries);
+            });
 
-                    const uniqueKey = e.bookingId 
-                        ? `${e.bookingId}_${e.guestName}` 
-                        : `${e.guestName}_${e.roomNumber || ''}_${e.checkInDate || docDate}`;
+            const accommodationGroups: Record<string, any[]> = {};
 
-                    if (!guestMap.has(uniqueKey)) {
-                        guestMap.set(uniqueKey, {
-                            id: `${docSnap.id}_${idx}`,
-                            guestName: e.guestName || "Guest",
-                            bookingId: e.bookingId || `RES-${(e.timestamp || Date.now()).toString().slice(-6)}`,
-                            roomType: e.roomType || "-",
-                            roomNumber: e.roomNumber || "-",
-                            channel: e.channel || "Walk-in",
-                            amount: e.totalAmount || e.amount || 0,
-                            totalAmount: e.totalAmount || e.amount || 0,
-                            status: e.status || "Pending",
-                            paymentStatus: e.paymentStatus || e.status || "Pending",
-                            checkInDate: e.checkInDate || docDate,
-                            checkOutDate: e.checkOutDate || "",
-                            timestamp: e.timestamp,
-                            staffName: e.staffName || user?.displayName || "Staff",
-                            phone: e.phone || "",
-                            nik: e.nik || e.identityNo || "",
-                            address: e.address || "",
-                            nationality: e.nationality || "INDONESIA",
-                            email: e.email || "",
-                            company: e.company || "-",
-                            rateCode: e.rateCode || "-",
-                            pax: e.pax || 1,
-                            upgradeFrom: e.upgradeFrom || "",
-                            upgradeTo: e.upgradeTo || "",
-                        });
+            allEntriesRaw.forEach((e) => {
+                const isPOS = e.guestName?.startsWith("POS Order") || !!e.posItems || !!e.revenueType;
+                const isAccommodation = !isPOS && (e.type === "accommodation" || (!e.type && e.guestName));
+
+                if (isAccommodation) {
+                    const roomIdent = e.roomNumber || e.roomTypeId || e.roomType || '';
+                    const key = e.bookingId
+                        ? `${e.bookingId}_${roomIdent}_${e.checkInDate}_${e.checkOutDate}`
+                        : `${e.guestName}_${roomIdent}_${e.checkInDate}_${e.checkOutDate}_${e.timestamp || ''}`;
+                    if (!accommodationGroups[key]) {
+                        accommodationGroups[key] = [];
                     }
+                    accommodationGroups[key].push(e);
+                }
+            });
+
+            const resolvedList: GuestEntryItem[] = [];
+
+            Object.values(accommodationGroups).forEach((group, gIdx) => {
+                const isCancelled = group.some(e =>
+                    e.status === "CANCELLED" ||
+                    e.paymentStatus === "CANCELLED" ||
+                    e.status === "CANCEL" ||
+                    e.paymentStatus === "CANCEL"
+                );
+
+                if (isCancelled) return; // Only list active stays in GRC
+
+                group.sort((a, b) => (a._docDate || a.checkInDate || '').localeCompare(b._docDate || b.checkInDate || ''));
+
+                const rep = group[0];
+                const totalStayAmount = group.reduce((sum, item) => sum + (Number(item.amount) || Number(item.totalAmount) || 0), 0);
+                const checkInDate = rep.checkInDate || rep.checkIn || rep._docDate;
+                const checkOutDate = rep.checkOutDate || rep.checkOut || "";
+
+                const isExtend = Boolean(checkInDate < todayStr && checkOutDate > todayStr);
+
+                // Collect best available contact & guest data from group
+                const phone = group.find(e => e.phone)?.phone || rep.phone || "";
+                const nik = group.find(e => e.nik || e.identityNo)?.nik || rep.nik || rep.identityNo || "";
+                const address = group.find(e => e.address)?.address || rep.address || "";
+                const nationality = group.find(e => e.nationality)?.nationality || rep.nationality || "INDONESIA";
+                const email = group.find(e => e.email)?.email || rep.email || "";
+                const company = group.find(e => e.company)?.company || rep.company || "-";
+                const rateCode = group.find(e => e.rateCode)?.rateCode || rep.rateCode || "-";
+                const pax = group.find(e => e.pax)?.pax || rep.pax || 1;
+                const upgradeFrom = group.find(e => e.upgradeFrom)?.upgradeFrom || rep.upgradeFrom || "";
+                const upgradeTo = group.find(e => e.upgradeTo)?.upgradeTo || rep.upgradeTo || "";
+                const staffName = group.find(e => e.staffName)?.staffName || rep.staffName || user?.displayName || "Staff";
+
+                resolvedList.push({
+                    id: `${rep._docId || 'stay'}_${rep.bookingId || gIdx}`,
+                    guestName: rep.guestName || "Guest",
+                    bookingId: rep.bookingId || `RES-${(rep.timestamp || Date.now()).toString().slice(-6)}`,
+                    roomType: rep.roomType || "-",
+                    roomNumber: rep.roomNumber || "-",
+                    channel: rep.channel || "Walk-in",
+                    amount: totalStayAmount || rep.amount || 0,
+                    totalAmount: totalStayAmount || rep.amount || 0,
+                    status: rep.status || "Pending",
+                    paymentStatus: rep.paymentStatus || rep.status || "Pending",
+                    checkInDate,
+                    checkOutDate,
+                    isExtend,
+                    timestamp: rep.timestamp,
+                    staffName,
+                    phone,
+                    nik,
+                    address,
+                    nationality,
+                    email,
+                    company,
+                    rateCode,
+                    pax,
+                    upgradeFrom,
+                    upgradeTo,
+                    _docId: rep._docId,
+                    _docDate: rep._docDate
                 });
             });
 
-            const sortedList = Array.from(guestMap.values()).sort((a, b) => {
+            // Sort: Today's active stays first (new check-in & extend), then upcoming, then by check-in date descending
+            resolvedList.sort((a, b) => {
+                const aActiveToday = (a.checkInDate === todayStr) || (a.isExtend === true);
+                const bActiveToday = (b.checkInDate === todayStr) || (b.isExtend === true);
+                if (aActiveToday && !bActiveToday) return -1;
+                if (!aActiveToday && bActiveToday) return 1;
+
                 const dateA = a.checkInDate || "";
                 const dateB = b.checkInDate || "";
                 return dateB.localeCompare(dateA);
             });
 
-            setEntries(sortedList);
+            setEntries(resolvedList);
+            setLoading(false);
+        }, (err) => {
+            console.error("Error fetching guest entries for GRC:", err);
             setLoading(false);
         });
 
         return () => unsubscribe();
-    }, [activeHotelCode, user]);
+    }, [activeHotelCode, todayStr, user]);
 
     // Format Stay Period
     const formatStayPeriod = (inDate?: string, outDate?: string) => {
@@ -257,7 +340,7 @@ export function GRCSection() {
         setIsEditorOpen(true);
     };
 
-    // Filtered entries
+    // Filtered entries (100% Inline with Overview definitions)
     const filteredEntries = useMemo(() => {
         return entries.filter(item => {
             const matchesSearch = 
@@ -269,21 +352,27 @@ export function GRCSection() {
             if (!matchesSearch) return false;
 
             if (filterPeriod === "today") {
-                return item.checkInDate === todayStr || (item.checkInDate && item.checkOutDate && item.checkInDate <= todayStr && item.checkOutDate >= todayStr);
+                // Inline with Overview: New Check-In today OR In-House / Extend today
+                return item.checkInDate === todayStr || item.isExtend === true;
             } else if (filterPeriod === "upcoming") {
-                return (item.checkInDate || "") >= todayStr;
+                return (item.checkInDate || "") > todayStr;
             }
             return true;
         });
     }, [entries, searchTerm, filterPeriod, todayStr]);
 
-    // Summary KPI Counts
+    // Summary KPI Counts (100% Inline with Overview)
     const kpiData = useMemo(() => {
-        const todayCount = entries.filter(e => e.checkInDate === todayStr).length;
-        const occupiedCount = entries.filter(e => e.roomNumber && e.roomNumber !== "-" && e.checkInDate === todayStr).length;
+        const todayNewCheckIn = entries.filter(e => e.checkInDate === todayStr && !e.isExtend).length;
+        const todayExtend = entries.filter(e => e.isExtend === true).length;
+        const todayTotalActive = entries.filter(e => e.checkInDate === todayStr || e.isExtend === true).length;
+        const occupiedCount = entries.filter(e => (e.checkInDate === todayStr || e.isExtend === true) && e.roomNumber && e.roomNumber !== "-").length;
         const totalGuests = entries.length;
+
         return {
-            todayCount,
+            todayNewCheckIn,
+            todayExtend,
+            todayCount: todayTotalActive,
             occupiedCount,
             totalGuests,
         };
@@ -329,11 +418,18 @@ export function GRCSection() {
             {/* KPI Summary Cards (Hidden on Print) */}
             <div className="grc-kpi-grid grc-no-print">
                 <div className="grc-kpi-card">
-                    <span className="grc-kpi-label">Check-in Hari Ini</span>
-                    <span className="grc-kpi-value">{kpiData.todayCount}</span>
+                    <span className="grc-kpi-label">Check-in & In-House Hari Ini</span>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+                        <span className="grc-kpi-value">{kpiData.todayCount}</span>
+                        {kpiData.todayExtend > 0 && (
+                            <span style={{ fontSize: "11px", color: "#d97706", fontWeight: 700 }}>
+                                ({kpiData.todayExtend} Extend)
+                            </span>
+                        )}
+                    </div>
                 </div>
                 <div className="grc-kpi-card">
-                    <span className="grc-kpi-label">Kamar Terisi</span>
+                    <span className="grc-kpi-label">Kamar Terisi (Occupied)</span>
                     <span className="grc-kpi-value">{kpiData.occupiedCount}</span>
                 </div>
                 <div className="grc-kpi-card">
@@ -367,7 +463,7 @@ export function GRCSection() {
                             onClick={() => setFilterPeriod("today")}
                             className={`grc-chip-btn ${filterPeriod === "today" ? "active" : ""}`}
                         >
-                            Hari Ini
+                            Hari Ini {kpiData.todayCount > 0 ? `(${kpiData.todayCount})` : ""}
                         </button>
                         <button
                             onClick={() => setFilterPeriod("upcoming")}
@@ -379,7 +475,7 @@ export function GRCSection() {
                             onClick={() => setFilterPeriod("all")}
                             className={`grc-chip-btn ${filterPeriod === "all" ? "active" : ""}`}
                         >
-                            Semua
+                            Semua ({kpiData.totalGuests})
                         </button>
                     </div>
                 </div>
@@ -429,8 +525,15 @@ export function GRCSection() {
                                             </div>
                                         </td>
                                         <td>
-                                            <div style={{ fontWeight: 600, color: "var(--grc-ink)" }}>
-                                                {guest.guestName}
+                                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                                <span style={{ fontWeight: 600, color: "var(--grc-ink)" }}>
+                                                    {guest.guestName}
+                                                </span>
+                                                {guest.isExtend && (
+                                                    <span className="grc-extend-badge">
+                                                        Extend
+                                                    </span>
+                                                )}
                                             </div>
                                             <div style={{ fontFamily: "var(--grc-font-mono)", fontSize: "10.5px", color: "var(--grc-muted)", marginTop: "2px" }}>
                                                 {guest.bookingId || "-"}
