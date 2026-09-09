@@ -163,6 +163,15 @@ export function useLexuPos() {
         }
       } catch (e) {}
     }
+    if (!hotelCode) {
+      const getCookie = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift();
+      };
+      hotelCode = getCookie('hotelCode') || localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
+      if (hotelCode) setActiveHotelCode(hotelCode);
+    }
 
     const fetchCategories = async () => {
       try {
@@ -383,7 +392,7 @@ export function useLexuPos() {
       } catch (e) {}
     }
 
-    if (!hotelCode || hotelCode === '87241') {
+    if (!hotelCode || hotelCode === '0') {
       toast.error("Gagal melakukan penundaan: Partner Code tidak valid.");
       return;
     }
@@ -492,7 +501,7 @@ export function useLexuPos() {
         } catch (e) {}
       }
 
-      if (!hotelCode || hotelCode === '87241') {
+      if (!hotelCode || hotelCode === '0') {
         toast.error("Gagal menyimpan transaksi: Partner Code tidak valid.");
         return;
       }

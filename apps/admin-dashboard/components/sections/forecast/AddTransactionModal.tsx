@@ -132,7 +132,7 @@ export const AddTransactionModal = ({
         setSaving(true);
         try {
             const hotelId = localStorage.getItem("active_hotel_code") || "";
-            if (!hotelId || hotelId === "87241") {
+            if (!hotelId || hotelId === "0") {
                 toast.error("Hotel Code is missing or invalid.");
                 return;
             }

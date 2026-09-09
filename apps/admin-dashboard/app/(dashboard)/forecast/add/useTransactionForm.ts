@@ -539,7 +539,7 @@ export const useTransactionForm = () => {
 
             for (const [dateStr, transactionEntries] of Object.entries(entriesByDate)) {
                 const hotelId = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") : null) || "";
-                if (!hotelId || hotelId === "87241") {
+                if (!hotelId || hotelId === "0") {
                     throw new Error("Hotel Code is missing or invalid. Action denied to prevent data contamination.");
                 }
                 const docId = `${hotelId}_${dateStr}`;

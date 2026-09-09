@@ -16,7 +16,31 @@ import ReceiptDialog from '../lexupos/ReceiptDialog';
 
 // Live Tables Component
 function LiveTableGrid() {
-  const [hotelCode, setHotelCode] = useState<string>('1');
+  const [hotelCode, setHotelCode] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const getCookie = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift();
+      };
+      
+      let code = getCookie('hotelCode');
+      if (!code) {
+        const userJson = localStorage.getItem('user');
+        if (userJson) {
+          try {
+            const userObj = JSON.parse(userJson);
+            code = userObj.hotelCode;
+          } catch (e) {}
+        }
+      }
+      if (!code) {
+        code = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
+      }
+      return code || '';
+    }
+    return '';
+  });
   const [tablesList, setTablesList] = useState<string[]>([]);
   const [heldOrders, setHeldOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -56,18 +80,24 @@ function LiveTableGrid() {
         }
       }
       if (!code) {
-        code = localStorage.getItem('hotelCode') || '';
+        code = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
       }
-      setHotelCode(code || '');
+      if (code && code !== hotelCode) {
+        setHotelCode(code);
+      }
     }
-  }, []);
+  }, [hotelCode]);
 
   useEffect(() => {
-    if (!hotelCode || hotelCode === '87241') {
+    if (!hotelCode || hotelCode === '0') {
+      setTablesList([]);
+      setHeldOrders([]);
       setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
+    setHeldOrders([]);
     let unsub: any;
     const fetchConfigAndListen = async () => {
       try {

@@ -51,39 +51,52 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const [hotelsList, setHotelsList] = useState<any[]>([]);
   const posSoundUrlRef = React.useRef<string>('/sounds/notification.mp3');
 
-  const handleHotelChange = (newCode: string) => {
+  const handleHotelChange = async (newCode: string) => {
     if (!user) return;
     const updatedUser = { ...user, hotelCode: newCode };
     setUser(updatedUser);
     localStorage.setItem('user', JSON.stringify(updatedUser));
-    localStorage.setItem('active_hotel_code', newCode); // Sync back to dashboard
+    localStorage.setItem('active_hotel_code', newCode);
+    localStorage.setItem('hotelCode', newCode);
+    localStorage.removeItem('active_shift');
+    try {
+      await localDb.products.clear();
+      await localDb.heldOrders.clear();
+    } catch (e) {}
     document.cookie = `hotelCode=${newCode}; path=/; max-age=31536000; SameSite=Lax`;
     window.location.reload();
   };
 
   useEffect(() => {
-    const userJson = localStorage.getItem('user');
-    if (!userJson) return;
     try {
-      const parsedUser = JSON.parse(userJson);
-      setUser(parsedUser);
-    const isSuper =
-        parsedUser?.role?.toLowerCase() === 'superadmin' ||
-        parsedUser?.role?.toLowerCase() === 'super admin' ||
-        parsedUser?.email?.toLowerCase() === 'nexura.management@gmail.com' ||
-        parsedUser?.email?.toLowerCase() === 'superadmin@setara.co.id';  // email superadmin baru
-      setIsSuperadmin(isSuper);
-
-      const hotelCode = parsedUser?.hotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
-      if (hotelCode && hotelCode !== "0") {
-        const currentCookie = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('hotelCode='))
-          ?.split('=')[1];
-        if (currentCookie !== hotelCode) {
-          document.cookie = `hotelCode=${hotelCode}; path=/; max-age=31536000; SameSite=Lax`;
-        }
+      const userJson = localStorage.getItem('user');
+      let effectiveHotelCode = '';
+      let isSuper = false;
+      if (userJson) {
+        try {
+          const parsedUser = JSON.parse(userJson);
+          setUser(parsedUser);
+          isSuper =
+            parsedUser?.role?.toLowerCase() === 'superadmin' ||
+            parsedUser?.role?.toLowerCase() === 'super admin' ||
+            parsedUser?.email?.toLowerCase() === 'nexura.management@gmail.com' ||
+            parsedUser?.email?.toLowerCase() === 'superadmin@setara.co.id';
+          setIsSuperadmin(isSuper);
+          effectiveHotelCode = parsedUser?.hotelCode || '';
+        } catch (e) {}
       }
+      if (!effectiveHotelCode) {
+        effectiveHotelCode = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
+      }
+
+      if (effectiveHotelCode) {
+        document.cookie = `hotelCode=${effectiveHotelCode}; path=/; max-age=31536000; SameSite=Lax`;
+        localStorage.setItem('hotelCode', effectiveHotelCode);
+        localStorage.setItem('active_hotel_code', effectiveHotelCode);
+      }
+
+      const hotelCode = effectiveHotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
+
       // Superadmin tanpa preview hotel — skip query Firestore
       if (!hotelCode || hotelCode === "0") {
         setIsHotelActive(true);
@@ -244,7 +257,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       hotelCode = getCookie('hotelCode') || localStorage.getItem('hotelCode') || '';
     }
 
-    if (!hotelCode || hotelCode === '87241') return;
+    if (!hotelCode || hotelCode === '0') return;
 
     const q = collection(db, 'hotels', hotelCode, 'pos_held_orders');
 
@@ -339,7 +352,11 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   const handleRestore = async (order: any) => {
     try {
-      const hotelCode = user?.hotelCode || '1';
+      const hotelCode = user?.hotelCode || '';
+      if (!hotelCode || hotelCode === '0') {
+        toast.error('Pilih properti hotel terlebih dahulu.');
+        return;
+      }
       localStorage.setItem('restored_held_order', JSON.stringify(order));
       await deleteDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', order.id));
       await localDb.heldOrders.delete(order.id);
@@ -360,7 +377,11 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       return;
     }
     try {
-      const hotelCode = user?.hotelCode || '1';
+      const hotelCode = user?.hotelCode || '';
+      if (!hotelCode || hotelCode === '0') {
+        toast.error('Pilih properti hotel terlebih dahulu.');
+        return;
+      }
       await deleteDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', orderId));
       await localDb.heldOrders.delete(orderId);
       toast.info(`Pesanan held untuk "${customerName}" berhasil dihapus.`);

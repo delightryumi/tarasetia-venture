@@ -98,7 +98,7 @@ export function SheetAdd({
         } catch(e) {}
       }
 
-      if (!hotelCode || hotelCode === '87241') {
+      if (!hotelCode || hotelCode === '0') {
         toast.error('Session error: Hotel Code is missing or invalid. Please log in again.');
         return;
       }

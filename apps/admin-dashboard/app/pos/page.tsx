@@ -87,9 +87,6 @@ export default function POSPage() {
       const restoName = localStorage.getItem('restoName');
       if (restoName) params.set('restoName', restoName);
 
-      const activeShift = localStorage.getItem('active_shift');
-      if (activeShift) params.set('activeShift', activeShift);
-
       // Pass the dashboard's current URL for redirection back
       params.set('dashboardUrl', window.location.origin + '/select-module');
 

@@ -53,7 +53,7 @@ export const AddGuestModal: React.FC<AddGuestModalProps> = ({ isOpen, onClose, s
 
         try {
             const hotelId = localStorage.getItem("active_hotel_code") || "";
-            if (!hotelId || hotelId === "87241") {
+            if (!hotelId || hotelId === "0") {
                 toast.error("Hotel Code is missing or invalid.");
                 setLoading(false);
                 return;

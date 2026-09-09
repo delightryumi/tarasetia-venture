@@ -6,7 +6,20 @@ import { doc, getDoc } from 'firebase/firestore';
 export async function GET(req: NextRequest) {
   try {
     // Read hotelCode from cookies
-    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "1";
+    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
+
+    if (!hotelCode || hotelCode === "0") {
+      return NextResponse.json({
+        id: 'pos',
+        name: 'POS System',
+        tax: 10,
+        service: 0,
+        lostBreakage: 0,
+        address: '',
+        phone: '',
+        tables: '10',
+      }, { status: 200 });
+    }
 
     // Attempt to read POS shop settings from Firestore under hotels/{hotelCode}/settings/pos
     const posSettingsRef = doc(db, 'hotels', hotelCode, 'settings', 'pos');
@@ -14,12 +27,12 @@ export async function GET(req: NextRequest) {
 
     let shopData = {
       id: 'pos',
-      name: 'Bumi Anyom Resort POS',
+      name: 'POS System',
       tax: 10,
       service: 0,
       lostBreakage: 0,
-      address: 'Bumi Anyom Resort, Indonesia',
-      phone: '+62 123-4567-890',
+      address: '',
+      phone: '',
       tables: '10',
     };
 

@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const start = searchParams.get('start');
     const end = searchParams.get('end');
 
-    if (!hotelCode || hotelCode === '87241') {
+    if (!hotelCode || hotelCode === '0') {
       return NextResponse.json(
         { combinedResult: [], categoryList: [], breakdown: [] },
         { status: 200 }

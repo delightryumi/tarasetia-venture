@@ -93,18 +93,18 @@ export default function CashierContainer() {
   }, []);
 
   const getUserInfo = () => {
-    let restoId = '1';
-    let hotelCode = '1';
+    let restoId = '';
+    let hotelCode = '';
     if (typeof window !== 'undefined') {
       const userJson = localStorage.getItem('user');
       if (userJson) {
         try {
           const user = JSON.parse(userJson);
-          restoId = user.restoId || '1';
-          hotelCode = user.hotelCode || '1';
+          restoId = user.restoId || '';
+          hotelCode = user.hotelCode || '';
         } catch (e) {}
       } else {
-         restoId = localStorage.getItem('restoId') || '1';
+         restoId = localStorage.getItem('restoId') || '';
          hotelCode = restoId;
       }
     }
@@ -114,6 +114,10 @@ export default function CashierContainer() {
   // loadActiveShift is removed because onSnapshot handles the real-time fetch with localStorage merging natively.
 
   const loadShiftHistory = async (restoId: string, hotelCode: string) => {
+    if (!hotelCode || hotelCode === "0") {
+      setShiftHistory([]);
+      return;
+    }
     try {
       // Fetch all shifts without where clauses to support legacy records that lack status/restoId fields
       const q = query(getHotelCollection(db, 'cashier_shifts', hotelCode));
@@ -172,6 +176,11 @@ export default function CashierContainer() {
 
   useEffect(() => {
     const { restoId, hotelCode } = getUserInfo();
+    if (!hotelCode || hotelCode === "0") {
+      setActiveShift(null);
+      setShiftHistory([]);
+      return;
+    }
     loadShiftHistory(restoId, hotelCode);
 
     // Query ALL open shifts for this hotel — shift is hotel-scoped, not per-device

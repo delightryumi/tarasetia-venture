@@ -38,8 +38,8 @@ export function getHotelCollection(
     return collection(db, collectionName);
   }
 
-  // Guard: if code is empty/falsy, or matches invalid dummy code, throw an error to prevent data contamination
-  if (!code || code.trim() === "" || code === "87241") {
+  // Guard: if code is empty/falsy, or matches placeholder "0", throw an error to prevent data contamination
+  if (!code || code.trim() === "" || code === "0") {
     throw new Error(`Invalid Hotel Code "${code}". Action denied to prevent data contamination.`);
   }
 

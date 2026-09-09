@@ -104,9 +104,6 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
       const restoName = localStorage.getItem('restoName');
       if (restoName) params.set('restoName', restoName);
 
-      const activeShift = localStorage.getItem('active_shift');
-      if (activeShift) params.set('activeShift', activeShift);
-
       const theme = localStorage.getItem('theme');
       if (theme) params.set('theme', theme);
 

@@ -12,7 +12,7 @@ export async function GET(
 
   try {
     const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
-    if (!hotelCode || hotelCode === "87241") {
+    if (!hotelCode || hotelCode === "0") {
       return NextResponse.json({ error: "Hotel Code is missing or invalid" }, { status: 400 });
     }
 
@@ -78,7 +78,7 @@ export const PATCH = async (
   const { id } = await params;
   try {
     const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
-    if (!hotelCode || hotelCode === "87241") {
+    if (!hotelCode || hotelCode === "0") {
       return NextResponse.json({ error: "Hotel Code is missing or invalid" }, { status: 400 });
     }
     const body = await request.json();
@@ -235,7 +235,7 @@ export const DELETE = async (
   const { id } = await params;
   try {
     const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
-    if (!hotelCode || hotelCode === "87241") {
+    if (!hotelCode || hotelCode === "0") {
       return NextResponse.json({ error: "Hotel Code is missing or invalid" }, { status: 400 });
     }
     let transactionDate: string | null = null;

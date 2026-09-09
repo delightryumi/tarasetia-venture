@@ -25,11 +25,11 @@ export default function SoundSettingCard() {
   const [selectedSound, setSelectedSound] = useState<string>('/sounds/notification.mp3');
   const [customSoundName, setCustomSoundName] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [hotelCode, setHotelCode] = useState<string>('1');
+  const [hotelCode, setHotelCode] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    let currentHotelCode = "1";
+    let currentHotelCode = "";
     if (typeof window !== 'undefined') {
       const userJson = localStorage.getItem('user');
       if (userJson) {
@@ -42,6 +42,8 @@ export default function SoundSettingCard() {
         } catch (e) {}
       }
     }
+
+    if (!currentHotelCode || currentHotelCode === "0") return;
 
     const hotelRef = doc(db, `hotels/${currentHotelCode}`);
     const unsubscribe = onSnapshot(hotelRef, (docSnap) => {

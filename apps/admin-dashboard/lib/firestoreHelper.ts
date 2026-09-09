@@ -16,17 +16,13 @@ export function getHotelCollection(
     if (typeof window !== "undefined") {
       try {
         let activeCode = localStorage.getItem("active_hotel_code");
-        if (activeCode === "87241") {
-          localStorage.removeItem("active_hotel_code");
-          activeCode = null;
-        }
         if (activeCode) {
           code = activeCode;
         } else {
           const storedUser = localStorage.getItem("auth_user");
           if (storedUser) {
             const parsed = JSON.parse(storedUser);
-            if (parsed && parsed.hotelCode && parsed.hotelCode !== "87241") {
+            if (parsed && parsed.hotelCode) {
               code = parsed.hotelCode;
             }
           }
@@ -38,7 +34,7 @@ export function getHotelCollection(
   }
 
   // Fallback to environment variable or default
-  if (!code || code === "87241") {
+  if (!code) {
     code = process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
   }
 
@@ -48,7 +44,7 @@ export function getHotelCollection(
   }
 
   // Fallback if code is missing or placeholder "0"
-  if (!code || code.trim() === "" || code === "87241" || code === "0") {
+  if (!code || code.trim() === "" || code === "0") {
     return collection(db, `hotels/_default/${collectionName}`);
   }
 

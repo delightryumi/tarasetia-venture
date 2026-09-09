@@ -50,7 +50,7 @@ function ActiveShiftSummary(): React.ReactNode {
       hotelCode = code || '';
     }
 
-    if (!hotelCode || hotelCode === '87241') return;
+    if (!hotelCode || hotelCode === '0') return;
 
     try {
       const q = query(

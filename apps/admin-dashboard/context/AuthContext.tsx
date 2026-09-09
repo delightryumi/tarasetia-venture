@@ -58,6 +58,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const setActiveHotelCode = (code: string) => {
         setActiveHotelCodeState(code);
         localStorage.setItem("active_hotel_code", code);
+        localStorage.setItem("hotelCode", code);
+        if (typeof document !== "undefined") {
+            document.cookie = `hotelCode=${code}; path=/; max-age=31536000; SameSite=Lax`;
+        }
     };
 
     // Load activeHotelCode from localStorage or user details
@@ -141,9 +145,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (storedUser) {
                 try {
                     const parsed = JSON.parse(storedUser);
-                    // Migrasi: jika superadmin masih menyimpan code lama "87241", reset ke "0"
                     if (parsed.role === "superadmin") {
-                        if (parsed.hotelCode === "87241" || !parsed.hotelCode) {
+                        if (!parsed.hotelCode) {
                             parsed.hotelCode = "0";
                         }
                         const savedActiveCode = localStorage.getItem("active_hotel_code");

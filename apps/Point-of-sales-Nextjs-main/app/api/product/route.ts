@@ -25,7 +25,7 @@ const generateUniqueId = async (hotelCode: string) => {
 export const POST = async (request: NextRequest) => {
   try {
     const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
-    if (!hotelCode || hotelCode === "87241") {
+    if (!hotelCode || hotelCode === "0") {
       return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
     }
     const customId = await generateUniqueId(hotelCode);

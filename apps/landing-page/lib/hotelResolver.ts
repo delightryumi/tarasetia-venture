@@ -38,16 +38,18 @@ export async function resolveHotelFromHost(host: string): Promise<HotelData | nu
     cleanHost.endsWith(".local");
 
   if (isLocal) {
-    const defaultCode = process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "1";
-    try {
-      const hotelDoc = await getDoc(doc(db, "hotels", defaultCode));
-      if (hotelDoc.exists()) {
-        const data = { ...hotelDoc.data(), hotelCode: defaultCode } as HotelData;
-        hostCache[cleanHost] = data;
-        return data;
+    const defaultCode = process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
+    if (defaultCode) {
+      try {
+        const hotelDoc = await getDoc(doc(db, "hotels", defaultCode));
+        if (hotelDoc.exists()) {
+          const data = { ...hotelDoc.data(), hotelCode: defaultCode } as HotelData;
+          hostCache[cleanHost] = data;
+          return data;
+        }
+      } catch (e) {
+        console.error("Local dev fallback error:", e);
       }
-    } catch (e) {
-      console.error("Local dev fallback error:", e);
     }
   }
 
@@ -83,16 +85,18 @@ export async function resolveHotelFromHost(host: string): Promise<HotelData | nu
   }
 
   // Final fallback to default hotel
-  const defaultCode = process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "1";
-  try {
-    const defaultDoc = await getDoc(doc(db, "hotels", defaultCode));
-    if (defaultDoc.exists()) {
-      const data = { ...defaultDoc.data(), hotelCode: defaultCode } as HotelData;
-      hostCache[cleanHost] = data;
-      return data;
+  const defaultCode = process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
+  if (defaultCode) {
+    try {
+      const defaultDoc = await getDoc(doc(db, "hotels", defaultCode));
+      if (defaultDoc.exists()) {
+        const data = { ...defaultDoc.data(), hotelCode: defaultCode } as HotelData;
+        hostCache[cleanHost] = data;
+        return data;
+      }
+    } catch (e) {
+      console.error("Error resolving default fallback hotel:", e);
     }
-  } catch (e) {
-    console.error("Error resolving default fallback hotel:", e);
   }
 
   hostCache[cleanHost] = null;

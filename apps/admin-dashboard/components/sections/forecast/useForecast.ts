@@ -55,7 +55,7 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
         };
 
         const hotelId = localStorage.getItem("active_hotel_code") || "";
-        if (!hotelId || hotelId === "87241") {
+        if (!hotelId || hotelId === "0") {
             setStats(prev => ({ ...prev, loading: false }));
             return;
         }

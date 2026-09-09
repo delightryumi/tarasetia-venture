@@ -6,7 +6,7 @@ import { getHotelCollection } from '@/lib/firestoreHelper';
 export async function GET(req: NextRequest) {
   try {
     const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
-    if (!hotelCode || hotelCode === "87241") {
+    if (!hotelCode || hotelCode === "0") {
       return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
     }
 

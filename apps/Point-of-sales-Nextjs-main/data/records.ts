@@ -32,8 +32,18 @@ export const fetchRecords = async ({
     }
 
     const cookieStore = await cookies();
-    const hotelCode = cookieStore.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "1";
+    const hotelCode = cookieStore.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
     console.log("[fetchRecords] hotelCode from cookie:", hotelCode);
+
+    if (!hotelCode || hotelCode === "0") {
+      return {
+        data: [],
+        metadata: {
+          hasNextPage: false,
+          totalPages: 0,
+        },
+      };
+    }
 
     // Fetch tax settings
     const posSettingsRef = doc(getHotelCollection(db, 'settings', hotelCode), 'pos');
