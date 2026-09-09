@@ -6,10 +6,21 @@ import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export async function GET(req: NextRequest) {
   try {
-    const hotelCode = req.cookies.get('hotelCode')?.value || "1";
     const { searchParams } = new URL(req.url);
+    const paramHotelCode = searchParams.get('hotelCode');
+    const cookieHotelCode = req.cookies.get('hotelCode')?.value;
+    const headerHotelCode = req.headers.get('x-hotel-code');
+    const hotelCode = paramHotelCode || cookieHotelCode || headerHotelCode || "";
+
     const start = searchParams.get('start');
     const end = searchParams.get('end');
+
+    if (!hotelCode || hotelCode === '87241') {
+      return NextResponse.json(
+        { combinedResult: [], categoryList: [], breakdown: [] },
+        { status: 200 }
+      );
+    }
 
     if (!start || !end) {
       console.error('Missing start or end date');

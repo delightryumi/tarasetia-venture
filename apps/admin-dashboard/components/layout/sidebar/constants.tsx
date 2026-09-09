@@ -5,7 +5,7 @@ import {
     Gift, Package, Globe, Users, ClipboardText,
     Coffee, Pulse, Storefront, FileImage,
     Notebook, UsersThree, Bed, Info, ShoppingCart,
-    IdentificationCard
+    IdentificationCard, FileXls, ChartBar
 } from "@phosphor-icons/react";
 import { NavItemType } from "./types";
 import { SpringOptions } from "framer-motion";
@@ -23,6 +23,9 @@ export const allNavItems: NavItemType[] = [
     { id: "pos", label: "POS Terminal", icon: <Storefront size={18} weight="bold" /> },
     { id: "invoice", label: "Buat Invoice", icon: <FileText size={18} weight="bold" /> },
     { id: "pnl", label: "P&L Statement", icon: <Notebook size={18} weight="bold" /> },
+    { id: "pnl-budget", label: "P&L Actual vs Budget", icon: <ChartBar size={18} weight="bold" /> },
+    { id: "dsr", label: "Daily Sales Report (DSR)", icon: <TrendUp size={18} weight="bold" /> },
+    { id: "budgeting", label: "Budgeting", icon: <FileXls size={18} weight="bold" /> },
     { id: "statements", label: "Laporan Keuangan", icon: <BookOpen size={18} weight="bold" /> },
     { id: "logo", label: "Logo (Terang/Gelap)", icon: <FileImage size={18} weight="bold" /> },
     { id: "hero", label: "Manajemen Hero", icon: <House size={18} weight="bold" /> },

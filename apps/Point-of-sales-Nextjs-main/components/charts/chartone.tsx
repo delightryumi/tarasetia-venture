@@ -118,8 +118,29 @@ export default function ChartOne({ defaultStartDate, defaultEndDate }: ChartOneP
   const fetchData = async () => {
     setLoading(true);
     try {
+      let hotelCode = '';
+      if (typeof window !== 'undefined') {
+        const getCookie = (name: string) => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop()?.split(';').shift();
+        };
+        hotelCode = getCookie('hotelCode') || '';
+        if (!hotelCode) {
+          const uJson = localStorage.getItem('user');
+          if (uJson) {
+            try {
+              hotelCode = JSON.parse(uJson).hotelCode || '';
+            } catch (e) {}
+          }
+        }
+        if (!hotelCode) {
+          hotelCode = localStorage.getItem('hotelCode') || '';
+        }
+      }
+
       const response = await axios.get(
-        `/api/productsale?start=${startDate}&end=${endDate}`
+        `/api/productsale?start=${startDate}&end=${endDate}${hotelCode ? `&hotelCode=${encodeURIComponent(hotelCode)}` : ''}`
       );
       const { combinedResult, categoryList, breakdown: bkList } = response.data;
 

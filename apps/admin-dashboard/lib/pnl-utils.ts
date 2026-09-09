@@ -7,6 +7,7 @@ export interface PnlIncomeItem {
   category?: string;
   paymentStatus?: string;
   date?: string;
+  description?: string;
 }
 
 export interface PnlExpenseItem {
@@ -20,6 +21,8 @@ export interface PnlExpenseItem {
   date?: string;
   category?: string;
   description?: string;
+  paymentStatus?: string;
+  paymentDate?: string;
 }
 
 export interface InvestorItem {
@@ -33,6 +36,7 @@ export interface InvestorItem {
 
 export interface GlobalPnLResult {
   card1_TotalRevenue: number;
+  totalRevenue?: number;
   card2_NonCommRevenue: number;
   card3_RevHotelCollect: number;
   card3_RevNexuraCollect: number;
@@ -100,6 +104,7 @@ export interface GlobalPnLResult {
   occ?: number; // Occupancy %
   arr?: number; // Average Room Rate
   revPar?: number; // Revenue per Available Room
+  kpiRevPar?: number;
   roomsAvailable?: number;
   roomsSold?: number;
   totalRooms?: number;

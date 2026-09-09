@@ -4,9 +4,9 @@ import React from "react";
 export type SectionType =
     | "overview" | "logo" | "hero" | "room-type" | "digital-checkin"
     | "about" | "gallery" | "footer"
-    | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "pnl" | "users" | "superadmin" | "inventory-control"
+    | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "pnl" | "pnl-budget" | "users" | "superadmin" | "inventory-control"
     | "purchasing" | "store-requisition" | "purchase-requisition" | "daily-market-list" | "stock-opname" | "items" | "suppliers"
-    | "purchase-order" | "food-beverage-product" | "food-beverage-realtime" | "hrd" | "statements";
+    | "purchase-order" | "food-beverage-product" | "food-beverage-realtime" | "hrd" | "statements" | "budgeting" | "dsr";
 
 export interface NavItemType {
     id: SectionType;

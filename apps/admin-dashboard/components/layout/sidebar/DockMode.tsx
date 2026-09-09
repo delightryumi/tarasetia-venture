@@ -69,6 +69,12 @@ export function DockMode({
                                 router.push(`/food-beverage/realtime?module=food-beverage`);
                             } else if (item.id === "statements") {
                                 router.push(`/statements?module=accounting`);
+                            } else if (item.id === "pnl-budget") {
+                                router.push(`/pnl-budget?module=accounting`);
+                            } else if (item.id === "dsr") {
+                                router.push(`/dsr?module=accounting`);
+                            } else if (item.id === "budgeting") {
+                                router.push(`/budgeting?module=accounting`);
                             } else {
                                 router.push(`/${item.id}`);
                             }

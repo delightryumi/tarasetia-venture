@@ -133,7 +133,7 @@ export function processPnLData(
   const frontOfficeAndPurchasingExpenseItems = expenses
     .filter(e => {
       const deptLower = (e.department || "").toLowerCase();
-      return deptLower === 'front office' || deptLower === 'purchasing';
+      return deptLower.includes('front office') || deptLower.includes('fo') || deptLower.includes('purchasing');
     });
   const expFrontOfficeAndPurchasing = frontOfficeAndPurchasingExpenseItems.reduce((sum, e) => sum + e.amount, 0);
 
@@ -147,7 +147,7 @@ export function processPnLData(
       const evCatLower = (e.eventCategory || (e as any).event_category || "").toLowerCase();
       const descLower = (e.description || "").toLowerCase();
       
-      const isHk = deptLower === 'housekeeping';
+      const isHk = deptLower.includes('housekeeping') || deptLower.includes('hk');
       const cleanString = (str: string) => str.replace(/food\s*&\s*beverage/g, '').replace(/f\s*&\s*b/g, '');
       const cleanCat = cleanString(catLower);
       const cleanName = cleanString(nameLower);
@@ -157,8 +157,8 @@ export function processPnLData(
       const isBeverage = fbCatLower.includes('beverage') || fbCatLower.includes('drink') || fbCatLower.includes('minuman') || cleanCat.includes('beverage') || cleanCat.includes('drink') || cleanCat.includes('minuman') || cleanName.includes('beverage') || cleanName.includes('drink') || cleanName.includes('minuman') || cleanDesc.includes('beverage') || cleanDesc.includes('drink') || cleanDesc.includes('minuman');
       const isFood = fbCatLower.includes('food') || fbCatLower.includes('makanan') || cleanCat.includes('food') || cleanCat.includes('makanan') || cleanName.includes('food') || cleanName.includes('makanan') || cleanDesc.includes('food') || cleanDesc.includes('makanan');
       
-      const isFB = isBanquet || isBeverage || isFood;
-      const isFOorPurchasing = deptLower === 'front office' || deptLower === 'purchasing';
+      const isFB = isBanquet || isBeverage || isFood || deptLower.includes('f&b') || deptLower.includes('kitchen') || deptLower.includes('resto');
+      const isFOorPurchasing = deptLower.includes('front office') || deptLower.includes('fo') || deptLower.includes('purchasing');
       
       return !isHk && !isFB && !isFOorPurchasing;
     })

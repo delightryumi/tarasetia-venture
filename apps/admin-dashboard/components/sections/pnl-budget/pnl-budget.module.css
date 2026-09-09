@@ -1,0 +1,373 @@
+/* pnl-budget.module.css - Styles for USALI Actual vs Budget P&L Statement */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 24px 20px 80px 20px;
+  font-family: inherit;
+  color: #1c1917;
+  box-sizing: border-box;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e7e5e4;
+}
+
+.headerTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.badgeCategory {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background-color: #f5f5f4;
+  border: 1px solid #e7e5e4;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #78716c;
+  width: fit-content;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #1c1917;
+  margin: 0;
+}
+
+.titleAccent {
+  color: #2563eb;
+}
+
+.subTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: #78716c;
+  margin: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.datePickerWrapper {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 10px;
+  padding: 4px 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #44403c;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.iconBtn:hover {
+  background: #f5f5f4;
+  color: #0c0a09;
+}
+
+/* KPIs Top Row */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.kpiCard {
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.kpiLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #78716c;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpiValue {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #1c1917;
+}
+
+.kpiComparison {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.variancePositive {
+  color: #16a34a;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.varianceNegative {
+  color: #dc2626;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Views Navigation Bar */
+.viewTabsNav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e7e5e4;
+}
+
+.viewTabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #f5f5f4;
+  color: #57534e;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.viewTabBtn:hover {
+  background: #e7e5e4;
+  color: #1c1917;
+}
+
+.viewTabBtnActive {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+}
+
+/* Excel Card Table Container */
+.excelCard {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e7e5e4;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+
+.excelSheetBanner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: #1e293b;
+  color: #ffffff;
+}
+
+.excelSheetTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.excelSheetBadge {
+  background: #3b82f6;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.excelSheetTitle {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.excelTableContainer {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.excelTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  font-family: inherit;
+  text-align: left;
+}
+
+.excelTable th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 800;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 14px;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.excelTable td {
+  padding: 8px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.excelTable tr:hover td {
+  background-color: #f8fafc;
+}
+
+.colCode {
+  font-family: monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+  width: 100px;
+}
+
+.colDesc {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.colAmount {
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.colVariance {
+  text-align: right;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.colPercent {
+  text-align: right;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  width: 85px;
+}
+
+/* Row Tiering */
+.tierHeaderRow td {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  font-weight: 900;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  border-top: 1px solid #cbd5e1;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.subTotalRow td {
+  background-color: #f8fafc;
+  font-weight: 800;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.gopRow td {
+  background-color: #eff6ff;
+  color: #1e40af;
+  font-weight: 900;
+  font-size: 13.5px;
+  border-top: 2px solid #93c5fd;
+  border-bottom: 2px solid #93c5fd;
+}
+
+.noiRow td {
+  background-color: #ecfdf5;
+  color: #065f46;
+  font-weight: 900;
+  font-size: 14px;
+  border-top: 2px solid #6ee7b7;
+  border-bottom: 2px solid #6ee7b7;
+}
+
+/* Month Button in Subheader */
+.monthBar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 10px 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #e7e5e4;
+}
+
+.monthPill {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid #e7e5e4;
+  background: #f5f5f4;
+  font-size: 12px;
+  font-weight: 700;
+  color: #57534e;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.monthPill:hover {
+  background: #e7e5e4;
+}
+
+.monthPillActive {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}

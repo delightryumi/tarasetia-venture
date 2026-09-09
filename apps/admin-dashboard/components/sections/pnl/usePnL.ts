@@ -17,7 +17,7 @@ export const usePnL = () => {
     const { activeHotelCode } = useAuth();
     const [isStartup, setIsStartup] = useState<boolean>(false);
     const [viewMode, setViewMode] = useState<"monthly" | "yearly">("monthly");
-    const [displayMode, setDisplayMode] = useState<"cards" | "charts">("cards");
+    const [displayMode, setDisplayMode] = useState<"cards" | "charts" | "statements">("cards");
     const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
     const [pnlResult, setPnlResult] = useState<GlobalPnLResult | null>(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -196,7 +196,7 @@ export const usePnL = () => {
             result.pnlResult.occ = forecastOcc ?? 0;
             result.pnlResult.revPar = forecastRevPar ?? 0;
             // Preserve existing KPI calculation if needed
-            result.pnlResult.kpiRevPar = result.pnlResult.totalRevenue / (totalRooms || 1);
+            result.pnlResult.kpiRevPar = (result.pnlResult.card1_TotalRevenue || 0) / (totalRooms || 1);
 
             setPnlResult(result.pnlResult);
         }, [

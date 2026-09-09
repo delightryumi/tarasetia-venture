@@ -1,0 +1,200 @@
+/* fees.module.css - Dedicated styling for Fees Tab */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e7e5e4;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: #18181b;
+  color: #ffffff;
+}
+
+.titleGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge {
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.title {
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  margin: 0;
+}
+
+.tag {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #a1a1aa;
+}
+
+/* Settings Bar */
+.settingsBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  background: #fafafa;
+  border-bottom: 1px solid #f4f4f5;
+}
+
+.settingItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settingLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #3f3f46;
+}
+
+.rateInput {
+  width: 50px;
+  height: 26px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  border: 1px solid #d4d4d8;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  color: #18181b;
+  transition: all 0.15s ease;
+}
+
+.rateInput:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.12);
+}
+
+.rateUnit {
+  font-size: 11px;
+  font-weight: 700;
+  color: #71717a;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 6px rgba(37,99,235,0.2);
+}
+
+.actionBtn:hover {
+  background: #1d4ed8;
+  box-shadow: 0 3px 10px rgba(37,99,235,0.3);
+}
+
+/* Schedule Table */
+.tableContainer {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  text-align: left;
+}
+
+.table th {
+  background: #f4f4f5;
+  color: #52525b;
+  font-weight: 800;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 5px 8px;
+  border-bottom: 2px solid #e4e4e7;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #f4f4f5;
+  color: #27272a;
+  white-space: nowrap;
+}
+
+.table tr:hover td {
+  background: #fafafa;
+}
+
+.cellDesc {
+  font-weight: 700;
+  color: #18181b;
+  min-width: 140px;
+  font-size: 11px;
+}
+
+.cellAmount {
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 75px;
+  font-size: 11px;
+}
+
+.cellYtd {
+  text-align: right;
+  font-weight: 900;
+  background: #f8fafc;
+  color: #0f172a;
+  min-width: 90px;
+  font-size: 11.5px;
+}
+
+.totalRow td {
+  background: #f0fdf4;
+  color: #166534;
+  font-weight: 900;
+  font-size: 11.5px;
+  border-top: 2px solid #86efac;
+  border-bottom: 2px solid #86efac;
+}
+
+.totalRow .cellDesc {
+  color: #166534;
+}

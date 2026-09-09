@@ -56,14 +56,17 @@ function LiveTableGrid() {
         }
       }
       if (!code) {
-        code = localStorage.getItem('hotelCode') || '1';
+        code = localStorage.getItem('hotelCode') || '';
       }
-      setHotelCode(code);
+      setHotelCode(code || '');
     }
   }, []);
 
   useEffect(() => {
-    if (!hotelCode) return;
+    if (!hotelCode || hotelCode === '87241') {
+      setIsLoading(false);
+      return;
+    }
 
     let unsub: any;
     const fetchConfigAndListen = async () => {

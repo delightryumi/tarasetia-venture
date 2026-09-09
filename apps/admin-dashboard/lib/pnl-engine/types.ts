@@ -27,6 +27,10 @@ export interface ExtendedTransaction {
   bookingId: string;
   paymentStatus?: string;
   type?: string;
+  isCompliment?: boolean;
+  complimentReason?: string;
+  complimentValue?: number;
+  effectiveDate?: string;
 }
 
 export interface HotelMaster {

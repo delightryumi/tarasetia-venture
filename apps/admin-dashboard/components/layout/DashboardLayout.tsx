@@ -116,7 +116,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                     pathModule = 'purchasing';
                 } else if (path.startsWith('/food-beverage')) {
                     pathModule = 'food-beverage';
-                } else if (path.startsWith('/accounting') || path === '/pnl') {
+                } else if (path.startsWith('/accounting') || path === '/pnl' || path === '/pnl-budget' || path === '/statements' || path === '/dsr' || path === '/budgeting') {
                     pathModule = 'accounting';
                 } else if (path === '/invoice') {
                     pathModule = 'front-office';

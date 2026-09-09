@@ -222,7 +222,7 @@ export const MobileBottomNav = () => {
         } else if (activeModule === "housekeeping") {
             items = allNavItems.filter(item => ["overview", "inventory-control", "forecast", "purchase-order"].includes(item.id));
         } else if (activeModule === "accounting") {
-            items = allNavItems.filter(item => ["pnl", "statements", "purchase-order"].includes(item.id));
+            items = allNavItems.filter(item => ["pnl", "pnl-budget", "dsr", "budgeting", "statements", "purchase-order"].includes(item.id));
         } else if (activeModule === "food-beverage") {
             items = allNavItems.filter(item => ["food-beverage-product", "food-beverage-realtime", "purchase-order"].includes(item.id));
         } else if (activeModule === "hrd") {
@@ -303,6 +303,12 @@ export const MobileBottomNav = () => {
                                         router.push(`/food-beverage/realtime?module=food-beverage`);
                                     } else if (item.id === "statements") {
                                         router.push(`/statements?module=accounting`);
+                                    } else if (item.id === "pnl-budget") {
+                                        router.push(`/pnl-budget?module=accounting`);
+                                    } else if (item.id === "dsr") {
+                                        router.push(`/dsr?module=accounting`);
+                                    } else if (item.id === "budgeting") {
+                                        router.push(`/budgeting?module=accounting`);
                                     } else if (item.id === "inventory-control") {
                                         router.push(`/inventory-control?module=${activeModule}`);
                                     } else {

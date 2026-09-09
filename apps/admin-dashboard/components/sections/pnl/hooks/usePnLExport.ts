@@ -20,6 +20,10 @@ interface UsePnLExportOptions {
     fixedAssetsValue?: number;
     customIncomes?: any[];
     nonCommissionRevenue?: any[];
+    vatPaid?: number;
+    feePaid?: number;
+    scPaid?: number;
+    lbPaid?: number;
 }
 
 const isTxIgnored = (tx: any) => {
@@ -50,6 +54,10 @@ export function usePnLExport({
     fixedAssetsValue = 0,
     customIncomes = [],
     nonCommissionRevenue = [],
+    vatPaid = 0,
+    feePaid = 0,
+    scPaid = 0,
+    lbPaid = 0,
 }: UsePnLExportOptions) {
 
     const handleExportExcel = () => {

@@ -13,8 +13,11 @@ interface GeneralLedgerProps {
     month: string;
     startingBalance: number;
     formatIDR: (val: number) => string;
-    formatIDR: (val: number) => string;
     pnlResult?: any;
+    vatPaid?: number;
+    feePaid?: number;
+    scPaid?: number;
+    lbPaid?: number;
 }
 
 interface LedgerEntry {

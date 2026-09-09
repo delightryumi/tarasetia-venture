@@ -236,7 +236,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             );
         } else if (activeModule === "accounting") {
             items = allNavItems.filter((item) =>
-                ["pnl", "statements", "purchase-order"].includes(item.id)
+                ["pnl", "pnl-budget", "dsr", "budgeting", "statements", "purchase-order"].includes(item.id)
             );
         } else if (activeModule === "food-beverage") {
             items = allNavItems.filter((item) =>

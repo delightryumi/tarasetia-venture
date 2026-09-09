@@ -10,6 +10,7 @@ export interface DrillDownContext {
   mgmtFeePercentage: number;
   serviceChargePercentage: number;
   lostBreakagePercentage: number;
+  payrollDetails?: any[];
 }
 
 export function getExpenseDrillDown(cardId: string, ctx: DrillDownContext): any[] | null {

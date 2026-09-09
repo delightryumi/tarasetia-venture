@@ -5,7 +5,12 @@ import { motion } from 'framer-motion';
 import { Clock, UserCircle, Wallet, ArrowRight } from 'lucide-react';
 import { useCurrency } from '@/hooks/useCurrency';
 
+import { db } from '@/lib/firebase';
+import { query, where, onSnapshot } from 'firebase/firestore';
+import { getHotelCollection } from '@/lib/firestoreHelper';
+
 interface ShiftData {
+  id?: string;
   cashierName: string;
   openedAt: string;
   houseBank: number;
@@ -20,16 +25,64 @@ function ActiveShiftSummary(): React.ReactNode {
 
   useEffect(() => {
     setIsClient(true);
-    const shiftJson = localStorage.getItem('active_shift');
-    if (shiftJson) {
-      try {
-        const shiftData = JSON.parse(shiftJson);
-        if (shiftData && shiftData.status === 'open') {
-          setActiveShift(shiftData);
+
+    let hotelCode = '';
+    if (typeof window !== 'undefined') {
+      const getCookie = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift();
+      };
+      
+      let code = getCookie('hotelCode');
+      if (!code) {
+        const userJson = localStorage.getItem('user');
+        if (userJson) {
+          try {
+            const userObj = JSON.parse(userJson);
+            code = userObj.hotelCode;
+          } catch (e) {}
         }
-      } catch (e) {
-        console.error('Error parsing shift data', e);
       }
+      if (!code) {
+        code = localStorage.getItem('hotelCode') || '';
+      }
+      hotelCode = code || '';
+    }
+
+    if (!hotelCode || hotelCode === '87241') return;
+
+    try {
+      const q = query(
+        getHotelCollection(db, 'cashier_shifts', hotelCode),
+        where('status', '==', 'open')
+      );
+
+      const unsub = onSnapshot(
+        q,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const docSnap = snapshot.docs[0];
+            const shiftData = { id: docSnap.id, ...docSnap.data() } as ShiftData;
+            setActiveShift(shiftData);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('active_shift', JSON.stringify(shiftData));
+            }
+          } else {
+            setActiveShift(null);
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('active_shift');
+            }
+          }
+        },
+        (err) => {
+          console.error('Error listening to active shift in ActiveShiftSummary:', err);
+        }
+      );
+
+      return () => unsub();
+    } catch (e) {
+      console.error('Failed to setup shift listener:', e);
     }
   }, []);
 

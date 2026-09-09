@@ -227,19 +227,26 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   useEffect(() => {
     const userJson = localStorage.getItem('user');
     let restoId = 'default-resto';
-    let hotelCode = '1';
+    let hotelCode = '';
     if (userJson) {
       try {
         const user = JSON.parse(userJson);
-        restoId = user.restoId || 'default-resto';
-        hotelCode = user.hotelCode || '1';
+        restoId = user.restoId || '';
+        hotelCode = user.hotelCode || '';
       } catch (e) {}
     }
+    if (!hotelCode) {
+      const getCookie = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift();
+      };
+      hotelCode = getCookie('hotelCode') || localStorage.getItem('hotelCode') || '';
+    }
 
-    const q = query(
-      collection(db, 'hotels', hotelCode, 'pos_held_orders'),
-      where('restoId', '==', restoId)
-    );
+    if (!hotelCode || hotelCode === '87241') return;
+
+    const q = collection(db, 'hotels', hotelCode, 'pos_held_orders');
 
     let isInitial = true;
     const unsubscribe = onSnapshot(q, (snapshot) => {
