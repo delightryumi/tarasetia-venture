@@ -1,6 +1,13 @@
 kind: "AppHostingYaml"
 schemaVersion: "v1"
 
+runConfig:
+  cpu: 1
+  memoryMiB: 2048
+  concurrency: 80
+  minInstances: 1
+  maxInstances: 20
+
 scripts:
   build: "pnpm --filter admin-dashboard build"
   run: "pnpm --filter admin-dashboard start"
