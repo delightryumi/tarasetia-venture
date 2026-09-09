@@ -1170,8 +1170,13 @@ export const recalculateBudgetMonthData = (draft: BudgetMonthData): void => {
 
   // 1. Room Department Recalculation
   const rm = draft.deptRooms;
-  rm.revenue.total = (rm.revenue.lodging || 0) + (rm.revenue.extraBed || 0) + (rm.revenue.otherRoomRevenue || 0);
-  rm.cogs.total = (rm.cogs.roomSupplies || 0) + (rm.cogs.linenReplacement || 0);
+  if (!rm.revenue) rm.revenue = { lodging: 0, extraBed: 0, otherRoomRevenue: 0, total: 0 };
+  if (!rm.cogs) rm.cogs = { roomSupplies: 0, linenReplacement: 0, total: 0 };
+  if (!rm.frontOffice) rm.frontOffice = createDefaultRoomDepartment().frontOffice;
+  if (!rm.housekeeping) rm.housekeeping = createDefaultRoomDepartment().housekeeping;
+
+  rm.revenue.total = (rm.revenue.lodging || 0) + (rm.revenue.extraBed || 0) + (rm.revenue.otherRoomRevenue || (rm.revenue as any).otherRoom || 0);
+  rm.cogs.total = (rm.cogs.roomSupplies || (rm.cogs as any).costOfRoom || 0) + (rm.cogs.linenReplacement || 0);
   rm.frontOffice.salary.total = sumSalaryWages(rm.frontOffice.salary);
   const foExp = rm.frontOffice.expenses;
   foExp.total = (foExp.uniform || 0) + (foExp.printingStationery || 0) + (foExp.transportFuel || 0) + (foExp.travelExpenses || 0) +
@@ -1196,11 +1201,45 @@ export const recalculateBudgetMonthData = (draft: BudgetMonthData): void => {
   // Sync Room top-level
   draft.roomRevenue.lodging = rm.revenue.lodging;
   draft.roomRevenue.extraBed = rm.revenue.extraBed;
-  draft.roomRevenue.otherRoomRevenue = rm.revenue.otherRoomRevenue;
+  draft.roomRevenue.otherRoomRevenue = rm.revenue.otherRoomRevenue || (rm.revenue as any).otherRoom || 0;
   draft.roomRevenue.totalRoomRevenue = rm.revenue.total;
 
   // 2. F&B Department Recalculation
   const fnb = draft.deptFnB;
+  if (!fnb.revenue) fnb.revenue = createDefaultFbDepartment().revenue;
+  if (!fnb.revenue.restaurant) fnb.revenue.restaurant = { food: 0, beverage: 0, other: 0, total: 0 };
+  if (!fnb.revenue.kitchen) fnb.revenue.kitchen = { food: 0, beverage: 0, other: 0, total: 0 };
+  if (!fnb.revenue.lounge) fnb.revenue.lounge = { food: 0, beverage: 0, other: 0, total: 0 };
+  if (!fnb.revenue.banquet) fnb.revenue.banquet = { food: 0, beverage: 0, other: 0, total: 0 };
+  if (!fnb.revenue.roomService) fnb.revenue.roomService = { food: 0, beverage: 0, other: 0, total: 0 };
+
+  if (!fnb.cogs) fnb.cogs = createDefaultFbDepartment().cogs;
+  if (!fnb.cogs.restaurant) fnb.cogs.restaurant = { costFood: 0, costBeverage: 0, costOther: 0, total: 0 };
+  if (!fnb.cogs.kitchen) fnb.cogs.kitchen = { costFood: 0, costBeverage: 0, costOther: 0, total: 0 };
+  if (!fnb.cogs.lounge) fnb.cogs.lounge = { costFood: 0, costBeverage: 0, costOther: 0, total: 0 };
+  if (!fnb.cogs.banquet) fnb.cogs.banquet = { costFood: 0, costBeverage: 0, costOther: 0, total: 0 };
+  if (!fnb.cogs.roomService) fnb.cogs.roomService = { costFood: 0, costBeverage: 0, costOther: 0, total: 0 };
+
+  const fbOutletKeys: ("restaurant" | "kitchen" | "lounge" | "banquet" | "roomService")[] = [
+    "restaurant",
+    "kitchen",
+    "lounge",
+    "banquet",
+    "roomService",
+  ];
+
+  fbOutletKeys.forEach((k) => {
+    if (!fnb[k]) {
+      fnb[k] = {
+        salary: createDefaultSalaryWages(),
+        expenses: createDefaultFbOutletExpenses(),
+        totalExpenses: 0,
+      };
+    }
+    if (!fnb[k].salary) fnb[k].salary = createDefaultSalaryWages();
+    if (!fnb[k].expenses) fnb[k].expenses = createDefaultFbOutletExpenses();
+  });
+
   const foodRev =
     (fnb.revenue.restaurant.food || 0) +
     (fnb.revenue.kitchen.food || 0) +

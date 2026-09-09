@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { BudgetMonthData, FbDepartmentBudget, FbOutletExpenses, createDefaultFbDepartment } from "@/lib/budget-types";
+import {
+  BudgetMonthData,
+  FbDepartmentBudget,
+  FbOutletExpenses,
+  createDefaultFbDepartment,
+  createDefaultSalaryWages,
+  createDefaultFbOutletExpenses,
+} from "@/lib/budget-types";
 import { formatIDR } from "@/lib/pnl-utils";
 import { SalaryWagesForm } from "../common/SalaryWagesForm";
 import styles from "../../budgeting.module.css";
@@ -43,6 +50,36 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
 
   const fnb: FbDepartmentBudget = monthData.deptFnB || createDefaultFbDepartment();
 
+  const handleRevenueChange = (
+    outlet: "restaurant" | "kitchen" | "lounge" | "banquet" | "roomService",
+    field: "food" | "beverage" | "other",
+    val: number
+  ) => {
+    onChange((draft) => {
+      if (!draft.deptFnB) draft.deptFnB = createDefaultFbDepartment();
+      if (!draft.deptFnB.revenue) draft.deptFnB.revenue = createDefaultFbDepartment().revenue;
+      if (!draft.deptFnB.revenue[outlet]) {
+        draft.deptFnB.revenue[outlet] = { food: 0, beverage: 0, other: 0, total: 0 };
+      }
+      draft.deptFnB.revenue[outlet][field] = val;
+    });
+  };
+
+  const handleCogsChange = (
+    outlet: "restaurant" | "kitchen" | "lounge" | "banquet" | "roomService",
+    field: "costFood" | "costBeverage" | "costOther",
+    val: number
+  ) => {
+    onChange((draft) => {
+      if (!draft.deptFnB) draft.deptFnB = createDefaultFbDepartment();
+      if (!draft.deptFnB.cogs) draft.deptFnB.cogs = createDefaultFbDepartment().cogs;
+      if (!draft.deptFnB.cogs[outlet]) {
+        draft.deptFnB.cogs[outlet] = { costFood: 0, costBeverage: 0, costOther: 0, total: 0 };
+      }
+      draft.deptFnB.cogs[outlet][field] = val;
+    });
+  };
+
   const handleExpenseChange = (
     outlet: "restaurant" | "kitchen" | "lounge" | "banquet" | "roomService",
     field: keyof FbOutletExpenses,
@@ -50,12 +87,28 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
   ) => {
     onChange((draft) => {
       if (!draft.deptFnB) draft.deptFnB = createDefaultFbDepartment();
-      const exp = draft.deptFnB[outlet].expenses;
-      exp[field] = val;
+      if (!draft.deptFnB[outlet]) {
+        draft.deptFnB[outlet] = {
+          salary: createDefaultSalaryWages(),
+          expenses: createDefaultFbOutletExpenses(),
+          totalExpenses: 0,
+        };
+      }
+      if (!draft.deptFnB[outlet].expenses) {
+        draft.deptFnB[outlet].expenses = createDefaultFbOutletExpenses();
+      }
+      draft.deptFnB[outlet].expenses[field] = val;
     });
   };
 
-  const currentOutletData = fnb[activeOutlet];
+  const currentOutletData = fnb[activeOutlet] || {
+    salary: createDefaultSalaryWages(),
+    expenses: createDefaultFbOutletExpenses(),
+    totalExpenses: 0,
+  };
+  const currentRev = fnb.revenue?.[activeOutlet] || { food: 0, beverage: 0, other: 0, total: 0 };
+  const currentCogs = fnb.cogs?.[activeOutlet] || { costFood: 0, costBeverage: 0, costOther: 0, total: 0 };
+
   const outletPrefixMap = {
     restaurant: { tag: "F&B RESTAURANT", title: "RESTAURANT OUTLET", code: "REST", revCode: "3023", cogsCode: "4014", expCode: "5075" },
     kitchen: { tag: "F&B KITCHEN", title: "KITCHEN PRODUCT", code: "KC", revCode: "3023", cogsCode: "4014", expCode: "5085" },
@@ -92,13 +145,13 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
           onClick={() => setActiveOutlet("banquet")}
           className={`${styles.mainTabBtn} ${activeOutlet === "banquet" ? styles.mainTabBtnActive : ""}`}
         >
-          Banquet & Events
+          Banquet & Events (BQ)
         </button>
         <button
           onClick={() => setActiveOutlet("roomService")}
           className={`${styles.mainTabBtn} ${activeOutlet === "roomService" ? styles.mainTabBtnActive : ""}`}
         >
-          Room Service
+          Room Service (RS / RB)
         </button>
       </div>
 
@@ -110,7 +163,7 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
             <h4 className={styles.excelSheetTitle}>{meta.title} - REVENUE & COST OF SALES</h4>
           </div>
           <span className={styles.totalBadge}>
-            Net Rev: {formatIDR(fnb.revenue[activeOutlet]?.total || 0)}
+            Net Rev: {formatIDR(currentRev.total || 0)}
           </span>
         </div>
 
@@ -139,10 +192,10 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={fnb.revenue[activeOutlet]?.food ? fnb.revenue[activeOutlet].food.toLocaleString("id-ID") : ""}
+                    value={currentRev.food ? currentRev.food.toLocaleString("id-ID") : ""}
                     onChange={(e) => {
                       const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
-                      onChange((d) => (d.deptFnB[activeOutlet].revenue.food = val));
+                      handleRevenueChange(activeOutlet, "food", val);
                     }}
                     onWheel={(e) => e.currentTarget.blur()}
                     placeholder="0"
@@ -157,10 +210,10 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={fnb.revenue[activeOutlet]?.beverage ? fnb.revenue[activeOutlet].beverage.toLocaleString("id-ID") : ""}
+                    value={currentRev.beverage ? currentRev.beverage.toLocaleString("id-ID") : ""}
                     onChange={(e) => {
                       const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
-                      onChange((d) => (d.deptFnB[activeOutlet].revenue.beverage = val));
+                      handleRevenueChange(activeOutlet, "beverage", val);
                     }}
                     onWheel={(e) => e.currentTarget.blur()}
                     placeholder="0"
@@ -175,10 +228,10 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={fnb.revenue[activeOutlet]?.other ? fnb.revenue[activeOutlet].other.toLocaleString("id-ID") : ""}
+                    value={currentRev.other ? currentRev.other.toLocaleString("id-ID") : ""}
                     onChange={(e) => {
                       const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
-                      onChange((d) => (d.deptFnB[activeOutlet].revenue.other = val));
+                      handleRevenueChange(activeOutlet, "other", val);
                     }}
                     onWheel={(e) => e.currentTarget.blur()}
                     placeholder="0"
@@ -190,7 +243,7 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
                 <td className={styles.excelCodeCell}>SUBTOTAL</td>
                 <td className={styles.excelDescCell}>Total Revenue - {meta.title}</td>
                 <td className={`${styles.excelInputCell} ${styles.excelNumValue}`} style={{ color: "#059669" }}>
-                  {formatIDR(fnb.revenue[activeOutlet]?.total || 0)}
+                  {formatIDR(currentRev.total || 0)}
                 </td>
               </tr>
 
@@ -207,10 +260,10 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={fnb.cogs[activeOutlet]?.costFood ? fnb.cogs[activeOutlet].costFood.toLocaleString("id-ID") : ""}
+                    value={currentCogs.costFood ? currentCogs.costFood.toLocaleString("id-ID") : ""}
                     onChange={(e) => {
                       const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
-                      onChange((d) => (d.deptFnB[activeOutlet].cogs.costFood = val));
+                      handleCogsChange(activeOutlet, "costFood", val);
                     }}
                     onWheel={(e) => e.currentTarget.blur()}
                     placeholder="0"
@@ -225,10 +278,10 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={fnb.cogs[activeOutlet]?.costBeverage ? fnb.cogs[activeOutlet].costBeverage.toLocaleString("id-ID") : ""}
+                    value={currentCogs.costBeverage ? currentCogs.costBeverage.toLocaleString("id-ID") : ""}
                     onChange={(e) => {
                       const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
-                      onChange((d) => (d.deptFnB[activeOutlet].cogs.costBeverage = val));
+                      handleCogsChange(activeOutlet, "costBeverage", val);
                     }}
                     onWheel={(e) => e.currentTarget.blur()}
                     placeholder="0"
@@ -243,10 +296,10 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={fnb.cogs[activeOutlet]?.costOther ? fnb.cogs[activeOutlet].costOther.toLocaleString("id-ID") : ""}
+                    value={currentCogs.costOther ? currentCogs.costOther.toLocaleString("id-ID") : ""}
                     onChange={(e) => {
                       const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
-                      onChange((d) => (d.deptFnB[activeOutlet].cogs.costOther = val));
+                      handleCogsChange(activeOutlet, "costOther", val);
                     }}
                     onWheel={(e) => e.currentTarget.blur()}
                     placeholder="0"
@@ -258,7 +311,7 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
                 <td className={styles.excelCodeCell}>SUBTOTAL</td>
                 <td className={styles.excelDescCell}>Total Cost of Sales - {meta.title}</td>
                 <td className={`${styles.excelInputCell} ${styles.excelNumValue}`} style={{ color: "#b91c1c" }}>
-                  {formatIDR(fnb.cogs[activeOutlet]?.total || 0)}
+                  {formatIDR(currentCogs.total || 0)}
                 </td>
               </tr>
             </tbody>
@@ -273,7 +326,17 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
         data={currentOutletData.salary}
         onChange={(updater) =>
           onChange((d) => {
-            if (!d.deptFnB) return;
+            if (!d.deptFnB) d.deptFnB = createDefaultFbDepartment();
+            if (!d.deptFnB[activeOutlet]) {
+              d.deptFnB[activeOutlet] = {
+                salary: createDefaultSalaryWages(),
+                expenses: createDefaultFbOutletExpenses(),
+                totalExpenses: 0,
+              };
+            }
+            if (!d.deptFnB[activeOutlet].salary) {
+              d.deptFnB[activeOutlet].salary = createDefaultSalaryWages();
+            }
             updater(d.deptFnB[activeOutlet].salary);
           })
         }
@@ -311,7 +374,7 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
                     <input
                       type="text"
                       inputMode="numeric"
-                      value={currentOutletData.expenses[row.key] ? (currentOutletData.expenses[row.key] as number).toLocaleString("id-ID") : ""}
+                      value={currentOutletData.expenses?.[row.key] ? (currentOutletData.expenses[row.key] as number).toLocaleString("id-ID") : ""}
                       onChange={(e) => {
                         const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
                         handleExpenseChange(activeOutlet, row.key, val);

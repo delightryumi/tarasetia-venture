@@ -372,11 +372,13 @@ export const RoomDeptTab: React.FC<RoomDeptTabProps> = ({
                     <input
                       type="text"
                       inputMode="numeric"
-                      value={rm.revenue.otherRoom ? rm.revenue.otherRoom.toLocaleString("id-ID") : ""}
+                      value={((rm.revenue.otherRoomRevenue ?? (rm.revenue as any).otherRoom)) ? (rm.revenue.otherRoomRevenue ?? (rm.revenue as any).otherRoom).toLocaleString("id-ID") : ""}
                       onChange={(e) => {
                         const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
                         onChange((d) => {
-                          d.deptRooms.revenue.otherRoom = val;
+                          if (!d.deptRooms) d.deptRooms = createDefaultRoomDepartment();
+                          d.deptRooms.revenue.otherRoomRevenue = val;
+                          (d.deptRooms.revenue as any).otherRoom = val;
                           d.roomRevenue.otherRoomRevenue = val;
                         });
                       }}
@@ -393,7 +395,7 @@ export const RoomDeptTab: React.FC<RoomDeptTabProps> = ({
                     {formatIDR(
                       ((st.occupiedRoomsPaid || 0) * (st.arrIdr || 0)) +
                       (rm.revenue.extraBed || 0) +
-                      (rm.revenue.otherRoom || rm.revenue.otherRoomRevenue || 0)
+                      (rm.revenue.otherRoomRevenue || (rm.revenue as any).otherRoom || 0)
                     )}
                   </td>
                 </tr>
@@ -411,10 +413,14 @@ export const RoomDeptTab: React.FC<RoomDeptTabProps> = ({
                     <input
                       type="text"
                       inputMode="numeric"
-                      value={rm.cogs.costOfRoom ? rm.cogs.costOfRoom.toLocaleString("id-ID") : ""}
+                      value={((rm.cogs.roomSupplies ?? (rm.cogs as any).costOfRoom)) ? (rm.cogs.roomSupplies ?? (rm.cogs as any).costOfRoom).toLocaleString("id-ID") : ""}
                       onChange={(e) => {
                         const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
-                        onChange((d) => (d.deptRooms.cogs.costOfRoom = val));
+                        onChange((d) => {
+                          if (!d.deptRooms) d.deptRooms = createDefaultRoomDepartment();
+                          d.deptRooms.cogs.roomSupplies = val;
+                          (d.deptRooms.cogs as any).costOfRoom = val;
+                        });
                       }}
                       onWheel={(e) => e.currentTarget.blur()}
                       placeholder="0"

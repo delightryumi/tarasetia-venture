@@ -16,6 +16,7 @@ export const SalaryWagesForm: React.FC<SalaryWagesFormProps> = ({
   deptCodePrefix = "DEPT",
   title = "Salary & Related",
   data,
+  onChange,
 }) => {
   const rows: { key: keyof DeptSalaryWages; label: string; code: string; formula: string }[] = [
     { key: "salaryKontrak", label: `${deptCodePrefix} - Salary (Kontrak/Permanen)`, code: "01", formula: "Staff & HOD (Manning)" },
@@ -36,16 +37,16 @@ export const SalaryWagesForm: React.FC<SalaryWagesFormProps> = ({
       <div className={styles.excelSheetBanner}>
         <div className={styles.excelSheetTitleGroup}>
           <span className={styles.excelSheetTag} style={{ backgroundColor: "#dbeafe", color: "#1e40af" }}>
-            🔒 PAYROLL LOCKED
+            💰 SALARY & WAGES
           </span>
           <h4 className={styles.excelSheetTitle}>{title}</h4>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={{ fontSize: "11px", fontWeight: 700, color: "#2563eb", background: "#eff6ff", padding: "3px 8px", borderRadius: "6px" }}>
-            Auto dari Manning Plan
+            Bisa Diedit / Auto Manning
           </span>
           <span className={styles.totalBadge} style={{ color: "#b91c1c", backgroundColor: "#fee2e2" }}>
-            Total Payroll: {formatIDR(data.total || 0)}
+            Total Payroll: {formatIDR(data?.total || 0)}
           </span>
         </div>
       </div>
@@ -67,8 +68,21 @@ export const SalaryWagesForm: React.FC<SalaryWagesFormProps> = ({
               <tr key={row.key} className={styles.excelRow}>
                 <td className={styles.excelCodeCell}>{row.code}</td>
                 <td className={styles.excelDescCell}>{row.label}</td>
-                <td className={`${styles.excelInputCell} ${styles.excelNumValue}`} style={{ fontWeight: 600 }}>
-                  {formatIDR(data[row.key] as number || 0)}
+                <td className={styles.excelInputCell}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={data?.[row.key] ? (data[row.key] as number).toLocaleString("id-ID") : ""}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
+                      onChange((draft) => {
+                        draft[row.key] = val;
+                      });
+                    }}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    placeholder="0"
+                    className={styles.excelInput}
+                  />
                 </td>
                 <td className={styles.excelCodeCell} style={{ color: "#64748b" }}>
                   {row.formula}
@@ -81,10 +95,10 @@ export const SalaryWagesForm: React.FC<SalaryWagesFormProps> = ({
               <td className={styles.excelCodeCell}>TOTAL</td>
               <td className={styles.excelDescCell}>Total {title}</td>
               <td className={`${styles.excelInputCell} ${styles.excelNumValue}`} style={{ color: "#b91c1c", fontWeight: 800 }}>
-                {formatIDR(data.total || 0)}
+                {formatIDR(data?.total || 0)}
               </td>
-              <td className={styles.excelCodeCell} style={{ color: "#b91c1c", fontWeight: 700 }}>
-                Auto Locked (Manning)
+              <td className={styles.excelCodeCell} style={{ color: "#059669", fontWeight: 700 }}>
+                Total Salary & Wages
               </td>
             </tr>
           </tbody>
