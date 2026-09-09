@@ -5,7 +5,7 @@ runConfig:
   cpu: 1
   memoryMiB: 2048
   concurrency: 80
-  minInstances: 1
+  minInstances: 0
   maxInstances: 20
 
 scripts:

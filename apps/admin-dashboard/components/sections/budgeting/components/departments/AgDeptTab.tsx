@@ -37,7 +37,7 @@ const AG_EXPENSE_ROWS = [
 ];
 
 export const AgDeptTab: React.FC<AgDeptTabProps> = ({ monthData, onChange }) => {
-  const ag: AgDepartmentBudget = monthData.deptAg || createDefaultAgDepartment();
+  const ag: AgDepartmentBudget = monthData?.deptAg || createDefaultAgDepartment();
 
   return (
     <div className={styles.sectionGrid}>

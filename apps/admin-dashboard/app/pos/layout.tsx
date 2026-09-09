@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import PosSplashLoader from '@/components/loader/PosSplashLoader';
 
 export default function POSLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -157,36 +158,5 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  return (
-    <div className="h-screen w-screen bg-neutral-50 dark:bg-black bg-grid-black/[0.05] dark:bg-grid-white/[0.15] relative flex flex-col items-center justify-center overflow-hidden font-sans select-none z-0">
-      {/* Radial gradient mask to fade the edges of the grid */}
-      <div className="absolute pointer-events-none inset-0 flex items-center justify-center bg-neutral-50 dark:bg-black [mask-image:radial-gradient(ellipse_at_center,transparent_20%,white)] dark:[mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] z-0"></div>
-
-      {/* Floating background blur glows */}
-      <div className="absolute w-72 h-72 rounded-full bg-blue-500/10 blur-[100px] pointer-events-none z-0" />
-
-      <div className="flex flex-col items-center justify-center z-10 space-y-6">
-        {/* Lottie Animation container */}
-        <div
-          style={{ height: '93px', width: '93px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-          dangerouslySetInnerHTML={{
-            __html: `<lottie-player src="/animated/b6a540ac-904f-11ee-9286-2bc689aa3dbc.json" background="transparent" speed="1.2" style="width: 100%; height: 100%;" loop autoplay></lottie-player>`
-          }}
-        />
-
-        {/* Status text */}
-        <div className="text-center flex flex-col items-center gap-2">
-          <p className="text-blue-500 text-[10px] font-extrabold tracking-[0.25em] uppercase animate-pulse">
-            Connecting...
-          </p>
-          <h2 className="text-neutral-800 dark:text-neutral-200 text-lg font-bold tracking-wide">
-            Redirecting to POS Terminal
-          </h2>
-          <p className="text-neutral-500 dark:text-neutral-450 text-xs">
-            Synchronizing data master. Please wait.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+  return <PosSplashLoader />;
 }

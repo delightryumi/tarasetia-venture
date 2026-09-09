@@ -48,7 +48,7 @@ const EXPENSE_ROW_CONFIG: { key: keyof FbOutletExpenses; label: string; code: st
 export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) => {
   const [activeOutlet, setActiveOutlet] = useState<"restaurant" | "kitchen" | "lounge" | "banquet" | "roomService">("restaurant");
 
-  const fnb: FbDepartmentBudget = monthData.deptFnB || createDefaultFbDepartment();
+  const fnb: FbDepartmentBudget = monthData?.deptFnB || createDefaultFbDepartment();
 
   const handleRevenueChange = (
     outlet: "restaurant" | "kitchen" | "lounge" | "banquet" | "roomService",

@@ -91,7 +91,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, storeName }: Si
 
   return (
     <motion.aside
-      className={`hidden md:flex flex-col fixed left-0 top-[56px] bottom-0 z-50 overflow-visible ${isCollapsed ? 'collapsed' : ''}`}
+      className={`flex flex-col fixed left-0 top-[56px] bottom-0 z-50 overflow-visible ${isCollapsed ? 'collapsed' : ''}`}
       initial="expanded"
       animate={isCollapsed ? "collapsed" : "expanded"}
       variants={sidebarVariants}

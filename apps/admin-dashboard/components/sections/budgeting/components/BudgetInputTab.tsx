@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   YearlyBudgetDocument,
   BudgetMonthData,
@@ -28,7 +28,15 @@ import {
   BarChart3,
   FileSpreadsheet,
   Download,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  ShieldCheck,
+  RotateCcw,
+  X,
 } from "lucide-react";
+import { toast } from "sonner";
 import styles from "../budgeting.module.css";
 import yearlyStyles from "./yearly/yearly.module.css";
 import { YearlyBudgetTab } from "./yearly/YearlyBudgetTab";
@@ -53,6 +61,7 @@ interface BudgetInputTabProps {
   onSave: (doc: YearlyBudgetDocument) => Promise<void>;
   saving: boolean;
   saveSuccess: boolean;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 const MONTH_NAMES = [
@@ -70,6 +79,8 @@ const MONTH_NAMES = [
   { key: "12", name: "Desember" },
 ];
 
+const VALID_ADMIN_PASSWORDS = ["admin123", "owner123"];
+
 type DeptTabKey = "pnl" | "room" | "fnb" | "mod" | "ag" | "hrd" | "sm" | "pomec" | "manning" | "fees";
 
 export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
@@ -79,10 +90,26 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
   onSave,
   saving,
   saveSuccess,
+  onDirtyChange,
 }) => {
   const [viewMode, setViewMode] = useState<"monthly" | "yearly">("monthly");
   const [activeMonthKey, setActiveMonthKey] = useState<string>("01");
   const [activeTab, setActiveTab] = useState<DeptTabKey>("pnl");
+
+  // Track Unsaved Edits
+  const [isDirty, setIsDirty] = useState<boolean>(false);
+
+  // Modals state
+  const [showPasswordModal, setShowPasswordModal] = useState<boolean>(false);
+  const [showUnsavedModal, setShowUnsavedModal] = useState<boolean>(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+
+  // Admin Auth input state
+  const [passwordInput, setPasswordInput] = useState<string>("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [showPasswordText, setShowPasswordText] = useState<boolean>(false);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
   const [localDoc, setLocalDoc] = useState<YearlyBudgetDocument | null>(() => {
     if (budgetDoc) return JSON.parse(JSON.stringify(budgetDoc));
     const emptyMonths: Record<string, BudgetMonthData> = {};
@@ -103,11 +130,121 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
     };
   });
 
+  // Sync when budgetDoc changes from server / year change
   useEffect(() => {
     if (budgetDoc) {
       setLocalDoc(JSON.parse(JSON.stringify(budgetDoc)));
+      setIsDirty(false);
+      onDirtyChange?.(false);
     }
-  }, [budgetDoc]);
+  }, [budgetDoc, onDirtyChange]);
+
+  // Focus password input when modal opens
+  useEffect(() => {
+    if (showPasswordModal) {
+      setPasswordInput("");
+      setPasswordError(null);
+      setTimeout(() => {
+        passwordInputRef.current?.focus();
+      }, 120);
+    }
+  }, [showPasswordModal]);
+
+  // Browser Reload / Close Tab Guard
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "Anda memiliki perubahan target budgeting yang belum disimpan.";
+        return e.returnValue;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isDirty]);
+
+  // Intercept Keyboard Reload Shortcuts (F5, Ctrl+R, Cmd+R) with Custom CSS Modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isDirty) return;
+      const isReloadKey =
+        e.key === "F5" ||
+        ((e.ctrlKey || e.metaKey) && (e.key === "r" || e.key === "R"));
+      if (isReloadKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        setPendingAction(() => {
+          window.location.reload();
+        });
+        setShowUnsavedModal(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, [isDirty]);
+
+  // Intercept in-app navigation (e.g. sidebar menu buttons, header navigation, links) when isDirty is true
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handleCaptureClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // 1. Allow clicks inside the modals themselves (password input, cancel button, discard button, confirm button, etc.)
+      if (
+        target.closest(`.${styles.authModalCard}`) ||
+        target.closest(`.${styles.authModalOverlay}`)
+      ) {
+        return;
+      }
+
+      // 2. Allow clicks inside the budgeting content area (editing inputs, subtabs, copy button, save button, excel export, etc.)
+      const isInsideBudgeting =
+        target.closest(`.${styles.container}`) ||
+        target.closest(`.${styles.sectionGrid}`) ||
+        target.closest(`.${styles.monthSelectorBar}`) ||
+        target.closest(`.${styles.formCard}`);
+
+      if (isInsideBudgeting) {
+        return;
+      }
+
+      // 3. If click is on an outside navigation element (Sidebar aside, nav-item, nav-group, select-module-btn, header buttons, or any outside link/button)
+      const clickable = (target.closest("button") || target.closest("a")) as HTMLElement | null;
+      if (clickable) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        setPendingAction(() => () => {
+          setIsDirty(false);
+          onDirtyChange?.(false);
+          setTimeout(() => {
+            clickable.click();
+          }, 60);
+        });
+
+        setShowUnsavedModal(true);
+      }
+    };
+
+    document.addEventListener("click", handleCaptureClick, true);
+    return () => {
+      document.removeEventListener("click", handleCaptureClick, true);
+    };
+  }, [isDirty, onDirtyChange]);
+
+  // Notify parent of dirty state
+  const markDirty = (dirty: boolean = true) => {
+    setIsDirty(dirty);
+    onDirtyChange?.(dirty);
+  };
 
   const { exportYearlyMasterExcel, exportMonthlyBudgetExcel } = useBudgetExport({
     year,
@@ -150,6 +287,7 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
     recalculateBudgetMonthData(draft);
 
     setLocalDoc(nextDoc);
+    markDirty(true);
   };
 
   // Copy active month's entire departmental configuration across all 12 months
@@ -182,6 +320,8 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
       nextDoc.months[k] = copied;
     }
     setLocalDoc(nextDoc);
+    markDirty(true);
+    toast.success(`Konfigurasi bulan ${currentMonthName} berhasil disalin ke seluruh 12 bulan!`);
   };
 
   const updateEntireDoc = (updater: (draft: YearlyBudgetDocument) => void) => {
@@ -189,11 +329,82 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
     const nextDoc = JSON.parse(JSON.stringify(localDoc)) as YearlyBudgetDocument;
     updater(nextDoc);
     setLocalDoc(nextDoc);
+    markDirty(true);
   };
 
-  const handleSave = () => {
-    if (localDoc) {
-      onSave(localDoc);
+  // Guarded Navigation Helper (prompts if unsaved changes exist)
+  const performGuardedAction = (action: () => void) => {
+    if (isDirty) {
+      setPendingAction(() => action);
+      setShowUnsavedModal(true);
+    } else {
+      action();
+    }
+  };
+
+  // Handle Month Switch with Guard
+  const handleSelectMonth = (monthKey: string) => {
+    if (monthKey === activeMonthKey && viewMode === "monthly") return;
+    performGuardedAction(() => {
+      setActiveMonthKey(monthKey);
+      setViewMode("monthly");
+    });
+  };
+
+  // Handle View Mode Switch with Guard
+  const handleSelectViewMode = (mode: "monthly" | "yearly") => {
+    if (mode === viewMode) return;
+    performGuardedAction(() => {
+      setViewMode(mode);
+    });
+  };
+
+  // Trigger Save (Opens Password Verification Modal)
+  const handleSaveClick = () => {
+    setShowPasswordModal(true);
+  };
+
+  // Verify Admin Password & Save
+  const handleVerifyAndSave = async () => {
+    if (!VALID_ADMIN_PASSWORDS.includes(passwordInput.trim())) {
+      setPasswordError("Password Admin salah! Silakan periksa kembali sandi Anda.");
+      toast.error("Password Admin salah! Penyimpanan target budgeting dibatalkan.");
+      return;
+    }
+
+    try {
+      setShowPasswordModal(false);
+      setPasswordError(null);
+      setPasswordInput("");
+      
+      if (localDoc) {
+        await onSave(localDoc);
+        markDirty(false);
+        toast.success(`Target Budgeting tahun ${year} berhasil disimpan ke database!`);
+
+        // Execute pending action if any was queued
+        if (pendingAction) {
+          pendingAction();
+          setPendingAction(null);
+        }
+      }
+    } catch (err) {
+      toast.error("Gagal menyimpan data budgeting ke server.");
+    }
+  };
+
+  // Discard local changes and revert to server state
+  const handleDiscardChanges = () => {
+    if (budgetDoc) {
+      setLocalDoc(JSON.parse(JSON.stringify(budgetDoc)));
+    }
+    markDirty(false);
+    setShowUnsavedModal(false);
+    toast.info("Perubahan target budgeting telah dibuang.");
+
+    if (pendingAction) {
+      pendingAction();
+      setPendingAction(null);
     }
   };
 
@@ -216,7 +427,7 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
           <div className={yearlyStyles.viewModeToggleGroup}>
             <button
               type="button"
-              onClick={() => setViewMode("monthly")}
+              onClick={() => handleSelectViewMode("monthly")}
               className={`${yearlyStyles.viewModeBtn} ${viewMode === "monthly" ? yearlyStyles.viewModeBtnActive : ""}`}
             >
               <Calendar size={14} />
@@ -224,7 +435,7 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setViewMode("yearly")}
+              onClick={() => handleSelectViewMode("yearly")}
               className={`${yearlyStyles.viewModeBtn} ${viewMode === "yearly" ? yearlyStyles.viewModeBtnActive : ""}`}
             >
               <BarChart3 size={14} />
@@ -240,7 +451,7 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
                 return (
                   <button
                     key={m.key}
-                    onClick={() => setActiveMonthKey(m.key)}
+                    onClick={() => handleSelectMonth(m.key)}
                     className={`${styles.monthBtn} ${isActive ? styles.monthBtnActive : ""}`}
                   >
                     {m.name.slice(0, 3)}
@@ -250,7 +461,7 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
               <div style={{ width: "1px", height: "18px", backgroundColor: "#d4d4d8", margin: "0 2px" }} />
               <button
                 type="button"
-                onClick={() => setViewMode("yearly")}
+                onClick={() => handleSelectViewMode("yearly")}
                 className={styles.monthBtn}
                 style={{ color: "#2563eb", fontWeight: 800 }}
                 title="Lihat Rekapitulasi Konsolidasi Budget Tahunan"
@@ -262,7 +473,7 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
             <div className={styles.monthButtonsList}>
               <button
                 type="button"
-                onClick={() => setViewMode("yearly")}
+                onClick={() => handleSelectViewMode("yearly")}
                 className={`${styles.monthBtn} ${styles.monthBtnActive}`}
                 style={{ fontWeight: 800 }}
               >
@@ -272,10 +483,7 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
               {MONTH_NAMES.map((m) => (
                 <button
                   key={m.key}
-                  onClick={() => {
-                    setActiveMonthKey(m.key);
-                    setViewMode("monthly");
-                  }}
+                  onClick={() => handleSelectMonth(m.key)}
                   className={styles.monthBtn}
                   title={`Beralih ke mode edit bulan ${m.name}`}
                 >
@@ -286,8 +494,15 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
           )}
         </div>
 
-        {/* Actions */}
+        {/* Actions & Unsaved Badge */}
         <div className={styles.toolbarActions}>
+          {isDirty && (
+            <div className={styles.unsavedBadge} title="Anda memiliki perubahan target budget yang belum disimpan">
+              <span className={styles.unsavedDot} />
+              <span>Belum Disimpan</span>
+            </div>
+          )}
+
           {viewMode === "monthly" ? (
             <>
               <button
@@ -335,9 +550,10 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
           )}
 
           <button
-            onClick={() => onSave(localDoc)}
+            onClick={handleSaveClick}
             disabled={saving}
             className={styles.saveBtn}
+            style={isDirty ? { backgroundColor: "#059669", boxShadow: "0 0 0 2px #a7f3d0" } : {}}
           >
             {saveSuccess ? (
               <>
@@ -347,7 +563,7 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
             ) : (
               <>
                 <Save size={16} />
-                <span>{saving ? "Menyimpan..." : "Simpan Budget"}</span>
+                <span>{saving ? "Menyimpan..." : isDirty ? "Simpan Budget *" : "Simpan Budget"}</span>
               </>
             )}
           </button>
@@ -360,221 +576,351 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
           year={year}
           budgetDoc={localDoc}
           hotelRoomCount={hotelRoomCount}
-          onSelectMonth={(k) => {
-            setActiveMonthKey(k);
-            setViewMode("monthly");
-          }}
+          onSelectMonth={(mKey) => handleSelectMonth(mKey)}
         />
       ) : (
         <>
+          {/* Monthly KPI Summary Strip */}
+          <div className={styles.monthKpiSummaryGrid}>
+            <div className={styles.monthKpiCard}>
+              <div className={styles.monthKpiHeader}>
+                <span className={styles.monthKpiLabel}>Target Net Revenue</span>
+                <span className={styles.monthKpiSub}>{currentMonthName} {year}</span>
+              </div>
+              <span className={styles.monthKpiValue} style={{ color: "#059669" }}>
+                {formatIDR(pnl.totalNetRevenue)}
+              </span>
+            </div>
 
-      {/* Live Active Month KPI Cards */}
-      <div className={styles.monthKpiSummaryGrid}>
-        <div className={styles.monthKpiCard}>
-          <div className={styles.monthKpiHeader}>
-            <span className={styles.monthKpiLabel}>Target Net Revenue</span>
-            <span className={styles.monthKpiSub}>{currentMonthName}</span>
+            <div className={styles.monthKpiCard}>
+              <div className={styles.monthKpiHeader}>
+                <span className={styles.monthKpiLabel}>Gross Operating Profit (GOP)</span>
+                <span
+                  className={styles.monthKpiSub}
+                  style={{
+                    color: pnl.grossOperatingProfit >= 0 ? "#059669" : "#dc2626",
+                    fontWeight: 700,
+                  }}
+                >
+                  {pnl.gopMarginPercent.toFixed(1)}% GOP Margin
+                </span>
+              </div>
+              <span
+                className={styles.monthKpiValue}
+                style={{ color: pnl.grossOperatingProfit >= 0 ? "#059669" : "#dc2626" }}
+              >
+                {formatIDR(pnl.grossOperatingProfit)}
+              </span>
+            </div>
+
+            <div className={styles.monthKpiCard}>
+              <div className={styles.monthKpiHeader}>
+                <span className={styles.monthKpiLabel}>Target Occupancy & ADR</span>
+                <span className={styles.monthKpiSub}>
+                  {currentMonthData.statistic?.occupiedRoomsPaid || 0} / {autoRoomsAvailable} RN
+                </span>
+              </div>
+              <span className={styles.monthKpiValue} style={{ color: "#2563eb" }}>
+                {(currentMonthData.statistic?.occupancyPercent || 0).toFixed(1)}% • {formatIDR(currentMonthData.statistic?.arrIdr || 0)}
+              </span>
+            </div>
           </div>
-          <span className={styles.monthKpiValue} style={{ color: "#059669" }}>
-            {formatIDR(pnl.totalNetRevenue || 0)}
-          </span>
-        </div>
 
-        <div className={styles.monthKpiCard}>
-          <div className={styles.monthKpiHeader}>
-            <span className={styles.monthKpiLabel}>Cost of Sales (COGS)</span>
-            <span className={styles.monthKpiSub}>
-              {pnl.totalNetRevenue > 0 ? `${(((pnl.totalCogs || 0) / pnl.totalNetRevenue) * 100).toFixed(1)}%` : "0%"}
-            </span>
-          </div>
-          <span className={styles.monthKpiValue} style={{ color: "#b91c1c" }}>
-            {formatIDR(pnl.totalCogs || 0)}
-          </span>
-        </div>
-
-        <div className={styles.monthKpiCard}>
-          <div className={styles.monthKpiHeader}>
-            <span className={styles.monthKpiLabel}>Gross Operating Profit</span>
-            <span
-              className={styles.monthKpiSub}
-              style={{
-                color: (pnl.grossOperatingProfit || 0) >= 0 ? "#059669" : "#b91c1c",
-                fontWeight: 800,
-              }}
+          {/* Departmental USALI Tabs Header */}
+          <div className={styles.deptTabContainer}>
+            <button
+              className={`${styles.deptTabBtn} ${activeTab === "pnl" ? styles.deptTabBtnActive : ""}`}
+              onClick={() => setActiveTab("pnl")}
             >
-              GOP {(pnl.gopMarginPercent || 0).toFixed(1)}%
-            </span>
-          </div>
-          <span
-            className={styles.monthKpiValue}
-            style={{
-              color: (pnl.grossOperatingProfit || 0) >= 0 ? "#18181b" : "#b91c1c",
-            }}
-          >
-            {formatIDR(pnl.grossOperatingProfit || 0)}
-          </span>
-        </div>
-
-        <div className={styles.monthKpiCard}>
-          <div className={styles.monthKpiHeader}>
-            <span className={styles.monthKpiLabel}>Net Operating Income</span>
-            <span
-              className={styles.monthKpiSub}
-              style={{
-                color: (pnl.netOperatingIncome || 0) >= 0 ? "#2563eb" : "#b91c1c",
-                fontWeight: 800,
-              }}
+              <PieChart size={14} />
+              <span>Summary P&L (Consolidated)</span>
+            </button>
+            <button
+              className={`${styles.deptTabBtn} ${activeTab === "room" ? styles.deptTabBtnActive : ""}`}
+              onClick={() => setActiveTab("room")}
             >
-              NOI {(pnl.noiMarginPercent || 0).toFixed(1)}%
-            </span>
+              <Bed size={14} />
+              <span>Rooms Dept (FO & HK)</span>
+            </button>
+            <button
+              className={`${styles.deptTabBtn} ${activeTab === "fnb" ? styles.deptTabBtnActive : ""}`}
+              onClick={() => setActiveTab("fnb")}
+            >
+              <Utensils size={14} />
+              <span>F&B Dept (Service & Culinary)</span>
+            </button>
+            <button
+              className={`${styles.deptTabBtn} ${activeTab === "mod" ? styles.deptTabBtnActive : ""}`}
+              onClick={() => setActiveTab("mod")}
+            >
+              <Layers size={14} />
+              <span>Minor Operating (MOD)</span>
+            </button>
+            <button
+              className={`${styles.deptTabBtn} ${activeTab === "ag" ? styles.deptTabBtnActive : ""}`}
+              onClick={() => setActiveTab("ag")}
+            >
+              <Briefcase size={14} />
+              <span>A&G (Admin & General)</span>
+            </button>
+            <button
+              className={`${styles.deptTabBtn} ${activeTab === "hrd" ? styles.deptTabBtnActive : ""}`}
+              onClick={() => setActiveTab("hrd")}
+            >
+              <Users size={14} />
+              <span>HRD (Human Resources)</span>
+            </button>
+            <button
+              className={`${styles.deptTabBtn} ${activeTab === "sm" ? styles.deptTabBtnActive : ""}`}
+              onClick={() => setActiveTab("sm")}
+            >
+              <TrendingUp size={14} />
+              <span>Sales & Marketing</span>
+            </button>
+            <button
+              className={`${styles.deptTabBtn} ${activeTab === "pomec" ? styles.deptTabBtnActive : ""}`}
+              onClick={() => setActiveTab("pomec")}
+            >
+              <Wrench size={14} />
+              <span>POMEC (Engineering & Energy)</span>
+            </button>
+            <button
+              className={`${styles.deptTabBtn} ${activeTab === "manning" ? styles.deptTabBtnActive : ""}`}
+              onClick={() => setActiveTab("manning")}
+            >
+              <Users size={14} />
+              <span>Manning & Headcount</span>
+            </button>
+            <button
+              className={`${styles.deptTabBtn} ${activeTab === "fees" ? styles.deptTabBtnActive : ""}`}
+              onClick={() => setActiveTab("fees")}
+            >
+              <Sparkles size={14} />
+              <span>Fees & Non-Operating</span>
+            </button>
           </div>
-          <span
-            className={styles.monthKpiValue}
-            style={{
-              color: (pnl.netOperatingIncome || 0) >= 0 ? "#2563eb" : "#b91c1c",
-            }}
-          >
-            {formatIDR(pnl.netOperatingIncome || 0)}
-          </span>
-        </div>
-      </div>
 
-      {/* USALI Departmental Navigation Bar (Mirroring Excel 26 Sheets) */}
-      <div className={styles.sectionTabsNav}>
-        <button
-          onClick={() => setActiveTab("pnl")}
-          className={`${styles.sectionNavBtn} ${activeTab === "pnl" ? styles.sectionNavBtnActive : ""}`}
-        >
-          <PieChart size={16} />
-          <span>IS Summary (P&L)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("room")}
-          className={`${styles.sectionNavBtn} ${activeTab === "room" ? styles.sectionNavBtnActive : ""}`}
-        >
-          <Bed size={16} />
-          <span>ROOM (FO & HK)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("fnb")}
-          className={`${styles.sectionNavBtn} ${activeTab === "fnb" ? styles.sectionNavBtnActive : ""}`}
-        >
-          <Utensils size={16} />
-          <span>F&B (Rest, Kitchen, Lounge, BQ, RS)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("mod")}
-          className={`${styles.sectionNavBtn} ${activeTab === "mod" ? styles.sectionNavBtnActive : ""}`}
-        >
-          <Layers size={16} />
-          <span>MOD (Laundry, Spa, OI)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("ag")}
-          className={`${styles.sectionNavBtn} ${activeTab === "ag" ? styles.sectionNavBtnActive : ""}`}
-        >
-          <Briefcase size={16} />
-          <span>A&G</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("hrd")}
-          className={`${styles.sectionNavBtn} ${activeTab === "hrd" ? styles.sectionNavBtnActive : ""}`}
-        >
-          <Users size={16} />
-          <span>HRD</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("sm")}
-          className={`${styles.sectionNavBtn} ${activeTab === "sm" ? styles.sectionNavBtnActive : ""}`}
-        >
-          <TrendingUp size={16} />
-          <span>SM</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("pomec")}
-          className={`${styles.sectionNavBtn} ${activeTab === "pomec" ? styles.sectionNavBtnActive : ""}`}
-        >
-          <Wrench size={16} />
-          <span>POMEC</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("manning")}
-          className={`${styles.sectionNavBtn} ${activeTab === "manning" ? styles.sectionNavBtnActive : ""}`}
-        >
-          <Users size={16} />
-          <span>Manning</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("fees")}
-          className={`${styles.sectionNavBtn} ${activeTab === "fees" ? styles.sectionNavBtnActive : ""}`}
-        >
-          <Calculator size={16} />
-          <span>Fees</span>
-        </button>
-      </div>
-
-      {/* DEPARTMENTAL CONTENT RENDERING */}
-      {activeTab === "pnl" && (
-        <SummaryPnlTab monthData={currentMonthData} onChange={updateMonthField} />
-      )}
-
-      {activeTab === "room" && (
-        <RoomDeptTab
-          monthData={currentMonthData}
-          hotelRoomCount={hotelRoomCount}
-          daysInMonth={daysInCurrentMonth}
-          onChange={updateMonthField}
-        />
-      )}
-
-      {activeTab === "fnb" && (
-        <FnBDeptTab monthData={currentMonthData} onChange={updateMonthField} />
-      )}
-
-      {activeTab === "mod" && (
-        <ModDeptTab monthData={currentMonthData} onChange={updateMonthField} />
-      )}
-
-      {activeTab === "ag" && (
-        <AgDeptTab monthData={currentMonthData} onChange={updateMonthField} />
-      )}
-
-      {activeTab === "hrd" && (
-        <HrdDeptTab monthData={currentMonthData} onChange={updateMonthField} />
-      )}
-
-      {activeTab === "sm" && (
-        <SmDeptTab monthData={currentMonthData} onChange={updateMonthField} />
-      )}
-
-      {activeTab === "pomec" && (
-        <PomecDeptTab monthData={currentMonthData} onChange={updateMonthField} />
-      )}
-
-      {activeTab === "manning" && (
-        <ManningTab
-          budgetDoc={localDoc}
-          hotelRoomCount={hotelRoomCount}
-          onDocChange={updateEntireDoc}
-        />
-      )}
-
-      {activeTab === "fees" && (
-        <FeesTab
-          budgetDoc={localDoc}
-          onDocChange={updateEntireDoc}
-        />
-      )}
+          {/* Departmental USALI Form Body */}
+          <div className={styles.formCard}>
+            {activeTab === "pnl" && (
+              <SummaryPnlTab
+                monthData={currentMonthData}
+                onChange={updateMonthField}
+              />
+            )}
+            {activeTab === "room" && (
+              <RoomDeptTab
+                monthData={currentMonthData}
+                hotelRoomCount={hotelRoomCount}
+                daysInMonth={daysInCurrentMonth}
+                onChange={updateMonthField}
+              />
+            )}
+            {activeTab === "fnb" && (
+              <FnBDeptTab
+                monthData={currentMonthData}
+                onChange={updateMonthField}
+              />
+            )}
+            {activeTab === "mod" && (
+              <ModDeptTab
+                monthData={currentMonthData}
+                onChange={updateMonthField}
+              />
+            )}
+            {activeTab === "ag" && (
+              <AgDeptTab
+                monthData={currentMonthData}
+                onChange={updateMonthField}
+              />
+            )}
+            {activeTab === "hrd" && (
+              <HrdDeptTab
+                monthData={currentMonthData}
+                onChange={updateMonthField}
+              />
+            )}
+            {activeTab === "sm" && (
+              <SmDeptTab
+                monthData={currentMonthData}
+                onChange={updateMonthField}
+              />
+            )}
+            {activeTab === "pomec" && (
+              <PomecDeptTab
+                monthData={currentMonthData}
+                onChange={updateMonthField}
+              />
+            )}
+            {activeTab === "manning" && (
+              <ManningTab
+                budgetDoc={localDoc}
+                hotelRoomCount={hotelRoomCount}
+                onDocChange={updateEntireDoc}
+              />
+            )}
+            {activeTab === "fees" && (
+              <FeesTab
+                budgetDoc={localDoc}
+                onDocChange={updateEntireDoc}
+              />
+            )}
+          </div>
         </>
+      )}
+
+      {/* ═════════════════════════════════════════════════════════════════════
+          MODAL 1: UNSAVED CHANGES WARNING MODAL
+          ═════════════════════════════════════════════════════════════════════ */}
+      {showUnsavedModal && (
+        <div
+          className={styles.authModalOverlay}
+          onClick={() => {
+            setShowUnsavedModal(false);
+            setPendingAction(null);
+          }}
+        >
+          <div className={styles.authModalCard} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.authModalHeader}>
+              <div className={`${styles.authModalIconBadge} ${styles.authModalIconBadgeAmber}`}>
+                <AlertTriangle size={22} />
+              </div>
+              <div className={styles.authModalTitleGroup}>
+                <h3 className={styles.authModalTitle}>Perubahan Belum Disimpan!</h3>
+                <p className={styles.authModalSubtitle}>
+                  Anda memiliki data target budgeting tahun <strong>{year}</strong> yang baru saja diubah namun belum disimpan ke server.
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.authModalBody}>
+              <p style={{ fontSize: "12px", color: "#64748b", margin: 0, lineHeight: 1.5 }}>
+                Apakah Anda ingin menyimpan perubahan tersebut sekarang sebelum berpindah halaman/tampilan?
+              </p>
+            </div>
+
+            <div className={styles.authModalFooterStacked}>
+              <button
+                type="button"
+                className={styles.modalBtnConfirm}
+                onClick={() => {
+                  setShowUnsavedModal(false);
+                  setShowPasswordModal(true);
+                }}
+              >
+                <Save size={15} />
+                <span>Simpan & Lanjutkan</span>
+              </button>
+
+              <div style={{ display: "flex", gap: "8px", justifyContent: "space-between" }}>
+                <button
+                  type="button"
+                  className={styles.modalBtnDiscard}
+                  onClick={handleDiscardChanges}
+                  style={{ flex: 1 }}
+                >
+                  <RotateCcw size={14} />
+                  <span>Buang Perubahan</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={styles.modalBtnCancel}
+                  onClick={() => {
+                    setShowUnsavedModal(false);
+                    setPendingAction(null);
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  <span>Batal (Tetap di Sini)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═════════════════════════════════════════════════════════════════════
+          MODAL 2: ADMIN PASSWORD AUTHENTICATION MODAL
+          ═════════════════════════════════════════════════════════════════════ */}
+      {showPasswordModal && (
+        <div
+          className={styles.authModalOverlay}
+          onClick={() => setShowPasswordModal(false)}
+        >
+          <div className={styles.authModalCard} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.authModalHeader}>
+              <div className={`${styles.authModalIconBadge} ${styles.authModalIconBadgeGreen}`}>
+                <ShieldCheck size={24} />
+              </div>
+              <div className={styles.authModalTitleGroup}>
+                <h3 className={styles.authModalTitle}>Otorisasi Sandi Admin</h3>
+                <p className={styles.authModalSubtitle}>
+                  Menyimpan perubahan master target budgeting tahun <strong>{year}</strong> memerlukan otorisasi password admin/supervisor.
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.authModalBody}>
+              <div className={styles.passwordInputBox}>
+                <input
+                  ref={passwordInputRef}
+                  type={showPasswordText ? "text" : "password"}
+                  placeholder="Masukkan password admin..."
+                  value={passwordInput}
+                  onChange={(e) => {
+                    setPasswordInput(e.target.value);
+                    if (passwordError) setPasswordError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleVerifyAndSave();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggleBtn}
+                  onClick={() => setShowPasswordText(!showPasswordText)}
+                  title={showPasswordText ? "Sembunyikan password" : "Tampilkan password"}
+                >
+                  {showPasswordText ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              {passwordError && (
+                <p className={styles.passwordErrorText}>{passwordError}</p>
+              )}
+
+              <p style={{ fontSize: "11px", color: "#94a3b8", margin: 0, fontStyle: "italic" }}>
+                Gunakan sandi admin untuk mengonfirmasi penyimpanan ke database Firestore.
+              </p>
+            </div>
+
+            <div className={styles.authModalFooter}>
+              <button
+                type="button"
+                className={styles.modalBtnCancel}
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setPasswordError(null);
+                }}
+              >
+                Batal
+              </button>
+
+              <button
+                type="button"
+                className={styles.modalBtnConfirm}
+                onClick={handleVerifyAndSave}
+                disabled={saving || !passwordInput.trim()}
+              >
+                <Lock size={14} />
+                <span>{saving ? "Memverifikasi..." : "Verifikasi & Simpan"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

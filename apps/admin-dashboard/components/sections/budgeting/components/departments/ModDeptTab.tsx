@@ -14,7 +14,7 @@ interface ModDeptTabProps {
 export const ModDeptTab: React.FC<ModDeptTabProps> = ({ monthData, onChange }) => {
   const [activeSubTab, setActiveSubTab] = useState<"laundry" | "spa" | "other">("laundry");
 
-  const mod: ModDepartmentBudget = monthData.deptMod || createDefaultModDepartment();
+  const mod: ModDepartmentBudget = monthData?.deptMod || createDefaultModDepartment();
 
   return (
     <div className={styles.sectionGrid}>

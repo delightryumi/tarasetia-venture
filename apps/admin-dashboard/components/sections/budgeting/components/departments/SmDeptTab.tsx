@@ -30,7 +30,7 @@ const SM_EXPENSE_ROWS = [
 ];
 
 export const SmDeptTab: React.FC<SmDeptTabProps> = ({ monthData, onChange }) => {
-  const sm: SmDepartmentBudget = monthData.deptSm || createDefaultSmDepartment();
+  const sm: SmDepartmentBudget = monthData?.deptSm || createDefaultSmDepartment();
 
   return (
     <div className={styles.sectionGrid}>

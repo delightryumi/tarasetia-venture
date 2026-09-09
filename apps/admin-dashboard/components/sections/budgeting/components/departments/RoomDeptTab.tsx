@@ -21,7 +21,7 @@ export const RoomDeptTab: React.FC<RoomDeptTabProps> = ({
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<"all" | "statistic" | "revenue" | "fo" | "hk">("all");
 
-  const rm: RoomDepartmentBudget = monthData.deptRooms || {
+  const rm: RoomDepartmentBudget = monthData?.deptRooms || {
     revenue: { lodging: 0, extraBed: 0, otherRoomRevenue: 0, total: 0 },
     cogs: { roomSupplies: 0, linenReplacement: 0, total: 0 },
     frontOffice: {
@@ -58,7 +58,21 @@ export const RoomDeptTab: React.FC<RoomDeptTabProps> = ({
     departmentProfit: 0,
   };
 
-  const st = monthData.statistic;
+  const st = monthData?.statistic || {
+    roomsAvailable: 0,
+    roomsOutOfOrder: 0,
+    roomsOccupiedComp: 0,
+    roomsOccupiedHouseUse: 0,
+    occupiedRoomsPaid: 0,
+    totalRoomsOccupied: 0,
+    occupancyPercent: 0,
+    arrIdr: 0,
+    revParIdr: 0,
+    totalPax: 0,
+    payingPax: 0,
+    fnbCoverCount: 0,
+    fnbAverageSpend: 0,
+  };
   const autoRoomsAvailable = hotelRoomCount * daysInMonth;
 
   // Handle Occupancy % Change with auto Room Sold & Lodging Revenue

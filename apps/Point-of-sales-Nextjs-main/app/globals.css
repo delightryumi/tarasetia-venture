@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -591,4 +591,80 @@ aside.collapsed .sidebar-toggle {
   background-color: var(--sidebar-active-indicator);
   border-radius: 2px;
 }
+
+/* Auto Forced Landscape for Mobile & Tablet POS */
+@media screen and (orientation: portrait) {
+  html, body {
+    overflow: hidden !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    width: 100dvw !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: fixed !important;
+    inset: 0 !important;
+  }
+  .pos-forced-landscape-root {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100vh !important;
+    width: 100dvh !important;
+    height: 100vw !important;
+    height: 100dvw !important;
+    transform: translate(-50%, -50%) rotate(90deg) !important;
+    transform-origin: center center !important;
+    overflow: hidden !important;
+    z-index: 1000 !important;
+  }
+  .pos-forced-landscape-splash {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100vh !important;
+    width: 100dvh !important;
+    height: 100vw !important;
+    height: 100dvw !important;
+    transform: translate(-50%, -50%) rotate(90deg) !important;
+    transform-origin: center center !important;
+    overflow: hidden !important;
+    z-index: 999999 !important;
+  }
+}
+
+@media screen and (orientation: landscape) {
+  html, body {
+    overflow: hidden !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    width: 100dvw !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .pos-forced-landscape-root {
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+    transform: none !important;
+  }
+  .pos-forced-landscape-splash {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    width: 100dvw !important;
+    height: 100dvh !important;
+    transform: none !important;
+    z-index: 999999 !important;
+  }
+}
+
+
+
 

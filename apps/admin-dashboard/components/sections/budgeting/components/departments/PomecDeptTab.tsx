@@ -36,7 +36,7 @@ const POMEC_MAINTENANCE_ROWS = [
 ];
 
 export const PomecDeptTab: React.FC<PomecDeptTabProps> = ({ monthData, onChange }) => {
-  const pomec: PomecDepartmentBudget = monthData.deptPomec || createDefaultPomecDepartment();
+  const pomec: PomecDepartmentBudget = monthData?.deptPomec || createDefaultPomecDepartment();
 
   return (
     <div className={styles.sectionGrid}>

@@ -1,0 +1,186 @@
+/* ==========================================================================
+   PRO UI APPLE-STYLE CINEMATIC SPLASH LOADER MODULE
+   ========================================================================== */
+
+.splashContainer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  background-image: 
+    radial-gradient(ellipse 70% 50% at 50% 45%, rgba(245, 245, 247, 0.9) 0%, #ffffff 100%),
+    radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.03) 0%, transparent 60%);
+  user-select: none;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ambient Diffused Halo Lighting */
+.ambientHalo {
+  position: absolute;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.03) 0%, rgba(212, 175, 55, 0.02) 40%, transparent 70%);
+  filter: blur(50px);
+  pointer-events: none;
+  animation: haloBreath 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes haloBreath {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.12);
+    opacity: 0.8;
+  }
+}
+
+/* Center Stage Content Card */
+.stageCard {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 32px;
+  text-align: center;
+  max-width: 340px;
+}
+
+/* Logo Pedestal Frame */
+.logoFrame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.logoAura {
+  position: absolute;
+  inset: -12px;
+  border-radius: 28px;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.04) 0%, transparent 70%);
+  filter: blur(16px);
+  pointer-events: none;
+}
+
+.logoImage {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+  filter: invert(1) drop-shadow(0 4px 18px rgba(0, 0, 0, 0.09));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Apple Status Badge */
+.metaPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.035);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 8px;
+}
+
+.pulsingDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.metaText {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #515154;
+}
+
+/* Subtitle Monospace Label */
+.brandLabel {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #1d1d1f;
+  margin: 0 0 20px 0;
+}
+
+/* Minimalist Apple Progress Track */
+.progressContainer {
+  width: 140px;
+  height: 3px;
+  background-color: rgba(0, 0, 0, 0.06);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.progressFill {
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, #1d1d1f 50%, transparent 100%);
+  border-radius: 9999px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
+  animation: appleProgressSweep 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes appleProgressSweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+/* Subtext hint */
+.systemHint {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #86868b;
+  margin-top: 14px;
+}
+
+/* Subtle Cupertino Footer */
+.footerBranding {
+  position: absolute;
+  bottom: 24px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: lowercase;
+  color: #86868b;
+}

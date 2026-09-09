@@ -795,14 +795,14 @@ const items = [
     title: "Don't Forget To Rest Your Soul",
     description: <span className="text-sm">Experience the power of time.</span>,
     header: <DigitalClock />,
-    className: 'md:col-span-1 h-full min-h-[10rem]',
+    className: 'col-span-1 h-full min-h-[10rem]',
     icon: <IconClock className="h-4 w-4 text-neutral-500" />,
   },
   {
     title: 'Shift Aktif',
     description: <span className="text-sm">Ringkasan kasir yang sedang bertugas.</span>,
     header: <ActiveShiftSummary />,
-    className: 'md:col-span-2 h-full min-h-[10rem]',
+    className: 'col-span-2 h-full min-h-[10rem]',
     icon: <IconTableColumn className="h-4 w-4 text-neutral-500" />,
   },
   {
@@ -813,7 +813,7 @@ const items = [
         <ChartOne defaultStartDate={getTodayString()} defaultEndDate={getTodayString()} />
       </div>
     ),
-    className: 'md:col-span-3',
+    className: 'col-span-3',
     icon: <IconTableColumn className="h-4 w-4 text-neutral-500" />,
   },
 ];

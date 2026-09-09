@@ -709,6 +709,11 @@ export interface BudgetAuditLog {
   userRole?: string;
   action: string;
   details?: string;
+  snapshot?: {
+    months: Record<string, BudgetMonthData>;
+    manning?: YearlyManningPlan;
+    fees?: YearlyFeesPlan;
+  };
 }
 
 export interface YearlyBudgetDocument {

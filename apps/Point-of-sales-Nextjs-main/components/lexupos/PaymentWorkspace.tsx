@@ -84,10 +84,10 @@ export default function PaymentWorkspace({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row-reverse flex-1 h-full min-w-0 overflow-y-auto lg:overflow-hidden bg-neutral-50/30 dark:bg-zinc-950/30">
+    <div className="flex flex-row-reverse flex-1 h-full min-w-0 overflow-hidden bg-neutral-50/30 dark:bg-zinc-950/30">
       
       {/* Visual Right Side (Review Transaksi) */}
-      <div className="w-full lg:w-[420px] xl:w-[460px] flex flex-col min-w-0 p-5 lg:p-8 shrink-0 lg:overflow-y-auto thin-scrollbar border-b lg:border-b-0 lg:border-l border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-950 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] z-10">
+      <div className="w-[360px] xl:w-[420px] flex flex-col min-w-0 p-5 shrink-0 overflow-y-auto thin-scrollbar border-l border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-950 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] z-10">
         <Button
           variant="ghost"
           size="sm"
@@ -131,15 +131,7 @@ export default function PaymentWorkspace({
           </div>
         )}
 
-        {/* Compact Item Summary on Mobile */}
-        <div className="flex lg:hidden items-center justify-between bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.05] rounded-[10px] p-3 shadow-sm mb-4 shrink-0">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">Total Item</span>
-          <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
-            {cart.reduce((sum, item) => sum + item.quantity, 0)} Pcs ({formatCurrency(subtotal)})
-          </span>
-        </div>
-
-        <div className="hidden lg:flex flex-1 overflow-y-auto bg-neutral-50 dark:bg-zinc-900/50 border border-neutral-200/80 dark:border-white/[0.05] rounded-[10px] p-5 flex flex-col gap-4 thin-scrollbar shadow-sm">
+        <div className="flex-1 overflow-y-auto bg-neutral-50 dark:bg-zinc-900/50 border border-neutral-200/80 dark:border-white/[0.05] rounded-[10px] p-5 flex flex-col gap-4 thin-scrollbar shadow-sm">
           {cart.map((item) => (
             <div 
               key={item.product.id}
@@ -150,7 +142,7 @@ export default function PaymentWorkspace({
                 <img
                   src={item.product.image}
                   alt={item.product.name}
-                  className="w-12 h-12 rounded-xl object-cover bg-slate-100 dark:bg-neutral-800 shrink-0"
+                  className="w-12 h-12 rounded-xl object-cover bg-slate-100 dark:neutral-800 shrink-0"
                 />
                 <div className="min-w-0">
                   <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 truncate">
@@ -171,7 +163,7 @@ export default function PaymentWorkspace({
       </div>
 
       {/* Visual Left Side (Configuration & Checkout) */}
-      <div className="flex-1 flex flex-col lg:h-full overflow-y-auto thin-scrollbar">
+      <div className="flex-1 flex flex-col h-full overflow-y-auto thin-scrollbar">
         
         {/* TOP LOCKED SECTION: Revenue Type & Payment Method */}
         <div className="p-4 pb-4 flex flex-col gap-4 shrink-0 z-10 border-b border-neutral-200 dark:border-white/[0.05]">

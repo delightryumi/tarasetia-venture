@@ -101,13 +101,5 @@ export default function POSPage() {
     }
   }, [user, activeHotelCode]);
 
-  return (
-    <div className="flex h-screen w-screen items-center justify-center bg-zinc-950 text-white font-sans">
-      <div className="text-center">
-        <p className="text-sm font-semibold tracking-wider text-blue-500 animate-pulse uppercase">
-          Redirecting to POS Terminal...
-        </p>
-      </div>
-    </div>
-  );
+  return null;
 }

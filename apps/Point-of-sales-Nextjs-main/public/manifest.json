@@ -1,0 +1,17 @@
+{
+  "name": "MyTara POS - Point of Sale",
+  "short_name": "MyTara POS",
+  "description": "Sistem Kasir & Point of Sale Terintegrasi MyTara",
+  "start_url": "/home",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

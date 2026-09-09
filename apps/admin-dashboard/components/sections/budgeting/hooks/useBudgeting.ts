@@ -312,6 +312,11 @@ export const useBudgeting = () => {
         userEmail,
         userRole,
         action: `Update Target Budget Tahun ${updatedDoc.year}`,
+        snapshot: {
+          months: JSON.parse(JSON.stringify(updatedDoc.months || {})),
+          manning: updatedDoc.manning ? JSON.parse(JSON.stringify(updatedDoc.manning)) : undefined,
+          fees: updatedDoc.fees ? JSON.parse(JSON.stringify(updatedDoc.fees)) : undefined,
+        },
       };
 
       const existingLogs = Array.isArray(updatedDoc.auditLogs) ? updatedDoc.auditLogs : [];
@@ -334,6 +339,64 @@ export const useBudgeting = () => {
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
       console.error("Error saving budget doc:", err);
+      throw err;
+    } finally {
+      setSavingBudget(false);
+    }
+  };
+
+  // Restore / Rollback to a specific Audit Log Snapshot (Superadmin only)
+  const restoreBudgetFromLog = async (logIndex: number) => {
+    if (!hotelCode || !budgetDoc || !budgetDoc.auditLogs || !budgetDoc.auditLogs[logIndex]) {
+      throw new Error("Data riwayat log tidak ditemukan.");
+    }
+    const targetLog = budgetDoc.auditLogs[logIndex];
+    if (!targetLog.snapshot || !targetLog.snapshot.months) {
+      throw new Error("Snapshot data untuk versi ini tidak tersedia atau versi dibuat sebelum fitur snapshot aktif.");
+    }
+
+    setSavingBudget(true);
+    try {
+      const now = new Date().toISOString();
+      const userName = user?.displayName || user?.email?.split("@")[0] || "Superadmin";
+      const userEmail = user?.email || "superadmin@setara.com";
+      const userRole = user?.role || "superadmin";
+
+      const rollbackLogEntry: BudgetAuditLog = {
+        timestamp: now,
+        userName,
+        userEmail,
+        userRole,
+        action: `Rollback ke versi ${new Date(targetLog.timestamp).toLocaleString("id-ID")}`,
+        snapshot: {
+          months: JSON.parse(JSON.stringify(targetLog.snapshot.months || {})),
+          manning: targetLog.snapshot.manning ? JSON.parse(JSON.stringify(targetLog.snapshot.manning)) : undefined,
+          fees: targetLog.snapshot.fees ? JSON.parse(JSON.stringify(targetLog.snapshot.fees)) : undefined,
+        },
+      };
+
+      const existingLogs = Array.isArray(budgetDoc.auditLogs) ? budgetDoc.auditLogs : [];
+      const updatedLogs = [rollbackLogEntry, ...existingLogs].slice(0, 50);
+
+      const restoredPayload: YearlyBudgetDocument = {
+        ...budgetDoc,
+        months: JSON.parse(JSON.stringify(targetLog.snapshot.months)),
+        manning: targetLog.snapshot.manning ? JSON.parse(JSON.stringify(targetLog.snapshot.manning)) : budgetDoc.manning,
+        fees: targetLog.snapshot.fees ? JSON.parse(JSON.stringify(targetLog.snapshot.fees)) : budgetDoc.fees,
+        updatedAt: now,
+        lastUpdatedBy: userName,
+        lastUpdatedByEmail: userEmail,
+        lastUpdatedByRole: userRole,
+        auditLogs: updatedLogs,
+      };
+
+      const budgetRef = doc(getHotelCollection(db, "budgeting", hotelCode), String(budgetDoc.year));
+      await setDoc(budgetRef, restoredPayload, { merge: true });
+
+      setBudgetDoc(restoredPayload);
+      return restoredPayload;
+    } catch (err) {
+      console.error("Error restoring budget from log:", err);
       throw err;
     } finally {
       setSavingBudget(false);
@@ -403,6 +466,7 @@ export const useBudgeting = () => {
     saveSuccess,
     budgetDoc,
     saveBudgetDoc,
+    restoreBudgetFromLog,
     dsrReport,
     refetchActuals: () => fetchActualsData(selectedYear, selectedDate),
   };

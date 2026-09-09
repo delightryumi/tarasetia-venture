@@ -25,7 +25,7 @@ const HR_EXPENSE_ROWS = [
 ];
 
 export const HrdDeptTab: React.FC<HrdDeptTabProps> = ({ monthData, onChange }) => {
-  const hrd: HrdDepartmentBudget = monthData.deptHrd || createDefaultHrdDepartment();
+  const hrd: HrdDepartmentBudget = monthData?.deptHrd || createDefaultHrdDepartment();
 
   return (
     <div className={styles.sectionGrid}>

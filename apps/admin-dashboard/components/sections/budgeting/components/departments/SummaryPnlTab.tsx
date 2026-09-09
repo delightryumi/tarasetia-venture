@@ -11,7 +11,7 @@ interface SummaryPnlTabProps {
 }
 
 export const SummaryPnlTab: React.FC<SummaryPnlTabProps> = ({ monthData, onChange }) => {
-  const pnl = monthData.summaryPnl || {
+  const pnl = monthData?.summaryPnl || {
     roomRevenue: 0,
     fnbRevenue: 0,
     modRevenue: 0,
@@ -43,7 +43,7 @@ export const SummaryPnlTab: React.FC<SummaryPnlTabProps> = ({ monthData, onChang
     noiMarginPercent: 0,
   };
 
-  const nonOp: NonOpDepartmentBudget = monthData.deptNonOp || createDefaultNonOpDepartment();
+  const nonOp: NonOpDepartmentBudget = monthData?.deptNonOp || createDefaultNonOpDepartment();
 
   const handleNonOpChange = (field: keyof NonOpDepartmentBudget, val: number) => {
     onChange((draft) => {

@@ -17,6 +17,8 @@ import { NavbarSheet } from '@/components/dashboard/NavbarSheet';
 import { MobileBottomNav } from '@/components/dashboard/MobileBottomNav';
 import { BillingSuspendedModal } from '@/components/dashboard/BillingSuspendedModal';
 import { NAVBAR_ITEMS } from '@/constant/navbarMenu';
+import { OrientationController } from '@/components/orientation/OrientationController';
+import { PosSplashLoader } from '@/components/loader/PosSplashLoader';
 import { useRBAC } from '@/hooks/useRBAC';
 import { toast } from 'react-toastify';
 import axios from 'axios';
@@ -49,7 +51,16 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [hotelsList, setHotelsList] = useState<any[]>([]);
+  const [isSplashDone, setIsSplashDone] = useState(false);
   const posSoundUrlRef = React.useRef<string>('/sounds/notification.mp3');
+
+  useEffect(() => {
+    // Cinematic Apple Intro duration: 1.6s
+    const timer = setTimeout(() => {
+      setIsSplashDone(true);
+    }, 1600);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleHotelChange = async (newCode: string) => {
     if (!user) return;
@@ -678,11 +689,30 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     );
   }
 
+  if (rbacLoading || !isSplashDone) {
+    return (
+      <div className="bg-white text-neutral-900 h-full w-full overflow-hidden relative flex flex-col items-center justify-center">
+        <PosSplashLoader />
+        <OrientationController />
+      </div>
+    );
+  }
 
+  if (!isAuthorized) {
+    if (typeof window !== 'undefined') {
+      window.location.href = loginGatewayUrl;
+    }
+    return (
+      <div className="bg-white text-neutral-900 h-full w-full overflow-hidden relative flex flex-col items-center justify-center">
+        <PosSplashLoader />
+        <OrientationController />
+      </div>
+    );
+  }
 
   return (
     <div 
-      className="bg-background text-foreground h-screen overflow-hidden flex flex-col relative"
+      className="bg-background text-foreground h-full overflow-hidden flex flex-col relative w-full"
     >
       {/* Header spanning 100% width across the top */}
       <header className="flex h-14 shrink-0 items-center justify-between gap-4 py-2.5 px-4 lg:px-6 sticky top-0 z-20 bg-white/65 dark:bg-[#181818]/65 backdrop-blur-md border-b border-black/5 dark:border-white/5 w-full select-none print:hidden">
@@ -700,10 +730,10 @@ const RootLayout = ({ children }: RootLayoutProps) => {
             />
           </button>
           
-          <div className="h-6 w-px bg-[#2e2e30] hidden sm:block" />
+          <div className="h-6 w-px bg-[#2e2e30]" />
           
           {isSuperadmin ? (
-            <div className="relative hidden sm:flex items-center h-9 w-[260px] md:w-[320px] bg-white dark:bg-[#222225] border border-slate-300 dark:border-white/[0.08] rounded-[6px] overflow-hidden shadow-sm text-neutral-900 dark:text-[#f4f4f5] text-[13px] font-semibold transition-all">
+            <div className="relative flex items-center h-9 w-[240px] md:w-[320px] bg-white dark:bg-[#222225] border border-slate-300 dark:border-white/[0.08] rounded-[6px] overflow-hidden shadow-sm text-neutral-900 dark:text-[#f4f4f5] text-[13px] font-semibold transition-all">
               <select
                 value={user?.hotelCode || "0"}
                 onChange={(e) => handleHotelChange(e.target.value)}
@@ -729,7 +759,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
               </select>
             </div>
           ) : (
-            <div className="hidden sm:flex items-center h-9 px-3 w-[260px] md:w-[320px] bg-white dark:bg-[#222225] border border-slate-300 dark:border-white/[0.08] rounded-[6px] overflow-hidden shadow-sm text-neutral-900 dark:text-[#f4f4f5] text-[13px] font-semibold">
+            <div className="flex items-center h-9 px-3 w-[240px] md:w-[320px] bg-white dark:bg-[#222225] border border-slate-300 dark:border-white/[0.08] rounded-[6px] overflow-hidden shadow-sm text-neutral-900 dark:text-[#f4f4f5] text-[13px] font-semibold">
               <span className="truncate w-full text-left text-neutral-900 dark:text-[#f4f4f5]">
                 [{user?.hotelCode || "0"}] {hotelName || "Memuat..."}
               </span>
@@ -886,39 +916,22 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         {/* Main Content Area */}
         <div 
           className={`flex flex-col h-full overflow-hidden w-full transition-all duration-500 ${
-            isCollapsed ? "md:pl-[100px]" : "md:pl-[200px]"
+            isCollapsed ? "pl-[100px]" : "pl-[200px]"
           }`}
         >
-          <main className={`flex-1 ${isLexuPos ? 'overflow-hidden p-0 pb-[56px] md:pr-5 md:pt-5 md:pb-5' : 'overflow-y-auto p-4 lg:p-6 pb-[72px] md:pb-0'} bg-slate-50 dark:bg-zinc-900/10 print:p-0 print:bg-white`}>
+          <main className={`flex-1 ${isLexuPos ? 'overflow-hidden p-0 pb-5 pr-5 pt-5' : 'overflow-y-auto p-4 lg:p-6 pb-4'} bg-slate-50 dark:bg-zinc-900/10 print:p-0 print:bg-white`}>
             <div
               className={`flex flex-col flex-1 ${isLexuPos ? 'h-full rounded-none md:rounded-xl overflow-hidden' : 'rounded-lg min-h-full'} print:p-0 print:m-0`}
               x-chunk="dashboard-02-chunk-1"
             >
-              {rbacLoading ? (
-                <div className="flex flex-1 items-center justify-center">
-                  <p className="text-sm text-muted-foreground animate-pulse">Checking access...</p>
-                </div>
-              ) : !isAuthorized ? (
-                (() => {
-                  if (typeof window !== 'undefined') {
-                    window.location.href = loginGatewayUrl;
-                  }
-                  return (
-                    <div className="flex flex-1 items-center justify-center">
-                      <p className="text-sm text-muted-foreground">Redirecting to login...</p>
-                    </div>
-                  );
-                })()
-              ) : (
-                children
-              )}
+              {children}
             </div>
           </main>
-          <div className="print:hidden">
-            <MobileBottomNav />
-          </div>
         </div>
       </div>
+
+      {/* Auto Landscape Lock for Mobile/Tablet POS */}
+      <OrientationController />
 
     </div>
   );
