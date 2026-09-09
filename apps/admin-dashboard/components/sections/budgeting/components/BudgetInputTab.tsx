@@ -24,8 +24,15 @@ import {
   Wrench,
   Sparkles,
   Calculator,
+  Calendar,
+  BarChart3,
+  FileSpreadsheet,
+  Download,
 } from "lucide-react";
 import styles from "../budgeting.module.css";
+import yearlyStyles from "./yearly/yearly.module.css";
+import { YearlyBudgetTab } from "./yearly/YearlyBudgetTab";
+import { useBudgetExport } from "../hooks/useBudgetExport";
 
 // Departmental Sub-components mirroring all 26 sheets of Excel USALI standard
 import { SummaryPnlTab } from "./departments/SummaryPnlTab";
@@ -73,6 +80,7 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
   saving,
   saveSuccess,
 }) => {
+  const [viewMode, setViewMode] = useState<"monthly" | "yearly">("monthly");
   const [activeMonthKey, setActiveMonthKey] = useState<string>("01");
   const [activeTab, setActiveTab] = useState<DeptTabKey>("pnl");
   const [localDoc, setLocalDoc] = useState<YearlyBudgetDocument | null>(() => {
@@ -100,6 +108,13 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
       setLocalDoc(JSON.parse(JSON.stringify(budgetDoc)));
     }
   }, [budgetDoc]);
+
+  const { exportYearlyMasterExcel, exportMonthlyBudgetExcel } = useBudgetExport({
+    year,
+    budgetDoc: localDoc,
+    hotelName: localDoc?.hotelName || "Bumi Anyom Resort",
+    hotelRoomCount,
+  });
 
   if (!localDoc) {
     return (
@@ -195,32 +210,129 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
     <div className={styles.sectionGrid}>
       {/* Top Toolbar */}
       <div className={styles.monthSelectorBar}>
-        {/* Month Buttons Jan - Des */}
-        <div className={styles.monthButtonsList}>
-          {MONTH_NAMES.map((m) => {
-            const isActive = m.key === activeMonthKey;
-            return (
+        {/* View Mode Toggle & Month Buttons */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          {/* Segmented Mode Switcher */}
+          <div className={yearlyStyles.viewModeToggleGroup}>
+            <button
+              type="button"
+              onClick={() => setViewMode("monthly")}
+              className={`${yearlyStyles.viewModeBtn} ${viewMode === "monthly" ? yearlyStyles.viewModeBtnActive : ""}`}
+            >
+              <Calendar size={14} />
+              <span>Bulanan (Monthly)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("yearly")}
+              className={`${yearlyStyles.viewModeBtn} ${viewMode === "yearly" ? yearlyStyles.viewModeBtnActive : ""}`}
+            >
+              <BarChart3 size={14} />
+              <span>Tahunan (Full Year)</span>
+            </button>
+          </div>
+
+          {/* Month Buttons Jan - Des (shown in Monthly mode or with direct jumper) */}
+          {viewMode === "monthly" ? (
+            <div className={styles.monthButtonsList}>
+              {MONTH_NAMES.map((m) => {
+                const isActive = m.key === activeMonthKey;
+                return (
+                  <button
+                    key={m.key}
+                    onClick={() => setActiveMonthKey(m.key)}
+                    className={`${styles.monthBtn} ${isActive ? styles.monthBtnActive : ""}`}
+                  >
+                    {m.name.slice(0, 3)}
+                  </button>
+                );
+              })}
+              <div style={{ width: "1px", height: "18px", backgroundColor: "#d4d4d8", margin: "0 2px" }} />
               <button
-                key={m.key}
-                onClick={() => setActiveMonthKey(m.key)}
-                className={`${styles.monthBtn} ${isActive ? styles.monthBtnActive : ""}`}
+                type="button"
+                onClick={() => setViewMode("yearly")}
+                className={styles.monthBtn}
+                style={{ color: "#2563eb", fontWeight: 800 }}
+                title="Lihat Rekapitulasi Konsolidasi Budget Tahunan"
               >
-                {m.name.slice(0, 3)}
+                📊 Tahunan (12 Bulan)
               </button>
-            );
-          })}
+            </div>
+          ) : (
+            <div className={styles.monthButtonsList}>
+              <button
+                type="button"
+                onClick={() => setViewMode("yearly")}
+                className={`${styles.monthBtn} ${styles.monthBtnActive}`}
+                style={{ fontWeight: 800 }}
+              >
+                📊 Konsolidasi 12 Bulan (Full Year)
+              </button>
+              <div style={{ width: "1px", height: "18px", backgroundColor: "#d4d4d8", margin: "0 2px" }} />
+              {MONTH_NAMES.map((m) => (
+                <button
+                  key={m.key}
+                  onClick={() => {
+                    setActiveMonthKey(m.key);
+                    setViewMode("monthly");
+                  }}
+                  className={styles.monthBtn}
+                  title={`Beralih ke mode edit bulan ${m.name}`}
+                >
+                  {m.name.slice(0, 3)}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Actions */}
         <div className={styles.toolbarActions}>
-          <button
-            onClick={copyToAllMonths}
-            className={styles.copyBtn}
-            title="Salin konfigurasi bulan ini ke semua bulan (Jan - Des)"
-          >
-            <Copy size={16} />
-            <span>Salin ke Semua Bulan</span>
-          </button>
+          {viewMode === "monthly" ? (
+            <>
+              <button
+                type="button"
+                onClick={() => exportMonthlyBudgetExcel(activeMonthKey)}
+                className={styles.copyBtn}
+                style={{ color: "#047857", borderColor: "#a7f3d0", backgroundColor: "#ecfdf5" }}
+                title={`Download Excel rincian budget bulan ${currentMonthName}`}
+              >
+                <FileSpreadsheet size={15} />
+                <span>Excel {currentMonthName.slice(0, 3)}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={exportYearlyMasterExcel}
+                className={styles.copyBtn}
+                style={{ color: "#1d4ed8", borderColor: "#bfdbfe", backgroundColor: "#eff6ff" }}
+                title="Download Master Workbook Excel Konsolidasi 12 Bulan Lengkap (7 Sheet USALI)"
+              >
+                <Download size={15} />
+                <span>Master Excel (12 Bulan)</span>
+              </button>
+
+              <button
+                onClick={copyToAllMonths}
+                className={styles.copyBtn}
+                title="Salin konfigurasi bulan ini ke semua bulan (Jan - Des)"
+              >
+                <Copy size={16} />
+                <span>Salin ke Semua Bulan</span>
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={exportYearlyMasterExcel}
+              className={styles.copyBtn}
+              style={{ color: "#047857", borderColor: "#a7f3d0", backgroundColor: "#ecfdf5", fontWeight: 700 }}
+              title="Download Master Workbook Excel Konsolidasi 12 Bulan Lengkap (7 Sheet USALI)"
+            >
+              <FileSpreadsheet size={15} />
+              <span>Export Master Excel (7 Sheet)</span>
+            </button>
+          )}
 
           <button
             onClick={() => onSave(localDoc)}
@@ -241,6 +353,20 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
           </button>
         </div>
       </div>
+
+      {/* ── CONDITIONAL RENDERING: YEARLY VIEW vs MONTHLY VIEW ── */}
+      {viewMode === "yearly" ? (
+        <YearlyBudgetTab
+          year={year}
+          budgetDoc={localDoc}
+          hotelRoomCount={hotelRoomCount}
+          onSelectMonth={(k) => {
+            setActiveMonthKey(k);
+            setViewMode("monthly");
+          }}
+        />
+      ) : (
+        <>
 
       {/* Live Active Month KPI Cards */}
       <div className={styles.monthKpiSummaryGrid}>
@@ -447,6 +573,8 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
           budgetDoc={localDoc}
           onDocChange={updateEntireDoc}
         />
+      )}
+        </>
       )}
     </div>
   );

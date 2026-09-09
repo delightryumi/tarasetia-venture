@@ -220,6 +220,25 @@ export const DSRReportTab: React.FC<DSRReportTabProps> = ({ dsrReport, hotelName
           </tbody>
         </table>
       </div>
+
+      {/* Formal Print-Only Executive Signature Block */}
+      <div className={styles.printSignatureSection}>
+        <div className={styles.signatureBox}>
+          <p className={styles.sigTitle}>Prepared by</p>
+          <div className={styles.sigLine} />
+          <p className={styles.sigRole}>Night Auditor / Income Audit</p>
+        </div>
+        <div className={styles.signatureBox}>
+          <p className={styles.sigTitle}>Verified by</p>
+          <div className={styles.sigLine} />
+          <p className={styles.sigRole}>Chief Accountant / Finance</p>
+        </div>
+        <div className={styles.signatureBox}>
+          <p className={styles.sigTitle}>Approved by</p>
+          <div className={styles.sigLine} />
+          <p className={styles.sigRole}>General Manager</p>
+        </div>
+      </div>
     </div>
   );
 };

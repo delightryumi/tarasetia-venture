@@ -1700,4 +1700,339 @@
   font-size: 11.5px;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   PRINT STYLES — DSR & Budgeting Native PDF / Paper Formatting
+   ═══════════════════════════════════════════════════════════════ */
+.printSignatureSection {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 6mm 8mm;
+  }
+
+  /* Reset all containers to pure white paper mode regardless of theme */
+  .container,
+  :global(.dark) .container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  /* Hide header controls, buttons, toolbars and alert banners */
+  .header,
+  .headerCard,
+  .headerRight,
+  .dateControlGroup,
+  .actionBtnGroup,
+  .toolbar,
+  .monthSelectorBar,
+  .tabsList,
+  .alertBanner,
+  .btnAction,
+  .btnPrimary,
+  .secondaryBtn,
+  .primaryBtn,
+  .iconBtn,
+  .todayBtn,
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  .tabContentArea,
+  :global(.dark) .tabContentArea {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    background: #ffffff !important;
+  }
+
+  /* Report Card - Crisp Clean Paper Style */
+  .reportCard,
+  :global(.dark) .reportCard,
+  .excelCard,
+  :global(.dark) .excelCard {
+    border: 1px solid #94a3b8 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    overflow: visible !important;
+    page-break-inside: auto !important;
+    margin: 0 !important;
+  }
+
+  /* Formal Header Banner */
+  .reportHeaderBanner,
+  :global(.dark) .reportHeaderBanner {
+    padding: 10px 16px !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-bottom: 2px solid #0f172a !important;
+    text-align: center !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .reportHotelName,
+  :global(.dark) .reportHotelName {
+    font-size: 17px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.06em !important;
+    color: #0f172a !important;
+    margin: 0 0 2px 0 !important;
+    text-transform: uppercase !important;
+  }
+
+  .reportDocTitle,
+  :global(.dark) .reportDocTitle {
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em !important;
+    color: #166534 !important;
+    margin: 0 !important;
+    text-transform: uppercase !important;
+  }
+
+  .tableWrapper,
+  :global(.dark) .tableWrapper,
+  .excelTableWrapper,
+  :global(.dark) .excelTableWrapper {
+    overflow: visible !important;
+    width: 100% !important;
+    background: #ffffff !important;
+  }
+
+  /* DSR Table - Crisp Accounting Grid */
+  .dsrTable,
+  :global(.dark) .dsrTable,
+  .excelTable,
+  :global(.dark) .excelTable {
+    width: 100% !important;
+    min-width: 100% !important;
+    font-size: 8px !important;
+    border-collapse: collapse !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .dsrTable th,
+  .dsrTable td,
+  :global(.dark) .dsrTable th,
+  :global(.dark) .dsrTable td,
+  .excelTable th,
+  .excelTable td,
+  :global(.dark) .excelTable th,
+  :global(.dark) .excelTable td {
+    padding: 2.5px 4px !important;
+    border: 0.5px solid #cbd5e1 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Table Column Headers */
+  .thMain,
+  :global(.dark) .thMain {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    font-size: 8px !important;
+    font-weight: 800 !important;
+    border: 0.5px solid #334155 !important;
+    text-transform: uppercase !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .thSub,
+  :global(.dark) .thSub {
+    background-color: #334155 !important;
+    color: #ffffff !important;
+    font-size: 7.5px !important;
+    font-weight: 700 !important;
+    border: 0.5px solid #475569 !important;
+    text-transform: uppercase !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Section Title Rows */
+  .sectionRow,
+  :global(.dark) .sectionRow {
+    background-color: #e2e8f0 !important;
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    font-size: 8.5px !important;
+    border-top: 1.5px solid #64748b !important;
+    border-bottom: 1.5px solid #64748b !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .sectionDebitBanner,
+  :global(.dark) .sectionDebitBanner {
+    background-color: #0f172a !important;
+    color: #fef08a !important;
+    font-weight: 800 !important;
+    font-size: 9px !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .sectionCreditBanner,
+  :global(.dark) .sectionCreditBanner {
+    background-color: #0f172a !important;
+    color: #bae6fd !important;
+    font-weight: 800 !important;
+    font-size: 9px !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .subSectionRow,
+  :global(.dark) .subSectionRow {
+    background-color: #f8fafc !important;
+    color: #334155 !important;
+    font-weight: 700 !important;
+    font-size: 8px !important;
+    border-top: 1px solid #cbd5e1 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Data Rows */
+  .dataRow,
+  :global(.dark) .dataRow {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-bottom: 0.5px solid #e2e8f0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .dataRow td,
+  :global(.dark) .dataRow td {
+    color: #0f172a !important;
+    background-color: transparent !important;
+  }
+
+  .totalRow,
+  :global(.dark) .totalRow {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    border-top: 1.5px solid #475569 !important;
+    border-bottom: 1.5px solid #475569 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .totalRow td,
+  :global(.dark) .totalRow td {
+    color: #0f172a !important;
+  }
+
+  .highlightRow,
+  :global(.dark) .highlightRow {
+    background-color: #fef3c7 !important;
+    color: #78350f !important;
+    font-weight: 800 !important;
+    border-top: 1.5px solid #d97706 !important;
+    border-bottom: 1.5px solid #d97706 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .highlightRow td,
+  :global(.dark) .highlightRow td {
+    color: #78350f !important;
+  }
+
+  .borderCol,
+  :global(.dark) .borderCol {
+    border-left: 1px solid #64748b !important;
+  }
+
+  .cellText,
+  :global(.dark) .cellText {
+    color: #0f172a !important;
+    font-size: 8px !important;
+  }
+
+  .cellNum,
+  :global(.dark) .cellNum {
+    color: #0f172a !important;
+    font-size: 8px !important;
+  }
+
+  .varPositive,
+  :global(.dark) .varPositive {
+    color: #15803d !important;
+    font-weight: 700 !important;
+  }
+
+  .varNegative,
+  :global(.dark) .varNegative {
+    color: #b91c1c !important;
+    font-weight: 700 !important;
+  }
+
+  /* Formal Print-Only Executive Signature Block */
+  .printSignatureSection {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-end !important;
+    margin-top: 28px !important;
+    padding: 0 20px 10px 20px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    background: #ffffff !important;
+  }
+
+  .signatureBox {
+    text-align: center !important;
+    width: 170px !important;
+  }
+
+  .sigTitle {
+    font-size: 8px !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    margin: 0 0 40px 0 !important;
+    text-transform: uppercase !important;
+  }
+
+  .sigLine {
+    border-bottom: 1px solid #0f172a !important;
+    width: 100% !important;
+    margin-bottom: 3px !important;
+  }
+
+  .sigRole {
+    font-size: 7.5px !important;
+    color: #64748b !important;
+    margin: 0 !important;
+  }
+}
+
+
+
 

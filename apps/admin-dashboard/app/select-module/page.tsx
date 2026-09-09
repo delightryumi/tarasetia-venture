@@ -231,7 +231,7 @@ export default function SelectModulePage() {
       case 'accounting':
         return userPermissions['module_accounting'] !== undefined
           ? !!userPermissions['module_accounting']
-          : userPermissions['pnl'] !== false;
+          : (userPermissions['pnl'] !== false || userPermissions['pnl-budget'] !== false || userPermissions['dsr'] !== false || userPermissions['budgeting'] !== false || userPermissions['statements'] !== false);
       case 'purchasing':
         return userPermissions['module_purchasing'] !== undefined
           ? !!userPermissions['module_purchasing']

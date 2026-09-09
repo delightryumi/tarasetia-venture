@@ -29,7 +29,7 @@ export function WhatsAppWidget() {
     }
 
     return (
-        <div style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 9999, fontFamily: "var(--font-geist-sans), sans-serif" }}>
+        <div className="no-print" style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 9999, fontFamily: "var(--font-geist-sans), sans-serif" }}>
             {/* Pop-up: Absolutely Positioned above the button */}
             <div
                 style={{

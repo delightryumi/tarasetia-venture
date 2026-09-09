@@ -24,7 +24,7 @@ const ALL_KEYS = [
     // Front Office & Housekeeping
     "overview", "digital-checkin", "forecast", "inventory-control", "invoice", "purchase-order",
     // Accounting
-    "pnl", "statements",
+    "pnl", "pnl-budget", "dsr", "budgeting", "statements",
     // CPanel
     "logo", "hero", "room-type", "about", "gallery", "footer", 
     "attractions", "promo", "packages", "seo", "users",
@@ -79,6 +79,31 @@ export const useUsers = (menuItems: any[]) => {
         }
     };
 
+    // Auto-sync newly added menu items to existing users who have module_accounting or admin/GM access
+    const syncNewSubmenusToUsers = async (userList: UserProfile[]) => {
+        for (const u of userList) {
+            if (!u.permissions) continue;
+            const updates: Record<string, boolean> = {};
+            const roleLower = u.role?.toLowerCase() || "";
+            const isFullRole = roleLower === "admin" || roleLower === "superadmin" || roleLower === "general manager" || roleLower === "finance";
+            const hasAccounting = u.permissions.module_accounting !== false && (u.permissions.pnl === true || isFullRole);
+
+            if (hasAccounting) {
+                if (u.permissions["pnl-budget"] === undefined) updates["permissions.pnl-budget"] = true;
+                if (u.permissions["dsr"] === undefined) updates["permissions.dsr"] = true;
+                if (u.permissions["budgeting"] === undefined) updates["permissions.budgeting"] = true;
+            }
+
+            if (Object.keys(updates).length > 0) {
+                try {
+                    await updateDoc(doc(getHotelCollection(db, "users_master", hotelCode), u.id), updates);
+                } catch (e) {
+                    console.error("Failed to sync new permissions for user:", u.id, e);
+                }
+            }
+        }
+    };
+
     useEffect(() => {
         if (!hotelCode) return;
         // Listen to Users
@@ -109,6 +134,9 @@ export const useUsers = (menuItems: any[]) => {
             const needsMigration = list.filter(u => !u.permissions);
             if (needsMigration.length > 0) {
                 migrateUsersPermissions(needsMigration);
+            } else {
+                // Check if existing users need new menu sync
+                syncNewSubmenusToUsers(list);
             }
 
             // Hide superadmin users from the client UI list
@@ -129,7 +157,7 @@ export const useUsers = (menuItems: any[]) => {
                     let modules = data.billing?.activeModules || [];
                     // Map old cpanel key to cpanel-full or cpanel-only
                     if (modules.includes('cpanel')) {
-                        modules = modules.filter(m => m !== 'cpanel');
+                        modules = modules.filter((m: string) => m !== 'cpanel');
                         const plan = data.billing?.plan || 'enterprise';
                         if (plan === 'startup') {
                             if (!modules.includes('cpanel-only')) modules.push('cpanel-only');

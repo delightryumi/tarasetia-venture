@@ -6,12 +6,13 @@ const ALL_KEYS = [
     "module_pos", "module_front_office", "module_housekeeping", 
     "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel", "module_hrd",
     // Submenus
-    "overview", "forecast", "invoice", "pnl", "logo", "hero", "room-type", 
-    "about", "gallery", "footer", "attractions", "promo", "packages", "seo", "users",
+    "overview", "digital-checkin", "forecast", "inventory-control", "invoice", 
+    "pnl", "pnl-budget", "dsr", "budgeting", "statements",
+    "logo", "hero", "room-type", "about", "gallery", "footer", "attractions", "promo", "packages", "seo", "users",
     "purchasing", "store-requisition", "purchase-requisition", "daily-market-list", 
-    "stock-opname", "items", "suppliers", "purchase-order", "food-beverage-product",
+    "stock-opname", "items", "suppliers", "purchase-order", "food-beverage-product", "food-beverage-realtime",
     // POS submenus
-    "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings",
+    "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings", "pos_self_order",
     "hrd"
 ];
 

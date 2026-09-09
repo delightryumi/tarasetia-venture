@@ -1242,25 +1242,25 @@ export const recalculateBudgetMonthData = (draft: BudgetMonthData): void => {
 
   const foodRev =
     (fnb.revenue.restaurant.food || 0) +
-    (fnb.revenue.kitchen.food || 0) +
     (fnb.revenue.lounge.food || 0) +
     (fnb.revenue.banquet.food || 0) +
     (fnb.revenue.roomService.food || 0);
   const bevRev =
     (fnb.revenue.restaurant.beverage || 0) +
-    (fnb.revenue.kitchen.beverage || 0) +
     (fnb.revenue.lounge.beverage || 0) +
     (fnb.revenue.banquet.beverage || 0) +
     (fnb.revenue.roomService.beverage || 0);
   const othRev =
     (fnb.revenue.restaurant.other || 0) +
-    (fnb.revenue.kitchen.other || 0) +
     (fnb.revenue.lounge.other || 0) +
     (fnb.revenue.banquet.other || 0) +
     (fnb.revenue.roomService.other || 0);
 
   fnb.revenue.restaurant.total = (fnb.revenue.restaurant.food || 0) + (fnb.revenue.restaurant.beverage || 0) + (fnb.revenue.restaurant.other || 0);
-  fnb.revenue.kitchen.total = (fnb.revenue.kitchen.food || 0) + (fnb.revenue.kitchen.beverage || 0) + (fnb.revenue.kitchen.other || 0);
+  fnb.revenue.kitchen.food = 0;
+  fnb.revenue.kitchen.beverage = 0;
+  fnb.revenue.kitchen.other = 0;
+  fnb.revenue.kitchen.total = 0;
   fnb.revenue.lounge.total = (fnb.revenue.lounge.food || 0) + (fnb.revenue.lounge.beverage || 0) + (fnb.revenue.lounge.other || 0);
   fnb.revenue.banquet.total = (fnb.revenue.banquet.food || 0) + (fnb.revenue.banquet.beverage || 0) + (fnb.revenue.banquet.other || 0);
   fnb.revenue.roomService.total = (fnb.revenue.roomService.food || 0) + (fnb.revenue.roomService.beverage || 0) + (fnb.revenue.roomService.other || 0);
@@ -1304,7 +1304,7 @@ export const recalculateBudgetMonthData = (draft: BudgetMonthData): void => {
 
   // Sync F&B top-level
   draft.fnbRevenue.food = {
-    breakfast: fnb.revenue.kitchen.food || 0,
+    breakfast: 0,
     restaurant: fnb.revenue.restaurant.food || 0,
     roomService: fnb.revenue.roomService.food || 0,
     banquet: fnb.revenue.banquet.food || 0,

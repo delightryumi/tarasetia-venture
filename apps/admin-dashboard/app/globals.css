@@ -571,31 +571,82 @@ input[type="date"].dateInput {
 }
 
 @media print {
-    @page {
-        size: A4 portrait;
-        margin: 0mm;
+    /* Base print typography & color — strictly force pure white paper mode */
+    *, *::before, *::after {
+        box-shadow: none !important;
+        text-shadow: none !important;
+        backdrop-filter: none !important;
     }
 
-    html, body {
+    html,
+    html.dark,
+    body,
+    body.dark,
+    .dark,
+    [class*="dark"] {
         background: #ffffff !important;
+        background-color: #ffffff !important;
+        color: #0f172a !important;
         margin: 0 !important;
         padding: 0 !important;
         width: 100% !important;
-        height: 100% !important;
-        max-height: 100% !important;
-        min-height: 0 !important;
-        overflow: hidden !important;
+        height: auto !important;
+        min-height: 100% !important;
+        overflow: visible !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
 
-    /* Hide entire screen UI (dashboard, sidebar, modals, topbars) */
-    body > *:not(#invoice-native-print-sheet):not(#grc-native-print-sheet) {
+    /* Hide standard dashboard chrome, sidebar, topbar, mobile nav, fixed floating elements & footer */
+    aside,
+    header.dashboard-header,
+    .dashboard-header,
+    .dashboard-footer-clean,
+    .mobile-bottom-nav,
+    .status-widget-container,
+    .no-print,
+    .hide-on-print,
+    .fixed:not(#invoice-native-print-sheet):not(#grc-native-print-sheet),
+    [class*="MobileBottomNav"],
+    [class*="bottom-nav"],
+    [class*="WhatsAppWidget"] {
         display: none !important;
         visibility: hidden !important;
     }
 
-    /* Pop the warm pre-rendered sheet directly to the physical print page */
+    /* Reset layout containers so reports flow naturally onto paper without clipping or scrollbars */
+    .dashboard-container,
+    .dashboard-wrapper,
+    .main-content,
+    .main-scroll-container,
+    .section-wrapper {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        transform: none !important;
+        box-shadow: none !important;
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+    }
+
+    /* ── Dedicated Invoice Print Isolation (Applied ONLY when #invoice-native-print-sheet exists) ── */
+    body:has(#invoice-native-print-sheet) {
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
+    }
+
+    body:has(#invoice-native-print-sheet) > *:not(#invoice-native-print-sheet) {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
     body > #invoice-native-print-sheet,
     body > #invoice-native-print-sheet * {
         visibility: visible !important;

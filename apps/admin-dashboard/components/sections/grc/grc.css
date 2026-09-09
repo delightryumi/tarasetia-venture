@@ -553,12 +553,7 @@
 
 /* ── PRINT MEDIA RULES (Warm Pre-Rendered Isolation & Strict 1-Page Constraint) ── */
 @media print {
-    @page {
-        size: auto;
-        margin: 0mm;
-    }
-
-    html, body {
+    body:has(#grc-native-print-sheet) {
         background: #ffffff !important;
         margin: 0 !important;
         padding: 0 !important;
@@ -571,8 +566,8 @@
         print-color-adjust: exact !important;
     }
 
-    /* Hide entire screen UI (dashboard, sidebar, modals, topbars) */
-    body > *:not(#grc-native-print-sheet) {
+    /* Hide entire screen UI (dashboard, sidebar, modals, topbars) ONLY when GRC native sheet is printed */
+    body:has(#grc-native-print-sheet) > *:not(#grc-native-print-sheet) {
         display: none !important;
         visibility: hidden !important;
     }

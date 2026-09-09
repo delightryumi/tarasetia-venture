@@ -1,0 +1,645 @@
+/* yearly.module.css - Styles for Yearly Budget Consolidated Matrix View */
+
+.yearlyContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* ── Mode Switcher & Top Controls ── */
+.viewModeToggleGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  background-color: #f1f5f9;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+:global(.dark) .viewModeToggleGroup {
+  background-color: #27272a;
+  border-color: #3f3f46;
+}
+
+.viewModeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.viewModeBtn:hover {
+  color: #0f172a;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+:global(.dark) .viewModeBtn {
+  color: #a1a1aa;
+}
+
+:global(.dark) .viewModeBtn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.viewModeBtnActive {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  font-weight: 800;
+}
+
+:global(.dark) .viewModeBtnActive {
+  background-color: #18181b !important;
+  color: #f8fafc !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Annual Banner & KPI ── */
+.annualBanner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 16px;
+  color: #ffffff;
+  box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.25);
+}
+
+.bannerLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.bannerIconBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.bannerTitle {
+  font-size: 18px;
+  font-weight: 900;
+  margin: 0;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.bannerSubtitle {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 2px 0 0 0;
+}
+
+.bannerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bannerActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bannerActionBtn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Annual Stats Grid ── */
+.annualStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .annualStatsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .annualStatsGrid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+:global(.dark) .statCard {
+  background-color: #18181b;
+  border-color: #27272a;
+}
+
+.statLabel {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+:global(.dark) .statLabel {
+  color: #94a3b8;
+}
+
+.statValue {
+  font-size: 16px;
+  font-weight: 900;
+  color: #0f172a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:global(.dark) .statValue {
+  color: #f8fafc;
+}
+
+.statSub {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #059669;
+}
+
+/* ── Quarterly Summary Strip ── */
+.quarterGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 1024px) {
+  .quarterGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.quarterCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+:global(.dark) .quarterCard {
+  background-color: #18181b;
+  border-color: #27272a;
+}
+
+.quarterHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+:global(.dark) .quarterHeader {
+  border-bottom-color: #3f3f46;
+}
+
+.quarterBadge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+:global(.dark) .quarterBadge {
+  background-color: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
+}
+
+.quarterMonths {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.quarterRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+}
+
+.quarterRowLabel {
+  color: #64748b;
+  font-weight: 600;
+}
+
+:global(.dark) .quarterRowLabel {
+  color: #94a3b8;
+}
+
+.quarterRowValue {
+  font-weight: 800;
+  color: #0f172a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:global(.dark) .quarterRowValue {
+  color: #f8fafc;
+}
+
+/* ── Matrix Table Container & Sticky Layout ── */
+.matrixWrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+:global(.dark) .matrixWrapper {
+  background-color: #18181b;
+  border-color: #3f3f46;
+}
+
+.matrixTable {
+  width: 100%;
+  min-width: 1300px;
+  border-collapse: collapse;
+  font-size: 11px;
+  text-align: left;
+}
+
+/* Sticky Headers */
+.matrixTable thead {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: #f8fafc;
+  border-bottom: 2px solid #cbd5e1;
+}
+
+:global(.dark) .matrixTable thead {
+  background-color: #202026;
+  border-bottom-color: #3f3f46;
+}
+
+.thStickyCode {
+  position: sticky;
+  left: 0;
+  z-index: 22;
+  background-color: #f8fafc;
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+  padding: 8px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #475569;
+  text-align: center;
+  border-right: 1px solid #e2e8f0;
+}
+
+:global(.dark) .thStickyCode {
+  background-color: #202026;
+  color: #94a3b8;
+  border-right-color: #3f3f46;
+}
+
+.thStickyDesc {
+  position: sticky;
+  left: 60px;
+  z-index: 22;
+  background-color: #f8fafc;
+  width: 220px;
+  min-width: 220px;
+  max-width: 260px;
+  padding: 8px 10px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #334155;
+  border-right: 2px solid #cbd5e1;
+}
+
+:global(.dark) .thStickyDesc {
+  background-color: #202026;
+  color: #f1f5f9;
+  border-right-color: #3f3f46;
+}
+
+.thMonth {
+  padding: 8px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: right;
+  color: #475569;
+  min-width: 80px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.thMonth:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+:global(.dark) .thMonth {
+  color: #94a3b8;
+}
+
+:global(.dark) .thMonth:hover {
+  background-color: #3f3f46;
+  color: #ffffff;
+}
+
+.thTotal {
+  padding: 8px 10px;
+  font-size: 10.5px;
+  font-weight: 900;
+  text-align: right;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  min-width: 120px;
+  border-left: 2px solid #93c5fd;
+}
+
+:global(.dark) .thTotal {
+  background-color: rgba(3, 105, 161, 0.25);
+  color: #38bdf8;
+  border-left-color: #0284c7;
+}
+
+.thPercent {
+  padding: 8px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: right;
+  background-color: #f1f5f9;
+  color: #475569;
+  min-width: 70px;
+}
+
+:global(.dark) .thPercent {
+  background-color: #27272a;
+  color: #94a3b8;
+}
+
+/* ── Sticky Body Columns ── */
+.tdStickyCode {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background-color: #ffffff;
+  padding: 5px 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #64748b;
+  text-align: center;
+  border-right: 1px solid #e2e8f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:global(.dark) .tdStickyCode {
+  background-color: #18181b;
+  color: #94a3b8;
+  border-right-color: #27272a;
+}
+
+.tdStickyDesc {
+  position: sticky;
+  left: 60px;
+  z-index: 10;
+  background-color: #ffffff;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1e293b;
+  border-right: 2px solid #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:global(.dark) .tdStickyDesc {
+  background-color: #18181b;
+  color: #e2e8f0;
+  border-right-color: #3f3f46;
+}
+
+.matrixRow {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.15s ease;
+}
+
+.matrixRow:hover {
+  background-color: #f8fafc;
+}
+
+:global(.dark) .matrixRow {
+  border-bottom-color: #27272a;
+}
+
+:global(.dark) .matrixRow:hover {
+  background-color: #202026;
+}
+
+.matrixRow:hover .tdStickyCode,
+.matrixRow:hover .tdStickyDesc {
+  background-color: #f8fafc;
+}
+
+:global(.dark) .matrixRow:hover .tdStickyCode,
+:global(.dark) .matrixRow:hover .tdStickyDesc {
+  background-color: #202026;
+}
+
+.tdMonthCell {
+  padding: 4px 6px;
+  text-align: right;
+  font-size: 10.5px;
+  color: #334155;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:global(.dark) .tdMonthCell {
+  color: #cbd5e1;
+}
+
+.tdTotalCell {
+  padding: 4px 10px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 800;
+  color: #0f172a;
+  background-color: #f0f9ff;
+  border-left: 2px solid #bae6fd;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:global(.dark) .tdTotalCell {
+  background-color: rgba(2, 132, 199, 0.12);
+  color: #38bdf8;
+  border-left-color: #0369a1;
+}
+
+.tdPercentCell {
+  padding: 4px 8px;
+  text-align: right;
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:global(.dark) .tdPercentCell {
+  color: #94a3b8;
+}
+
+/* Category Section Header Row */
+.matrixCategoryRow {
+  background-color: #f1f5f9;
+  border-top: 1px solid #cbd5e1;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+:global(.dark) .matrixCategoryRow {
+  background-color: #27272a;
+  border-color: #3f3f46;
+}
+
+.matrixCategoryCell {
+  padding: 6px 10px;
+  font-size: 10.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1e293b;
+}
+
+:global(.dark) .matrixCategoryCell {
+  color: #f8fafc;
+}
+
+/* Subtotal Row */
+.matrixSubtotalRow {
+  background-color: #f8fafc;
+  border-top: 1px solid #cbd5e1;
+  border-bottom: 1px solid #cbd5e1;
+  font-weight: 800;
+}
+
+:global(.dark) .matrixSubtotalRow {
+  background-color: #202026;
+  border-color: #3f3f46;
+}
+
+.matrixSubtotalRow .tdStickyCode,
+.matrixSubtotalRow .tdStickyDesc {
+  background-color: #f8fafc;
+  font-weight: 800;
+}
+
+:global(.dark) .matrixSubtotalRow .tdStickyCode,
+:global(.dark) .matrixSubtotalRow .tdStickyDesc {
+  background-color: #202026;
+  font-weight: 800;
+}
+
+/* Highlight / Grand Total Row */
+.matrixHighlightRow {
+  background-color: #ecfdf5;
+  border-top: 1px solid #10b981;
+  border-bottom: 2px solid #059669;
+  font-weight: 900;
+  color: #065f46;
+}
+
+:global(.dark) .matrixHighlightRow {
+  background-color: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+  color: #6ee7b7;
+}
+
+.matrixHighlightRow .tdStickyCode,
+.matrixHighlightRow .tdStickyDesc {
+  background-color: #ecfdf5;
+  font-weight: 900;
+  color: #065f46;
+}
+
+:global(.dark) .matrixHighlightRow .tdStickyCode,
+:global(.dark) .matrixHighlightRow .tdStickyDesc {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+}
+
+.matrixHighlightRow .tdTotalCell {
+  background-color: #d1fae5;
+  color: #047857;
+  border-left-color: #10b981;
+}
+
+:global(.dark) .matrixHighlightRow .tdTotalCell {
+  background-color: rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
+  border-left-color: #10b981;
+}
+
+/* Print Styles */
+@media print {
+  .viewModeToggleGroup,
+  .bannerActions {
+    display: none !important;
+  }
+
+  .matrixWrapper {
+    overflow: visible !important;
+    border: 1px solid #000000 !important;
+  }
+
+  .matrixTable {
+    min-width: 100% !important;
+  }
+}

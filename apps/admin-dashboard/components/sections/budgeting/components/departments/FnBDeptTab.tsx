@@ -111,7 +111,7 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
 
   const outletPrefixMap = {
     restaurant: { tag: "F&B RESTAURANT", title: "RESTAURANT OUTLET", code: "REST", revCode: "3023", cogsCode: "4014", expCode: "5075" },
-    kitchen: { tag: "F&B KITCHEN", title: "KITCHEN PRODUCT", code: "KC", revCode: "3023", cogsCode: "4014", expCode: "5085" },
+    kitchen: { tag: "F&B KITCHEN", title: "KITCHEN PRODUCT", code: "KC", revCode: "-", cogsCode: "4014", expCode: "5085" },
     lounge: { tag: "SKY LOUNGE", title: "SKY LOUNGE & BAR", code: "LOUNGE", revCode: "3033", cogsCode: "4024", expCode: "5095" },
     banquet: { tag: "BANQUET & EVENTS", title: "BANQUET & EVENTS", code: "BQ", revCode: "3063", cogsCode: "4054", expCode: "5105" },
     roomService: { tag: "ROOM SERVICE", title: "ROOM SERVICE", code: "RS", revCode: "3073", cogsCode: "4064", expCode: "5115" },
@@ -160,10 +160,14 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
         <div className={styles.excelSheetBanner}>
           <div className={styles.excelSheetTitleGroup}>
             <span className={styles.excelSheetTag}>{meta.tag}</span>
-            <h4 className={styles.excelSheetTitle}>{meta.title} - REVENUE & COST OF SALES</h4>
+            <h4 className={styles.excelSheetTitle}>
+              {meta.title} - {activeOutlet === "kitchen" ? "COST OF SALES & EXPENSES" : "REVENUE & COST OF SALES"}
+            </h4>
           </div>
           <span className={styles.totalBadge}>
-            Net Rev: {formatIDR(currentRev.total || 0)}
+            {activeOutlet === "kitchen"
+              ? `Total COGS: ${formatIDR(currentCogs.total || 0)}`
+              : `Net Rev: ${formatIDR(currentRev.total || 0)}`}
           </span>
         </div>
 
@@ -179,73 +183,77 @@ export const FnBDeptTab: React.FC<FnBDeptTabProps> = ({ monthData, onChange }) =
               </tr>
             </thead>
             <tbody>
-              {/* REVENUE */}
-              <tr className={styles.excelCategoryRow}>
-                <td className={styles.excelCategoryCell} colSpan={3}>
-                  {meta.code} REVENUE
-                </td>
-              </tr>
-              <tr className={styles.excelRow}>
-                <td className={styles.excelCodeCell}>{meta.revCode}-01</td>
-                <td className={styles.excelDescCell}>{meta.code}-Food Revenue</td>
-                <td className={styles.excelInputCell}>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={currentRev.food ? currentRev.food.toLocaleString("id-ID") : ""}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
-                      handleRevenueChange(activeOutlet, "food", val);
-                    }}
-                    onWheel={(e) => e.currentTarget.blur()}
-                    placeholder="0"
-                    className={styles.excelInput}
-                  />
-                </td>
-              </tr>
-              <tr className={styles.excelRow}>
-                <td className={styles.excelCodeCell}>{meta.revCode}-02</td>
-                <td className={styles.excelDescCell}>{meta.code}-Beverage Revenue</td>
-                <td className={styles.excelInputCell}>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={currentRev.beverage ? currentRev.beverage.toLocaleString("id-ID") : ""}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
-                      handleRevenueChange(activeOutlet, "beverage", val);
-                    }}
-                    onWheel={(e) => e.currentTarget.blur()}
-                    placeholder="0"
-                    className={styles.excelInput}
-                  />
-                </td>
-              </tr>
-              <tr className={styles.excelRow}>
-                <td className={styles.excelCodeCell}>{meta.revCode}-03</td>
-                <td className={styles.excelDescCell}>{meta.code}-Others</td>
-                <td className={styles.excelInputCell}>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={currentRev.other ? currentRev.other.toLocaleString("id-ID") : ""}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
-                      handleRevenueChange(activeOutlet, "other", val);
-                    }}
-                    onWheel={(e) => e.currentTarget.blur()}
-                    placeholder="0"
-                    className={styles.excelInput}
-                  />
-                </td>
-              </tr>
-              <tr className={styles.excelSubtotalRow}>
-                <td className={styles.excelCodeCell}>SUBTOTAL</td>
-                <td className={styles.excelDescCell}>Total Revenue - {meta.title}</td>
-                <td className={`${styles.excelInputCell} ${styles.excelNumValue}`} style={{ color: "#059669" }}>
-                  {formatIDR(currentRev.total || 0)}
-                </td>
-              </tr>
+              {/* REVENUE (Excluded for Kitchen - Cost Center Only) */}
+              {activeOutlet !== "kitchen" && (
+                <>
+                  <tr className={styles.excelCategoryRow}>
+                    <td className={styles.excelCategoryCell} colSpan={3}>
+                      {meta.code} REVENUE
+                    </td>
+                  </tr>
+                  <tr className={styles.excelRow}>
+                    <td className={styles.excelCodeCell}>{meta.revCode}-01</td>
+                    <td className={styles.excelDescCell}>{meta.code}-Food Revenue</td>
+                    <td className={styles.excelInputCell}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={currentRev.food ? currentRev.food.toLocaleString("id-ID") : ""}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
+                          handleRevenueChange(activeOutlet, "food", val);
+                        }}
+                        onWheel={(e) => e.currentTarget.blur()}
+                        placeholder="0"
+                        className={styles.excelInput}
+                      />
+                    </td>
+                  </tr>
+                  <tr className={styles.excelRow}>
+                    <td className={styles.excelCodeCell}>{meta.revCode}-02</td>
+                    <td className={styles.excelDescCell}>{meta.code}-Beverage Revenue</td>
+                    <td className={styles.excelInputCell}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={currentRev.beverage ? currentRev.beverage.toLocaleString("id-ID") : ""}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
+                          handleRevenueChange(activeOutlet, "beverage", val);
+                        }}
+                        onWheel={(e) => e.currentTarget.blur()}
+                        placeholder="0"
+                        className={styles.excelInput}
+                      />
+                    </td>
+                  </tr>
+                  <tr className={styles.excelRow}>
+                    <td className={styles.excelCodeCell}>{meta.revCode}-03</td>
+                    <td className={styles.excelDescCell}>{meta.code}-Others</td>
+                    <td className={styles.excelInputCell}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={currentRev.other ? currentRev.other.toLocaleString("id-ID") : ""}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
+                          handleRevenueChange(activeOutlet, "other", val);
+                        }}
+                        onWheel={(e) => e.currentTarget.blur()}
+                        placeholder="0"
+                        className={styles.excelInput}
+                      />
+                    </td>
+                  </tr>
+                  <tr className={styles.excelSubtotalRow}>
+                    <td className={styles.excelCodeCell}>SUBTOTAL</td>
+                    <td className={styles.excelDescCell}>Total Revenue - {meta.title}</td>
+                    <td className={`${styles.excelInputCell} ${styles.excelNumValue}`} style={{ color: "#059669" }}>
+                      {formatIDR(currentRev.total || 0)}
+                    </td>
+                  </tr>
+                </>
+              )}
 
               {/* COST OF SALES */}
               <tr className={styles.excelCategoryRow}>

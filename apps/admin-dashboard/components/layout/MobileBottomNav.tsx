@@ -265,7 +265,7 @@ export const MobileBottomNav = () => {
     const navItems = getFilteredNavItems();
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-[100] lg:hidden pointer-events-none flex justify-center">
+        <div className="fixed bottom-0 left-0 right-0 z-[100] lg:hidden pointer-events-none flex justify-center no-print mobile-bottom-nav">
             <motion.div 
                 initial={{ y: 80, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}

@@ -1260,3 +1260,36 @@ body.full-window-mode .main-scroll-container {
     height: 20px !important;
     stroke-width: 1.5px !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   LAYOUT PRINT MEDIA RULES
+   ═══════════════════════════════════════════════════════════════ */
+@media print {
+    .dashboard-top-bar,
+    .dashboard-sidebar,
+    .dock-mode-sidebar,
+    .expanded-mode-sidebar,
+    .status-widget-container,
+    .dashboard-footer-clean,
+    .mobile-bottom-nav,
+    .no-print {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    .dashboard-wrapper,
+    .main-content,
+    .main-scroll-container,
+    .section-wrapper {
+        position: static !important;
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+    }
+}

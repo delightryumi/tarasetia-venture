@@ -9,7 +9,7 @@ import {
     Info, Grid, Settings as SettingsIcon, MapPin, 
     Gift, Package, Users, ShoppingCart, Banknote, Building2,
     BedDouble, Coffee, ShoppingBag, Calculator, Store, User as UserIcon, Archive, Star,
-    Camera, ClipboardList, Layers, BarChart2, Zap
+    Camera, ClipboardList, Layers, BarChart2, Zap, FileSpreadsheet
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -102,6 +102,7 @@ const PERMISSION_TREE: PermissionModule[] = [
             { id: "stock-opname", label: "Stock Opname", icon: <PieChart size={14} /> },
             { id: "items", label: "Items Master", icon: <Package size={14} /> },
             { id: "suppliers", label: "Suppliers", icon: <Users size={14} /> },
+            { id: "purchase-order", label: "Purchase Order", icon: <ShoppingCart size={14} /> },
         ]
     },
     {
@@ -110,7 +111,10 @@ const PERMISSION_TREE: PermissionModule[] = [
         icon: <Calculator size={14} />,
         submenus: [
             { id: "pnl", label: "P&L Statement", icon: <PieChart size={14} /> },
-            { id: "statements", label: "Laporan Keuangan", icon: <BarChart2 size={14} /> },
+            { id: "pnl-budget", label: "P&L Actual vs Budget", icon: <BarChart2 size={14} /> },
+            { id: "dsr", label: "Daily Sales Report (DSR)", icon: <TrendingUp size={14} /> },
+            { id: "budgeting", label: "Budgeting", icon: <FileSpreadsheet size={14} /> },
+            { id: "statements", label: "Laporan Keuangan", icon: <FileText size={14} /> },
             { id: "purchase-order", label: "Purchase Order", icon: <ShoppingCart size={14} /> },
         ]
     },

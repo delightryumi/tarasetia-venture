@@ -4,7 +4,7 @@ import React from "react";
 import { useDSR } from "./hooks/useDSR";
 import { DSRReportTab } from "../budgeting/components/DSRReportTab";
 import { useDSRExport } from "../budgeting/hooks/useDSRExport";
-import { Calendar, Download, Printer, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Download, Printer, RefreshCw, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import styles from "../budgeting/budgeting.module.css";
 
 export const DSRSection: React.FC = () => {
@@ -20,7 +20,7 @@ export const DSRSection: React.FC = () => {
     refetchActuals,
   } = useDSR();
 
-  const { exportToExcel, handlePrint } = useDSRExport({
+  const { exportToExcel, exportToPDF, handlePrint } = useDSRExport({
     dsrReport,
     hotelName,
   });
@@ -105,12 +105,17 @@ export const DSRSection: React.FC = () => {
               <span>Refresh</span>
             </button>
 
-            <button onClick={exportToExcel} className={styles.secondaryBtn}>
+            <button onClick={exportToExcel} className={styles.secondaryBtn} title="Download Excel Spreadsheet">
               <Download size={15} />
               <span>Excel</span>
             </button>
 
-            <button onClick={handlePrint} className={styles.primaryBtn}>
+            <button onClick={exportToPDF} className={styles.secondaryBtn} title="Download PDF File">
+              <FileText size={15} />
+              <span>PDF File</span>
+            </button>
+
+            <button onClick={handlePrint} className={styles.primaryBtn} title="Print or Save as PDF via Browser">
               <Printer size={15} />
               <span>Print / PDF</span>
             </button>
