@@ -604,7 +604,7 @@ export default function SelectModulePage() {
       </div>
 
       {/* Main viewport body content */}
-      <div className={`flex-grow flex flex-col items-center relative overflow-hidden w-full h-full z-10 pt-[80px] pb-8 ${showGrid ? 'justify-start md:justify-center' : 'justify-center'}`}>
+      <div className={`flex-grow flex flex-col items-center relative overflow-hidden w-full h-full z-10 pt-[56px] md:pt-[64px] pb-0 ${showGrid ? 'justify-start md:justify-center' : 'justify-center'}`}>
         {showGrid ? (
           <WorkspaceSection
             menus={menus.filter(m => m.active)}

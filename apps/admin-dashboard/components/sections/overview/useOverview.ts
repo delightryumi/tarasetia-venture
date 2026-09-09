@@ -24,6 +24,12 @@ export interface BookingEntry {
     incomeCategory?: string;
     roomStatus?: string;
     guestStatus?: string;
+    totalAmount?: number;
+    ratePerNight?: number;
+    totalStayNights?: number;
+    nightsInPeriod?: number;
+    payHotel?: number;
+    payTransfer?: number;
 }
 
 export interface OverviewStats {
@@ -81,12 +87,12 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                 // Calculate dynamic Firestore query range with timezone-safe parsing
                 const [sY, sM, sD] = startDateStr.split('-').map(Number);
                 const startD = new Date(sY, (sM || 1) - 1, sD || 1);
-                startD.setDate(startD.getDate() - 60);
+                startD.setDate(startD.getDate() - 30);
                 const startRange = `${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, '0')}-${String(startD.getDate()).padStart(2, '0')}`;
 
                 const [eY, eM, eD] = endDateStr.split('-').map(Number);
                 const endD = new Date(eY, (eM || 1) - 1, eD || 1);
-                endD.setDate(endD.getDate() + 30);
+                endD.setDate(endD.getDate() + 7);
                 const endRange = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
 
                 const q = query(
@@ -166,13 +172,72 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                             rep.paymentStatus = "CANCELLED";
                         }
                         
-                        // Aggregate accommodation amounts across all nights of the stay
-                        rep.amount = group.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-                        rep.payHotel = group.reduce((sum, item) => sum + (Number(item.payHotel || item.paidCash || item.paidAmount1) || 0), 0);
-                        rep.payTransfer = group.reduce((sum, item) => sum + (Number(item.payTransfer || item.payNexura || item.paidTransfer || item.paidAmount2) || 0), 0);
+                        // Calculate stay nights and daily rate for accurate Daily Audit balance
+                        const checkInDate = rep.checkInDate || rep.checkIn || group[0]._docDate;
+                        const checkOutDate = rep.checkOutDate || rep.checkOut || "";
+
+                        let totalStayNights = 1;
+                        if (checkInDate && checkOutDate) {
+                            const [ciY, ciM, ciD] = checkInDate.split('-').map(Number);
+                            const [coY, coM, coD] = checkOutDate.split('-').map(Number);
+                            const dIn = new Date(ciY, (ciM || 1) - 1, ciD || 1);
+                            const dOut = new Date(coY, (coM || 1) - 1, coD || 1);
+                            const diff = Math.round((dOut.getTime() - dIn.getTime()) / (1000 * 60 * 60 * 24));
+                            totalStayNights = Math.max(1, isNaN(diff) ? 1 : diff);
+                        }
+
+                        // Generate all stay night dates
+                        const stayNightDates: string[] = [];
+                        if (checkInDate && totalStayNights > 0) {
+                            const [ciY, ciM, ciD] = checkInDate.split('-').map(Number);
+                            let curr = new Date(ciY, (ciM || 1) - 1, ciD || 1);
+                            for (let i = 0; i < totalStayNights; i++) {
+                                const y = curr.getFullYear();
+                                const m = String(curr.getMonth() + 1).padStart(2, '0');
+                                const d = String(curr.getDate()).padStart(2, '0');
+                                stayNightDates.push(`${y}-${m}-${d}`);
+                                curr.setDate(curr.getDate() + 1);
+                            }
+                        }
+
+                        const stayTotalAmount = group.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                        const stayPayHotel = group.reduce((sum, item) => sum + (Number(item.payHotel || item.paidCash || item.paidAmount1) || 0), 0);
+                        const stayPayTransfer = group.reduce((sum, item) => sum + (Number(item.payTransfer || item.payNexura || item.paidTransfer || item.paidAmount2) || 0), 0);
+
+                        // Find matching nights in current filter range [startDateStr, endDateStr]
+                        const matchingNights = stayNightDates.filter(d => d >= startDateStr && d <= endDateStr);
+                        const nightsInPeriod = matchingNights.length;
+
+                        // Check if group has explicit daily entries for the selected dates
+                        const periodEntries = group.filter(e => e._docDate && e._docDate >= startDateStr && e._docDate <= endDateStr);
                         
-                        rep.checkInDate = rep.checkInDate || rep.checkIn || group[0]._docDate;
-                        rep.checkOutDate = rep.checkOutDate || rep.checkOut || "";
+                        let periodAmount = 0;
+                        let periodPayHotel = 0;
+                        let periodPayTransfer = 0;
+
+                        if (periodEntries.length > 0 && periodEntries.length === nightsInPeriod) {
+                            periodAmount = periodEntries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                            periodPayHotel = periodEntries.reduce((sum, item) => sum + (Number(item.payHotel || item.paidCash || item.paidAmount1) || 0), 0);
+                            periodPayTransfer = periodEntries.reduce((sum, item) => sum + (Number(item.payTransfer || item.payNexura || item.paidTransfer || item.paidAmount2) || 0), 0);
+                        } else if (nightsInPeriod > 0) {
+                            periodAmount = Math.round((stayTotalAmount / totalStayNights) * nightsInPeriod);
+                            periodPayHotel = Math.round((stayPayHotel / totalStayNights) * nightsInPeriod);
+                            periodPayTransfer = Math.round((stayPayTransfer / totalStayNights) * nightsInPeriod);
+                        } else {
+                            periodAmount = Math.round(stayTotalAmount / totalStayNights);
+                            periodPayHotel = Math.round(stayPayHotel / totalStayNights);
+                            periodPayTransfer = Math.round(stayPayTransfer / totalStayNights);
+                        }
+
+                        rep.totalAmount = stayTotalAmount;
+                        rep.ratePerNight = Math.round(stayTotalAmount / totalStayNights);
+                        rep.totalStayNights = totalStayNights;
+                        rep.nightsInPeriod = nightsInPeriod || 1;
+                        rep.amount = periodAmount;
+                        rep.payHotel = periodPayHotel;
+                        rep.payTransfer = periodPayTransfer;
+                        rep.checkInDate = checkInDate;
+                        rep.checkOutDate = checkOutDate;
 
                         resolvedAccommodation.push(rep);
                     });
@@ -244,6 +309,15 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
 
         initBookings();
 
+        return () => {
+            if (unsubDaily) unsubDaily();
+        };
+    }, [activeHotelCode, startDateStr, endDateStr]);
+
+    // Separate useEffect for static collections to avoid re-reading when toggling dates
+    useEffect(() => {
+        if (!activeHotelCode || activeHotelCode === "0") return;
+
         const unsubRooms = onSnapshot(getHotelCollection(db, "roomTypes", activeHotelCode), (snapshot) => {
             let totalRooms = 0;
             const rTypes: any[] = [];
@@ -295,9 +369,8 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
             unsubGallery();
             unsubAttractions();
             unsubSEO();
-            if (unsubDaily) unsubDaily();
         };
-    }, [activeHotelCode, startDateStr, endDateStr]);
+    }, [activeHotelCode]);
 
     return stats;
 };
