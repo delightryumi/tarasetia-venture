@@ -711,228 +711,230 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   }
 
   return (
-    <div 
-      className="bg-background text-foreground h-full overflow-hidden flex flex-col relative w-full"
-    >
-      {/* Header spanning 100% width across the top */}
-      <header className="flex h-14 shrink-0 items-center justify-between gap-4 py-2.5 px-4 lg:px-6 sticky top-0 z-20 bg-white/65 dark:bg-[#181818]/65 backdrop-blur-md border-b border-black/5 dark:border-white/5 w-full select-none print:hidden">
-        {/* Left Side: Logo & Hotel Badge */}
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => window.location.href = dashboardUrl}
-            className="border-none bg-transparent p-0 m-0 cursor-pointer flex items-center transition-opacity hover:opacity-80 active:scale-95"
-            title="Kembali ke Dashboard Utama"
-          >
-            <img
-              src="/channels/6.png"
-              alt="Nexura Logo"
-              className="h-6 md:h-7 w-auto object-contain dark:invert-0 invert transition-all duration-300"
-            />
-          </button>
-          
-          <div className="h-6 w-px bg-[#2e2e30]" />
-          
-          {isSuperadmin ? (
-            <div className="relative flex items-center h-9 w-[240px] md:w-[320px] bg-white dark:bg-[#222225] border border-slate-300 dark:border-white/[0.08] rounded-[6px] overflow-hidden shadow-sm text-neutral-900 dark:text-[#f4f4f5] text-[13px] font-semibold transition-all">
-              <select
-                value={user?.hotelCode || "0"}
-                onChange={(e) => handleHotelChange(e.target.value)}
-                className="border-none pr-10 py-1 text-[13px] font-semibold focus:outline-none focus:ring-0 cursor-pointer appearance-none h-full w-full truncate rounded-[6px] text-left bg-transparent text-neutral-900 dark:text-[#f4f4f5]"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239297a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 12px center',
-                  backgroundSize: '16px',
-                  paddingLeft: '12px',
-                }}
-              >
-                <option value="0" className="bg-white dark:bg-[#1c1c1e] text-neutral-900 dark:text-[#f4f4f5]">
-                  — Superadmin (tidak ada preview) —
-                </option>
-                {hotelsList && hotelsList.length > 0 && (
-                  hotelsList.map((hotel) => (
-                    <option key={hotel.hotelCode} value={hotel.hotelCode} className="bg-white dark:bg-[#1c1c1e] text-neutral-900 dark:text-[#f4f4f5]">
-                      [{hotel.hotelCode}] {hotel.name}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-          ) : (
-            <div className="flex items-center h-9 px-3 w-[240px] md:w-[320px] bg-white dark:bg-[#222225] border border-slate-300 dark:border-white/[0.08] rounded-[6px] overflow-hidden shadow-sm text-neutral-900 dark:text-[#f4f4f5] text-[13px] font-semibold">
-              <span className="truncate w-full text-left text-neutral-900 dark:text-[#f4f4f5]">
-                [{user?.hotelCode || "0"}] {hotelName || "Memuat..."}
-              </span>
-            </div>
-          )}
-        </div>
-        
-        {/* Right Side: Theme Switcher (ModeToggle), Hamburger Menu */}
-        <div className="flex items-center gap-3">
-          <ModeToggle />
-
-          {/* Hamburger Dropdown Menu exactly matching Select Module */}
-          <div className="relative z-50">
+    <div className="pos-forced-landscape-root h-full w-full overflow-hidden">
+      <div 
+        className="bg-background text-foreground h-full overflow-hidden flex flex-col relative w-full"
+      >
+        {/* Header spanning 100% width across the top */}
+        <header className="flex h-14 shrink-0 items-center justify-between gap-4 py-2.5 px-4 lg:px-6 sticky top-0 z-20 bg-white/65 dark:bg-[#181818]/65 backdrop-blur-md border-b border-black/5 dark:border-white/5 w-full select-none print:hidden">
+          {/* Left Side: Logo & Hotel Badge */}
+          <div className="flex items-center gap-4">
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="w-8 h-8 rounded-[8px] bg-[#282828] text-[#c2c2c2] hover:bg-[#333333] hover:text-white transition-all shadow-sm active:scale-95 flex items-center justify-center cursor-pointer border-none focus:outline-none shrink-0"
-              title="Menu CPanel & Akun"
+              onClick={() => window.location.href = dashboardUrl}
+              className="border-none bg-transparent p-0 m-0 cursor-pointer flex items-center transition-opacity hover:opacity-80 active:scale-95"
+              title="Kembali ke Dashboard Utama"
             >
-              <Menu className="w-[1.15rem] h-[1.15rem]" />
+              <img
+                src="/channels/6.png"
+                alt="Nexura Logo"
+                className="h-6 md:h-7 w-auto object-contain dark:invert-0 invert transition-all duration-300"
+              />
             </button>
+            
+            <div className="h-6 w-px bg-[#2e2e30]" />
+            
+            {isSuperadmin ? (
+              <div className="relative flex items-center h-9 w-[240px] md:w-[320px] bg-white dark:bg-[#222225] border border-slate-300 dark:border-white/[0.08] rounded-[6px] overflow-hidden shadow-sm text-neutral-900 dark:text-[#f4f4f5] text-[13px] font-semibold transition-all">
+                <select
+                  value={user?.hotelCode || "0"}
+                  onChange={(e) => handleHotelChange(e.target.value)}
+                  className="border-none pr-10 py-1 text-[13px] font-semibold focus:outline-none focus:ring-0 cursor-pointer appearance-none h-full w-full truncate rounded-[6px] text-left bg-transparent text-neutral-900 dark:text-[#f4f4f5]"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239297a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 12px center',
+                    backgroundSize: '16px',
+                    paddingLeft: '12px',
+                  }}
+                >
+                  <option value="0" className="bg-white dark:bg-[#1c1c1e] text-neutral-900 dark:text-[#f4f4f5]">
+                    — Superadmin (tidak ada preview) —
+                  </option>
+                  {hotelsList && hotelsList.length > 0 && (
+                    hotelsList.map((hotel) => (
+                      <option key={hotel.hotelCode} value={hotel.hotelCode} className="bg-white dark:bg-[#1c1c1e] text-neutral-900 dark:text-[#f4f4f5]">
+                        [{hotel.hotelCode}] {hotel.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+            ) : (
+              <div className="flex items-center h-9 px-3 w-[240px] md:w-[320px] bg-white dark:bg-[#222225] border border-slate-300 dark:border-white/[0.08] rounded-[6px] overflow-hidden shadow-sm text-neutral-900 dark:text-[#f4f4f5] text-[13px] font-semibold">
+                <span className="truncate w-full text-left text-neutral-900 dark:text-[#f4f4f5]">
+                  [{user?.hotelCode || "0"}] {hotelName || "Memuat..."}
+                </span>
+              </div>
+            )}
+          </div>
+          
+          {/* Right Side: Theme Switcher (ModeToggle), Hamburger Menu */}
+          <div className="flex items-center gap-3">
+            <ModeToggle />
 
-            <AnimatePresence>
-              {isMenuOpen && (
-                <>
-                  {/* Backdrop */}
-                  <div
-                    className="fixed inset-0 z-40 cursor-default bg-transparent"
-                    onClick={() => setIsMenuOpen(false)}
-                  />
+            {/* Hamburger Dropdown Menu exactly matching Select Module */}
+            <div className="relative z-50">
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="w-8 h-8 rounded-[8px] bg-[#282828] text-[#c2c2c2] hover:bg-[#333333] hover:text-white transition-all shadow-sm active:scale-95 flex items-center justify-center cursor-pointer border-none focus:outline-none shrink-0"
+                title="Menu CPanel & Akun"
+              >
+                <Menu className="w-[1.15rem] h-[1.15rem]" />
+              </button>
 
-                  {/* Dropdown Menu */}
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: 8 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 8 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute right-0 mt-2 w-[220px] bg-white dark:bg-[#121212] border border-slate-200 dark:border-white/[0.08] rounded-[12px] shadow-lg p-2 z-50 flex flex-col gap-1"
-                  >
-                    {/* User Login Info Profile Card */}
-                    {(() => {
-                      const userName = user?.displayName || user?.email?.split('@')[0] || "Administrator";
-                      return (
-                        <div className="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-white/[0.03] rounded-[10px] mb-2 border-none">
-                          <div 
-                            className="w-10 h-10 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-700 flex-shrink-0 flex items-center justify-center"
-                            style={{ backgroundColor: ['rgba(141, 122, 82, 0.15)', 'rgba(120, 128, 105, 0.15)', '#f3e8ff', '#e0e7ff', '#dcfce7', '#fee2e2', '#fef3c7'][((userName || "U").charCodeAt(0) || 0) % 7] }}
-                          >
-                            <img 
-                              src={`/avatar/memo_${((((userName || "U").charCodeAt(0) || 0) + 5) % 35) + 1}.png`} 
-                              alt={userName}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-bold text-neutral-800 dark:text-[#f4f4f5] truncate">{userName}</span>
-                            <span className="text-[10px] text-neutral-500 dark:text-[#a1a1aa] truncate">{user?.email}</span>
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                              <span className="text-[8px] text-emerald-500 dark:text-emerald-400 font-bold uppercase tracking-widest">System Live</span>
+              <AnimatePresence>
+                {isMenuOpen && (
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 z-40 cursor-default bg-transparent"
+                      onClick={() => setIsMenuOpen(false)}
+                    />
+
+                    {/* Dropdown Menu */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-2 w-[220px] bg-white dark:bg-[#121212] border border-slate-200 dark:border-white/[0.08] rounded-[12px] shadow-lg p-2 z-50 flex flex-col gap-1"
+                    >
+                      {/* User Login Info Profile Card */}
+                      {(() => {
+                        const userName = user?.displayName || user?.email?.split('@')[0] || "Administrator";
+                        return (
+                          <div className="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-white/[0.03] rounded-[10px] mb-2 border-none">
+                            <div 
+                              className="w-10 h-10 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-700 flex-shrink-0 flex items-center justify-center"
+                              style={{ backgroundColor: ['rgba(141, 122, 82, 0.15)', 'rgba(120, 128, 105, 0.15)', '#f3e8ff', '#e0e7ff', '#dcfce7', '#fee2e2', '#fef3c7'][((userName || "U").charCodeAt(0) || 0) % 7] }}
+                            >
+                              <img 
+                                src={`/avatar/memo_${((((userName || "U").charCodeAt(0) || 0) + 5) % 35) + 1}.png`} 
+                                alt={userName}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-bold text-neutral-800 dark:text-[#f4f4f5] truncate">{userName}</span>
+                              <span className="text-[10px] text-neutral-500 dark:text-[#a1a1aa] truncate">{user?.email}</span>
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                <span className="text-[8px] text-emerald-500 dark:text-emerald-400 font-bold uppercase tracking-widest">System Live</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })()}
+                        );
+                      })()}
 
-                    {/* Active Hotel Info (Mobile only) */}
-                    <div className="px-3 py-2 bg-neutral-50 dark:bg-white/[0.03] rounded-[10px] mb-2 flex flex-col gap-0.5 border-t border-slate-200 dark:border-white/[0.08] pt-2 mt-1 sm:hidden">
-                      <span className="text-[9px] text-neutral-500 dark:text-[#a1a1aa] font-bold uppercase tracking-widest">Active Hotel</span>
-                      {isSuperadmin ? (
-                        <select
-                          value={user?.hotelCode || "0"}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => handleHotelChange(e.target.value)}
-                          className="w-full mt-1 border border-slate-300 dark:border-white/[0.08] rounded-[6px] py-1 px-2 text-xs bg-white dark:bg-[#1c1c1e] text-neutral-900 dark:text-[#f4f4f5] focus:outline-none"
-                          style={{ pointerEvents: 'auto' }}
-                        >
-                          <option value="0">— Superadmin (tidak ada preview) —</option>
-                          {hotelsList && hotelsList.length > 0 && (
-                            hotelsList.map((hotel) => (
-                              <option key={hotel.hotelCode} value={hotel.hotelCode}>
-                                [{hotel.hotelCode}] {hotel.name}
-                              </option>
-                            ))
-                          )}
-                        </select>
-                      ) : (
-                        <span className="text-xs font-bold text-neutral-800 dark:text-[#f4f4f5] truncate">
-                          [{user?.hotelCode || "0"}] {hotelName || "Memuat..."}
-                        </span>
-                      )}
-                    </div>
-
-                    {(() => {
-                      const isSuper = user?.role?.toLowerCase() === 'superadmin' || user?.role?.toLowerCase() === 'super admin' || user?.email?.toLowerCase() === 'nexura.management@gmail.com';
-                      const hasAccessCPanel = canAccess('module_cpanel') || canAccess('cpanel') || isSuper;
-                      return hasAccessCPanel && (
-                        <>
-                          <button
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              router.push(dashboardUrl.replace('/select-module', '') + '/logo?module=cpanel');
-                            }}
-                            className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-[6px] border-none cursor-pointer flex items-center gap-3 transition-all duration-150 bg-transparent font-sans"
+                      {/* Active Hotel Info (Mobile only) */}
+                      <div className="px-3 py-2 bg-neutral-50 dark:bg-white/[0.03] rounded-[10px] mb-2 flex flex-col gap-0.5 border-t border-slate-200 dark:border-white/[0.08] pt-2 mt-1 sm:hidden">
+                        <span className="text-[9px] text-neutral-500 dark:text-[#a1a1aa] font-bold uppercase tracking-widest">Active Hotel</span>
+                        {isSuperadmin ? (
+                          <select
+                            value={user?.hotelCode || "0"}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => handleHotelChange(e.target.value)}
+                            className="w-full mt-1 border border-slate-300 dark:border-white/[0.08] rounded-[6px] py-1 px-2 text-xs bg-white dark:bg-[#1c1c1e] text-neutral-900 dark:text-[#f4f4f5] focus:outline-none"
+                            style={{ pointerEvents: 'auto' }}
                           >
-                            <Settings className="w-4 h-4 text-neutral-800 dark:text-neutral-200" />
-                            <span>CPanel</span>
-                          </button>
+                            <option value="0">— Superadmin (tidak ada preview) —</option>
+                            {hotelsList && hotelsList.length > 0 && (
+                              hotelsList.map((hotel) => (
+                                <option key={hotel.hotelCode} value={hotel.hotelCode}>
+                                  [{hotel.hotelCode}] {hotel.name}
+                                </option>
+                              ))
+                            )}
+                          </select>
+                        ) : (
+                          <span className="text-xs font-bold text-neutral-800 dark:text-[#f4f4f5] truncate">
+                            [{user?.hotelCode || "0"}] {hotelName || "Memuat..."}
+                          </span>
+                        )}
+                      </div>
 
-                          <button
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              router.push(dashboardUrl.replace('/select-module', '') + '/users?module=cpanel');
-                            }}
-                            className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-[6px] border-none cursor-pointer flex items-center gap-3 transition-all duration-150 bg-transparent font-sans"
-                          >
-                            <Users className="w-4 h-4 text-neutral-800 dark:text-neutral-200" />
-                            <span>User Settings</span>
-                          </button>
+                      {(() => {
+                        const isSuper = user?.role?.toLowerCase() === 'superadmin' || user?.role?.toLowerCase() === 'super admin' || user?.email?.toLowerCase() === 'nexura.management@gmail.com';
+                        const hasAccessCPanel = canAccess('module_cpanel') || canAccess('cpanel') || isSuper;
+                        return hasAccessCPanel && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setIsMenuOpen(false);
+                                router.push(dashboardUrl.replace('/select-module', '') + '/logo?module=cpanel');
+                              }}
+                              className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-[6px] border-none cursor-pointer flex items-center gap-3 transition-all duration-150 bg-transparent font-sans"
+                            >
+                              <Settings className="w-4 h-4 text-neutral-800 dark:text-neutral-200" />
+                              <span>CPanel</span>
+                            </button>
 
-                          <div className="h-px bg-neutral-200 dark:bg-white/[0.08] my-1" />
-                        </>
-                      );
-                    })()}
+                            <button
+                              onClick={() => {
+                                setIsMenuOpen(false);
+                                router.push(dashboardUrl.replace('/select-module', '') + '/users?module=cpanel');
+                              }}
+                              className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-[6px] border-none cursor-pointer flex items-center gap-3 transition-all duration-150 bg-transparent font-sans"
+                            >
+                              <Users className="w-4 h-4 text-neutral-800 dark:text-neutral-200" />
+                              <span>User Settings</span>
+                            </button>
 
-                    <button
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        handleLogout();
-                      }}
-                      className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-[#aa2d00] dark:text-[#f87171] hover:text-[#aa2d00] hover:bg-[#fef2f2] dark:hover:bg-red-500/10 rounded-[6px] border-none cursor-pointer flex items-center gap-3 transition-all duration-150 bg-transparent font-sans"
-                    >
-                      <LogOut className="w-4 h-4 text-[#aa2d00] dark:text-[#f87171]" />
-                      <span>Logout</span>
-                    </button>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
+                            <div className="h-px bg-neutral-200 dark:bg-white/[0.08] my-1" />
+                          </>
+                        );
+                      })()}
+
+                      <button
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-[#aa2d00] dark:text-[#f87171] hover:text-[#aa2d00] hover:bg-[#fef2f2] dark:hover:bg-red-500/10 rounded-[6px] border-none cursor-pointer flex items-center gap-3 transition-all duration-150 bg-transparent font-sans"
+                      >
+                        <LogOut className="w-4 h-4 text-[#aa2d00] dark:text-[#f87171]" />
+                        <span>Logout</span>
+                      </button>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </header>
+
+        {/* Main body of layout containing sidebar & children */}
+        <div className="flex flex-1 overflow-hidden relative w-full">
+          {/* Sidebar */}
+          <div className="print:hidden h-full">
+            <Sidebar 
+              isCollapsed={isCollapsed} 
+              onToggleCollapse={handleToggleCollapse} 
+              storeName={storeName} 
+            />
+          </div>
+
+          {/* Main Content Area */}
+          <div 
+            className={`flex flex-col h-full overflow-hidden w-full transition-all duration-500 ${
+              isCollapsed ? "pl-[100px]" : "pl-[200px]"
+            }`}
+          >
+            <main className={`flex-1 ${isLexuPos ? 'overflow-hidden p-0 pb-5 pr-5 pt-5' : 'overflow-y-auto p-4 lg:p-6 pb-4'} bg-slate-50 dark:bg-zinc-900/10 print:p-0 print:bg-white`}>
+              <div
+                className={`flex flex-col flex-1 ${isLexuPos ? 'h-full rounded-none md:rounded-xl overflow-hidden' : 'rounded-lg min-h-full'} print:p-0 print:m-0`}
+                x-chunk="dashboard-02-chunk-1"
+              >
+                {children}
+              </div>
+            </main>
           </div>
         </div>
-      </header>
 
-      {/* Main body of layout containing sidebar & children */}
-      <div className="flex flex-1 overflow-hidden relative w-full">
-        {/* Sidebar */}
-        <div className="print:hidden h-full">
-          <Sidebar 
-            isCollapsed={isCollapsed} 
-            onToggleCollapse={handleToggleCollapse} 
-            storeName={storeName} 
-          />
-        </div>
+        {/* Auto Landscape Lock for Mobile/Tablet POS */}
+        <OrientationController />
 
-        {/* Main Content Area */}
-        <div 
-          className={`flex flex-col h-full overflow-hidden w-full transition-all duration-500 ${
-            isCollapsed ? "pl-[100px]" : "pl-[200px]"
-          }`}
-        >
-          <main className={`flex-1 ${isLexuPos ? 'overflow-hidden p-0 pb-5 pr-5 pt-5' : 'overflow-y-auto p-4 lg:p-6 pb-4'} bg-slate-50 dark:bg-zinc-900/10 print:p-0 print:bg-white`}>
-            <div
-              className={`flex flex-col flex-1 ${isLexuPos ? 'h-full rounded-none md:rounded-xl overflow-hidden' : 'rounded-lg min-h-full'} print:p-0 print:m-0`}
-              x-chunk="dashboard-02-chunk-1"
-            >
-              {children}
-            </div>
-          </main>
-        </div>
       </div>
-
-      {/* Auto Landscape Lock for Mobile/Tablet POS */}
-      <OrientationController />
-
     </div>
   );
 };

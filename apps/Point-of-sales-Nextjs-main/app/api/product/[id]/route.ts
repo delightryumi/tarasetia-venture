@@ -24,7 +24,8 @@ export const PATCH = async (
       subcategory: body.subcategory || '',
       image: body.imageProduct || '',
       description: body.description || '',
-      addons: body.addons || []
+      addons: body.addons || [],
+      isSignature: Boolean(body.isSignature)
     }, { merge: true });
 
     // Return the updated product structure matching the frontend's expectations

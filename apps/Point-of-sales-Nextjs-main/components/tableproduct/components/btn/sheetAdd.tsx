@@ -47,6 +47,7 @@ export function SheetAdd({
   const [imageProductUrl, setImageProductUrl] = useState('');
   const [description, setDescription] = useState('');
   const [addons, setAddons] = useState<{name: string, price: number}[]>([]);
+  const [isSignature, setIsSignature] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<{ [key: string]: string }>({});
   const stockProductNumber = parseFloat(stockProduct) || 0;
@@ -162,6 +163,7 @@ export function SheetAdd({
         imageProduct: imageProductUrl || undefined,
         description: description,
         addons: addons,
+        isSignature: isSignature,
       });
 
       // Send validated data using axios
@@ -448,6 +450,22 @@ export function SheetAdd({
               >
                 + Add Modifier
               </Button>
+            </div>
+
+            <Label className="text-right">
+              Rekomendasi
+            </Label>
+            <div className="col-span-3 flex items-center gap-2 pt-1">
+              <input
+                type="checkbox"
+                id="isSignatureAdd"
+                checked={isSignature}
+                onChange={(e) => setIsSignature(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+              />
+              <label htmlFor="isSignatureAdd" className="text-xs font-semibold cursor-pointer text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                ⭐ Masukkan ke Daftar Chef Signature (Rekomendasi Koki)
+              </label>
             </div>
           </div>
         </div>

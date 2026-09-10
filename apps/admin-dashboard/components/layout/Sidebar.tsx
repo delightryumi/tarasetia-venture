@@ -169,7 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 setActiveModule("hrd");
                 return;
             }
-            if (pathname.startsWith("/front-office")) {
+            if (pathname.startsWith("/front-office") || pathname === "/digital-checkin" || pathname === "/invoice") {
                 localStorage.setItem("active_module", "front-office");
                 setActiveModule("front-office");
                 return;
@@ -179,7 +179,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 setActiveModule("housekeeping");
                 return;
             }
-            if (pathname.startsWith("/accounting")) {
+            if (
+                pathname.startsWith("/accounting") || 
+                pathname === "/pnl" || 
+                pathname === "/pnl-budget" || 
+                pathname === "/statements" || 
+                pathname === "/dsr" || 
+                pathname === "/budgeting"
+            ) {
                 localStorage.setItem("active_module", "accounting");
                 setActiveModule("accounting");
                 return;
@@ -187,6 +194,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             if (pathname.startsWith("/food-beverage")) {
                 localStorage.setItem("active_module", "food-beverage");
                 setActiveModule("food-beverage");
+                return;
+            }
+            const cpanelPaths = ['/logo', '/hero', '/room-type', '/about', '/gallery', '/footer', '/attractions', '/promo', '/packages', '/seo', '/users'];
+            if (pathname.startsWith('/cpanel') || cpanelPaths.some(p => pathname.startsWith(p))) {
+                localStorage.setItem("active_module", "cpanel");
+                setActiveModule("cpanel");
                 return;
             }
 

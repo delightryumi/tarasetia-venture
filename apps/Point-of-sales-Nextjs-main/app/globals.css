@@ -592,9 +592,10 @@ aside.collapsed .sidebar-toggle {
   border-radius: 2px;
 }
 
-/* Auto Forced Landscape for Mobile & Tablet POS */
+/* Auto Forced Landscape for Mobile & Tablet POS Workstation */
 @media screen and (orientation: portrait) {
-  html, body {
+  html:has(.pos-forced-landscape-root),
+  body:has(.pos-forced-landscape-root) {
     overflow: hidden !important;
     width: 100vw !important;
     height: 100vh !important;
@@ -638,7 +639,8 @@ aside.collapsed .sidebar-toggle {
 }
 
 @media screen and (orientation: landscape) {
-  html, body {
+  html:has(.pos-forced-landscape-root),
+  body:has(.pos-forced-landscape-root) {
     overflow: hidden !important;
     width: 100vw !important;
     height: 100vh !important;

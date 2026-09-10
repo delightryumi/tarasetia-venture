@@ -176,42 +176,89 @@ export const ForecastSection: React.FC = () => {
         return dates;
     };
 
+    const isBookingMatch = (e: any, target: any) => {
+        if (!e || !target) return false;
+        
+        const targetBookingId = (target.bookingId || "").trim();
+        const targetTimestamp = target.timestamp ? String(target.timestamp).trim() : "";
+        const targetId = target.id ? String(target.id).trim() : "";
+        const targetGuestName = (target.guestName || "").trim().toLowerCase();
+        
+        const eBookingId = (e.bookingId || "").trim();
+        const eTimestamp = e.timestamp ? String(e.timestamp).trim() : "";
+        const eId = e.id ? String(e.id).trim() : "";
+        const eGuestName = (e.guestName || "").trim().toLowerCase();
+
+        // 1. Direct ID / Key matches
+        if (targetBookingId !== "" && eBookingId !== "" && targetBookingId === eBookingId) return true;
+        if (targetTimestamp !== "" && eTimestamp !== "" && targetTimestamp === eTimestamp) return true;
+        if (targetId !== "" && eId !== "" && targetId === eId) return true;
+
+        // 2. Name match
+        if (targetGuestName !== "" && eGuestName !== "") {
+            if (eGuestName === targetGuestName) return true;
+        }
+
+        // 3. Linked pelunasan / reversal check
+        if (e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal" || eGuestName.startsWith("koreksi tanggal pelunasan") || eGuestName.startsWith("pelunasan piutang")) {
+            const cleanEGuestName = eGuestName
+                .replace(/^koreksi tanggal pelunasan\s*-\s*/i, "")
+                .replace(/^pelunasan piutang\s*-\s*/i, "")
+                .trim();
+            if (
+                (targetTimestamp && (String(e.refTimestamp) === targetTimestamp || eTimestamp === targetTimestamp)) ||
+                (targetBookingId && (e.refBookingId === targetBookingId || eBookingId === targetBookingId)) ||
+                (targetGuestName && cleanEGuestName === targetGuestName)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     const getCascadeDates = (b: any) => {
         const dates = new Set<string>();
-        const checkIn = b.checkInDate || b.checkIn;
-        const checkOut = b.checkOutDate || b.checkOut;
-        if (checkIn) dates.add(checkIn);
-        if (checkOut) dates.add(checkOut);
-        
         const todayStr = new Date().toISOString().split('T')[0];
         dates.add(todayStr);
 
+        const addDateRange = (cIn?: string, cOut?: string) => {
+            if (cIn && typeof cIn === 'string' && cIn.includes('-')) {
+                dates.add(cIn);
+                if (cOut && typeof cOut === 'string' && cOut.includes('-') && cOut > cIn) {
+                    let curr = new Date(cIn);
+                    const end = new Date(cOut);
+                    while (curr <= end) {
+                        dates.add(curr.toISOString().split('T')[0]);
+                        curr.setDate(curr.getDate() + 1);
+                    }
+                }
+            }
+        };
+
+        addDateRange(b.checkInDate || b.checkIn, b.checkOutDate || b.checkOut);
+        if (b.effectiveDate) dates.add(b.effectiveDate);
+        if (b._docDate) dates.add(b._docDate);
+
         if (b.timestamp) {
-            const tStr = typeof b.timestamp === 'string' && b.timestamp.includes('T')
-                ? b.timestamp.split('T')[0]
-                : new Date(b.timestamp).toISOString().split('T')[0];
-            dates.add(tStr);
+            try {
+                const tStr = typeof b.timestamp === 'string' && b.timestamp.includes('T')
+                    ? b.timestamp.split('T')[0]
+                    : new Date(b.timestamp).toISOString().split('T')[0];
+                if (tStr && tStr.length === 10) dates.add(tStr);
+            } catch {}
         }
         if (b.createdAt) {
-            const cStr = typeof b.createdAt === 'string' && b.createdAt.includes('T')
-                ? b.createdAt.split('T')[0]
-                : new Date(b.createdAt).toISOString().split('T')[0];
-            dates.add(cStr);
+            try {
+                const cStr = typeof b.createdAt === 'string' && b.createdAt.includes('T')
+                    ? b.createdAt.split('T')[0]
+                    : new Date(b.createdAt).toISOString().split('T')[0];
+                if (cStr && cStr.length === 10) dates.add(cStr);
+            } catch {}
         }
 
-        const dateList = Array.from(dates).filter(Boolean).sort();
-        if (dateList.length > 1) {
-            const minDate = new Date(dateList[0]);
-            const maxDate = new Date(dateList[dateList.length - 1]);
-            const curr = new Date(minDate);
-            while (curr <= maxDate) {
-                dates.add(curr.toISOString().split('T')[0]);
-                curr.setDate(curr.getDate() + 1);
-            }
-        }
-        return Array.from(dates).sort();
+        return Array.from(dates).filter(Boolean).sort();
     };
-
 
     const executeVoid = async () => {
         if (!bookingToVoid) return;
@@ -221,8 +268,6 @@ export const ForecastSection: React.FC = () => {
                 toast.error("Hotel Code is missing.");
                 return;
             }
-            const isPOS = bookingToVoid.guestName?.startsWith("POS Order") || !!bookingToVoid.posItems || !!bookingToVoid.revenueType;
-            const isAcc = !isPOS && (bookingToVoid.type === "accommodation" || (!bookingToVoid.type && bookingToVoid.guestName));
             const dates = getCascadeDates(bookingToVoid);
 
             for (const d of dates) {
@@ -231,33 +276,7 @@ export const ForecastSection: React.FC = () => {
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     const mapped = entries.map((e: any) => {
-                        const isMainMatch = e.timestamp === bookingToVoid.timestamp || 
-                            (isAcc && 
-                             e.guestName === bookingToVoid.guestName && 
-                             e.checkInDate === bookingToVoid.checkInDate && 
-                             e.checkOutDate === bookingToVoid.checkOutDate && 
-                             e.roomNumber === bookingToVoid.roomNumber);
-
-                        let isMatch = isMainMatch;
-                        if (!isMatch && (e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal")) {
-                            if (bookingToVoid.timestamp && e.refTimestamp === bookingToVoid.timestamp) {
-                                isMatch = true;
-                            } else if (bookingToVoid.bookingId && e.refBookingId === bookingToVoid.bookingId) {
-                                isMatch = true;
-                            } else {
-                                const cleanEGuestName = (e.guestName || "")
-                                    .replace(/^Koreksi Tanggal Pelunasan\s*-\s*/i, "")
-                                    .replace(/^Pelunasan Piutang\s*-\s*/i, "")
-                                    .trim()
-                                    .toLowerCase();
-                                const cleanParentName = (bookingToVoid.guestName || "").trim().toLowerCase();
-                                if (cleanEGuestName === cleanParentName && cleanParentName !== "") {
-                                    isMatch = true;
-                                }
-                            }
-                        }
-
-                        if (isMatch) {
+                        if (isBookingMatch(e, bookingToVoid)) {
                             return { ...e, status: "VOID", paymentStatus: "VOID" };
                         }
                         return e;
@@ -283,8 +302,6 @@ export const ForecastSection: React.FC = () => {
                 toast.error("Hotel Code is missing.");
                 return;
             }
-            const isPOS = bookingToCancel.guestName?.startsWith("POS Order") || !!bookingToCancel.posItems || !!bookingToCancel.revenueType;
-            const isAcc = !isPOS && (bookingToCancel.type === "accommodation" || (!bookingToCancel.type && bookingToCancel.guestName));
             const dates = getCascadeDates(bookingToCancel);
             const todayStr = new Date().toISOString().split('T')[0];
             const cancelledByVal = user ? `${user.displayName} (${user.role || 'user'})` : "System";
@@ -295,33 +312,7 @@ export const ForecastSection: React.FC = () => {
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     const mapped = entries.map((e: any) => {
-                        const isMainMatch = e.timestamp === bookingToCancel.timestamp || 
-                            (isAcc && 
-                             e.guestName === bookingToCancel.guestName && 
-                             e.checkInDate === bookingToCancel.checkInDate && 
-                             e.checkOutDate === bookingToCancel.checkOutDate && 
-                             e.roomNumber === bookingToCancel.roomNumber);
-
-                        let isMatch = isMainMatch;
-                        if (!isMatch && (e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal")) {
-                            if (bookingToCancel.timestamp && e.refTimestamp === bookingToCancel.timestamp) {
-                                isMatch = true;
-                            } else if (bookingToCancel.bookingId && e.refBookingId === bookingToCancel.bookingId) {
-                                isMatch = true;
-                            } else {
-                                const cleanEGuestName = (e.guestName || "")
-                                    .replace(/^Koreksi Tanggal Pelunasan\s*-\s*/i, "")
-                                    .replace(/^Pelunasan Piutang\s*-\s*/i, "")
-                                    .trim()
-                                    .toLowerCase();
-                                const cleanParentName = (bookingToCancel.guestName || "").trim().toLowerCase();
-                                if (cleanEGuestName === cleanParentName && cleanParentName !== "") {
-                                    isMatch = true;
-                                }
-                            }
-                        }
-
-                        if (isMatch) {
+                        if (isBookingMatch(e, bookingToCancel)) {
                             return { 
                                 ...e, 
                                 status: "CANCELLED", 
@@ -352,26 +343,14 @@ export const ForecastSection: React.FC = () => {
                 toast.error("Hotel Code is missing.");
                 return;
             }
-            const checkInDate = booking.checkInDate || booking.checkIn;
-            const checkOutDate = booking.checkOutDate || booking.checkOut;
-            const isPOS = booking.guestName?.startsWith("POS Order") || !!booking.posItems || !!booking.revenueType;
-            const isAcc = !isPOS && (booking.type === "accommodation" || (!booking.type && booking.guestName));
-            
-            const dates = getDatesBetween(checkInDate, checkOutDate, isAcc);
+            const dates = getCascadeDates(booking);
             for (const d of dates) {
                 const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     const updatedEntries = entries.map((e: any) => {
-                        const isMatch = e.timestamp === booking.timestamp || 
-                            (isAcc && 
-                             e.guestName === booking.guestName && 
-                             e.checkInDate === booking.checkInDate && 
-                             e.checkOutDate === booking.checkOutDate && 
-                             String(e.roomNumber) === String(booking.roomNumber));
-                        
-                        if (isMatch) {
+                        if (isBookingMatch(e, booking)) {
                             const updated = { ...e, [field]: value };
                             if (field === "status" || field === "paymentStatus") {
                                 if (value === "CANCELLED" || value === "CANCEL") {

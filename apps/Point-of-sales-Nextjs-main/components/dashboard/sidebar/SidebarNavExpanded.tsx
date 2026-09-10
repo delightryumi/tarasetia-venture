@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { SquaresFour } from '@phosphor-icons/react';
+import { useSidebarScroll } from '@/hooks/useSidebarScroll';
 
 interface SidebarNavExpandedProps {
   dashboardUrl: string;
@@ -16,10 +17,16 @@ export function SidebarNavExpanded({
   pathname,
   router,
 }: SidebarNavExpandedProps) {
+  const scrollRef = useSidebarScroll<HTMLElement>();
+
   return (
     <nav
-      className="flex flex-col gap-1.5 flex-grow overflow-y-auto overflow-x-hidden px-3"
-      style={{ scrollbarWidth: "none" }}
+      ref={scrollRef}
+      className="flex flex-col gap-1.5 flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 select-none"
+      style={{
+        scrollbarWidth: "none",
+        WebkitOverflowScrolling: "touch",
+      }}
     >
       {/* Pilih Modul button — matching admin dashboard style exactly */}
       <motion.button

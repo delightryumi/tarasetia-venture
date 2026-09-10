@@ -16,10 +16,10 @@ export function SidebarHeader({
 }: SidebarHeaderProps) {
   return (
     <div
-      className={`flex items-center mb-4 px-4 relative ${
+      className={`flex items-center mb-2.5 px-3 relative shrink-0 ${
         isCollapsed ? 'justify-center px-0' : 'justify-between'
       }`}
-      style={{ minHeight: "56px" }}
+      style={{ minHeight: "44px" }}
     >
       {!isCollapsed ? (
         <div className="flex flex-col gap-0.5 w-full">

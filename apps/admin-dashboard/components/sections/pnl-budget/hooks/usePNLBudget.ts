@@ -164,6 +164,10 @@ export const usePNLBudget = () => {
         revSnap.forEach((docSnap) => {
           const data = docSnap.data();
           const docDate = data.date || docSnap.id.replace(`${hCode}_`, "") || docSnap.id;
+
+          const dayAccommodationGroups: Record<string, any[]> = {};
+          const dayNonAccEntries: any[] = [];
+
           (data.entries || []).forEach((t: any) => {
             const status = (t.status || "").toUpperCase();
             const payStatus = (t.paymentStatus || "").toUpperCase();
@@ -182,6 +186,40 @@ export const usePNLBudget = () => {
               t.guestName?.startsWith("Pelunasan Piutang");
             if (isPelunasan) return;
 
+            const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+            const isAcc =
+              !isPOS &&
+              (t.type === "accommodation" || (!t.type && (t.guestName || t.roomNumber || t.roomType)));
+
+            if (isAcc) {
+              const normGuestName = (t.guestName || "").trim().toLowerCase();
+              const roomIdent = String(t.roomNumber || t.roomTypeId || t.roomType || '').trim();
+              const cIn = t.checkInDate || t.checkIn || '';
+              const cOut = t.checkOutDate || t.checkOut || '';
+              const key = (normGuestName && cIn) 
+                ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}` 
+                : (t.bookingId ? `b_${t.bookingId}` : `t_${t.timestamp}`);
+              if (!dayAccommodationGroups[key]) {
+                dayAccommodationGroups[key] = [];
+              }
+              dayAccommodationGroups[key].push(t);
+            } else {
+              dayNonAccEntries.push(t);
+            }
+          });
+
+          const cleanDayEntries: any[] = [];
+          Object.values(dayAccommodationGroups).forEach(group => {
+            group.sort((a, b) => {
+              const tA = new Date(a.timestamp || 0).getTime();
+              const tB = new Date(b.timestamp || 0).getTime();
+              return tA - tB;
+            });
+            cleanDayEntries.push(group[group.length - 1]);
+          });
+          cleanDayEntries.push(...dayNonAccEntries);
+
+          cleanDayEntries.forEach((t: any) => {
             const entryDate = t.effectiveDate || docDate || t.date || t.checkInDate || "";
             const mKey = entryDate.slice(5, 7);
             if (!monthlyMap[mKey]) return;
@@ -191,6 +229,8 @@ export const usePNLBudget = () => {
               !isPOS &&
               (t.type === "accommodation" || (!t.type && (t.guestName || t.roomNumber || t.roomType)));
 
+            const status = (t.status || "").toUpperCase();
+            const payStatus = (t.paymentStatus || "").toUpperCase();
             const amt = Number(t.amount) || 0;
             const paxCount = Number(t.pax) || (Number(t.adultCount || 0) + Number(t.childCount || 0)) || 1;
             const roomCount = Math.max(1, Number(t.roomsCount || (t as any).roomCount) || 1);

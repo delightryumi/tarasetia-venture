@@ -35,20 +35,18 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className="h-full w-full overflow-hidden">
-      <body className={`${inter.className} h-full w-full overflow-hidden m-0 p-0`}>
-        <div className="pos-forced-landscape-root h-full w-full overflow-hidden">
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <NextTopLoader showSpinner={false} />
-            {children}
-            <ToastContainer />
-          </ThemeProvider>
-        </div>
+    <html lang="en" suppressHydrationWarning className="h-full w-full">
+      <body className={`${inter.className} min-h-full w-full m-0 p-0 antialiased`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <NextTopLoader showSpinner={false} />
+          {children}
+          <ToastContainer />
+        </ThemeProvider>
       </body>
     </html>
   );

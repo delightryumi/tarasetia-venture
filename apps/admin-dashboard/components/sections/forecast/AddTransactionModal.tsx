@@ -136,42 +136,89 @@ export const AddTransactionModal = ({
                 toast.error("Hotel Code is missing or invalid.");
                 return;
             }
-            const dateStr = form.checkIn; 
-            const docId = `${hotelId}_${dateStr}`;
             
             const selectedRoomType = roomTypes.find(r => r.id === form.roomTypeId)?.name || "";
+            const isWalkIn = form.channel === "Walk-in" || form.channel === "Nexura Sales" || form.channel === "Booking Engine";
+            const source = isWalkIn ? "Walk-in" : "OTA";
 
-            const transactionData = {
-                guestName: form.guestName,
-                checkInDate: form.checkIn,
-                checkOutDate: form.checkOut,
-                roomType: selectedRoomType,
-                roomNumber: form.roomNumber,
-                channel: form.channel,
-                voucherCode: form.voucherCode,
-                amount: Number(form.totalAmount),
-                paidAmount1: Number(form.paidAmount1),
-                paidAmount2: form.isSplitBill ? Number(form.paidAmount2) : 0,
-                paymentStatus: form.paymentMethod,
-                isSplitBill: form.isSplitBill,
-                source: (form.channel === "Walk-in" || form.channel === "Nexura Sales" || form.channel === "Booking Engine") ? "Walk-in" : "OTA",
-                status: "CONFIRMED",
-                timestamp: new Date().toISOString()
-            };
+            const startD = new Date(form.checkIn);
+            const endD = new Date(form.checkOut);
+            const nights = Math.max(1, Math.ceil((endD.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24)));
+            
+            const totalAmountNum = Number(form.totalAmount) || 0;
+            const paidAmount1Num = Number(form.paidAmount1) || 0;
+            const paidAmount2Num = form.isSplitBill ? (Number(form.paidAmount2) || 0) : 0;
+            
+            let remainingPaid1 = paidAmount1Num;
+            let remainingPaid2 = paidAmount2Num;
+            const timestamp = new Date().toISOString();
+            const bookingId = `RES-${Date.now().toString().slice(-6)}`;
 
-            const docRef = doc(getHotelCollection(db, "daily_revenue"), docId);
-            const docSnap = await getDoc(docRef);
+            for (let i = 0; i < nights; i++) {
+                const currentDate = new Date(startD);
+                currentDate.setDate(currentDate.getDate() + i);
+                const dateStr = currentDate.toISOString().split('T')[0];
+                const nightlyRate = Math.round(totalAmountNum / nights);
+                
+                let dailyPaid1 = 0;
+                let dailyPaid2 = 0;
+                if (i === nights - 1) {
+                    dailyPaid1 = remainingPaid1;
+                    dailyPaid2 = remainingPaid2;
+                } else {
+                    dailyPaid1 = Math.round(paidAmount1Num / nights);
+                    dailyPaid2 = Math.round(paidAmount2Num / nights);
+                    remainingPaid1 -= dailyPaid1;
+                    remainingPaid2 -= dailyPaid2;
+                }
 
-            if (docSnap.exists()) {
-                await updateDoc(docRef, {
-                    entries: arrayUnion(transactionData),
-                    date: dateStr
-                });
-            } else {
-                await setDoc(docRef, {
-                    entries: [transactionData],
-                    date: dateStr
-                });
+                const dailyPaidTotal = dailyPaid1 + dailyPaid2;
+                const dailyBalance = Math.max(0, nightlyRate - dailyPaidTotal);
+                const dailyStatus = dailyBalance === 0 ? "Lunas" : (dailyPaidTotal > 0 ? "DP / Partial" : "Belum Bayar");
+
+                const payHotelVal = isWalkIn ? dailyPaid1 : (form.paymentMethod === "Pay at Hotel" ? dailyPaid1 : 0);
+                const payTransferVal = !isWalkIn ? dailyPaid1 + dailyPaid2 : (form.paymentMethod === "Pay at Nexura" ? dailyPaid1 + dailyPaid2 : dailyPaid2);
+
+                const transactionData = {
+                    guestName: form.guestName,
+                    bookingId: bookingId,
+                    checkInDate: form.checkIn,
+                    checkOutDate: form.checkOut,
+                    effectiveDate: dateStr,
+                    roomType: selectedRoomType,
+                    roomNumber: form.roomNumber,
+                    channel: form.channel,
+                    voucherCode: form.voucherCode,
+                    amount: nightlyRate,
+                    totalAmount: totalAmountNum,
+                    nights: nights,
+                    paidAmount1: dailyPaid1,
+                    paidAmount2: dailyPaid2,
+                    payHotel: payHotelVal,
+                    payTransfer: payTransferVal,
+                    paidCash: payHotelVal,
+                    paidTransfer: payTransferVal,
+                    paymentStatus: dailyStatus,
+                    isSplitBill: form.isSplitBill,
+                    source: source,
+                    status: "CONFIRMED",
+                    timestamp: timestamp
+                };
+
+                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${dateStr}`);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    await updateDoc(docRef, {
+                        entries: arrayUnion(transactionData),
+                        date: dateStr
+                    });
+                } else {
+                    await setDoc(docRef, {
+                        entries: [transactionData],
+                        date: dateStr
+                    });
+                }
             }
 
             toast.success("Transaction recorded");

@@ -79,7 +79,7 @@ const MONTH_NAMES = [
   { key: "12", name: "Desember" },
 ];
 
-const VALID_ADMIN_PASSWORDS = ["admin123", "owner123"];
+const VALID_ADMIN_PASSWORDS = ["admin123", "owner123", "superadmin", "superadmin123", "setara123", "admin"];
 
 type DeptTabKey = "pnl" | "room" | "fnb" | "mod" | "ag" | "hrd" | "sm" | "pomec" | "manning" | "fees";
 
@@ -388,8 +388,9 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
           setPendingAction(null);
         }
       }
-    } catch (err) {
-      toast.error("Gagal menyimpan data budgeting ke server.");
+    } catch (err: any) {
+      console.error("Budget save error:", err);
+      toast.error(err?.message ? `Gagal menyimpan: ${err.message}` : "Gagal menyimpan data budgeting ke server.");
     }
   };
 

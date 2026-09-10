@@ -87,6 +87,8 @@ export function ExpandedMode({
                                                     router.push(`/food-beverage/product?module=food-beverage`);
                                                 } else if (item.id === "food-beverage-realtime") {
                                                     router.push(`/food-beverage/realtime?module=food-beverage`);
+                                                } else if (item.id === "pnl") {
+                                                    router.push(`/pnl?module=accounting`);
                                                 } else if (item.id === "statements") {
                                                     router.push(`/statements?module=accounting`);
                                                 } else if (item.id === "pnl-budget") {
@@ -95,6 +97,10 @@ export function ExpandedMode({
                                                     router.push(`/dsr?module=accounting`);
                                                 } else if (item.id === "budgeting") {
                                                     router.push(`/budgeting?module=accounting`);
+                                                } else if (item.id === "inventory-control") {
+                                                    router.push(`/inventory-control?module=${activeModule}`);
+                                                } else if (item.id === "overview" || item.id === "forecast") {
+                                                    router.push(`/${item.id}?module=${activeModule}`);
                                                 } else {
                                                     router.push(`/${item.id}`);
                                                 }
@@ -130,6 +136,8 @@ export function ExpandedMode({
                                 router.push(`/food-beverage/product?module=food-beverage`);
                             } else if (item.id === "food-beverage-realtime") {
                                 router.push(`/food-beverage/realtime?module=food-beverage`);
+                            } else if (item.id === "pnl") {
+                                router.push(`/pnl?module=accounting`);
                             } else if (item.id === "statements") {
                                 router.push(`/statements?module=accounting`);
                             } else if (item.id === "pnl-budget") {
@@ -138,6 +146,10 @@ export function ExpandedMode({
                                 router.push(`/dsr?module=accounting`);
                             } else if (item.id === "budgeting") {
                                 router.push(`/budgeting?module=accounting`);
+                            } else if (item.id === "inventory-control") {
+                                router.push(`/inventory-control?module=${activeModule}`);
+                            } else if (item.id === "overview" || item.id === "forecast") {
+                                router.push(`/${item.id}?module=${activeModule}`);
                             } else {
                                 router.push(`/${item.id}`);
                             }

@@ -140,10 +140,13 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         const isAccommodation = !isPOS && (e.type === "accommodation" || (!e.type && e.guestName));
                         
                         if (isAccommodation) {
-                            const roomIdent = e.roomNumber || e.roomTypeId || e.roomType || '';
-                            const key = e.bookingId 
-                                ? `${e.bookingId}_${roomIdent}_${e.checkInDate}_${e.checkOutDate}` 
-                                : `${e.guestName}_${roomIdent}_${e.checkInDate}_${e.checkOutDate}_${e.timestamp || ''}`;
+                            const normGuestName = (e.guestName || "").trim().toLowerCase();
+                            const roomIdent = String(e.roomNumber || e.roomTypeId || e.roomType || '').trim();
+                            const cIn = e.checkInDate || e.checkIn || '';
+                            const cOut = e.checkOutDate || e.checkOut || '';
+                            const key = (normGuestName && cIn) 
+                                ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}` 
+                                : (e.bookingId ? `b_${e.bookingId}` : `t_${e.timestamp}`);
                             if (!accommodationGroups[key]) {
                                 accommodationGroups[key] = [];
                             }
@@ -166,7 +169,7 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         
                         group.sort((a, b) => (a._docDate || a.checkInDate || '').localeCompare(b._docDate || b.checkInDate || ''));
 
-                        const rep = { ...group[0] };
+                        const rep = { ...group[group.length - 1] };
                         if (isCancelled) {
                             rep.status = "CANCELLED";
                             rep.paymentStatus = "CANCELLED";
@@ -200,9 +203,17 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                             }
                         }
 
-                        const stayTotalAmount = group.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-                        const stayPayHotel = group.reduce((sum, item) => sum + (Number(item.payHotel || item.paidCash || item.paidAmount1) || 0), 0);
-                        const stayPayTransfer = group.reduce((sum, item) => sum + (Number(item.payTransfer || item.payNexura || item.paidTransfer || item.paidAmount2) || 0), 0);
+                        // Deduplicate entries per distinct docDate to avoid summing duplicate records from same night
+                        const dateMap: Record<string, any> = {};
+                        group.forEach(item => {
+                            const dKey = item._docDate || item.effectiveDate || item.checkInDate || 'default';
+                            dateMap[dKey] = item;
+                        });
+                        const distinctEntries = Object.values(dateMap);
+
+                        const stayTotalAmount = distinctEntries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                        const stayPayHotel = distinctEntries.reduce((sum, item) => sum + (Number(item.payHotel ?? item.paidCash ?? item.paidAmount1 ?? 0)), 0);
+                        const stayPayTransfer = distinctEntries.reduce((sum, item) => sum + (Number(item.payTransfer ?? item.payNexura ?? item.paidTransfer ?? item.paidAmount2 ?? 0)), 0);
 
                         // Find matching nights in current filter range [startDateStr, endDateStr]
                         const matchingNights = stayNightDates.filter(d => d >= startDateStr && d <= endDateStr);

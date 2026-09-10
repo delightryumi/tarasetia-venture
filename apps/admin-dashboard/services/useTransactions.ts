@@ -58,8 +58,8 @@ export function useTransactions(month?: number, year?: number) {
           (data.entries || []).forEach((t: any) => {
             results.push({
               amount: Number(t.amount) || 0,
-              paidCash: Number(t.paidCash || t.paidAmount1) || 0,
-              paidTransfer: Number(t.paidTransfer || t.paidAmount2) || 0,
+              paidCash: Number(t.payHotel ?? t.paidCash ?? t.paidAmount1 ?? 0),
+              paidTransfer: Number(t.payTransfer ?? t.paidTransfer ?? t.payNexura ?? t.paidAmount2 ?? 0),
               feePercentage: Number(t.feePercentage) || 0,
               status: t.status || "CONFIRMED",
               channel: t.channel || "Walk-in",

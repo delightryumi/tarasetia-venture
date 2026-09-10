@@ -297,7 +297,9 @@ export const useBudgeting = () => {
 
   // Save modified Budget Document
   const saveBudgetDoc = async (updatedDoc: YearlyBudgetDocument) => {
-    if (!hotelCode) return;
+    if (!hotelCode) {
+      throw new Error("Kode hotel tidak ditemukan. Silakan pilih hotel aktif.");
+    }
     setSavingBudget(true);
     setSaveSuccess(false);
     try {
@@ -313,17 +315,28 @@ export const useBudgeting = () => {
         userRole,
         action: `Update Target Budget Tahun ${updatedDoc.year}`,
         snapshot: {
-          months: JSON.parse(JSON.stringify(updatedDoc.months || {})),
-          manning: updatedDoc.manning ? JSON.parse(JSON.stringify(updatedDoc.manning)) : undefined,
-          fees: updatedDoc.fees ? JSON.parse(JSON.stringify(updatedDoc.fees)) : undefined,
+          months: updatedDoc.months ? JSON.parse(JSON.stringify(updatedDoc.months)) : {},
+          manning: updatedDoc.manning ? JSON.parse(JSON.stringify(updatedDoc.manning)) : null,
+          fees: updatedDoc.fees ? JSON.parse(JSON.stringify(updatedDoc.fees)) : null,
         },
       };
 
+      // Keep up to 5 full snapshots to strictly protect from 1MB Firestore document limit
       const existingLogs = Array.isArray(updatedDoc.auditLogs) ? updatedDoc.auditLogs : [];
-      const updatedLogs = [newLogEntry, ...existingLogs].slice(0, 50);
+      const sanitizedExistingLogs = existingLogs.slice(0, 15).map((l, idx) => {
+        if (idx >= 4) {
+          const { snapshot, ...rest } = l;
+          return rest;
+        }
+        return l;
+      });
+      const updatedLogs = [newLogEntry, ...sanitizedExistingLogs];
 
-      const payload: YearlyBudgetDocument = {
+      const rawPayload = {
         ...updatedDoc,
+        year: Number(updatedDoc.year),
+        hotelCode: hotelCode || "default",
+        hotelName: updatedDoc.hotelName || hotelName || "Hotel",
         updatedAt: now,
         lastUpdatedBy: userName,
         lastUpdatedByEmail: userEmail,
@@ -331,10 +344,13 @@ export const useBudgeting = () => {
         auditLogs: updatedLogs,
       };
 
-      const budgetRef = doc(getHotelCollection(db, "budgeting", hotelCode), String(updatedDoc.year));
-      await setDoc(budgetRef, payload, { merge: true });
+      // Sanitize payload with JSON serialization to strip all undefined fields that cause Firestore errors
+      const cleanPayload: YearlyBudgetDocument = JSON.parse(JSON.stringify(rawPayload));
 
-      setBudgetDoc(payload);
+      const budgetRef = doc(getHotelCollection(db, "budgeting", hotelCode), String(updatedDoc.year));
+      await setDoc(budgetRef, cleanPayload, { merge: true });
+
+      setBudgetDoc(cleanPayload);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -370,15 +386,22 @@ export const useBudgeting = () => {
         action: `Rollback ke versi ${new Date(targetLog.timestamp).toLocaleString("id-ID")}`,
         snapshot: {
           months: JSON.parse(JSON.stringify(targetLog.snapshot.months || {})),
-          manning: targetLog.snapshot.manning ? JSON.parse(JSON.stringify(targetLog.snapshot.manning)) : undefined,
-          fees: targetLog.snapshot.fees ? JSON.parse(JSON.stringify(targetLog.snapshot.fees)) : undefined,
+          manning: targetLog.snapshot.manning ? JSON.parse(JSON.stringify(targetLog.snapshot.manning)) : null,
+          fees: targetLog.snapshot.fees ? JSON.parse(JSON.stringify(targetLog.snapshot.fees)) : null,
         },
       };
 
       const existingLogs = Array.isArray(budgetDoc.auditLogs) ? budgetDoc.auditLogs : [];
-      const updatedLogs = [rollbackLogEntry, ...existingLogs].slice(0, 50);
+      const sanitizedExistingLogs = existingLogs.slice(0, 15).map((l, idx) => {
+        if (idx >= 4) {
+          const { snapshot, ...rest } = l;
+          return rest;
+        }
+        return l;
+      });
+      const updatedLogs = [rollbackLogEntry, ...sanitizedExistingLogs];
 
-      const restoredPayload: YearlyBudgetDocument = {
+      const rawRestoredPayload = {
         ...budgetDoc,
         months: JSON.parse(JSON.stringify(targetLog.snapshot.months)),
         manning: targetLog.snapshot.manning ? JSON.parse(JSON.stringify(targetLog.snapshot.manning)) : budgetDoc.manning,
@@ -390,11 +413,13 @@ export const useBudgeting = () => {
         auditLogs: updatedLogs,
       };
 
-      const budgetRef = doc(getHotelCollection(db, "budgeting", hotelCode), String(budgetDoc.year));
-      await setDoc(budgetRef, restoredPayload, { merge: true });
+      const cleanRestoredPayload: YearlyBudgetDocument = JSON.parse(JSON.stringify(rawRestoredPayload));
 
-      setBudgetDoc(restoredPayload);
-      return restoredPayload;
+      const budgetRef = doc(getHotelCollection(db, "budgeting", hotelCode), String(budgetDoc.year));
+      await setDoc(budgetRef, cleanRestoredPayload, { merge: true });
+
+      setBudgetDoc(cleanRestoredPayload);
+      return cleanRestoredPayload;
     } catch (err) {
       console.error("Error restoring budget from log:", err);
       throw err;

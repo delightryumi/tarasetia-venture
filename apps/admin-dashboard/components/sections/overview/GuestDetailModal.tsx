@@ -79,13 +79,23 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
     // Populate and sync form data when selected guest changes
     React.useEffect(() => {
         if (guest) {
+            const checkIn = guest.checkInDate || guest.checkIn || '';
+            const checkOut = guest.checkOutDate || guest.checkOut || '';
+            const isAcc = guest.type === 'accommodation' || !guest.type;
+            const dates = getDatesBetween(checkIn, checkOut, isAcc);
+            const nights = dates.length || 1;
+            
+            const initTotalAmount = guest.totalAmount || (guest.amount && nights > 1 ? guest.amount * nights : (guest.amount || 0));
+            const initPayHotel = guest.payHotel ?? guest.paidCash ?? 0;
+            const initPayTransfer = guest.payTransfer ?? guest.payNexura ?? guest.paidTransfer ?? 0;
+
             setFormData({
                 ...guest,
-                totalAmount: guest.totalAmount || guest.amount || 0,
-                payHotel: guest.payHotel ?? guest.paidCash ?? guest.amount ?? 0,
-                payTransfer: guest.payTransfer ?? guest.payNexura ?? guest.paidTransfer ?? 0,
-                checkIn: guest.checkInDate || guest.checkIn || '',
-                checkOut: guest.checkOutDate || guest.checkOut || '',
+                totalAmount: initTotalAmount,
+                payHotel: initPayHotel,
+                payTransfer: initPayTransfer,
+                checkIn,
+                checkOut,
                 roomTypeId: guest.roomTypeId || '',
                 roomNumber: guest.roomNumber || '',
                 channel: guest.channel || 'Walk-in',
@@ -133,42 +143,96 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
         return dates;
     };
 
+    const isBookingMatch = (e: any, target: any, newTarget?: any) => {
+        if (!e) return false;
+        
+        const targetBookingId = (target?.bookingId || newTarget?.bookingId || "").trim();
+        const targetTimestamp = target?.timestamp ? String(target.timestamp).trim() : (newTarget?.timestamp ? String(newTarget.timestamp).trim() : "");
+        const targetId = target?.id ? String(target.id).trim() : (newTarget?.id ? String(newTarget.id).trim() : "");
+        
+        const targetGuestName = (target?.guestName || "").trim().toLowerCase();
+        const newGuestName = (newTarget?.guestName || "").trim().toLowerCase();
+        
+        const eBookingId = (e.bookingId || "").trim();
+        const eTimestamp = e.timestamp ? String(e.timestamp).trim() : "";
+        const eId = e.id ? String(e.id).trim() : "";
+        const eGuestName = (e.guestName || "").trim().toLowerCase();
+
+        // 1. Direct ID / Key matches
+        if (targetBookingId !== "" && eBookingId !== "" && targetBookingId === eBookingId) return true;
+        if (targetTimestamp !== "" && eTimestamp !== "" && targetTimestamp === eTimestamp) return true;
+        if (targetId !== "" && eId !== "" && targetId === eId) return true;
+
+        // 2. Name match (exact or matching clean name)
+        if (targetGuestName !== "" && eGuestName !== "") {
+            if (eGuestName === targetGuestName) return true;
+        }
+        if (newGuestName !== "" && eGuestName !== "") {
+            if (eGuestName === newGuestName) return true;
+        }
+
+        // 3. Linked pelunasan / reversal check
+        if (e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal" || eGuestName.startsWith("koreksi tanggal pelunasan") || eGuestName.startsWith("pelunasan piutang")) {
+            const cleanEGuestName = eGuestName
+                .replace(/^koreksi tanggal pelunasan\s*-\s*/i, "")
+                .replace(/^pelunasan piutang\s*-\s*/i, "")
+                .trim();
+            if (
+                (targetTimestamp && (String(e.refTimestamp) === targetTimestamp || eTimestamp === targetTimestamp)) ||
+                (targetBookingId && (e.refBookingId === targetBookingId || eBookingId === targetBookingId)) ||
+                (targetGuestName && cleanEGuestName === targetGuestName) ||
+                (newGuestName && cleanEGuestName === newGuestName)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     const getCascadeDates = (b: any) => {
         const dates = new Set<string>();
-        const checkIn = b.checkInDate || b.checkIn;
-        const checkOut = b.checkOutDate || b.checkOut;
-        if (checkIn) dates.add(checkIn);
-        if (checkOut) dates.add(checkOut);
-        
         const todayStr = new Date().toISOString().split('T')[0];
         dates.add(todayStr);
 
+        const addDateRange = (cIn?: string, cOut?: string) => {
+            if (cIn && typeof cIn === 'string' && cIn.includes('-')) {
+                dates.add(cIn);
+                if (cOut && typeof cOut === 'string' && cOut.includes('-') && cOut > cIn) {
+                    let curr = new Date(cIn);
+                    const end = new Date(cOut);
+                    while (curr <= end) {
+                        dates.add(curr.toISOString().split('T')[0]);
+                        curr.setDate(curr.getDate() + 1);
+                    }
+                }
+            }
+        };
+
+        addDateRange(b.checkInDate || b.checkIn, b.checkOutDate || b.checkOut);
+        addDateRange(b.oldCheckIn, b.oldCheckOut);
+        if (b.effectiveDate) dates.add(b.effectiveDate);
+        if (b._docDate) dates.add(b._docDate);
+
         if (b.timestamp) {
-            const tStr = typeof b.timestamp === 'string' && b.timestamp.includes('T')
-                ? b.timestamp.split('T')[0]
-                : new Date(b.timestamp).toISOString().split('T')[0];
-            dates.add(tStr);
+            try {
+                const tStr = typeof b.timestamp === 'string' && b.timestamp.includes('T')
+                    ? b.timestamp.split('T')[0]
+                    : new Date(b.timestamp).toISOString().split('T')[0];
+                if (tStr && tStr.length === 10) dates.add(tStr);
+            } catch {}
         }
         if (b.createdAt) {
-            const cStr = typeof b.createdAt === 'string' && b.createdAt.includes('T')
-                ? b.createdAt.split('T')[0]
-                : new Date(b.createdAt).toISOString().split('T')[0];
-            dates.add(cStr);
+            try {
+                const cStr = typeof b.createdAt === 'string' && b.createdAt.includes('T')
+                    ? b.createdAt.split('T')[0]
+                    : new Date(b.createdAt).toISOString().split('T')[0];
+                if (cStr && cStr.length === 10) dates.add(cStr);
+            } catch {}
         }
 
-        const dateList = Array.from(dates).filter(Boolean).sort();
-        if (dateList.length > 1) {
-            const minDate = new Date(dateList[0]);
-            const maxDate = new Date(dateList[dateList.length - 1]);
-            const curr = new Date(minDate);
-            while (curr <= maxDate) {
-                dates.add(curr.toISOString().split('T')[0]);
-                curr.setDate(curr.getDate() + 1);
-            }
-        }
-        return Array.from(dates).sort();
+        return Array.from(dates).filter(Boolean).sort();
     };
-
 
     const handleSave = async () => {
         try {
@@ -186,26 +250,21 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 if (!formData.roomTypeId) { toast.error("Room Category is required"); return; }
             }
 
-            // 1. Delete all old nightly entries
-            const oldCheckIn = guest.checkInDate || guest.checkIn;
-            const oldCheckOut = guest.checkOutDate || guest.checkOut;
-            const oldIsAcc = guest.type === "accommodation";
-            const oldDates = getDatesBetween(oldCheckIn, oldCheckOut, oldIsAcc);
+            // 1. Cleanly delete all old nightly entries and linked entries across all possible cascade dates
+            const sweepDates = getCascadeDates({
+                ...guest,
+                checkIn: formData.checkIn,
+                checkOut: formData.checkOut,
+                oldCheckIn: guest.checkInDate || guest.checkIn,
+                oldCheckOut: guest.checkOutDate || guest.checkOut
+            });
             
-            for (const d of oldDates) {
+            for (const d of sweepDates) {
                 const oldRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const oldSnap = await getDoc(oldRef);
                 if (oldSnap.exists()) {
                     const oldEntries = oldSnap.data().entries || [];
-                    const filtered = oldEntries.filter((e: any) => {
-                        const isMatch = e.timestamp === guest.timestamp || 
-                            (guest.type === 'accommodation' && 
-                             e.guestName === guest.guestName && 
-                             e.checkInDate === guest.checkInDate && 
-                             e.checkOutDate === guest.checkOutDate && 
-                             e.roomNumber === guest.roomNumber);
-                        return !isMatch;
-                    });
+                    const filtered = oldEntries.filter((e: any) => !isBookingMatch(e, guest, formData));
                     await updateDoc(oldRef, { entries: filtered });
                 }
             }
@@ -257,6 +316,8 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                     checkOutDate: formData.checkOut,
                     effectiveDate: dateStr,
                     amount: nightlyRate,
+                    totalAmount: totalAmount,
+                    nights: nights,
                     payHotel: dailyPayHotel,
                     payTransfer: dailyPayTransfer,
                     paidCash: dailyPayHotel,
@@ -274,74 +335,78 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 });
             }
 
-            // 3. Write new entries
+            // 3. Write new entries (with explicit purge of any remaining match)
             for (const entry of newEntries) {
                 const dateStr = entry.effectiveDate || entry.checkInDate;
                 const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${dateStr}`);
                 const docSnap = await getDoc(docRef);
                 const cleanedEntry = cleanUndefined(entry);
                 if (docSnap.exists()) {
-                    const entries = docSnap.data().entries || [];
-                    await updateDoc(docRef, { entries: [...entries, cleanedEntry], date: dateStr });
+                    const currentEntries = docSnap.data().entries || [];
+                    const purged = currentEntries.filter((e: any) => !isBookingMatch(e, guest, formData));
+                    await updateDoc(docRef, { entries: [...purged, cleanedEntry], date: dateStr });
                 } else {
                     await setDoc(docRef, { entries: [cleanedEntry], date: dateStr });
                 }
             }
 
-            // 4. Generate Pelunasan & Reversal entries if there's a positive payment
-            const oldPayHotel = Number(guest.payHotel || guest.paidCash || 0);
-            const oldPayTransfer = Number(guest.payTransfer || guest.paidTransfer || 0);
-            const diffPayHotel = payHotel - oldPayHotel;
-            const diffPayTransfer = payTransfer - oldPayTransfer;
+            // 4. Generate Pelunasan & Reversal entries ONLY for Walk-in AR adjustments
+            if (newSource === "Walk-in") {
+                const oldPayHotel = Number(guest.payHotel || guest.paidCash || 0);
+                const oldPayTransfer = Number(guest.payTransfer || guest.paidTransfer || 0);
+                const diffPayHotel = payHotel - oldPayHotel;
+                const diffPayTransfer = payTransfer - oldPayTransfer;
 
-            if (diffPayHotel > 0 || diffPayTransfer > 0) {
-                const pelunasanEntries = [];
-                // Reversal entry (backdated to checkIn date to reduce that day's cash flow)
-                pelunasanEntries.push({
-                    id: `rev_${Date.now()}_1`,
-                    type: "pelunasan_reversal",
-                    guestName: `Koreksi Tanggal Pelunasan - ${formData.guestName}`,
-                    amount: 0,
-                    payHotel: -diffPayHotel,
-                    payTransfer: -diffPayTransfer,
-                    paidCash: -diffPayHotel,
-                    paidTransfer: -diffPayTransfer,
-                    effectiveDate: formData.checkIn,
-                    timestamp: new Date().toISOString(),
-                    refBookingId: guest.bookingId || guest.id || "",
-                    refTimestamp: guest.timestamp || guest.createdAt || "",
-                    isPelunasan: true,
-                    isHidden: true
-                });
+                if (diffPayHotel > 0 || diffPayTransfer > 0) {
+                    const pelunasanEntries = [];
+                    // Reversal entry (backdated to checkIn date to reduce that day's cash flow)
+                    pelunasanEntries.push({
+                        id: `rev_${Date.now()}_1`,
+                        type: "pelunasan_reversal",
+                        guestName: `Koreksi Tanggal Pelunasan - ${formData.guestName}`,
+                        amount: 0,
+                        payHotel: -diffPayHotel,
+                        payTransfer: -diffPayTransfer,
+                        paidCash: -diffPayHotel,
+                        paidTransfer: -diffPayTransfer,
+                        effectiveDate: formData.checkIn,
+                        timestamp: new Date().toISOString(),
+                        refBookingId: guest.bookingId || guest.id || "",
+                        refTimestamp: guest.timestamp || guest.createdAt || "",
+                        isPelunasan: true,
+                        isHidden: true
+                    });
 
-                // Actual Pelunasan entry (on today's date)
-                pelunasanEntries.push({
-                    id: `pel_${Date.now()}_2`,
-                    type: "pelunasan_ar",
-                    guestName: `Pelunasan Piutang - ${formData.guestName}`,
-                    amount: 0,
-                    payHotel: diffPayHotel,
-                    payTransfer: diffPayTransfer,
-                    paidCash: diffPayHotel,
-                    paidTransfer: diffPayTransfer,
-                    effectiveDate: todayStr,
-                    timestamp: new Date().toISOString(),
-                    refBookingId: guest.bookingId || guest.id || "",
-                    refTimestamp: guest.timestamp || guest.createdAt || "",
-                    isPelunasan: true,
-                    isHidden: true
-                });
+                    // Actual Pelunasan entry (on today's date)
+                    pelunasanEntries.push({
+                        id: `pel_${Date.now()}_2`,
+                        type: "pelunasan_ar",
+                        guestName: `Pelunasan Piutang - ${formData.guestName}`,
+                        amount: 0,
+                        payHotel: diffPayHotel,
+                        payTransfer: diffPayTransfer,
+                        paidCash: diffPayHotel,
+                        paidTransfer: diffPayTransfer,
+                        effectiveDate: todayStr,
+                        timestamp: new Date().toISOString(),
+                        refBookingId: guest.bookingId || guest.id || "",
+                        refTimestamp: guest.timestamp || guest.createdAt || "",
+                        isPelunasan: true,
+                        isHidden: true
+                    });
 
-                for (const entry of pelunasanEntries) {
-                    const dateStr = entry.effectiveDate;
-                    const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${dateStr}`);
-                    const docSnap = await getDoc(docRef);
-                    const cleanedEntry = cleanUndefined(entry);
-                    if (docSnap.exists()) {
-                        const entries = docSnap.data().entries || [];
-                        await updateDoc(docRef, { entries: [...entries, cleanedEntry], date: dateStr }, { merge: true });
-                    } else {
-                        await setDoc(docRef, { entries: [cleanedEntry], date: dateStr }, { merge: true });
+                    for (const entry of pelunasanEntries) {
+                        const dateStr = entry.effectiveDate;
+                        const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${dateStr}`);
+                        const docSnap = await getDoc(docRef);
+                        const cleanedEntry = cleanUndefined(entry);
+                        if (docSnap.exists()) {
+                            const entries = docSnap.data().entries || [];
+                            const purged = entries.filter((e: any) => !isBookingMatch(e, guest, formData));
+                            await updateDoc(docRef, { entries: [...purged, cleanedEntry], date: dateStr }, { merge: true });
+                        } else {
+                            await setDoc(docRef, { entries: [cleanedEntry], date: dateStr }, { merge: true });
+                        }
                     }
                 }
             }
@@ -362,8 +427,6 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 toast.error("Hotel Code is missing.");
                 return;
             }
-            const isPOS = guest.guestName?.startsWith("POS Order") || !!guest.posItems || !!guest.revenueType;
-            const isAcc = !isPOS && (guest.type === "accommodation" || (!guest.type && guest.guestName));
             const dates = getCascadeDates(guest);
 
             for (const d of dates) {
@@ -372,33 +435,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     const mapped = entries.map((e: any) => {
-                        const isMainMatch = e.timestamp === guest.timestamp || 
-                            (isAcc && 
-                             e.guestName === guest.guestName && 
-                             e.checkInDate === guest.checkInDate && 
-                             e.checkOutDate === guest.checkOutDate && 
-                             e.roomNumber === guest.roomNumber);
-
-                        let isMatch = isMainMatch;
-                        if (!isMatch && (e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal")) {
-                            if (guest.timestamp && e.refTimestamp === guest.timestamp) {
-                                isMatch = true;
-                            } else if (guest.bookingId && e.refBookingId === guest.bookingId) {
-                                isMatch = true;
-                            } else {
-                                const cleanEGuestName = (e.guestName || "")
-                                    .replace(/^Koreksi Tanggal Pelunasan\s*-\s*/i, "")
-                                    .replace(/^Pelunasan Piutang\s*-\s*/i, "")
-                                    .trim()
-                                    .toLowerCase();
-                                const cleanParentName = (guest.guestName || "").trim().toLowerCase();
-                                if (cleanEGuestName === cleanParentName && cleanParentName !== "") {
-                                    isMatch = true;
-                                }
-                            }
-                        }
-
-                        if (isMatch) {
+                        if (isBookingMatch(e, guest)) {
                             return cleanUndefined({ ...e, status: "VOID", paymentStatus: "VOID" });
                         }
                         return cleanUndefined(e);
@@ -424,8 +461,6 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 toast.error("Hotel Code is missing.");
                 return;
             }
-            const isPOS = guest.guestName?.startsWith("POS Order") || !!guest.posItems || !!guest.revenueType;
-            const isAcc = !isPOS && (guest.type === "accommodation" || (!guest.type && guest.guestName));
             const dates = getCascadeDates(guest);
             const todayStr = new Date().toISOString().split('T')[0];
             const cancelledByVal = user ? `${user.displayName} (${user.role || 'user'})` : "System";
@@ -436,33 +471,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     const mapped = entries.map((e: any) => {
-                        const isMainMatch = e.timestamp === guest.timestamp || 
-                            (isAcc && 
-                             e.guestName === guest.guestName && 
-                             e.checkInDate === guest.checkInDate && 
-                             e.checkOutDate === guest.checkOutDate && 
-                             e.roomNumber === guest.roomNumber);
-
-                        let isMatch = isMainMatch;
-                        if (!isMatch && (e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal")) {
-                            if (guest.timestamp && e.refTimestamp === guest.timestamp) {
-                                isMatch = true;
-                            } else if (guest.bookingId && e.refBookingId === guest.bookingId) {
-                                isMatch = true;
-                            } else {
-                                const cleanEGuestName = (e.guestName || "")
-                                    .replace(/^Koreksi Tanggal Pelunasan\s*-\s*/i, "")
-                                    .replace(/^Pelunasan Piutang\s*-\s*/i, "")
-                                    .trim()
-                                    .toLowerCase();
-                                const cleanParentName = (guest.guestName || "").trim().toLowerCase();
-                                if (cleanEGuestName === cleanParentName && cleanParentName !== "") {
-                                    isMatch = true;
-                                }
-                            }
-                        }
-
-                        if (isMatch) {
+                        if (isBookingMatch(e, guest)) {
                             return cleanUndefined({ 
                                 ...e, 
                                 status: "CANCELLED", 

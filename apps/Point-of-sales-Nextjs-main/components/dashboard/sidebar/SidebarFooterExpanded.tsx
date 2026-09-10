@@ -11,9 +11,9 @@ export function SidebarFooterExpanded({
 }: SidebarFooterExpandedProps) {
   return (
     <div
-      className="mt-auto flex flex-col gap-2"
+      className="mt-auto flex flex-col gap-2 shrink-0"
       style={{
-        paddingTop: "16px",
+        paddingTop: "10px",
         borderTop: "1px solid var(--sidebar-border)",
       }}
     >

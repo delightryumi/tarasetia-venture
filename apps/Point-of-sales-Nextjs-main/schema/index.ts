@@ -38,6 +38,10 @@ export const productSchema = z
         price: z.number().min(0)
       }))
       .optional(),
+    isSignature: z
+      .boolean()
+      .optional()
+      .default(false),
   })
   .refine(
     (data) =>

@@ -6,6 +6,8 @@ import { SquaresFour, SignOut } from '@phosphor-icons/react';
 import { NAVBAR_ITEMS } from '@/constant/navbarMenu';
 import { useRBAC } from '@/hooks/useRBAC';
 
+import { useSidebarScroll } from '@/hooks/useSidebarScroll';
+
 // Modular Sub-components
 import { DockNavItem } from './sidebar/DockNavItem';
 import { SidebarHeader } from './sidebar/SidebarHeader';
@@ -23,6 +25,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, storeName }: Si
   const router = useRouter();
   const { canAccess } = useRBAC();
   const mouseY = useMotionValue(Infinity);
+  const dockScrollRef = useSidebarScroll<HTMLDivElement>();
 
   const [dashboardUrl, setDashboardUrl] = React.useState('https://live.mytara.id/select-module');
 
@@ -104,7 +107,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, storeName }: Si
         borderBottomWidth: "0px",
         borderRadius: "0px",
         boxShadow: "none",
-        padding: isCollapsed ? "24px 0" : "20px 12px",
+        padding: isCollapsed ? "16px 0" : "12px 8px",
         overflowY: "hidden",
         overflowX: "visible",
       }}
@@ -120,8 +123,12 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, storeName }: Si
       {isCollapsed ? (
         /* Collapsed Mode (macOS Dock Toolbar) */
         <div
-          className="flex-1 flex flex-col overflow-y-auto overflow-x-visible"
-          style={{ scrollbarWidth: "none" }}
+          ref={dockScrollRef}
+          className="flex-1 min-h-0 flex flex-col overflow-y-auto overflow-x-visible select-none"
+          style={{
+            scrollbarWidth: "none",
+            WebkitOverflowScrolling: "touch",
+          }}
         >
           <motion.nav
             onMouseMove={(e) => mouseY.set(e.clientY)}
@@ -165,7 +172,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, storeName }: Si
 
       {/* Footer section at the very bottom */}
       {isCollapsed ? (
-        <div className="flex items-center justify-center py-2 border-t-0 mt-auto" style={{ borderTop: "none" }}>
+        <div className="flex items-center justify-center py-2 border-t-0 mt-auto shrink-0" style={{ borderTop: "none" }}>
           <button
             onClick={handleLogout}
             title="Keluar"

@@ -6,7 +6,7 @@ import {
     PieChart, FileImage, Home, Layout, Info, 
     Grid, Settings, MapPin, Gift, Package, 
     Search, Users, LogOut, Coffee, ClipboardList, Camera,
-    Activity, BookOpen
+    Activity, BookOpen, Calculator, ShieldCheck
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
@@ -92,7 +92,7 @@ export const MobileBottomNav = () => {
                 setActiveModule("hrd");
                 return;
             }
-            if (pathname.startsWith('/front-office')) {
+            if (pathname.startsWith('/front-office') || pathname === '/digital-checkin' || pathname === '/invoice') {
                 localStorage.setItem("active_module", "front-office");
                 setActiveModule("front-office");
                 return;
@@ -102,7 +102,14 @@ export const MobileBottomNav = () => {
                 setActiveModule("housekeeping");
                 return;
             }
-            if (pathname.startsWith('/accounting')) {
+            if (
+                pathname.startsWith('/accounting') || 
+                pathname === '/pnl' || 
+                pathname === '/pnl-budget' || 
+                pathname === '/statements' || 
+                pathname === '/dsr' || 
+                pathname === '/budgeting'
+            ) {
                 localStorage.setItem("active_module", "accounting");
                 setActiveModule("accounting");
                 return;
@@ -112,6 +119,13 @@ export const MobileBottomNav = () => {
                 setActiveModule("food-beverage");
                 return;
             }
+            const cpanelPaths = ['/logo', '/hero', '/room-type', '/about', '/gallery', '/footer', '/attractions', '/promo', '/packages', '/seo', '/users'];
+            if (pathname.startsWith('/cpanel') || cpanelPaths.some(p => pathname.startsWith(p))) {
+                localStorage.setItem("active_module", "cpanel");
+                setActiveModule("cpanel");
+                return;
+            }
+
             const params = new URLSearchParams(window.location.search);
             const modParam = params.get("module");
             if (modParam) {
@@ -174,6 +188,9 @@ export const MobileBottomNav = () => {
         { id: "pos", label: "POS Terminal", icon: <ShoppingCart size={20} /> },
         { id: "invoice", label: "Invoice", icon: <FileText size={20} /> },
         { id: "pnl", label: "PNL", icon: <PieChart size={20} /> },
+        { id: "pnl-budget", label: "P&L Budget", icon: <BarChart2 size={20} /> },
+        { id: "dsr", label: "DSR", icon: <TrendingUp size={20} /> },
+        { id: "budgeting", label: "Budgeting", icon: <Calculator size={20} /> },
         { id: "statements", label: "Laporan Keuangan", icon: <BookOpen size={20} /> },
         { id: "logo", label: "Logo", icon: <FileImage size={20} /> },
         { id: "hero", label: "Hero", icon: <Home size={20} /> },
@@ -186,6 +203,7 @@ export const MobileBottomNav = () => {
         { id: "packages", label: "Packages", icon: <Package size={20} /> },
         { id: "seo", label: "SEO", icon: <Search size={20} /> },
         { id: "users", label: "Users", icon: <Users size={20} /> },
+        { id: "superadmin", label: "Superadmin", icon: <ShieldCheck size={20} /> },
         { id: "hrd", label: "HRD", icon: <ClipboardList size={20} /> },
         { id: "purchasing", label: "Dasbor", icon: <Home size={20} /> },
         { id: "store-requisition", label: "SR", icon: <FileText size={20} /> },
@@ -234,14 +252,14 @@ export const MobileBottomNav = () => {
             ].includes(item.id));
         } else if (activeModule === "cpanel") {
             if (activeSection === "users") {
-                items = allNavItems.filter(item => ["users"].includes(item.id));
+                items = allNavItems.filter(item => ["users", "superadmin"].includes(item.id));
             } else {
                 if (activeModules !== null && !activeModules.includes('cpanel-full')) {
                     items = allNavItems.filter(item => ["logo"].includes(item.id));
                 } else {
                     items = allNavItems.filter(item => [
                         "logo", "hero", "room-type", "about", "gallery", 
-                        "footer", "attractions", "promo", "packages", "seo"
+                        "footer", "attractions", "promo", "packages", "seo", "superadmin"
                     ].includes(item.id));
                 }
             }
@@ -301,6 +319,8 @@ export const MobileBottomNav = () => {
                                         router.push(`/food-beverage/product?module=food-beverage`);
                                     } else if (item.id === "food-beverage-realtime") {
                                         router.push(`/food-beverage/realtime?module=food-beverage`);
+                                    } else if (item.id === "pnl") {
+                                        router.push(`/pnl?module=accounting`);
                                     } else if (item.id === "statements") {
                                         router.push(`/statements?module=accounting`);
                                     } else if (item.id === "pnl-budget") {
@@ -311,6 +331,8 @@ export const MobileBottomNav = () => {
                                         router.push(`/budgeting?module=accounting`);
                                     } else if (item.id === "inventory-control") {
                                         router.push(`/inventory-control?module=${activeModule}`);
+                                    } else if (item.id === "overview" || item.id === "forecast") {
+                                        router.push(`/${item.id}?module=${activeModule}`);
                                     } else {
                                         router.push(`/${item.id}`);
                                     }

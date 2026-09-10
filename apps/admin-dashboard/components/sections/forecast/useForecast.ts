@@ -90,166 +90,250 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
             }
 
             const q = query(getHotelCollection(db, "daily_revenue"), where("date", ">=", startStr), where("date", "<=", endStr));
-            const snap = await getDocs(q);
-            
-            let gross = 0, walkin = 0, ota = 0, other = 0, transferAmt = 0, hotel = 0, roomsSold = 0, roomRevenue = 0;
-            let currentEntries: any[] = [];
-            
-            const buckets: Record<string, any> = {};
-            trendLabels.forEach(l => buckets[l] = { gross: 0, roomRev: 0, sold: 0 });
-
-            snap.forEach(d => {
-                const data = d.data();
-                const date = data.date || ""; 
-                const [dY, dM, dD] = date.split('-');
+            const unsubscribe = onSnapshot(q, (snap) => {
+                let gross = 0, walkin = 0, ota = 0, other = 0, transferAmt = 0, hotel = 0, roomsSold = 0, roomRevenue = 0;
+                let currentEntries: any[] = [];
                 
-                let label = "";
-                if (trendMode === 'days') label = String(parseInt(dD));
-                else if (trendMode === 'months') label = trendLabels[parseInt(dM)-1];
-                else label = dY;
+                const buckets: Record<string, any> = {};
+                trendLabels.forEach(l => buckets[l] = { gross: 0, roomRev: 0, sold: 0 });
 
-                const isCurrent = (viewMode === "daily" && date === selectedDate) ||
-                                  (viewMode === "monthly" && dY === year && dM === month) ||
-                                  (viewMode === "yearly" && dY === year);
+                snap.forEach(d => {
+                    const data = d.data();
+                    const date = data.date || ""; 
+                    const [dY, dM, dD] = date.split('-');
+                    
+                    let label = "";
+                    if (trendMode === 'days') label = String(parseInt(dD));
+                    else if (trendMode === 'months') label = trendLabels[parseInt(dM)-1];
+                    else label = dY;
 
-                (data.entries || []).forEach((e: any) => {
-                    const isPOS = e.guestName?.startsWith('POS Order #') || Array.isArray(e.posItems);
-                    if (isPOS) return;
-                    if (e.status === "VOID" || e.status === "VOIDED") return;
+                    const isCurrent = (viewMode === "daily" && date === selectedDate) ||
+                                      (viewMode === "monthly" && dY === year && dM === month) ||
+                                      (viewMode === "yearly" && dY === year);
 
-                    const isPelunasan = e.isHidden || e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal" || e.guestName?.startsWith("Koreksi Tanggal Pelunasan") || e.guestName?.startsWith("Pelunasan Piutang");
-                    if (isPelunasan) return;
+                    // 1. Group & Deduplicate entries for this specific day document
+                    const dayAccommodationGroups: Record<string, any[]> = {};
+                    const dayNonAccEntries: any[] = [];
 
-                    const isCancelled = e.status === "CANCELLED" || e.status === "CANCEL";
+                    (data.entries || []).forEach((e: any) => {
+                        const isPOS = e.guestName?.startsWith('POS Order #') || Array.isArray(e.posItems);
+                        if (isPOS) return;
+                        if (e.status === "VOID" || e.status === "VOIDED") return;
 
-                    if (!isCancelled) {
-                        const amount = Number(e.amount) || 0;
+                        const isPelunasan = e.isHidden || e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal" || e.guestName?.startsWith("Koreksi Tanggal Pelunasan") || e.guestName?.startsWith("Pelunasan Piutang");
+                        if (isPelunasan) return;
+
                         const isAcc = e.type === "accommodation" || (!e.type && e.guestName);
+                        if (isAcc) {
+                            const normGuestName = (e.guestName || "").trim().toLowerCase();
+                            const roomIdent = String(e.roomNumber || e.roomTypeId || e.roomType || '').trim();
+                            const cIn = e.checkInDate || e.checkIn || '';
+                            const cOut = e.checkOutDate || e.checkOut || '';
+                            const key = (normGuestName && cIn) 
+                                ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}` 
+                                : (e.bookingId ? `b_${e.bookingId}` : `t_${e.timestamp}`);
+                            if (!dayAccommodationGroups[key]) {
+                                dayAccommodationGroups[key] = [];
+                            }
+                            dayAccommodationGroups[key].push(e);
+                        } else {
+                            dayNonAccEntries.push(e);
+                        }
+                    });
 
-                        if (buckets[label]) {
-                            buckets[label].gross += amount;
-                            if (isAcc) {
-                                buckets[label].roomRev += amount;
-                                buckets[label].sold += 1;
+                    const dayEntries: any[] = [];
+                    Object.values(dayAccommodationGroups).forEach(group => {
+                        const isCancelled = group.some(e => e.status === "CANCELLED" || e.status === "CANCEL" || e.paymentStatus === "CANCELLED" || e.paymentStatus === "CANCEL");
+                        // Sort so that newest timestamp is last
+                        group.sort((a, b) => {
+                            const tA = new Date(a.timestamp || 0).getTime();
+                            const tB = new Date(b.timestamp || 0).getTime();
+                            return tA - tB;
+                        });
+                        const rep = { ...group[group.length - 1] };
+                        if (isCancelled) {
+                            rep.status = "CANCELLED";
+                            rep.paymentStatus = "CANCELLED";
+                        }
+                        dayEntries.push(rep);
+                    });
+                    dayEntries.push(...dayNonAccEntries);
+
+                    // 2. Process clean dayEntries for statistics and buckets
+                    dayEntries.forEach((e: any) => {
+                        const isCancelled = e.status === "CANCELLED" || e.status === "CANCEL" || e.paymentStatus === "CANCELLED" || e.paymentStatus === "CANCEL";
+
+                        if (!isCancelled) {
+                            const amount = Number(e.amount) || 0;
+                            const isAcc = e.type === "accommodation" || (!e.type && e.guestName);
+
+                            if (buckets[label]) {
+                                buckets[label].gross += amount;
+                                if (isAcc) {
+                                    buckets[label].roomRev += amount;
+                                    buckets[label].sold += 1;
+                                }
+                            }
+
+                            if (isCurrent) {
+                                gross += amount;
+                                if (e.type === "other_income") other += amount;
+                                else {
+                                    if (e.source === "Walk-in" || e.channel === "Walk-in") walkin += amount;
+                                    else if (e.source === "OTA" || (e.channel && e.channel !== "Walk-in" && e.channel !== "Direct")) ota += amount;
+                                    else other += amount;
+                                }
+
+                                const cashAmt = Number(e.payHotel || e.paidCash || e.paidAmount1 || 0);
+                                const digitalAmt = Number(e.payTransfer || e.payNexura || e.paidTransfer || e.paidAmount2 || 0);
+                                
+                                if (cashAmt > 0 || digitalAmt > 0) {
+                                    hotel += cashAmt;
+                                    transferAmt += digitalAmt;
+                                } else {
+                                    if (e.paymentStatus === "Pay at Nexura" || e.paymentStatus === "Virtual Payment / OTA" || e.paymentStatus === "Virtual / OTA") transferAmt += amount;
+                                    if (e.paymentStatus === "Pay at Hotel") hotel += amount;
+                                }
+
+                                if (isAcc) {
+                                    roomsSold += 1;
+                                    roomRevenue += amount;
+                                }
+                                currentEntries.push({ ...e, _docId: d.id });
+                            }
+                        } else {
+                            if (isCurrent) {
+                                currentEntries.push({ ...e, _docId: d.id });
                             }
                         }
+                    });
+                });
 
-                        if (isCurrent) {
-                            gross += amount;
-                            if (e.type === "other_income") other += amount;
-                            else {
-                                if (e.source === "Walk-in") walkin += amount;
-                                else if (e.source === "OTA") ota += amount;
-                                else other += amount;
-                            }
+                const trendData = trendLabels.map(label => {
+                    const b = buckets[label];
+                    const daysInBucket = trendMode === 'days' ? 1 : 
+                                         trendMode === 'months' ? new Date(Number(year), trendLabels.indexOf(label)+1, 0).getDate() :
+                                         365;
+                    
+                    const occ = (totalPhysicalRooms * daysInBucket) > 0 ? (b.sold / (totalPhysicalRooms * daysInBucket)) * 100 : 0;
+                    const arr = b.sold > 0 ? b.roomRev / b.sold : 0;
+                    const revPar = (totalPhysicalRooms * daysInBucket) > 0 ? b.roomRev / (totalPhysicalRooms * daysInBucket) : 0;
 
-                             const cashAmt = Number(e.payHotel || e.paidCash || e.paidAmount1 || 0);
-                             const digitalAmt = Number(e.payTransfer || e.payNexura || e.paidTransfer || e.paidAmount2 || 0);
-                             
-                             if (cashAmt > 0 || digitalAmt > 0) {
-                                 hotel += cashAmt;
-                                 transferAmt += digitalAmt;
-                             } else {
-                                 if (e.paymentStatus === "Pay at Nexura" || e.paymentStatus === "Virtual Payment / OTA") transferAmt += amount;
-                                 if (e.paymentStatus === "Pay at Hotel") hotel += amount;
-                             }
+                    return { label, gross: b.gross, occ, arr, revPar };
+                });
 
-                            if (isAcc) {
-                                roomsSold += 1;
-                                roomRevenue += amount;
-                            }
-                            currentEntries.push({ ...e, _docId: d.id });
+                const totalPossibleRoomNights = totalPhysicalRooms * totalDaysForOcc;
+                
+                const forecastAccommodationGroups: Record<string, any[]> = {};
+                const resolvedEntries: any[] = [];
+
+                currentEntries.forEach((e) => {
+                    const isAcc = e.type === "accommodation" || (!e.type && e.guestName);
+                    if (isAcc) {
+                        const normName = (e.guestName || "").trim().toLowerCase();
+                        const roomIdent = String(e.roomNumber || e.roomTypeId || e.roomType || '').trim();
+                        const cIn = e.checkInDate || e.checkIn || '';
+                        const cOut = e.checkOutDate || e.checkOut || '';
+                        const key = (normName && cIn) 
+                            ? `${normName}_${roomIdent}_${cIn}_${cOut}` 
+                            : (e.bookingId ? `b_${e.bookingId}` : `t_${e.timestamp}`);
+                        
+                        if (!forecastAccommodationGroups[key]) {
+                            forecastAccommodationGroups[key] = [];
                         }
+                        forecastAccommodationGroups[key].push(e);
                     } else {
-                        if (isCurrent) {
-                            currentEntries.push({ ...e, _docId: d.id });
-                        }
+                        resolvedEntries.push(e);
                     }
                 });
-            });
 
-            const trendData = trendLabels.map(label => {
-                const b = buckets[label];
-                const daysInBucket = trendMode === 'days' ? 1 : 
-                                     trendMode === 'months' ? new Date(Number(year), trendLabels.indexOf(label)+1, 0).getDate() :
-                                     365;
-                
-                const occ = (totalPhysicalRooms * daysInBucket) > 0 ? (b.sold / (totalPhysicalRooms * daysInBucket)) * 100 : 0;
-                const arr = b.sold > 0 ? b.roomRev / b.sold : 0;
-                const revPar = (totalPhysicalRooms * daysInBucket) > 0 ? b.roomRev / (totalPhysicalRooms * daysInBucket) : 0;
+                Object.values(forecastAccommodationGroups).forEach((group) => {
+                    group.sort((a, b) => {
+                        const tA = new Date(a.timestamp || a.effectiveDate || 0).getTime();
+                        const tB = new Date(b.timestamp || b.effectiveDate || 0).getTime();
+                        return tA - tB;
+                    });
+                    const rep = { ...group[group.length - 1] };
+                    
+                    // Deduplicate per distinct effectiveDate
+                    const dateMap: Record<string, any> = {};
+                    group.forEach(item => {
+                        const effDate = item.effectiveDate || item.checkInDate || 'default';
+                        dateMap[effDate] = item;
+                    });
+                    const distinctNightEntries = Object.values(dateMap);
+                    
+                    const summedAmount = distinctNightEntries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                    const summedPayHotel = distinctNightEntries.reduce((sum, item) => sum + (Number(item.payHotel ?? item.paidCash ?? item.paidAmount1 ?? 0)), 0);
+                    const summedPayTransfer = distinctNightEntries.reduce((sum, item) => sum + (Number(item.payTransfer ?? item.payNexura ?? item.paidTransfer ?? item.paidAmount2 ?? 0)), 0);
+                    
+                    rep.amount = summedAmount;
+                    rep.totalAmount = rep.totalAmount || summedAmount;
+                    rep.payHotel = summedPayHotel;
+                    rep.payTransfer = summedPayTransfer;
+                    resolvedEntries.push(rep);
+                });
 
-                return { label, gross: b.gross, occ, arr, revPar };
-            });
-
-            const totalPossibleRoomNights = totalPhysicalRooms * totalDaysForOcc;
-            
-            const forecastAccommodationGroups: Record<string, any[]> = {};
-            const resolvedEntries: any[] = [];
-
-            currentEntries.forEach((e) => {
-                const isAcc = e.type === "accommodation" || (!e.type && e.guestName);
-                if (isAcc) {
-                    const key = e.bookingId || e.timestamp || `${e.guestName}_${e.checkInDate}_${e.checkOutDate}_${e.roomNumber}`;
-                    if (!forecastAccommodationGroups[key]) {
-                        forecastAccommodationGroups[key] = [];
-                    }
-                    forecastAccommodationGroups[key].push(e);
-                } else {
-                    resolvedEntries.push(e);
+                // If in daily view, roomsSold is exact count of occupied accommodation rooms
+                let finalRoomsSold = roomsSold;
+                if (viewMode === 'daily') {
+                    finalRoomsSold = resolvedEntries.filter(e => {
+                        const isAcc = e.type === "accommodation" || (!e.type && e.guestName);
+                        const isCancelled = e.status === "CANCELLED" || e.status === "CANCEL" || e.paymentStatus === "CANCELLED" || e.paymentStatus === "CANCEL";
+                        return isAcc && !isCancelled;
+                    }).length;
                 }
+
+                // Compute ARR and RevPar based on view mode
+                let finalArr = 0;
+                let finalRevPar = 0;
+                if (viewMode === 'monthly') {
+                    const monthIdx = Number(month) - 1;
+                    const monthLabel = trendLabels[monthIdx];
+                    const monthBucket = buckets[monthLabel] || { roomRev: 0, sold: 0 };
+                    finalArr = monthBucket.sold > 0 ? monthBucket.roomRev / monthBucket.sold : 0;
+                    const daysInMonth = totalDaysForOcc;
+                    finalRevPar = (totalPhysicalRooms * daysInMonth) > 0 ? monthBucket.roomRev / (totalPhysicalRooms * daysInMonth) : 0;
+                } else if (viewMode === 'daily') {
+                    const day = selectedDate.split('-')[2];
+                    const dayLabel = String(parseInt(day, 10));
+                    const dayBucket = buckets[dayLabel] || { roomRev: 0, sold: 0 };
+                    finalArr = finalRoomsSold > 0 ? gross / finalRoomsSold : 0;
+                    finalRevPar = (totalPhysicalRooms) > 0 ? gross / totalPhysicalRooms : 0;
+                } else {
+                    finalArr = roomsSold > 0 ? roomRevenue / roomsSold : 0;
+                    finalRevPar = totalPossibleRoomNights > 0 ? roomRevenue / totalPossibleRoomNights : 0;
+                }
+
+                const computedOcc = totalPossibleRoomNights > 0 ? (finalRoomsSold / totalPossibleRoomNights) * 100 : 0;
+
+                setStats({
+                    totalGrossRevenue: gross,
+                    salesPayAtTransfer: transferAmt,
+                    salesPayAtHotel: hotel,
+                    walkInRevenue: walkin,
+                    otaRevenue: ota,
+                    otherRevenue: other,
+                    occ: computedOcc,
+                    arr: finalArr,
+                    revPar: finalRevPar,
+                    roomsSold: finalRoomsSold,
+                    totalPossibleRoomNights,
+                    entries: resolvedEntries.sort((a, b) => (b.checkInDate || "").localeCompare(a.checkInDate || "")),
+                    trendData,
+                    loading: false,
+                });
+            }, (error) => {
+                console.error("useForecast onSnapshot error:", error);
+                setStats(prev => ({ ...prev, loading: false }));
             });
 
-            Object.values(forecastAccommodationGroups).forEach((group) => {
-                const rep = { ...group[0] };
-                rep.amount = group.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-                rep.payHotel = group.reduce((sum, item) => sum + (Number(item.payHotel || item.paidCash || item.paidAmount1) || 0), 0);
-                 rep.payTransfer = group.reduce((sum, item) => sum + (Number(item.payTransfer || item.payNexura || item.paidTransfer || item.paidAmount2) || 0), 0);
-                resolvedEntries.push(rep);
-            });
-
-// Compute ARR and RevPar based on view mode
-            let finalArr = 0;
-            let finalRevPar = 0;
-            if (viewMode === 'monthly') {
-                // Monthly bucket
-                const monthIdx = Number(month) - 1;
-                const monthLabel = trendLabels[monthIdx];
-                const monthBucket = buckets[monthLabel] || { roomRev: 0, sold: 0 };
-                finalArr = monthBucket.sold > 0 ? monthBucket.roomRev / monthBucket.sold : 0;
-                const daysInMonth = totalDaysForOcc; // days in selected month
-                finalRevPar = (totalPhysicalRooms * daysInMonth) > 0 ? monthBucket.roomRev / (totalPhysicalRooms * daysInMonth) : 0;
-            } else if (viewMode === 'daily') {
-                // Daily bucket
-                const day = selectedDate.split('-')[2];
-                const dayLabel = String(parseInt(day, 10));
-                const dayBucket = buckets[dayLabel] || { roomRev: 0, sold: 0 };
-                finalArr = dayBucket.sold > 0 ? dayBucket.roomRev / dayBucket.sold : 0;
-                finalRevPar = (totalPhysicalRooms) > 0 ? dayBucket.roomRev / totalPhysicalRooms : 0;
-            } else {
-                // Yearly totals
-                finalArr = roomsSold > 0 ? roomRevenue / roomsSold : 0;
-                finalRevPar = totalPossibleRoomNights > 0 ? roomRevenue / totalPossibleRoomNights : 0;
-            }
-
-            setStats({
-                totalGrossRevenue: gross,
-                salesPayAtTransfer: transferAmt,
-                salesPayAtHotel: hotel,
-                walkInRevenue: walkin,
-                otaRevenue: ota,
-                otherRevenue: other,
-                occ: totalPossibleRoomNights > 0 ? (roomsSold / totalPossibleRoomNights) * 100 : 0,
-                arr: finalArr,
-                revPar: finalRevPar,
-                roomsSold,
-                totalPossibleRoomNights,
-                entries: resolvedEntries.sort((a, b) => (b.checkInDate || "").localeCompare(a.checkInDate || "")),
-                trendData,
-                loading: false,
-            });
+            return unsubscribe;
         };
 
-        fetchData();
+        let unsub: any;
+        fetchData().then(fn => { unsub = fn; });
+        return () => { if (unsub) unsub(); };
     }, [viewMode, selectedDate, refreshTrigger]);
 
     return { ...stats, refresh: () => setRefreshTrigger(prev => prev + 1) };

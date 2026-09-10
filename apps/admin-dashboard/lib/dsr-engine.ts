@@ -228,8 +228,17 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
 
   const dailyStayRecords: DailyStayRecord[] = [];
 
-  // Each entry in rawTxList (from daily_revenue) represents a daily record
+  const dayAccommodationGroups: Record<string, any[]> = {};
+
   validEntries.forEach((e) => {
+    const isPelunasan =
+      e.isPelunasan ||
+      e.type === "pelunasan_ar" ||
+      e.type === "pelunasan_reversal" ||
+      e.guestName?.startsWith("Koreksi Tanggal Pelunasan") ||
+      e.guestName?.startsWith("Pelunasan Piutang");
+    if (isPelunasan) return;
+
     const isPOS = e.guestName?.startsWith("POS Order") || !!e.posItems || !!e.revenueType;
     const isAccommodation =
       !isPOS &&
@@ -238,29 +247,52 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
 
     if (isAccommodation) {
       const entryDate = e.effectiveDate || e.date || e.checkInDate || date;
-      const st = (e.status || "").toUpperCase();
-      const pst = (e.paymentStatus || "").toUpperCase();
-      const isOOO = st === "OOO" || st === "OUT_OF_ORDER" || !!e.isOOO || !!e.isOutOfOrder;
-      const isHouseUse = st === "HOUSE_USE" || !!e.isHouseUse;
-      const isCompliment = st === "COMPLIMENT" || pst === "COMPLIMENT" || !!e.isCompliment;
-      const isSold = !isOOO && !isHouseUse && !isCompliment;
-
-      dailyStayRecords.push({
-        date: entryDate,
-        roomNumber: e.roomNumber || "-",
-        roomType: e.roomType || "-",
-        guestName: e.guestName || "-",
-        dailyAmount: isSold ? (Number(e.amount) || 0) : 0,
-        pax: Number(e.pax) || Number(e.adultCount || 0) + Number(e.childCount || 0) || 1,
-        roomsCount: Math.max(1, Number(e.roomsCount || (e as any).roomCount) || 1),
-        isOOO,
-        isHouseUse,
-        isCompliment,
-        isSold,
-      });
+      const normGuestName = (e.guestName || "").trim().toLowerCase();
+      const roomIdent = String(e.roomNumber || e.roomTypeId || e.roomType || '').trim();
+      const cIn = e.checkInDate || e.checkIn || '';
+      const cOut = e.checkOutDate || e.checkOut || '';
+      const key = `${entryDate}_${(normGuestName && cIn) ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}` : (e.bookingId ? `b_${e.bookingId}` : `t_${e.timestamp}`)}`;
+      if (!dayAccommodationGroups[key]) {
+        dayAccommodationGroups[key] = [];
+      }
+      dayAccommodationGroups[key].push(e);
     } else {
       nonAccommodationEntries.push(e);
     }
+  });
+
+  const cleanAccommodationEntries: any[] = [];
+  Object.values(dayAccommodationGroups).forEach(group => {
+    group.sort((a, b) => {
+      const tA = new Date(a.timestamp || 0).getTime();
+      const tB = new Date(b.timestamp || 0).getTime();
+      return tA - tB;
+    });
+    cleanAccommodationEntries.push(group[group.length - 1]);
+  });
+
+  cleanAccommodationEntries.forEach((e) => {
+    const entryDate = e.effectiveDate || e.date || e.checkInDate || date;
+    const st = (e.status || "").toUpperCase();
+    const pst = (e.paymentStatus || "").toUpperCase();
+    const isOOO = st === "OOO" || st === "OUT_OF_ORDER" || !!e.isOOO || !!e.isOutOfOrder;
+    const isHouseUse = st === "HOUSE_USE" || !!e.isHouseUse;
+    const isCompliment = st === "COMPLIMENT" || pst === "COMPLIMENT" || !!e.isCompliment;
+    const isSold = !isOOO && !isHouseUse && !isCompliment;
+
+    dailyStayRecords.push({
+      date: entryDate,
+      roomNumber: e.roomNumber || "-",
+      roomType: e.roomType || "-",
+      guestName: e.guestName || "-",
+      dailyAmount: isSold ? (Number(e.amount) || 0) : 0,
+      pax: Number(e.pax) || Number(e.adultCount || 0) + Number(e.childCount || 0) || 1,
+      roomsCount: Math.max(1, Number(e.roomsCount || (e as any).roomCount) || 1),
+      isOOO,
+      isHouseUse,
+      isCompliment,
+      isSold,
+    });
   });
 
   // ─────────────────────────────────────────────────────────────

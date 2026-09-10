@@ -26,6 +26,88 @@ const CHANNELS = [
 export function GuestEditForm({ formData, setFormData, roomTypes, guest }: GuestEditFormProps) {
     const [additionalCash, setAdditionalCash] = useState<number | "">("");
     const [additionalTransfer, setAdditionalTransfer] = useState<number | "">("");
+
+    const checkInDate = formData.checkIn ? new Date(formData.checkIn) : null;
+    const checkOutDate = formData.checkOut ? new Date(formData.checkOut) : null;
+    const calculatedNights = (checkInDate && checkOutDate && checkOutDate > checkInDate)
+        ? Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24))
+        : 1;
+
+    const totalAmount = Number(formData.totalAmount) || 0;
+    const payHotel = Number(formData.payHotel) || 0;
+    const payTransfer = Number(formData.payTransfer) || 0;
+    const totalPaid = payHotel + payTransfer;
+    const balance = totalAmount - totalPaid;
+    const isLunas = balance <= 0;
+    const isOTA = formData.channel && formData.channel !== "Walk-in" && formData.channel !== "Direct";
+    const avgRatePerNight = calculatedNights > 0 ? Math.round(totalAmount / calculatedNights) : totalAmount;
+
+    const handleSettleFull = (target: "hotel" | "ota") => {
+        if (target === "ota") {
+            const newPayTransfer = isOTA ? totalAmount : Math.max(0, totalAmount - payHotel);
+            const newPayHotel = isOTA ? 0 : payHotel;
+            setFormData({
+                ...formData,
+                payHotel: newPayHotel,
+                payTransfer: newPayTransfer,
+                paymentStatus: "Lunas",
+                status: formData.status === "CANCELLED" ? "CONFIRMED" : (formData.status || "CONFIRMED")
+            });
+            if (guest) {
+                const origTransfer = Number(guest.payTransfer || guest.paidTransfer || 0);
+                setAdditionalTransfer(Math.max(0, newPayTransfer - origTransfer));
+                setAdditionalCash("");
+            }
+        } else {
+            const newPayHotel = !isOTA ? totalAmount : Math.max(0, totalAmount - payTransfer);
+            const newPayTransfer = !isOTA ? 0 : payTransfer;
+            setFormData({
+                ...formData,
+                payHotel: newPayHotel,
+                payTransfer: newPayTransfer,
+                paymentStatus: "Lunas",
+                status: formData.status === "CANCELLED" ? "CONFIRMED" : (formData.status || "CONFIRMED")
+            });
+            if (guest) {
+                const origCash = Number(guest.payHotel || guest.paidCash || 0);
+                setAdditionalCash(Math.max(0, newPayHotel - origCash));
+                setAdditionalTransfer("");
+            }
+        }
+    };
+
+    const handlePaymentStatusClick = (statusName: string) => {
+        if (statusName === "Lunas") {
+            if (isOTA) {
+                handleSettleFull("ota");
+            } else {
+                handleSettleFull("hotel");
+            }
+        } else if (statusName === "Belum Bayar") {
+            setFormData({
+                ...formData,
+                payHotel: 0,
+                payTransfer: 0,
+                paymentStatus: "Belum Bayar",
+                status: "CONFIRMED"
+            });
+            setAdditionalCash("");
+            setAdditionalTransfer("");
+        } else if (statusName === "DP / Partial") {
+            setFormData({
+                ...formData,
+                paymentStatus: "DP / Partial",
+                status: "CONFIRMED"
+            });
+        } else if (statusName === "CANCELLED") {
+            setFormData({
+                ...formData,
+                paymentStatus: "CANCELLED",
+                status: "CANCELLED"
+            });
+        }
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Section 01: Identity */}
@@ -183,7 +265,7 @@ export function GuestEditForm({ formData, setFormData, roomTypes, guest }: Guest
                 </div>
             </section>
 
-            {/* Section 03: Financials */}
+            {/* Section 03: Financials & Settlement */}
             <section>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                     <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: 'rgba(120, 128, 105, 0.08)', padding: '2px 6px', borderRadius: '4px' }}>03</span>
@@ -191,131 +273,205 @@ export function GuestEditForm({ formData, setFormData, roomTypes, guest }: Guest
                     <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--f-hairline)' }} />
                 </div>
                 
-                {/* Stay Info summary */}
-                {guest && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px', padding: '12px', backgroundColor: 'var(--f-surface-soft)', borderRadius: '6px', border: '1px solid var(--f-hairline)' }}>
-                        <div>
-                            <span className={styles.guestSubtext} style={{ fontSize: '9px', color: 'var(--f-muted)' }}>Total Tagihan</span>
-                            <div style={{ fontSize: '11px', fontWeight: 700 }}>Rp {Number(formData.totalAmount || 0).toLocaleString('id-ID')}</div>
+                {/* Stay Info Summary Banner */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '16px', padding: '12px', backgroundColor: 'var(--f-surface-soft)', borderRadius: '8px', border: '1px solid var(--f-hairline)' }}>
+                    <div>
+                        <span className={styles.guestSubtext} style={{ fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--f-muted)' }}>Total Tagihan ({calculatedNights} Malam)</span>
+                        <div style={{ fontSize: '13px', fontWeight: 800, marginTop: '2px', color: 'var(--f-body)' }}>
+                            Rp {totalAmount.toLocaleString('id-ID')}
                         </div>
-                        <div>
-                            <span className={styles.guestSubtext} style={{ fontSize: '9px', color: 'var(--f-muted)' }}>Sudah Dibayar (DP)</span>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--f-sage)' }}>Rp {Number((guest.payHotel || guest.paidCash || 0) + (guest.payTransfer || guest.paidTransfer || 0)).toLocaleString('id-ID')}</div>
-                        </div>
-                        <div>
-                            <span className={styles.guestSubtext} style={{ fontSize: '9px', color: 'var(--f-muted)' }}>Sisa Tagihan</span>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#b45309' }}>
-                                Rp {Math.max(0, Number(formData.totalAmount || 0) - Number((guest.payHotel || guest.paidCash || 0) + (guest.payTransfer || guest.paidTransfer || 0))).toLocaleString('id-ID')}
-                            </div>
-                        </div>
+                        <span style={{ fontSize: '9px', color: 'var(--f-muted)' }}>
+                            @ Rp {avgRatePerNight.toLocaleString('id-ID')}/mlm
+                        </span>
                     </div>
-                )}
+                    <div>
+                        <span className={styles.guestSubtext} style={{ fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--f-muted)' }}>Total Terbayar</span>
+                        <div style={{ fontSize: '13px', fontWeight: 800, marginTop: '2px', color: 'var(--f-sage, #5a734e)' }}>
+                            Rp {totalPaid.toLocaleString('id-ID')}
+                        </div>
+                        <span style={{ fontSize: '9px', color: 'var(--f-muted)' }}>
+                            Hotel: {payHotel.toLocaleString('id-ID')} | OTA: {payTransfer.toLocaleString('id-ID')}
+                        </span>
+                    </div>
+                    <div>
+                        <span className={styles.guestSubtext} style={{ fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--f-muted)' }}>Sisa Tagihan</span>
+                        <div style={{ fontSize: '13px', fontWeight: 800, marginTop: '2px', color: isLunas ? '#16a34a' : '#ea580c' }}>
+                            Rp {Math.max(0, balance).toLocaleString('id-ID')}
+                        </div>
+                        <span style={{ fontSize: '9px', fontWeight: 700, color: isLunas ? '#16a34a' : '#ea580c' }}>
+                            {isLunas ? "✓ LUNAS (100%)" : "BELUM LUNAS"}
+                        </span>
+                    </div>
+                </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <NexuraInputLabel label="Total Gross Amount (Total Tarif Kamar)" type="number" value={formData.totalAmount} onChange={(v: string) => setFormData({...formData, totalAmount: Number(v)})} />
+                    <NexuraInputLabel 
+                        label="Total Gross Amount (Total Tarif Kamar Keseluruhan)" 
+                        type="number" 
+                        value={formData.totalAmount} 
+                        onChange={(v: string) => {
+                            const newTotal = Number(v) || 0;
+                            const currentPaid = Number(formData.payHotel || 0) + Number(formData.payTransfer || 0);
+                            const nextStatus = currentPaid >= newTotal ? "Lunas" : (currentPaid > 0 ? "DP / Partial" : "Belum Bayar");
+                            setFormData({
+                                ...formData, 
+                                totalAmount: newTotal,
+                                paymentStatus: nextStatus,
+                                status: nextStatus === "Lunas" ? "CONFIRMED" : formData.status
+                            });
+                        }} 
+                    />
                     
-                    {/* Additional Payment inputs */}
-                    {guest && (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', backgroundColor: 'rgba(120, 128, 105, 0.05)', padding: '12px', borderRadius: '6px', border: '1px dashed var(--f-sage)' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-sage)' }}>Bayar Tambahan (Cash/TF)</span>
-                                <input
-                                    type="number"
-                                    placeholder="Nominal bayar..."
-                                    value={additionalCash}
-                                    onChange={(e) => {
-                                        const valStr = e.target.value;
-                                        setAdditionalCash(valStr === "" ? "" : Number(valStr));
-                                        const val = Number(valStr) || 0;
-                                        const newPayHotel = Number(guest.payHotel || guest.paidCash || 0) + val;
-                                        const totalPaid = newPayHotel + Number(formData.payTransfer || 0);
-                                        const totalAmt = Number(formData.totalAmount || 0);
-                                        const nextStatus = totalPaid >= totalAmt ? "Lunas" : (totalPaid > 0 ? "DP / Partial" : "Belum Bayar");
-                                        setFormData({
-                                            ...formData,
-                                            payHotel: newPayHotel,
-                                            paymentStatus: nextStatus,
-                                            status: nextStatus
-                                        });
-                                    }}
+                    {/* Payment Channel Inputs */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        {/* Hotel Payment */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>
+                                    Terbayar di Hotel (Cash/EDC)
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSettleFull("hotel")}
                                     style={{
-                                        width: '100%', height: '40px', padding: '0 12px', borderRadius: '6px',
-                                        border: '1px solid var(--f-sage)', backgroundColor: 'var(--f-surface)',
-                                        fontSize: '11px', color: 'var(--f-body)', outline: 'none'
+                                        fontSize: '8px', fontWeight: 700, padding: '2px 6px',
+                                        borderRadius: '4px', backgroundColor: 'rgba(120, 128, 105, 0.15)',
+                                        color: 'var(--f-sage)', border: '1px solid var(--f-sage)', cursor: 'pointer'
                                     }}
-                                />
+                                    title="Lunaskan sisa pembayaran ke akun Hotel Cash/EDC"
+                                >
+                                    LUNASKAN HOTEL
+                                </button>
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-sage)' }}>Bayar Tambahan (OTA/Virtual)</span>
-                                <input
-                                    type="number"
-                                    placeholder="Nominal bayar..."
-                                    value={additionalTransfer}
-                                    onChange={(e) => {
-                                        const valStr = e.target.value;
-                                        setAdditionalTransfer(valStr === "" ? "" : Number(valStr));
-                                        const val = Number(valStr) || 0;
-                                        const newPayTransfer = Number(guest.payTransfer || guest.paidTransfer || 0) + val;
-                                        const totalPaid = Number(formData.payHotel || 0) + newPayTransfer;
-                                        const totalAmt = Number(formData.totalAmount || 0);
-                                        const nextStatus = totalPaid >= totalAmt ? "Lunas" : (totalPaid > 0 ? "DP / Partial" : "Belum Bayar");
-                                        setFormData({
-                                            ...formData,
-                                            payTransfer: newPayTransfer,
-                                            paymentStatus: nextStatus,
-                                            status: nextStatus
-                                        });
-                                    }}
+                            <input
+                                type="number"
+                                value={formData.payHotel}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                onChange={(e) => {
+                                    const val = Number(e.target.value) || 0;
+                                    const newPaid = val + Number(formData.payTransfer || 0);
+                                    const nextStatus = newPaid >= totalAmount ? "Lunas" : (newPaid > 0 ? "DP / Partial" : "Belum Bayar");
+                                    setFormData({
+                                        ...formData,
+                                        payHotel: val,
+                                        paymentStatus: nextStatus,
+                                        status: nextStatus === "Lunas" ? "CONFIRMED" : formData.status
+                                    });
+                                }}
+                                style={{
+                                    width: '100%', height: '40px', padding: '0 12px', borderRadius: '6px',
+                                    border: '1px solid var(--f-hairline)', backgroundColor: 'var(--f-surface)',
+                                    fontSize: '11px', fontFamily: 'var(--f-font-mono)', color: 'var(--f-body)', outline: 'none'
+                                }}
+                            />
+                        </div>
+
+                        {/* OTA Payment */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>
+                                    Terbayar via OTA (Virtual/TF)
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSettleFull("ota")}
                                     style={{
-                                        width: '100%', height: '40px', padding: '0 12px', borderRadius: '6px',
-                                        border: '1px solid var(--f-sage)', backgroundColor: 'var(--f-surface)',
-                                        fontSize: '11px', color: 'var(--f-body)', outline: 'none'
+                                        fontSize: '8px', fontWeight: 700, padding: '2px 6px',
+                                        borderRadius: '4px', backgroundColor: 'rgba(120, 128, 105, 0.15)',
+                                        color: 'var(--f-sage)', border: '1px solid var(--f-sage)', cursor: 'pointer'
                                     }}
-                                />
+                                    title="Lunaskan sisa pembayaran ke akun OTA Virtual Card"
+                                >
+                                    LUNASKAN OTA
+                                </button>
                             </div>
+                            <input
+                                type="number"
+                                value={formData.payTransfer}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                onChange={(e) => {
+                                    const val = Number(e.target.value) || 0;
+                                    const newPaid = Number(formData.payHotel || 0) + val;
+                                    const nextStatus = newPaid >= totalAmount ? "Lunas" : (newPaid > 0 ? "DP / Partial" : "Belum Bayar");
+                                    setFormData({
+                                        ...formData,
+                                        payTransfer: val,
+                                        paymentStatus: nextStatus,
+                                        status: nextStatus === "Lunas" ? "CONFIRMED" : formData.status
+                                    });
+                                }}
+                                style={{
+                                    width: '100%', height: '40px', padding: '0 12px', borderRadius: '6px',
+                                    border: '1px solid var(--f-hairline)', backgroundColor: 'var(--f-surface)',
+                                    fontSize: '11px', fontFamily: 'var(--f-font-mono)', color: 'var(--f-body)', outline: 'none'
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* OTA Hotel Cash Conflict Warning & Auto-Fix */}
+                    {isOTA && payHotel > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: 'rgba(239, 68, 68, 0.08)', borderRadius: '6px', border: '1px dashed rgba(239, 68, 68, 0.3)' }}>
+                            <span style={{ fontSize: '9px', color: '#b91c1c', fontWeight: 600 }}>
+                                ⚠️ Terdeteksi Rp {payHotel.toLocaleString('id-ID')} di Hotel Cash pada reservasi {formData.channel}.
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => handleSettleFull("ota")}
+                                style={{
+                                    padding: '4px 10px', fontSize: '8px', fontWeight: 700, borderRadius: '4px',
+                                    backgroundColor: '#b91c1c', color: '#fff', border: 'none', cursor: 'pointer'
+                                }}
+                            >
+                                Pindahkan 100% ke OTA
+                            </button>
                         </div>
                     )}
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <div style={{ position: 'relative' }}>
-                            <NexuraInputLabel label="Total Akumulasi Terbayar (Hotel)" type="number" value={formData.payHotel} onChange={(v: string) => setFormData({...formData, payHotel: Number(v)})} />
-                            <button
-                                type="button"
-                                title="Auto-fill with remaining balance to settle full payment"
-                                onClick={() => {
-                                    const diff = Number(formData.totalAmount || 0) - Number(formData.payTransfer || 0);
-                                    if (diff >= 0) {
-                                        setFormData({...formData, payHotel: diff, paymentStatus: 'Lunas', status: 'Lunas'});
-                                        if (guest) {
-                                            const origPaidCash = Number(guest.payHotel || guest.paidCash || 0);
-                                            setAdditionalCash(Math.max(0, diff - origPaidCash));
-                                        }
-                                    }
-                                }}
-                                style={{
-                                    position: 'absolute', right: '4px', bottom: '8px',
-                                    height: '24px', padding: '0 8px', fontSize: '9px', fontWeight: 700,
-                                    borderRadius: '4px', backgroundColor: 'var(--color-primary, var(--f-sage))', color: 'var(--color-white, #fff)',
-                                    border: 'none', cursor: 'pointer', zIndex: 10
-                                }}
-                            >
-                                LUNASKAN
-                            </button>
+                    {/* Quick Settlement Banner if balance > 0 */}
+                    {balance > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', backgroundColor: 'rgba(234, 88, 12, 0.08)', borderRadius: '6px', border: '1px dashed rgba(234, 88, 12, 0.4)' }}>
+                            <div style={{ fontSize: '10px', color: '#c2410c', fontWeight: 600 }}>
+                                Sisa belum lunas: <strong>Rp {balance.toLocaleString('id-ID')}</strong>
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSettleFull(isOTA ? "ota" : "hotel")}
+                                    style={{
+                                        padding: '4px 10px', fontSize: '9px', fontWeight: 700, borderRadius: '4px',
+                                        backgroundColor: '#1A1C14', color: '#fff', border: 'none', cursor: 'pointer'
+                                    }}
+                                >
+                                    ⚡ Lunaskan via {isOTA ? 'OTA' : 'Hotel'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSettleFull(isOTA ? "hotel" : "ota")}
+                                    style={{
+                                        padding: '4px 10px', fontSize: '9px', fontWeight: 700, borderRadius: '4px',
+                                        backgroundColor: 'var(--f-surface)', color: 'var(--f-body)', border: '1px solid var(--f-hairline)', cursor: 'pointer'
+                                    }}
+                                >
+                                    + via {isOTA ? 'Hotel' : 'OTA'}
+                                </button>
+                            </div>
                         </div>
-                        <NexuraInputLabel label="Total Akumulasi Terbayar (OTA)" type="number" value={formData.payTransfer} onChange={(v: string) => setFormData({...formData, payTransfer: Number(v)})} />
-                    </div>
+                    )}
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <label className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>Payment Status</label>
+                    {/* Payment Status Buttons */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                        <label className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>
+                            Payment Status (Pilih Status Pembayaran)
+                        </label>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                             {["Lunas", "Belum Bayar", "DP / Partial", "CANCELLED"].map(s => {
-                                const isDisabled = s === "Lunas" && (Number(formData.payHotel || 0) + Number(formData.payTransfer || 0) < Number(formData.totalAmount || 0));
+                                const isSelected = formData.paymentStatus === s || (s === "Lunas" && isLunas && formData.paymentStatus !== "CANCELLED");
                                 return (
                                     <button 
                                         key={s}
                                         type="button"
-                                        disabled={isDisabled}
-                                        onClick={() => setFormData({...formData, paymentStatus: s, status: s})}
+                                        onClick={() => handlePaymentStatusClick(s)}
                                         style={{
                                             height: '36px',
                                             fontSize: '9px',
@@ -323,15 +479,14 @@ export function GuestEditForm({ formData, setFormData, roomTypes, guest }: Guest
                                             textTransform: 'uppercase',
                                             letterSpacing: '0.05em',
                                             borderRadius: '6px',
-                                            cursor: isDisabled ? 'not-allowed' : 'pointer',
-                                            border: '1px solid var(--f-hairline)',
-                                            backgroundColor: formData.paymentStatus === s ? 'var(--f-sage)' : 'var(--f-canvas)',
-                                            color: formData.paymentStatus === s ? '#ffffff' : (isDisabled ? 'var(--f-hairline)' : 'var(--f-muted)'),
-                                            opacity: isDisabled ? 0.5 : 1,
+                                            cursor: 'pointer',
+                                            border: isSelected ? '1px solid var(--f-sage)' : '1px solid var(--f-hairline)',
+                                            backgroundColor: isSelected ? '#1A1C14' : 'var(--f-canvas)',
+                                            color: isSelected ? '#ffffff' : 'var(--f-muted)',
                                             transition: 'all 0.15s'
                                         }}
                                     >
-                                        {s}
+                                        {s === "Lunas" ? "✓ LUNAS" : s}
                                     </button>
                                 );
                             })}

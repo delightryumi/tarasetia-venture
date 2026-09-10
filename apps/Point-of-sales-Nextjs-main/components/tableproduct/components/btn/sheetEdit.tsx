@@ -40,6 +40,7 @@ type Data = {
     imageProduct?: string | null;
     description?: string;
     addons?: {name: string, price: number}[];
+    isSignature?: boolean;
   };
 };
 
@@ -70,6 +71,7 @@ export function SheetEdit({
   const [imageProductUrl, setImageProductUrl] = useState(data.productstock.imageProduct || '');
   const [description, setDescription] = useState(data.productstock.description || '');
   const [addons, setAddons] = useState<{name: string, price: number}[]>(data.productstock.addons || []);
+  const [isSignature, setIsSignature] = useState(Boolean(data.productstock.isSignature));
   const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<{ [key: string]: string }>({});
 
@@ -163,6 +165,7 @@ export function SheetEdit({
       setImageProductUrl(data.productstock.imageProduct || '');
       setDescription(data.productstock.description || '');
       setAddons(data.productstock.addons || []);
+      setIsSignature(Boolean(data.productstock.isSignature));
     }
   }, [
     open,
@@ -201,6 +204,7 @@ export function SheetEdit({
       subcategoryProduct === (data.productstock.subcategory || '') &&
       imageProductUrl === (data.productstock.imageProduct || '') &&
       description === (data.productstock.description || '') &&
+      isSignature === Boolean(data.productstock.isSignature) &&
       JSON.stringify(addons) === JSON.stringify(data.productstock.addons || [])
     ) {
       toast.info('No changes made.');
@@ -220,6 +224,7 @@ export function SheetEdit({
         imageProduct: imageProductUrl || undefined,
         description: description,
         addons: addons,
+        isSignature: isSignature,
       });
 
       // Send validated data using axios
@@ -504,6 +509,22 @@ export function SheetEdit({
               >
                 + Add Modifier
               </Button>
+            </div>
+
+            <Label className="text-right">
+              Rekomendasi
+            </Label>
+            <div className="col-span-3 flex items-center gap-2 pt-1">
+              <input
+                type="checkbox"
+                id="isSignatureEdit"
+                checked={isSignature}
+                onChange={(e) => setIsSignature(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+              />
+              <label htmlFor="isSignatureEdit" className="text-xs font-semibold cursor-pointer text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                ⭐ Masukkan ke Daftar Chef Signature (Rekomendasi Koki)
+              </label>
             </div>
 
           </div>

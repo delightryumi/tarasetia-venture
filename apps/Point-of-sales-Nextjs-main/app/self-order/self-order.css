@@ -1,0 +1,188 @@
+/* =========================================================
+   Luxury Hotel & Resort Guest Self-Ordering Experience
+   High-End Hospitality Design System (Apple / Five-Star Standard)
+   Featuring Modern Pro Neo-Geometric Typography (Urbanist & Outfit)
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Urbanist:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --so-font-sans: 'Urbanist', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --so-font-display: 'Outfit', 'Urbanist', sans-serif;
+
+  /* Luxury Theme Palette */
+  --so-bg: #f8f7f4;
+  --so-surface: #ffffff;
+  --so-surface-card: #ffffff;
+  --so-surface-muted: #f2efe9;
+  
+  /* Borders */
+  --so-border-gold: rgba(197, 160, 89, 0.28);
+  --so-border-subtle: rgba(0, 0, 0, 0.06);
+
+  /* Primary Theme (Deep Emerald Luxe) */
+  --so-emerald: #0b3d2e;
+  --so-emerald-dark: #07261d;
+  --so-emerald-light: #e6f4ef;
+  --so-emerald-glow: rgba(11, 61, 46, 0.18);
+
+  /* Accent (Champagne Gold Luxe) */
+  --so-gold: #c5a059;
+  --so-gold-hover: #b08d48;
+  --so-gold-light: #faf5ea;
+  --so-gold-dark: #8c6e33;
+  --so-gold-glow: rgba(197, 160, 89, 0.35);
+
+  /* Text & Contrast */
+  --so-text-primary: #0f1412;
+  --so-text-secondary: #4a5450;
+  --so-text-muted: #828c87;
+  --so-text-inverse: #ffffff;
+
+  /* Shadows */
+  --so-shadow-subtle: 0 2px 12px -2px rgba(18, 22, 21, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  --so-shadow-card: 0 6px 24px -4px rgba(18, 22, 21, 0.06), 0 1px 4px rgba(0, 0, 0, 0.03);
+  --so-shadow-float: 0 12px 36px -6px rgba(11, 61, 46, 0.28), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Global Reset for Self-Order Container */
+html:has(.self-order-container),
+body:has(.self-order-container),
+body.self-order-active {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  position: static !important;
+  inset: auto !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  min-height: 100% !important;
+  min-height: 100dvh !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: var(--so-bg) !important;
+  color: var(--so-text-primary) !important;
+  font-family: var(--so-font-sans) !important;
+  letter-spacing: -0.015em;
+  transform: none !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.self-order-container {
+  font-family: var(--so-font-sans);
+  letter-spacing: -0.015em;
+  width: 100%;
+  max-width: 100vw;
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
+  transform: none !important;
+  overflow-x: hidden;
+  overflow-y: visible;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--so-bg);
+  color: var(--so-text-primary);
+}
+
+/* Headings with Outfit Display Font */
+.so-display-font {
+  font-family: var(--so-font-display);
+  letter-spacing: -0.025em;
+}
+
+/* Luxury Glass Header */
+.so-glass-nav {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border-bottom: 1px solid rgba(197, 160, 89, 0.22);
+}
+
+/* Subtle Gold Badge */
+.so-badge-gold {
+  background: linear-gradient(135deg, #fdfaf3 0%, #f6ecd8 100%);
+  border: 1px solid rgba(197, 160, 89, 0.45);
+  color: #8c6e33;
+  box-shadow: 0 1px 4px rgba(197, 160, 89, 0.12);
+  font-family: var(--so-font-display);
+}
+
+/* Emerald Badge */
+.so-badge-emerald {
+  background: linear-gradient(135deg, #eaf5f1 0%, #d8eee6 100%);
+  border: 1px solid rgba(11, 61, 46, 0.25);
+  color: #0b3d2e;
+  font-family: var(--so-font-display);
+}
+
+/* Luxury Card Shadow & Hover */
+.so-card {
+  background: #ffffff;
+  border: 1px solid rgba(197, 160, 89, 0.18);
+  box-shadow: var(--so-shadow-card);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s ease;
+}
+
+.so-card:hover {
+  border-color: rgba(197, 160, 89, 0.45);
+  box-shadow: 0 10px 30px -4px rgba(18, 22, 21, 0.09), 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.so-card:active {
+  transform: scale(0.985);
+}
+
+/* Floating Action Button / Island */
+.so-floating-island {
+  background: linear-gradient(135deg, #0b3d2e 0%, #124d3b 100%);
+  border: 1px solid rgba(197, 160, 89, 0.45);
+  box-shadow: var(--so-shadow-float);
+}
+
+/* Horizontal scrollbar removal */
+.so-no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.so-no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Responsive Desktop Wrapper */
+@media screen and (min-width: 768px) {
+  .self-order-max-width {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.06);
+    min-height: 100vh;
+    background-color: #ffffff;
+    border-left: 1px solid rgba(0, 0, 0, 0.04);
+    border-right: 1px solid rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* Touch optimizations */
+.self-order-container button,
+.self-order-container input,
+.self-order-container a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Compact Height & Landscape Optimizations */
+@media screen and (max-height: 520px) {
+  .so-modal-img {
+    height: 130px !important;
+    min-height: 110px !important;
+  }
+  .so-modal-title {
+    font-size: 15px !important;
+  }
+  .so-modal-price {
+    font-size: 13.5px !important;
+  }
+}
+

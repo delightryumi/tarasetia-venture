@@ -43,6 +43,9 @@ export const fetchProduct = async ({
           stock: Number(data.stock) || 0,
           price: Number(data.buyPrice || 0), // Buy price
           imageProduct: data.image || null,
+          description: data.description || '',
+          addons: data.addons || [],
+          isSignature: Boolean(data.isSignature),
         },
       };
     });
