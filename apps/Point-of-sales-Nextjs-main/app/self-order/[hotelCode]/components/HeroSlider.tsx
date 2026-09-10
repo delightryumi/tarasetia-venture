@@ -10,11 +10,7 @@ export default function HeroSlider({ promoBanners, onBannerClick }: HeroSliderPr
   const [currentIndex, setCurrentIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
 
-  if (!promoBanners || promoBanners.length === 0) {
-    return null;
-  }
-
-  const banners = promoBanners;
+  const banners = promoBanners || [];
 
   useEffect(() => {
     if (banners.length <= 1) return;
@@ -25,12 +21,16 @@ export default function HeroSlider({ promoBanners, onBannerClick }: HeroSliderPr
   }, [banners.length]);
 
   useEffect(() => {
-    if (sliderRef.current) {
+    if (sliderRef.current && banners.length > 0) {
       const container = sliderRef.current;
       const targetScroll = currentIndex * container.clientWidth;
       container.scrollTo({ left: targetScroll, behavior: 'smooth' });
     }
-  }, [currentIndex]);
+  }, [currentIndex, banners.length]);
+
+  if (!banners || banners.length === 0) {
+    return null;
+  }
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
