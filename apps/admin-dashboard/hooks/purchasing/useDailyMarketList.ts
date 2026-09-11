@@ -12,8 +12,6 @@ export function useDailyMarketList() {
     setLoading(true);
     setError(null);
     try {
-      const items = await itemsService.getAll();
-      await dmlService.seedDemoDMLs(items);
       const data = await dmlService.getAll();
       setDmls(data);
     } catch (err: any) {

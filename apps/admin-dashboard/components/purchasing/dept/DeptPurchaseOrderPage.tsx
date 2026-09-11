@@ -132,7 +132,7 @@ export default function DeptPurchaseOrderPage({ department, title }: DeptPurchas
           status: targetStatus,
           department,
           submitted_by: user?.uid || 'unknown',
-          submitted_by_name: user?.displayName || user?.email || department,
+          submitted_by_name: user?.displayName || (user as any)?.name || user?.email || department,
           verified_by: null, verified_by_name: null,
           ...formData,
         } as any);
@@ -149,7 +149,9 @@ export default function DeptPurchaseOrderPage({ department, title }: DeptPurchas
             amount: formData.total_cost,
             date: formData.order_date,
             description: formData.notes || `Daily Market List ${freshDoc.dml_number}`,
-            fbCategory: null, eventCategory: null,
+            fbCategory: formData.fb_category || null,
+            eventCategory: formData.event_category || null,
+            items: freshDoc.items || []
           });
         }
       } else if (targetStatus === 'draft' && targetId) {
@@ -183,7 +185,7 @@ export default function DeptPurchaseOrderPage({ department, title }: DeptPurchas
       } else {
         await createSR({
           requested_by: user?.uid || 'unknown',
-          requested_by_name: user?.displayName || user?.email || department,
+          requested_by_name: user?.displayName || (user as any)?.name || user?.email || department,
           department,
           status: targetStatus,
           approved_by: null,
@@ -219,7 +221,7 @@ export default function DeptPurchaseOrderPage({ department, title }: DeptPurchas
           linked_sr_id: null, linked_sr_number: null,
           status: targetStatus, total_actual: 0,
           requested_by: user?.uid || 'unknown',
-          requested_by_name: user?.displayName || user?.email || department,
+          requested_by_name: user?.displayName || (user as any)?.name || user?.email || department,
           department,
           approved_by: null,
           ...formData,

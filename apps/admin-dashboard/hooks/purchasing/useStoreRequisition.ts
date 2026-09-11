@@ -12,9 +12,6 @@ export function useStoreRequisition() {
     setLoading(true);
     setError(null);
     try {
-      // Fetch items first to ensure we have item data to seed SR
-      const items = await itemsService.getAll();
-      await srService.seedDemoSRs(items);
       const data = await srService.getAll();
       setSrs(data);
     } catch (err: any) {

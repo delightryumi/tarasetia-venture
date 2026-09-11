@@ -116,7 +116,7 @@ export default function PurchaseRequisitionPage() {
           status: targetStatus, 
           total_actual: 0, 
           requested_by: user?.uid || 'unknown', 
-          requested_by_name: user?.displayName || user?.email || 'Purchasing', 
+          requested_by_name: user?.displayName || (user as any)?.name || user?.email || 'Purchasing', 
           approved_by: null, 
           ...formData 
         } as any);

@@ -11,7 +11,6 @@ export function useSuppliers() {
     setLoading(true);
     setError(null);
     try {
-      await suppliersService.seedDemoSuppliers();
       const data = await suppliersService.getAll();
       setSuppliers(data);
     } catch (err: any) {

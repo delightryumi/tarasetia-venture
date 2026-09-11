@@ -13,9 +13,6 @@ export function usePurchaseRequisition() {
     setLoading(true);
     setError(null);
     try {
-      const items = await itemsService.getAll();
-      const suppliers = await suppliersService.getAll();
-      await prService.seedDemoPRs(items, suppliers);
       const data = await prService.getAll();
       setPrs(data);
     } catch (err: any) {

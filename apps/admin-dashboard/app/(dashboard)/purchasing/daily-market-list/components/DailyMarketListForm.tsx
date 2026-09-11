@@ -169,7 +169,7 @@ export default function DailyMarketListForm({
               <div className={s.metaInfoBar}>
                 <div className={s.metaInfoItem}>
                   <span className={s.metaInfoLabel}><User size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Prepared By</span>
-                  <span className={s.metaInfoValue}>{user?.displayName || user?.email || 'Chef'}</span>
+                  <span className={s.metaInfoValue}>{initialData ? (initialData.submitted_by_name || initialData.submitted_by || user?.displayName || (user as any)?.name || user?.email) : (user?.displayName || (user as any)?.name || user?.email || 'Chef')}</span>
                 </div>
                 <div className={s.metaInfoItem}>
                   <span className={s.metaInfoLabel}>Account / UID</span>

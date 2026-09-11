@@ -117,7 +117,7 @@ export default function DailyMarketListPage() {
           date: new Date(formData.order_date), 
           status: targetStatus, 
           submitted_by: user?.uid || 'unknown', 
-          submitted_by_name: user?.displayName || user?.email || 'Chef', 
+          submitted_by_name: user?.displayName || (user as any)?.name || user?.email || 'Chef', 
           verified_by: null, 
           verified_by_name: null, 
           ...formData 

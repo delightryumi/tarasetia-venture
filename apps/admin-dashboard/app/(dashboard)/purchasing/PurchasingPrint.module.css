@@ -1,0 +1,385 @@
+/* ════════════════════════════════════════════════════════════
+   PURCHASING PRINT MODULE (DML, PR, SR)
+   Standalone CSS Module for Hospitality Procurement Documents
+   ════════════════════════════════════════════════════════════ */
+
+.printArea {
+  display: none;
+  box-sizing: border-box;
+}
+
+@media print {
+  .printHideRoot {
+    display: none !important;
+  }
+
+  .printArea {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 16mm 18mm 18mm 18mm !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    line-height: 1.4 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+
+  .printArea * {
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* ── Document Header ── */
+.printHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid #0f172a;
+  box-sizing: border-box;
+}
+
+.printHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  max-width: 52%;
+}
+
+.printLogo {
+  max-height: 48px;
+  max-width: 190px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 4px;
+  align-self: flex-start;
+}
+
+.printCompany {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.printCompanySub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.printCompanyAddr {
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.printHeaderRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  gap: 3px;
+  max-width: 48%;
+}
+
+.printDocBadge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0369a1;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 2px;
+}
+
+.printDocTitle {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.printDocSubTitle {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.printDocNumBox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 3px 10px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+}
+
+.printDocNumLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.printDocNumValue {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* ── Metadata Grid ── */
+.printMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px 18px;
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  box-sizing: border-box;
+}
+
+.printMetaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.printMetaLabel {
+  font-size: 9px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.printMetaValue {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.printStatusPill {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  width: fit-content;
+}
+
+.printStatusApproved {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.printStatusSubmitted {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.printStatusDraft {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+/* ── Items Table ── */
+.printTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 18px;
+  font-size: 11px;
+  box-sizing: border-box;
+}
+
+.printTable thead th {
+  padding: 8px 10px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border: 1px solid #0f172a;
+}
+
+.printTable thead th:first-child {
+  border-top-left-radius: 4px;
+}
+.printTable thead th:last-child {
+  border-top-right-radius: 4px;
+}
+
+.printTable tbody tr td {
+  padding: 7px 10px;
+  font-size: 11px;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.printCategoryRow td {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  padding: 6px 10px !important;
+  border-top: 1px solid #cbd5e1 !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+  border-left: 3.5px solid #0284c7 !important;
+}
+
+.printItemName {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.printItemSub {
+  font-size: 9.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.printTable tfoot td {
+  font-weight: 700;
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1;
+  border-top: 2px solid #0f172a;
+  padding: 8px 10px;
+  font-size: 11.5px;
+  color: #0f172a;
+}
+
+/* ── Notes Box ── */
+.printNotes {
+  margin-top: 12px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-left: 3.5px solid #f59e0b;
+  border-radius: 6px;
+  background: #fffbeb;
+  page-break-inside: avoid;
+  box-sizing: border-box;
+}
+
+.printNotesLabel {
+  font-size: 9px;
+  font-weight: 700;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+}
+
+.printNotesBody {
+  font-size: 11px;
+  color: #78350f;
+  line-height: 1.45;
+}
+
+/* ── Signatures ── */
+.printSignatureRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 20px;
+  page-break-inside: avoid;
+  box-sizing: border-box;
+}
+
+.printSignBlock {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px 12px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 110px;
+  box-sizing: border-box;
+}
+
+.printSignTitle {
+  font-size: 9px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px dashed #e2e8f0;
+  padding-bottom: 4px;
+}
+
+.printSignSpace {
+  flex: 1;
+  min-height: 42px;
+}
+
+.printSignName {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f172a;
+  border-top: 1px solid #94a3b8;
+  padding-top: 4px;
+}
+
+.printSignRole {
+  font-size: 9.5px;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.printSignDate {
+  font-size: 9px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+/* ── Print Footer ── */
+.printFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 9px;
+  color: #94a3b8;
+  page-break-inside: avoid;
+  box-sizing: border-box;
+}

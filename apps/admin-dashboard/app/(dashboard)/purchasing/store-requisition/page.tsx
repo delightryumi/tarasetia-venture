@@ -31,7 +31,7 @@ function getTodayStr() {
 
 export default function StoreRequisitionPage() {
   const { srs, loading, createSR, updateSR, approveSR, fulfillSR, deleteSR } = useStoreRequisition();
-  const { items } = useItems();
+  const { items, updateItem } = useItems();
   const { suppliers } = useSuppliers();
   const { user } = useAuth();
 
@@ -112,7 +112,7 @@ export default function StoreRequisitionPage() {
         // Create mode
         await createSR({ 
           requested_by: user?.uid || 'unknown', 
-          requested_by_name: user?.displayName || user?.email || 'Staff', 
+          requested_by_name: user?.displayName || (user as any)?.name || user?.email || 'Staff', 
           status: targetStatus, 
           approved_by: null, 
           ...formData 
@@ -152,7 +152,15 @@ export default function StoreRequisitionPage() {
 
   const handleFulfill = async (sr: any) => {
     try {
-      await fulfillSR(sr.id, sr.items.map((i: any) => ({ ...i, qty_fulfilled: i.qty_requested })));
+      await fulfillSR(sr.id, (sr.items || []).map((i: any) => ({ ...i, qty_fulfilled: i.qty_requested })));
+      for (const item of (sr.items || [])) {
+        const cat = items.find(i => i.id === item.item_id);
+        if (cat) {
+          await updateItem(item.item_id, {
+            current_stock: Math.max(0, (cat.current_stock || 0) - Number(item.qty_requested || 0))
+          });
+        }
+      }
       toast.success('Stock fulfilled and released.');
       setSelectedSr(null);
     } catch (err: any) {

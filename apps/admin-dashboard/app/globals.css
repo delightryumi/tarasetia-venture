@@ -832,3 +832,21 @@ input[type="number"].no-spin {
     z-index: 999999 !important;
   }
 }
+
+/* ════════════════════════════════════════════
+   GLOBAL PRINT STYLES — A4 Standard Margins
+   ════════════════════════════════════════════ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

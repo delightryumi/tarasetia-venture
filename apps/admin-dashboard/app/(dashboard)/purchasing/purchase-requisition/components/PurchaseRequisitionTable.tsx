@@ -31,6 +31,7 @@ export default function PurchaseRequisitionTable({
             <th>PR Number</th>
             <th>Date</th>
             <th>Department</th>
+            <th>Requested By</th>
             <th>Supplier(s)</th>
             <th className={s.thRight}>Est. Cost</th>
             <th>Status</th>
@@ -40,7 +41,7 @@ export default function PurchaseRequisitionTable({
         <tbody className={s.tableBody}>
           {loading ? (
             <tr>
-              <td colSpan={7}>
+              <td colSpan={8}>
                 <div className={s.empty}>
                   <p className={s.emptyBody}>Loading…</p>
                 </div>
@@ -48,7 +49,7 @@ export default function PurchaseRequisitionTable({
             </tr>
           ) : filteredPrs.length === 0 ? (
             <tr>
-              <td colSpan={7}>
+              <td colSpan={8}>
                 <div className={s.empty}>
                   <ShoppingCart size={40} className={s.emptyIcon} />
                   <p className={s.emptyTitle}>No purchase requisitions</p>
@@ -118,6 +119,7 @@ export default function PurchaseRequisitionTable({
                     {pr.department || '—'}
                     {pr.department === 'Food & Beverage' && pr.fb_category && ` (${pr.fb_category})`}
                   </td>
+                  <td className={s.tdMuted}>{pr.requested_by_name || pr.requested_by || '—'}</td>
                   <td className={s.tdMuted}>{sups.join(', ') || '—'}</td>
                   <td className={s.tdRight}>{formatRupiah(pr.total_estimated)}</td>
                   <td><PStatusChip status={pr.status} /></td>

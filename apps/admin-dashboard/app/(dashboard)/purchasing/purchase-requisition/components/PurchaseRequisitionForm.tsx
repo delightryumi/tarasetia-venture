@@ -170,7 +170,7 @@ export default function PurchaseRequisitionForm({
               <div className={s.metaInfoBar}>
                 <div className={s.metaInfoItem}>
                   <span className={s.metaInfoLabel}><User size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Requested By</span>
-                  <span className={s.metaInfoValue}>{user?.displayName || user?.email || 'Purchasing'}</span>
+                  <span className={s.metaInfoValue}>{initialData ? (initialData.requested_by_name || initialData.requested_by || user?.displayName || (user as any)?.name || user?.email) : (user?.displayName || (user as any)?.name || user?.email || 'Purchasing')}</span>
                 </div>
                 <div className={s.metaInfoItem}>
                   <span className={s.metaInfoLabel}>Account / UID</span>

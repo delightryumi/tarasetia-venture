@@ -42,7 +42,11 @@ export default function PurchasingOverviewPage() {
   );
 
   const recentPRs = useMemo(
-    () => [...prs].sort((a, b) => ((b.created_at?.seconds ?? 0) - (a.created_at?.seconds ?? 0))).slice(0, 5),
+    () => [...prs].sort((a, b) => {
+      const timeA = a.created_at?.toDate ? a.created_at.toDate().getTime() : (a.created_at?.seconds ? a.created_at.seconds * 1000 : new Date(a.created_at || 0).getTime());
+      const timeB = b.created_at?.toDate ? b.created_at.toDate().getTime() : (b.created_at?.seconds ? b.created_at.seconds * 1000 : new Date(b.created_at || 0).getTime());
+      return timeB - timeA;
+    }).slice(0, 5),
     [prs]
   );
 
@@ -139,12 +143,12 @@ export default function PurchasingOverviewPage() {
                   </tr>
                 ) : (
                   recentPRs.map(pr => {
-                    const suppliers = Array.from(new Set((pr.items ?? []).map((i: any) => i.supplier_name))).filter(Boolean);
+                    const suppliers = Array.from(new Set((pr.items ?? []).map((i: any) => i.supplier_name || i.supplier || ''))).filter(Boolean);
                     return (
                       <tr key={pr.id}>
                         <td className={styles.tdPrimary}>{pr.pr_number}</td>
                         <td className={styles.tdMuted}>{suppliers.join(', ') || '—'}</td>
-                        <td className={`${styles.tdRight}`}>{formatRupiah(pr.total_estimated)}</td>
+                        <td className={`${styles.tdRight}`}>{formatRupiah(pr.total_estimated || 0)}</td>
                         <td><PStatusChip status={pr.status} /></td>
                       </tr>
                     );

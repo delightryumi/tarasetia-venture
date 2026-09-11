@@ -21,6 +21,7 @@ interface CustomUser {
     uid: string;
     email: string;
     displayName: string;
+    name?: string;
     role?: string;
     hotelCode?: string;
     allowedOutlets?: string[];
@@ -125,6 +126,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [user]);
 
+    // Helper to fetch user's real name from users_master
+    const fetchUserName = async (email: string, code?: string): Promise<{ name: string; role?: string; hotelCode?: string }> => {
+        if (!email) return { name: "" };
+        const docId = email.toLowerCase().replace(/[@.]/g, "_");
+        if (code && code !== "0") {
+            try {
+                const userDocRef = doc(db, `hotels/${code}/users_master`, docId);
+                const snap = await getDoc(userDocRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    return {
+                        name: data.name || data.displayName || data.full_name || "",
+                        role: data.role || "",
+                        hotelCode: data.hotelCode || code
+                    };
+                }
+            } catch (e) {
+                console.error("Error fetching user from hotel users_master:", e);
+            }
+        }
+        try {
+            const globalDocRef = doc(db, "users_master", docId);
+            const globalSnap = await getDoc(globalDocRef);
+            if (globalSnap.exists()) {
+                const data = globalSnap.data();
+                return {
+                    name: data.name || data.displayName || data.full_name || "",
+                    role: data.role || "",
+                    hotelCode: data.hotelCode || ""
+                };
+            }
+        } catch (e) {
+            console.error("Error fetching user from global users_master:", e);
+        }
+        return { name: "" };
+    };
+
     // Sync session on load
     useEffect(() => {
         const checkSession = async () => {
@@ -167,12 +205,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                     setUser(parsed);
                     setLoading(false);
+
+                    // Background sync real name from users_master
+                    const activeCode = localStorage.getItem("active_hotel_code") || parsed.hotelCode;
+                    fetchUserName(parsed.email, activeCode).then(info => {
+                        if (info.name && (info.name !== parsed.displayName || !parsed.name)) {
+                            const updated = {
+                                ...parsed,
+                                displayName: info.name,
+                                name: info.name,
+                                role: info.role || parsed.role
+                            };
+                            localStorage.setItem("auth_user", JSON.stringify(updated));
+                            setUser(updated);
+                        }
+                    }).catch(() => {});
+
                     return;
                 } catch (e) {
                     localStorage.removeItem("auth_user");
                 }
             }
-
 
             // Fallback to Firebase Auth
             const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
@@ -185,34 +238,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     let hotelCode = claims.hotelCode as string || "";
                     let allowedOutlets = claims.allowedOutlets as string[] || [];
                     
-                    const isSuperadminEmail = email.toLowerCase() === "admin@setara.co.id";
+                    const isSuperadminEmail = email.toLowerCase() === "admin@setara.co.id" || email.toLowerCase() === "superadmin@setara.co.id";
                     if (isSuperadminEmail) {
                         role = "superadmin";
                         hotelCode = "0";
                     }
 
-                    // Fallback lookup from Firestore if claims aren't set yet
-                    if (!role || !hotelCode) {
-                        const code = localStorage.getItem("active_hotel_code");
-                        if (code) {
-                            const docId = email.toLowerCase().replace(/[@.]/g, "_");
-                            const userDocRef = doc(db, `hotels/${code}/users_master`, docId);
-                            const snap = await getDoc(userDocRef);
-                            if (snap.exists()) {
-                                role = snap.data().role || "";
-                                hotelCode = snap.data().hotelCode || code;
-                            }
-                        }
+                    const code = localStorage.getItem("active_hotel_code") || hotelCode;
+                    const userInfo = await fetchUserName(email, code);
+
+                    if (!role && userInfo.role) {
+                        role = userInfo.role;
+                    }
+                    if (!hotelCode && userInfo.hotelCode) {
+                        hotelCode = userInfo.hotelCode;
                     }
 
                     if (!allowedOutlets.includes(hotelCode) && hotelCode) {
                         allowedOutlets = [...allowedOutlets, hotelCode];
                     }
 
+                    const resolvedDisplayName = userInfo.name || fbUser.displayName || email.split("@")[0];
+
                     const customUser: CustomUser = {
                         uid: fbUser.uid,
                         email: email,
-                        displayName: fbUser.displayName || email.split("@")[0],
+                        displayName: resolvedDisplayName,
+                        name: resolvedDisplayName,
                         role,
                         hotelCode,
                         allowedOutlets,
@@ -304,11 +356,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
             }
 
+            const userInfo = await fetchUserName(email, code);
+            const resolvedDisplayName = userInfo.name || fbUser.displayName || email.split("@")[0];
+
             const customUser: CustomUser = {
                 uid: fbUser.uid,
                 email: email,
-                displayName: fbUser.displayName || email.split("@")[0],
-                role,
+                displayName: resolvedDisplayName,
+                name: resolvedDisplayName,
+                role: role || userInfo.role || "",
                 hotelCode: role !== "superadmin" ? code : "0", // Gunakan code yg diinput sbg hotelCode aktif saat login
                 allowedOutlets,
             };
