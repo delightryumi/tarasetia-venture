@@ -244,14 +244,46 @@ export function useLexuPos() {
         if (restoredJson) {
           try {
             const restoredOrder = JSON.parse(restoredJson);
-            if (restoredOrder.cart && Array.isArray(restoredOrder.cart)) {
-              setCart(restoredOrder.cart);
+            let restoredCart = restoredOrder.cart;
+
+            // Reconstruct cart if cart is missing/empty but items or products exist (e.g. from self-order)
+            if ((!restoredCart || !Array.isArray(restoredCart) || restoredCart.length === 0) && (restoredOrder.items || restoredOrder.products)) {
+              const rawItems = restoredOrder.items || restoredOrder.products || [];
+              restoredCart = rawItems.map((item: any) => {
+                const name = item.product?.name || item.name || item.productstock?.name || 'Item';
+                const price = Number(item.product?.price ?? item.price ?? 0);
+                const quantity = Number(item.quantity ?? item.qty ?? item.count ?? 1);
+                const category = item.product?.category || item.category || item.categoryId || '';
+                const subcategory = item.product?.subcategory || item.subcategory || '';
+                const image = item.product?.image || item.image || '';
+                const selectedAddons = item.selectedAddons || item.addons || [];
+                const note = item.note || '';
+
+                return {
+                  cartItemId: item.cartItemId || Math.random().toString(36).substring(7),
+                  product: {
+                    id: item.product?.id || item.id || Math.random().toString(36).substring(7),
+                    name,
+                    price,
+                    category,
+                    subcategory,
+                    image
+                  },
+                  quantity,
+                  selectedAddons,
+                  note
+                };
+              });
+            }
+
+            if (restoredCart && Array.isArray(restoredCart) && restoredCart.length > 0) {
+              setCart(restoredCart);
               setCustomerName(restoredOrder.customerName || '');
               setTableNumber(restoredOrder.tableNumber || '');
               setNotes(restoredOrder.notes || '');
               setDiscountPercent(restoredOrder.discountPercent || 0);
-              setRestoredOrderId(restoredOrder.id);
-              toast.success(`Mengembalikan pesanan held untuk ${restoredOrder.customerName || 'Guest'}`);
+              setRestoredOrderId(restoredOrder.id || restoredOrder.orderNumber || null);
+              toast.success(`Mengembalikan pesanan meja ${restoredOrder.tableNumber || ''} (${restoredOrder.customerName || 'Guest'}) ke kasir.`);
             }
           } catch (err) {
             console.error('Failed to parse restored held order:', err);
@@ -641,37 +673,47 @@ export function useLexuPos() {
           await localDb.heldOrders.delete(restoredOrderId);
         }
 
-        if (!restoredOrderId) {
-          const shadowHeldId = `HLD-${transactionId.replace('TRS-', '')}`;
-          const shadowHeldData = {
-            id: shadowHeldId,
-            customerName: customerName.trim() || 'Guest',
-            tableNumber: finalTableNumber,
-            notes: notes.trim() || '',
-            cart: cart.map(item => ({
-              product: {
-                id: item.product.id,
-                name: item.product.name,
-                price: item.product.price,
-                category: item.product.category || '',
-                subcategory: item.product.subcategory || '',
-                image: item.product.image || ''
-              },
-              quantity: item.quantity
-            })),
-            subtotal,
-            discount,
-            discountPercent,
-            tax,
-            payableAmount,
-            createdAt: new Date().toISOString(),
-            restoId: restoId || 'default-resto',
-            cashierName: cashierName || 'Kasir',
-            isPaidDirectly: true
-          };
-          await setDoc(doc(getHotelCollection(db, "pos_held_orders"), shadowHeldId), shadowHeldData);
-          await localDb.heldOrders.put(shadowHeldData);
-        }
+        // Register table with PAID status so BentoGrid shows table as occupied (PAID) until cleared
+        const shadowHeldId = `HLD-${transactionId.replace('TRS-', '')}`;
+        const shadowHeldData = {
+          id: shadowHeldId,
+          customerName: customerName.trim() || 'Guest',
+          tableNumber: finalTableNumber,
+          notes: notes.trim() || '',
+          cart: cart.map(item => ({
+            product: {
+              id: item.product.id,
+              name: item.product.name,
+              price: item.product.price,
+              category: item.product.category || '',
+              subcategory: item.product.subcategory || '',
+              image: item.product.image || ''
+            },
+            quantity: item.quantity,
+            selectedAddons: item.selectedAddons || [],
+            note: item.note || ''
+          })),
+          items: cart.map(item => ({
+            id: item.product.id,
+            name: item.product.name,
+            price: item.product.price,
+            qty: item.quantity,
+            addons: item.selectedAddons || [],
+            note: item.note || ''
+          })),
+          subtotal,
+          discount,
+          discountPercent,
+          tax,
+          payableAmount,
+          total: payableAmount,
+          createdAt: new Date().toISOString(),
+          restoId: restoId || 'default-resto',
+          cashierName: shiftCashierName || cashierName || 'Kasir',
+          isPaidDirectly: true
+        };
+        await setDoc(doc(getHotelCollection(db, "pos_held_orders"), shadowHeldId), shadowHeldData);
+        await localDb.heldOrders.put(shadowHeldData);
 
       } catch (firebaseErr) {
         console.error("Firebase store order failed:", firebaseErr);

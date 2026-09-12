@@ -11,7 +11,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, onSnapshot, collection, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { localDb } from '@/lib/dexie';
 import { toast } from 'react-toastify';
-import { Coffee, Users, Plus, Trash2, X, ClipboardList, CheckCircle, Printer } from 'lucide-react';
+import { Coffee, Users, Plus, Trash2, X, ClipboardList, CheckCircle, Printer, CreditCard } from 'lucide-react';
 import ReceiptDialog from '../lexupos/ReceiptDialog';
 
 // Live Tables Component
@@ -160,6 +160,69 @@ function LiveTableGrid() {
     return withoutPrefix.replace(/[^a-z0-9]/g, '');
   };
 
+  // Helper to extract items list from any order format
+  const getOrderItems = (order: any) => {
+    if (!order) return [];
+    const rawList = order.cart || order.items || order.products || [];
+    return rawList.map((item: any, idx: number) => {
+      const name = item.product?.name || item.name || item.productstock?.name || 'Item';
+      const quantity = Number(item.quantity ?? item.qty ?? item.count ?? 1);
+      const price = Number(item.product?.price ?? item.price ?? item.product?.sellprice ?? 0);
+      const addons = item.selectedAddons || item.addons || [];
+      const note = item.note || '';
+      const addonsTotal = addons.reduce((sum: number, a: any) => sum + (Number(a.price) || 0), 0);
+      const itemTotal = (price + addonsTotal) * quantity;
+      return {
+        id: item.cartItemId || item.id || item.product?.id || `item-${idx}`,
+        name,
+        quantity,
+        price,
+        addons,
+        note,
+        addonsTotal,
+        itemTotal,
+        category: item.product?.category || item.category || '',
+        subcategory: item.product?.subcategory || item.subcategory || '',
+        image: item.product?.image || item.image || ''
+      };
+    });
+  };
+
+  // Helper to compute total bill
+  const getOrderTotal = (order: any) => {
+    if (!order) return 0;
+    return Number(order.payableAmount ?? order.total ?? order.totalAmount ?? order.subtotal ?? 0);
+  };
+
+  // Normalize order for restoring to LexuPOS
+  const normalizeOrderForRestore = (order: any) => {
+    if (!order) return order;
+    const items = getOrderItems(order);
+    
+    const cart = items.map((item: any) => ({
+      cartItemId: item.id || Math.random().toString(36).substring(7),
+      product: {
+        id: item.id || '',
+        name: item.name,
+        price: item.price,
+        category: item.category || '',
+        subcategory: item.subcategory || '',
+        image: item.image || ''
+      },
+      quantity: item.quantity,
+      selectedAddons: item.addons || [],
+      note: item.note || ''
+    }));
+
+    return {
+      ...order,
+      cart,
+      items: order.items || items,
+      payableAmount: getOrderTotal(order),
+      subtotal: order.subtotal || items.reduce((s: number, i: any) => s + (i.itemTotal || 0), 0),
+    };
+  };
+
   const handleSaveTableName = async () => {
     if (!selectedTable || !newTableName.trim()) return;
     setIsSavingTableName(true);
@@ -244,9 +307,18 @@ function LiveTableGrid() {
     setIsModalOpen(true);
   };
 
+  const handlePayAtCashier = () => {
+    if (!selectedOrder) return;
+    const readyOrder = normalizeOrderForRestore(selectedOrder);
+    localStorage.setItem('restored_held_order', JSON.stringify(readyOrder));
+    toast.info(`Memuat meja ${selectedTable} ke kasir untuk proses pembayaran.`);
+    window.location.href = '/lexupos';
+  };
+
   const handleCheckout = () => {
     if (!selectedOrder) return;
-    localStorage.setItem('restored_held_order', JSON.stringify(selectedOrder));
+    const readyOrder = normalizeOrderForRestore(selectedOrder);
+    localStorage.setItem('restored_held_order', JSON.stringify(readyOrder));
     toast.info(`Memulihkan meja ${selectedTable} ke kasir.`);
     window.location.href = '/lexupos';
   };
@@ -289,11 +361,11 @@ function LiveTableGrid() {
           customerName: selectedOrder.customerName || 'Guest',
           tableNumber: selectedOrder.tableNumber || '',
           cashierName: selectedOrder.cashierName || 'Kasir',
-          items: selectedOrder.cart || [],
+          items: getOrderItems(selectedOrder),
           subtotal: Number(selectedOrder.subtotal) || 0,
           tax: Number(selectedOrder.tax) || 0,
           discount: Number(selectedOrder.discount) || 0,
-          total: Number(selectedOrder.payableAmount ?? selectedOrder.subtotal ?? 0),
+          total: getOrderTotal(selectedOrder),
           paymentMethod: selectedOrder.paymentMethod || 'cash',
           revenueType: selectedOrder.revenueType || 'alacarte',
           status: 'CANCELLED',
@@ -361,7 +433,7 @@ function LiveTableGrid() {
           <a href="/settings" className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold">Atur di Pengaturan Toko &rarr;</a>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5">
+        <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5">
           {(() => {
             const registeredMatches = tablesList.map((tableName) => {
               const activeOrder = heldOrders.find(
@@ -422,7 +494,7 @@ function LiveTableGrid() {
                     </span>
                     <div className="flex items-center justify-between w-full mt-1">
                       <span className="text-[11px] font-black text-emerald-750 dark:text-emerald-400">
-                        {formatCurrency(activeOrder.payableAmount ?? activeOrder.subtotal ?? 0)}
+                        {formatCurrency(getOrderTotal(activeOrder))}
                       </span>
                       <div className="flex items-center gap-1">
                         {activeOrder.payableAmount === 0 || activeOrder.paymentMethod === 'compliment' || activeOrder.discountPercent === 100 ? (
@@ -537,26 +609,46 @@ function LiveTableGrid() {
 
                   {/* Items List (Internal scroll if item list is massive) */}
                   <span className="text-[10px] text-neutral-400 dark:text-zinc-500 font-bold uppercase tracking-wider mb-2 shrink-0">Item Pesanan</span>
-                  <div className="max-h-[220px] overflow-y-auto border border-neutral-100 dark:border-zinc-800/80 rounded-[10px] p-3 flex flex-col gap-2 mb-4 bg-transparent thin-scrollbar shrink-0">
-                    {selectedOrder.cart && selectedOrder.cart.map((item: any, idx: number) => (
-                      <div key={idx} className="flex justify-between items-start text-xs">
-                        <div className="flex flex-col min-w-0 pr-4">
-                          <span className="text-neutral-800 dark:text-[#f4f4f5] font-bold truncate">
-                            {item.product?.name || 'Item'}
+                  <div className="max-h-[220px] overflow-y-auto border border-neutral-100 dark:border-zinc-800/80 rounded-[10px] p-3 flex flex-col gap-2.5 mb-4 bg-transparent thin-scrollbar shrink-0">
+                    {(() => {
+                      const items = getOrderItems(selectedOrder);
+                      if (items.length === 0) {
+                        return (
+                          <span className="text-xs text-neutral-400 dark:text-zinc-500 italic py-2 text-center">
+                            Tidak ada item pesanan terdaftar
                           </span>
-                          <span className="text-[10px] text-neutral-500 dark:text-[#a1a1aa]">
-                            {item.quantity} x {formatCurrency(item.product?.price || 0)}
+                        );
+                      }
+                      return items.map((item: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-start text-xs border-b border-neutral-50 dark:border-zinc-800/50 pb-2 last:border-none last:pb-0">
+                          <div className="flex flex-col min-w-0 pr-3">
+                            <span className="text-neutral-800 dark:text-[#f4f4f5] font-bold truncate">
+                              {item.name}
+                            </span>
+                            <span className="text-[10px] text-neutral-500 dark:text-[#a1a1aa]">
+                              {item.quantity} x {formatCurrency(item.price)}
+                            </span>
+                            {item.addons && item.addons.length > 0 && (
+                              <div className="text-[9px] text-emerald-600 dark:text-emerald-400 mt-0.5">
+                                +{item.addons.map((a: any) => `${a.name || a} (${formatCurrency(Number(a.price) || 0)})`).join(', ')}
+                              </div>
+                            )}
+                            {item.note && (
+                              <div className="text-[9px] text-amber-600 dark:text-amber-400 italic mt-0.5">
+                                Catatan: {item.note}
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-neutral-800 dark:text-[#f4f4f5] font-bold shrink-0">
+                            {formatCurrency(item.itemTotal)}
                           </span>
                         </div>
-                        <span className="text-neutral-800 dark:text-[#f4f4f5] font-bold shrink-0">
-                          {formatCurrency((item.product?.price || 0) * item.quantity)}
-                        </span>
-                      </div>
-                    ))}
+                      ));
+                    })()}
                   </div>
 
                   {/* Totals */}
-                  <div className="border-t border-neutral-100 dark:border-zinc-800 pt-3 flex flex-col gap-1.5 mb-5 shrink-0">
+                  <div className="border-t border-neutral-100 dark:border-zinc-800 pt-3 flex flex-col gap-1.5 mb-4 shrink-0">
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-neutral-500 dark:text-neutral-400 font-medium">Subtotal</span>
                       <span className="text-neutral-800 dark:text-[#f4f4f5] font-semibold">{formatCurrency(selectedOrder.subtotal || 0)}</span>
@@ -576,12 +668,12 @@ function LiveTableGrid() {
                     <div className="flex justify-between items-center text-sm pt-2 border-t border-neutral-100 dark:border-zinc-800/80 mt-1">
                       <span className="text-neutral-800 dark:text-neutral-200 font-black">Total Tagihan</span>
                       <span className="text-stone-900 dark:text-white font-black text-base">
-                        {formatCurrency(selectedOrder.payableAmount ?? selectedOrder.subtotal ?? 0)}
+                        {formatCurrency(getOrderTotal(selectedOrder))}
                       </span>
                     </div>
                     {/* Status Banner */}
                     <div className={cn(
-                      "mt-3 p-2 rounded-[10px] text-center text-[10px] font-black uppercase tracking-wider leading-none shrink-0",
+                      "mt-2 p-2 rounded-[10px] text-center text-[10px] font-black uppercase tracking-wider leading-none shrink-0",
                       selectedOrder.isPaidDirectly 
                         ? "bg-emerald-500/10 text-emerald-650 dark:bg-emerald-500/20 dark:text-emerald-400"
                         : "bg-amber-500/10 text-amber-650 dark:bg-amber-500/20 dark:text-amber-400"
@@ -591,24 +683,33 @@ function LiveTableGrid() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                  <div className="flex flex-col gap-2 shrink-0">
                     {!selectedOrder.isPaidDirectly ? (
                       <>
                         <button
-                          onClick={handleCheckout}
-                          className="flex-1 py-3 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 font-black text-xs cursor-pointer border-none flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-[0.98]"
+                          onClick={handlePayAtCashier}
+                          className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs cursor-pointer border-none flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
                         >
-                          <Plus size={14} />
-                          Ubah & Tambah Orderan
+                          <CreditCard size={15} />
+                          Bayar di Kasir (Proses Pembayaran)
                         </button>
-                        <button
-                          disabled={true}
-                          title="Meja belum lunas. Selesaikan pembayaran di kasir terlebih dahulu."
-                          className="py-3 px-4 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-600 font-black text-xs cursor-not-allowed border-none flex items-center justify-center gap-1.5 opacity-50"
-                        >
-                          <Trash2 size={14} />
-                          Clear Table
-                        </button>
+                        
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleCheckout}
+                            className="flex-1 py-2.5 px-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-neutral-800 dark:text-neutral-200 font-bold text-xs cursor-pointer border border-neutral-200 dark:border-white/[0.08] flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                          >
+                            <Plus size={14} />
+                            Ubah & Tambah Menu
+                          </button>
+                          <button
+                            onClick={handleClearTable}
+                            className="py-2.5 px-3 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-950/50 text-red-600 dark:text-red-400 font-bold text-xs cursor-pointer border border-red-200/60 dark:border-red-900/40 flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                          >
+                            <Trash2 size={14} />
+                            Batalkan / Void
+                          </button>
+                        </div>
                       </>
                     ) : (
                       <button
@@ -624,7 +725,7 @@ function LiveTableGrid() {
 
                   <button
                     onClick={() => setIsPrintDialogOpen(true)}
-                    className="w-full py-3 px-4 rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-neutral-800 dark:text-neutral-200 font-black text-xs cursor-pointer border border-neutral-200 dark:border-white/[0.08] flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-[0.98] mt-2 shrink-0 mb-2"
+                    className="w-full py-2.5 px-4 rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-neutral-800 dark:text-neutral-200 font-bold text-xs cursor-pointer border border-neutral-200 dark:border-white/[0.08] flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-[0.98] mt-2 shrink-0 mb-2"
                   >
                     <Printer size={14} />
                     Cetak Struk / KOT (Kitchen/Bar)
@@ -659,11 +760,11 @@ function LiveTableGrid() {
           tableNumber={selectedOrder.tableNumber || selectedTable || ''}
           notes={selectedOrder.notes || ''}
           paymentMethod={selectedOrder.isPaidDirectly ? (selectedOrder.paymentMethod || 'cash') : 'unpaid'}
-          cart={selectedOrder.cart || []}
+          cart={normalizeOrderForRestore(selectedOrder).cart}
           subtotal={selectedOrder.subtotal || 0}
           tax={selectedOrder.tax || 0}
           discount={selectedOrder.discount || 0}
-          payableAmount={selectedOrder.payableAmount ?? selectedOrder.subtotal ?? 0}
+          payableAmount={getOrderTotal(selectedOrder)}
           cashAmount={selectedOrder.isPaidDirectly ? (selectedOrder.cashAmount || '0') : '0'}
           cashierName={selectedOrder.cashierName || 'Kasir'}
           status={selectedOrder.isPaidDirectly ? 'PAID' : 'UNPAID'}

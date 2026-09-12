@@ -245,17 +245,41 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
       const tax = Math.round(subtotal * 0.10);
       const total = subtotal + tax;
 
+      const formattedCart = cartItems.map((item) => {
+        const p = products.find((prod) => prod.id === item.id);
+        return {
+          cartItemId: item.cartItemId,
+          product: {
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            category: (p as any)?.category || item.categoryId || '',
+            subcategory: (p as any)?.subcategory || '',
+            image: (p as any)?.image || ''
+          },
+          quantity: item.qty,
+          selectedAddons: item.addons || [],
+          note: item.note || ''
+        };
+      });
+
       const orderData = {
         orderNumber: generatedOrderNum,
         customerName: customerName.trim(),
         tableNumber: tableNumber.trim(),
         orderType: 'Self-Order Tamu',
+        source: 'Self-Order Tamu',
+        cart: formattedCart,
         items: cartItems,
         notes: orderNotes.trim(),
         subtotal,
         tax,
+        discount: 0,
+        discountPercent: 0,
+        payableAmount: total,
         total,
         paymentStatus: 'PENDING',
+        isPaidDirectly: false,
         paymentMethod: paymentMethod === 'qris' ? 'QRIS' : 'Cashier',
         restoId: 'default-resto',
         createdAt: new Date().toISOString()

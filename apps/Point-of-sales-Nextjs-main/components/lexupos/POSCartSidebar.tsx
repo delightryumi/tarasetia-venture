@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Trash2, Plus, Minus, Pause, ArrowRight, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Trash2, Plus, Minus, Pause, ArrowRight, ShoppingBag, ArrowLeft, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CartItem } from './types';
@@ -164,11 +164,17 @@ export default function POSCartSidebar({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5 flex-1 min-w-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.product.image}
-                    alt={item.product.name}
-                    className="w-8 h-8 rounded-lg object-cover bg-slate-100 dark:bg-neutral-800 shrink-0"
-                  />
+                  {item.product.image ? (
+                    <img
+                      src={item.product.image}
+                      alt={item.product.name}
+                      className="w-8 h-8 rounded-lg object-cover bg-slate-100 dark:bg-neutral-800 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 text-neutral-400">
+                      <Utensils className="w-4 h-4" />
+                    </div>
+                  )}
                   <div className="min-w-0">
                     <h4 className="text-xs font-semibold text-neutral-700 dark:text-neutral-200 line-clamp-2 font-sans">
                       {item.product.name}

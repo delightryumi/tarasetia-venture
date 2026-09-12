@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowLeft, Coins, QrCode, CreditCard, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Coins, QrCode, CreditCard, CheckCircle2, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CartItem, PaymentMethodType } from './types';
@@ -139,11 +139,17 @@ export default function PaymentWorkspace({
             >
               <div className="flex items-center gap-4 min-w-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={item.product.image}
-                  alt={item.product.name}
-                  className="w-12 h-12 rounded-xl object-cover bg-slate-100 dark:neutral-800 shrink-0"
-                />
+                {item.product.image ? (
+                  <img
+                    src={item.product.image}
+                    alt={item.product.name}
+                    className="w-12 h-12 rounded-xl object-cover bg-slate-100 dark:bg-neutral-800 shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 text-neutral-400">
+                    <Utensils className="w-6 h-6" />
+                  </div>
+                )}
                 <div className="min-w-0">
                   <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 truncate">
                     {item.product.name}

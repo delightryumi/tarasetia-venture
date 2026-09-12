@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { Store, Search, Plus, Info, Layers, RotateCcw } from 'lucide-react';
+import { Store, Search, Plus, Info, Layers, RotateCcw, Utensils } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Product } from './types';
 import { db } from '@/lib/firebase';
@@ -196,7 +196,7 @@ export default function POSCatalogView({
       )}
 
       {/* ── Product Grid ─────────────────────────────────────────────────────── */}
-      <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 content-start overflow-y-auto thin-scrollbar flex-1 pr-1 ${!hasSubcategories ? 'mt-3' : ''}`}>
+      <div className={`grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 xl:grid-cols-5 gap-3 content-start overflow-y-auto thin-scrollbar flex-1 pr-1 ${!hasSubcategories ? 'mt-3' : ''}`}>
         {filteredProducts.map((product) => (
           <div
             key={product.id}
@@ -205,11 +205,17 @@ export default function POSCatalogView({
           >
             <div className="relative h-20 xs:h-24 md:h-auto md:aspect-square w-full rounded-xl overflow-hidden bg-slate-200/50 dark:bg-neutral-950 mb-1.5 md:mb-2.5 shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={product.image}
-                alt={product.name}
-                className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
-              />
+              {product.image ? (
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
+                />
+              ) : (
+                <div className="w-full h-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-400">
+                  <Utensils className="w-8 h-8 opacity-60" />
+                </div>
+              )}
               {/* Only show subcategory badge — keeps card clean */}
               <div className="absolute top-1.5 right-1.5">
                 {product.subcategory ? (

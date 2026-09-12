@@ -101,17 +101,18 @@ export default function ReceiptDialog({
   };
 
   // Map cart items to ReceiptItemData
-  const receiptItems: ReceiptItemData[] = cart.map(item => ({
-    id: item.product.id,
-    name: item.product.name,
-    category: item.product.category || 'Lainnya',
-    subcategory: item.product.subcategory || '—',
-    price: item.product.price,
-    quantity: item.quantity,
+  const safeCart = Array.isArray(cart) ? cart : [];
+  const receiptItems: ReceiptItemData[] = safeCart.map((item: any) => ({
+    id: item.product?.id || item.id || '',
+    name: item.product?.name || item.name || 'Item',
+    category: item.product?.category || item.category || 'Lainnya',
+    subcategory: item.product?.subcategory || item.subcategory || '—',
+    price: Number(item.product?.price ?? item.price ?? 0),
+    quantity: Number(item.quantity ?? item.qty ?? 1),
     isCompliment: item.isCompliment,
     complimentReason: item.complimentReason,
-    selectedAddons: item.selectedAddons,
-    note: item.note,
+    selectedAddons: item.selectedAddons || item.addons || [],
+    note: item.note || '',
   }));
 
   const now = new Date().toLocaleDateString('id-ID', {
