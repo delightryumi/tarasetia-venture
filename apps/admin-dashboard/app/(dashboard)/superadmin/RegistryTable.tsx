@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { Sparkles, Globe, Layers, Calendar, CheckCircle, Edit, Trash2, Link } from "lucide-react";
-import styles from "./superadmin.module.css";
+import { Building2, Globe, Layers, Calendar, CheckCircle, Edit, Trash2, Link } from "lucide-react";
+import styles from "./RegistryTable.module.css";
 import { HotelMasterDoc } from "./types";
 
 interface RegistryTableProps {
@@ -23,18 +23,21 @@ export const RegistryTable: React.FC<RegistryTableProps> = ({
   <section className={styles.tableCard}>
     <div className={styles.tableHeader}>
       <h2 className={styles.tableTitle}>
-        <Sparkles size={16} style={{ color: "#d9a441" }} />
-        Registry Partner CRS
+        <Building2 size={15} style={{ color: "#1e3a2f" }} />
+        <span>Data Master Registry Partner CRS</span>
       </h2>
+      <span className={styles.tableCountBadge}>
+        {hotels.length} Properti Terdaftar
+      </span>
     </div>
 
     <div className={styles.tableWrapper}>
       <table className={styles.table}>
         <thead>
           <tr className={styles.tableHead}>
-            <th>Nama Partner &amp; Kode</th>
-            <th>Domain &amp; Subdomain</th>
-            <th>Layanan &amp; Billing</th>
+            <th>Nama Properti &amp; ID</th>
+            <th>Domain &amp; Routing</th>
+            <th>Layanan &amp; Paket</th>
             <th>Status Langganan</th>
             <th style={{ textAlign: "center" }}>Status Sistem</th>
             <th style={{ textAlign: "center" }}>Aksi</th>
@@ -44,9 +47,9 @@ export const RegistryTable: React.FC<RegistryTableProps> = ({
           {hotels.map((hotel) => (
             <tr key={hotel.hotelCode}>
               <td className={styles.tdPrimary}>
-                <div>{hotel.name}</div>
-                <div className={styles.tdMono} style={{ color: "var(--s-muted)", marginTop: "2px" }}>
-                  Code: {hotel.hotelCode}
+                <div className={styles.hotelName}>{hotel.name}</div>
+                <div className={styles.hotelCodeBadge}>
+                  ID: {hotel.hotelCode}
                 </div>
               </td>
               <td>

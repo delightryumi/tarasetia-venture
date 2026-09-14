@@ -58,6 +58,15 @@ export default function DetailPage() {
   const tax   = nettTotal * (taxRate / 100);
   const total = nettTotal + tax;
 
+  const firstTx = transactionData[0];
+  const finalSubtotal = firstTx?.subtotal !== undefined ? firstTx.subtotal : subtotal;
+  const finalDiscount = firstTx?.discount !== undefined ? firstTx.discount : discount;
+  const finalTax = firstTx?.tax !== undefined ? firstTx.tax : tax;
+  const finalTotal = firstTx?.total !== undefined ? firstTx.total : total;
+  const effectiveTaxRate = finalSubtotal - finalDiscount > 0
+    ? Math.round((finalTax / (finalSubtotal - finalDiscount)) * 100)
+    : taxRate;
+
   // Map transactionData to ReceiptItemData
   const receiptItems: ReceiptItemData[] = transactionData.map(item => ({
     id: item.id,
@@ -68,6 +77,8 @@ export default function DetailPage() {
     quantity: item.quantity,
     isCompliment: item.isCompliment,
     complimentReason: item.complimentReason,
+    selectedAddons: item.selectedAddons || [],
+    note: item.note || '',
   }));
 
   // ── Print ───────────────────────────────────────────────────────────────────
@@ -139,7 +150,7 @@ export default function DetailPage() {
               variant="outline"
               className="rounded-xl flex items-center gap-1.5 border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 text-xs"
               onClick={handlePrint}
-              disabled={total === 0 || printing}
+              disabled={receiptItems.length === 0 || printing}
             >
               <Printer className="w-3.5 h-3.5" />
               Cetak Struk
@@ -163,15 +174,22 @@ export default function DetailPage() {
                 transactionInfo={{ 
                   id, 
                   date: saleDate, 
-                  customerName: 'Walk-in Customer', 
-                  paymentMethod: transactionData[0]?.paymethod || transactionData[0]?.paymentMethod || 'TUNAI',
-                  status: transactionData[0]?.status,
-                  cancelReason: transactionData[0]?.cancelReason,
-                  tableName: transactionData[0]?.tableNumber || transactionData[0]?.table || undefined,
+                  customerName: firstTx?.customerName || 'Walk-in Customer', 
+                  cashierName: firstTx?.cashierName || 'Kasir',
+                  paymentMethod: firstTx?.paymentMethod || firstTx?.paymethod || 'cash',
+                  status: firstTx?.status,
+                  cancelReason: firstTx?.cancelReason,
+                  tableName: firstTx?.tableNumber || firstTx?.table || undefined,
                 }}
                 items={receiptItems}
                 totals={{
-                  subtotal, discount, taxRate, taxAmount: tax, payableAmount: total
+                  subtotal: finalSubtotal,
+                  discount: finalDiscount,
+                  taxRate: effectiveTaxRate,
+                  taxAmount: finalTax,
+                  payableAmount: finalTotal,
+                  cashAmount: firstTx?.cashAmount,
+                  changeAmount: firstTx?.changeAmount,
                 }}
                 className="shadow-sm border border-neutral-200"
                 printMode={printMode}
@@ -191,15 +209,22 @@ export default function DetailPage() {
             transactionInfo={{ 
               id, 
               date: saleDate, 
-              customerName: 'Walk-in Customer', 
-              paymentMethod: transactionData[0]?.paymethod || transactionData[0]?.paymentMethod || 'TUNAI',
-              status: transactionData[0]?.status,
-              cancelReason: transactionData[0]?.cancelReason,
-              tableName: transactionData[0]?.tableNumber || transactionData[0]?.table || undefined,
+              customerName: firstTx?.customerName || 'Walk-in Customer', 
+              cashierName: firstTx?.cashierName || 'Kasir',
+              paymentMethod: firstTx?.paymentMethod || firstTx?.paymethod || 'cash',
+              status: firstTx?.status,
+              cancelReason: firstTx?.cancelReason,
+              tableName: firstTx?.tableNumber || firstTx?.table || undefined,
             }}
             items={receiptItems}
             totals={{
-              subtotal, discount, taxRate, taxAmount: tax, payableAmount: total
+              subtotal: finalSubtotal,
+              discount: finalDiscount,
+              taxRate: effectiveTaxRate,
+              taxAmount: finalTax,
+              payableAmount: finalTotal,
+              cashAmount: firstTx?.cashAmount,
+              changeAmount: firstTx?.changeAmount,
             }}
             printMode={printMode}
          />

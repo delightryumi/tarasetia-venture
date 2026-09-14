@@ -5,7 +5,7 @@ import {
     Gift, Package, Globe, Users, ClipboardText,
     Coffee, Pulse, Storefront, FileImage,
     Notebook, UsersThree, Bed, Info, ShoppingCart,
-    IdentificationCard, FileXls, ChartBar
+    IdentificationCard, FileXls, ChartBar, SlidersHorizontal
 } from "@phosphor-icons/react";
 import { NavItemType } from "./types";
 import { SpringOptions } from "framer-motion";
@@ -19,7 +19,8 @@ export const allNavItems: NavItemType[] = [
     { id: "overview", label: "Overview", icon: <ChartPie size={18} weight="bold" /> },
     { id: "digital-checkin", label: "GRC (Guest Card)", icon: <IdentificationCard size={18} weight="bold" /> },
     { id: "forecast", label: "Forecast", icon: <TrendUp size={18} weight="bold" /> },
-    { id: "inventory-control", label: "Inventory Control", icon: <SquaresFour size={18} weight="bold" /> },
+    { id: "rate-inventory", label: "Rate & Inventory", icon: <SlidersHorizontal size={18} weight="bold" /> },
+    { id: "channel-manager", label: "Channel Manager", icon: <Globe size={18} weight="bold" /> },
     { id: "pos", label: "POS Terminal", icon: <Storefront size={18} weight="bold" /> },
     { id: "invoice", label: "Buat Invoice", icon: <FileText size={18} weight="bold" /> },
     { id: "pnl", label: "P&L Statement", icon: <Notebook size={18} weight="bold" /> },
@@ -39,6 +40,7 @@ export const allNavItems: NavItemType[] = [
     { id: "packages", label: "Paket Kustom", icon: <Package size={18} weight="bold" /> },
     { id: "seo", label: "SEO & Metadata", icon: <Globe size={18} weight="bold" /> },
     { id: "users", label: "Manajemen User", icon: <Users size={18} weight="bold" /> },
+    { id: "superadmin", label: "Super Admin", icon: <Gear size={18} weight="bold" /> },
     { id: "hrd", label: "HRD & Absensi", icon: <ClipboardText size={18} weight="bold" /> },
 
     { id: "purchasing", label: "Dasbor", icon: <House size={18} weight="bold" /> },

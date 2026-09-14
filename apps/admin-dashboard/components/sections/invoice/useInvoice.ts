@@ -216,7 +216,7 @@ export const useInvoice = () => {
         if (!element) return;
 
         try {
-            const html2canvas = (await import('html2canvas')).default;
+            const html2canvas = ((await import(/* webpackIgnore: true */ 'html2canvas' as any)) as any).default;
             const jsPDF = (await import('jspdf')).default;
 
             const canvas = await html2canvas(element, {

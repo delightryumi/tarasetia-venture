@@ -70,7 +70,9 @@ export const PosSplashLoader: React.FC<PosSplashLoaderProps> = () => {
 
       {/* Cupertino Minimalist Footer */}
       <div className={styles.footerBranding}>
-        powered by my tara
+        <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+          powered by Tara
+        </a>
       </div>
     </div>
   );

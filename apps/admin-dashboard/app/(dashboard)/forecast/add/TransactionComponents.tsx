@@ -435,6 +435,74 @@ export const DateCard = ({ label, value, onChange, type }: any) => {
     );
 };
 
+export function RatePlanSelect({ value, options, onChange }: { value: string, options: any[], onChange: (v: string) => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    useClickOutside(containerRef, () => setIsOpen(false), isOpen);
+    const selected = options.find(o => o.id === value || o.code === value);
+
+    return (
+        <div className="relative" ref={containerRef}>
+            <button 
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className={styles.inputWrapper}
+                style={{ width: '100%', height: '40px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}
+            >
+                <div className="flex items-center gap-3 flex-1">
+                    <Package size={16} className="text-stone-400" />
+                    <span className={styles.popoverItemText} style={{ color: 'var(--f-body)' }}>
+                        {selected?.name || (options.length > 0 ? 'Pilih Paket Harga (Rate Plan)' : 'Standard BAR')}
+                    </span>
+                </div>
+                <ChevronRight size={14} className={`text-stone-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-90' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        className={styles.popover}
+                    >
+                        {options.length === 0 ? (
+                            <div className="p-3 text-[11px] text-stone-400 text-center">
+                                Belum ada Rate Plan khusus
+                            </div>
+                        ) : (
+                            options.map((option) => (
+                                <button
+                                    key={option.id}
+                                    type="button"
+                                    onClick={() => {
+                                        onChange(option.id);
+                                        setIsOpen(false);
+                                    }}
+                                    className={styles.popoverItem}
+                                    style={{
+                                        backgroundColor: (value === option.id || value === option.code) ? 'var(--f-sage)' : '',
+                                        color: (value === option.id || value === option.code) ? '#ffffff' : 'var(--f-body)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'flex-start'
+                                    }}
+                                >
+                                    <div className="flex items-center justify-between w-full">
+                                        <span className={styles.popoverItemText} style={{ fontWeight: 600 }}>{option.name}</span>
+                                        <span className="text-[11px] opacity-80">Rp {(option.baseRate || 0).toLocaleString("id-ID")}</span>
+                                    </div>
+                                    <span className="text-[10px] opacity-70">{option.mealsIncluded ? "Termasuk Sarapan" : "Room Only"}</span>
+                                </button>
+                            ))
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
 export function RoomNumberSelect({ value, options, onChange }: { value: string, options: string[], onChange: (v: string) => void }) {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -495,3 +563,5 @@ export function RoomNumberSelect({ value, options, onChange }: { value: string, 
         </div>
     );
 }
+
+

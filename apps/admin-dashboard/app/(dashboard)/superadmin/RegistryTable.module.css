@@ -1,0 +1,353 @@
+/* RegistryTable.module.css — VHP / DSI Hotel Registry Grid */
+
+.tableCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  margin-bottom: 20px;
+}
+
+.tableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tableTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.tableCountBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1e3a2f;
+  background: rgba(30, 58, 47, 0.08);
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid rgba(30, 58, 47, 0.15);
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+
+.tableHead th {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 12px;
+  border-bottom: 1px solid #cbd5e1;
+  white-space: nowrap;
+}
+
+.tableBody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.12s ease;
+}
+
+.tableBody tr:hover {
+  background-color: #f8fafc;
+}
+
+.tableBody tr:last-child {
+  border-bottom: none;
+}
+
+.tableBody td {
+  padding: 8px 12px;
+  vertical-align: middle;
+  color: #334155;
+}
+
+.tdPrimary {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.hotelName {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.hotelCodeBadge {
+  display: inline-block;
+  font-family: var(--font-mono-jb, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  color: #1e3a2f;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+
+.tdMono {
+  font-family: var(--font-mono-jb, monospace);
+  font-size: 11px;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.badgePaid {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.badgeGrace {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.badgeOverdue {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.badgeActive {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.badgeInactive {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+
+/* Actions Group */
+.actionsGroup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.actionBtn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.actionBtnPrimary {
+  background: rgba(30, 58, 47, 0.06);
+  border-color: rgba(30, 58, 47, 0.2);
+  color: #1e3a2f;
+}
+
+.actionBtnPrimary:hover {
+  background: #1e3a2f;
+  color: #ffffff;
+  border-color: #1e3a2f;
+}
+
+.actionBtnDanger {
+  color: #dc2626;
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
+.actionBtnDanger:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+}
+
+.switchToggle {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+}
+
+.switchToggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switchSlider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: 0.2s;
+  border-radius: 18px;
+}
+
+.switchSlider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+.switchToggle input:checked + .switchSlider {
+  background-color: #1e3a2f;
+}
+
+/* Toggle Switch */
+.toggleBtn {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  outline: none;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.toggleActive {
+  background: #1e3a2f;
+}
+
+.toggleInactive {
+  background: #cbd5e1;
+}
+
+.toggleKnob {
+  pointer-events: none;
+  display: block;
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.knobActive {
+  transform: translateX(15px);
+}
+
+.knobInactive {
+  transform: translateX(2px);
+}
+
+/* Dark Mode */
+:global(.dark) .tableCard {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+:global(.dark) .tableHeader {
+  background: #0f172a;
+  border-bottom-color: #334155;
+}
+
+:global(.dark) .tableTitle {
+  color: #f8fafc;
+}
+
+:global(.dark) .tableCountBadge {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+:global(.dark) .tableHead th {
+  background: #0f172a;
+  color: #94a3b8;
+  border-bottom-color: #334155;
+}
+
+:global(.dark) .tableBody tr {
+  border-bottom-color: #334155;
+}
+
+:global(.dark) .tableBody tr:hover {
+  background-color: #0f172a;
+}
+
+:global(.dark) .tableBody td {
+  color: #cbd5e1;
+}
+
+:global(.dark) .hotelName {
+  color: #f8fafc;
+}
+
+:global(.dark) .hotelCodeBadge {
+  background: #0f172a;
+  color: #86efac;
+  border-color: #166534;
+}
+
+:global(.dark) .actionBtn {
+  background: #0f172a;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+:global(.dark) .actionBtn:hover {
+  background: #1e293b;
+  color: #ffffff;
+}

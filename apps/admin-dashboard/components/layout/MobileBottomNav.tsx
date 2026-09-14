@@ -92,7 +92,12 @@ export const MobileBottomNav = () => {
                 setActiveModule("hrd");
                 return;
             }
-            if (pathname.startsWith('/front-office') || pathname === '/digital-checkin' || pathname === '/invoice') {
+            if (
+                pathname.startsWith('/front-office') ||
+                pathname === '/digital-checkin' ||
+                pathname === '/invoice' ||
+                pathname.startsWith('/rate-inventory')
+            ) {
                 localStorage.setItem("active_module", "front-office");
                 setActiveModule("front-office");
                 return;
@@ -183,8 +188,8 @@ export const MobileBottomNav = () => {
     const allNavItems = [
         { id: "overview", label: "Overview", icon: <BarChart2 size={20} /> },
         { id: "digital-checkin", label: "GRC", icon: <FileText size={20} /> },
-        { id: "inventory-control", label: "Inventory", icon: <Grid size={20} /> },
         { id: "forecast", label: "Forecast", icon: <TrendingUp size={20} /> },
+        { id: "rate-inventory", label: "Rate & Inventory", icon: <Settings size={20} /> },
         { id: "pos", label: "POS Terminal", icon: <ShoppingCart size={20} /> },
         { id: "invoice", label: "Invoice", icon: <FileText size={20} /> },
         { id: "pnl", label: "PNL", icon: <PieChart size={20} /> },
@@ -236,9 +241,9 @@ export const MobileBottomNav = () => {
 
         let items = allNavItems;
         if (activeModule === "front-office") {
-            items = allNavItems.filter(item => ["overview", "inventory-control", "digital-checkin", "forecast", "invoice", "purchase-order"].includes(item.id));
+            items = allNavItems.filter(item => ["overview", "digital-checkin", "forecast", "rate-inventory", "invoice", "purchase-order"].includes(item.id));
         } else if (activeModule === "housekeeping") {
-            items = allNavItems.filter(item => ["overview", "inventory-control", "forecast", "purchase-order"].includes(item.id));
+            items = allNavItems.filter(item => ["overview", "forecast", "purchase-order"].includes(item.id));
         } else if (activeModule === "accounting") {
             items = allNavItems.filter(item => ["pnl", "pnl-budget", "dsr", "budgeting", "statements", "purchase-order"].includes(item.id));
         } else if (activeModule === "food-beverage") {

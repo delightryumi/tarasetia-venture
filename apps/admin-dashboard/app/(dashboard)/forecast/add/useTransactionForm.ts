@@ -58,6 +58,11 @@ const INITIAL_FORM = {
     pax: 1,
     upgradeFrom: "",
     upgradeTo: "",
+    paidCash: "",
+    paidEdc: "",
+    paidQris: "",
+    paidTransfer: "",
+    paidOta: "",
     payHotel: "",
     payTransfer: "",
     totalAmount: "",
@@ -119,6 +124,8 @@ export const useTransactionForm = () => {
     }, [router, searchParams, user]);
 
     const [roomTypes, setRoomTypes] = useState<any[]>([]);
+    const [ratePlans, setRatePlans] = useState<any[]>([]);
+    const [selectedRatePlanId, setSelectedRatePlanId] = useState<string>("");
     const [occupancy, setOccupancy] = useState<any[]>([]);
     const [saving, setSaving] = useState(false);
     const [step, setStep] = useState<"select" | "form">("select");
@@ -138,51 +145,29 @@ export const useTransactionForm = () => {
         ? (form.nightRates || []).reduce((acc, r) => acc + (Number(r) || 0), 0)
         : (Number(form.totalAmount) || 0);
         
-    const balance = totalGross - (Number(form.payHotel) || 0) - (Number(form.payTransfer) || 0);
+    const totalPaid = (Number(form.paidCash) || 0) + 
+                      (Number(form.paidEdc) || 0) + 
+                      (Number(form.paidQris) || 0) + 
+                      (Number(form.paidTransfer) || 0) + 
+                      (Number(form.paidOta) || 0) + 
+                      (form.paidCash === "" && form.paidEdc === "" && form.paidQris === "" && form.paidTransfer === "" && form.paidOta === "" 
+                        ? (Number(form.payHotel) || 0) + (Number(form.payTransfer) || 0) 
+                        : 0);
+                        
+    const balance = totalGross - totalPaid;
 
-    useEffect(() => {
-        const isRestricted = !(form.channel === "Walk-in");
-        if (revenueType === "room") {
-            if (form.isCompliment) {
-                setForm(prev => ({ 
-                    ...prev, 
-                    payHotel: "0",
-                    payTransfer: "0"
-                }));
-            } else if (isRestricted) {
-                setForm(prev => ({ 
-                    ...prev, 
-                    payHotel: "0",
-                    payTransfer: totalGross.toString()
-                }));
-            }
-        }
-    }, [form.channel, revenueType, totalGross, form.isCompliment]);
-
-    useEffect(() => {
-        if (revenueType === "other") {
-            if (form.isCompliment) {
-                setForm(prev => ({
-                    ...prev,
-                    payHotel: "0",
-                    payTransfer: "0"
-                }));
-            } else {
-                setForm(prev => ({
-                    ...prev,
-                    payTransfer: "0"
-                }));
-            }
-        }
-    }, [revenueType, form.isCompliment]);
-
-    // Fetch Allotment & Current Bookings
+    // Fetch Room Types, Rate Plans, & Occupancy
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const rSnap = await getDocs(getHotelCollection(db, "roomTypes", activeHotelCode));
                 const types = rSnap.docs.map(d => ({ id: d.id, ...d.data() }));
                 setRoomTypes(types);
+
+                // Fetch Rate Plans
+                const rpSnap = await getDocs(getHotelCollection(db, "ratePlans", activeHotelCode));
+                const plans = rpSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                setRatePlans(plans);
                 
                 if (types.length > 0) {
                     setForm(prev => {
@@ -206,6 +191,7 @@ export const useTransactionForm = () => {
         };
         fetchData();
     }, [activeHotelCode]);
+
 
     // Sync nightRates with nights
     useEffect(() => {
@@ -337,11 +323,6 @@ export const useTransactionForm = () => {
                 toast.error("Room rate cannot be negative");
                 return null;
             }
-            // Check for negative payments
-            if (Number(form.payHotel) < 0 || Number(form.payTransfer) < 0) {
-                toast.error("Payment amount cannot be negative");
-                return null;
-            }
         } else {
             const amountVal = Number(form.totalAmount);
             if (form.isCompliment && !form.complimentReason) { toast.error("Alasan Compliment wajib diisi"); return null; }
@@ -353,10 +334,20 @@ export const useTransactionForm = () => {
                 toast.error("Total Amount must be greater than 0");
                 return null;
             }
-            if (Number(form.payHotel) < 0 || Number(form.payTransfer) < 0) {
-                toast.error("Payment amount cannot be negative");
-                return null;
-            }
+        }
+
+        // Check for negative payments
+        if (
+            Number(form.paidCash) < 0 || 
+            Number(form.paidEdc) < 0 || 
+            Number(form.paidQris) < 0 || 
+            Number(form.paidTransfer) < 0 || 
+            Number(form.paidOta) < 0 ||
+            Number(form.payHotel) < 0 || 
+            Number(form.payTransfer) < 0
+        ) {
+            toast.error("Payment amount cannot be negative");
+            return null;
         }
 
         // Allow adding transactions for past dates without availability check
@@ -371,10 +362,20 @@ export const useTransactionForm = () => {
 
         let transactionEntries: any[] = [];
 
+        // Determine granular settlement values
+        const rawCash = form.paidCash !== "" ? Number(form.paidCash) || 0 : (form.paidEdc === "" && form.paidQris === "" && form.paidTransfer === "" ? Number(form.payHotel) || 0 : 0);
+        const rawEdc = Number(form.paidEdc) || 0;
+        const rawQris = Number(form.paidQris) || 0;
+        const rawTransfer = Number(form.paidTransfer) || 0;
+        const rawOta = form.paidOta !== "" ? Number(form.paidOta) || 0 : (Number(form.payTransfer) || 0);
+
         if (revenueType === "room") {
             const startD = new Date(form.checkIn);
-            let remainingPayHotel = Number(form.payHotel) || 0;
-            let remainingPayTransfer = Number(form.payTransfer) || 0;
+            let remCash = rawCash;
+            let remEdc = rawEdc;
+            let remQris = rawQris;
+            let remTransfer = rawTransfer;
+            let remOta = rawOta;
 
             for (let i = 0; i < nights; i++) {
                 const currentDate = new Date(startD);
@@ -384,26 +385,52 @@ export const useTransactionForm = () => {
                 const nightlyRate = Number(form.nightRates[i]) || 0;
                 const ratio = totalGross > 0 ? nightlyRate / totalGross : 0;
                 
-                let dailyPayHotel = 0;
-                let dailyPayTransfer = 0;
+                let dailyCash = 0;
+                let dailyEdc = 0;
+                let dailyQris = 0;
+                let dailyTransfer = 0;
+                let dailyOta = 0;
                 
                 if (i === nights - 1) {
-                    dailyPayHotel = remainingPayHotel;
-                    dailyPayTransfer = remainingPayTransfer;
+                    dailyCash = remCash;
+                    dailyEdc = remEdc;
+                    dailyQris = remQris;
+                    dailyTransfer = remTransfer;
+                    dailyOta = remOta;
                 } else {
-                    dailyPayHotel = Math.round((Number(form.payHotel) || 0) * ratio);
-                    dailyPayTransfer = Math.round((Number(form.payTransfer) || 0) * ratio);
-                    remainingPayHotel -= dailyPayHotel;
-                    remainingPayTransfer -= dailyPayTransfer;
+                    dailyCash = Math.round(rawCash * ratio);
+                    dailyEdc = Math.round(rawEdc * ratio);
+                    dailyQris = Math.round(rawQris * ratio);
+                    dailyTransfer = Math.round(rawTransfer * ratio);
+                    dailyOta = Math.round(rawOta * ratio);
+
+                    remCash -= dailyCash;
+                    remEdc -= dailyEdc;
+                    remQris -= dailyQris;
+                    remTransfer -= dailyTransfer;
+                    remOta -= dailyOta;
                 }
                 
                 const finalAmount = form.isCompliment ? 0 : nightlyRate;
-                const finalPayHotel = form.isCompliment ? 0 : dailyPayHotel;
-                const finalPayTransfer = form.isCompliment ? 0 : dailyPayTransfer;
+                const finalCash = form.isCompliment ? 0 : dailyCash;
+                const finalEdc = form.isCompliment ? 0 : dailyEdc;
+                const finalQris = form.isCompliment ? 0 : dailyQris;
+                const finalTransfer = form.isCompliment ? 0 : dailyTransfer;
+                const finalOta = form.isCompliment ? 0 : dailyOta;
+                
+                const finalPayHotel = finalCash + finalEdc + finalQris + finalTransfer;
+                const finalPayTransfer = finalOta + finalTransfer;
 
-                const dailyPaid = finalPayHotel + finalPayTransfer;
+                const dailyPaid = finalCash + finalEdc + finalQris + finalTransfer + finalOta;
                 const dailyBalance = Math.max(0, finalAmount - dailyPaid);
                 const dailyStatus = form.isCompliment ? "Lunas" : (dailyBalance === 0 ? "Lunas" : (dailyPaid > 0 ? "DP / Partial" : "Belum Bayar"));
+
+                let pm = "Cash";
+                if (finalOta > 0 && finalPayHotel === 0) pm = "OTA Virtual / City Ledger";
+                else if (finalEdc > 0 && finalCash === 0 && finalQris === 0 && finalTransfer === 0) pm = "EDC BCA / Mandiri";
+                else if (finalQris > 0 && finalCash === 0 && finalEdc === 0 && finalTransfer === 0) pm = "QRIS Payment";
+                else if (finalTransfer > 0 && finalCash === 0 && finalEdc === 0 && finalQris === 0) pm = "Bank Transfer";
+                else if ([finalCash > 0, finalEdc > 0, finalQris > 0, finalTransfer > 0, finalOta > 0].filter(Boolean).length > 1) pm = "Split Payment";
 
                 transactionEntries.push({
                     type: "accommodation",
@@ -430,17 +457,21 @@ export const useTransactionForm = () => {
                     voucherCode: form.voucherCode,
                     amount: finalAmount,
                     totalAmount: totalGross,
+                    paidCash: finalCash,
+                    paidEdc: finalEdc,
+                    paidQris: finalQris,
+                    paidTransfer: finalTransfer,
+                    paidOta: finalOta,
                     payHotel: finalPayHotel,
                     payTransfer: finalPayTransfer,
-                    paidCash: finalPayHotel,
                     paidAmount1: finalPayHotel,
-                    paidTransfer: finalPayTransfer,
                     paidAmount2: finalPayTransfer,
                     initialPayHotel: finalPayHotel,
                     initialPayTransfer: finalPayTransfer,
+                    paymentMethod: pm,
                     paymentStatus: dailyStatus,
                     source: form.channel === "Walk-in" ? "Walk-in" : "OTA",
-                    status: form.channel === "Walk-in" ? "CONFIRMED" : "CONFIRMED", // Aligning reservation statuses
+                    status: "CONFIRMED",
                     staffName: form.staffName,
                     note: form.note,
                     timestamp: new Date().toISOString(),
@@ -451,12 +482,25 @@ export const useTransactionForm = () => {
             }
         } else {
             const finalAmount = form.isCompliment ? 0 : Number(form.totalAmount);
-            const finalPayHotel = form.isCompliment ? 0 : (Number(form.payHotel) || 0);
-            const finalPayTransfer = form.isCompliment ? 0 : (Number(form.payTransfer) || 0);
+            const finalCash = form.isCompliment ? 0 : rawCash;
+            const finalEdc = form.isCompliment ? 0 : rawEdc;
+            const finalQris = form.isCompliment ? 0 : rawQris;
+            const finalTransfer = form.isCompliment ? 0 : rawTransfer;
+            const finalOta = form.isCompliment ? 0 : rawOta;
+            
+            const finalPayHotel = finalCash + finalEdc + finalQris + finalTransfer;
+            const finalPayTransfer = finalOta + finalTransfer;
 
-            const totalPaid = finalPayHotel + finalPayTransfer;
+            const totalPaid = finalCash + finalEdc + finalQris + finalTransfer + finalOta;
             const incomeBalance = Math.max(0, finalAmount - totalPaid);
             const incomeStatus = form.isCompliment ? "Lunas" : (incomeBalance === 0 ? "Lunas" : (totalPaid > 0 ? "DP / Partial" : "Belum Bayar"));
+
+            let pm = "Cash";
+            if (finalOta > 0 && finalPayHotel === 0) pm = "OTA Virtual / City Ledger";
+            else if (finalEdc > 0 && finalCash === 0 && finalQris === 0 && finalTransfer === 0) pm = "EDC BCA / Mandiri";
+            else if (finalQris > 0 && finalCash === 0 && finalEdc === 0 && finalTransfer === 0) pm = "QRIS Payment";
+            else if (finalTransfer > 0 && finalCash === 0 && finalEdc === 0 && finalQris === 0) pm = "Bank Transfer";
+            else if ([finalCash > 0, finalEdc > 0, finalQris > 0, finalTransfer > 0, finalOta > 0].filter(Boolean).length > 1) pm = "Split Payment";
 
             transactionEntries = [{
                 type: "other_income",
@@ -467,14 +511,18 @@ export const useTransactionForm = () => {
                 checkInDate: form.checkIn,
                 checkOutDate: form.checkIn,
                 amount: finalAmount,
+                paidCash: finalCash,
+                paidEdc: finalEdc,
+                paidQris: finalQris,
+                paidTransfer: finalTransfer,
+                paidOta: finalOta,
                 payHotel: finalPayHotel,
                 payTransfer: finalPayTransfer,
-                paidCash: finalPayHotel,
                 paidAmount1: finalPayHotel,
-                paidTransfer: finalPayTransfer,
                 paidAmount2: finalPayTransfer,
                 initialPayHotel: finalPayHotel,
                 initialPayTransfer: finalPayTransfer,
+                paymentMethod: pm,
                 paymentStatus: incomeStatus,
                 source: "Walk-in", // Other income is generally considered walk-in
                 status: "CONFIRMED",
@@ -560,6 +608,20 @@ export const useTransactionForm = () => {
                 }
             }
 
+            // Trigger background ARI sync to Channex if room transaction
+            if (revenueType === "room" && form.checkIn && form.checkOut) {
+                fetch("/api/channex/sync-ari", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode: activeHotelCode,
+                        startDate: form.checkIn,
+                        endDate: form.checkOut,
+                        type: "availability"
+                    })
+                }).catch(e => console.warn("[Channex Sync Trigger Warning]:", e));
+            }
+
             toast.success("All transactions synchronized successfully");
             handleCancel();
         } catch (err) {
@@ -568,11 +630,37 @@ export const useTransactionForm = () => {
         } finally {
             setSaving(false);
         }
-    }, [form, queue, prepareEntries, handleCancel, revenueType]);
+    }, [form, queue, prepareEntries, handleCancel, revenueType, activeHotelCode]);
+
+    const onSelectRatePlan = (ratePlanId: string) => {
+        const plan = ratePlans.find(p => p.id === ratePlanId || p.code === ratePlanId);
+        if (!plan) return;
+        
+        setSelectedRatePlanId(ratePlanId);
+        setForm(prev => {
+            const baseRate = plan.baseRate || 0;
+            const newRates = Array(nights).fill(baseRate);
+            const newRooms = [...prev.rooms];
+            if (newRooms[0]) {
+                newRooms[0] = {
+                    ...newRooms[0],
+                    roomTypeId: plan.roomTypeId || newRooms[0].roomTypeId,
+                    price: baseRate.toString()
+                };
+            }
+            return {
+                ...prev,
+                rateCode: plan.code || plan.name,
+                nightRates: newRates,
+                rooms: newRooms
+            };
+        });
+        toast.info(`Paket ${plan.name} terpilih: Rp ${plan.baseRate.toLocaleString("id-ID")} / malam`);
+    };
 
     const updateForm = (field: string, value: any) => {
         let finalValue = value;
-        if (["payHotel", "payTransfer", "totalAmount"].includes(field)) {
+        if (["paidCash", "paidEdc", "paidQris", "paidTransfer", "paidOta", "payHotel", "payTransfer", "totalAmount"].includes(field)) {
             const num = Number(value);
             if (!isNaN(num) && num < 0) {
                 finalValue = 0;
@@ -671,6 +759,9 @@ export const useTransactionForm = () => {
     return {
         form,
         roomTypes,
+        ratePlans,
+        selectedRatePlanId,
+        onSelectRatePlan,
         saving,
         step,
         revenueType,
@@ -694,3 +785,4 @@ export const useTransactionForm = () => {
         commitTransactions
     };
 };
+

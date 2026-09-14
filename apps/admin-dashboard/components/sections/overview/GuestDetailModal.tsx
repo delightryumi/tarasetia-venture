@@ -51,6 +51,11 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
     const [formData, setFormData] = React.useState({
         guestName: '',
         totalAmount: 0,
+        paidCash: 0,
+        paidEdc: 0,
+        paidQris: 0,
+        paidTransfer: 0,
+        paidOta: 0,
         payHotel: 0,
         payTransfer: 0,
         checkIn: '',
@@ -86,12 +91,25 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             const nights = dates.length || 1;
             
             const initTotalAmount = guest.totalAmount || (guest.amount && nights > 1 ? guest.amount * nights : (guest.amount || 0));
-            const initPayHotel = guest.payHotel ?? guest.paidCash ?? 0;
-            const initPayTransfer = guest.payTransfer ?? guest.payNexura ?? guest.paidTransfer ?? 0;
+            const hasGranular = (guest.paidCash !== undefined || guest.paidEdc !== undefined || guest.paidQris !== undefined || guest.paidTransfer !== undefined || guest.paidOta !== undefined);
+            
+            const initPaidCash = guest.paidCash !== undefined ? Number(guest.paidCash) : (!hasGranular ? Number(guest.payHotel || 0) : 0);
+            const initPaidEdc = Number(guest.paidEdc || 0);
+            const initPaidQris = Number(guest.paidQris || 0);
+            const initPaidTransfer = Number(guest.paidTransfer || 0);
+            const initPaidOta = guest.paidOta !== undefined ? Number(guest.paidOta) : (!hasGranular ? Number(guest.payTransfer || guest.payNexura || 0) : 0);
+
+            const initPayHotel = initPaidCash + initPaidEdc + initPaidQris + initPaidTransfer;
+            const initPayTransfer = initPaidOta + initPaidTransfer;
 
             setFormData({
                 ...guest,
                 totalAmount: initTotalAmount,
+                paidCash: initPaidCash,
+                paidEdc: initPaidEdc,
+                paidQris: initPaidQris,
+                paidTransfer: initPaidTransfer,
+                paidOta: initPaidOta,
                 payHotel: initPayHotel,
                 payTransfer: initPayTransfer,
                 checkIn,
@@ -274,11 +292,20 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             const nights = newDates.length || 1;
             
             const totalAmount = Number(formData.totalAmount) || 0;
-            const payHotel = Number(formData.payHotel) || 0;
-            const payTransfer = Number(formData.payTransfer) || 0;
+            const paidCash = Number(formData.paidCash || 0);
+            const paidEdc = Number(formData.paidEdc || 0);
+            const paidQris = Number(formData.paidQris || 0);
+            const paidTransfer = Number(formData.paidTransfer || 0);
+            const paidOta = Number(formData.paidOta || 0);
             
-            let remainingPayHotel = payHotel;
-            let remainingPayTransfer = payTransfer;
+            const finalPayHotel = paidCash + paidEdc + paidQris + paidTransfer;
+            const finalPayTransfer = paidOta + paidTransfer;
+
+            let remCash = paidCash;
+            let remEdc = paidEdc;
+            let remQris = paidQris;
+            let remTransfer = paidTransfer;
+            let remOta = paidOta;
 
             const isNowCancelled = formData.status === "CANCELLED" || formData.paymentStatus === "CANCELLED" || formData.status === "CANCEL" || formData.paymentStatus === "CANCEL";
             const now = new Date();
@@ -294,18 +321,41 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 const dateStr = newDates[i];
                 const nightlyRate = Math.round(totalAmount / nights);
                 
-                let dailyPayHotel = 0;
-                let dailyPayTransfer = 0;
+                let dailyCash = 0;
+                let dailyEdc = 0;
+                let dailyQris = 0;
+                let dailyTransfer = 0;
+                let dailyOta = 0;
                 
                 if (i === nights - 1) {
-                    dailyPayHotel = remainingPayHotel;
-                    dailyPayTransfer = remainingPayTransfer;
+                    dailyCash = remCash;
+                    dailyEdc = remEdc;
+                    dailyQris = remQris;
+                    dailyTransfer = remTransfer;
+                    dailyOta = remOta;
                 } else {
-                    dailyPayHotel = Math.round(payHotel / nights);
-                    dailyPayTransfer = Math.round(payTransfer / nights);
-                    remainingPayHotel -= dailyPayHotel;
-                    remainingPayTransfer -= dailyPayTransfer;
+                    dailyCash = Math.round(paidCash / nights);
+                    dailyEdc = Math.round(paidEdc / nights);
+                    dailyQris = Math.round(paidQris / nights);
+                    dailyTransfer = Math.round(paidTransfer / nights);
+                    dailyOta = Math.round(paidOta / nights);
+
+                    remCash -= dailyCash;
+                    remEdc -= dailyEdc;
+                    remQris -= dailyQris;
+                    remTransfer -= dailyTransfer;
+                    remOta -= dailyOta;
                 }
+
+                const dPayHotel = dailyCash + dailyEdc + dailyQris + dailyTransfer;
+                const dPayTransfer = dailyOta + dailyTransfer;
+
+                let pm = "Cash";
+                if (dailyOta > 0 && dPayHotel === 0) pm = "OTA Virtual / City Ledger";
+                else if (dailyEdc > 0 && dailyCash === 0 && dailyQris === 0 && dailyTransfer === 0) pm = "EDC BCA / Mandiri";
+                else if (dailyQris > 0 && dailyCash === 0 && dailyEdc === 0 && dailyTransfer === 0) pm = "QRIS Payment";
+                else if (dailyTransfer > 0 && dailyCash === 0 && dailyEdc === 0 && dailyQris === 0) pm = "Bank Transfer";
+                else if ([dailyCash > 0, dailyEdc > 0, dailyQris > 0, dailyTransfer > 0, dailyOta > 0].filter(Boolean).length > 1) pm = "Split Payment";
                 
                 newEntries.push({
                     ...guest,
@@ -318,14 +368,18 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                     amount: nightlyRate,
                     totalAmount: totalAmount,
                     nights: nights,
-                    payHotel: dailyPayHotel,
-                    payTransfer: dailyPayTransfer,
-                    paidCash: dailyPayHotel,
-                    paidAmount1: dailyPayHotel,
-                    paidTransfer: dailyPayTransfer,
-                    paidAmount2: dailyPayTransfer,
-                    initialPayHotel: guest.initialPayHotel !== undefined ? Number(guest.initialPayHotel) : Number(guest.payHotel || guest.paidCash || 0),
-                    initialPayTransfer: guest.initialPayTransfer !== undefined ? Number(guest.initialPayTransfer) : Number(guest.payTransfer || guest.paidTransfer || 0),
+                    paidCash: dailyCash,
+                    paidEdc: dailyEdc,
+                    paidQris: dailyQris,
+                    paidTransfer: dailyTransfer,
+                    paidOta: dailyOta,
+                    payHotel: dPayHotel,
+                    payTransfer: dPayTransfer,
+                    paidAmount1: dPayHotel,
+                    paidAmount2: dPayTransfer,
+                    initialPayHotel: guest.initialPayHotel !== undefined ? Number(guest.initialPayHotel) : dPayHotel,
+                    initialPayTransfer: guest.initialPayTransfer !== undefined ? Number(guest.initialPayTransfer) : dPayTransfer,
+                    paymentMethod: pm,
                     paymentStatus: isNowCancelled ? "CANCELLED" : formData.paymentStatus,
                     status: isNowCancelled ? "CANCELLED" : formData.status,
                     cancelledAt: cancelledAtVal,
@@ -354,8 +408,8 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             if (newSource === "Walk-in") {
                 const oldPayHotel = Number(guest.payHotel || guest.paidCash || 0);
                 const oldPayTransfer = Number(guest.payTransfer || guest.paidTransfer || 0);
-                const diffPayHotel = payHotel - oldPayHotel;
-                const diffPayTransfer = payTransfer - oldPayTransfer;
+                const diffPayHotel = finalPayHotel - oldPayHotel;
+                const diffPayTransfer = finalPayTransfer - oldPayTransfer;
 
                 if (diffPayHotel > 0 || diffPayTransfer > 0) {
                     const pelunasanEntries = [];
@@ -403,7 +457,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                         if (docSnap.exists()) {
                             const entries = docSnap.data().entries || [];
                             const purged = entries.filter((e: any) => !isBookingMatch(e, guest, formData));
-                            await updateDoc(docRef, { entries: [...purged, cleanedEntry], date: dateStr }, { merge: true });
+                            await updateDoc(docRef, { entries: [...purged, cleanedEntry], date: dateStr });
                         } else {
                             await setDoc(docRef, { entries: [cleanedEntry], date: dateStr }, { merge: true });
                         }

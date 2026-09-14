@@ -3,7 +3,7 @@
 import React from "react";
 import { Sparkles, Calendar, Receipt, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
-import styles from "./superadmin.module.css";
+import styles from "./BillingTable.module.css";
 import { HotelMasterDoc } from "./types";
 
 interface BillingTableProps {

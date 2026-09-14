@@ -24,9 +24,6 @@ const CHANNELS = [
 ];
 
 export function GuestEditForm({ formData, setFormData, roomTypes, guest }: GuestEditFormProps) {
-    const [additionalCash, setAdditionalCash] = useState<number | "">("");
-    const [additionalTransfer, setAdditionalTransfer] = useState<number | "">("");
-
     const checkInDate = formData.checkIn ? new Date(formData.checkIn) : null;
     const checkOutDate = formData.checkOut ? new Date(formData.checkOut) : null;
     const calculatedNights = (checkInDate && checkOutDate && checkOutDate > checkInDate)
@@ -34,65 +31,74 @@ export function GuestEditForm({ formData, setFormData, roomTypes, guest }: Guest
         : 1;
 
     const totalAmount = Number(formData.totalAmount) || 0;
-    const payHotel = Number(formData.payHotel) || 0;
-    const payTransfer = Number(formData.payTransfer) || 0;
-    const totalPaid = payHotel + payTransfer;
+    const paidCash = Number(formData.paidCash || 0);
+    const paidEdc = Number(formData.paidEdc || 0);
+    const paidQris = Number(formData.paidQris || 0);
+    const paidTransfer = Number(formData.paidTransfer || 0);
+    const paidOta = Number(formData.paidOta || 0);
+
+    const hasGranular = (formData.paidCash !== undefined || formData.paidEdc !== undefined || formData.paidQris !== undefined || formData.paidTransfer !== undefined || formData.paidOta !== undefined);
+    const legacyPayHotel = !hasGranular ? Number(formData.payHotel || 0) : 0;
+    const legacyPayTransfer = !hasGranular ? Number(formData.payTransfer || 0) : 0;
+
+    const totalPaid = paidCash + paidEdc + paidQris + paidTransfer + paidOta + legacyPayHotel + legacyPayTransfer;
     const balance = totalAmount - totalPaid;
     const isLunas = balance <= 0;
     const isOTA = formData.channel && formData.channel !== "Walk-in" && formData.channel !== "Direct";
     const avgRatePerNight = calculatedNights > 0 ? Math.round(totalAmount / calculatedNights) : totalAmount;
 
-    const handleSettleFull = (target: "hotel" | "ota") => {
-        if (target === "ota") {
-            const newPayTransfer = isOTA ? totalAmount : Math.max(0, totalAmount - payHotel);
-            const newPayHotel = isOTA ? 0 : payHotel;
-            setFormData({
-                ...formData,
-                payHotel: newPayHotel,
-                payTransfer: newPayTransfer,
-                paymentStatus: "Lunas",
-                status: formData.status === "CANCELLED" ? "CONFIRMED" : (formData.status || "CONFIRMED")
-            });
-            if (guest) {
-                const origTransfer = Number(guest.payTransfer || guest.paidTransfer || 0);
-                setAdditionalTransfer(Math.max(0, newPayTransfer - origTransfer));
-                setAdditionalCash("");
-            }
-        } else {
-            const newPayHotel = !isOTA ? totalAmount : Math.max(0, totalAmount - payTransfer);
-            const newPayTransfer = !isOTA ? 0 : payTransfer;
-            setFormData({
-                ...formData,
-                payHotel: newPayHotel,
-                payTransfer: newPayTransfer,
-                paymentStatus: "Lunas",
-                status: formData.status === "CANCELLED" ? "CONFIRMED" : (formData.status || "CONFIRMED")
-            });
-            if (guest) {
-                const origCash = Number(guest.payHotel || guest.paidCash || 0);
-                setAdditionalCash(Math.max(0, newPayHotel - origCash));
-                setAdditionalTransfer("");
-            }
-        }
+    const handleSwitchPaymentMethod = (target: "cash" | "edc" | "qris" | "transfer" | "ota") => {
+        const targetAmount = totalAmount > 0 ? totalAmount : 0;
+        const newPaidCash = target === "cash" ? targetAmount : 0;
+        const newPaidEdc = target === "edc" ? targetAmount : 0;
+        const newPaidQris = target === "qris" ? targetAmount : 0;
+        const newPaidTransfer = target === "transfer" ? targetAmount : 0;
+        const newPaidOta = target === "ota" ? targetAmount : 0;
+
+        const newPayHotel = newPaidCash + newPaidEdc + newPaidQris + newPaidTransfer;
+        const newPayTransfer = newPaidOta + newPaidTransfer;
+
+        setFormData({
+            ...formData,
+            paidCash: newPaidCash,
+            paidEdc: newPaidEdc,
+            paidQris: newPaidQris,
+            paidTransfer: newPaidTransfer,
+            paidOta: newPaidOta,
+            payHotel: newPayHotel,
+            payTransfer: newPayTransfer,
+            paymentStatus: targetAmount > 0 ? "Lunas" : (formData.paymentStatus || "Belum Bayar"),
+            status: formData.status === "CANCELLED" ? "CONFIRMED" : (formData.status || "CONFIRMED")
+        });
     };
+
+    const activeMethod = 
+        (paidCash > 0 && paidEdc === 0 && paidQris === 0 && paidTransfer === 0 && paidOta === 0) ? "cash" :
+        (paidEdc > 0 && paidCash === 0 && paidQris === 0 && paidTransfer === 0 && paidOta === 0) ? "edc" :
+        (paidQris > 0 && paidCash === 0 && paidEdc === 0 && paidTransfer === 0 && paidOta === 0) ? "qris" :
+        (paidTransfer > 0 && paidCash === 0 && paidEdc === 0 && paidQris === 0 && paidOta === 0) ? "transfer" :
+        (paidOta > 0 && paidCash === 0 && paidEdc === 0 && paidQris === 0 && paidTransfer === 0) ? "ota" : null;
 
     const handlePaymentStatusClick = (statusName: string) => {
         if (statusName === "Lunas") {
             if (isOTA) {
-                handleSettleFull("ota");
+                handleSwitchPaymentMethod("ota");
             } else {
-                handleSettleFull("hotel");
+                handleSwitchPaymentMethod("cash");
             }
         } else if (statusName === "Belum Bayar") {
             setFormData({
                 ...formData,
+                paidCash: 0,
+                paidEdc: 0,
+                paidQris: 0,
+                paidTransfer: 0,
+                paidOta: 0,
                 payHotel: 0,
                 payTransfer: 0,
                 paymentStatus: "Belum Bayar",
                 status: "CONFIRMED"
             });
-            setAdditionalCash("");
-            setAdditionalTransfer("");
         } else if (statusName === "DP / Partial") {
             setFormData({
                 ...formData,
@@ -290,7 +296,7 @@ export function GuestEditForm({ formData, setFormData, roomTypes, guest }: Guest
                             Rp {totalPaid.toLocaleString('id-ID')}
                         </div>
                         <span style={{ fontSize: '9px', color: 'var(--f-muted)' }}>
-                            Hotel: {payHotel.toLocaleString('id-ID')} | OTA: {payTransfer.toLocaleString('id-ID')}
+                            Cash: {paidCash.toLocaleString('id-ID')} | EDC: {paidEdc.toLocaleString('id-ID')} | QRIS: {paidQris.toLocaleString('id-ID')} | TF: {paidTransfer.toLocaleString('id-ID')} | OTA: {paidOta.toLocaleString('id-ID')}
                         </span>
                     </div>
                     <div>
@@ -311,7 +317,7 @@ export function GuestEditForm({ formData, setFormData, roomTypes, guest }: Guest
                         value={formData.totalAmount} 
                         onChange={(v: string) => {
                             const newTotal = Number(v) || 0;
-                            const currentPaid = Number(formData.payHotel || 0) + Number(formData.payTransfer || 0);
+                            const currentPaid = (Number(formData.paidCash || 0) + Number(formData.paidEdc || 0) + Number(formData.paidQris || 0) + Number(formData.paidTransfer || 0) + Number(formData.paidOta || 0)) || (Number(formData.payHotel || 0) + Number(formData.payTransfer || 0));
                             const nextStatus = currentPaid >= newTotal ? "Lunas" : (currentPaid > 0 ? "DP / Partial" : "Belum Bayar");
                             setFormData({
                                 ...formData, 
@@ -321,39 +327,132 @@ export function GuestEditForm({ formData, setFormData, roomTypes, guest }: Guest
                             });
                         }} 
                     />
-                    
-                    {/* Payment Channel Inputs */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        {/* Hotel Payment */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>
-                                    Terbayar di Hotel (Cash/EDC)
+
+                    {/* Quick 1-Click Payment Method Switcher */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px 12px', backgroundColor: 'var(--f-surface-soft, rgba(0,0,0,0.02))', borderRadius: '8px', border: '1px solid var(--f-hairline)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--f-muted)' }}>
+                                ⚡ GANTI METODE PAYMENT (100% LUNAS):
+                            </span>
+                            {activeMethod && (
+                                <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-sage, #16a34a)', backgroundColor: 'rgba(22, 163, 74, 0.12)', padding: '2px 6px', borderRadius: '4px' }}>
+                                    ✓ AKTIF: {activeMethod.toUpperCase()}
                                 </span>
-                                <button
-                                    type="button"
-                                    onClick={() => handleSettleFull("hotel")}
-                                    style={{
-                                        fontSize: '8px', fontWeight: 700, padding: '2px 6px',
-                                        borderRadius: '4px', backgroundColor: 'rgba(120, 128, 105, 0.15)',
-                                        color: 'var(--f-sage)', border: '1px solid var(--f-sage)', cursor: 'pointer'
-                                    }}
-                                    title="Lunaskan sisa pembayaran ke akun Hotel Cash/EDC"
-                                >
-                                    LUNASKAN HOTEL
-                                </button>
-                            </div>
+                            )}
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                            <button
+                                type="button"
+                                onClick={() => handleSwitchPaymentMethod("cash")}
+                                style={{
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    padding: '6px 12px',
+                                    borderRadius: '6px',
+                                    backgroundColor: activeMethod === 'cash' ? '#16a34a' : 'var(--f-surface)',
+                                    color: activeMethod === 'cash' ? '#ffffff' : 'var(--f-body)',
+                                    border: activeMethod === 'cash' ? '1px solid #16a34a' : '1px solid var(--f-hairline)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease',
+                                    boxShadow: activeMethod === 'cash' ? '0 2px 4px rgba(22, 163, 74, 0.2)' : 'none'
+                                }}
+                            >
+                                💵 CASH FO
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleSwitchPaymentMethod("edc")}
+                                style={{
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    padding: '6px 12px',
+                                    borderRadius: '6px',
+                                    backgroundColor: activeMethod === 'edc' ? '#2563eb' : 'var(--f-surface)',
+                                    color: activeMethod === 'edc' ? '#ffffff' : 'var(--f-body)',
+                                    border: activeMethod === 'edc' ? '1px solid #2563eb' : '1px solid var(--f-hairline)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease',
+                                    boxShadow: activeMethod === 'edc' ? '0 2px 4px rgba(37, 99, 235, 0.2)' : 'none'
+                                }}
+                            >
+                                💳 EDC CARD
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleSwitchPaymentMethod("qris")}
+                                style={{
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    padding: '6px 12px',
+                                    borderRadius: '6px',
+                                    backgroundColor: activeMethod === 'qris' ? '#9333ea' : 'var(--f-surface)',
+                                    color: activeMethod === 'qris' ? '#ffffff' : 'var(--f-body)',
+                                    border: activeMethod === 'qris' ? '1px solid #9333ea' : '1px solid var(--f-hairline)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease',
+                                    boxShadow: activeMethod === 'qris' ? '0 2px 4px rgba(147, 51, 234, 0.2)' : 'none'
+                                }}
+                            >
+                                📱 QRIS
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleSwitchPaymentMethod("transfer")}
+                                style={{
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    padding: '6px 12px',
+                                    borderRadius: '6px',
+                                    backgroundColor: activeMethod === 'transfer' ? '#0284c7' : 'var(--f-surface)',
+                                    color: activeMethod === 'transfer' ? '#ffffff' : 'var(--f-body)',
+                                    border: activeMethod === 'transfer' ? '1px solid #0284c7' : '1px solid var(--f-hairline)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease',
+                                    boxShadow: activeMethod === 'transfer' ? '0 2px 4px rgba(2, 132, 199, 0.2)' : 'none'
+                                }}
+                            >
+                                🏦 BANK TF
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleSwitchPaymentMethod("ota")}
+                                style={{
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    padding: '6px 12px',
+                                    borderRadius: '6px',
+                                    backgroundColor: activeMethod === 'ota' ? '#d97706' : 'var(--f-surface)',
+                                    color: activeMethod === 'ota' ? '#ffffff' : 'var(--f-body)',
+                                    border: activeMethod === 'ota' ? '1px solid #d97706' : '1px solid var(--f-hairline)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease',
+                                    boxShadow: activeMethod === 'ota' ? '0 2px 4px rgba(217, 119, 6, 0.2)' : 'none'
+                                }}
+                            >
+                                🌐 OTA VIRTUAL
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {/* Granular Payment Channel Inputs */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        {/* Cash FO */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>
+                                💵 Cash Tunai di FO
+                            </span>
                             <input
                                 type="number"
-                                value={formData.payHotel}
+                                value={formData.paidCash !== undefined ? formData.paidCash : (legacyPayHotel || "")}
                                 onWheel={(e) => e.currentTarget.blur()}
                                 onChange={(e) => {
                                     const val = Number(e.target.value) || 0;
-                                    const newPaid = val + Number(formData.payTransfer || 0);
+                                    const newPaid = val + Number(formData.paidEdc || 0) + Number(formData.paidQris || 0) + Number(formData.paidTransfer || 0) + Number(formData.paidOta || 0);
                                     const nextStatus = newPaid >= totalAmount ? "Lunas" : (newPaid > 0 ? "DP / Partial" : "Belum Bayar");
                                     setFormData({
                                         ...formData,
-                                        payHotel: val,
+                                        paidCash: val,
+                                        payHotel: val + Number(formData.paidEdc || 0) + Number(formData.paidQris || 0) + Number(formData.paidTransfer || 0),
                                         paymentStatus: nextStatus,
                                         status: nextStatus === "Lunas" ? "CONFIRMED" : formData.status
                                     });
@@ -363,39 +462,27 @@ export function GuestEditForm({ formData, setFormData, roomTypes, guest }: Guest
                                     border: '1px solid var(--f-hairline)', backgroundColor: 'var(--f-surface)',
                                     fontSize: '11px', fontFamily: 'var(--f-font-mono)', color: 'var(--f-body)', outline: 'none'
                                 }}
+                                placeholder="0"
                             />
                         </div>
 
-                        {/* OTA Payment */}
+                        {/* EDC Card */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>
-                                    Terbayar via OTA (Virtual/TF)
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => handleSettleFull("ota")}
-                                    style={{
-                                        fontSize: '8px', fontWeight: 700, padding: '2px 6px',
-                                        borderRadius: '4px', backgroundColor: 'rgba(120, 128, 105, 0.15)',
-                                        color: 'var(--f-sage)', border: '1px solid var(--f-sage)', cursor: 'pointer'
-                                    }}
-                                    title="Lunaskan sisa pembayaran ke akun OTA Virtual Card"
-                                >
-                                    LUNASKAN OTA
-                                </button>
-                            </div>
+                            <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>
+                                💳 EDC BCA / Mandiri / Card
+                            </span>
                             <input
                                 type="number"
-                                value={formData.payTransfer}
+                                value={formData.paidEdc !== undefined ? formData.paidEdc : ""}
                                 onWheel={(e) => e.currentTarget.blur()}
                                 onChange={(e) => {
                                     const val = Number(e.target.value) || 0;
-                                    const newPaid = Number(formData.payHotel || 0) + val;
+                                    const newPaid = Number(formData.paidCash || 0) + val + Number(formData.paidQris || 0) + Number(formData.paidTransfer || 0) + Number(formData.paidOta || 0);
                                     const nextStatus = newPaid >= totalAmount ? "Lunas" : (newPaid > 0 ? "DP / Partial" : "Belum Bayar");
                                     setFormData({
                                         ...formData,
-                                        payTransfer: val,
+                                        paidEdc: val,
+                                        payHotel: Number(formData.paidCash || 0) + val + Number(formData.paidQris || 0) + Number(formData.paidTransfer || 0),
                                         paymentStatus: nextStatus,
                                         status: nextStatus === "Lunas" ? "CONFIRMED" : formData.status
                                     });
@@ -405,59 +492,101 @@ export function GuestEditForm({ formData, setFormData, roomTypes, guest }: Guest
                                     border: '1px solid var(--f-hairline)', backgroundColor: 'var(--f-surface)',
                                     fontSize: '11px', fontFamily: 'var(--f-font-mono)', color: 'var(--f-body)', outline: 'none'
                                 }}
+                                placeholder="0"
+                            />
+                        </div>
+
+                        {/* QRIS */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>
+                                📱 QRIS Hotel
+                            </span>
+                            <input
+                                type="number"
+                                value={formData.paidQris !== undefined ? formData.paidQris : ""}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                onChange={(e) => {
+                                    const val = Number(e.target.value) || 0;
+                                    const newPaid = Number(formData.paidCash || 0) + Number(formData.paidEdc || 0) + val + Number(formData.paidTransfer || 0) + Number(formData.paidOta || 0);
+                                    const nextStatus = newPaid >= totalAmount ? "Lunas" : (newPaid > 0 ? "DP / Partial" : "Belum Bayar");
+                                    setFormData({
+                                        ...formData,
+                                        paidQris: val,
+                                        payHotel: Number(formData.paidCash || 0) + Number(formData.paidEdc || 0) + val + Number(formData.paidTransfer || 0),
+                                        paymentStatus: nextStatus,
+                                        status: nextStatus === "Lunas" ? "CONFIRMED" : formData.status
+                                    });
+                                }}
+                                style={{
+                                    width: '100%', height: '40px', padding: '0 12px', borderRadius: '6px',
+                                    border: '1px solid var(--f-hairline)', backgroundColor: 'var(--f-surface)',
+                                    fontSize: '11px', fontFamily: 'var(--f-font-mono)', color: 'var(--f-body)', outline: 'none'
+                                }}
+                                placeholder="0"
+                            />
+                        </div>
+
+                        {/* Bank Transfer */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>
+                                🏦 Bank Transfer ke Hotel
+                            </span>
+                            <input
+                                type="number"
+                                value={formData.paidTransfer !== undefined ? formData.paidTransfer : ""}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                onChange={(e) => {
+                                    const val = Number(e.target.value) || 0;
+                                    const newPaid = Number(formData.paidCash || 0) + Number(formData.paidEdc || 0) + Number(formData.paidQris || 0) + val + Number(formData.paidOta || 0);
+                                    const nextStatus = newPaid >= totalAmount ? "Lunas" : (newPaid > 0 ? "DP / Partial" : "Belum Bayar");
+                                    setFormData({
+                                        ...formData,
+                                        paidTransfer: val,
+                                        payHotel: Number(formData.paidCash || 0) + Number(formData.paidEdc || 0) + Number(formData.paidQris || 0) + val,
+                                        payTransfer: val + Number(formData.paidOta || 0),
+                                        paymentStatus: nextStatus,
+                                        status: nextStatus === "Lunas" ? "CONFIRMED" : formData.status
+                                    });
+                                }}
+                                style={{
+                                    width: '100%', height: '40px', padding: '0 12px', borderRadius: '6px',
+                                    border: '1px solid var(--f-hairline)', backgroundColor: 'var(--f-surface)',
+                                    fontSize: '11px', fontFamily: 'var(--f-font-mono)', color: 'var(--f-body)', outline: 'none'
+                                }}
+                                placeholder="0"
+                            />
+                        </div>
+
+                        {/* OTA Virtual Card */}
+                        <div className={styles.colSpan2} style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1' }}>
+                            <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-muted)', marginLeft: '2px' }}>
+                                🌐 OTA Virtual Card / City Ledger (Channel Collect)
+                            </span>
+                            <input
+                                type="number"
+                                value={formData.paidOta !== undefined ? formData.paidOta : (legacyPayTransfer || "")}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                onChange={(e) => {
+                                    const val = Number(e.target.value) || 0;
+                                    const newPaid = Number(formData.paidCash || 0) + Number(formData.paidEdc || 0) + Number(formData.paidQris || 0) + Number(formData.paidTransfer || 0) + val;
+                                    const nextStatus = newPaid >= totalAmount ? "Lunas" : (newPaid > 0 ? "DP / Partial" : "Belum Bayar");
+                                    setFormData({
+                                        ...formData,
+                                        paidOta: val,
+                                        payTransfer: Number(formData.paidTransfer || 0) + val,
+                                        paymentStatus: nextStatus,
+                                        status: nextStatus === "Lunas" ? "CONFIRMED" : formData.status
+                                    });
+                                }}
+                                style={{
+                                    width: '100%', height: '40px', padding: '0 12px', borderRadius: '6px',
+                                    border: '1px solid var(--f-hairline)', backgroundColor: 'var(--f-surface)',
+                                    fontSize: '11px', fontFamily: 'var(--f-font-mono)', color: 'var(--f-body)', outline: 'none'
+                                }}
+                                placeholder="0"
                             />
                         </div>
                     </div>
-
-                    {/* OTA Hotel Cash Conflict Warning & Auto-Fix */}
-                    {isOTA && payHotel > 0 && (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: 'rgba(239, 68, 68, 0.08)', borderRadius: '6px', border: '1px dashed rgba(239, 68, 68, 0.3)' }}>
-                            <span style={{ fontSize: '9px', color: '#b91c1c', fontWeight: 600 }}>
-                                ⚠️ Terdeteksi Rp {payHotel.toLocaleString('id-ID')} di Hotel Cash pada reservasi {formData.channel}.
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => handleSettleFull("ota")}
-                                style={{
-                                    padding: '4px 10px', fontSize: '8px', fontWeight: 700, borderRadius: '4px',
-                                    backgroundColor: '#b91c1c', color: '#fff', border: 'none', cursor: 'pointer'
-                                }}
-                            >
-                                Pindahkan 100% ke OTA
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Quick Settlement Banner if balance > 0 */}
-                    {balance > 0 && (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', backgroundColor: 'rgba(234, 88, 12, 0.08)', borderRadius: '6px', border: '1px dashed rgba(234, 88, 12, 0.4)' }}>
-                            <div style={{ fontSize: '10px', color: '#c2410c', fontWeight: 600 }}>
-                                Sisa belum lunas: <strong>Rp {balance.toLocaleString('id-ID')}</strong>
-                            </div>
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                                <button
-                                    type="button"
-                                    onClick={() => handleSettleFull(isOTA ? "ota" : "hotel")}
-                                    style={{
-                                        padding: '4px 10px', fontSize: '9px', fontWeight: 700, borderRadius: '4px',
-                                        backgroundColor: '#1A1C14', color: '#fff', border: 'none', cursor: 'pointer'
-                                    }}
-                                >
-                                    ⚡ Lunaskan via {isOTA ? 'OTA' : 'Hotel'}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleSettleFull(isOTA ? "hotel" : "ota")}
-                                    style={{
-                                        padding: '4px 10px', fontSize: '9px', fontWeight: 700, borderRadius: '4px',
-                                        backgroundColor: 'var(--f-surface)', color: 'var(--f-body)', border: '1px solid var(--f-hairline)', cursor: 'pointer'
-                                    }}
-                                >
-                                    + via {isOTA ? 'Hotel' : 'OTA'}
-                                </button>
-                            </div>
-                        </div>
-                    )}
                     
                     {/* Payment Status Buttons */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>

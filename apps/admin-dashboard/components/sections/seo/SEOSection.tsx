@@ -250,8 +250,9 @@ export const SEOSection = () => {
                                     )}
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-sm font-medium text-[#202124] leading-tight">{seo.siteTitle?.split('|')[0]?.trim() || 'Partner'}</span>
+                                    <span className="text-sm font-medium text-[#202124] leading-tight">{((seo as any).siteTitle || seo.title || 'Partner').split('|')[0]?.trim()}</span>
                                     <span className="text-xs text-[#5f6368] leading-tight flex items-center gap-1">
+
                                         {seo.canonicalUrl || "https://bumianyom.id"}
                                         <span className="text-[10px]">› ...</span>
                                     </span>

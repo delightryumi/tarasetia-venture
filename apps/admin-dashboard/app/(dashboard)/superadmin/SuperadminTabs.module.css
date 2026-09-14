@@ -1,0 +1,121 @@
+/* SuperadminTabs.module.css — Enterprise VHP / DSI Hotel Style */
+
+.tabsContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--s-border, #e2e8f0);
+  margin-bottom: 14px;
+  padding: 4px 0 10px 0;
+  position: sticky;
+  top: 50px;
+  z-index: 30;
+  background: var(--s-canvas, #ffffff);
+  flex-wrap: wrap;
+}
+
+.tabsGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.tabBtn:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.tabBtnActive {
+  background: #1e3a2f !important;
+  color: #ffffff !important;
+  border-color: #1e3a2f !important;
+  box-shadow: 0 1px 3px rgba(30, 58, 47, 0.25);
+}
+
+.tabsRightActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.moduleSwitchBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  height: 32px;
+  border-radius: 4px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.moduleSwitchBtn:hover {
+  background: #f8fafc;
+  border-color: #1e3a2f;
+  color: #1e3a2f;
+}
+
+/* Dark Mode Overrides */
+:global(.dark) .tabsContainer {
+  border-color: #334155;
+  background: #0f172a;
+}
+
+:global(.dark) .tabsGroup {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+:global(.dark) .tabBtn {
+  color: #94a3b8;
+}
+
+:global(.dark) .tabBtn:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:global(.dark) .tabBtnActive {
+  background: #2d5a47 !important;
+  border-color: #3e7b61 !important;
+  color: #ffffff !important;
+}
+
+:global(.dark) .moduleSwitchBtn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+:global(.dark) .moduleSwitchBtn:hover {
+  background: #334155;
+  color: #ffffff;
+}

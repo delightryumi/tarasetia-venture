@@ -316,13 +316,19 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
 
                         <footer className="dashboard-footer-clean">
                             <a
-                                href={poweredByLink?.startsWith('http') ? poweredByLink : `https://${poweredByLink || "setaraventure.com"}`}
+                                href={
+                                    poweredByLink && !poweredByLink.includes("setaraventure.com")
+                                        ? (poweredByLink.startsWith('http') ? poweredByLink : `https://${poweredByLink}`)
+                                        : "https://mytara.id"
+                                }
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="powered-by-link"
                             >
                                 <span className="text-light">Powered by</span>
-                                <span className="text-brand">{poweredByText || "Setara Venture"}</span>
+                                <span className="text-brand">
+                                    {poweredByText && !poweredByText.toLowerCase().includes("setara venture") ? poweredByText : "Tara"}
+                                </span>
                                 <ExternalLink size={12} className="link-icon" />
                             </a>
                         </footer>

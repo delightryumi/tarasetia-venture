@@ -96,7 +96,7 @@ const TableBodyRecords: React.FC<TableBodyRecordsProps> = ({ data }) => {
               </TableCell>
               <TableCell className="p-4 text-center uppercase font-bold text-[10px] whitespace-nowrap">
                 <span className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-bold tracking-wider ${item.isCompliment ? "bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800" : "bg-sky-50 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-800"}`}>
-                  {item.isCompliment ? 'COMPLIMENT' : item.paymentMethod}
+                  {item.isCompliment ? 'COMPLIMENT' : (item.paymentMethod?.toLowerCase() === 'cash' ? 'TUNAI' : item.paymentMethod)}
                 </span>
               </TableCell>
               <TableCell className="p-4 text-center capitalize font-semibold text-[10px] whitespace-nowrap">

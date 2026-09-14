@@ -338,20 +338,20 @@ export const AddTransactionModal = ({
                                                     label="Full Guest Name" 
                                                     placeholder="NAME OF RESIDENT" 
                                                     value={form.guestName}
-                                                    onChange={v => updateForm("guestName", v)}
+                                                    onChange={(v: string) => updateForm("guestName", v)}
                                                 />
                                                 <div className="grid grid-cols-2 gap-10">
                                                     <NexuraInput 
                                                         label="Check-in" 
                                                         type="date"
                                                         value={form.checkIn}
-                                                        onChange={v => updateForm("checkIn", v)}
+                                                        onChange={(v: string) => updateForm("checkIn", v)}
                                                     />
                                                     <NexuraInput 
                                                         label="Check-out" 
                                                         type="date"
                                                         value={form.checkOut}
-                                                        onChange={v => updateForm("checkOut", v)}
+                                                        onChange={(v: string) => updateForm("checkOut", v)}
                                                     />
                                                 </div>
                                             </div>
@@ -423,7 +423,7 @@ export const AddTransactionModal = ({
                                                         label="Promotion" 
                                                         placeholder="VOUCHER CODE"
                                                         value={form.voucherCode}
-                                                        onChange={v => updateForm("voucherCode", v)}
+                                                        onChange={(v: string) => updateForm("voucherCode", v)}
                                                     />
                                                 </div>
                                                 

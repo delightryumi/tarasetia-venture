@@ -1,0 +1,148 @@
+/* KpiCards.module.css — High-Density Enterprise Hotel KPI Strip */
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 768px) {
+  .kpiGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kpiCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  border-left: 3px solid #1e3a2f;
+  transition: all 0.15s ease;
+}
+
+.kpiCard:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.kpiCardActive {
+  border-left-color: #16a34a;
+}
+
+.kpiCardOverdue {
+  border-left-color: #dc2626;
+}
+
+.kpiCardRevenue {
+  border-left-color: #1e3a2f;
+}
+
+.kpiCardOutstanding {
+  border-left-color: #d97706;
+}
+
+.kpiLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+
+.kpiValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.1;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  color: #1e3a2f;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.kpiIconActive {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
+
+.kpiIconOverdue {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.kpiIconOutstanding {
+  background: #fffbeb;
+  color: #d97706;
+  border-color: #fde68a;
+}
+
+/* Dark Mode */
+:global(.dark) .kpiCard {
+  background: #1e293b;
+  border-color: #334155;
+  border-left-color: #3e7b61;
+}
+
+:global(.dark) .kpiCardActive {
+  border-left-color: #22c55e;
+}
+
+:global(.dark) .kpiCardOverdue {
+  border-left-color: #ef4444;
+}
+
+:global(.dark) .kpiCardOutstanding {
+  border-left-color: #f59e0b;
+}
+
+:global(.dark) .kpiLabel {
+  color: #94a3b8;
+}
+
+:global(.dark) .kpiValue {
+  color: #f8fafc;
+}
+
+:global(.dark) .kpiIcon {
+  background: #0f172a;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+:global(.dark) .kpiIconActive {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+:global(.dark) .kpiIconOverdue {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+:global(.dark) .kpiIconOutstanding {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.3);
+}

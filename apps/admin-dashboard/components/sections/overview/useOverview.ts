@@ -19,6 +19,7 @@ export interface BookingEntry {
     isExtend?: boolean;
     _docId?: string;
     roomNumber?: string;
+    paymentMethod?: string;
     paymentStatus?: string;
     type?: string;
     incomeCategory?: string;
@@ -28,6 +29,11 @@ export interface BookingEntry {
     ratePerNight?: number;
     totalStayNights?: number;
     nightsInPeriod?: number;
+    paidCash?: number;
+    paidEdc?: number;
+    paidQris?: number;
+    paidTransfer?: number;
+    paidOta?: number;
     payHotel?: number;
     payTransfer?: number;
 }
@@ -212,8 +218,19 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         const distinctEntries = Object.values(dateMap);
 
                         const stayTotalAmount = distinctEntries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-                        const stayPayHotel = distinctEntries.reduce((sum, item) => sum + (Number(item.payHotel ?? item.paidCash ?? item.paidAmount1 ?? 0)), 0);
-                        const stayPayTransfer = distinctEntries.reduce((sum, item) => sum + (Number(item.payTransfer ?? item.payNexura ?? item.paidTransfer ?? item.paidAmount2 ?? 0)), 0);
+                        const stayPaidCash = distinctEntries.reduce((sum, item) => sum + (Number(item.paidCash) || 0), 0);
+                        const stayPaidEdc = distinctEntries.reduce((sum, item) => sum + (Number(item.paidEdc) || 0), 0);
+                        const stayPaidQris = distinctEntries.reduce((sum, item) => sum + (Number(item.paidQris) || 0), 0);
+                        const stayPaidTransfer = distinctEntries.reduce((sum, item) => sum + (Number(item.paidTransfer) || 0), 0);
+                        const stayPaidOta = distinctEntries.reduce((sum, item) => sum + (Number(item.paidOta) || 0), 0);
+
+                        const hasGranularStay = (stayPaidCash > 0 || stayPaidEdc > 0 || stayPaidQris > 0 || stayPaidTransfer > 0 || stayPaidOta > 0);
+                        const stayPayHotel = hasGranularStay 
+                            ? (stayPaidCash + stayPaidEdc + stayPaidQris + stayPaidTransfer) 
+                            : distinctEntries.reduce((sum, item) => sum + (Number(item.payHotel ?? item.paidCash ?? item.paidAmount1 ?? 0)), 0);
+                        const stayPayTransfer = hasGranularStay 
+                            ? (stayPaidOta + stayPaidTransfer) 
+                            : distinctEntries.reduce((sum, item) => sum + (Number(item.payTransfer ?? item.payNexura ?? item.paidTransfer ?? item.paidAmount2 ?? 0)), 0);
 
                         // Find matching nights in current filter range [startDateStr, endDateStr]
                         const matchingNights = stayNightDates.filter(d => d >= startDateStr && d <= endDateStr);
@@ -245,6 +262,11 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         rep.totalStayNights = totalStayNights;
                         rep.nightsInPeriod = nightsInPeriod || 1;
                         rep.amount = periodAmount;
+                        rep.paidCash = stayPaidCash;
+                        rep.paidEdc = stayPaidEdc;
+                        rep.paidQris = stayPaidQris;
+                        rep.paidTransfer = stayPaidTransfer;
+                        rep.paidOta = stayPaidOta;
                         rep.payHotel = periodPayHotel;
                         rep.payTransfer = periodPayTransfer;
                         rep.checkInDate = checkInDate;

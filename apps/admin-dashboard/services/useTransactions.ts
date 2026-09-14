@@ -8,7 +8,10 @@ import { getHotelCollection } from "@/lib/firestoreHelper";
 export interface Transaction {
   amount: number;
   paidCash: number;
+  paidEdc?: number;
+  paidQris?: number;
   paidTransfer: number;
+  paidOta?: number;
   feePercentage: number;
   status: string;
   channel: string;
@@ -56,10 +59,20 @@ export function useTransactions(month?: number, year?: number) {
           const docDate = data.date || "-";
           
           (data.entries || []).forEach((t: any) => {
+            const hasGranular = (t.paidCash !== undefined || t.paidEdc !== undefined || t.paidQris !== undefined || t.paidTransfer !== undefined || t.paidOta !== undefined);
+            const pCash = t.paidCash !== undefined ? Number(t.paidCash) : (!hasGranular ? Number(t.payHotel || 0) : 0);
+            const pEdc = Number(t.paidEdc || 0);
+            const pQris = Number(t.paidQris || 0);
+            const pTransfer = Number(t.paidTransfer || 0);
+            const pOta = t.paidOta !== undefined ? Number(t.paidOta) : (!hasGranular ? Number(t.payTransfer || t.payNexura || 0) : 0);
+
             results.push({
               amount: Number(t.amount) || 0,
-              paidCash: Number(t.payHotel ?? t.paidCash ?? t.paidAmount1 ?? 0),
-              paidTransfer: Number(t.payTransfer ?? t.paidTransfer ?? t.payNexura ?? t.paidAmount2 ?? 0),
+              paidCash: pCash,
+              paidEdc: pEdc,
+              paidQris: pQris,
+              paidTransfer: pTransfer,
+              paidOta: pOta,
               feePercentage: Number(t.feePercentage) || 0,
               status: t.status || "CONFIRMED",
               channel: t.channel || "Walk-in",

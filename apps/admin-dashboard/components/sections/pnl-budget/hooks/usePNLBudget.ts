@@ -27,6 +27,39 @@ export interface PnLComparisonRow {
   variancePercent: number;
 }
 
+export interface ActualMonthlyPnLData {
+  roomRevenue: number;
+  fnbRevenue: number;
+  modRevenue: number;
+  otherIncome: number;
+  totalRevenue: number;
+  roomCogs: number;
+  fnbCogs: number;
+  modCogs: number;
+  totalCogs: number;
+  roomExp: number;
+  fnbExp: number;
+  modExp: number;
+  agExp: number;
+  hrdExp: number;
+  smExp: number;
+  pomecExp: number;
+  totalOpex: number;
+  nonOp: number;
+  nonOpBaseFee: number;
+  nonOpIncentiveFee: number;
+  nonOpFranchiseFee: number;
+  nonOpInsurance: number;
+  nonOpPropertyTax: number;
+  nonOpBankInterest: number;
+  nonOpDepreciation: number;
+  occupiedRooms: number;
+  totalPax: number;
+  payingPax: number;
+  houseUsePax: number;
+  complimentPax: number;
+}
+
 export const usePNLBudget = () => {
   const { activeHotelCode, activeHotelName } = useAuth();
 
@@ -42,7 +75,7 @@ export const usePNLBudget = () => {
   const [hotelRoomCount, setHotelRoomCount] = useState<number>(39);
 
   // Live actual monthly data aggregated from transactions/orders/incomes/expenses
-  const [actualMonthlyData, setActualMonthlyData] = useState<Record<string, Partial<BudgetMonthData>>>({});
+  const [actualMonthlyData, setActualMonthlyData] = useState<Record<string, ActualMonthlyPnLData>>({});
 
   // 1. Fetch Room Count
   const fetchRoomCount = useCallback(async (hCode: string) => {

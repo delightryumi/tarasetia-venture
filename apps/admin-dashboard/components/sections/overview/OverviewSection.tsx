@@ -18,7 +18,6 @@ import { getHotelCollection } from "@/lib/firestoreHelper";
 // Modular Imports
 import styles from "./OverviewStyles.module.css";
 import { StatCard } from "./StatCard";
-import { InventoryCalendar } from "./InventoryCalendar";
 import { AuditLedger } from "./AuditLedger";
 import { GuestDetailModal } from "./GuestDetailModal";
 import { VoidConfirmModal } from "./VoidConfirmModal";
@@ -415,8 +414,13 @@ export function OverviewSection() {
                 
                 let paymentMethod = b.paymentMethod || b.settlement || "-";
                 if (!b.paymentMethod || b.paymentMethod === "personal" || b.paymentMethod === "others") {
-                    if (b.payHotel) paymentMethod = "Pay at Hotel / Cash";
-                    else if (b.payTransfer) paymentMethod = "Transfer";
+                    if (Number(b.paidCash || 0) > 0) paymentMethod = "Cash FO";
+                    else if (Number(b.paidEdc || 0) > 0) paymentMethod = "EDC Card";
+                    else if (Number(b.paidQris || 0) > 0) paymentMethod = "QRIS Hotel";
+                    else if (Number(b.paidTransfer || 0) > 0) paymentMethod = "Bank Transfer";
+                    else if (Number(b.paidOta || 0) > 0) paymentMethod = "OTA Virtual";
+                    else if (b.payHotel) paymentMethod = "Pay at Hotel";
+                    else if (b.payTransfer) paymentMethod = "Transfer / OTA";
                     else paymentMethod = b.paymentStatus || "Cash / Direct";
                 }
 
@@ -536,7 +540,7 @@ export function OverviewSection() {
 
     const handleExportPDF = async () => {
         try {
-            const doc = new jsPDF({
+            const pdfDoc = new jsPDF({
                 orientation: "landscape",
                 unit: "mm",
                 format: "a4",
@@ -557,8 +561,8 @@ export function OverviewSection() {
                 const docRef = doc(getHotelCollection(db, "settings", hotelId), "landingPage");
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
-                    const d = snap.data();
-                    logoUrl = d.darkLogo || d.lightLogo || d.logoUrl || null;
+                    const d = snap.data() as any;
+                    logoUrl = d?.darkLogo || d?.lightLogo || d?.logoUrl || null;
                 }
             } catch (e) {
                 console.warn("Could not fetch cpanel logo:", e);
@@ -572,7 +576,7 @@ export function OverviewSection() {
                 try {
                     const base64Logo = await getBase64Image(logoUrl);
                     if (base64Logo) {
-                        doc.addImage(base64Logo, "PNG", 14, 9, 24, 13);
+                        pdfDoc.addImage(base64Logo, "PNG", 14, 9, 24, 13);
                         logoLoaded = true;
                     }
                 } catch (e) {
@@ -583,34 +587,34 @@ export function OverviewSection() {
             const headerLeftX = logoLoaded ? 42 : 14;
 
             // Property Name & Details
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(13);
-            doc.setTextColor(24, 29, 38);
-            doc.text(hotelName.toUpperCase(), headerLeftX, 15);
+            pdfDoc.setFont("helvetica", "bold");
+            pdfDoc.setFontSize(13);
+            pdfDoc.setTextColor(24, 29, 38);
+            pdfDoc.text(hotelName.toUpperCase(), headerLeftX, 15);
 
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(7.5);
-            doc.setTextColor(100, 100, 100);
-            doc.text(`${hotelAddress} ${hotelPhone ? " | " + hotelPhone : ""}`, headerLeftX, 20);
+            pdfDoc.setFont("helvetica", "normal");
+            pdfDoc.setFontSize(7.5);
+            pdfDoc.setTextColor(100, 100, 100);
+            pdfDoc.text(`${hotelAddress} ${hotelPhone ? " | " + hotelPhone : ""}`, headerLeftX, 20);
 
             // Report Title & System Info Box (Right Side)
             const rightBoxX = 185;
-            doc.setFillColor(248, 249, 250);
-            doc.roundedRect(rightBoxX, 7, 98, 22, 2, 2, "F");
-            doc.setDrawColor(220, 224, 230);
-            doc.roundedRect(rightBoxX, 7, 98, 22, 2, 2, "D");
+            pdfDoc.setFillColor(248, 249, 250);
+            pdfDoc.roundedRect(rightBoxX, 7, 98, 22, 2, 2, "F");
+            pdfDoc.setDrawColor(220, 224, 230);
+            pdfDoc.roundedRect(rightBoxX, 7, 98, 22, 2, 2, "D");
 
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(8.5);
-            doc.setTextColor(24, 29, 38);
-            doc.text("DAILY AUDIT & FRONT OFFICE LEDGER", rightBoxX + 4, 12);
+            pdfDoc.setFont("helvetica", "bold");
+            pdfDoc.setFontSize(8.5);
+            pdfDoc.setTextColor(24, 29, 38);
+            pdfDoc.text("DAILY AUDIT & FRONT OFFICE LEDGER", rightBoxX + 4, 12);
 
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(6.5);
-            doc.setTextColor(90, 95, 105);
-            doc.text(`Periode: ${periodStr}`, rightBoxX + 4, 16.5);
-            doc.text(`Jam Sistem: ${sysTime}`, rightBoxX + 4, 20.5);
-            doc.text(`Staf Cetak: ${staffStr} (Front Office)`, rightBoxX + 4, 24.5);
+            pdfDoc.setFont("helvetica", "normal");
+            pdfDoc.setFontSize(6.5);
+            pdfDoc.setTextColor(90, 95, 105);
+            pdfDoc.text(`Periode: ${periodStr}`, rightBoxX + 4, 16.5);
+            pdfDoc.text(`Jam Sistem: ${sysTime}`, rightBoxX + 4, 20.5);
+            pdfDoc.text(`Staf Cetak: ${staffStr} (Front Office)`, rightBoxX + 4, 24.5);
 
             // 2. Separate Data into Pay at Hotel and Transfer
             const payHotelBookings = latestBookings.filter((b: any) => !isTransferTransaction(b));
@@ -629,16 +633,16 @@ export function OverviewSection() {
             const totalRevenue = subtotalPayHotel + subtotalTransfer;
 
             // Summary KPI Strip
-            doc.setFillColor(24, 29, 38);
-            doc.roundedRect(14, 31, 269, 9, 1.5, 1.5, "F");
+            pdfDoc.setFillColor(24, 29, 38);
+            pdfDoc.roundedRect(14, 31, 269, 9, 1.5, 1.5, "F");
 
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(6.5);
-            doc.setTextColor(255, 255, 255);
-            doc.text(`TOTAL TRANSAKSI: ${latestBookings.length}`, 18, 37);
-            doc.text(`PAY AT HOTEL: Rp ${subtotalPayHotel.toLocaleString("id-ID")} (${payHotelBookings.length})`, 68, 37);
-            doc.text(`TRANSFER & OTA: Rp ${subtotalTransfer.toLocaleString("id-ID")} (${transferBookings.length})`, 140, 37);
-            doc.text(`GRAND TOTAL: Rp ${totalRevenue.toLocaleString("id-ID")}`, 220, 37);
+            pdfDoc.setFont("helvetica", "bold");
+            pdfDoc.setFontSize(6.5);
+            pdfDoc.setTextColor(255, 255, 255);
+            pdfDoc.text(`TOTAL TRANSAKSI: ${latestBookings.length}`, 18, 37);
+            pdfDoc.text(`PAY AT HOTEL: Rp ${subtotalPayHotel.toLocaleString("id-ID")} (${payHotelBookings.length})`, 68, 37);
+            pdfDoc.text(`TRANSFER & OTA: Rp ${subtotalTransfer.toLocaleString("id-ID")} (${transferBookings.length})`, 140, 37);
+            pdfDoc.text(`GRAND TOTAL: Rp ${totalRevenue.toLocaleString("id-ID")}`, 220, 37);
 
             // Format Table Row helper
             const buildTableRows = (list: any[]) => {
@@ -660,8 +664,13 @@ export function OverviewSection() {
                     
                     let paymentMethod = b.paymentMethod || b.settlement || "-";
                     if (!b.paymentMethod || b.paymentMethod === "personal" || b.paymentMethod === "others") {
-                        if (b.payHotel) paymentMethod = "Pay at Hotel / Cash";
-                        else if (b.payTransfer) paymentMethod = "Transfer";
+                        if (Number(b.paidCash || 0) > 0) paymentMethod = "Cash FO";
+                        else if (Number(b.paidEdc || 0) > 0) paymentMethod = "EDC Card";
+                        else if (Number(b.paidQris || 0) > 0) paymentMethod = "QRIS Hotel";
+                        else if (Number(b.paidTransfer || 0) > 0) paymentMethod = "Bank Transfer";
+                        else if (Number(b.paidOta || 0) > 0) paymentMethod = "OTA Virtual";
+                        else if (b.payHotel) paymentMethod = "Pay at Hotel";
+                        else if (b.payTransfer) paymentMethod = "Transfer / OTA";
                         else paymentMethod = b.paymentStatus || "Cash / Direct";
                     }
 
@@ -707,12 +716,12 @@ export function OverviewSection() {
             };
 
             // ── TABLE 1: PAY AT HOTEL ──
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(7.5);
-            doc.setTextColor(24, 29, 38);
-            doc.text("1. TABEL TRANSAKSI PAY AT HOTEL (CASH / BAYAR DI TEMPAT)", 14, 45);
+            pdfDoc.setFont("helvetica", "bold");
+            pdfDoc.setFontSize(7.5);
+            pdfDoc.setTextColor(24, 29, 38);
+            pdfDoc.text("1. TABEL TRANSAKSI PAY AT HOTEL (CASH / BAYAR DI TEMPAT)", 14, 45);
 
-            autoTable(doc, {
+            autoTable(pdfDoc, {
                 startY: 47,
                 head: [[
                     "No", "Waktu", "No. Voucher / ID", "Nama Tamu / Order", "Tipe Kamar", 
@@ -753,20 +762,20 @@ export function OverviewSection() {
             });
 
             // ── TABLE 2: TRANSFER & OTA ──
-            let currentY = (doc as any).lastAutoTable?.finalY || 100;
+            let currentY = (pdfDoc as any).lastAutoTable?.finalY || 100;
             if (currentY > 150) {
-                doc.addPage();
+                pdfDoc.addPage();
                 currentY = 15;
             } else {
                 currentY += 8;
             }
 
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(7.5);
-            doc.setTextColor(24, 29, 38);
-            doc.text("2. TABEL TRANSAKSI BANK TRANSFER & OTA (NON-CASH / SETTLEMENT)", 14, currentY);
+            pdfDoc.setFont("helvetica", "bold");
+            pdfDoc.setFontSize(7.5);
+            pdfDoc.setTextColor(24, 29, 38);
+            pdfDoc.text("2. TABEL TRANSAKSI BANK TRANSFER & OTA (NON-CASH / SETTLEMENT)", 14, currentY);
 
-            autoTable(doc, {
+            autoTable(pdfDoc, {
                 startY: currentY + 2,
                 head: [[
                     "No", "Waktu", "No. Voucher / ID", "Nama Tamu / Order", "Tipe Kamar", 
@@ -805,18 +814,18 @@ export function OverviewSection() {
                     halign: "right"
                 },
                 didDrawPage: (data) => {
-                    const pageCount = (doc as any).internal.getNumberOfPages();
-                    const pageCurrent = (doc as any).internal.getCurrentPageInfo().pageNumber;
+                    const pageCount = (pdfDoc as any).internal.getNumberOfPages();
+                    const pageCurrent = (pdfDoc as any).internal.getCurrentPageInfo().pageNumber;
                     
-                    doc.setFontSize(5.5);
-                    doc.setFont("helvetica", "normal");
-                    doc.setTextColor(130, 130, 130);
-                    doc.text(
+                    pdfDoc.setFontSize(5.5);
+                    pdfDoc.setFont("helvetica", "normal");
+                    pdfDoc.setTextColor(130, 130, 130);
+                    pdfDoc.text(
                         `* Dokumen laporan resmi Front Office - Nexura Hospitality PMS | Dicetak otomatis pada ${sysTime}`,
                         14,
                         204
                     );
-                    doc.text(
+                    pdfDoc.text(
                         `Halaman ${pageCurrent} dari ${pageCount}`,
                         265,
                         204
@@ -825,40 +834,40 @@ export function OverviewSection() {
             });
 
             // ── GRAND TOTAL BOX & SIGNATURES ──
-            const finalY = (doc as any).lastAutoTable?.finalY || 140;
+            const finalY = (pdfDoc as any).lastAutoTable?.finalY || 140;
             let sigY = finalY + 7;
             if (sigY > 165) {
-                doc.addPage();
+                pdfDoc.addPage();
                 sigY = 20;
             }
 
             // Grand Total summary banner
-            doc.setFillColor(245, 245, 247);
-            doc.roundedRect(14, sigY, 269, 8, 1, 1, "F");
-            doc.setDrawColor(210, 215, 220);
-            doc.roundedRect(14, sigY, 269, 8, 1, 1, "D");
+            pdfDoc.setFillColor(245, 245, 247);
+            pdfDoc.roundedRect(14, sigY, 269, 8, 1, 1, "F");
+            pdfDoc.setDrawColor(210, 215, 220);
+            pdfDoc.roundedRect(14, sigY, 269, 8, 1, 1, "D");
 
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(7.5);
-            doc.setTextColor(24, 29, 38);
-            doc.text(`RINGKASAN TOTAL:  Pay at Hotel = Rp ${subtotalPayHotel.toLocaleString("id-ID")}  |  Transfer & OTA = Rp ${subtotalTransfer.toLocaleString("id-ID")}  |  GRAND TOTAL REVENUE = Rp ${totalRevenue.toLocaleString("id-ID")}`, 18, sigY + 5.5);
+            pdfDoc.setFont("helvetica", "bold");
+            pdfDoc.setFontSize(7.5);
+            pdfDoc.setTextColor(24, 29, 38);
+            pdfDoc.text(`RINGKASAN TOTAL:  Pay at Hotel = Rp ${subtotalPayHotel.toLocaleString("id-ID")}  |  Transfer & OTA = Rp ${subtotalTransfer.toLocaleString("id-ID")}  |  GRAND TOTAL REVENUE = Rp ${totalRevenue.toLocaleString("id-ID")}`, 18, sigY + 5.5);
 
             // Signature columns
             const signTop = sigY + 12;
-            doc.setFontSize(6.5);
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(60, 60, 60);
+            pdfDoc.setFontSize(6.5);
+            pdfDoc.setFont("helvetica", "bold");
+            pdfDoc.setTextColor(60, 60, 60);
 
-            doc.text("Dibuat & Diperiksa Oleh:", 30, signTop);
-            doc.text("Diverifikasi Oleh:", 125, signTop);
-            doc.text("Disetujui Oleh:", 220, signTop);
+            pdfDoc.text("Dibuat & Diperiksa Oleh:", 30, signTop);
+            pdfDoc.text("Diverifikasi Oleh:", 125, signTop);
+            pdfDoc.text("Disetujui Oleh:", 220, signTop);
 
-            doc.setFont("helvetica", "normal");
-            doc.text("( Front Office / Night Auditor )", 25, signTop + 14);
-            doc.text("( Duty Manager / Accounting )", 120, signTop + 14);
-            doc.text("( General Manager )", 220, signTop + 14);
+            pdfDoc.setFont("helvetica", "normal");
+            pdfDoc.text("( Front Office / Night Auditor )", 25, signTop + 14);
+            pdfDoc.text("( Duty Manager / Accounting )", 120, signTop + 14);
+            pdfDoc.text("( General Manager )", 220, signTop + 14);
 
-            doc.save(`Detailed_Audit_Ledger_${periodFileName}.pdf`);
+            pdfDoc.save(`Detailed_Audit_Ledger_${periodFileName}.pdf`);
             toast.success("Laporan PDF (2 Tabel Terpisah) berhasil di-export");
         } catch (error) {
             console.error("PDF Export error:", error);
@@ -1008,7 +1017,7 @@ export function OverviewSection() {
                 <AuditLedger 
                     bookings={latestBookings}
                     onView={(b) => { setSelectedGuest(b); setIsEditing(false); }}
-                    onEdit={(b) => setSelectedGuest(b) && setIsEditing(true)}
+                    onEdit={(b) => { setSelectedGuest(b); setIsEditing(true); }}
                     onDelete={(b) => setBookingToVoid(b)}
                     onCancel={(b) => setBookingToCancel(b)}
                     onStatusUpdate={handleStatusUpdate}

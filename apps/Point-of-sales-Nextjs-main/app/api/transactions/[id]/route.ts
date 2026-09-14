@@ -39,6 +39,20 @@ export async function GET(
       docData = snap.docs[0].data();
     }
 
+    const paymentMethod = docData.paymentMethod || docData.paymethod || docData.method || 'cash';
+    const customerName = docData.customerName || 'Walk-in Customer';
+    const cashierName = docData.cashierName || 'Kasir';
+    const tableNumber = docData.tableNumber || '';
+    const discount = Number(docData.discount || 0);
+    const subtotal = docData.subtotal !== undefined ? Number(docData.subtotal) : undefined;
+    const tax = docData.tax !== undefined ? Number(docData.tax) : undefined;
+    const total = docData.total !== undefined ? Number(docData.total) : undefined;
+    const cashAmount = docData.cashAmount !== undefined ? Number(docData.cashAmount) : undefined;
+    const changeAmount = docData.changeAmount !== undefined ? Number(docData.changeAmount) : undefined;
+    const status = docData.status || 'SUCCESS';
+    const cancelReason = docData.cancelReason || '';
+    const notes = docData.notes || '';
+
     const items = (docData.items || []).map((item: any) => ({
       id: item.id,
       transactionId: id,
@@ -55,9 +69,25 @@ export async function GET(
           subcategory: item.subcategory || '',
         },
       },
-      discount: docData.discount || 0,
-      status: docData.status || 'SUCCESS',
-      cancelReason: docData.cancelReason || '',
+      discount,
+      status,
+      cancelReason,
+      paymentMethod,
+      paymethod: paymentMethod,
+      customerName,
+      cashierName,
+      tableNumber,
+      table: tableNumber,
+      subtotal,
+      tax,
+      total,
+      cashAmount,
+      changeAmount,
+      notes,
+      isCompliment: !!(item.isCompliment ?? docData.isCompliment),
+      complimentReason: item.complimentReason || docData.complimentReason || '',
+      selectedAddons: item.selectedAddons || [],
+      note: item.note || '',
     }));
 
     return NextResponse.json(items, { status: 200 });

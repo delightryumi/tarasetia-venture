@@ -48,7 +48,7 @@ const getAdminStorage = () => {
   return getStorage();
 };
 
-export const adminAuth = new Proxy({} as admin.auth.Auth, {
+export const adminAuth = new Proxy({} as ReturnType<typeof getAuth>, {
   get(target, prop, receiver) {
     const instance = getAdminAuth();
     const value = Reflect.get(instance, prop);
@@ -59,7 +59,7 @@ export const adminAuth = new Proxy({} as admin.auth.Auth, {
   }
 });
 
-export const adminDb = new Proxy({} as admin.firestore.Firestore, {
+export const adminDb = new Proxy({} as ReturnType<typeof getFirestore>, {
   get(target, prop, receiver) {
     const instance = getAdminDb();
     const value = Reflect.get(instance, prop);
@@ -69,6 +69,7 @@ export const adminDb = new Proxy({} as admin.firestore.Firestore, {
     return value;
   }
 });
+
 
 export const adminStorage = new Proxy({} as Storage, {
   get(target, prop, receiver) {

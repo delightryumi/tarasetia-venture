@@ -17,7 +17,7 @@ interface CartSidebarProps {
     setTableName?: (name: string) => void;
     notes?: string;
     setNotes?: (notes: string) => void;
-    ticketNumber: string;
+    ticketNumber?: string;
     clearCart: () => void;
     updateQuantity: (id: string, delta: number) => void;
     subtotal: number;
@@ -29,9 +29,10 @@ interface CartSidebarProps {
 export const CartSidebar: React.FC<CartSidebarProps> = ({
     cart, customerName, setCustomerName,
     tableName, setTableName, notes, setNotes,
-    ticketNumber, clearCart, updateQuantity,
+    ticketNumber = "TRX-001", clearCart, updateQuantity,
     subtotal, tax, total, onCheckout
 }) => (
+
     <aside className="w-full bg-transparent flex flex-col flex-1 overflow-hidden min-h-0">
         {/* Apple Parchment Ticket Header */}
         <div className="flex-shrink-0" style={{ padding: '2rem 2rem 1rem 2rem' }}>

@@ -20,11 +20,62 @@ import {
     BedDouble,
     Users,
     Maximize2,
-    Package
+    Package,
+    Search,
+    LayoutGrid,
+    Table,
+    Edit2,
+    Layers,
+    ShieldCheck,
+    Building2,
+    CheckCircle2,
+    Copy,
+    Activity
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 import styles from "./RoomTypeSection.module.css";
+import vhpStyles from "./RoomTypeTableVHP.module.css";
 
-export const RoomTypeSection = () => {
+interface RoomTypeSectionProps {
+    embedded?: boolean;
+}
+
+export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = false }) => {
+    const { activeHotelCode } = useAuth();
+    const [pingingId, setPingingId] = useState<string | null>(null);
+
+    const handlePingRoom = async (type: any) => {
+        setPingingId(type.id);
+        try {
+            const res = await fetch("/api/channex/ping", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    hotelCode: activeHotelCode,
+                    type: "room_type",
+                    id: type.id,
+                    channexId: type.channexRoomTypeId
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success(data.message);
+            } else {
+                toast.error(data.message || "Gagal melakukan ping ke Channex");
+            }
+        } catch (err: any) {
+            toast.error(`Koneksi Ping Error: ${err.message}`);
+        } finally {
+            setPingingId(null);
+        }
+    };
+
+    const copyToClipboard = (text: string, label: string) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        toast.success(`${label} disalin ke clipboard!`);
+    };
     const {
         roomTypes,
         loading,
@@ -64,6 +115,10 @@ export const RoomTypeSection = () => {
         setCurrentStep,
     } = useRoomTypes();
     
+    // View mode: systematic VHP table grid (default) or visual cards
+    const [viewMode, setViewMode] = useState<"vhp" | "cards">("vhp");
+    const [searchQuery, setSearchQuery] = useState("");
+
     // Local state for room number tag input
     const [roomInput, setRoomInput] = useState("");
 
@@ -123,209 +178,553 @@ export const RoomTypeSection = () => {
         </div>
     );
 
+    const totalRoomTypes = roomTypes.length;
+    const totalPhysicalRooms = roomTypes.reduce((acc, curr) => {
+        return acc + (curr.physicalRooms?.length || curr.roomCount || 0);
+    }, 0);
+    const totalCapacityPax = roomTypes.reduce((acc, curr) => {
+        const units = curr.physicalRooms?.length || curr.roomCount || 1;
+        return acc + ((curr.capacity || 2) * units);
+    }, 0);
+
+    const filteredTypes = roomTypes.filter(rt => {
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.toLowerCase();
+        const matchName = rt.name?.toLowerCase().includes(q);
+        const matchDesc = rt.description?.toLowerCase().includes(q);
+        const matchRooms = rt.physicalRooms?.some((r: any) => {
+            const num = typeof r === 'string' ? r : r.number || r.name;
+            return num?.toString().toLowerCase().includes(q);
+        });
+        return matchName || matchDesc || matchRooms;
+    });
+
     const renderListView = () => (
         <motion.div
             key="list"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={styles.container}
+            className={`${styles.container} ${embedded ? styles.containerEmbedded : ""}`}
         >
             {/* Header */}
-            <div className={styles.header}>
+            <div className={`${styles.header} ${embedded ? styles.headerEmbedded : ""}`}>
                 <div className={styles.headerContent}>
                     <span className={styles.headerTag}>
-                        Store & Inventory
+                        Store & Inventory Master
                     </span>
                     <h1 className={styles.headerTitle}>
-                        Room Categories
+                        Master Kategori Kamar & Allotment
                     </h1>
                     <p className={styles.headerSubtitle}>
-                        Kelola master tipe kamar, nomor kamar fisik, kapasitas tamu, dan kurasi fasilitas.
+                        Manajemen enterprise tipe kamar, nomor kamar fisik, kapasitas pax tamu, dan pemetaan ke sistem Channel Manager.
                     </p>
                 </div>
                 <div className={styles.headerActions}>
                     <button
                         onClick={() => setView('stepper')}
                         className={styles.btnPrimary}
+                        style={{ backgroundColor: "#1e3a2f", borderColor: "#142921" }}
                     >
                         <Plus size={15} strokeWidth={2.5} />
-                        <span>Tambah Kategori</span>
+                        <span>Tambah Tipe Kamar</span>
                     </button>
                 </div>
             </div>
 
-            {/* Catalog Grid */}
-            {roomTypes.length > 0 ? (
-                <div className={styles.grid}>
-                    <AnimatePresence mode="popLayout">
-                        {roomTypes.map((type) => {
-                            const profileImg = type.images?.find(img => img.isProfile)?.url || type.images?.[0]?.url;
-                            return (
-                                <motion.div 
-                                    key={type.id} 
-                                    whileHover={{ y: -3 }}
-                                    className={styles.card}
-                                >
-                                    <div>
-                                        {/* Image Section */}
-                                        <div className={styles.cardImageWrapper}>
-                                            {profileImg ? (
-                                                <img 
-                                                    src={profileImg} 
-                                                    alt={type.name} 
-                                                    className={styles.cardImage} 
-                                                />
-                                            ) : (
-                                                <div className={styles.cardImagePlaceholder}>
-                                                    <Package size={36} strokeWidth={1} />
-                                                </div>
-                                            )}
-                                            <div className={styles.cardUnitBadge}>
-                                                {type.roomCount || 0} Unit
-                                            </div>
-                                        </div>
+            {/* VHP Hotel ERP Layout */}
+            <div className={vhpStyles.vhpContainer}>
+                {/* 1. Top Metrics KPI Summary Strip */}
+                <div className={vhpStyles.kpiSummaryStrip}>
+                    <div className={vhpStyles.kpiCard}>
+                        <div className={vhpStyles.kpiIconBox}>
+                            <Building2 size={20} />
+                        </div>
+                        <div className={vhpStyles.kpiContent}>
+                            <span className={vhpStyles.kpiLabel}>Total Tipe Kamar</span>
+                            <span className={vhpStyles.kpiValue}>{totalRoomTypes}</span>
+                            <span className={vhpStyles.kpiSubtext}>Kategori aktif</span>
+                        </div>
+                    </div>
 
-                                        {/* Card Content */}
-                                        <div className={styles.cardContent}>
-                                            <div>
-                                                <div className={styles.cardMeta}>
-                                                    <span className={styles.cardCategory}>
-                                                        Sanctuary
-                                                    </span>
-                                                    {type.bookingUrl && (
-                                                        <a 
-                                                            href={type.bookingUrl} 
-                                                            target="_blank" 
-                                                            rel="noreferrer" 
-                                                            className={styles.cardBookingLink} 
-                                                            title="Buka Booking Gateway"
-                                                        >
-                                                            <ExternalLink size={13} />
-                                                        </a>
-                                                    )}
-                                                </div>
-                                                <h3 className={styles.cardTitle}>
-                                                    {type.name}
-                                                </h3>
-                                                <p className={styles.cardDescription}>
-                                                    {type.description || "Belum ada deskripsi untuk kategori kamar ini."}
-                                                </p>
-                                            </div>
+                    <div className={vhpStyles.kpiCard}>
+                        <div className={vhpStyles.kpiIconBox}>
+                            <Hash size={20} />
+                        </div>
+                        <div className={vhpStyles.kpiContent}>
+                            <span className={vhpStyles.kpiLabel}>Total Kamar Fisik</span>
+                            <span className={vhpStyles.kpiValue}>{totalPhysicalRooms}</span>
+                            <span className={vhpStyles.kpiSubtext}>Unit allotment terdaftar</span>
+                        </div>
+                    </div>
 
-                                            {/* Specs Bar */}
-                                            <div className={styles.cardSpecs}>
-                                                <div className={styles.specItem}>
-                                                    <Users size={13} color="#8e8e93" />
-                                                    <span>{type.capacity || 2} Tamu</span>
-                                                </div>
-                                                <span className={styles.specDot}>•</span>
-                                                <div className={styles.specItem}>
-                                                    <Maximize2 size={13} color="#8e8e93" />
-                                                    <span>{type.roomSizeValue ? `${type.roomSizeValue} ${type.roomSizeUnit || 'm²'}` : '32 m²'}</span>
-                                                </div>
-                                                <span className={styles.specDot}>•</span>
-                                                <div className={styles.specItem}>
-                                                    <BedDouble size={13} color="#8e8e93" />
-                                                    <span>{type.beds?.length || 1} Bed</span>
-                                                </div>
-                                            </div>
+                    <div className={vhpStyles.kpiCard}>
+                        <div className={vhpStyles.kpiIconBox}>
+                            <Users size={20} />
+                        </div>
+                        <div className={vhpStyles.kpiContent}>
+                            <span className={vhpStyles.kpiLabel}>Kapasitas Maksimal</span>
+                            <span className={vhpStyles.kpiValue}>{totalCapacityPax}</span>
+                            <span className={vhpStyles.kpiSubtext}>Pax total properti</span>
+                        </div>
+                    </div>
 
-                                            {/* Physical Room Numbers Box */}
-                                            <div className={styles.roomNumbersBox}>
-                                                <div className={styles.roomNumbersHeader}>
-                                                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                                        <Hash size={12} color="#111113" /> No. Kamar Terdaftar
-                                                    </span>
-                                                    <span className={styles.roomNumbersCount}>
-                                                        {type.physicalRooms?.length || 0} Unit
-                                                    </span>
-                                                </div>
-                                                <div className={styles.roomChipsList}>
-                                                    {type.physicalRooms && type.physicalRooms.length > 0 ? (
-                                                        <>
-                                                            {type.physicalRooms.slice(0, 8).map((r: any, idx: number) => {
-                                                                const num = typeof r === 'string' ? r : r.number || r.name;
-                                                                return (
-                                                                    <span key={idx} className={styles.roomChip}>
-                                                                        {num}
-                                                                    </span>
-                                                                );
-                                                            })}
-                                                            {type.physicalRooms.length > 8 && (
-                                                                <span className={styles.roomChipMore}>
-                                                                    +{type.physicalRooms.length - 8} lainnya
-                                                                </span>
+                    <div className={vhpStyles.kpiCard}>
+                        <div className={vhpStyles.kpiIconBox}>
+                            <ShieldCheck size={20} />
+                        </div>
+                        <div className={vhpStyles.kpiContent}>
+                            <span className={vhpStyles.kpiLabel}>Integrasi Channex</span>
+                            <span className={vhpStyles.kpiValue}>Aktif</span>
+                            <span className={vhpStyles.kpiSubtext}>OTA Mapping Ready</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 2. Systematic Toolbar (Search, Filter, View Mode Switcher) */}
+                <div className={vhpStyles.toolbar}>
+                    <div className={vhpStyles.searchWrapper}>
+                        <Search size={15} color="#94a3b8" />
+                        <input
+                            type="text"
+                            placeholder="Cari tipe kamar, deskripsi, atau no. kamar (misal 101)..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className={vhpStyles.searchInput}
+                        />
+                    </div>
+
+                    <div className={vhpStyles.toolbarActions}>
+                        <div className={vhpStyles.viewModeGroup}>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode("vhp")}
+                                className={`${vhpStyles.viewModeBtn} ${viewMode === "vhp" ? vhpStyles.viewModeBtnActive : ""}`}
+                                title="Tampilan Tabel Sistematis VHP"
+                            >
+                                <Table size={14} />
+                                <span>Tabel Sistematis (VHP)</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode("cards")}
+                                className={`${vhpStyles.viewModeBtn} ${viewMode === "cards" ? vhpStyles.viewModeBtnActive : ""}`}
+                                title="Tampilan Galeri Kartu"
+                            >
+                                <LayoutGrid size={14} />
+                                <span>Galeri Visual</span>
+                            </button>
+                        </div>
+
+                        <button
+                            onClick={() => setView('stepper')}
+                            className={vhpStyles.btnAddRoom}
+                        >
+                            <Plus size={14} strokeWidth={2.5} />
+                            <span>+ Kategori Baru</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* 3. Main Data Content */}
+                {roomTypes.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        <div className={styles.emptyIcon}>
+                            <Home size={26} strokeWidth={1.5} />
+                        </div>
+                        <h3 className={styles.emptyTitle}>Belum Ada Kategori Kamar</h3>
+                        <p className={styles.emptyDescription}>
+                            Buat kategori kamar pertama properti Anda untuk mulai mengatur inventaris dan nomor kamar fisik.
+                        </p>
+                        <button
+                            onClick={() => setView('stepper')}
+                            className={styles.btnPrimary}
+                            style={{ backgroundColor: "#1e3a2f", borderColor: "#142921" }}
+                        >
+                            <Plus size={15} />
+                            <span>Tambah Kategori Pertama</span>
+                        </button>
+                    </div>
+                ) : filteredTypes.length === 0 ? (
+                    <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 8, padding: 32, textAlign: "center", color: "#64748b" }}>
+                        <Search size={28} style={{ margin: "0 auto 8px", opacity: 0.5 }} />
+                        <p style={{ margin: 0, fontWeight: 600 }}>Tidak ada tipe kamar yang cocok dengan pencarian "{searchQuery}"</p>
+                        <button
+                            onClick={() => setSearchQuery("")}
+                            style={{ marginTop: 10, background: "none", border: "none", color: "#1e3a2f", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
+                        >
+                            Reset Pencarian
+                        </button>
+                    </div>
+                ) : viewMode === "vhp" ? (
+                    /* Systematic VHP Table Grid */
+                    <div className={vhpStyles.tableContainer}>
+                        <div className={vhpStyles.tableResponsive}>
+                            <table className={vhpStyles.vhpTable}>
+                                <thead>
+                                    <tr>
+                                        <th>Tipe Kamar & Kode</th>
+                                        <th>Allotment & Nomor Kamar Fisik</th>
+                                        <th>Kapasitas & Dimensi</th>
+                                        <th>Konfigurasi Ranjang</th>
+                                        <th>Fasilitas Utama</th>
+                                        <th>Status Channex</th>
+                                        <th style={{ textAlign: "right" }}>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredTypes.map((type) => {
+                                        const profileImg = type.images?.find(img => img.isProfile)?.url || type.images?.[0]?.url;
+                                        const allotmentCount = type.physicalRooms?.length || type.roomCount || 0;
+                                        return (
+                                            <tr key={type.id}>
+                                                {/* Tipe Kamar & Thumbnail */}
+                                                <td>
+                                                    <div className={vhpStyles.roomCell}>
+                                                        <div className={vhpStyles.roomThumbnail}>
+                                                            {profileImg ? (
+                                                                <img src={profileImg} alt={type.name} className={vhpStyles.thumbnailImg} />
+                                                            ) : (
+                                                                <Package size={20} color="#94a3b8" />
                                                             )}
-                                                        </>
-                                                    ) : (
-                                                        <span className={styles.roomEmptyNotice}>
-                                                            Belum ada nomor kamar spesifik
+                                                        </div>
+                                                        <div className={vhpStyles.roomInfo}>
+                                                            <span className={vhpStyles.roomName}>{type.name}</span>
+                                                            <div className={vhpStyles.idList}>
+                                                                <span
+                                                                    className={vhpStyles.idPill}
+                                                                    onClick={() => copyToClipboard(type.id, "ID PMS")}
+                                                                    title="Klik untuk salin ID Kamar Internal PMS"
+                                                                >
+                                                                    <Copy size={10} /> PMS ID: <b>{type.id}</b>
+                                                                </span>
+                                                                <span
+                                                                    className={`${vhpStyles.idPill} ${type.channexRoomTypeId ? vhpStyles.idPillChannex : ""}`}
+                                                                    onClick={() => copyToClipboard(type.channexRoomTypeId || "", "Channex Room ID")}
+                                                                    title="Klik untuk salin UUID Channex"
+                                                                >
+                                                                    <Copy size={10} /> Channex ID: <b>{type.channexRoomTypeId || "(Belum Sync)"}</b>
+                                                                </span>
+                                                            </div>
+                                                            {type.bookingUrl && (
+                                                                <a
+                                                                    href={type.bookingUrl}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className={vhpStyles.bookingIconLink}
+                                                                    title="Buka Booking Engine"
+                                                                    style={{ marginTop: 2 }}
+                                                                >
+                                                                    <ExternalLink size={11} /> Booking Engine
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {/* Allotment & Physical Rooms */}
+                                                <td>
+                                                    <div className={vhpStyles.allotmentCell}>
+                                                        <div className={vhpStyles.allotmentHeader}>
+                                                            <span className={vhpStyles.allotmentBadge}>
+                                                                <Hash size={11} /> {allotmentCount} Unit Fisik
+                                                            </span>
+                                                        </div>
+                                                        {type.physicalRooms && type.physicalRooms.length > 0 ? (
+                                                            <div className={vhpStyles.roomChipsWrapper}>
+                                                                {type.physicalRooms.slice(0, 6).map((r: any, idx: number) => {
+                                                                    const num = typeof r === 'string' ? r : r.number || r.name;
+                                                                    return (
+                                                                        <span key={idx} className={vhpStyles.roomChip}>
+                                                                            {num}
+                                                                        </span>
+                                                                    );
+                                                                })}
+                                                                {type.physicalRooms.length > 6 && (
+                                                                    <span className={vhpStyles.roomChipMore}>
+                                                                        +{type.physicalRooms.length - 6}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className={vhpStyles.emptyRoomNotice}>
+                                                                Belum ada nomor fisik
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+
+                                                {/* Kapasitas & Dimensi */}
+                                                <td>
+                                                    <div className={vhpStyles.specsCell}>
+                                                        <div className={vhpStyles.specRow}>
+                                                            <Users size={12} color="#64748b" />
+                                                            <span><strong>{type.capacity || 2}</strong> Tamu Max</span>
+                                                        </div>
+                                                        <div className={vhpStyles.specRow}>
+                                                            <Maximize2 size={12} color="#64748b" />
+                                                            <span className={vhpStyles.specMuted}>
+                                                                {type.roomSizeValue ? `${type.roomSizeValue} ${type.roomSizeUnit || 'm²'}` : '32 m²'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {/* Ranjang */}
+                                                <td>
+                                                    <div className={vhpStyles.bedsCell}>
+                                                        {type.beds && type.beds.length > 0 ? (
+                                                            type.beds.slice(0, 2).map((b, idx) => (
+                                                                <span key={idx} className={vhpStyles.bedChip}>
+                                                                    <BedDouble size={12} color="#64748b" />
+                                                                    {b.quantity}x {b.type}
+                                                                </span>
+                                                            ))
+                                                        ) : (
+                                                            <span className={vhpStyles.bedChip}>
+                                                                <BedDouble size={12} color="#64748b" />
+                                                                {type.bedType || '1x King Bed'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+
+                                                {/* Fasilitas Utama */}
+                                                <td>
+                                                    <div className={vhpStyles.amenitiesCell}>
+                                                        {type.amenities && type.amenities.length > 0 ? (
+                                                            <>
+                                                                {type.amenities.slice(0, 2).map((aId) => {
+                                                                    const amenity = AMENITIES.find(a => a.id === aId);
+                                                                    return amenity ? (
+                                                                        <span key={aId} className={vhpStyles.amenityPill}>
+                                                                            <amenity.icon size={11} color="#64748b" />
+                                                                            {amenity.label}
+                                                                        </span>
+                                                                    ) : null;
+                                                                })}
+                                                                {type.amenities.length > 2 && (
+                                                                    <span className={vhpStyles.amenityPill}>
+                                                                        +{type.amenities.length - 2}
+                                                                    </span>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <span style={{ fontSize: 11, color: "#94a3b8" }}>-</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+
+                                                {/* Status Channex */}
+                                                <td>
+                                                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                                                        <span className={type.channexRoomTypeId ? vhpStyles.statusBadgeReady : vhpStyles.statusBadgeLocal}>
+                                                            <span className={type.channexRoomTypeId ? vhpStyles.statusDotGreen : vhpStyles.statusDotGray} />
+                                                            {type.channexRoomTypeId ? "Tersambung Channex" : "Lokal PMS"}
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handlePingRoom(type)}
+                                                            disabled={pingingId === type.id}
+                                                            className={vhpStyles.btnPing}
+                                                            title="Uji coba koneksi ping Room Type ini ke Channex Server"
+                                                        >
+                                                            <Activity size={11} className={pingingId === type.id ? "animate-spin" : ""} />
+                                                            <span>{pingingId === type.id ? "Pinging..." : "⚡ Test Ping"}</span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+
+                                                {/* Aksi */}
+                                                <td>
+                                                    <div className={vhpStyles.actionsCell} style={{ justifyContent: "flex-end" }}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => startEditing(type)}
+                                                            className={vhpStyles.btnActionEdit}
+                                                            title="Edit Tipe Kamar & Allotment"
+                                                        >
+                                                            <Edit2 size={12} />
+                                                            <span>Edit</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDelete(type.id)}
+                                                            className={vhpStyles.btnActionDelete}
+                                                            title="Hapus Kategori"
+                                                        >
+                                                            <Trash2 size={13} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className={vhpStyles.tableFooter}>
+                            <span className={vhpStyles.footerHint}>
+                                <CheckCircle2 size={13} color="#166534" />
+                                Menampilkan {filteredTypes.length} dari {totalRoomTypes} kategori kamar hotel
+                            </span>
+                            <span>Sistem Master Inventory VHP / My Tara</span>
+                        </div>
+                    </div>
+                ) : (
+                    /* Visual Cards Grid (Tampilan Galeri) */
+                    <div className={styles.grid}>
+                        <AnimatePresence mode="popLayout">
+                            {filteredTypes.map((type) => {
+                                const profileImg = type.images?.find(img => img.isProfile)?.url || type.images?.[0]?.url;
+                                return (
+                                    <motion.div 
+                                        key={type.id} 
+                                        whileHover={{ y: -3 }}
+                                        className={styles.card}
+                                    >
+                                        <div>
+                                            {/* Image Section */}
+                                            <div className={styles.cardImageWrapper}>
+                                                {profileImg ? (
+                                                    <img 
+                                                        src={profileImg} 
+                                                        alt={type.name} 
+                                                        className={styles.cardImage} 
+                                                    />
+                                                ) : (
+                                                    <div className={styles.cardImagePlaceholder}>
+                                                        <Package size={36} strokeWidth={1} />
+                                                    </div>
+                                                )}
+                                                <div className={styles.cardUnitBadge}>
+                                                    {type.physicalRooms?.length || type.roomCount || 0} Unit
+                                                </div>
+                                            </div>
+
+                                            {/* Card Content */}
+                                            <div className={styles.cardContent}>
+                                                <div>
+                                                    <div className={styles.cardMeta}>
+                                                        <span className={styles.cardCategory}>
+                                                            #{type.id.slice(0, 6).toUpperCase()}
+                                                        </span>
+                                                        {type.bookingUrl && (
+                                                            <a 
+                                                                href={type.bookingUrl} 
+                                                                target="_blank" 
+                                                                rel="noreferrer" 
+                                                                className={styles.cardBookingLink} 
+                                                                title="Buka Booking Gateway"
+                                                            >
+                                                                <ExternalLink size={13} />
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                    <h3 className={styles.cardTitle}>
+                                                        {type.name}
+                                                    </h3>
+                                                    <p className={styles.cardDescription}>
+                                                        {type.description || "Belum ada deskripsi untuk kategori kamar ini."}
+                                                    </p>
+                                                </div>
+
+                                                {/* Specs Bar */}
+                                                <div className={styles.cardSpecs}>
+                                                    <div className={styles.specItem}>
+                                                        <Users size={13} color="#8e8e93" />
+                                                        <span>{type.capacity || 2} Tamu</span>
+                                                    </div>
+                                                    <span className={styles.specDot}>•</span>
+                                                    <div className={styles.specItem}>
+                                                        <Maximize2 size={13} color="#8e8e93" />
+                                                        <span>{type.roomSizeValue ? `${type.roomSizeValue} ${type.roomSizeUnit || 'm²'}` : '32 m²'}</span>
+                                                    </div>
+                                                    <span className={styles.specDot}>•</span>
+                                                    <div className={styles.specItem}>
+                                                        <BedDouble size={13} color="#8e8e93" />
+                                                        <span>{type.beds?.length || 1} Bed</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Physical Room Numbers Box */}
+                                                <div className={styles.roomNumbersBox}>
+                                                    <div className={styles.roomNumbersHeader}>
+                                                        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                                            <Hash size={12} color="#111113" /> No. Kamar Terdaftar
+                                                        </span>
+                                                        <span className={styles.roomNumbersCount}>
+                                                            {type.physicalRooms?.length || 0} Unit
+                                                        </span>
+                                                    </div>
+                                                    <div className={styles.roomChipsList}>
+                                                        {type.physicalRooms && type.physicalRooms.length > 0 ? (
+                                                            <>
+                                                                {type.physicalRooms.slice(0, 8).map((r: any, idx: number) => {
+                                                                    const num = typeof r === 'string' ? r : r.number || r.name;
+                                                                    return (
+                                                                        <span key={idx} className={styles.roomChip}>
+                                                                            {num}
+                                                                        </span>
+                                                                    );
+                                                                })}
+                                                                {type.physicalRooms.length > 8 && (
+                                                                    <span className={styles.roomChipMore}>
+                                                                        +{type.physicalRooms.length - 8} lainnya
+                                                                    </span>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <span className={styles.roomEmptyNotice}>
+                                                                Belum ada nomor kamar spesifik
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Amenities */}
+                                                <div className={styles.amenitiesList}>
+                                                    {type.amenities?.slice(0, 3).map(aId => {
+                                                        const amenity = AMENITIES.find(a => a.id === aId);
+                                                        return amenity ? (
+                                                            <div key={aId} className={styles.amenityChip}>
+                                                                <amenity.icon size={12} color="#8e8e93" />
+                                                                <span>{amenity.label}</span>
+                                                            </div>
+                                                        ) : null;
+                                                    })}
+                                                    {type.amenities && type.amenities.length > 3 && (
+                                                        <span className={styles.amenityMore}>
+                                                            +{type.amenities.length - 3} lainnya
                                                         </span>
                                                     )}
                                                 </div>
                                             </div>
-
-                                            {/* Amenities */}
-                                            <div className={styles.amenitiesList}>
-                                                {type.amenities?.slice(0, 3).map(aId => {
-                                                    const amenity = AMENITIES.find(a => a.id === aId);
-                                                    return amenity ? (
-                                                        <div key={aId} className={styles.amenityChip}>
-                                                            <amenity.icon size={12} color="#8e8e93" />
-                                                            <span>{amenity.label}</span>
-                                                        </div>
-                                                    ) : null;
-                                                })}
-                                                {type.amenities && type.amenities.length > 3 && (
-                                                    <span className={styles.amenityMore}>
-                                                        +{type.amenities.length - 3} lainnya
-                                                    </span>
-                                                )}
-                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* Footer */}
-                                    <div className={styles.cardFooter}>
-                                        <button
-                                            onClick={() => startEditing(type)}
-                                            className={styles.btnEdit}
-                                        >
-                                            Edit Kategori
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(type.id)}
-                                            className={styles.btnDelete}
-                                            title="Hapus kategori"
-                                        >
-                                            <Trash2 size={15} />
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
-                    </AnimatePresence>
-                </div>
-            ) : (
-                /* Empty State */
-                <div className={styles.emptyState}>
-                    <div className={styles.emptyIcon}>
-                        <Home size={26} strokeWidth={1.5} />
+                                        {/* Footer */}
+                                        <div className={styles.cardFooter}>
+                                            <button
+                                                onClick={() => startEditing(type)}
+                                                className={styles.btnEdit}
+                                            >
+                                                Edit Kategori
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(type.id)}
+                                                className={styles.btnDelete}
+                                                title="Hapus kategori"
+                                            >
+                                                <Trash2 size={15} />
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </AnimatePresence>
                     </div>
-                    <h3 className={styles.emptyTitle}>Belum Ada Kategori Kamar</h3>
-                    <p className={styles.emptyDescription}>
-                        Buat kategori kamar pertama properti Anda untuk mulai mengatur inventaris dan nomor kamar fisik.
-                    </p>
-                    <button
-                        onClick={() => setView('stepper')}
-                        className={styles.btnPrimary}
-                    >
-                        <Plus size={15} />
-                        <span>Tambah Kategori Pertama</span>
-                    </button>
-                </div>
-            )}
+                )}
+            </div>
         </motion.div>
     );
 
@@ -335,7 +734,7 @@ export const RoomTypeSection = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={styles.container}
+            className={`${styles.container} ${embedded ? styles.containerEmbedded : ""}`}
             style={{ maxWidth: 960 }}
         >
             <button

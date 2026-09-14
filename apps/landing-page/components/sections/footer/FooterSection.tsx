@@ -238,18 +238,14 @@ export const FooterSection = () => {
 
                 <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.3em] text-white/15">
                     <span className="font-normal lowercase">Powered by</span>
-                    {data.poweredByLink ? (
-                        <a
-                            href={formatExternalUrl(data.poweredByLink)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[#788069] hover:text-white transition-colors"
-                        >
-                            {data.poweredByText}
-                        </a>
-                    ) : (
-                        <span className="text-[#788069]">{data.poweredByText}</span>
-                    )}
+                    <a
+                        href={data?.poweredByLink && !data.poweredByLink.includes("setaraventure.com") ? formatExternalUrl(data.poweredByLink) : "https://mytara.id"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#788069] hover:text-white transition-colors"
+                    >
+                        {data?.poweredByText && !data.poweredByText.toLowerCase().includes("setara venture") ? data.poweredByText : "Tara"}
+                    </a>
                 </div>
             </div>
         </footer>

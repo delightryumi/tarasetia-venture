@@ -3,7 +3,8 @@
 import React from "react";
 import { Receipt } from "lucide-react";
 import { formatIDR } from "@/lib/pnl-utils";
-import { CartItem } from "../../types";
+import { CartItem } from "../types";
+
 
 interface OrderSummaryProps {
     cart: CartItem[];

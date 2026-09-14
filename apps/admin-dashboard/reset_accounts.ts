@@ -81,9 +81,10 @@ async function runReset() {
     console.log("Mencari semua koleksi users_master di setiap hotel...");
     const hotelsSnapshot = await adminDb.collection("hotels").get();
     let hotelCodes: string[] = [];
-    hotelsSnapshot.forEach((doc) => {
+    hotelsSnapshot.forEach((doc: any) => {
       hotelCodes.push(doc.id);
     });
+
 
     for (const code of hotelCodes) {
       const usersMasterPath = `hotels/${code}/users_master`;

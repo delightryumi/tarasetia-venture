@@ -10,7 +10,7 @@ const LeftPanel = React.memo(() => {
     return (
         <div className="panels-container">
             <div className="panel left-panel">
-                <img src="/channels/1.png" alt="Setara Venture Logo" className="hero-logo" />
+                <img src="/channels/1.png" alt="Tara Logo" className="hero-logo" />
                 <div className="panel-content">
                     <h3><span>Property</span> Management System</h3>
                     <p>
@@ -76,7 +76,7 @@ export const LoginSection = () => {
             <div className="forms-container">
                 {/* Top Logo */}
                 <div className="auth-header mobile-only-logo">
-                    <img src="/channels/1.png" alt="Setara Venture Logo" className="mobile-auth-logo" />
+                    <img src="/channels/1.png" alt="Tara Logo" className="mobile-auth-logo" />
                 </div>
 
                 {/* Form in the center */}
@@ -222,7 +222,19 @@ export const LoginSection = () => {
 
                 {/* Bottom Copyright */}
                 <div className="auth-footer">
-                    <p>© {new Date().getFullYear()} Setara Venture. All rights reserved.</p>
+                    <p>
+                        Powered by{" "}
+                        <a
+                            href="https://mytara.id"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold hover:underline"
+                            style={{ color: "inherit" }}
+                        >
+                            Tara
+                        </a>{" "}
+                        · © {new Date().getFullYear()} All rights reserved.
+                    </p>
                 </div>
             </div>
 

@@ -6,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { useAuth } from "@/context/AuthContext";
 import { YearlyBudgetDocument, DSRReportResult, createDefaultBudgetMonthData } from "@/lib/budget-types";
-import { computeDSRReport, TransactionEntry, PosOrder } from "@/lib/dsr-engine";
+import { computeDSRReport, TransactionEntry, PosOrder, CustomIncomeItem } from "@/lib/dsr-engine";
 
 export const useDSR = () => {
   const { activeHotelCode, activeHotelName } = useAuth();

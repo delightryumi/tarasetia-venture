@@ -25,4 +25,14 @@ export interface TransactionData {
   cancelReason?: string;
   tableNumber?: string;
   table?: string;
+  customerName?: string;
+  cashierName?: string;
+  subtotal?: number;
+  tax?: number;
+  total?: number;
+  cashAmount?: number;
+  changeAmount?: number;
+  notes?: string;
+  selectedAddons?: any[];
+  note?: string;
 }

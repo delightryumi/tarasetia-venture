@@ -18,6 +18,9 @@ function AddTransactionContent() {
     const {
         form,
         roomTypes,
+        ratePlans,
+        selectedRatePlanId,
+        onSelectRatePlan,
         saving,
         step,
         setStep,
@@ -67,6 +70,9 @@ function AddTransactionContent() {
                                     revenueType={revenueType}
                                     form={form}
                                     roomTypes={roomTypes}
+                                    ratePlans={ratePlans}
+                                    selectedRatePlanId={selectedRatePlanId}
+                                    onSelectRatePlan={onSelectRatePlan}
                                     updateForm={updateForm}
                                     updateRoom={updateRoom}
                                     updateNightRate={updateNightRate}
@@ -78,6 +84,7 @@ function AddTransactionContent() {
                                     getAvailableRoomNumbers={getAvailableRoomNumbers}
                                 />
                             </div>
+
 
                             <ReviewSidebar 
                                 revenueType={revenueType}

@@ -33,8 +33,9 @@ const stagger = {
 
 const rise = {
   hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.1, 0.25, 1] } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] } },
 };
+
 
 const MONTH_OPTIONS = [
   { key: "01", name: "Jan" },
@@ -67,14 +68,14 @@ export const PNLBudgetSection: React.FC = () => {
     reloadData,
   } = usePNLBudget();
 
-  const [zoomLevel, setZoomLevel] = useState<number>(0.85);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
 
   useEffect(() => {
     const saved = localStorage.getItem("crs_pnl_budget_zoom");
     if (saved) {
-      const parsed = parseFloat(saved);
-      if (!isNaN(parsed) && parsed >= 0.6 && parsed <= 1.2) {
-        setZoomLevel(parsed);
+      const z = parseFloat(saved);
+      if (!isNaN(z) && z >= 0.65 && z <= 1.2) {
+        setZoomLevel(z);
       }
     }
   }, []);
@@ -90,8 +91,8 @@ export const PNLBudgetSection: React.FC = () => {
   };
 
   // KPIs for the selected month
-  const mActual = actualMonthlyData[selectedMonth] || {};
-  const mBudget = budgetDoc?.months?.[selectedMonth]?.summaryPnl || {};
+  const mActual = actualMonthlyData[selectedMonth] || ({} as any);
+  const mBudget: any = budgetDoc?.months?.[selectedMonth]?.summaryPnl || {};
 
   const actRev = (mActual.roomRevenue || 0) + (mActual.fnbRevenue || 0) + (mActual.modRevenue || 0) + (mActual.otherIncome || 0);
   const budRev = mBudget.totalNetRevenue || 0;

@@ -34,6 +34,7 @@ import { BulkAlertModal } from "./BulkAlertModal";
 import { AddPaymentModal } from "./AddPaymentModal";
 import { PrintInvoice } from "./PrintInvoice";
 import { MergeAccessModal } from "./MergeAccessModal";
+import { ChannelManagerSection } from "@/components/sections/channel-manager/ChannelManagerSection";
 import styles from "./superadmin.module.css";
 
 export default function SuperadminPage() {
@@ -58,7 +59,7 @@ export default function SuperadminPage() {
   // ── UI state ──
   const [theme, setTheme] = useState<"dark" | "light" | "system">("system");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeMainTab, setActiveMainTab] = useState<"registry" | "billing">("registry");
+  const [activeMainTab, setActiveMainTab] = useState<"registry" | "billing" | "channel-manager">("registry");
 
   // ── Hotel form (add/edit) ──
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -115,6 +116,31 @@ export default function SuperadminPage() {
 
   // ── Print invoice ──
   const [activeInvoiceToPrint, setActiveInvoiceToPrint] = useState<any>(null);
+
+  // ── Tab URL parameter sync ──
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab === "channel-manager" || tab === "billing" || tab === "registry") {
+        setActiveMainTab(tab);
+      }
+    }
+  }, []);
+
+  const handleTabChange = (tab: "registry" | "billing" | "channel-manager") => {
+    setActiveMainTab(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (tab === "registry") {
+        url.searchParams.delete("tab");
+      } else {
+        url.searchParams.set("tab", tab);
+      }
+      window.history.replaceState(null, "", url.toString());
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   // ── Theme sync ──
   useEffect(() => {
@@ -567,59 +593,67 @@ export default function SuperadminPage() {
 
       {/* ── Main Page Content ── */}
       <div className={styles.page}>
-        <SuperadminPageHeader
-          error={error}
-          successMsg={successMsg}
-          onAddHotel={openAddModal}
-        />
-
-        <SystemCredentialsNotes />
-
-        <SuperadminTabs activeTab={activeMainTab} onChange={setActiveMainTab} />
-
-        {activeMainTab === "registry" ? (
-          <RegistryKpiCards totalHotels={totalHotels} activeHotels={activeHotels} overdueHotels={overdueHotels} />
-        ) : (
-          <BillingKpiCards totalRevenue={totalRevenue} outstandingAmount={outstandingAmount} overdueHotels={overdueHotels} />
-        )}
+        <SuperadminTabs activeTab={activeMainTab} onChange={handleTabChange} />
 
         {activeMainTab === "registry" && (
-          <RegistryTable
-            hotels={hotels}
-            onEdit={openEditModal}
-            onDelete={openDeleteConfirm}
-            onToggleActive={handleToggleActive}
-            onMergeAccess={(hotel) => setMergeAccessHotel(hotel)}
-          />
+          <>
+            <SuperadminPageHeader
+              error={error}
+              successMsg={successMsg}
+              onAddHotel={openAddModal}
+            />
+
+            <SystemCredentialsNotes />
+
+            <RegistryKpiCards totalHotels={totalHotels} activeHotels={activeHotels} overdueHotels={overdueHotels} />
+
+            <RegistryTable
+              hotels={hotels}
+              onEdit={openEditModal}
+              onDelete={openDeleteConfirm}
+              onToggleActive={handleToggleActive}
+              onMergeAccess={(hotel) => setMergeAccessHotel(hotel)}
+            />
+          </>
         )}
 
         {activeMainTab === "billing" && (
-          <BillingTable
-            hotels={hotels}
-            selectedHotelCodes={selectedHotelCodes}
-            setSelectedHotelCodes={setSelectedHotelCodes}
-            onToggleExpirationAlert={handleToggleExpirationAlert}
-            onToggleBillingAlert={handleToggleBillingAlert}
-            onManageInvoice={(hotel) => {
-              setSelectedHotelForBilling(hotel);
-              loadBillingRecords(hotel.hotelCode);
-              setTimeout(() => { document.getElementById("billing-history-section")?.scrollIntoView({ behavior: "smooth" }); }, 100);
-            }}
-            onOpenBulkAlert={() => { setBulkAlertMsg(""); setBulkAlertTarget(selectedHotelCodes.length > 0 ? "selected" : "all"); setIsBulkAlertModalOpen(true); }}
-            selectedHotelForBilling={selectedHotelForBilling}
-            setSelectedHotelForBilling={(h) => { setSelectedHotelForBilling(h); if (h) loadBillingRecords(h.hotelCode); else setBillingRecords([]); }}
-            billingRecords={billingRecords}
-            loadingBillingRecords={loadingBillingRecords}
-            onTogglePaymentStatus={handleTogglePaymentStatus}
-            onPrintInvoice={handlePrintInvoice}
-            onOpenAddPayment={() => {
-              setPaymentAmount(""); setPaymentPlan(selectedHotelForBilling?.billing?.plan || "basic");
-              setPaymentCycle(selectedHotelForBilling?.billing?.cycle || "monthly");
-              setPaymentPeriodStart(new Date().toISOString().split("T")[0]);
-              setPaymentPeriodEnd(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
-              setPaymentStatus("paid"); setIsAddPaymentOpen(true);
-            }}
-          />
+          <>
+            <BillingKpiCards totalRevenue={totalRevenue} outstandingAmount={outstandingAmount} overdueHotels={overdueHotels} />
+
+            <BillingTable
+              hotels={hotels}
+              selectedHotelCodes={selectedHotelCodes}
+              setSelectedHotelCodes={setSelectedHotelCodes}
+              onToggleExpirationAlert={handleToggleExpirationAlert}
+              onToggleBillingAlert={handleToggleBillingAlert}
+              onManageInvoice={(hotel) => {
+                setSelectedHotelForBilling(hotel);
+                loadBillingRecords(hotel.hotelCode);
+                setTimeout(() => { document.getElementById("billing-history-section")?.scrollIntoView({ behavior: "smooth" }); }, 100);
+              }}
+              onOpenBulkAlert={() => { setBulkAlertMsg(""); setBulkAlertTarget(selectedHotelCodes.length > 0 ? "selected" : "all"); setIsBulkAlertModalOpen(true); }}
+              selectedHotelForBilling={selectedHotelForBilling}
+              setSelectedHotelForBilling={(h) => { setSelectedHotelForBilling(h); if (h) loadBillingRecords(h.hotelCode); else setBillingRecords([]); }}
+              billingRecords={billingRecords}
+              loadingBillingRecords={loadingBillingRecords}
+              onTogglePaymentStatus={handleTogglePaymentStatus}
+              onPrintInvoice={handlePrintInvoice}
+              onOpenAddPayment={() => {
+                setPaymentAmount(""); setPaymentPlan(selectedHotelForBilling?.billing?.plan || "basic");
+                setPaymentCycle(selectedHotelForBilling?.billing?.cycle || "monthly");
+                setPaymentPeriodStart(new Date().toISOString().split("T")[0]);
+                setPaymentPeriodEnd(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
+                setPaymentStatus("paid"); setIsAddPaymentOpen(true);
+              }}
+            />
+          </>
+        )}
+
+        {activeMainTab === "channel-manager" && (
+          <div style={{ marginTop: "12px", width: "100%" }}>
+            <ChannelManagerSection />
+          </div>
         )}
 
         {/* ── Modals ── */}

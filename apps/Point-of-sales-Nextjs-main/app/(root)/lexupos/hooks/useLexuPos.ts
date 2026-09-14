@@ -634,6 +634,8 @@ export function useLexuPos() {
           discount,
           total: payableAmount,
           paymentMethod,
+          cashAmount: paymentMethod === 'cash' ? (parseFloat(cashAmount) || payableAmount) : undefined,
+          changeAmount: paymentMethod === 'cash' ? Math.max(0, (parseFloat(cashAmount) || payableAmount) - payableAmount) : undefined,
           customerName: customerName.trim() || 'Guest',
           cashierName: shiftCashierName,
           tableNumber: finalTableNumber,

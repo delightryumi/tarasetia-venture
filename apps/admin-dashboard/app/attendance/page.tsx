@@ -506,8 +506,10 @@ export default function AttendancePage() {
           </div>
 
           <div style={{ paddingBottom: '10px', paddingTop: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-            <span style={{ fontSize: 10, color: '#9ca3af', letterSpacing: 1, textTransform: 'lowercase', fontWeight: 600 }}>powered by</span>
-            <img src="/channels/1.png" alt="Setara Venture" style={{ height: 24, objectFit: 'contain', filter: 'grayscale(1) opacity(0.6)' }} />
+            <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textDecoration: 'none' }}>
+              <span style={{ fontSize: 10, color: '#9ca3af', letterSpacing: 1, textTransform: 'lowercase', fontWeight: 600 }}>powered by</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#d1d5db', letterSpacing: '0.05em' }}>Tara</span>
+            </a>
           </div>
         </div>
       </div>
@@ -671,10 +673,12 @@ export default function AttendancePage() {
           )}
         </main>
         
-        {/* Footer Setara Venture */}
+        {/* Footer Tara */}
         <div style={{ padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 'auto' }}>
-          <span style={{ fontSize: 10, color: '#9ca3af', letterSpacing: 1, textTransform: 'lowercase', fontWeight: 600 }}>powered by</span>
-          <img src="/channels/1.png" alt="Setara Venture" style={{ height: 24, objectFit: 'contain', filter: 'grayscale(1) opacity(0.6)' }} />
+          <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textDecoration: 'none' }}>
+            <span style={{ fontSize: 10, color: '#9ca3af', letterSpacing: 1, textTransform: 'lowercase', fontWeight: 600 }}>powered by</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#4b5563', letterSpacing: '0.05em' }}>Tara</span>
+          </a>
         </div>
 
         {/* Change PIN Modal */}

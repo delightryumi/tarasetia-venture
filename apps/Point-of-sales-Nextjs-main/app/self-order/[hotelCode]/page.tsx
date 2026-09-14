@@ -434,14 +434,21 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
 
       {/* 5. Powered by Tara Logo Footer */}
       <footer className="py-10 pb-28 sm:pb-24 flex flex-col items-center justify-center gap-2 mt-auto border-t border-[#c5a059]/15">
-        <span className="text-[10px] sm:text-[10.5px] uppercase font-bold tracking-[0.22em] text-[#8c6e33]/80 so-display-font">
-          Powered by
-        </span>
-        <img
-          src="/channels/1.png"
-          alt="Tara"
-          className="h-10 sm:h-11 object-contain opacity-90 hover:opacity-100 transition-opacity"
-        />
+        <a
+          href="https://mytara.id"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-col items-center justify-center gap-2 no-underline cursor-pointer group"
+        >
+          <span className="text-[10px] sm:text-[10.5px] uppercase font-bold tracking-[0.22em] text-[#8c6e33]/80 so-display-font group-hover:text-[#8c6e33] transition-colors">
+            Powered by
+          </span>
+          <img
+            src="/channels/1.png"
+            alt="Tara"
+            className="h-10 sm:h-11 object-contain opacity-90 group-hover:opacity-100 transition-opacity"
+          />
+        </a>
       </footer>
     </main>
   );

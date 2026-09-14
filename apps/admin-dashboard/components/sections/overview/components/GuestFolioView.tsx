@@ -98,9 +98,17 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
             {/* Section 3: Financial Summary Card */}
             {(() => {
                 const totalAmount = Number(guest.totalAmount || guest.amount || 0);
-                const payHotel = Number(guest.payHotel ?? guest.paidCash ?? 0);
-                const payTransfer = Number(guest.payTransfer ?? guest.paidTransfer ?? 0);
-                const totalPaid = payHotel + payTransfer;
+                const paidCash = Number(guest.paidCash || 0);
+                const paidEdc = Number(guest.paidEdc || 0);
+                const paidQris = Number(guest.paidQris || 0);
+                const paidTransfer = Number(guest.paidTransfer || 0);
+                const paidOta = Number(guest.paidOta || 0);
+
+                const hasGranular = (guest.paidCash !== undefined || guest.paidEdc !== undefined || guest.paidQris !== undefined || guest.paidTransfer !== undefined || guest.paidOta !== undefined);
+                const legacyPayHotel = !hasGranular ? Number(guest.payHotel || 0) : 0;
+                const legacyPayTransfer = !hasGranular ? Number(guest.payTransfer || 0) : 0;
+
+                const totalPaid = paidCash + paidEdc + paidQris + paidTransfer + paidOta + legacyPayHotel + legacyPayTransfer;
                 const remainingBalance = Math.max(0, totalAmount - totalPaid);
 
                 return (
@@ -118,23 +126,84 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                             </div>
                         </div>
 
-                        {/* Detailed Inline Payment Breakdown */}
+                        {/* Detailed Inline Payment Breakdown Sesuai DSR */}
                         <div style={{ marginTop: '12px', padding: '12px', border: '1px solid var(--f-hairline)', borderRadius: 'var(--f-radius-sm)', backgroundColor: 'var(--f-surface-soft)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 600 }}>Paid at Hotel (Cash/Transfer)</span>
-                                <span className="folio-mono" style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-ink)' }}>
-                                    Rp {payHotel.toLocaleString('id-ID')}
-                                </span>
+                            <div style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--f-muted)', letterSpacing: '0.05em', borderBottom: '1px solid var(--f-hairline)', paddingBottom: '4px' }}>
+                                Rincian Penerimaan Pembayaran (Settlement)
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 600 }}>Paid via OTA / Virtual</span>
-                                <span className="folio-mono" style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-ink)' }}>
-                                    Rp {payTransfer.toLocaleString('id-ID')}
-                                </span>
-                            </div>
+
+                            {paidCash > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 600 }}>💵 Cash / Tunai di FO</span>
+                                    <span className="folio-mono" style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-ink)' }}>
+                                        Rp {paidCash.toLocaleString('id-ID')}
+                                    </span>
+                                </div>
+                            )}
+
+                            {paidEdc > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 600 }}>💳 EDC BCA / Mandiri / Card</span>
+                                    <span className="folio-mono" style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-ink)' }}>
+                                        Rp {paidEdc.toLocaleString('id-ID')}
+                                    </span>
+                                </div>
+                            )}
+
+                            {paidQris > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 600 }}>📱 QRIS Payment di Hotel</span>
+                                    <span className="folio-mono" style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-ink)' }}>
+                                        Rp {paidQris.toLocaleString('id-ID')}
+                                    </span>
+                                </div>
+                            )}
+
+                            {paidTransfer > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 600 }}>🏦 Bank Transfer ke Rekening Hotel</span>
+                                    <span className="folio-mono" style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-ink)' }}>
+                                        Rp {paidTransfer.toLocaleString('id-ID')}
+                                    </span>
+                                </div>
+                            )}
+
+                            {paidOta > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 600 }}>🌐 OTA / Virtual Card / City Ledger</span>
+                                    <span className="folio-mono" style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-ink)' }}>
+                                        Rp {paidOta.toLocaleString('id-ID')}
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Legacy fallback */}
+                            {!hasGranular && legacyPayHotel > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 600 }}>Paid at Hotel (Legacy)</span>
+                                    <span className="folio-mono" style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-ink)' }}>
+                                        Rp {legacyPayHotel.toLocaleString('id-ID')}
+                                    </span>
+                                </div>
+                            )}
+                            {!hasGranular && legacyPayTransfer > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 600 }}>Paid via OTA / Virtual (Legacy)</span>
+                                    <span className="folio-mono" style={{ fontSize: '10px', fontWeight: 700, color: 'var(--f-ink)' }}>
+                                        Rp {legacyPayTransfer.toLocaleString('id-ID')}
+                                    </span>
+                                </div>
+                            )}
+
+                            {totalPaid === 0 && (
+                                <div style={{ fontSize: '9px', fontStyle: 'italic', color: 'var(--f-muted)', padding: '2px 0' }}>
+                                    Belum ada pembayaran yang diterima untuk folio ini (Rp 0).
+                                </div>
+                            )}
+
                             <div style={{ height: '1px', backgroundColor: 'var(--f-hairline)' }} />
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700 }}>Total Collected</span>
+                                <span className={styles.guestSubtext} style={{ fontSize: '9px', fontWeight: 700 }}>Total Collected (Terbayar)</span>
                                 <span className="folio-mono" style={{ fontSize: '10px', fontWeight: 800, color: 'var(--f-ink)' }}>
                                     Rp {totalPaid.toLocaleString('id-ID')}
                                 </span>

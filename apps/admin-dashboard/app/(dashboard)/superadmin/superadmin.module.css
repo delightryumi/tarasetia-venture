@@ -11,32 +11,32 @@
   --s-space-xxl: 48px;
 
   /* Radius Tokens */
-  --s-radius-sm: 6px;
-  --s-radius-md: 10px;
-  --s-radius-lg: 12px;
+  --s-radius-sm: 4px;
+  --s-radius-md: 6px;
+  --s-radius-lg: 8px;
   --s-radius-full: 9999px;
 
   /* Fonts */
   --s-font: var(--font-geist-sans), 'Inter', system-ui, sans-serif;
 
   /* Colors (Light Mode) */
-  --s-canvas: #ffffff;
-  --s-surface-card: #faf8f4;
-  --s-surface-soft: #f8fafc;
-  --s-hairline: rgba(141, 122, 82, 0.12);
-  --s-ink: #181d26;
-  --s-body: #333840;
-  --s-muted: #41454d;
+  --s-canvas: #f8fafc;
+  --s-surface-card: #ffffff;
+  --s-surface-soft: #f1f5f9;
+  --s-hairline: #e2e8f0;
+  --s-ink: #0f172a;
+  --s-body: #334155;
+  --s-muted: #64748b;
 
-  --s-primary-btn-bg: #181d26;
+  --s-primary-btn-bg: #1e3a2f;
   --s-primary-btn-text: #ffffff;
   
   --s-secondary-btn-bg: #ffffff;
-  --s-secondary-btn-text: #181d26;
-  --s-secondary-btn-border: #dddddd;
+  --s-secondary-btn-text: #0f172a;
+  --s-secondary-btn-border: #cbd5e1;
 
-  padding: var(--s-space-xl);
-  max-width: 1280px;
+  padding: 6px 20px 36px;
+  max-width: 1360px;
   margin: 0 auto;
   font-family: var(--s-font);
   color: var(--s-body);
@@ -628,31 +628,80 @@
 /* ── Tab Layout ── */
 .tabsContainer {
   display: flex;
-  gap: var(--s-space-xs);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-space-md);
   border-bottom: 1px solid var(--s-hairline);
   margin-bottom: var(--s-space-lg);
+  position: sticky;
+  top: 56px;
+  z-index: 40;
+  background: var(--s-canvas);
+  backdrop-filter: blur(12px);
+  padding: 8px 0;
+  flex-wrap: wrap;
+}
+
+.tabsGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--s-space-xs);
+  flex-wrap: wrap;
+}
+
+.tabsRightActions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-space-sm);
+}
+
+.moduleSwitchBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--s-radius-md);
+  background: var(--s-surface-soft);
+  border: 1px solid var(--s-hairline);
+  color: var(--s-body);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.moduleSwitchBtn:hover {
+  background: var(--s-primary-btn-bg);
+  color: var(--s-primary-btn-text);
+  border-color: var(--s-primary-btn-bg);
 }
 
 .tabBtn {
   background: none;
   border: none;
-  padding: var(--s-space-sm) var(--s-space-lg);
-  font-size: 14px;
+  padding: 8px 16px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--s-muted);
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--s-radius-sm) var(--s-radius-sm) 0 0;
 }
 
 .tabBtn:hover {
   color: var(--s-ink);
+  background: var(--s-surface-soft);
 }
 
 .tabBtnActive {
   color: var(--s-ink);
   border-bottom-color: var(--s-ink);
-  font-weight: 600;
+  font-weight: 700;
+  background: var(--s-surface-soft);
 }
 
 /* ── Central Billing Table & Controls ── */
@@ -859,7 +908,7 @@
 
 /* Spacer to push content below the fixed header */
 .headerSpacer {
-  height: 48px;
+  height: 44px;
   flex-shrink: 0;
 }
 
@@ -1161,42 +1210,6 @@
   height: 16px;
   accent-color: #c5a880;
   cursor: pointer;
-}
-
-/* -- Tabs & Utilities -- */
-.tabsContainer {
-  display: flex;
-  gap: var(--s-space-sm);
-  margin-bottom: var(--s-space-xl);
-  border-bottom: 1px solid var(--s-hairline);
-  padding-bottom: var(--s-space-xs);
-  overflow-x: auto;
-}
-
-.tabBtn {
-  padding: var(--s-space-sm) var(--s-space-md);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--s-muted);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.tabBtn:hover {
-  color: var(--s-ink);
-}
-
-.tabBtnActive {
-  color: var(--s-ink);
-  border-bottom-color: var(--s-ink);
-}
-
-.headerSpacer {
-  height: 64px;
 }
 
 

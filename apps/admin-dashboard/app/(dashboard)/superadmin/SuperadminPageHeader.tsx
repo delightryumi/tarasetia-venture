@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Building2, Plus, ShieldAlert, CheckCircle } from "lucide-react";
-import styles from "./superadmin.module.css";
+import styles from "./SuperadminPageHeader.module.css";
 
 interface SuperadminPageHeaderProps {
   error: string;
@@ -19,17 +19,17 @@ export const SuperadminPageHeader: React.FC<SuperadminPageHeaderProps> = ({
     <header className={styles.header}>
       <div className={styles.headerLeft}>
         <h1 className={styles.title}>
-          <Building2 size={32} />
+          <Building2 size={20} className={styles.titleIcon} />
           Superadmin CRS Portal
         </h1>
         <p className={styles.subtitle}>
-          Registry terpusat, pengawasan billing, dan aktivasi sistem partner.
+          Registry terpusat properti hotel partner, pengawasan billing, dan aktivasi sistem PMS &amp; OTA.
         </p>
       </div>
-      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+      <div className={styles.headerRight}>
         <button onClick={onAddHotel} className={styles.btnPrimary}>
-          <Plus size={16} />
-          Registrasi Partner Baru
+          <Plus size={15} />
+          <span>Registrasi Partner Baru</span>
         </button>
       </div>
     </header>

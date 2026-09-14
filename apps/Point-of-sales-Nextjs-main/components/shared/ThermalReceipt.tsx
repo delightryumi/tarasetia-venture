@@ -48,6 +48,16 @@ export interface ThermalReceiptProps {
   onPrintModeChange?: (mode: 'all' | 'kitchen' | 'bar') => void;
 }
 
+export function formatPaymentMethod(method?: string): string {
+  if (!method) return 'TUNAI';
+  const m = method.toLowerCase().trim();
+  if (m === 'cash' || m === 'tunai') return 'TUNAI';
+  if (m === 'qris') return 'QRIS';
+  if (m === 'card' || m === 'kartu' || m === 'debit' || m === 'credit') return 'KARTU';
+  if (m === 'compliment') return 'COMPLIMENT';
+  return method.toUpperCase();
+}
+
 export default function ThermalReceipt({
   shopInfo,
   transactionInfo,
@@ -356,11 +366,9 @@ export default function ThermalReceipt({
               <span className="font-bold uppercase">
                 {transactionInfo.status === 'UNPAID' ? (
                   <span className="text-red-600 font-extrabold">BELUM BAYAR (UNPAID)</span>
-                ) : transactionInfo.paymentMethod === 'cash' ? 'TUNAI'
-                  : transactionInfo.paymentMethod === 'qris' ? 'QRIS'
-                  : transactionInfo.paymentMethod === 'card' ? 'KARTU'
-                  : transactionInfo.paymentMethod === 'compliment' ? 'COMPLIMENT'
-                  : transactionInfo.paymentMethod}
+                ) : (
+                  formatPaymentMethod(transactionInfo.paymentMethod)
+                )}
               </span>
             </div>
             {transactionInfo.status === 'UNPAID' && (
@@ -593,11 +601,7 @@ export default function ThermalReceipt({
                 <div className="flex justify-between pt-1 mt-1 text-neutral-800">
                   <span>Tipe Pembayaran:</span>
                   <span className="font-bold uppercase">
-                    {transactionInfo.paymentMethod === 'cash' ? 'TUNAI' : 
-                     transactionInfo.paymentMethod === 'qris' ? 'QRIS' : 
-                     transactionInfo.paymentMethod === 'card' ? 'KARTU' : 
-                     transactionInfo.paymentMethod === 'compliment' ? 'COMPLIMENT' : 
-                     transactionInfo.paymentMethod}
+                    {formatPaymentMethod(transactionInfo.paymentMethod)}
                   </span>
                 </div>
               )
@@ -639,8 +643,10 @@ export default function ThermalReceipt({
 
           {/* Powered By Footer */}
           <div className="flex flex-col items-center justify-center mt-4 pt-2 border-t border-dotted border-gray-300">
-            <span className="text-[7px] text-gray-400 lowercase tracking-widest font-black mb-1.5">powered by</span>
-            <img src="/channels/1.png" alt="Setara Venture" className="h-4 w-auto grayscale opacity-90 object-contain powered-by-logo" />
+            <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center no-underline text-inherit cursor-pointer">
+              <span className="text-[7px] text-gray-400 lowercase tracking-widest font-black mb-1">powered by</span>
+              <img src="/channels/1.png" alt="My Tara" className="h-6 w-auto object-contain" />
+            </a>
           </div>
         </>
       )}

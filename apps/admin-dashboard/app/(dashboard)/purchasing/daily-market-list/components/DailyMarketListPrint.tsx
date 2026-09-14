@@ -199,7 +199,7 @@ export default function DailyMarketListPrint({ selectedDml }: DailyMarketListPri
 
       {/* ── Footer ── */}
       <div className={s.printFooter}>
-        <div>Dicetak melalui Sistem CRS Setara Venture · {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+        <div>Powered by <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none', fontWeight: 600 }}>Tara</a> · {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
         <div>Dokumen Operasional Pengadaan F&B Resmi</div>
       </div>
     </div>

@@ -49,10 +49,15 @@ export const WorkspaceFooter: React.FC<WorkspaceFooterProps> = () => {
       </div>
 
       {/* Right side: Copyright */}
-      <div className="text-[10px] text-slate-500 dark:text-zinc-400 flex items-center gap-1 flex-shrink-0">
+      <a
+        href="https://mytara.id"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-[10px] text-slate-500 dark:text-zinc-400 flex items-center gap-1 flex-shrink-0 hover:text-amber-600 transition-colors cursor-pointer group"
+      >
         <span className="font-sans font-light text-slate-400 dark:text-zinc-500 hidden sm:inline">Powered by</span>
-        <span className="font-serif italic font-light text-slate-700 dark:text-zinc-300">© 2026 Setara Venture.</span>
-      </div>
+        <span className="font-serif italic font-semibold text-slate-700 dark:text-zinc-300 group-hover:underline">Tara</span>
+      </a>
     </footer>
   );
 };

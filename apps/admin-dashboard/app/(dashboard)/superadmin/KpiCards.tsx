@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { Building2, CheckCircle, ShieldAlert, Layers } from "lucide-react";
-import styles from "./superadmin.module.css";
+import { Building2, CheckCircle, ShieldAlert, CreditCard } from "lucide-react";
+import styles from "./KpiCards.module.css";
 
 interface RegistryKpiProps {
   totalHotels: number;
@@ -20,54 +20,54 @@ export const RegistryKpiCards: React.FC<RegistryKpiProps> = ({ totalHotels, acti
   <section className={styles.kpiGrid}>
     <div className={styles.kpiCard}>
       <div>
-        <div className={styles.kpiLabel}>Total Partner</div>
+        <div className={styles.kpiLabel}>Total Properti Partner</div>
         <div className={styles.kpiValue}>{totalHotels}</div>
       </div>
-      <div className={styles.kpiIcon}><Building2 size={20} /></div>
+      <div className={styles.kpiIcon}><Building2 size={16} /></div>
     </div>
-    <div className={styles.kpiCard}>
+    <div className={`${styles.kpiCard} ${styles.kpiCardActive}`}>
       <div>
         <div className={styles.kpiLabel}>Hotel Aktif</div>
-        <div className={styles.kpiValue} style={{ color: "#15803d" }}>{activeHotels}</div>
+        <div className={styles.kpiValue} style={{ color: "#16a34a" }}>{activeHotels}</div>
       </div>
-      <div className={styles.kpiIcon}><CheckCircle size={20} style={{ color: "#15803d" }} /></div>
+      <div className={`${styles.kpiIcon} ${styles.kpiIconActive}`}><CheckCircle size={16} /></div>
     </div>
-    <div className={styles.kpiCard}>
+    <div className={`${styles.kpiCard} ${styles.kpiCardOverdue}`}>
       <div>
         <div className={styles.kpiLabel}>Billing Overdue</div>
-        <div className={styles.kpiValue} style={{ color: "#b91c1c" }}>{overdueHotels}</div>
+        <div className={styles.kpiValue} style={{ color: "#dc2626" }}>{overdueHotels}</div>
       </div>
-      <div className={styles.kpiIcon}><ShieldAlert size={20} style={{ color: "#b91c1c" }} /></div>
+      <div className={`${styles.kpiIcon} ${styles.kpiIconOverdue}`}><ShieldAlert size={16} /></div>
     </div>
   </section>
 );
 
 export const BillingKpiCards: React.FC<BillingKpiProps> = ({ totalRevenue, outstandingAmount, overdueHotels }) => (
   <section className={styles.kpiGrid}>
-    <div className={styles.kpiCard}>
+    <div className={`${styles.kpiCard} ${styles.kpiCardRevenue}`}>
       <div>
-        <div className={styles.kpiLabel}>Total Pendapatan</div>
-        <div className={styles.kpiValue} style={{ color: "#15803d" }}>
+        <div className={styles.kpiLabel}>Total Pendapatan Terbayar</div>
+        <div className={styles.kpiValue} style={{ color: "#16a34a" }}>
           Rp {totalRevenue.toLocaleString("id-ID")}
         </div>
       </div>
-      <div className={styles.kpiIcon}><CheckCircle size={20} style={{ color: "#15803d" }} /></div>
+      <div className={`${styles.kpiIcon} ${styles.kpiIconActive}`}><CheckCircle size={16} /></div>
     </div>
-    <div className={styles.kpiCard}>
+    <div className={`${styles.kpiCard} ${styles.kpiCardOutstanding}`}>
       <div>
         <div className={styles.kpiLabel}>Piutang Belum Lunas</div>
-        <div className={styles.kpiValue} style={{ color: "#d9a441" }}>
+        <div className={styles.kpiValue} style={{ color: "#d97706" }}>
           Rp {outstandingAmount.toLocaleString("id-ID")}
         </div>
       </div>
-      <div className={styles.kpiIcon}><Layers size={20} style={{ color: "#d9a441" }} /></div>
+      <div className={`${styles.kpiIcon} ${styles.kpiIconOutstanding}`}><CreditCard size={16} /></div>
     </div>
-    <div className={styles.kpiCard}>
+    <div className={`${styles.kpiCard} ${styles.kpiCardOverdue}`}>
       <div>
-        <div className={styles.kpiLabel}>Billing Overdue</div>
-        <div className={styles.kpiValue} style={{ color: "#b91c1c" }}>{overdueHotels}</div>
+        <div className={styles.kpiLabel}>Properti Overdue</div>
+        <div className={styles.kpiValue} style={{ color: "#dc2626" }}>{overdueHotels}</div>
       </div>
-      <div className={styles.kpiIcon}><ShieldAlert size={20} style={{ color: "#b91c1c" }} /></div>
+      <div className={`${styles.kpiIcon} ${styles.kpiIconOverdue}`}><ShieldAlert size={16} /></div>
     </div>
   </section>
 );

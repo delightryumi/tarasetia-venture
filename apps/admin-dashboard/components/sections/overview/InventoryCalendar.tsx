@@ -628,13 +628,13 @@ export function InventoryCalendar({
                                                             )}
                                                             {/* Housekeeping Icons */}
                                                             {booking.roomStatus?.toLowerCase() === 'dirty' && (
-                                                                <Broom size={16} weight="fill" color="#fcd34d" style={{ marginLeft: '4px', flexShrink: 0 }} title="Dirty Room" />
+                                                                <span title="Dirty Room" style={{ display: 'inline-flex' }}><Broom size={16} weight="fill" color="#fcd34d" style={{ marginLeft: '4px', flexShrink: 0 }} /></span>
                                                             )}
                                                             {booking.roomStatus?.toLowerCase() === 'maintenance' && (
-                                                                <Wrench size={16} weight="fill" color="#fca5a5" style={{ marginLeft: '4px', flexShrink: 0 }} title="Maintenance" />
+                                                                <span title="Maintenance" style={{ display: 'inline-flex' }}><Wrench size={16} weight="fill" color="#fca5a5" style={{ marginLeft: '4px', flexShrink: 0 }} /></span>
                                                             )}
                                                             {booking.roomStatus?.toLowerCase() === 'clean' && (
-                                                                <Sparkle size={16} weight="fill" color="#ffffff" style={{ marginLeft: '4px', flexShrink: 0 }} title="Clean" />
+                                                                <span title="Clean" style={{ display: 'inline-flex' }}><Sparkle size={16} weight="fill" color="#ffffff" style={{ marginLeft: '4px', flexShrink: 0 }} /></span>
                                                             )}
 
                                                             <span className="gantt-booking-name">{booking.guestName || "Guest"}</span>

@@ -169,7 +169,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 setActiveModule("hrd");
                 return;
             }
-            if (pathname.startsWith("/front-office") || pathname === "/digital-checkin" || pathname === "/invoice") {
+            if (
+                pathname.startsWith("/front-office") ||
+                pathname === "/digital-checkin" ||
+                pathname === "/invoice" ||
+                pathname === "/rate-inventory" ||
+                pathname.startsWith("/rate-inventory")
+            ) {
                 localStorage.setItem("active_module", "front-office");
                 setActiveModule("front-office");
                 return;
@@ -196,7 +202,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 setActiveModule("food-beverage");
                 return;
             }
-            const cpanelPaths = ['/logo', '/hero', '/room-type', '/about', '/gallery', '/footer', '/attractions', '/promo', '/packages', '/seo', '/users'];
+            const cpanelPaths = ['/logo', '/hero', '/room-type', '/about', '/gallery', '/footer', '/attractions', '/promo', '/packages', '/seo', '/channel-manager', '/users', '/superadmin'];
             if (pathname.startsWith('/cpanel') || cpanelPaths.some(p => pathname.startsWith(p))) {
                 localStorage.setItem("active_module", "cpanel");
                 setActiveModule("cpanel");
@@ -241,11 +247,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         let items = allNavItems;
         if (activeModule === "front-office") {
             items = allNavItems.filter((item) =>
-                ["overview", "digital-checkin", "forecast", "inventory-control", "invoice", "purchase-order"].includes(item.id)
+                ["overview", "digital-checkin", "forecast", "rate-inventory", "invoice", "purchase-order"].includes(item.id)
             );
         } else if (activeModule === "housekeeping") {
             items = allNavItems.filter((item) =>
-                ["overview", "forecast", "inventory-control", "purchase-order"].includes(item.id)
+                ["overview", "forecast", "purchase-order"].includes(item.id)
             );
         } else if (activeModule === "accounting") {
             items = allNavItems.filter((item) =>
@@ -288,6 +294,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             "promo",
                             "packages",
                             "seo",
+                            "channel-manager",
                             "superadmin",
                         ].includes(item.id)
                     );
@@ -324,11 +331,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ["room-type", "attractions", "packages"].includes(item.id)
             );
             const marketingItems = navItems.filter((item) =>
-                ["promo", "seo"].includes(item.id)
+                ["promo", "seo", "channel-manager"].includes(item.id)
             );
             const systemItems = navItems.filter((item) =>
                 ["superadmin", "users"].includes(item.id)
             );
+
 
             if (layoutItems.length > 0) groups.push({ title: "Tampilan", items: layoutItems });
             if (facilityItems.length > 0) groups.push({ title: "Fasilitas", items: facilityItems });

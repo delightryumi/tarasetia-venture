@@ -200,11 +200,11 @@ export function processPnLData(
 
   const revenueHotelCollect = transactions
     .filter(isAccommodation)
-    .reduce((sum, t) => sum + (Number(t.paidCash) || 0), 0);
+    .reduce((sum, t) => sum + (Number(t.paidCash) || 0) + (Number(t.paidEdc) || 0) + (Number(t.paidQris) || 0) + (Number((t as any).paidTransfer) || 0), 0);
 
   const revenueNexuraCollect = transactions
     .filter(isAccommodation)
-    .reduce((sum, t) => sum + (Number(t.paidTransfer) || 0), 0);
+    .reduce((sum, t) => sum + (Number((t as any).paidOta) || Number(t.paidTransfer) || 0), 0);
 
   const ledgerOtherIncome = transactions
     .filter(isFOOtherIncome)

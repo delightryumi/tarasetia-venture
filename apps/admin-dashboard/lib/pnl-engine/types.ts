@@ -12,6 +12,9 @@ export interface ExtendedTransaction {
   amount: number;
   paidCash: number;
   paidTransfer: number;
+  paidEdc?: number;
+  paidQris?: number;
+  paidOta?: number;
   feePercentage: number;
   status: string;
   channel: string;

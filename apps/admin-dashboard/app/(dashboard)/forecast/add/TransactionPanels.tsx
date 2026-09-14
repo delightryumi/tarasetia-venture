@@ -26,6 +26,7 @@ import {
     SectionTitle,
     ChannelSelect,
     RoomTypeSelect,
+    RatePlanSelect,
     OtherIncomeTypeSelect,
     TerminalInput,
     TypeCard,
@@ -116,6 +117,9 @@ interface TransactionEntryFormProps {
     revenueType: 'room' | 'other';
     form: any;
     roomTypes: any[];
+    ratePlans?: any[];
+    selectedRatePlanId?: string;
+    onSelectRatePlan?: (ratePlanId: string) => void;
     updateForm: (field: string, value: any) => void;
     updateRoom: (idx: number, field: string, value: any) => void;
     updateNightRate: (idx: number, rate: any) => void;
@@ -128,6 +132,9 @@ export function TransactionEntryForm({
     revenueType,
     form,
     roomTypes,
+    ratePlans = [],
+    selectedRatePlanId = "",
+    onSelectRatePlan = () => {},
     updateForm,
     updateRoom,
     updateNightRate,
@@ -140,6 +147,9 @@ export function TransactionEntryForm({
     const endD = form.checkOut ? new Date(form.checkOut) : null;
     const nights = (startD && endD && endD > startD) ? Math.ceil((endD.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24)) : 1;
     const availableRooms = getAvailableRoomNumbers(form.rooms[0].roomTypeId || "");
+
+    const currentRoomTypeId = form.rooms[0]?.roomTypeId;
+    const filteredRatePlans = ratePlans.filter((rp: any) => !currentRoomTypeId || rp.roomTypeId === currentRoomTypeId || !rp.roomTypeId);
 
     return (
         <div className={styles.card}>
@@ -271,7 +281,7 @@ export function TransactionEntryForm({
                             </div>
                         </div>
 
-                        <SectionTitle number="03" label="Kamar & Saluran Pemesanan (OTA / Channel)" />
+                        <SectionTitle number="03" label="Kamar, Paket Harga (Rate Plan) & Saluran" />
                         <div className={styles.formGrid} style={{ rowGap: '12px' }}>
                             <div className={styles.formGroup}>
                                 <label className={styles.inputLabel}>Tipe Kamar (Room Type)</label>
@@ -282,6 +292,14 @@ export function TransactionEntryForm({
                                         updateRoom(0, "roomTypeId", val);
                                         updateRoom(0, "roomNumber", ""); // reset room number when type changes
                                     }}
+                                />
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label className={styles.inputLabel}>Paket Harga (Rate Plan / Channex)</label>
+                                <RatePlanSelect 
+                                    value={selectedRatePlanId || form.rateCode}
+                                    options={filteredRatePlans}
+                                    onChange={(val: string) => onSelectRatePlan(val)}
                                 />
                             </div>
                             <div className={styles.formGroup}>
@@ -299,13 +317,6 @@ export function TransactionEntryForm({
                                     onChange={(val: string) => updateForm("channel", val)}
                                 />
                             </div>
-                            <TerminalInput 
-                                label="Kode Harga (Rate Code)"
-                                value={form.rateCode}
-                                onChange={(val: string) => updateForm("rateCode", val)}
-                                placeholder="-"
-                                icon={FileText}
-                            />
                             <TerminalInput 
                                 label="Upgrade Kamar Dari (From)"
                                 value={form.upgradeFrom}
@@ -339,7 +350,8 @@ export function TransactionEntryForm({
                             })}
                         </div>
 
-                        <SectionTitle number="04" label="Rincian Pembayaran & Pendapatan Bersih" />
+
+                        <SectionTitle number="04" label="Rincian Pembayaran & Settlement (Sesuai DSR)" />
                         <div className={styles.formGrid} style={{ rowGap: '12px' }}>
                             <div className={styles.colSpan2} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--f-surface)', border: '1px solid var(--f-hairline)', borderRadius: '8px' }}>
                                 <input 
@@ -368,22 +380,224 @@ export function TransactionEntryForm({
 
                             {!form.isCompliment && (
                                 <>
+                                    {/* Quick 1-Click Settlement Shortcuts */}
+                                    <div className={styles.colSpan2} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px 12px', backgroundColor: 'var(--f-surface-soft, rgba(0,0,0,0.02))', borderRadius: '8px', border: '1px solid var(--f-hairline)' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--f-muted)' }}>
+                                                ⚡ GANTI / SET METODE PAYMENT (100%):
+                                            </span>
+                                            {(() => {
+                                                const activeQuickMethod = 
+                                                    (Number(form.paidCash || 0) > 0 && Number(form.paidEdc || 0) === 0 && Number(form.paidQris || 0) === 0 && Number(form.paidTransfer || 0) === 0 && Number(form.paidOta || 0) === 0) ? "cash" :
+                                                    (Number(form.paidEdc || 0) > 0 && Number(form.paidCash || 0) === 0 && Number(form.paidQris || 0) === 0 && Number(form.paidTransfer || 0) === 0 && Number(form.paidOta || 0) === 0) ? "edc" :
+                                                    (Number(form.paidQris || 0) > 0 && Number(form.paidCash || 0) === 0 && Number(form.paidEdc || 0) === 0 && Number(form.paidTransfer || 0) === 0 && Number(form.paidOta || 0) === 0) ? "qris" :
+                                                    (Number(form.paidTransfer || 0) > 0 && Number(form.paidCash || 0) === 0 && Number(form.paidEdc || 0) === 0 && Number(form.paidQris || 0) === 0 && Number(form.paidOta || 0) === 0) ? "transfer" :
+                                                    (Number(form.paidOta || 0) > 0 && Number(form.paidCash || 0) === 0 && Number(form.paidEdc || 0) === 0 && Number(form.paidQris || 0) === 0 && Number(form.paidTransfer || 0) === 0) ? "ota" : null;
+                                                return activeQuickMethod ? (
+                                                    <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-sage, #16a34a)', backgroundColor: 'rgba(22, 163, 74, 0.12)', padding: '2px 6px', borderRadius: '4px' }}>
+                                                        ✓ AKTIF: {activeQuickMethod.toUpperCase()}
+                                                    </span>
+                                                ) : null;
+                                            })()}
+                                        </div>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    updateForm("paidCash", totalGross);
+                                                    updateForm("paidEdc", 0);
+                                                    updateForm("paidQris", 0);
+                                                    updateForm("paidTransfer", 0);
+                                                    updateForm("paidOta", 0);
+                                                    updateForm("payHotel", totalGross);
+                                                    updateForm("payTransfer", 0);
+                                                }}
+                                                style={{
+                                                    fontSize: '10px',
+                                                    fontWeight: 700,
+                                                    padding: '6px 12px',
+                                                    borderRadius: '6px',
+                                                    backgroundColor: (Number(form.paidCash || 0) === totalGross && totalGross > 0) ? '#16a34a' : 'var(--f-surface)',
+                                                    color: (Number(form.paidCash || 0) === totalGross && totalGross > 0) ? '#ffffff' : 'var(--f-body)',
+                                                    border: (Number(form.paidCash || 0) === totalGross && totalGross > 0) ? '1px solid #16a34a' : '1px solid var(--f-hairline)',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.15s ease',
+                                                    boxShadow: (Number(form.paidCash || 0) === totalGross && totalGross > 0) ? '0 2px 4px rgba(22, 163, 74, 0.2)' : 'none'
+                                                }}
+                                            >
+                                                💵 CASH FO
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    updateForm("paidCash", 0);
+                                                    updateForm("paidEdc", totalGross);
+                                                    updateForm("paidQris", 0);
+                                                    updateForm("paidTransfer", 0);
+                                                    updateForm("paidOta", 0);
+                                                    updateForm("payHotel", totalGross);
+                                                    updateForm("payTransfer", 0);
+                                                }}
+                                                style={{
+                                                    fontSize: '10px',
+                                                    fontWeight: 700,
+                                                    padding: '6px 12px',
+                                                    borderRadius: '6px',
+                                                    backgroundColor: (Number(form.paidEdc || 0) === totalGross && totalGross > 0) ? '#2563eb' : 'var(--f-surface)',
+                                                    color: (Number(form.paidEdc || 0) === totalGross && totalGross > 0) ? '#ffffff' : 'var(--f-body)',
+                                                    border: (Number(form.paidEdc || 0) === totalGross && totalGross > 0) ? '1px solid #2563eb' : '1px solid var(--f-hairline)',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.15s ease',
+                                                    boxShadow: (Number(form.paidEdc || 0) === totalGross && totalGross > 0) ? '0 2px 4px rgba(37, 99, 235, 0.2)' : 'none'
+                                                }}
+                                            >
+                                                💳 EDC CARD
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    updateForm("paidCash", 0);
+                                                    updateForm("paidEdc", 0);
+                                                    updateForm("paidQris", totalGross);
+                                                    updateForm("paidTransfer", 0);
+                                                    updateForm("paidOta", 0);
+                                                    updateForm("payHotel", totalGross);
+                                                    updateForm("payTransfer", 0);
+                                                }}
+                                                style={{
+                                                    fontSize: '10px',
+                                                    fontWeight: 700,
+                                                    padding: '6px 12px',
+                                                    borderRadius: '6px',
+                                                    backgroundColor: (Number(form.paidQris || 0) === totalGross && totalGross > 0) ? '#9333ea' : 'var(--f-surface)',
+                                                    color: (Number(form.paidQris || 0) === totalGross && totalGross > 0) ? '#ffffff' : 'var(--f-body)',
+                                                    border: (Number(form.paidQris || 0) === totalGross && totalGross > 0) ? '1px solid #9333ea' : '1px solid var(--f-hairline)',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.15s ease',
+                                                    boxShadow: (Number(form.paidQris || 0) === totalGross && totalGross > 0) ? '0 2px 4px rgba(147, 51, 234, 0.2)' : 'none'
+                                                }}
+                                            >
+                                                📱 QRIS
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    updateForm("paidCash", 0);
+                                                    updateForm("paidEdc", 0);
+                                                    updateForm("paidQris", 0);
+                                                    updateForm("paidTransfer", totalGross);
+                                                    updateForm("paidOta", 0);
+                                                    updateForm("payHotel", totalGross);
+                                                    updateForm("payTransfer", totalGross);
+                                                }}
+                                                style={{
+                                                    fontSize: '10px',
+                                                    fontWeight: 700,
+                                                    padding: '6px 12px',
+                                                    borderRadius: '6px',
+                                                    backgroundColor: (Number(form.paidTransfer || 0) === totalGross && totalGross > 0) ? '#0284c7' : 'var(--f-surface)',
+                                                    color: (Number(form.paidTransfer || 0) === totalGross && totalGross > 0) ? '#ffffff' : 'var(--f-body)',
+                                                    border: (Number(form.paidTransfer || 0) === totalGross && totalGross > 0) ? '1px solid #0284c7' : '1px solid var(--f-hairline)',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.15s ease',
+                                                    boxShadow: (Number(form.paidTransfer || 0) === totalGross && totalGross > 0) ? '0 2px 4px rgba(2, 132, 199, 0.2)' : 'none'
+                                                }}
+                                            >
+                                                🏦 BANK TF
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    updateForm("paidCash", 0);
+                                                    updateForm("paidEdc", 0);
+                                                    updateForm("paidQris", 0);
+                                                    updateForm("paidTransfer", 0);
+                                                    updateForm("paidOta", totalGross);
+                                                    updateForm("payHotel", 0);
+                                                    updateForm("payTransfer", totalGross);
+                                                }}
+                                                style={{
+                                                    fontSize: '10px',
+                                                    fontWeight: 700,
+                                                    padding: '6px 12px',
+                                                    borderRadius: '6px',
+                                                    backgroundColor: (Number(form.paidOta || 0) === totalGross && totalGross > 0) ? '#d97706' : 'var(--f-surface)',
+                                                    color: (Number(form.paidOta || 0) === totalGross && totalGross > 0) ? '#ffffff' : 'var(--f-body)',
+                                                    border: (Number(form.paidOta || 0) === totalGross && totalGross > 0) ? '1px solid #d97706' : '1px solid var(--f-hairline)',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.15s ease',
+                                                    boxShadow: (Number(form.paidOta || 0) === totalGross && totalGross > 0) ? '0 2px 4px rgba(217, 119, 6, 0.2)' : 'none'
+                                                }}
+                                            >
+                                                🌐 OTA VIRTUAL
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Granular Settlement Inputs */}
                                     <TerminalInput 
-                                        label="Pembayaran Cash di Hotel (Pay at Hotel)"
-                                        value={form.payHotel}
-                                        onChange={(val: string) => updateForm("payHotel", Number(val))}
+                                        label="💵 Cash di Hotel (Tunai FO)"
+                                        value={form.paidCash}
+                                        onChange={(val: string) => {
+                                            const num = Number(val) || 0;
+                                            updateForm("paidCash", num);
+                                            updateForm("payHotel", num + Number(form.paidEdc || 0) + Number(form.paidQris || 0) + Number(form.paidTransfer || 0));
+                                        }}
                                         placeholder="0"
                                         type="number"
                                         isAmount={true}
                                     />
                                     <TerminalInput 
-                                        label="Pembayaran Virtual / OTA (Debit, QRIS, dsb.)"
-                                        value={form.payTransfer}
-                                        onChange={(val: string) => updateForm("payTransfer", Number(val))}
+                                        label="💳 EDC BCA / Mandiri / Card di Hotel"
+                                        value={form.paidEdc}
+                                        onChange={(val: string) => {
+                                            const num = Number(val) || 0;
+                                            updateForm("paidEdc", num);
+                                            updateForm("payHotel", Number(form.paidCash || 0) + num + Number(form.paidQris || 0) + Number(form.paidTransfer || 0));
+                                        }}
                                         placeholder="0"
                                         type="number"
                                         isAmount={true}
                                     />
+                                    <TerminalInput 
+                                        label="📱 QRIS Payment di Hotel"
+                                        value={form.paidQris}
+                                        onChange={(val: string) => {
+                                            const num = Number(val) || 0;
+                                            updateForm("paidQris", num);
+                                            updateForm("payHotel", Number(form.paidCash || 0) + Number(form.paidEdc || 0) + num + Number(form.paidTransfer || 0));
+                                        }}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                    <TerminalInput 
+                                        label="🏦 Bank Transfer ke Rekening Hotel"
+                                        value={form.paidTransfer}
+                                        onChange={(val: string) => {
+                                            const num = Number(val) || 0;
+                                            updateForm("paidTransfer", num);
+                                            updateForm("payHotel", Number(form.paidCash || 0) + Number(form.paidEdc || 0) + Number(form.paidQris || 0) + num);
+                                            updateForm("payTransfer", num + Number(form.paidOta || 0));
+                                        }}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                    <div className={styles.colSpan2}>
+                                        <TerminalInput 
+                                            label="🌐 OTA Virtual Card / City Ledger (Channel Collect)"
+                                            value={form.paidOta}
+                                            onChange={(val: string) => {
+                                                const num = Number(val) || 0;
+                                                updateForm("paidOta", num);
+                                                updateForm("payTransfer", num + Number(form.paidTransfer || 0));
+                                            }}
+                                            placeholder="0"
+                                            type="number"
+                                            isAmount={true}
+                                        />
+                                    </div>
                                 </>
                             )}
                         </div>
@@ -418,7 +632,7 @@ export function TransactionEntryForm({
                             />
                         </div>
 
-                        <SectionTitle number="02" label="Tanggal & Pembayaran" />
+                        <SectionTitle number="02" label="Tanggal & Pembayaran (Sesuai DSR)" />
                         <div className={styles.formGrid} style={{ rowGap: '12px' }}>
                             <div className={styles.colSpan2} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--f-surface)', border: '1px solid var(--f-hairline)', borderRadius: '8px' }}>
                                 <input 
@@ -455,13 +669,54 @@ export function TransactionEntryForm({
                                 label="Total Harga (Total Amount)"
                                 value={form.totalAmount}
                                 onChange={(val: string) => {
-                                    updateForm("totalAmount", Number(val));
-                                    updateForm("payHotel", Number(val)); // Sync automatically for Pay at Hotel
+                                    const num = Number(val) || 0;
+                                    updateForm("totalAmount", num);
+                                    if (form.paidCash === "" && form.paidEdc === "" && form.paidQris === "" && form.paidTransfer === "") {
+                                        updateForm("paidCash", num);
+                                        updateForm("payHotel", num);
+                                    }
                                 }}
                                 placeholder="0"
                                 type="number"
                                 isAmount={true}
                             />
+
+                            {!form.isCompliment && (
+                                <>
+                                    <TerminalInput 
+                                        label="💵 Cash Tunai"
+                                        value={form.paidCash}
+                                        onChange={(val: string) => updateForm("paidCash", Number(val) || 0)}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                    <TerminalInput 
+                                        label="💳 EDC BCA / Mandiri"
+                                        value={form.paidEdc}
+                                        onChange={(val: string) => updateForm("paidEdc", Number(val) || 0)}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                    <TerminalInput 
+                                        label="📱 QRIS Payment"
+                                        value={form.paidQris}
+                                        onChange={(val: string) => updateForm("paidQris", Number(val) || 0)}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                    <TerminalInput 
+                                        label="🏦 Bank Transfer"
+                                        value={form.paidTransfer}
+                                        onChange={(val: string) => updateForm("paidTransfer", Number(val) || 0)}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
@@ -594,18 +849,38 @@ export function ReviewSidebar({
                             )}
 
                             <div className={styles.draftAmountSection}>
-                                <div className={styles.draftAmountRow}>
-                                    <span>Pay at Hotel</span>
-                                    <span className={styles.draftAmountValue}>Rp {formatCurrency(form.isCompliment ? 0 : (form.payHotel || 0))}</span>
-                                </div>
-                                {revenueType === 'room' && (
+                                {Number(form.paidCash || 0) > 0 && (
                                     <div className={styles.draftAmountRow}>
-                                        <span>Virtual Payment / OTA</span>
-                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(form.isCompliment ? 0 : (form.payTransfer || 0))}</span>
+                                        <span>💵 Cash FO</span>
+                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(Number(form.paidCash || 0))}</span>
+                                    </div>
+                                )}
+                                {Number(form.paidEdc || 0) > 0 && (
+                                    <div className={styles.draftAmountRow}>
+                                        <span>💳 EDC Card</span>
+                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(Number(form.paidEdc || 0))}</span>
+                                    </div>
+                                )}
+                                {Number(form.paidQris || 0) > 0 && (
+                                    <div className={styles.draftAmountRow}>
+                                        <span>📱 QRIS Payment</span>
+                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(Number(form.paidQris || 0))}</span>
+                                    </div>
+                                )}
+                                {Number(form.paidTransfer || 0) > 0 && (
+                                    <div className={styles.draftAmountRow}>
+                                        <span>🏦 Bank Transfer</span>
+                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(Number(form.paidTransfer || 0))}</span>
+                                    </div>
+                                )}
+                                {Number(form.paidOta || form.payTransfer || 0) > 0 && (
+                                    <div className={styles.draftAmountRow}>
+                                        <span>🌐 OTA / City Ledger</span>
+                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(Number(form.paidOta || form.payTransfer || 0))}</span>
                                     </div>
                                 )}
                                 <div className={styles.draftTotalRow}>
-                                    <span>Total Gross {form.isCompliment && "(Compliment Value)"}</span>
+                                    <span>Total Gross {form.isCompliment && "(Compliment)"}</span>
                                     <span className={styles.draftTotalValue}>Rp {formatCurrency(totalGross || 0)}</span>
                                 </div>
                             </div>
@@ -616,22 +891,29 @@ export function ReviewSidebar({
                     <div className={styles.sidebarSection} style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid var(--f-hairline)' }}>
                         <div className={styles.summaryCard}>
                             <div className={styles.summaryTotalRow}>
-                                <span className={styles.summaryTotalLabel}>Total</span>
+                                <span className={styles.summaryTotalLabel}>Total Tagihan</span>
                                 <span className={styles.summaryTotalValue}>Rp {formatCurrency(queue.reduce((acc, item) => acc + item.amount, 0) + totalGross)}</span>
                             </div>
                             
                             <div className={styles.summaryBreakdown}>
                                 <div className={styles.summaryBreakdownRow}>
-                                    <span className={styles.summaryBreakdownLabel}>Total Pay at Hotel</span>
-                                    <span className={styles.summaryBreakdownValue}>Rp {formatCurrency(queue.reduce((acc, item) => acc + item.payHotel, 0) + (Number(form.payHotel) || 0))}</span>
-                                </div>
-                                <div className={styles.summaryBreakdownRow}>
-                                    <span className={styles.summaryBreakdownLabel}>Total Virtual Payment / OTA</span>
-                                    <span className={styles.summaryBreakdownValue}>Rp {formatCurrency(queue.reduce((acc, item) => acc + item.payTransfer, 0) + (Number(form.payTransfer) || 0))}</span>
+                                    <span className={styles.summaryBreakdownLabel}>Total Terbayar</span>
+                                    <span className={styles.summaryBreakdownValue} style={{ color: 'var(--f-sage)' }}>
+                                        Rp {formatCurrency(
+                                            queue.reduce((acc, item) => acc + (Number(item.paidCash || 0) + Number(item.paidEdc || 0) + Number(item.paidQris || 0) + Number(item.paidTransfer || 0) + Number(item.paidOta || item.payTransfer || 0)), 0) + 
+                                            (Number(form.paidCash || 0) + Number(form.paidEdc || 0) + Number(form.paidQris || 0) + Number(form.paidTransfer || 0) + Number(form.paidOta || form.payTransfer || 0))
+                                        )}
+                                    </span>
                                 </div>
                                 <div className={styles.summaryBalanceRow}>
-                                    <span className={styles.summaryBalanceLabel}>Balance</span>
-                                    <span className={styles.summaryBalanceValue}>Rp {formatCurrency((queue.reduce((acc, item) => acc + item.amount, 0) + totalGross) - (queue.reduce((acc, item) => acc + item.payHotel, 0) + (Number(form.payHotel) || 0)) - (queue.reduce((acc, item) => acc + item.payTransfer, 0) + (Number(form.payTransfer) || 0)))}</span>
+                                    <span className={styles.summaryBalanceLabel}>Sisa Piutang</span>
+                                    <span className={styles.summaryBalanceValue}>
+                                        Rp {formatCurrency(
+                                            Math.max(0, (queue.reduce((acc, item) => acc + item.amount, 0) + totalGross) - 
+                                            (queue.reduce((acc, item) => acc + (Number(item.paidCash || 0) + Number(item.paidEdc || 0) + Number(item.paidQris || 0) + Number(item.paidTransfer || 0) + Number(item.paidOta || item.payTransfer || 0)), 0) + 
+                                            (Number(form.paidCash || 0) + Number(form.paidEdc || 0) + Number(form.paidQris || 0) + Number(form.paidTransfer || 0) + Number(form.paidOta || form.payTransfer || 0))))
+                                        )}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -824,13 +1106,15 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
             <div className={styles.footerBranding}>
                 <div className={styles.footerBrandingLine} />
                 <a 
-                    href="#" 
+                    href="https://mytara.id" 
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={styles.footerLink}
                 >
                     <span className={styles.footerTitle}>Institutional Terminal</span>
                     <div className={styles.footerMeta}>
                         <span>Powered by</span>
-                        <span className={styles.footerBrandText}>Setara Venture</span>
+                        <span className={styles.footerBrandText}>Tara</span>
                     </div>
                 </a>
             </div>

@@ -1,0 +1,246 @@
+/* ChannelAvailabilityRules.module.css — Professional Hotel Yield Management Aesthetics */
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.topBar {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.titleGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.desc {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.btnAdd {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #1e3a2f;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #13241d;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btnAdd:hover {
+    background: #152720;
+}
+
+/* ── Table Grid ── */
+.tableCard {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.rulesTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: left;
+}
+
+.th {
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 700;
+    padding: 10px 14px;
+    border-bottom: 1px solid #cbd5e1;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s ease;
+}
+
+.tr:hover {
+    background: #f8fafc;
+}
+
+.td {
+    padding: 12px 14px;
+    color: #0f172a;
+    vertical-align: middle;
+}
+
+.badgeType {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.typeCloseOut {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+.typeMax {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.daysRow {
+    display: flex;
+    gap: 3px;
+    margin-top: 4px;
+}
+
+.dayPill {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.dayPillActive {
+    background: #1e3a2f;
+    color: #ffffff;
+}
+
+/* ── Modal ── */
+.modalBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+}
+
+.modalContent {
+    background: #ffffff;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 540px;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.modalHeader {
+    padding: 14px 18px;
+    background: #f8fafc;
+    border-bottom: 1px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modalTitle {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.modalBody {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: 75vh;
+    overflow-y: auto;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.input {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    outline: none;
+}
+
+.input:focus {
+    border-color: #1e3a2f;
+}
+
+.modalFooter {
+    padding: 12px 18px;
+    background: #f8fafc;
+    border-top: 1px solid #cbd5e1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.btnCancel {
+    height: 34px;
+    padding: 0 14px;
+    font-size: 12px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btnSave {
+    height: 34px;
+    padding: 0 16px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #1e3a2f;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}

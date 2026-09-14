@@ -367,8 +367,10 @@ export default function HistoryModal({
               <p>Dokumen ini adalah laporan resmi penutupan shift kasir.</p>
               <p>Dicetak: {new Date().toLocaleString('id-ID')}</p>
               <div className="center" style={{ borderTop: '1px dotted #000', marginTop: 8, paddingTop: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <span style={{ fontSize: 7, color: '#000', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 900, marginBottom: 2 }}>powered by</span>
-                <img src="/channels/1.png" alt="Setara Venture" style={{ height: 14, width: 'auto', opacity: 1, objectFit: 'contain', filter: 'grayscale(100%) brightness(0)' }} />
+                <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <span style={{ fontSize: 7, color: '#000', textTransform: 'lowercase', letterSpacing: '0.15em', fontWeight: 900, marginBottom: 2 }}>powered by</span>
+                  <img src="/channels/1.png" alt="My Tara" style={{ height: 24, width: 'auto', objectFit: 'contain' }} />
+                </a>
               </div>
             </div>
           </div>

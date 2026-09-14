@@ -1,0 +1,166 @@
+/* RateInventoryFilterBar.module.css — My Tara Luxury Hotel Theme */
+
+.filterBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background-color: #faf8f4;
+    border-left: 1px solid rgba(141, 122, 82, 0.18);
+    border-right: 1px solid rgba(141, 122, 82, 0.18);
+    border-bottom: 1px solid rgba(141, 122, 82, 0.18);
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.filterLeftGroup {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.selectDropdown {
+    height: 30px;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #181d26;
+    background-color: #fbf9f4;
+    border: 1px solid rgba(141, 122, 82, 0.22);
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+}
+
+.selectDropdown:hover {
+    background-color: #ebe7d7;
+    border-color: rgba(141, 122, 82, 0.4);
+}
+
+.selectDropdown:focus {
+    border-color: #8d7a52;
+    box-shadow: 0 0 0 2px rgba(141, 122, 82, 0.18);
+    background-color: #ffffff;
+}
+
+.radioGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 8px;
+    background-color: #f5f2eb;
+    border: 1px solid rgba(141, 122, 82, 0.15);
+    border-radius: 6px;
+}
+
+.radioLabel {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #383838;
+    cursor: pointer;
+    user-select: none;
+}
+
+.radioInput {
+    accent-color: #181d26;
+    cursor: pointer;
+}
+
+.checkboxGroup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #383838;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkboxInput {
+    accent-color: #8d7a52;
+    cursor: pointer;
+}
+
+.filterRightGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btnReset {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #a32d2d;
+    background-color: #fcebeb;
+    border: 1px solid rgba(163, 45, 45, 0.25);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+}
+
+.btnReset:hover {
+    background-color: #f8d7d7;
+}
+
+.btnSave {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 14px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+    background-color: #181d26;
+    border: 1px solid #181d26;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    box-shadow: 0 2px 6px rgba(24, 29, 38, 0.15);
+}
+
+.btnSave:hover:not(:disabled) {
+    background-color: #262626;
+}
+
+.btnSave:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #8d9884;
+    border-color: #6c7664;
+}
+
+.btnSaveDirty {
+    background-color: #0f6e56 !important;
+    border-color: #0d5a46 !important;
+    box-shadow: 0 2px 8px rgba(15, 110, 86, 0.35);
+    animation: pulseSave 2s infinite;
+}
+
+@keyframes pulseSave {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}

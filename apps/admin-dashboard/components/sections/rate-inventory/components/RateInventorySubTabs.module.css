@@ -1,0 +1,118 @@
+/* RateInventorySubTabs.module.css — My Tara Luxury Hotel Theme */
+
+.subTabsBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f5f2eb;
+    padding: 8px 16px 0 16px;
+    border-bottom: 1px solid rgba(141, 122, 82, 0.18);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.subTabsGroup {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.tabItem {
+    padding: 8px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #515154;
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    font-family: inherit;
+}
+
+.tabItem:hover {
+    color: #181d26;
+    background-color: rgba(255, 255, 255, 0.6);
+}
+
+.tabItemActive {
+    background-color: #faf8f4;
+    color: #181d26;
+    font-weight: 800;
+    border: 1px solid rgba(141, 122, 82, 0.22);
+    border-bottom: 2px solid #faf8f4;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 6px rgba(141, 122, 82, 0.05);
+}
+
+.subTabsActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+}
+
+.actionBtnSecondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #383838;
+    background-color: #faf8f4;
+    border: 1px solid rgba(141, 122, 82, 0.2);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+}
+
+.actionBtnSecondary:hover {
+    background-color: #ebe7d7;
+    border-color: rgba(141, 122, 82, 0.35);
+    color: #181d26;
+}
+
+.actionBtnPrimary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 14px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+    background-color: #181d26;
+    border: 1px solid #181d26;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 6px rgba(24, 29, 38, 0.15);
+    font-family: inherit;
+}
+
+.actionBtnPrimary:hover {
+    background-color: #262626;
+    box-shadow: 0 3px 8px rgba(24, 29, 38, 0.25);
+}
+
+.infoBadgeText {
+    font-size: 10px;
+    font-weight: 600;
+    color: #736342;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 6px;
+    background-color: rgba(141, 122, 82, 0.08);
+    border-radius: 4px;
+    height: 26px;
+}
+
