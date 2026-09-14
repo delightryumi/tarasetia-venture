@@ -1,0 +1,795 @@
+/* ConfirmationLetterLandscape.module.css — TARA PMS Landscape High-Density Enterprise Grid */
+
+.container {
+    width: 100%;
+    margin: 0 auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-family: var(--font-geist-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    color: var(--f-foreground, #0f172a);
+    background-color: var(--f-canvas, #f8fafc);
+    min-height: 100vh;
+}
+
+:global(.dark) .container {
+    background-color: #090d16;
+    color: #f8fafc;
+}
+
+/* ── Top VHP / DSI Command Bar ── */
+.topBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 10px 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+:global(.dark) .topBar {
+    background: #131b2e;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.topBarLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.topBarBadge {
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    background: #181d26;
+    color: #dfd3b2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #0f172a;
+}
+
+.topBarTitleRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.topBarTitle {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+
+:global(.dark) .topBarTitle {
+    color: #ffffff;
+}
+
+.systemBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.topBarMeta {
+    font-size: 11.5px;
+    color: #64748b;
+    margin-top: 1px;
+}
+
+:global(.dark) .topBarMeta {
+    color: #94a3b8;
+}
+
+.topBarActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ── Buttons (VHP / DSI Compact Actions) ── */
+.btnAction {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 13px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+    white-space: nowrap;
+}
+
+.btnPrimary {
+    background-color: #181d26;
+    color: #ffffff;
+    border: 1px solid #0f172a;
+}
+
+.btnPrimary:hover {
+    background-color: #262d3d;
+}
+
+:global(.dark) .btnPrimary {
+    background-color: #dfd3b2;
+    color: #181d26;
+    border-color: #b49b67;
+}
+
+.btnSecondary {
+    background-color: #ffffff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+}
+
+.btnSecondary:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+:global(.dark) .btnSecondary {
+    background-color: #1e293b;
+    color: #f8fafc;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.btnBlue {
+    background-color: #2563eb;
+    color: #ffffff;
+    border: 1px solid #1d4ed8;
+}
+
+.btnBlue:hover {
+    background-color: #1d4ed8;
+}
+
+.btnDanger {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+.btnDanger:hover {
+    background-color: #fee2e2;
+}
+
+/* ── Nav Tabs (Segmented Category Bar) ── */
+.navContainer {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 4px;
+    gap: 4px;
+    width: fit-content;
+}
+
+:global(.dark) .navContainer {
+    background: #131b2e;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.navTabItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #52525b;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.navTabItem:hover {
+    color: #18181b;
+    background: rgba(0, 0, 0, 0.04);
+}
+
+:global(.dark) .navTabItem {
+    color: #94a3b8;
+}
+
+.navTabItemActive {
+    background: #18181b !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+:global(.dark) .navTabItemActive {
+    background: #dfd3b2 !important;
+    color: #181d26 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LANDSCAPE INPUT CONSOLE (VHP / DSI SPREADSHEET ON TOP)
+   ═══════════════════════════════════════════════════════════ */
+.landscapeConsole {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+/* ── Card Container ── */
+.vhpCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+:global(.dark) .vhpCard {
+    background: #131b2e;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.vhpCardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background-color: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: 0.01em;
+}
+
+:global(.dark) .vhpCardHeader {
+    background-color: rgba(255, 255, 255, 0.04);
+    color: #dfd3b2;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.vhpHeaderActionRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ── Landscape Form Bar (12-Column Unified System) ── */
+.landscapeFormGrid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 12px 14px;
+    padding: 16px 18px;
+}
+
+@media (max-width: 1024px) {
+    .landscapeFormGrid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px 12px;
+        padding: 12px 14px;
+    }
+}
+
+@media (max-width: 640px) {
+    .landscapeFormGrid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+}
+
+/* 12-Column Spans for clean alignment */
+.col12 { grid-column: span 12; }
+.col8  { grid-column: span 8; }
+.col6  { grid-column: span 6; }
+.col4  { grid-column: span 4; }
+.col3  { grid-column: span 3; }
+.col2  { grid-column: span 2; }
+
+@media (max-width: 1024px) {
+    .col8  { grid-column: span 6; }
+    .col6  { grid-column: span 6; }
+    .col4  { grid-column: span 3; }
+    .col3  { grid-column: span 3; }
+    .col2  { grid-column: span 2; }
+}
+
+@media (max-width: 640px) {
+    .col12, .col8, .col6, .col4, .col3, .col2 {
+        grid-column: span 1;
+    }
+}
+
+/* Backward compatibility aliases */
+.gridColSpanFull { grid-column: span 12; }
+.gridColSpan4 { grid-column: span 8; }
+.gridColSpan3 { grid-column: span 6; }
+.gridColSpan2 { grid-column: span 4; }
+
+/* Section Sub-Divider inside Form Cards */
+.formSectionDivider {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 10px;
+    margin-top: 4px;
+    border-top: 1px solid #f1f5f9;
+}
+
+:global(.dark) .formSectionDivider {
+    border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+.formSectionDividerText {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8d7a52;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+:global(.dark) .formSectionDividerText {
+    color: #dfd3b2;
+}
+
+.fieldItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.fieldLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+:global(.dark) .fieldLabel {
+    color: #94a3b8;
+}
+
+.cellInput,
+.cellSelect {
+    height: 34px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 12.5px;
+    font-weight: 500;
+    outline: none;
+    transition: all 0.15s ease-in-out;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.cellInput:hover,
+.cellSelect:hover {
+    border-color: #9ca3af;
+}
+
+.cellInput:focus,
+.cellSelect:focus {
+    border-color: #b49b67;
+    box-shadow: 0 0 0 3px rgba(180, 155, 103, 0.18);
+    background-color: #ffffff;
+}
+
+:global(.dark) .cellInput,
+:global(.dark) .cellSelect {
+    background: #0d1322;
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #f8fafc;
+}
+
+:global(.dark) .cellInput:focus,
+:global(.dark) .cellSelect:focus {
+    border-color: #dfd3b2;
+    box-shadow: 0 0 0 3px rgba(223, 211, 178, 0.15);
+}
+
+/* ── Landscape VHP / DSI Spreadsheet Table (Kamar & MICE) ── */
+.tableContainer {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.vhpTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.vhpTable th,
+.vhpTable td {
+    border: 1px solid #e2e8f0;
+    padding: 8px 10px;
+    vertical-align: middle;
+}
+
+:global(.dark) .vhpTable th,
+:global(.dark) .vhpTable td {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.vhpTh {
+    background-color: #f8fafc;
+    color: #334155;
+    font-weight: 700;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: center;
+}
+
+:global(.dark) .vhpTh {
+    background-color: rgba(255, 255, 255, 0.04);
+    color: #94a3b8;
+}
+
+.vhpThLeft {
+    text-align: left;
+}
+
+.vhpThRight {
+    text-align: right;
+}
+
+.vhpRow:hover td {
+    background-color: #f8fafc;
+}
+
+:global(.dark) .vhpRow:hover td {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.vhpTableInput {
+    height: 30px;
+    padding: 4px 8px;
+    border-radius: 5px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 12px;
+    outline: none;
+    width: 100%;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+}
+
+.vhpTableInput:focus {
+    border-color: #b49b67;
+    box-shadow: 0 0 0 2px rgba(180, 155, 103, 0.18);
+    background-color: #ffffff;
+}
+
+:global(.dark) .vhpTableInput {
+    background: #0d1322;
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #f8fafc;
+}
+
+.vhpFooterRow td {
+    background-color: #f8fafc;
+    font-weight: 700;
+    border-top: 2px solid #cbd5e1;
+    color: #0f172a;
+    padding: 10px;
+}
+
+:global(.dark) .vhpFooterRow td {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #f8fafc;
+    border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Financial Counters Bar (Bottom of Landscape Console) ── */
+.financialBar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 12px 18px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+:global(.dark) .financialBar {
+    background: #0d1322;
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 900px) {
+    .financialBar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.financialCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+:global(.dark) .financialCard {
+    background: #182236;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.financialLabel {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.financialValue {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 2px;
+    font-variant-numeric: tabular-nums;
+}
+
+:global(.dark) .financialValue {
+    color: #ffffff;
+}
+
+.financialValueGold {
+    color: #927238 !important;
+}
+
+:global(.dark) .financialValueGold {
+    color: #dfd3b2 !important;
+}
+
+/* ── Toggleable / Live Document Sheet Container (Below Landscape Console) ── */
+.sheetSection {
+    background: #475569;
+    border-radius: 6px;
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+    border: 1px solid #334155;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* ── List Archive View (Same High-Contrast Grid) ── */
+.archiveCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+:global(.dark) .archiveCard {
+    background: #131b2e;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.archiveToolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.archiveSearch {
+    position: relative;
+    flex: 1;
+    min-width: 280px;
+}
+
+.archiveSearchInput {
+    width: 100%;
+    height: 36px;
+    padding: 7px 14px 7px 38px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    font-size: 12.5px;
+    outline: none;
+    background: #ffffff;
+    color: #0f172a;
+    transition: all 0.15s ease-in-out;
+    box-sizing: border-box;
+}
+
+.archiveSearchInput:focus {
+    border-color: #b49b67;
+    box-shadow: 0 0 0 3px rgba(180, 155, 103, 0.18);
+}
+
+:global(.dark) .archiveSearchInput {
+    background: #0d1322;
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #f8fafc;
+}
+
+:global(.dark) .archiveSearchInput:focus {
+    border-color: #dfd3b2;
+    box-shadow: 0 0 0 3px rgba(223, 211, 178, 0.15);
+}
+
+.searchIcon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.filterGroup {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filterSelect {
+    height: 36px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 12.5px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.filterSelect:focus {
+    border-color: #b49b67;
+    box-shadow: 0 0 0 3px rgba(180, 155, 103, 0.18);
+}
+
+:global(.dark) .filterSelect {
+    background: #0d1322;
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #f8fafc;
+}
+
+:global(.dark) .filterSelect:focus {
+    border-color: #dfd3b2;
+    box-shadow: 0 0 0 3px rgba(223, 211, 178, 0.15);
+}
+
+/* ── Badges ── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2.5px 8px;
+    border-radius: 4px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.badgeDraft {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.badgeSent {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #93c5fd;
+}
+
+.badgeConfirmed {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.badgeCancelled {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 48px 24px;
+}
+
+.emptyStateIcon {
+    margin-bottom: 12px;
+    color: #94a3b8;
+}
+
+.emptyStateTitle {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+:global(.dark) .emptyStateTitle {
+    color: #f8fafc;
+}
+
+.emptyStateText {
+    font-size: 12px;
+    color: #64748b;
+    max-width: 460px;
+    margin: 0 auto 16px auto;
+}
+
+:global(.dark) .emptyStateText {
+    color: #94a3b8;
+}
+
+/* ── Print Media Query ── */
+@media print {
+    @page {
+        margin: 8mm;
+        size: A4 portrait;
+    }
+
+    .topBar,
+    .navContainer,
+    .landscapeConsole,
+    .archiveCard,
+    .noPrint {
+        display: none !important;
+    }
+
+    .container {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        min-height: auto !important;
+    }
+
+    .sheetSection {
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+}

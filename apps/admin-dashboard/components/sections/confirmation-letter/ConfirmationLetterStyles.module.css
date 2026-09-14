@@ -1,0 +1,1145 @@
+/* ConfirmationLetterStyles.module.css — My Tara High-Contrast Enterprise Theme */
+
+.container {
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    font-family: var(--font-geist-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    color: var(--f-foreground, #0f172a);
+    background-color: var(--f-canvas, #f8fafc);
+    min-height: 100vh;
+}
+
+:global(.dark) .container {
+    background-color: #090d16;
+    color: #f8fafc;
+}
+
+/* ── Top Enterprise Header Bar (Matches Channel Manager TopBar) ── */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 14px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+:global(.dark) .header {
+    background: #131b2e;
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.headerIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: #181d26;
+    border: 1px solid #0f172a;
+    color: #dfd3b2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+:global(.dark) .headerIcon {
+    background: #1e293b;
+    border-color: rgba(223, 211, 178, 0.3);
+}
+
+.headerTitleRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.headerTitle {
+    font-size: 17px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+:global(.dark) .headerTitle {
+    color: #ffffff;
+}
+
+.headerBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: #f1eee1;
+    color: #736342;
+    border: 1px solid rgba(141, 122, 82, 0.25);
+}
+
+:global(.dark) .headerBadge {
+    background: rgba(141, 122, 82, 0.2);
+    color: #dfd3b2;
+    border-color: rgba(141, 122, 82, 0.4);
+}
+
+.headerSubtitle {
+    margin: 3px 0 0 0;
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+:global(.dark) .headerSubtitle {
+    color: #94a3b8;
+}
+
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ── Buttons (High-Contrast My Tara Palette) ── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btnPrimary {
+    background-color: #181d26;
+    color: #ffffff;
+    border: 1px solid #0f172a;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btnPrimary:hover {
+    background-color: #262d3d;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+:global(.dark) .btnPrimary {
+    background-color: #dfd3b2;
+    color: #181d26;
+    border-color: #b49b67;
+    font-weight: 700;
+}
+
+:global(.dark) .btnPrimary:hover {
+    background-color: #ebdcb5;
+}
+
+.btnSecondary {
+    background-color: #ffffff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.btnSecondary:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+:global(.dark) .btnSecondary {
+    background-color: #1e293b;
+    color: #f8fafc;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+:global(.dark) .btnSecondary:hover {
+    background-color: #27354a;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btnDanger {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.btnDanger:hover {
+    background-color: #fee2e2;
+    border-color: #f87171;
+    color: #b91c1c;
+}
+
+:global(.dark) .btnDanger {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.35);
+}
+
+.btnAction {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+}
+
+/* ── Minimalist Segmented Category Navigation (Matches Channel Manager .categoryNav) ── */
+.tabsRow {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 5px;
+    gap: 6px;
+    width: fit-content;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+:global(.dark) .tabsRow {
+    background: #131b2e;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.tabBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #52525b;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.tabBtn:hover {
+    color: #18181b;
+    background: rgba(0, 0, 0, 0.04);
+}
+
+:global(.dark) .tabBtn {
+    color: #94a3b8;
+}
+
+:global(.dark) .tabBtn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tabBtnActive {
+    background: #18181b !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+:global(.dark) .tabBtnActive {
+    background: #dfd3b2 !important;
+    color: #181d26 !important;
+    font-weight: 700;
+}
+
+/* ── Card & Table (List View) ── */
+.card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+:global(.dark) .card {
+    background: #131b2e;
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.filterBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.searchBox {
+    position: relative;
+    flex: 1;
+    min-width: 280px;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 8px 14px 8px 36px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.searchInput:focus {
+    border-color: #8d7a52;
+    box-shadow: 0 0 0 2px rgba(141, 122, 82, 0.15);
+}
+
+:global(.dark) .searchInput {
+    background: #0d1322;
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #f8fafc;
+}
+
+.filterGroup {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filterSelect {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 12.5px;
+    outline: none;
+    cursor: pointer;
+}
+
+:global(.dark) .filterSelect {
+    background: #0d1322;
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #f8fafc;
+}
+
+.tableResponsive {
+    overflow-x: auto;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+:global(.dark) .tableResponsive {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+}
+
+.table th {
+    background: #f8fafc;
+    padding: 10px 14px;
+    font-weight: 700;
+    color: #475569;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+}
+
+:global(.dark) .table th {
+    background: rgba(255, 255, 255, 0.04);
+    color: #94a3b8;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+    vertical-align: middle;
+}
+
+:global(.dark) .table td {
+    border-color: rgba(255, 255, 255, 0.05);
+    color: #f8fafc;
+}
+
+.table tr:hover td {
+    background: #f8fafc;
+}
+
+:global(.dark) .table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* ── Status Badges (High Contrast) ── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.badgeDraft {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.badgeSent {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #93c5fd;
+}
+
+.badgeConfirmed {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.badgeCancelled {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+/* ── Empty State ── */
+.emptyState {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.emptyStateIcon {
+    color: #94a3b8;
+    opacity: 0.5;
+    margin-bottom: 14px;
+}
+
+.emptyStateTitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 6px 0;
+}
+
+:global(.dark) .emptyStateTitle {
+    color: #f8fafc;
+}
+
+.emptyStateText {
+    font-size: 13px;
+    color: #64748b;
+    max-width: 480px;
+    margin: 0 auto 20px auto;
+    line-height: 1.5;
+}
+
+/* ── Split Layout for Editor & Live Preview ── */
+.splitLayout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+@media (max-width: 1280px) {
+    .splitLayout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.formContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sectionCard {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 18px 22px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+:global(.dark) .sectionCard {
+    background: #131b2e;
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.sectionCardTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 14px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 10px;
+}
+
+:global(.dark) .sectionCardTitle {
+    color: #dfd3b2;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 640px) {
+    .formGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.formGroupFull {
+    grid-column: 1 / -1;
+}
+
+.label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+:global(.dark) .label {
+    color: #94a3b8;
+}
+
+.input,
+.textarea {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.15s ease;
+    width: 100%;
+}
+
+.input:focus,
+.textarea:focus {
+    border-color: #8d7a52;
+    box-shadow: 0 0 0 2px rgba(141, 122, 82, 0.15);
+}
+
+:global(.dark) .input,
+:global(.dark) .textarea {
+    background: #0d1322;
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #f8fafc;
+}
+
+.textarea {
+    resize: vertical;
+    line-height: 1.45;
+}
+
+/* ── Live Preview Wrapper (High Contrast Screen Mode) ── */
+.previewStickyWrapper {
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.previewScrollArea {
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.previewCol {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.previewToolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+:global(.dark) .previewToolbar {
+    background: #131b2e;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   5-STAR LUXURY HOTEL CONFIRMATION LETTER (PRINTABLE SHEET)
+   ═══════════════════════════════════════════════════════════ */
+.paperContainer {
+    padding: 16px;
+    background: #475569;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+}
+
+.paper {
+    background: #ffffff;
+    color: #0f172a;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm 14mm;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    font-family: var(--font-geist-sans, 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    line-height: 1.35;
+    font-size: 7.5pt;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border: none;
+}
+
+/* Official Hotel Letterhead (Clean Modern Minimalist) */
+.letterheadRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 10px;
+    margin-bottom: 8px;
+}
+
+.hotelBranding {
+    flex: 1;
+    max-width: 58%;
+}
+
+.hotelBrandWithLogo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.hotelLogoImg {
+    max-height: 44px;
+    max-width: 170px;
+    object-fit: contain;
+    display: block;
+}
+
+.hotelBrandInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.hotelStars {
+    color: #b49b67;
+    font-size: 8.5pt;
+    letter-spacing: 1.5px;
+    margin-bottom: 1px;
+}
+
+.hotelName {
+    font-size: 13pt;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 2px 0;
+    letter-spacing: -0.01em;
+}
+
+.hotelMeta {
+    font-size: 7pt;
+    color: #64748b;
+    line-height: 1.35;
+}
+
+.letterTitleBox {
+    text-align: right;
+    min-width: 200px;
+}
+
+.docTitle {
+    font-size: 12.5pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1px;
+}
+
+.docSubtitle {
+    font-size: 7pt;
+    font-weight: 600;
+    color: #8d7a52;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.docRefNo {
+    font-size: 7.8pt;
+    font-weight: 700;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+
+.docDate {
+    font-size: 7pt;
+    color: #64748b;
+    margin-top: 1px;
+}
+
+.docStatusTag {
+    display: inline-block;
+    font-size: 6.5pt;
+    font-weight: 700;
+    color: #1e293b;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    margin-top: 3px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Formal Hospitality Salutation */
+.formalGreeting {
+    font-size: 7.2pt;
+    color: #475569;
+    margin-bottom: 8px;
+    line-height: 1.35;
+}
+
+/* ── Modern 2-Column Information Grid (Clean & Borderless) ── */
+.modernInfoGrid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 14px;
+    padding: 6px 0 8px 0;
+    margin-bottom: 6px;
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.infoColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.infoSectionTag {
+    font-size: 6.5pt;
+    font-weight: 700;
+    color: #8d7a52;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 2px;
+}
+
+.infoPrimaryName {
+    font-size: 9pt;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.25;
+    margin-bottom: 2px;
+}
+
+.infoRow {
+    display: flex;
+    font-size: 7pt;
+    line-height: 1.3;
+}
+
+.infoLabel {
+    width: 85px;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.infoVal {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+/* Stay Dates Bar (Modern Timeline) */
+.stayHighlightBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    padding: 4px 8px;
+    margin-bottom: 3px;
+}
+
+.stayDateBlock {
+    display: flex;
+    flex-direction: column;
+}
+
+.stayDateLabel {
+    font-size: 5.8pt;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.04em;
+}
+
+.stayDateVal {
+    font-size: 7.8pt;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.stayTimeVal {
+    font-size: 6pt;
+    color: #64748b;
+}
+
+.stayArrow {
+    color: #94a3b8;
+    font-size: 9pt;
+    font-weight: 300;
+}
+
+/* Section Divider */
+.paperSectionTitle {
+    font-size: 7.2pt;
+    font-weight: 800;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 6px 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.paperSectionTitle::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+/* Clean Minimalist Hotel Tables (Borderless Editorial Look) */
+.hotelTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 4px;
+    font-size: 7pt;
+}
+
+.hotelTable th {
+    background: #f8fafc;
+    color: #475569;
+    padding: 4px 6px;
+    font-weight: 700;
+    text-align: left;
+    text-transform: uppercase;
+    font-size: 6.5pt;
+    letter-spacing: 0.04em;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1.5px solid #0f172a;
+    border-left: none;
+    border-right: none;
+}
+
+.hotelTable td {
+    padding: 4px 6px;
+    border-bottom: 1px solid #f1f5f9;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    color: #1e293b;
+    vertical-align: middle;
+}
+
+.hotelTable tr:hover td {
+    background: #fafafa;
+}
+
+/* Total Summary Row / Table */
+.totalsSummaryContainer {
+    margin-left: auto;
+    width: 48%;
+    margin-top: 2px;
+    margin-bottom: 8px;
+}
+
+.totalsRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 0;
+    font-size: 7pt;
+    color: #64748b;
+}
+
+.totalsRowBold {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    margin-top: 2px;
+    border-top: 1.5px solid #0f172a;
+    border-bottom: 1.5px solid #0f172a;
+    font-size: 8.5pt;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+/* 2-Column Grid: Billing Protocol & Hotel Regulations (Clean Minimalist) */
+.termsBillingGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 6px;
+    padding-top: 4px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.billingDossierBox {
+    background: transparent;
+    padding: 0;
+    font-size: 6.8pt;
+    line-height: 1.35;
+}
+
+.billingTitle {
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #0f172a;
+    font-size: 6.8pt;
+    letter-spacing: 0.04em;
+    margin-bottom: 3px;
+}
+
+.billingItem {
+    margin-bottom: 2px;
+    color: #334155;
+}
+
+.bankMiniCard {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    padding: 4px 8px;
+    margin-top: 3px;
+    font-size: 6.8pt;
+}
+
+/* Terms & Regulations */
+.regulationsBox {
+    background: transparent;
+    padding: 0;
+    font-size: 6.8pt;
+    line-height: 1.35;
+    color: #334155;
+}
+
+.regulationsTitle {
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #0f172a;
+    font-size: 6.8pt;
+    letter-spacing: 0.04em;
+    margin-bottom: 3px;
+}
+
+.regulationsList {
+    margin: 0;
+    padding-left: 12px;
+}
+
+.regulationsList li {
+    margin-bottom: 2px;
+}
+
+/* Dual Minimalist Signatures */
+.signaturesGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: auto;
+    padding-top: 6px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.sigBlock {
+    text-align: center;
+    font-size: 7pt;
+    color: #334155;
+}
+
+.sigRole {
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #0f172a;
+    letter-spacing: 0.03em;
+    font-size: 6.8pt;
+}
+
+.sigCompany {
+    font-size: 6.8pt;
+    color: #64748b;
+    margin-bottom: 24px;
+}
+
+.sigUnderline {
+    border-top: 1px solid #cbd5e1;
+    width: 70%;
+    margin: 0 auto;
+    padding-top: 3px;
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 7.5pt;
+}
+
+.sigTitle {
+    font-size: 6.5pt;
+    color: #64748b;
+    margin-top: 1px;
+}
+
+/* ── Print Media Query (Zero Bleed, Perfect A4) ── */
+@media print {
+    @page {
+        margin: 5mm 8mm;
+        size: A4 portrait;
+    }
+
+    .noPrint,
+    .header,
+    .tabsRow,
+    .filterBar,
+    .formContainer,
+    .previewToolbar {
+        display: none !important;
+    }
+
+    .container {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        min-height: auto !important;
+        background: transparent !important;
+    }
+
+    .splitLayout {
+        display: block !important;
+    }
+
+    .previewStickyWrapper {
+        position: static !important;
+    }
+
+    .previewScrollArea {
+        max-height: none !important;
+        overflow: visible !important;
+        box-shadow: none !important;
+    }
+
+    .paperContainer {
+        padding: 0 !important;
+        background: transparent !important;
+        display: block !important;
+        min-height: auto !important;
+    }
+
+    .paper {
+        width: 100% !important;
+        min-height: auto !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    .signaturesGrid {
+        margin-top: 14px !important;
+        page-break-inside: avoid !important;
+    }
+
+    .hotelTable {
+        page-break-inside: auto !important;
+    }
+
+    .hotelTable tr {
+        page-break-inside: avoid !important;
+    }
+}

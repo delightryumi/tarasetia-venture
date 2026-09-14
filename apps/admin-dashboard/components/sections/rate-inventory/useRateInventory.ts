@@ -548,7 +548,8 @@ export const useRateInventory = () => {
 
             await batch.commit();
             setStagedUpdates({});
-            toast.success(`Berhasil menyimpan ${unsavedCount} perubahan ke database.`);
+            toast.success(`Berhasil menyimpan ${unsavedCount} perubahan ke database. Menyinkronkan ke Channex...`);
+            syncAriToChannex();
         } catch (err: any) {
             console.error("Error saving ARI changes:", err);
             toast.error(`Gagal menyimpan perubahan: ${err.message}`);
@@ -648,7 +649,8 @@ export const useRateInventory = () => {
 
             await batch.commit();
             setBulkModalOpen(false);
-            toast.success(`Bulk Update berhasil diterapkan pada ${affectedDates.length} tanggal.`);
+            toast.success(`Bulk Update berhasil diterapkan pada ${affectedDates.length} tanggal. Menyinkronkan ke Channex...`);
+            syncAriToChannex();
         } catch (err: any) {
             console.error("Error applying bulk update:", err);
             toast.error(`Gagal menerapkan Bulk Update: ${err.message}`);
@@ -718,7 +720,10 @@ export const useRateInventory = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     hotelCode: activeHotelCode,
-                    dateList,
+                    type: "full_sync",
+                    startDate: dateList[0],
+                    endDate: dateList[dateList.length - 1],
+                    daysAhead: dateList.length || 14,
                     roomTypeId: roomTypeId || undefined
                 })
             });

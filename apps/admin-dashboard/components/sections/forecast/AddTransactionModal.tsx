@@ -180,13 +180,16 @@ export const AddTransactionModal = ({
                 const payTransferVal = !isWalkIn ? dailyPaid1 + dailyPaid2 : (form.paymentMethod === "Pay at Nexura" ? dailyPaid1 + dailyPaid2 : dailyPaid2);
 
                 const transactionData = {
+                    type: "accommodation",
                     guestName: form.guestName,
                     bookingId: bookingId,
                     checkInDate: form.checkIn,
                     checkOutDate: form.checkOut,
                     effectiveDate: dateStr,
                     roomType: selectedRoomType,
+                    roomTypeId: form.roomTypeId,
                     roomNumber: form.roomNumber,
+                    roomCount: 1,
                     channel: form.channel,
                     voucherCode: form.voucherCode,
                     amount: nightlyRate,
@@ -219,6 +222,20 @@ export const AddTransactionModal = ({
                         date: dateStr
                     });
                 }
+            }
+
+            // Trigger background ARI sync to Channex if room transaction
+            if (form.checkIn && form.checkOut) {
+                fetch("/api/channex/sync-ari", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode: hotelId,
+                        startDate: form.checkIn,
+                        endDate: form.checkOut,
+                        type: "availability"
+                    })
+                }).catch(e => console.warn("[Channex Sync Trigger Warning]:", e));
             }
 
             toast.success("Transaction recorded");

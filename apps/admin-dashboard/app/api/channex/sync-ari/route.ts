@@ -21,6 +21,18 @@ export async function POST(req: NextRequest) {
         defaultEnd.setDate(defaultEnd.getDate() + 30);
         const end = endDate || defaultEnd.toISOString().split("T")[0];
 
+        if (type === "full_sync") {
+            const daysAhead = Number(body.daysAhead) || 365;
+            const result = await channexSyncService.fullPropertySync(hotelCode, daysAhead);
+            return NextResponse.json({
+                success: true,
+                message: result.message,
+                availabilityCount: result.availabilityCount,
+                restrictionsCount: result.restrictionsCount,
+                latencyMs: result.latencyMs
+            });
+        }
+
         if (type === "rates" && ratePlanId && rate !== undefined) {
             const result = await channexSyncService.pushRateUpdate(hotelCode, ratePlanId, start, end, Number(rate), restrictions);
             const latency = Date.now() - startTime;

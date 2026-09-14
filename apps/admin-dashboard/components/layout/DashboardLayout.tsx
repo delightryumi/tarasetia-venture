@@ -221,7 +221,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     const hideSidebar = isSuperadminPage || pathname === "/inventory-control";
 
     return (
-        <div className="flex flex-col min-h-screen bg-transparent select-none">
+        <div className={`flex flex-col min-h-screen select-none ${isSuperadminPage ? 'bg-white dark:bg-[#09090b]' : 'bg-transparent'}`}>
             {/* Global POS order notifier — active on every page */}
             {activeHotelCode && activeHotelCode !== '0' && (
                 <GlobalOrderNotifier
@@ -297,7 +297,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                 )}
                 <main 
                     className="main-content"
-                    style={hideSidebar ? { marginLeft: 0, maxWidth: "100vw", width: "100%" } : undefined}
+                    style={hideSidebar ? { marginLeft: 0, maxWidth: "100vw", width: "100%", paddingTop: 0 } : undefined}
                 >
                     <div className="main-scroll-container">
                         <AnimatePresence mode="wait">
@@ -314,24 +314,26 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                             </motion.div>
                         </AnimatePresence>
 
-                        <footer className="dashboard-footer-clean">
-                            <a
-                                href={
-                                    poweredByLink && !poweredByLink.includes("setaraventure.com")
-                                        ? (poweredByLink.startsWith('http') ? poweredByLink : `https://${poweredByLink}`)
-                                        : "https://mytara.id"
-                                }
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="powered-by-link"
-                            >
-                                <span className="text-light">Powered by</span>
-                                <span className="text-brand">
-                                    {poweredByText && !poweredByText.toLowerCase().includes("setara venture") ? poweredByText : "Tara"}
-                                </span>
-                                <ExternalLink size={12} className="link-icon" />
-                            </a>
-                        </footer>
+                        {!isSuperadminPage && (
+                            <footer className="dashboard-footer-clean">
+                                <a
+                                    href={
+                                        poweredByLink && !poweredByLink.includes("setaraventure.com")
+                                            ? (poweredByLink.startsWith('http') ? poweredByLink : `https://${poweredByLink}`)
+                                            : "https://mytara.id"
+                                    }
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="powered-by-link"
+                                >
+                                    <span className="text-light">Powered by</span>
+                                    <span className="text-brand">
+                                        {poweredByText && !poweredByText.toLowerCase().includes("setara venture") ? poweredByText : "Tara"}
+                                    </span>
+                                    <ExternalLink size={12} className="link-icon" />
+                                </a>
+                            </footer>
+                        )}
                     </div>
                 </main>
                 {!isSuperadminPage && <MobileBottomNav />}

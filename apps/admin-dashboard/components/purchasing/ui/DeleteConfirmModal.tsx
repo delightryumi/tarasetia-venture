@@ -9,12 +9,18 @@ interface DeleteConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (password: string) => void;
+  title?: string;
+  subtitle?: string;
+  confirmText?: string;
 }
 
 export default function DeleteConfirmModal({
   isOpen,
   onClose,
-  onConfirm
+  onConfirm,
+  title = 'Confirm Delete',
+  subtitle = 'This action requires administrator authorization.',
+  confirmText = 'Delete Requisition'
 }: DeleteConfirmModalProps) {
   const [password, setPassword] = useState('');
 
@@ -40,9 +46,9 @@ export default function DeleteConfirmModal({
             animate={{ scale: 1 }} 
             exit={{ scale: 0.95 }}
           >
-            <h3 className={s.modalTitle}>Confirm Delete</h3>
+            <h3 className={s.modalTitle}>{title}</h3>
             <p className={s.modalSubtitle} style={{ marginBottom: 16 }}>
-              This action requires administrator authorization.
+              {subtitle}
             </p>
             
             <div className={s.formField} style={{ marginBottom: 20 }}>
@@ -61,7 +67,7 @@ export default function DeleteConfirmModal({
             </div>
 
             <div className={s.modalActions} style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <PButton variant="danger" onClick={handleConfirm}>Delete Requisition</PButton>
+              <PButton variant="danger" onClick={handleConfirm}>{confirmText}</PButton>
               <PButton variant="secondary" onClick={() => { setPassword(''); onClose(); }}>Cancel</PButton>
             </div>
           </motion.div>

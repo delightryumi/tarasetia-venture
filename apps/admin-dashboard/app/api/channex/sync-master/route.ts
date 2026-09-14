@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
         const hotelData = hotelDoc.data();
         let channexPropertyId = hotelData?.channexPropertyId || hotelData?.channelManager?.channexPropertyId;
         const customApiKey = hotelData?.channelManager?.apiKey || process.env.CHANNEX_API_KEY;
+        const env = hotelData?.channelManager?.env || "staging";
 
         if (!customApiKey) {
             return NextResponse.json({
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
                     timezone: "Asia/Jakarta",
                     country: "ID",
                     address: hotelData?.address || "Indonesia"
-                }, customApiKey);
+                }, customApiKey, env);
 
                 channexPropertyId = createdProp?.data?.id;
                 if (channexPropertyId) {
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
         // 2. Fetch existing Room Types on Channex
         let existingChannexRooms: any[] = [];
         try {
-            const channexRoomsRes = await channexClient.getRoomTypes(channexPropertyId, customApiKey);
+            const channexRoomsRes = await channexClient.getRoomTypes(channexPropertyId, customApiKey, env);
             existingChannexRooms = channexRoomsRes?.data || [];
         } catch (e) {
             console.warn("[SyncMaster] Warning fetching existing room types from Channex:", e);
@@ -98,8 +99,10 @@ export async function POST(req: NextRequest) {
                         title: roomTitle,
                         count_of_rooms: totalRooms,
                         occ_adults: capacity,
+                        occ_children: Number((rt as any).occChildren ?? 0),
+                        occ_infants: Number((rt as any).occInfants ?? 0),
                         default_occupancy: capacity
-                    }, customApiKey);
+                    }, customApiKey, env);
 
                     assignedChannexRoomId = createdRoom?.data?.id;
                     syncedRoomsCount++;
@@ -122,7 +125,7 @@ export async function POST(req: NextRequest) {
         // 4. Fetch existing Rate Plans on Channex
         let existingChannexRates: any[] = [];
         try {
-            const channexRatesRes = await channexClient.getRatePlans(channexPropertyId, customApiKey);
+            const channexRatesRes = await channexClient.getRatePlans(channexPropertyId, customApiKey, env);
             existingChannexRates = channexRatesRes?.data || [];
         } catch (e) {
             console.warn("[SyncMaster] Warning fetching existing rate plans from Channex:", e);
@@ -162,7 +165,7 @@ export async function POST(req: NextRequest) {
                                 is_primary: true
                             }
                         ]
-                    }, customApiKey);
+                    }, customApiKey, env);
 
                     assignedChannexRateId = createdPlan?.data?.id;
                     syncedRatePlansCount++;

@@ -39,11 +39,36 @@ export const OTHER_INCOME_TYPES = [
     "Other Income"
 ];
 
+export const BOOKING_TYPES = [
+    "Confirm Booking",
+    "Tentative / Hold",
+    "Inquiry",
+    "Compliment / Gratis"
+];
+
+export const BUSINESS_SOURCES = [
+    "Direct / Walk-in",
+    "Corporate / Perusahaan",
+    "Government / Dinas",
+    "Travel Agent / FIT",
+    "Group / MICE",
+    "OTA / Online Channel",
+    "Wholesaler"
+];
+
 const INITIAL_FORM = {
+    salutation: "Mr.",
     guestName: "",
     checkIn: "",
+    checkInTime: "02:00 PM",
     checkOut: "",
-    rooms: [{ roomTypeId: "", roomNumber: "", price: "" }],
+    checkOutTime: "12:00 PM",
+    roomCount: 1,
+    bookingType: "Confirm Booking",
+    businessSource: "Direct / Walk-in",
+    isContract: false,
+    bookAllAvailable: false,
+    rooms: [{ roomTypeId: "", roomNumber: "", ratePlanId: "", rateCode: "-", adults: 1, children: 0, price: "" }],
     nightRates: [""] as any[],
     channel: "Walk-in",
     voucherCode: "",
@@ -53,11 +78,19 @@ const INITIAL_FORM = {
     nationality: "INDONESIA",
     email: "",
     address: "",
+    zipCode: "",
+    country: "Indonesia",
+    state: "",
+    city: "",
     company: "-",
     rateCode: "-",
     pax: 1,
     upgradeFrom: "",
     upgradeTo: "",
+    sendEmailVoucher: false,
+    enableGuestPortal: true,
+    paymentRecipient: "Hotel / Front Desk",
+    paymentModeEnabled: true,
     paidCash: "",
     paidEdc: "",
     paidQris: "",
@@ -127,23 +160,47 @@ export const useTransactionForm = () => {
     const [ratePlans, setRatePlans] = useState<any[]>([]);
     const [selectedRatePlanId, setSelectedRatePlanId] = useState<string>("");
     const [occupancy, setOccupancy] = useState<any[]>([]);
+    const [ariOverrides, setAriOverrides] = useState<Record<string, any>>({});
     const [saving, setSaving] = useState(false);
     const [step, setStep] = useState<"select" | "form">("select");
     const [revenueType, setRevenueType] = useState<"room" | "other">("room");
     const [queue, setQueue] = useState<any[]>([]);
     
+    const initialCheckIn = selectedDate;
+    const initialCheckOut = (() => {
+        try {
+            const d = new Date(selectedDate);
+            d.setDate(d.getDate() + 1);
+            return d.toISOString().split("T")[0];
+        } catch (e) {
+            return "";
+        }
+    })();
+
     const [form, setForm] = useState({
         ...INITIAL_FORM,
-        checkIn: selectedDate
+        checkIn: initialCheckIn,
+        checkOut: initialCheckOut
     });
 
     const start = form.checkIn ? new Date(form.checkIn) : null;
     const end = form.checkOut ? new Date(form.checkOut) : null;
     const nights = (start && end && end > start) ? Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) : 1;
 
+    // Calculate total gross across all rooms and nights
     const totalGross = revenueType === "room" 
-        ? (form.nightRates || []).reduce((acc, r) => acc + (Number(r) || 0), 0)
-        : (Number(form.totalAmount) || 0);
+        ? (() => {
+            if (form.isCompliment) return 0;
+            const totalFromRooms = (form.rooms || []).reduce((acc: number, r: any) => {
+                const p = Number(r.price) || 0;
+                return acc + (p * nights);
+            }, 0);
+            if ((!form.rooms || form.rooms.length <= 1) && form.nightRates && form.nightRates.length > 0 && form.nightRates.some((r: any) => Number(r) > 0)) {
+                return (form.nightRates || []).reduce((acc: number, r: any) => acc + (Number(r) || 0), 0);
+            }
+            return totalFromRooms;
+        })()
+        : (form.isCompliment ? 0 : (Number(form.totalAmount) || 0));
         
     const totalPaid = (Number(form.paidCash) || 0) + 
                       (Number(form.paidEdc) || 0) + 
@@ -167,7 +224,27 @@ export const useTransactionForm = () => {
                 // Fetch Rate Plans
                 const rpSnap = await getDocs(getHotelCollection(db, "ratePlans", activeHotelCode));
                 const plans = rpSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                setRatePlans(plans);
+                if (plans.length > 0) {
+                    setRatePlans(plans);
+                } else if (types.length > 0) {
+                    const fallbackPlans = types.flatMap((t: any) => [
+                        {
+                            id: `${t.id}-bb`,
+                            code: `${t.code || t.name}-BB`,
+                            name: `${t.name} - With Breakfast`,
+                            baseRate: t.basePrice || t.price || 650000,
+                            roomTypeId: t.id
+                        },
+                        {
+                            id: `${t.id}-ro`,
+                            code: `${t.code || t.name}-RO`,
+                            name: `${t.name} - Room Only`,
+                            baseRate: t.basePrice || t.price || 650000,
+                            roomTypeId: t.id
+                        }
+                    ]);
+                    setRatePlans(fallbackPlans);
+                }
                 
                 if (types.length > 0) {
                     setForm(prev => {
@@ -185,6 +262,20 @@ export const useTransactionForm = () => {
                     self.findIndex(t => t.timestamp === e.timestamp) === idx
                 );
                 setOccupancy(uniqueBookings);
+
+                // Fetch ARI Overrides for Stop Sell validation
+                try {
+                    const ovSnap = await getDocs(getHotelCollection(db, "ari_overrides", activeHotelCode));
+                    const ovMap: Record<string, any> = {};
+                    ovSnap.docs.forEach(d => {
+                        const data = d.data();
+                        const dateKey = data.date || d.id.replace(`${activeHotelCode}_`, "");
+                        ovMap[dateKey] = data;
+                    });
+                    setAriOverrides(ovMap);
+                } catch (ovErr) {
+                    console.warn("Could not fetch ari_overrides:", ovErr);
+                }
             } catch (err) {
                 console.error("Error fetching inventory data:", err);
             }
@@ -231,6 +322,28 @@ export const useTransactionForm = () => {
         });
     };
 
+    const checkStopSell = useCallback((roomTypeId: string, ratePlanId: string, dateStr: string) => {
+        const dayOverride = ariOverrides[dateStr];
+        const rp = ratePlans.find(p => p.id === ratePlanId);
+        if (dayOverride?.stopSell && ratePlanId && dayOverride.stopSell[ratePlanId] !== undefined) {
+            return !!dayOverride.stopSell[ratePlanId];
+        }
+        if (rp && rp.stopSell !== undefined) {
+            return !!rp.stopSell;
+        }
+        const plansForRoom = ratePlans.filter(p => p.roomTypeId === roomTypeId || (p.roomTypeName && roomTypes.find(rt => rt.id === roomTypeId)?.name?.toLowerCase() === p.roomTypeName?.toLowerCase()));
+        if (plansForRoom.length > 0) {
+            return plansForRoom.every(p => {
+                if (dayOverride?.stopSell?.[p.id] !== undefined) return !!dayOverride.stopSell[p.id];
+                return !!p.stopSell;
+            });
+        }
+        if (dayOverride?.stopSell && Object.values(dayOverride.stopSell).some(v => v === true)) {
+            return true;
+        }
+        return false;
+    }, [ariOverrides, ratePlans, roomTypes]);
+
     const isAvailable = useCallback(() => {
         if (revenueType !== "room" || !form.checkIn || !form.checkOut) return true;
 
@@ -248,6 +361,13 @@ export const useTransactionForm = () => {
         // Loop through each night of the stay
         for (let d = new Date(startD); d < endD; d.setDate(d.getDate() + 1)) {
             const dateStr = d.toISOString().split('T')[0];
+
+            // 1. Check Stop Sell for each room
+            for (const rm of form.rooms) {
+                if (rm.roomTypeId && checkStopSell(rm.roomTypeId, rm.ratePlanId || selectedRatePlanId, dateStr)) {
+                    return false;
+                }
+            }
             
             for (const [typeId, count] of Object.entries(requestedByType)) {
                 const type = roomTypes.find(rt => rt.id === typeId);
@@ -265,7 +385,9 @@ export const useTransactionForm = () => {
                                         statusUpper === 'VOIDED' ||
                                         e.isHidden;
                     if (e.type !== 'accommodation' || isCancelled) return false;
-                    if (e.roomType?.toLowerCase() !== type.name?.toLowerCase()) return false;
+                    const isMatch = (e.roomTypeId && e.roomTypeId === type.id) || 
+                                    (e.roomType && type.name && e.roomType.toLowerCase() === type.name.toLowerCase());
+                    if (!isMatch) return false;
                     
                     if (e.checkInDate && e.checkOutDate) {
                         return dateStr >= e.checkInDate && dateStr < e.checkOutDate;
@@ -275,32 +397,60 @@ export const useTransactionForm = () => {
                     return false;
                 }).reduce((acc, curr) => acc + (Number(curr.roomCount) || 1), 0);
 
-                const totalAllotment = parseInt(type.roomCount) || parseInt(type.totalRooms) || 0;
+                const totalAllotment = parseInt(type.roomCount) || parseInt(type.totalRooms) || parseInt(type.allotment) || parseInt(type.count_of_rooms) || (type.physicalRooms && type.physicalRooms.length > 0 ? type.physicalRooms.length : 0) || 4;
                 if (occupied + count > totalAllotment) return false;
             }
         }
         return true;
-    }, [form.checkIn, form.checkOut, form.rooms, occupancy, roomTypes, revenueType]);
+    }, [form.checkIn, form.checkOut, form.rooms, occupancy, roomTypes, revenueType, checkStopSell, selectedRatePlanId]);
 
     const addRoom = () => {
-        setForm(prev => ({
-            ...prev,
-            rooms: [...prev.rooms, { roomTypeId: "", roomNumber: "", price: "" }]
-        }));
+        setForm(prev => {
+            const defaultType = roomTypes[0]?.id || "";
+            const defaultPrice = (roomTypes[0]?.basePrice || roomTypes[0]?.price || "").toString();
+            const nextRooms = [
+                ...prev.rooms,
+                { 
+                    roomTypeId: prev.rooms[0]?.roomTypeId || defaultType, 
+                    roomNumber: "", 
+                    ratePlanId: "", 
+                    rateCode: "-", 
+                    adults: 1, 
+                    children: 0, 
+                    price: prev.rooms[0]?.price || defaultPrice 
+                }
+            ];
+            return {
+                ...prev,
+                rooms: nextRooms,
+                roomCount: nextRooms.length
+            };
+        });
     };
 
     const removeRoom = (index: number) => {
         if (form.rooms.length <= 1) return;
-        setForm(prev => ({
-            ...prev,
-            rooms: prev.rooms.filter((_, i) => i !== index)
-        }));
+        setForm(prev => {
+            const nextRooms = prev.rooms.filter((_, i) => i !== index);
+            return {
+                ...prev,
+                rooms: nextRooms,
+                roomCount: nextRooms.length
+            };
+        });
     };
 
     const updateRoom = (index: number, field: string, value: any) => {
         setForm(prev => {
             const newRooms = [...prev.rooms];
             newRooms[index] = { ...newRooms[index], [field]: value };
+
+            if (field === "roomTypeId") {
+                const rt = roomTypes.find(r => r.id === value);
+                if (rt && (!newRooms[index].price || newRooms[index].price === "0" || newRooms[index].price === "")) {
+                    newRooms[index].price = (rt.basePrice || rt.price || "").toString();
+                }
+            }
             return { ...prev, rooms: newRooms };
         });
     };
@@ -313,14 +463,16 @@ export const useTransactionForm = () => {
             if (!form.guestName) { toast.error("Guest Name is required"); return null; }
             if (!form.checkOut) { toast.error("Check-out Date is required"); return null; }
             if (form.checkOut <= form.checkIn) { toast.error("Check-out Date must be after Check-in Date"); return null; }
-            if (!form.rooms[0]?.roomTypeId) { toast.error("Room Category is required"); return null; }
-            if (!form.rooms[0]?.roomNumber) { toast.error("Room Number is required"); return null; }
+            if (!form.rooms || form.rooms.length === 0 || !form.rooms[0]?.roomTypeId) { 
+                toast.error("Silakan pilih Tipe Kamar"); 
+                return null; 
+            }
             if (form.isCompliment && !form.complimentReason) { toast.error("Alasan Compliment wajib diisi"); return null; }
             
             // Check for negative room rates
-            const hasNegativeRate = (form.nightRates || []).some(r => Number(r) < 0);
+            const hasNegativeRate = (form.rooms || []).some(r => Number(r.price) < 0) || (form.nightRates || []).some(r => Number(r) < 0);
             if (hasNegativeRate) {
-                toast.error("Room rate cannot be negative");
+                toast.error("Tarif kamar tidak boleh bernilai negatif");
                 return null;
             }
         } else {
@@ -350,13 +502,30 @@ export const useTransactionForm = () => {
             return null;
         }
 
+        // Check Stop Sell explicitly with exact date and room name
+        if (isRoom) {
+            const startD = new Date(form.checkIn);
+            for (let i = 0; i < nights; i++) {
+                const cur = new Date(startD);
+                cur.setDate(cur.getDate() + i);
+                const dateStr = cur.toISOString().split('T')[0];
+                for (const rm of form.rooms) {
+                    if (rm.roomTypeId && checkStopSell(rm.roomTypeId, rm.ratePlanId || selectedRatePlanId, dateStr)) {
+                        const rtName = roomTypes.find(t => t.id === rm.roomTypeId)?.name || "Kamar";
+                        toast.error(`Kamar "${rtName}" berstatus STOP SELL pada tanggal ${dateStr}. Tidak dapat melakukan booking / walk-in!`);
+                        return null;
+                    }
+                }
+            }
+        }
+
         // Allow adding transactions for past dates without availability check
         const checkInDate = new Date(form.checkIn);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const isFutureOrToday = checkInDate >= today;
         if (isRoom && !isAvailable() && isFutureOrToday) {
-            toast.error("Requested room types are sold out for these dates");
+            toast.error("Requested room types are sold out or closed for these dates");
             return null;
         }
 
@@ -377,109 +546,140 @@ export const useTransactionForm = () => {
             let remTransfer = rawTransfer;
             let remOta = rawOta;
 
-            for (let i = 0; i < nights; i++) {
-                const currentDate = new Date(startD);
-                currentDate.setDate(currentDate.getDate() + i);
-                const dateStr = currentDate.toISOString().split('T')[0];
-                
-                const nightlyRate = Number(form.nightRates[i]) || 0;
-                const ratio = totalGross > 0 ? nightlyRate / totalGross : 0;
-                
-                let dailyCash = 0;
-                let dailyEdc = 0;
-                let dailyQris = 0;
-                let dailyTransfer = 0;
-                let dailyOta = 0;
-                
-                if (i === nights - 1) {
-                    dailyCash = remCash;
-                    dailyEdc = remEdc;
-                    dailyQris = remQris;
-                    dailyTransfer = remTransfer;
-                    dailyOta = remOta;
-                } else {
-                    dailyCash = Math.round(rawCash * ratio);
-                    dailyEdc = Math.round(rawEdc * ratio);
-                    dailyQris = Math.round(rawQris * ratio);
-                    dailyTransfer = Math.round(rawTransfer * ratio);
-                    dailyOta = Math.round(rawOta * ratio);
+            const roomList: any[] = form.rooms && form.rooms.length > 0 ? form.rooms : [{ roomTypeId: "", roomNumber: "", price: "" }];
 
-                    remCash -= dailyCash;
-                    remEdc -= dailyEdc;
-                    remQris -= dailyQris;
-                    remTransfer -= dailyTransfer;
-                    remOta -= dailyOta;
+            roomList.forEach((rm: any, rIdx: number) => {
+                const roomTypeObj = roomTypes.find(rt => rt.id === rm.roomTypeId);
+                const roomTypeName = roomTypeObj?.name || rm.roomTypeName || "Standard Room";
+                const baseNightlyRate = Number(rm.price) || 0;
+
+                for (let i = 0; i < nights; i++) {
+                    const currentDate = new Date(startD);
+                    currentDate.setDate(currentDate.getDate() + i);
+                    const dateStr = currentDate.toISOString().split('T')[0];
+                    
+                    const nightlyRate = (rIdx === 0 && form.nightRates && form.nightRates[i] !== undefined && form.nightRates[i] !== "") 
+                        ? (Number(form.nightRates[i]) || 0) 
+                        : baseNightlyRate;
+
+                    const ratio = totalGross > 0 ? nightlyRate / totalGross : 0;
+                    
+                    let dailyCash = 0;
+                    let dailyEdc = 0;
+                    let dailyQris = 0;
+                    let dailyTransfer = 0;
+                    let dailyOta = 0;
+                    
+                    if (i === nights - 1 && rIdx === roomList.length - 1) {
+                        dailyCash = remCash;
+                        dailyEdc = remEdc;
+                        dailyQris = remQris;
+                        dailyTransfer = remTransfer;
+                        dailyOta = remOta;
+                    } else {
+                        dailyCash = Math.round(rawCash * ratio);
+                        dailyEdc = Math.round(rawEdc * ratio);
+                        dailyQris = Math.round(rawQris * ratio);
+                        dailyTransfer = Math.round(rawTransfer * ratio);
+                        dailyOta = Math.round(rawOta * ratio);
+
+                        remCash -= dailyCash;
+                        remEdc -= dailyEdc;
+                        remQris -= dailyQris;
+                        remTransfer -= dailyTransfer;
+                        remOta -= dailyOta;
+                    }
+                    
+                    const finalAmount = form.isCompliment ? 0 : nightlyRate;
+                    const finalCash = form.isCompliment ? 0 : dailyCash;
+                    const finalEdc = form.isCompliment ? 0 : dailyEdc;
+                    const finalQris = form.isCompliment ? 0 : dailyQris;
+                    const finalTransfer = form.isCompliment ? 0 : dailyTransfer;
+                    const finalOta = form.isCompliment ? 0 : dailyOta;
+                    
+                    const finalPayHotel = finalCash + finalEdc + finalQris + finalTransfer;
+                    const finalPayTransfer = finalOta + finalTransfer;
+
+                    const dailyPaid = finalCash + finalEdc + finalQris + finalTransfer + finalOta;
+                    const dailyBalance = Math.max(0, finalAmount - dailyPaid);
+                    const dailyStatus = form.isCompliment ? "Lunas" : (dailyBalance === 0 ? "Lunas" : (dailyPaid > 0 ? "DP / Partial" : "Belum Bayar"));
+
+                    let pm = "Cash";
+                    if (finalOta > 0 && finalPayHotel === 0) pm = "OTA Virtual / City Ledger";
+                    else if (finalEdc > 0 && finalCash === 0 && finalQris === 0 && finalTransfer === 0) pm = "EDC BCA / Mandiri";
+                    else if (finalQris > 0 && finalCash === 0 && finalEdc === 0 && finalTransfer === 0) pm = "QRIS Payment";
+                    else if (finalTransfer > 0 && finalCash === 0 && finalEdc === 0 && finalQris === 0) pm = "Bank Transfer";
+                    else if ([finalCash > 0, finalEdc > 0, finalQris > 0, finalTransfer > 0, finalOta > 0].filter(Boolean).length > 1) pm = "Split Payment";
+
+                    const fullGuestName = [form.salutation, form.guestName].filter(Boolean).join(" ");
+
+                    transactionEntries.push({
+                        type: "accommodation",
+                        salutation: form.salutation || "Mr.",
+                        guestName: fullGuestName,
+                        rawGuestName: form.guestName,
+                        bookingId: form.bookingId || `RES-${Date.now().toString().slice(-6)}`,
+                        phone: form.phone || "",
+                        nik: form.nik || "",
+                        nationality: form.nationality || "INDONESIA",
+                        email: form.email || "",
+                        address: form.address || "",
+                        zipCode: form.zipCode || "",
+                        country: form.country || "Indonesia",
+                        state: form.state || "",
+                        city: form.city || "",
+                        company: form.company || "-",
+                        bookingType: form.bookingType || "Confirm Booking",
+                        businessSource: form.businessSource || "Direct / Walk-in",
+                        rateCode: rm.rateCode || form.rateCode || "-",
+                        ratePlanId: rm.ratePlanId || "",
+                        pax: Number(rm.adults || form.pax || 1),
+                        adults: Number(rm.adults || 1),
+                        children: Number(rm.children || 0),
+                        upgradeFrom: form.upgradeFrom || "",
+                        upgradeTo: form.upgradeTo || "",
+                        checkInDate: form.checkIn,
+                        checkInTime: form.checkInTime || "02:00 PM",
+                        checkOutDate: form.checkOut,
+                        checkOutTime: form.checkOutTime || "12:00 PM",
+                        effectiveDate: dateStr,
+                        roomType: roomTypeName,
+                        roomTypeId: rm.roomTypeId || "",
+                        roomNumber: rm.roomNumber || `Room ${rIdx + 1}`,
+                        roomCount: 1,
+                        roomIndex: rIdx,
+                        totalRoomsInBooking: roomList.length,
+                        nights: 1,
+                        channel: form.channel,
+                        voucherCode: form.voucherCode,
+                        amount: finalAmount,
+                        totalAmount: totalGross,
+                        paidCash: finalCash,
+                        paidEdc: finalEdc,
+                        paidQris: finalQris,
+                        paidTransfer: finalTransfer,
+                        paidOta: finalOta,
+                        payHotel: finalPayHotel,
+                        payTransfer: finalPayTransfer,
+                        paidAmount1: finalPayHotel,
+                        paidAmount2: finalPayTransfer,
+                        initialPayHotel: finalPayHotel,
+                        initialPayTransfer: finalPayTransfer,
+                        paymentMethod: pm,
+                        paymentStatus: dailyStatus,
+                        source: form.channel === "Walk-in" ? "Walk-in" : "OTA",
+                        status: form.bookingType === "Inquiry" ? "INQUIRY" : (form.bookingType === "Tentative / Hold" ? "HOLD" : "CONFIRMED"),
+                        staffName: form.staffName,
+                        note: form.note,
+                        timestamp: new Date().toISOString(),
+                        isCompliment: form.isCompliment,
+                        complimentReason: form.isCompliment ? form.complimentReason : undefined,
+                        complimentValue: form.isCompliment ? nightlyRate : undefined,
+                        sendEmailVoucher: form.sendEmailVoucher,
+                        enableGuestPortal: form.enableGuestPortal
+                    });
                 }
-                
-                const finalAmount = form.isCompliment ? 0 : nightlyRate;
-                const finalCash = form.isCompliment ? 0 : dailyCash;
-                const finalEdc = form.isCompliment ? 0 : dailyEdc;
-                const finalQris = form.isCompliment ? 0 : dailyQris;
-                const finalTransfer = form.isCompliment ? 0 : dailyTransfer;
-                const finalOta = form.isCompliment ? 0 : dailyOta;
-                
-                const finalPayHotel = finalCash + finalEdc + finalQris + finalTransfer;
-                const finalPayTransfer = finalOta + finalTransfer;
-
-                const dailyPaid = finalCash + finalEdc + finalQris + finalTransfer + finalOta;
-                const dailyBalance = Math.max(0, finalAmount - dailyPaid);
-                const dailyStatus = form.isCompliment ? "Lunas" : (dailyBalance === 0 ? "Lunas" : (dailyPaid > 0 ? "DP / Partial" : "Belum Bayar"));
-
-                let pm = "Cash";
-                if (finalOta > 0 && finalPayHotel === 0) pm = "OTA Virtual / City Ledger";
-                else if (finalEdc > 0 && finalCash === 0 && finalQris === 0 && finalTransfer === 0) pm = "EDC BCA / Mandiri";
-                else if (finalQris > 0 && finalCash === 0 && finalEdc === 0 && finalTransfer === 0) pm = "QRIS Payment";
-                else if (finalTransfer > 0 && finalCash === 0 && finalEdc === 0 && finalQris === 0) pm = "Bank Transfer";
-                else if ([finalCash > 0, finalEdc > 0, finalQris > 0, finalTransfer > 0, finalOta > 0].filter(Boolean).length > 1) pm = "Split Payment";
-
-                transactionEntries.push({
-                    type: "accommodation",
-                    guestName: form.guestName,
-                    bookingId: form.bookingId || `RES-${Date.now().toString().slice(-6)}`,
-                    phone: form.phone || "",
-                    nik: form.nik || "",
-                    nationality: form.nationality || "INDONESIA",
-                    email: form.email || "",
-                    address: form.address || "",
-                    company: form.company || "-",
-                    rateCode: form.rateCode || "-",
-                    pax: Number(form.pax) || 1,
-                    upgradeFrom: form.upgradeFrom || "",
-                    upgradeTo: form.upgradeTo || "",
-                    checkInDate: form.checkIn,
-                    checkOutDate: form.checkOut,
-                    effectiveDate: dateStr,
-                    roomType: roomTypes.find(rt => rt.id === form.rooms[0].roomTypeId)?.name || "",
-                    roomNumber: form.rooms[0].roomNumber,
-                    roomCount: 1,
-                    nights: 1,
-                    channel: form.channel,
-                    voucherCode: form.voucherCode,
-                    amount: finalAmount,
-                    totalAmount: totalGross,
-                    paidCash: finalCash,
-                    paidEdc: finalEdc,
-                    paidQris: finalQris,
-                    paidTransfer: finalTransfer,
-                    paidOta: finalOta,
-                    payHotel: finalPayHotel,
-                    payTransfer: finalPayTransfer,
-                    paidAmount1: finalPayHotel,
-                    paidAmount2: finalPayTransfer,
-                    initialPayHotel: finalPayHotel,
-                    initialPayTransfer: finalPayTransfer,
-                    paymentMethod: pm,
-                    paymentStatus: dailyStatus,
-                    source: form.channel === "Walk-in" ? "Walk-in" : "OTA",
-                    status: "CONFIRMED",
-                    staffName: form.staffName,
-                    note: form.note,
-                    timestamp: new Date().toISOString(),
-                    isCompliment: form.isCompliment,
-                    complimentReason: form.isCompliment ? form.complimentReason : undefined,
-                    complimentValue: form.isCompliment ? nightlyRate : undefined
-                });
-            }
+            });
         } else {
             const finalAmount = form.isCompliment ? 0 : Number(form.totalAmount);
             const finalCash = form.isCompliment ? 0 : rawCash;
@@ -586,40 +786,58 @@ export const useTransactionForm = () => {
             });
 
             for (const [dateStr, transactionEntries] of Object.entries(entriesByDate)) {
-                const hotelId = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") : null) || "";
+                const hotelId = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") : null) || (user as any)?.hotelId || "";
                 if (!hotelId || hotelId === "0") {
                     throw new Error("Hotel Code is missing or invalid. Action denied to prevent data contamination.");
                 }
                 const docId = `${hotelId}_${dateStr}`;
-                const docRef = doc(getHotelCollection(db, "daily_revenue"), docId);
+                const docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), docId);
                 const docSnap = await getDoc(docRef);
-                const cleanedEntries = transactionEntries.map(e => cleanUndefined(e));
+                const cleanedEntries = transactionEntries.map(e => cleanUndefined({
+                    ...e,
+                    hotelId: hotelId,
+                    hotelCode: hotelId
+                }));
 
                 if (docSnap.exists()) {
                     await updateDoc(docRef, { 
                         entries: arrayUnion(...cleanedEntries),
-                        date: dateStr
+                        date: dateStr,
+                        hotelId: hotelId,
+                        hotelCode: hotelId,
+                        updatedAt: new Date().toISOString()
                     });
                 } else {
                     await setDoc(docRef, { 
                         entries: cleanedEntries,
-                        date: dateStr
+                        date: dateStr,
+                        hotelId: hotelId,
+                        hotelCode: hotelId,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
                     });
                 }
             }
 
-            // Trigger background ARI sync to Channex if room transaction
-            if (revenueType === "room" && form.checkIn && form.checkOut) {
-                fetch("/api/channex/sync-ari", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        hotelCode: activeHotelCode,
-                        startDate: form.checkIn,
-                        endDate: form.checkOut,
-                        type: "availability"
-                    })
-                }).catch(e => console.warn("[Channex Sync Trigger Warning]:", e));
+            // Trigger background ARI sync to Channex for all affected stay dates if room transaction
+            const hotelIdForSync = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") : null) || (user as any)?.hotelId || "";
+            const affectedDates = Object.keys(entriesByDate).sort();
+            const hasRoomTx = finalEntries.some(e => e.type === "accommodation");
+            if (hasRoomTx && affectedDates.length > 0 && hotelIdForSync) {
+                try {
+                    await fetch("/api/channex/sync-ari", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            hotelCode: hotelIdForSync,
+                            startDate: affectedDates[0],
+                            endDate: affectedDates[affectedDates.length - 1],
+                            type: "availability"
+                        })
+                    });
+                } catch (e) {
+                    console.warn("[Channex Sync Trigger Warning]:", e);
+                }
             }
 
             toast.success("All transactions synchronized successfully");
@@ -658,17 +876,6 @@ export const useTransactionForm = () => {
         toast.info(`Paket ${plan.name} terpilih: Rp ${plan.baseRate.toLocaleString("id-ID")} / malam`);
     };
 
-    const updateForm = (field: string, value: any) => {
-        let finalValue = value;
-        if (["paidCash", "paidEdc", "paidQris", "paidTransfer", "paidOta", "payHotel", "payTransfer", "totalAmount"].includes(field)) {
-            const num = Number(value);
-            if (!isNaN(num) && num < 0) {
-                finalValue = 0;
-            }
-        }
-        setForm(prev => ({ ...prev, [field]: finalValue }));
-    };
-
     const getAvailableRoomNumbers = useCallback((roomTypeId: string) => {
         const type = roomTypes.find(rt => rt.id === roomTypeId);
         if (!type) return [];
@@ -679,7 +886,7 @@ export const useTransactionForm = () => {
         }).filter(Boolean);
 
         // Pad with generic room numbers up to allotment if empty or less than allotment
-        const allotment = parseInt(type.roomCount) || parseInt(type.totalRooms) || parseInt(type.allotment) || 0;
+        const allotment = parseInt(type.roomCount) || parseInt(type.totalRooms) || parseInt(type.allotment) || parseInt(type.count_of_rooms) || (type.physicalRooms && type.physicalRooms.length > 0 ? type.physicalRooms.length : 0) || 4;
         let genericCounter = 1;
         while (allPhysicalRooms.length < allotment) {
             let newNumber = `${genericCounter}`;
@@ -713,7 +920,9 @@ export const useTransactionForm = () => {
                                     statusUpper === 'VOIDED' ||
                                     e.isHidden;
                 if (e.type !== 'accommodation' || isCancelled) return;
-                if (e.roomType?.toLowerCase() !== type.name?.toLowerCase()) return;
+                const isMatch = (e.roomTypeId && e.roomTypeId === type.id) || 
+                                (e.roomType && type.name && e.roomType.toLowerCase() === type.name.toLowerCase());
+                if (!isMatch) return;
                 
                 let isOccupiedOnDate = false;
                 if (e.checkInDate && e.checkOutDate) {
@@ -738,7 +947,9 @@ export const useTransactionForm = () => {
                                     statusUpper === 'VOIDED' ||
                                     item.isHidden;
                 if (item.type !== 'accommodation' || isCancelled) return;
-                if (item.roomType?.toLowerCase() !== type.name?.toLowerCase()) return;
+                const isMatch = (item.roomTypeId && item.roomTypeId === type.id) || 
+                                (item.roomType && type.name && item.roomType.toLowerCase() === type.name.toLowerCase());
+                if (!isMatch) return;
                 
                 let isOccupiedOnDate = false;
                 if (item.checkInDate && item.checkOutDate) {
@@ -755,6 +966,90 @@ export const useTransactionForm = () => {
 
         return allPhysicalRooms.filter((r: string) => !occupiedRooms.has(r.toString().toUpperCase().trim()));
     }, [form.checkIn, form.checkOut, roomTypes, occupancy, queue]);
+
+    const updateForm = (field: string, value: any) => {
+        let finalValue = value;
+        if (["paidCash", "paidEdc", "paidQris", "paidTransfer", "paidOta", "payHotel", "payTransfer", "totalAmount"].includes(field)) {
+            const num = Number(value);
+            if (!isNaN(num) && num < 0) {
+                finalValue = 0;
+            }
+        }
+
+        if (field === "bookAllAvailable") {
+            const isChecked = !!value;
+            setForm(prev => {
+                if (isChecked && roomTypes.length > 0) {
+                    const allRooms: any[] = [];
+                    roomTypes.forEach((rt: any) => {
+                        const availableNumbers = getAvailableRoomNumbers(rt.id);
+                        const plansForType = ratePlans.filter((p: any) => 
+                            (p.roomTypeId && p.roomTypeId === rt.id) ||
+                            (!p.roomTypeId && p.name?.toLowerCase().includes(rt.name?.toLowerCase())) ||
+                            (rt.name && p.name?.toLowerCase().includes(rt.name?.toLowerCase())) ||
+                            (rt.name && rt.name?.toLowerCase().includes(p.name?.toLowerCase()))
+                        );
+                        const usablePlans = plansForType.length > 0 ? plansForType : ratePlans;
+                        const totalAllotment = parseInt(rt.roomCount) || parseInt(rt.totalRooms) || parseInt(rt.allotment) || parseInt(rt.count_of_rooms) || (rt.physicalRooms && rt.physicalRooms.length > 0 ? rt.physicalRooms.length : 0) || 4;
+                        const count = availableNumbers.length > 0 ? availableNumbers.length : totalAllotment;
+
+                        for (let i = 0; i < count; i++) {
+                            const matchedPlan = usablePlans.length > 0 ? usablePlans[i % usablePlans.length] : null;
+                            const rate = matchedPlan?.baseRate || rt.basePrice || rt.price || 650000;
+                            const roomNum = availableNumbers[i] || (i + 1).toString();
+                            allRooms.push({
+                                roomTypeId: rt.id,
+                                roomNumber: roomNum,
+                                ratePlanId: matchedPlan?.id || matchedPlan?.code || "",
+                                rateCode: matchedPlan?.code || matchedPlan?.name || rt.code || "-",
+                                adults: 1,
+                                children: 0,
+                                price: rate.toString()
+                            });
+                        }
+                    });
+
+                    if (allRooms.length === 0) {
+                        toast.warning("Tidak ada kamar yang tersedia");
+                        return { ...prev, bookAllAvailable: false };
+                    }
+
+                    return {
+                        ...prev,
+                        bookAllAvailable: true,
+                        rooms: allRooms,
+                        roomCount: allRooms.length
+                    };
+                } else if (!isChecked) {
+                    const defaultType = roomTypes[0]?.id || "";
+                    const plansForType = ratePlans.filter((p: any) => 
+                        (p.roomTypeId && p.roomTypeId === defaultType) ||
+                        (!p.roomTypeId && p.name?.toLowerCase().includes(roomTypes[0]?.name?.toLowerCase()))
+                    );
+                    const matchedPlan = plansForType[0] || ratePlans[0] || null;
+                    const defaultRate = matchedPlan?.baseRate || roomTypes[0]?.basePrice || roomTypes[0]?.price || 650000;
+                    return {
+                        ...prev,
+                        bookAllAvailable: false,
+                        rooms: [{
+                            roomTypeId: defaultType,
+                            roomNumber: "",
+                            ratePlanId: matchedPlan?.id || matchedPlan?.code || "",
+                            rateCode: matchedPlan?.code || matchedPlan?.name || "-",
+                            adults: 1,
+                            children: 0,
+                            price: defaultRate.toString()
+                        }],
+                        roomCount: 1
+                    };
+                }
+                return { ...prev, bookAllAvailable: isChecked };
+            });
+            return;
+        }
+
+        setForm(prev => ({ ...prev, [field]: finalValue }));
+    };
 
     return {
         form,

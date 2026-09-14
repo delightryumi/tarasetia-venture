@@ -4,6 +4,7 @@ import React, { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import styles from "./TransactionFormStyles.module.css";
+import pmsStyles from "./AddReservation.module.css";
 import { useTransactionForm } from "./useTransactionForm";
 import {
     TerminalHeader,
@@ -35,8 +36,77 @@ function AddTransactionContent() {
         removeFromQueue,
         commitTransactions,
         handleCancel,
-        getAvailableRoomNumbers
+        getAvailableRoomNumbers,
+        addRoom,
+        removeRoom
     } = useTransactionForm();
+
+    React.useEffect(() => {
+        const handleWheel = () => {
+            const active = document.activeElement as HTMLElement | null;
+            if (active && (active.tagName === "INPUT" || active.tagName === "SELECT")) {
+                active.blur();
+            }
+        };
+        window.addEventListener("wheel", handleWheel, { passive: true });
+        return () => window.removeEventListener("wheel", handleWheel);
+    }, []);
+
+    const isRoomForm = step === 'form' && revenueType === 'room';
+
+    if (isRoomForm) {
+        return (
+            <div className={pmsStyles.rootContainer}>
+                <div className={pmsStyles.layoutGrid}>
+                    <div className={pmsStyles.leftColumn}>
+                        <TransactionEntryForm 
+                            revenueType={revenueType}
+                            form={form}
+                            roomTypes={roomTypes}
+                            ratePlans={ratePlans}
+                            selectedRatePlanId={selectedRatePlanId}
+                            onSelectRatePlan={onSelectRatePlan}
+                            updateForm={updateForm}
+                            updateRoom={updateRoom}
+                            addRoom={addRoom}
+                            removeRoom={removeRoom}
+                            updateNightRate={updateNightRate}
+                            onCancel={() => {
+                                setStep('select');
+                                updateForm("incomeType", "");
+                            }}
+                            onSubmit={addToQueue}
+                            getAvailableRoomNumbers={getAvailableRoomNumbers}
+                            totalGross={totalGross}
+                            handleCancel={handleCancel}
+                        />
+                    </div>
+
+                    <ReviewSidebar 
+                        revenueType={revenueType}
+                        form={form}
+                        roomTypes={roomTypes}
+                        totalGross={totalGross}
+                        queue={queue}
+                        saving={saving}
+                        updateForm={updateForm}
+                        onCommit={commitTransactions}
+                        onSubmit={addToQueue}
+                        onCancel={handleCancel}
+                    />
+                </div>
+
+                {queue.length > 0 && (
+                    <div style={{ maxWidth: '1440px', margin: '24px auto 0 auto' }}>
+                        <QueueTable 
+                            queue={queue}
+                            removeFromQueue={removeFromQueue}
+                        />
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div className={styles.forecastTerminalRoot}>
@@ -75,16 +145,19 @@ function AddTransactionContent() {
                                     onSelectRatePlan={onSelectRatePlan}
                                     updateForm={updateForm}
                                     updateRoom={updateRoom}
+                                    addRoom={addRoom}
+                                    removeRoom={removeRoom}
                                     updateNightRate={updateNightRate}
                                     onCancel={() => {
                                         setStep('select');
-                                        updateForm({ incomeType: "" });
+                                        updateForm("incomeType", "");
                                     }}
                                     onSubmit={addToQueue}
                                     getAvailableRoomNumbers={getAvailableRoomNumbers}
+                                    totalGross={totalGross}
+                                    handleCancel={handleCancel}
                                 />
                             </div>
-
 
                             <ReviewSidebar 
                                 revenueType={revenueType}
@@ -93,7 +166,10 @@ function AddTransactionContent() {
                                 totalGross={totalGross}
                                 queue={queue}
                                 saving={saving}
+                                updateForm={updateForm}
                                 onCommit={commitTransactions}
+                                onSubmit={addToQueue}
+                                onCancel={handleCancel}
                             />
                         </div>
                     )}

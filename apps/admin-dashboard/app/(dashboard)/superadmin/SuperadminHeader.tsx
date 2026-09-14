@@ -4,7 +4,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, Settings, Users, LogOut } from "lucide-react";
 import { ModuleActionButtons } from "@/components/layout/ModuleActionButtons";
-import styles from "@/app/select-module/select-module.module.css";
+import styles from "./SuperadminHeader.module.css";
 import { HotelMasterDoc } from "./types";
 
 interface SuperadminHeaderProps {
@@ -63,7 +63,11 @@ export const SuperadminHeader: React.FC<SuperadminHeaderProps> = ({
                 }}
                 className={`border-none pr-8 sm:pr-10 py-1 text-[11px] sm:text-[13px] font-medium focus:outline-none focus:ring-0 cursor-pointer appearance-none h-full w-full truncate rounded-[6px] text-left ${styles.hotelSelect}`}
                 style={{
-                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239297a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                  backgroundColor: "#ffffff",
+                  color: "#0f172a",
+                  fontWeight: 600,
+                  colorScheme: "light",
+                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
                   backgroundRepeat: "no-repeat",
                   backgroundPosition: "right 8px center",
                   backgroundSize: "16px",
@@ -72,12 +76,12 @@ export const SuperadminHeader: React.FC<SuperadminHeaderProps> = ({
               >
                 {hotelsList && hotelsList.length > 0 ? (
                   hotelsList.map((hotel) => (
-                    <option key={hotel.hotelCode} value={hotel.hotelCode}>
+                    <option key={hotel.hotelCode} value={hotel.hotelCode} style={{ backgroundColor: "#ffffff", color: "#0f172a" }}>
                       [{hotel.hotelCode}] {hotel.name}
                     </option>
                   ))
                 ) : (
-                  <option value="" disabled>Memuat daftar partner...</option>
+                  <option value="" disabled style={{ backgroundColor: "#ffffff", color: "#64748b" }}>Memuat daftar partner...</option>
                 )}
               </select>
             </div>
@@ -85,7 +89,7 @@ export const SuperadminHeader: React.FC<SuperadminHeaderProps> = ({
             activeHotelCode && (
               <div
                 className={`hidden sm:flex items-center h-9 pr-3 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[11px] sm:text-[13px] font-semibold ${styles.hotelBadge}`}
-                style={{ paddingLeft: "8px" }}
+                style={{ paddingLeft: "8px", backgroundColor: "#ffffff", color: "#0f172a" }}
               >
                 <span className="truncate w-full text-left" style={{ paddingLeft: "4px" }}>
                   [{activeHotelCode || "0"}] {activeHotelName || "Memuat..."}

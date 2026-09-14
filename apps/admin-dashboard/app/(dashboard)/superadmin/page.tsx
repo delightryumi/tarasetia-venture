@@ -569,9 +569,18 @@ export default function SuperadminPage() {
     setTimeout(() => window.print(), 150);
   };
 
+  // ── Access Denied Guard: Strictly block anyone who is not verified superadmin ──
+  if (authLoading || !user || user.role !== "superadmin") {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", backgroundColor: "var(--s-canvas, #08080a)" }}>
+        <Loader2 className="animate-spin" size={32} style={{ color: "#2563eb" }} />
+      </div>
+    );
+  }
+
   // ── Render ──
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", width: "100%", overflowX: "hidden", backgroundColor: "var(--s-canvas)" }}>
+    <div className={styles.superadminRoot}>
       {/* ── Fixed Global Header ── */}
       <SuperadminHeader
         theme={theme}
@@ -651,7 +660,7 @@ export default function SuperadminPage() {
         )}
 
         {activeMainTab === "channel-manager" && (
-          <div style={{ marginTop: "12px", width: "100%" }}>
+          <div style={{ width: "100%" }}>
             <ChannelManagerSection />
           </div>
         )}

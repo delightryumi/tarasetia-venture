@@ -1,5 +1,18 @@
 /* superadmin.module.css — CRS Superadmin Portal Styles */
 
+.superadminRoot {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  background-color: #ffffff;
+}
+
+:global(.dark) .superadminRoot {
+  background-color: #09090b;
+}
+
 .page {
   /* Spacing Tokens */
   --s-space-xxs: 4px;
@@ -20,9 +33,9 @@
   --s-font: var(--font-geist-sans), 'Inter', system-ui, sans-serif;
 
   /* Colors (Light Mode) */
-  --s-canvas: #f8fafc;
+  --s-canvas: #ffffff;
   --s-surface-card: #ffffff;
-  --s-surface-soft: #f1f5f9;
+  --s-surface-soft: #f8fafc;
   --s-hairline: #e2e8f0;
   --s-ink: #0f172a;
   --s-body: #334155;
@@ -35,8 +48,11 @@
   --s-secondary-btn-text: #0f172a;
   --s-secondary-btn-border: #cbd5e1;
 
-  padding: 6px 20px 36px;
+  width: 100%;
   max-width: 1360px;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0 24px 32px;
   margin: 0 auto;
   font-family: var(--s-font);
   color: var(--s-body);
@@ -908,7 +924,7 @@
 
 /* Spacer to push content below the fixed header */
 .headerSpacer {
-  height: 44px;
+  height: 48px;
   flex-shrink: 0;
 }
 

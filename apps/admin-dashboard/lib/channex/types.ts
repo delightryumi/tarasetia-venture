@@ -167,9 +167,14 @@ export type ChannexWebhookEventType =
 export interface ChannexWebhookPayload {
     event: ChannexWebhookEventType;
     property_id?: string;
+    booking_revision_id?: string;
     booking?: ChannexBooking;
     data?: any;
     inserted_at?: string;
+    unmapped_details?: any;
+    message?: any;
+    review?: any;
+    is_simulation?: boolean;
 }
 
 export interface MyTaraRatePlan {

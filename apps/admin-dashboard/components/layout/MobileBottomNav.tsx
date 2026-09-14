@@ -96,7 +96,8 @@ export const MobileBottomNav = () => {
                 pathname.startsWith('/front-office') ||
                 pathname === '/digital-checkin' ||
                 pathname === '/invoice' ||
-                pathname.startsWith('/rate-inventory')
+                pathname.startsWith('/rate-inventory') ||
+                pathname.startsWith('/confirmation-letter')
             ) {
                 localStorage.setItem("active_module", "front-office");
                 setActiveModule("front-office");
@@ -187,11 +188,12 @@ export const MobileBottomNav = () => {
 
     const allNavItems = [
         { id: "overview", label: "Overview", icon: <BarChart2 size={20} /> },
-        { id: "digital-checkin", label: "GRC", icon: <FileText size={20} /> },
         { id: "forecast", label: "Forecast", icon: <TrendingUp size={20} /> },
         { id: "rate-inventory", label: "Rate & Inventory", icon: <Settings size={20} /> },
-        { id: "pos", label: "POS Terminal", icon: <ShoppingCart size={20} /> },
         { id: "invoice", label: "Invoice", icon: <FileText size={20} /> },
+        { id: "digital-checkin", label: "GRC", icon: <FileText size={20} /> },
+        { id: "confirmation-letter", label: "CL", icon: <FileText size={20} /> },
+        { id: "pos", label: "POS Terminal", icon: <ShoppingCart size={20} /> },
         { id: "pnl", label: "PNL", icon: <PieChart size={20} /> },
         { id: "pnl-budget", label: "P&L Budget", icon: <BarChart2 size={20} /> },
         { id: "dsr", label: "DSR", icon: <TrendingUp size={20} /> },
@@ -241,7 +243,7 @@ export const MobileBottomNav = () => {
 
         let items = allNavItems;
         if (activeModule === "front-office") {
-            items = allNavItems.filter(item => ["overview", "digital-checkin", "forecast", "rate-inventory", "invoice", "purchase-order"].includes(item.id));
+            items = allNavItems.filter(item => ["overview", "forecast", "rate-inventory", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id));
         } else if (activeModule === "housekeeping") {
             items = allNavItems.filter(item => ["overview", "forecast", "purchase-order"].includes(item.id));
         } else if (activeModule === "accounting") {
@@ -336,7 +338,7 @@ export const MobileBottomNav = () => {
                                         router.push(`/budgeting?module=accounting`);
                                     } else if (item.id === "inventory-control") {
                                         router.push(`/inventory-control?module=${activeModule}`);
-                                    } else if (item.id === "overview" || item.id === "forecast") {
+                                    } else if (item.id === "overview" || item.id === "forecast" || item.id === "confirmation-letter" || item.id === "invoice" || item.id === "digital-checkin") {
                                         router.push(`/${item.id}?module=${activeModule}`);
                                     } else {
                                         router.push(`/${item.id}`);

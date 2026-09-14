@@ -300,10 +300,10 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                 type="button"
                                 onClick={() => setViewMode("vhp")}
                                 className={`${vhpStyles.viewModeBtn} ${viewMode === "vhp" ? vhpStyles.viewModeBtnActive : ""}`}
-                                title="Tampilan Tabel Sistematis VHP"
+                                title="Tampilan Tabel Sistematis TARA"
                             >
                                 <Table size={14} />
-                                <span>Tabel Sistematis (VHP)</span>
+                                <span>Tabel Sistematis (TARA)</span>
                             </button>
                             <button
                                 type="button"
@@ -568,7 +568,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                 <CheckCircle2 size={13} color="#166534" />
                                 Menampilkan {filteredTypes.length} dari {totalRoomTypes} kategori kamar hotel
                             </span>
-                            <span>Sistem Master Inventory VHP / My Tara</span>
+                            <span>Sistem Master Inventory TARA PMS</span>
                         </div>
                     </div>
                 ) : (

@@ -79,16 +79,6 @@ export function RateInventorySubTabs({
                     <span>Bulk Update</span>
                 </button>
 
-                <Link
-                    href="/channel-manager?tab=golive"
-                    className={styles.actionBtnSecondary}
-                    style={{ textDecoration: "none", color: "#1e3a2f", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "6px" }}
-                    title="Buka Channel Manager &amp; Konfigurasi Akun Channex"
-                >
-                    <Globe size={13} />
-                    <span>Channel Manager (Channex)</span>
-                </Link>
-
                 <span className={styles.infoBadgeText} title="Informasi tarif">
                     <Info size={13} />
                     <span>{taxInclusive ? "Tax Inclusive" : "Tax Exclusive"}</span>

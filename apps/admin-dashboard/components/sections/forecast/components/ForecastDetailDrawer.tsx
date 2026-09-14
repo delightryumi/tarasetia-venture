@@ -10,6 +10,7 @@ import styles from "../ForecastStyles.module.css";
 interface ForecastDetailDrawerProps {
     title: string;
     entries: any[];
+    summary?: any;
     onClose: () => void;
     formatCurrency: (v: number) => string;
 }

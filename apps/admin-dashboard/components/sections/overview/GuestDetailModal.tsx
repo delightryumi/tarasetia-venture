@@ -490,13 +490,28 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                     const entries = docSnap.data().entries || [];
                     const mapped = entries.map((e: any) => {
                         if (isBookingMatch(e, guest)) {
-                            return cleanUndefined({ ...e, status: "VOID", paymentStatus: "VOID" });
+                            return cleanUndefined({ ...e, status: "VOID", paymentStatus: "VOID", roomCount: 0 });
                         }
                         return cleanUndefined(e);
                     });
                     await updateDoc(docRef, { entries: mapped, date: d });
                 }
             }
+
+            // Immediately trigger availability recalculation & push released inventory to Channex/OTAs
+            if (dates.length > 0) {
+                fetch("/api/channex/sync-ari", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode: hotelId,
+                        startDate: dates[0],
+                        endDate: dates[dates.length - 1],
+                        type: "availability"
+                    })
+                }).catch(err => console.warn("[Void Channex Sync Warning]:", err));
+            }
+
             toast.success("Transaction voided successfully");
             if (onSave) onSave();
             onClose();
@@ -530,6 +545,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                 ...e, 
                                 status: "CANCELLED", 
                                 paymentStatus: "CANCELLED",
+                                roomCount: 0,
                                 cancelledAt: todayStr,
                                 cancelledBy: cancelledByVal
                             });
@@ -539,6 +555,21 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                     await updateDoc(docRef, { entries: mapped, date: d });
                 }
             }
+
+            // Immediately trigger availability recalculation & push released inventory to Channex/OTAs
+            if (dates.length > 0) {
+                fetch("/api/channex/sync-ari", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode: hotelId,
+                        startDate: dates[0],
+                        endDate: dates[dates.length - 1],
+                        type: "availability"
+                    })
+                }).catch(err => console.warn("[Cancel Channex Sync Warning]:", err));
+            }
+
             toast.success("Transaction cancelled successfully");
             if (onSave) onSave();
             onClose();

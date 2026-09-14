@@ -36,13 +36,17 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
         if (!hotelCode) return;
         setLoading(true);
         try {
-            const res = await fetch(`/api/channex/tasks?hotelCode=${hotelCode}`);
+            const res = await fetch(`/api/channex/tasks?hotelCode=${encodeURIComponent(hotelCode)}`);
+            if (!res.ok) {
+                console.warn(`[ChannelActionLogs] Tasks endpoint returned HTTP ${res.status}`);
+                return;
+            }
             const data = await res.json();
-            if (data.success && data.logs) {
+            if (data.success && Array.isArray(data.logs)) {
                 setLogs(data.logs);
             }
         } catch (err: any) {
-            console.error("Error fetching logs:", err);
+            console.warn("[ChannelActionLogs] Could not load task logs:", err?.message || err);
         } finally {
             setLoading(false);
         }

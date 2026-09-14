@@ -120,37 +120,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // 2. Fetch user permissions
     useEffect(() => {
         const fetchPermissions = async () => {
-            if (!user?.email) return;
+            if (!user?.email) {
+                setIsSuperadmin(false);
+                setUserPermissions(null);
+                return;
+            }
+
+            const isSuperEmail =
+                user.email.toLowerCase() === "superadmin@setara.co.id" ||
+                user.email.toLowerCase() === "nexura.management@gmail.com";
+            const userRole = (user as any).role?.toLowerCase();
+
+            if (userRole === "superadmin" || isSuperEmail) {
+                setIsSuperadmin(true);
+                return;
+            }
 
             try {
                 const userDocId = user.email.toLowerCase().replace(/[@.]/g, "_");
-                const isSuper =
-                    (user as any).role === "superadmin" ||
-                    user.email.toLowerCase() === "nexura.management@gmail.com";
-                
                 const userSnap = await getDoc(
-                    isSuper
-                        ? doc(db, "users_master", userDocId)
-                        : doc(getHotelCollection(db, "users_master"), userDocId)
+                    doc(getHotelCollection(db, "users_master"), userDocId)
                 );
 
                 if (userSnap.exists()) {
                     const userData = userSnap.data();
-                    const role = userData.role;
+                    const role = userData.role?.toLowerCase();
 
                     if (role === "superadmin") {
                         setIsSuperadmin(true);
                         return;
                     }
 
+                    setIsSuperadmin(false);
                     setUserPermissions(userData.permissions || {});
                 } else {
-                    // Default to superadmin if not found in master
-                    setIsSuperadmin(true);
+                    setIsSuperadmin(false);
+                    setUserPermissions({});
                 }
             } catch (err) {
                 console.error("Error fetching permissions:", err);
-                setIsSuperadmin(true);
+                setIsSuperadmin(false);
+                setUserPermissions({});
             }
         };
         fetchPermissions();
@@ -174,7 +184,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 pathname === "/digital-checkin" ||
                 pathname === "/invoice" ||
                 pathname === "/rate-inventory" ||
-                pathname.startsWith("/rate-inventory")
+                pathname.startsWith("/rate-inventory") ||
+                pathname.startsWith("/confirmation-letter")
             ) {
                 localStorage.setItem("active_module", "front-office");
                 setActiveModule("front-office");
@@ -247,7 +258,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         let items = allNavItems;
         if (activeModule === "front-office") {
             items = allNavItems.filter((item) =>
-                ["overview", "digital-checkin", "forecast", "rate-inventory", "invoice", "purchase-order"].includes(item.id)
+                ["overview", "forecast", "rate-inventory", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id)
             );
         } else if (activeModule === "housekeeping") {
             items = allNavItems.filter((item) =>
@@ -277,27 +288,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
             );
         } else if (activeModule === "cpanel") {
             if (activeSection === "users") {
-                items = allNavItems.filter((item) => ["users", "superadmin"].includes(item.id));
+                items = allNavItems.filter((item) =>
+                    item.id === "users" || (item.id === "superadmin" && isSuperadmin)
+                );
             } else {
                 if (activeModules !== null && !activeModules.includes("cpanel-full")) {
                     items = allNavItems.filter((item) => ["logo"].includes(item.id));
                 } else {
-                    items = allNavItems.filter((item) =>
-                        [
-                            "logo",
-                            "hero",
-                            "room-type",
-                            "about",
-                            "gallery",
-                            "footer",
-                            "attractions",
-                            "promo",
-                            "packages",
-                            "seo",
-                            "channel-manager",
-                            "superadmin",
-                        ].includes(item.id)
-                    );
+                    const cpanelAllowedIds = [
+                        "logo",
+                        "hero",
+                        "room-type",
+                        "about",
+                        "gallery",
+                        "footer",
+                        "attractions",
+                        "promo",
+                        "packages",
+                        "seo",
+                        "channel-manager",
+                    ];
+                    if (isSuperadmin) {
+                        cpanelAllowedIds.push("superadmin");
+                    }
+                    items = allNavItems.filter((item) => cpanelAllowedIds.includes(item.id));
                 }
             }
         }
@@ -308,13 +322,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         const isAdminUser = user?.role?.toLowerCase() === "admin";
 
         let finalItems = items;
+        // Strictly filter out superadmin from any user that is not confirmed superadmin
         if (!isSuperadmin) {
             finalItems = finalItems.filter((item) => item.id !== "superadmin");
         }
 
-        return isSuperadmin || isAdminUser
+        return isSuperadmin
             ? finalItems
-            : finalItems.filter((item) => userPermissions?.[item.id] === true);
+            : isAdminUser
+            ? finalItems.filter((item) => item.id !== "superadmin")
+            : finalItems.filter((item) => item.id !== "superadmin" && userPermissions?.[item.id] === true);
     };
 
     const navItems = getFilteredNavItems();
@@ -334,9 +351,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ["promo", "seo", "channel-manager"].includes(item.id)
             );
             const systemItems = navItems.filter((item) =>
-                ["superadmin", "users"].includes(item.id)
+                item.id === "users" || (item.id === "superadmin" && isSuperadmin)
             );
-
 
             if (layoutItems.length > 0) groups.push({ title: "Tampilan", items: layoutItems });
             if (facilityItems.length > 0) groups.push({ title: "Fasilitas", items: facilityItems });

@@ -9,7 +9,7 @@ import {
     Info, Grid, Settings as SettingsIcon, MapPin, 
     Gift, Package, Users, ShoppingCart, Banknote, Building2,
     BedDouble, Coffee, ShoppingBag, Calculator, Store, User as UserIcon, Archive, Star,
-    Camera, ClipboardList, Layers, BarChart2, Zap, FileSpreadsheet
+    Camera, ClipboardList, Layers, BarChart2, Zap, FileSpreadsheet, SlidersHorizontal, Globe
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -63,7 +63,9 @@ const PERMISSION_TREE: PermissionModule[] = [
         submenus: [
             { id: "overview", label: "Overview", icon: <LayoutDashboard size={14} /> },
             { id: "digital-checkin", label: "GRC (Guest Card)", icon: <FileText size={14} /> },
+            { id: "confirmation-letter", label: "Confirmation Letter (CL)", icon: <FileText size={14} /> },
             { id: "forecast", label: "Forecast", icon: <TrendingUp size={14} /> },
+            { id: "rate-inventory", label: "Rate & Inventory", icon: <SlidersHorizontal size={14} /> },
             { id: "inventory-control", label: "Inventory Control", icon: <Layers size={14} /> },
             { id: "invoice", label: "Create Invoice", icon: <FileText size={14} /> },
             { id: "purchase-order", label: "Purchase Order", icon: <ShoppingCart size={14} /> },
@@ -141,7 +143,9 @@ const PERMISSION_TREE: PermissionModule[] = [
             { id: "promo", label: "Promo Management", icon: <Gift size={14} /> },
             { id: "packages", label: "Custom Packages", icon: <Package size={14} /> },
             { id: "seo", label: "SEO & Metadata", icon: <Search size={14} /> },
+            { id: "channel-manager", label: "Channel Manager (Channex/OTA)", icon: <Globe size={14} /> },
             { id: "users", label: "User Management", icon: <Users size={14} /> },
+            { id: "superadmin", label: "Super Admin (Partner Setting)", icon: <ShieldCheck size={14} /> },
         ]
     }
 ];

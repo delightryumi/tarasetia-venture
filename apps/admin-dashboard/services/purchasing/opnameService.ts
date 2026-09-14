@@ -69,35 +69,5 @@ export const opnameService = {
     await updateDoc(docRef, {
       is_deleted: true
     });
-  },
-
-  async seedDemoOpnames(items: any[]): Promise<void> {
-    const q = query(getHotelCollection(db, COLLECTION_NAME));
-    const snap = await getDocs(q);
-    if (!snap.empty) return;
-
-    if (items.length === 0) return;
-
-    const currentYearMonth = new Date().toISOString().substring(0, 7); // e.g. "2026-05"
-
-    const demoOpname: Omit<StockOpname, "id" | "created_at" | "approved_at"> = {
-      period: currentYearMonth,
-      status: "open",
-      conducted_by: "Demo Inventory Controller",
-      conducted_by_name: "Staff Alex",
-      approved_by: null,
-      items: items.map(item => ({
-        item_id: item.id || "1",
-        name: item.name,
-        unit: item.unit,
-        system_qty: item.current_stock,
-        physical_qty: item.current_stock, // Initialized as correct
-        variance: 0,
-        variance_type: "none",
-        notes: "Matches system inventory level"
-      }))
-    };
-
-    await this.create(demoOpname);
   }
 };

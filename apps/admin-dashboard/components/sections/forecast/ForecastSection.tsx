@@ -277,13 +277,28 @@ export const ForecastSection: React.FC = () => {
                     const entries = docSnap.data().entries || [];
                     const mapped = entries.map((e: any) => {
                         if (isBookingMatch(e, bookingToVoid)) {
-                            return { ...e, status: "VOID", paymentStatus: "VOID" };
+                            return { ...e, status: "VOID", paymentStatus: "VOID", roomCount: 0 };
                         }
                         return e;
                     });
                     await updateDoc(docRef, { entries: mapped, date: d });
                 }
             }
+
+            // Immediately trigger availability recalculation & push released inventory to Channex/OTAs
+            if (dates.length > 0) {
+                fetch("/api/channex/sync-ari", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode: hotelId,
+                        startDate: dates[0],
+                        endDate: dates[dates.length - 1],
+                        type: "availability"
+                    })
+                }).catch(err => console.warn("[Void Channex Sync Warning]:", err));
+            }
+
             toast.success("Transaction voided successfully");
         } catch (error) {
             console.error(error);
@@ -317,6 +332,7 @@ export const ForecastSection: React.FC = () => {
                                 ...e, 
                                 status: "CANCELLED", 
                                 paymentStatus: "CANCELLED",
+                                roomCount: 0,
                                 cancelledAt: todayStr,
                                 cancelledBy: cancelledByVal
                             };
@@ -326,6 +342,21 @@ export const ForecastSection: React.FC = () => {
                     await updateDoc(docRef, { entries: mapped, date: d });
                 }
             }
+
+            // Immediately trigger availability recalculation & push released inventory to Channex/OTAs
+            if (dates.length > 0) {
+                fetch("/api/channex/sync-ari", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode: hotelId,
+                        startDate: dates[0],
+                        endDate: dates[dates.length - 1],
+                        type: "availability"
+                    })
+                }).catch(err => console.warn("[Cancel Channex Sync Warning]:", err));
+            }
+
             toast.success("Transaction cancelled successfully");
         } catch (error) {
             console.error(error);
@@ -344,6 +375,7 @@ export const ForecastSection: React.FC = () => {
                 return;
             }
             const dates = getCascadeDates(booking);
+            const isCancelling = value === "CANCELLED" || value === "CANCEL";
             for (const d of dates) {
                 const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
@@ -353,7 +385,7 @@ export const ForecastSection: React.FC = () => {
                         if (isBookingMatch(e, booking)) {
                             const updated = { ...e, [field]: value };
                             if (field === "status" || field === "paymentStatus") {
-                                if (value === "CANCELLED" || value === "CANCEL") {
+                                if (isCancelling) {
                                     const now = new Date();
                                     const yyyy = now.getFullYear();
                                     const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -361,6 +393,7 @@ export const ForecastSection: React.FC = () => {
                                     updated.cancelledAt = `${yyyy}-${mm}-${dd}`;
                                     updated.status = "CANCELLED";
                                     updated.paymentStatus = "CANCELLED";
+                                    updated.roomCount = 0;
                                     updated.cancelledBy = user ? `${user.displayName} (${user.role || 'user'})` : "System";
                                 } else {
                                     updated.cancelledAt = null;
@@ -374,6 +407,21 @@ export const ForecastSection: React.FC = () => {
                     await updateDoc(docRef, { entries: updatedEntries, date: d });
                 }
             }
+
+            // If status changed to/from cancel or void, sync ARI availability
+            if (dates.length > 0 && (field === "status" || field === "paymentStatus")) {
+                fetch("/api/channex/sync-ari", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode: hotelId,
+                        startDate: dates[0],
+                        endDate: dates[dates.length - 1],
+                        type: "availability"
+                    })
+                }).catch(err => console.warn("[Status Update Channex Sync Warning]:", err));
+            }
+
             stats.refresh();
         } catch (error) {
             console.error("Failed to update status:", error);

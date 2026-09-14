@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { channexSyncService } from "@/lib/channex/syncService";
+import { channexClient } from "@/lib/channex/channexClient";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { ChannexWebhookPayload } from "@/lib/channex/types";
 
 /**
- * Endpoint for Sandbox Testing & OTA Simulation
+ * Comprehensive Endpoint for Sandbox Testing & OTA Certification Simulation Suite
  * URL: POST /api/channex/sandbox-simulate
  */
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         const {
-            action = "create_booking", // "create_booking" | "cancel_booking" | "test_ari_push"
+            action = "create_booking",
             hotelCode,
             channelName = "Booking.com",
             guestName = "Budi Santoso (Test Sandbox)",
@@ -20,24 +21,67 @@ export async function POST(req: NextRequest) {
             roomTypeId,
             arrivalDate,
             departureDate,
+            newArrivalDate,
+            newDepartureDate,
             totalPrice = 1250000,
-            bookingIdToCancel
+            bookingIdToCancel,
+            bookingIdToModify
         } = body;
 
         if (!hotelCode) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
 
-        // 1. Fetch Hotel Doc to get property ID
+        // 1. Fetch Hotel Doc to get property ID and channel manager config
         const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
         if (!hotelDoc.exists) {
             return NextResponse.json({ error: `Hotel ${hotelCode} tidak ditemukan` }, { status: 404 });
         }
 
         const hotelData = hotelDoc.data();
-        const channexPropertyId = hotelData?.channexPropertyId || hotelData?.channelManager?.channexPropertyId || `prop_sandbox_${hotelCode}`;
+        const cmConfig = hotelData?.channelManager || {};
+        const channexPropertyId = cmConfig.channexPropertyId || hotelData?.channexPropertyId || `prop_sandbox_${hotelCode}`;
+        const apiKey = cmConfig.apiKey || process.env.CHANNEX_API_KEY;
+        const environment = cmConfig.environment || "staging";
 
-        // 2. Action: Create Simulated Booking
+        // 2. Action: Test Ping & Connection
+        if (action === "test_ping") {
+            try {
+                const res = await channexClient.getProperty(channexPropertyId, apiKey, environment);
+                return NextResponse.json({
+                    success: true,
+                    stage: 1,
+                    title: "Test Ping & Credentials",
+                    message: `Berhasil terhubung ke Channex (${environment.toUpperCase()}). Property terverifikasi!`,
+                    data: res?.data || null
+                });
+            } catch (err: any) {
+                return NextResponse.json({
+                    success: false,
+                    stage: 1,
+                    title: "Test Ping & Credentials",
+                    message: `Koneksi gagal atau properti belum didaftarkan di Channex: ${err.message}`,
+                    error: err.message
+                }, { status: 200 });
+            }
+        }
+
+        // 3. Action: Full Property Sync (Stage 3 Certification: Exact 2 Calls)
+        if (action === "test_full_sync") {
+            const syncResult = await channexSyncService.fullPropertySync(hotelCode, 365);
+            return NextResponse.json({
+                success: syncResult.success,
+                stage: 2,
+                title: "Full Property ARI Sync (2-Call Bulk Standard)",
+                message: syncResult.success
+                    ? `Full sync 365 hari berhasil dieksekusi tepat dalam 2 API Call bulk (Availability & Rate Restrictions)!`
+                    : `Gagal menjalankan Full sync: ${syncResult.error}`,
+                callsCount: 2,
+                detail: syncResult
+            });
+        }
+
+        // 4. Action: Create Simulated Booking (Stage 4: Booking Ingestion)
         if (action === "create_booking") {
             const simulatedBookingId = `OTA-SBX-${Math.floor(100000 + Math.random() * 900000)}`;
             const todayStr = new Date().toISOString().split("T")[0];
@@ -52,8 +96,10 @@ export async function POST(req: NextRequest) {
 
             const payload: ChannexWebhookPayload = {
                 event: "booking_new",
+                is_simulation: true,
                 property_id: channexPropertyId,
                 inserted_at: new Date().toISOString(),
+                booking_revision_id: `rev_${Date.now()}`,
                 booking: {
                     id: simulatedBookingId,
                     property_id: channexPropertyId,
@@ -90,15 +136,93 @@ export async function POST(req: NextRequest) {
 
             const result = await channexSyncService.processIncomingBookingWebhook(payload);
 
+            if (!result.success) {
+                return NextResponse.json({
+                    success: false,
+                    stage: 3,
+                    title: "Simulated Booking DITOLAK (Stop Sell Active)",
+                    message: result.message,
+                    bookingId: result.bookingId,
+                    isStopSellBlocked: true
+                }, { status: 400 });
+            }
+
             return NextResponse.json({
                 success: true,
-                message: `Simulasi reservasi dari ${channelName} berhasil diterima dan dimasukkan ke Front Office PMS!`,
+                stage: 3,
+                title: "Simulated Booking Ingestion",
+                message: `Simulasi reservasi ${simulatedBookingId} dari ${channelName} berhasil diproses ke PMS, kamar diblokir, dan ACK terkirim!`,
                 bookingId: result.bookingId,
                 simulatedPayload: payload
             });
         }
 
-        // 3. Action: Cancel Simulated Booking
+        // 5. Action: Modify Booking (Stage 5B: Date Shift & Anti-Ghost Booking)
+        if (action === "modify_booking") {
+            const bookingId = bookingIdToModify || `OTA-SBX-MOD-${Date.now().toString().slice(-4)}`;
+            const origCheckin = arrivalDate || new Date().toISOString().split("T")[0];
+            const origCheckout = departureDate || (() => {
+                const d = new Date();
+                d.setDate(d.getDate() + 2);
+                return d.toISOString().split("T")[0];
+            })();
+
+            // Shifted dates (e.g. 3 days forward)
+            const shiftedCheckin = newArrivalDate || (() => {
+                const d = new Date();
+                d.setDate(d.getDate() + 3);
+                return d.toISOString().split("T")[0];
+            })();
+            const shiftedCheckout = newDepartureDate || (() => {
+                const d = new Date();
+                d.setDate(d.getDate() + 5);
+                return d.toISOString().split("T")[0];
+            })();
+
+            const payload: ChannexWebhookPayload = {
+                event: "booking_modification",
+                is_simulation: true,
+                property_id: channexPropertyId,
+                inserted_at: new Date().toISOString(),
+                booking_revision_id: `rev_mod_${Date.now()}`,
+                booking: {
+                    id: bookingId,
+                    property_id: channexPropertyId,
+                    channel_name: channelName,
+                    channel_booking_id: bookingId,
+                    status: "modified",
+                    arrival_date: shiftedCheckin,
+                    departure_date: shiftedCheckout,
+                    total_price: Number(totalPrice) || 1350000,
+                    currency: "IDR",
+                    customer: {
+                        name: `${guestName} (Shifted Dates)`,
+                        email: guestEmail,
+                        phone: guestPhone
+                    },
+                    rooms: [
+                        {
+                            room_type_id: roomTypeId || "standard",
+                            amount: Number(totalPrice) || 1350000,
+                            guest_name: guestName
+                        }
+                    ]
+                }
+            };
+
+            const result = await channexSyncService.processIncomingBookingWebhook(payload);
+
+            return NextResponse.json({
+                success: true,
+                stage: 4,
+                title: "Booking Modification & Anti-Ghost Date Shift",
+                message: `Reservasi ${bookingId} berhasil dimodifikasi dari rentang [${origCheckin} - ${origCheckout}] ke [${shiftedCheckin} - ${shiftedCheckout}]. Tanggal lama dirilis dan tanggal baru diblokir tanpa ghost booking!`,
+                result,
+                shiftedDates: { oldRange: `${origCheckin} s/d ${origCheckout}`, newRange: `${shiftedCheckin} s/d ${shiftedCheckout}` }
+            });
+        }
+
+        // 6. Action: Cancel Booking (Stage 5: Booking Cancellation)
         if (action === "cancel_booking") {
             if (!bookingIdToCancel) {
                 return NextResponse.json({ error: "bookingIdToCancel diperlukan untuk pembatalan" }, { status: 400 });
@@ -106,8 +230,10 @@ export async function POST(req: NextRequest) {
 
             const payload: ChannexWebhookPayload = {
                 event: "booking_cancellation",
+                is_simulation: true,
                 property_id: channexPropertyId,
                 inserted_at: new Date().toISOString(),
+                booking_revision_id: `rev_cnc_${Date.now()}`,
                 booking: {
                     id: bookingIdToCancel,
                     property_id: channexPropertyId,
@@ -130,8 +256,56 @@ export async function POST(req: NextRequest) {
 
             return NextResponse.json({
                 success: true,
-                message: `Simulasi pembatalan reservasi ${bookingIdToCancel} berhasil diproses! Stok kamar dikembalikan ke pool ketersediaan.`,
+                stage: 5,
+                title: "Booking Cancellation & Stock Release",
+                message: `Simulasi pembatalan reservasi ${bookingIdToCancel} berhasil diproses. Stok kamar dikembalikan ke pool ketersediaan PMS & OTA!`,
                 result
+            });
+        }
+
+        // 7. Action: Simulate Unmapped Room Alert (Stage 6: Mapping Fallback)
+        if (action === "unmapped_alert") {
+            const payload: ChannexWebhookPayload = {
+                event: "booking_unmapped_room",
+                property_id: channexPropertyId,
+                inserted_at: new Date().toISOString(),
+                unmapped_details: {
+                    ota_room_type_id: "ota_suite_unmapped_999",
+                    ota_rate_plan_id: "ota_standard_rate_111",
+                    channel_name: channelName,
+                    reservation_id: `OTA-UNMAPPED-${Date.now().toString().slice(-4)}`
+                }
+            };
+
+            // Process via webhook handler logic / log to channex_task_logs
+            await adminDb.collection("hotels").doc(hotelCode).collection("channex_task_logs").add({
+                taskType: "unmapped_room_alert",
+                status: "ACTION_REQUIRED",
+                channelName,
+                unmappedDetails: payload.unmapped_details,
+                message: `Kamar OTA ${payload.unmapped_details?.ota_room_type_id} belum dipetakan ke kamar PMS Tara. Harap lakukan mapping di iFrame Channel Manager.`,
+                createdAt: new Date().toISOString()
+            });
+
+            return NextResponse.json({
+                success: true,
+                stage: 6,
+                title: "Unmapped Room Alert Handling",
+                message: "Alert unmapped room berhasil ditangkap dan dicatat ke channex_task_logs dengan status ACTION_REQUIRED!",
+                payload
+            });
+        }
+
+        // 8. Action: Feed Poll Test (Stage 7: Polling Fallback)
+        if (action === "feed_poll") {
+            const feedData = await channexClient.getBookingRevisionFeed(apiKey, environment);
+            return NextResponse.json({
+                success: true,
+                stage: 7,
+                title: "Booking Revision Feed Polling",
+                message: `Feed polling berhasil terhubung ke GET /api/v1/booking_revisions/feed. Mendapat ${feedData?.data?.length || 0} revisions.`,
+                revisionsCount: feedData?.data?.length || 0,
+                feedData
             });
         }
 

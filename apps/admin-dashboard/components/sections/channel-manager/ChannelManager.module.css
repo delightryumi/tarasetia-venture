@@ -2,29 +2,30 @@
 
 .container {
     width: 100%;
-    margin: 0 auto;
-    padding: 20px 24px;
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
     font-family: var(--font-geist-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
     color: var(--f-foreground, #0f172a);
-    background-color: var(--f-canvas, #f8fafc);
-    min-height: 100vh;
+    background-color: transparent;
+    box-sizing: border-box;
 }
 
-/* ── Top Enterprise Header Bar ── */
+/* ── Top Enterprise Header Bar (Seamless & Transparent, Zero Double Background) ── */
 .topBar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 12px;
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 12px 18px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    gap: 10px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--s-hairline, #e2e8f0);
+    border-radius: 0;
+    padding: 0 0 8px 0;
+    box-shadow: none;
 }
 
 .topBarLeft {
@@ -215,26 +216,26 @@
     color: #ef4444;
 }
 
-/* ── Clean Enterprise Navigation Bar (Typography-First, Zero AI Clutter) ── */
+/* ── Clean Enterprise Navigation Bar (Seamless, Transparent, Zero Double Background) ── */
 .navContainer {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 2px;
     width: 100%;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-    overflow: hidden;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
 }
 
 /* Tier 1: Minimalist Segmented Category Header */
 .categoryNav {
     display: flex;
     align-items: center;
-    border-bottom: 1px solid #e2e8f0;
-    background: #fafafa;
-    padding: 6px 12px;
+    border-bottom: 1px solid var(--s-hairline, #e2e8f0);
+    background: transparent;
+    padding: 0 0 6px 0;
     gap: 6px;
     flex-wrap: wrap;
 }
@@ -243,9 +244,9 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 14px;
+    padding: 5px 12px;
     border-radius: 6px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: #52525b;
     background: transparent;
@@ -268,8 +269,8 @@
 }
 
 .categoryBadge {
-    font-size: 11px;
-    padding: 1px 6px;
+    font-size: 10px;
+    padding: 1px 5px;
     border-radius: 10px;
     background: #e4e4e7;
     color: #52525b;
@@ -285,10 +286,11 @@
 .subTabsNav {
     display: flex;
     align-items: center;
-    padding: 0 16px;
-    gap: 24px;
-    background: #ffffff;
-    min-height: 44px;
+    padding: 0;
+    gap: 20px;
+    background: transparent;
+    border-bottom: 1px solid var(--s-hairline, #e2e8f0);
+    min-height: 36px;
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -301,7 +303,7 @@
 .subTabItem {
     display: inline-flex;
     align-items: center;
-    padding: 12px 0;
+    padding: 8px 0;
     font-size: 13px;
     font-weight: 500;
     color: #71717a;
@@ -312,6 +314,14 @@
     transition: all 0.15s ease;
     white-space: nowrap;
     margin-bottom: -1px;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.subTabItem:focus,
+.subTabItem:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .subTabItem:hover {
@@ -323,6 +333,7 @@
     color: #0f172a !important;
     font-weight: 600 !important;
     border-bottom-color: #0f172a !important;
+    outline: none !important;
 }
 
 .quickJumper {
@@ -345,11 +356,11 @@
     }
 }
 
-/* ── Enterprise DSI / Excel High-Density Table ── */
+/* ── Enterprise DSI / Excel High-Density Table (Seamless, No Double Background) ── */
 .gridCard {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
+    background: transparent;
+    border: 1px solid var(--s-hairline, #e2e8f0);
+    border-radius: 6px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -359,10 +370,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 16px;
-    background-color: #f8fafc;
-    border-bottom: 1px solid #cbd5e1;
-    gap: 12px;
+    padding: 8px 12px;
+    background-color: transparent;
+    border-bottom: 1px solid var(--s-hairline, #e2e8f0);
+    gap: 10px;
     flex-wrap: wrap;
 }
 
@@ -518,6 +529,59 @@
     background-color: #fef3c7;
     color: #b45309;
     border: 1px solid #fcd34d;
+}
+
+/* ── Unified OTA Catalog Table (Enterprise Kolom Tabel Text) ── */
+.catalogTableWrapper {
+    width: 100%;
+    overflow-x: auto;
+    background-color: transparent;
+}
+
+.catalogTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: left;
+    background-color: transparent;
+}
+
+.catalogTable th {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 10px 14px;
+    border-bottom: 1px solid #cbd5e1;
+    white-space: nowrap;
+}
+
+:global(.dark) .catalogTable th {
+    background-color: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+.catalogTable td {
+    padding: 10px 14px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+}
+
+:global(.dark) .catalogTable td {
+    border-color: #1e293b;
+    color: #cbd5e1;
+}
+
+.catalogTable tr:hover td {
+    background-color: #f8fafc;
+}
+
+:global(.dark) .catalogTable tr:hover td {
+    background-color: rgba(255, 255, 255, 0.03);
 }
 
 /* ── Channel Card Grid ── */
@@ -802,4 +866,1194 @@
 .btnPing:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+/* ── Channex Certification Suite Aesthetics ── */
+.certSuiteContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px;
+    background: #ffffff;
+}
+
+.certHeaderBanner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    padding: 16px 20px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+}
+
+.certStageList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.certStageCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 14px 18px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+}
+
+.certStageCard:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.certStagePassed {
+    border-left: 4px solid #16a34a !important;
+    background: #f0fdf4 !important;
+}
+
+.certStageFailed {
+    border-left: 4px solid #dc2626 !important;
+    background: #fef2f2 !important;
+}
+
+.certStageRunning {
+    border-left: 4px solid #2563eb !important;
+    background: #eff6ff !important;
+}
+
+.certStatusPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.statusPassed {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.statusFailed {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+.statusRunning {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #93c5fd;
+}
+
+.statusPending {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
+}
+
+/* ── Full Modular Helper Classes ── */
+.systemHeaderRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.systemMetaRow {
+    font-size: 12px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 3px;
+    flex-wrap: wrap;
+}
+
+.btnSandboxActive {
+    background: #eff6ff !important;
+    border-color: #2563eb !important;
+    color: #1d4ed8 !important;
+    font-weight: 700 !important;
+}
+
+.btnVccAccent {
+    border-left: 3px solid #0284c7 !important;
+}
+
+.channelDetailGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.channelDetailCard {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.channelSummaryRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.channelHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ── Navigation & Header Helpers ── */
+.systemIcon {
+    color: #2563eb;
+}
+
+.systemBadgeClickable {
+    cursor: pointer;
+    border: none;
+}
+
+.syncMasterIcon {
+    color: #d97706;
+}
+
+.quickJumperLabel {
+    font-size: 11px;
+    color: #a1a1aa;
+}
+
+.quickJumperSelect {
+    height: 26px;
+    font-size: 11px;
+    color: #3f3f46;
+    padding: 0 6px;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    border-radius: 5px;
+}
+
+.embeddedCard {
+    padding: 20px 24px;
+}
+
+/* ── Pricing Matrix Tab ── */
+.matrixHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.matrixHeaderTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.matrixHeaderSubtitle {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.matrixControls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.matrixControlLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.matrixSelect {
+    height: 28px;
+}
+
+.matrixThStickyLeft {
+    width: 240px;
+    min-width: 240px;
+}
+
+.matrixThBaseNet {
+    width: 130px;
+    min-width: 130px;
+    background-color: #f8fafc;
+}
+
+.matrixGroupHeader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.matrixPricingBadge {
+    font-size: 10px;
+    font-weight: 600;
+    color: #2563eb;
+}
+
+.matrixThPercent {
+    width: 80px;
+    min-width: 80px;
+}
+
+.matrixThGross {
+    width: 130px;
+    min-width: 130px;
+    color: #16a34a;
+}
+
+.matrixThNet {
+    width: 130px;
+    min-width: 130px;
+    color: #0f172a;
+}
+
+.matrixEmptyCell {
+    text-align: center;
+    padding: 40px;
+    color: #64748b;
+}
+
+.matrixEmptyContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.matrixBtnCreateRate {
+    padding: 7px 16px;
+    background: #1e3a2f;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.matrixBtnCreateRate:hover {
+    background: #142820;
+}
+
+.matrixPlanCell {
+    display: flex;
+    flex-direction: column;
+}
+
+.matrixPlanTitle {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.matrixPlanMeta {
+    font-size: 10px;
+    color: #64748b;
+}
+
+.matrixBaseNetCell {
+    background-color: #fafaf9;
+}
+
+.matrixInputPercent {
+    width: 55px;
+    text-align: center;
+}
+
+/* ── Channel Mapping Tab ── */
+.mappingHeaderTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.mappingHeaderSubtitle {
+    font-size: 11px;
+    color: #64748b;
+    margin: 2px 0 0 0;
+}
+
+.channelSwitcherList {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+}
+
+.channelSwitcherBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    outline: none !important;
+}
+
+.channelSwitcherBtn:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.channelSwitcherBtn:focus,
+.channelSwitcherBtn:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.channelSwitcherBtnActive {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border-color: #3b82f6 !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(59, 130, 246, 0.12) !important;
+}
+
+.channelMappingBody {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.channelActiveBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 12px;
+    background-color: transparent;
+    border: 1px solid var(--s-hairline, #e2e8f0);
+    border-radius: 6px;
+}
+
+.channelIdentityBox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.channelTitleRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.channelMainTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.channelSubMeta {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.channelBarActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.channelExtranetGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    background: transparent;
+    padding: 8px 0;
+    border: none;
+}
+
+.channelFieldLabel {
+    font-size: 11px;
+    font-weight: 700;
+    color: #334155;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.channelFieldInput {
+    height: 32px;
+    font-size: 12px;
+    text-align: left;
+}
+
+.channelFieldSelect {
+    height: 32px;
+    width: 100%;
+}
+
+.mappingSectionHeading {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.cellRoomName {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.cellRateCode {
+    font-size: 10px;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.cellRateRoomType {
+    font-weight: 500;
+    font-size: 12px;
+    color: #334155;
+    margin-bottom: 3px;
+}
+
+.unmappedChannexText {
+    font-size: 11px;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.mappingInputRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mappingInputField {
+    height: 28px;
+    text-align: left;
+    max-width: 260px;
+    flex: 1;
+}
+
+.mappingActionCell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.mappingThAction {
+    text-align: center;
+    width: 180px;
+}
+
+/* ── Catalog Tab ── */
+.catalogSearchInput {
+    width: 200px;
+    height: 30px;
+    text-align: left;
+}
+
+.catalogMeta {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.catalogMetaDot {
+    margin: 0 6px;
+}
+
+.catalogHotelIdBadge {
+    font-size: 11px;
+    color: #0f172a;
+    background: #f1f5f9;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.catalogCardFooter {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+.btnFlexCenter {
+    flex: 1;
+    justify-content: center;
+}
+
+.btnCenter {
+    justify-content: center;
+}
+
+/* ── Iframe Tab ── */
+.iframeBody {
+    padding: 16px;
+}
+
+.iframeLoadingBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 480px;
+    gap: 12px;
+    color: #64748b;
+}
+
+.iframeElement {
+    width: 100%;
+    height: 720px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+}
+
+.iframeEmptyBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    gap: 12px;
+    textAlign: center;
+}
+
+/* ── Sandbox Certification Suite ── */
+.sandboxContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sandboxToolbarTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sandboxToolbarRight {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sandboxScorePassed {
+    font-size: 12px;
+    font-weight: 700;
+    color: #16a34a;
+}
+
+.sandboxScorePending {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0284c7;
+}
+
+.btnRunAllCert {
+    background: #1e40af;
+    border-color: #1d4ed8;
+}
+
+.certStageLeft {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+    min-width: 280px;
+}
+
+.certIndexCircle {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 12px;
+}
+
+.certIndexPassed {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.certIndexDefault {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.certStageTextCol {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.certStageTitleRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.certStageTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.certStageDesc {
+    font-size: 11px;
+    color: #64748b;
+    margin: 0;
+}
+
+.certStageDetail {
+    font-size: 11px;
+    margin-top: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.certStageDetailPassed {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.certStageDetailFailed {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.btnTestStage {
+    font-size: 11px;
+    height: 30px;
+}
+
+/* ── Webhook Simulator Section ── */
+.sandboxFormCard {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.sandboxFormHeading {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.sandboxFieldLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.sandboxSelect {
+    width: 100%;
+    height: 32px;
+    margin-top: 4px;
+}
+
+.sandboxInput {
+    height: 32px;
+    text-align: left;
+    margin-top: 4px;
+}
+
+.sandboxGrid2Col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.sandboxBtnRow {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.sandboxBtnSubmit {
+    flex: 1;
+    justify-content: center;
+    height: 36px;
+}
+
+.sandboxBtnCancel {
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
+.sandboxDiagnosticsCol {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sandboxResultSuccess {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #16a34a;
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.sandboxEmptyConsole {
+    height: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.sandboxEmptyIcon {
+    color: #64748b;
+    margin-bottom: 8px;
+}
+
+.sandboxEmptyHelp {
+    font-size: 10px;
+    margin-top: 4px;
+}
+
+/* ── Go-Live / API Credentials Tab ── */
+.goliveContainer {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.envBanner {
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.envBannerProd {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+}
+
+.envBannerStaging {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+
+.envBannerRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.envStatusRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.envServerTitleProd {
+    font-size: 13px;
+    font-weight: 700;
+    color: #15803d;
+}
+
+.envServerTitleStaging {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1d4ed8;
+}
+
+.envHelpDesc {
+    font-size: 11px;
+    color: #475569;
+    margin: 4px 0 0 0;
+}
+
+.btnSwitchEnv {
+    height: 34px;
+    padding: 0 14px;
+    font-size: 11px;
+}
+
+.credentialsCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.credentialsHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 12px;
+}
+
+.credentialsHeaderIcon {
+    color: #2563eb;
+}
+
+.credentialsTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.credentialsFieldHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.credentialsLabelBold {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.requiredAsterisk {
+    color: #dc2626;
+}
+
+.credentialsExtLink {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.credentialsExtAnchor {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+.inputGroupRow {
+    display: flex;
+    gap: 8px;
+}
+
+.apiKeyInput {
+    height: 38px;
+    text-align: left;
+    font-size: 12px;
+    flex-grow: 1;
+    padding: 0 12px;
+    font-family: var(--font-mono-jb), monospace;
+}
+
+.btnApiKeyToggle {
+    height: 38px;
+    padding: 0 12px;
+    font-size: 11px;
+}
+
+.apiKeyMissingAlert {
+    font-size: 11px;
+    color: #dc2626;
+    margin: 4px 0 0 0;
+}
+
+.propertyIdInput {
+    height: 38px;
+    text-align: left;
+    font-size: 12px;
+    padding: 0 12px;
+    font-family: var(--font-mono-jb), monospace;
+}
+
+.fieldHelpMuted {
+    font-size: 11px;
+    color: #64748b;
+    margin: 4px 0 0 0;
+}
+
+.webhookInput {
+    height: 36px;
+    text-align: left;
+    font-size: 12px;
+    padding: 0 12px;
+    background-color: #f8fafc;
+    color: #334155;
+    font-family: monospace;
+    flex-grow: 1;
+}
+
+.btnCopyWebhook {
+    height: 36px;
+    padding: 0 14px;
+    font-size: 11px;
+}
+
+.credentialsSubmitRow {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 16px;
+}
+
+.btnSaveCreds {
+    height: 38px;
+    padding: 0 20px;
+}
+
+.btnOpenMappingHub {
+    height: 38px;
+    padding: 0 16px;
+}
+
+.guideList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.guideCard {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: #f8fafc;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.guideStepNumber {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.guideStepTitle {
+    font-size: 12px;
+    fontWeight: 700;
+    color: #0f172a;
+}
+
+.guideStepDesc {
+    font-size: 11px;
+    color: #64748b;
+    margin: 2px 0 0 0;
+}
+
+.guideLink {
+    color: #2563eb;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+/* ── Activity / Audit Stream Tab ── */
+.activityLogList {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.activityLogItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background-color: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    font-size: 12px;
+}
+
+.activityLogLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.activityLogIcon {
+    color: #16a34a;
+}
+
+.activityLogText {
+    color: #0f172a;
+    font-family: var(--font-geist-mono, monospace);
+}
+
+.activityLogTime {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+/* ── Modal & Dialog Helpers ── */
+.modalCloseBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #64748b;
+}
+
+.addChannelSearchField {
+    height: 36px;
+    text-align: left;
+    font-size: 12px;
+}
+
+.addChannelGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.addChannelItem {
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.addChannelItemConnected {
+    border: 1px solid #86efac;
+    background-color: #f0fdf4;
+}
+
+.addChannelItemAvailable {
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+}
+
+.addChannelItemHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.addChannelItemIdentity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.addChannelItemTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.addChannelItemMeta {
+    font-size: 10px;
+    color: #64748b;
+}
+
+.addChannelItemBtn {
+    margin-top: 4px;
+    font-size: 11px;
+    height: 28px;
+    justify-content: center;
+}
+
+.confirmHeaderTitle {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.confirmHeaderSub {
+    margin: 2px 0 0 0;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.confirmBannerIdentity {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.confirmBannerTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.confirmBannerSub {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.confirmBoldBtn {
+    font-weight: 700;
+}
+
+.copyIcon {
+    opacity: 0.6;
+}
+
+.catalogSearchRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.flexOne {
+    flex: 1;
+}
+
+.confirmConsequenceTitle {
+    font-weight: 700;
+    font-size: 12px;
 }

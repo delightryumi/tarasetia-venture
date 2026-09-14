@@ -22,12 +22,12 @@ const ALL_KEYS = [
     "module_pos", "module_front_office", "module_housekeeping", 
     "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel", "module_hrd",
     // Front Office & Housekeeping
-    "overview", "digital-checkin", "forecast", "inventory-control", "invoice", "purchase-order",
+    "overview", "digital-checkin", "forecast", "rate-inventory", "confirmation-letter", "inventory-control", "invoice", "purchase-order",
     // Accounting
     "pnl", "pnl-budget", "dsr", "budgeting", "statements",
-    // CPanel
+    // CPanel & Channel Manager
     "logo", "hero", "room-type", "about", "gallery", "footer", 
-    "attractions", "promo", "packages", "seo", "users",
+    "attractions", "promo", "packages", "seo", "channel-manager", "users", "superadmin",
     // Purchasing
     "purchasing", "store-requisition", "purchase-requisition", "daily-market-list", 
     "stock-opname", "items", "suppliers",
@@ -92,6 +92,19 @@ export const useUsers = (menuItems: any[]) => {
                 if (u.permissions["pnl-budget"] === undefined) updates["permissions.pnl-budget"] = true;
                 if (u.permissions["dsr"] === undefined) updates["permissions.dsr"] = true;
                 if (u.permissions["budgeting"] === undefined) updates["permissions.budgeting"] = true;
+                if (u.permissions["statements"] === undefined) updates["permissions.statements"] = true;
+            }
+
+            const hasFrontOffice = u.permissions.module_front_office !== false && (u.permissions.overview === true || isFullRole);
+            if (hasFrontOffice) {
+                if (u.permissions["rate-inventory"] === undefined) updates["permissions.rate-inventory"] = true;
+                if (u.permissions["confirmation-letter"] === undefined) updates["permissions.confirmation-letter"] = true;
+            }
+
+            const hasCpanel = u.permissions.module_cpanel !== false && (u.permissions.logo === true || isFullRole);
+            if (hasCpanel) {
+                if (u.permissions["channel-manager"] === undefined) updates["permissions.channel-manager"] = true;
+                if (isFullRole && u.permissions["superadmin"] === undefined) updates["permissions.superadmin"] = true;
             }
 
             if (Object.keys(updates).length > 0) {

@@ -17,10 +17,16 @@ import {
     Mail,
     FileText,
     MapPin,
-    Building
+    Building,
+    HelpCircle,
+    Check,
+    Play,
+    ChevronDown,
+    X
 } from "lucide-react";
 import styles from "./TransactionFormStyles.module.css";
-import { CHANNELS } from "./useTransactionForm";
+import pmsStyles from "./AddReservation.module.css";
+import { CHANNELS, BOOKING_TYPES } from "./useTransactionForm";
 import Modal from "./Modal";
 import {
     SectionTitle,
@@ -122,10 +128,14 @@ interface TransactionEntryFormProps {
     onSelectRatePlan?: (ratePlanId: string) => void;
     updateForm: (field: string, value: any) => void;
     updateRoom: (idx: number, field: string, value: any) => void;
+    addRoom?: () => void;
+    removeRoom?: (idx: number) => void;
     updateNightRate: (idx: number, rate: any) => void;
     onCancel: () => void;
     onSubmit: () => void;
     getAvailableRoomNumbers: (roomTypeId: string) => string[];
+    totalGross?: number;
+    handleCancel?: () => void;
 }
 
 export function TransactionEntryForm({
@@ -137,597 +147,732 @@ export function TransactionEntryForm({
     onSelectRatePlan = () => {},
     updateForm,
     updateRoom,
+    addRoom,
+    removeRoom,
     updateNightRate,
     onCancel,
     onSubmit,
-    getAvailableRoomNumbers
+    getAvailableRoomNumbers,
+    totalGross: propTotalGross,
+    handleCancel
 }: TransactionEntryFormProps) {
-  const [modalData, setModalData] = useState<{ type: string; data: any } | null>(null);
+    const [modalData, setModalData] = useState<{ type: string; data: any } | null>(null);
+    const [showGroupMenu, setShowGroupMenu] = useState(false);
     const startD = form.checkIn ? new Date(form.checkIn) : null;
     const endD = form.checkOut ? new Date(form.checkOut) : null;
     const nights = (startD && endD && endD > startD) ? Math.ceil((endD.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24)) : 1;
-    const availableRooms = getAvailableRoomNumbers(form.rooms[0].roomTypeId || "");
 
-    const currentRoomTypeId = form.rooms[0]?.roomTypeId;
-    const filteredRatePlans = ratePlans.filter((rp: any) => !currentRoomTypeId || rp.roomTypeId === currentRoomTypeId || !rp.roomTypeId);
+    const totalGross = propTotalGross !== undefined ? propTotalGross : (
+        revenueType === "room"
+            ? (form.nightRates || []).reduce((acc: number, r: any) => acc + (Number(r) || 0), 0)
+            : (Number(form.totalAmount) || 0)
+    );
 
+    React.useEffect(() => {
+        const handleWheel = () => {
+            const active = document.activeElement as HTMLElement | null;
+            if (active && (active.tagName === "INPUT" || active.tagName === "SELECT")) {
+                active.blur();
+            }
+        };
+        window.addEventListener("wheel", handleWheel, { passive: true });
+        return () => window.removeEventListener("wheel", handleWheel);
+    }, []);
+
+    if (revenueType === 'room') {
+        return (
+            <div className={pmsStyles.pmsCard}>
+                {/* Top Navigation */}
+                <div className={pmsStyles.topNav}>
+                    <button 
+                        type="button" 
+                        onClick={handleCancel || onCancel} 
+                        className={pmsStyles.backButton}
+                        title="Back"
+                    >
+                        <ArrowLeft size={16} strokeWidth={2.5} />
+                        <span>Add Reservation</span>
+                    </button>
+                </div>
+
+                <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
+                    {/* Row 1: Stay Timeline Bar (Exact Single-Line eZee PMS Format) */}
+                    <div className={pmsStyles.stayTimelineBar}>
+                        {/* Check-in Date & Time */}
+                        <div className={pmsStyles.timelineGroup}>
+                            <label className={pmsStyles.fieldLabel}>Check-in</label>
+                            <div className={pmsStyles.dateTimeRow}>
+                                <input 
+                                    type="date" 
+                                    className={`${pmsStyles.fieldInput} ${pmsStyles.dateInput}`}
+                                    value={form.checkIn}
+                                    onChange={(e) => updateForm("checkIn", e.target.value)}
+                                />
+                                <input 
+                                    type="time" 
+                                    className={`${pmsStyles.fieldInput} ${pmsStyles.timeInput}`}
+                                    value={form.checkInTime || "18:30"}
+                                    onChange={(e) => updateForm("checkInTime", e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Nights Badge */}
+                        <div className={pmsStyles.nightsBadge}>
+                            <span className={pmsStyles.nightsNum}>{nights}</span>
+                            <span className={pmsStyles.nightsText}>Nights</span>
+                        </div>
+
+                        {/* Check-out Date & Time */}
+                        <div className={pmsStyles.timelineGroup}>
+                            <label className={pmsStyles.fieldLabel}>Check-out</label>
+                            <div className={pmsStyles.dateTimeRow}>
+                                <input 
+                                    type="date" 
+                                    className={`${pmsStyles.fieldInput} ${pmsStyles.dateInput}`}
+                                    value={form.checkOut}
+                                    onChange={(e) => updateForm("checkOut", e.target.value)}
+                                />
+                                <input 
+                                    type="time" 
+                                    className={`${pmsStyles.fieldInput} ${pmsStyles.timeInput}`}
+                                    value={form.checkOutTime || "11:00"}
+                                    onChange={(e) => updateForm("checkOutTime", e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Room(s) Count */}
+                        <div className={pmsStyles.timelineGroup}>
+                            <label className={pmsStyles.fieldLabel}>Room(s)</label>
+                            <input 
+                                type="number" 
+                                min={1}
+                                max={50}
+                                className={`${pmsStyles.fieldInput} ${pmsStyles.roomCountInput}`}
+                                value={form.rooms?.length || 1}
+                                onWheel={(e) => (e.target as HTMLElement).blur()}
+                                onChange={(e) => {
+                                    const targetCount = Math.max(1, parseInt(e.target.value) || 1);
+                                    const currentCount = form.rooms?.length || 1;
+                                    if (targetCount > currentCount && addRoom) {
+                                        for (let i = 0; i < targetCount - currentCount; i++) addRoom();
+                                    } else if (targetCount < currentCount && removeRoom) {
+                                        for (let i = 0; i < currentCount - targetCount; i++) removeRoom(currentCount - 1 - i);
+                                    }
+                                }}
+                            />
+                        </div>
+
+                        {/* Reservation Type */}
+                        <div className={pmsStyles.timelineGroup}>
+                            <label className={pmsStyles.fieldLabel}>Reservation Type</label>
+                            <select 
+                                className={`${pmsStyles.fieldSelect} ${pmsStyles.reservationTypeSelect}`}
+                                value={form.bookingType || "Confirm Booking"}
+                                onChange={(e) => updateForm("bookingType", e.target.value)}
+                            >
+                                {BOOKING_TYPES.map((bt) => (
+                                    <option key={bt} value={bt}>{bt}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Row 2: Booking Source */}
+                    <div className={pmsStyles.sourceRow}>
+                        <div className={pmsStyles.timelineGroup}>
+                            <label className={pmsStyles.fieldLabel}>Booking Source</label>
+                            <select 
+                                className={`${pmsStyles.fieldSelect} ${pmsStyles.sourceSelect}`}
+                                value={form.channel || "Booking Engine"}
+                                onChange={(e) => updateForm("channel", e.target.value)}
+                            >
+                                {CHANNELS.map((ch) => (
+                                    <option key={ch.name} value={ch.name}>{ch.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Row 3: Rate Offered & Checkboxes */}
+                    <div className={pmsStyles.checkboxesBar}>
+                        <span className={pmsStyles.rateOfferedLabel}>Rate Offered:</span>
+                        <label className={pmsStyles.checkboxLabel}>
+                            <input 
+                                type="checkbox"
+                                checked={!!form.isContract}
+                                onChange={(e) => updateForm("isContract", e.target.checked)}
+                            />
+                            <span>Contract</span>
+                        </label>
+                        <label className={pmsStyles.checkboxLabel}>
+                            <input 
+                                type="checkbox"
+                                checked={!!form.bookAllAvailable}
+                                onChange={(e) => updateForm("bookAllAvailable", e.target.checked)}
+                            />
+                            <span>Book All Available Rooms</span>
+                        </label>
+                        <label className={pmsStyles.checkboxLabel}>
+                            <input 
+                                type="checkbox"
+                                checked={!!form.isCompliment}
+                                onChange={(e) => updateForm("isCompliment", e.target.checked)}
+                            />
+                            <span>Complimentary Room</span>
+                        </label>
+                    </div>
+
+                    {form.isCompliment && (
+                        <div style={{ marginBottom: 12 }}>
+                            <TerminalInput 
+                                label="Complimentary Reason (Required)"
+                                value={form.complimentReason}
+                                onChange={(val: string) => updateForm("complimentReason", val)}
+                                placeholder="EXAMPLE: VIP GUEST / OWNER / SERVICE RECOVERY"
+                                icon={AlertCircle}
+                            />
+                        </div>
+                    )}
+
+                    {/* Room Allocation Table */}
+                    <div className={pmsStyles.tableWrapper}>
+                        <table className={pmsStyles.pmsTable}>
+                            <thead>
+                                <tr>
+                                    <th style={{ minWidth: '150px' }}>Room Type</th>
+                                    <th style={{ width: '85px', minWidth: '82px' }}>Room No.</th>
+                                    <th style={{ minWidth: '190px' }}>Rate Type</th>
+                                    <th style={{ width: '56px', minWidth: '52px', textAlign: 'center' }}>Adult</th>
+                                    <th style={{ width: '56px', minWidth: '52px', textAlign: 'center' }}>Child</th>
+                                    <th style={{ width: '115px', minWidth: '105px' }}>Rate (Rp)</th>
+                                    <th style={{ width: '28px', textAlign: 'center' }}></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {form.rooms?.map((rm: any, idx: number) => {
+                                    const availableNumbers = getAvailableRoomNumbers(rm.roomTypeId || "");
+                                    const currentRoomTypeId = rm.roomTypeId || form.rooms[0]?.roomTypeId;
+                                    const rtObj = roomTypes.find(t => t.id === currentRoomTypeId);
+                                    const filteredRatePlans = ratePlans.filter((rp: any) => {
+                                        if (!currentRoomTypeId) return true;
+                                        if (!rp.roomTypeId) return true;
+                                        if (rp.roomTypeId === currentRoomTypeId) return true;
+                                        if (rtObj?.name && rp.name && (
+                                            rp.name.toLowerCase().includes(rtObj.name.toLowerCase()) ||
+                                            rtObj.name.toLowerCase().includes(rp.name.toLowerCase())
+                                        )) return true;
+                                        return false;
+                                    });
+
+                                    return (
+                                        <tr key={idx}>
+                                            <td>
+                                                <select
+                                                    className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelect}`}
+                                                    value={rm.roomTypeId || ""}
+                                                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                                                    onChange={(e) => {
+                                                        updateRoom(idx, "roomTypeId", e.target.value);
+                                                        updateRoom(idx, "roomNumber", "");
+                                                    }}
+                                                >
+                                                    <option value="">-Select-</option>
+                                                    {roomTypes.map((rt) => (
+                                                        <option key={rt.id} value={rt.id}>
+                                                            {rt.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select
+                                                    className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelectSm}`}
+                                                    value={rm.roomNumber || ""}
+                                                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                                                    onChange={(e) => updateRoom(idx, "roomNumber", e.target.value)}
+                                                >
+                                                    <option value="">-Select-</option>
+                                                    {availableNumbers.map((num: string) => (
+                                                        <option key={num} value={num}>
+                                                            {num}
+                                                        </option>
+                                                    ))}
+                                                    {rm.roomNumber && !availableNumbers.includes(rm.roomNumber) && (
+                                                        <option value={rm.roomNumber}>{rm.roomNumber}</option>
+                                                    )}
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select
+                                                    className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelect}`}
+                                                    value={rm.ratePlanId || rm.rateCode || ""}
+                                                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        updateRoom(idx, "ratePlanId", val);
+                                                        const matched = ratePlans.find((p) => p.id === val || p.code === val);
+                                                        if (matched) {
+                                                            updateRoom(idx, "rateCode", matched.code || matched.name);
+                                                            if (matched.baseRate) {
+                                                                updateRoom(idx, "price", matched.baseRate.toString());
+                                                                if (idx === 0) updateNightRate(0, matched.baseRate);
+                                                            }
+                                                        }
+                                                    }}
+                                                >
+                                                    <option value="">-Select-</option>
+                                                    {filteredRatePlans.map((rp: any) => (
+                                                        <option key={rp.id || rp.code} value={rp.id || rp.code}>
+                                                            {rp.name || rp.code}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <select
+                                                    className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelectMini}`}
+                                                    value={rm.adults || 1}
+                                                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                                                    onChange={(e) => updateRoom(idx, "adults", Number(e.target.value) || 1)}
+                                                >
+                                                    {[1, 2, 3, 4, 5, 6].map((n) => (
+                                                        <option key={n} value={n}>{n}</option>
+                                                    ))}
+                                                </select>
+                                            </td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <select
+                                                    className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelectMini}`}
+                                                    value={rm.children || 0}
+                                                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                                                    onChange={(e) => updateRoom(idx, "children", Number(e.target.value) || 0)}
+                                                >
+                                                    {[0, 1, 2, 3, 4].map((n) => (
+                                                        <option key={n} value={n}>{n}</option>
+                                                    ))}
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input
+                                                    type="number"
+                                                    className={`${pmsStyles.fieldInput} ${pmsStyles.tableRateInput}`}
+                                                    placeholder="0.00"
+                                                    value={rm.price ?? ""}
+                                                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        updateRoom(idx, "price", val);
+                                                        if (idx === 0) updateNightRate(0, val);
+                                                    }}
+                                                />
+                                            </td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                {form.rooms.length > 1 && removeRoom && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeRoom(idx)}
+                                                        className={pmsStyles.btnDeleteRow}
+                                                        title="Delete room"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Table Actions Below */}
+                    <div className={pmsStyles.tableActionsBar} style={{ position: 'relative' }}>
+                        {addRoom && (
+                            <button type="button" onClick={addRoom} className={pmsStyles.btnAddRoom}>
+                                Add Room
+                            </button>
+                        )}
+                        <button 
+                            type="button" 
+                            onClick={() => setShowGroupMenu(prev => !prev)}
+                            className={pmsStyles.btnGroupOptions}
+                            style={form.bookAllAvailable || (form.rooms && form.rooms.length > 1) ? { borderColor: '#1f2937', color: '#1f2937', fontWeight: 600 } : {}}
+                            title="Group Options"
+                        >
+                            <span>Group Options</span>
+                            <ChevronDown size={12} />
+                        </button>
+
+                        {showGroupMenu && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '34px',
+                                left: addRoom ? '88px' : '0px',
+                                background: 'var(--pms-card-bg)',
+                                border: '1px solid var(--pms-border)',
+                                borderRadius: '4px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                zIndex: 50,
+                                minWidth: '230px',
+                                padding: '4px 0',
+                                fontSize: '12px'
+                            }}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (form.rooms && form.rooms[0]?.price) {
+                                            const p = form.rooms[0].price;
+                                            form.rooms.forEach((_: any, i: number) => {
+                                                if (i > 0) updateRoom(i, "price", p);
+                                            });
+                                        }
+                                        setShowGroupMenu(false);
+                                    }}
+                                    style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--pms-text-primary)' }}
+                                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--pms-surface)')}
+                                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                                >
+                                    <span>💰 Set Same Rate For All Rooms</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        form.rooms.forEach((_: any, i: number) => updateRoom(i, "adults", 2));
+                                        setShowGroupMenu(false);
+                                    }}
+                                    style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--pms-text-primary)' }}
+                                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--pms-surface)')}
+                                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                                >
+                                    <span>👥 Set 2 Adults For All Rooms</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        form.rooms.forEach((rm: any, i: number) => {
+                                            const rt = roomTypes.find((r: any) => r.id === rm.roomTypeId);
+                                            if (rt) updateRoom(i, "price", (rt.basePrice || rt.price || 0).toString());
+                                        });
+                                        setShowGroupMenu(false);
+                                    }}
+                                    style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--pms-text-primary)' }}
+                                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--pms-surface)')}
+                                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                                >
+                                    <span>🔄 Reset To Standard Rates</span>
+                                </button>
+                                {form.rooms && form.rooms.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            updateForm("bookAllAvailable", false);
+                                            setShowGroupMenu(false);
+                                        }}
+                                        style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', borderTop: '1px solid var(--pms-border-light)', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--pms-surface)')}
+                                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                                    >
+                                        <span>✕ Revert to Single Room</span>
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* GUEST INFORMATION Section */}
+                    <div className={pmsStyles.sectionTitle}>GUEST INFORMATION</div>
+
+                    <div className={pmsStyles.guestGrid}>
+                        {/* Guest Name compound input */}
+                        <div>
+                            <label className={pmsStyles.fieldLabel}>Guest Name</label>
+                            <div className={pmsStyles.guestNameCompound}>
+                                <select 
+                                    className={pmsStyles.salutationSelect}
+                                    value={form.salutation || "Mr."}
+                                    onChange={(e) => updateForm("salutation", e.target.value)}
+                                >
+                                    <option value="Mr.">Mr.</option>
+                                    <option value="Mrs.">Mrs.</option>
+                                    <option value="Ms.">Ms.</option>
+                                </select>
+                                <input 
+                                    type="text" 
+                                    className={pmsStyles.guestNameInput}
+                                    value={form.guestName}
+                                    onChange={(e) => updateForm("guestName", e.target.value)}
+                                    placeholder="Full Name"
+                                    required
+                                />
+                                <div className={pmsStyles.guestUserIcon}>
+                                    <User size={14} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Mobile */}
+                        <div>
+                            <label className={pmsStyles.fieldLabel}>Mobile</label>
+                            <input 
+                                type="text" 
+                                className={pmsStyles.fieldInput}
+                                value={form.phone}
+                                onChange={(e) => updateForm("phone", e.target.value)}
+                                placeholder="Mobile"
+                            />
+                        </div>
+
+                        {/* Email */}
+                        <div>
+                            <label className={pmsStyles.fieldLabel}>Email</label>
+                            <input 
+                                type="email" 
+                                className={pmsStyles.fieldInput}
+                                value={form.email}
+                                onChange={(e) => updateForm("email", e.target.value)}
+                                placeholder="Email"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Address Fields */}
+                    <div className={pmsStyles.guestAddressGrid}>
+                        <div>
+                            <label className={pmsStyles.fieldLabel}>Address</label>
+                            <input 
+                                type="text" 
+                                className={pmsStyles.fieldInput}
+                                value={form.address}
+                                onChange={(e) => updateForm("address", e.target.value)}
+                                placeholder="Address"
+                            />
+                        </div>
+                        <div>
+                            <label className={pmsStyles.fieldLabel}>Zip</label>
+                            <input 
+                                type="text" 
+                                className={pmsStyles.fieldInput}
+                                value={form.zipCode || ""}
+                                onChange={(e) => updateForm("zipCode", e.target.value)}
+                                placeholder="Zip Code"
+                            />
+                        </div>
+                        <div>
+                            <label className={pmsStyles.fieldLabel}>Country</label>
+                            <input 
+                                type="text" 
+                                className={pmsStyles.fieldInput}
+                                value={form.country || "Indonesia"}
+                                onChange={(e) => updateForm("country", e.target.value)}
+                                placeholder="Country"
+                            />
+                        </div>
+                        <div>
+                            <label className={pmsStyles.fieldLabel}>City / State</label>
+                            <input 
+                                type="text" 
+                                className={pmsStyles.fieldInput}
+                                value={form.city || ""}
+                                onChange={(e) => updateForm("city", e.target.value)}
+                                placeholder="City / State"
+                            />
+                        </div>
+                    </div>
+
+                    {/* ADDITIONAL INFORMATION */}
+                    <div className={pmsStyles.sectionTitle}>ADDITIONAL INFORMATION</div>
+
+                    <div style={{ display: 'flex', gap: '20px', marginBottom: '14px' }}>
+                        <label className={pmsStyles.checkboxLabel}>
+                            <input 
+                                type="checkbox"
+                                checked={!!form.sendEmailVoucher}
+                                onChange={(e) => updateForm("sendEmailVoucher", e.target.checked)}
+                            />
+                            <span>Email booking voucher</span>
+                        </label>
+                    </div>
+
+                    <div style={{ marginBottom: '20px' }}>
+                        <label className={pmsStyles.fieldLabel}>Special Request / Remarks (Optional)</label>
+                        <input 
+                            type="text" 
+                            className={pmsStyles.fieldInput}
+                            value={form.note || ""}
+                            onChange={(e) => updateForm("note", e.target.value)}
+                            placeholder="e.g.: Early check-in requested, high floor, non-smoking"
+                        />
+                    </div>
+
+                    {/* Bottom Actions */}
+                    <div className={pmsStyles.formBottomActions}>
+                        <button 
+                            type="button" 
+                            onClick={handleCancel || onCancel} 
+                            className={pmsStyles.btnCancel}
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="submit" 
+                            className={pmsStyles.btnAddRoom}
+                            style={{ height: '34px', padding: '0 20px', background: '#1f2937', color: '#ffffff', borderColor: '#1f2937', borderRadius: '3px' }}
+                        >
+                            Book Now
+                        </button>
+                    </div>
+                </form>
+
+                {modalData && (
+                    <Modal onClose={() => setModalData(null)}>
+                        <pre>{JSON.stringify(modalData.data, null, 2)}</pre>
+                    </Modal>
+                )}
+            </div>
+        );
+    }
+
+    // OTHER INCOME ENTRY FORM
     return (
         <div className={styles.card}>
             <div className={styles.cardHeader}>
                 <div className={styles.cardHeaderLeft} onClick={() => setModalData({ type: 'transactionEntry', data: { revenueType, form } })} style={{ cursor: 'pointer' }}>
-                    <div className={`${styles.dotAccent} ${revenueType === 'room' ? styles.dotSage : styles.dotTerracotta}`} />
+                    <div className={`${styles.dotAccent} ${styles.dotTerracotta}`} />
                     <span className={styles.cardTitle}>
-                        Entri Transaksi - {revenueType === 'room' ? "Room Revenue" : "Other Income"}
+                        Entri Transaksi - Other Income
                     </span>
                 </div>
-                 <button onClick={(e) => { e.stopPropagation(); onCancel(); }} className={styles.cardHeaderBtn}>
-                     Ubah Kategori
-                 </button>
+                <button onClick={(e) => { e.stopPropagation(); onCancel(); }} className={styles.cardHeaderBtn}>
+                    Ubah Kategori
+                </button>
             </div>
 
             <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                {revenueType === 'room' ? (
-                    /* ROOM REVENUE ENTRY FORM */
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <SectionTitle number="01" label="Informasi Tamu & Durasi Menginap" />
-                        <div className={styles.formGrid}>
-                            <TerminalInput 
-                                label="Nama Tamu (Guest Name)"
-                                value={form.guestName}
-                                onChange={(val: string) => updateForm("guestName", val)}
-                                placeholder="CONTOH: BUDI SANTOSO"
-                                icon={User}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <SectionTitle number="01" label="Kategori & Keterangan Pendapatan Lain" />
+                    
+                    <div className={styles.formGrid}>
+                        <div className={styles.formGroup}>
+                            <label className={styles.inputLabel}>Kategori Transaksi</label>
+                            <OtherIncomeTypeSelect 
+                                value={form.incomeType}
+                                options={["Other"]}
+                                onChange={(val: string) => updateForm("incomeType", val)}
                             />
-                            <TerminalInput 
-                                label="No. Reservasi / Booking ID"
-                                value={form.bookingId}
-                                onChange={(val: string) => updateForm("bookingId", val)}
-                                placeholder="CONTOH: S.26002290 / TRV-98214"
-                                icon={FileText}
+                        </div>
+                        <TerminalInput 
+                            label="Keterangan (Description)"
+                            value={form.guestName}
+                            onChange={(val: string) => updateForm("guestName", val)}
+                            placeholder="CONTOH: SEWA SEPEDA MOTOR / EXTRA BED"
+                            icon={User}
+                        />
+                        <TerminalInput 
+                            label="Nama Staff (Staff Name)"
+                            value={form.staffName}
+                            onChange={(val: string) => updateForm("staffName", val)}
+                            placeholder="CONTOH: ADI / SARI"
+                            icon={User}
+                        />
+                    </div>
+
+                    <SectionTitle number="02" label="Tanggal & Pembayaran (Sesuai DSR)" />
+                    <div className={styles.formGrid} style={{ rowGap: '12px' }}>
+                        <div className={styles.colSpan2} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--f-surface)', border: '1px solid var(--f-hairline)', borderRadius: '8px' }}>
+                            <input 
+                                type="checkbox" 
+                                id="isComplimentOther"
+                                checked={!!form.isCompliment}
+                                onChange={(e) => updateForm("isCompliment", e.target.checked)}
+                                style={{ width: '16px', height: '16px', accentColor: 'var(--f-sage)' }}
                             />
-                            <TerminalInput 
-                                label="Nama Staff (Staff In-Charge)"
-                                value={form.staffName}
-                                onChange={(val: string) => updateForm("staffName", val)}
-                                placeholder="CONTOH: ADI / SARI"
-                                icon={User}
-                            />
-                            <TerminalInput 
-                                label="Jumlah Tamu (No of Pax)"
-                                value={form.pax || 1}
-                                onChange={(val: string) => updateForm("pax", val)}
-                                placeholder="1"
-                                type="number"
-                                icon={User}
-                            />
-                            <div className={styles.colSpan2}>
-                                <div className={styles.dateCardsContainer}>
-                                    <DateCard 
-                                        label="Check In"
-                                        value={form.checkIn}
-                                        onChange={(val: string) => updateForm("checkIn", val)}
-                                        type="check-in"
-                                    />
-                                    <DateCard 
-                                        label="Check Out"
-                                        value={form.checkOut}
-                                        onChange={(val: string) => updateForm("checkOut", val)}
-                                        type="check-out"
-                                    />
-                                </div>
-                            </div>
+                            <label htmlFor="isComplimentOther" style={{ fontSize: '12px', fontWeight: '600', color: 'var(--f-foreground)', cursor: 'pointer' }}>
+                                Tandai sebagai Compliment (Kompensasi / Gratis)
+                            </label>
                         </div>
 
-                        <SectionTitle number="02" label="Data Identitas & Registrasi GRC" />
-                        <div className={styles.formGrid} style={{ rowGap: '12px' }}>
-                            <TerminalInput 
-                                label="No. Identitas (NIK / Paspor)"
-                                value={form.nik}
-                                onChange={(val: string) => updateForm("nik", val)}
-                                placeholder="CONTOH: 3201234567890001"
-                                icon={FileText}
-                            />
-                            <TerminalInput 
-                                label="No. Telp / HP Tamu"
-                                value={form.phone}
-                                onChange={(val: string) => updateForm("phone", val)}
-                                placeholder="CONTOH: 088216012667"
-                                icon={Phone}
-                            />
-                            <TerminalInput 
-                                label="Kewarganegaraan (Nationality)"
-                                value={form.nationality}
-                                onChange={(val: string) => updateForm("nationality", val)}
-                                placeholder="INDONESIA"
-                                icon={Globe}
-                            />
-                            <TerminalInput 
-                                label="Email Tamu"
-                                value={form.email}
-                                onChange={(val: string) => updateForm("email", val)}
-                                placeholder="tamu@email.com"
-                                icon={Mail}
-                            />
+                        {form.isCompliment && (
                             <div className={styles.colSpan2}>
                                 <TerminalInput 
-                                    label="Perusahaan / Instansi (Company)"
-                                    value={form.company}
-                                    onChange={(val: string) => updateForm("company", val)}
-                                    placeholder="PT / Instansi (opsional, default: -)"
-                                    icon={Building}
+                                    label="Alasan Compliment (Wajib)"
+                                    value={form.complimentReason}
+                                    onChange={(val: string) => updateForm("complimentReason", val)}
+                                    placeholder="CONTOH: KELUARGA OWNER / KOMPENSASI"
+                                    icon={AlertCircle}
                                 />
                             </div>
-                            <div className={styles.colSpan2}>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.inputLabel}>Alamat Lengkap Sesuai KTP (Address)</label>
-                                    <textarea
-                                        value={form.address}
-                                        onChange={(e) => updateForm("address", e.target.value)}
-                                        placeholder="ALAMAT LENGKAP TAMU..."
-                                        rows={2}
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px 12px',
-                                            borderRadius: '8px',
-                                            border: '1px solid var(--f-hairline)',
-                                            backgroundColor: 'var(--f-surface)',
-                                            color: 'var(--f-foreground)',
-                                            fontSize: '12px',
-                                            outline: 'none',
-                                            resize: 'none'
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                        )}
 
-                        <SectionTitle number="03" label="Kamar, Paket Harga (Rate Plan) & Saluran" />
-                        <div className={styles.formGrid} style={{ rowGap: '12px' }}>
-                            <div className={styles.formGroup}>
-                                <label className={styles.inputLabel}>Tipe Kamar (Room Type)</label>
-                                <RoomTypeSelect 
-                                    value={form.rooms[0].roomTypeId}
-                                    options={roomTypes}
-                                    onChange={(val: string) => {
-                                        updateRoom(0, "roomTypeId", val);
-                                        updateRoom(0, "roomNumber", ""); // reset room number when type changes
-                                    }}
-                                />
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label className={styles.inputLabel}>Paket Harga (Rate Plan / Channex)</label>
-                                <RatePlanSelect 
-                                    value={selectedRatePlanId || form.rateCode}
-                                    options={filteredRatePlans}
-                                    onChange={(val: string) => onSelectRatePlan(val)}
-                                />
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label className={styles.inputLabel}>Nomor Kamar (Room Number)</label>
-                                <RoomNumberSelect 
-                                    value={form.rooms[0].roomNumber}
-                                    options={availableRooms}
-                                    onChange={(val: string) => updateRoom(0, "roomNumber", val)}
-                                />
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label className={styles.inputLabel}>Saluran Pemesanan (Channel)</label>
-                                <ChannelSelect 
-                                    value={form.channel}
-                                    onChange={(val: string) => updateForm("channel", val)}
-                                />
-                            </div>
-                            <TerminalInput 
-                                label="Upgrade Kamar Dari (From)"
-                                value={form.upgradeFrom}
-                                onChange={(val: string) => updateForm("upgradeFrom", val)}
-                                placeholder="Tipe awal (opsional)"
-                                icon={BedDouble}
-                            />
-                            <TerminalInput 
-                                label="Upgrade Kamar Ke (Room Type Upgrade)"
-                                value={form.upgradeTo}
-                                onChange={(val: string) => updateForm("upgradeTo", val)}
-                                placeholder="Tipe upgrade (opsional)"
-                                icon={BedDouble}
-                            />
-                            {startD && Array.from({ length: nights }).map((_, idx) => {
-                                const currentD = new Date(startD);
-                                currentD.setDate(currentD.getDate() + idx);
-                                const dateLabel = currentD.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
-                                const label = nights > 1 ? `Room Rate Malam ${idx + 1} (${dateLabel})` : "Total Room Rate per Malam";
-                                return (
-                                    <TerminalInput 
-                                        key={idx}
-                                        label={label}
-                                        value={form.nightRates[idx] ?? ""}
-                                        onChange={(val: string) => updateNightRate(idx, val)}
-                                        placeholder="0"
-                                        type="number"
-                                        isAmount={true}
-                                    />
-                                );
-                            })}
-                        </div>
+                        <DateCard 
+                            label="Tanggal Transaksi"
+                            value={form.checkIn}
+                            onChange={(val: string) => updateForm("checkIn", val)}
+                            type="check-in"
+                        />
+                        <TerminalInput 
+                            label="Total Harga (Total Amount)"
+                            value={form.totalAmount}
+                            onChange={(val: string) => {
+                                const num = Number(val) || 0;
+                                updateForm("totalAmount", num);
+                                if (form.paidCash === "" && form.paidEdc === "" && form.paidQris === "" && form.paidTransfer === "") {
+                                    updateForm("paidCash", num);
+                                    updateForm("payHotel", num);
+                                }
+                            }}
+                            placeholder="0"
+                            type="number"
+                            isAmount={true}
+                        />
 
-
-                        <SectionTitle number="04" label="Rincian Pembayaran & Settlement (Sesuai DSR)" />
-                        <div className={styles.formGrid} style={{ rowGap: '12px' }}>
-                            <div className={styles.colSpan2} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--f-surface)', border: '1px solid var(--f-hairline)', borderRadius: '8px' }}>
-                                <input 
-                                    type="checkbox" 
-                                    id="isComplimentRoom"
-                                    checked={!!form.isCompliment}
-                                    onChange={(e) => updateForm("isCompliment", e.target.checked)}
-                                    style={{ width: '16px', height: '16px', accentColor: 'var(--f-sage)' }}
+                        {!form.isCompliment && (
+                            <>
+                                <TerminalInput 
+                                    label="💵 Cash Tunai"
+                                    value={form.paidCash}
+                                    onChange={(val: string) => updateForm("paidCash", Number(val) || 0)}
+                                    placeholder="0"
+                                    type="number"
+                                    isAmount={true}
                                 />
-                                <label htmlFor="isComplimentRoom" style={{ fontSize: '12px', fontWeight: '600', color: 'var(--f-foreground)', cursor: 'pointer' }}>
-                                    Tandai sebagai Compliment (Kompensasi / Gratis)
-                                </label>
-                            </div>
-                            
-                            {form.isCompliment && (
-                                <div className={styles.colSpan2}>
-                                    <TerminalInput 
-                                        label="Alasan Compliment (Wajib)"
-                                        value={form.complimentReason}
-                                        onChange={(val: string) => updateForm("complimentReason", val)}
-                                        placeholder="CONTOH: KELUARGA OWNER / KOMPENSASI AC RUSAK"
-                                        icon={AlertCircle}
-                                    />
-                                </div>
-                            )}
-
-                            {!form.isCompliment && (
-                                <>
-                                    {/* Quick 1-Click Settlement Shortcuts */}
-                                    <div className={styles.colSpan2} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px 12px', backgroundColor: 'var(--f-surface-soft, rgba(0,0,0,0.02))', borderRadius: '8px', border: '1px solid var(--f-hairline)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--f-muted)' }}>
-                                                ⚡ GANTI / SET METODE PAYMENT (100%):
-                                            </span>
-                                            {(() => {
-                                                const activeQuickMethod = 
-                                                    (Number(form.paidCash || 0) > 0 && Number(form.paidEdc || 0) === 0 && Number(form.paidQris || 0) === 0 && Number(form.paidTransfer || 0) === 0 && Number(form.paidOta || 0) === 0) ? "cash" :
-                                                    (Number(form.paidEdc || 0) > 0 && Number(form.paidCash || 0) === 0 && Number(form.paidQris || 0) === 0 && Number(form.paidTransfer || 0) === 0 && Number(form.paidOta || 0) === 0) ? "edc" :
-                                                    (Number(form.paidQris || 0) > 0 && Number(form.paidCash || 0) === 0 && Number(form.paidEdc || 0) === 0 && Number(form.paidTransfer || 0) === 0 && Number(form.paidOta || 0) === 0) ? "qris" :
-                                                    (Number(form.paidTransfer || 0) > 0 && Number(form.paidCash || 0) === 0 && Number(form.paidEdc || 0) === 0 && Number(form.paidQris || 0) === 0 && Number(form.paidOta || 0) === 0) ? "transfer" :
-                                                    (Number(form.paidOta || 0) > 0 && Number(form.paidCash || 0) === 0 && Number(form.paidEdc || 0) === 0 && Number(form.paidQris || 0) === 0 && Number(form.paidTransfer || 0) === 0) ? "ota" : null;
-                                                return activeQuickMethod ? (
-                                                    <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--f-sage, #16a34a)', backgroundColor: 'rgba(22, 163, 74, 0.12)', padding: '2px 6px', borderRadius: '4px' }}>
-                                                        ✓ AKTIF: {activeQuickMethod.toUpperCase()}
-                                                    </span>
-                                                ) : null;
-                                            })()}
-                                        </div>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    updateForm("paidCash", totalGross);
-                                                    updateForm("paidEdc", 0);
-                                                    updateForm("paidQris", 0);
-                                                    updateForm("paidTransfer", 0);
-                                                    updateForm("paidOta", 0);
-                                                    updateForm("payHotel", totalGross);
-                                                    updateForm("payTransfer", 0);
-                                                }}
-                                                style={{
-                                                    fontSize: '10px',
-                                                    fontWeight: 700,
-                                                    padding: '6px 12px',
-                                                    borderRadius: '6px',
-                                                    backgroundColor: (Number(form.paidCash || 0) === totalGross && totalGross > 0) ? '#16a34a' : 'var(--f-surface)',
-                                                    color: (Number(form.paidCash || 0) === totalGross && totalGross > 0) ? '#ffffff' : 'var(--f-body)',
-                                                    border: (Number(form.paidCash || 0) === totalGross && totalGross > 0) ? '1px solid #16a34a' : '1px solid var(--f-hairline)',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.15s ease',
-                                                    boxShadow: (Number(form.paidCash || 0) === totalGross && totalGross > 0) ? '0 2px 4px rgba(22, 163, 74, 0.2)' : 'none'
-                                                }}
-                                            >
-                                                💵 CASH FO
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    updateForm("paidCash", 0);
-                                                    updateForm("paidEdc", totalGross);
-                                                    updateForm("paidQris", 0);
-                                                    updateForm("paidTransfer", 0);
-                                                    updateForm("paidOta", 0);
-                                                    updateForm("payHotel", totalGross);
-                                                    updateForm("payTransfer", 0);
-                                                }}
-                                                style={{
-                                                    fontSize: '10px',
-                                                    fontWeight: 700,
-                                                    padding: '6px 12px',
-                                                    borderRadius: '6px',
-                                                    backgroundColor: (Number(form.paidEdc || 0) === totalGross && totalGross > 0) ? '#2563eb' : 'var(--f-surface)',
-                                                    color: (Number(form.paidEdc || 0) === totalGross && totalGross > 0) ? '#ffffff' : 'var(--f-body)',
-                                                    border: (Number(form.paidEdc || 0) === totalGross && totalGross > 0) ? '1px solid #2563eb' : '1px solid var(--f-hairline)',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.15s ease',
-                                                    boxShadow: (Number(form.paidEdc || 0) === totalGross && totalGross > 0) ? '0 2px 4px rgba(37, 99, 235, 0.2)' : 'none'
-                                                }}
-                                            >
-                                                💳 EDC CARD
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    updateForm("paidCash", 0);
-                                                    updateForm("paidEdc", 0);
-                                                    updateForm("paidQris", totalGross);
-                                                    updateForm("paidTransfer", 0);
-                                                    updateForm("paidOta", 0);
-                                                    updateForm("payHotel", totalGross);
-                                                    updateForm("payTransfer", 0);
-                                                }}
-                                                style={{
-                                                    fontSize: '10px',
-                                                    fontWeight: 700,
-                                                    padding: '6px 12px',
-                                                    borderRadius: '6px',
-                                                    backgroundColor: (Number(form.paidQris || 0) === totalGross && totalGross > 0) ? '#9333ea' : 'var(--f-surface)',
-                                                    color: (Number(form.paidQris || 0) === totalGross && totalGross > 0) ? '#ffffff' : 'var(--f-body)',
-                                                    border: (Number(form.paidQris || 0) === totalGross && totalGross > 0) ? '1px solid #9333ea' : '1px solid var(--f-hairline)',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.15s ease',
-                                                    boxShadow: (Number(form.paidQris || 0) === totalGross && totalGross > 0) ? '0 2px 4px rgba(147, 51, 234, 0.2)' : 'none'
-                                                }}
-                                            >
-                                                📱 QRIS
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    updateForm("paidCash", 0);
-                                                    updateForm("paidEdc", 0);
-                                                    updateForm("paidQris", 0);
-                                                    updateForm("paidTransfer", totalGross);
-                                                    updateForm("paidOta", 0);
-                                                    updateForm("payHotel", totalGross);
-                                                    updateForm("payTransfer", totalGross);
-                                                }}
-                                                style={{
-                                                    fontSize: '10px',
-                                                    fontWeight: 700,
-                                                    padding: '6px 12px',
-                                                    borderRadius: '6px',
-                                                    backgroundColor: (Number(form.paidTransfer || 0) === totalGross && totalGross > 0) ? '#0284c7' : 'var(--f-surface)',
-                                                    color: (Number(form.paidTransfer || 0) === totalGross && totalGross > 0) ? '#ffffff' : 'var(--f-body)',
-                                                    border: (Number(form.paidTransfer || 0) === totalGross && totalGross > 0) ? '1px solid #0284c7' : '1px solid var(--f-hairline)',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.15s ease',
-                                                    boxShadow: (Number(form.paidTransfer || 0) === totalGross && totalGross > 0) ? '0 2px 4px rgba(2, 132, 199, 0.2)' : 'none'
-                                                }}
-                                            >
-                                                🏦 BANK TF
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    updateForm("paidCash", 0);
-                                                    updateForm("paidEdc", 0);
-                                                    updateForm("paidQris", 0);
-                                                    updateForm("paidTransfer", 0);
-                                                    updateForm("paidOta", totalGross);
-                                                    updateForm("payHotel", 0);
-                                                    updateForm("payTransfer", totalGross);
-                                                }}
-                                                style={{
-                                                    fontSize: '10px',
-                                                    fontWeight: 700,
-                                                    padding: '6px 12px',
-                                                    borderRadius: '6px',
-                                                    backgroundColor: (Number(form.paidOta || 0) === totalGross && totalGross > 0) ? '#d97706' : 'var(--f-surface)',
-                                                    color: (Number(form.paidOta || 0) === totalGross && totalGross > 0) ? '#ffffff' : 'var(--f-body)',
-                                                    border: (Number(form.paidOta || 0) === totalGross && totalGross > 0) ? '1px solid #d97706' : '1px solid var(--f-hairline)',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.15s ease',
-                                                    boxShadow: (Number(form.paidOta || 0) === totalGross && totalGross > 0) ? '0 2px 4px rgba(217, 119, 6, 0.2)' : 'none'
-                                                }}
-                                            >
-                                                🌐 OTA VIRTUAL
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Granular Settlement Inputs */}
-                                    <TerminalInput 
-                                        label="💵 Cash di Hotel (Tunai FO)"
-                                        value={form.paidCash}
-                                        onChange={(val: string) => {
-                                            const num = Number(val) || 0;
-                                            updateForm("paidCash", num);
-                                            updateForm("payHotel", num + Number(form.paidEdc || 0) + Number(form.paidQris || 0) + Number(form.paidTransfer || 0));
-                                        }}
-                                        placeholder="0"
-                                        type="number"
-                                        isAmount={true}
-                                    />
-                                    <TerminalInput 
-                                        label="💳 EDC BCA / Mandiri / Card di Hotel"
-                                        value={form.paidEdc}
-                                        onChange={(val: string) => {
-                                            const num = Number(val) || 0;
-                                            updateForm("paidEdc", num);
-                                            updateForm("payHotel", Number(form.paidCash || 0) + num + Number(form.paidQris || 0) + Number(form.paidTransfer || 0));
-                                        }}
-                                        placeholder="0"
-                                        type="number"
-                                        isAmount={true}
-                                    />
-                                    <TerminalInput 
-                                        label="📱 QRIS Payment di Hotel"
-                                        value={form.paidQris}
-                                        onChange={(val: string) => {
-                                            const num = Number(val) || 0;
-                                            updateForm("paidQris", num);
-                                            updateForm("payHotel", Number(form.paidCash || 0) + Number(form.paidEdc || 0) + num + Number(form.paidTransfer || 0));
-                                        }}
-                                        placeholder="0"
-                                        type="number"
-                                        isAmount={true}
-                                    />
-                                    <TerminalInput 
-                                        label="🏦 Bank Transfer ke Rekening Hotel"
-                                        value={form.paidTransfer}
-                                        onChange={(val: string) => {
-                                            const num = Number(val) || 0;
-                                            updateForm("paidTransfer", num);
-                                            updateForm("payHotel", Number(form.paidCash || 0) + Number(form.paidEdc || 0) + Number(form.paidQris || 0) + num);
-                                            updateForm("payTransfer", num + Number(form.paidOta || 0));
-                                        }}
-                                        placeholder="0"
-                                        type="number"
-                                        isAmount={true}
-                                    />
-                                    <div className={styles.colSpan2}>
-                                        <TerminalInput 
-                                            label="🌐 OTA Virtual Card / City Ledger (Channel Collect)"
-                                            value={form.paidOta}
-                                            onChange={(val: string) => {
-                                                const num = Number(val) || 0;
-                                                updateForm("paidOta", num);
-                                                updateForm("payTransfer", num + Number(form.paidTransfer || 0));
-                                            }}
-                                            placeholder="0"
-                                            type="number"
-                                            isAmount={true}
-                                        />
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                                <TerminalInput 
+                                    label="💳 EDC BCA / Mandiri"
+                                    value={form.paidEdc}
+                                    onChange={(val: string) => updateForm("paidEdc", Number(val) || 0)}
+                                    placeholder="0"
+                                    type="number"
+                                    isAmount={true}
+                                />
+                                <TerminalInput 
+                                    label="📱 QRIS Payment"
+                                    value={form.paidQris}
+                                    onChange={(val: string) => updateForm("paidQris", Number(val) || 0)}
+                                    placeholder="0"
+                                    type="number"
+                                    isAmount={true}
+                                />
+                                <TerminalInput 
+                                    label="🏦 Bank Transfer"
+                                    value={form.paidTransfer}
+                                    onChange={(val: string) => updateForm("paidTransfer", Number(val) || 0)}
+                                    placeholder="0"
+                                    type="number"
+                                    isAmount={true}
+                                />
+                            </>
+                        )}
                     </div>
-                ) : (
-                    /* OTHER INCOME ENTRY FORM */
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <SectionTitle number="01" label="Kategori & Keterangan Pendapatan Lain" />
-                        
-                        <div className={styles.formGrid}>
-                            <div className={styles.formGroup}>
-                                <label className={styles.inputLabel}>Kategori Transaksi</label>
-                                <OtherIncomeTypeSelect 
-                                    value={form.incomeType}
-                                    options={["Other"]}
-                                    onChange={(val: string) => updateForm("incomeType", val)}
-                                />
-                            </div>
-                            <TerminalInput 
-                                label="Keterangan (Description)"
-                                value={form.guestName}
-                                onChange={(val: string) => updateForm("guestName", val)}
-                                placeholder="CONTOH: SEWA SEPEDA MOTOR / EXTRA BED"
-                                icon={User}
-                            />
-                            <TerminalInput 
-                                label="Nama Staff (Staff Name)"
-                                value={form.staffName}
-                                onChange={(val: string) => updateForm("staffName", val)}
-                                placeholder="CONTOH: ADI / SARI"
-                                icon={User}
-                            />
-                        </div>
+                </div>
 
-                        <SectionTitle number="02" label="Tanggal & Pembayaran (Sesuai DSR)" />
-                        <div className={styles.formGrid} style={{ rowGap: '12px' }}>
-                            <div className={styles.colSpan2} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--f-surface)', border: '1px solid var(--f-hairline)', borderRadius: '8px' }}>
-                                <input 
-                                    type="checkbox" 
-                                    id="isComplimentOther"
-                                    checked={!!form.isCompliment}
-                                    onChange={(e) => updateForm("isCompliment", e.target.checked)}
-                                    style={{ width: '16px', height: '16px', accentColor: 'var(--f-sage)' }}
-                                />
-                                <label htmlFor="isComplimentOther" style={{ fontSize: '12px', fontWeight: '600', color: 'var(--f-foreground)', cursor: 'pointer' }}>
-                                    Tandai sebagai Compliment (Kompensasi / Gratis)
-                                </label>
-                            </div>
-
-                            {form.isCompliment && (
-                                <div className={styles.colSpan2}>
-                                    <TerminalInput 
-                                        label="Alasan Compliment (Wajib)"
-                                        value={form.complimentReason}
-                                        onChange={(val: string) => updateForm("complimentReason", val)}
-                                        placeholder="CONTOH: KELUARGA OWNER / KOMPENSASI"
-                                        icon={AlertCircle}
-                                    />
-                                </div>
-                            )}
-
-                            <DateCard 
-                                label="Tanggal Transaksi"
-                                value={form.checkIn}
-                                onChange={(val: string) => updateForm("checkIn", val)}
-                                type="check-in"
-                            />
-                            <TerminalInput 
-                                label="Total Harga (Total Amount)"
-                                value={form.totalAmount}
-                                onChange={(val: string) => {
-                                    const num = Number(val) || 0;
-                                    updateForm("totalAmount", num);
-                                    if (form.paidCash === "" && form.paidEdc === "" && form.paidQris === "" && form.paidTransfer === "") {
-                                        updateForm("paidCash", num);
-                                        updateForm("payHotel", num);
-                                    }
-                                }}
-                                placeholder="0"
-                                type="number"
-                                isAmount={true}
-                            />
-
-                            {!form.isCompliment && (
-                                <>
-                                    <TerminalInput 
-                                        label="💵 Cash Tunai"
-                                        value={form.paidCash}
-                                        onChange={(val: string) => updateForm("paidCash", Number(val) || 0)}
-                                        placeholder="0"
-                                        type="number"
-                                        isAmount={true}
-                                    />
-                                    <TerminalInput 
-                                        label="💳 EDC BCA / Mandiri"
-                                        value={form.paidEdc}
-                                        onChange={(val: string) => updateForm("paidEdc", Number(val) || 0)}
-                                        placeholder="0"
-                                        type="number"
-                                        isAmount={true}
-                                    />
-                                    <TerminalInput 
-                                        label="📱 QRIS Payment"
-                                        value={form.paidQris}
-                                        onChange={(val: string) => updateForm("paidQris", Number(val) || 0)}
-                                        placeholder="0"
-                                        type="number"
-                                        isAmount={true}
-                                    />
-                                    <TerminalInput 
-                                        label="🏦 Bank Transfer"
-                                        value={form.paidTransfer}
-                                        onChange={(val: string) => updateForm("paidTransfer", Number(val) || 0)}
-                                        placeholder="0"
-                                        type="number"
-                                        isAmount={true}
-                                    />
-                                </>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* General Notes for both */}
+                {/* General Notes */}
                 <div style={{ paddingTop: '8px' }}>
                     <TerminalInput 
                         label="Catatan Tambahan (Optional Notes)"
                         value={form.note}
                         onChange={(val: string) => updateForm("note", val)}
-                        placeholder="CONTOH: TAMU MINTA LATE CHECK-OUT ATAU NO-SMOKING ROOM"
+                        placeholder="CONTOH: KETERANGAN TAMBAHAN TRANSAKSI"
                     />
                 </div>
 
@@ -742,13 +887,12 @@ export function TransactionEntryForm({
                     </button>
                 </div>
             </form>
-            {modalData && (
-              <Modal onClose={() => setModalData(null)}>
-                <pre>{JSON.stringify(modalData.data, null, 2)}</pre>
-              </Modal>
-            )}
-            
 
+            {modalData && (
+                <Modal onClose={() => setModalData(null)}>
+                    <pre>{JSON.stringify(modalData.data, null, 2)}</pre>
+                </Modal>
+            )}
         </div>
     );
 }
@@ -760,7 +904,10 @@ interface ReviewSidebarProps {
     totalGross: number;
     queue: any[];
     saving: boolean;
+    updateForm?: (field: string, value: any) => void;
     onCommit: () => void;
+    onSubmit?: () => void;
+    onCancel?: () => void;
 }
 
 export function ReviewSidebar({
@@ -770,172 +917,291 @@ export function ReviewSidebar({
     totalGross,
     queue,
     saving,
-    onCommit
+    updateForm,
+    onCommit,
+    onSubmit,
+    onCancel
 }: ReviewSidebarProps) {
-    const [modalData, setModalData] = useState<{ type: string; data: any } | null>(null);
-    const currentChannel = CHANNELS.find(c => c.name === form.channel);
-    
+    const startD = form.checkIn ? new Date(form.checkIn) : null;
+    const endD = form.checkOut ? new Date(form.checkOut) : null;
+    const nights = (startD && endD && endD > startD) ? Math.ceil((endD.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24)) : 1;
+
+    const formatDateStandard = (dateStr: string) => {
+        if (!dateStr) return "-";
+        const parts = dateStr.split("-");
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    };
+
     return (
-        <aside className={styles.rightSidebarCol}>
-            <div className={`${styles.card} ${styles.sidebar}`} onClick={() => setModalData({ type: 'reviewSidebar', data: { revenueType, form, totalGross, queue } })} style={{ cursor: 'pointer' }}>
-                <div className={styles.sidebarInner}>
-                    <div className={styles.sidebarHeader}>
-                        <h2 className={styles.sidebarTitle}>Review Transaksi</h2>
-                        <p className={styles.sidebarSubtitle}>Audit validasi internal ({queue.length + 1} items)</p>
+        <aside className={pmsStyles.rightColumn}>
+            <div className={pmsStyles.billingCard}>
+                {/* Header */}
+                <div className={pmsStyles.billingHeader}>
+                    <h2 className={pmsStyles.billingTitle}>Billing Summary</h2>
+                    <span className={pmsStyles.badgeConfirm}>
+                        {form.bookingType || "Confirm Booking"}
+                    </span>
+                </div>
+
+                {/* Stay Summary Row */}
+                <div className={pmsStyles.staySummaryRow}>
+                    <div className={pmsStyles.staySummaryCol}>
+                        <span className={pmsStyles.staySummaryLabel}>Check-in</span>
+                        <span className={pmsStyles.staySummaryDate}>{formatDateStandard(form.checkIn)}</span>
                     </div>
-
-                    {/* CURRENT DRAFT ENTRY */}
-                    <div className={styles.sidebarSection}>
-                        <div className={styles.sidebarStatusHeader}>
-                            <div className={styles.sidebarStatusDot} />
-                            <span className={styles.sidebarStatusText}>Draft Sekarang</span>
-                        </div>
-                        <div className={styles.draftCard}>
-                            <div className={`${styles.draftCardRow} ${styles.draftCardDivider}`}>
-                                <span className={styles.draftLabel}>Guest Name</span>
-                                <span className={styles.draftValue} style={{ maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{form.guestName || '0'}</span>
-                            </div>
-                            
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                <div className={styles.draftCardRow}>
-                                    <span className={styles.draftLabel}>{revenueType === 'room' ? "Periode" : "Tanggal"}</span>
-                                    <span className={styles.draftValue}>
-                                        {form.checkIn} {revenueType === 'room' && `— ${form.checkOut || '0'}`}
-                                    </span>
-                                </div>
-                                <div className={styles.draftCardRow}>
-                                    <span className={styles.draftLabel}>{revenueType === 'room' ? "Room" : "Kategori"}</span>
-                                    <span className={styles.draftValue}>
-                                        {revenueType === 'room' ? (
-                                            `${roomTypes.find(r => r.id === form.rooms[0].roomTypeId)?.name || 'N/A'} - ${form.rooms[0].roomNumber || 'No Room'}`
-                                        ) : (
-                                            form.incomeType || 'Belum Dipilih'
-                                        )}
-                                    </span>
-                                </div>
-                                <div className={styles.draftCardRow}>
-                                    <span className={styles.draftLabel}>Staff</span>
-                                    <span className={styles.draftValue} style={{ color: 'var(--f-sage)' }}>{form.staffName || 'NOT SET'}</span>
-                                </div>
-                                {revenueType === 'room' && (
-                                    <div className={styles.draftCardRow}>
-                                        <span className={styles.draftLabel}>Channel</span>
-                                        <div className="flex items-center gap-2">
-                                            {currentChannel?.logo && (
-                                                currentChannel.logo === "globe" ? (
-                                                    <Globe size={14} className="text-stone-400 opacity-60" />
-                                                ) : (
-                                                    <img src={currentChannel.logo} className="w-3.5 h-3.5 object-contain opacity-60" alt="" />
-                                                )
-                                            )}
-                                            <span className={styles.draftValue}>{form.channel}</span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {form.note && (
-                                <div className={styles.draftNote}>
-                                    <p className={styles.draftNoteText}>"{form.note}"</p>
-                                </div>
-                            )}
-
-                            {form.isCompliment && (
-                                <div className={styles.draftNote}>
-                                    <p className={styles.draftNoteText} style={{ color: '#ef4444' }}>
-                                        COMPLIMENT: {form.complimentReason || 'Alasan belum diisi'}
-                                    </p>
-                                </div>
-                            )}
-
-                            <div className={styles.draftAmountSection}>
-                                {Number(form.paidCash || 0) > 0 && (
-                                    <div className={styles.draftAmountRow}>
-                                        <span>💵 Cash FO</span>
-                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(Number(form.paidCash || 0))}</span>
-                                    </div>
-                                )}
-                                {Number(form.paidEdc || 0) > 0 && (
-                                    <div className={styles.draftAmountRow}>
-                                        <span>💳 EDC Card</span>
-                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(Number(form.paidEdc || 0))}</span>
-                                    </div>
-                                )}
-                                {Number(form.paidQris || 0) > 0 && (
-                                    <div className={styles.draftAmountRow}>
-                                        <span>📱 QRIS Payment</span>
-                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(Number(form.paidQris || 0))}</span>
-                                    </div>
-                                )}
-                                {Number(form.paidTransfer || 0) > 0 && (
-                                    <div className={styles.draftAmountRow}>
-                                        <span>🏦 Bank Transfer</span>
-                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(Number(form.paidTransfer || 0))}</span>
-                                    </div>
-                                )}
-                                {Number(form.paidOta || form.payTransfer || 0) > 0 && (
-                                    <div className={styles.draftAmountRow}>
-                                        <span>🌐 OTA / City Ledger</span>
-                                        <span className={styles.draftAmountValue}>Rp {formatCurrency(Number(form.paidOta || form.payTransfer || 0))}</span>
-                                    </div>
-                                )}
-                                <div className={styles.draftTotalRow}>
-                                    <span>Total Gross {form.isCompliment && "(Compliment)"}</span>
-                                    <span className={styles.draftTotalValue}>Rp {formatCurrency(totalGross || 0)}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* CUMULATIVE SUMMARY */}
-                    <div className={styles.sidebarSection} style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid var(--f-hairline)' }}>
-                        <div className={styles.summaryCard}>
-                            <div className={styles.summaryTotalRow}>
-                                <span className={styles.summaryTotalLabel}>Total Tagihan</span>
-                                <span className={styles.summaryTotalValue}>Rp {formatCurrency(queue.reduce((acc, item) => acc + item.amount, 0) + totalGross)}</span>
-                            </div>
-                            
-                            <div className={styles.summaryBreakdown}>
-                                <div className={styles.summaryBreakdownRow}>
-                                    <span className={styles.summaryBreakdownLabel}>Total Terbayar</span>
-                                    <span className={styles.summaryBreakdownValue} style={{ color: 'var(--f-sage)' }}>
-                                        Rp {formatCurrency(
-                                            queue.reduce((acc, item) => acc + (Number(item.paidCash || 0) + Number(item.paidEdc || 0) + Number(item.paidQris || 0) + Number(item.paidTransfer || 0) + Number(item.paidOta || item.payTransfer || 0)), 0) + 
-                                            (Number(form.paidCash || 0) + Number(form.paidEdc || 0) + Number(form.paidQris || 0) + Number(form.paidTransfer || 0) + Number(form.paidOta || form.payTransfer || 0))
-                                        )}
-                                    </span>
-                                </div>
-                                <div className={styles.summaryBalanceRow}>
-                                    <span className={styles.summaryBalanceLabel}>Sisa Piutang</span>
-                                    <span className={styles.summaryBalanceValue}>
-                                        Rp {formatCurrency(
-                                            Math.max(0, (queue.reduce((acc, item) => acc + item.amount, 0) + totalGross) - 
-                                            (queue.reduce((acc, item) => acc + (Number(item.paidCash || 0) + Number(item.paidEdc || 0) + Number(item.paidQris || 0) + Number(item.paidTransfer || 0) + Number(item.paidOta || item.payTransfer || 0)), 0) + 
-                                            (Number(form.paidCash || 0) + Number(form.paidEdc || 0) + Number(form.paidQris || 0) + Number(form.paidTransfer || 0) + Number(form.paidOta || form.payTransfer || 0))))
-                                        )}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', paddingTop: '40px' }}>
-                        <button 
-                            onClick={onCommit} 
-                            disabled={saving || queue.length === 0} 
-                            className={styles.sidebarActionBtn}
-                        >
-                            {saving ? (
-                                <div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#ffffff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                            ) : (
-                                <>
-                                    <span className={styles.sidebarActionBtnTitle}>SYNC {queue.length} ITEMS TO SERVER</span>
-                                    <span className={styles.sidebarActionBtnSubtitle}>{queue.length} Items Pending</span>
-                                </>
-                            )}
-                        </button>
+                    <span className={pmsStyles.staySummaryArrow}>⟶</span>
+                    <div className={pmsStyles.staySummaryCol} style={{ alignItems: 'flex-end' }}>
+                        <span className={pmsStyles.staySummaryLabel}>Check-out</span>
+                        <span className={pmsStyles.staySummaryDate}>{formatDateStandard(form.checkOut)}</span>
                     </div>
                 </div>
+
+                {/* Financial Breakdown */}
+                <div className={pmsStyles.breakdownList}>
+                    <div className={pmsStyles.breakdownItem}>
+                        <span>Room Charges</span>
+                        <span style={{ fontWeight: 600, color: 'var(--pms-text-primary)' }}>
+                            {form.isCompliment ? "0.00" : (totalGross === 0 ? "0.00" : formatCurrency(totalGross))}
+                        </span>
+                    </div>
+                    <div className={pmsStyles.breakdownItem}>
+                        <span>Taxes</span>
+                        <span style={{ color: 'var(--pms-text-muted)' }}>0.00</span>
+                    </div>
+                    <div className={pmsStyles.breakdownTotal}>
+                        <span>Due Amount</span>
+                        <span>
+                            Rp {form.isCompliment ? "0.00" : (totalGross === 0 ? "0.00" : formatCurrency(totalGross))}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Bill To */}
+                <div className={pmsStyles.billToRow}>
+                    <label className={pmsStyles.billToLabel}>Bill To</label>
+                    <select
+                        className={`${pmsStyles.fieldSelect} ${pmsStyles.billToSelect}`}
+                        value={form.paymentRecipient || "-Select-"}
+                        onChange={(e) => updateForm && updateForm("paymentRecipient", e.target.value)}
+                    >
+                        <option value="-Select-">-Select-</option>
+                        <option value="Hotel / Front Desk">Hotel / Front Desk</option>
+                        <option value="OTA / City Ledger">OTA / City Ledger</option>
+                        <option value="Company / BTC">Company / BTC</option>
+                    </select>
+                </div>
+
+                {/* Section: Payment Mode */}
+                {!form.isCompliment && (
+                    <div style={{ marginBottom: 14 }}>
+                        <div className={pmsStyles.paymentModeRow}>
+                            <label className={pmsStyles.checkboxLabel}>
+                                <input
+                                    type="checkbox"
+                                    checked={form.paymentModeEnabled !== false}
+                                    onChange={(e) => updateForm && updateForm("paymentModeEnabled", e.target.checked)}
+                                />
+                                <span style={{ fontWeight: 600 }}>Payment Mode</span>
+                            </label>
+                        </div>
+
+                        {form.paymentModeEnabled !== false && (
+                            <div className={pmsStyles.paymentSection}>
+                                {/* Quick 1-Click Settlement Shortcuts */}
+                                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--pms-text-secondary)', marginBottom: 6 }}>
+                                    ⚡ QUICK SETTLEMENT:
+                                </div>
+                                <div className={pmsStyles.shortcutGrid}>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!updateForm) return;
+                                            updateForm("paidCash", totalGross);
+                                            updateForm("paidEdc", 0);
+                                            updateForm("paidQris", 0);
+                                            updateForm("paidTransfer", 0);
+                                            updateForm("paidOta", 0);
+                                            updateForm("payHotel", totalGross);
+                                            updateForm("payTransfer", 0);
+                                        }}
+                                        className={`${pmsStyles.shortcutBtn} ${Number(form.paidCash || 0) === totalGross && totalGross > 0 ? pmsStyles.shortcutBtnActive : ''}`}
+                                    >
+                                        💵 CASH
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!updateForm) return;
+                                            updateForm("paidCash", 0);
+                                            updateForm("paidEdc", totalGross);
+                                            updateForm("paidQris", 0);
+                                            updateForm("paidTransfer", 0);
+                                            updateForm("paidOta", 0);
+                                            updateForm("payHotel", totalGross);
+                                            updateForm("payTransfer", 0);
+                                        }}
+                                        className={`${pmsStyles.shortcutBtn} ${Number(form.paidEdc || 0) === totalGross && totalGross > 0 ? pmsStyles.shortcutBtnActive : ''}`}
+                                    >
+                                        💳 EDC
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!updateForm) return;
+                                            updateForm("paidCash", 0);
+                                            updateForm("paidEdc", 0);
+                                            updateForm("paidQris", totalGross);
+                                            updateForm("paidTransfer", 0);
+                                            updateForm("paidOta", 0);
+                                            updateForm("payHotel", totalGross);
+                                            updateForm("payTransfer", 0);
+                                        }}
+                                        className={`${pmsStyles.shortcutBtn} ${Number(form.paidQris || 0) === totalGross && totalGross > 0 ? pmsStyles.shortcutBtnActive : ''}`}
+                                    >
+                                        📱 QRIS
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!updateForm) return;
+                                            updateForm("paidCash", 0);
+                                            updateForm("paidEdc", 0);
+                                            updateForm("paidQris", 0);
+                                            updateForm("paidTransfer", totalGross);
+                                            updateForm("paidOta", 0);
+                                            updateForm("payHotel", totalGross);
+                                            updateForm("payTransfer", totalGross);
+                                        }}
+                                        className={`${pmsStyles.shortcutBtn} ${Number(form.paidTransfer || 0) === totalGross && totalGross > 0 ? pmsStyles.shortcutBtnActive : ''}`}
+                                    >
+                                        🏦 TRANSFER
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!updateForm) return;
+                                            updateForm("paidCash", 0);
+                                            updateForm("paidEdc", 0);
+                                            updateForm("paidQris", 0);
+                                            updateForm("paidTransfer", 0);
+                                            updateForm("paidOta", totalGross);
+                                            updateForm("payHotel", 0);
+                                            updateForm("payTransfer", totalGross);
+                                        }}
+                                        className={`${pmsStyles.shortcutBtn} ${Number(form.paidOta || 0) === totalGross && totalGross > 0 ? pmsStyles.shortcutBtnActive : ''}`}
+                                    >
+                                        🌐 OTA
+                                    </button>
+                                </div>
+
+                                {/* Granular Settlement Inputs */}
+                                <div className={pmsStyles.granularInputs}>
+                                    <TerminalInput 
+                                        label="💵 Cash FO (Front Desk Cash)"
+                                        value={form.paidCash}
+                                        onChange={(val: string) => {
+                                            if (!updateForm) return;
+                                            const num = Number(val) || 0;
+                                            updateForm("paidCash", num);
+                                            updateForm("payHotel", num + Number(form.paidEdc || 0) + Number(form.paidQris || 0) + Number(form.paidTransfer || 0));
+                                        }}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                    <TerminalInput 
+                                        label="💳 EDC BCA / Mandiri / Card"
+                                        value={form.paidEdc}
+                                        onChange={(val: string) => {
+                                            if (!updateForm) return;
+                                            const num = Number(val) || 0;
+                                            updateForm("paidEdc", num);
+                                            updateForm("payHotel", Number(form.paidCash || 0) + num + Number(form.paidQris || 0) + Number(form.paidTransfer || 0));
+                                        }}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                    <TerminalInput 
+                                        label="📱 QRIS Hotel"
+                                        value={form.paidQris}
+                                        onChange={(val: string) => {
+                                            if (!updateForm) return;
+                                            const num = Number(val) || 0;
+                                            updateForm("paidQris", num);
+                                            updateForm("payHotel", Number(form.paidCash || 0) + Number(form.paidEdc || 0) + num + Number(form.paidTransfer || 0));
+                                        }}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                    <TerminalInput 
+                                        label="🏦 Bank Transfer Rekening Hotel"
+                                        value={form.paidTransfer}
+                                        onChange={(val: string) => {
+                                            if (!updateForm) return;
+                                            const num = Number(val) || 0;
+                                            updateForm("paidTransfer", num);
+                                            updateForm("payHotel", Number(form.paidCash || 0) + Number(form.paidEdc || 0) + Number(form.paidQris || 0) + num);
+                                            updateForm("payTransfer", num + Number(form.paidOta || 0));
+                                        }}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                    <TerminalInput 
+                                        label="🌐 OTA Virtual / City Ledger"
+                                        value={form.paidOta}
+                                        onChange={(val: string) => {
+                                            if (!updateForm) return;
+                                            const num = Number(val) || 0;
+                                            updateForm("paidOta", num);
+                                            updateForm("payTransfer", num + Number(form.paidTransfer || 0));
+                                        }}
+                                        placeholder="0"
+                                        type="number"
+                                        isAmount={true}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Final Action Button */}
+                {onSubmit && (
+                    <button 
+                        type="button" 
+                        onClick={onSubmit} 
+                        disabled={saving}
+                        className={pmsStyles.btnBookNow}
+                    >
+                        <Check size={16} />
+                        <span>Confirm Booking</span>
+                    </button>
+                )}
+
+                {/* Queue Commit Section */}
+                {queue.length > 0 && (
+                    <div className={pmsStyles.pendingQueueFooter}>
+                        <div className={pmsStyles.pendingQueueRow}>
+                            <span className={pmsStyles.pendingQueueLabel}>Antrean Transaksi</span>
+                            <span className={pmsStyles.pendingQueueCount}>{queue.length} Item Pending</span>
+                        </div>
+                        <button 
+                            type="button" 
+                            onClick={onCommit} 
+                            disabled={saving}
+                            className={`${styles.btnPrimary} ${pmsStyles.btnCommitQueue}`}
+                        >
+                            <ShieldCheck size={16} />
+                            {saving ? "MENYIMPAN..." : `COMMIT (${queue.length} TRX)`}
+                        </button>
+                    </div>
+                )}
             </div>
         </aside>
     );
@@ -949,38 +1215,38 @@ interface QueueTableProps {
 export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
   const [modalData, setModalData] = useState<{ type: string; data: any } | null>(null);
     return (
-        <div className={styles.tableContainer}>
-            <div className={styles.tableHeader}>
-                <div className={styles.tableHeaderLeft}>
-                    <div className={styles.tableHeaderIcon}>
-                        <Receipt size={20} />
+        <div className={pmsStyles.queueCard}>
+            <div className={pmsStyles.queueHeader}>
+                <div className={pmsStyles.queueHeaderLeft}>
+                    <div className={pmsStyles.queueIconBox}>
+                        <Receipt size={18} />
                     </div>
                     <div>
-                        <h3 className={styles.tableTitle}>Queue List ({queue.length})</h3>
-                        <p className={styles.tableSubtitle}>Final audit before submission</p>
+                        <h3 className={pmsStyles.queueTitle}>Daftar Antrean Reservasi ({queue.length})</h3>
+                        <p className={pmsStyles.queueSubtitle}>Audit dan verifikasi sebelum commit transaksi</p>
                     </div>
                 </div>
             </div>
-            <div style={{ overflowX: 'auto' }}>
-                <table className={styles.tableElement}>
-                    <thead className={styles.tableHead}>
+            <div className={pmsStyles.tableContainer}>
+                <table className={pmsStyles.pmsTable}>
+                    <thead>
                         <tr>
-                            <th className={styles.tableCell}>Date</th>
-                            <th className={styles.tableCell}>Guest Detail</th>
-                            <th className={styles.tableCell} style={{ textAlign: 'right' }}>Total</th>
-                            <th className={styles.tableCell} style={{ textAlign: 'right' }}>Paid</th>
-                            <th className={styles.tableCell} style={{ textAlign: 'right' }}>Balance</th>
-                            <th className={styles.tableCell} style={{ textAlign: 'center', width: '100px' }}>Status</th>
-                            <th className={styles.tableCell} style={{ textAlign: 'center', width: '80px' }}>Action</th>
+                            <th>Tanggal</th>
+                            <th>Detail Tamu</th>
+                            <th style={{ textAlign: 'right' }}>Total</th>
+                            <th style={{ textAlign: 'right' }}>Paid</th>
+                            <th style={{ textAlign: 'right' }}>Balance</th>
+                            <th style={{ textAlign: 'center', width: '110px' }}>Status</th>
+                            <th style={{ textAlign: 'center', width: '80px' }}>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {queue.length === 0 ? (
                             <tr>
-                                <td colSpan={7} className={styles.tableCell} style={{ padding: '40px 20px', textAlign: 'center' }}>
-                                    <div className={styles.tableEmptyState}>
-                                        <AlertCircle size={32} strokeWidth={1.5} />
-                                        <p className={styles.tableEmptyText}>No items in queue</p>
+                                <td colSpan={7} style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--pms-text-muted)' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                        <AlertCircle size={28} strokeWidth={1.5} />
+                                        <p style={{ margin: 0, fontSize: '13px', fontWeight: 600 }}>Tidak ada transaksi dalam antrean</p>
                                     </div>
                                 </td>
                             </tr>
@@ -993,9 +1259,9 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                                 const balanceVal = Math.max(0, (item.amount || 0) - totalPaid);
 
                                 return (
-                                    <tr key={idx} className={styles.tableRow} onClick={() => setModalData({ type: 'queueItem', data: item })}>
-                                        <td className={`${styles.tableCell} ${styles.dateCell}`}>{item.effectiveDate || item.checkInDate}</td>
-                                        <td className={styles.tableCell}>
+                                    <tr key={idx} className={pmsStyles.queueRowHover} onClick={() => setModalData({ type: 'queueItem', data: item })}>
+                                        <td style={{ fontFamily: 'var(--pms-font-mono)', fontWeight: 600 }}>{item.effectiveDate || item.checkInDate}</td>
+                                        <td>
                                             <div className={styles.detailCellInner}>
                                                 <div className={styles.detailCellRow1}>
                                                     {channelLogo && (
@@ -1026,10 +1292,10 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className={styles.tableCell} style={{ textAlign: 'right', fontFamily: 'var(--f-font-mono)', fontWeight: '700' }}>
+                                        <td style={{ textAlign: 'right', fontFamily: 'var(--pms-font-mono)', fontWeight: '700' }}>
                                             Rp {item.isCompliment ? 0 : formatCurrency(item.amount)}
                                         </td>
-                                        <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                                        <td style={{ textAlign: 'right' }}>
                                             <div className="flex flex-col items-end">
                                                 <span className="font-mono font-bold text-stone-900 dark:text-stone-100">
                                                     Rp {item.isCompliment ? 0 : formatCurrency(totalPaid)}
@@ -1043,12 +1309,12 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                                                 )}
                                             </div>
                                         </td>
-                                        <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                                        <td style={{ textAlign: 'right' }}>
                                             <span className={`font-mono font-bold ${balanceVal > 0 && !item.isCompliment ? 'text-amber-600 dark:text-amber-400' : 'text-stone-500'}`}>
                                                 Rp {item.isCompliment ? 0 : formatCurrency(balanceVal)}
                                             </span>
                                         </td>
-                                        <td className={styles.tableCell} style={{ textAlign: 'center' }}>
+                                        <td style={{ textAlign: 'center' }}>
                                             {(() => {
                                                 const status = item.paymentStatus || (item.isCompliment ? "Lunas" : (balanceVal === 0 ? "Lunas" : (totalPaid > 0 ? "DP / Partial" : "Belum Bayar")));
                                                 
@@ -1080,7 +1346,7 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                                                 );
                                             })()}
                                         </td>
-                                        <td className={styles.tableCell} style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                                        <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                                             <button onClick={() => removeFromQueue(idx)} className={styles.tableActionBtn}>
                                                 <Trash2 size={15} />
                                             </button>

@@ -16,11 +16,30 @@ export async function GET(req: NextRequest) {
         const channexPropertyId = hotelData?.channelManager?.propertyId || hotelData?.channelManager?.channexPropertyId || hotelData?.channexPropertyId;
         const customApiKey = hotelData?.channelManager?.apiKey;
 
+        // 1. Fetch local Firestore audit task logs (Fast & Instant)
+        const localTasksSnap = await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`)
+            .orderBy("inserted_at", "desc")
+            .limit(50)
+            .get();
+
+        const localTasks = localTasksSnap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
         let taskLogs: any[] = [];
 
+        // 2. Fetch remote Channex tasks with a strict 2.5s timeout so the UI never hangs
         if (channexPropertyId && customApiKey) {
             try {
-                const res = await channexClient.getTasks(channexPropertyId, customApiKey);
+                const timeoutPromise = new Promise<null>((_, reject) => 
+                    setTimeout(() => reject(new Error("Channex tasks fetch timeout")), 2500)
+                );
+                const res: any = await Promise.race([
+                    channexClient.getTasks(channexPropertyId, customApiKey),
+                    timeoutPromise
+                ]);
+
                 if (res?.data && res.data.length > 0) {
                     taskLogs = res.data.map((t: any) => ({
                         id: t.id,
@@ -32,24 +51,18 @@ export async function GET(req: NextRequest) {
                     }));
                 }
             } catch (err: any) {
-                console.warn("[Channex Tasks] Live API fetch error, using audit demo logs:", err.message);
+                console.warn("[Channex Tasks] Live API fetch skipped/fallback:", err.message);
             }
         }
 
-        if (taskLogs.length === 0) {
-            // Check real Firestore audit log collection
-            const localTasksSnap = await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`)
-                .orderBy("inserted_at", "desc")
-                .limit(50)
-                .get();
+        // Merge both sources and sort by newest first
+        const allLogs = [...localTasks, ...taskLogs].sort((a, b) => {
+            const timeA = new Date(a.inserted_at || 0).getTime();
+            const timeB = new Date(b.inserted_at || 0).getTime();
+            return timeB - timeA;
+        });
 
-            taskLogs = localTasksSnap.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-        }
-
-        return NextResponse.json({ success: true, logs: taskLogs });
+        return NextResponse.json({ success: true, logs: allLogs });
     } catch (err: any) {
         return NextResponse.json({ success: false, error: err.message }, { status: 500 });
     }

@@ -240,15 +240,27 @@ export function OverviewSection() {
                                     isMatch = true;
                                 }
                             }
-                        }
-
-                        if (isMatch) {
-                            return { ...e, status: "VOID", paymentStatus: "VOID" };
+                        }                        if (isMatch) {
+                            return { ...e, status: "VOID", paymentStatus: "VOID", roomCount: 0 };
                         }
                         return e;
                     });
                     await updateDoc(docRef, { entries: mapped, date: d });
                 }
+            }
+
+            // Immediately trigger availability recalculation & push released inventory to Channex/OTAs
+            if (dates.length > 0) {
+                fetch("/api/channex/sync-ari", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode: hotelId,
+                        startDate: dates[0],
+                        endDate: dates[dates.length - 1],
+                        type: "availability"
+                    })
+                }).catch(err => console.warn("[Void Channex Sync Warning]:", err));
             }
 
             // Cascade void if it has a bookingId
@@ -268,8 +280,10 @@ export function OverviewSection() {
             }
 
             setBookingToVoid(null);
+            toast.success("Transaction voided successfully");
         } catch (error) {
             console.error("Void Failed", error);
+            toast.error("Failed to void transaction");
         }
     };
 
@@ -324,6 +338,7 @@ export function OverviewSection() {
                                 ...e, 
                                 status: "CANCELLED", 
                                 paymentStatus: "CANCELLED",
+                                roomCount: 0,
                                 cancelledAt: todayStr,
                                 cancelledBy: cancelledByVal
                             };
@@ -333,9 +348,26 @@ export function OverviewSection() {
                     await updateDoc(docRef, { entries: mapped, date: d });
                 }
             }
+
+            // Immediately trigger availability recalculation & push released inventory to Channex/OTAs
+            if (dates.length > 0) {
+                fetch("/api/channex/sync-ari", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode: hotelId,
+                        startDate: dates[0],
+                        endDate: dates[dates.length - 1],
+                        type: "availability"
+                    })
+                }).catch(err => console.warn("[Cancel Channex Sync Warning]:", err));
+            }
+
             setBookingToCancel(null);
+            toast.success("Transaction cancelled successfully");
         } catch (error) {
             console.error("Cancel Failed", error);
+            toast.error("Failed to cancel transaction");
         }
     };
 

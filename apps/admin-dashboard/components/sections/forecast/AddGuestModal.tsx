@@ -98,6 +98,18 @@ export const AddGuestModal: React.FC<AddGuestModalProps> = ({ isOpen, onClose, s
                 date: selectedDate
             }, { merge: true });
 
+            // Trigger background ARI sync to Channex
+            fetch("/api/channex/sync-ari", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    hotelCode: hotelId,
+                    startDate: selectedDate,
+                    endDate: selectedDate,
+                    type: "availability"
+                })
+            }).catch(e => console.warn("[Channex Sync Trigger Warning]:", e));
+
             toast.success("Tamu berhasil ditambahkan!");
             onClose();
             setFormData({

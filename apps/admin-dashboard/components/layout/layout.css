@@ -328,10 +328,40 @@
     padding: 40px;
 }
 
-/* No padding for superadmin full-width page */
+/* No padding and pure clean canvas for superadmin full-width page */
+.dashboard-wrapper.no-sidebar {
+    background-color: #ffffff;
+}
+
+:global(.dark) .dashboard-wrapper.no-sidebar,
+.dark .dashboard-wrapper.no-sidebar {
+    background-color: #09090b;
+}
+
+.dashboard-wrapper.no-sidebar .main-content {
+    padding-top: 0 !important;
+    background-color: #ffffff;
+}
+
+:global(.dark) .dashboard-wrapper.no-sidebar .main-content,
+.dark .dashboard-wrapper.no-sidebar .main-content {
+    background-color: #09090b;
+}
+
 .dashboard-wrapper.no-sidebar .main-scroll-container {
     padding: 0;
+    background-color: #ffffff;
 }
+
+:global(.dark) .dashboard-wrapper.no-sidebar .main-scroll-container,
+.dark .dashboard-wrapper.no-sidebar .main-scroll-container {
+    background-color: #09090b;
+}
+
+.dashboard-wrapper.no-sidebar .section-wrapper {
+    min-height: 100vh;
+}
+
 .section-wrapper {
     min-height: calc(100% - 140px);
 }

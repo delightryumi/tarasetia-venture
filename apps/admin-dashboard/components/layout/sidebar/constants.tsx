@@ -17,12 +17,13 @@ export const DISTANCE = 200;
 
 export const allNavItems: NavItemType[] = [
     { id: "overview", label: "Overview", icon: <ChartPie size={18} weight="bold" /> },
-    { id: "digital-checkin", label: "GRC (Guest Card)", icon: <IdentificationCard size={18} weight="bold" /> },
     { id: "forecast", label: "Forecast", icon: <TrendUp size={18} weight="bold" /> },
     { id: "rate-inventory", label: "Rate & Inventory", icon: <SlidersHorizontal size={18} weight="bold" /> },
+    { id: "invoice", label: "Invoice", icon: <FileText size={18} weight="bold" /> },
+    { id: "digital-checkin", label: "GRC (Guest Card)", icon: <IdentificationCard size={18} weight="bold" /> },
+    { id: "confirmation-letter", label: "Confirmation Letter (CL)", icon: <FileText size={18} weight="bold" /> },
     { id: "channel-manager", label: "Channel Manager", icon: <Globe size={18} weight="bold" /> },
     { id: "pos", label: "POS Terminal", icon: <Storefront size={18} weight="bold" /> },
-    { id: "invoice", label: "Buat Invoice", icon: <FileText size={18} weight="bold" /> },
     { id: "pnl", label: "P&L Statement", icon: <Notebook size={18} weight="bold" /> },
     { id: "pnl-budget", label: "P&L Actual vs Budget", icon: <ChartBar size={18} weight="bold" /> },
     { id: "dsr", label: "Daily Sales Report (DSR)", icon: <TrendUp size={18} weight="bold" /> },
