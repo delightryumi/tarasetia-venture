@@ -45,7 +45,7 @@ export default function DetailModal({
 
   const computeBreakdown = () => {
     if (detailTransactions.length > 0) {
-      let total = 0, cash = 0, qris = 0, card = 0;
+      let total = 0, cash = 0, qris = 0, card = 0, transfer = 0;
       detailTransactions.forEach(tx => {
         if (tx.status === 'CANCELLED' || tx.status === 'VOID') return;
         const amt = tx.amount ?? tx.total ?? 0;

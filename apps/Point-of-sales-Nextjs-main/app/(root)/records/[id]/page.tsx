@@ -56,7 +56,7 @@ export default function DetailPage() {
     }
   });
 
-  const firstTx = transactionData[0];
+  const firstTx = transactionData[0] as any;
   const finalDiscount = Number(firstTx?.discount || 0);
   const recordedTotal = Number(firstTx?.total ?? firstTx?.amount ?? 0);
   let recordedSubtotal = firstTx?.subtotal !== undefined ? Number(firstTx.subtotal) : 0;

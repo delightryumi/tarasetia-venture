@@ -11,8 +11,17 @@ import { getHotelCollection } from '@/lib/firestoreHelper';
 interface TransactionLog {
   id: string;
   amount: number;
-  method: 'cash' | 'qris' | 'card';
+  method: string;
   timestamp: string;
+}
+
+interface SalesBreakdown {
+  cash: number;
+  qris: number;
+  card: number;
+  transfer: number;
+  total: number;
+  count: number;
 }
 
 interface ShiftData {
@@ -103,8 +112,8 @@ export default function CashierHistoryPage() {
     return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
   };
 
-  const getSalesBreakdown = (shift: ShiftData | null) => {
-    const breakdown = { cash: 0, qris: 0, card: 0, transfer: 0, total: 0, count: 0 };
+  const getSalesBreakdown = (shift: ShiftData | null): SalesBreakdown => {
+    const breakdown: SalesBreakdown = { cash: 0, qris: 0, card: 0, transfer: 0, total: 0, count: 0 };
     if (shift && shift.transactions && Array.isArray(shift.transactions)) {
       shift.transactions.forEach((tx) => {
         if (!tx) return;
@@ -171,7 +180,7 @@ export default function CashierHistoryPage() {
   const safeShiftHistory = Array.isArray(shiftHistory) ? shiftHistory.filter(Boolean) : [];
 
   // Compute values beforehand to prevent rendering crashes
-  const selectedBreakdown = selectedHistoryShift ? getSalesBreakdown(selectedHistoryShift) : { cash: 0, qris: 0, card: 0, total: 0, count: 0 };
+  const selectedBreakdown: SalesBreakdown = selectedHistoryShift ? getSalesBreakdown(selectedHistoryShift) : { cash: 0, qris: 0, card: 0, transfer: 0, total: 0, count: 0 };
   const expectedCash = selectedHistoryShift ? (selectedHistoryShift.houseBank || 0) + selectedBreakdown.cash : 0;
   const countedCashVal = selectedHistoryShift ? (selectedHistoryShift.countedCash || 0) : 0;
   const diffCash = countedCashVal - expectedCash;
