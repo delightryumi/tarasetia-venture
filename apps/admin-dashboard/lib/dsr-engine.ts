@@ -7,6 +7,33 @@ import {
   createDefaultBudgetMonthData,
 } from "./budget-types";
 
+const isFoodItem = (target: string, cat: string, name: string) => {
+  const t = (target || "").toLowerCase().trim();
+  const c = (cat || "").toLowerCase().trim();
+  const n = (name || "").toLowerCase().trim();
+  if (t === "food" || c === "food" || c === "makanan" || c.includes("food") || c.includes("makan")) return true;
+  const foodKeywords = [
+    "nasi", "mie", "ayam", "bebek", "soup", "sop", "tahu", "mendoan", "tempe", "snack",
+    "goreng", "bakar", "kremes", "fillet", "kentang", "roti", "pisang", "burger",
+    "sandwich", "pasta", "spaghetti", "pizza", "daging", "sapi", "ikan", "udang", "salad"
+  ];
+  return foodKeywords.some(kw => n.includes(kw));
+};
+
+const isBeverageItem = (target: string, cat: string, name: string) => {
+  const t = (target || "").toLowerCase().trim();
+  const c = (cat || "").toLowerCase().trim();
+  const n = (name || "").toLowerCase().trim();
+  if (t === "beverage" || c === "beverage" || c === "minuman" || c.includes("bev") || c.includes("minum") || c.includes("drink") || c.includes("bar") || c.includes("kopi") || c.includes("coffee")) return true;
+  const drinkKeywords = [
+    "kopi", "coffee", "tea", "teh", "latte", "cappucino", "cappuccino", "espresso",
+    "mocha", "mocachino", "juice", "jus", "mojito", "float", "milkshake", "taro",
+    "matcha", "mineral", "air", "wedang", "chocolate", "cokelat", "drink", "beer",
+    "wine", "syrup", "sirup", "boba", "smoothie", "creamy", "berrycano", "americano"
+  ];
+  return drinkKeywords.some(kw => n.includes(kw));
+};
+
 export interface TransactionEntry {
   id?: string;
   bookingId?: string;
@@ -518,16 +545,18 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
       if (items.length > 0) {
         const itemSum = items.reduce((iSum, item) => {
           const cat = (item.category || (item as any).pnlTarget || "").toLowerCase().trim();
+          const pnlTarget = ((item as any).pnlTarget || "").toUpperCase().trim();
+          const itemName = (item.name || "").toLowerCase().trim();
           const outlet = (item.outlet || (order as any).revenueType || "restaurant").toLowerCase().trim();
           
           let matchesCat = false;
           if (type === "food") {
-            matchesCat = cat === "food" || cat === "makanan" || cat.includes("food") || cat.includes("makan");
+            matchesCat = pnlTarget === "FOOD" || isFoodItem(pnlTarget, cat, itemName);
           } else if (type === "beverage") {
-            matchesCat = cat === "beverage" || cat === "bev" || cat === "drink" || cat === "minuman" || cat.includes("bev") || cat.includes("drink") || cat.includes("minum");
+            matchesCat = pnlTarget === "BEVERAGE" || isBeverageItem(pnlTarget, cat, itemName);
           } else {
             // Other: not food and not beverage (and not spa/laundry)
-            const isFoodOrBev = cat.includes("food") || cat.includes("makan") || cat.includes("bev") || cat.includes("drink") || cat.includes("minum");
+            const isFoodOrBev = isFoodItem(pnlTarget, cat, itemName) || isBeverageItem(pnlTarget, cat, itemName);
             const isMinor = cat.includes("spa") || cat.includes("laundry");
             matchesCat = cat === "other" || (!isFoodOrBev && !isMinor);
           }
@@ -545,12 +574,13 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
       const ordAmt = Number(order.subtotal || order.total || 0);
       if (ordAmt > 0) {
         const ordCat = ((order as any).orderType || (order as any).category || (order as any).revenueType || "").toLowerCase().trim();
+        const ordName = ((order as any).name || "").toLowerCase().trim();
         const outlet = ((order as any).revenueType || "restaurant").toLowerCase().trim();
         let matchesCat = false;
         if (type === "food") {
-          matchesCat = ordCat.includes("food") || ordCat.includes("makan");
+          matchesCat = isFoodItem("", ordCat, ordName);
         } else if (type === "beverage") {
-          matchesCat = ordCat.includes("bev") || ordCat.includes("drink") || ordCat.includes("minum");
+          matchesCat = isBeverageItem("", ordCat, ordName);
         } else {
           matchesCat = type === "other";
         }
@@ -1010,10 +1040,10 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
     const posList = timeframe === "today" ? todayPosOrders : timeframe === "mtd" ? mtdPosOrders : ytdPosOrders;
     let posSum = 0;
     posList.forEach((o) => {
-      const pm = (o.paymentMethod || "").toLowerCase();
+      const pm = (o.paymentMethod || (o as any).method || "").toLowerCase();
       if (type === "cash" && (pm.includes("cash") || pm.includes("tunai"))) posSum += Number(o.total || 0);
       else if (type === "transfer" && (pm.includes("transfer") || pm.includes("bank"))) posSum += Number(o.total || 0);
-      else if (type === "edc_bca" && (pm.includes("bca") || pm.includes("edc"))) posSum += Number(o.total || 0);
+      else if (type === "edc_bca" && (pm.includes("bca") || pm.includes("edc") || pm.includes("card") || pm.includes("kartu") || pm.includes("debit") || pm.includes("credit"))) posSum += Number(o.total || 0);
       else if (type === "edc_mandiri" && pm.includes("mandiri")) posSum += Number(o.total || 0);
       else if (type === "qris" && pm.includes("qris")) posSum += Number(o.total || 0);
       else if (type === "city_ledger" && (pm.includes("city") || pm.includes("room_charge") || pm.includes("folio"))) posSum += Number(o.total || 0);

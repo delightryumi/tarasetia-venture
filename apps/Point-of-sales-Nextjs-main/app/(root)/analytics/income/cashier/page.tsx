@@ -104,14 +104,22 @@ export default function CashierHistoryPage() {
   };
 
   const getSalesBreakdown = (shift: ShiftData | null) => {
-    const breakdown = { cash: 0, qris: 0, card: 0, total: 0, count: 0 };
+    const breakdown = { cash: 0, qris: 0, card: 0, transfer: 0, total: 0, count: 0 };
     if (shift && shift.transactions && Array.isArray(shift.transactions)) {
       shift.transactions.forEach((tx) => {
         if (!tx) return;
-        const method = tx.method || 'cash';
+        const method = (tx.method || 'cash').toLowerCase();
         const amount = tx.amount || 0;
-        if (method === 'cash' || method === 'qris' || method === 'card') {
-          breakdown[method] += amount;
+        if (method === 'cash' || method === 'tunai') {
+          breakdown.cash += amount;
+        } else if (method === 'qris' || method === 'e-money' || method === 'emoney') {
+          breakdown.qris += amount;
+        } else if (method === 'card' || method === 'edc' || method === 'debit' || method === 'kredit' || method === 'credit' || method === 'kartu') {
+          breakdown.card += amount;
+        } else if (method === 'transfer') {
+          breakdown.transfer += amount;
+        } else {
+          breakdown.qris += amount;
         }
         breakdown.total += amount;
         breakdown.count += 1;
@@ -315,9 +323,15 @@ export default function CashierHistoryPage() {
                   <span>{formatCurrency(selectedBreakdown.qris)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Debit / Kredit:</span>
+                  <span>Debit / Kredit (EDC):</span>
                   <span>{formatCurrency(selectedBreakdown.card)}</span>
                 </div>
+                {selectedBreakdown.transfer > 0 && (
+                  <div className="flex justify-between">
+                    <span>Transfer Bank:</span>
+                    <span>{formatCurrency(selectedBreakdown.transfer)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-bold text-neutral-700 dark:text-neutral-200 border-t border-dotted border-neutral-200 dark:border-white/[0.05] pt-1">
                   <span>Total Pendapatan:</span>
                   <span>{formatCurrency(selectedBreakdown.total)}</span>

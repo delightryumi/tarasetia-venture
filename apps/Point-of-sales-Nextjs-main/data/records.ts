@@ -71,9 +71,9 @@ export const fetchRecords = async ({
       });
       calcSubtotal = calcSubtotal > 0 ? calcSubtotal : Number(data.subtotal || 0);
 
-      const dbTotal = Number(data.total || 0);
-      const dbTax = Number(data.tax || 0);
-      let dbDiscount = Number(data.discount || 0);
+      const dbTotal = Number(data.total ?? data.amount ?? 0);
+      const dbTax = Number(data.tax ?? data.taxAmount ?? 0);
+      let dbDiscount = Number(data.discount ?? 0);
       if (!dbDiscount && dbTotal > 0 && calcSubtotal > 0) {
         dbDiscount = Math.max(0, calcSubtotal + dbTax - dbTotal);
       }
@@ -81,6 +81,7 @@ export const fetchRecords = async ({
       const nettTotal = Math.max(0, calcSubtotal - dbDiscount);
       const computedTax = nettTotal * (taxRate / 100);
       const calculatedTotal = nettTotal + computedTax;
+      const finalTotal = data.isCompliment ? 0 : (dbTotal > 0 ? dbTotal : calculatedTotal);
 
       let createdAt = new Date().toISOString();
       if (data.timestamp) {
@@ -91,10 +92,10 @@ export const fetchRecords = async ({
 
       transactions.push({
         id: data.transactionId || docSnap.id,
-        totalAmount: calculatedTotal,
+        totalAmount: finalTotal,
         discount: dbDiscount,
         createdAt,
-        isComplete: data.status !== 'CANCELLED',
+        isComplete: data.status !== 'CANCELLED' && data.status !== 'VOID',
         status: data.status || 'SUCCESS',
         cancelReason: data.cancelReason || '',
         products: items.map((item: any) => ({
@@ -103,13 +104,13 @@ export const fetchRecords = async ({
           quantity: Number(item.quantity || 0),
         })),
         totalQuantity,
-        paymentMethod: data.paymentMethod || 'cash',
+        paymentMethod: (data.paymentMethod || data.method || 'cash').toLowerCase(),
         revenueType: data.revenueType || 'alacarte',
         customerName: data.customerName || '',
         tableNumber: data.tableNumber || '',
         cashierName: data.cashierName || '',
         isCompliment: !!data.isCompliment,
-        complimentValue: Number(data.complimentValue || 0),
+        complimentValue: Number(data.complimentValue || calcSubtotal || 0),
       });
     });
 

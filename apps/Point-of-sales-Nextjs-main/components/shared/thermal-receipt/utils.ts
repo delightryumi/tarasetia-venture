@@ -51,13 +51,21 @@ export function groupAndAggregate(items: ReceiptItemData[]): {
   return { grouped, categoryTotals, sortedCats: Object.keys(grouped).sort() };
 }
 
-// ─── Payment Method Label ────────────────────────────────────────────────────
 export function paymentLabel(method: string): string {
+  const low = (method || '').toLowerCase().trim();
   const map: Record<string, string> = {
     cash: 'TUNAI',
+    tunai: 'TUNAI',
     qris: 'QRIS',
-    card: 'KARTU',
+    'e-money': 'QRIS',
+    emoney: 'QRIS',
+    card: 'KARTU (EDC)',
+    edc: 'KARTU (EDC)',
+    kartu: 'KARTU (EDC)',
+    debit: 'KARTU (EDC)',
+    credit: 'KARTU (EDC)',
+    transfer: 'TRANSFER',
     compliment: 'COMPLIMENT',
   };
-  return map[method] ?? method;
+  return map[low] ?? (method ? method.toUpperCase() : 'TUNAI');
 }

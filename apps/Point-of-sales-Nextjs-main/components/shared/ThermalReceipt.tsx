@@ -38,6 +38,8 @@ export interface ThermalReceiptProps {
     discount: number;
     taxRate: number;
     taxAmount: number;
+    serviceRate?: number;
+    serviceAmount?: number;
     payableAmount: number;
     cashAmount?: number;
     changeAmount?: number;
@@ -52,8 +54,9 @@ export function formatPaymentMethod(method?: string): string {
   if (!method) return 'TUNAI';
   const m = method.toLowerCase().trim();
   if (m === 'cash' || m === 'tunai') return 'TUNAI';
-  if (m === 'qris') return 'QRIS';
-  if (m === 'card' || m === 'kartu' || m === 'debit' || m === 'credit') return 'KARTU';
+  if (m === 'qris' || m === 'e-money' || m === 'emoney') return 'QRIS';
+  if (m === 'card' || m === 'kartu' || m === 'debit' || m === 'credit' || m === 'edc') return 'KARTU (EDC)';
+  if (m === 'transfer') return 'TRANSFER';
   if (m === 'compliment') return 'COMPLIMENT';
   return method.toUpperCase();
 }
@@ -76,6 +79,14 @@ export default function ThermalReceipt({
   const setPrintMode = onPrintModeChange ?? setLocalPrintMode;
   
   const isCancelled = transactionInfo.status === 'CANCELLED' || transactionInfo.status === 'VOID';
+  const isCash = (() => {
+    const m = (transactionInfo.paymentMethod || '').toLowerCase().trim();
+    return m === 'cash' || m === 'tunai';
+  })();
+  const isCompliment = (() => {
+    const m = (transactionInfo.paymentMethod || '').toLowerCase().trim();
+    return m === 'compliment' || (items.length > 0 && items.every(i => i.isCompliment));
+  })();
 
   useEffect(() => {
     // Check if running in browser
@@ -582,12 +593,20 @@ export default function ThermalReceipt({
                 </div>
               </>
             )}
-            <div className="flex justify-between">
-              <span>Service TAX ({totals.taxRate}%):</span>
-              <span>{formatCurrency(totals.taxAmount)}</span>
-            </div>
+            {totals.serviceAmount !== undefined && totals.serviceAmount > 0 && (
+              <div className="flex justify-between">
+                <span>Service Charge{totals.serviceRate ? ` (${totals.serviceRate}%)` : ''}:</span>
+                <span>+{formatCurrency(totals.serviceAmount)}</span>
+              </div>
+            )}
+            {totals.taxAmount > 0 && (
+              <div className="flex justify-between">
+                <span>PB1 / Pajak Resto{totals.taxRate ? ` (${totals.taxRate}%)` : ''}:</span>
+                <span>+{formatCurrency(totals.taxAmount)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-[11px] border-t border-dashed border-black pt-1 mt-[2px]">
-              <span>TOTAL:</span>
+              <span>TOTAL TAGIHAN:</span>
               <span>{formatCurrency(totals.payableAmount)}</span>
             </div>
 
@@ -607,16 +626,33 @@ export default function ThermalReceipt({
               )
             )}
 
-            {transactionInfo.status !== 'UNPAID' && totals.cashAmount !== undefined && totals.changeAmount !== undefined && (
+            {/* Rincian Penyelesaian Pembayaran Standar Hotel */}
+            {transactionInfo.status !== 'UNPAID' && (
               <>
-                <div className="flex justify-between pt-1 mt-1 border-t border-dotted border-gray-400">
-                  <span>Uang Diterima:</span>
-                  <span>{formatCurrency(totals.cashAmount)}</span>
-                </div>
-                <div className="flex justify-between font-bold">
-                  <span>Uang Kembali:</span>
-                  <span>{formatCurrency(totals.changeAmount)}</span>
-                </div>
+                {isCash ? (
+                  totals.cashAmount !== undefined && totals.cashAmount > 0 ? (
+                    <>
+                      <div className="flex justify-between pt-1 mt-1 border-t border-dotted border-gray-400">
+                        <span>Tunai Diterima:</span>
+                        <span>{formatCurrency(totals.cashAmount)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold">
+                        <span>Kembalian:</span>
+                        <span>{formatCurrency(totals.changeAmount || 0)}</span>
+                      </div>
+                    </>
+                  ) : null
+                ) : isCompliment ? (
+                  <div className="flex justify-between pt-1 mt-1 border-t border-dotted border-gray-400">
+                    <span>Status:</span>
+                    <span className="font-bold text-black uppercase">COMPLIMENTARY (FOC)</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-between pt-1 mt-1 border-t border-dotted border-gray-400">
+                    <span>Status Pembayaran:</span>
+                    <span className="font-bold text-black">LUNAS (PAID)</span>
+                  </div>
+                )}
               </>
             )}
           </div>

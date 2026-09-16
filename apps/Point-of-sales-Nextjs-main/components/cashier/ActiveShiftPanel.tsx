@@ -38,7 +38,7 @@ export default function ActiveShiftPanel({
         activeSales.cash += amt;
       } else if (m === 'qris' || m === 'e-money' || m === 'emoney') {
         activeSales.qris += amt;
-      } else if (m === 'card' || m === 'debit' || m === 'kredit' || m === 'credit' || m === 'kartu' || m === 'transfer') {
+      } else if (m === 'card' || m === 'edc' || m === 'debit' || m === 'kredit' || m === 'credit' || m === 'kartu' || m === 'transfer') {
         activeSales.card += amt;
       } else {
         activeSales.qris += amt; // default fallback
@@ -118,7 +118,7 @@ export default function ActiveShiftPanel({
           </div>
 
           <div className="bg-neutral-50 dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.05] p-4 rounded-xl shadow-sm hover:scale-[1.01] transition-transform">
-            <span className="text-[10px] text-neutral-400 font-bold block mb-1">KARTU / TRANSFER</span>
+            <span className="text-[10px] text-neutral-400 font-bold block mb-1">KARTU (EDC) / TRANSFER</span>
             <span className="text-base font-black text-neutral-800 dark:text-neutral-200">
               {formatMoney(activeSales.card || 0)}
             </span>

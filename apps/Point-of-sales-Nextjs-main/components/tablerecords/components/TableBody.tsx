@@ -36,6 +36,44 @@ interface TableBodyRecordsProps {
   data: Recordsdata[];
 }
 
+const getPaymentBadge = (method: string, isCompliment?: boolean) => {
+  if (isCompliment) {
+    return {
+      label: 'COMPLIMENT',
+      className: 'bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
+    };
+  }
+  const low = (method || '').toLowerCase().trim();
+  if (low === 'cash' || low === 'tunai') {
+    return {
+      label: 'TUNAI',
+      className: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+    };
+  }
+  if (low === 'qris' || low === 'e-money' || low === 'emoney') {
+    return {
+      label: 'QRIS',
+      className: 'bg-sky-50 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-800'
+    };
+  }
+  if (low === 'card' || low === 'edc' || low === 'debit' || low === 'credit' || low === 'kartu') {
+    return {
+      label: 'KARTU (EDC)',
+      className: 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+    };
+  }
+  if (low === 'transfer') {
+    return {
+      label: 'TRANSFER',
+      className: 'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
+    };
+  }
+  return {
+    label: (method || 'TUNAI').toUpperCase(),
+    className: 'bg-neutral-50 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800'
+  };
+};
+
 const TableBodyRecords: React.FC<TableBodyRecordsProps> = ({ data }) => {
   const { formatCurrency } = useCurrency();
   const [loading, setLoading] = useState<boolean>(true);
@@ -54,7 +92,9 @@ const TableBodyRecords: React.FC<TableBodyRecordsProps> = ({ data }) => {
     <TableBody>
       {loading
         ? Array.from({ length: 5 }).map((_, i) => <SkeletonRecords key={i} />)
-        : recordsData.map((item, index) => (
+        : recordsData.map((item, index) => {
+            const badge = getPaymentBadge(item.paymentMethod, item.isCompliment);
+            return (
             <TableRow 
               key={`${item.id}-${index}`} 
               className={item.status === 'CANCELLED' ? 'line-through text-neutral-400 dark:text-neutral-600 opacity-65 bg-red-500/5' : ''}
@@ -95,8 +135,8 @@ const TableBodyRecords: React.FC<TableBodyRecordsProps> = ({ data }) => {
                 )}
               </TableCell>
               <TableCell className="p-4 text-center uppercase font-bold text-[10px] whitespace-nowrap">
-                <span className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-bold tracking-wider ${item.isCompliment ? "bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800" : "bg-sky-50 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-800"}`}>
-                  {item.isCompliment ? 'COMPLIMENT' : (item.paymentMethod?.toLowerCase() === 'cash' ? 'TUNAI' : item.paymentMethod)}
+                <span className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-[10px] font-bold tracking-wider ${badge.className}`}>
+                  {badge.label}
                 </span>
               </TableCell>
               <TableCell className="p-4 text-center capitalize font-semibold text-[10px] whitespace-nowrap">
@@ -111,7 +151,8 @@ const TableBodyRecords: React.FC<TableBodyRecordsProps> = ({ data }) => {
                 <Dropdown records={item} />
               </TableCell>
             </TableRow>
-          ))}
+          );
+        })}
     </TableBody>
   );
 };

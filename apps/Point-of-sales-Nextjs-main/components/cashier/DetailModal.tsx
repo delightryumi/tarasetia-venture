@@ -53,22 +53,54 @@ export default function DetailModal({
         total += amt;
         if (m === 'cash' || m === 'tunai') cash += amt;
         else if (m === 'qris' || m === 'e-money' || m === 'emoney') qris += amt;
-        else if (m === 'card' || m === 'debit' || m === 'kredit' || m === 'credit' || m === 'kartu' || m === 'transfer') card += amt;
+        else if (m === 'card' || m === 'edc' || m === 'debit' || m === 'kredit' || m === 'credit' || m === 'kartu') card += amt;
+        else if (m === 'transfer') transfer += amt;
         else qris += amt; // default non-cash to qris bucket
       });
-      return { total, cash, qris, card };
+      return { total, cash, qris, card, transfer };
     }
     // fallback: shift.transactions[]
     const fb = getSalesBreakdown(selectedHistoryShift);
-    return { ...fb };
+    return { ...fb, transfer: 0 };
   };
   const b = computeBreakdown();
+
+  // ── Helper category detector ──
+  const isFoodItem = (target: string, cat: string, name: string) => {
+    const t = (target || '').toLowerCase().trim();
+    const c = (cat || '').toLowerCase().trim();
+    const n = (name || '').toLowerCase().trim();
+    if (t === 'food' || c === 'food' || c === 'makanan' || c.includes('food') || c.includes('makan')) return true;
+    const foodKeywords = [
+      'nasi', 'mie', 'ayam', 'bebek', 'soup', 'sop', 'tahu', 'mendoan', 'tempe', 'snack',
+      'goreng', 'bakar', 'kremes', 'fillet', 'kentang', 'roti', 'pisang', 'burger',
+      'sandwich', 'pasta', 'spaghetti', 'pizza', 'daging', 'sapi', 'ikan', 'udang', 'salad'
+    ];
+    return foodKeywords.some(kw => n.includes(kw));
+  };
+
+  const isBeverageItem = (target: string, cat: string, name: string) => {
+    const t = (target || '').toLowerCase().trim();
+    const c = (cat || '').toLowerCase().trim();
+    const n = (name || '').toLowerCase().trim();
+    if (t === 'beverage' || c === 'beverage' || c === 'minuman' || c.includes('bev') || c.includes('minum') || c.includes('drink') || c.includes('bar') || c.includes('kopi') || c.includes('coffee')) return true;
+    const drinkKeywords = [
+      'kopi', 'coffee', 'tea', 'teh', 'latte', 'cappucino', 'cappuccino', 'espresso',
+      'mocha', 'mocachino', 'juice', 'jus', 'mojito', 'float', 'milkshake', 'taro',
+      'matcha', 'mineral', 'air', 'wedang', 'chocolate', 'cokelat', 'drink', 'beer',
+      'wine', 'syrup', 'sirup', 'boba', 'smoothie', 'creamy', 'berrycano', 'americano'
+    ];
+    return drinkKeywords.some(kw => n.includes(kw));
+  };
 
   // ── Compute breakdown from detailTransactions for screen display ──
   let foodTotal = 0;
   let beverageTotal = 0;
   let banquetTotal = 0;
   let otherTotal = 0;
+  let discountTotal = 0;
+  let taxTotal = 0;
+  let serviceTotal = 0;
 
   detailTransactions.forEach(tx => {
     if (tx.status === 'CANCELLED' || tx.status === 'VOID') return;
@@ -84,24 +116,66 @@ export default function DetailModal({
       return;
     }
 
+    let txGross = 0;
     if (isBanquet) {
-      banquetTotal += tx.amount ?? tx.total ?? 0;
-    } else if (tx.items && Array.isArray(tx.items)) {
+      const amt = tx.amount ?? tx.total ?? 0;
+      banquetTotal += amt;
+      txGross = amt;
+    } else if (tx.items && Array.isArray(tx.items) && tx.items.length > 0) {
       tx.items.forEach((item: any) => {
         // Jika item individu bertanda compliment, harganya dihitung 0
         const itemPrice = item.isCompliment ? 0 : (item.originalPrice ?? item.price ?? 0);
         const itemTotal = itemPrice * (item.quantity || 1);
-        const target = item.pnlTarget?.toUpperCase() || '';
-        const cat = item.category?.toUpperCase() || '';
-        if (target === 'FOOD' || (!target && cat === 'FOOD')) foodTotal += itemTotal;
-        else if (target === 'BEVERAGE' || (!target && cat === 'BEVERAGE')) beverageTotal += itemTotal;
-        else if (target === 'BANQUET' || (!target && cat === 'BANQUET')) banquetTotal += itemTotal;
-        else otherTotal += itemTotal;
+        txGross += itemTotal;
+
+        const target = item.pnlTarget || '';
+        const cat = item.category || '';
+        const name = item.name || '';
+
+        if (target.toUpperCase() === 'BANQUET' || cat.toUpperCase() === 'BANQUET') {
+          banquetTotal += itemTotal;
+        } else if (isFoodItem(target, cat, name)) {
+          foodTotal += itemTotal;
+        } else if (isBeverageItem(target, cat, name)) {
+          beverageTotal += itemTotal;
+        } else {
+          otherTotal += itemTotal;
+        }
       });
     } else {
-      otherTotal += tx.amount ?? tx.total ?? 0;
+      const amt = tx.amount ?? tx.total ?? 0;
+      otherTotal += amt;
+      txGross = amt;
     }
+
+    const txDisc = Number(tx.discount || 0);
+    const txTotal = Number(tx.amount ?? tx.total ?? 0);
+    let txTax = Number(tx.tax ?? tx.taxAmount ?? 0);
+    const txSvc = Number(tx.service ?? tx.serviceAmount ?? 0);
+
+    if (!txTax && txTotal > Math.max(0, txGross - txDisc)) {
+      txTax = txTotal - Math.max(0, txGross - txDisc) - txSvc;
+    }
+
+    discountTotal += txDisc;
+    taxTotal += txTax;
+    serviceTotal += txSvc;
   });
+
+  const productSubtotal = foodTotal + beverageTotal + banquetTotal + otherTotal;
+
+  // Reconcile so components always match b.total
+  const componentsSum = productSubtotal - discountTotal + taxTotal + serviceTotal;
+  if (b.total > 0 && Math.abs(b.total - componentsSum) > 0.01) {
+    const diff = b.total - (productSubtotal - discountTotal + serviceTotal);
+    if (diff > 0) {
+      taxTotal = diff;
+    }
+  }
+
+  const netBase = Math.max(1, productSubtotal - discountTotal);
+  const taxRatePct = taxTotal > 0 ? Math.round((taxTotal / netBase) * 100) : 0;
+  const serviceRatePct = serviceTotal > 0 ? Math.round((serviceTotal / netBase) * 100) : 0;
 
 
   return (
@@ -150,7 +224,9 @@ export default function DetailModal({
                     </div>
                     <div className="flex flex-col items-end">
                       <span className="text-sm font-black text-neutral-800 dark:text-white">{formatMoney(tx.amount)}</span>
-                      <span className="text-[9px] bg-neutral-200 dark:bg-zinc-800 text-neutral-600 dark:text-neutral-300 px-2 py-0.5 rounded font-bold uppercase tracking-wider mt-1">{tx.method}</span>
+                      <span className="text-[9px] bg-neutral-200 dark:bg-zinc-800 text-neutral-600 dark:text-neutral-300 px-2 py-0.5 rounded font-bold uppercase tracking-wider mt-1">
+                        {(tx.method === 'card' || tx.method === 'edc') ? 'KARTU (EDC)' : tx.method}
+                      </span>
                     </div>
                   </div>
                   
@@ -194,35 +270,73 @@ export default function DetailModal({
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-neutral-600 dark:text-neutral-300 font-medium">Kartu / Transfer:</span>
+                    <span className="text-neutral-600 dark:text-neutral-300 font-medium">Kartu (EDC):</span>
                     <span className="font-bold text-neutral-800 dark:text-white">
                       {formatMoney(b.card)}
                     </span>
                   </div>
+                  {b.transfer > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-neutral-600 dark:text-neutral-300 font-medium">Transfer Bank:</span>
+                      <span className="font-bold text-neutral-800 dark:text-white">
+                        {formatMoney(b.transfer)}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="w-full h-[1px] bg-emerald-500/10 my-2" />
 
                 <div className="flex flex-col gap-2 mt-1 mb-3">
-                  <span className="text-[10px] font-bold text-neutral-500 uppercase">Sumber Revenue</span>
+                  <span className="text-[10px] font-bold text-neutral-500 uppercase">Breakdown Penjualan (Kategori)</span>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-neutral-600 dark:text-neutral-300 font-medium">Food Revenue:</span>
+                    <span className="text-neutral-600 dark:text-neutral-300 font-medium">Food / Makanan:</span>
                     <span className="font-bold text-neutral-800 dark:text-white">{formatMoney(foodTotal)}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-neutral-600 dark:text-neutral-300 font-medium">Beverage Revenue:</span>
+                    <span className="text-neutral-600 dark:text-neutral-300 font-medium">Beverage / Minuman:</span>
                     <span className="font-bold text-neutral-800 dark:text-white">{formatMoney(beverageTotal)}</span>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-neutral-600 dark:text-neutral-300 font-medium">Banquet Revenue:</span>
-                    <span className="font-bold text-neutral-800 dark:text-white">{formatMoney(banquetTotal)}</span>
-                  </div>
+                  {banquetTotal > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-neutral-600 dark:text-neutral-300 font-medium">Banquet:</span>
+                      <span className="font-bold text-neutral-800 dark:text-white">{formatMoney(banquetTotal)}</span>
+                    </div>
+                  )}
                   {otherTotal > 0 && (
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-neutral-600 dark:text-neutral-300 font-medium">Other Revenue:</span>
+                      <span className="text-neutral-600 dark:text-neutral-300 font-medium">Lainnya:</span>
                       <span className="font-bold text-neutral-800 dark:text-white">{formatMoney(otherTotal)}</span>
                     </div>
                   )}
+                  
+                  <div className="w-full h-[1px] bg-neutral-200 dark:bg-white/[0.1] my-1" />
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-neutral-700 dark:text-neutral-200 font-semibold">Subtotal Produk:</span>
+                    <span className="font-bold text-neutral-800 dark:text-white">{formatMoney(productSubtotal)}</span>
+                  </div>
+                  {discountTotal > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-rose-600 dark:text-rose-400 font-medium">Diskon:</span>
+                      <span className="font-bold text-rose-600 dark:text-rose-400">-{formatMoney(discountTotal)}</span>
+                    </div>
+                  )}
+                  {taxTotal > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-neutral-600 dark:text-neutral-300 font-medium">PB1 / Pajak Resto{taxRatePct > 0 ? ` (${taxRatePct}%)` : ''}:</span>
+                      <span className="font-bold text-neutral-800 dark:text-white">+{formatMoney(taxTotal)}</span>
+                    </div>
+                  )}
+                  {serviceTotal > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-neutral-600 dark:text-neutral-300 font-medium">Service Charge{serviceRatePct > 0 ? ` (${serviceRatePct}%)` : ''}:</span>
+                      <span className="font-bold text-neutral-800 dark:text-white">+{formatMoney(serviceTotal)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center text-sm pt-1 border-t border-dashed border-emerald-500/30">
+                    <span className="text-emerald-700 dark:text-emerald-400 font-bold">Total Penjualan Shift:</span>
+                    <span className="font-black text-emerald-700 dark:text-emerald-400">{formatMoney(b.total)}</span>
+                  </div>
                 </div>
 
                 <div className="w-full h-[1px] bg-emerald-500/10 my-2" />

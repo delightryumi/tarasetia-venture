@@ -39,6 +39,8 @@ export interface ReceiptTotals {
   discount: number;
   taxRate: number;
   taxAmount: number;
+  serviceRate?: number;
+  serviceAmount?: number;
   payableAmount: number;
   cashAmount?: number;
   changeAmount?: number;

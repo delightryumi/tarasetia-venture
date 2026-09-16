@@ -136,8 +136,7 @@ export default function CashierContainer() {
         return tB - tA;
       });
 
-      // ── Patch each shift's transactions from pos_orders (source of truth) ──
-      // This guarantees the cards in ShiftHistoryList show accurate totals
+      // ── Patch each shift's transactions from pos_orders without losing shift transactions ──
       const enrichedHistory = await Promise.all(
         history.map(async (shift) => {
           try {
@@ -146,20 +145,23 @@ export default function CashierContainer() {
               where('shiftId', '==', shift.id)
             );
             const ordersSnap = await getDocs(ordersQ);
-            if (!ordersSnap.empty) {
-              const patchedTxs = ordersSnap.docs.map(d => {
-                const od = d.data();
-                return {
-                  id: od.transactionId || d.id,
-                  amount: (od.status === 'CANCELLED' || od.status === 'VOID') ? 0 : (od.total ?? od.amount ?? 0),
-                  method: (od.paymentMethod ?? od.method ?? 'cash').toLowerCase(),
-                  timestamp: od.timestamp?.toDate ? od.timestamp.toDate().toISOString() : (od.timestamp ?? new Date().toISOString()),
-                  revenueType: od.revenueType ?? '',
-                  status: od.status || 'SUCCESS',
-                };
+            const txMap = new Map<string, any>();
+            (shift.transactions || []).forEach(t => {
+              if (t.id) txMap.set(t.id, t);
+            });
+            ordersSnap.docs.forEach(d => {
+              const od = d.data();
+              const txId = od.transactionId || d.id;
+              txMap.set(txId, {
+                id: txId,
+                amount: (od.status === 'CANCELLED' || od.status === 'VOID') ? 0 : (od.total ?? od.amount ?? 0),
+                method: (od.paymentMethod ?? od.method ?? 'cash').toLowerCase(),
+                timestamp: od.timestamp?.toDate ? od.timestamp.toDate().toISOString() : (od.timestamp ?? new Date().toISOString()),
+                revenueType: od.revenueType ?? '',
+                status: od.status || 'SUCCESS',
               });
-              return { ...shift, transactions: patchedTxs };
-            }
+            });
+            return { ...shift, transactions: Array.from(txMap.values()) };
           } catch (e) {
             // silent fail — keep original shift
           }
@@ -444,20 +446,71 @@ export default function CashierContainer() {
         where('shiftId', '==', shift.id)
       );
       const snap = await getDocs(q);
-      const details: any[] = [];
+      const detailsMap = new Map<string, any>();
       snap.forEach(docSnap => {
         const d = docSnap.data();
-        // Normalize pos_orders fields → align with shift.transactions shape
-        // pos_orders uses: total, paymentMethod
-        // shift.transactions uses: amount, method
-        details.push({
+        const txId = d.transactionId || docSnap.id;
+        detailsMap.set(txId, {
           ...d,
-          id: d.transactionId || docSnap.id,
-          // normalize
+          id: txId,
           amount: (d.status === 'CANCELLED' || d.status === 'VOID') ? 0 : (d.total ?? d.amount ?? 0),
+          originalTotal: d.total ?? d.amount ?? 0,
           method: (d.paymentMethod ?? d.method ?? 'cash').toLowerCase(),
         });
       });
+
+      // Also ensure any transactions recorded in shift.transactions are retrieved
+      if (shift.transactions && shift.transactions.length > 0) {
+        for (const t of shift.transactions) {
+          if (t.id && !detailsMap.has(t.id)) {
+            try {
+              let dd: any = null;
+              const directDoc = await getDoc(doc(getHotelCollection(db, 'pos_orders', hotelCode), t.id));
+              if (directDoc.exists()) {
+                dd = directDoc.data();
+              } else {
+                const qTx = query(getHotelCollection(db, 'pos_orders', hotelCode), where('transactionId', '==', t.id));
+                const snapTx = await getDocs(qTx);
+                if (!snapTx.empty) {
+                  dd = snapTx.docs[0].data();
+                }
+              }
+
+              if (dd) {
+                detailsMap.set(t.id, {
+                  ...dd,
+                  id: t.id,
+                  amount: (dd.status === 'CANCELLED' || dd.status === 'VOID') ? 0 : (dd.total ?? dd.amount ?? t.amount ?? 0),
+                  originalTotal: dd.total ?? dd.amount ?? t.amount ?? 0,
+                  method: (dd.paymentMethod ?? dd.method ?? t.method ?? 'cash').toLowerCase(),
+                });
+              } else {
+                detailsMap.set(t.id, {
+                  id: t.id,
+                  amount: (t.status === 'CANCELLED' || t.status === 'VOID') ? 0 : (t.amount || 0),
+                  originalTotal: t.amount || 0,
+                  method: (t.method || 'cash').toLowerCase(),
+                  timestamp: t.timestamp,
+                  revenueType: t.revenueType || '',
+                  items: t.items || []
+                });
+              }
+            } catch {
+              detailsMap.set(t.id, {
+                id: t.id,
+                amount: (t.status === 'CANCELLED' || t.status === 'VOID') ? 0 : (t.amount || 0),
+                originalTotal: t.amount || 0,
+                method: (t.method || 'cash').toLowerCase(),
+                timestamp: t.timestamp,
+                revenueType: t.revenueType || '',
+                items: t.items || []
+              });
+            }
+          }
+        }
+      }
+
+      const details = Array.from(detailsMap.values());
       // Sort by timestamp asc
       details.sort((a, b) => {
         const da = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
@@ -466,8 +519,7 @@ export default function CashierContainer() {
       });
       setDetailTransactions(details);
 
-      // ── Patch shift.transactions[] if pos_orders has more entries ──
-      // This ensures getSalesBreakdown (which reads shift.transactions) is also accurate
+      // ── Patch shift.transactions[] if details has more entries ──
       if (details.length > (shift.transactions?.length ?? 0)) {
         const patchedTxs = details.map(d => ({
           id: d.transactionId || d.id,
@@ -476,8 +528,6 @@ export default function CashierContainer() {
           timestamp: d.timestamp?.toDate ? d.timestamp.toDate().toISOString() : (d.timestamp ?? new Date().toISOString()),
           revenueType: d.revenueType ?? '',
         }));
-        // Update in-memory shift state
-        const { restoId } = getUserInfo();
         setShiftHistory(prev =>
           prev.map(s =>
             s.id === shift.id ? { ...s, transactions: patchedTxs } : s
@@ -516,7 +566,7 @@ export default function CashierContainer() {
         total += amt;
         if (m === 'cash' || m === 'tunai') cash += amt;
         else if (m === 'qris' || m === 'e-money' || m === 'emoney') qris += amt;
-        else if (m === 'card' || m === 'debit' || m === 'kredit' || m === 'credit' || m === 'transfer') card += amt;
+        else if (m === 'card' || m === 'edc' || m === 'kartu' || m === 'debit' || m === 'kredit' || m === 'credit' || m === 'transfer') card += amt;
         else qris += amt;
       });
     }

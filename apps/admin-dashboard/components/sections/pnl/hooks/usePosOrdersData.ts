@@ -3,6 +3,33 @@ import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase"; 
 import { getHotelCollection } from "@/lib/firestoreHelper"; 
 
+const isFoodItem = (target: string, cat: string, name: string) => {
+  const t = (target || '').toLowerCase().trim();
+  const c = (cat || '').toLowerCase().trim();
+  const n = (name || '').toLowerCase().trim();
+  if (t === 'food' || c === 'food' || c === 'makanan' || c.includes('food') || c.includes('makan')) return true;
+  const foodKeywords = [
+    'nasi', 'mie', 'ayam', 'bebek', 'soup', 'sop', 'tahu', 'mendoan', 'tempe', 'snack',
+    'goreng', 'bakar', 'kremes', 'fillet', 'kentang', 'roti', 'pisang', 'burger',
+    'sandwich', 'pasta', 'spaghetti', 'pizza', 'daging', 'sapi', 'ikan', 'udang', 'salad'
+  ];
+  return foodKeywords.some(kw => n.includes(kw));
+};
+
+const isBeverageItem = (target: string, cat: string, name: string) => {
+  const t = (target || '').toLowerCase().trim();
+  const c = (cat || '').toLowerCase().trim();
+  const n = (name || '').toLowerCase().trim();
+  if (t === 'beverage' || c === 'beverage' || c === 'minuman' || c.includes('bev') || c.includes('minum') || c.includes('drink') || c.includes('bar') || c.includes('kopi') || c.includes('coffee')) return true;
+  const drinkKeywords = [
+    'kopi', 'coffee', 'tea', 'teh', 'latte', 'cappucino', 'cappuccino', 'espresso',
+    'mocha', 'mocachino', 'juice', 'jus', 'mojito', 'float', 'milkshake', 'taro',
+    'matcha', 'mineral', 'air', 'wedang', 'chocolate', 'cokelat', 'drink', 'beer',
+    'wine', 'syrup', 'sirup', 'boba', 'smoothie', 'creamy', 'berrycano', 'americano'
+  ];
+  return drinkKeywords.some(kw => n.includes(kw));
+};
+
 export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") => {
     const [loadingPOS, setLoadingPOS] = useState(false);
 
@@ -121,8 +148,12 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
               
               let docDateStr: string = "";
               if (data.timestamp) {
-                const docDate = typeof data.timestamp.toDate === 'function' ? data.timestamp.toDate() : new Date(data.timestamp);
+                const docDate = typeof data.timestamp.toDate === 'function' ? data.timestamp.toDate() : new Date(data.timestamp.seconds ? data.timestamp.seconds * 1000 : data.timestamp);
                 docDateStr = docDate.toISOString().split('T')[0];
+              } else if (data.createdAt) {
+                docDateStr = typeof data.createdAt === 'string' ? data.createdAt.split('T')[0] : '';
+              } else if (data.date) {
+                docDateStr = data.date;
               }
 
               if (docDateStr >= startStr && docDateStr <= endStr) {
@@ -164,9 +195,11 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                       const prodInfo = productMap[item.id] || { buyPrice: 0, category: '', name: item.name || 'Item' };
                       const prodCatName = (prodInfo.category || '').toLowerCase().trim();
                       const resolvedTarget = categoryPnlMap[prodCatName] || 'FOOD';
+                      const itemName = (item.name || prodInfo.name || '').toLowerCase().trim();
                       let itemCategory: 'food' | 'beverage' | 'banquet' | 'other' = 'food';
-                      if (resolvedTarget === 'BEVERAGE') itemCategory = 'beverage';
-                      else if (resolvedTarget === 'BANQUET') itemCategory = 'banquet';
+                      if (resolvedTarget === 'BANQUET' || prodCatName.includes('banquet')) itemCategory = 'banquet';
+                      else if (resolvedTarget === 'BEVERAGE' || isBeverageItem(resolvedTarget, prodCatName, itemName)) itemCategory = 'beverage';
+                      else if (resolvedTarget === 'FOOD' || isFoodItem(resolvedTarget, prodCatName, itemName)) itemCategory = 'food';
                       else if (resolvedTarget === 'OTHER') itemCategory = 'other';
                       fetchedPosOrders.push({
                         id: `${orderId}-${item.id}`,
@@ -206,12 +239,15 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                     const resolvedTarget = categoryPnlMap[prodCatName] || 
                       (prodCatName.includes('drink') || prodCatName.includes('beverage') || prodCatName.includes('minuman') ? 'BEVERAGE' : 
                        prodCatName.includes('banquet') ? 'BANQUET' : 'FOOD');
+                    const itemName = (item.name || prodInfo.name || '').toLowerCase().trim();
 
                     let itemCategory: 'food' | 'beverage' | 'banquet' | 'other' = 'food';
-                    if (isBanquet || resolvedTarget === 'BANQUET') {
+                    if (isBanquet || resolvedTarget === 'BANQUET' || prodCatName.includes('banquet')) {
                       itemCategory = 'banquet';
-                    } else if (resolvedTarget === 'BEVERAGE') {
+                    } else if (resolvedTarget === 'BEVERAGE' || isBeverageItem(resolvedTarget, prodCatName, itemName)) {
                       itemCategory = 'beverage';
+                    } else if (resolvedTarget === 'FOOD' || isFoodItem(resolvedTarget, prodCatName, itemName)) {
+                      itemCategory = 'food';
                     } else if (resolvedTarget === 'OTHER') {
                       itemCategory = 'other';
                     }
@@ -296,12 +332,15 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
                     const resolvedTarget = categoryPnlMap[prodCatName] || 
                       (prodCatName.includes('drink') || prodCatName.includes('beverage') || prodCatName.includes('minuman') ? 'BEVERAGE' : 
                        prodCatName.includes('banquet') ? 'BANQUET' : 'FOOD');
+                    const itemName = (data.name || prodInfo.name || '').toLowerCase().trim();
 
                     let itemCategory: 'food' | 'beverage' | 'banquet' | 'other' = 'food';
-                    if (isBanquet || resolvedTarget === 'BANQUET') {
+                    if (isBanquet || resolvedTarget === 'BANQUET' || prodCatName.includes('banquet')) {
                       itemCategory = 'banquet';
-                    } else if (resolvedTarget === 'BEVERAGE') {
+                    } else if (resolvedTarget === 'BEVERAGE' || isBeverageItem(resolvedTarget, prodCatName, itemName)) {
                       itemCategory = 'beverage';
+                    } else if (resolvedTarget === 'FOOD' || isFoodItem(resolvedTarget, prodCatName, itemName)) {
+                      itemCategory = 'food';
                     } else if (resolvedTarget === 'OTHER') {
                       itemCategory = 'other';
                     }

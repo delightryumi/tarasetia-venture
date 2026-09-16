@@ -116,7 +116,7 @@ function LiveTableGrid() {
             parsedTables.push(`Meja ${i}`);
           }
         } else {
-          parsedTables = rawTables.split(',').map(t => t.trim()).filter(Boolean);
+          parsedTables = Array.from(new Set(rawTables.split(',').map(t => t.trim()).filter(Boolean)));
         }
         setTablesList(parsedTables);
 
@@ -461,9 +461,9 @@ function LiveTableGrid() {
 
             const allTables = [...registeredMatches, ...extraTables];
 
-            return allTables.map(({ tableName, activeOrder, isOccupied, isExtra }) => (
+            return allTables.map(({ tableName, activeOrder, isOccupied, isExtra }, idx) => (
               <button
-                key={isOccupied && activeOrder ? `${tableName}-${activeOrder.id}` : tableName}
+                key={isOccupied && activeOrder?.id ? `${tableName}-${activeOrder.id}-${idx}` : `table-${tableName}-${idx}`}
                 onClick={() => handleTableClick(tableName)}
                 className={cn(
                   "p-4 rounded-xl border flex flex-col justify-between items-start text-left transition-all relative overflow-hidden select-none cursor-pointer h-[115px] focus:outline-none",

@@ -49,23 +49,35 @@ export default function DetailPage() {
   const componentRef = useRef<HTMLDivElement>(null);
 
   // ── Totals ──────────────────────────────────────────────────────────────────
-  let subtotal = 0;
+  let itemsSum = 0;
   transactionData.forEach(item => {
-    if (item?.product) subtotal += item.product.sellprice * item.quantity;
+    if (item?.product && !item.isCompliment) {
+      itemsSum += Number(item.product.sellprice || 0) * Number(item.quantity || 1);
+    }
   });
-  const discount = transactionData[0]?.discount || 0;
-  const nettTotal = subtotal - discount;
-  const tax   = nettTotal * (taxRate / 100);
-  const total = nettTotal + tax;
 
   const firstTx = transactionData[0];
-  const finalSubtotal = firstTx?.subtotal !== undefined ? firstTx.subtotal : subtotal;
-  const finalDiscount = firstTx?.discount !== undefined ? firstTx.discount : discount;
-  const finalTax = firstTx?.tax !== undefined ? firstTx.tax : tax;
-  const finalTotal = firstTx?.total !== undefined ? firstTx.total : total;
-  const effectiveTaxRate = finalSubtotal - finalDiscount > 0
-    ? Math.round((finalTax / (finalSubtotal - finalDiscount)) * 100)
-    : taxRate;
+  const finalDiscount = Number(firstTx?.discount || 0);
+  const recordedTotal = Number(firstTx?.total ?? firstTx?.amount ?? 0);
+  let recordedSubtotal = firstTx?.subtotal !== undefined ? Number(firstTx.subtotal) : 0;
+  let recordedTax = Number(firstTx?.tax ?? firstTx?.taxAmount ?? 0);
+  let recordedService = Number(firstTx?.service ?? firstTx?.serviceAmount ?? 0);
+
+  // If subtotal in db was equal to total or tax was unrecorded, but items sum is lower than total
+  let finalSubtotal = itemsSum > 0 ? itemsSum : (recordedSubtotal > 0 ? recordedSubtotal : recordedTotal);
+  let finalTotal = recordedTotal > 0 ? recordedTotal : Math.max(0, finalSubtotal - finalDiscount + recordedTax + recordedService);
+
+  let finalService = recordedService;
+  let finalTax = recordedTax;
+
+  // Auto-detect tax if unrecorded but total > (subtotal - discount)
+  if (finalTax === 0 && finalTotal > Math.max(0, finalSubtotal - finalDiscount)) {
+    finalTax = finalTotal - Math.max(0, finalSubtotal - finalDiscount) - finalService;
+  }
+
+  const netBase = Math.max(1, finalSubtotal - finalDiscount);
+  const effectiveTaxRate = finalTax > 0 ? Math.round((finalTax / netBase) * 100) : 0;
+  const effectiveServiceRate = finalService > 0 ? Math.round((finalService / netBase) * 100) : 0;
 
   // Map transactionData to ReceiptItemData
   const receiptItems: ReceiptItemData[] = transactionData.map(item => ({
@@ -187,6 +199,8 @@ export default function DetailPage() {
                   discount: finalDiscount,
                   taxRate: effectiveTaxRate,
                   taxAmount: finalTax,
+                  serviceRate: effectiveServiceRate,
+                  serviceAmount: finalService,
                   payableAmount: finalTotal,
                   cashAmount: firstTx?.cashAmount,
                   changeAmount: firstTx?.changeAmount,
@@ -222,6 +236,8 @@ export default function DetailPage() {
               discount: finalDiscount,
               taxRate: effectiveTaxRate,
               taxAmount: finalTax,
+              serviceRate: effectiveServiceRate,
+              serviceAmount: finalService,
               payableAmount: finalTotal,
               cashAmount: firstTx?.cashAmount,
               changeAmount: firstTx?.changeAmount,
