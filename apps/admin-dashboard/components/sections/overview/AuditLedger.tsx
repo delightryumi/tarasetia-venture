@@ -85,7 +85,10 @@ export function AuditLedger({
                     <tbody>
                         {bookings.map((booking, idx) => {
                             const isAcc = booking.type === 'accommodation' || (!booking.type && booking.guestName && !booking.guestName.startsWith('POS Order') && !booking.posItems && !booking.revenueType);
-                            const isCancelled = booking.status === 'CANCELLED' || booking.status === 'CANCEL';
+                            const st = String(booking.status || '').toUpperCase();
+                            const pst = String(booking.paymentStatus || '').toUpperCase();
+                            const gst = String(booking.guestStatus || '').toLowerCase();
+                            const isCancelled = st === 'CANCELLED' || st === 'CANCEL' || pst === 'CANCELLED' || pst === 'CANCEL' || gst === 'cancelled' || gst === 'cancel';
                             return (
                                 <tr 
                                     key={idx} 
@@ -106,6 +109,8 @@ export function AuditLedger({
                                                     justifyContent: "center", 
                                                     padding: 0,
                                                     flexShrink: 0,
+                                                    filter: isCancelled ? 'grayscale(100%)' : 'none',
+                                                    opacity: isCancelled ? 0.45 : 1,
                                                     backgroundColor: ['rgba(141, 122, 82, 0.15)', 'rgba(120, 128, 105, 0.15)', 'rgba(141, 122, 82, 0.08)', 'rgba(120, 128, 105, 0.08)', 'var(--f-surface-soft)', 'rgba(0, 0, 0, 0.04)', 'rgba(0, 0, 0, 0.02)'][((((booking.guestName || "O").charCodeAt(0) || 0) + (booking.amount || 0)) % 7)] 
                                                 }}
                                             >
@@ -116,60 +121,159 @@ export function AuditLedger({
                                                 />
                                             </div>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                <p className={styles.guestName} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '150px' }}>
+                                                <p 
+                                                    className={styles.guestName} 
+                                                    style={{ 
+                                                        margin: 0, 
+                                                        textOverflow: 'ellipsis', 
+                                                        overflow: 'hidden', 
+                                                        whiteSpace: 'nowrap', 
+                                                        maxWidth: '150px',
+                                                        color: isCancelled ? '#9ca3af' : undefined,
+                                                        textDecoration: isCancelled ? 'line-through' : 'none'
+                                                    }}
+                                                >
                                                     {booking.guestName || "General Sale"}
                                                 </p>
-                                                <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0, fontFamily: 'var(--f-font-mono)' }}>{booking.bookingId || "Walk-In"}</p>
+                                                <p 
+                                                    className={styles.guestSubtext} 
+                                                    style={{ 
+                                                        fontSize: '8px', 
+                                                        color: isCancelled ? '#9ca3af' : 'var(--f-light-muted)', 
+                                                        textDecoration: isCancelled ? 'line-through' : 'none',
+                                                        margin: 0, 
+                                                        fontFamily: 'var(--f-font-mono)' 
+                                                    }}
+                                                >
+                                                    {booking.bookingId || "Walk-In"}
+                                                </p>
                                             </div>
                                         </div>
                                     </td>
                                     <td className={styles.tableCell}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <p className={styles.guestSubtext} style={{ color: 'var(--f-body)', fontWeight: 700, margin: 0 }}>
+                                            <p 
+                                                className={styles.guestSubtext} 
+                                                style={{ 
+                                                    color: isCancelled ? '#9ca3af' : 'var(--f-body)', 
+                                                    textDecoration: isCancelled ? 'line-through' : 'none',
+                                                    fontWeight: 700, 
+                                                    margin: 0 
+                                                }}
+                                            >
                                                 {booking.checkInDate || "---"}
                                             </p>
-                                            <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0 }}>Until {booking.checkOutDate || "---"}</p>
+                                            <p 
+                                                className={styles.guestSubtext} 
+                                                style={{ 
+                                                    fontSize: '8px', 
+                                                    color: isCancelled ? '#9ca3af' : 'var(--f-light-muted)', 
+                                                    textDecoration: isCancelled ? 'line-through' : 'none',
+                                                    margin: 0 
+                                                }}
+                                            >
+                                                Until {booking.checkOutDate || "---"}
+                                            </p>
                                         </div>
                                     </td>
                                     <td className={styles.tableCell} style={{ padding: '20px 16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                             <div style={{ display: 'flex' }}>
-                                                <span className={styles.guestSubtext} style={{ fontWeight: 700, backgroundColor: 'var(--f-surface-soft)', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--f-hairline)', fontSize: '9px', letterSpacing: '0.05em' }}>
+                                                <span 
+                                                    className={styles.guestSubtext} 
+                                                    style={{ 
+                                                        fontWeight: 700, 
+                                                        backgroundColor: isCancelled ? '#f3f4f6' : 'var(--f-surface-soft)', 
+                                                        color: isCancelled ? '#9ca3af' : undefined,
+                                                        textDecoration: isCancelled ? 'line-through' : 'none',
+                                                        padding: '4px 8px', 
+                                                        borderRadius: '6px', 
+                                                        border: '1px solid var(--f-hairline)', 
+                                                        fontSize: '9px', 
+                                                        letterSpacing: '0.05em' 
+                                                    }}
+                                                >
                                                     {(booking.roomType || "Service").toUpperCase()}
                                                 </span>
                                             </div>
                                             {booking.roomNumber && (
-                                                <span className={styles.guestSubtext} style={{ color: 'var(--f-sage)', fontWeight: 800, fontSize: '10px', letterSpacing: '0.05em', marginLeft: '2px' }}>
+                                                <span 
+                                                    className={styles.guestSubtext} 
+                                                    style={{ 
+                                                        color: isCancelled ? '#9ca3af' : 'var(--f-sage)', 
+                                                        textDecoration: isCancelled ? 'line-through' : 'none',
+                                                        fontWeight: 800, 
+                                                        fontSize: '10px', 
+                                                        letterSpacing: '0.05em', 
+                                                        marginLeft: '2px' 
+                                                    }}
+                                                >
                                                     {booking.roomNumber.toUpperCase().startsWith('ROOM') ? booking.roomNumber.toUpperCase() : `ROOM ${booking.roomNumber.toUpperCase()}`}
                                                 </span>
                                             )}
                                             {isAcc && (
-                                                <RoomStatusPicker 
-                                                    current={booking.roomStatus || 'dirty'} 
-                                                    onChange={(val) => onStatusUpdate(booking, 'roomStatus', val)} 
-                                                />
+                                                <div style={{ opacity: isCancelled ? 0.4 : 1, pointerEvents: isCancelled ? 'none' : 'auto' }}>
+                                                    <RoomStatusPicker 
+                                                        current={booking.roomStatus || 'dirty'} 
+                                                        onChange={(val) => onStatusUpdate(booking, 'roomStatus', val)} 
+                                                    />
+                                                </div>
                                             )}
                                         </div>
                                     </td>
                                     <td className={styles.tableCell}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: isCancelled ? 0.6 : 1 }}>
                                             <div style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: 'var(--f-canvas)', border: '1px solid var(--f-hairline)', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <img src={getChannelLogo(booking.channel)} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain', opacity: 0.6 }} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
+                                                <img src={getChannelLogo(booking.channel)} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain', opacity: isCancelled ? 0.35 : 0.6, filter: isCancelled ? 'grayscale(100%)' : 'none' }} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
                                             </div>
-                                            <p className={styles.guestSubtext} style={{ margin: 0, fontWeight: 700, color: 'var(--f-light-muted)' }}>{booking.channel}</p>
+                                            <p 
+                                                className={styles.guestSubtext} 
+                                                style={{ 
+                                                    margin: 0, 
+                                                    fontWeight: 700, 
+                                                    color: isCancelled ? '#9ca3af' : 'var(--f-light-muted)',
+                                                    textDecoration: isCancelled ? 'line-through' : 'none'
+                                                }}
+                                            >
+                                                {booking.channel}
+                                            </p>
                                         </div>
                                     </td>
                                     <td className={styles.tableCell}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <p className={styles.guestAmount} style={{ margin: 0 }}>Rp {Number(booking.amount).toLocaleString('id-ID')}</p>
-                                            <p className={`${styles.paymentBadge} ${booking.paymentStatus?.includes('Lunas') ? styles.paymentLunas : styles.paymentPending}`} style={{ margin: 0, width: 'fit-content' }}>
-                                                {booking.paymentStatus || 'Pending'}
+                                            <p 
+                                                className={styles.guestAmount} 
+                                                style={{ 
+                                                    margin: 0, 
+                                                    color: isCancelled ? '#9ca3af' : undefined,
+                                                    textDecoration: isCancelled ? 'line-through' : 'none'
+                                                }}
+                                            >
+                                                Rp {Number(booking.amount).toLocaleString('id-ID')}
+                                            </p>
+                                            <p 
+                                                className={`${styles.paymentBadge} ${
+                                                    isCancelled 
+                                                        ? styles.paymentCancelled 
+                                                        : (booking.paymentStatus?.includes('Lunas') ? styles.paymentLunas : styles.paymentPending)
+                                                }`} 
+                                                style={{ 
+                                                    margin: 0, 
+                                                    width: 'fit-content',
+                                                    textDecoration: isCancelled ? 'line-through' : 'none'
+                                                }}
+                                            >
+                                                {isCancelled ? 'CANCELLED' : (booking.paymentStatus || 'Pending')}
                                             </p>
                                         </div>
                                     </td>
                                     <td className={styles.tableCell} style={{ textAlign: 'center' }}>
                                         <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                            {isAcc ? (
+                                            {isCancelled ? (
+                                                <span className={styles.cancelledBadge}>
+                                                    CANCELLED
+                                                </span>
+                                            ) : isAcc ? (
                                                 <GuestStatusPicker 
                                                     current={booking.guestStatus || 'arriving'} 
                                                     onChange={(val) => onStatusUpdate(booking, 'guestStatus', val)}

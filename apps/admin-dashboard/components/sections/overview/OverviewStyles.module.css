@@ -543,6 +543,12 @@
   color: #d97706;
 }
 
+.paymentCancelled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  border: 1px solid #e5e7eb;
+}
+
 /* ── Audit Ledger Table ── */
 .tableContainer {
   overflow-x: auto;
@@ -576,6 +582,50 @@
 
 .tableRow:hover {
   background-color: var(--f-surface-soft) !important;
+}
+
+/* ── Cancelled Row Styling in Audit Ledger (Gray + Line-Through) ── */
+.cancelledRow {
+  background-color: rgba(0, 0, 0, 0.02) !important;
+  opacity: 0.7;
+}
+
+.cancelledRow:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+.cancelledRow .guestName,
+.cancelledRow .guestAmount,
+.cancelledRow .guestSubtext {
+  color: #9ca3af !important;
+  text-decoration: line-through !important;
+}
+
+.cancelledBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  border: 1px solid #e5e7eb;
+  text-decoration: line-through;
+}
+
+.cancelledItem {
+  opacity: 0.7;
+}
+
+.cancelledItem .guestName,
+.cancelledItem .guestAmount,
+.cancelledItem .guestSubtext {
+  color: #9ca3af !important;
+  text-decoration: line-through !important;
 }
 
 .tableCell {

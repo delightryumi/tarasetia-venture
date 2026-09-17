@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -43,6 +44,9 @@ const stagger = {
 };
 
 export const ForecastSection: React.FC = () => {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const currentModule = searchParams.get("module") || "front-office";
     const { user, activeHotelCode } = useAuth();
     const [viewMode, setViewMode] = useState<"daily" | "monthly" | "yearly">("daily");
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -154,8 +158,10 @@ export const ForecastSection: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
 
     const handleEdit = (booking: any) => {
-        setSelectedGuest(booking);
-        setIsEditing(true);
+        const targetDate = booking.effectiveDate || booking.checkInDate || booking._docDate || selectedDate;
+        const bId = booking.bookingId || "";
+        const ts = booking.timestamp || "";
+        router.push(`/forecast/add?date=${targetDate}&bookingId=${encodeURIComponent(bId)}&timestamp=${encodeURIComponent(ts)}&module=${currentModule}&mode=edit&from=forecast`);
     };
 
     const [bookingToVoid, setBookingToVoid] = useState<any>(null);

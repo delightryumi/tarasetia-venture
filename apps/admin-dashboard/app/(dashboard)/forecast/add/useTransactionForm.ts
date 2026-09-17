@@ -40,7 +40,7 @@ export const OTHER_INCOME_TYPES = [
 ];
 
 export const BOOKING_TYPES = [
-    "Confirm Booking",
+    "Confirmed",
     "Tentative / Hold",
     "Inquiry",
     "Compliment / Gratis"
@@ -64,7 +64,7 @@ const INITIAL_FORM = {
     checkOut: "",
     checkOutTime: "12:00 PM",
     roomCount: 1,
-    bookingType: "Confirm Booking",
+    bookingType: "Confirmed",
     businessSource: "Direct / Walk-in",
     isContract: false,
     bookAllAvailable: false,
@@ -143,7 +143,11 @@ export const useTransactionForm = () => {
             }
         }
 
-        let redirectPath = `/overview?module=${moduleParam}`;
+        const fromParam = searchParams.get("from");
+        let redirectPath = fromParam === "forecast"
+            ? `/forecast?module=${moduleParam}`
+            : `/overview?module=${moduleParam}`;
+
         if (moduleParam === "purchasing") {
             redirectPath = "/purchasing?module=purchasing";
         } else if (moduleParam === "food-beverage") {
@@ -156,12 +160,19 @@ export const useTransactionForm = () => {
         router.push(redirectPath);
     }, [router, searchParams, user]);
 
+    const isEditMode = searchParams.get("mode") === "edit";
+    const editBookingId = searchParams.get("bookingId");
+    const editTimestamp = searchParams.get("timestamp");
+    const [originalEntry, setOriginalEntry] = useState<any>(null);
+    const [isLoadingEdit, setIsLoadingEdit] = useState<boolean>(isEditMode);
+
     const [roomTypes, setRoomTypes] = useState<any[]>([]);
     const [ratePlans, setRatePlans] = useState<any[]>([]);
     const [selectedRatePlanId, setSelectedRatePlanId] = useState<string>("");
     const [occupancy, setOccupancy] = useState<any[]>([]);
     const [ariOverrides, setAriOverrides] = useState<Record<string, any>>({});
     const [saving, setSaving] = useState(false);
+    const searchMod = searchParams.get("module");
     const [step, setStep] = useState<"select" | "form">("select");
     const [revenueType, setRevenueType] = useState<"room" | "other">("room");
     const [queue, setQueue] = useState<any[]>([]);
@@ -246,7 +257,7 @@ export const useTransactionForm = () => {
                     setRatePlans(fallbackPlans);
                 }
                 
-                if (types.length > 0) {
+                if (types.length > 0 && !isEditMode) {
                     setForm(prev => {
                         const newRooms = [...prev.rooms];
                         if (newRooms[0] && !newRooms[0].roomTypeId) {
@@ -281,7 +292,139 @@ export const useTransactionForm = () => {
             }
         };
         fetchData();
-    }, [activeHotelCode]);
+    }, [activeHotelCode, isEditMode]);
+
+    // Load existing transaction when in Edit Mode
+    useEffect(() => {
+        if (!isEditMode || (!editBookingId && !editTimestamp)) return;
+        let isCancelled = false;
+
+        const loadEditData = async () => {
+            setIsLoadingEdit(true);
+            try {
+                const hotelId = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") : null) || (user as any)?.hotelId || "";
+                if (!hotelId) return;
+
+                let foundEntry: any = null;
+                let foundDocDate = selectedDate;
+
+                // 1. First check daily_revenue doc for selectedDate
+                if (selectedDate) {
+                    const docId = `${hotelId}_${selectedDate}`;
+                    const docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), docId);
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        const entries = docSnap.data().entries || [];
+                        foundEntry = entries.find((e: any) => 
+                            (editBookingId && e.bookingId && e.bookingId === editBookingId) || 
+                            (editTimestamp && String(e.timestamp) === String(editTimestamp))
+                        );
+                    }
+                }
+
+                // 2. Fallback: search across all daily_revenue docs for this hotel
+                if (!foundEntry) {
+                    const revCollection = getHotelCollection(db, "daily_revenue", hotelId);
+                    const qSnap = await getDocs(revCollection);
+                    for (const d of qSnap.docs) {
+                        const entries = d.data().entries || [];
+                        const match = entries.find((e: any) => 
+                            (editBookingId && e.bookingId && e.bookingId === editBookingId) || 
+                            (editTimestamp && String(e.timestamp) === String(editTimestamp))
+                        );
+                        if (match) {
+                            foundEntry = match;
+                            foundDocDate = d.data().date || d.id.replace(`${hotelId}_`, "");
+                            break;
+                        }
+                    }
+                }
+
+                if (foundEntry && !isCancelled) {
+                    setOriginalEntry({ ...foundEntry, _originalDocDate: foundDocDate });
+                    
+                    const isOther = foundEntry.type === "other_income";
+                    setRevenueType(isOther ? "other" : "room");
+                    setStep("form");
+
+                    let roomsList = (foundEntry.rooms && foundEntry.rooms.length > 0) 
+                        ? foundEntry.rooms 
+                        : [{
+                            roomTypeId: foundEntry.roomTypeId || "",
+                            roomNumber: foundEntry.roomNumber || "",
+                            ratePlanId: foundEntry.ratePlanId || "",
+                            rateCode: foundEntry.rateCode || "-",
+                            adults: Number(foundEntry.adults || foundEntry.pax || 1),
+                            children: Number(foundEntry.children || 0),
+                            price: foundEntry.amount || ""
+                        }];
+
+                    setForm({
+                        ...INITIAL_FORM,
+                        salutation: foundEntry.salutation || "Mr.",
+                        guestName: foundEntry.rawGuestName || (foundEntry.guestName ? foundEntry.guestName.replace(/^(Mr\.|Mrs\.|Ms\.|Dr\.)\s+/i, '') : ""),
+                        checkIn: foundEntry.checkInDate || foundDocDate,
+                        checkInTime: foundEntry.checkInTime || "02:00 PM",
+                        checkOut: foundEntry.checkOutDate || "",
+                        checkOutTime: foundEntry.checkOutTime || "12:00 PM",
+                        roomCount: Number(foundEntry.roomCount) || 1,
+                        bookingType: foundEntry.bookingType || "Confirmed",
+                        businessSource: foundEntry.businessSource || "Direct / Walk-in",
+                        isContract: !!foundEntry.isContract,
+                        bookAllAvailable: false,
+                        rooms: roomsList,
+                        nightRates: foundEntry.nightRates || [foundEntry.amount || ""],
+                        channel: foundEntry.channel || "Walk-in",
+                        voucherCode: foundEntry.voucherCode || "",
+                        bookingId: foundEntry.bookingId || editBookingId || "",
+                        phone: foundEntry.phone || "",
+                        nik: foundEntry.nik || "",
+                        nationality: foundEntry.nationality || "INDONESIA",
+                        email: foundEntry.email || "",
+                        address: foundEntry.address || "",
+                        zipCode: foundEntry.zipCode || "",
+                        country: foundEntry.country || "Indonesia",
+                        state: foundEntry.state || "",
+                        city: foundEntry.city || "",
+                        company: foundEntry.company || "-",
+                        rateCode: foundEntry.rateCode || "-",
+                        pax: Number(foundEntry.pax || 1),
+                        upgradeFrom: foundEntry.upgradeFrom || "",
+                        upgradeTo: foundEntry.upgradeTo || "",
+                        sendEmailVoucher: !!foundEntry.sendEmailVoucher,
+                        enableGuestPortal: foundEntry.enableGuestPortal !== false,
+                        paymentRecipient: foundEntry.paymentRecipient || "Hotel / Front Desk",
+                        paymentModeEnabled: true,
+                        paidCash: foundEntry.paidCash ?? "",
+                        paidEdc: foundEntry.paidEdc ?? "",
+                        paidQris: foundEntry.paidQris ?? "",
+                        paidTransfer: foundEntry.paidTransfer ?? "",
+                        paidOta: foundEntry.paidOta ?? "",
+                        payHotel: foundEntry.payHotel ?? "",
+                        payTransfer: foundEntry.payTransfer ?? "",
+                        totalAmount: foundEntry.totalAmount ?? foundEntry.amount ?? "",
+                        incomeType: foundEntry.incomeCategory || "Other",
+                        note: foundEntry.note || "",
+                        staffName: foundEntry.staffName || "",
+                        isCompliment: !!foundEntry.isCompliment,
+                        complimentReason: foundEntry.complimentReason || "",
+                    });
+
+                    if (foundEntry.ratePlanId) {
+                        setSelectedRatePlanId(foundEntry.ratePlanId);
+                    }
+                }
+            } catch (err) {
+                console.error("Error loading edit transaction:", err);
+                toast.error("Gagal memuat detail transaksi.");
+            } finally {
+                if (!isCancelled) setIsLoadingEdit(false);
+            }
+        };
+
+        loadEditData();
+        return () => { isCancelled = true; };
+    }, [isEditMode, editBookingId, editTimestamp, selectedDate, activeHotelCode, user]);
 
 
     // Sync nightRates with nights
@@ -531,12 +674,13 @@ export const useTransactionForm = () => {
 
         let transactionEntries: any[] = [];
 
-        // Determine granular settlement values
-        const rawCash = form.paidCash !== "" ? Number(form.paidCash) || 0 : (form.paidEdc === "" && form.paidQris === "" && form.paidTransfer === "" ? Number(form.payHotel) || 0 : 0);
-        const rawEdc = Number(form.paidEdc) || 0;
-        const rawQris = Number(form.paidQris) || 0;
-        const rawTransfer = Number(form.paidTransfer) || 0;
-        const rawOta = form.paidOta !== "" ? Number(form.paidOta) || 0 : (Number(form.payTransfer) || 0);
+        // Determine granular settlement values (Billing is optional; empty billing defaults to 0 and "Belum Bayar")
+        const hasPayment = form.paymentModeEnabled !== false;
+        const rawCash = hasPayment && form.paidCash !== "" ? Number(form.paidCash) || 0 : (hasPayment && form.paidEdc === "" && form.paidQris === "" && form.paidTransfer === "" ? Number(form.payHotel) || 0 : 0);
+        const rawEdc = hasPayment ? (Number(form.paidEdc) || 0) : 0;
+        const rawQris = hasPayment ? (Number(form.paidQris) || 0) : 0;
+        const rawTransfer = hasPayment ? (Number(form.paidTransfer) || 0) : 0;
+        const rawOta = hasPayment && form.paidOta !== "" ? Number(form.paidOta) || 0 : (hasPayment ? (Number(form.payTransfer) || 0) : 0);
 
         if (revenueType === "room") {
             const startD = new Date(form.checkIn);
@@ -604,12 +748,16 @@ export const useTransactionForm = () => {
                     const dailyBalance = Math.max(0, finalAmount - dailyPaid);
                     const dailyStatus = form.isCompliment ? "Lunas" : (dailyBalance === 0 ? "Lunas" : (dailyPaid > 0 ? "DP / Partial" : "Belum Bayar"));
 
-                    let pm = "Cash";
-                    if (finalOta > 0 && finalPayHotel === 0) pm = "OTA Virtual / City Ledger";
-                    else if (finalEdc > 0 && finalCash === 0 && finalQris === 0 && finalTransfer === 0) pm = "EDC BCA / Mandiri";
-                    else if (finalQris > 0 && finalCash === 0 && finalEdc === 0 && finalTransfer === 0) pm = "QRIS Payment";
-                    else if (finalTransfer > 0 && finalCash === 0 && finalEdc === 0 && finalQris === 0) pm = "Bank Transfer";
-                    else if ([finalCash > 0, finalEdc > 0, finalQris > 0, finalTransfer > 0, finalOta > 0].filter(Boolean).length > 1) pm = "Split Payment";
+                    let pm = "Belum Ada Pembayaran";
+                    if (dailyPaid > 0) {
+                        if (finalOta > 0 && finalPayHotel === 0) pm = "OTA Virtual / City Ledger";
+                        else if (finalEdc > 0 && finalCash === 0 && finalQris === 0 && finalTransfer === 0) pm = "EDC BCA / Mandiri";
+                        else if (finalQris > 0 && finalCash === 0 && finalEdc === 0 && finalTransfer === 0) pm = "QRIS Payment";
+                        else if (finalTransfer > 0 && finalCash === 0 && finalEdc === 0 && finalQris === 0) pm = "Bank Transfer";
+                        else if (finalCash > 0 && finalEdc === 0 && finalQris === 0 && finalTransfer === 0 && finalOta === 0) pm = "Cash";
+                        else if ([finalCash > 0, finalEdc > 0, finalQris > 0, finalTransfer > 0, finalOta > 0].filter(Boolean).length > 1) pm = "Split Payment";
+                        else pm = "Cash";
+                    }
 
                     const fullGuestName = [form.salutation, form.guestName].filter(Boolean).join(" ");
 
@@ -629,7 +777,7 @@ export const useTransactionForm = () => {
                         state: form.state || "",
                         city: form.city || "",
                         company: form.company || "-",
-                        bookingType: form.bookingType || "Confirm Booking",
+                        bookingType: form.bookingType || "Confirmed",
                         businessSource: form.businessSource || "Direct / Walk-in",
                         rateCode: rm.rateCode || form.rateCode || "-",
                         ratePlanId: rm.ratePlanId || "",
@@ -695,12 +843,16 @@ export const useTransactionForm = () => {
             const incomeBalance = Math.max(0, finalAmount - totalPaid);
             const incomeStatus = form.isCompliment ? "Lunas" : (incomeBalance === 0 ? "Lunas" : (totalPaid > 0 ? "DP / Partial" : "Belum Bayar"));
 
-            let pm = "Cash";
-            if (finalOta > 0 && finalPayHotel === 0) pm = "OTA Virtual / City Ledger";
-            else if (finalEdc > 0 && finalCash === 0 && finalQris === 0 && finalTransfer === 0) pm = "EDC BCA / Mandiri";
-            else if (finalQris > 0 && finalCash === 0 && finalEdc === 0 && finalTransfer === 0) pm = "QRIS Payment";
-            else if (finalTransfer > 0 && finalCash === 0 && finalEdc === 0 && finalQris === 0) pm = "Bank Transfer";
-            else if ([finalCash > 0, finalEdc > 0, finalQris > 0, finalTransfer > 0, finalOta > 0].filter(Boolean).length > 1) pm = "Split Payment";
+            let pm = "Belum Ada Pembayaran";
+            if (totalPaid > 0) {
+                if (finalOta > 0 && finalPayHotel === 0) pm = "OTA Virtual / City Ledger";
+                else if (finalEdc > 0 && finalCash === 0 && finalQris === 0 && finalTransfer === 0) pm = "EDC BCA / Mandiri";
+                else if (finalQris > 0 && finalCash === 0 && finalEdc === 0 && finalTransfer === 0) pm = "QRIS Payment";
+                else if (finalTransfer > 0 && finalCash === 0 && finalEdc === 0 && finalQris === 0) pm = "Bank Transfer";
+                else if (finalCash > 0 && finalEdc === 0 && finalQris === 0 && finalTransfer === 0 && finalOta === 0) pm = "Cash";
+                else if ([finalCash > 0, finalEdc > 0, finalQris > 0, finalTransfer > 0, finalOta > 0].filter(Boolean).length > 1) pm = "Split Payment";
+                else pm = "Cash";
+            }
 
             transactionEntries = [{
                 type: "other_income",
@@ -771,7 +923,7 @@ export const useTransactionForm = () => {
         }
 
         if (finalEntries.length === 0) {
-            toast.error("Queue is empty and form is not filled.");
+            toast.error("Silakan lengkapi detail reservasi terlebih dahulu.");
             return;
         }
 
@@ -784,6 +936,98 @@ export const useTransactionForm = () => {
                 if (!entriesByDate[date]) entriesByDate[date] = [];
                 entriesByDate[date].push(entry);
             });
+
+            if (isEditMode && originalEntry) {
+                const origDates = new Set<string>();
+                if (originalEntry.effectiveDate) origDates.add(originalEntry.effectiveDate);
+                if (originalEntry.checkInDate) origDates.add(originalEntry.checkInDate);
+                if (originalEntry._originalDocDate) origDates.add(originalEntry._originalDocDate);
+                if (originalEntry.checkInDate && originalEntry.checkOutDate) {
+                    let d = new Date(originalEntry.checkInDate);
+                    const end = new Date(originalEntry.checkOutDate);
+                    while (d < end) {
+                        origDates.add(d.toISOString().split('T')[0]);
+                        d.setDate(d.getDate() + 1);
+                    }
+                }
+
+                const isMatchOriginal = (e: any) => {
+                    if (originalEntry.bookingId && e.bookingId && e.bookingId === originalEntry.bookingId) return true;
+                    if (originalEntry.timestamp && String(e.timestamp) === String(originalEntry.timestamp)) return true;
+                    if (originalEntry.guestName && e.guestName && e.guestName.toLowerCase() === originalEntry.guestName.toLowerCase()) {
+                        if (originalEntry.roomNumber && e.roomNumber && String(e.roomNumber) === String(originalEntry.roomNumber)) return true;
+                    }
+                    return false;
+                };
+
+                const allDatesToTouch = new Set([...Array.from(origDates), ...Object.keys(entriesByDate)]);
+                const hotelId = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") : null) || (user as any)?.hotelId || "";
+                if (!hotelId || hotelId === "0") {
+                    throw new Error("Hotel Code is missing or invalid.");
+                }
+
+                for (const dateStr of Array.from(allDatesToTouch)) {
+                    const docId = `${hotelId}_${dateStr}`;
+                    const docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), docId);
+                    const docSnap = await getDoc(docRef);
+
+                    const existingEntries = docSnap.exists() ? (docSnap.data().entries || []) : [];
+                    const filteredExisting = existingEntries.filter((e: any) => !isMatchOriginal(e));
+
+                    const newEntriesForDate = (entriesByDate[dateStr] || []).map(e => cleanUndefined({
+                        ...e,
+                        bookingId: originalEntry.bookingId || e.bookingId,
+                        timestamp: originalEntry.timestamp || e.timestamp,
+                        hotelId: hotelId,
+                        hotelCode: hotelId,
+                        updatedAt: new Date().toISOString()
+                    }));
+
+                    const mergedEntries = [...filteredExisting, ...newEntriesForDate];
+
+                    if (docSnap.exists()) {
+                        await updateDoc(docRef, {
+                            entries: mergedEntries,
+                            date: dateStr,
+                            hotelId: hotelId,
+                            hotelCode: hotelId,
+                            updatedAt: new Date().toISOString()
+                        });
+                    } else if (mergedEntries.length > 0) {
+                        await setDoc(docRef, {
+                            entries: mergedEntries,
+                            date: dateStr,
+                            hotelId: hotelId,
+                            hotelCode: hotelId,
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                        });
+                    }
+                }
+
+                const sortedDates = Array.from(allDatesToTouch).sort();
+                const hasRoomTx = finalEntries.some(e => e.type === "accommodation") || originalEntry.type === "accommodation";
+                if (hasRoomTx && sortedDates.length > 0) {
+                    try {
+                        await fetch("/api/channex/sync-ari", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                hotelCode: hotelId,
+                                startDate: sortedDates[0],
+                                endDate: sortedDates[sortedDates.length - 1],
+                                type: "availability"
+                            })
+                        });
+                    } catch (e) {
+                        console.warn("[Channex Sync Trigger Warning]:", e);
+                    }
+                }
+
+                toast.success("Perubahan transaksi berhasil disimpan.");
+                handleCancel();
+                return;
+            }
 
             for (const [dateStr, transactionEntries] of Object.entries(entriesByDate)) {
                 const hotelId = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") : null) || (user as any)?.hotelId || "";
@@ -976,6 +1220,33 @@ export const useTransactionForm = () => {
             }
         }
 
+        if (field === "checkIn") {
+            const checkInDateStr = String(value);
+            let nextCheckOut = "";
+            try {
+                if (checkInDateStr && checkInDateStr.includes("-")) {
+                    const [y, m, d] = checkInDateStr.split("-").map(Number);
+                    if (y && m && d) {
+                        const dateObj = new Date(y, m - 1, d);
+                        dateObj.setDate(dateObj.getDate() + 1);
+                        const nextY = dateObj.getFullYear();
+                        const nextM = String(dateObj.getMonth() + 1).padStart(2, "0");
+                        const nextD = String(dateObj.getDate()).padStart(2, "0");
+                        nextCheckOut = `${nextY}-${nextM}-${nextD}`;
+                    }
+                }
+            } catch (e) {
+                console.warn("Error calculating check-out H+1", e);
+            }
+
+            setForm(prev => ({
+                ...prev,
+                checkIn: checkInDateStr,
+                ...(nextCheckOut ? { checkOut: nextCheckOut } : {})
+            }));
+            return;
+        }
+
         if (field === "bookAllAvailable") {
             const isChecked = !!value;
             setForm(prev => {
@@ -1077,7 +1348,10 @@ export const useTransactionForm = () => {
         queue,
         addToQueue,
         removeFromQueue,
-        commitTransactions
+        commitTransactions,
+        isEditMode,
+        isLoadingEdit,
+        originalEntry
     };
 };
 

@@ -22,8 +22,10 @@ import {
     Check,
     Play,
     ChevronDown,
-    X
+    X,
+    CreditCard
 } from "lucide-react";
+import { toast } from "sonner";
 import styles from "./TransactionFormStyles.module.css";
 import pmsStyles from "./AddReservation.module.css";
 import { CHANNELS, BOOKING_TYPES } from "./useTransactionForm";
@@ -133,9 +135,12 @@ interface TransactionEntryFormProps {
     updateNightRate: (idx: number, rate: any) => void;
     onCancel: () => void;
     onSubmit: () => void;
+    onCommit?: () => void;
     getAvailableRoomNumbers: (roomTypeId: string) => string[];
     totalGross?: number;
     handleCancel?: () => void;
+    saving?: boolean;
+    isEditMode?: boolean;
 }
 
 export function TransactionEntryForm({
@@ -152,9 +157,12 @@ export function TransactionEntryForm({
     updateNightRate,
     onCancel,
     onSubmit,
+    onCommit,
     getAvailableRoomNumbers,
     totalGross: propTotalGross,
-    handleCancel
+    handleCancel,
+    saving = false,
+    isEditMode = false
 }: TransactionEntryFormProps) {
     const [modalData, setModalData] = useState<{ type: string; data: any } | null>(null);
     const [showGroupMenu, setShowGroupMenu] = useState(false);
@@ -191,7 +199,7 @@ export function TransactionEntryForm({
                         title="Back"
                     >
                         <ArrowLeft size={16} strokeWidth={2.5} />
-                        <span>Add Reservation</span>
+                        <span>{isEditMode ? `Edit Reservation (${form.bookingId || "Booking"})` : "Add Reservation"}</span>
                     </button>
                 </div>
 
@@ -269,7 +277,7 @@ export function TransactionEntryForm({
                             <label className={pmsStyles.fieldLabel}>Reservation Type</label>
                             <select 
                                 className={`${pmsStyles.fieldSelect} ${pmsStyles.reservationTypeSelect}`}
-                                value={form.bookingType || "Confirm Booking"}
+                                value={form.bookingType || "Confirmed"}
                                 onChange={(e) => updateForm("bookingType", e.target.value)}
                             >
                                 {BOOKING_TYPES.map((bt) => (
@@ -713,14 +721,36 @@ export function TransactionEntryForm({
                             onClick={handleCancel || onCancel} 
                             className={pmsStyles.btnCancel}
                         >
-                            Cancel
+                            Batal
                         </button>
+                        {onSubmit && (
+                            <button 
+                                type="button" 
+                                onClick={onSubmit} 
+                                className={pmsStyles.btnQueueSecondary}
+                                title="Tambahkan transaksi ke antrean tanpa langsung menyimpan"
+                            >
+                                <Plus size={14} />
+                                <span>+ Antrean (Queue)</span>
+                            </button>
+                        )}
                         <button 
-                            type="submit" 
-                            className={pmsStyles.btnAddRoom}
-                            style={{ height: '34px', padding: '0 20px', background: '#1f2937', color: '#ffffff', borderColor: '#1f2937', borderRadius: '3px' }}
+                            type="button" 
+                            onClick={onCommit || onSubmit} 
+                            disabled={saving}
+                            className={pmsStyles.btnBookNowPrimary}
                         >
-                            Book Now
+                            {saving ? (
+                                <>
+                                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin mr-1" />
+                                    <span>Menyimpan...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Check size={14} />
+                                    <span>{isEditMode ? "Simpan Perubahan" : "Simpan Booking (Book Now)"}</span>
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>
@@ -741,7 +771,7 @@ export function TransactionEntryForm({
                 <div className={styles.cardHeaderLeft} onClick={() => setModalData({ type: 'transactionEntry', data: { revenueType, form } })} style={{ cursor: 'pointer' }}>
                     <div className={`${styles.dotAccent} ${styles.dotTerracotta}`} />
                     <span className={styles.cardTitle}>
-                        Entri Transaksi - Other Income
+                        {isEditMode ? "Edit Transaksi - Other Income" : "Entri Transaksi - Other Income"}
                     </span>
                 </div>
                 <button onClick={(e) => { e.stopPropagation(); onCancel(); }} className={styles.cardHeaderBtn}>
@@ -908,6 +938,7 @@ interface ReviewSidebarProps {
     onCommit: () => void;
     onSubmit?: () => void;
     onCancel?: () => void;
+    isEditMode?: boolean;
 }
 
 export function ReviewSidebar({
@@ -920,11 +951,85 @@ export function ReviewSidebar({
     updateForm,
     onCommit,
     onSubmit,
-    onCancel
+    onCancel,
+    isEditMode = false
 }: ReviewSidebarProps) {
     const startD = form.checkIn ? new Date(form.checkIn) : null;
     const endD = form.checkOut ? new Date(form.checkOut) : null;
     const nights = (startD && endD && endD > startD) ? Math.ceil((endD.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24)) : 1;
+
+    // Calculate current recorded payment and remaining Due Amount
+    const currentPaid = (Number(form.paidCash) || 0) + 
+                        (Number(form.paidEdc) || 0) + 
+                        (Number(form.paidQris) || 0) + 
+                        (Number(form.paidTransfer) || 0) + 
+                        (Number(form.paidOta) || 0) + 
+                        (form.paidCash === "" && form.paidEdc === "" && form.paidQris === "" && form.paidTransfer === "" && form.paidOta === "" 
+                            ? (Number(form.payHotel) || 0) + (Number(form.payTransfer) || 0) 
+                            : 0);
+
+    const dueAmount = form.isCompliment ? 0 : Math.max(0, totalGross - currentPaid);
+
+    const handleAddPayment = () => {
+        if (!updateForm) return;
+
+        if (totalGross <= 0) {
+            toast.warning("Silakan tentukan tipe kamar dan tarif terlebih dahulu.");
+            return;
+        }
+
+        if (dueAmount <= 0) {
+            toast.info("Tagihan sudah lunas (Due Amount: Rp 0).");
+            return;
+        }
+
+        const isOTAChannel = form.channel && !["Walk-in", "Direct"].includes(form.channel);
+
+        if (currentPaid === 0) {
+            if (isOTAChannel) {
+                updateForm("paidOta", dueAmount);
+                updateForm("paidCash", 0);
+                updateForm("paidEdc", 0);
+                updateForm("paidQris", 0);
+                updateForm("paidTransfer", 0);
+                updateForm("payHotel", 0);
+                updateForm("payTransfer", dueAmount);
+                toast.success(`Pembayaran OTA Virtual Rp ${formatCurrency(dueAmount)} (Due Amount) berhasil dicatat.`);
+            } else {
+                updateForm("paidCash", dueAmount);
+                updateForm("paidEdc", 0);
+                updateForm("paidQris", 0);
+                updateForm("paidTransfer", 0);
+                updateForm("paidOta", 0);
+                updateForm("payHotel", dueAmount);
+                updateForm("payTransfer", 0);
+                toast.success(`Pembayaran Cash FO Rp ${formatCurrency(dueAmount)} (Due Amount) berhasil dicatat.`);
+            }
+        } else {
+            if (Number(form.paidEdc) > 0) {
+                const nextVal = Number(form.paidEdc) + dueAmount;
+                updateForm("paidEdc", nextVal);
+                updateForm("payHotel", (Number(form.payHotel) || 0) + dueAmount);
+                toast.success(`Sisa Due Amount Rp ${formatCurrency(dueAmount)} ditambahkan ke EDC.`);
+            } else if (Number(form.paidTransfer) > 0) {
+                const nextVal = Number(form.paidTransfer) + dueAmount;
+                updateForm("paidTransfer", nextVal);
+                updateForm("payHotel", (Number(form.payHotel) || 0) + dueAmount);
+                updateForm("payTransfer", (Number(form.payTransfer) || 0) + dueAmount);
+                toast.success(`Sisa Due Amount Rp ${formatCurrency(dueAmount)} ditambahkan ke Bank Transfer.`);
+            } else if (Number(form.paidOta) > 0) {
+                const nextVal = Number(form.paidOta) + dueAmount;
+                updateForm("paidOta", nextVal);
+                updateForm("payTransfer", (Number(form.payTransfer) || 0) + dueAmount);
+                toast.success(`Sisa Due Amount Rp ${formatCurrency(dueAmount)} ditambahkan ke OTA Virtual.`);
+            } else {
+                const nextVal = (Number(form.paidCash) || 0) + dueAmount;
+                updateForm("paidCash", nextVal);
+                updateForm("payHotel", (Number(form.payHotel) || 0) + dueAmount);
+                toast.success(`Sisa Due Amount Rp ${formatCurrency(dueAmount)} ditambahkan ke Cash FO.`);
+            }
+        }
+    };
 
     const formatDateStandard = (dateStr: string) => {
         if (!dateStr) return "-";
@@ -940,9 +1045,11 @@ export function ReviewSidebar({
             <div className={pmsStyles.billingCard}>
                 {/* Header */}
                 <div className={pmsStyles.billingHeader}>
-                    <h2 className={pmsStyles.billingTitle}>Billing Summary</h2>
+                    <h2 className={pmsStyles.billingTitle}>
+                        {isEditMode ? "Billing Summary (Edit)" : "Billing Summary"}
+                    </h2>
                     <span className={pmsStyles.badgeConfirm}>
-                        {form.bookingType || "Confirm Booking"}
+                        {form.bookingType || "Confirmed"}
                     </span>
                 </div>
 
@@ -964,17 +1071,23 @@ export function ReviewSidebar({
                     <div className={pmsStyles.breakdownItem}>
                         <span>Room Charges</span>
                         <span style={{ fontWeight: 600, color: 'var(--pms-text-primary)' }}>
-                            {form.isCompliment ? "0.00" : (totalGross === 0 ? "0.00" : formatCurrency(totalGross))}
+                            Rp {form.isCompliment ? "0.00" : (totalGross === 0 ? "0.00" : formatCurrency(totalGross))}
                         </span>
                     </div>
                     <div className={pmsStyles.breakdownItem}>
                         <span>Taxes</span>
                         <span style={{ color: 'var(--pms-text-muted)' }}>0.00</span>
                     </div>
+                    {currentPaid > 0 && (
+                        <div className={pmsStyles.breakdownItem} style={{ color: '#059669', fontWeight: 600 }}>
+                            <span>Paid Amount</span>
+                            <span>- Rp {formatCurrency(currentPaid)}</span>
+                        </div>
+                    )}
                     <div className={pmsStyles.breakdownTotal}>
                         <span>Due Amount</span>
-                        <span>
-                            Rp {form.isCompliment ? "0.00" : (totalGross === 0 ? "0.00" : formatCurrency(totalGross))}
+                        <span style={{ color: dueAmount > 0 ? 'var(--pms-accent, #b45309)' : '#059669', fontWeight: 700 }}>
+                            Rp {form.isCompliment ? "0.00" : formatCurrency(dueAmount)}
                         </span>
                     </div>
                 </div>
@@ -1004,9 +1117,12 @@ export function ReviewSidebar({
                                     checked={form.paymentModeEnabled !== false}
                                     onChange={(e) => updateForm && updateForm("paymentModeEnabled", e.target.checked)}
                                 />
-                                <span style={{ fontWeight: 600 }}>Payment Mode</span>
+                                <span style={{ fontWeight: 600 }}>Payment Mode (Opsional)</span>
                             </label>
                         </div>
+                        <p style={{ margin: '0 0 8px 0', fontSize: '10.5px', color: 'var(--pms-text-muted)', lineHeight: 1.35 }}>
+                            Pencatatan pembayaran bersifat opsional. Jika tidak diisi, pemesanan tetap diproses dengan status <b>Belum Bayar</b> dan langsung mengurangi ketersediaan inventori kamar.
+                        </p>
 
                         {form.paymentModeEnabled !== false && (
                             <div className={pmsStyles.paymentSection}>
@@ -1171,18 +1287,15 @@ export function ReviewSidebar({
                     </div>
                 )}
 
-                {/* Final Action Button */}
-                {onSubmit && (
-                    <button 
-                        type="button" 
-                        onClick={onSubmit} 
-                        disabled={saving}
-                        className={pmsStyles.btnBookNow}
-                    >
-                        <Check size={16} />
-                        <span>Confirm Booking</span>
-                    </button>
-                )}
+                {/* Add Payment Action Button (Reads Due Amount & Records Payment, does NOT commit booking) */}
+                <button 
+                    type="button" 
+                    onClick={handleAddPayment} 
+                    className={pmsStyles.btnAddPayment}
+                >
+                    <CreditCard size={15} />
+                    <span>Add Payment</span>
+                </button>
 
                 {/* Queue Commit Section */}
                 {queue.length > 0 && (
@@ -1198,7 +1311,7 @@ export function ReviewSidebar({
                             className={`${styles.btnPrimary} ${pmsStyles.btnCommitQueue}`}
                         >
                             <ShieldCheck size={16} />
-                            {saving ? "MENYIMPAN..." : `COMMIT (${queue.length} TRX)`}
+                            {saving ? "MENYIMPAN..." : `COMMIT SEMUA (${queue.length} TRX)`}
                         </button>
                     </div>
                 )}

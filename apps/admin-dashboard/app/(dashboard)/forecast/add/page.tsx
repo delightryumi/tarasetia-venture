@@ -38,7 +38,9 @@ function AddTransactionContent() {
         handleCancel,
         getAvailableRoomNumbers,
         addRoom,
-        removeRoom
+        removeRoom,
+        isEditMode,
+        isLoadingEdit
     } = useTransactionForm();
 
     React.useEffect(() => {
@@ -51,6 +53,15 @@ function AddTransactionContent() {
         window.addEventListener("wheel", handleWheel, { passive: true });
         return () => window.removeEventListener("wheel", handleWheel);
     }, []);
+
+    if (isLoadingEdit) {
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px', gap: '12px' }}>
+                <div style={{ width: '32px', height: '32px', border: '3px solid #10b981', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--pms-text-muted, #78716c)' }}>Memuat data reservasi untuk diedit...</span>
+            </div>
+        );
+    }
 
     const isRoomForm = step === 'form' && revenueType === 'room';
 
@@ -72,13 +83,20 @@ function AddTransactionContent() {
                             removeRoom={removeRoom}
                             updateNightRate={updateNightRate}
                             onCancel={() => {
-                                setStep('select');
-                                updateForm("incomeType", "");
+                                if (isEditMode) {
+                                    handleCancel();
+                                } else {
+                                    setStep('select');
+                                    updateForm("incomeType", "");
+                                }
                             }}
                             onSubmit={addToQueue}
+                            onCommit={commitTransactions}
+                            saving={saving}
                             getAvailableRoomNumbers={getAvailableRoomNumbers}
                             totalGross={totalGross}
                             handleCancel={handleCancel}
+                            isEditMode={isEditMode}
                         />
                     </div>
 
@@ -93,11 +111,12 @@ function AddTransactionContent() {
                         onCommit={commitTransactions}
                         onSubmit={addToQueue}
                         onCancel={handleCancel}
+                        isEditMode={isEditMode}
                     />
                 </div>
 
                 {queue.length > 0 && (
-                    <div style={{ maxWidth: '1440px', margin: '24px auto 0 auto' }}>
+                    <div style={{ maxWidth: '1440px', width: '100%', margin: '24px auto 0 auto', boxSizing: 'border-box' }}>
                         <QueueTable 
                             queue={queue}
                             removeFromQueue={removeFromQueue}
@@ -116,7 +135,9 @@ function AddTransactionContent() {
                 saving={saving}
                 onCommit={commitTransactions}
                 onBack={() => {
-                    if (step === 'form') {
+                    if (isEditMode) {
+                        handleCancel();
+                    } else if (step === 'form') {
                         setStep('select');
                     } else {
                         handleCancel();
@@ -149,13 +170,20 @@ function AddTransactionContent() {
                                     removeRoom={removeRoom}
                                     updateNightRate={updateNightRate}
                                     onCancel={() => {
-                                        setStep('select');
-                                        updateForm("incomeType", "");
+                                        if (isEditMode) {
+                                            handleCancel();
+                                        } else {
+                                            setStep('select');
+                                            updateForm("incomeType", "");
+                                        }
                                     }}
                                     onSubmit={addToQueue}
+                                    onCommit={commitTransactions}
+                                    saving={saving}
                                     getAvailableRoomNumbers={getAvailableRoomNumbers}
                                     totalGross={totalGross}
                                     handleCancel={handleCancel}
+                                    isEditMode={isEditMode}
                                 />
                             </div>
 
@@ -170,6 +198,7 @@ function AddTransactionContent() {
                                 onCommit={commitTransactions}
                                 onSubmit={addToQueue}
                                 onCancel={handleCancel}
+                                isEditMode={isEditMode}
                             />
                         </div>
                     )}

@@ -177,16 +177,23 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
         const eGuestName = (e.guestName || "").trim().toLowerCase();
 
         // 1. Direct ID / Key matches
-        if (targetBookingId !== "" && eBookingId !== "" && targetBookingId === eBookingId) return true;
+        if (targetBookingId !== "" && eBookingId !== "") {
+            if (targetBookingId === eBookingId) return true;
+            return false; // If both have explicit bookingIds and they don't match, they are different bookings
+        }
         if (targetTimestamp !== "" && eTimestamp !== "" && targetTimestamp === eTimestamp) return true;
         if (targetId !== "" && eId !== "" && targetId === eId) return true;
 
-        // 2. Name match (exact or matching clean name)
+        // 2. Name + Room match (fallback for legacy records without bookingId)
+        const targetRoom = String(target?.roomNumber || newTarget?.roomNumber || "").trim();
+        const eRoom = String(e?.roomNumber || "").trim();
         if (targetGuestName !== "" && eGuestName !== "") {
-            if (eGuestName === targetGuestName) return true;
-        }
-        if (newGuestName !== "" && eGuestName !== "") {
-            if (eGuestName === newGuestName) return true;
+            if (eGuestName === targetGuestName || (newGuestName !== "" && eGuestName === newGuestName)) {
+                if (targetRoom !== "" && eRoom !== "") {
+                    return targetRoom === eRoom;
+                }
+                return true;
+            }
         }
 
         // 3. Linked pelunasan / reversal check
@@ -278,7 +285,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             });
             
             for (const d of sweepDates) {
-                const oldRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
+                const oldRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
                 const oldSnap = await getDoc(oldRef);
                 if (oldSnap.exists()) {
                     const oldEntries = oldSnap.data().entries || [];
@@ -392,7 +399,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             // 3. Write new entries (with explicit purge of any remaining match)
             for (const entry of newEntries) {
                 const dateStr = entry.effectiveDate || entry.checkInDate;
-                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${dateStr}`);
+                const docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${dateStr}`);
                 const docSnap = await getDoc(docRef);
                 const cleanedEntry = cleanUndefined(entry);
                 if (docSnap.exists()) {
@@ -404,8 +411,8 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 }
             }
 
-            // 4. Generate Pelunasan & Reversal entries ONLY for Walk-in AR adjustments
-            if (newSource === "Walk-in") {
+            // 4. Generate Pelunasan & Reversal entries ONLY for Walk-in AR adjustments on subsequent dates
+            if (newSource === "Walk-in" && todayStr !== formData.checkIn) {
                 const oldPayHotel = Number(guest.payHotel || guest.paidCash || 0);
                 const oldPayTransfer = Number(guest.payTransfer || guest.paidTransfer || 0);
                 const diffPayHotel = finalPayHotel - oldPayHotel;
@@ -451,12 +458,20 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
                     for (const entry of pelunasanEntries) {
                         const dateStr = entry.effectiveDate;
-                        const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${dateStr}`);
+                        const docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${dateStr}`);
                         const docSnap = await getDoc(docRef);
                         const cleanedEntry = cleanUndefined(entry);
                         if (docSnap.exists()) {
                             const entries = docSnap.data().entries || [];
-                            const purged = entries.filter((e: any) => !isBookingMatch(e, guest, formData));
+                            // CRITICAL: ONLY purge previous linked pelunasan/reversal entries, NEVER purge the main accommodation booking!
+                            const purged = entries.filter((e: any) => {
+                                const isPel = e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal";
+                                if (!isPel) return true; // KEEP accommodation and other regular bookings!
+                                const isLinked = (guest.bookingId && e.refBookingId === guest.bookingId) ||
+                                                 (guest.timestamp && String(e.refTimestamp) === String(guest.timestamp)) ||
+                                                 (guest.id && e.refBookingId === guest.id);
+                                return !isLinked;
+                            });
                             await updateDoc(docRef, { entries: [...purged, cleanedEntry], date: dateStr });
                         } else {
                             await setDoc(docRef, { entries: [cleanedEntry], date: dateStr }, { merge: true });
@@ -484,17 +499,12 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             const dates = getCascadeDates(guest);
 
             for (const d of dates) {
-                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
+                const docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
-                    const mapped = entries.map((e: any) => {
-                        if (isBookingMatch(e, guest)) {
-                            return cleanUndefined({ ...e, status: "VOID", paymentStatus: "VOID", roomCount: 0 });
-                        }
-                        return cleanUndefined(e);
-                    });
-                    await updateDoc(docRef, { entries: mapped, date: d });
+                    const remainingEntries = entries.filter((e: any) => !isBookingMatch(e, guest));
+                    await updateDoc(docRef, { entries: remainingEntries, date: d });
                 }
             }
 
@@ -535,7 +545,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             const cancelledByVal = user ? `${user.displayName} (${user.role || 'user'})` : "System";
 
             for (const d of dates) {
-                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
+                const docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];

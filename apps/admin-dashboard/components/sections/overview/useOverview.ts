@@ -123,7 +123,13 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         allDays.push({ ...data, date: docDate });
 
                         const entries = (data.entries || [])
-                            .filter((e: any) => e.status !== "VOID" && e.status !== "VOIDED" && !e.isHidden && e.type !== "pelunasan_ar" && e.type !== "pelunasan_reversal" && !e.isPelunasan)
+                            .filter((e: any) => {
+                                const st = String(e.status || "").toUpperCase();
+                                const pst = String(e.paymentStatus || "").toUpperCase();
+                                const gst = String(e.guestStatus || "").toLowerCase();
+                                const isVoid = st === "VOID" || st === "VOIDED" || pst === "VOID" || pst === "VOIDED" || gst === "void" || e.isDeleted === true || e.isVoid === true;
+                                return !isVoid && !e.isHidden && e.type !== "pelunasan_ar" && e.type !== "pelunasan_reversal" && !e.isPelunasan;
+                            })
                             .map((e: any) => {
                                 const checkInDate = e.checkInDate || e.checkIn || e.effectiveDate || docDate;
                                 const checkOutDate = e.checkOutDate || e.checkOut || "";
@@ -166,12 +172,12 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
 
                     const resolvedAccommodation: any[] = [];
                     Object.values(accommodationGroups).forEach((group) => {
-                        const isCancelled = group.some(e => 
-                            e.status === "CANCELLED" || 
-                            e.paymentStatus === "CANCELLED" || 
-                            e.status === "CANCEL" || 
-                            e.paymentStatus === "CANCEL"
-                        );
+                        const isCancelled = group.some(e => {
+                            const st = String(e.status || "").toUpperCase();
+                            const pst = String(e.paymentStatus || "").toUpperCase();
+                            const gst = String(e.guestStatus || "").toLowerCase();
+                            return st === "CANCELLED" || st === "CANCEL" || pst === "CANCELLED" || pst === "CANCEL" || gst === "cancelled" || gst === "cancel";
+                        });
                         
                         group.sort((a, b) => (a._docDate || a.checkInDate || '').localeCompare(b._docDate || b.checkInDate || ''));
 
@@ -276,7 +282,10 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                     });
 
                     resolvedAccommodation.forEach((e) => {
-                        const isCancelled = e.status === "CANCELLED" || e.paymentStatus === "CANCELLED" || e.status === "CANCEL" || e.paymentStatus === "CANCEL";
+                        const st = String(e.status || "").toUpperCase();
+                        const pst = String(e.paymentStatus || "").toUpperCase();
+                        const gst = String(e.guestStatus || "").toLowerCase();
+                        const isCancelled = st === "CANCELLED" || st === "CANCEL" || pst === "CANCELLED" || pst === "CANCEL" || gst === "cancelled" || gst === "cancel";
                         
                         if (!isCancelled) {
                             if (e.checkInDate >= startDateStr && e.checkInDate <= endDateStr) {

@@ -50,63 +50,116 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                         <p className={styles.noActivityText}>No activity</p>
                     </div>
                 ) : (
-                    items.map((item: any, idx: number) => (
-                        <button 
-                            key={idx}
-                            onClick={() => onItemClick?.(item)}
-                            className={styles.guestItem}
-                        >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
-                                    <div className={styles.guestAvatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        {item.channel === "Booking Engine" ? (
-                                            <Globe size={14} className="text-stone-400 dark:text-stone-500" />
-                                        ) : (
-                                            <img src={getChannelLogo(item.channel)} alt="" className={styles.guestAvatarImg} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
-                                        )}
-                                    </div>
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div className={styles.guestMainInfo}>
-                                            <p className={styles.guestName} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{item.guestName || "General Sale"}</p>
-                                            {item.isExtend && (
-                                                <span className={styles.extendBadge}>Extend</span>
+                    items.map((item: any, idx: number) => {
+                        const st = String(item.status || '').toUpperCase();
+                        const pst = String(item.paymentStatus || '').toUpperCase();
+                        const gst = String(item.guestStatus || '').toLowerCase();
+                        const isCancelled = st === 'CANCELLED' || st === 'CANCEL' || pst === 'CANCELLED' || pst === 'CANCEL' || gst === 'cancelled' || gst === 'cancel';
+                        return (
+                            <button 
+                                key={idx}
+                                onClick={() => onItemClick?.(item)}
+                                className={`${styles.guestItem} ${isCancelled ? styles.cancelledItem : ''}`}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
+                                        <div className={styles.guestAvatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', filter: isCancelled ? 'grayscale(100%)' : 'none', opacity: isCancelled ? 0.45 : 1 }}>
+                                            {item.channel === "Booking Engine" ? (
+                                                <Globe size={14} className="text-stone-400 dark:text-stone-500" />
+                                            ) : (
+                                                <img src={getChannelLogo(item.channel)} alt="" className={styles.guestAvatarImg} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
                                             )}
                                         </div>
-
-                                        <div className={styles.guestMetaRow}>
-                                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                                                <BedDouble size={10} style={{ color: 'var(--f-light-muted)', marginTop: '2px' }} />
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <p className={styles.guestSubtext} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                                                        {item.roomType || (item.incomeCategory || '---')}
-                                                    </p>
-                                                    {item.roomNumber && (
-                                                        <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0 }}>
-                                                            Room {item.roomNumber}
-                                                        </p>
-                                                    )}
-                                                </div>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div className={styles.guestMainInfo}>
+                                                <p 
+                                                    className={styles.guestName} 
+                                                    style={{ 
+                                                        margin: 0, 
+                                                        textOverflow: 'ellipsis', 
+                                                        overflow: 'hidden', 
+                                                        whiteSpace: 'nowrap',
+                                                        color: isCancelled ? '#9ca3af' : undefined,
+                                                        textDecoration: isCancelled ? 'line-through' : 'none'
+                                                    }}
+                                                >
+                                                    {item.guestName || "General Sale"}
+                                                </p>
+                                                {item.isExtend && (
+                                                    <span className={styles.extendBadge}>Extend</span>
+                                                )}
                                             </div>
-                                            
-                                            {(item.type === 'accommodation' || (!item.type && item.guestName && !item.guestName.startsWith('POS Order') && !item.posItems && !item.revenueType)) && (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--f-hairline)' }} />
-                                                    <RoomStatusBadge current={item.roomStatus || 'dirty'} />
-                                                    <GuestStatusBadge current={item.guestStatus || 'arriving'} />
+
+                                            <div className={styles.guestMetaRow}>
+                                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                                                    <BedDouble size={10} style={{ color: 'var(--f-light-muted)', marginTop: '2px' }} />
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <p 
+                                                            className={styles.guestSubtext} 
+                                                            style={{ 
+                                                                margin: 0, 
+                                                                textOverflow: 'ellipsis', 
+                                                                overflow: 'hidden', 
+                                                                whiteSpace: 'nowrap',
+                                                                color: isCancelled ? '#9ca3af' : undefined,
+                                                                textDecoration: isCancelled ? 'line-through' : 'none'
+                                                            }}
+                                                        >
+                                                            {item.roomType || (item.incomeCategory || '---')}
+                                                        </p>
+                                                        {item.roomNumber && (
+                                                            <p 
+                                                                className={styles.guestSubtext} 
+                                                                style={{ 
+                                                                    fontSize: '8px', 
+                                                                    color: isCancelled ? '#9ca3af' : 'var(--f-light-muted)', 
+                                                                    textDecoration: isCancelled ? 'line-through' : 'none',
+                                                                    margin: 0 
+                                                                }}
+                                                            >
+                                                                Room {item.roomNumber}
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            )}
+                                                
+                                                {(item.type === 'accommodation' || (!item.type && item.guestName && !item.guestName.startsWith('POS Order') && !item.posItems && !item.revenueType)) && (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: isCancelled ? 0.45 : 1 }}>
+                                                        <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--f-hairline)' }} />
+                                                        <RoomStatusBadge current={item.roomStatus || 'dirty'} />
+                                                        <GuestStatusBadge current={item.guestStatus || 'arriving'} />
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
+                                    <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '16px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                        <p 
+                                            className={styles.guestAmount} 
+                                            style={{ 
+                                                margin: 0, 
+                                                lineHeight: 'none',
+                                                color: isCancelled ? '#9ca3af' : undefined,
+                                                textDecoration: isCancelled ? 'line-through' : 'none'
+                                            }}
+                                        >
+                                            Rp {Number(item.amount).toLocaleString('id-ID')}
+                                        </p>
+                                        <span 
+                                            className={`${styles.paymentBadge} ${
+                                                isCancelled 
+                                                    ? styles.paymentCancelled 
+                                                    : (item.paymentStatus?.includes('Lunas') || !item.paymentStatus ? styles.paymentLunas : styles.paymentPending)
+                                            }`}
+                                            style={{ textDecoration: isCancelled ? 'line-through' : 'none' }}
+                                        >
+                                            {isCancelled ? 'CANCELLED' : (item.paymentStatus || 'Settled')}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '16px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                                    <p className={styles.guestAmount} style={{ margin: 0, lineHeight: 'none' }}>Rp {Number(item.amount).toLocaleString('id-ID')}</p>
-                                    <span className={`${styles.paymentBadge} ${item.paymentStatus?.includes('Lunas') || !item.paymentStatus ? styles.paymentLunas : styles.paymentPending}`}>
-                                        {item.paymentStatus || 'Settled'}
-                                    </span>
-                                </div>
-                            </div>
-                        </button>
-                    ))
+                            </button>
+                        );
+                    })
                 )}
             </div>
         </motion.div>

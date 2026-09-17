@@ -140,7 +140,55 @@ export function OverviewSection() {
         }
         return Array.from(dates).sort();
     };
-
+    const isBookingMatch = (e: any, target: any) => {
+        if (!e || !target) return false;
+        
+        const targetBookingId = String(target.bookingId || "").trim();
+        const eBookingId = String(e.bookingId || "").trim();
+        if (targetBookingId !== "" && eBookingId !== "") {
+            if (targetBookingId === eBookingId) return true;
+            return false;
+        }
+        
+        const targetTimestamp = target.timestamp ? String(target.timestamp).trim() : "";
+        const eTimestamp = e.timestamp ? String(e.timestamp).trim() : "";
+        if (targetTimestamp !== "" && eTimestamp !== "" && targetTimestamp === eTimestamp) return true;
+        
+        const targetId = target.id ? String(target.id).trim() : "";
+        const eId = e.id ? String(e.id).trim() : "";
+        if (targetId !== "" && eId !== "" && targetId === eId) return true;
+        
+        const targetGuestName = String(target.guestName || "").trim().toLowerCase();
+        const eGuestName = String(e.guestName || "").trim().toLowerCase();
+        
+        if (targetGuestName !== "" && eGuestName !== "") {
+            if (targetGuestName === eGuestName) {
+                const targetCheckIn = target.checkInDate || target.checkIn || "";
+                const eCheckIn = e.checkInDate || e.checkIn || "";
+                if (targetCheckIn && eCheckIn) {
+                    return targetCheckIn === eCheckIn;
+                }
+                return true;
+            }
+        }
+        
+        // Linked pelunasan or reversal records
+        if (e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal" || eGuestName.startsWith("koreksi tanggal pelunasan") || eGuestName.startsWith("pelunasan piutang")) {
+            const cleanEGuestName = eGuestName
+                .replace(/^koreksi tanggal pelunasan\s*-\s*/i, "")
+                .replace(/^pelunasan piutang\s*-\s*/i, "")
+                .trim();
+            if (
+                (targetTimestamp && (String(e.refTimestamp) === targetTimestamp || eTimestamp === targetTimestamp)) ||
+                (targetBookingId && (e.refBookingId === targetBookingId || eBookingId === targetBookingId)) ||
+                (targetGuestName && cleanEGuestName === targetGuestName)
+            ) {
+                return true;
+            }
+        }
+        
+        return false;
+    };
 
     const handleStatusUpdate = async (item: any, field: string, value: string) => {
         // Allow status updates even in housekeeping view (they manage room status/remarks)
@@ -162,12 +210,7 @@ export function OverviewSection() {
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     const updatedEntries = entries.map((e: any) => {
-                        const isMatch = e.timestamp === item.timestamp || 
-                            (isAcc && 
-                             e.guestName === item.guestName && 
-                             e.checkInDate === item.checkInDate && 
-                             e.checkOutDate === item.checkOutDate && 
-                             String(e.roomNumber) === String(item.roomNumber));
+                        const isMatch = isBookingMatch(e, item);
                         
                         if (isMatch) {
                             const updated = { ...e, [field]: value };
@@ -206,8 +249,6 @@ export function OverviewSection() {
                 toast.error("Hotel Code is missing.");
                 return;
             }
-            const isPOS = bookingToVoid.guestName?.startsWith("POS Order") || !!bookingToVoid.posItems || !!bookingToVoid.revenueType;
-            const isAcc = !isPOS && (bookingToVoid.type === "accommodation" || (!bookingToVoid.type && bookingToVoid.guestName));
             const dates = getCascadeDates(bookingToVoid);
 
             for (const d of dates) {
@@ -215,37 +256,9 @@ export function OverviewSection() {
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
-                    const mapped = entries.map((e: any) => {
-                        const isMainMatch = e.timestamp === bookingToVoid.timestamp || 
-                            (isAcc && 
-                             e.guestName === bookingToVoid.guestName && 
-                             e.checkInDate === bookingToVoid.checkInDate && 
-                             e.checkOutDate === bookingToVoid.checkOutDate && 
-                             e.roomNumber === bookingToVoid.roomNumber);
-
-                        let isMatch = isMainMatch;
-                        if (!isMatch && (e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal")) {
-                            if (bookingToVoid.timestamp && e.refTimestamp === bookingToVoid.timestamp) {
-                                isMatch = true;
-                            } else if (bookingToVoid.bookingId && e.refBookingId === bookingToVoid.bookingId) {
-                                isMatch = true;
-                            } else {
-                                const cleanEGuestName = (e.guestName || "")
-                                    .replace(/^Koreksi Tanggal Pelunasan\s*-\s*/i, "")
-                                    .replace(/^Pelunasan Piutang\s*-\s*/i, "")
-                                    .trim()
-                                    .toLowerCase();
-                                const cleanParentName = (bookingToVoid.guestName || "").trim().toLowerCase();
-                                if (cleanEGuestName === cleanParentName && cleanParentName !== "") {
-                                    isMatch = true;
-                                }
-                            }
-                        }                        if (isMatch) {
-                            return { ...e, status: "VOID", paymentStatus: "VOID", roomCount: 0 };
-                        }
-                        return e;
-                    });
-                    await updateDoc(docRef, { entries: mapped, date: d });
+                    // Void completely deletes the matched transaction from daily entries
+                    const remainingEntries = entries.filter((e: any) => !isBookingMatch(e, bookingToVoid));
+                    await updateDoc(docRef, { entries: remainingEntries, date: d });
                 }
             }
 
@@ -295,45 +308,17 @@ export function OverviewSection() {
                 toast.error("Hotel Code is missing.");
                 return;
             }
-            const isPOS = bookingToCancel.guestName?.startsWith("POS Order") || !!bookingToCancel.posItems || !!bookingToCancel.revenueType;
-            const isAcc = !isPOS && (bookingToCancel.type === "accommodation" || (!bookingToCancel.type && bookingToCancel.guestName));
             const dates = getCascadeDates(bookingToCancel);
             const todayStr = new Date().toISOString().split('T')[0];
             const cancelledByVal = user ? `${user.displayName} (${user.role || 'user'})` : "System";
- 
+
             for (const d of dates) {
                 const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     const mapped = entries.map((e: any) => {
-                        const isMainMatch = e.timestamp === bookingToCancel.timestamp || 
-                            (isAcc && 
-                             e.guestName === bookingToCancel.guestName && 
-                             e.checkInDate === bookingToCancel.checkInDate && 
-                             e.checkOutDate === bookingToCancel.checkOutDate && 
-                             e.roomNumber === bookingToCancel.roomNumber);
-
-                        let isMatch = isMainMatch;
-                        if (!isMatch && (e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal")) {
-                            if (bookingToCancel.timestamp && e.refTimestamp === bookingToCancel.timestamp) {
-                                isMatch = true;
-                            } else if (bookingToCancel.bookingId && e.refBookingId === bookingToCancel.bookingId) {
-                                isMatch = true;
-                            } else {
-                                const cleanEGuestName = (e.guestName || "")
-                                    .replace(/^Koreksi Tanggal Pelunasan\s*-\s*/i, "")
-                                    .replace(/^Pelunasan Piutang\s*-\s*/i, "")
-                                    .trim()
-                                    .toLowerCase();
-                                const cleanParentName = (bookingToCancel.guestName || "").trim().toLowerCase();
-                                if (cleanEGuestName === cleanParentName && cleanParentName !== "") {
-                                    isMatch = true;
-                                }
-                            }
-                        }
-
-                        if (isMatch) {
+                        if (isBookingMatch(e, bookingToCancel)) {
                             return { 
                                 ...e, 
                                 status: "CANCELLED", 
@@ -959,7 +944,11 @@ export function OverviewSection() {
                                     type="date" 
                                     value={startDate} 
                                     onChange={(e) => {
-                                        if (e.target.value) setStartDate(e.target.value);
+                                        const val = e.target.value;
+                                        if (val) {
+                                            setStartDate(val);
+                                            setEndDate(val);
+                                        }
                                     }} 
                                     className={styles.dateInput}
                                 />
@@ -970,6 +959,7 @@ export function OverviewSection() {
                                 <input 
                                     type="date" 
                                     value={endDate} 
+                                    min={startDate}
                                     onChange={(e) => {
                                         if (e.target.value) setEndDate(e.target.value);
                                     }} 
