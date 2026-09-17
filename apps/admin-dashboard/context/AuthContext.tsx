@@ -25,6 +25,7 @@ interface CustomUser {
     role?: string;
     hotelCode?: string;
     allowedOutlets?: string[];
+    permissions?: Record<string, boolean>;
 }
 
 interface AuthContextType {
@@ -126,8 +127,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [user]);
 
-    // Helper to fetch user's real name from users_master
-    const fetchUserName = async (email: string, code?: string): Promise<{ name: string; role?: string; hotelCode?: string }> => {
+    // Real-time sync of user permissions and profile from users_master
+    useEffect(() => {
+        if (!user?.email || !activeHotelCode || activeHotelCode === "0") return;
+        const userDocId = user.email.toLowerCase().replace(/[@.]/g, "_");
+        const userDocRef = doc(db, `hotels/${activeHotelCode}/users_master`, userDocId);
+        const unsubscribe = onSnapshot(userDocRef, (snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                setUser(prev => {
+                    if (!prev) return prev;
+                    const updated: CustomUser = {
+                        ...prev,
+                        displayName: data.name || data.displayName || prev.displayName,
+                        name: data.name || prev.name,
+                        role: data.role || prev.role,
+                        permissions: data.permissions || {}
+                    };
+                    localStorage.setItem("auth_user", JSON.stringify(updated));
+                    return updated;
+                });
+            }
+        }, (err) => {
+            console.error("Error listening to user permissions in AuthContext:", err);
+        });
+        return () => unsubscribe();
+    }, [user?.email, activeHotelCode]);
+
+    // Helper to fetch user's real name and permissions from users_master
+    const fetchUserName = async (email: string, code?: string): Promise<{ name: string; role?: string; hotelCode?: string; permissions?: Record<string, boolean> }> => {
         if (!email) return { name: "" };
         const docId = email.toLowerCase().replace(/[@.]/g, "_");
         if (code && code !== "0") {
@@ -139,7 +167,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     return {
                         name: data.name || data.displayName || data.full_name || "",
                         role: data.role || "",
-                        hotelCode: data.hotelCode || code
+                        hotelCode: data.hotelCode || code,
+                        permissions: data.permissions || {}
                     };
                 }
             } catch (e) {
@@ -154,7 +183,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 return {
                     name: data.name || data.displayName || data.full_name || "",
                     role: data.role || "",
-                    hotelCode: data.hotelCode || ""
+                    hotelCode: data.hotelCode || "",
+                    permissions: data.permissions || {}
                 };
             }
         } catch (e) {
@@ -206,15 +236,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     setUser(parsed);
                     setLoading(false);
 
-                    // Background sync real name from users_master
+                    // Background sync real name and permissions from users_master
                     const activeCode = localStorage.getItem("active_hotel_code") || parsed.hotelCode;
                     fetchUserName(parsed.email, activeCode).then(info => {
-                        if (info.name && (info.name !== parsed.displayName || !parsed.name)) {
-                            const updated = {
+                        if (info.name || info.permissions) {
+                            const updated: CustomUser = {
                                 ...parsed,
-                                displayName: info.name,
-                                name: info.name,
-                                role: info.role || parsed.role
+                                displayName: info.name || parsed.displayName,
+                                name: info.name || parsed.name,
+                                role: info.role || parsed.role,
+                                permissions: info.permissions || parsed.permissions || {}
                             };
                             localStorage.setItem("auth_user", JSON.stringify(updated));
                             setUser(updated);
@@ -268,6 +299,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         role,
                         hotelCode,
                         allowedOutlets,
+                        permissions: userInfo.permissions || {},
                     };
                     
                     localStorage.setItem("auth_user", JSON.stringify(customUser));
@@ -367,6 +399,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 role: role || userInfo.role || "",
                 hotelCode: role !== "superadmin" ? code : "0", // Gunakan code yg diinput sbg hotelCode aktif saat login
                 allowedOutlets,
+                permissions: userInfo.permissions || {},
             };
 
             localStorage.setItem("auth_user", JSON.stringify(customUser));

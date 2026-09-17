@@ -37,13 +37,13 @@ interface Props {
 export function ChannelReviewsTab({ hotelCode }: Props) {
     const [reviews, setReviews] = useState<OTAFeedback[]>([]);
     const [summary, setSummary] = useState<any>({
-        averageScore: 9.0,
-        totalReviews: 48,
-        cleanliness: 9.3,
-        staff: 9.5,
-        location: 9.1,
-        comfort: 9.0,
-        value: 8.8
+        averageScore: 0,
+        totalReviews: 0,
+        cleanliness: 0,
+        staff: 0,
+        location: 0,
+        comfort: 0,
+        value: 0
     });
     const [loading, setLoading] = useState<boolean>(false);
     const [filterOta, setFilterOta] = useState<string>("all");

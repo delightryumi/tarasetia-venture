@@ -221,3 +221,87 @@ export interface ChannexHotelSettings {
         isActive: boolean;
     }>;
 }
+
+// ── Separated Rate & Allotment per OTA Types ──
+export type ChannelSeparationMode = "merged" | "separated_rate" | "separated_allotment" | "separated_both";
+
+export interface ChannelRateOverride {
+    rate?: number;
+    extraAdultRate?: number;
+    extraChildRate?: number;
+    stopSell?: boolean;
+    isCustom?: boolean; // true if overridden manually, false if derived
+}
+
+export interface ChannelAllotmentOverride {
+    allotmentLimit?: number; // max_availability cap for this channel
+    stopSell?: boolean; // channel close_out
+    isCustom?: boolean;
+}
+
+export interface ChannelDayOverrides {
+    rates?: Record<string, ChannelRateOverride>; // ratePlanId -> override
+    allotments?: Record<string, ChannelAllotmentOverride>; // roomTypeId -> override
+    stopSell?: boolean; // Channel Master Stop Sell
+}
+
+export interface DayAriOverrideDocument {
+    rates?: Record<string, number>; // ratePlanId -> base rate
+    extraAdultRates?: Record<string, number>;
+    extraChildRates?: Record<string, number>;
+    stopsell?: Record<string, boolean>; // ratePlanId -> stopSell
+    availabilityOverrides?: Record<string, number>; // roomTypeId -> physical count
+    channels?: Record<string, ChannelDayOverrides>; // channelCode -> specific overrides
+    updatedAt?: string;
+    updatedBy?: string;
+}
+
+// ── Advanced Channex Integration Models ──
+export interface GoogleHotelConfig {
+    isEnabled: boolean;
+    googleHotelCenterId?: string;
+    status: "ACTIVE" | "PENDING" | "DISCONNECTED";
+    landingPageUrl?: string;
+    currency: string;
+    taxPolicy: "inclusive" | "exclusive";
+    lastSyncAt?: string;
+    totalDirectClicks?: number;
+}
+
+export interface DynamicPricingConfig {
+    provider: "pricelabs" | "roompricegenie" | "beyond" | "custom";
+    isEnabled: boolean;
+    apiKey?: string;
+    propertyId?: string;
+    minRateGuardrail?: number;
+    maxRateGuardrail?: number;
+    autoPushToChannex: boolean;
+    lastSyncAt?: string;
+    lastSyncStatus?: "SUCCESS" | "ERROR";
+    syncNotes?: string;
+}
+
+export interface OtaPromotionConfig {
+    id: string;
+    title: string;
+    channelCode: "airbnb" | "booking_com" | "agoda" | "expedia";
+    promoType: "mobile_only" | "high_rated_guest" | "last_minute" | "early_bird" | "los";
+    discountPercent: number;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    applicableRoomTypeIds: string[]; // "all" or specific room types
+    minLos?: number;
+    daysAdvance?: number;
+}
+
+export interface StripeTokenizationConfig {
+    isEnabled: boolean;
+    stripePublishableKey?: string;
+    accountStatus: "CONNECTED" | "NOT_CONFIGURED" | "RESTRICTED";
+    autoPreAuthOnBooking: boolean;
+    autoCaptureOnCheckin: boolean;
+    pciComplianceLevel: string;
+    lastTokenizedAt?: string;
+}
+

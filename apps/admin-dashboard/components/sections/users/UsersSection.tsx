@@ -9,7 +9,8 @@ import {
     Info, Grid, Settings as SettingsIcon, MapPin, 
     Gift, Package, Users, ShoppingCart, Banknote, Building2,
     BedDouble, Coffee, ShoppingBag, Calculator, Store, User as UserIcon, Archive, Star,
-    Camera, ClipboardList, Layers, BarChart2, Zap, FileSpreadsheet, SlidersHorizontal, Globe
+    Camera, ClipboardList, Layers, BarChart2, Zap, FileSpreadsheet, SlidersHorizontal, Globe,
+    Ban, Tag, XCircle, Trash2
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -52,6 +53,8 @@ const PERMISSION_TREE: PermissionModule[] = [
             { id: "pos_cashier", label: "Cashier", icon: <UserIcon size={14} /> },
             { id: "pos_product", label: "Product", icon: <Package size={14} /> },
             { id: "pos_records", label: "Records", icon: <Archive size={14} /> },
+            { id: "pos_cancel", label: "Akses Cancel Order POS", icon: <XCircle size={14} /> },
+            { id: "pos_void", label: "Akses Void Order POS", icon: <Trash2 size={14} /> },
             { id: "pos_settings", label: "Settings", icon: <SettingsIcon size={14} /> },
             { id: "pos_self_order", label: "Self-Ordering", icon: <ShoppingCart size={14} /> },
         ]
@@ -65,7 +68,12 @@ const PERMISSION_TREE: PermissionModule[] = [
             { id: "digital-checkin", label: "GRC (Guest Card)", icon: <FileText size={14} /> },
             { id: "confirmation-letter", label: "Confirmation Letter (CL)", icon: <FileText size={14} /> },
             { id: "forecast", label: "Forecast", icon: <TrendingUp size={14} /> },
-            { id: "rate-inventory", label: "Rate & Inventory", icon: <SlidersHorizontal size={14} /> },
+            { id: "rate-inventory", label: "Rate & Inventory (Akses Menu)", icon: <SlidersHorizontal size={14} /> },
+            { id: "fo_stopsell", label: "↳ Akses Stop Sell (Buka/Tutup Jual)", icon: <Ban size={14} /> },
+            { id: "fo_rate_change", label: "↳ Akses Merubah Rate / Harga", icon: <Tag size={14} /> },
+            { id: "fo_inventory_change", label: "↳ Akses Merubah Inventory / Allotment", icon: <Layers size={14} /> },
+            { id: "fo_cancel", label: "Akses Cancel Reservasi (FO)", icon: <XCircle size={14} /> },
+            { id: "fo_void", label: "Akses Void Reservasi (FO)", icon: <Trash2 size={14} /> },
             { id: "inventory-control", label: "Inventory Control", icon: <Layers size={14} /> },
             { id: "invoice", label: "Create Invoice", icon: <FileText size={14} /> },
             { id: "purchase-order", label: "Purchase Order", icon: <ShoppingCart size={14} /> },
@@ -143,9 +151,7 @@ const PERMISSION_TREE: PermissionModule[] = [
             { id: "promo", label: "Promo Management", icon: <Gift size={14} /> },
             { id: "packages", label: "Custom Packages", icon: <Package size={14} /> },
             { id: "seo", label: "SEO & Metadata", icon: <Search size={14} /> },
-            { id: "channel-manager", label: "Channel Manager (Channex/OTA)", icon: <Globe size={14} /> },
             { id: "users", label: "User Management", icon: <Users size={14} /> },
-            { id: "superadmin", label: "Super Admin (Partner Setting)", icon: <ShieldCheck size={14} /> },
         ]
     }
 ];

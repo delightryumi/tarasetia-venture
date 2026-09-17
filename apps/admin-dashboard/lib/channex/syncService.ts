@@ -681,6 +681,83 @@ export class ChannexSyncService {
             message: `Full Property ARI Sync (${daysAhead} days) successfully sent in exactly 2 API calls (${latencyMs}ms).`
         };
     }
+
+    /**
+     * Process Incoming ARI / Rate Webhook from Channex
+     * When prices or restrictions are updated directly on Channex/OTA
+     */
+    async processIncomingAriWebhook(payload: any): Promise<{ success: boolean; message: string }> {
+        const propertyId = payload.property_id;
+        const hotelCode = await this.findHotelCodeByChannexPropertyId(propertyId);
+        if (!hotelCode) {
+            return { success: false, message: `No hotel found for Channex property [${propertyId}]` };
+        }
+
+        const values = payload.values || payload.data || [payload];
+        const ratePlansSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
+        const ratePlans = ratePlansSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        let updatedDatesCount = 0;
+
+        for (const item of values) {
+            const channexRatePlanId = item.rate_plan_id;
+            const mappedRatePlan = ratePlans.find((rp: any) => 
+                rp.channexRatePlanId === channexRatePlanId || rp.id === channexRatePlanId
+            );
+
+            if (!mappedRatePlan) continue;
+
+            const datesToUpdate: string[] = [];
+            if (item.date) {
+                datesToUpdate.push(item.date);
+            } else if (item.date_from && item.date_to) {
+                let curr = new Date(item.date_from);
+                const stop = new Date(item.date_to);
+                while (curr <= stop) {
+                    datesToUpdate.push(curr.toISOString().split("T")[0]);
+                    curr.setDate(curr.getDate() + 1);
+                }
+            }
+
+            for (const dStr of datesToUpdate) {
+                const docId = `${hotelCode}_${dStr}`;
+                const docRef = adminDb.collection(`hotels/${hotelCode}/ari_overrides`).doc(docId);
+                const snap = await docRef.get();
+                const existing = snap.exists ? snap.data() : {};
+
+                const updatedRates = { ...(existing?.rates || {}) };
+                const updatedStopSell = { ...(existing?.stopSell || {}) };
+                const updatedMinStay = { ...(existing?.minStay || {}) };
+
+                if (item.rate !== undefined && item.rate !== null) {
+                    updatedRates[mappedRatePlan.id] = Number(item.rate);
+                }
+                if (item.stop_sell !== undefined && item.stop_sell !== null) {
+                    updatedStopSell[mappedRatePlan.id] = Boolean(item.stop_sell);
+                }
+                if (item.min_stay_through !== undefined || item.min_stay_arrival !== undefined) {
+                    updatedMinStay[mappedRatePlan.id] = Number(item.min_stay_through || item.min_stay_arrival || 1);
+                }
+
+                await docRef.set({
+                    date: dStr,
+                    hotelCode,
+                    rates: updatedRates,
+                    stopSell: updatedStopSell,
+                    minStay: updatedMinStay,
+                    lastUpdated: new Date().toISOString(),
+                    source: "channex_webhook"
+                }, { merge: true });
+
+                updatedDatesCount++;
+            }
+        }
+
+        return {
+            success: true,
+            message: `Updated ${updatedDatesCount} date overrides from Channex ARI Webhook for Hotel [${hotelCode}].`
+        };
+    }
 }
 
 export const channexSyncService = new ChannexSyncService();

@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { DeleteAlertDialog } from './alertDelete';
 import { VoidAlertDialog } from './alertVoid';
 import Link from 'next/link';
+import { useRBAC } from '@/hooks/useRBAC';
 
 type Products = {
   id: string;
@@ -30,6 +31,10 @@ type Records = {
 };
 
 const Dropdown = ({ records }: { records: Records }) => {
+  const { canAccess } = useRBAC();
+  const canCancel = canAccess('pos_cancel');
+  const canVoid = canAccess('pos_void') || canAccess('trans_void');
+
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
 
@@ -55,14 +60,16 @@ const Dropdown = ({ records }: { records: Records }) => {
           <DropdownMenuItem asChild>
             <Link href={`/records/${records.id}`}>View</Link>
           </DropdownMenuItem>
-          {records.status !== 'CANCELLED' && (
+          {records.status !== 'CANCELLED' && canCancel && (
             <DropdownMenuItem onClick={() => setVoidOpen(true)}>
               Cancel Order
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
-            Void Order
-          </DropdownMenuItem>
+          {canVoid && (
+            <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
+              Void Order
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       <DeleteAlertDialog

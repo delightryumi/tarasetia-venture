@@ -276,9 +276,9 @@ export async function POST(req: NextRequest) {
         }
 
         // ====================================================
-        // ACTION 3: DISCONNECT CHANNEL
+        // ACTION 3: DISCONNECT / DELETE CHANNEL
         // ====================================================
-        if (action === "disconnect") {
+        if (action === "disconnect" || action === "delete") {
             if (!channelCode) {
                 return NextResponse.json({ error: "channelCode is required" }, { status: 400 });
             }
@@ -292,15 +292,8 @@ export async function POST(req: NextRequest) {
                 }
             }
 
-            const updatedChannels = {
-                ...(cm.channels || {}),
-                [channelCode]: {
-                    ...(cm.channels?.[channelCode] || {}),
-                    isActive: false,
-                    channexStatus: "INACTIVE",
-                    lastChannexSync: new Date().toISOString()
-                }
-            };
+            const updatedChannels = { ...(cm.channels || {}) };
+            delete updatedChannels[channelCode];
 
             await adminDb.collection("hotels").doc(hotelCode).set({
                 channelManager: {
@@ -311,8 +304,40 @@ export async function POST(req: NextRequest) {
 
             return NextResponse.json({
                 success: true,
-                message: `Saluran ${currentChannel?.channelName || channelCode} berhasil dinonaktifkan.`,
-                channel: updatedChannels[channelCode]
+                message: `Saluran ${currentChannel?.channelName || channelCode} berhasil diputuskan dan dihapus.`,
+                channels: updatedChannels
+            });
+        }
+
+        // ====================================================
+        // ACTION 3B: CLEAN DUMMY / UNMAPPED GHOST CHANNELS
+        // ====================================================
+        if (action === "clean_dummy") {
+            const channexRes = await channexClient.getChannels(channexPropertyId, apiKey, env);
+            const liveChannexChannels = channexRes?.data || [];
+            const liveChannelIds = new Set(liveChannexChannels.map((c: any) => c.id));
+
+            const currentChannels = cm.channels || {};
+            const cleanedChannels: Record<string, any> = {};
+
+            Object.entries(currentChannels).forEach(([k, v]: [string, any]) => {
+                // Keep only if it has a legitimate channel in Channex or active
+                if (v?.channexChannelId && liveChannelIds.has(v.channexChannelId)) {
+                    cleanedChannels[k] = v;
+                }
+            });
+
+            await adminDb.collection("hotels").doc(hotelCode).set({
+                channelManager: {
+                    channels: cleanedChannels,
+                    lastSyncAt: new Date().toISOString()
+                }
+            }, { merge: true });
+
+            return NextResponse.json({
+                success: true,
+                message: "Semua saluran dummy yang belum terpetakan ke Channex berhasil dibersihkan.",
+                channels: cleanedChannels
             });
         }
 
@@ -326,17 +351,77 @@ export async function POST(req: NextRequest) {
             const currentLocal = cm.channels || {};
             const syncedLocal = { ...currentLocal };
 
+            // Fetch local roomTypes and ratePlans for accurate ID cross-mapping
+            const roomTypesSnap = await adminDb.collection("hotels").doc(hotelCode).collection("roomTypes").get();
+            const localRoomTypes = roomTypesSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+
+            const ratePlansSnap = await adminDb.collection("hotels").doc(hotelCode).collection("ratePlans").get();
+            const localRatePlans = ratePlansSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+
             liveChannexChannels.forEach((cc: any) => {
                 const adapter = cc?.attributes?.channel || cc?.attributes?.channel_code;
                 const matchedCode = Object.keys(TARA_TO_CHANNEX_ADAPTERS).find(
                     k => TARA_TO_CHANNEX_ADAPTERS[k].toLowerCase() === adapter?.toLowerCase()
                 ) || adapter?.toLowerCase();
 
+                // Extract room mappings from Channex channel settings
+                const channexRooms = cc.attributes?.settings?.mappingSettings?.rooms || cc.attributes?.settings?.mapping_settings?.rooms || {};
+                const extractedRoomMappings: Record<string, string> = {};
+                Object.entries(channexRooms).forEach(([otaRoomCode, channexRoomId]) => {
+                    const matchedRt = localRoomTypes.find((r: any) => r.channexRoomTypeId === channexRoomId || r.id === channexRoomId);
+                    const targetKey = matchedRt ? matchedRt.id : (channexRoomId as string);
+                    extractedRoomMappings[targetKey] = otaRoomCode as string;
+                });
+
+                // Extract rate plan mappings from Channex channel rate_plans
+                const channexRates = cc.attributes?.rate_plans || [];
+                const extractedRateMappings: Record<string, string> = {};
+                channexRates.forEach((cr: any) => {
+                    const channexRatePlanId = cr.rate_plan_id;
+                    const otaRatePlanCode = cr.settings?.rate_plan_code || channexRatePlanId;
+                    const matchedRp = localRatePlans.find((r: any) => r.channexRatePlanId === channexRatePlanId || r.id === channexRatePlanId);
+                    const targetKey = matchedRp ? matchedRp.id : channexRatePlanId;
+                    extractedRateMappings[targetKey] = otaRatePlanCode;
+                });
+
+                const existingChannel = syncedLocal[matchedCode] || {};
+                const mergedRoomMappings = { ...extractedRoomMappings, ...(existingChannel.roomMappings || {}) };
+                // Ensure non-empty extracted takes precedence
+                Object.entries(extractedRoomMappings).forEach(([k, v]) => {
+                    if (v && (!mergedRoomMappings[k] || mergedRoomMappings[k].trim() === "")) {
+                        mergedRoomMappings[k] = v;
+                    }
+                });
+
+                const mergedRateMappings = { ...extractedRateMappings, ...(existingChannel.rateMappings || {}) };
+                Object.entries(extractedRateMappings).forEach(([k, v]) => {
+                    if (v && (!mergedRateMappings[k] || mergedRateMappings[k].trim() === "")) {
+                        mergedRateMappings[k] = v;
+                    }
+                });
+
                 if (matchedCode && syncedLocal[matchedCode]) {
                     syncedLocal[matchedCode] = {
                         ...syncedLocal[matchedCode],
                         channexChannelId: cc.id,
                         channexStatus: cc.attributes?.is_active ? "ACTIVE" : "PENDING",
+                        isActive: cc.attributes?.is_active ?? true,
+                        roomMappings: mergedRoomMappings,
+                        rateMappings: mergedRateMappings,
+                        lastChannexSync: new Date().toISOString()
+                    };
+                } else if (matchedCode) {
+                    syncedLocal[matchedCode] = {
+                        channelCode: matchedCode,
+                        channelName: cc.attributes?.title || adapter || matchedCode,
+                        hotelId: cc.attributes?.settings?.hotel_code || "",
+                        commissionPercent: 0,
+                        pricingModel: "gross",
+                        channexChannelId: cc.id,
+                        channexStatus: cc.attributes?.is_active ? "ACTIVE" : "PENDING",
+                        isActive: cc.attributes?.is_active ?? true,
+                        roomMappings: mergedRoomMappings,
+                        rateMappings: mergedRateMappings,
                         lastChannexSync: new Date().toISOString()
                     };
                 }

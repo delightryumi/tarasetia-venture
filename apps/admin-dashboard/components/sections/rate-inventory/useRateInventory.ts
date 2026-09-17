@@ -27,7 +27,12 @@ import {
 } from "./RateInventoryTypes";
 
 export const useRateInventory = () => {
-    const { activeHotelCode, activeHotelName } = useAuth();
+    const { activeHotelCode, activeHotelName, user } = useAuth();
+
+    const isSuperadmin = user?.role?.toLowerCase() === "superadmin" || user?.role?.toLowerCase() === "admin";
+    const canStopSell = isSuperadmin || user?.permissions?.fo_stopsell === true;
+    const canChangeRate = isSuperadmin || user?.permissions?.fo_rate_change === true;
+    const canChangeInventory = isSuperadmin || user?.permissions?.fo_inventory_change === true;
 
     // Active sub-view tab: "inventory" | "rates" | "stopsell"
     const [activeTab, setActiveTab] = useState<RateInventoryTab>("inventory");
@@ -52,6 +57,7 @@ export const useRateInventory = () => {
     // Data states
     const [roomTypes, setRoomTypes] = useState<RoomTypeInfo[]>([]);
     const [ratePlans, setRatePlans] = useState<MyTaraRatePlan[]>([]);
+    const [channelConfigs, setChannelConfigs] = useState<Record<string, any>>({});
     const [dailyRevenueMap, setDailyRevenueMap] = useState<Record<string, any[]>>({});
     const [ariOverridesMap, setAriOverridesMap] = useState<Record<string, any>>({});
 
@@ -280,10 +286,13 @@ export const useRateInventory = () => {
         return () => unsub();
     }, [activeHotelCode, dateList]);
 
-    // 5. Compute Full Grid Matrix with Overrides & Staged Changes
+    // 5. Compute Full Grid Matrix with Overrides & Staged Changes (Supporting Per-Channel Rates & Capped Allotment)
     const matrix: RoomTypeInventoryRow[] = useMemo(() => {
         const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const isChannelSpecific = channelFilter !== "all";
+        const channelCode = channelFilter;
+        const chConfig = channelConfigs[channelCode];
 
         return roomTypes.map(rt => {
             // Find real rate plans belonging to this room type
@@ -330,18 +339,41 @@ export const useRateInventory = () => {
                     }
                 });
 
-                // Check manual inventory override
+                // Check manual inventory override or channel-specific allotment cap
                 const dayOverride = ariOverridesMap[dateStr];
-                const stagedInvKey = `inv_${rt.id}_${dateStr}`;
+                const stagedInvKey = isChannelSpecific 
+                    ? `channelAllotment_${channelCode}_${rt.id}_${dateStr}`
+                    : `inv_${rt.id}_${dateStr}`;
                 const hasStagedInv = stagedUpdates[stagedInvKey] !== undefined;
                 
                 const totalRooms = rt.totalRooms || 1;
                 let availableRooms = Math.max(0, totalRooms - bookedCount);
+                let isCapped = false;
 
-                if (hasStagedInv) {
-                    availableRooms = Number(stagedUpdates[stagedInvKey]) || 0;
-                } else if (dayOverride?.inventoryOverrides?.[rt.id] !== undefined) {
-                    availableRooms = Number(dayOverride.inventoryOverrides[rt.id]) || 0;
+                const chSeparationMode = chConfig?.separationMode || "merged";
+                const canSeparateAllotment = isChannelSpecific && (chSeparationMode === "separated_allotment" || chSeparationMode === "separated_both");
+
+                if (canSeparateAllotment) {
+                    if (hasStagedInv) {
+                        availableRooms = Number(stagedUpdates[stagedInvKey]) || 0;
+                        isCapped = true;
+                    } else if (dayOverride?.channels?.[channelCode]?.allotments?.[rt.id]?.allotmentLimit !== undefined) {
+                        availableRooms = Number(dayOverride.channels[channelCode].allotments[rt.id].allotmentLimit) || 0;
+                        isCapped = true;
+                    } else {
+                        // Inherit from physical shared available rooms
+                        availableRooms = Math.max(0, totalRooms - bookedCount);
+                    }
+                } else if (isChannelSpecific) {
+                    // Allotment is not separated: follows Common Pool physical available rooms
+                    availableRooms = Math.max(0, totalRooms - bookedCount);
+                    isCapped = false;
+                } else {
+                    if (hasStagedInv) {
+                        availableRooms = Number(stagedUpdates[stagedInvKey]) || 0;
+                    } else if (dayOverride?.inventoryOverrides?.[rt.id] !== undefined) {
+                        availableRooms = Number(dayOverride.inventoryOverrides[rt.id]) || 0;
+                    }
                 }
 
                 const occupancyPercent = totalRooms > 0 ? Math.min(100, Math.round((bookedCount / totalRooms) * 100)) : 0;
@@ -359,7 +391,8 @@ export const useRateInventory = () => {
                     stopSell: false,
                     rate: rt.basePrice,
                     extraAdultRate: 0,
-                    extraChildRate: 0
+                    extraChildRate: 0,
+                    isCapped
                 };
             });
 
@@ -372,25 +405,65 @@ export const useRateInventory = () => {
                     const dayOverride = ariOverridesMap[dateStr];
 
                     // Check Staged Updates first, then Firestore Overrides, then Rate Plan Master Default
-                    const rateKey = `rate_${rp.id}_${dateStr}`;
-                    const stopSellKey = `stopSell_${rp.id}_${dateStr}`;
+                    const rateKey = isChannelSpecific ? `channelRate_${channelCode}_${rp.id}_${dateStr}` : `rate_${rp.id}_${dateStr}`;
+                    const stopSellKey = isChannelSpecific ? `channelStopSell_${channelCode}_${rp.id}_${dateStr}` : `stopSell_${rp.id}_${dateStr}`;
                     const adultKey = `adult_${rp.id}_${dateStr}`;
                     const childKey = `child_${rp.id}_${dateStr}`;
 
-                    // Rate
-                    let currentRate = Number(rp.baseRate ?? rt.basePrice ?? 0);
-                    if (stagedUpdates[rateKey] !== undefined) {
-                        currentRate = Number(stagedUpdates[rateKey]) || 0;
-                    } else if (dayOverride?.rates?.[rp.id] !== undefined) {
-                        currentRate = Number(dayOverride.rates[rp.id]) || 0;
+                    // Base rate from Master / Common Pool
+                    const baseRateValue = Number(rp.baseRate ?? rt.basePrice ?? 0);
+                    const commonPoolRate = dayOverride?.rates?.[rp.id] !== undefined 
+                        ? Number(dayOverride.rates[rp.id]) 
+                        : baseRateValue;
+
+                    let currentRate = commonPoolRate;
+                    let isChannelCustom = false;
+
+                    const canSeparateRate = isChannelSpecific && (chConfig?.separationMode === "separated_rate" || chConfig?.separationMode === "separated_both");
+
+                    if (canSeparateRate) {
+                        if (stagedUpdates[rateKey] !== undefined) {
+                            currentRate = Number(stagedUpdates[rateKey]) || 0;
+                            isChannelCustom = true;
+                        } else if (dayOverride?.channels?.[channelCode]?.rates?.[rp.id]?.rate !== undefined) {
+                            currentRate = Number(dayOverride.channels[channelCode].rates[rp.id].rate) || 0;
+                            isChannelCustom = true;
+                        } else {
+                            // Calculate derived rate with channel markup modifier
+                            const markupPct = Number(chConfig?.markupPercent || 0);
+                            const markupFixed = Number(chConfig?.markupFixed || 0);
+                            currentRate = Math.round(commonPoolRate * (1 + markupPct / 100)) + markupFixed;
+                        }
+                    } else if (isChannelSpecific) {
+                        // Rate is not separated for this channel: follows common pool rate!
+                        currentRate = commonPoolRate;
+                        isChannelCustom = false;
+                    } else {
+                        if (stagedUpdates[rateKey] !== undefined) {
+                            currentRate = Number(stagedUpdates[rateKey]) || 0;
+                        } else if (dayOverride?.rates?.[rp.id] !== undefined) {
+                            currentRate = Number(dayOverride.rates[rp.id]) || 0;
+                        }
                     }
 
                     // Stop Sell
                     let currentStopSell = rp.stopSell || false;
-                    if (stagedUpdates[stopSellKey] !== undefined) {
-                        currentStopSell = !!stagedUpdates[stopSellKey];
-                    } else if (dayOverride?.stopSell?.[rp.id] !== undefined) {
-                        currentStopSell = !!dayOverride.stopSell[rp.id];
+                    if (isChannelSpecific) {
+                        if (stagedUpdates[stopSellKey] !== undefined) {
+                            currentStopSell = !!stagedUpdates[stopSellKey];
+                        } else if (dayOverride?.channels?.[channelCode]?.rates?.[rp.id]?.stopSell !== undefined) {
+                            currentStopSell = !!dayOverride.channels[channelCode].rates[rp.id].stopSell;
+                        } else if (dayOverride?.channels?.[channelCode]?.stopSell !== undefined) {
+                            currentStopSell = !!dayOverride.channels[channelCode].stopSell;
+                        } else {
+                            currentStopSell = dayOverride?.stopSell?.[rp.id] !== undefined ? !!dayOverride.stopSell[rp.id] : (rp.stopSell || false);
+                        }
+                    } else {
+                        if (stagedUpdates[stopSellKey] !== undefined) {
+                            currentStopSell = !!stagedUpdates[stopSellKey];
+                        } else if (dayOverride?.stopSell?.[rp.id] !== undefined) {
+                            currentStopSell = !!dayOverride.stopSell[rp.id];
+                        }
                     }
 
                     // Extra Adult / Child
@@ -420,7 +493,8 @@ export const useRateInventory = () => {
                         rate: currentRate,
                         stopSell: currentStopSell,
                         extraAdultRate: currentAdultRate,
-                        extraChildRate: currentChildRate
+                        extraChildRate: currentChildRate,
+                        isChannelCustom
                     };
                 });
 
@@ -447,7 +521,7 @@ export const useRateInventory = () => {
                 ratePlans: ratePlanRows
             };
         });
-    }, [roomTypes, ratePlans, dailyRevenueMap, ariOverridesMap, stagedUpdates, dateList, taxInclusive, activeHotelCode]);
+    }, [roomTypes, ratePlans, dailyRevenueMap, ariOverridesMap, stagedUpdates, dateList, taxInclusive, activeHotelCode, channelFilter, channelConfigs]);
 
     // Filter matrix by selected room type
     const filteredMatrix = useMemo(() => {
@@ -468,10 +542,43 @@ export const useRateInventory = () => {
         return totals;
     }, [matrix, dateList]);
 
-    // Stage a cell edit
+    // Stage a cell edit with permission validation (Supporting Common Pool & Channel-specific keys)
     const stageEdit = useCallback((key: string, value: any) => {
+        if ((key.startsWith("stopSell_") || key.startsWith("channelStopSell_")) && !canStopSell) {
+            toast.error("Anda tidak memiliki akses untuk merubah Stop Sell.");
+            return;
+        }
+        if ((key.startsWith("rate_") || key.startsWith("adult_") || key.startsWith("child_") || key.startsWith("channelRate_")) && !canChangeRate) {
+            toast.error("Anda tidak memiliki akses untuk merubah Rate / Harga.");
+            return;
+        }
+        if ((key.startsWith("inv_") || key.startsWith("channelAllotment_")) && !canChangeInventory) {
+            toast.error("Anda tidak memiliki akses untuk merubah Inventory.");
+            return;
+        }
+
+        // Validate separationMode when editing channel-specific overrides
+        if (key.startsWith("channelRate_")) {
+            const parts = key.split("_");
+            const code = parts[1];
+            const cfg = channelConfigs[code];
+            if (cfg?.separationMode !== "separated_rate" && cfg?.separationMode !== "separated_both") {
+                toast.warning(`Saluran ${cfg?.channelName || code} tidak diatur untuk pemisahan tarif di Channel Manager.`);
+                return;
+            }
+        }
+        if (key.startsWith("channelAllotment_")) {
+            const parts = key.split("_");
+            const code = parts[1];
+            const cfg = channelConfigs[code];
+            if (cfg?.separationMode !== "separated_allotment" && cfg?.separationMode !== "separated_both") {
+                toast.warning(`Saluran ${cfg?.channelName || code} tidak diatur untuk pemisahan allotment di Channel Manager.`);
+                return;
+            }
+        }
+
         setStagedUpdates(prev => ({ ...prev, [key]: value }));
-    }, []);
+    }, [canStopSell, canChangeRate, canChangeInventory, channelConfigs]);
 
     // Count unsaved staged edits
     const unsavedCount = useMemo(() => Object.keys(stagedUpdates).length, [stagedUpdates]);
@@ -482,7 +589,7 @@ export const useRateInventory = () => {
         toast.info("Perubahan lokal berhasil dibatalkan.");
     }, []);
 
-    // Save all staged changes in batch to Firestore
+    // Save all staged changes in batch to Firestore (Persisting both Common Pool & Per-Channel Overrides)
     const saveAllChanges = async () => {
         if (!activeHotelCode || unsavedCount === 0) return;
         setSaving(true);
@@ -495,32 +602,73 @@ export const useRateInventory = () => {
                 extraAdultRates?: Record<string, number>;
                 extraChildRates?: Record<string, number>;
                 inventoryOverrides?: Record<string, number>;
+                channels?: Record<string, {
+                    rates?: Record<string, any>;
+                    allotments?: Record<string, any>;
+                    stopSell?: boolean;
+                }>;
             }> = {};
 
             Object.entries(stagedUpdates).forEach(([key, value]) => {
-                // Key format: type_id_YYYY-MM-DD
                 const parts = key.split("_");
                 const type = parts[0];
                 const dateStr = parts[parts.length - 1];
-                const id = parts.slice(1, parts.length - 1).join("_");
 
                 if (!dateEditsMap[dateStr]) {
                     dateEditsMap[dateStr] = {};
                 }
 
-                if (type === "rate") {
+                if (type === "channelRate") {
+                    // format: channelRate_${channelCode}_${ratePlanId}_${dateStr}
+                    const channelCode = parts[1];
+                    const rpId = parts.slice(2, parts.length - 1).join("_");
+                    if (!dateEditsMap[dateStr].channels) dateEditsMap[dateStr].channels = {};
+                    if (!dateEditsMap[dateStr].channels![channelCode]) dateEditsMap[dateStr].channels![channelCode] = { rates: {}, allotments: {} };
+                    if (!dateEditsMap[dateStr].channels![channelCode].rates) dateEditsMap[dateStr].channels![channelCode].rates = {};
+                    dateEditsMap[dateStr].channels![channelCode].rates![rpId] = {
+                        rate: Number(value) || 0,
+                        isCustom: true
+                    };
+                } else if (type === "channelAllotment") {
+                    // format: channelAllotment_${channelCode}_${roomTypeId}_${dateStr}
+                    const channelCode = parts[1];
+                    const rtId = parts.slice(2, parts.length - 1).join("_");
+                    if (!dateEditsMap[dateStr].channels) dateEditsMap[dateStr].channels = {};
+                    if (!dateEditsMap[dateStr].channels![channelCode]) dateEditsMap[dateStr].channels![channelCode] = { rates: {}, allotments: {} };
+                    if (!dateEditsMap[dateStr].channels![channelCode].allotments) dateEditsMap[dateStr].channels![channelCode].allotments = {};
+                    dateEditsMap[dateStr].channels![channelCode].allotments![rtId] = {
+                        allotmentLimit: Number(value) || 0,
+                        isCustom: true
+                    };
+                } else if (type === "channelStopSell") {
+                    // format: channelStopSell_${channelCode}_${ratePlanId}_${dateStr}
+                    const channelCode = parts[1];
+                    const rpId = parts.slice(2, parts.length - 1).join("_");
+                    if (!dateEditsMap[dateStr].channels) dateEditsMap[dateStr].channels = {};
+                    if (!dateEditsMap[dateStr].channels![channelCode]) dateEditsMap[dateStr].channels![channelCode] = { rates: {}, allotments: {} };
+                    if (!dateEditsMap[dateStr].channels![channelCode].rates) dateEditsMap[dateStr].channels![channelCode].rates = {};
+                    dateEditsMap[dateStr].channels![channelCode].rates![rpId] = {
+                        ...(dateEditsMap[dateStr].channels![channelCode].rates![rpId] || {}),
+                        stopSell: !!value
+                    };
+                } else if (type === "rate") {
+                    const id = parts.slice(1, parts.length - 1).join("_");
                     if (!dateEditsMap[dateStr].rates) dateEditsMap[dateStr].rates = {};
                     dateEditsMap[dateStr].rates![id] = Number(value) || 0;
                 } else if (type === "stopSell") {
+                    const id = parts.slice(1, parts.length - 1).join("_");
                     if (!dateEditsMap[dateStr].stopSell) dateEditsMap[dateStr].stopSell = {};
                     dateEditsMap[dateStr].stopSell![id] = !!value;
                 } else if (type === "adult") {
+                    const id = parts.slice(1, parts.length - 1).join("_");
                     if (!dateEditsMap[dateStr].extraAdultRates) dateEditsMap[dateStr].extraAdultRates = {};
                     dateEditsMap[dateStr].extraAdultRates![id] = Number(value) || 0;
                 } else if (type === "child") {
+                    const id = parts.slice(1, parts.length - 1).join("_");
                     if (!dateEditsMap[dateStr].extraChildRates) dateEditsMap[dateStr].extraChildRates = {};
                     dateEditsMap[dateStr].extraChildRates![id] = Number(value) || 0;
                 } else if (type === "inv") {
+                    const id = parts.slice(1, parts.length - 1).join("_");
                     if (!dateEditsMap[dateStr].inventoryOverrides) dateEditsMap[dateStr].inventoryOverrides = {};
                     dateEditsMap[dateStr].inventoryOverrides![id] = Number(value) || 0;
                 }
@@ -531,6 +679,18 @@ export const useRateInventory = () => {
             Object.entries(dateEditsMap).forEach(([dateStr, edits]) => {
                 const docRef = doc(getHotelCollection(db, "ari_overrides", activeHotelCode), `${activeHotelCode}_${dateStr}`);
                 const currentDoc = ariOverridesMap[dateStr] || {};
+                const currentChannels = currentDoc.channels || {};
+
+                const mergedChannels = { ...currentChannels };
+                if (edits.channels) {
+                    Object.entries(edits.channels).forEach(([chCode, chData]) => {
+                        mergedChannels[chCode] = {
+                            ...(mergedChannels[chCode] || {}),
+                            rates: { ...(mergedChannels[chCode]?.rates || {}), ...(chData.rates || {}) },
+                            allotments: { ...(mergedChannels[chCode]?.allotments || {}), ...(chData.allotments || {}) }
+                        };
+                    });
+                }
 
                 const updatedDoc = {
                     date: dateStr,
@@ -540,6 +700,7 @@ export const useRateInventory = () => {
                     extraAdultRates: { ...(currentDoc.extraAdultRates || {}), ...(edits.extraAdultRates || {}) },
                     extraChildRates: { ...(currentDoc.extraChildRates || {}), ...(edits.extraChildRates || {}) },
                     inventoryOverrides: { ...(currentDoc.inventoryOverrides || {}), ...(edits.inventoryOverrides || {}) },
+                    channels: mergedChannels,
                     updatedAt: new Date().toISOString()
                 };
 
@@ -586,6 +747,22 @@ export const useRateInventory = () => {
                 return;
             }
 
+            if (params.rateAction !== "none" && !canChangeRate) {
+                toast.error("Anda tidak memiliki izin untuk merubah Rate / Harga.");
+                setSaving(false);
+                return;
+            }
+            if (params.stopSellAction !== "none" && !canStopSell) {
+                toast.error("Anda tidak memiliki izin untuk merubah Stop Sell.");
+                setSaving(false);
+                return;
+            }
+            if (params.inventoryAction !== "none" && !canChangeInventory) {
+                toast.error("Anda tidak memiliki izin untuk merubah Inventory.");
+                setSaving(false);
+                return;
+            }
+
             // Identify target rate plans and room types
             const targetRoomTypes = (params.roomTypeIds.length === 0 || params.roomTypeIds.includes("all"))
                 ? roomTypes
@@ -600,51 +777,113 @@ export const useRateInventory = () => {
             affectedDates.forEach(dateStr => {
                 const docRef = doc(getHotelCollection(db, "ari_overrides", activeHotelCode), `${activeHotelCode}_${dateStr}`);
                 const currentDoc = ariOverridesMap[dateStr] || {};
+                const currentChannels = currentDoc.channels || {};
 
-                const newRates = { ...(currentDoc.rates || {}) };
-                const newStopSell = { ...(currentDoc.stopSell || {}) };
-                const newInv = { ...(currentDoc.inventoryOverrides || {}) };
+                const targetChannelId = params.channelId || "all";
+                const isChannelSpecific = targetChannelId !== "all";
 
-                // Apply Rate Adjustments
-                if (params.rateAction !== "none") {
-                    targetRatePlans.forEach(rp => {
-                        const basePrice = Number(rp.baseRate || 0);
-                        const currPrice = currentDoc.rates?.[rp.id] !== undefined ? currentDoc.rates[rp.id] : basePrice;
+                if (isChannelSpecific) {
+                    const channelData = currentChannels[targetChannelId] || { rates: {}, allotments: {} };
+                    const newChRates = { ...(channelData.rates || {}) };
+                    const newChAllotments = { ...(channelData.allotments || {}) };
 
-                        if (params.rateAction === "set" && params.rateValue !== undefined) {
-                            newRates[rp.id] = params.rateValue;
-                        } else if (params.rateAction === "inc_amount" && params.rateValue !== undefined) {
-                            newRates[rp.id] = currPrice + params.rateValue;
-                        } else if (params.rateAction === "dec_amount" && params.rateValue !== undefined) {
-                            newRates[rp.id] = Math.max(0, currPrice - params.rateValue);
-                        } else if (params.rateAction === "inc_percent" && params.rateValue !== undefined) {
-                            newRates[rp.id] = Math.round(currPrice * (1 + params.rateValue / 100));
-                        } else if (params.rateAction === "dec_percent" && params.rateValue !== undefined) {
-                            newRates[rp.id] = Math.max(0, Math.round(currPrice * (1 - params.rateValue / 100)));
+                    if (params.rateAction !== "none") {
+                        targetRatePlans.forEach(rp => {
+                            const basePrice = Number(rp.baseRate || 0);
+                            const currPrice = channelData.rates?.[rp.id]?.rate ?? (currentDoc.rates?.[rp.id] ?? basePrice);
+                            let finalPrice = currPrice;
+                            if (params.rateAction === "set" && params.rateValue !== undefined) {
+                                finalPrice = params.rateValue;
+                            } else if (params.rateAction === "inc_amount" && params.rateValue !== undefined) {
+                                finalPrice = currPrice + params.rateValue;
+                            } else if (params.rateAction === "dec_amount" && params.rateValue !== undefined) {
+                                finalPrice = Math.max(0, currPrice - params.rateValue);
+                            } else if (params.rateAction === "inc_percent" && params.rateValue !== undefined) {
+                                finalPrice = Math.round(currPrice * (1 + params.rateValue / 100));
+                            } else if (params.rateAction === "dec_percent" && params.rateValue !== undefined) {
+                                finalPrice = Math.max(0, Math.round(currPrice * (1 - params.rateValue / 100)));
+                            }
+                            newChRates[rp.id] = { rate: finalPrice, isCustom: true };
+                        });
+                    }
+
+                    if (params.stopSellAction === "close") {
+                        targetRatePlans.forEach(rp => {
+                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), stopSell: true };
+                        });
+                    } else if (params.stopSellAction === "open") {
+                        targetRatePlans.forEach(rp => {
+                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), stopSell: false };
+                        });
+                    }
+
+                    if (params.inventoryAction === "set" && params.inventoryValue !== undefined) {
+                        targetRoomTypes.forEach(rt => {
+                            newChAllotments[rt.id] = { allotmentLimit: params.inventoryValue!, isCustom: true };
+                        });
+                    }
+
+                    const mergedChannels = {
+                        ...currentChannels,
+                        [targetChannelId]: {
+                            ...channelData,
+                            rates: newChRates,
+                            allotments: newChAllotments
                         }
-                    });
-                }
+                    };
 
-                // Apply Stop Sell
-                if (params.stopSellAction === "close") {
-                    targetRatePlans.forEach(rp => { newStopSell[rp.id] = true; });
-                } else if (params.stopSellAction === "open") {
-                    targetRatePlans.forEach(rp => { newStopSell[rp.id] = false; });
-                }
+                    batch.set(docRef, {
+                        date: dateStr,
+                        hotelCode: activeHotelCode,
+                        channels: mergedChannels,
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
+                } else {
+                    const newRates = { ...(currentDoc.rates || {}) };
+                    const newStopSell = { ...(currentDoc.stopSell || {}) };
+                    const newInv = { ...(currentDoc.inventoryOverrides || {}) };
 
-                // Apply Inventory Override
-                if (params.inventoryAction === "set" && params.inventoryValue !== undefined) {
-                    targetRoomTypes.forEach(rt => { newInv[rt.id] = params.inventoryValue!; });
-                }
+                    // Apply Rate Adjustments
+                    if (params.rateAction !== "none") {
+                        targetRatePlans.forEach(rp => {
+                            const basePrice = Number(rp.baseRate || 0);
+                            const currPrice = currentDoc.rates?.[rp.id] !== undefined ? currentDoc.rates[rp.id] : basePrice;
 
-                batch.set(docRef, {
-                    date: dateStr,
-                    hotelCode: activeHotelCode,
-                    rates: newRates,
-                    stopSell: newStopSell,
-                    inventoryOverrides: newInv,
-                    updatedAt: new Date().toISOString()
-                }, { merge: true });
+                            if (params.rateAction === "set" && params.rateValue !== undefined) {
+                                newRates[rp.id] = params.rateValue;
+                            } else if (params.rateAction === "inc_amount" && params.rateValue !== undefined) {
+                                newRates[rp.id] = currPrice + params.rateValue;
+                            } else if (params.rateAction === "dec_amount" && params.rateValue !== undefined) {
+                                newRates[rp.id] = Math.max(0, currPrice - params.rateValue);
+                            } else if (params.rateAction === "inc_percent" && params.rateValue !== undefined) {
+                                newRates[rp.id] = Math.round(currPrice * (1 + params.rateValue / 100));
+                            } else if (params.rateAction === "dec_percent" && params.rateValue !== undefined) {
+                                newRates[rp.id] = Math.max(0, Math.round(currPrice * (1 - params.rateValue / 100)));
+                            }
+                        });
+                    }
+
+                    // Apply Stop Sell
+                    if (params.stopSellAction === "close") {
+                        targetRatePlans.forEach(rp => { newStopSell[rp.id] = true; });
+                    } else if (params.stopSellAction === "open") {
+                        targetRatePlans.forEach(rp => { newStopSell[rp.id] = false; });
+                    }
+
+                    // Apply Inventory Override
+                    if (params.inventoryAction === "set" && params.inventoryValue !== undefined) {
+                        targetRoomTypes.forEach(rt => { newInv[rt.id] = params.inventoryValue!; });
+                    }
+
+                    batch.set(docRef, {
+                        date: dateStr,
+                        hotelCode: activeHotelCode,
+                        rates: newRates,
+                        stopSell: newStopSell,
+                        inventoryOverrides: newInv,
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
+                }
             });
 
             await batch.commit();
@@ -783,6 +1022,10 @@ export const useRateInventory = () => {
         saving,
         syncingAri,
         syncingRoomTypeId,
-        lastSyncedAt
+        lastSyncedAt,
+        canStopSell,
+        canChangeRate,
+        canChangeInventory,
+        channelConfigs
     };
 };

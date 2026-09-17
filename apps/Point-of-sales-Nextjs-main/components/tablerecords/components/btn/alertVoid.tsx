@@ -17,6 +17,7 @@ import { ReloadIcon } from '@radix-ui/react-icons';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'react-toastify';
+import { useRBAC } from '@/hooks/useRBAC';
 
 type Data = {
   id: string;
@@ -31,6 +32,8 @@ export function VoidAlertDialog({
   onClose: () => void;
   data: Data;
 }) {
+  const { canAccess } = useRBAC();
+  const canCancel = canAccess('pos_cancel');
   const [loading, setLoading] = useState(false);
   const [reasonInput, setReasonInput] = useState('');
   const router = useRouter();
@@ -41,6 +44,10 @@ export function VoidAlertDialog({
   };
 
   const handleVoid = async () => {
+    if (!canCancel) {
+      toast.error('Anda tidak memiliki izin untuk membatalkan transaksi.');
+      return;
+    }
     if (!reasonInput.trim()) {
       toast.error('Alasan pembatalan (reason) wajib diisi!');
       return;

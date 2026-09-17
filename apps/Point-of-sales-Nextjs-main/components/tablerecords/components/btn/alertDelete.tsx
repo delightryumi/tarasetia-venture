@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'react-toastify';
 import { localDb } from '@/lib/dexie';
+import { useRBAC } from '@/hooks/useRBAC';
 
 type Data = {
   id: string;
@@ -32,6 +33,8 @@ export function DeleteAlertDialog({
   onClose: () => void;
   data: Data;
 }) {
+  const { canAccess } = useRBAC();
+  const canVoid = canAccess('pos_void') || canAccess('trans_void');
   const [loading, setLoading] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const router = useRouter();
@@ -42,6 +45,10 @@ export function DeleteAlertDialog({
   };
 
   const handleDelete = async () => {
+    if (!canVoid) {
+      toast.error('Anda tidak memiliki izin untuk melakukan void transaksi.');
+      return;
+    }
     if (passwordInput !== 'admin123' && passwordInput !== 'owner123') {
       toast.error('Password Admin salah! Penghapusan dibatalkan.');
       return;

@@ -47,7 +47,11 @@ export function RateInventorySection() {
         saving,
         syncingAri,
         syncingRoomTypeId,
-        lastSyncedAt
+        lastSyncedAt,
+        canStopSell,
+        canChangeRate,
+        canChangeInventory,
+        channelConfigs
     } = useRateInventory();
 
     return (
@@ -65,6 +69,7 @@ export function RateInventorySection() {
             <RateInventoryFilterBar
                 channelFilter={channelFilter}
                 setChannelFilter={setChannelFilter}
+                channelConfigs={channelConfigs}
                 roomTypeFilter={roomTypeFilter}
                 setRoomTypeFilter={setRoomTypeFilter}
                 roomTypes={roomTypes}
@@ -92,6 +97,11 @@ export function RateInventorySection() {
                 stageEdit={stageEdit}
                 onSyncRoom={syncAriToChannex}
                 syncingRoomTypeId={syncingRoomTypeId}
+                canStopSell={canStopSell}
+                canChangeRate={canChangeRate}
+                canChangeInventory={canChangeInventory}
+                channelFilter={channelFilter}
+                channelConfigs={channelConfigs}
             />
 
             {/* 4. Modular Bulk Update Modal */}
@@ -101,8 +111,12 @@ export function RateInventorySection() {
                 onApply={applyBulkUpdate}
                 roomTypes={roomTypes}
                 ratePlans={ratePlans}
+                channelConfigs={channelConfigs}
                 saving={saving}
                 defaultStartDate={startDate}
+                canStopSell={canStopSell}
+                canChangeRate={canChangeRate}
+                canChangeInventory={canChangeInventory}
             />
         </div>
     );

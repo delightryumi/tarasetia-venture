@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Menu, Settings, Users, LogOut, Building2 } from "lucide-react";
+import { Menu, Settings, Users, LogOut, Building2, BellRing } from "lucide-react";
+import { NotificationSettingsDrawer } from "./NotificationSettingsDrawer";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,6 +27,7 @@ export const StatusWidget = () => {
     const [userRole, setUserRole] = useState<string>("");
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('system');
+    const [isNotifOpen, setIsNotifOpen] = useState(false);
 
     const userName = user?.displayName || user?.email?.split('@')[0] || "Administrator";
 
@@ -176,7 +178,9 @@ export const StatusWidget = () => {
                     changeTheme={changeTheme}
                 />
 
+
                 {/* Hamburger Menu (Garis 3) */}
+
                 <div className={styles.menuWrapper}>
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -276,6 +280,20 @@ export const StatusWidget = () => {
                                         </>
                                     )}
 
+                                    {/* Notification Settings Menu Item */}
+                                    <button
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            setIsNotifOpen(true);
+                                        }}
+                                        className={styles.dropdownItem}
+                                    >
+                                        <BellRing className={styles.dropdownIcon} />
+                                        <span>Notification Settings</span>
+                                    </button>
+
+                                    <div className={styles.dropdownDivider} />
+
                                     <button
                                         onClick={() => {
                                             setIsMenuOpen(false);
@@ -292,6 +310,15 @@ export const StatusWidget = () => {
                     </AnimatePresence>
                 </div>
             </div>
+
+            {/* PWA Notification Settings Drawer (global, all pages) */}
+            <NotificationSettingsDrawer
+                isOpen={isNotifOpen}
+                onClose={() => setIsNotifOpen(false)}
+                hotelCode={activeHotelCode || "1"}
+                userId={user?.uid || user?.email || "guest"}
+                userEmail={user?.email || undefined}
+            />
         </div>
     );
 };

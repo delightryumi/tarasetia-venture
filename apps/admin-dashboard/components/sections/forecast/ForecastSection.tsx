@@ -48,6 +48,9 @@ export const ForecastSection: React.FC = () => {
     const searchParams = useSearchParams();
     const currentModule = searchParams.get("module") || "front-office";
     const { user, activeHotelCode } = useAuth();
+    const isSuperadmin = user?.role?.toLowerCase() === "superadmin" || user?.role?.toLowerCase() === "admin";
+    const canCancel = isSuperadmin || user?.permissions?.fo_cancel === true;
+    const canVoid = isSuperadmin || user?.permissions?.fo_void === true;
     const [viewMode, setViewMode] = useState<"daily" | "monthly" | "yearly">("daily");
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [activeFilter, setActiveFilter] = useState<string | null>(null);
@@ -267,6 +270,11 @@ export const ForecastSection: React.FC = () => {
     };
 
     const executeVoid = async () => {
+        if (!canVoid) {
+            toast.error("Anda tidak memiliki izin untuk melakukan void booking/transaksi.");
+            setBookingToVoid(null);
+            return;
+        }
         if (!bookingToVoid) return;
         try {
             const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
@@ -316,6 +324,11 @@ export const ForecastSection: React.FC = () => {
     };
 
     const executeCancel = async () => {
+        if (!canCancel) {
+            toast.error("Anda tidak memiliki izin untuk membatalkan booking/transaksi.");
+            setBookingToCancel(null);
+            return;
+        }
         if (!bookingToCancel) return;
         try {
             const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";

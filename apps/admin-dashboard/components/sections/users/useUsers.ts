@@ -23,18 +23,21 @@ const ALL_KEYS = [
     "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel", "module_hrd",
     // Front Office & Housekeeping
     "overview", "digital-checkin", "forecast", "rate-inventory", "confirmation-letter", "inventory-control", "invoice", "purchase-order",
+    // Granular Rate & Inventory & FO Transaction permissions
+    "fo_stopsell", "fo_rate_change", "fo_inventory_change", "fo_cancel", "fo_void",
     // Accounting
     "pnl", "pnl-budget", "dsr", "budgeting", "statements",
-    // CPanel & Channel Manager
+    // CPanel
     "logo", "hero", "room-type", "about", "gallery", "footer", 
-    "attractions", "promo", "packages", "seo", "channel-manager", "users", "superadmin",
+    "attractions", "promo", "packages", "seo", "users",
     // Purchasing
     "purchasing", "store-requisition", "purchase-requisition", "daily-market-list", 
     "stock-opname", "items", "suppliers",
     // Food & Beverage
     "food-beverage-product", "food-beverage-realtime",
-    // POS submenus
+    // POS submenus & granular permissions
     "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings", "pos_self_order",
+    "pos_cancel", "pos_void",
     // HRD
     "hrd"
 ];
@@ -99,13 +102,20 @@ export const useUsers = (menuItems: any[]) => {
             if (hasFrontOffice) {
                 if (u.permissions["rate-inventory"] === undefined) updates["permissions.rate-inventory"] = true;
                 if (u.permissions["confirmation-letter"] === undefined) updates["permissions.confirmation-letter"] = true;
+                if (u.permissions["fo_stopsell"] === undefined) updates["permissions.fo_stopsell"] = isFullRole || u.permissions["rate-inventory"] === true;
+                if (u.permissions["fo_rate_change"] === undefined) updates["permissions.fo_rate_change"] = isFullRole || u.permissions["rate-inventory"] === true;
+                if (u.permissions["fo_inventory_change"] === undefined) updates["permissions.fo_inventory_change"] = isFullRole || u.permissions["rate-inventory"] === true;
+                if (u.permissions["fo_cancel"] === undefined) updates["permissions.fo_cancel"] = isFullRole || u.permissions["trans_cancel"] === true;
+                if (u.permissions["fo_void"] === undefined) updates["permissions.fo_void"] = isFullRole || u.permissions["trans_void"] === true;
             }
 
-            const hasCpanel = u.permissions.module_cpanel !== false && (u.permissions.logo === true || isFullRole);
-            if (hasCpanel) {
-                if (u.permissions["channel-manager"] === undefined) updates["permissions.channel-manager"] = true;
-                if (isFullRole && u.permissions["superadmin"] === undefined) updates["permissions.superadmin"] = true;
+            const hasPos = u.permissions.module_pos !== false && (u.permissions.pos_cashier === true || isFullRole);
+            if (hasPos) {
+                if (u.permissions["pos_cancel"] === undefined) updates["permissions.pos_cancel"] = isFullRole || u.permissions["trans_cancel"] === true;
+                if (u.permissions["pos_void"] === undefined) updates["permissions.pos_void"] = isFullRole || u.permissions["trans_void"] === true;
             }
+
+
 
             if (Object.keys(updates).length > 0) {
                 try {

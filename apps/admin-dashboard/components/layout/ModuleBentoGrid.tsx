@@ -31,6 +31,7 @@ const MODULE_ACCENTS: Record<string, { icon: string; bg: string; bgDark: string;
   'Purchasing':     { icon: '#8b5cf6', bg: 'rgba(139,92,246,0.06)',   bgDark: 'rgba(139,92,246,0.1)',   border: '#8b5cf6' },
   'Accounting':     { icon: '#22c55e', bg: 'rgba(34,197,94,0.06)',    bgDark: 'rgba(34,197,94,0.1)',    border: '#22c55e' },
   'HRD & Absensi':  { icon: '#ec4899', bg: 'rgba(236,72,153,0.06)',   bgDark: 'rgba(236,72,153,0.1)',   border: '#ec4899' },
+  'Channel Manager':{ icon: '#0284c7', bg: 'rgba(2,132,199,0.06)',   bgDark: 'rgba(2,132,199,0.1)',   border: '#0284c7' },
   'Superadmin':     { icon: '#f59e0b', bg: 'rgba(245,158,11,0.06)',   bgDark: 'rgba(245,158,11,0.1)',   border: '#f59e0b' },
 };
 

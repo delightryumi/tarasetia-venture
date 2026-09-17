@@ -306,9 +306,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         "promo",
                         "packages",
                         "seo",
-                        "channel-manager",
                     ];
                     if (isSuperadmin) {
+                        cpanelAllowedIds.push("channel-manager");
                         cpanelAllowedIds.push("superadmin");
                     }
                     items = allNavItems.filter((item) => cpanelAllowedIds.includes(item.id));
@@ -322,16 +322,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         const isAdminUser = user?.role?.toLowerCase() === "admin";
 
         let finalItems = items;
-        // Strictly filter out superadmin from any user that is not confirmed superadmin
+        // Strictly filter out superadmin and channel-manager from any user that is not confirmed superadmin
         if (!isSuperadmin) {
-            finalItems = finalItems.filter((item) => item.id !== "superadmin");
+            finalItems = finalItems.filter((item) => item.id !== "superadmin" && item.id !== "channel-manager");
         }
 
         return isSuperadmin
             ? finalItems
             : isAdminUser
-            ? finalItems.filter((item) => item.id !== "superadmin")
-            : finalItems.filter((item) => item.id !== "superadmin" && userPermissions?.[item.id] === true);
+            ? finalItems.filter((item) => item.id !== "superadmin" && item.id !== "channel-manager")
+            : finalItems.filter((item) => item.id !== "superadmin" && item.id !== "channel-manager" && userPermissions?.[item.id] === true);
     };
 
     const navItems = getFilteredNavItems();
@@ -348,7 +348,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ["room-type", "attractions", "packages"].includes(item.id)
             );
             const marketingItems = navItems.filter((item) =>
-                ["promo", "seo", "channel-manager"].includes(item.id)
+                ["promo", "seo"].includes(item.id) || (item.id === "channel-manager" && isSuperadmin)
             );
             const systemItems = navItems.filter((item) =>
                 item.id === "users" || (item.id === "superadmin" && isSuperadmin)

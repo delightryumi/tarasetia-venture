@@ -1,5 +1,8 @@
 "use client";
 
+import { ChannelSeparationMode } from "@/lib/channex/types";
+export type { ChannelSeparationMode };
+
 export type RateInventoryTab =
     | "inventory"
     | "rates"
@@ -19,6 +22,8 @@ export interface DayInventoryStatus {
     rate: number;
     extraAdultRate: number;
     extraChildRate: number;
+    isChannelCustom?: boolean;
+    isCapped?: boolean;
 }
 
 export interface RatePlanGridRow {

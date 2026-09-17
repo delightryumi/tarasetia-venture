@@ -21,8 +21,12 @@ interface BulkUpdateModalProps {
     onApply: (params: BulkUpdateParams) => Promise<void>;
     roomTypes: RoomTypeInfo[];
     ratePlans: MyTaraRatePlan[];
+    channelConfigs?: Record<string, any>;
     saving: boolean;
     defaultStartDate?: string;
+    canStopSell?: boolean;
+    canChangeRate?: boolean;
+    canChangeInventory?: boolean;
 }
 
 export function BulkUpdateModal({
@@ -31,8 +35,12 @@ export function BulkUpdateModal({
     onApply,
     roomTypes,
     ratePlans,
+    channelConfigs = {},
     saving,
-    defaultStartDate
+    defaultStartDate,
+    canStopSell = true,
+    canChangeRate = true,
+    canChangeInventory = true
 }: BulkUpdateModalProps) {
     const todayStr = defaultStartDate || new Date().toISOString().split("T")[0];
     const defaultEndStr = (() => {
@@ -48,7 +56,7 @@ export function BulkUpdateModal({
     // Days of week (0=Sun, 1=Mon, ..., 6=Sat)
     const [daysOfWeek, setDaysOfWeek] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
 
-    // Target Room Types & Rate Plans
+    // Target Room Types & Rate Plans & Channel
     const [selectedRoomTypes, setSelectedRoomTypes] = useState<string[]>(["all"]);
     const [selectedRatePlans, setSelectedRatePlans] = useState<string[]>(["all"]);
     const [selectedChannel, setSelectedChannel] = useState<string>("all");
@@ -92,32 +100,22 @@ export function BulkUpdateModal({
     };
 
     const DAYS_CONFIG = [
-        { label: "Mon", idx: 1 },
-        { label: "Tue", idx: 2 },
-        { label: "Wed", idx: 3 },
-        { label: "Thu", idx: 4 },
-        { label: "Fri", idx: 5 },
-        { label: "Sat", idx: 6 },
-        { label: "Sun", idx: 0 }
+        { idx: 1, label: "Sen" },
+        { idx: 2, label: "Sel" },
+        { idx: 3, label: "Rab" },
+        { idx: 4, label: "Kam" },
+        { idx: 5, label: "Jum" },
+        { idx: 6, label: "Sab" },
+        { idx: 0, label: "Min" }
     ];
 
     return (
-        <div className={styles.overlay}>
-            <div className={styles.modalCard}>
-                {/* Header */}
-                <div className={styles.header}>
-                    <div className={styles.headerTitleGroup}>
-                        <div className={styles.headerIcon}>
-                            <Zap size={18} />
-                        </div>
-                        <div>
-                            <h2 className={styles.title}>
-                                Bulk Update Rates &amp; Inventory
-                            </h2>
-                            <p className={styles.subtitle}>
-                                Perbarui harga kamar, ketersediaan kamar, dan status stop sell sekaligus
-                            </p>
-                        </div>
+        <div className={styles.modalBackdrop}>
+            <div className={styles.modalContent}>
+                <div className={styles.modalHeader}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <Zap size={18} style={{ color: "#2563eb" }} />
+                        <h3 className={styles.modalTitle}>Bulk Update: Tarif, Allotment &amp; Stop Sell</h3>
                     </div>
                     <button
                         type="button"
@@ -128,9 +126,8 @@ export function BulkUpdateModal({
                     </button>
                 </div>
 
-                {/* Form Body */}
-                <form onSubmit={handleSubmit} className={styles.formBody}>
-                    {/* 1. Date Range & Days of Week */}
+                <form onSubmit={handleSubmit} className={styles.modalBody}>
+                    {/* 1. Periode Tanggal & Hari */}
                     <div className={styles.sectionBox}>
                         <div className={styles.sectionTitle}>
                             <Calendar size={14} />
@@ -212,14 +209,42 @@ export function BulkUpdateModal({
                         </div>
                     </div>
 
-                    {/* 2. Target Selection */}
+                    {/* 2. Target Saluran (OTA), Tipe Kamar & Rate Plan */}
                     <div className={styles.sectionBox}>
                         <div className={styles.sectionTitle}>
                             <SlidersHorizontal size={14} />
-                            <span>2. Target Tipe Kamar &amp; Rate Plan</span>
+                            <span>2. Target Saluran (OTA), Tipe Kamar &amp; Rate Plan</span>
                         </div>
 
-                        <div className={styles.grid2Col}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                            <div>
+                                <label className={styles.inputLabel}>
+                                    Target Saluran Distribusi
+                                </label>
+                                <select
+                                    value={selectedChannel}
+                                    onChange={e => setSelectedChannel(e.target.value)}
+                                    className={styles.selectField}
+                                    style={{ fontWeight: 600 }}
+                                >
+                                    <option value="all">🌐 Semua Saluran (Common Pool)</option>
+                                    {channelConfigs && Object.keys(channelConfigs).length > 0 ? (
+                                        Object.entries(channelConfigs).map(([code, cfg]: [string, any]) => (
+                                            <option key={code} value={code}>
+                                                {cfg.icon || "🏨"} {cfg.channelName || code}
+                                            </option>
+                                        ))
+                                    ) : (
+                                        <>
+                                            <option value="traveloka">🕊️ Traveloka</option>
+                                            <option value="booking_com">🅱️ Booking.com</option>
+                                            <option value="agoda">🅰️ Agoda</option>
+                                            <option value="tiket">🎫 Tiket.com</option>
+                                        </>
+                                    )}
+                                </select>
+                            </div>
+
                             <div>
                                 <label className={styles.inputLabel}>
                                     Tipe Kamar (Room Types)
@@ -229,7 +254,7 @@ export function BulkUpdateModal({
                                     onChange={e => setSelectedRoomTypes([e.target.value])}
                                     className={styles.selectField}
                                 >
-                                    <option value="all">Semua Tipe Kamar (All Room Types)</option>
+                                    <option value="all">Semua Tipe Kamar</option>
                                     {roomTypes.map(rt => (
                                         <option key={rt.id} value={rt.id}>{rt.name}</option>
                                     ))}
@@ -245,7 +270,7 @@ export function BulkUpdateModal({
                                     onChange={e => setSelectedRatePlans([e.target.value])}
                                     className={styles.selectField}
                                 >
-                                    <option value="all">Semua Rate Plan (All Plans)</option>
+                                    <option value="all">Semua Rate Plan</option>
                                     {ratePlans.map(rp => (
                                         <option key={rp.id} value={rp.id}>{rp.name} ({rp.code})</option>
                                     ))}
@@ -267,11 +292,15 @@ export function BulkUpdateModal({
                                 </div>
                                 <select
                                     value={rateAction}
-                                    onChange={e => setRateAction(e.target.value as any)}
+                                    disabled={!canChangeRate}
+                                    onChange={e => {
+                                        if (!canChangeRate) return;
+                                        setRateAction(e.target.value as any);
+                                    }}
                                     className={styles.selectField}
-                                    style={{ width: "auto", height: "30px" }}
+                                    style={{ width: "auto", height: "30px", opacity: !canChangeRate ? 0.6 : 1, cursor: !canChangeRate ? "not-allowed" : undefined }}
                                 >
-                                    <option value="none">Tidak Diubah</option>
+                                    <option value="none">{!canChangeRate ? "Tidak Diizinkan (No Permission)" : "Tidak Diubah"}</option>
                                     <option value="set">Tetapkan Harga Pasti (Set Fixed Rp)</option>
                                     <option value="inc_amount">Naikkan Sebesar (+Rp)</option>
                                     <option value="dec_amount">Turunkan Sebesar (-Rp)</option>
@@ -279,7 +308,7 @@ export function BulkUpdateModal({
                                     <option value="dec_percent">Turunkan Persen (-%)</option>
                                 </select>
                             </div>
-                            {rateAction !== "none" && (
+                            {rateAction !== "none" && canChangeRate && (
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "10px" }}>
                                     <label style={{ fontSize: "11px", color: "#64748b" }}>
                                         Nilai Penyesuaian:
@@ -316,11 +345,15 @@ export function BulkUpdateModal({
                                 </div>
                                 <select
                                     value={stopSellAction}
-                                    onChange={e => setStopSellAction(e.target.value as any)}
+                                    disabled={!canStopSell}
+                                    onChange={e => {
+                                        if (!canStopSell) return;
+                                        setStopSellAction(e.target.value as any);
+                                    }}
                                     className={styles.selectField}
-                                    style={{ width: "auto", height: "30px" }}
+                                    style={{ width: "auto", height: "30px", opacity: !canStopSell ? 0.6 : 1, cursor: !canStopSell ? "not-allowed" : undefined }}
                                 >
-                                    <option value="none">Tidak Diubah</option>
+                                    <option value="none">{!canStopSell ? "Tidak Diizinkan (No Permission)" : "Tidak Diubah"}</option>
                                     <option value="close">🚫 Tutup Penjualan (Stop Sell ON)</option>
                                     <option value="open">✓ Buka Penjualan (Stop Sell OFF)</option>
                                 </select>
@@ -343,11 +376,15 @@ export function BulkUpdateModal({
                                 </div>
                                 <select
                                     value={inventoryAction}
-                                    onChange={e => setInventoryAction(e.target.value as any)}
+                                    disabled={!canChangeInventory}
+                                    onChange={e => {
+                                        if (!canChangeInventory) return;
+                                        setInventoryAction(e.target.value as any);
+                                    }}
                                     className={styles.selectField}
-                                    style={{ width: "auto", height: "30px" }}
+                                    style={{ width: "auto", height: "30px", opacity: !canChangeInventory ? 0.6 : 1, cursor: !canChangeInventory ? "not-allowed" : undefined }}
                                 >
-                                    <option value="none">Tidak Diubah</option>
+                                    <option value="none">{!canChangeInventory ? "Tidak Diizinkan (No Permission)" : "Tidak Diubah"}</option>
                                     <option value="set">Tetapkan Kuota (Set Availability)</option>
                                 </select>
                             </div>

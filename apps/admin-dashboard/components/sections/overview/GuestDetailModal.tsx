@@ -45,6 +45,9 @@ const cleanUndefined = (obj: any): any => {
 export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, onSave }: GuestDetailModalProps) {
     const router = useRouter();
     const { user, activeHotelCode } = useAuth();
+    const isSuperadmin = user?.role?.toLowerCase() === "superadmin" || user?.role?.toLowerCase() === "admin";
+    const canCancel = isSuperadmin || user?.permissions?.fo_cancel === true;
+    const canVoid = isSuperadmin || user?.permissions?.fo_void === true;
     const [isEditMode, setIsEditMode] = React.useState(initialEditing);
     const [showConfirmVoid, setShowConfirmVoid] = React.useState(false);
     const [showConfirmCancel, setShowConfirmCancel] = React.useState(false);
@@ -490,6 +493,11 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
     };
 
     const executeVoid = async () => {
+        if (!canVoid) {
+            toast.error("Anda tidak memiliki izin untuk melakukan void booking.");
+            setShowConfirmVoid(false);
+            return;
+        }
         try {
             const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
             if (!hotelId) {
@@ -534,6 +542,11 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
     };
 
     const executeCancel = async () => {
+        if (!canCancel) {
+            toast.error("Anda tidak memiliki izin untuk membatalkan booking.");
+            setShowConfirmCancel(false);
+            return;
+        }
         try {
             const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
             if (!hotelId) {
@@ -666,17 +679,31 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                 <button onClick={() => setIsEditMode(true)} className={styles.btnSecondary} style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px', fontWeight: 700 }}>Modify</button>
                                 {guest.status !== "CANCELLED" && guest.status !== "CANCEL" && guest.status !== "VOID" && guest.status !== "VOIDED" && (
                                     <button 
-                                        onClick={() => setShowConfirmCancel(true)} 
+                                        onClick={() => {
+                                            if (!canCancel) {
+                                                toast.error("Anda tidak memiliki izin untuk membatalkan booking.");
+                                                return;
+                                            }
+                                            setShowConfirmCancel(true);
+                                        }} 
                                         className={styles.btnWarning}
-                                        style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px', border: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                        style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', opacity: !canCancel ? 0.6 : 1, cursor: !canCancel ? 'not-allowed' : undefined }}
+                                        title={!canCancel ? "Tidak memiliki izin Cancel Booking" : undefined}
                                     >
                                         Cancel Booking
                                     </button>
                                 )}
                                 <button 
-                                    onClick={() => setShowConfirmVoid(true)} 
+                                    onClick={() => {
+                                        if (!canVoid) {
+                                            toast.error("Anda tidak memiliki izin untuk melakukan void booking.");
+                                            return;
+                                        }
+                                        setShowConfirmVoid(true);
+                                    }} 
                                     className={styles.btnDanger}
-                                    style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                    style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', opacity: !canVoid ? 0.6 : 1, cursor: !canVoid ? 'not-allowed' : undefined }}
+                                    title={!canVoid ? "Tidak memiliki izin Void Booking" : undefined}
                                 >
                                     <Trash2 size={14} /> Void Entry
                                 </button>

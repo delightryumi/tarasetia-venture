@@ -2,6 +2,7 @@
 
 import React, { useState, useLayoutEffect, useRef, useCallback } from "react";
 import { Sidebar } from "./Sidebar";
+import { ChannelManagerSidebar } from "./ChannelManagerSidebar";
 import { StatusWidget } from "./StatusWidget";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { BillingAlertModal } from "./BillingAlertModal";
@@ -218,6 +219,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     }
 
     const isSuperadminPage = pathname === "/superadmin";
+    const isChannelManagerPage = pathname === "/channel-manager";
     const hideSidebar = isSuperadminPage || pathname === "/inventory-control";
 
     return (
@@ -283,10 +285,17 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                     </header>
                 )}
                 {!hideSidebar && (
-                    <Sidebar
-                        isCollapsed={isCollapsed}
-                        setIsCollapsed={setIsCollapsed}
-                    />
+                    isChannelManagerPage ? (
+                        <ChannelManagerSidebar
+                            isCollapsed={isCollapsed}
+                            setIsCollapsed={setIsCollapsed}
+                        />
+                    ) : (
+                        <Sidebar
+                            isCollapsed={isCollapsed}
+                            setIsCollapsed={setIsCollapsed}
+                        />
+                    )
                 )}
                 {/* Mobile Overlay */}
                 {!isCollapsed && !hideSidebar && (

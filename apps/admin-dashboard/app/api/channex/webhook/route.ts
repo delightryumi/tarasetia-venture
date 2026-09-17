@@ -28,10 +28,54 @@ export async function POST(req: NextRequest) {
         // 1. Handle Booking Events (new, modification, cancellation)
         if (payload.event === "booking" || payload.event === "booking_new" || payload.event === "booking_modification" || payload.event === "booking_cancellation" || payload.booking) {
             const result = await channexSyncService.processIncomingBookingWebhook(payload);
+
+            // Broadcast Web Push to staff devices
+            const propertyId = payload.property_id || (payload.booking as any)?.property_id;
+            const hotelCode = propertyId 
+                ? await channexSyncService.findHotelCodeByChannexPropertyId(propertyId)
+                : null;
+
+            if (hotelCode) {
+                const bookingData = payload.booking || payload;
+                const isCancel = payload.event === "booking_cancellation" || (bookingData as any)?.status === "cancelled";
+                const guestName = `${(bookingData as any)?.customer?.name || ""} ${(bookingData as any)?.customer?.surname || ""}`.trim() || "Tamu OTA";
+                const otaName = (bookingData as any)?.ota_name || (bookingData as any)?.channel_name || "OTA";
+                const roomName = (bookingData as any)?.rooms?.[0]?.room_type_name || "Kamar Hotel";
+                const bookingRef = (bookingData as any)?.booking_id || result.bookingId || "Booking";
+
+                const pushTitle = isCancel
+                    ? `🚨 Pembatalan Reservasi! [${otaName}]`
+                    : `🛎️ Reservasi Baru Masuk! [${otaName}]`;
+
+                const pushBody = isCancel
+                    ? `Tamu ${guestName} membatalkan pesanan kamar ${roomName} (${bookingRef}). Segera cek ketersediaan!`
+                    : `Tamu ${guestName} memesan kamar ${roomName} (${bookingRef}). Check-in segera!`;
+
+                const { sendPushNotificationToHotel } = await import("@/lib/notifications/webPushServer");
+                sendPushNotificationToHotel(hotelCode, {
+                    title: pushTitle,
+                    body: pushBody,
+                    type: isCancel ? "booking_cancelled" : "booking_new",
+                    tag: `booking-${bookingRef}`,
+                    url: `/overview?module=front-office&bookingRef=${bookingRef}`,
+                    bookingId: bookingRef,
+                    otaName
+                }).catch(err => console.warn("[Webhook Push] Warning:", err?.message));
+            }
+
             return NextResponse.json({
                 success: true,
                 message: result.message,
                 bookingId: result.bookingId
+            });
+        }
+
+        // 1B. Handle Inbound ARI / Rate Changes from Channex
+        if (payload.event === "ari" || payload.event === "rate" || payload.event === "restriction") {
+            const ariResult = await channexSyncService.processIncomingAriWebhook(payload);
+            return NextResponse.json({
+                success: true,
+                message: ariResult.message
             });
         }
 

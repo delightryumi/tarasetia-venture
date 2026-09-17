@@ -26,6 +26,11 @@ interface RateInventoryGridProps {
     stageEdit: (key: string, value: any) => void;
     onSyncRoom?: (roomTypeId: string) => Promise<void>;
     syncingRoomTypeId?: string | null;
+    canStopSell?: boolean;
+    canChangeRate?: boolean;
+    canChangeInventory?: boolean;
+    channelFilter?: string;
+    channelConfigs?: Record<string, any>;
 }
 
 export function RateInventoryGrid({
@@ -38,8 +43,19 @@ export function RateInventoryGrid({
     totalDailyAvailable,
     stageEdit,
     onSyncRoom,
-    syncingRoomTypeId
+    syncingRoomTypeId,
+    canStopSell = true,
+    canChangeRate = true,
+    canChangeInventory = true,
+    channelFilter = "all",
+    channelConfigs = {}
 }: RateInventoryGridProps) {
+    const isChannelSpecific = channelFilter !== "all";
+    const chConfig = isChannelSpecific && channelConfigs ? channelConfigs[channelFilter] : null;
+    const chSeparationMode = chConfig?.separationMode || "merged";
+    const isAllotmentSeparated = isChannelSpecific && (chSeparationMode === "separated_allotment" || chSeparationMode === "separated_both");
+    const isRateSeparated = isChannelSpecific && (chSeparationMode === "separated_rate" || chSeparationMode === "separated_both");
+
     const formatCurrencyDisplay = (val: number) => {
         return Number(val || 0).toLocaleString("en-US", {
             minimumFractionDigits: 0,
@@ -157,10 +173,14 @@ export function RateInventoryGrid({
                                             const avail = dayStat?.availableRooms ?? 0;
                                             const isWeekend = dayStat?.isWeekend;
                                             const isZero = avail === 0;
-                                            const invKey = `inv_${rt.roomTypeId}_${dateStr}`;
+                                            const isChannelSpecific = channelFilter && channelFilter !== "all";
+                                            const invKey = isChannelSpecific 
+                                                ? `channelAllotment_${channelFilter}_${rt.roomTypeId}_${dateStr}`
+                                                : `inv_${rt.roomTypeId}_${dateStr}`;
 
                                             // 1. INVENTORY TAB: Editable room type allotment
                                             if (activeTab === "inventory") {
+                                                const canEditCellInv = canChangeInventory && (!isChannelSpecific || isAllotmentSeparated);
                                                 return (
                                                     <td
                                                         key={dateStr}
@@ -170,13 +190,27 @@ export function RateInventoryGrid({
                                                             type="number"
                                                             min={0}
                                                             value={avail}
+                                                            disabled={!canEditCellInv}
                                                             onChange={e => {
+                                                                if (!canEditCellInv) return;
                                                                 const val = Math.max(0, parseInt(e.target.value, 10) || 0);
                                                                 stageEdit(invKey, val);
                                                             }}
                                                             onWheel={e => e.currentTarget.blur()}
                                                             className={`${styles.invInput} ${isZero ? styles.invInputZero : ""}`}
-                                                            title={`Kapasitas tersedia: ${avail} / ${rt.totalPhysicalRooms}`}
+                                                            style={{
+                                                                ...(!canEditCellInv ? { cursor: "not-allowed", opacity: 0.65, backgroundColor: "#f8fafc" } : {}),
+                                                                ...(dayStat?.isCapped ? { borderColor: "#8b5cf6", backgroundColor: "#f5f3ff", fontWeight: 700 } : {})
+                                                            }}
+                                                            title={
+                                                                !canChangeInventory 
+                                                                    ? "Anda tidak memiliki izin untuk merubah inventory" 
+                                                                    : (isChannelSpecific && !isAllotmentSeparated)
+                                                                        ? `[Tergabung] Allotment ${chConfig?.channelName || channelFilter} mengikuti Common Pool fisik`
+                                                                        : (dayStat?.isCapped 
+                                                                            ? `[Capped OTA] Batas kuota ${chConfig?.channelName || channelFilter}: ${avail} unit` 
+                                                                            : `Kapasitas fisik tersedia: ${avail} / ${rt.totalPhysicalRooms}`)
+                                                            }
                                                         />
                                                     </td>
                                                 );
@@ -192,14 +226,20 @@ export function RateInventoryGrid({
                                                     >
                                                         <button
                                                             type="button"
+                                                            disabled={!canStopSell}
                                                             onClick={() => {
+                                                                if (!canStopSell) return;
                                                                 const targetState = !allStop;
                                                                 rt.ratePlans.forEach(rp => {
-                                                                    stageEdit(`stopSell_${rp.ratePlanId}_${dateStr}`, targetState);
+                                                                    const rpStopKey = isChannelSpecific 
+                                                                        ? `channelStopSell_${channelFilter}_${rp.ratePlanId}_${dateStr}` 
+                                                                        : `stopSell_${rp.ratePlanId}_${dateStr}`;
+                                                                    stageEdit(rpStopKey, targetState);
                                                                 });
                                                             }}
                                                             className={allStop ? styles.badgeClosed : styles.badgeOpen}
-                                                            title="Klik untuk toggle Stop Sell seluruh rate plan kamar ini"
+                                                            style={!canStopSell ? { cursor: "not-allowed", opacity: 0.6 } : undefined}
+                                                            title={!canStopSell ? "Anda tidak memiliki izin untuk merubah Stop Sell" : `Klik untuk toggle Stop Sell seluruh rate plan (${channelFilter})`}
                                                         >
                                                             {allStop ? "🚫 CLOSED" : "OPEN"}
                                                         </button>
@@ -265,12 +305,18 @@ export function RateInventoryGrid({
                                                             const isWeekend = dayStat?.isWeekend;
                                                             const isStopSell = !!dayStat?.stopSell;
 
-                                                            const rateKey = `rate_${rp.ratePlanId}_${dateStr}`;
-                                                            const stopSellKey = `stopSell_${rp.ratePlanId}_${dateStr}`;
+                                                            const isChannelSpecific = channelFilter && channelFilter !== "all";
+                                                            const rateKey = isChannelSpecific 
+                                                                ? `channelRate_${channelFilter}_${rp.ratePlanId}_${dateStr}` 
+                                                                : `rate_${rp.ratePlanId}_${dateStr}`;
+                                                            const stopSellKey = isChannelSpecific 
+                                                                ? `channelStopSell_${channelFilter}_${rp.ratePlanId}_${dateStr}` 
+                                                                : `stopSell_${rp.ratePlanId}_${dateStr}`;
 
                                                             // Rates Tab Render
                                                             if (activeTab === "rates") {
                                                                 const currentRate = dayStat?.rate ?? rp.baseRate;
+                                                                const canEditCellRate = canChangeRate && (!isChannelSpecific || isRateSeparated);
                                                                 return (
                                                                     <td
                                                                         key={dateStr}
@@ -279,13 +325,27 @@ export function RateInventoryGrid({
                                                                         <input
                                                                             type="text"
                                                                             value={formatCurrencyDisplay(currentRate)}
+                                                                            disabled={!canEditCellRate}
                                                                             onChange={e => {
+                                                                                if (!canEditCellRate) return;
                                                                                 const rawNum = Number(e.target.value.replace(/[^0-9.-]+/g, "")) || 0;
                                                                                 stageEdit(rateKey, rawNum);
                                                                             }}
                                                                             onWheel={e => e.currentTarget.blur()}
                                                                             className={`${styles.rateInput} ${isStopSell ? styles.rateInputStopSell : ""}`}
-                                                                            title={`Rp ${currentRate.toLocaleString()}`}
+                                                                            style={{
+                                                                                ...(!canEditCellRate ? { cursor: "not-allowed", opacity: 0.65, backgroundColor: "#f8fafc" } : {}),
+                                                                                ...(dayStat?.isChannelCustom ? { borderColor: "#10b981", backgroundColor: "#ecfdf5", fontWeight: 700 } : {})
+                                                                            }}
+                                                                            title={
+                                                                                !canChangeRate 
+                                                                                    ? "Anda tidak memiliki izin untuk merubah rate" 
+                                                                                    : (isChannelSpecific && !isRateSeparated)
+                                                                                        ? `[Tergabung] Tarif ${chConfig?.channelName || channelFilter} mengikuti tarif dasar Common Pool`
+                                                                                        : (dayStat?.isChannelCustom 
+                                                                                            ? `[Custom OTA Rate] Rp ${currentRate.toLocaleString()}` 
+                                                                                            : `Rp ${currentRate.toLocaleString()}`)
+                                                                            }
                                                                         />
                                                                     </td>
                                                                 );
@@ -300,8 +360,14 @@ export function RateInventoryGrid({
                                                                     >
                                                                         <button
                                                                             type="button"
-                                                                            onClick={() => stageEdit(stopSellKey, !isStopSell)}
+                                                                            disabled={!canStopSell}
+                                                                            onClick={() => {
+                                                                                if (!canStopSell) return;
+                                                                                stageEdit(stopSellKey, !isStopSell);
+                                                                            }}
                                                                             className={isStopSell ? styles.badgeClosed : styles.badgeOpen}
+                                                                            style={!canStopSell ? { cursor: "not-allowed", opacity: 0.6 } : undefined}
+                                                                            title={!canStopSell ? "Anda tidak memiliki izin untuk merubah Stop Sell" : (isStopSell ? "🚫 STOP SELL" : "OPEN")}
                                                                         >
                                                                             {isStopSell ? "🚫 STOP SELL" : "OPEN"}
                                                                         </button>

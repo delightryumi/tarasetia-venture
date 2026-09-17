@@ -15,7 +15,9 @@ import {
   Menu,
   Users,
   LogOut,
+  BellRing,
 } from 'lucide-react';
+import { NotificationSettingsDrawer } from '@/components/layout/NotificationSettingsDrawer';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { ModuleActionButtons } from '@/components/layout/ModuleActionButtons';
@@ -54,6 +56,7 @@ export default function SelectModulePage() {
   const [isHotelActive, setIsHotelActive] = useState<boolean | null>(null);
   const [nextDueDate, setNextDueDate] = useState<string>('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
 
 
 
@@ -326,8 +329,18 @@ export default function SelectModulePage() {
     },
   ];
 
-  // Tambahkan kartu Superadmin secara dinamis hanya untuk superadmin
+  // Tambahkan kartu Channel Manager & Superadmin secara dinamis HANYA untuk superadmin
   if (isSuperadmin) {
+    menus.push({
+      title: 'Channel Manager',
+      subtitle: 'OTA & Distribution',
+      description: 'Channex 2-way sync & inventory',
+      href: '/channel-manager',
+      active: true,
+      icon: 'globe',
+      image: '/images/modules/channel-manager.png',
+      colSpan: 1 as const,
+    });
     menus.push({
       title: 'Superadmin',
       subtitle: 'Central Registry',
@@ -570,6 +583,20 @@ export default function SelectModulePage() {
                         </>
                       )}
 
+                      {/* Notification Settings */}
+                      <button
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          setIsNotifOpen(true);
+                        }}
+                        className={styles.dropdownItem}
+                      >
+                        <BellRing className={styles.dropdownIcon} />
+                        <span>Notification Settings</span>
+                      </button>
+
+                      <div className={styles.dropdownDivider} />
+
                       <button
                         onClick={() => {
                           setIsMenuOpen(false);
@@ -619,6 +646,16 @@ export default function SelectModulePage() {
         )}
       </div>
       <BillingAlertModal />
+
+      {/* PWA Notification Settings Drawer */}
+      <NotificationSettingsDrawer
+        isOpen={isNotifOpen}
+        onClose={() => setIsNotifOpen(false)}
+        hotelCode={activeHotelCode || '1'}
+        userId={user?.uid || user?.email || 'guest'}
+        userEmail={user?.email || undefined}
+      />
     </div>
   );
 }
+

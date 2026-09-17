@@ -8,6 +8,7 @@ import styles from "./RateInventoryFilterBar.module.css";
 interface RateInventoryFilterBarProps {
     channelFilter: string;
     setChannelFilter: (val: string) => void;
+    channelConfigs?: Record<string, any>;
     roomTypeFilter: string;
     setRoomTypeFilter: (val: string) => void;
     roomTypes: RoomTypeInfo[];
@@ -26,6 +27,7 @@ interface RateInventoryFilterBarProps {
 export function RateInventoryFilterBar({
     channelFilter,
     setChannelFilter,
+    channelConfigs = {},
     roomTypeFilter,
     setRoomTypeFilter,
     roomTypes,
@@ -40,21 +42,43 @@ export function RateInventoryFilterBar({
     onResetStaged,
     onSaveAllChanges
 }: RateInventoryFilterBarProps) {
+    // Only display channels that are mapped/connected AND explicitly set to a separated mode
+    const separatedChannels = Object.entries(channelConfigs || {}).filter(([_, cfg]: [string, any]) => {
+        if (!cfg || cfg.isActive === false) return false;
+        const isMapped = !!cfg.hotelId || Object.keys(cfg.roomMappings || {}).length > 0;
+        if (!isMapped) return false;
+        return cfg.separationMode === "separated_rate" || cfg.separationMode === "separated_allotment" || cfg.separationMode === "separated_both";
+    });
+
+    // Auto-reset filter to "all" if selected channel is no longer separated
+    React.useEffect(() => {
+        if (channelFilter !== "all" && !separatedChannels.some(([code]) => code === channelFilter)) {
+            setChannelFilter("all");
+        }
+    }, [channelFilter, separatedChannels, setChannelFilter]);
+
     return (
         <div className={styles.filterBar}>
             <div className={styles.filterLeftGroup}>
-                {/* Channel Selector */}
+                {/* Channel Selector (Common Pool vs Specific Separated OTA) */}
                 <select
                     value={channelFilter}
                     onChange={e => setChannelFilter(e.target.value)}
                     className={styles.selectDropdown}
+                    style={{ fontWeight: 600, minWidth: "220px" }}
                 >
-                    <option value="all">OTA Common Pool ▾</option>
-                    <option value="traveloka">Traveloka</option>
-                    <option value="booking_com">Booking.com</option>
-                    <option value="agoda">Agoda</option>
-                    <option value="tiket">Tiket.com</option>
-                    <option value="direct">Direct Booking Engine</option>
+                    <option value="all">🌐 Semua Saluran (Common Pool / Tergabung)</option>
+                    {separatedChannels.map(([code, cfg]: [string, any]) => {
+                        const modeBadge = 
+                            cfg.separationMode === "separated_rate" ? "• [Tarif Terpisah]" :
+                            cfg.separationMode === "separated_allotment" ? "• [Allotment Terpisah]" :
+                            "• [Tarif & Allotment Terpisah]";
+                        return (
+                            <option key={code} value={code}>
+                                {cfg.icon || "🏨"} {cfg.channelName || code} {modeBadge}
+                            </option>
+                        );
+                    })}
                 </select>
 
                 {/* Room Type Selector */}

@@ -51,6 +51,9 @@ export function OverviewSection() {
     const currentModule = searchParams.get("module") || "front-office";
     const isReadOnly = currentModule === "housekeeping"; // read‑only mode for housekeeping
     const { user, activeHotelCode, activeHotelName } = useAuth();
+    const isSuperadmin = user?.role?.toLowerCase() === "superadmin" || user?.role?.toLowerCase() === "admin";
+    const canCancel = isSuperadmin || user?.permissions?.fo_cancel === true;
+    const canVoid = isSuperadmin || user?.permissions?.fo_void === true;
     const { branding, pos } = useSettings();
     
     const todayStr = React.useMemo(() => {
@@ -216,6 +219,10 @@ export function OverviewSection() {
                             const updated = { ...e, [field]: value };
                             if (field === "status" || field === "paymentStatus") {
                                 if (value === "CANCELLED" || value === "CANCEL") {
+                                    if (!canCancel) {
+                                        toast.error("Anda tidak memiliki izin untuk membatalkan booking/transaksi.");
+                                        return e;
+                                    }
                                     const now = new Date();
                                     const yyyy = now.getFullYear();
                                     const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -242,6 +249,11 @@ export function OverviewSection() {
     };
 
     const executeVoid = async () => {
+        if (!canVoid) {
+            toast.error("Anda tidak memiliki izin untuk melakukan Void booking/transaksi.");
+            setBookingToVoid(null);
+            return;
+        }
         if (!bookingToVoid) return;
         try {
             const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
@@ -301,6 +313,11 @@ export function OverviewSection() {
     };
 
     const executeCancel = async () => {
+        if (!canCancel) {
+            toast.error("Anda tidak memiliki izin untuk membatalkan booking/transaksi.");
+            setBookingToCancel(null);
+            return;
+        }
         if (!bookingToCancel) return;
         try {
             const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
@@ -1040,8 +1057,20 @@ export function OverviewSection() {
                     bookings={latestBookings}
                     onView={(b) => { setSelectedGuest(b); setIsEditing(false); }}
                     onEdit={(b) => { setSelectedGuest(b); setIsEditing(true); }}
-                    onDelete={(b) => setBookingToVoid(b)}
-                    onCancel={(b) => setBookingToCancel(b)}
+                    onDelete={(b) => {
+                        if (!canVoid) {
+                            toast.error("Anda tidak memiliki izin untuk melakukan Void booking/transaksi.");
+                            return;
+                        }
+                        setBookingToVoid(b);
+                    }}
+                    onCancel={(b) => {
+                        if (!canCancel) {
+                            toast.error("Anda tidak memiliki izin untuk membatalkan booking/transaksi.");
+                            return;
+                        }
+                        setBookingToCancel(b);
+                    }}
                     onStatusUpdate={handleStatusUpdate}
                     onExportExcel={handleExportExcel}
                     onExportPDF={handleExportPDF}
