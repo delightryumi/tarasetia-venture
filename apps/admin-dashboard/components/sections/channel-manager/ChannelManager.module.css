@@ -1374,38 +1374,65 @@
 
 .channelExtranetGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 12px;
-    background: transparent;
-    padding: 8px 0;
-    border: none;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin-top: 12px;
+    margin-bottom: 24px;
+}
+
+.channelExtranetItem {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
 }
 
 .channelFieldLabel {
     font-size: 11px;
     font-weight: 700;
-    color: #334155;
+    color: #475569;
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    line-height: 1.3;
+    min-height: 28px;
+    display: flex;
+    align-items: flex-end;
 }
 
 .channelFieldInput {
-    height: 32px;
+    height: 36px;
     font-size: 12px;
     text-align: left;
-}
-
-.channelFieldSelect {
-    height: 32px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0 10px;
+    background: #ffffff;
+    box-sizing: border-box;
     width: 100%;
 }
 
-.mappingSectionHeading {
+.channelFieldSelect {
+    height: 36px;
+    width: 100%;
     font-size: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0 10px;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+
+.mappingSectionHeading {
+    font-size: 13px;
     font-weight: 700;
     color: #0f172a;
-    margin-bottom: 6px;
-    display: block;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .cellRoomName {
@@ -1439,10 +1466,15 @@
 }
 
 .mappingInputField {
-    height: 28px;
+    height: 32px;
     text-align: left;
     max-width: 260px;
     flex: 1;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 12px;
+    box-sizing: border-box;
 }
 
 .mappingActionCell {
@@ -1715,6 +1747,16 @@
     align-items: center;
     gap: 8px;
     color: #16a34a;
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.sandboxResultError {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ef4444;
     font-weight: 700;
     margin-bottom: 8px;
     font-size: 12px;

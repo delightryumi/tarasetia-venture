@@ -165,6 +165,16 @@ export function ExecutiveSummarySection({
                         onClick={onCardClick}
                     />
                     <SummaryCard
+                        label="POMEC / Maintenance Expenses"
+                        icon={<Receipt size={18} />}
+                        accent="#ef4444"
+                        value={pnlResult?.expPomec || 0}
+                        loading={loading}
+                        variants={rise}
+                        bgVariant="expense"
+                        onClick={onCardClick}
+                    />
+                    <SummaryCard
                         label="Operational Expenses"
                         icon={<Receipt size={18} />}
                         accent="#ef4444"

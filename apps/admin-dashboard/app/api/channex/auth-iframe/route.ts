@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
         const hotelData = hotelDoc.data();
         let channexPropertyId = hotelData?.channexPropertyId || hotelData?.channelManager?.channexPropertyId;
         const customApiKey = hotelData?.channelManager?.apiKey || process.env.CHANNEX_API_KEY;
+        const env = hotelData?.channelManager?.environment || (process.env.CHANNEX_ENV === "production" ? "production" : "staging");
 
         if (!customApiKey) {
             return NextResponse.json({
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
                     timezone: "Asia/Jakarta",
                     country: "ID",
                     address: hotelData?.address || "Indonesia"
-                }, customApiKey);
+                }, customApiKey, env);
 
                 channexPropertyId = created?.data?.id;
                 if (channexPropertyId) {
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Generate One-Time Token for Iframe
-        const { iframeUrl, token } = await channexClient.createOneTimeToken(channexPropertyId, username, customApiKey);
+        const { iframeUrl, token } = await channexClient.createOneTimeToken(channexPropertyId, username, customApiKey, env);
 
         return NextResponse.json({
             success: true,

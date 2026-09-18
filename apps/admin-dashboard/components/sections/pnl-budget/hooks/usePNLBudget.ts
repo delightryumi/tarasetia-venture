@@ -286,6 +286,7 @@ export const usePNLBudget = () => {
               }
             } else {
               const cat = (t.category || t.department || "").toLowerCase();
+              const subCat = (t.subCategory || "").toLowerCase();
               const desc = (t.description || "").toLowerCase();
               if (
                 cat.includes("extra_bed") ||
@@ -300,6 +301,9 @@ export const usePNLBudget = () => {
                 cat.includes("resto") ||
                 cat.includes("food") ||
                 cat.includes("bev") ||
+                subCat.includes("breakfast") ||
+                desc.includes("breakfast") ||
+                desc.includes("sarapan") ||
                 desc.includes("makan") ||
                 desc.includes("minum")
               ) {

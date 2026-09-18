@@ -182,15 +182,20 @@ export interface MyTaraRatePlan {
     hotelCode: string;
     name: string;
     code: string;
-    roomTypeId: string;
-    roomTypeName: string;
-    baseRate: number;
+    roomTypeId?: string; // Primary or legacy roomTypeId
+    roomTypeName?: string; // Primary or legacy roomTypeName
+    roomTypeIds?: string[]; // Multiple selected room types
+    roomTypeNames?: string[]; // Names of selected room types
+    roomRates?: Record<string, number>; // Per-room net PMS rates: { [roomTypeId]: rate }
+    baseRate: number; // Default / primary base rate
     currency: string;
     mealsIncluded: boolean;
+    breakfastRate?: number; // USALI Package Breakfast Rate per Pax (dynamic & adjustable)
     cancellationPolicy: "FREE" | "NON_REFUNDABLE" | "MODERATE";
     minStay: number;
     stopSell: boolean;
     channexRatePlanId?: string;
+    channexRatePlanIds?: Record<string, string>;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -210,6 +215,7 @@ export interface ChannexHotelSettings {
     channexPropertyId?: string;
     apiKeyOverride?: string;
     webhookSecret?: string;
+    defaultBreakfastRate?: number; // Hotel default USALI Breakfast Rate per Pax (default Rp 75.000)
     isSyncActive: boolean;
     lastSyncAt?: string;
     lastSyncStatus?: "SUCCESS" | "FAILED" | "PENDING";

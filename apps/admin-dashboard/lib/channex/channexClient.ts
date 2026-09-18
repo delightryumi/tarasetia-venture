@@ -204,7 +204,8 @@ export class ChannexClient {
         }, customApiKey, environment);
 
         const token = res?.data?.token || "";
-        const iframeHost = this.getBaseUrl(environment).replace("/api/v1", "");
+        const isProd = environment === "production" || (!environment && this.defaultBaseUrl.includes("api.channex.io"));
+        const iframeHost = isProd ? "https://app.channex.io" : "https://staging.channex.io";
         const iframeUrl = `${iframeHost}/auth/exchange?oauth_session_key=${token}&app_mode=headless&redirect_to=/channels&property_id=${propertyId}&allow_notifications_edit=false`;
 
         return {
@@ -423,16 +424,54 @@ export class ChannexClient {
 
     /**
      * Test connection credentials against an OTA before creating
+     * Official Channex Specification: POST /api/v1/channels/test_connection
+     * Payload: { channel: adapter_code, settings: { ... } }
      */
     async testChannelConnection(channelCode: string, settings: any, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
         return this.request<{ data: any; meta: any }>("/channels/test_connection", {
             method: "POST",
             body: JSON.stringify({
-                channel: {
-                    channel: channelCode,
-                    settings
-                }
+                channel: channelCode,
+                settings
             })
+        }, customApiKey, environment);
+    }
+
+    /**
+     * Retrieve the mapping details of a channel (rooms and rates exposed by the OTA)
+     * Official Channex Specification: POST /api/v1/channels/mapping_details
+     */
+    async getChannelMappingDetails(channelCode: string, settings: any, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any }>("/channels/mapping_details", {
+            method: "POST",
+            body: JSON.stringify({
+                channel: channelCode,
+                settings
+            })
+        }, customApiKey, environment);
+    }
+
+    /**
+     * Retrieve the connection details of a channel (currency and connection states)
+     * Official Channex Specification: POST /api/v1/channels/connection_details
+     */
+    async getChannelConnectionDetails(channelCode: string, settings: any, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any }>("/channels/connection_details", {
+            method: "POST",
+            body: JSON.stringify({
+                channel: channelCode,
+                settings
+            })
+        }, customApiKey, environment);
+    }
+
+    /**
+     * Check readiness of a channel connection before activation
+     * Official Channex Specification: POST /api/v1/channels/{id}/check_readiness
+     */
+    async checkChannelReadiness(channelId: string, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any }>(`/channels/${channelId}/check_readiness`, {
+            method: "POST"
         }, customApiKey, environment);
     }
 
@@ -460,8 +499,9 @@ export class ChannexClient {
      * Activate channel connection in Channex to begin ARI and Booking synchronization
      */
     async activateChannel(channelId: string, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
-        return this.request<{ data: any; meta: any }>(`/channels/${channelId}/activate`, {
-            method: "POST"
+        return this.request<{ data: any; meta: any }>(`/channels/${channelId}`, {
+            method: "PUT",
+            body: JSON.stringify({ channel: { is_active: true } })
         }, customApiKey, environment);
     }
 
@@ -469,8 +509,9 @@ export class ChannexClient {
      * Deactivate channel connection in Channex
      */
     async deactivateChannel(channelId: string, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
-        return this.request<{ data: any; meta: any }>(`/channels/${channelId}/deactivate`, {
-            method: "POST"
+        return this.request<{ data: any; meta: any }>(`/channels/${channelId}`, {
+            method: "PUT",
+            body: JSON.stringify({ channel: { is_active: false } })
         }, customApiKey, environment);
     }
 }

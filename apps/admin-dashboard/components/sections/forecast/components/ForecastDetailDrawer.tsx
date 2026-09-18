@@ -13,6 +13,7 @@ interface ForecastDetailDrawerProps {
     summary?: any;
     onClose: () => void;
     formatCurrency: (v: number) => string;
+    onSelectGuest?: (guest: any) => void;
 }
 
 const getChannelIcon = (channel?: string, source?: string) => {
@@ -29,7 +30,7 @@ const getChannelIcon = (channel?: string, source?: string) => {
     return "globe";
 };
 
-export const ForecastDetailDrawer: React.FC<ForecastDetailDrawerProps> = ({ title, entries, summary, onClose, formatCurrency }) => {
+export const ForecastDetailDrawer: React.FC<ForecastDetailDrawerProps> = ({ title, entries, summary, onClose, formatCurrency, onSelectGuest }) => {
     // Check if clicked outside
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -113,7 +114,8 @@ export const ForecastDetailDrawer: React.FC<ForecastDetailDrawerProps> = ({ titl
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.05 }}
                                     className={styles.guestItem}
-                                    style={{ gap: "12px", alignItems: "center" }}
+                                    style={{ gap: "12px", alignItems: "center", cursor: onSelectGuest ? "pointer" : "default" }}
+                                    onClick={() => onSelectGuest && onSelectGuest(item)}
                                 >
                                     <div style={{ display: "flex", alignItems: "center", gap: "12px", overflow: "hidden" }}>
                                         <div className={styles.guestAvatar}>

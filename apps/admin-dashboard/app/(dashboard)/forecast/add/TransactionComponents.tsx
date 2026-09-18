@@ -490,9 +490,18 @@ export function RatePlanSelect({ value, options, onChange }: { value: string, op
                                 >
                                     <div className="flex items-center justify-between w-full">
                                         <span className={styles.popoverItemText} style={{ fontWeight: 600 }}>{option.name}</span>
-                                        <span className="text-[11px] opacity-80">Rp {(option.baseRate || 0).toLocaleString("id-ID")}</span>
+                                        <span className="text-[11px] opacity-80">
+                                            {option.roomRates && Object.values(option.roomRates).length > 1
+                                                ? `Rp ${Math.min(...Object.values(option.roomRates).map(Number)).toLocaleString("id-ID")} - ${Math.max(...Object.values(option.roomRates).map(Number)).toLocaleString("id-ID")}`
+                                                : `Rp ${(option.baseRate || 0).toLocaleString("id-ID")}`}
+                                        </span>
                                     </div>
-                                    <span className="text-[10px] opacity-70">{option.mealsIncluded ? "Termasuk Sarapan" : "Room Only"}</span>
+                                    <span className="text-[10px] opacity-70">
+                                        {option.roomTypeNames && option.roomTypeNames.length > 0
+                                            ? `${option.roomTypeNames.length} Kamar Terhubung • `
+                                            : (option.roomTypeName ? `${option.roomTypeName} • ` : "")}
+                                        {option.mealsIncluded ? "Termasuk Sarapan" : "Room Only"}
+                                    </span>
                                 </button>
                             ))
                         )}

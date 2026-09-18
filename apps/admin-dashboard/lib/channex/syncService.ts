@@ -24,7 +24,12 @@ export class ChannexSyncService {
             const hotelsSnap = await adminDb.collection("hotels").get();
             for (const docSnap of hotelsSnap.docs) {
                 const data = docSnap.data();
-                if (data.channexPropertyId === channexPropertyId || data.channelManager?.channexPropertyId === channexPropertyId) {
+                if (
+                    docSnap.id === channexPropertyId ||
+                    data.channexPropertyId === channexPropertyId || 
+                    data.channelManager?.channexPropertyId === channexPropertyId ||
+                    data.channelManager?.openChannelHotelCode === channexPropertyId
+                ) {
                     return docSnap.id;
                 }
             }
@@ -46,14 +51,14 @@ export class ChannexSyncService {
     /**
      * Processes incoming Booking Webhook from Channex (Booking.com, Agoda, Traveloka, Tiket.com, etc.)
      */
-    async processIncomingBookingWebhook(payload: ChannexWebhookPayload): Promise<{ success: boolean; message: string; bookingId?: string }> {
+    async processIncomingBookingWebhook(payload: ChannexWebhookPayload, explicitHotelCode?: string): Promise<{ success: boolean; message: string; bookingId?: string }> {
         const { event, property_id, booking } = payload;
 
         if (!booking || !property_id) {
             return { success: false, message: "Missing booking or property_id in webhook payload" };
         }
 
-        const hotelCode = await this.findHotelCodeByChannexPropertyId(property_id);
+        const hotelCode = explicitHotelCode || await this.findHotelCodeByChannexPropertyId(property_id);
         if (!hotelCode) {
             return { success: false, message: `No active hotel found for Channex Property ID: ${property_id}` };
         }
@@ -65,7 +70,10 @@ export class ChannexSyncService {
         const arrivalDate = booking.arrival_date;
         const departureDate = booking.departure_date;
         const totalPrice = Number(booking.total_price) || 0;
-        const isChannelCollect = booking.payment_type === "channel_collect" || booking.payment_collect === "channel";
+        const isChannelCollect = booking.payment_type === "channel_collect" 
+            || booking.payment_type === "virtual_card" 
+            || booking.payment_collect === "channel"
+            || (channelName && !["walk-in", "direct"].includes(channelName.toLowerCase()) && booking.payment_collect !== "property");
 
         // Calculate nights
         const start = new Date(arrivalDate);
@@ -83,6 +91,11 @@ export class ChannexSyncService {
         const roomTypesSnap = await adminDb.collection(`hotels/${hotelCode}/roomTypes`).get();
         const roomTypes = roomTypesSnap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
 
+        // Fetch hotel data for propertyName and settings
+        const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
+        const hotelData = hotelDoc.data() || {};
+        const propertyName = hotelData.name || hotelData.propertyName || "Setara Demo Partner";
+
         // 1. GHOST BOOKING CLEANUP & CANCELLATION RETENTION (Certification Stage 5B & Audit Requirement)
         const affectedDates = new Set<string>();
         try {
@@ -90,20 +103,38 @@ export class ChannexSyncService {
             for (const doc of existingRevenueSnap.docs) {
                 const dayData = doc.data();
                 const entries = dayData.entries || [];
-                const matchingEntry = entries.find((e: any) => e.bookingId === otaBookingId || e.channexBookingId === booking.id);
+                const matchingEntry = entries.find((e: any) => 
+                    e.bookingId === otaBookingId || 
+                    e.channexBookingId === booking.id ||
+                    e.voucherCode === otaBookingId ||
+                    e.bookingId === booking.id ||
+                    e.bookingId === `${otaBookingId}-BFT` ||
+                    e.parentBookingId === otaBookingId ||
+                    e.parentBookingId === booking.id
+                );
                 if (matchingEntry) {
                     const docDate = dayData.date || doc.id.replace(`${hotelCode}_`, "");
                     affectedDates.add(docDate);
                     
                     if (isCancelled) {
-                        // Keep transaction record for Front Office & Audit visibility, but mark as CANCELLED with roomCount: 0
+                        // Keep transaction record for Front Office & Audit visibility, but mark as CANCELLED with roomCount: 0 & roomsCount: 0
                         const updatedEntries = entries.map((e: any) => {
-                            if (e.bookingId === otaBookingId || e.channexBookingId === booking.id) {
+                            if (
+                                e.bookingId === otaBookingId || 
+                                e.channexBookingId === booking.id ||
+                                e.voucherCode === otaBookingId ||
+                                e.bookingId === booking.id ||
+                                e.bookingId === `${otaBookingId}-BFT` ||
+                                e.parentBookingId === otaBookingId ||
+                                e.parentBookingId === booking.id
+                            ) {
                                 return {
                                     ...e,
+                                    amount: 0,
                                     status: "CANCELLED",
                                     paymentStatus: "CANCELLED",
                                     roomCount: 0,
+                                    roomsCount: 0,
                                     note: `${e.note || ''} [CANCELLED by OTA Webhook]`.trim(),
                                     lastUpdated: new Date().toISOString()
                                 };
@@ -116,7 +147,14 @@ export class ChannexSyncService {
                         });
                     } else {
                         // For date modifications: clear out slots that may no longer be part of new stay range
-                        const cleanedEntries = entries.filter((e: any) => e.bookingId !== otaBookingId && e.channexBookingId !== booking.id);
+                        const cleanedEntries = entries.filter((e: any) => 
+                            e.bookingId !== otaBookingId && 
+                            e.channexBookingId !== booking.id &&
+                            e.voucherCode !== otaBookingId &&
+                            e.bookingId !== `${otaBookingId}-BFT` &&
+                            e.parentBookingId !== otaBookingId &&
+                            e.parentBookingId !== booking.id
+                        );
                         await doc.ref.update({
                             entries: cleanedEntries,
                             lastUpdated: new Date().toISOString()
@@ -157,6 +195,7 @@ export class ChannexSyncService {
 
                 const rPlans = hotelRatePlans.filter((rp: any) => 
                     rp.roomTypeId === mappedRoomType?.id || 
+                    (Array.isArray(rp.roomTypeIds) && rp.roomTypeIds.includes(mappedRoomType?.id)) ||
                     (rp.roomTypeName && rp.roomTypeName.trim().toLowerCase() === (mappedRoomType?.name || "").trim().toLowerCase())
                 );
 
@@ -212,102 +251,201 @@ export class ChannexSyncService {
             }
         }
 
-        // Process each booked room
-        for (const bookedRoom of (booking.rooms || [])) {
-            const mappedRoomType = roomTypes.find((rt: any) => 
-                rt.channexRoomTypeId === bookedRoom.room_type_id || 
-                rt.id === bookedRoom.room_type_id ||
-                rt.name?.toLowerCase() === (bookedRoom.room_type_id || "").toLowerCase()
-            ) || roomTypes[0];
+        // Process each booked room (skip creating new entries if already cancelled in existing daily records)
+        if (!isCancelled || affectedDates.size === 0) {
+            for (const bookedRoom of (booking.rooms || [])) {
+                const mappedRoomType = roomTypes.find((rt: any) => 
+                    rt.channexRoomTypeId === bookedRoom.room_type_id || 
+                    rt.id === bookedRoom.room_type_id ||
+                    rt.name?.toLowerCase() === (bookedRoom.room_type_id || "").toLowerCase()
+                ) || roomTypes[0];
 
-            const roomTypeName = mappedRoomType?.name || "Standard Room";
-            const roomTypeId = mappedRoomType?.id || bookedRoom.room_type_id;
-            primaryRoomTypeName = roomTypeName;
+                const roomTypeName = mappedRoomType?.name || "Standard Room";
+                const roomTypeId = mappedRoomType?.id || bookedRoom.room_type_id;
+                primaryRoomTypeName = roomTypeName;
 
-            // Find an available physical room number
-            const physicalRooms = (mappedRoomType?.physicalRooms || []).map((r: any) => typeof r === "string" ? r : r.number || r.name).filter(Boolean);
-            const assignedRoomNumber = physicalRooms[0] || "AUTO";
-            primaryRoomNumber = assignedRoomNumber;
+                // Find an available physical room number
+                const physicalRooms = (mappedRoomType?.physicalRooms || []).map((r: any) => typeof r === "string" ? r : r.number || r.name).filter(Boolean);
+                const assignedRoomNumber = physicalRooms[0] || "AUTO";
+                primaryRoomNumber = assignedRoomNumber;
 
-            // Divide rate per night
-            const roomNights = bookedRoom.days && bookedRoom.days.length > 0 ? bookedRoom.days.length : nights;
-            const avgNightlyRate = Math.round(totalPrice / roomNights);
+                // Check if rate plan or booking includes breakfast (USALI Package Plan)
+                const bookedRatePlan = hotelRatePlans.find((rp: any) => 
+                    rp.id === bookedRoom.rate_plan_id || 
+                    rp.channexRatePlanId === bookedRoom.rate_plan_id ||
+                    rp.code === bookedRoom.rate_plan_id
+                );
 
-            for (let i = 0; i < roomNights; i++) {
-                const currentDate = new Date(start);
-                currentDate.setDate(currentDate.getDate() + i);
-                const dateStr = currentDate.toISOString().split("T")[0];
-                affectedDates.add(dateStr);
+                const isWithBreakfast = Boolean(
+                    bookedRatePlan?.mealsIncluded ||
+                    bookedRatePlan?.name?.toLowerCase().includes("breakfast") ||
+                    bookedRatePlan?.name?.toLowerCase().includes("bb") ||
+                    (bookedRatePlan?.code && bookedRatePlan.code.toLowerCase().endsWith("-bb")) ||
+                    (booking as any).meals?.breakfast ||
+                    (bookedRoom as any).meals?.breakfast
+                );
 
-                const dailyAmount = bookedRoom.days && bookedRoom.days[i] ? Number(bookedRoom.days[i].amount) : avgNightlyRate;
-                const payTransfer = isChannelCollect ? dailyAmount : 0;
-                const payHotel = 0;
+                // Dynamic Breakfast Rate: from rate plan override, or hotel settings, or default 75.000 IDR
+                const dynamicBreakfastRate = Number(
+                    bookedRatePlan?.breakfastRate || 
+                    hotelData.settings?.breakfastRate || 
+                    hotelData.settings?.defaultBreakfastRate || 
+                    hotelData.breakfastRate || 
+                    75000
+                );
 
-                const entryObject = {
-                    type: "accommodation",
-                    guestName,
-                    bookingId: otaBookingId,
-                    channexBookingId: booking.id,
-                    phone: guest.phone || "",
-                    email: guest.email || "",
-                    address: guest.address || "",
-                    nationality: guest.country || "INDONESIA",
-                    company: channelName,
-                    checkInDate: arrivalDate,
-                    checkOutDate: departureDate,
-                    effectiveDate: dateStr,
-                    roomType: roomTypeName,
-                    roomTypeId: roomTypeId,
-                    roomNumber: assignedRoomNumber,
-                    roomCount: isCancelled ? 0 : 1,
-                    nights: 1,
-                    channel: channelName,
-                    voucherCode: otaBookingId,
-                    amount: dailyAmount,
-                    totalAmount: totalPrice,
-                    payHotel,
-                    payTransfer,
-                    paidCash: payHotel,
-                    paidAmount1: payHotel,
-                    paidTransfer: payTransfer,
-                    paidAmount2: payTransfer,
-                    initialPayHotel: payHotel,
-                    initialPayTransfer: payTransfer,
-                    paymentStatus: isCancelled ? "CANCELLED" : paymentStatus,
-                    source: "OTA",
-                    status: isCancelled ? "CANCELLED" : finalStatus,
-                    staffName: "Channex Channel Manager",
-                    note: `OTA Booking via ${channelName}. Ref: ${otaBookingId}. ${isCancelled ? '[CANCELLED]' : ''} ${booking.notes || ""}`.trim(),
-                    timestamp: new Date().toISOString(),
-                    isOTA: true,
-                    channexRaw: {
-                        eventId: payload.event,
-                        insertedAt: payload.inserted_at
+                const adults = Math.max(1, Number((bookedRoom as any).occupancy?.adults || (bookedRoom as any).adults || (bookedRoom as any).occupancy || 2));
+
+                // Divide rate per night
+                const roomNights = bookedRoom.days && bookedRoom.days.length > 0 ? bookedRoom.days.length : nights;
+                const avgNightlyRate = Math.round(totalPrice / roomNights);
+
+                for (let i = 0; i < roomNights; i++) {
+                    const currentDate = new Date(start);
+                    currentDate.setDate(currentDate.getDate() + i);
+                    const dateStr = currentDate.toISOString().split("T")[0];
+                    affectedDates.add(dateStr);
+
+                    const dailyAmount = bookedRoom.days && bookedRoom.days[i] ? Number(bookedRoom.days[i].amount) : avgNightlyRate;
+
+                    // USALI Standard 1: Package Revenue Allocation
+                    // Allocate breakfast portion to F&B, remaining to Room Accommodation
+                    const calculatedBreakfast = dynamicBreakfastRate * adults;
+                    const breakfastAmount = isWithBreakfast ? Math.min(calculatedBreakfast, Math.round(dailyAmount * 0.45)) : 0;
+                    const netRoomAmount = Math.max(0, dailyAmount - breakfastAmount);
+
+                    const roomPayTransfer = isChannelCollect ? netRoomAmount : 0;
+                    const bftPayTransfer = isChannelCollect ? breakfastAmount : 0;
+
+                    const entryObject = {
+                        type: "accommodation",
+                        guestName,
+                        bookingId: otaBookingId,
+                        channexBookingId: booking.id,
+                        phone: guest.phone || "",
+                        email: guest.email || "",
+                        address: guest.address || "",
+                        nationality: guest.country || "INDONESIA",
+                        company: channelName,
+                        checkInDate: arrivalDate,
+                        checkOutDate: departureDate,
+                        effectiveDate: dateStr,
+                        roomType: roomTypeName,
+                        roomTypeId: roomTypeId,
+                        ratePlanName: bookedRatePlan?.name || (isWithBreakfast ? `${roomTypeName} - With Breakfast` : `${roomTypeName} - Room Only`),
+                        ratePlanId: bookedRoom.rate_plan_id || bookedRatePlan?.id || "",
+                        rateCode: bookedRatePlan?.code || (isWithBreakfast ? "BB" : "RO"),
+                        mealsIncluded: isWithBreakfast,
+                        hasBreakfast: isWithBreakfast,
+                        breakfastPax: isWithBreakfast ? adults : 0,
+                        breakfastAmount: breakfastAmount,
+                        breakfastRate: dynamicBreakfastRate,
+                        pax: adults,
+                        roomCount: 1,
+                        roomsCount: 1,
+                        roomNumber: assignedRoomNumber,
+                        nights: 1,
+                        amount: isCancelled ? 0 : netRoomAmount,
+                        totalAmount: isCancelled ? 0 : netRoomAmount,
+                        paidCash: 0,
+                        paidAmount1: 0,
+                        paidTransfer: roomPayTransfer,
+                        paidAmount2: roomPayTransfer,
+                        paidOta: roomPayTransfer,
+                        paymentMethod: isChannelCollect ? "Channel Collect (OTA Collect / VCC)" : "Property Collect (Pay at Hotel)",
+                        paymentCollect: isChannelCollect ? "channel" : "property",
+                        paymentType: booking.payment_type || (isChannelCollect ? "virtual_card" : "cash"),
+                        paymentStatus: isCancelled ? "CANCELLED" : paymentStatus,
+                        payHotel: 0,
+                        payTransfer: roomPayTransfer,
+                        source: "OTA",
+                        status: isCancelled ? "CANCELLED" : finalStatus,
+                        propertyName,
+                        staffName: "Channex Channel Manager",
+                        note: `OTA Booking via ${channelName}. Ref: ${otaBookingId}.${isWithBreakfast ? ' [USALI Room Charge (Net of Breakfast)]' : ''} ${isCancelled ? '[CANCELLED]' : ''} ${booking.notes || ""}`.trim(),
+                        timestamp: new Date().toISOString(),
+                        isOTA: true,
+                        channexRaw: {
+                            eventId: payload.event,
+                            insertedAt: payload.inserted_at
+                        }
+                    };
+
+                    const entriesToAdd: any[] = [entryObject];
+
+                    if (isWithBreakfast && breakfastAmount > 0) {
+                        const breakfastEntry = {
+                            type: "other_income",
+                            department: "F&B",
+                            category: "F&B",
+                            subCategory: "breakfast",
+                            revenueType: "breakfast",
+                            guestName: `${guestName} (Breakfast Package)`,
+                            rawGuestName: guestName,
+                            bookingId: `${otaBookingId}-BFT`,
+                            parentBookingId: otaBookingId,
+                            channexBookingId: booking.id,
+                            phone: guest.phone || "",
+                            email: guest.email || "",
+                            nationality: guest.country || "INDONESIA",
+                            company: channelName,
+                            checkInDate: arrivalDate,
+                            checkOutDate: departureDate,
+                            effectiveDate: dateStr,
+                            roomType: roomTypeName,
+                            roomNumber: assignedRoomNumber,
+                            description: `Package Breakfast (${adults} Pax) - ${roomTypeName}`,
+                            amount: isCancelled ? 0 : breakfastAmount,
+                            pax: adults,
+                            source: "OTA Package",
+                            channel: channelName,
+                            voucherCode: otaBookingId,
+                            payHotel: 0,
+                            payTransfer: bftPayTransfer,
+                            paidCash: 0,
+                            paidAmount1: 0,
+                            paidTransfer: bftPayTransfer,
+                            paidAmount2: bftPayTransfer,
+                            status: isCancelled ? "CANCELLED" : finalStatus,
+                            paymentStatus: isCancelled ? "CANCELLED" : paymentStatus,
+                            paymentCollect: isChannelCollect ? "channel" : "property",
+                            paymentType: booking.payment_type || (isChannelCollect ? "virtual_card" : "cash"),
+                            paymentMethod: isChannelCollect ? "Channel Collect (OTA Collect / VCC)" : "Property Collect (Pay at Hotel)",
+                            timestamp: new Date().toISOString(),
+                            isBreakfastPackage: true,
+                            isOTA: true,
+                            note: `USALI Package Allocation: Breakfast for ${adults} pax included in room package (${channelName})`,
+                        };
+                        entriesToAdd.push(breakfastEntry);
                     }
-                };
 
-                const dailyDocRef = adminDb.collection(`hotels/${hotelCode}/daily_revenue`).doc(`${hotelCode}_${dateStr}`);
-                const dailyDoc = await dailyDocRef.get();
+                    const dailyDocRef = adminDb.collection(`hotels/${hotelCode}/daily_revenue`).doc(`${hotelCode}_${dateStr}`);
+                    const dailyDoc = await dailyDocRef.get();
 
-                if (dailyDoc.exists) {
-                    const existingEntries = dailyDoc.data()?.entries || [];
-                    const filteredEntries = existingEntries.filter((e: any) => 
-                        e.bookingId !== otaBookingId && e.channexBookingId !== booking.id
-                    );
-                    filteredEntries.push(entryObject);
+                    if (dailyDoc.exists) {
+                        const existingEntries = dailyDoc.data()?.entries || [];
+                        const filteredEntries = existingEntries.filter((e: any) => 
+                            e.bookingId !== otaBookingId && 
+                            e.channexBookingId !== booking.id &&
+                            e.voucherCode !== otaBookingId &&
+                            e.bookingId !== `${otaBookingId}-BFT` &&
+                            e.parentBookingId !== otaBookingId
+                        );
+                        filteredEntries.push(...entriesToAdd);
 
-                    await dailyDocRef.update({
-                        entries: filteredEntries,
-                        date: dateStr,
-                        lastUpdated: new Date().toISOString()
-                    });
-                } else {
-                    await dailyDocRef.set({
-                        entries: [entryObject],
-                        date: dateStr,
-                        hotelId: hotelCode,
-                        createdAt: new Date().toISOString()
-                    });
+                        await dailyDocRef.update({
+                            entries: filteredEntries,
+                            date: dateStr,
+                            lastUpdated: new Date().toISOString()
+                        });
+                    } else {
+                        await dailyDocRef.set({
+                            entries: entriesToAdd,
+                            date: dateStr,
+                            hotelId: hotelCode,
+                            createdAt: new Date().toISOString()
+                        });
+                    }
                 }
             }
         }

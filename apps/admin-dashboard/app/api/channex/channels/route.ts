@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { FieldValue } from "firebase-admin/firestore";
 import { channexClient } from "@/lib/channex/channexClient";
 
 /**
@@ -78,7 +79,7 @@ const TARA_TO_CHANNEX_ADAPTERS: Record<string, string> = {
 /**
  * Helper to resolve hotel config (Channex Property ID, API Key, Environment)
  */
-async function getHotelChannexContext(hotelCode: string) {
+async function getHotelChannexContext(hotelCode: string, requirePropertyId: boolean = true) {
     const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
     if (!hotelDoc.exists) {
         throw new Error(`Hotel [${hotelCode}] tidak ditemukan di database.`);
@@ -87,11 +88,11 @@ async function getHotelChannexContext(hotelCode: string) {
     const hotelData = hotelDoc.data() || {};
     const cm = hotelData.channelManager || {};
 
-    const channexPropertyId = hotelData.channexPropertyId || cm.channexPropertyId;
+    const channexPropertyId = hotelData.channexPropertyId || cm.channexPropertyId || cm.propertyId || "";
     const apiKey = cm.apiKey || process.env.CHANNEX_API_KEY || "";
     const env = (cm.env === "production" ? "production" : "staging") as "staging" | "production";
 
-    if (!channexPropertyId) {
+    if (requirePropertyId && !channexPropertyId) {
         throw new Error(`Hotel [${hotelCode}] belum terhubung ke Properti Channex. Silakan buka tab Kredensial API terlebih dahulu.`);
     }
 
@@ -117,15 +118,17 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
 
-        const { channexPropertyId, apiKey, env, cm } = await getHotelChannexContext(hotelCode);
+        const { channexPropertyId, apiKey, env, cm } = await getHotelChannexContext(hotelCode, false);
 
-        // Fetch live channels from Channex for this property
+        // Fetch live channels from Channex for this property if propertyId exists
         let channexChannels: any[] = [];
-        try {
-            const channexRes = await channexClient.getChannels(channexPropertyId, apiKey, env);
-            channexChannels = channexRes?.data || [];
-        } catch (apiErr: any) {
-            console.warn(`[Channex Channels GET] Warning fetching from Channex:`, apiErr.message);
+        if (channexPropertyId && apiKey) {
+            try {
+                const channexRes = await channexClient.getChannels(channexPropertyId, apiKey, env);
+                channexChannels = channexRes?.data || [];
+            } catch (apiErr: any) {
+                console.warn(`[Channex Channels GET] Warning fetching from Channex:`, apiErr.message);
+            }
         }
 
         return NextResponse.json({
@@ -144,7 +147,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/channex/channels
- * Actions: 'connect', 'disconnect', 'sync_all', 'test_connection'
+ * Actions: 'connect', 'disconnect', 'sync_all', 'test_connection', 'mapping_details'
  */
 export async function POST(req: NextRequest) {
     try {
@@ -155,60 +158,202 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
 
-        const { hotelData, cm, channexPropertyId, apiKey, env } = await getHotelChannexContext(hotelCode);
-
         // ====================================================
         // ACTION 1: TEST CONNECTION WITH OTA VIA CHANNEX
         // ====================================================
         if (action === "test_connection") {
             const adapterCode = TARA_TO_CHANNEX_ADAPTERS[channelCode] || channelCode;
-            const settings = channelData?.settings || { hotel_id: channelData?.hotelId || "" };
+            const hotelId = channelData?.hotelId || channelData?.settings?.hotel_id || channelData?.settings?.hotel_code || "";
+
+            if (!hotelId) {
+                return NextResponse.json({
+                    success: false,
+                    message: "Silakan masukkan Hotel ID Extranet terlebih dahulu untuk menguji koneksi."
+                }, { status: 200 });
+            }
+
+            const { apiKey, env } = await getHotelChannexContext(hotelCode, false);
+
+            if (!apiKey) {
+                return NextResponse.json({
+                    success: false,
+                    message: "API Key Channex belum dikonfigurasi. Silakan isi API Key di tab 'Kredensial API' terlebih dahulu."
+                }, { status: 200 });
+            }
+
+            // Populate settings for adapter (handles hotel_id and hotel_code)
+            const settings = channelData?.settings || {
+                hotel_id: hotelId,
+                hotel_code: hotelId
+            };
 
             try {
                 const testResult = await channexClient.testChannelConnection(adapterCode, settings, apiKey, env);
+                const isSuccess = testResult?.data?.success ?? true;
+                const errorDetail = testResult?.data?.errors;
+
+                if (!isSuccess) {
+                    let errMsg = "Koneksi ditolak oleh OTA. Pastikan Hotel ID Extranet valid dan properti sudah diotorisasi.";
+                    if (errorDetail === "implementation_not_defined") {
+                        errMsg = `OTA ${adapterCode} tidak menyediakan endpoint uji probe langsung. Otorisasi dilakukan via portal Extranet ${adapterCode} (pilih Provider: Channex). Anda dapat langsung memetakan kamar & rate plan lalu klik 'Simpan & Sinkronkan ke Channex'.`;
+                    } else if (errorDetail === "authentication_failed" || errorDetail === "invalid_credentials") {
+                        errMsg = `Autentikasi gagal. Hotel ID atau kredensial ${adapterCode} belum terdaftar atau belum diizinkan oleh OTA.`;
+                    } else if (typeof errorDetail === "string") {
+                        errMsg = errorDetail;
+                    } else if (errorDetail) {
+                        errMsg = JSON.stringify(errorDetail);
+                    }
+
+                    return NextResponse.json({
+                        success: false,
+                        message: `OTA Validasi (${adapterCode}): ${errMsg}`,
+                        result: testResult
+                    }, { status: 200 });
+                }
+
                 return NextResponse.json({
                     success: true,
-                    message: "Koneksi ke OTA berhasil divalidasi oleh Channex!",
+                    message: `Koneksi ke OTA (${adapterCode}) berhasil divalidasi oleh Channex!`,
                     result: testResult
                 });
             } catch (testErr: any) {
+                console.warn("[Channex Test Connection Error]:", testErr.message);
                 return NextResponse.json({
                     success: false,
-                    message: testErr.message || "Gagal menguji koneksi ke OTA."
-                }, { status: 400 });
+                    message: `Validasi gagal: ${testErr.message}`
+                }, { status: 200 });
             }
         }
 
         // ====================================================
-        // ACTION 2: CONNECT / SYNC CHANNEL TO CHANNEX
+        // ACTION 1B: GET MAPPING DETAILS FROM OTA VIA CHANNEX
         // ====================================================
-        if (action === "connect") {
+        if (action === "mapping_details") {
+            const adapterCode = TARA_TO_CHANNEX_ADAPTERS[channelCode] || channelCode;
+            const hotelId = channelData?.hotelId || channelData?.settings?.hotel_id || channelData?.settings?.hotel_code || "";
+            const { apiKey, env } = await getHotelChannexContext(hotelCode, false);
+
+            if (!apiKey || !hotelId) {
+                return NextResponse.json({ success: false, message: "API Key dan Hotel ID diperlukan." }, { status: 200 });
+            }
+
+            const settings = { hotel_id: hotelId, hotel_code: hotelId, ...(channelData?.settings || {}) };
+            try {
+                const mappingRes = await channexClient.getChannelMappingDetails(adapterCode, settings, apiKey, env);
+                return NextResponse.json({
+                    success: true,
+                    data: mappingRes?.data || {}
+                });
+            } catch (err: any) {
+                return NextResponse.json({
+                    success: false,
+                    message: err.message || "Gagal mengambil data mapping dari OTA."
+                }, { status: 200 });
+            }
+        }
+
+        // ====================================================
+        // ACTION 2: CONNECT / SYNC CHANNEL & MAPPINGS TO CHANNEX
+        // ====================================================
+        if (action === "connect" || action === "sync_mapping") {
             if (!channelCode) {
                 return NextResponse.json({ error: "channelCode is required" }, { status: 400 });
             }
 
+            const { hotelData, cm, channexPropertyId, apiKey, env } = await getHotelChannexContext(hotelCode, true);
             const adapterCode = TARA_TO_CHANNEX_ADAPTERS[channelCode] || channelCode;
-            const hotelId = channelData?.hotelId || "";
+            const hotelId = channelData?.hotelId || channelData?.settings?.hotel_id || channelData?.settings?.hotel_code || "";
 
-            let channexChannelId = channelData?.channexChannelId || null;
+            let channexChannelId = channelData?.channexChannelId || cm.channels?.[channelCode]?.channexChannelId || null;
             let channexStatus = "ACTIVE";
             let channexSyncNote = "Terkoneksi langsung via My TARA API Engine";
 
             // If an API key is available and hotelId is provided, attempt to register/activate with Channex
-            if (apiKey && hotelId) {
+            if (apiKey && channexPropertyId && hotelId) {
                 try {
-                    // Try finding if channel is already registered on Channex
+                    // 1. Resolve Group ID
+                    let groupId = cm.groupId || hotelData.groupId;
+                    if (!groupId) {
+                        try {
+                            const propRes = await channexClient.getProperty(channexPropertyId, apiKey, env);
+                            groupId = propRes?.data?.relationships?.groups?.data?.[0]?.id || propRes?.data?.relationships?.group?.data?.id;
+                        } catch (propErr) {
+                            console.warn("[Channex getProperty group resolution warning]:", propErr);
+                        }
+                    }
+
+                    // 2. Fetch local roomTypes and ratePlans from Firestore to construct rate_plans mappings
+                    const roomTypesSnap = await adminDb.collection("hotels").doc(hotelCode).collection("roomTypes").get();
+                    const localRoomTypes = roomTypesSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+
+                    const ratePlansSnap = await adminDb.collection("hotels").doc(hotelCode).collection("ratePlans").get();
+                    const localRatePlans = ratePlansSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+
+                    // Build mapping items for Channex
+                    const roomMappings = channelData?.roomMappings || cm.channels?.[channelCode]?.roomMappings || {};
+                    const rateMappings = channelData?.rateMappings || cm.channels?.[channelCode]?.rateMappings || {};
+
+                    const ratePlansPayload: any[] = [];
+                    const seenRatePlanIds = new Set<string>();
+
+                    for (const rp of localRatePlans) {
+                        const otaRateCode = rateMappings[rp.id];
+                        const channexRateId = rp.channexRatePlanId;
+                        if (!channexRateId || !otaRateCode) continue;
+
+                        // Find corresponding room type
+                        const matchedRt = localRoomTypes.find(r => r.id === rp.roomTypeId);
+                        const otaRoomCode = (matchedRt && roomMappings[matchedRt.id]) 
+                            ? roomMappings[matchedRt.id] 
+                            : (hotelId || otaRateCode);
+
+                        const capacity = Number(matchedRt?.capacity || 2);
+                        const isPrimary = !seenRatePlanIds.has(channexRateId);
+                        seenRatePlanIds.add(channexRateId);
+
+                        ratePlansPayload.push({
+                            rate_plan_id: channexRateId,
+                            settings: {
+                                room_type_code: String(otaRoomCode),
+                                rate_plan_code: String(otaRateCode),
+                                occupancy: capacity,
+                                pricing_type: "OBP",
+                                primary_occ: isPrimary,
+                                readonly: false
+                            }
+                        });
+                    }
+
+                    // 3. Check existing channels on Channex
                     const existingChannelsRes = await channexClient.getChannels(channexPropertyId, apiKey, env);
                     const existingList = existingChannelsRes?.data || [];
                     const existing = existingList.find((c: any) => 
+                        (channexChannelId && c.id === channexChannelId) ||
                         c?.attributes?.channel === adapterCode || 
                         c?.attributes?.channel_code === adapterCode ||
                         c?.attributes?.title?.toLowerCase().includes(channelCode.replace("_", ""))
                     );
 
+                    const channelSettings = {
+                        hotel_id: hotelId,
+                        hotel_code: hotelId,
+                        ...(channelData?.settings || {})
+                    };
+
                     if (existing) {
                         channexChannelId = existing.id;
-                        channexStatus = existing.attributes?.is_active ? "ACTIVE" : "PENDING";
+                        // Update existing channel with rate_plans mapping & settings
+                        try {
+                            const updatePayload = {
+                                channel: adapterCode,
+                                settings: channelSettings,
+                                ...(ratePlansPayload.length > 0 ? { rate_plans: ratePlansPayload } : {})
+                            };
+                            await channexClient.updateChannel(existing.id, updatePayload, apiKey, env);
+                        } catch (updErr: any) {
+                            console.warn(`[Channex Channel Update Warning]:`, updErr.message);
+                        }
+
                         // Activate if inactive
                         if (!existing.attributes?.is_active) {
                             try {
@@ -216,28 +361,35 @@ export async function POST(req: NextRequest) {
                                 channexStatus = "ACTIVE";
                             } catch (actErr: any) {
                                 console.warn(`[Channex Activate Warning]:`, actErr.message);
+                                channexStatus = existing.attributes?.is_active ? "ACTIVE" : "PENDING";
                             }
+                        } else {
+                            channexStatus = "ACTIVE";
                         }
                     } else {
-                        // Create Channel Connection on Channex
+                        // Create Channel Connection on Channex with official schema
                         const createPayload = {
-                            title: channelData?.channelName || adapterCode,
-                            property_id: channexPropertyId,
+                            title: `${channelData?.channelName || adapterCode} - ${hotelData?.name || hotelCode}`,
+                            group_id: groupId,
+                            properties: [channexPropertyId],
                             channel: adapterCode,
-                            settings: {
-                                hotel_id: hotelId
-                            }
+                            settings: channelSettings,
+                            ...(ratePlansPayload.length > 0 ? { rate_plans: ratePlansPayload } : {})
                         };
 
                         try {
                             const createRes = await channexClient.createChannel(createPayload, apiKey, env);
                             channexChannelId = createRes?.data?.id;
                             if (channexChannelId) {
-                                await channexClient.activateChannel(channexChannelId, apiKey, env);
-                                channexStatus = "ACTIVE";
+                                try {
+                                    await channexClient.activateChannel(channexChannelId, apiKey, env);
+                                    channexStatus = "ACTIVE";
+                                } catch (actErr: any) {
+                                    console.warn(`[Channex Activate Warning]:`, actErr.message);
+                                }
                             }
                         } catch (createErr: any) {
-                            console.warn(`[Channex Direct Creation Notice]: ${createErr.message}. Channel mapped in TARA with local activation.`);
+                            console.warn(`[Channex Direct Creation Notice]: ${createErr.message}.`);
                             channexSyncNote = `Terkoneksi di TARA (Channex Staging: ${createErr.message})`;
                         }
                     }
@@ -283,6 +435,7 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: "channelCode is required" }, { status: 400 });
             }
 
+            const { cm, apiKey, env } = await getHotelChannexContext(hotelCode, false);
             const currentChannel = cm.channels?.[channelCode];
             if (currentChannel?.channexChannelId && apiKey) {
                 try {
@@ -295,12 +448,21 @@ export async function POST(req: NextRequest) {
             const updatedChannels = { ...(cm.channels || {}) };
             delete updatedChannels[channelCode];
 
-            await adminDb.collection("hotels").doc(hotelCode).set({
-                channelManager: {
-                    channels: updatedChannels,
-                    lastSyncAt: new Date().toISOString()
-                }
-            }, { merge: true });
+            // Use update with FieldValue.delete to completely remove the map entry from Firestore
+            try {
+                await adminDb.collection("hotels").doc(hotelCode).update({
+                    [`channelManager.channels.${channelCode}`]: FieldValue.delete(),
+                    "channelManager.lastSyncAt": new Date().toISOString()
+                });
+            } catch (fsErr: any) {
+                // Fallback if document structure requires set
+                await adminDb.collection("hotels").doc(hotelCode).set({
+                    channelManager: {
+                        channels: updatedChannels,
+                        lastSyncAt: new Date().toISOString()
+                    }
+                }, { merge: true });
+            }
 
             return NextResponse.json({
                 success: true,
@@ -313,6 +475,7 @@ export async function POST(req: NextRequest) {
         // ACTION 3B: CLEAN DUMMY / UNMAPPED GHOST CHANNELS
         // ====================================================
         if (action === "clean_dummy") {
+            const { cm, channexPropertyId, apiKey, env } = await getHotelChannexContext(hotelCode, true);
             const channexRes = await channexClient.getChannels(channexPropertyId, apiKey, env);
             const liveChannexChannels = channexRes?.data || [];
             const liveChannelIds = new Set(liveChannexChannels.map((c: any) => c.id));
@@ -345,6 +508,7 @@ export async function POST(req: NextRequest) {
         // ACTION 4: FULL RE-SYNC CHANNELS FROM CHANNEX
         // ====================================================
         if (action === "sync_all") {
+            const { cm, channexPropertyId, apiKey, env } = await getHotelChannexContext(hotelCode, true);
             const channexRes = await channexClient.getChannels(channexPropertyId, apiKey, env);
             const liveChannexChannels = channexRes?.data || [];
 

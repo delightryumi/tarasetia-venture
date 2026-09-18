@@ -812,3 +812,250 @@
   align-items: center;
   justify-content: center;
 }
+
+/* ── Room Checklist Architecture (Inverted Rate Plan Setup) ── */
+.roomsChecklistSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+}
+
+.roomsChecklistHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.roomsChecklistTitleBox {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.roomsChecklistTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.roomsChecklistSubtitle {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.roomsChecklistActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnChecklistAction {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.btnChecklistAction:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.roomsChecklistList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.roomCheckCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.roomCheckCard:hover {
+  border-color: #94a3b8;
+}
+
+.roomCheckCardActive {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.roomCheckLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.roomCheckCheckbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #166534;
+  cursor: pointer;
+}
+
+.roomCheckInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.roomCheckName {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.roomCheckUnits {
+  font-size: 10.5px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.roomCheckPriceWrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.roomCheckPriceLabel {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.roomCheckPriceBox {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: #ffffff;
+  overflow: hidden;
+  height: 28px;
+}
+
+.roomCheckPriceBox:focus-within {
+  border-color: #166534;
+  box-shadow: 0 0 0 2px rgba(22, 101, 52, 0.1);
+}
+
+.roomCheckPrefix {
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 0 6px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #e2e8f0;
+}
+
+.roomCheckInput {
+  border: none;
+  background: transparent;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: #0f172a;
+  width: 100px;
+  outline: none;
+}
+
+.roomCheckDisabledText {
+  font-size: 11px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* ── Table Room Badges & Range ── */
+.roomBadgesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  max-width: 280px;
+}
+
+.roomBadgePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #1e3a2f;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 2px 7px;
+  border-radius: 12px;
+}
+
+.roomBadgePillMore {
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 2px 6px;
+  border-radius: 12px;
+  cursor: help;
+}
+
+.presetChipsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.presetChip {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.presetChip:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+

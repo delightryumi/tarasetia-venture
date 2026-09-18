@@ -24,7 +24,8 @@ interface ReceiptDialogProps {
   tableNumber: string;
   notes: string;
   paymentMethod: string;
-  cart: CartItem[];
+  cart?: CartItem[] | any[];
+  items?: ReceiptItemData[];
   subtotal: number;
   tax: number;
   discount: number;
@@ -33,26 +34,12 @@ interface ReceiptDialogProps {
   cashierName?: string;
   onClose?: () => void;
   transactionId?: string;
-  status?: 'PAID' | 'UNPAID';
-}
-
-/**
- * Groups cart items into:
- *   { category: { subcategory: CartItem[] } }
- */
-function groupCartItems(cart: CartItem[]) {
-  const grouped: Record<string, Record<string, CartItem[]>> = {};
-
-  cart.forEach(item => {
-    const cat = item.product.category || 'Lainnya';
-    const sub = item.product.subcategory?.trim() || '—';
-
-    if (!grouped[cat]) grouped[cat] = {};
-    if (!grouped[cat][sub]) grouped[cat][sub] = [];
-    grouped[cat][sub].push(item);
-  });
-
-  return grouped;
+  status?: 'PAID' | 'UNPAID' | 'SUCCESS' | 'CANCELLED' | 'VOID' | string;
+  service?: number;
+  serviceRate?: number;
+  taxRate?: number;
+  date?: string;
+  cancelReason?: string;
 }
 
 export default function ReceiptDialog({
@@ -62,7 +49,8 @@ export default function ReceiptDialog({
   tableNumber,
   notes,
   paymentMethod,
-  cart,
+  cart = [],
+  items,
   subtotal,
   tax,
   discount,
@@ -71,7 +59,12 @@ export default function ReceiptDialog({
   cashierName = 'Kasir',
   onClose,
   transactionId = '',
-  status = 'PAID'
+  status = 'PAID',
+  service,
+  serviceRate,
+  taxRate,
+  date,
+  cancelReason,
 }: ReceiptDialogProps) {
   const { formatCurrency } = useCurrency();
   const [storeName, setStoreName] = React.useState('BUMI ANYOM RESORT');
@@ -100,20 +93,25 @@ export default function ReceiptDialog({
     return diff >= 0 ? diff : 0;
   };
 
-  // Map cart items to ReceiptItemData
-  const safeCart = Array.isArray(cart) ? cart : [];
-  const receiptItems: ReceiptItemData[] = safeCart.map((item: any) => ({
-    id: item.product?.id || item.id || '',
-    name: item.product?.name || item.name || 'Item',
-    category: item.product?.category || item.category || 'Lainnya',
-    subcategory: item.product?.subcategory || item.subcategory || '—',
-    price: Number(item.product?.price ?? item.price ?? 0),
-    quantity: Number(item.quantity ?? item.qty ?? 1),
-    isCompliment: item.isCompliment,
-    complimentReason: item.complimentReason,
-    selectedAddons: item.selectedAddons || item.addons || [],
-    note: item.note || '',
-  }));
+  // Map cart items or use pre-mapped items
+  const receiptItems: ReceiptItemData[] = React.useMemo(() => {
+    if (items && Array.isArray(items) && items.length > 0) {
+      return items;
+    }
+    const safeCart = Array.isArray(cart) ? cart : [];
+    return safeCart.map((item: any) => ({
+      id: item.product?.id || item.productId || item.id || '',
+      name: item.product?.productstock?.name || item.product?.name || item.name || 'Item',
+      category: item.product?.productstock?.cat || item.product?.category || item.category || 'Lainnya',
+      subcategory: item.product?.productstock?.subcategory || item.product?.subcategory || item.subcategory || '—',
+      price: Number(item.product?.sellprice ?? item.product?.price ?? item.price ?? 0),
+      quantity: Number(item.quantity ?? item.qty ?? 1),
+      isCompliment: item.isCompliment,
+      complimentReason: item.complimentReason,
+      selectedAddons: item.selectedAddons || item.addons || [],
+      note: item.note || '',
+    }));
+  }, [items, cart]);
 
   const now = new Date().toLocaleDateString('id-ID', {
     year: 'numeric',
@@ -123,40 +121,42 @@ export default function ReceiptDialog({
     minute: '2-digit'
   });
 
+  const isCancelled = status === 'CANCELLED' || status === 'VOID';
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-xl max-w-sm max-h-[90vh] flex flex-col overflow-hidden p-0 print:absolute print:left-0 print:top-0 print:transform-none print:border-none print:shadow-none print:w-full print:max-w-full print:h-auto print:max-h-none print:overflow-visible print:bg-white print:m-0 print:p-0">
+      <AlertDialogContent className="bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-xl max-w-sm max-h-[90vh] flex flex-col overflow-hidden p-0 print:absolute print:left-0 print:top-0 print:transform-none print:border-none print:shadow-none print:w-full print:max-w-full print:h-auto print:max-h-none print:overflow-visible print:bg-white print:m-0 print:p-0 print:visible print:block">
         <div className="sr-only">
           <AlertDialogTitle>Struk Pembayaran</AlertDialogTitle>
           <AlertDialogDescription>Rincian struk belanja transaksi kasir.</AlertDialogDescription>
         </div>
 
         {/* ── Scrollable receipt body ── */}
-        <div className="flex-1 flex flex-col items-center text-center px-4 pt-5 pb-2 font-mono text-neutral-700 dark:text-neutral-300 overflow-y-auto thin-scrollbar print:p-0 print:block">
-          {/* Success Icon */}
-          <CheckCircle2 className="w-10 h-10 text-emerald-500 mb-4 shrink-0 print:hidden" />
-
+        <div className="flex-1 flex flex-col items-center text-center p-4 font-mono text-neutral-700 dark:text-neutral-300 overflow-y-auto thin-scrollbar print:p-0 print:block print:overflow-visible print:w-full print:max-w-full">
           {/* Reusable Thermal Receipt Component */}
-          <div className="border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 p-4 flex justify-center w-full max-w-sm shadow-sm shrink-0 print:p-0 print:bg-white print:border-none print:shadow-none print:w-full print:max-w-full print:mx-0 print:block">
+          <div className="border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 p-4 flex justify-center w-full max-w-sm shadow-sm shrink-0 print:p-0 print:bg-white print:border-none print:shadow-none print:w-full print:max-w-full print:mx-0 print:block print:overflow-visible">
             <ThermalReceipt
               shopInfo={{ name: storeName, address, phone }}
               transactionInfo={{ 
                 id: transactionId || '—', 
-                date: now, 
+                date: date || now, 
                 customerName, 
                 cashierName, 
                 paymentMethod: status === 'UNPAID' ? 'unpaid' : paymentMethod,
                 status: status,
+                cancelReason: cancelReason,
                 tableName: tableNumber || undefined,
               }}
               items={receiptItems}
               totals={{
-                subtotal, discount, 
-                taxRate: subtotal - discount > 0 ? Math.round((tax / (subtotal - discount)) * 100) : 10, 
+                subtotal, 
+                discount, 
+                taxRate: taxRate !== undefined ? taxRate : (subtotal - discount > 0 ? Math.round((tax / (subtotal - discount)) * 100) : 10), 
                 taxAmount: tax, 
+                serviceRate: serviceRate,
+                serviceAmount: service,
                 payableAmount, 
-                cashAmount: status === 'UNPAID' ? undefined : (paymentMethod === 'cash' ? parseFloat(cashAmount) : undefined), 
+                cashAmount: status === 'UNPAID' ? undefined : (paymentMethod === 'cash' || !isNaN(parseFloat(cashAmount)) ? parseFloat(cashAmount) : undefined), 
                 changeAmount: status === 'UNPAID' ? undefined : (paymentMethod === 'cash' ? calculatedChange() : undefined)
               }}
               className="shadow-sm border border-neutral-200 print:shadow-none print:border-none print:w-full"

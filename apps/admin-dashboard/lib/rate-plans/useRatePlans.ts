@@ -60,42 +60,62 @@ export const useRatePlans = () => {
                 return;
             }
 
-            for (const rt of roomTypes) {
-                const rtBase = Number(rt.price || rt.baseRate || 0);
+            const allRoomTypeIds = roomTypes.map(r => r.id);
+            const allRoomTypeNames = roomTypes.map(r => r.name);
 
-                // 1. Room Only Plan
-                await addDoc(getHotelCollection(db, "ratePlans", activeHotelCode), {
-                    hotelCode: activeHotelCode,
-                    name: `${rt.name} - Room Only`,
-                    code: `${(rt.name || "RM").slice(0, 3).toUpperCase()}-RO`,
-                    roomTypeId: rt.id,
-                    roomTypeName: rt.name,
-                    baseRate: rtBase,
-                    currency: "IDR",
-                    mealsIncluded: false,
-                    cancellationPolicy: "FREE",
-                    minStay: 1,
-                    stopSell: false,
-                    createdAt: new Date().toISOString()
-                });
+            const roRates: Record<string, number> = {};
+            const bbRates: Record<string, number> = {};
 
-                // 2. Bed & Breakfast Plan
-                await addDoc(getHotelCollection(db, "ratePlans", activeHotelCode), {
-                    hotelCode: activeHotelCode,
-                    name: `${rt.name} - With Breakfast`,
-                    code: `${(rt.name || "RM").slice(0, 3).toUpperCase()}-BB`,
-                    roomTypeId: rt.id,
-                    roomTypeName: rt.name,
-                    baseRate: rtBase > 0 ? rtBase + 100000 : 0,
-                    currency: "IDR",
-                    mealsIncluded: true,
-                    cancellationPolicy: "FREE",
-                    minStay: 1,
-                    stopSell: false,
-                    createdAt: new Date().toISOString()
-                });
-            }
-            toast.success("Default Rate Plans berhasil dibuat.");
+            roomTypes.forEach(rt => {
+                const rtBase = Number(rt.price || rt.baseRate || 500000);
+                roRates[rt.id] = rtBase;
+                bbRates[rt.id] = rtBase + 100000;
+            });
+
+            const primaryBaseRate = Number(roomTypes[0]?.price || roomTypes[0]?.baseRate || 500000);
+
+            // 1. Master Room Only Plan (RO)
+            await addDoc(getHotelCollection(db, "ratePlans", activeHotelCode), {
+                hotelCode: activeHotelCode,
+                name: "Room Only (RO)",
+                code: "RO",
+                roomTypeId: roomTypes[0]?.id || "",
+                roomTypeName: roomTypes[0]?.name || "",
+                roomTypeIds: allRoomTypeIds,
+                roomTypeNames: allRoomTypeNames,
+                roomRates: roRates,
+                baseRate: primaryBaseRate,
+                currency: "IDR",
+                mealsIncluded: false,
+                cancellationPolicy: "FREE",
+                minStay: 1,
+                stopSell: false,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+
+            // 2. Master Bed & Breakfast Plan (BB)
+            await addDoc(getHotelCollection(db, "ratePlans", activeHotelCode), {
+                hotelCode: activeHotelCode,
+                name: "With Breakfast (BB)",
+                code: "BB",
+                roomTypeId: roomTypes[0]?.id || "",
+                roomTypeName: roomTypes[0]?.name || "",
+                roomTypeIds: allRoomTypeIds,
+                roomTypeNames: allRoomTypeNames,
+                roomRates: bbRates,
+                baseRate: primaryBaseRate + 100000,
+                currency: "IDR",
+                mealsIncluded: true,
+                breakfastRate: 75000,
+                cancellationPolicy: "FREE",
+                minStay: 1,
+                stopSell: false,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+
+            toast.success("Default Master Rate Plans (RO & BB) berhasil dibuat untuk semua kamar.");
         } catch (err: any) {
             console.error("Error seeding rate plans:", err);
             toast.error(`Gagal membuat default rate plans: ${err.message}`);

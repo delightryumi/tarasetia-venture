@@ -61,9 +61,9 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                                 onClick={() => onItemClick?.(item)}
                                 className={`${styles.guestItem} ${isCancelled ? styles.cancelledItem : ''}`}
                             >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
-                                        <div className={styles.guestAvatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', filter: isCancelled ? 'grayscale(100%)' : 'none', opacity: isCancelled ? 0.45 : 1 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', minWidth: 0, gap: '8px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                                        <div className={styles.guestAvatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, filter: isCancelled ? 'grayscale(100%)' : 'none', opacity: isCancelled ? 0.45 : 1 }}>
                                             {item.channel === "Booking Engine" ? (
                                                 <Globe size={14} className="text-stone-400 dark:text-stone-500" />
                                             ) : (
@@ -133,7 +133,7 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                                             </div>
                                         </div>
                                     </div>
-                                    <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '16px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                    <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '8px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
                                         <p 
                                             className={styles.guestAmount} 
                                             style={{ 

@@ -137,7 +137,19 @@ export function processPnLData(
     });
   const expFrontOfficeAndPurchasing = frontOfficeAndPurchasingExpenseItems.reduce((sum, e) => sum + e.amount, 0);
 
-  // 4. Other Manual Expenses (excluding Housekeeping, F&B, Front Office, and Purchasing)
+  // 4. POMEC / Engineering & Energy expenses (Property Operation, Maintenance & Energy Cost)
+  const pomecExpenseItems = expenses
+    .filter(e => {
+      const deptLower = (e.department || "").toLowerCase();
+      const catLower = (e.category || "").toLowerCase();
+      const nameLower = (e.name || "").toLowerCase();
+      return deptLower.includes('pomec') || deptLower.includes('eng') || deptLower.includes('maintenance') ||
+             catLower.includes('pomec') || catLower.includes('maintenance') || catLower.includes('pln') || catLower.includes('electricity') ||
+             nameLower.includes('pomec') || nameLower.includes('engineering');
+    });
+  const expPomec = pomecExpenseItems.reduce((sum, e) => sum + e.amount, 0);
+
+  // 5. Other Manual Expenses (excluding Housekeeping, F&B, Front Office, Purchasing, and POMEC)
   const otherManualExpenses = expenses
     .filter(e => {
       const nameLower = (e.name || "").toLowerCase();
@@ -159,8 +171,11 @@ export function processPnLData(
       
       const isFB = isBanquet || isBeverage || isFood || deptLower.includes('f&b') || deptLower.includes('kitchen') || deptLower.includes('resto');
       const isFOorPurchasing = deptLower.includes('front office') || deptLower.includes('fo') || deptLower.includes('purchasing');
+      const isPOMEC = deptLower.includes('pomec') || deptLower.includes('eng') || deptLower.includes('maintenance') ||
+                      catLower.includes('pomec') || catLower.includes('maintenance') || catLower.includes('pln') || catLower.includes('electricity') ||
+                      nameLower.includes('pomec') || nameLower.includes('engineering');
       
-      return !isHk && !isFB && !isFOorPurchasing;
+      return !isHk && !isFB && !isFOorPurchasing && !isPOMEC;
     })
     .reduce((sum, e) => sum + e.amount, 0) + posExpOther;
 
@@ -179,7 +194,7 @@ export function processPnLData(
     .filter(t => t.isCompliment)
     .reduce((sum, t) => sum + (Number(t.complimentValue) || 0), 0);
 
-  const totalOperationalExpenses = expHousekeeping + expAlacarte + expBanquet + expFrontOfficeAndPurchasing + otherManualExpenses + payrollExpense + foComplimentValue + posComplimentValue;
+  const totalOperationalExpenses = expHousekeeping + expAlacarte + expBanquet + expFrontOfficeAndPurchasing + expPomec + otherManualExpenses + payrollExpense + foComplimentValue + posComplimentValue;
   
   const expOperational = expFrontOfficeAndPurchasing + otherManualExpenses;
 
@@ -206,19 +221,42 @@ export function processPnLData(
     .filter(isAccommodation)
     .reduce((sum, t) => sum + (Number((t as any).paidOta) || Number(t.paidTransfer) || 0), 0);
 
+  const isFnbRevenue = (t: any) => {
+      if (isAccommodation(t)) return false;
+      const dept = (t.department || "").toLowerCase();
+      const cat = (t.category || "").toLowerCase();
+      const subCat = (t.subCategory || "").toLowerCase();
+      const desc = (t.description || t.note || "").toLowerCase();
+      return dept.includes("f&b") || cat.includes("f&b") || subCat === "breakfast" || desc.includes("breakfast") || desc.includes("sarapan");
+  };
+
+  const isFnbBeverage = (t: any) => {
+      const subCat = (t.subCategory || "").toLowerCase();
+      const desc = (t.description || t.note || "").toLowerCase();
+      return subCat.includes("bev") || desc.includes("beverage") || desc.includes("drink") || desc.includes("minum");
+  };
+
+  const ledgerFnbFoodRevenue = transactions
+    .filter(t => !isAccommodation(t) && isFnbRevenue(t) && !isFnbBeverage(t))
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const ledgerFnbBevRevenue = transactions
+    .filter(t => !isAccommodation(t) && isFnbRevenue(t) && isFnbBeverage(t))
+    .reduce((sum, t) => sum + t.amount, 0);
+
   const ledgerOtherIncome = transactions
-    .filter(isFOOtherIncome)
+    .filter(t => isFOOtherIncome(t) && !isFnbRevenue(t))
     .reduce((sum, t) => sum + t.amount, 0);
 
   const otherRevenueTotal = totalExtraIncome + ledgerOtherIncome + posRevOther;
   
-  const vatBase = ledgerRoomRevenue + posRevAlacarte + posRevBanquet + otherRevenueTotal;
-  const totalRevenue = vatBase + foComplimentValue + posComplimentValue;
-  
-  const revFoodAlacarte = posRevFood;
-  const revBeverageAlacarte = posRevBeverage;
+  const revFoodAlacarte = posRevFood + ledgerFnbFoodRevenue;
+  const revBeverageAlacarte = posRevBeverage + ledgerFnbBevRevenue;
   const revBanquetRevenue = posRevBanquet;
   const revTotalFnb = revFoodAlacarte + revBeverageAlacarte; 
+
+  const vatBase = ledgerRoomRevenue + revFoodAlacarte + revBeverageAlacarte + revBanquetRevenue + otherRevenueTotal;
+  const totalRevenue = vatBase + foComplimentValue + posComplimentValue; 
 
   const pnlResult: GlobalPnLResult = {
     card1_TotalRevenue: totalRevenue,
@@ -246,6 +284,7 @@ export function processPnLData(
     expHousekeeping: expHousekeeping,
     expAlacarte: expAlacarte,
     expBanquet: expBanquet,
+    expPomec: expPomec,
     expOperational: expOperational,         
     expFood: expFood,
     expBeverage: expBeverage,

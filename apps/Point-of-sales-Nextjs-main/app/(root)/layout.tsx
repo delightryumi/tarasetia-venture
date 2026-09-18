@@ -711,7 +711,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   }
 
   return (
-    <div className="pos-forced-landscape-root h-full w-full overflow-hidden">
+    <div className="pos-forced-landscape-root h-full w-full overflow-hidden print:hidden">
       <div 
         className="bg-background text-foreground h-full overflow-hidden flex flex-col relative w-full"
       >

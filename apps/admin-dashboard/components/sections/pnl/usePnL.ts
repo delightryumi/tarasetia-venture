@@ -174,10 +174,10 @@ export const usePnL = () => {
                 payrollExpense
             );
 
-            result.pnlResult.revAlacarte = posRevAlacarte;
+            result.pnlResult.revAlacarte = result.pnlResult.revTotalFnb;
             result.pnlResult.revBanquet = posRevBanquet;
-            result.pnlResult.revFood = posRevFood;
-            result.pnlResult.revBeverage = posRevBeverage;
+            result.pnlResult.revFood = result.pnlResult.revFoodAlacarte;
+            result.pnlResult.revBeverage = result.pnlResult.revBeverageAlacarte;
 
             result.pnlResult.posGrossRevenue = posGrossRevenue;
             result.pnlResult.posNettRevenue = posNettRevenue;

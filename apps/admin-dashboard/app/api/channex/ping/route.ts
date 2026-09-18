@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
         const cm = hotelData?.channelManager || {};
         const channexPropertyId = cm.propertyId || cm.channexPropertyId || hotelData?.channexPropertyId;
         const customApiKey = cm.apiKey;
+        const env = cm.environment || (process.env.CHANNEX_ENV === "production" ? "production" : "staging");
 
         // If no credentials set yet
         if (!channexPropertyId) {
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
         // Perform test query to Channex
         try {
             if (type === "room_type") {
-                const res = await channexClient.getRoomTypes(channexPropertyId, customApiKey);
+                const res = await channexClient.getRoomTypes(channexPropertyId, customApiKey, env);
                 const rooms = res?.data || [];
                 const matched = rooms.find((r: any) => r.id === channexId);
                 const latency = Date.now() - startTime;
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
                     });
                 }
             } else if (type === "rate_plan") {
-                const res = await channexClient.getRatePlans(channexPropertyId, customApiKey);
+                const res = await channexClient.getRatePlans(channexPropertyId, customApiKey, env);
                 const rates = res?.data || [];
                 const matched = rates.find((r: any) => r.id === channexId);
                 const latency = Date.now() - startTime;
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest) {
                 }
             } else {
                 // General property connection ping
-                await channexClient.getProperty(channexPropertyId, customApiKey);
+                await channexClient.getProperty(channexPropertyId, customApiKey, env);
                 const latency = Date.now() - startTime;
                 return NextResponse.json({
                     success: true,

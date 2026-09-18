@@ -9,7 +9,8 @@ import {
     Save,
     User,
     X,
-    Printer
+    Printer,
+    Lock
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
@@ -79,10 +80,44 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
     const [roomTypes, setRoomTypes] = React.useState<any[]>([]);
 
+    // Lock condition: OTA / Channex bookings cannot be edited manually
+    const isChannexLocked = React.useMemo(() => {
+        if (!guest) return false;
+        if (guest.isOTA === true) return true;
+        if (guest.channexBookingId || guest.channexId) return true;
+        const channel = (guest.channel || guest.source || "").toLowerCase().trim();
+        const manualAllowed = [
+            "walk-in",
+            "walkin",
+            "walk in",
+            "nexura sales",
+            "nexura",
+            "direct",
+            "manual",
+            "internal"
+        ];
+        if (manualAllowed.includes(channel)) {
+            return false;
+        }
+        const otaKeywords = ["traveloka", "booking.com", "agoda", "tiket", "expedia", "airbnb", "trip", "mg", "channex"];
+        if (otaKeywords.some(k => channel.includes(k))) {
+            return true;
+        }
+        if (channel && !manualAllowed.includes(channel)) {
+            return true;
+        }
+        return false;
+    }, [guest]);
+
     // Sync edit mode when edit/view is toggled externally
     React.useEffect(() => {
-        setIsEditMode(initialEditing);
-    }, [initialEditing, guest]);
+        if (initialEditing && isChannexLocked) {
+            toast.warning("Reservasi OTA / Channel Manager terkunci otomatis. Data tidak dapat dimodifikasi manual.");
+            setIsEditMode(false);
+        } else {
+            setIsEditMode(initialEditing);
+        }
+    }, [initialEditing, guest, isChannexLocked]);
 
     // Populate and sync form data when selected guest changes
     React.useEffect(() => {
@@ -181,7 +216,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
         // 1. Direct ID / Key matches
         if (targetBookingId !== "" && eBookingId !== "") {
-            if (targetBookingId === eBookingId) return true;
+            if (targetBookingId === eBookingId || eBookingId === `${targetBookingId}-BFT` || targetBookingId === `${eBookingId}-BFT`) return true;
             return false; // If both have explicit bookingIds and they don't match, they are different bookings
         }
         if (targetTimestamp !== "" && eTimestamp !== "" && targetTimestamp === eTimestamp) return true;
@@ -263,6 +298,10 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
     };
 
     const handleSave = async () => {
+        if (isChannexLocked) {
+            toast.error("Reservasi dari Channel Manager (OTA) tidak dapat diubah manual untuk menjaga integritas data.");
+            return;
+        }
         try {
             const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
             if (!hotelId) {
@@ -615,22 +654,94 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             className={styles.rightDrawer}
         >
             <div className={styles.card} style={{ height: '100%', minHeight: '500px', display: 'flex', flexDirection: 'column', padding: 0, border: 'none', borderRadius: 0, overflow: 'hidden' }}>
-                {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--f-hairline)', padding: '16px', backgroundColor: 'var(--f-surface-soft)' }}>
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                            <div style={{ width: '6px', height: '1px', backgroundColor: 'var(--f-sage)' }} />
-                            <span className={styles.guestSubtext} style={{ fontSize: '8px', fontWeight: 700, color: 'var(--f-sage)', letterSpacing: '0.2em' }}>
-                                {isEditMode ? "Adjustment Mode" : "Digital Folio"}
+                {/* Header ala Channex */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--f-hairline)', padding: '16px 20px', backgroundColor: 'var(--f-surface-soft, #f8fafc)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <button onClick={onClose} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Tutup">
+                            <X size={16} />
+                        </button>
+                        <div>
+                            <h2 className={styles.headerTitle} style={{ fontSize: '15px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span>{isEditMode ? "Ubah Booking" : `Booking ${guest.bookingId || guest.voucherCode || 'MTR-Ref'}`}</span>
+                            </h2>
+                            <span style={{ fontSize: '10px', color: 'var(--f-muted)', fontWeight: 500 }}>
+                                {isEditMode ? "Sesuaikan rincian kamar & pembayaran" : "Detail Reservasi & Audit Ledger"}
                             </span>
                         </div>
-                        <h2 className={styles.headerTitle} style={{ fontSize: '13px', margin: 0 }}>
-                            {isEditMode ? "Modify" : "Review"} <span style={{ color: 'var(--f-sage)' }}>{guest.type === 'accommodation' ? 'Entry' : 'Income'}</span>
-                        </h2>
                     </div>
-                    <button onClick={onClose} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Close">
-                        <X size={16} />
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {!isEditMode && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const bParam = guest.bookingId ? `&bookingId=${encodeURIComponent(guest.bookingId)}` : '';
+                                    const gParam = guest.guestName ? `&guestName=${encodeURIComponent(guest.guestName)}` : '';
+                                    router.push(`/digital-checkin?autoOpen=true${gParam}${bParam}`);
+                                }}
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '6px 14px',
+                                    borderRadius: '6px',
+                                    backgroundColor: '#fff',
+                                    border: '1px solid var(--f-hairline, #e2e8f0)',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    color: 'var(--f-ink, #0f172a)',
+                                    cursor: 'pointer'
+                                }}
+                                title="Cetak Guest Registration Card (GRC)"
+                            >
+                                <Printer size={13} />
+                                <span>Print</span>
+                            </button>
+                        )}
+                        {!isEditMode && (
+                            isChannexLocked ? (
+                                <div
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '6px 12px',
+                                        borderRadius: '6px',
+                                        backgroundColor: '#f1f5f9',
+                                        border: '1px solid #cbd5e1',
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        color: '#64748b',
+                                        cursor: 'not-allowed'
+                                    }}
+                                    title="Reservasi dari Channel Manager (OTA) terkunci. Perubahan tanggal, kamar, atau harga harus dilakukan melalui OTA terkait."
+                                >
+                                    <Lock size={12} />
+                                    <span>Channex Locked</span>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditMode(true)}
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '6px 14px',
+                                        borderRadius: '6px',
+                                        backgroundColor: '#0284c7',
+                                        border: '1px solid #0284c7',
+                                        fontSize: '11px',
+                                        fontWeight: 700,
+                                        color: '#fff',
+                                        cursor: 'pointer'
+                                    }}
+                                    title="Alokasi Kamar / Edit"
+                                >
+                                    <span>Allocate / Edit</span>
+                                </button>
+                            )
+                        )}
+                    </div>
                 </div>
 
                 {/* Content */}
@@ -676,7 +787,18 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                 </button>
                             </div>
                             <div style={{ display: 'flex', gap: '8px' }}>
-                                <button onClick={() => setIsEditMode(true)} className={styles.btnSecondary} style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px', fontWeight: 700 }}>Modify</button>
+                                {!isChannexLocked ? (
+                                    <button onClick={() => setIsEditMode(true)} className={styles.btnSecondary} style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px', fontWeight: 700 }}>Modify</button>
+                                ) : (
+                                    <button 
+                                        disabled 
+                                        className={styles.btnSecondary} 
+                                        style={{ height: '36px', padding: '0 14px', fontSize: '10px', borderRadius: '8px', fontWeight: 600, opacity: 0.6, cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '5px' }}
+                                        title="Reservasi OTA terkunci (ReadOnly)"
+                                    >
+                                        <Lock size={12} /> Read Only
+                                    </button>
+                                )}
                                 {guest.status !== "CANCELLED" && guest.status !== "CANCEL" && guest.status !== "VOID" && guest.status !== "VOIDED" && (
                                     <button 
                                         onClick={() => {

@@ -64,6 +64,14 @@ export default function DailyMarketListDetail({
             <div className={s.detailBody}>
               <div className={s.detailMeta}>
                 <div className={s.detailMetaItem}>
+                  <div className={s.detailMetaLabel}>Department</div>
+                  <div className={s.detailMetaValue}>
+                    {selectedDml.department || 'Food & Beverage'}
+                    {selectedDml.department === 'Food & Beverage' && selectedDml.fb_category && ` (${selectedDml.fb_category})`}
+                    {selectedDml.department === 'Food & Beverage' && selectedDml.event_category && ` - ${selectedDml.event_category}`}
+                  </div>
+                </div>
+                <div className={s.detailMetaItem}>
                   <div className={s.detailMetaLabel}>Prepared By</div>
                   <div className={s.detailMetaValue}>{selectedDml.submitted_by_name || selectedDml.submitted_by}</div>
                 </div>

@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
             newArrivalDate,
             newDepartureDate,
             totalPrice = 1250000,
+            paymentCollect = "channel",
             bookingIdToCancel,
             bookingIdToModify
         } = body;
@@ -112,8 +113,8 @@ export async function POST(req: NextRequest) {
                     departure_date: checkout,
                     total_price: Number(totalPrice) || 1200000,
                     currency: "IDR",
-                    payment_type: "channel_collect",
-                    payment_collect: "channel",
+                    payment_type: paymentCollect === "property" ? "cash" : "virtual_card",
+                    payment_collect: paymentCollect === "property" ? "property" : "channel",
                     customer: {
                         name: guestName,
                         email: guestEmail,
@@ -134,7 +135,7 @@ export async function POST(req: NextRequest) {
                 }
             };
 
-            const result = await channexSyncService.processIncomingBookingWebhook(payload);
+            const result = await channexSyncService.processIncomingBookingWebhook(payload, hotelCode);
 
             if (!result.success) {
                 return NextResponse.json({
@@ -210,7 +211,7 @@ export async function POST(req: NextRequest) {
                 }
             };
 
-            const result = await channexSyncService.processIncomingBookingWebhook(payload);
+            const result = await channexSyncService.processIncomingBookingWebhook(payload, hotelCode);
 
             return NextResponse.json({
                 success: true,
@@ -252,7 +253,7 @@ export async function POST(req: NextRequest) {
                 }
             };
 
-            const result = await channexSyncService.processIncomingBookingWebhook(payload);
+            const result = await channexSyncService.processIncomingBookingWebhook(payload, hotelCode);
 
             return NextResponse.json({
                 success: true,

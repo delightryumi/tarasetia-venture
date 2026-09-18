@@ -39,6 +39,7 @@ function AddTransactionContent() {
         getAvailableRoomNumbers,
         addRoom,
         removeRoom,
+        availableChannels,
         isEditMode,
         isLoadingEdit
     } = useTransactionForm();
@@ -77,6 +78,7 @@ function AddTransactionContent() {
                             ratePlans={ratePlans}
                             selectedRatePlanId={selectedRatePlanId}
                             onSelectRatePlan={onSelectRatePlan}
+                            availableChannels={availableChannels}
                             updateForm={updateForm}
                             updateRoom={updateRoom}
                             addRoom={addRoom}
@@ -164,6 +166,7 @@ function AddTransactionContent() {
                                     ratePlans={ratePlans}
                                     selectedRatePlanId={selectedRatePlanId}
                                     onSelectRatePlan={onSelectRatePlan}
+                                    availableChannels={availableChannels}
                                     updateForm={updateForm}
                                     updateRoom={updateRoom}
                                     addRoom={addRoom}

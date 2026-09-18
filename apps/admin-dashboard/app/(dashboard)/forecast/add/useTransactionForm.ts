@@ -15,6 +15,15 @@ export interface RoomType {
 
 export const SAGE = "#788069";
 
+export interface ChannelOption {
+    name: string;
+    category: "Direct" | "OTA" | "Travel Agent" | "Corporate" | "Wholesaler" | "Government" | "Other";
+    color?: string;
+    logo?: string;
+    commissionPercent?: number;
+    code?: string;
+}
+
 export const CHANNELS = [
     { name: "Traveloka", color: "#00aaf2", logo: "/channels/traveloka.png" },
     { name: "Booking.com", color: "#003580", logo: "/channels/booking_com.png" },
@@ -27,6 +36,31 @@ export const CHANNELS = [
     { name: "Walk-in", color: "#2e7d32", logo: "/channels/walk_in.png" },
     { name: "Booking Engine", color: SAGE, logo: "globe" },
 ];
+
+export const DEFAULT_CHANNELS: ChannelOption[] = [
+    { name: "Direct / Walk-in", category: "Direct", color: "#2e7d32", logo: "/channels/walk_in.png" },
+    { name: "Booking Engine (Direct Web)", category: "Direct", color: SAGE, logo: "globe" },
+    { name: "Traveloka", category: "OTA", color: "#00aaf2", logo: "/channels/traveloka.png" },
+    { name: "Booking.com", category: "OTA", color: "#003580", logo: "/channels/booking_com.png" },
+    { name: "Tiket.com", category: "OTA", color: "#ff5e1a", logo: "/channels/tiket_com.png" },
+    { name: "Agoda", category: "OTA", color: "#e8173e", logo: "/channels/agoda.png" },
+    { name: "Airbnb", category: "OTA", color: "#ff5a5f", logo: "/channels/airbnb.png" },
+    { name: "Trip.com", category: "OTA", color: "#1890ff", logo: "/channels/trip.png" },
+    { name: "Expedia", category: "OTA", color: "#fbc02d", logo: "/channels/expedia.png" },
+    { name: "MG Bedbank", category: "OTA", color: "#6c3483", logo: "/channels/mg.png" },
+    { name: "Nexura Sales", category: "Corporate", color: "#059669", logo: "/channels/nexura.png", code: "NEXURA" },
+];
+
+export const CATALOG_OTA_METADATA: Record<string, { color: string; logo: string }> = {
+    "traveloka": { color: "#00aaf2", logo: "/channels/traveloka.png" },
+    "booking.com": { color: "#003580", logo: "/channels/booking_com.png" },
+    "tiket.com": { color: "#ff5e1a", logo: "/channels/tiket_com.png" },
+    "agoda": { color: "#e8173e", logo: "/channels/agoda.png" },
+    "airbnb": { color: "#ff5a5f", logo: "/channels/airbnb.png" },
+    "trip.com": { color: "#1890ff", logo: "/channels/trip.png" },
+    "expedia": { color: "#fbc02d", logo: "/channels/expedia.png" },
+    "mg bedbank": { color: "#6c3483", logo: "/channels/mg.png" },
+};
 
 export const OTHER_INCOME_TYPES = [
     "Breakfast",
@@ -70,7 +104,7 @@ const INITIAL_FORM = {
     bookAllAvailable: false,
     rooms: [{ roomTypeId: "", roomNumber: "", ratePlanId: "", rateCode: "-", adults: 1, children: 0, price: "" }],
     nightRates: [""] as any[],
-    channel: "Walk-in",
+    channel: "Direct / Walk-in",
     voucherCode: "",
     bookingId: "",
     phone: "",
@@ -122,7 +156,7 @@ const cleanUndefined = (obj: any): any => {
 export const useTransactionForm = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { user, activeHotelCode } = useAuth();
+    const { user, activeHotelCode, activeHotelName } = useAuth();
     const selectedDate = searchParams.get("date") || new Date().toISOString().split("T")[0];
 
     const handleCancel = useCallback(() => {
@@ -169,6 +203,7 @@ export const useTransactionForm = () => {
     const [roomTypes, setRoomTypes] = useState<any[]>([]);
     const [ratePlans, setRatePlans] = useState<any[]>([]);
     const [selectedRatePlanId, setSelectedRatePlanId] = useState<string>("");
+    const [availableChannels, setAvailableChannels] = useState<ChannelOption[]>(DEFAULT_CHANNELS);
     const [occupancy, setOccupancy] = useState<any[]>([]);
     const [ariOverrides, setAriOverrides] = useState<Record<string, any>>({});
     const [saving, setSaving] = useState(false);
@@ -193,6 +228,17 @@ export const useTransactionForm = () => {
         checkIn: initialCheckIn,
         checkOut: initialCheckOut
     });
+
+    // Auto-populate staffName with logged-in user's name so it's always recorded
+    useEffect(() => {
+        if (user && !form.staffName) {
+            const autoName = user.displayName || (user as any).name || user.email || "";
+            if (autoName) {
+                setForm(prev => ({ ...prev, staffName: prev.staffName || autoName }));
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.displayName, (user as any)?.name, user?.email]);
 
     const start = form.checkIn ? new Date(form.checkIn) : null;
     const end = form.checkOut ? new Date(form.checkOut) : null;
@@ -286,6 +332,78 @@ export const useTransactionForm = () => {
                     setAriOverrides(ovMap);
                 } catch (ovErr) {
                     console.warn("Could not fetch ari_overrides:", ovErr);
+                }
+
+                // Fetch Active Channels from Channel Manager & Manual Travel Agents
+                try {
+                    const hotelDocSnap = await getDoc(doc(db, "hotels", activeHotelCode));
+                    const hotelData = hotelDocSnap.data() || {};
+                    const cmChannels = hotelData?.channelManager?.channels || {};
+
+                    const taSnap = await getDocs(getHotelCollection(db, "travel_agents", activeHotelCode));
+                    const customAgents: ChannelOption[] = [];
+                    taSnap.forEach(d => {
+                        const data = d.data();
+                        if (data.isActive !== false) {
+                            const cat = data.category?.includes("Corporate") 
+                                ? "Corporate" 
+                                : (data.category?.includes("Wholesaler") ? "Wholesaler" : (data.category?.includes("Government") ? "Government" : "Travel Agent"));
+                            customAgents.push({
+                                name: data.name,
+                                category: cat,
+                                color: "#7e22ce",
+                                commissionPercent: data.commissionPercent,
+                                code: data.code
+                            });
+                        }
+                    });
+
+                    const channelList: ChannelOption[] = [
+                        { name: "Direct / Walk-in", category: "Direct", color: "#2e7d32", logo: "/channels/walk_in.png" },
+                        { name: "Booking Engine (Direct Web)", category: "Direct", color: SAGE, logo: "globe" },
+                    ];
+
+                    const activeOtaList = Object.values(cmChannels).filter((c: any) => c.isActive);
+                    if (activeOtaList.length > 0) {
+                        activeOtaList.forEach((ota: any) => {
+                            const meta = CATALOG_OTA_METADATA[ota.channelName?.toLowerCase()] || {};
+                            channelList.push({
+                                name: ota.channelName,
+                                category: "OTA",
+                                color: meta.color || "#1d4ed8",
+                                logo: meta.logo || "/channels/traveloka.png",
+                                commissionPercent: ota.commissionPercent,
+                                code: ota.channelCode
+                            });
+                        });
+                    } else {
+                        // Default catalog OTAs fallback
+                        DEFAULT_CHANNELS.filter(c => c.category === "OTA").forEach(c => {
+                            channelList.push(c);
+                        });
+                    }
+
+                    // Default Nexura Sales mitra
+                    if (!channelList.some(c => c.name.toLowerCase() === "nexura sales")) {
+                        channelList.push({
+                            name: "Nexura Sales",
+                            category: "Corporate",
+                            color: "#059669",
+                            logo: "/channels/nexura.png",
+                            code: "NEXURA"
+                        });
+                    }
+
+                    // Custom added Travel Agents / Corporate / Wholesaler
+                    customAgents.forEach(ag => {
+                        if (!channelList.some(c => c.name.toLowerCase() === ag.name.toLowerCase())) {
+                            channelList.push(ag);
+                        }
+                    });
+
+                    setAvailableChannels(channelList);
+                } catch (chErr) {
+                    console.warn("Could not fetch CM channels or travel agents:", chErr);
                 }
             } catch (err) {
                 console.error("Error fetching inventory data:", err);
@@ -474,7 +592,11 @@ export const useTransactionForm = () => {
         if (rp && rp.stopSell !== undefined) {
             return !!rp.stopSell;
         }
-        const plansForRoom = ratePlans.filter(p => p.roomTypeId === roomTypeId || (p.roomTypeName && roomTypes.find(rt => rt.id === roomTypeId)?.name?.toLowerCase() === p.roomTypeName?.toLowerCase()));
+        const plansForRoom = ratePlans.filter(p => 
+            p.roomTypeId === roomTypeId || 
+            (Array.isArray(p.roomTypeIds) && p.roomTypeIds.includes(roomTypeId)) ||
+            (p.roomTypeName && roomTypes.find(rt => rt.id === roomTypeId)?.name?.toLowerCase() === p.roomTypeName?.toLowerCase())
+        );
         if (plansForRoom.length > 0) {
             return plansForRoom.every(p => {
                 if (dayOverride?.stopSell?.[p.id] !== undefined) return !!dayOverride.stopSell[p.id];
@@ -761,6 +883,49 @@ export const useTransactionForm = () => {
 
                     const fullGuestName = [form.salutation, form.guestName].filter(Boolean).join(" ");
 
+                    // USALI Standard 1: Package Revenue Allocation (Room + Breakfast split)
+                    const matchedRatePlan = ratePlans.find((p: any) => 
+                        p.id === (rm.ratePlanId || selectedRatePlanId) || 
+                        p.code === (rm.ratePlanId || selectedRatePlanId) ||
+                        p.id === rm.rateCode ||
+                        p.code === rm.rateCode
+                    );
+
+                    const hasBreakfast = !form.isCompliment && !!(
+                        rm.mealsIncluded ||
+                        matchedRatePlan?.mealsIncluded ||
+                        matchedRatePlan?.meals?.breakfast ||
+                        matchedRatePlan?.name?.toLowerCase().includes("breakfast") ||
+                        matchedRatePlan?.code?.toLowerCase().includes("bb") ||
+                        (rm.rateCode && rm.rateCode.toLowerCase().includes("bb")) ||
+                        (rm.ratePlanName && rm.ratePlanName.toLowerCase().includes("breakfast")) ||
+                        (form.rateCode && form.rateCode.toLowerCase().includes("bb"))
+                    );
+
+                    const dynamicBreakfastRate = Number(rm.breakfastRate || matchedRatePlan?.breakfastRate) || 75000;
+                    const adultsCount = Number(rm.adults || form.pax || 1);
+                    const rawBreakfastAmt = hasBreakfast ? dynamicBreakfastRate * adultsCount : 0;
+                    // Cap breakfast so it never exceeds 45% of total room charge (safety against extreme discounts)
+                    const breakfastAmount = Math.min(rawBreakfastAmt, Math.round(finalAmount * 0.45));
+                    const netRoomAmount = finalAmount - breakfastAmount;
+
+                    const breakfastRatio = finalAmount > 0 ? (breakfastAmount / finalAmount) : 0;
+                    const bftCash = Math.round(finalCash * breakfastRatio);
+                    const bftEdc = Math.round(finalEdc * breakfastRatio);
+                    const bftQris = Math.round(finalQris * breakfastRatio);
+                    const bftTransfer = Math.round(finalTransfer * breakfastRatio);
+                    const bftOta = Math.round(finalOta * breakfastRatio);
+                    const bftPayHotel = bftCash + bftEdc + bftQris + bftTransfer;
+                    const bftPayTransfer = bftOta + bftTransfer;
+
+                    const roomCash = finalCash - bftCash;
+                    const roomEdc = finalEdc - bftEdc;
+                    const roomQris = finalQris - bftQris;
+                    const roomTransfer = finalTransfer - bftTransfer;
+                    const roomOta = finalOta - bftOta;
+                    const roomPayHotel = roomCash + roomEdc + roomQris + roomTransfer;
+                    const roomPayTransfer = roomOta + roomTransfer;
+
                     transactionEntries.push({
                         type: "accommodation",
                         salutation: form.salutation || "Mr.",
@@ -781,8 +946,8 @@ export const useTransactionForm = () => {
                         businessSource: form.businessSource || "Direct / Walk-in",
                         rateCode: rm.rateCode || form.rateCode || "-",
                         ratePlanId: rm.ratePlanId || "",
-                        pax: Number(rm.adults || form.pax || 1),
-                        adults: Number(rm.adults || 1),
+                        pax: adultsCount,
+                        adults: adultsCount,
                         children: Number(rm.children || 0),
                         upgradeFrom: form.upgradeFrom || "",
                         upgradeTo: form.upgradeTo || "",
@@ -800,25 +965,28 @@ export const useTransactionForm = () => {
                         nights: 1,
                         channel: form.channel,
                         voucherCode: form.voucherCode,
-                        amount: finalAmount,
+                        amount: netRoomAmount,
                         totalAmount: totalGross,
-                        paidCash: finalCash,
-                        paidEdc: finalEdc,
-                        paidQris: finalQris,
-                        paidTransfer: finalTransfer,
-                        paidOta: finalOta,
-                        payHotel: finalPayHotel,
-                        payTransfer: finalPayTransfer,
-                        paidAmount1: finalPayHotel,
-                        paidAmount2: finalPayTransfer,
-                        initialPayHotel: finalPayHotel,
-                        initialPayTransfer: finalPayTransfer,
+                        paidCash: roomCash,
+                        paidEdc: roomEdc,
+                        paidQris: roomQris,
+                        paidTransfer: roomTransfer,
+                        paidOta: roomOta,
+                        payHotel: roomPayHotel,
+                        payTransfer: roomPayTransfer,
+                        paidAmount1: roomPayHotel,
+                        paidAmount2: roomPayTransfer,
+                        initialPayHotel: roomPayHotel,
+                        initialPayTransfer: roomPayTransfer,
                         paymentMethod: pm,
                         paymentStatus: dailyStatus,
                         source: form.channel === "Walk-in" ? "Walk-in" : "OTA",
                         status: form.bookingType === "Inquiry" ? "INQUIRY" : (form.bookingType === "Tentative / Hold" ? "HOLD" : "CONFIRMED"),
-                        staffName: form.staffName,
+                        staffName: form.staffName || user?.displayName || user?.name || "Front Desk Staff",
+                        staffEmail: user?.email || "",
+                        propertyName: activeHotelName || "",
                         note: form.note,
+                        description: (hasBreakfast && breakfastAmount > 0) ? "[USALI Room Charge (Net of Breakfast)]" : undefined,
                         timestamp: new Date().toISOString(),
                         isCompliment: form.isCompliment,
                         complimentReason: form.isCompliment ? form.complimentReason : undefined,
@@ -826,6 +994,75 @@ export const useTransactionForm = () => {
                         sendEmailVoucher: form.sendEmailVoucher,
                         enableGuestPortal: form.enableGuestPortal
                     });
+
+
+                    // Companion F&B Entry for Breakfast Package (USALI Standard 1)
+                    if (hasBreakfast && breakfastAmount > 0) {
+                        transactionEntries.push({
+                            type: "other_income",
+                            department: "F&B",
+                            category: "F&B",
+                            subCategory: "breakfast",
+                            description: `Package Breakfast (${adultsCount} Pax) - ${roomTypeName}`,
+                            salutation: form.salutation || "Mr.",
+                            guestName: fullGuestName,
+                            rawGuestName: form.guestName,
+                            bookingId: `${form.bookingId || `RES-${Date.now().toString().slice(-6)}`}-BFT`,
+                            phone: form.phone || "",
+                            nik: form.nik || "",
+                            nationality: form.nationality || "INDONESIA",
+                            email: form.email || "",
+                            address: form.address || "",
+                            zipCode: form.zipCode || "",
+                            country: form.country || "Indonesia",
+                            state: form.state || "",
+                            city: form.city || "",
+                            company: form.company || "-",
+                            bookingType: form.bookingType || "Confirmed",
+                            businessSource: form.businessSource || "Direct / Walk-in",
+                            rateCode: rm.rateCode || form.rateCode || "-",
+                            ratePlanId: rm.ratePlanId || "",
+                            pax: adultsCount,
+                            adults: adultsCount,
+                            children: Number(rm.children || 0),
+                            checkInDate: form.checkIn,
+                            checkInTime: form.checkInTime || "02:00 PM",
+                            checkOutDate: form.checkOut,
+                            checkOutTime: form.checkOutTime || "12:00 PM",
+                            effectiveDate: dateStr,
+                            roomType: roomTypeName,
+                            roomTypeId: rm.roomTypeId || "",
+                            roomNumber: rm.roomNumber || `Room ${rIdx + 1}`,
+                            roomCount: 1,
+                            roomIndex: rIdx,
+                            totalRoomsInBooking: roomList.length,
+                            nights: 1,
+                            channel: form.channel,
+                            voucherCode: form.voucherCode,
+                            amount: breakfastAmount,
+                            totalAmount: breakfastAmount,
+                            paidCash: bftCash,
+                            paidEdc: bftEdc,
+                            paidQris: bftQris,
+                            paidTransfer: bftTransfer,
+                            paidOta: bftOta,
+                            payHotel: bftPayHotel,
+                            payTransfer: bftPayTransfer,
+                            paidAmount1: bftPayHotel,
+                            paidAmount2: bftPayTransfer,
+                            initialPayHotel: bftPayHotel,
+                            initialPayTransfer: bftPayTransfer,
+                            paymentMethod: pm,
+                            paymentStatus: dailyStatus,
+                            source: form.channel === "Walk-in" ? "Walk-in" : "OTA",
+                            status: form.bookingType === "Inquiry" ? "INQUIRY" : (form.bookingType === "Tentative / Hold" ? "HOLD" : "CONFIRMED"),
+                            staffName: form.staffName,
+                            note: `USALI Package Revenue Split from Room Booking (${form.bookingId || "Direct"})`,
+                            timestamp: new Date().toISOString(),
+                            sendEmailVoucher: false,
+                            enableGuestPortal: false
+                        });
+                    }
                 }
             });
         } else {
@@ -859,7 +1096,9 @@ export const useTransactionForm = () => {
                 guestName: form.guestName, // This stores the description for other income
                 incomeCategory: form.incomeType,
                 note: form.note,
-                staffName: form.staffName || "System",
+                staffName: form.staffName || user?.displayName || user?.name || "Front Desk Staff",
+                staffEmail: user?.email || "",
+                propertyName: activeHotelName || "",
                 checkInDate: form.checkIn,
                 checkOutDate: form.checkIn,
                 amount: finalAmount,
@@ -883,10 +1122,11 @@ export const useTransactionForm = () => {
                 complimentReason: form.isCompliment ? form.complimentReason : undefined,
                 complimentValue: form.isCompliment ? Number(form.totalAmount) : undefined
             }];
+
         }
 
         return transactionEntries;
-    }, [form, revenueType, balance, isAvailable, nights, roomTypes, totalGross]);
+    }, [form, revenueType, balance, isAvailable, nights, roomTypes, totalGross, ratePlans, selectedRatePlanId]);
 
     const addToQueue = () => {
         const entries = prepareEntries();
@@ -1099,15 +1339,19 @@ export const useTransactionForm = () => {
         if (!plan) return;
         
         setSelectedRatePlanId(ratePlanId);
+        let appliedRate = plan.baseRate || 0;
         setForm(prev => {
-            const baseRate = plan.baseRate || 0;
-            const newRates = Array(nights).fill(baseRate);
+            const currentRoomTypeId = prev.rooms[0]?.roomTypeId || plan.roomTypeId || "";
+            appliedRate = (plan.roomRates && plan.roomRates[currentRoomTypeId]) 
+                ? Number(plan.roomRates[currentRoomTypeId]) 
+                : Number(plan.baseRate || 0);
+            const newRates = Array(nights).fill(appliedRate);
             const newRooms = [...prev.rooms];
             if (newRooms[0]) {
                 newRooms[0] = {
                     ...newRooms[0],
-                    roomTypeId: plan.roomTypeId || newRooms[0].roomTypeId,
-                    price: baseRate.toString()
+                    roomTypeId: (plan.roomTypeId && !plan.roomTypeIds?.length) ? plan.roomTypeId : newRooms[0].roomTypeId,
+                    price: appliedRate.toString()
                 };
             }
             return {
@@ -1117,7 +1361,7 @@ export const useTransactionForm = () => {
                 rooms: newRooms
             };
         });
-        toast.info(`Paket ${plan.name} terpilih: Rp ${plan.baseRate.toLocaleString("id-ID")} / malam`);
+        toast.info(`Paket ${plan.name} terpilih: Rp ${appliedRate.toLocaleString("id-ID")} / malam`);
     };
 
     const getAvailableRoomNumbers = useCallback((roomTypeId: string) => {
@@ -1322,12 +1566,65 @@ export const useTransactionForm = () => {
         setForm(prev => ({ ...prev, [field]: finalValue }));
     };
 
+    const addQuickTravelAgent = async (agentData: {
+        name: string;
+        category?: string;
+        phone?: string;
+        email?: string;
+        contactPerson?: string;
+        commissionPercent?: number;
+    }) => {
+        if (!agentData.name.trim() || !activeHotelCode) return;
+        try {
+            const agentId = `ta_${agentData.name.toLowerCase().replace(/[^a-z0-9]/g, "_")}_${Date.now().toString().slice(-4)}`;
+            const agentDocRef = doc(db, "hotels", activeHotelCode, "travel_agents", agentId);
+            const payload = {
+                id: agentId,
+                name: agentData.name.trim(),
+                category: agentData.category || "Travel Agent (Offline)",
+                phone: agentData.phone || "",
+                email: agentData.email || "",
+                contactPerson: agentData.contactPerson || "",
+                commissionPercent: agentData.commissionPercent || 0,
+                isActive: true,
+                createdAt: new Date().toISOString()
+            };
+            await setDoc(agentDocRef, payload, { merge: true });
+
+            const cat = payload.category.includes("Corporate") ? "Corporate" : "Travel Agent";
+            const newChannel: ChannelOption = {
+                name: payload.name,
+                category: cat as any,
+                color: "#7e22ce",
+                commissionPercent: payload.commissionPercent
+            };
+
+            setAvailableChannels(prev => {
+                if (prev.some(c => c.name.toLowerCase() === newChannel.name.toLowerCase())) return prev;
+                return [...prev, newChannel];
+            });
+
+            setForm(prev => ({
+                ...prev,
+                channel: payload.name,
+                businessSource: payload.category.includes("Corporate") ? "Corporate / Perusahaan" : "Travel Agent / FIT"
+            }));
+
+            toast.success(`Mitra / Travel Agent "${payload.name}" berhasil didaftarkan dan dipilih!`);
+        } catch (err: any) {
+            console.error("Failed to add travel agent:", err);
+            toast.error("Gagal menambahkan travel agent.");
+        }
+    };
+
     return {
         form,
         roomTypes,
         ratePlans,
         selectedRatePlanId,
         onSelectRatePlan,
+        availableChannels,
+        addQuickTravelAgent,
         saving,
         step,
         revenueType,

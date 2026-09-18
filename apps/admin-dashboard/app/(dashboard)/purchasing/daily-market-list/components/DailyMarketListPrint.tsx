@@ -79,14 +79,18 @@ export default function DailyMarketListPrint({ selectedDml }: DailyMarketListPri
           <div className={s.printMetaLabel}>Departemen</div>
           <div className={s.printMetaValue}>{selectedDml.department || 'Food & Beverage'}</div>
         </div>
-        <div className={s.printMetaItem}>
-          <div className={s.printMetaLabel}>Kategori (F&B)</div>
-          <div className={s.printMetaValue}>{selectedDml.fb_category || 'Food'}</div>
-        </div>
-        <div className={s.printMetaItem}>
-          <div className={s.printMetaLabel}>Tipe Layanan / Outlet</div>
-          <div className={s.printMetaValue}>{selectedDml.event_category || 'A la Carte'}</div>
-        </div>
+        {(!selectedDml.department || selectedDml.department === 'Food & Beverage') && (
+          <>
+            <div className={s.printMetaItem}>
+              <div className={s.printMetaLabel}>Kategori (F&B)</div>
+              <div className={s.printMetaValue}>{selectedDml.fb_category || 'Food'}</div>
+            </div>
+            <div className={s.printMetaItem}>
+              <div className={s.printMetaLabel}>Tipe Layanan / Outlet</div>
+              <div className={s.printMetaValue}>{selectedDml.event_category || 'A la Carte'}</div>
+            </div>
+          </>
+        )}
         <div className={s.printMetaItem}>
           <div className={s.printMetaLabel}>Status Dokumen</div>
           <div>

@@ -60,6 +60,7 @@ export interface GlobalPnLResult {
   expHousekeeping?: number;
   expAlacarte?: number;
   expBanquet?: number;
+  expPomec?: number;          // Property Operation, Maintenance & Energy (POMEC)
   expOperational?: number;    // Front Office + Purchasing + Other (excl. HK & F&B)
   expFood?: number;
   expBeverage?: number;

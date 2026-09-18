@@ -1,13 +1,29 @@
 "use client";
 
-import React from "react";
-import { Activity, Download, FileText, Eye, Pencil, Trash2, CalendarX } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { 
+    CalendarCheck2, 
+    Download, 
+    RefreshCw, 
+    Search, 
+    SlidersHorizontal,
+    ArrowUpDown,
+    CheckCircle2, 
+    AlertTriangle, 
+    HelpCircle,
+    Copy,
+    Check
+} from "lucide-react";
 import { getChannelLogo } from "./StatCard";
-import { RoomStatusPicker, GuestStatusPicker } from "./StatusPickers";
 import styles from "./OverviewStyles.module.css";
+import { toast } from "sonner";
 
 interface AuditLedgerProps {
     bookings: any[];
+    title?: string;
+    activeFilter?: string | null;
+    onClearFilter?: () => void;
+    onRefresh?: () => void;
     onView: (booking: any) => void;
     onEdit: (booking: any) => void;
     onDelete: (booking: any) => void;
@@ -15,294 +31,379 @@ interface AuditLedgerProps {
     onStatusUpdate: (item: any, field: string, value: string) => void;
     onExportPDF: () => void;
     onExportExcel: () => void;
+    activeHotelName?: string;
 }
+
+// Format date to Channex standard: "Sep 18, 2026"
+const formatChannexDate = (dateStr?: string) => {
+    if (!dateStr || dateStr === '---') return '---';
+    try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    } catch {
+        return dateStr;
+    }
+};
 
 export function AuditLedger({ 
     bookings, 
+    title,
+    activeFilter,
+    onClearFilter,
+    onRefresh,
     onView, 
     onEdit, 
     onDelete, 
     onCancel,
     onStatusUpdate,
     onExportPDF,
-    onExportExcel
+    onExportExcel,
+    activeHotelName
 }: AuditLedgerProps) {
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortAsc, setSortAsc] = useState(false);
+    const [copiedId, setCopiedId] = useState<string | null>(null);
+
+    const handleCopy = (e: React.MouseEvent, text: string) => {
+        e.stopPropagation();
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        setCopiedId(text);
+        toast.success(`Copied: ${text}`);
+        setTimeout(() => setCopiedId(null), 2000);
+    };
+
+    // Filter and sort bookings
+    const filteredBookings = useMemo(() => {
+        let result = [...bookings];
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            result = result.filter(b => 
+                (b.guestName && b.guestName.toLowerCase().includes(q)) ||
+                (b.bookingId && b.bookingId.toLowerCase().includes(q)) ||
+                (b.channel && b.channel.toLowerCase().includes(q)) ||
+                (b.roomType && b.roomType.toLowerCase().includes(q))
+            );
+        }
+        result.sort((a, b) => {
+            const timeA = new Date(a.checkInDate || a.timestamp || 0).getTime();
+            const timeB = new Date(b.checkInDate || b.timestamp || 0).getTime();
+            return sortAsc ? timeA - timeB : timeB - timeA;
+        });
+        return result;
+    }, [bookings, searchQuery, sortAsc]);
+
     return (
-        <section className={styles.card} style={{ overflow: 'hidden', padding: 0 }}>
-            <div className={styles.cardHeader} style={{ padding: '24px 24px 16px 24px', borderBottom: '1px solid var(--f-hairline)', marginBottom: 0 }}>
-                <div className={styles.cardHeaderLeft}>
-                    <div className={styles.headerBadge} style={{ backgroundColor: 'var(--color-neutral-200, rgba(141, 122, 82, 0.12))', color: 'var(--color-neutral-900, #212121)' }}>
-                        <Activity size={15} />
+        <section className={styles.card} style={{ overflow: 'hidden', padding: 0, backgroundColor: '#ffffff', border: '1px solid var(--f-hairline, #e2e8f0)', borderRadius: '8px' }}>
+            {/* Channex-Standard Top Toolbar */}
+            <div style={{ 
+                padding: '16px 20px', 
+                borderBottom: '1px solid var(--f-hairline, #e2e8f0)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                backgroundColor: '#ffffff',
+                flexWrap: 'wrap',
+                gap: '12px'
+            }}>
+                {/* Left Side: Title & Search Bar */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    {title && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', letterSpacing: '0.02em' }}>
+                                {title}
+                            </span>
+                        </div>
+                    )}
+                    <div style={{ position: 'relative', minWidth: '240px' }}>
+                        <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                        <input 
+                            type="text" 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search"
+                            style={{
+                                padding: '6px 12px 6px 32px',
+                                fontSize: '12px',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: '6px',
+                                width: '240px',
+                                outline: 'none',
+                                color: '#0f172a',
+                                backgroundColor: '#ffffff'
+                            }}
+                        />
                     </div>
-                    <div className={styles.headerMeta}>
-                        <span className={styles.headerSubtitle}>Setara Operational</span>
-                        <h2 className={styles.headerTitle} style={{ fontSize: '13px' }}>
-                            Detail <span style={{ color: 'var(--color-neutral-900, #212121)' }}>Transaksi</span>
-                        </h2>
-                    </div>
+                    {activeFilter && (
+                        <button
+                            type="button"
+                            onClick={onClearFilter}
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                backgroundColor: '#f1f5f9',
+                                border: '1px solid #cbd5e1',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                color: '#334155',
+                                cursor: 'pointer'
+                            }}
+                            title="Klik untuk menghapus filter"
+                        >
+                            <span>Filter: {activeFilter}</span>
+                            <span style={{ color: '#ef4444', fontWeight: 800, marginLeft: '4px' }}>✕</span>
+                        </button>
+                    )}
                 </div>
 
-                <div className={styles.headerRight}>
-                    <div style={{ textAlign: 'right', marginRight: '16px', borderRight: '1px solid var(--f-hairline)', paddingRight: '16px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <span className={styles.headerSubtitle} style={{ fontSize: '8px' }}>Ledger Status</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--color-neutral-900, #212121)' }} />
-                            <span className={styles.guestSubtext} style={{ color: 'var(--f-ink)', fontSize: '9px', fontWeight: 700 }}>{bookings.length} Active Entries</span>
-                        </div>
-                    </div>
+                {/* Right Action Buttons */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button 
-                        onClick={onExportExcel} 
-                        className={styles.btnIcon}
-                        style={{ width: '36px', height: '36px', borderRadius: '8px' }}
-                        title="Export to Excel"
+                        type="button"
+                        onClick={() => toast.info("Filter lanjutan aktif berdasarkan rentang tanggal & status.")}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 14px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#334155',
+                            backgroundColor: '#ffffff',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '6px',
+                            cursor: 'pointer'
+                        }}
                     >
-                        <Download size={16} />
+                        <SlidersHorizontal size={13} />
+                        <span>Advanced Search</span>
                     </button>
+
                     <button 
-                        onClick={onExportPDF} 
-                        className={styles.btnIcon}
-                        style={{ width: '36px', height: '36px', borderRadius: '8px' }}
-                        title="Export to PDF"
+                        type="button"
+                        onClick={() => {
+                            if (onRefresh) {
+                                onRefresh();
+                                toast.success("Data transaksi diperbarui");
+                            } else {
+                                window.location.reload();
+                            }
+                        }}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 14px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#334155',
+                            backgroundColor: '#ffffff',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '6px',
+                            cursor: 'pointer'
+                        }}
                     >
-                        <FileText size={16} />
+                        <RefreshCw size={13} />
+                        <span>Refresh</span>
+                    </button>
+
+                    <button 
+                        type="button"
+                        onClick={onExportExcel}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 14px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#334155',
+                            backgroundColor: '#ffffff',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '6px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        <Download size={13} />
+                        <span>Export</span>
                     </button>
                 </div>
             </div>
 
-            <div className={styles.tableContainer}>
-                <table className={styles.tableElement}>
-                    <thead className={styles.tableHead}>
+            {/* Table Container */}
+            <div className={styles.tableContainer} style={{ overflowX: 'auto' }}>
+                <table className={styles.tableElement} style={{ minWidth: '940px', borderCollapse: 'collapse', width: '100%' }}>
+                    <thead style={{ backgroundColor: '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
                         <tr>
-                            <th className={styles.tableHeadCell}>Guest Name</th>
-                            <th className={styles.tableHeadCell}>Stay Period</th>
-                            <th className={styles.tableHeadCell}>Room & Remarks</th>
-                            <th className={styles.tableHeadCell}>Channel</th>
-                            <th className={styles.tableHeadCell}>Financials</th>
-                            <th className={styles.tableHeadCell} style={{ textAlign: 'center' }}>Status</th>
-                            <th className={styles.tableHeadCell} style={{ textAlign: 'center' }}>Action</th>
+                            <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#595959', width: '130px' }}>
+                                Status
+                            </th>
+                            <th 
+                                onClick={() => setSortAsc(prev => !prev)}
+                                style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#595959', cursor: 'pointer', width: '160px' }}
+                            >
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                    <span>Unique ID</span>
+                                    <ArrowUpDown size={12} style={{ opacity: 0.6 }} />
+                                </div>
+                            </th>
+                            <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#595959', width: '160px' }}>
+                                Property
+                            </th>
+                            <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#595959' }}>
+                                Customer
+                            </th>
+                            <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#595959', width: '220px' }}>
+                                Dates
+                            </th>
+                            <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#595959', width: '110px' }}>
+                                Rooms Count
+                            </th>
+                            <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#595959', width: '80px' }}>
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', justifyContent: 'center' }}>
+                                    <span>Acked</span>
+                                    <HelpCircle size={11} style={{ opacity: 0.6 }} />
+                                </div>
+                            </th>
+                            <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: 600, color: '#595959', width: '130px' }}>
+                                Total
+                            </th>
+                            <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#595959', width: '80px' }}>
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        {bookings.map((booking, idx) => {
-                            const isAcc = booking.type === 'accommodation' || (!booking.type && booking.guestName && !booking.guestName.startsWith('POS Order') && !booking.posItems && !booking.revenueType);
-                            const st = String(booking.status || '').toUpperCase();
-                            const pst = String(booking.paymentStatus || '').toUpperCase();
-                            const gst = String(booking.guestStatus || '').toLowerCase();
-                            const isCancelled = st === 'CANCELLED' || st === 'CANCEL' || pst === 'CANCELLED' || pst === 'CANCEL' || gst === 'cancelled' || gst === 'cancel';
-                            return (
-                                <tr 
-                                    key={idx} 
-                                    className={`${styles.tableRow} ${isCancelled ? styles.cancelledRow : ''}`}
-                                    style={idx % 2 === 0 ? { backgroundColor: 'var(--f-canvas)' } : { backgroundColor: 'var(--f-surface)' }}
-                                >
-                                    <td className={styles.tableCell}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                                            <div 
-                                                style={{ 
-                                                    width: "40px", 
-                                                    height: "40px", 
-                                                    borderRadius: "50%", 
-                                                    overflow: "hidden", 
-                                                    border: "1px solid var(--f-hairline)", 
-                                                    display: "flex", 
-                                                    alignItems: "center", 
-                                                    justifyContent: "center", 
+                        {filteredBookings.length === 0 ? (
+                            <tr>
+                                <td colSpan={9} style={{ textAlign: 'center', padding: '48px 16px', color: '#8c8c8c' }}>
+                                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 500 }}>No bookings found.</p>
+                                </td>
+                            </tr>
+                        ) : (
+                            filteredBookings.map((booking, idx) => {
+                                const st = String(booking.status || '').toUpperCase();
+                                const pst = String(booking.paymentStatus || '').toUpperCase();
+                                const gst = String(booking.guestStatus || '').toLowerCase();
+                                const isCancelled = st === 'CANCELLED' || st === 'CANCEL' || pst === 'CANCELLED' || pst === 'CANCEL' || gst === 'cancelled' || gst === 'cancel';
+                                const isUnmapped = booking.channexRaw?.unmapped || booking.status === 'UNMAPPED' || String(booking.note || '').toLowerCase().includes('unmapped');
+
+                                const isOther = booking.type === 'other_income';
+                                const checkInFormatted = isOther 
+                                    ? (booking.date ? formatChannexDate(booking.date) : (booking.timestamp ? formatChannexDate(new Date(booking.timestamp).toISOString().split('T')[0]) : '---'))
+                                    : formatChannexDate(booking.checkInDate || booking.checkIn);
+                                const checkOutFormatted = isOther ? '' : formatChannexDate(booking.checkOutDate || booking.checkOut);
+                                const dateDisplay = isOther || !checkOutFormatted || checkOutFormatted === '---'
+                                    ? checkInFormatted
+                                    : `${checkInFormatted} → ${checkOutFormatted}`;
+
+                                const uniqueId = booking.bookingId || booking.voucherCode || `MTR-${booking.timestamp?.toString().slice(-6) || idx}`;
+                                const totalAmt = Number(booking.totalAmount || booking.amount || 0);
+
+                                return (
+                                    <tr 
+                                        key={idx}
+                                        style={{ 
+                                            borderBottom: '1px solid #f0f0f0',
+                                            backgroundColor: idx % 2 === 0 ? '#ffffff' : '#fafafa',
+                                            transition: 'background-color 0.15s ease'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? '#ffffff' : '#fafafa'}
+                                    >
+                                        {/* Status */}
+                                        <td style={{ padding: '12px 16px', fontSize: '12px' }}>
+                                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                                {isCancelled ? (
+                                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#8c8c8c', fontWeight: 500 }}>
+                                                        Cancelled
+                                                    </span>
+                                                ) : isUnmapped ? (
+                                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#faad14', fontWeight: 600 }}>
+                                                        <AlertTriangle size={13} color="#faad14" />
+                                                        <span>New</span>
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#52c41a', fontWeight: 600 }}>
+                                                        <CheckCircle2 size={13} color="#52c41a" />
+                                                        <span>New</span>
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+
+                                        {/* Unique ID */}
+                                        <td style={{ padding: '12px 16px', fontSize: '12px', color: '#262626' }}>
+                                            <span style={{ fontFamily: 'var(--f-font-mono, monospace)', fontWeight: 500 }}>
+                                                {uniqueId}
+                                            </span>
+                                        </td>
+
+                                        {/* Property */}
+                                        <td style={{ padding: '12px 16px', fontSize: '12px', color: '#595959' }}>
+                                            {booking.propertyName || activeHotelName || "—"}
+                                        </td>
+
+                                        {/* Customer */}
+                                        <td style={{ padding: '12px 16px', fontSize: '12px', color: '#262626', fontWeight: 500 }}>
+                                            {booking.guestName || booking.incomeCategory || (isOther ? "Other Income" : "General Sale")}
+                                        </td>
+
+                                        {/* Dates */}
+                                        <td style={{ padding: '12px 16px', fontSize: '12px', color: '#595959' }}>
+                                            {dateDisplay}
+                                        </td>
+
+                                        {/* Rooms Count */}
+                                        <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', color: '#595959' }}>
+                                            {isOther ? '—' : (booking.roomCount || 1)}
+                                        </td>
+
+                                        {/* Acked */}
+                                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                                            <div style={{ display: 'inline-flex', justifyContent: 'center' }}>
+                                                <HelpCircle size={14} style={{ color: '#bfbfbf' }} />
+                                            </div>
+                                        </td>
+
+                                        {/* Total */}
+                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: 500, color: '#262626' }}>
+                                            IDR {totalAmt.toLocaleString('en-US')}
+                                        </td>
+
+                                        {/* Actions: View text link ala Channex */}
+                                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                                            <button 
+                                                type="button"
+                                                onClick={() => onView(booking)}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: '#1890ff',
+                                                    fontSize: '12px',
+                                                    fontWeight: 500,
+                                                    cursor: 'pointer',
                                                     padding: 0,
-                                                    flexShrink: 0,
-                                                    filter: isCancelled ? 'grayscale(100%)' : 'none',
-                                                    opacity: isCancelled ? 0.45 : 1,
-                                                    backgroundColor: ['rgba(141, 122, 82, 0.15)', 'rgba(120, 128, 105, 0.15)', 'rgba(141, 122, 82, 0.08)', 'rgba(120, 128, 105, 0.08)', 'var(--f-surface-soft)', 'rgba(0, 0, 0, 0.04)', 'rgba(0, 0, 0, 0.02)'][((((booking.guestName || "O").charCodeAt(0) || 0) + (booking.amount || 0)) % 7)] 
+                                                    textDecoration: 'none'
                                                 }}
+                                                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                                                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
                                             >
-                                                <img 
-                                                    src={`/avatar/memo_${((((booking.guestName || "O").charCodeAt(0) || 0) + (booking.amount || 0)) % 35) + 1}.png`} 
-                                                    alt={booking.guestName || "Guest"} 
-                                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                                />
-                                            </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                <p 
-                                                    className={styles.guestName} 
-                                                    style={{ 
-                                                        margin: 0, 
-                                                        textOverflow: 'ellipsis', 
-                                                        overflow: 'hidden', 
-                                                        whiteSpace: 'nowrap', 
-                                                        maxWidth: '150px',
-                                                        color: isCancelled ? '#9ca3af' : undefined,
-                                                        textDecoration: isCancelled ? 'line-through' : 'none'
-                                                    }}
-                                                >
-                                                    {booking.guestName || "General Sale"}
-                                                </p>
-                                                <p 
-                                                    className={styles.guestSubtext} 
-                                                    style={{ 
-                                                        fontSize: '8px', 
-                                                        color: isCancelled ? '#9ca3af' : 'var(--f-light-muted)', 
-                                                        textDecoration: isCancelled ? 'line-through' : 'none',
-                                                        margin: 0, 
-                                                        fontFamily: 'var(--f-font-mono)' 
-                                                    }}
-                                                >
-                                                    {booking.bookingId || "Walk-In"}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className={styles.tableCell}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <p 
-                                                className={styles.guestSubtext} 
-                                                style={{ 
-                                                    color: isCancelled ? '#9ca3af' : 'var(--f-body)', 
-                                                    textDecoration: isCancelled ? 'line-through' : 'none',
-                                                    fontWeight: 700, 
-                                                    margin: 0 
-                                                }}
-                                            >
-                                                {booking.checkInDate || "---"}
-                                            </p>
-                                            <p 
-                                                className={styles.guestSubtext} 
-                                                style={{ 
-                                                    fontSize: '8px', 
-                                                    color: isCancelled ? '#9ca3af' : 'var(--f-light-muted)', 
-                                                    textDecoration: isCancelled ? 'line-through' : 'none',
-                                                    margin: 0 
-                                                }}
-                                            >
-                                                Until {booking.checkOutDate || "---"}
-                                            </p>
-                                        </div>
-                                    </td>
-                                    <td className={styles.tableCell} style={{ padding: '20px 16px' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <div style={{ display: 'flex' }}>
-                                                <span 
-                                                    className={styles.guestSubtext} 
-                                                    style={{ 
-                                                        fontWeight: 700, 
-                                                        backgroundColor: isCancelled ? '#f3f4f6' : 'var(--f-surface-soft)', 
-                                                        color: isCancelled ? '#9ca3af' : undefined,
-                                                        textDecoration: isCancelled ? 'line-through' : 'none',
-                                                        padding: '4px 8px', 
-                                                        borderRadius: '6px', 
-                                                        border: '1px solid var(--f-hairline)', 
-                                                        fontSize: '9px', 
-                                                        letterSpacing: '0.05em' 
-                                                    }}
-                                                >
-                                                    {(booking.roomType || "Service").toUpperCase()}
-                                                </span>
-                                            </div>
-                                            {booking.roomNumber && (
-                                                <span 
-                                                    className={styles.guestSubtext} 
-                                                    style={{ 
-                                                        color: isCancelled ? '#9ca3af' : 'var(--f-sage)', 
-                                                        textDecoration: isCancelled ? 'line-through' : 'none',
-                                                        fontWeight: 800, 
-                                                        fontSize: '10px', 
-                                                        letterSpacing: '0.05em', 
-                                                        marginLeft: '2px' 
-                                                    }}
-                                                >
-                                                    {booking.roomNumber.toUpperCase().startsWith('ROOM') ? booking.roomNumber.toUpperCase() : `ROOM ${booking.roomNumber.toUpperCase()}`}
-                                                </span>
-                                            )}
-                                            {isAcc && (
-                                                <div style={{ opacity: isCancelled ? 0.4 : 1, pointerEvents: isCancelled ? 'none' : 'auto' }}>
-                                                    <RoomStatusPicker 
-                                                        current={booking.roomStatus || 'dirty'} 
-                                                        onChange={(val) => onStatusUpdate(booking, 'roomStatus', val)} 
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className={styles.tableCell}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: isCancelled ? 0.6 : 1 }}>
-                                            <div style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: 'var(--f-canvas)', border: '1px solid var(--f-hairline)', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <img src={getChannelLogo(booking.channel)} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain', opacity: isCancelled ? 0.35 : 0.6, filter: isCancelled ? 'grayscale(100%)' : 'none' }} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
-                                            </div>
-                                            <p 
-                                                className={styles.guestSubtext} 
-                                                style={{ 
-                                                    margin: 0, 
-                                                    fontWeight: 700, 
-                                                    color: isCancelled ? '#9ca3af' : 'var(--f-light-muted)',
-                                                    textDecoration: isCancelled ? 'line-through' : 'none'
-                                                }}
-                                            >
-                                                {booking.channel}
-                                            </p>
-                                        </div>
-                                    </td>
-                                    <td className={styles.tableCell}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <p 
-                                                className={styles.guestAmount} 
-                                                style={{ 
-                                                    margin: 0, 
-                                                    color: isCancelled ? '#9ca3af' : undefined,
-                                                    textDecoration: isCancelled ? 'line-through' : 'none'
-                                                }}
-                                            >
-                                                Rp {Number(booking.amount).toLocaleString('id-ID')}
-                                            </p>
-                                            <p 
-                                                className={`${styles.paymentBadge} ${
-                                                    isCancelled 
-                                                        ? styles.paymentCancelled 
-                                                        : (booking.paymentStatus?.includes('Lunas') ? styles.paymentLunas : styles.paymentPending)
-                                                }`} 
-                                                style={{ 
-                                                    margin: 0, 
-                                                    width: 'fit-content',
-                                                    textDecoration: isCancelled ? 'line-through' : 'none'
-                                                }}
-                                            >
-                                                {isCancelled ? 'CANCELLED' : (booking.paymentStatus || 'Pending')}
-                                            </p>
-                                        </div>
-                                    </td>
-                                    <td className={styles.tableCell} style={{ textAlign: 'center' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                            {isCancelled ? (
-                                                <span className={styles.cancelledBadge}>
-                                                    CANCELLED
-                                                </span>
-                                            ) : isAcc ? (
-                                                <GuestStatusPicker 
-                                                    current={booking.guestStatus || 'arriving'} 
-                                                    onChange={(val) => onStatusUpdate(booking, 'guestStatus', val)}
-                                                />
-                                            ) : (
-                                                <span className={styles.guestSubtext} style={{ color: 'var(--f-light-muted)', fontSize: '8px', fontWeight: 700, letterSpacing: '0.1em' }}>Service</span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className={styles.tableCell}>
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                            <button onClick={() => onView(booking)} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="View Details"><Eye size={14} /></button>
-                                            <button onClick={() => onEdit(booking)} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Edit"><Pencil size={14} /></button>
-                                            {!isCancelled && (
-                                                <button 
-                                                    onClick={() => onCancel?.(booking)} 
-                                                    className={`${styles.btnIcon} ${styles.btnIconWarning}`} 
-                                                    style={{ width: '32px', height: '32px', borderRadius: '6px' }} 
-                                                    title="Cancel Booking"
-                                                >
-                                                    <CalendarX size={14} />
-                                                </button>
-                                            )}
-                                            <button onClick={() => onDelete(booking)} className={`${styles.btnIcon} ${styles.btnIconDanger}`} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Void Entry"><Trash2 size={14} /></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
+                                                View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        )}
                     </tbody>
                 </table>
             </div>

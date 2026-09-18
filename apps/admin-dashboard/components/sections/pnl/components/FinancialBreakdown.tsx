@@ -145,6 +145,7 @@ export default function FinancialBreakdown({
   const val_expHousekeeping = pnlResult.expHousekeeping || 0;
   const val_expAlacarte = pnlResult.expAlacarte || 0;
   const val_expBanquet = pnlResult.expBanquet || 0;
+  const val_expPomec = pnlResult.expPomec || 0;
   const val_expOperational = pnlResult.expOperational || 0;
   const val_card8_TotalExpenses = pnlResult.card8_TotalExpenses || 0;
 
@@ -228,7 +229,8 @@ export default function FinancialBreakdown({
                      {!isStartup && <TableRow label="Housekeeping Expenses" subLabel="Guest supplies, laundry & linen costs" value={val_expHousekeeping} isNegative />}
                      <TableRow label="Total F&B A la Carte Expenses" subLabel="A la carte kitchen, bar & beverage raw materials" value={val_expAlacarte} isNegative />
                      <TableRow label="Total Banquet Expenses" subLabel="Event banquet catering & external sourcing costs" value={val_expBanquet} isNegative />
-                     <TableRow label="Operational Expenses" subLabel="Purchasing, general office, administrative & utilities" value={val_expOperational} isNegative />
+                     <TableRow label="POMEC / Maintenance Expenses" subLabel="Property operation, engineering & energy costs" value={val_expPomec} isNegative />
+                     <TableRow label="Operational Expenses" subLabel="Purchasing, general office, administrative & other" value={val_expOperational} isNegative />
                      <TableRow label="Compliment Deductions" subLabel="POS complimentary items given to guests" value={pnlResult.posComplimentValue || 0} isNegative />
                      <TableRow label="Total Operational Expenses" subLabel="Sum of all operational departmental costs" value={val_card8_TotalExpenses + (pnlResult.posComplimentValue || 0)} isTotal={true} />
                   </tbody>

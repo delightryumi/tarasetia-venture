@@ -7,6 +7,10 @@ export interface ProductStock {
 export interface Product {
   sellprice: number;
   productstock: ProductStock;
+  name?: string;
+  price?: number;
+  category?: string;
+  subcategory?: string;
 }
 
 export interface TransactionData {

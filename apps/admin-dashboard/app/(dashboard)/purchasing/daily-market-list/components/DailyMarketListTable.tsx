@@ -26,6 +26,7 @@ export default function DailyMarketListTable({
           <tr>
             <th>DML Number</th>
             <th>Date</th>
+            <th>Department</th>
             <th>Prepared By</th>
             <th>Supplier</th>
             <th className={s.thRight}>Items</th>
@@ -36,7 +37,7 @@ export default function DailyMarketListTable({
         <tbody className={s.tableBody}>
           {loading ? (
             <tr>
-              <td colSpan={7}>
+              <td colSpan={8}>
                 <div className={s.empty}>
                   <p className={s.emptyBody}>Loading…</p>
                 </div>
@@ -44,7 +45,7 @@ export default function DailyMarketListTable({
             </tr>
           ) : filteredDmls.length === 0 ? (
             <tr>
-              <td colSpan={7}>
+              <td colSpan={8}>
                 <div className={s.empty}>
                   <Coffee size={40} className={s.emptyIcon} />
                   <p className={s.emptyTitle}>No daily market lists</p>
@@ -110,6 +111,21 @@ export default function DailyMarketListTable({
                       </span>
                    </td>
                   <td>{dateObj.toLocaleDateString('id-ID')}</td>
+                  <td>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      background: dml.department === 'POMEC' ? 'rgba(109, 40, 217, 0.08)' : 'var(--p-surface-sunken)',
+                      color: dml.department === 'POMEC' ? '#7c3aed' : 'var(--p-text)',
+                      border: dml.department === 'POMEC' ? '1px solid rgba(109, 40, 217, 0.25)' : '1px solid var(--p-hairline)'
+                    }}>
+                      {dml.department || 'Food & Beverage'}
+                    </span>
+                  </td>
                   <td className={s.tdMuted}>{dml.submitted_by_name || dml.submitted_by}</td>
                   <td className={s.tdMuted}>{dmlSuppliers.join(', ') || '—'}</td>
                   <td className={`${s.tdRight} ${s.tdMuted}`}>{dml.items.length}</td>

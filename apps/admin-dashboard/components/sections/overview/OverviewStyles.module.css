@@ -46,12 +46,14 @@
 
 /* ── Layout Panels ── */
 .mainContainer {
-  max-width: 1400px;
+  max-width: 100%;
+  width: 100%;
   margin: 0 auto;
-  padding: 24px;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
+  box-sizing: border-box;
 }
 
 .twoColumnLayout {
@@ -343,19 +345,21 @@
 /* ── Stat Card Grid ── */
 .statGrid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-@media (min-width: 768px) {
+@media (max-width: 1024px) {
   .statGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 1200px) {
+@media (max-width: 640px) {
   .statGrid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr;
   }
 }
 
@@ -364,12 +368,15 @@
   background-color: var(--f-surface);
   border: 1px solid var(--f-hairline);
   border-radius: var(--f-radius-lg);
-  padding: 24px;
+  padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 100%;
 }
 
 .cardHeader {
@@ -419,18 +426,22 @@
   flex-direction: column;
   gap: 12px;
   max-height: 420px;
+  min-height: 140px;
   overflow-y: auto;
   padding-right: 4px;
+  flex: 1;
 }
 
 .noActivity {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 32px 16px;
   background-color: var(--f-surface-soft);
   border: 1px dashed var(--f-hairline);
   border-radius: var(--f-radius-md);
+  flex: 1;
+  height: 100%;
 }
 
 .noActivityText {
@@ -783,7 +794,7 @@
   right: 0;
   bottom: 0;
   width: 100%;
-  max-width: 480px;
+  max-width: 600px;
   height: 100vh;
   background-color: var(--f-surface);
   border-left: 1px solid var(--f-hairline);

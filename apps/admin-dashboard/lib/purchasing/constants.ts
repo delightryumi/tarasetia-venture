@@ -27,12 +27,16 @@ export const ITEM_UNITS = [
 ];
 
 export const DEPARTMENTS = [
+  "Food & Beverage",
   "F&B Kitchen",
   "F&B Service",
   "Housekeeping",
   "Front Office",
+  "POMEC",
   "Engineering",
+  "Accounting",
   "Finance & Admin",
+  "Purchasing",
   "Sales & Marketing"
 ];
 

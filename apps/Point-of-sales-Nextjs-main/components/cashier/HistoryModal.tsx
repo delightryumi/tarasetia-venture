@@ -31,6 +31,20 @@ export default function HistoryModal({
   const [outletName, setOutletName] = useState('Partner Property');
   const [outletAddress, setOutletAddress] = useState('');
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [paperSize, setPaperSize] = useState<'80mm' | '58mm'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pos_slip_paper_size');
+      if (saved === '58mm' || saved === '80mm') return saved;
+    }
+    return '80mm';
+  });
+
+  const handlePaperSizeChange = (size: '80mm' | '58mm') => {
+    setPaperSize(size);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pos_slip_paper_size', size);
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -246,44 +260,104 @@ export default function HistoryModal({
   const handlePrint = () => {
     const el = document.getElementById('shift-closing-slip');
     if (!el) { toast.error('Gagal memuat area cetak.'); return; }
-    const pw = window.open('', '', 'height=800,width=900');
+    const pw = window.open('', '_blank', 'height=800,width=850');
     if (!pw) { toast.error('Gagal membuka jendela cetak. Izinkan pop-up.'); return; }
-    pw.document.write(`<html><head><title>Shift Closing Slip - ${selectedHistoryShift.cashierName}</title><style>
-      @page { margin: 0; size: 80mm auto; }
-      * { box-sizing: border-box; color: #000 !important; }
-      body { margin: 0; padding: 8px 0; background: #fff; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 11px; display: flex; justify-content: center; }
-      #wrap { width: 76mm; padding: 0 3mm; }
-      .center { text-align: center; }
-      .right { text-align: right; }
-      .bold { font-weight: 700; }
-      .row { display: flex; justify-content: space-between; align-items: flex-start; margin: 2px 0; }
-      .row .val { font-weight: 700; white-space: nowrap; margin-left: 8px; text-align: right; }
-      .row .lbl { flex: 1; }
-      .section-title { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #000 !important; margin: 8px 0 4px; border-bottom: 1px dashed #000; padding-bottom: 2px; }
-      .dash { border: none; border-top: 1px dashed #000; margin: 6px 0; }
-      .dot { border: none; border-top: 1px dotted #000; margin: 3px 0; }
-      .outlet { font-size: 16px; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; transform: scaleY(1.2); display: block; margin: 4px 0 2px; font-family: Georgia, serif; text-align: center; }
-      .sub-outlet { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; text-align: center; color: #000 !important; }
-      .tx-table { width: 100%; border-collapse: collapse; font-size: 9.5px; margin-top: 2px; }
-      .tx-table th { font-weight: 700; font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #000; padding: 2px 1px; text-align: left; }
-      .tx-table td { padding: 1.5px 1px; vertical-align: top; }
-      .tx-table tr:last-child td { border-bottom: 1px dotted #000; }
-      .total-row td { font-weight: 700; border-top: 1px solid #000; padding-top: 3px; }
-      .green { color: #000 !important; font-weight: bold; }
-      .red { color: #000 !important; font-weight: bold; }
-      .amber { color: #000 !important; font-weight: bold; }
-      .footer { font-size: 8px; color: #000 !important; text-align: center; margin-top: 10px; font-style: italic; }
-      .sign-block { margin-top: 14px; margin-bottom: 6px; border-top: 1px dashed #000; padding-top: 8px; }
-      .sign-grid { display: flex; justify-content: space-between; text-align: center; font-size: 8.5px; }
-      .sign-col { width: 46%; }
-      .sign-space { height: 36px; }
-      .sign-name { font-weight: 700; border-top: 1px dotted #000; padding-top: 2px; font-size: 8.5px; }
-    </style></head><body><div id="wrap">`);
-    pw.document.write(el.innerHTML);
-    pw.document.write(`</div></body></html>`);
+
+    const is58 = paperSize === '58mm';
+    const printableWidth = is58 ? '48mm' : '72mm';
+    const baseFontSize = is58 ? '11px' : '12.5px';
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+
+    pw.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Shift Closing Slip - ${selectedHistoryShift.cashierName}</title>
+  <base href="${origin}/">
+  <style>
+    @page {
+      margin: 0 !important;
+      size: auto !important;
+    }
+    @media print {
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        width: 100% !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      #wrap {
+        width: 100% !important;
+        max-width: ${printableWidth} !important;
+        margin: 0 auto !important;
+        padding: 1.5mm 2.5mm 12mm 2.5mm !important;
+        box-sizing: border-box !important;
+      }
+    }
+    * {
+      box-sizing: border-box;
+      color: #000 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: ${baseFontSize};
+      line-height: 1.35;
+      display: flex;
+      justify-content: center;
+    }
+    #wrap {
+      width: 100%;
+      max-width: ${printableWidth};
+      padding: 1.5mm 2.5mm 12mm 2.5mm;
+      box-sizing: border-box;
+      background: #fff;
+    }
+    .center { text-align: center; }
+    .right { text-align: right; }
+    .bold { font-weight: 700; }
+    .row { display: flex; justify-content: space-between; align-items: flex-start; margin: 3px 0; font-size: ${baseFontSize}; line-height: 1.35; }
+    .row .val { font-weight: 700; white-space: nowrap; margin-left: 8px; text-align: right; }
+    .row .lbl { flex: 1; color: #111; }
+    .section-title { font-size: ${is58 ? '11px' : '12.5px'}; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; margin: 8px 0 4px; border-bottom: 1.5px dashed #000; padding-bottom: 2px; }
+    .dash { border: none; border-top: 1.5px dashed #000; margin: 6px 0; }
+    .dot { border: none; border-top: 1px dotted #000; margin: 3px 0; }
+    .outlet { font-size: ${is58 ? '15px' : '17px'}; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; display: block; margin: 2px 0 3px; font-family: system-ui, -apple-system, sans-serif; text-align: center; line-height: 1.25; }
+    .sub-outlet { font-size: ${is58 ? '10px' : '11.5px'}; font-weight: 600; text-align: center; margin: 2px 0; line-height: 1.3; }
+    .tx-table { width: 100%; border-collapse: collapse; font-size: ${is58 ? '10px' : '11.5px'}; margin-top: 3px; line-height: 1.3; }
+    .tx-table th { font-weight: 800; font-size: ${is58 ? '9.5px' : '11px'}; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1.5px solid #000; padding: 3px 1px; text-align: left; }
+    .tx-table td { padding: 2.5px 1px; vertical-align: top; }
+    .tx-table tr:last-child td { border-bottom: 1px dotted #000; }
+    .total-row td { font-weight: 800; font-size: ${is58 ? '12px' : '13.5px'}; border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; padding: 4px 1px; }
+    .green, .red, .amber { color: #000 !important; font-weight: bold; }
+    .footer { font-size: ${is58 ? '9.5px' : '10.5px'}; text-align: center; margin-top: 10px; }
+    .logo { max-height: 44px; width: auto; display: block; margin: 0 auto 5px; filter: grayscale(100%) brightness(0); }
+    .indent { padding-left: 8px; font-size: ${is58 ? '10px' : '11.5px'}; }
+    .sign-block { margin-top: 14px; margin-bottom: 6px; border-top: 1.5px dashed #000; padding-top: 8px; }
+    .sign-grid { display: flex; justify-content: space-between; text-align: center; font-size: ${is58 ? '10px' : '11px'}; }
+    .sign-col { width: 46%; }
+    .sign-space { height: 38px; }
+    .sign-name { font-weight: 700; border-top: 1px dotted #000; padding-top: 2px; font-size: ${is58 ? '10px' : '11px'}; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    ${el.innerHTML}
+  </div>
+</body>
+</html>`);
     pw.document.close();
     pw.focus();
-    setTimeout(() => { pw.print(); pw.close(); }, 600);
+    setTimeout(() => {
+      pw.print();
+      pw.close();
+    }, 650);
   };
 
   return (
@@ -300,6 +374,37 @@ export default function HistoryModal({
           </button>
         </div>
 
+        {/* Paper Size Selector */}
+        <div className="flex items-center justify-between px-6 py-2.5 bg-neutral-50 dark:bg-zinc-950/60 border-b border-neutral-200 dark:border-white/[0.06] shrink-0 text-xs">
+          <span className="text-neutral-600 dark:text-neutral-400 font-semibold flex items-center gap-1.5">
+            <span>Ukuran Kertas Thermal:</span>
+          </span>
+          <div className="flex bg-neutral-200/80 dark:bg-zinc-800 p-0.5 rounded-xl gap-1">
+            <button
+              type="button"
+              onClick={() => handlePaperSizeChange('80mm')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                paperSize === '80mm'
+                  ? 'bg-white dark:bg-zinc-700 text-neutral-900 dark:text-white shadow-sm'
+                  : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+              }`}
+            >
+              80 mm (Standar)
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePaperSizeChange('58mm')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                paperSize === '58mm'
+                  ? 'bg-white dark:bg-zinc-700 text-neutral-900 dark:text-white shadow-sm'
+                  : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+              }`}
+            >
+              58 mm (Kecil)
+            </button>
+          </div>
+        </div>
+
         <div className="flex-1 overflow-y-auto px-4 py-5 bg-neutral-100 dark:bg-zinc-950 mx-4 my-3 rounded-xl border border-neutral-200 dark:border-white/[0.05]">
           
           <style>{`
@@ -307,43 +412,45 @@ export default function HistoryModal({
               box-sizing: border-box;
             }
             .closing-slip-preview-container {
-              width: 76mm;
-              padding: 10px 8px;
+              width: 100%;
+              max-width: ${paperSize === '58mm' ? '300px' : '360px'};
+              padding: 16px 14px;
               background: #fff;
               color: #000;
               font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-              font-size: 11px;
+              font-size: ${paperSize === '58mm' ? '11px' : '12.5px'};
+              line-height: 1.35;
               margin: 0 auto;
-              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-              border-radius: 6px;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+              border-radius: 8px;
             }
             .closing-slip-preview-container .center { text-align: center; }
             .closing-slip-preview-container .right { text-align: right; }
             .closing-slip-preview-container .bold { font-weight: 700; }
-            .closing-slip-preview-container .row { display: flex; justify-content: space-between; align-items: flex-start; margin: 2px 0; }
+            .closing-slip-preview-container .row { display: flex; justify-content: space-between; align-items: flex-start; margin: 3px 0; font-size: ${paperSize === '58mm' ? '11px' : '12.5px'}; line-height: 1.35; }
             .closing-slip-preview-container .row .val { font-weight: 700; white-space: nowrap; margin-left: 8px; text-align: right; }
-            .closing-slip-preview-container .row .lbl { flex: 1; }
-            .closing-slip-preview-container .section-title { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #000 !important; margin: 8px 0 4px; border-bottom: 1px dashed #000; padding-bottom: 2px; }
-            .closing-slip-preview-container .dash { border: none; border-top: 1px dashed #000; margin: 6px 0; }
-            .closing-slip-preview-container .dot { border: none; border-top: 1px dotted #000; margin: 3px 0; }
-            .closing-slip-preview-container .outlet { font-size: 15px; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; transform: scaleY(1.15); display: block; margin: 4px 0 2px; font-family: Georgia, serif; text-align: center; }
-            .closing-slip-preview-container .sub-outlet { font-size: 8.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; text-align: center; color: #000 !important; }
-            .closing-slip-preview-container .tx-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 2px; }
-            .closing-slip-preview-container .tx-table th { font-weight: 700; font-size: 8px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #000; padding: 2px 1px; text-align: left; }
-            .closing-slip-preview-container .tx-table td { padding: 1.5px 1px; vertical-align: top; }
+            .closing-slip-preview-container .row .lbl { flex: 1; color: #222; }
+            .closing-slip-preview-container .section-title { font-size: ${paperSize === '58mm' ? '11px' : '12.5px'}; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: #000 !important; margin: 9px 0 5px; border-bottom: 1.5px dashed #000; padding-bottom: 3px; }
+            .closing-slip-preview-container .dash { border: none; border-top: 1.5px dashed #000; margin: 7px 0; }
+            .closing-slip-preview-container .dot { border: none; border-top: 1px dotted #000; margin: 4px 0; }
+            .closing-slip-preview-container .outlet { font-size: ${paperSize === '58mm' ? '15px' : '17px'}; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; display: block; margin: 2px 0 3px; font-family: system-ui, -apple-system, sans-serif; text-align: center; line-height: 1.25; }
+            .closing-slip-preview-container .sub-outlet { font-size: ${paperSize === '58mm' ? '10px' : '11.5px'}; font-weight: 600; text-align: center; color: #333 !important; line-height: 1.3; margin: 2px 0; }
+            .closing-slip-preview-container .tx-table { width: 100%; border-collapse: collapse; font-size: ${paperSize === '58mm' ? '10px' : '11.5px'}; margin-top: 4px; line-height: 1.3; }
+            .closing-slip-preview-container .tx-table th { font-weight: 800; font-size: ${paperSize === '58mm' ? '9.5px' : '11px'}; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1.5px solid #000; padding: 3px 1px; text-align: left; }
+            .closing-slip-preview-container .tx-table td { padding: 2.5px 1px; vertical-align: top; }
             .closing-slip-preview-container .tx-table tr:last-child td { border-bottom: 1px dotted #000; }
-            .closing-slip-preview-container .total-row td { font-weight: 700; border-top: 1px solid #000; padding-top: 3px; }
-            .closing-slip-preview-container .green { color: #166534 !important; }
-            .closing-slip-preview-container .red { color: #991b1b !important; }
-            .closing-slip-preview-container .amber { color: #92400e !important; }
-            .closing-slip-preview-container .footer { font-size: 8px; color: #000 !important; text-align: center; margin-top: 10px; font-style: italic; }
-            .closing-slip-preview-container .logo { max-height: 40px; width: auto; display: block; margin: 0 auto 5px; filter: grayscale(100%) brightness(0); }
-            .closing-slip-preview-container .indent { padding-left: 8px; font-size: 9px; color: #000 !important; }
-            .closing-slip-preview-container .sign-block { margin-top: 14px; margin-bottom: 6px; border-top: 1px dashed #000; padding-top: 8px; }
-            .closing-slip-preview-container .sign-grid { display: flex; justify-content: space-between; text-align: center; font-size: 8.5px; }
+            .closing-slip-preview-container .total-row td { font-weight: 800; font-size: ${paperSize === '58mm' ? '12px' : '13.5px'}; border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; padding: 4px 1px; }
+            .closing-slip-preview-container .green { color: #166534 !important; font-weight: bold; }
+            .closing-slip-preview-container .red { color: #991b1b !important; font-weight: bold; }
+            .closing-slip-preview-container .amber { color: #92400e !important; font-weight: bold; }
+            .closing-slip-preview-container .footer { font-size: ${paperSize === '58mm' ? '9.5px' : '10.5px'}; color: #000 !important; text-align: center; margin-top: 12px; }
+            .closing-slip-preview-container .logo { max-height: 48px; width: auto; display: block; margin: 0 auto 6px; filter: grayscale(100%) brightness(0); }
+            .closing-slip-preview-container .indent { padding-left: 8px; font-size: ${paperSize === '58mm' ? '10px' : '11.5px'}; color: #000 !important; }
+            .closing-slip-preview-container .sign-block { margin-top: 16px; margin-bottom: 8px; border-top: 1.5px dashed #000; padding-top: 10px; }
+            .closing-slip-preview-container .sign-grid { display: flex; justify-content: space-between; text-align: center; font-size: ${paperSize === '58mm' ? '10px' : '11px'}; }
             .closing-slip-preview-container .sign-col { width: 46%; }
-            .closing-slip-preview-container .sign-space { height: 36px; }
-            .closing-slip-preview-container .sign-name { font-weight: 700; border-top: 1px dotted #000; padding-top: 2px; font-size: 8.5px; }
+            .closing-slip-preview-container .sign-space { height: 40px; }
+            .closing-slip-preview-container .sign-name { font-weight: 700; border-top: 1px dotted #000; padding-top: 3px; font-size: ${paperSize === '58mm' ? '10px' : '11px'}; }
           `}</style>
 
           <div
@@ -386,18 +493,18 @@ export default function HistoryModal({
             <div className="section-title">Riwayat Transaksi (Audit)</div>
 
             {isLoadingDetail ? (
-              <div className="center italic py-2" style={{ fontSize: 9, color: '#555' }}>Memuat data transaksi...</div>
+              <div className="center italic py-2" style={{ fontSize: 11.5, color: '#555' }}>Memuat data transaksi...</div>
             ) : detailTransactions.length === 0 ? (
-              <div className="center italic py-2" style={{ fontSize: 9, color: '#888' }}>Tidak ada transaksi dalam shift ini.</div>
+              <div className="center italic py-2" style={{ fontSize: 11.5, color: '#888' }}>Tidak ada transaksi dalam shift ini.</div>
             ) : (
               <>
                 <table className="tx-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '15%' }}>Waktu</th>
-                      <th style={{ width: '42%' }}>No. Bill / Tx</th>
+                      <th style={{ width: '16%' }}>Waktu</th>
+                      <th style={{ width: '38%' }}>No. Bill / Tx</th>
                       <th className="center" style={{ width: '18%' }}>Metode</th>
-                      <th className="right" style={{ width: '25%' }}>Nominal</th>
+                      <th className="right" style={{ width: '28%' }}>Nominal</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -415,7 +522,7 @@ export default function HistoryModal({
                       return (
                         <tr key={i} style={isCancelled ? { textDecoration: 'line-through', opacity: 0.6 } : undefined}>
                           <td>{timeStr}</td>
-                          <td className="bold font-mono" style={{ fontSize: '7.5px', wordBreak: 'break-all' }}>
+                          <td className="bold font-mono" style={{ fontSize: paperSize === '58mm' ? '9.5px' : '10.5px', wordBreak: 'break-all' }}>
                             {txId}{isCancelled ? ' (VOID)' : isTxCompliment ? ' (FOC)' : ''}
                           </td>
                           <td className="center">{m}</td>
@@ -432,7 +539,7 @@ export default function HistoryModal({
                   </tbody>
                 </table>
                 {voidCount > 0 && (
-                  <div style={{ fontSize: '8px', color: '#991b1b', marginTop: 3, fontStyle: 'italic' }}>
+                  <div style={{ fontSize: '10.5px', color: '#991b1b', marginTop: 4, fontStyle: 'italic' }}>
                     * {voidCount} bill void ({formatMoney(voidTotal)}) tidak dimasukkan ke total penjualan.
                   </div>
                 )}
@@ -449,7 +556,7 @@ export default function HistoryModal({
                 {banquetTotal > 0 && <div className="row"><span className="lbl">Banquet:</span><span className="val">{formatMoney(banquetTotal)}</span></div>}
                 {otherTotal > 0 && <div className="row"><span className="lbl">Lainnya / Others:</span><span className="val">{formatMoney(otherTotal)}</span></div>}
                 
-                <div className="row" style={{ borderTop: '1px dotted #888', paddingTop: 2, marginTop: 3 }}>
+                <div className="row" style={{ borderTop: '1px dotted #888', paddingTop: 3, marginTop: 4 }}>
                   <span className="lbl bold">Subtotal Penjualan (Gross):</span>
                   <span className="val bold">{formatMoney(productSubtotal)}</span>
                 </div>
@@ -492,11 +599,11 @@ export default function HistoryModal({
                   </div>
                 )}
                 <hr className="dot" />
-                <div className="row bold" style={{ fontSize: '11px' }}>
+                <div className="row bold" style={{ fontSize: paperSize === '58mm' ? '12px' : '13.5px', marginTop: 2 }}>
                   <span className="lbl">Total Settlement Shift:</span>
                   <span className="val">{formatMoney(b.total)}</span>
                 </div>
-                <div className="row" style={{ fontSize: '8px', color: '#166534', marginTop: 1 }}>
+                <div className="row" style={{ fontSize: '11px', color: '#166534', marginTop: 2 }}>
                   <span className="lbl italic">Status Rekonsiliasi:</span>
                   <span className="val green">BALANCE / MATCH ✓</span>
                 </div>
@@ -524,7 +631,7 @@ export default function HistoryModal({
               <span className="lbl">Fisik Kas Aktual Dihitung:</span>
               <span className="val bold">{selectedHistoryShift.status === 'open' ? 'Belum Diinput (Shift Aktif)' : formatMoney(countedCash)}</span>
             </div>
-            <div className="row bold" style={{ marginTop: 4 }}>
+            <div className="row bold" style={{ marginTop: 4, fontSize: paperSize === '58mm' ? '12px' : '13.5px' }}>
               <span className="lbl">Selisih Kas Fisik:</span>
               <span className={`val ${selectedHistoryShift.status === 'open' ? 'amber' : cashDiff === 0 ? 'green' : cashDiff > 0 ? 'amber' : 'red'}`}>
                 {selectedHistoryShift.status === 'open' 
@@ -541,7 +648,7 @@ export default function HistoryModal({
               <>
                 <hr className="dash" />
                 <div className="section-title">Catatan Closing</div>
-                <p className="italic" style={{ fontSize: 9.5, color: '#555', margin: '4px 0', lineHeight: 1.3 }}>{selectedHistoryShift.notes}</p>
+                <p className="italic" style={{ fontSize: 11.5, color: '#555', margin: '4px 0', lineHeight: 1.3 }}>{selectedHistoryShift.notes}</p>
               </>
             )}
 
@@ -550,7 +657,7 @@ export default function HistoryModal({
               <div className="sign-grid">
                 <div className="sign-col">
                   <p style={{ margin: 0, fontWeight: 700 }}>Diserahkan Oleh,</p>
-                  <p style={{ margin: 0, fontSize: '8px', color: '#555' }}>(Kasir Bertugas)</p>
+                  <p style={{ margin: 0, fontSize: '10px', color: '#555' }}>(Kasir Bertugas)</p>
                   <div className="sign-space" />
                   <p className="sign-name">
                     {selectedHistoryShift.cashierName || 'Kasir'}
@@ -558,7 +665,7 @@ export default function HistoryModal({
                 </div>
                 <div className="sign-col">
                   <p style={{ margin: 0, fontWeight: 700 }}>Diverifikasi Oleh,</p>
-                  <p style={{ margin: 0, fontSize: '8px', color: '#555' }}>(Spv / Income Auditor)</p>
+                  <p style={{ margin: 0, fontSize: '10px', color: '#555' }}>(Spv / Income Auditor)</p>
                   <div className="sign-space" />
                   <p className="sign-name">
                     ( ............................ )
@@ -572,7 +679,7 @@ export default function HistoryModal({
               <p>Dicetak: {new Date().toLocaleString('id-ID')}</p>
               <div className="center" style={{ borderTop: '1px dotted #000', marginTop: 8, paddingTop: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <span style={{ fontSize: 7, color: '#000', textTransform: 'lowercase', letterSpacing: '0.15em', fontWeight: 900, marginBottom: 2 }}>powered by</span>
+                  <span style={{ fontSize: '9px', color: '#000', textTransform: 'lowercase', letterSpacing: '0.15em', fontWeight: 900, marginBottom: 2 }}>powered by</span>
                   <img src="/channels/1.png" alt="My Tara" style={{ height: 24, width: 'auto', objectFit: 'contain' }} />
                 </a>
               </div>

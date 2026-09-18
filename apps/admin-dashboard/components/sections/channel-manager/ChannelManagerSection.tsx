@@ -43,7 +43,8 @@ import {
     UploadCloud,
     Table,
     LayoutGrid,
-    Tag
+    Tag,
+    Users
 } from "lucide-react";
 import styles from "./ChannelManager.module.css";
 import { OtaLogo } from "./OtaLogo";
@@ -63,8 +64,9 @@ import { ChannelGoogleHotelsTab } from "./ChannelGoogleHotelsTab";
 import { ChannelDynamicPricingTab } from "./ChannelDynamicPricingTab";
 import { ChannelPromotionsTab } from "./ChannelPromotionsTab";
 import { ChannelPaymentTokenizationTab } from "./ChannelPaymentTokenizationTab";
+import { TravelAgentTab } from "./TravelAgentTab";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteField } from "firebase/firestore";
 import { toast } from "sonner";
 
 import { ChannelSeparationMode } from "@/lib/channex/types";
@@ -177,7 +179,7 @@ export function ChannelManagerSection() {
     const { ratePlans, loading: loadingRates, saving: savingRates, updateRatePlan, seedDefaultRatePlans } = useRatePlans();
     const { roomTypes, loading: loadingRooms } = useRoomTypes();
 
-    type ChannelTabType = "rooms" | "rateplans" | "matrix" | "mapping" | "dynamic_pricing" | "catalog" | "rules" | "google" | "promotions" | "content" | "messages" | "reviews" | "logs" | "payments" | "iframe" | "sandbox" | "golive" | "sync";
+    type ChannelTabType = "rooms" | "rateplans" | "matrix" | "mapping" | "dynamic_pricing" | "catalog" | "travel_agents" | "rules" | "google" | "promotions" | "content" | "messages" | "reviews" | "logs" | "payments" | "iframe" | "sandbox" | "golive" | "sync";
     const [activeTab, setActiveTab] = useState<ChannelTabType>("mapping");
     const [isVccModalOpen, setIsVccModalOpen] = useState<boolean>(false);
     const [isTaxesModalOpen, setIsTaxesModalOpen] = useState<boolean>(false);
@@ -188,7 +190,7 @@ export function ChannelManagerSection() {
             if (typeof window !== "undefined") {
                 const params = new URLSearchParams(window.location.search);
                 const tabParam = params.get("tab");
-                if (tabParam && ["rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "iframe", "sandbox", "golive", "sync"].includes(tabParam)) {
+                if (tabParam && ["rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "iframe", "sandbox", "golive", "sync"].includes(tabParam)) {
                     setActiveTab(tabParam as any);
                 }
             }
@@ -198,7 +200,7 @@ export function ChannelManagerSection() {
 
         const handleCustomTabChange = (e: any) => {
             const tab = typeof e.detail === "string" ? e.detail : e.detail?.tab;
-            if (tab && ["rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "iframe", "sandbox", "golive", "sync"].includes(tab)) {
+            if (tab && ["rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "iframe", "sandbox", "golive", "sync"].includes(tab)) {
                 setActiveTab(tab as any);
             }
         };
@@ -321,6 +323,13 @@ export function ChannelManagerSection() {
             title: "ARI Synchronization Feed & Status",
             subtitle: "Real-time monitor of live ARI sync queues, pending updates, and connection status between PMS and OTAs.",
             icon: RefreshCw
+        },
+        travel_agents: {
+            title: "Travel Agent & Saluran Distribusi Mitra",
+            subtitle: "Kelola daftar mitra Travel Agent offline, korporasi, wholesaler, dan saluran OTA yang terhubung ke sistem pemesanan hotel.",
+            icon: Users,
+            badge: "Mitra & OTA",
+            badgeColor: "#2563eb"
         }
     };
     
@@ -379,6 +388,7 @@ export function ChannelManagerSection() {
         d.setDate(d.getDate() + 2);
         return d.toISOString().split("T")[0];
     });
+    const [simPaymentCollect, setSimPaymentCollect] = useState<"channel" | "property">("channel");
     const [simulating, setSimulating] = useState<boolean>(false);
     const [simulatedResult, setSimulatedResult] = useState<any>(null);
 
@@ -494,48 +504,49 @@ export function ChannelManagerSection() {
     }>>(() => [
         {
             id: "inventory",
-            label: "Inventori & Tarif",
+            label: "Inventory & Pricing",
             badge: "5",
             tabs: [
-                { id: "rooms", label: "Kamar & Allotment" },
-                { id: "rateplans", label: "Rate Plan & Paket" },
-                { id: "matrix", label: "Matriks Harga (BAR)" },
-                { id: "mapping", label: "Pemetaan ID Kamar" },
+                { id: "rooms", label: "Room Types & Allotment" },
+                { id: "rateplans", label: "Rate Plans & Packages" },
+                { id: "matrix", label: "Rate Matrix (Net / Gross)" },
+                { id: "mapping", label: "Channel Mapping" },
                 { id: "dynamic_pricing", label: "📈 Dynamic Pricing (RMS)" }
             ]
         },
         {
             id: "distribution",
-            label: "Saluran OTA",
-            badge: `${activeChannelsList.length} Saluran`,
+            label: "OTA Distribution",
+            badge: `${activeChannelsList.length} Channels`,
             tabs: [
-                { id: "catalog", label: `Katalog Saluran (${activeChannelsList.length})` },
-                { id: "rules", label: "Aturan Yield & Alokasi" },
+                { id: "catalog", label: `Channel Catalog (${activeChannelsList.length})` },
+                { id: "travel_agents", label: "🤝 Travel Agents & Wholesalers" },
+                { id: "rules", label: "Yield & Allocation Rules" },
                 { id: "google", label: "🇬 Google Hotel Free Links" },
-                { id: "promotions", label: "🏷️ Promosi Saluran OTA" },
-                { id: "content", label: "Konten Foto & Fasilitas" }
+                { id: "promotions", label: "🏷️ OTA Promotions & Deals" },
+                { id: "content", label: "Property Content & Amenities" }
             ]
         },
         {
             id: "guest",
-            label: "Layanan Tamu",
+            label: "Guest Communications",
             badge: "2",
             tabs: [
-                { id: "messages", label: "Pesan Tamu (Inbox)" },
-                { id: "reviews", label: "Ulasan Tamu" }
+                { id: "messages", label: "Guest Messaging Inbox" },
+                { id: "reviews", label: "Guest Reviews & Ratings" }
             ]
         },
         {
             id: "system",
-            label: "Sistem & Integrasi",
+            label: "System & Connectivity",
             badge: "6",
             tabs: [
-                { id: "payments", label: "💳 Stripe & PCI Vault" },
-                { id: "sandbox", label: "🧪 Sandbox Sertifikasi" },
-                { id: "logs", label: "Audit Log Transmisi" },
-                { id: "iframe", label: "Channex Hub" },
-                { id: "golive", label: "Kredensial API" },
-                { id: "sync", label: "Aktivitas Sinkronisasi" }
+                { id: "payments", label: "💳 Stripe & PCI Card Vault" },
+                { id: "sandbox", label: "🧪 Certification Sandbox" },
+                { id: "logs", label: "ARI Transmission Logs" },
+                { id: "iframe", label: "Channex Console (SSO)" },
+                { id: "golive", label: "API Credentials & Production" },
+                { id: "sync", label: "Distribution Sync Feed" }
             ]
         }
     ], [activeChannelsList.length]);
@@ -696,6 +707,7 @@ export function ChannelManagerSection() {
                     action: "test_connection",
                     channelCode: code,
                     channelData: {
+                        ...targetChannel,
                         hotelId: targetChannel.hotelId
                     }
                 })
@@ -704,7 +716,7 @@ export function ChannelManagerSection() {
             if (data.success) {
                 toast.success(data.message || "Koneksi OTA berhasil divalidasi oleh Channex!");
             } else {
-                toast.error(data.message || "Koneksi ke OTA gagal. Pastikan Hotel ID Extranet valid.");
+                toast.error(data.message || data.error || "Koneksi ke OTA gagal. Pastikan Hotel ID Extranet valid.");
             }
         } catch (err: any) {
             toast.error(`Validasi OTA Error: ${err.message}`);
@@ -788,6 +800,17 @@ export function ChannelManagerSection() {
 
             // Disconnect & delete in Channex / Firestore via Direct API
             if (activeHotelCode && activeHotelCode !== "0") {
+                // Delete from Firestore directly using deleteField() so reload never restores it
+                try {
+                    const docRef = doc(db, "hotels", activeHotelCode);
+                    updateDoc(docRef, {
+                        [`channelManager.channels.${channelCode}`]: deleteField(),
+                        "channelManager.lastSyncAt": new Date().toISOString()
+                    }).catch(err => console.error("Firestore delete error:", err));
+                } catch (fsErr) {
+                    console.error("Firestore delete error:", fsErr);
+                }
+
                 fetch("/api/channex/channels", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -1022,6 +1045,7 @@ export function ChannelManagerSection() {
                     arrivalDate: simCheckin,
                     departureDate: simCheckout,
                     totalPrice: simPrice,
+                    paymentCollect: simPaymentCollect,
                     bookingIdToCancel: simulatedResult?.bookingId || undefined
                 })
             });
@@ -1066,12 +1090,13 @@ export function ChannelManagerSection() {
                     roomTypeId: simRoomTypeId,
                     arrivalDate: simCheckin,
                     departureDate: simCheckout,
-                    totalPrice: simPrice
+                    totalPrice: simPrice,
+                    paymentCollect: simPaymentCollect
                 })
             });
 
             const data = await res.json();
-            setSimulatedResult(data);
+            setSimulatedResult({ ...data, bookingId: data.bookingId || data.reservationId });
             if (data.success) {
                 toast.success(data.message || "Reservasi berhasil di-push ke Channex!");
                 setSyncLog(prev => [
@@ -1352,23 +1377,23 @@ export function ChannelManagerSection() {
                     <div className={styles.gridToolbar}>
                         <div className={styles.matrixHeaderLeft}>
                             <span className={styles.matrixHeaderTitle}>
-                                📊 Matriks Perhitungan Harga Kamar Multi-Channel:
+                                📊 Multi-Channel Rate Calculation Matrix:
                             </span>
                             <span className={styles.matrixHeaderSubtitle}>
-                                Bandingkan harga dasar Net PMS dengan harga jual Gross di setiap OTA berdasarkan persentase komisi masing-masing saluran.
+                                Compare PMS Base Net Rates against OTA Channel Gross Selling Rates across active channel commission models.
                             </span>
                         </div>
 
                         <div className={styles.matrixControls}>
-                            <span className={styles.matrixControlLabel}>Tampilan Kolom:</span>
+                            <span className={styles.matrixControlLabel}>View Mode:</span>
                             <select
                                 value={pricingViewMode}
                                 onChange={e => setPricingViewMode(e.target.value as any)}
                                 className={`${styles.cellSelect} ${styles.matrixSelect}`}
                             >
-                                <option value="all">Semua (Harga Net + Komisi + Harga Gross)</option>
-                                <option value="gross_only">Harga Gross Jual OTA Saja</option>
-                                <option value="net_only">Harga Net Diterima Hotel Saja</option>
+                                <option value="all">Complete Breakdown (Net, Commission %, Gross Rate)</option>
+                                <option value="gross_only">Channel Gross Rate Only</option>
+                                <option value="net_only">Net Hotel Yield Only</option>
                             </select>
                         </div>
                     </div>
@@ -1378,7 +1403,7 @@ export function ChannelManagerSection() {
                             <thead>
                                 <tr>
                                     <th rowSpan={2} className={`${styles.dsiTh} ${styles.colStickyLeft} ${styles.matrixThStickyLeft}`}>
-                                        Tipe Kamar &amp; Rate Plan
+                                        Room Types &amp; Rate Plans
                                     </th>
                                     <th rowSpan={2} className={`${styles.dsiTh} ${styles.matrixThBaseNet}`}>
                                         Base Net Rate (PMS)
@@ -1407,16 +1432,16 @@ export function ChannelManagerSection() {
                                         <React.Fragment key={`${ch.channelCode}_sub`}>
                                             {pricingViewMode === "all" && (
                                                 <>
-                                                    <th className={`${styles.dsiTh} ${styles.matrixThPercent}`}>Komisi %</th>
+                                                    <th className={`${styles.dsiTh} ${styles.matrixThPercent}`}>Commission %</th>
                                                     <th className={`${styles.dsiTh} ${styles.matrixThPercent}`}>Markup %</th>
-                                                    <th className={`${styles.dsiTh} ${styles.matrixThGross}`}>Harga Jual OTA</th>
+                                                    <th className={`${styles.dsiTh} ${styles.matrixThGross}`}>Gross Selling Rate</th>
                                                 </>
                                             )}
                                             {pricingViewMode === "gross_only" && (
-                                                <th className={`${styles.dsiTh} ${styles.matrixThGross}`}>Harga Jual OTA</th>
+                                                <th className={`${styles.dsiTh} ${styles.matrixThGross}`}>Gross Selling Rate</th>
                                             )}
                                             {pricingViewMode === "net_only" && (
-                                                <th className={`${styles.dsiTh} ${styles.matrixThNet}`}>Net Hotel</th>
+                                                <th className={`${styles.dsiTh} ${styles.matrixThNet}`}>Net Yield</th>
                                             )}
                                         </React.Fragment>
                                     ))}
@@ -1449,7 +1474,7 @@ export function ChannelManagerSection() {
                                                     <div className={styles.matrixPlanCell}>
                                                         <span className={styles.matrixPlanTitle}>{rp.name}</span>
                                                         <span className={styles.matrixPlanMeta}>
-                                                            {rp.roomTypeName} • {rp.mealsIncluded ? "Breakfast" : "Room Only"}
+                                                            {rp.roomTypeName || (rp.roomTypeNames && rp.roomTypeNames.length > 0 ? rp.roomTypeNames.join(", ") : "Semua Kamar")} • {rp.mealsIncluded ? "Breakfast" : "Room Only"}
                                                         </span>
                                                     </div>
                                                 </td>
@@ -1730,20 +1755,20 @@ export function ChannelManagerSection() {
                             </div>
 
                             <div className={styles.channelExtranetGrid}>
-                                <div>
-                                    <label className={styles.channelFieldLabel}>
-                                        OTA Property / Hotel ID ({channelConfigs[selectedChannelCode].channelName})
+                                <div className={styles.channelExtranetItem}>
+                                    <label className={styles.channelFieldLabel} title={`OTA Property / Hotel ID (${channelConfigs[selectedChannelCode].channelName})`}>
+                                        OTA Hotel ID ({channelConfigs[selectedChannelCode].channelName.replace(/\s*\(.*?\)/, '')})
                                     </label>
                                     <input
                                         type="text"
                                         value={channelConfigs[selectedChannelCode].hotelId}
                                         onChange={e => updateChannelField(selectedChannelCode, "hotelId", e.target.value)}
-                                        placeholder="e.g. 1084920"
+                                        placeholder={selectedChannelCode === "open_channel" ? "e.g. setara_demo_1" : "e.g. 1084920"}
                                         className={`${styles.cellInput} ${styles.channelFieldInput}`}
                                     />
                                 </div>
 
-                                <div>
+                                <div className={styles.channelExtranetItem}>
                                     <label className={styles.channelFieldLabel}>
                                         Pricing Model
                                     </label>
@@ -1757,7 +1782,7 @@ export function ChannelManagerSection() {
                                     </select>
                                 </div>
 
-                                <div>
+                                <div className={styles.channelExtranetItem}>
                                     <label className={styles.channelFieldLabel}>
                                         OTA Commission (%)
                                     </label>
@@ -1769,7 +1794,7 @@ export function ChannelManagerSection() {
                                     />
                                 </div>
 
-                                <div>
+                                <div className={styles.channelExtranetItem}>
                                     <label className={styles.channelFieldLabel}>
                                         Distribution Strategy (Front Office)
                                     </label>
@@ -1802,7 +1827,7 @@ export function ChannelManagerSection() {
                                         <tr>
                                             <th className={styles.dsiTh}>PMS Room Type & Code</th>
                                             <th className={styles.dsiTh}>Channel Manager Room UUID</th>
-                                            <th className={styles.dsiTh}>OTA Room ID ({channelConfigs[selectedChannelCode].channelName})</th>
+                                            <th className={styles.dsiTh}>OTA Room ID ({channelConfigs[selectedChannelCode].channelName.replace(/\s*\(.*?\)/, '')})</th>
                                             <th className={`${styles.dsiTh} ${styles.mappingThAction}`}>Status & Diagnostics</th>
                                         </tr>
                                     </thead>
@@ -1911,7 +1936,7 @@ export function ChannelManagerSection() {
                                         <tr>
                                             <th className={styles.dsiTh}>PMS Rate Plan & Code</th>
                                             <th className={styles.dsiTh}>Room Type & CM Rate UUID</th>
-                                            <th className={styles.dsiTh}>OTA Rate Plan ID ({channelConfigs[selectedChannelCode].channelName})</th>
+                                            <th className={styles.dsiTh}>OTA Rate Plan ID ({channelConfigs[selectedChannelCode].channelName.replace(/\s*\(.*?\)/, '')})</th>
                                             <th className={`${styles.dsiTh} ${styles.mappingThAction}`}>Status & Diagnostics</th>
                                         </tr>
                                     </thead>
@@ -1937,7 +1962,7 @@ export function ChannelManagerSection() {
                                                     </td>
                                                     <td>
                                                         <div className={styles.cellRateRoomType}>
-                                                            {rp.roomTypeName || rp.roomTypeId}
+                                                            {rp.roomTypeName || (rp.roomTypeNames && rp.roomTypeNames.length > 0 ? (rp.roomTypeNames.length > 2 ? `${rp.roomTypeNames.slice(0, 2).join(", ")} +${rp.roomTypeNames.length - 2}` : rp.roomTypeNames.join(", ")) : rp.roomTypeId || "Semua Kamar")}
                                                         </div>
                                                         {rp.channexRatePlanId ? (
                                                             <button
@@ -2012,6 +2037,39 @@ export function ChannelManagerSection() {
                                         })}
                                     </tbody>
                                 </table>
+                            </div>
+
+                            {/* Mapping Action Footer */}
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px", paddingTop: "14px", borderTop: "1px solid #e2e8f0", flexWrap: "wrap", gap: "10px" }}>
+                                <div style={{ fontSize: "12px", color: "#64748b" }}>
+                                    💡 Masukkan Room ID dan Rate ID dari Extranet OTA, lalu klik <strong>Simpan & Sinkronkan ke Channex</strong> untuk mengaktifkan sinkronisasi 2 arah.
+                                </div>
+                                <div style={{ display: "flex", gap: "8px" }}>
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveAll}
+                                        disabled={savingSettings}
+                                        className={styles.btnActionSecondary}
+                                        style={{ padding: "7px 14px", fontSize: "12px" }}
+                                    >
+                                        <Save size={13} />
+                                        <span>{savingSettings ? "Menyimpan..." : "Simpan Pemetaan"}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            await handleSaveAll();
+                                            await handleSyncSingleChannelToChannex(selectedChannelCode);
+                                        }}
+                                        disabled={savingSettings || syncingChannex}
+                                        className={styles.btnActionPrimary}
+                                        style={{ padding: "7px 16px", fontSize: "12px", background: "#059669" }}
+                                        title="Simpan pemetaan dan sinkronkan rate_plans ke Channex server"
+                                    >
+                                        <Zap size={13} className={syncingChannex ? "animate-spin" : ""} />
+                                        <span>{syncingChannex ? "Sinkronisasi Channex..." : "Simpan & Sinkronkan ke Channex"}</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -2350,6 +2408,17 @@ export function ChannelManagerSection() {
                 </div>
             )}
 
+            {/* TAB: TRAVEL AGENT & SALURAN MANUAL */}
+            {activeTab === "travel_agents" && (
+                <div className={`${styles.gridCard} ${styles.embeddedCard}`}>
+                    <TravelAgentTab 
+                        hotelCode={activeHotelCode} 
+                        channelConfigs={channelConfigs} 
+                        onNavigateToCatalog={() => handleSelectTab("catalog")} 
+                    />
+                </div>
+            )}
+
             {/* TAB: ATURAN ALOKASI SALURAN (YIELD MANAGEMENT & OVERRIDES) */}
             {activeTab === "rules" && (
                 <div className={`${styles.gridCard} ${styles.embeddedCard}`}>
@@ -2676,6 +2745,18 @@ export function ChannelManagerSection() {
                                     />
                                 </div>
 
+                                <div>
+                                    <label className={styles.sandboxFieldLabel}>Metode Pembayaran (Payment Collection):</label>
+                                    <select
+                                        value={simPaymentCollect}
+                                        onChange={e => setSimPaymentCollect(e.target.value as any)}
+                                        className={`${styles.cellSelect} ${styles.sandboxInput}`}
+                                    >
+                                        <option value="channel">Channel Collect / OTA Collect (VCC - Tamu Bayar di OTA)</option>
+                                        <option value="property">Property Collect (Pay at Hotel - Tamu Bayar di Hotel)</option>
+                                    </select>
+                                </div>
+
                                 <div className={styles.sandboxBtnRow}>
                                     <button
                                         type="button"
@@ -2725,9 +2806,9 @@ export function ChannelManagerSection() {
 
                                 {simulatedResult ? (
                                     <div>
-                                        <div className={styles.sandboxResultSuccess}>
-                                            <CheckCircle2 size={16} />
-                                            <span>{simulatedResult.message}</span>
+                                        <div className={simulatedResult.success !== false ? styles.sandboxResultSuccess : styles.sandboxResultError}>
+                                            {simulatedResult.success !== false ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+                                            <span>{simulatedResult.message || (simulatedResult.success !== false ? "Simulasi Berhasil" : "Simulasi Gagal")}</span>
                                         </div>
                                         <div className={styles.consoleBox}>
                                             {JSON.stringify(simulatedResult, null, 2)}

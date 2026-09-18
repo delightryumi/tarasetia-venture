@@ -610,22 +610,27 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
 
     const foMatcher = (t: TransactionEntry) => {
       const cat = (t.category || t.department || "").toLowerCase();
+      const subCatName = ((t as any).subCategory || "").toLowerCase();
       const desc = (t.description || "").toLowerCase();
       const isFnb =
         cat.includes("f&b") ||
         cat.includes("resto") ||
         cat.includes("food") ||
         cat.includes("bev") ||
+        subCatName.includes("breakfast") ||
+        desc.includes("breakfast") ||
+        desc.includes("sarapan") ||
         desc.includes("makan") ||
         desc.includes("minum");
       if (!isFnb) return false;
-      if (type === "food" && (cat.includes("food") || desc.includes("makanan") || !cat.includes("bev"))) {
-        return outletMatcher(cat + " " + desc);
+      const combined = `${cat} ${subCatName} ${desc}`;
+      if (type === "food" && (cat.includes("food") || subCatName.includes("breakfast") || desc.includes("breakfast") || desc.includes("sarapan") || desc.includes("makanan") || !cat.includes("bev"))) {
+        return outletMatcher(combined);
       }
       if (type === "beverage" && (cat.includes("bev") || desc.includes("minuman") || cat.includes("drink"))) {
-        return outletMatcher(cat + " " + desc);
+        return outletMatcher(combined);
       }
-      return outletMatcher(cat + " " + desc);
+      return outletMatcher(combined);
     };
 
     const todayAct = filterPosRev(todayPosOrders, type, outletMatcher) + filterNonAccRev("today", foMatcher);

@@ -28,7 +28,7 @@ import {
 import { toast } from "sonner";
 import styles from "./TransactionFormStyles.module.css";
 import pmsStyles from "./AddReservation.module.css";
-import { CHANNELS, BOOKING_TYPES } from "./useTransactionForm";
+import { CHANNELS, BOOKING_TYPES, ChannelOption } from "./useTransactionForm";
 import Modal from "./Modal";
 import {
     SectionTitle,
@@ -128,6 +128,7 @@ interface TransactionEntryFormProps {
     ratePlans?: any[];
     selectedRatePlanId?: string;
     onSelectRatePlan?: (ratePlanId: string) => void;
+    availableChannels?: ChannelOption[];
     updateForm: (field: string, value: any) => void;
     updateRoom: (idx: number, field: string, value: any) => void;
     addRoom?: () => void;
@@ -150,6 +151,7 @@ export function TransactionEntryForm({
     ratePlans = [],
     selectedRatePlanId = "",
     onSelectRatePlan = () => {},
+    availableChannels = [],
     updateForm,
     updateRoom,
     addRoom,
@@ -289,16 +291,62 @@ export function TransactionEntryForm({
 
                     {/* Row 2: Booking Source */}
                     <div className={pmsStyles.sourceRow}>
-                        <div className={pmsStyles.timelineGroup}>
+                        <div className={pmsStyles.timelineGroup} style={{ flex: 1, minWidth: "260px" }}>
                             <label className={pmsStyles.fieldLabel}>Booking Source</label>
                             <select 
                                 className={`${pmsStyles.fieldSelect} ${pmsStyles.sourceSelect}`}
-                                value={form.channel || "Booking Engine"}
-                                onChange={(e) => updateForm("channel", e.target.value)}
+                                style={{ width: "100%", minWidth: "220px" }}
+                                value={form.channel || "Direct / Walk-in"}
+                                onChange={(e) => {
+                                    const selectedVal = e.target.value;
+                                    updateForm("channel", selectedVal);
+                                    
+                                    // Also auto-sync businessSource according to category if available
+                                    const matched = (availableChannels || []).find(c => c.name === selectedVal);
+                                    if (matched) {
+                                        if (matched.category === "Direct") updateForm("businessSource", "Direct / Walk-in");
+                                        else if (matched.category === "OTA") updateForm("businessSource", "OTA / Online Channel");
+                                        else if (matched.category === "Corporate") updateForm("businessSource", "Corporate / Perusahaan");
+                                        else if (matched.category === "Wholesaler") updateForm("businessSource", "Wholesaler");
+                                        else if (matched.category === "Government") updateForm("businessSource", "Government / Dinas");
+                                        else if (matched.category === "Travel Agent") updateForm("businessSource", "Travel Agent / FIT");
+                                    }
+                                }}
                             >
-                                {CHANNELS.map((ch) => (
-                                    <option key={ch.name} value={ch.name}>{ch.name}</option>
-                                ))}
+                                {availableChannels && availableChannels.length > 0 ? (
+                                    <>
+                                        {/* Direct group */}
+                                        {availableChannels.some(c => c.category === "Direct") && (
+                                            <optgroup label="Direct / Langsung">
+                                                {availableChannels.filter(c => c.category === "Direct").map((c, idx) => (
+                                                    <option key={`direct-${c.name}-${idx}`} value={c.name}>{c.name}</option>
+                                                ))}
+                                            </optgroup>
+                                        )}
+                                        {/* OTA group */}
+                                        {availableChannels.some(c => c.category === "OTA") && (
+                                            <optgroup label="Saluran OTA (Connected)">
+                                                {availableChannels.filter(c => c.category === "OTA").map((c, idx) => (
+                                                    <option key={`ota-${c.code || c.name}-${idx}`} value={c.name}>{c.name}</option>
+                                                ))}
+                                            </optgroup>
+                                        )}
+                                        {/* Travel Agent & Partners */}
+                                        {availableChannels.some(c => !["Direct", "OTA"].includes(c.category)) && (
+                                            <optgroup label="Travel Agent & Mitra Khusus">
+                                                {availableChannels.filter(c => !["Direct", "OTA"].includes(c.category)).map((c, idx) => (
+                                                    <option key={`agent-${c.code || c.name}-${idx}`} value={c.name}>
+                                                        {c.name} ({c.category})
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                        )}
+                                    </>
+                                ) : (
+                                    CHANNELS.map((ch) => (
+                                        <option key={ch.name} value={ch.name}>{ch.name}</option>
+                                    ))
+                                )}
                             </select>
                         </div>
                     </div>
@@ -365,6 +413,9 @@ export function TransactionEntryForm({
                                     const rtObj = roomTypes.find(t => t.id === currentRoomTypeId);
                                     const filteredRatePlans = ratePlans.filter((rp: any) => {
                                         if (!currentRoomTypeId) return true;
+                                        if (Array.isArray(rp.roomTypeIds) && rp.roomTypeIds.length > 0) {
+                                            return rp.roomTypeIds.includes(currentRoomTypeId);
+                                        }
                                         if (!rp.roomTypeId) return true;
                                         if (rp.roomTypeId === currentRoomTypeId) return true;
                                         if (rtObj?.name && rp.name && (
@@ -423,9 +474,18 @@ export function TransactionEntryForm({
                                                         const matched = ratePlans.find((p) => p.id === val || p.code === val);
                                                         if (matched) {
                                                             updateRoom(idx, "rateCode", matched.code || matched.name);
-                                                            if (matched.baseRate) {
-                                                                updateRoom(idx, "price", matched.baseRate.toString());
-                                                                if (idx === 0) updateNightRate(0, matched.baseRate);
+                                                            const applicableRate = (matched.roomRates && matched.roomRates[rm.roomTypeId])
+                                                                ? Number(matched.roomRates[rm.roomTypeId])
+                                                                : Number(matched.baseRate || 0);
+                                                            if (applicableRate) {
+                                                                updateRoom(idx, "price", applicableRate.toString());
+                                                                if (idx === 0) updateNightRate(0, applicableRate);
+                                                            }
+                                                            if (matched.breakfastRate !== undefined) {
+                                                                updateRoom(idx, "breakfastRate", matched.breakfastRate);
+                                                            }
+                                                            if (matched.mealsIncluded !== undefined) {
+                                                                updateRoom(idx, "mealsIncluded", matched.mealsIncluded);
                                                             }
                                                         }
                                                     }}
@@ -433,7 +493,7 @@ export function TransactionEntryForm({
                                                     <option value="">-Select-</option>
                                                     {filteredRatePlans.map((rp: any) => (
                                                         <option key={rp.id || rp.code} value={rp.id || rp.code}>
-                                                            {rp.name || rp.code}
+                                                            {rp.name || rp.code} {rp.mealsIncluded ? `(Inc. Bft Rp ${(rp.breakfastRate || 75000).toLocaleString('id-ID')})` : ''}
                                                         </option>
                                                     ))}
                                                 </select>

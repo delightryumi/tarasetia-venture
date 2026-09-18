@@ -45,6 +45,8 @@ export interface RoomType {
     roomSizeValue?: number;
     roomSizeUnit?: string;
     roomCount?: number;
+    price?: number;
+    basePrice?: number;
     physicalRooms?: Array<PhysicalRoom | string>;
     channexRoomTypeId?: string;
     createdAt?: string;

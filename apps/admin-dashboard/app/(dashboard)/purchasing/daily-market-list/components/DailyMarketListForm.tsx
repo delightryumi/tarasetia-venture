@@ -9,7 +9,7 @@ import { formatRupiah } from '@/lib/purchasing/utils';
 import { toast } from 'sonner';
 import s from '../../shared-page.module.css';
 
-const DEPARTMENTS = ["Food & Beverage", "Front Office", "Housekeeping", "Accounting", "Purchasing"];
+const DEPARTMENTS = ["Food & Beverage", "Front Office", "Housekeeping", "Accounting", "Purchasing", "POMEC"];
 const FB_CATEGORIES = ["Food", "Beverage"];
 const EVENT_CATEGORIES = ["A la Carte", "Banquet"];
 

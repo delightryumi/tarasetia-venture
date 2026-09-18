@@ -296,7 +296,11 @@ export const useRateInventory = () => {
 
         return roomTypes.map(rt => {
             // Find real rate plans belonging to this room type
-            const rtPlans = ratePlans.filter(rp => rp.roomTypeId === rt.id || (rp.roomTypeName && rp.roomTypeName.trim().toLowerCase() === rt.name.trim().toLowerCase()));
+            const rtPlans = ratePlans.filter(rp => 
+                rp.roomTypeId === rt.id || 
+                (Array.isArray(rp.roomTypeIds) && rp.roomTypeIds.includes(rt.id)) ||
+                (rp.roomTypeName && rp.roomTypeName.trim().toLowerCase() === rt.name.trim().toLowerCase())
+            );
 
             // Days status for room type summary row (inventory)
             const roomTypeDaysStatus: Record<string, DayInventoryStatus> = {};
@@ -411,7 +415,7 @@ export const useRateInventory = () => {
                     const childKey = `child_${rp.id}_${dateStr}`;
 
                     // Base rate from Master / Common Pool
-                    const baseRateValue = Number(rp.baseRate ?? rt.basePrice ?? 0);
+                    const baseRateValue = Number(rp.roomRates?.[rt.id] ?? rp.baseRate ?? rt.basePrice ?? 0);
                     const commonPoolRate = dayOverride?.rates?.[rp.id] !== undefined 
                         ? Number(dayOverride.rates[rp.id]) 
                         : baseRateValue;

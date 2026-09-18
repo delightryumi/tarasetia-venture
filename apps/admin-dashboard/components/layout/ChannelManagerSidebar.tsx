@@ -26,7 +26,8 @@ import {
     RefreshCw,
     ArrowLeft,
     CheckCircle2,
-    Bell
+    Bell,
+    Users
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import "./layout.css";
@@ -90,7 +91,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
         router.push("/select-module");
     };
 
-    const sidebarVariants = {
+    const sidebarVariants: any = {
         expanded: {
             width: "var(--sidebar-width)",
             transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
@@ -105,12 +106,13 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
         {
             title: "OTA Distribution & Connectivity",
             items: [
-                { id: "mapping", label: "Channel Mapping & Rules", shortLabel: "Mapping", icon: Key, badge: "Rules", badgeColor: "#16a34a" },
-                { id: "catalog", label: "Channel Catalog (68+)", shortLabel: "Catalog", icon: Globe },
+                { id: "mapping", label: "Channel Mapping", shortLabel: "Mapping", icon: Key, badge: "Rules", badgeColor: "#16a34a" },
+                { id: "catalog", label: "Channel Catalog (68+ OTAs)", shortLabel: "Catalog", icon: Globe },
+                { id: "travel_agents", label: "Travel Agent & Saluran", shortLabel: "Agents", icon: Users, badge: "Mitra", badgeColor: "#7e22ce" },
                 { id: "rules", label: "Yield & Inventory Rules", shortLabel: "Yield", icon: Shield },
                 { id: "google", label: "Google Hotel Links", shortLabel: "Google", icon: Search },
                 { id: "promotions", label: "Promotions & Deals", shortLabel: "Promos", icon: Tag },
-                { id: "content", label: "Content & Amenities Sync", shortLabel: "Content", icon: UploadCloud }
+                { id: "content", label: "Content & Amenities", shortLabel: "Content", icon: UploadCloud }
             ]
         },
         {
@@ -281,7 +283,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                                         </div>
 
                                         {!isCollapsed && (
-                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: 1, overflow: "hidden" }}>
+                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: 1, minWidth: 0, gap: "6px" }}>
                                                 <span className="nav-label" style={{ fontSize: "12px", color: isActive ? "#ffffff" : "#1e293b" }}>
                                                     {item.label}
                                                 </span>
@@ -292,7 +294,8 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                                                         padding: "1px 6px",
                                                         borderRadius: "9999px",
                                                         background: isActive ? "rgba(255, 255, 255, 0.25)" : "#dcfce7",
-                                                        color: isActive ? "#ffffff" : item.badgeColor || "#166534"
+                                                        color: isActive ? "#ffffff" : item.badgeColor || "#166534",
+                                                        flexShrink: 0
                                                     }}>
                                                         {item.badge}
                                                     </span>

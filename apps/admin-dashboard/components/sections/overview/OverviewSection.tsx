@@ -149,7 +149,7 @@ export function OverviewSection() {
         const targetBookingId = String(target.bookingId || "").trim();
         const eBookingId = String(e.bookingId || "").trim();
         if (targetBookingId !== "" && eBookingId !== "") {
-            if (targetBookingId === eBookingId) return true;
+            if (targetBookingId === eBookingId || eBookingId === `${targetBookingId}-BFT` || targetBookingId === `${eBookingId}-BFT`) return true;
             return false;
         }
         
@@ -230,6 +230,8 @@ export function OverviewSection() {
                                     updated.cancelledAt = `${yyyy}-${mm}-${dd}`;
                                     updated.status = "CANCELLED";
                                     updated.paymentStatus = "CANCELLED";
+                                    updated.roomCount = 0;
+                                    updated.roomsCount = 0;
                                     updated.cancelledBy = user ? `${user.displayName} (${user.role || 'user'})` : "System";
                                 } else {
                                     updated.cancelledAt = null;
@@ -242,6 +244,20 @@ export function OverviewSection() {
                     });
                     await updateDoc(docRef, { entries: updatedEntries, date: d });
                 }
+            }
+
+            // Immediately trigger availability recalculation & push released inventory to Channex/OTAs
+            if ((value === "CANCELLED" || value === "CANCEL") && dates.length > 0) {
+                fetch("/api/channex/sync-ari", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode: hotelId,
+                        startDate: dates[0],
+                        endDate: dates[dates.length - 1],
+                        type: "availability"
+                    })
+                }).catch(err => console.warn("[Cancel Channex Sync Warning]:", err));
             }
         } catch (error) {
             console.error("Status Update Failed", error);
@@ -1055,6 +1071,7 @@ export function OverviewSection() {
                 {/* SECTION 2: AUDIT LEDGER */}
                 <AuditLedger 
                     bookings={latestBookings}
+                    activeHotelName={activeHotelName}
                     onView={(b) => { setSelectedGuest(b); setIsEditing(false); }}
                     onEdit={(b) => { setSelectedGuest(b); setIsEditing(true); }}
                     onDelete={(b) => {
@@ -1075,6 +1092,7 @@ export function OverviewSection() {
                     onExportExcel={handleExportExcel}
                     onExportPDF={handleExportPDF}
                 />
+
             </main>
 
             {/* Right Drawer Overlay Popup */}

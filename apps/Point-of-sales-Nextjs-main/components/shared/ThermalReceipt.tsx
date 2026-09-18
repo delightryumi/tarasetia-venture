@@ -61,6 +61,23 @@ export function formatPaymentMethod(method?: string): string {
   return method.toUpperCase();
 }
 
+export function formatReceiptDate(dateVal?: string | Date) {
+  if (!dateVal) return '';
+  if (typeof dateVal === 'string' && dateVal.includes('pukul')) return dateVal;
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return String(dateVal);
+  const months = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+  const day = d.getDate();
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${day} ${month} ${year} pukul ${hours}.${minutes}`;
+}
+
 export default function ThermalReceipt({
   shopInfo,
   transactionInfo,
@@ -153,6 +170,26 @@ export default function ThermalReceipt({
   });
 
   const sortedCats = Object.keys(grouped).sort();
+  const displayDate = formatReceiptDate(transactionInfo.date);
+  const rawTable = transactionInfo.tableName;
+  const isTakeAway = !rawTable || 
+    rawTable.toLowerCase().includes('take') || 
+    rawTable === '-' || 
+    rawTable === '—';
+  const displayTable = isTakeAway 
+    ? 'Take Away' 
+    : (rawTable.toLowerCase().includes('meja') 
+        ? rawTable 
+        : `Meja ${rawTable}`);
+
+  const isGeneralGuest = !transactionInfo.customerName || 
+    transactionInfo.customerName.toLowerCase() === 'walk-in customer' || 
+    transactionInfo.customerName.toLowerCase() === 'walk-in' ||
+    transactionInfo.customerName.toLowerCase() === 'guest' || 
+    transactionInfo.customerName.toLowerCase() === 'tamu umum';
+  const displayCustomer = isGeneralGuest ? 'Tamu Umum' : transactionInfo.customerName;
+
+  const displayCashier = transactionInfo.cashierName || 'Master Superadmin';
 
   return (
     <div 
@@ -163,6 +200,7 @@ export default function ThermalReceipt({
         @media print {
           @page {
             margin: 0 !important;
+            size: auto !important;
           }
           body {
             margin: 0 !important;
@@ -212,40 +250,6 @@ export default function ThermalReceipt({
         }
       `}</style>
 
-      {/* Print Target Selector (Screen only) */}
-      <div className="flex gap-1 mb-4 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg print:hidden text-[10px] font-sans">
-        <button
-          onClick={() => setPrintMode('all')}
-          className={`flex-1 py-1.5 px-2 rounded-md font-semibold text-center transition-all border-none cursor-pointer ${
-            printMode === 'all'
-              ? 'bg-white dark:bg-zinc-700 text-neutral-900 dark:text-white shadow-sm'
-              : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white bg-transparent'
-          }`}
-        >
-          Kasir (Full)
-        </button>
-        <button
-          onClick={() => setPrintMode('kitchen')}
-          className={`flex-1 py-1.5 px-2 rounded-md font-semibold text-center transition-all border-none cursor-pointer ${
-            printMode === 'kitchen'
-              ? 'bg-white dark:bg-zinc-700 text-neutral-900 dark:text-white shadow-sm'
-              : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white bg-transparent'
-          }`}
-        >
-          Dapur (KOT)
-        </button>
-        <button
-          onClick={() => setPrintMode('bar')}
-          className={`flex-1 py-1.5 px-2 rounded-md font-semibold text-center transition-all border-none cursor-pointer ${
-            printMode === 'bar'
-              ? 'bg-white dark:bg-zinc-700 text-neutral-900 dark:text-white shadow-sm'
-              : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white bg-transparent'
-          }`}
-        >
-          Bar (Drink)
-        </button>
-      </div>
-
       {/* ── KOT Header (Dapur / Bar) ── */}
       {printMode !== 'all' ? (
         <div className="w-full mb-0">
@@ -284,7 +288,7 @@ export default function ThermalReceipt({
             </div>
             {/* Time + Cashier + Meja */}
             <div className="text-right">
-              <div className="font-mono font-bold text-[9px] text-black">{transactionInfo.date}</div>
+              <div className="font-mono font-bold text-[9px] text-black">{displayDate}</div>
               {transactionInfo.tableName && (
                 <div className="font-mono text-[8px] text-black mt-[1px]">
                   Meja: <span className="font-bold">{transactionInfo.tableName}</span>
@@ -320,17 +324,23 @@ export default function ThermalReceipt({
           <div style={{ borderTop: '2px solid #000', marginTop: '4px', marginBottom: '6px' }} />
         </div>
       ) : (
-        /* ── Kasir Full Header ── */
-        <div className="text-center mb-3 flex flex-col items-center">
+        /* ── Kasir Full Header (Exact Match to LexuPOS) ── */
+        <div className="text-center mb-2 flex flex-col items-center">
           {logoUrl && (
-            <img src={logoUrl} alt="Store Logo" className="w-[36mm] h-auto object-contain mb-5" style={{ filter: 'grayscale(100%) brightness(0)' }} />
+            <img src={logoUrl} alt="Store Logo" className="w-[36mm] h-auto object-contain mb-3" style={{ filter: 'grayscale(100%) brightness(0)' }} />
           )}
-          <h2 className="text-[16px] font-serif font-light uppercase tracking-[0.15em] m-0 mt-1 mb-2 leading-tight" style={{ transform: 'scaleY(1.3) scaleX(0.9)', transformOrigin: 'center' }}>{shopInfo.name}</h2>
+          <h2 className="text-[17px] font-serif font-light uppercase tracking-[0.15em] m-0 mt-0.5 mb-1 leading-tight" style={{ transform: 'scaleY(1.3) scaleX(0.9)', transformOrigin: 'center' }}>
+            {shopInfo.name}
+          </h2>
           {shopInfo.address && (
-            <p className="text-[9px] mt-[2px] mb-0 leading-tight text-neutral-600 font-medium">{shopInfo.address}</p>
+            <p className="text-[9px] mt-[1px] mb-0 leading-tight text-neutral-600 font-medium max-w-[90%]">
+              {shopInfo.address}
+            </p>
           )}
           {shopInfo.phone && (
-            <p className="text-[9px] mt-[2px] mb-0 leading-tight font-semibold text-neutral-800">Tlp: {shopInfo.phone}</p>
+            <p className="text-[9px] mt-[2px] mb-0 leading-tight font-semibold text-neutral-800">
+              Tlp: {shopInfo.phone}
+            </p>
           )}
         </div>
       )}
@@ -347,40 +357,26 @@ export default function ThermalReceipt({
               )}
             </div>
           )}
-          <div className="text-[9px] flex flex-col gap-[2px] mb-1.5">
+          <div className="text-[9.5px] flex flex-col gap-[2px] mb-1.5">
             <div className="flex justify-between">
-              <span>No. Transaksi:</span>
+              <span className="text-neutral-700">No. Transaksi:</span>
               <span className="font-bold">{transactionInfo.id}</span>
             </div>
             <div className="flex justify-between">
-              <span>Tanggal:</span>
-              <span className="font-bold">{transactionInfo.date}</span>
+              <span className="text-neutral-700">Tanggal:</span>
+              <span className="font-bold">{displayDate}</span>
             </div>
-            {transactionInfo.tableName && (
-              <div className="flex justify-between">
-                <span>Meja:</span>
-                <span className="font-bold">{transactionInfo.tableName}</span>
-              </div>
-            )}
             <div className="flex justify-between">
-              <span>Pelanggan:</span>
-              <span className="font-bold">{transactionInfo.customerName || 'Walk-in Customer'}</span>
+              <span className="text-neutral-700">Meja:</span>
+              <span className="font-bold">{displayTable}</span>
             </div>
-            {transactionInfo.cashierName && (
-              <div className="flex justify-between">
-                <span>Kasir:</span>
-                <span className="font-bold">{transactionInfo.cashierName}</span>
-              </div>
-            )}
             <div className="flex justify-between">
-              <span>Metode:</span>
-              <span className="font-bold uppercase">
-                {transactionInfo.status === 'UNPAID' ? (
-                  <span className="text-red-600 font-extrabold">BELUM BAYAR (UNPAID)</span>
-                ) : (
-                  formatPaymentMethod(transactionInfo.paymentMethod)
-                )}
-              </span>
+              <span className="text-neutral-700">Pelanggan:</span>
+              <span className="font-bold">{displayCustomer}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-neutral-700">Kasir:</span>
+              <span className="font-bold">{displayCashier}</span>
             </div>
             {transactionInfo.status === 'UNPAID' && (
               <div className="w-full text-center font-extrabold text-[11px] border border-black text-black py-1 my-1.5 uppercase font-mono tracking-wider">
@@ -392,182 +388,56 @@ export default function ThermalReceipt({
         </>
       )}
 
-      {/* Items */}
+      {/* Items List (Exact Match: Bold Category, Name, Price, and 1 x Rp line) */}
       {sortedCats.map((cat) => (
-        <div key={cat} className="mb-2">
-          {/* Category header — hanya tampil di mode kasir */}
-          {printMode === 'all' && (
-            <div className="text-[10px] font-bold uppercase tracking-[1px] border-b border-dotted border-gray-500 pb-[2px] mb-1">
-              {cat}
-            </div>
-          )}
-          {/* KOT mode: tampilkan category sebagai section divider */}
-          {printMode !== 'all' && (
-            <div
-              className="text-[9px] font-mono font-black uppercase tracking-widest mb-1 pb-[2px]"
-              style={{ borderBottom: '1px solid #000', letterSpacing: '0.15em' }}
-            >
-              — {cat} —
-            </div>
-          )}
-          {Object.keys(grouped[cat]).sort().map(sub => (
-            <div key={sub} className="mb-1">
-              {sub !== '—' && (
-                <div className={`text-[8px] uppercase ml-1 mb-[2px] tracking-[0.5px] ${
-                  printMode !== 'all' ? 'font-bold text-black' : 'text-gray-700'
-                }`}>
-                  {sub}
-                </div>
-              )}
-              {grouped[cat][sub].map((item, i) => {
-                const addonsTotal = item.selectedAddons ? item.selectedAddons.reduce((sum, a) => sum + a.price, 0) : 0;
-                const itemPrice = item.price + addonsTotal;
+        <div key={cat} className="mb-2.5">
+          {/* Category header */}
+          <div className="text-[10px] font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1 text-black">
+            {cat}
+          </div>
+          
+          <div className="flex flex-col gap-1.5">
+            {Object.keys(grouped[cat]).sort().map(sub => (
+              <React.Fragment key={sub}>
+                {grouped[cat][sub].map((item, i) => {
+                  const addonsTotal = item.selectedAddons ? item.selectedAddons.reduce((sum, a) => sum + a.price, 0) : 0;
+                  const itemPrice = item.price + addonsTotal;
 
-                if (printMode !== 'all') {
                   return (
-                    <div
-                      key={i}
-                      className={isCancelled ? 'opacity-60' : ''}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '8px',
-                        marginBottom: '6px',
-                        paddingBottom: '6px',
-                        borderBottom: '1px dashed #555',
-                        textDecoration: isCancelled ? 'line-through' : 'none',
-                      }}
-                    >
-                      {/* QTY — big number box, border-only, black text */}
-                      <div
-                        style={{
-                          flexShrink: 0,
-                          minWidth: '38px',
-                          textAlign: 'center',
-                          border: '2px solid #000',
-                          borderRadius: '3px',
-                          padding: '2px 4px',
-                          fontFamily: 'monospace',
-                          fontWeight: 900,
-                          fontSize: '18px',
-                          lineHeight: '1.1',
-                          color: '#000',
-                          background: 'transparent',
-                        }}
-                      >
-                        {item.quantity}
-                        <div style={{ fontSize: '7px', fontWeight: 700, letterSpacing: '0.05em', marginTop: '-2px' }}>PCS</div>
-                      </div>
-
-                      {/* Item detail */}
-                      <div style={{ flex: 1 }}>
-                        {/* Nama item */}
-                        <div
-                          style={{
-                            fontWeight: 800,
-                            fontSize: '13px',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.03em',
-                            lineHeight: '1.2',
-                            color: '#000',
-                          }}
-                        >
+                    <div key={i} className={`flex flex-col text-[10px] w-full ${isCancelled ? 'line-through text-neutral-500 opacity-70' : ''}`}>
+                      <div className="flex justify-between items-start">
+                        <span className="font-bold text-[10px] uppercase text-black leading-tight flex-1 pr-2">
                           {item.name}
                           {item.isCompliment && (
-                            <span
-                              style={{
-                                fontSize: '7px',
-                                marginLeft: '4px',
-                                border: '1px solid #000',
-                                padding: '0 2px',
-                                fontWeight: 700,
-                                verticalAlign: 'middle',
-                              }}
-                            >
+                            <span className="text-[7.5px] ml-1.5 border border-black text-black px-1 rounded-sm font-semibold">
                               COMPLIMENT
                             </span>
                           )}
-                        </div>
-
-                        {/* Add-ons / Modifiers */}
-                        {item.selectedAddons && item.selectedAddons.length > 0 && (
-                          <div
-                            style={{
-                              fontSize: '9px',
-                              fontWeight: 700,
-                              color: '#000',
-                              marginTop: '2px',
-                              paddingLeft: '6px',
-                              borderLeft: '2px solid #000',
-                            }}
-                          >
-                            + {item.selectedAddons.map(a => a.name).join(', ')}
-                          </div>
-                        )}
-
-                        {/* Qty x harga (info ringkas untuk double-check) */}
-                        <div style={{ fontSize: '9px', color: '#000', marginTop: '2px', fontWeight: 600 }}>
-                          {item.quantity} x {formatCurrency(itemPrice)}
-                          {item.isCompliment && ' — GRATIS'}
-                        </div>
-
-                        {/* Special note / request */}
-                        {item.note && (
-                          <div
-                            style={{
-                              fontSize: '9px',
-                              fontWeight: 800,
-                              color: '#000',
-                              marginTop: '4px',
-                              padding: '4px 6px',
-                              border: '2px solid #000',
-                              borderRadius: '2px',
-                              background: 'transparent',
-                              lineHeight: '1.3',
-                            }}
-                          >
-                            ⚠ {item.note}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div key={i} className={`flex justify-between items-start text-[10px] ml-2 mb-[2px] ${isCancelled ? 'line-through text-neutral-500 opacity-70' : ''}`}>
-                    <div className="max-w-[70%]">
-                      <div className="font-bold leading-tight">
-                        {item.name}
-                        {item.isCompliment && (
-                          <span className="text-[8px] ml-1 border border-black text-black px-1 rounded-sm font-semibold">
-                            COMPLIMENT
-                          </span>
-                        )}
+                        </span>
+                        <span className="font-bold text-[10px] whitespace-nowrap text-right text-black shrink-0">
+                          {item.isCompliment ? formatCurrency(0) : formatCurrency(itemPrice * item.quantity)}
+                        </span>
                       </div>
                       {item.selectedAddons && item.selectedAddons.length > 0 && (
-                        <div className="text-[8px] text-gray-600 mt-[1px]">
+                        <div className="text-[8.5px] text-neutral-600 mt-[1px]">
                           + {item.selectedAddons.map(a => a.name).join(', ')}
                         </div>
                       )}
                       {item.note && (
-                        <div className="text-[8px] italic text-gray-600 mt-[1px]">
+                        <div className="text-[8.5px] italic text-neutral-600 mt-[1px]">
                           Catatan: {item.note}
                         </div>
                       )}
-                      <div className="text-[8px] text-gray-700 mt-[1px]">
+                      <div className="text-[8.5px] text-neutral-600 mt-[0.5px]">
                         {item.quantity} x {formatCurrency(itemPrice)}
                         {item.isCompliment && item.complimentReason && ` (${item.complimentReason})`}
                       </div>
                     </div>
-                    <span className="font-bold whitespace-nowrap ml-2">
-                      {item.isCompliment ? formatCurrency(0) : formatCurrency(itemPrice * item.quantity)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+                  );
+                })}
+              </React.Fragment>
+            ))}
+          </div>
         </div>
       ))}
 
@@ -575,17 +445,17 @@ export default function ThermalReceipt({
         <>
           <div className="border-t border-dashed border-black my-1.5" />
 
-          {/* Totals */}
-          <div className="flex flex-col gap-[2px] text-[9px]">
+          {/* Totals (Exact Match to LexuPOS) */}
+          <div className="flex flex-col gap-[2px] text-[9.5px]">
             <div className="flex justify-between">
-              <span>Subtotal:</span>
-              <span>{formatCurrency(totals.subtotal)}</span>
+              <span className="text-neutral-700">Subtotal:</span>
+              <span className="font-bold">{formatCurrency(totals.subtotal)}</span>
             </div>
             {totals.discount > 0 && (
               <>
-                <div className="flex justify-between text-gray-700">
+                <div className="flex justify-between text-neutral-700">
                   <span>Diskon:</span>
-                  <span>-{formatCurrency(totals.discount)}</span>
+                  <span className="font-bold">-{formatCurrency(totals.discount)}</span>
                 </div>
                 <div className="flex justify-between font-bold">
                   <span>Setelah Diskon:</span>
@@ -595,92 +465,71 @@ export default function ThermalReceipt({
             )}
             {totals.serviceAmount !== undefined && totals.serviceAmount > 0 && (
               <div className="flex justify-between">
-                <span>Service Charge{totals.serviceRate ? ` (${totals.serviceRate}%)` : ''}:</span>
-                <span>+{formatCurrency(totals.serviceAmount)}</span>
+                <span className="text-neutral-700">Service Charge ({totals.serviceRate || 5}%):</span>
+                <span className="font-bold">+{formatCurrency(totals.serviceAmount)}</span>
               </div>
             )}
             {totals.taxAmount > 0 && (
               <div className="flex justify-between">
-                <span>PB1 / Pajak Resto{totals.taxRate ? ` (${totals.taxRate}%)` : ''}:</span>
-                <span>+{formatCurrency(totals.taxAmount)}</span>
+                <span className="text-neutral-700">Pajak Resto (PB1) ({totals.taxRate || 10}%):</span>
+                <span className="font-bold">+{formatCurrency(totals.taxAmount)}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-[11px] border-t border-dashed border-black pt-1 mt-[2px]">
-              <span>TOTAL TAGIHAN:</span>
-              <span>{formatCurrency(totals.payableAmount)}</span>
+          </div>
+
+          <div className="border-t border-dashed border-black my-1.5" />
+
+          <div className="flex justify-between font-bold text-[12px] py-0.5">
+            <span>TOTAL TAGIHAN:</span>
+            <span>{formatCurrency(totals.payableAmount)}</span>
+          </div>
+
+          <div className="border-t border-dashed border-black my-1.5" />
+
+          <div className="flex flex-col gap-[2px] text-[9.5px]">
+            <div className="flex justify-between">
+              <span className="text-neutral-700">Metode Pembayaran:</span>
+              <span className="font-bold uppercase text-black">
+                {transactionInfo.status === 'UNPAID' ? 'BELUM BAYAR' : formatPaymentMethod(transactionInfo.paymentMethod)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-neutral-700">Status:</span>
+              <span className="font-bold uppercase text-black">
+                {transactionInfo.status === 'UNPAID' ? (
+                  <span className="text-red-600">BELUM BAYAR (UNPAID)</span>
+                ) : isCancelled ? (
+                  <span className="text-red-600">VOID / BATAL</span>
+                ) : (
+                  'LUNAS (PAID)'
+                )}
+              </span>
             </div>
 
-            {transactionInfo.status === 'UNPAID' ? (
-              <div className="flex justify-between pt-1 mt-1">
-                <span>Tipe Pembayaran:</span>
-                <span className="font-black uppercase">BELUM BAYAR (UNPAID)</span>
-              </div>
-            ) : (
-              transactionInfo.paymentMethod && (
-                <div className="flex justify-between pt-1 mt-1 text-neutral-800">
-                  <span>Tipe Pembayaran:</span>
-                  <span className="font-bold uppercase">
-                    {formatPaymentMethod(transactionInfo.paymentMethod)}
-                  </span>
-                </div>
-              )
-            )}
-
-            {/* Rincian Penyelesaian Pembayaran Standar Hotel */}
-            {transactionInfo.status !== 'UNPAID' && (
+            {isCash && totals.cashAmount !== undefined && totals.cashAmount > 0 && (
               <>
-                {isCash ? (
-                  totals.cashAmount !== undefined && totals.cashAmount > 0 ? (
-                    <>
-                      <div className="flex justify-between pt-1 mt-1 border-t border-dotted border-gray-400">
-                        <span>Tunai Diterima:</span>
-                        <span>{formatCurrency(totals.cashAmount)}</span>
-                      </div>
-                      <div className="flex justify-between font-bold">
-                        <span>Kembalian:</span>
-                        <span>{formatCurrency(totals.changeAmount || 0)}</span>
-                      </div>
-                    </>
-                  ) : null
-                ) : isCompliment ? (
-                  <div className="flex justify-between pt-1 mt-1 border-t border-dotted border-gray-400">
-                    <span>Status:</span>
-                    <span className="font-bold text-black uppercase">COMPLIMENTARY (FOC)</span>
-                  </div>
-                ) : (
-                  <div className="flex justify-between pt-1 mt-1 border-t border-dotted border-gray-400">
-                    <span>Status Pembayaran:</span>
-                    <span className="font-bold text-black">LUNAS (PAID)</span>
-                  </div>
-                )}
+                <div className="flex justify-between pt-0.5">
+                  <span className="text-neutral-700">Tunai Diterima:</span>
+                  <span className="font-bold">{formatCurrency(totals.cashAmount)}</span>
+                </div>
+                <div className="flex justify-between font-bold">
+                  <span>Kembalian:</span>
+                  <span>{formatCurrency(totals.changeAmount || 0)}</span>
+                </div>
               </>
             )}
           </div>
 
-          <div className="border-t border-dashed border-black my-2" />
-          
-          {isCancelled && (
-            <div className="w-full text-center font-bold text-[12px] border-2 border-black py-1.5 my-2.5 uppercase font-mono tracking-wider">
-              *** VOID / BATAL ***
-            </div>
-          )}
-
-          {transactionInfo.status === 'UNPAID' ? (
-            <div className="text-center text-[8px] italic leading-relaxed text-red-650 font-bold mb-3">
-              <p className="m-0">Pesanan belum dibayar / Unpaid Bill.</p>
-              <p className="m-0 text-red-500">Bukan merupakan bukti pembayaran sah.</p>
-            </div>
-          ) : (
-            <div className="text-center text-[8px] italic leading-relaxed text-gray-700 mb-3">
-              <p className="m-0 font-medium">Terima kasih atas kunjungan Anda!</p>
-              <p className="m-0 text-gray-500">Struk ini adalah bukti pembayaran sah.</p>
-            </div>
-          )}
+          {/* Footer (Exact Match: Terima kasih atas kunjungan Anda) */}
+          <div className="text-center text-[9px] leading-relaxed text-neutral-600 mt-5 mb-2">
+            <p className="m-0 font-medium">Terima kasih atas kunjungan Anda</p>
+            <p className="m-0 text-neutral-500 text-[8px] mt-0.5">Struk ini adalah bukti pembayaran yang sah</p>
+          </div>
 
           {/* Powered By Footer */}
-          <div className="flex flex-col items-center justify-center mt-4 pt-2 border-t border-dotted border-gray-300">
+          <div className="flex flex-col items-center justify-center mt-3 pt-2 border-t border-dotted border-neutral-300">
             <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center no-underline text-inherit cursor-pointer">
-              <span className="text-[7px] text-gray-400 lowercase tracking-widest font-black mb-1">powered by</span>
+              <span className="text-[7.5px] text-neutral-500 lowercase tracking-widest font-black mb-1">powered by</span>
               <img src="/channels/1.png" alt="My Tara" className="h-6 w-auto object-contain" />
             </a>
           </div>

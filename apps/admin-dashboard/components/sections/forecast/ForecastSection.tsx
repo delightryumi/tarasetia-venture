@@ -34,6 +34,7 @@ import { ChannelPerformance } from "./components/ChannelPerformance";
 import { VoidConfirmModal } from "../overview/VoidConfirmModal";
 import { CancelConfirmModal } from "../overview/CancelConfirmModal";
 import { ForecastDetailDrawer } from "./components/ForecastDetailDrawer";
+import { AuditLedger } from "../overview/AuditLedger";
 
 
 
@@ -47,7 +48,7 @@ export const ForecastSection: React.FC = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentModule = searchParams.get("module") || "front-office";
-    const { user, activeHotelCode } = useAuth();
+    const { user, activeHotelCode, activeHotelName } = useAuth();
     const isSuperadmin = user?.role?.toLowerCase() === "superadmin" || user?.role?.toLowerCase() === "admin";
     const canCancel = isSuperadmin || user?.permissions?.fo_cancel === true;
     const canVoid = isSuperadmin || user?.permissions?.fo_void === true;
@@ -653,18 +654,20 @@ export const ForecastSection: React.FC = () => {
                 <AnimatePresence mode="wait">
                     {displayMode === "cards" && (
                         viewMode === "daily" ? (
-                            <TransactionTable
-                                stats={stats}
-                                searchQuery={searchQuery}
-                                setSearchQuery={setSearchQuery}
+                            <AuditLedger
+                                title="Detail Transaksi"
+                                bookings={activeFilter ? stats.entries.filter((e: any) => e.type === activeFilter) : stats.entries}
                                 activeFilter={activeFilter}
-                                setActiveFilter={setActiveFilter}
-                                handleStatusUpdate={handleStatusUpdate}
-                                setSelectedGuest={setSelectedGuest}
-                                handleEdit={handleEdit}
-                                handleDeleteClick={(b) => setBookingToVoid(b)}
-                                handleCancelClick={(b) => setBookingToCancel(b)}
-                                formatCurrency={formatCurrency}
+                                activeHotelName={activeHotelName}
+                                onClearFilter={() => setActiveFilter(null)}
+                                onRefresh={() => stats.refresh()}
+                                onView={(b) => { setSelectedGuest(b); setIsEditing(false); }}
+                                onEdit={(b) => { setSelectedGuest(b); setIsEditing(true); }}
+                                onDelete={(b) => setBookingToVoid(b)}
+                                onCancel={(b) => setBookingToCancel(b)}
+                                onStatusUpdate={handleStatusUpdate}
+                                onExportExcel={handleExportExcel}
+                                onExportPDF={handleExportPDF}
                             />
                         ) : (
                             <ChannelPerformance
@@ -677,7 +680,18 @@ export const ForecastSection: React.FC = () => {
                     )}
                 </AnimatePresence>
 
+                {/* Right Drawer Overlay Popup */}
                 <AnimatePresence>
+                    {selectedGuest && (
+                        <motion.div 
+                            key="backdrop"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className={styles.sidebarBackdrop}
+                            onClick={() => { setSelectedGuest(null); setIsEditing(false); }}
+                        />
+                    )}
                     {selectedGuest && (
                         <GuestDetailModal 
                             key={selectedGuest.timestamp || selectedGuest.bookingId || Math.random()}
@@ -697,6 +711,10 @@ export const ForecastSection: React.FC = () => {
                             summary={detailDrawerConfig.summary}
                             onClose={() => setDetailDrawerConfig(null)}
                             formatCurrency={formatCurrency}
+                            onSelectGuest={(item) => {
+                                setSelectedGuest(item);
+                                setIsEditing(false);
+                            }}
                         />
                     )}
                 </AnimatePresence>
