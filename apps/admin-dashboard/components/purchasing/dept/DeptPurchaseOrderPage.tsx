@@ -257,24 +257,31 @@ export default function DeptPurchaseOrderPage({ department, title }: DeptPurchas
   };
 
   return (
-    <motion.div variants={fadeUp} initial="hidden" animate="visible" className="purchasing-root">
+    <motion.div variants={fadeUp} initial="hidden" animate="visible" className={ds.container}>
       <div className={s.printHideRoot}>
-        {/* Header */}
-        <header className={`${overviewStyles.header} no-print !mb-8`}>
-          <div className={overviewStyles.headerInner} style={{ padding: 0 }}>
-            <div className={overviewStyles.headerLeft}>
-              <div className={overviewStyles.headerBadge} style={{ backgroundColor: 'var(--sidebar-link-active-bg)', color: 'var(--sidebar-link-active-text)' }}>
-                <FileText size={15} />
-              </div>
-              <div className={overviewStyles.headerMeta}>
-                <span className={overviewStyles.headerSubtitle}>{tabDescriptions[activeTab]}</span>
-                <h1 className={overviewStyles.headerTitle}>
-                  {department} <span style={{ color: 'var(--sidebar-link-active-bg)' }}>Purchase Orders</span>
-                </h1>
-              </div>
+        {/* Header Card */}
+        <div className={ds.headerWrapper}>
+          <div className={ds.topRibbon}>
+            <div className={ds.ribbonLeft}>
+              <span className={ds.ribbonBadge}>{department.slice(0, 3).toUpperCase()}</span>
+              <span className={ds.ribbonDivider}>/</span>
+              <span className={ds.ribbonTitle}>Departmental Procurement Portal</span>
+            </div>
+            <div style={{ fontFamily: 'var(--p-font-mono, monospace)', fontSize: 11, color: '#64748b', fontWeight: 600 }}>
+              {department} Division
+            </div>
+          </div>
+
+          <div className={ds.headerMainRow}>
+            <div className={ds.headerTitleSec}>
+              <h1 className={ds.title}>
+                {department} Requisitions
+                <span className={ds.titleBadge}>Operational Control</span>
+              </h1>
+              <p className={ds.subtitle}>{tabDescriptions[activeTab]}</p>
             </div>
 
-            <div className={overviewStyles.headerRight}>
+            <div>
               {activeTab === 'DML' && (
                 <PButton onClick={() => { setSelectedDmlForForm(null); setDmlFormOpen(true); }}>
                   <Plus size={16} strokeWidth={2} /> Generate DML
@@ -292,28 +299,46 @@ export default function DeptPurchaseOrderPage({ department, title }: DeptPurchas
               )}
             </div>
           </div>
-        </header>
 
-        {/* Tabs */}
-        <div className={ds.tabsContainer}>
-          {TABS.map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`${ds.tabBtn} ${activeTab === tab ? ds.tabActive : ''}`}
-            >
-              {tabLabels[tab]}
-            </button>
-          ))}
+          {/* Segmented Tabs */}
+          <div className={ds.tabsContainer}>
+            {TABS.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`${ds.tabBtn} ${activeTab === tab ? ds.tabActive : ''}`}
+              >
+                {tabLabels[tab]}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Filter Bar */}
         <div className={ds.filterBar}>
           <div className={ds.filterGroup}>
-            <span className={ds.filterLabel}>Tanggal</span>
-            <input type="date" className={ds.filterInput} value={dateFilter} onChange={e => setDateFilter(e.target.value)} />
+            <span className={ds.filterLabel}>Requisition Date</span>
+            <input 
+              type="date" 
+              className={ds.filterInput} 
+              value={dateFilter} 
+              onChange={e => setDateFilter(e.target.value)} 
+            />
+          </div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <button 
+              type="button" 
+              className={ds.todayBtn} 
+              onClick={() => setDateFilter(getTodayStr())}
+            >
+              Today
+            </button>
             {dateFilter && (
-              <button className={ds.clearBtn} onClick={() => setDateFilter('')}>
+              <button 
+                type="button" 
+                className={ds.clearBtn} 
+                onClick={() => setDateFilter('')}
+              >
                 Clear Filter
               </button>
             )}
@@ -346,6 +371,7 @@ export default function DeptPurchaseOrderPage({ department, title }: DeptPurchas
               filteredSrs={filteredSrs}
               selectedSr={selectedSr}
               setSelectedSr={setSelectedSr}
+              onDelete={(id) => { setSrDeleteId(id); setSrDeleteOpen(true); }}
             />
             <DeptSRDetail
               selectedSr={selectedSr}
@@ -364,6 +390,7 @@ export default function DeptPurchaseOrderPage({ department, title }: DeptPurchas
               filteredPrs={filteredPrs}
               selectedPr={selectedPr}
               setSelectedPr={setSelectedPr}
+              onDeleteClick={(id) => { setPrDeleteId(id); setPrDeleteOpen(true); }}
             />
             <DeptPRDetail
               selectedPr={selectedPr}

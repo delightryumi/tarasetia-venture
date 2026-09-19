@@ -9,8 +9,9 @@ import { useSuppliers } from '@/hooks/purchasing/useSuppliers';
 import { toast } from 'sonner';
 import { PButton } from '@/components/purchasing/ui/PButton';
 import { useAuth } from '@/context/AuthContext';
-import s from '../shared-page.module.css';
+import s from './StoreRequisition.module.css';
 import { pushCostToPnL, removeCostFromPnL } from '@/lib/purchasing/pnlHelper';
+import { formatRupiah } from '@/lib/purchasing/utils';
 
 // Subcomponents
 import StoreRequisitionTable from './components/StoreRequisitionTable';
@@ -44,19 +45,63 @@ export default function StoreRequisitionPage() {
 
   // Filters
   const [dateFilter, setDateFilter] = useState(() => getTodayStr());
+  const [statusFilter, setStatusFilter] = useState<'submitted' | 'fulfilled' | null>(null);
+  const [activeKpiFilter, setActiveKpiFilter] = useState<'all' | 'pending' | 'fulfilled' | 'value' | null>(null);
 
   // Delete modal states
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const filteredSrs = useMemo(() => {
-    return srs.filter(sr => {
+    let result = srs.filter(sr => {
+      if (statusFilter && sr.status !== statusFilter) return false;
       if (!dateFilter) return true;
       const dateObj = sr.created_at?.toDate ? sr.created_at.toDate() : new Date(sr.created_at);
       const dateString = dateObj.toISOString().split('T')[0];
       return dateString === dateFilter;
     });
-  }, [srs, dateFilter]);
+
+    if (activeKpiFilter === 'value') {
+      result = [...result].sort((a, b) => (Number(b.total_cost) || 0) - (Number(a.total_cost) || 0));
+    }
+    return result;
+  }, [srs, dateFilter, statusFilter, activeKpiFilter]);
+
+  const handleKpiClick = (type: 'all' | 'pending' | 'fulfilled' | 'value') => {
+    if (activeKpiFilter === type) {
+      setActiveKpiFilter(null);
+      setStatusFilter(null);
+      setDateFilter(getTodayStr());
+      return;
+    }
+    setActiveKpiFilter(type);
+    if (type === 'all') {
+      setStatusFilter(null);
+      setDateFilter('');
+    } else if (type === 'pending') {
+      setStatusFilter('submitted');
+      setDateFilter('');
+    } else if (type === 'fulfilled') {
+      setStatusFilter('fulfilled');
+      setDateFilter('');
+    } else if (type === 'value') {
+      setStatusFilter(null);
+      setDateFilter('');
+    }
+  };
+
+  const kpis = useMemo(() => {
+    const totalCount = srs.length;
+    const pendingCount = srs.filter(s => s.status === 'submitted').length;
+    const fulfilledCount = srs.filter(s => s.status === 'fulfilled').length;
+    const totalVal = srs.reduce((acc, s) => acc + (Number(s.total_cost) || 0), 0);
+    return {
+      totalCount,
+      pendingCount,
+      fulfilledCount,
+      totalVal
+    };
+  }, [srs]);
 
   const handleOpenCreate = () => {
     setSelectedSrForForm(null);
@@ -172,34 +217,213 @@ export default function StoreRequisitionPage() {
     window.print();
   };
 
+  // FULL PAGE DOCUMENT VIEW (not a popup)
+  if (isFormOpen) {
+    return (
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" className={s.container}>
+        <StoreRequisitionForm 
+          isOpen={true}
+          onClose={() => setIsFormOpen(false)}
+          initialData={selectedSrForForm}
+          items={items}
+          suppliers={suppliers}
+          user={user}
+          onSave={handleSaveForm}
+        />
+      </motion.div>
+    );
+  }
+
   return (
-    <motion.div variants={fadeUp} initial="hidden" animate="visible">
+    <motion.div variants={fadeUp} initial="hidden" animate="visible" className={s.container}>
       {/* Screen Content Wrapper (hidden when printing) */}
       <div className={s.printHideRoot}>
-        {/* Header */}
-        <div className={s.header}>
-          <div>
-            <h1 className={s.title}>Store Requisitions</h1>
-            <p className={s.subtitle}>Submit internal supply requests and manage approvals.</p>
+        {/* Header Card */}
+        <div className={s.headerCard}>
+          <div className={s.topRibbon}>
+            <div className={s.ribbonLeft}>
+              <span className={s.ribbonBadge}>SR</span>
+              <span className={s.ribbonDivider}>/</span>
+              <span className={s.ribbonTitle}>Internal Stock Disbursement</span>
+            </div>
+            <div className={s.statusLive}>
+              <span className={s.liveDot} />
+              <span>Central Store</span>
+            </div>
           </div>
-          <PButton onClick={handleOpenCreate}>
-            <Plus size={16} strokeWidth={2} />
-            New Requisition
-          </PButton>
+
+          <div className={s.headerRow}>
+            <div className={s.titleArea}>
+              <div className={s.titleWithBadge}>
+                <h1 className={s.title}>Store Requisitions</h1>
+                <span className={s.titleBadge}>Internal Control</span>
+              </div>
+              <p className={s.subtitle}>
+                Departmental requisitions, warehouse inventory disbursement, and internal cost control.
+              </p>
+            </div>
+            <div className={s.headerActions}>
+              <button type="button" className={s.actionCtaBtn} onClick={handleOpenCreate}>
+                <Plus size={16} strokeWidth={2.5} />
+                <span>New Store Requisition</span>
+              </button>
+            </div>
+          </div>
+
+          {/* KPI Summary Cards - Clickable Filters */}
+          <div className={s.kpiGrid}>
+            <div 
+              role="button"
+              tabIndex={0}
+              className={`${s.kpiCard} ${activeKpiFilter === 'all' ? s.kpiCardActive : ''}`}
+              onClick={() => handleKpiClick('all')}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleKpiClick('all'); }}
+              title="Klik untuk tampilkan semua request tanpa batas tanggal"
+            >
+              <div className={s.kpiHeader}>
+                <span className={s.kpiLabel}>Total Requisitions</span>
+                {activeKpiFilter === 'all' ? (
+                  <span className={s.kpiActiveTag}>● Active</span>
+                ) : (
+                  <span className={s.kpiIcon}>📋</span>
+                )}
+              </div>
+              <div className={s.kpiValueRow}>
+                <span className={s.kpiValue}>{kpis.totalCount}</span>
+                <span className={s.kpiSub}>Registered requests</span>
+              </div>
+            </div>
+
+            <div 
+              role="button"
+              tabIndex={0}
+              className={`${s.kpiCard} ${activeKpiFilter === 'pending' ? s.kpiCardActive : ''}`}
+              onClick={() => handleKpiClick('pending')}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleKpiClick('pending'); }}
+              title="Klik untuk filter request yang menunggu approval manager"
+            >
+              <div className={s.kpiHeader}>
+                <span className={s.kpiLabel}>Pending Approval</span>
+                {activeKpiFilter === 'pending' ? (
+                  <span className={s.kpiActiveTag}>● Active</span>
+                ) : (
+                  <span className={s.kpiIcon}>⏳</span>
+                )}
+              </div>
+              <div className={s.kpiValueRow}>
+                <span className={s.kpiValue} style={{ color: '#d97706' }}>{kpis.pendingCount}</span>
+                <span className={s.kpiSub}>Awaiting manager</span>
+              </div>
+            </div>
+
+            <div 
+              role="button"
+              tabIndex={0}
+              className={`${s.kpiCard} ${activeKpiFilter === 'fulfilled' ? s.kpiCardActive : ''}`}
+              onClick={() => handleKpiClick('fulfilled')}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleKpiClick('fulfilled'); }}
+              title="Klik untuk filter request yang sudah fulfilled & issued"
+            >
+              <div className={s.kpiHeader}>
+                <span className={s.kpiLabel}>Fulfilled & Issued</span>
+                {activeKpiFilter === 'fulfilled' ? (
+                  <span className={s.kpiActiveTag}>● Active</span>
+                ) : (
+                  <span className={s.kpiIcon}>✅</span>
+                )}
+              </div>
+              <div className={s.kpiValueRow}>
+                <span className={s.kpiValue} style={{ color: '#1e4d3a' }}>{kpis.fulfilledCount}</span>
+                <span className={s.kpiSub}>Stock released</span>
+              </div>
+            </div>
+
+            <div 
+              role="button"
+              tabIndex={0}
+              className={`${s.kpiCard} ${activeKpiFilter === 'value' ? s.kpiCardActive : ''}`}
+              onClick={() => handleKpiClick('value')}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleKpiClick('value'); }}
+              title="Klik untuk mengurutkan requisition berdasarkan nilai pengeluaran tertinggi"
+            >
+              <div className={s.kpiHeader}>
+                <span className={s.kpiLabel}>Total Value</span>
+                {activeKpiFilter === 'value' ? (
+                  <span className={s.kpiActiveTag}>● Sorted</span>
+                ) : (
+                  <span className={s.kpiIcon}>💰</span>
+                )}
+              </div>
+              <div className={s.kpiValueRow}>
+                <span className={s.kpiValue} style={{ fontSize: '18px' }}>{formatRupiah(kpis.totalVal)}</span>
+                <span className={s.kpiSub}>Material cost</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Filter Bar */}
         <div className={s.filterBar}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--p-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Requisition Date</span>
-            <input type="date" className={s.filterSelect} value={dateFilter} onChange={e => setDateFilter(e.target.value)} />
+          <div className={s.filterGroup}>
+            <span className={s.filterLabel}>Requisition Date</span>
+            <input 
+              type="date" 
+              className={s.filterInput} 
+              value={dateFilter} 
+              onChange={e => {
+                setDateFilter(e.target.value);
+                setActiveKpiFilter(null);
+              }} 
+            />
+          </div>
+          <div className={s.filterActions}>
+            <button 
+              type="button" 
+              className={s.filterTodayBtn}
+              onClick={() => {
+                setDateFilter(getTodayStr());
+                setActiveKpiFilter(null);
+              }}
+            >
+              Today
+            </button>
             {dateFilter && (
-              <PButton variant="secondary" onClick={() => setDateFilter('')} style={{ padding: '0 12px', height: 40, fontSize: 13 }}>
+              <button 
+                type="button" 
+                className={s.filterClearBtn}
+                onClick={() => setDateFilter('')}
+              >
                 Clear Filter
-              </PButton>
+              </button>
             )}
           </div>
         </div>
+
+        {/* Active Filter Banner */}
+        {activeKpiFilter && (
+          <div className={s.activeFilterBanner}>
+            <div className={s.activeFilterText}>
+              <span>⚡ Filter Aktif:</span>
+              <strong>
+                {activeKpiFilter === 'all' && `Menampilkan Seluruh Request (${filteredSrs.length} records)`}
+                {activeKpiFilter === 'pending' && `Status: Menunggu Approval (${filteredSrs.length} records)`}
+                {activeKpiFilter === 'fulfilled' && `Status: Fulfilled & Issued (${filteredSrs.length} records)`}
+                {activeKpiFilter === 'value' && `Urutan: Nilai Pengeluaran Tertinggi (${filteredSrs.length} records)`}
+              </strong>
+            </div>
+            <button 
+              type="button" 
+              className={s.activeFilterResetBtn}
+              onClick={() => {
+                setActiveKpiFilter(null);
+                setStatusFilter(null);
+                setDateFilter(getTodayStr());
+              }}
+            >
+              Reset Filter
+            </button>
+          </div>
+        )}
 
         {/* Table & Detail */}
         <div className={s.twoPanel}>
@@ -221,17 +445,6 @@ export default function StoreRequisitionPage() {
             onPrint={handlePrint}
           />
         </div>
-
-        {/* Slider Form */}
-        <StoreRequisitionForm 
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          initialData={selectedSrForForm}
-          items={items}
-          suppliers={suppliers}
-          user={user}
-          onSave={handleSaveForm}
-        />
 
         {/* Delete Confirmation Modal */}
         <DeleteConfirmModal 

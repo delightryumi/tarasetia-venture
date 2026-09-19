@@ -6,6 +6,7 @@ import {
   DSRCell,
   createDefaultBudgetMonthData,
 } from "./budget-types";
+import { detectBreakfastAllocation } from "./breakfast-utils";
 
 const isFoodItem = (target: string, cat: string, name: string) => {
   const t = (target || "").toLowerCase().trim();
@@ -123,6 +124,8 @@ export interface DSREngineInput {
   mtdPosOrders?: PosOrder[];
   ytdPosOrders?: PosOrder[];
   customIncomes?: CustomIncomeItem[];
+  ratePlans?: any[];
+  hotelBreakfastRate?: number;
 }
 
 function calculateCell(
@@ -171,6 +174,8 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
     mtdPosOrders = [],
     ytdPosOrders = [],
     customIncomes = [],
+    ratePlans = [],
+    hotelBreakfastRate,
   } = input;
 
   const [yearStr, monthStr, dayStr] = date.split("-");
@@ -248,6 +253,7 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
     roomType: string;
     guestName: string;
     dailyAmount: number;
+    dailyBkfAmount: number;
     pax: number;
     roomsCount: number;
     isOOO: boolean;
@@ -269,12 +275,11 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
       e.guestName?.startsWith("Pelunasan Piutang");
     if (isPelunasan) return;
 
-
-    const isPOS = e.guestName?.startsWith("POS Order") || !!e.posItems || !!e.revenueType;
+    const isPOS = e.guestName?.startsWith("POS Order") || !!e.posItems || (e.revenueType && e.revenueType !== "breakfast");
     const isAccommodation =
       !isPOS &&
       (e.type === "accommodation" ||
-        (!e.type && (e.guestName || e.roomNumber || e.roomType)));
+        (!e.type && (e.guestName || e.roomNumber || e.roomType) && !e.revenueType));
 
     if (isAccommodation) {
       const entryDate = e.effectiveDate || e.date || e.checkInDate || date;
@@ -282,7 +287,9 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
       const roomIdent = String(e.roomNumber || e.roomTypeId || e.roomType || '').trim();
       const cIn = e.checkInDate || e.checkIn || '';
       const cOut = e.checkOutDate || e.checkOut || '';
-      const key = `${entryDate}_${(normGuestName && cIn) ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}` : (e.bookingId ? `b_${e.bookingId}` : `t_${e.timestamp}`)}`;
+      const bId = e.bookingId ? `b_${e.bookingId}` : '';
+      const rIdx = (e as any).roomIndex !== undefined ? `_rIdx_${(e as any).roomIndex}` : '';
+      const key = `${entryDate}_${(normGuestName && cIn) ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}_${bId}${rIdx}_${e.id || ''}` : (bId ? `${bId}${rIdx}` : `t_${e.timestamp}`)}`;
       if (!dayAccommodationGroups[key]) {
         dayAccommodationGroups[key] = [];
       }
@@ -302,6 +309,8 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
     cleanAccommodationEntries.push(group[group.length - 1]);
   });
 
+  const cleanAllEntries: TransactionEntry[] = [...cleanAccommodationEntries, ...nonAccommodationEntries];
+
   cleanAccommodationEntries.forEach((e) => {
     const entryDate = e.effectiveDate || e.date || e.checkInDate || date;
     const st = (e.status || "").toUpperCase();
@@ -311,12 +320,18 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
     const isCompliment = st === "COMPLIMENT" || pst === "COMPLIMENT" || !!e.isCompliment;
     const isSold = !isOOO && !isHouseUse && !isCompliment;
 
+    // Detect package breakfast allocation (USALI standard)
+    const alloc = detectBreakfastAllocation(e, { ratePlans, hotelBreakfastRate });
+    const dailyBkfAmount = isSold && !alloc.isPreSplit ? alloc.breakfastAmount : 0;
+    const dailyRoomLodging = isSold ? (alloc.isPreSplit ? (Number(e.amount) || 0) : alloc.netRoomAmount) : 0;
+
     dailyStayRecords.push({
       date: entryDate,
       roomNumber: e.roomNumber || "-",
       roomType: e.roomType || "-",
       guestName: e.guestName || "-",
-      dailyAmount: isSold ? (Number(e.amount) || 0) : 0,
+      dailyAmount: dailyRoomLodging,
+      dailyBkfAmount: dailyBkfAmount,
       pax: Number(e.pax) || Number(e.adultCount || 0) + Number(e.childCount || 0) || 1,
       roomsCount: Math.max(1, Number(e.roomsCount || (e as any).roomCount) || 1),
       isOOO,
@@ -633,9 +648,19 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
       return outletMatcher(combined);
     };
 
-    const todayAct = filterPosRev(todayPosOrders, type, outletMatcher) + filterNonAccRev("today", foMatcher);
-    const mtdAct = filterPosRev(mtdPosOrders, type, outletMatcher) + filterNonAccRev("mtd", foMatcher);
-    const ytdAct = filterPosRev(ytdPosOrders, type, outletMatcher) + filterNonAccRev("ytd", foMatcher);
+    const pkgBkfToday = (subCat === "breakfast" && type === "food")
+      ? todayStays.reduce((s, r) => s + (r.dailyBkfAmount || 0), 0)
+      : 0;
+    const pkgBkfMtd = (subCat === "breakfast" && type === "food")
+      ? mtdStays.reduce((s, r) => s + (r.dailyBkfAmount || 0), 0)
+      : 0;
+    const pkgBkfYtd = (subCat === "breakfast" && type === "food")
+      ? ytdStays.reduce((s, r) => s + (r.dailyBkfAmount || 0), 0)
+      : 0;
+
+    const todayAct = filterPosRev(todayPosOrders, type, outletMatcher) + filterNonAccRev("today", foMatcher) + pkgBkfToday;
+    const mtdAct = filterPosRev(mtdPosOrders, type, outletMatcher) + filterNonAccRev("mtd", foMatcher) + pkgBkfMtd;
+    const ytdAct = filterPosRev(ytdPosOrders, type, outletMatcher) + filterNonAccRev("ytd", foMatcher) + pkgBkfYtd;
 
     return { todayAct, mtdAct, ytdAct };
   };
@@ -990,27 +1015,42 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
   // ─────────────────────────────────────────────────────────────
   // 4. PAYMENTS & SETTLEMENTS
   // ─────────────────────────────────────────────────────────────
-  const sumPayment = (timeframe: "today" | "mtd" | "ytd", type: "cash" | "edc_bca" | "edc_mandiri" | "qris" | "transfer" | "city_ledger") => {
+  const sumPayment = (
+    timeframe: "today" | "mtd" | "ytd",
+    type: "cash" | "edc_bca" | "edc_mandiri" | "qris" | "transfer" | "city_ledger"
+  ): { foSum: number; posSum: number; total: number } => {
     let foSum = 0;
-    validEntries.forEach((t) => {
-      const d = t.date || date;
+    cleanAllEntries.forEach((t) => {
+      const d = t.effectiveDate || t.date || date;
       if (timeframe === "today" && d !== date) return;
       if (timeframe === "mtd" && (d < startOfMonth || d > date)) return;
       if (timeframe === "ytd" && (d < startOfYear || d > date)) return;
 
       const hasGranular = (t.paidCash !== undefined || t.paidEdc !== undefined || t.paidQris !== undefined || t.paidTransfer !== undefined || t.paidOta !== undefined);
       const pm = (t.paymentMethod || t.channel || "").toLowerCase();
-      const isOtaChannel = t.channel && !["direct", "walk-in", "internal", "-"].includes(t.channel.toLowerCase());
+      const isOtaChannel = !!(t.channel && !["direct", "walk-in", "internal", "-", ""].includes(t.channel.toLowerCase()));
+      const pst = (t.paymentStatus || "").toUpperCase();
+      const isUnpaid = pst === "UNPAID" || pst === "BELUM BAYAR" || pst === "PENDING" || (t as any).isPaid === false;
 
       if (hasGranular) {
         if (type === "cash") foSum += Number(t.paidCash || 0);
         else if (type === "edc_bca") foSum += Number(t.paidEdc || 0);
         else if (type === "edc_mandiri") foSum += 0;
         else if (type === "qris") foSum += Number(t.paidQris || 0);
-        else if (type === "transfer") foSum += Number(t.paidTransfer || 0);
-        else if (type === "city_ledger") foSum += Number(t.paidOta || (isOtaChannel ? t.paidTransfer || 0 : 0));
+        else if (type === "transfer") {
+          // If OTA channel or has paidOta, city ledger handles it; avoid double-counting
+          if (isOtaChannel && Number(t.paidOta || 0) > 0) {
+            foSum += Math.max(0, Number(t.paidTransfer || 0) - Number(t.paidOta || 0));
+          } else if (!isOtaChannel) {
+            foSum += Number(t.paidTransfer || 0);
+          }
+        } else if (type === "city_ledger") {
+          foSum += Number(t.paidOta || (isOtaChannel ? t.paidTransfer || 0 : 0));
+        }
       } else {
-        // Legacy fallback
+        // Legacy fallback - only add if not unpaid
+        if (isUnpaid) return;
+
         const legacyHotel = Number((t as any).payHotel ?? t.paidCash ?? 0);
         const legacyTransfer = Number((t as any).payTransfer ?? (t as any).payNexura ?? t.paidTransfer ?? 0);
 
@@ -1046,15 +1086,18 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
     let posSum = 0;
     posList.forEach((o) => {
       const pm = (o.paymentMethod || (o as any).method || "").toLowerCase();
+      // Exclude room charges from direct POS settlements to prevent double-counting with FO ledger
+      if (pm.includes("room_charge") || pm.includes("folio")) return;
+
       if (type === "cash" && (pm.includes("cash") || pm.includes("tunai"))) posSum += Number(o.total || 0);
       else if (type === "transfer" && (pm.includes("transfer") || pm.includes("bank"))) posSum += Number(o.total || 0);
       else if (type === "edc_bca" && (pm.includes("bca") || pm.includes("edc") || pm.includes("card") || pm.includes("kartu") || pm.includes("debit") || pm.includes("credit"))) posSum += Number(o.total || 0);
       else if (type === "edc_mandiri" && pm.includes("mandiri")) posSum += Number(o.total || 0);
       else if (type === "qris" && pm.includes("qris")) posSum += Number(o.total || 0);
-      else if (type === "city_ledger" && (pm.includes("city") || pm.includes("room_charge") || pm.includes("folio"))) posSum += Number(o.total || 0);
+      else if (type === "city_ledger" && pm.includes("city")) posSum += Number(o.total || 0);
     });
 
-    return foSum + posSum;
+    return { foSum, posSum, total: foSum + posSum };
   };
 
   const cashToday = sumPayment("today", "cash");
@@ -1077,9 +1120,9 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
   const cityLedgerMtd = sumPayment("mtd", "city_ledger");
   const cityLedgerYtd = sumPayment("ytd", "city_ledger");
 
-  const totalSettlementToday = cashToday + edcBcaToday + qrisToday + transferToday + cityLedgerToday;
-  const totalSettlementMtd = cashMtd + edcBcaMtd + qrisMtd + transferMtd + cityLedgerMtd;
-  const totalSettlementYtd = cashYtd + edcBcaYtd + qrisYtd + transferYtd + cityLedgerYtd;
+  const totalSettlementToday = cashToday.total + edcBcaToday.total + qrisToday.total + transferToday.total + cityLedgerToday.total;
+  const totalSettlementMtd = cashMtd.total + edcBcaMtd.total + qrisMtd.total + transferMtd.total + cityLedgerMtd.total;
+  const totalSettlementYtd = cashYtd.total + edcBcaYtd.total + qrisYtd.total + transferYtd.total + cityLedgerYtd.total;
 
   // ─────────────────────────────────────────────────────────────
   // 5. BUILD FORMATTED DSR ROWS
@@ -1381,15 +1424,15 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
     amenitiesRevenue: amenitiesRevenueRows,
     summaryTotals: summaryTotalsRows,
     payments: {
-      cashFo: { id: "p_cash_fo", label: "Cash (FO)", today: cashToday, mtd: cashMtd, ytd: cashYtd },
-      cashOutlet: { id: "p_cash_outlet", label: "Cash (Outlet POS)", today: 0, mtd: 0, ytd: 0 },
+      cashFo: { id: "p_cash_fo", label: "Cash (FO)", today: cashToday.foSum, mtd: cashMtd.foSum, ytd: cashYtd.foSum },
+      cashOutlet: { id: "p_cash_outlet", label: "Cash (Outlet POS)", today: cashToday.posSum, mtd: cashMtd.posSum, ytd: cashYtd.posSum },
       cashRefundFo: { id: "p_cash_refund", label: "Cash Refund FO", today: 0, mtd: 0, ytd: 0 },
-      totalCash: { id: "p_total_cash", label: "Total Cash", today: cashToday, mtd: cashMtd, ytd: cashYtd },
-      edcBca: { id: "p_edc_bca", label: "EDC BCA / Mandiri", today: edcBcaToday, mtd: edcBcaMtd, ytd: edcBcaYtd },
+      totalCash: { id: "p_total_cash", label: "Total Cash", today: cashToday.total, mtd: cashMtd.total, ytd: cashYtd.total },
+      edcBca: { id: "p_edc_bca", label: "EDC BCA / Mandiri", today: edcBcaToday.total, mtd: edcBcaMtd.total, ytd: edcBcaYtd.total },
       edcMandiri: { id: "p_edc_mandiri", label: "EDC Other", today: 0, mtd: 0, ytd: 0 },
-      qris: { id: "p_qris", label: "QRIS Payment", today: qrisToday, mtd: qrisMtd, ytd: qrisYtd },
-      transfer: { id: "p_transfer", label: "Bank Transfer", today: transferToday, mtd: transferMtd, ytd: transferYtd },
-      cityLedger: { id: "p_city_ledger", label: "City Ledger (AR / OTA)", today: cityLedgerToday, mtd: cityLedgerMtd, ytd: cityLedgerYtd },
+      qris: { id: "p_qris", label: "QRIS Payment", today: qrisToday.total, mtd: qrisMtd.total, ytd: qrisYtd.total },
+      transfer: { id: "p_transfer", label: "Bank Transfer", today: transferToday.total, mtd: transferMtd.total, ytd: transferYtd.total },
+      cityLedger: { id: "p_city_ledger", label: "City Ledger (AR / OTA)", today: cityLedgerToday.total, mtd: cityLedgerMtd.total, ytd: cityLedgerYtd.total },
       totalSettlement: { id: "p_total_settlement", label: "Total Settlement", today: totalSettlementToday, mtd: totalSettlementMtd, ytd: totalSettlementYtd },
     },
   };

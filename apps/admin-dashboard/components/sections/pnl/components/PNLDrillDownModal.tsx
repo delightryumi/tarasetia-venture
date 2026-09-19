@@ -140,18 +140,18 @@ export function PNLDrillDownModal({
                                         <span style={{ fontSize: 11, fontWeight: 700, color: T.textSec, textTransform: "uppercase", letterSpacing: "0.05em" }}>Revenue Breakdown</span>
                                     </div>
                                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textPri }}>
-                                        <span className="flex-1">Subtotal (Harga Awal)</span>
+                                        <span className="flex-1">Subtotal (Base Price)</span>
                                         <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.subtotal)}</span>
                                     </div>
                                     {fbPerformanceData.totalDiscount > 0 && (
                                         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--f-expense-color)" }}>
-                                            <span className="flex-1">Diskon</span>
+                                            <span className="flex-1">Discount</span>
                                             <span style={{ fontFamily: T.mono }}>−{formatIDR(fbPerformanceData.totalDiscount)}</span>
                                         </div>
                                     )}
                                     <div style={{ borderTop: "1px dashed var(--f-hairline)", margin: "4px 0" }} />
                                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "var(--f-income-color)" }}>
-                                        <span className="flex-1">Nett Revenue</span>
+                                        <span className="flex-1">Net Revenue</span>
                                         <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.netRevenue)}</span>
                                     </div>
                                     {[
@@ -178,7 +178,7 @@ export function PNLDrillDownModal({
                                         <span style={{ fontSize: 11, fontWeight: 700, color: T.textSec, textTransform: "uppercase", letterSpacing: "0.05em" }}>Profitability & Expenses</span>
                                     </div>
                                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textPri }}>
-                                        <span className="flex-1">Nett Revenue</span>
+                                        <span className="flex-1">Net Revenue</span>
                                         <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.netRevenue)}</span>
                                     </div>
                                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--f-expense-color)" }}>
@@ -414,7 +414,7 @@ export function PNLDrillDownModal({
                                                             </div>
                                                             {!isCancelled && item.taxAmount !== undefined && item.taxAmount > 0 && (
                                                                 <div style={{ fontSize: 10, color: T.textSec, marginTop: 4, display: "flex", gap: 8, alignItems: "center" }}>
-                                                                    <span>DPP (Nett): {formatIDR(item.nettAmount || 0)}</span>
+                                                                    <span>Net (DPP): {formatIDR(item.nettAmount || 0)}</span>
                                                                     <span style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--f-hairline, rgba(0,0,0,0.15))", display: "inline-block" }} />
                                                                     <span>Tax, Service &amp; PB1: {formatIDR(item.taxAmount)}</span>
                                                                 </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Printer } from 'lucide-react';
+import { CheckCircle2, Printer, UtensilsCrossed, Wine, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -16,6 +16,29 @@ import { toast } from 'react-toastify';
 import { useCurrency } from '@/hooks/useCurrency';
 import axios from 'axios';
 import ThermalReceipt, { ReceiptItemData } from '@/components/shared/ThermalReceipt';
+
+type PrintMode = 'all' | 'kitchen' | 'bar';
+
+const PRINT_MODES: { key: PrintMode; label: string; icon: React.ReactNode; desc: string }[] = [
+  {
+    key: 'all',
+    label: 'Kasir',
+    icon: <CreditCard size={13} />,
+    desc: 'Struk lengkap dengan total'
+  },
+  {
+    key: 'kitchen',
+    label: 'Kitchen',
+    icon: <UtensilsCrossed size={13} />,
+    desc: 'Tiket dapur (non-minuman)'
+  },
+  {
+    key: 'bar',
+    label: 'Bar',
+    icon: <Wine size={13} />,
+    desc: 'Tiket bar (minuman)'
+  },
+];
 
 interface ReceiptDialogProps {
   isOpen: boolean;
@@ -70,6 +93,7 @@ export default function ReceiptDialog({
   const [storeName, setStoreName] = React.useState('BUMI ANYOM RESORT');
   const [address, setAddress] = React.useState('');
   const [phone, setPhone] = React.useState('');
+  const [printMode, setPrintMode] = React.useState<PrintMode>('all');
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -131,6 +155,25 @@ export default function ReceiptDialog({
           <AlertDialogDescription>Rincian struk belanja transaksi kasir.</AlertDialogDescription>
         </div>
 
+        {/* ── Print Mode Selector ── */}
+        <div className="flex gap-1.5 px-4 pt-4 pb-0 print:hidden">
+          {PRINT_MODES.map(({ key, label, icon, desc }) => (
+            <button
+              key={key}
+              onClick={() => setPrintMode(key)}
+              title={desc}
+              className={`flex-1 flex flex-col items-center gap-1 py-2 px-1.5 rounded-xl border text-center cursor-pointer transition-all ${
+                printMode === key
+                  ? 'bg-neutral-900 dark:bg-white border-neutral-900 dark:border-white text-white dark:text-neutral-900 shadow-md'
+                  : 'bg-neutral-50 dark:bg-zinc-800 border-neutral-200 dark:border-zinc-700 text-neutral-500 dark:text-neutral-400 hover:border-neutral-400 dark:hover:border-zinc-500'
+              }`}
+            >
+              <span className="flex items-center gap-1 font-bold text-[11px]">{icon}{label}</span>
+              <span className="text-[9px] font-normal leading-tight opacity-70">{desc}</span>
+            </button>
+          ))}
+        </div>
+
         {/* ── Scrollable receipt body ── */}
         <div className="flex-1 flex flex-col items-center text-center p-4 font-mono text-neutral-700 dark:text-neutral-300 overflow-y-auto thin-scrollbar print:p-0 print:block print:overflow-visible print:w-full print:max-w-full">
           {/* Reusable Thermal Receipt Component */}
@@ -159,6 +202,7 @@ export default function ReceiptDialog({
                 cashAmount: status === 'UNPAID' ? undefined : (paymentMethod === 'cash' || !isNaN(parseFloat(cashAmount)) ? parseFloat(cashAmount) : undefined), 
                 changeAmount: status === 'UNPAID' ? undefined : (paymentMethod === 'cash' ? calculatedChange() : undefined)
               }}
+              printMode={printMode}
               className="shadow-sm border border-neutral-200 print:shadow-none print:border-none print:w-full"
             />
           </div>
@@ -172,7 +216,9 @@ export default function ReceiptDialog({
             className="rounded-xl flex items-center justify-center gap-1.5 border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 text-xs h-9"
           >
             <Printer className="w-3.5 h-3.5" />
-            <span>Cetak struk</span>
+            <span>
+              Cetak {printMode === 'kitchen' ? 'Tiket Dapur' : printMode === 'bar' ? 'Tiket Bar' : 'Struk Kasir'}
+            </span>
           </Button>
           <AlertDialogAction
             onClick={onClose}

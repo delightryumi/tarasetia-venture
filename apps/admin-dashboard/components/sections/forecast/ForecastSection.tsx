@@ -38,6 +38,20 @@ import { AuditLedger } from "../overview/AuditLedger";
 
 
 
+/* ── Clean Undefined Helper to prevent Firestore errors ── */
+const cleanUndefined = (obj: any): any => {
+    if (!obj || typeof obj !== "object") return obj;
+    const cleaned = { ...obj };
+    Object.keys(cleaned).forEach(key => {
+        if (cleaned[key] === undefined) {
+            delete cleaned[key];
+        } else if (cleaned[key] && typeof cleaned[key] === "object" && !cleaned[key].toDate) {
+            cleaned[key] = cleanUndefined(cleaned[key]);
+        }
+    });
+    return cleaned;
+};
+
 /* ── Animations ── */
 const stagger = {
     hidden: { opacity: 0 },
@@ -69,75 +83,98 @@ export const ForecastSection: React.FC = () => {
         switch(type) {
             case "Gross":
             case "Total Gross Revenue":
+            case "Total Pendapatan Kotor":
+            case "Total Pendapatan Kotor (Gross Revenue)":
                 filtered = stats.entries;
                 title = "Total Gross Revenue";
                 break;
             case "Hotel":
             case "Sales Pay at Hotel":
+            case "Sales (Pay at Hotel)":
+            case "Hotel Collect (Direct)":
+            case "Penjualan (Hotel Collect)":
                 filtered = stats.entries.filter((e: any) => {
                     const cashAmt = Number(e.payHotel || e.paidCash || e.paidAmount1 || 0);
                     return cashAmt > 0 || e.paymentStatus === "Pay at Hotel";
                 });
-                title = "Sales Pay at Hotel";
+                title = "Hotel Collect (Direct)";
                 break;
             case "Nexura":
             case "Virtual":
             case "Sales Pay at Nexura":
             case "Sales (Virtual / OTA)":
+            case "OTA Collect (City Ledger)":
+            case "Penjualan (OTA Collect)":
                 filtered = stats.entries.filter((e: any) => {
                     const digitalAmt = Number(e.payTransfer || e.payNexura || e.paidTransfer || e.paidAmount2 || 0);
                     return digitalAmt > 0 || e.paymentStatus === "Pay at Nexura" || e.paymentStatus === "Virtual Payment / OTA" || e.paymentStatus === "Virtual / OTA";
                 });
-                title = "Sales (Virtual / OTA)";
+                title = "OTA Collect (City Ledger)";
                 break;
             case "WalkIn":
             case "Walk-in Revenue":
+            case "Pendapatan Walk-in":
+            case "Pendapatan Walk-in (Front Desk)":
                 filtered = stats.entries.filter((e: any) => e.type !== "other_income" && (e.source === "Walk-in" || e.channel === "Walk-in" || e.channel === "WALKIN"));
                 title = "Walk-in Revenue";
                 break;
             case "OTA":
             case "OTA Revenue":
+            case "OTA Channel Revenue":
+            case "Pendapatan OTA":
+            case "Pendapatan OTA (Channel Manager)":
                 filtered = stats.entries.filter((e: any) => e.type !== "other_income" && e.source !== "Walk-in" && e.channel !== "Walk-in" && e.channel !== "WALKIN");
-                title = "OTA Revenue";
+                title = "OTA Channel Revenue";
                 break;
             case "Other":
             case "Other Revenue":
+            case "Non-Room Revenue":
+            case "Pendapatan Lainnya":
+            case "Pendapatan Lainnya (Other Revenue)":
                 filtered = stats.entries.filter((e: any) => e.type === "other_income");
-                title = "Other Revenue";
+                title = "Non-Room Revenue";
                 break;
             case "OCC":
             case "Occupancy Bookings":
+            case "Occupancy Rate (OCC)":
+            case "Okupansi Kamar":
+            case "Tingkat Okupansi (Occupancy Rate)":
                 filtered = stats.entries.filter((e: any) => e.type === "accommodation" || (!e.type && e.guestName));
-                title = "Occupancy Bookings";
+                title = "Occupancy Rate (OCC)";
                 summary = {
-                    label: "OCC Calculation",
-                    formula: "Rooms Sold / Total Allotment",
+                    label: "Occupancy Calculation",
+                    formula: "Rooms Sold / Total Available Rooms",
                     values: `${stats.roomsSold} / ${stats.totalPossibleRoomNights}`,
                     result: `${stats.occ.toFixed(1)}%`
                 };
                 break;
             case "ARR":
             case "Average Room Rate":
+            case "Average Daily Rate (ADR)":
+            case "Tarif Rata-rata Kamar":
+            case "Tarif Rata-rata Kamar (ADR / ARR)":
                 filtered = stats.entries.filter((e: any) => e.type === "accommodation" || (!e.type && e.guestName));
-                title = "Average Room Rate";
+                title = "Average Daily Rate (ADR)";
                 summary = {
-                    label: "ARR Calculation",
-                    formula: "Gross Revenue / Rooms Sold",
-                    values: `Rp ${stats.totalGrossRevenue.toLocaleString()} / ${stats.roomsSold}`,
-                    result: `Rp ${stats.arr.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                    label: "ADR Calculation",
+                    formula: "Room Revenue / Rooms Sold",
+                    values: `IDR ${stats.totalGrossRevenue.toLocaleString()} / ${stats.roomsSold}`,
+                    result: `IDR ${stats.arr.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                 };
                 break;
             case "RevPAR":
             case "RevPAR Performance":
+            case "RevPar":
+            case "Revenue Per Available Room (RevPAR)":
+            case "Pendapatan per Kamar Tersedia (RevPAR)":
                 filtered = stats.entries.filter((e: any) => e.type === "accommodation" || (!e.type && e.guestName));
-                title = "RevPAR Performance";
+                title = "Revenue Per Available Room (RevPAR)";
                 summary = {
                     label: "RevPAR Calculation",
-                    formula: "Gross Revenue / Total Allotment",
-                    values: `Rp ${stats.totalGrossRevenue.toLocaleString()} / ${stats.totalPossibleRoomNights}`,
-                    result: `Rp ${stats.revPar.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                    formula: "Total Room Revenue / Total Available Rooms",
+                    values: `IDR ${stats.totalGrossRevenue.toLocaleString()} / ${stats.totalPossibleRoomNights}`,
+                    result: `IDR ${stats.revPar.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                 };
-                break;
         }
         return { filtered, title, summary };
     };
@@ -292,9 +329,9 @@ export const ForecastSection: React.FC = () => {
                     const entries = docSnap.data().entries || [];
                     const mapped = entries.map((e: any) => {
                         if (isBookingMatch(e, bookingToVoid)) {
-                            return { ...e, status: "VOID", paymentStatus: "VOID", roomCount: 0 };
+                            return cleanUndefined({ ...e, status: "VOID", paymentStatus: "VOID", roomCount: 0 });
                         }
-                        return e;
+                        return cleanUndefined(e);
                     });
                     await updateDoc(docRef, { entries: mapped, date: d });
                 }
@@ -348,16 +385,16 @@ export const ForecastSection: React.FC = () => {
                     const entries = docSnap.data().entries || [];
                     const mapped = entries.map((e: any) => {
                         if (isBookingMatch(e, bookingToCancel)) {
-                            return { 
+                            return cleanUndefined({ 
                                 ...e, 
                                 status: "CANCELLED", 
                                 paymentStatus: "CANCELLED",
                                 roomCount: 0,
                                 cancelledAt: todayStr,
                                 cancelledBy: cancelledByVal
-                            };
+                            });
                         }
-                        return e;
+                        return cleanUndefined(e);
                     });
                     await updateDoc(docRef, { entries: mapped, date: d });
                 }
@@ -420,9 +457,9 @@ export const ForecastSection: React.FC = () => {
                                     updated.cancelledBy = null;
                                 }
                             }
-                            return updated;
+                            return cleanUndefined(updated);
                         }
-                        return e;
+                        return cleanUndefined(e);
                     });
                     await updateDoc(docRef, { entries: updatedEntries, date: d });
                 }
@@ -568,7 +605,7 @@ export const ForecastSection: React.FC = () => {
                                 onClick={() => handleCardClick("Gross")}
                             />
                             <SummaryCard
-                                label="Sales (Pay at Hotel)"
+                                label="Hotel Collect (Direct)"
                                 icon={<Hotel size={18} />}
                                 accent="#3b82f6"
                                 value={stats.salesPayAtHotel}
@@ -577,7 +614,7 @@ export const ForecastSection: React.FC = () => {
                                 onClick={() => handleCardClick("Hotel")}
                             />
                             <SummaryCard
-                                label="Sales (Virtual / OTA)"
+                                label="OTA Collect (City Ledger)"
                                 icon={<CreditCard size={18} />}
                                 accent="#8b5cf6"
                                 value={stats.salesPayAtTransfer}
@@ -595,7 +632,7 @@ export const ForecastSection: React.FC = () => {
                                 onClick={() => handleCardClick("WalkIn")}
                             />
                             <SummaryCard
-                                label="OTA Revenue"
+                                label="OTA Channel Revenue"
                                 icon={<Globe size={18} />}
                                 accent="#06b6d4"
                                 value={stats.otaRevenue}
@@ -604,7 +641,7 @@ export const ForecastSection: React.FC = () => {
                                 onClick={() => handleCardClick("OTA")}
                             />
                             <SummaryCard
-                                label="Other Revenue"
+                                label="Non-Room Revenue"
                                 icon={<MoreHorizontal size={18} />}
                                 accent="#ec4899"
                                 value={stats.otherRevenue}
@@ -613,7 +650,7 @@ export const ForecastSection: React.FC = () => {
                                 onClick={() => handleCardClick("Other")}
                             />
                             <SummaryCard
-                                label="OCC (Occupancy)"
+                                label="Occupancy Rate (OCC)"
                                 icon={<Percent size={18} />}
                                 accent="#f59e0b"
                                 prefix=""
@@ -624,7 +661,7 @@ export const ForecastSection: React.FC = () => {
                                 onClick={() => handleCardClick("OCC")}
                             />
                             <SummaryCard
-                                label="ARR (Avg Room Rate)"
+                                label="Average Daily Rate (ADR)"
                                 icon={<Coins size={18} />}
                                 accent="#10b981"
                                 value={stats.arr}
@@ -633,7 +670,7 @@ export const ForecastSection: React.FC = () => {
                                 onClick={() => handleCardClick("ARR")}
                             />
                             <SummaryCard
-                                label="RevPar"
+                                label="RevPAR"
                                 icon={<TrendingUp size={18} />}
                                 accent="#6366f1"
                                 value={stats.revPar}
@@ -655,7 +692,7 @@ export const ForecastSection: React.FC = () => {
                     {displayMode === "cards" && (
                         viewMode === "daily" ? (
                             <AuditLedger
-                                title="Detail Transaksi"
+                                title="Daily Revenue & Folio Audit Ledger"
                                 bookings={activeFilter ? stats.entries.filter((e: any) => e.type === activeFilter) : stats.entries}
                                 activeFilter={activeFilter}
                                 activeHotelName={activeHotelName}

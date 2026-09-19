@@ -7,10 +7,10 @@ import { TrendDataItem, MultiYearTrendDataItem } from "../types";
 
 export const YEARS = [2024, 2025, 2026];
 export const MONTHS = [
-    { n: "Januari", v: "01" }, { n: "Februari", v: "02" }, { n: "Maret", v: "03" },
-    { n: "April", v: "04" }, { n: "Mei", v: "05" }, { n: "Juni", v: "06" },
-    { n: "Juli", v: "07" }, { n: "Agustus", v: "08" }, { n: "September", v: "09" },
-    { n: "Oktober", v: "10" }, { n: "November", v: "11" }, { n: "Desember", v: "12" }
+    { n: "January", v: "01" }, { n: "February", v: "02" }, { n: "March", v: "03" },
+    { n: "April", v: "04" }, { n: "May", v: "05" }, { n: "June", v: "06" },
+    { n: "July", v: "07" }, { n: "August", v: "08" }, { n: "September", v: "09" },
+    { n: "October", v: "10" }, { n: "November", v: "11" }, { n: "December", v: "12" }
 ];
 
 export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly") => {
@@ -47,7 +47,7 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
                 const dayNonAccEntries: any[] = [];
 
                 (data.entries || []).forEach((t: any) => {
-                    const isPOS = t.guestName?.startsWith('POS Order') || Array.isArray(t.posItems) || !!t.revenueType;
+                    const isPOS = t.guestName?.startsWith('POS Order') || Array.isArray(t.posItems) || (t.revenueType && t.revenueType !== 'breakfast');
                     if (isPOS) return;
 
                     const status = (t.status || "").toUpperCase();
@@ -61,15 +61,17 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
                         t.guestName?.startsWith("Koreksi Tanggal Pelunasan") || t.guestName?.startsWith("Pelunasan Piutang");
                     if (isPelunasan) return;
 
-                    const isAcc = t.type === "accommodation" || (!t.type && t.guestName);
+                    const isAcc = t.type === "accommodation" || (!t.type && t.guestName && !t.revenueType);
                     if (isAcc) {
                         const normGuestName = (t.guestName || "").trim().toLowerCase();
                         const roomIdent = String(t.roomNumber || t.roomTypeId || t.roomType || '').trim();
                         const cIn = t.checkInDate || t.checkIn || '';
                         const cOut = t.checkOutDate || t.checkOut || '';
+                        const bId = t.bookingId ? `b_${t.bookingId}` : '';
+                        const rIdx = t.roomIndex !== undefined ? `_rIdx_${t.roomIndex}` : '';
                         const key = (normGuestName && cIn) 
-                            ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}` 
-                            : (t.bookingId ? `b_${t.bookingId}` : `t_${t.timestamp}`);
+                            ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}_${bId}${rIdx}_${t.id || ''}` 
+                            : (bId ? `${bId}${rIdx}` : `t_${t.timestamp}`);
                         if (!dayAccommodationGroups[key]) {
                             dayAccommodationGroups[key] = [];
                         }
@@ -123,7 +125,7 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
                     const dayNonAccEntries: any[] = [];
 
                     (data.entries || []).forEach((t: any) => {
-                        const isPOS = t.guestName?.startsWith('POS Order') || Array.isArray(t.posItems) || !!t.revenueType;
+                        const isPOS = t.guestName?.startsWith('POS Order') || Array.isArray(t.posItems) || (t.revenueType && t.revenueType !== 'breakfast');
                         if (isPOS) return;
 
                         const status = (t.status || "").toUpperCase();
@@ -137,15 +139,17 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
                             t.guestName?.startsWith("Koreksi Tanggal Pelunasan") || t.guestName?.startsWith("Pelunasan Piutang");
                         if (isPelunasan) return;
 
-                        const isAcc = t.type === "accommodation" || (!t.type && t.guestName);
+                        const isAcc = t.type === "accommodation" || (!t.type && t.guestName && !t.revenueType);
                         if (isAcc) {
                             const normGuestName = (t.guestName || "").trim().toLowerCase();
                             const roomIdent = String(t.roomNumber || t.roomTypeId || t.roomType || '').trim();
                             const cIn = t.checkInDate || t.checkIn || '';
                             const cOut = t.checkOutDate || t.checkOut || '';
+                            const bId = t.bookingId ? `b_${t.bookingId}` : '';
+                            const rIdx = t.roomIndex !== undefined ? `_rIdx_${t.roomIndex}` : '';
                             const key = (normGuestName && cIn) 
-                                ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}` 
-                                : (t.bookingId ? `b_${t.bookingId}` : `t_${t.timestamp}`);
+                                ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}_${bId}${rIdx}_${t.id || ''}` 
+                                : (bId ? `${bId}${rIdx}` : `t_${t.timestamp}`);
                             if (!dayAccommodationGroups[key]) {
                                 dayAccommodationGroups[key] = [];
                             }

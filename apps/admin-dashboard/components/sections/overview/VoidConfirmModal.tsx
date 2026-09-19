@@ -41,21 +41,21 @@ export function VoidConfirmModal({ isOpen, itemName, onConfirm, onCancel }: Void
                         className="delete-modal-card"
                     >
                         <h3 className="delete-modal-title">
-                            Void Transaction Entry
+                            Confirm Transaction Void
                         </h3>
                         <div className="delete-modal-desc">
                             <p>
-                                Apakah Anda yakin ingin mem-void transaksi ini? Transaksi untuk <strong>{itemName}</strong> akan dihapus dari daftar dan room inventory akan dibebaskan.
+                                Are you sure you want to void this transaction? All charges for <strong>{itemName}</strong> will be voided from the audit ledger and room inventory will be released.
                             </p>
                             
                             <div className="delete-modal-separator">
                                 <label htmlFor="adminPassword" className="delete-modal-label">
-                                    Konfirmasi Password Admin
+                                    Supervisor / Manager Authorization Password
                                 </label>
                                 <input
                                     id="adminPassword"
                                     type="password"
-                                    placeholder="Masukkan password admin..."
+                                    placeholder="Enter authorization password..."
                                     value={passwordInput}
                                     onChange={(e) => setPasswordInput(e.target.value)}
                                     className="delete-modal-input"
@@ -73,14 +73,14 @@ export function VoidConfirmModal({ isOpen, itemName, onConfirm, onCancel }: Void
                                 className="delete-modal-btn-cancel"
                                 style={{ cursor: "pointer" }}
                             >
-                                Abort
+                                Cancel
                             </button>
                             <button 
                                 onClick={handleConfirm}
                                 className="delete-modal-btn-delete"
                                 style={{ cursor: "pointer" }}
                             >
-                                Void Entry
+                                Void Transaction
                             </button>
                         </div>
                     </motion.div>

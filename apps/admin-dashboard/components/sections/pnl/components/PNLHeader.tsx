@@ -1,9 +1,10 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-    PieChart, LayoutDashboard, TrendingUp, Download, FileText, Calendar, ChevronDown, BookOpen
+    LayoutDashboard, TrendingUp, Download, FileText, Calendar, ChevronDown
 } from "lucide-react";
 import { MONTHS, YEARS } from "../usePnL";
+import s from "./PNLHeader.module.css";
 
 interface PNLHeaderProps {
     viewMode: "monthly" | "yearly";
@@ -20,9 +21,6 @@ interface PNLHeaderProps {
     hideDisplayMode?: boolean;
 }
 
-const PEACH = "var(--sidebar-link-active-bg)";
-const RICH_BLACK = "var(--sidebar-link-active-text)";
-
 export const PNLHeader: React.FC<PNLHeaderProps> = ({
     viewMode, setViewMode, displayMode, setDisplayMode,
     month, setMonth, showDatePicker, setShowDatePicker,
@@ -30,85 +28,112 @@ export const PNLHeader: React.FC<PNLHeaderProps> = ({
 }) => {
     const [y, mStr] = month.split('-');
     const dateObj = new Date(parseInt(y), parseInt(mStr)-1);
-    const displayMonth = dateObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    const displayMonth = dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
     return (
-        <motion.header variants={rise} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-stone-100">
-            <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-3.5 mb-1">
-                    <div className="w-8 h-8 rounded-md flex items-center justify-center transition-transform hover:rotate-12 bg-stone-100 dark:bg-[#262626] text-stone-850 dark:text-stone-100">
-                        <PieChart size={14} />
-                    </div>
-                    <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">Audit Core</span>
+        <motion.header variants={rise} className={s.headerContainer}>
+            {/* Top Enterprise Ribbon */}
+            <div className={s.topRibbon}>
+                <div className={s.ribbonLeft}>
+                    <span className={s.ribbonBadge}>
+                        HOTEL ENTERPRISE PMS
+                    </span>
+                    <span className={s.ribbonDivider}>|</span>
+                    <span className={s.ribbonTitle}>
+                        FINANCIAL AUDIT CONSOLE · ACCOUNTING MODULE
+                    </span>
                 </div>
-                <h1 className="text-2xl md:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-                    Global <span className="text-[var(--sage)]">{hideDisplayMode ? "Financial Statements" : "PnL Reports"}</span>
-                </h1>
+                <div className={s.statusLive}>
+                    <span className={s.statusDot} />
+                    <span>STATUS: ACTIVE AUDIT / LIVE LEDGER</span>
+                </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4">
-                <div className="flex p-1 bg-stone-100 dark:bg-[#1a1a1a] rounded-xl border border-stone-200/40 dark:border-[#262626]">
-                    <button
-                        onClick={() => setViewMode("monthly")}
-                        className={`flex items-center justify-center h-10 rounded-lg text-[13px] font-bold transition-all whitespace-nowrap min-w-[140px] ${viewMode === "monthly" ? "shadow-sm" : "text-stone-400 hover:text-stone-600 hover:bg-stone-200/50 dark:hover:text-[#f4f4f5] dark:hover:bg-[#1f1f1f]"}`}
-                        style={viewMode === "monthly" ? { backgroundColor: PEACH, color: RICH_BLACK } : {}}
-                    >
-                        Monthly
-                    </button>
-                    <button
-                        onClick={() => setViewMode("yearly")}
-                        className={`flex items-center justify-center h-10 rounded-lg text-[13px] font-bold transition-all whitespace-nowrap min-w-[140px] ${viewMode === "yearly" ? "shadow-sm" : "text-stone-400 hover:text-stone-600 hover:bg-stone-200/50 dark:hover:text-[#f4f4f5] dark:hover:bg-[#1f1f1f]"}`}
-                        style={viewMode === "yearly" ? { backgroundColor: PEACH, color: RICH_BLACK } : {}}
-                    >
-                        Yearly
-                    </button>
+            {/* Main Header Title & Export Actions */}
+            <div className={s.titleBar}>
+                <div className={s.titleArea}>
+                    <h1 className={s.mainHeading}>
+                        PROFIT &amp; LOSS <span className={s.mainHeadingAccent}>{hideDisplayMode ? "FINANCIAL STATEMENTS" : "STATEMENT"}</span>
+                    </h1>
+                    <p className={s.subHeading}>
+                        Operational Profit &amp; Loss Statement · Direct Operating Cost Ledger &amp; Departmental Audit Console
+                    </p>
                 </div>
 
-                {!hideDisplayMode && (
-                    <div className="flex p-1 bg-stone-100 dark:bg-[#1a1a1a] rounded-xl border border-stone-200/40 dark:border-[#262626] ml-2">
-                        <button
-                            onClick={() => setDisplayMode("cards")}
-                            className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${displayMode === "cards" ? "bg-white dark:bg-[#262626] shadow-sm text-stone-900 dark:text-[#f4f4f5]" : "text-stone-400 hover:text-stone-600 dark:text-[#a1a1aa] dark:hover:text-[#f4f4f5] dark:hover:bg-[#1f1f1f]"}`}
-                            title="Card View"
-                        >
-                            <LayoutDashboard size={16} />
-                        </button>
-                        <button
-                            onClick={() => setDisplayMode("charts")}
-                            className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${displayMode === "charts" ? "bg-white dark:bg-[#262626] shadow-sm text-stone-900 dark:text-[#f4f4f5]" : "text-stone-400 hover:text-stone-600 dark:text-[#a1a1aa] dark:hover:text-[#f4f4f5] dark:hover:bg-[#1f1f1f]"}`}
-                            title="Analytics View"
-                        >
-                            <TrendingUp size={16} />
-                        </button>
-                    </div>
-                )}
-
-                <div className="flex items-center gap-2 border-l border-stone-200 dark:border-[#262626] pl-4 ml-2">
+                {/* Export Actions (Pinned Top-Right) */}
+                <div className={s.exportGroup}>
                     <button 
                         onClick={onExportExcel}
-                        className="h-10 w-10 flex items-center justify-center rounded-xl bg-white dark:bg-[#262626] border border-stone-100 dark:border-[#262626] text-stone-400 hover:text-emerald-600 dark:text-[#a1a1aa] dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-[#1f1f1f] transition-all shadow-sm"
-                        title="Export to Excel"
+                        className={s.exportBtn}
+                        title="Export to Excel (.xlsx)"
                     >
-                        <Download size={18} />
+                        <Download size={13} style={{ color: "#1e4d3a" }} />
+                        <span>Excel</span>
                     </button>
                     <button 
                         onClick={onExportPDF}
-                        className="h-10 w-10 flex items-center justify-center rounded-xl bg-white dark:bg-[#262626] border border-stone-100 dark:border-stone-800/50 text-stone-400 hover:text-rose-600 dark:hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all shadow-sm"
-                        title="Export to PDF"
+                        className={`${s.exportBtn} ${s.exportBtnPDF}`}
+                        title="Export to PDF (.pdf)"
                     >
-                        <FileText size={18} />
+                        <FileText size={13} style={{ color: "#e11d48" }} />
+                        <span>PDF</span>
                     </button>
                 </div>
+            </div>
 
-                <div className="relative w-full sm:w-auto">
+            {/* Dedicated Executive Filter Toolbar Strip */}
+            <div className={s.filterStrip}>
+                <div className={s.filterLeftGroup}>
+                    {/* Monthly / Yearly Switcher */}
+                    <div className={s.segmentedTrack}>
+                        <button
+                            onClick={() => setViewMode("monthly")}
+                            className={`${s.segmentedTab} ${viewMode === "monthly" ? s.segmentedTabActive : ""}`}
+                        >
+                            Monthly Ledger
+                        </button>
+                        <button
+                            onClick={() => setViewMode("yearly")}
+                            className={`${s.segmentedTab} ${viewMode === "yearly" ? s.segmentedTabActive : ""}`}
+                        >
+                            Annual Consolidation
+                        </button>
+                    </div>
+
+                    {/* Display Mode (Cards / Charts) */}
+                    {!hideDisplayMode && (
+                        <div className={s.modeTrack}>
+                            <button
+                                onClick={() => setDisplayMode("cards")}
+                                className={`${s.modeBtn} ${displayMode === "cards" ? s.modeBtnActive : ""}`}
+                                title="Summary Cards View"
+                            >
+                                <LayoutDashboard size={13} />
+                                <span>Cards</span>
+                            </button>
+                            <button
+                                onClick={() => setDisplayMode("charts")}
+                                className={`${s.modeBtn} ${displayMode === "charts" ? s.modeBtnActive : ""}`}
+                                title="Trend Analysis View"
+                            >
+                                <TrendingUp size={13} />
+                                <span>Trends</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Right Side: Period Selector / Calendar (Completely away from sidebar) */}
+                <div style={{ position: "relative" }}>
                     <button 
                         onClick={() => setShowDatePicker(!showDatePicker)}
-                        className="flex items-center justify-center gap-3 h-10 px-6 rounded-xl text-[13px] font-bold tracking-widest transition-all shadow-sm border border-stone-200/40 dark:border-stone-800/50 hover:bg-white dark:hover:bg-[#262626] active:scale-95 uppercase w-full sm:min-w-[180px]"
-                        style={{ backgroundColor: PEACH, color: RICH_BLACK }}
+                        className={s.periodBtn}
                     >
-                        <Calendar size={16} />
-                        {viewMode === "monthly" ? displayMonth : y}
-                        <ChevronDown size={14} className={`transition-transform duration-300 ${showDatePicker ? 'rotate-180' : ''}`} />
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+                            <Calendar size={13} className={s.periodIcon} />
+                            <span>{viewMode === "monthly" ? displayMonth : `YEAR ${y}`}</span>
+                        </span>
+                        <ChevronDown size={13} style={{ opacity: 0.6, transform: showDatePicker ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                     </button>
 
                     <AnimatePresence>

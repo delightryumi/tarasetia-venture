@@ -9,9 +9,10 @@ import { useSuppliers } from '@/hooks/purchasing/useSuppliers';
 import { toast } from 'sonner';
 import { PButton } from '@/components/purchasing/ui/PButton';
 import { useAuth } from '@/context/AuthContext';
-import s from '../shared-page.module.css';
+import s from './DailyMarketList.module.css';
 import { pushCostToPnL, removeCostFromPnL } from '@/lib/purchasing/pnlHelper';
 import { dmlService } from '@/services/purchasing/dmlService';
+import { formatRupiah } from '@/lib/purchasing/utils';
 
 // Subcomponents
 import DailyMarketListTable from './components/DailyMarketListTable';
@@ -45,19 +46,75 @@ export default function DailyMarketListPage() {
 
   // Filters
   const [dateFilter, setDateFilter] = useState(() => getTodayStr());
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'tempo' | null>(null);
+  const [activeKpiFilter, setActiveKpiFilter] = useState<'all' | 'pending' | 'cost' | 'tempo' | null>(null);
 
   // Delete modal states
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const filteredDmls = useMemo(() => {
-    return dmls.filter(dml => {
+    let result = dmls.filter(dml => {
+      if (statusFilter === 'pending' && !(dml.status === 'draft' || dml.status === 'submitted')) return false;
+      if (statusFilter === 'approved' && (dml.status as any) !== 'approved' && dml.status !== 'received') return false;
+      if (statusFilter === 'tempo') {
+        const hasTempo = (dml.items || []).some((i: any) => i.paymentStatus === 'tempo');
+        if (!hasTempo) return false;
+      }
       if (!dateFilter) return true;
       const dateObj = dml.date?.toDate ? dml.date.toDate() : new Date(dml.date);
       const dateString = dateObj.toISOString().split('T')[0];
       return dateString === dateFilter;
     });
-  }, [dmls, dateFilter]);
+
+    if (activeKpiFilter === 'cost') {
+      result = [...result].sort((a, b) => (Number(b.total_cost) || 0) - (Number(a.total_cost) || 0));
+    }
+    return result;
+  }, [dmls, dateFilter, statusFilter, activeKpiFilter]);
+
+  const handleKpiClick = (type: 'all' | 'pending' | 'cost' | 'tempo') => {
+    if (activeKpiFilter === type) {
+      setActiveKpiFilter(null);
+      setStatusFilter(null);
+      setDateFilter(getTodayStr());
+      return;
+    }
+    setActiveKpiFilter(type);
+    if (type === 'all') {
+      setStatusFilter(null);
+      setDateFilter('');
+    } else if (type === 'pending') {
+      setStatusFilter('pending');
+      setDateFilter('');
+    } else if (type === 'cost') {
+      setStatusFilter('approved');
+      setDateFilter('');
+    } else if (type === 'tempo') {
+      setStatusFilter('tempo');
+      setDateFilter('');
+    }
+  };
+
+  const kpis = useMemo(() => {
+    const totalCount = dmls.length;
+    const pendingCount = dmls.filter(d => d.status === 'draft' || d.status === 'submitted').length;
+    const totalVal = dmls.reduce((acc, d) => acc + (Number(d.total_cost) || 0), 0);
+    let tempoCost = 0;
+    dmls.forEach(d => {
+      (d.items || []).forEach((i: any) => {
+        if (i.paymentStatus === 'tempo') {
+          tempoCost += Number(i.total || ((Number(i.qty_ordered || i.qty || 0)) * (Number(i.unit_price || 0))));
+        }
+      });
+    });
+    return {
+      totalCount,
+      pendingCount,
+      totalVal,
+      tempoCost
+    };
+  }, [dmls]);
 
   const handleOpenCreate = () => {
     setSelectedDmlForForm(null);
@@ -181,50 +238,64 @@ export default function DailyMarketListPage() {
   const handleApprove = async (dml: any) => {
     try {
       await updateDML(dml.id, { 
-        status: 'approved', 
+        status: 'approved' as any, 
         verified_by: user?.uid || 'system', 
-        verified_by_name: user?.displayName || user?.email || 'Purchasing' 
+        verified_by_name: user?.email || 'F&B Director' 
       });
-      toast.success('Daily Market List approved.');
+
+      await pushCostToPnL({
+        docId: `dml-${dml.id}`,
+        docNum: dml.dml_number,
+        department: dml.department || 'Food & Beverage',
+        amount: dml.total_cost || 0,
+        date: dml.order_date || dml.date,
+        description: dml.notes || `Daily Market List ${dml.dml_number}`,
+        fbCategory: dml.fb_category || null,
+        eventCategory: dml.event_category || null,
+        items: dml.items || []
+      });
+
+      toast.success('Daily Market List approved and posted to Cost of Sales.');
       setSelectedDml(null);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to approve Daily Market List.');
+      toast.error(err.message || 'Failed to approve.');
     }
   };
 
-  const handleUpdatePaymentStatus = async (itemIndex: number, status: string) => {
+  const handleUpdatePaymentStatus = async (itemIndex: number, newStatus: string) => {
     if (!selectedDml) return;
     try {
-      const updatedItems = [...(selectedDml.items || [])];
-      if (updatedItems[itemIndex]) {
-        updatedItems[itemIndex] = {
-          ...updatedItems[itemIndex],
-          paymentStatus: status
-        };
-      }
-      
-      await updateDML(selectedDml.id, { items: updatedItems });
-      
-      const newDml = { ...selectedDml, items: updatedItems };
-      setSelectedDml(newDml);
+      const updatedItems = [...selectedDml.items];
+      updatedItems[itemIndex] = {
+        ...updatedItems[itemIndex],
+        paymentStatus: newStatus
+      };
 
-      if (newDml.status === 'submitted' || newDml.status === 'approved') {
+      await updateDML(selectedDml.id, { items: updatedItems } as any);
+
+      setSelectedDml((prev: any) => ({
+        ...prev,
+        items: updatedItems
+      }));
+
+      if (selectedDml.status === 'submitted' || selectedDml.status === 'approved') {
         await pushCostToPnL({
-          docId: `dml-${newDml.id}`,
-          docNum: newDml.dml_number,
-          department: newDml.department || 'Food & Beverage',
-          amount: newDml.total_cost || 0,
-          date: newDml.order_date || newDml.date,
-          description: newDml.notes || `Daily Market List ${newDml.dml_number}`,
-          fbCategory: newDml.fb_category || null,
-          eventCategory: newDml.event_category || null,
+          docId: `dml-${selectedDml.id}`,
+          docNum: selectedDml.dml_number,
+          department: selectedDml.department || 'Food & Beverage',
+          amount: selectedDml.total_cost || 0,
+          date: selectedDml.order_date || selectedDml.date,
+          description: selectedDml.notes || `Daily Market List ${selectedDml.dml_number}`,
+          fbCategory: selectedDml.fb_category || null,
+          eventCategory: selectedDml.event_category || null,
           items: updatedItems
         });
       }
-      
-      toast.success('Tipe pembayaran item berhasil diperbarui');
-    } catch (e: any) {
-      toast.error(e.message || 'Gagal mengupdate tipe pembayaran');
+
+      toast.success(`Payment status updated to ${newStatus.toUpperCase()}`);
+    } catch (error) {
+      console.error("Failed to update item payment status:", error);
+      toast.error("Failed to update payment status");
     }
   };
 
@@ -232,34 +303,213 @@ export default function DailyMarketListPage() {
     window.print();
   };
 
+  // FULL PAGE DOCUMENT VIEW (not a popup)
+  if (isFormOpen) {
+    return (
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" className={s.container}>
+        <DailyMarketListForm 
+          isOpen={true}
+          onClose={() => setIsFormOpen(false)}
+          initialData={selectedDmlForForm}
+          items={items}
+          suppliers={suppliers}
+          user={user}
+          onSave={handleSaveForm}
+        />
+      </motion.div>
+    );
+  }
+
   return (
-    <motion.div variants={fadeUp} initial="hidden" animate="visible">
+    <motion.div variants={fadeUp} initial="hidden" animate="visible" className={s.container}>
       {/* Screen Content Wrapper (hidden when printing) */}
       <div className={s.printHideRoot}>
-        {/* Header */}
-        <div className={s.header}>
-          <div>
-            <h1 className={s.title}>Daily Market List</h1>
-            <p className={s.subtitle}>Manage daily fresh produce procurement checklists for kitchen operations.</p>
+        {/* Header Card */}
+        <div className={s.headerCard}>
+          <div className={s.topRibbon}>
+            <div className={s.ribbonLeft}>
+              <span className={s.ribbonBadge}>DML</span>
+              <span className={s.ribbonDivider}>/</span>
+              <span className={s.ribbonTitle}>Culinary Direct Purchasing</span>
+            </div>
+            <div className={s.statusLive}>
+              <span className={s.liveDot} />
+              Kitchen Operations
+            </div>
           </div>
-          <PButton onClick={handleOpenCreate}>
-            <Plus size={16} strokeWidth={2} />
-            Generate DML
-          </PButton>
+
+          <div className={s.headerRow}>
+            <div className={s.titleArea}>
+              <div className={s.titleWithBadge}>
+                <h1 className={s.title}>Daily Market List</h1>
+                <span className={s.titleBadge}>Direct Culinary Cost</span>
+              </div>
+              <p className={s.subtitle}>
+                Daily fresh produce procurement checklist, market receipts, and direct food cost control.
+              </p>
+            </div>
+            <div className={s.headerActions}>
+              <button type="button" className={s.actionCtaBtn} onClick={handleOpenCreate}>
+                <Plus size={16} strokeWidth={2.5} />
+                <span>New Daily Market List</span>
+              </button>
+            </div>
+          </div>
+
+          {/* KPI Summary Cards - Clickable Filters */}
+          <div className={s.kpiGrid}>
+            <div 
+              role="button"
+              tabIndex={0}
+              className={`${s.kpiCard} ${activeKpiFilter === 'all' ? s.kpiCardActive : ''}`}
+              onClick={() => handleKpiClick('all')}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleKpiClick('all'); }}
+              title="Klik untuk tampilkan semua lembar belanja pasar tanpa batas tanggal"
+            >
+              <div className={s.kpiHeader}>
+                <span className={s.kpiLabel}>Total Market Lists</span>
+                {activeKpiFilter === 'all' ? (
+                  <span className={s.kpiActiveTag}>● Active</span>
+                ) : (
+                  <span className={s.kpiIcon}>🥬</span>
+                )}
+              </div>
+              <div className={s.kpiValueRow}>
+                <span className={s.kpiValue}>{kpis.totalCount}</span>
+                <span className={s.kpiSub}>Registered procurement sheets</span>
+              </div>
+            </div>
+
+            <div 
+              role="button"
+              tabIndex={0}
+              className={`${s.kpiCard} ${activeKpiFilter === 'pending' ? s.kpiCardActive : ''}`}
+              onClick={() => handleKpiClick('pending')}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleKpiClick('pending'); }}
+              title="Klik untuk filter DML yang menunggu verifikasi kitchen / finance"
+            >
+              <div className={s.kpiHeader}>
+                <span className={s.kpiLabel}>Pending Review</span>
+                {activeKpiFilter === 'pending' ? (
+                  <span className={s.kpiActiveTag}>● Active</span>
+                ) : (
+                  <span className={s.kpiIcon}>⏳</span>
+                )}
+              </div>
+              <div className={s.kpiValueRow}>
+                <span className={s.kpiValue} style={{ color: '#d97706' }}>{kpis.pendingCount}</span>
+                <span className={s.kpiSub}>Draft / Awaiting verification</span>
+              </div>
+            </div>
+
+            <div 
+              role="button"
+              tabIndex={0}
+              className={`${s.kpiCard} ${activeKpiFilter === 'cost' ? s.kpiCardActive : ''}`}
+              onClick={() => handleKpiClick('cost')}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleKpiClick('cost'); }}
+              title="Klik untuk filter DML yang sudah disetujui (Direct Cost of Sales)"
+            >
+              <div className={s.kpiHeader}>
+                <span className={s.kpiLabel}>Direct Culinary Cost</span>
+                {activeKpiFilter === 'cost' ? (
+                  <span className={s.kpiActiveTag}>● Approved</span>
+                ) : (
+                  <span className={s.kpiIcon}>💰</span>
+                )}
+              </div>
+              <div className={s.kpiValueRow}>
+                <span className={s.kpiValue} style={{ fontSize: '18px', color: '#1e4d3a' }}>{formatRupiah(kpis.totalVal)}</span>
+                <span className={s.kpiSub}>Direct Cost of Sales (Food)</span>
+              </div>
+            </div>
+
+            <div 
+              role="button"
+              tabIndex={0}
+              className={`${s.kpiCard} ${activeKpiFilter === 'tempo' ? s.kpiCardActive : ''}`}
+              onClick={() => handleKpiClick('tempo')}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleKpiClick('tempo'); }}
+              title="Klik untuk filter DML yang memiliki tagihan Tempo / AP Pasar"
+            >
+              <div className={s.kpiHeader}>
+                <span className={s.kpiLabel}>Tempo / Credit Cost</span>
+                {activeKpiFilter === 'tempo' ? (
+                  <span className={s.kpiActiveTag}>● Tempo</span>
+                ) : (
+                  <span className={s.kpiIcon}>💳</span>
+                )}
+              </div>
+              <div className={s.kpiValueRow}>
+                <span className={s.kpiValue} style={{ fontSize: '18px', color: '#dc2626' }}>{formatRupiah(kpis.tempoCost)}</span>
+                <span className={s.kpiSub}>Market payables outstanding</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Filter Bar */}
         <div className={s.filterBar}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--p-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Market List Date</span>
-            <input type="date" className={s.filterSelect} value={dateFilter} onChange={e => setDateFilter(e.target.value)} />
+          <div className={s.filterGroup}>
+            <span className={s.filterLabel}>Market List Date</span>
+            <input 
+              type="date" 
+              className={s.filterInput} 
+              value={dateFilter} 
+              onChange={e => {
+                setDateFilter(e.target.value);
+                setActiveKpiFilter(null);
+              }} 
+            />
+          </div>
+          <div className={s.filterActions}>
+            <button 
+              type="button" 
+              className={s.filterTodayBtn}
+              onClick={() => {
+                setDateFilter(getTodayStr());
+                setActiveKpiFilter(null);
+              }}
+            >
+              Today
+            </button>
             {dateFilter && (
-              <PButton variant="secondary" onClick={() => setDateFilter('')} style={{ padding: '0 12px', height: 40, fontSize: 13 }}>
+              <button 
+                type="button" 
+                className={s.filterClearBtn}
+                onClick={() => setDateFilter('')}
+              >
                 Clear Filter
-              </PButton>
+              </button>
             )}
           </div>
         </div>
+
+        {/* Active Filter Banner */}
+        {activeKpiFilter && (
+          <div className={s.activeFilterBanner}>
+            <div className={s.activeFilterText}>
+              <span>⚡ Filter Aktif:</span>
+              <strong>
+                {activeKpiFilter === 'all' && `Menampilkan Seluruh Daily Market List (${filteredDmls.length} records)`}
+                {activeKpiFilter === 'pending' && `Status: Menunggu Review / Approval (${filteredDmls.length} records)`}
+                {activeKpiFilter === 'cost' && `Status: Approved Direct Food Cost (${filteredDmls.length} records)`}
+                {activeKpiFilter === 'tempo' && `Item Tagihan Tempo / AP Pasar (${filteredDmls.length} records)`}
+              </strong>
+            </div>
+            <button 
+              type="button" 
+              className={s.activeFilterResetBtn}
+              onClick={() => {
+                setActiveKpiFilter(null);
+                setStatusFilter(null);
+                setDateFilter(getTodayStr());
+              }}
+            >
+              Reset Filter
+            </button>
+          </div>
+        )}
 
         {/* Table & Detail */}
         <div className={s.twoPanel}>
@@ -281,17 +531,6 @@ export default function DailyMarketListPage() {
             onUpdatePaymentStatus={handleUpdatePaymentStatus}
           />
         </div>
-
-        {/* Slider Form */}
-        <DailyMarketListForm 
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          initialData={selectedDmlForForm}
-          items={items}
-          suppliers={suppliers}
-          user={user}
-          onSave={handleSaveForm}
-        />
 
         {/* Delete Confirmation Modal */}
         <DeleteConfirmModal 

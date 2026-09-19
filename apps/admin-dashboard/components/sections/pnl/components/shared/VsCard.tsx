@@ -85,7 +85,7 @@ export function VsCard({
 
             <div className={classes.grid}>
                 <div className={classes.col}>
-                    <span className={classes.colLabel}>Nett Revenue</span>
+                    <span className={classes.colLabel}>Net Revenue</span>
                     <span className={classes.colValue}>
                         {loading ? "—" : `Rp ${Math.round(nettRevenue).toLocaleString("id-ID")}`}
                     </span>
@@ -93,7 +93,7 @@ export function VsCard({
                 <div className={`${classes.col} ${classes.borderLeft}`}>
                     <span className={classes.colLabel}>Expenses</span>
                     <span className={classes.colValue}>
-                        {loading ? "—" : `Rp ${expenses.toLocaleString("id-ID")}`}
+                        {loading ? "—" : `Rp ${Math.round(expenses).toLocaleString("id-ID")}`}
                     </span>
                 </div>
             </div>

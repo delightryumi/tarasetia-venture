@@ -1,23 +1,24 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, ArrowLeft, User, Calendar } from 'lucide-react';
+import { Calendar, CheckCircle2, FileSpreadsheet, Package, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PButton } from '@/components/purchasing/ui/PButton';
 import SearchableSelect from '@/components/purchasing/ui/SearchableSelect';
 import { formatRupiah } from '@/lib/purchasing/utils';
 import { toast } from 'sonner';
-import s from '../../shared-page.module.css';
+import s from '../../RequisitionFormModal.module.css';
 
-const DEPARTMENTS = ["Food & Beverage", "Front Office", "Housekeeping", "Accounting", "Purchasing", "POMEC"];
+const DEPARTMENTS = [
+  { name: "Food & Beverage", code: "500" },
+  { name: "Front Office", code: "400" },
+  { name: "Housekeeping", code: "450" },
+  { name: "POMEC", code: "600" },
+  { name: "Accounting", code: "700" },
+  { name: "Purchasing", code: "750" },
+];
+
 const FB_CATEGORIES = ["Food", "Beverage"];
 const EVENT_CATEGORIES = ["A la Carte", "Banquet"];
-
-const slideInFull = {
-  hidden: { x: '100%' },
-  visible: { x: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as any } },
-  exit: { x: '100%', transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as any } },
-};
 
 function getTodayStr() {
   const d = new Date();
@@ -43,7 +44,7 @@ export default function StoreRequisitionForm({
   user,
   onSave
 }: StoreRequisitionFormProps) {
-  const [department, setDepartment] = useState(DEPARTMENTS[0]);
+  const [department, setDepartment] = useState(DEPARTMENTS[0].name);
   const [fbCategory, setFbCategory] = useState(FB_CATEGORIES[0]);
   const [eventCategory, setEventCategory] = useState(EVENT_CATEGORIES[0]);
   const [notes, setNotes] = useState('');
@@ -53,7 +54,7 @@ export default function StoreRequisitionForm({
 
   useEffect(() => {
     if (initialData) {
-      setDepartment(initialData.department || DEPARTMENTS[0]);
+      setDepartment(initialData.department || DEPARTMENTS[0].name);
       const loadedFbCat = initialData.fb_category || FB_CATEGORIES[0];
       let loadedEvCat = initialData.event_category || EVENT_CATEGORIES[0];
       if (loadedFbCat === 'Beverage' && loadedEvCat === 'Banquet') {
@@ -78,7 +79,7 @@ export default function StoreRequisitionForm({
         };
       }));
     } else {
-      setDepartment(DEPARTMENTS[0]);
+      setDepartment(DEPARTMENTS[0].name);
       setFbCategory(FB_CATEGORIES[0]);
       setEventCategory(EVENT_CATEGORIES[0]);
       setNotes('');
@@ -106,7 +107,7 @@ export default function StoreRequisitionForm({
   const handleSave = async (targetStatus: 'draft' | 'submitted') => {
     const invalid = reqItems.some(i => !i.item_id || i.qty_requested <= 0);
     if (invalid) {
-      toast.error('Please select a valid item and quantity for all rows.');
+      toast.error('Pastikan semua baris barang memiliki kuantitas valid (> 0).');
       return;
     }
 
@@ -147,206 +148,348 @@ export default function StoreRequisitionForm({
     await onSave(targetStatus, finalData);
   };
 
+  const totalCalculatedCost = reqItems.reduce((acc, curr) => acc + (curr.qty_requested * curr.unit_price), 0);
+
+  if (!isOpen) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            className={s.createSliderBackdrop}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
-          <motion.div
-            className={s.createSlider}
-            variants={slideInFull}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-          >
-            {/* Header */}
-            <div className={s.createSliderHeader}>
-              <button className={s.createSliderBackBtn} onClick={onClose}>
-                <ArrowLeft size={18} />
-              </button>
-              <div className={s.createSliderHeaderInfo}>
-                <h2 className={s.createSliderTitle}>{initialData ? 'Edit Store Requisition' : 'New Store Requisition'}</h2>
-                <p className={s.createSliderSubtitle}>Submit a request for items from the hotel store or warehouse.</p>
+    <div className={s.pageWrapper}>
+      {/* Top Navigation & Breadcrumbs Bar */}
+      <div className={s.navBar}>
+        <button type="button" className={s.backBtn} onClick={onClose}>
+          <ArrowLeft size={16} />
+          <span>Kembali ke Jurnal Requisition</span>
+        </button>
+        <div className={s.navBreadcrumb}>
+          <span>Purchasing</span>
+          <span className={s.navDivider}>/</span>
+          <span>Store Requisition</span>
+          <span className={s.navDivider}>/</span>
+          <span className={s.navCurrent}>
+            {initialData ? 'Edit Bon Permintaan' : 'Form Pengajuan Bon Baru'}
+          </span>
+        </div>
+      </div>
+
+      {/* Main Full-Page ERP Document */}
+      <div className={s.documentCard}>
+        {/* Enterprise Header */}
+        <div className={s.docHeader}>
+          <div className={s.headerLeft}>
+            <div className={s.docIconBox}>
+              <Package size={22} />
+            </div>
+            <div className={s.headerTitleGroup}>
+              <div className={s.headerTopMeta}>
+                <span className={s.docCodeBadge}>FORM SR-01</span>
+                <span className={s.docTypeSubtitle}>Internal Stock Disbursement Voucher</span>
               </div>
+              <h1 className={s.docTitle}>
+                {initialData ? 'Edit Bon Permintaan Barang (Store Requisition)' : 'Form Permintaan Barang Baru (Store Requisition)'}
+                <span className={s.hotelBadge}>Central Store / Warehouse</span>
+              </h1>
+            </div>
+          </div>
+
+          <div className={s.headerRight}>
+            <span className={s.statusIndicator}>
+              {initialData?.status ? String(initialData.status).toUpperCase() : 'NEW DRAFT'}
+            </span>
+          </div>
+        </div>
+
+        {/* Document Body */}
+        <div className={s.docBody}>
+          {/* Section 1: Department Cost Allocation & Logistics Schedule */}
+          <div className={s.formSection}>
+            <div className={s.sectionHeader}>
+              <div className={s.sectionTitleGroup}>
+                <span className={s.sectionStep}>1</span>
+                <span className={s.sectionTitle}>Department Cost Allocation & Logistics Schedule</span>
+              </div>
+              <span className={s.sectionNote}>Pusat Biaya & Alokasi Departemen</span>
             </div>
 
-            {/* Body */}
-            <div className={s.createSliderBody}>
-              {/* Meta Info Bar — shows staff info */}
-              <div className={s.metaInfoBar}>
-                <div className={s.metaInfoItem}>
-                  <span className={s.metaInfoLabel}><User size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Requested By</span>
-                  <span className={s.metaInfoValue}>{initialData ? (initialData.requested_by_name || initialData.requested_by || user?.displayName || (user as any)?.name || user?.email) : (user?.displayName || (user as any)?.name || user?.email || 'Staff')}</span>
-                </div>
-                <div className={s.metaInfoItem}>
-                  <span className={s.metaInfoLabel}>Account / UID</span>
-                  <span className={s.metaInfoValue} style={{ fontSize: 12, color: 'var(--p-muted)' }}>{user?.email || user?.uid || '—'}</span>
-                </div>
-                <div className={s.metaInfoItem}>
-                  <span className={s.metaInfoLabel}>Role</span>
-                  <span className={s.metaInfoValue}>{(user as any)?.role || 'Staff'}</span>
-                </div>
+            {/* Department Grid */}
+            <div className={s.fieldItem}>
+              <label className={s.fieldLabel}>Requesting Department (Cost Center)</label>
+              <div className={s.deptSelectorGrid}>
+                {DEPARTMENTS.map(dep => (
+                  <button
+                    type="button"
+                    key={dep.name}
+                    className={`${s.deptBtn} ${department === dep.name ? s.deptBtnActive : ''}`}
+                    onClick={() => setDepartment(dep.name)}
+                  >
+                    <span className={s.deptCode}>DEPT {dep.code}</span>
+                    <span className={s.deptName}>{dep.name}</span>
+                  </button>
+                ))}
               </div>
 
-              {/* Date Inputs */}
-              <div className={s.dateInputsGrid}>
-                <div className={s.formField}>
-                  <label className={s.formLabel}><Calendar size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Order Date (Tanggal Order)</label>
-                  <input className={s.formInput} type="date" value={orderDate} onChange={e => setOrderDate(e.target.value)} required />
-                </div>
-                <div className={s.formField}>
-                  <label className={s.formLabel}><Calendar size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Requested Delivery Date (Tanggal Datang)</label>
-                  <input className={s.formInput} type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} />
-                </div>
-              </div>
-
-              {/* Department Selection */}
-              <div className={s.formField} style={{ marginBottom: 24 }}>
-                <label className={s.formLabel}>Department (Cost Allocation)</label>
-                <div className={s.chipGroup}>
-                  {DEPARTMENTS.map(dep => (
-                    <button type="button" key={dep} className={`${s.chip} ${department === dep ? s.chipActive : ''}`} onClick={() => setDepartment(dep)}>{dep}</button>
-                  ))}
-                </div>
-                {department === 'Food & Beverage' && (
-                  <div style={{ marginTop: 12, paddingLeft: 12, borderLeft: '2px solid var(--p-hairline)' }}>
-                    <label className={s.formLabel} style={{ fontSize: 11, color: 'var(--p-muted)' }}>F&B Category</label>
-                    <div className={s.chipGroup}>
-                      {FB_CATEGORIES.map(cat => (
-                        <button
-                          type="button"
-                          key={cat}
-                          className={`${s.chip} ${fbCategory === cat ? s.chipActive : ''}`}
-                          onClick={() => {
-                            setFbCategory(cat);
-                            if (cat === 'Beverage') {
-                              setEventCategory('A la Carte');
-                            }
-                          }}
-                          style={{ padding: '4px 12px', fontSize: 12 }}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-                    <label className={s.formLabel} style={{ fontSize: 11, color: 'var(--p-muted)', marginTop: 8 }}>Service Type</label>
-                    <div className={s.chipGroup}>
-                      {EVENT_CATEGORIES.filter(cat => !(fbCategory === 'Beverage' && cat === 'Banquet')).map(cat => (
-                        <button type="button" key={cat} className={`${s.chip} ${eventCategory === cat ? s.chipActive : ''}`} onClick={() => setEventCategory(cat)} style={{ padding: '4px 12px', fontSize: 12 }}>{cat}</button>
-                      ))}
-                    </div>
+              {/* F&B Sub-allocation */}
+              {department === 'Food & Beverage' && (
+                <div className={s.subAllocationBar}>
+                  <div className={s.subGroup}>
+                    <span className={s.subLabel}>Expense Category:</span>
+                    {FB_CATEGORIES.map(cat => (
+                      <button
+                        type="button"
+                        key={cat}
+                        className={`${s.pillBtn} ${fbCategory === cat ? s.pillBtnActive : ''}`}
+                        onClick={() => {
+                          setFbCategory(cat);
+                          if (cat === 'Beverage') setEventCategory('A la Carte');
+                        }}
+                      >
+                        {cat === 'Food' ? '5010 - Food Cost' : '5020 - Beverage Cost'}
+                      </button>
+                    ))}
                   </div>
-                )}
-              </div>
 
-              {/* Item Rows */}
-              <div className={s.itemRowsHeader}>
-                <span className={s.itemRowsLabel}>Requested Items</span>
-              </div>
-              
-              <div style={{ marginBottom: 16 }}>
-                <SearchableSelect 
-                  items={items.filter(it => (it.procurement_module || 'SR') === 'SR' && !reqItems.find(ri => ri.item_id === it.id))}
-                  value=""
-                  placeholder="Search and select an item to add to the list..."
-                  onChange={(val: string) => {
-                    const foundItem = items.find(it => it.id === val);
-                    if (foundItem) {
-                      setReqItems(r => [...r, { item_id: val, qty_requested: 1, unit_price: foundItem.last_purchase_price || 0, notes: '', supplier_id: foundItem.default_supplier_id || '' }]);
-                    }
-                  }}
-                  showStock={true}
+                  <div className={s.subGroup} style={{ marginLeft: 16 }}>
+                    <span className={s.subLabel}>Outlet / Service:</span>
+                    {EVENT_CATEGORIES.filter(cat => !(fbCategory === 'Beverage' && cat === 'Banquet')).map(cat => (
+                      <button
+                        type="button"
+                        key={cat}
+                        className={`${s.pillBtn} ${eventCategory === cat ? s.pillBtnActive : ''}`}
+                        onClick={() => setEventCategory(cat)}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Date and Requester Grid */}
+            <div className={s.fieldGrid3}>
+              <div className={s.fieldItem}>
+                <label className={s.fieldLabel}>
+                  <Calendar size={12} />
+                  Requisition Date (Tanggal Bon)
+                </label>
+                <input 
+                  className={`${s.fieldInput} ${s.fieldInputMono}`}
+                  type="date" 
+                  value={orderDate} 
+                  onChange={e => setOrderDate(e.target.value)} 
+                  required 
                 />
               </div>
 
-              <table className={s.excelTable}>
+              <div className={s.fieldItem}>
+                <label className={s.fieldLabel}>
+                  <Calendar size={12} />
+                  Required Delivery Date (Target Terima)
+                </label>
+                <input 
+                  className={`${s.fieldInput} ${s.fieldInputMono}`}
+                  type="date" 
+                  value={deliveryDate} 
+                  onChange={e => setDeliveryDate(e.target.value)} 
+                />
+              </div>
+
+              <div className={s.fieldItem}>
+                <label className={s.fieldLabel}>Originator / Requested By</label>
+                <div className={s.readOnlyBadgeBox}>
+                  <span className={s.readOnlyUser}>
+                    {initialData ? (initialData.requested_by_name || initialData.requested_by || user?.displayName || 'Staff') : (user?.displayName || user?.email || 'Staff')}
+                  </span>
+                  <span className={s.readOnlySub}>{(user as any)?.role || 'Staff'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Requisition Item Lines */}
+          <div className={s.formSection}>
+            <div className={s.sectionHeader}>
+              <div className={s.sectionTitleGroup}>
+                <span className={s.sectionStep}>2</span>
+                <span className={s.sectionTitle}>Requisition Lines (Warehouse Items)</span>
+              </div>
+              <span className={s.sectionNote}>Daftar Permintaan Barang Gudang</span>
+            </div>
+
+            <div className={s.searchToolbar}>
+              <SearchableSelect 
+                items={items.filter(it => (it.procurement_module || 'SR') === 'SR' && !reqItems.find(ri => ri.item_id === it.id))}
+                value=""
+                placeholder="🔍 Cari nama barang gudang atau barcode untuk menambahkan ke voucher..."
+                onChange={(val: string) => {
+                  const foundItem = items.find(it => it.id === val);
+                  if (foundItem) {
+                    setReqItems(r => [...r, { 
+                      item_id: val, 
+                      qty_requested: 1, 
+                      unit_price: foundItem.last_purchase_price || 0, 
+                      notes: '', 
+                      supplier_id: foundItem.default_supplier_id || '' 
+                    }]);
+                  }
+                }}
+                showStock={true}
+              />
+            </div>
+
+            <div className={s.itemTableWrapper}>
+              <table className={s.itemTable}>
                 <thead>
                   <tr>
-                    <th>Nama Barang</th>
-                    <th>Jumlah</th>
-                    <th>Unit</th>
-                    <th>Supplier</th>
-                    <th className={s.excelThRight}>Harga Satuan</th>
-                    <th>Note</th>
-                    <th className={s.excelThRight}>Total</th>
-                    <th></th>
+                    <th style={{ width: 40, textAlign: 'center' }}>#</th>
+                    <th>Item Description</th>
+                    <th style={{ width: 80, textAlign: 'center' }}>Unit</th>
+                    <th style={{ width: 110, textAlign: 'center' }}>Current Stock</th>
+                    <th style={{ width: 100, textAlign: 'right' }}>Req. Qty</th>
+                    <th style={{ width: 130, textAlign: 'right' }}>Unit Cost</th>
+                    <th style={{ width: 130, textAlign: 'right' }}>Line Total</th>
+                    <th style={{ minWidth: 140 }}>Remarks / Cost Purpose</th>
+                    <th style={{ width: 44, textAlign: 'center' }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {reqItems.length === 0 ? (
                     <tr>
-                      <td colSpan={8} style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--p-muted)', fontSize: 13 }}>
-                        No items added yet. Search above to add items.
+                      <td colSpan={9} style={{ textAlign: 'center', padding: '36px 16px', color: '#94a3b8' }}>
+                        <FileSpreadsheet size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+                        <div style={{ fontWeight: 600, fontSize: 13, color: '#64748b' }}>Belum ada item permintaan</div>
+                        <div style={{ fontSize: 12 }}>Gunakan kotak pencarian di atas untuk memilih barang dari katalog gudang.</div>
                       </td>
                     </tr>
                   ) : (() => {
                     const enriched = reqItems.map((ri, idx) => ({ ...ri, _idx: idx, _item: items.find(i => i.id === ri.item_id) }));
                     const grouped: Record<string, typeof enriched> = {};
-                    enriched.forEach(e => { const cat = e._item?.category || 'Uncategorized'; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(e); });
+                    enriched.forEach(e => { const cat = e._item?.category || 'General Store'; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(e); });
                     const sortedCats = Object.keys(grouped).sort();
+                    
+                    let counter = 1;
                     return sortedCats.flatMap(cat => [
-                      <tr key={`cat-${cat}`} className={s.categoryHeaderRow}>
-                        <td colSpan={8} className={s.categoryHeaderCell}>{cat}</td>
+                      <tr key={`cat-${cat}`} className={s.rowCategoryHeader}>
+                        <td colSpan={9} className={s.categoryCell}>
+                          📁 {cat}
+                        </td>
                       </tr>,
-                      ...grouped[cat].map(e => (
-                        <tr key={e._idx}>
-                          <td style={{ minWidth: 200, paddingLeft: 24 }}>
-                            <div style={{ fontWeight: 500, color: 'var(--p-ink)' }}>{e._item?.name}</div>
-                          </td>
-                          <td style={{ width: 80 }}>
-                            <input className={s.formInput} type="number" min={0} step="any" value={e.qty_requested} onChange={ev => handleItemChange(e._idx, 'qty_requested', Number(ev.target.value))} required />
-                          </td>
-                          <td className={s.excelTdCenter} style={{ width: 60, color: 'var(--p-muted)', fontSize: 12 }}>{e._item?.unit || '—'}</td>
-                          <td style={{ width: 140, fontSize: 13, color: 'var(--p-ink)', verticalAlign: 'middle' }}>
-                            {suppliers.find(sup => sup.id === e.supplier_id)?.name || e._item?.default_supplier_name || 'No Supplier'}
-                          </td>
-                          <td style={{ width: 140 }}>
-                            <input className={s.formInput} type="text" readOnly value={formatRupiah(e.unit_price)} style={{ backgroundColor: 'var(--p-surface-soft)', color: 'var(--p-muted)' }} />
-                          </td>
-                          <td style={{ width: 140 }}>
-                            <input className={s.formInput} type="text" placeholder="Note…" value={e.notes} onChange={ev => handleItemChange(e._idx, 'notes', ev.target.value)} />
-                          </td>
-                          <td className={s.excelTdRight} style={{ width: 120 }}>
-                            {formatRupiah((e.qty_requested || 0) * (e.unit_price || 0))}
-                          </td>
-                          <td className={s.excelNoCol}>
-                            <button type="button" className={s.removeBtn} onClick={() => handleRemoveRow(e._idx)}><X size={14} /></button>
-                          </td>
-                        </tr>
-                      ))
+                      ...grouped[cat].map(e => {
+                        const curStock = Number(e._item?.current_stock ?? 0);
+                        const isStockLow = curStock <= 0;
+                        return (
+                          <tr key={e._idx}>
+                            <td style={{ textAlign: 'center', color: '#94a3b8', fontFamily: 'monospace' }}>
+                              {counter++}
+                            </td>
+                            <td>
+                              <div className={s.itemNameCell}>{e._item?.name}</div>
+                              <div style={{ fontSize: 11, color: '#94a3b8' }}>SKU: {e._item?.sku || e._item?.id?.slice(0, 8) || '—'}</div>
+                            </td>
+                            <td style={{ textAlign: 'center', color: '#64748b', fontWeight: 600 }}>
+                              {e._item?.unit || 'pcs'}
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <span className={`${s.stockBadge} ${isStockLow ? s.stockLow : s.stockAvailable}`}>
+                                {curStock} {e._item?.unit || 'pcs'}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              <input 
+                                className={s.tableInputNumber} 
+                                type="number" 
+                                min={0.1} 
+                                step="any" 
+                                value={e.qty_requested} 
+                                onChange={ev => handleItemChange(e._idx, 'qty_requested', Number(ev.target.value))} 
+                                required 
+                              />
+                            </td>
+                            <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#475569', fontWeight: 600 }}>
+                              {formatRupiah(e.unit_price)}
+                            </td>
+                            <td className={s.tableTotalCell}>
+                              {formatRupiah((e.qty_requested || 0) * (e.unit_price || 0))}
+                            </td>
+                            <td>
+                              <input 
+                                className={s.tableInputText} 
+                                type="text" 
+                                placeholder="Untuk keperluan apa..." 
+                                value={e.notes} 
+                                onChange={ev => handleItemChange(e._idx, 'notes', ev.target.value)} 
+                              />
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <button 
+                                type="button" 
+                                className={s.removeRowBtn} 
+                                onClick={() => handleRemoveRow(e._idx)}
+                                title="Hapus baris"
+                              >
+                                ✕
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
                     ]);
                   })()}
                 </tbody>
-                <tfoot>
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: 'right' }}>Total Estimated Cost:</td>
-                    <td className={s.excelTdRight}>{formatRupiah(reqItems.reduce((acc, curr) => acc + (curr.qty_requested * curr.unit_price), 0))}</td>
-                    <td></td>
-                  </tr>
-                </tfoot>
               </table>
+            </div>
 
-              <div className={s.formField} style={{ marginBottom: 0 }}>
-                <label className={s.formLabel}>Remarks</label>
-                <textarea className={s.formTextarea} placeholder="Provide justification or notes…" value={notes} onChange={e => setNotes(e.target.value)} />
+            {/* Financial Summary Box */}
+            <div className={s.summaryFooterBox}>
+              <div className={s.summaryLeft}>
+                <span className={s.summaryCount}>{reqItems.length} Total Lines Requested</span>
+                <span className={s.summaryAllocation}>
+                  Cost Charged To: <strong>{department}</strong> {department === 'Food & Beverage' ? `(${fbCategory} - ${eventCategory})` : ''}
+                </span>
+              </div>
+              <div className={s.summaryRight}>
+                <span className={s.summaryTotalLabel}>Total Requisition Value:</span>
+                <span className={s.summaryTotalValue}>{formatRupiah(totalCalculatedCost)}</span>
               </div>
             </div>
+          </div>
 
-            {/* Footer */}
-            <div className={s.createSliderFooter}>
-              <PButton variant="secondary" onClick={onClose}>Cancel</PButton>
-              <PButton variant="secondary" onClick={() => handleSave('draft')}>Save Draft</PButton>
-              <PButton variant="primary" onClick={() => handleSave('submitted')}>Submit Requisition</PButton>
+          {/* Section 3: Justification & Remarks */}
+          <div className={s.formSection}>
+            <div className={s.sectionHeader}>
+              <div className={s.sectionTitleGroup}>
+                <span className={s.sectionStep}>3</span>
+                <span className={s.sectionTitle}>Justification & Department Authorization Notes</span>
+              </div>
+              <span className={s.sectionNote}>Catatan & Keperluan Pengajuan</span>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+
+            <div className={s.fieldItem}>
+              <textarea 
+                className={s.remarksTextarea} 
+                placeholder="Masukkan alasan atau justifikasi pengeluaran barang gudang ini (contoh: Persiapan Banquet Wedding, Penggantian Amenitas Kamar Lt. 3)..." 
+                value={notes} 
+                onChange={e => setNotes(e.target.value)} 
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Page Action Footer */}
+        <div className={s.docFooter}>
+          <button type="button" className={s.btnSecondary} onClick={onClose}>
+            Batal / Kembali
+          </button>
+          <div className={s.footerActionsRight}>
+            <button type="button" className={s.btnSecondary} onClick={() => handleSave('draft')}>
+              Simpan Draft
+            </button>
+            <button type="button" className={s.btnSubmit} onClick={() => handleSave('submitted')}>
+              <CheckCircle2 size={16} />
+              Submit Requisition
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

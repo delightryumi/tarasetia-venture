@@ -14,7 +14,7 @@ import { getHotelCollection } from '@/lib/firestoreHelper';
 import { PnlExpenseItem, formatIDR } from "@/lib/pnl-utils";
 import s from "./OperationalExpenses.module.css";
 
-/* ─────────────────────── USALI Constants ─────────────────────── */
+/* ─────────────────────── Department Cost Center Constants ─────────────────────── */
 export const USALI_DEPARTMENTS = [
   { key: "all", label: "All Departments", group: "all", icon: Layers },
   { key: "Rooms - Front Office", label: "Rooms - Front Office", group: "Rooms", icon: Bed },
@@ -34,16 +34,16 @@ export const USALI_DEPARTMENTS = [
 ];
 
 export const DEPARTMENT_FILTER_TABS = [
-  { id: "all", label: "All Departments", icon: Layers },
-  { id: "Rooms", label: "Rooms (FO & HK)", icon: Bed },
-  { id: "F&B", label: "F&B Outlets", icon: UtensilsCrossed },
-  { id: "POMEC", label: "POMEC / Energy", icon: Wrench },
-  { id: "A&G", label: "Admin & General", icon: Building2 },
-  { id: "HRD", label: "HRD", icon: Users },
-  { id: "S&M", label: "Sales & Marketing", icon: TrendingUp },
-  { id: "MOD", label: "Minor Depts (MOD)", icon: Sparkles },
-  { id: "Non-Op", label: "Non-Operating", icon: Shield },
-  { id: "Other", label: "Other", icon: Tag },
+  { id: "all", label: "All Cost Centers", icon: Layers },
+  { id: "Rooms", label: "Rooms Division", icon: Bed },
+  { id: "F&B", label: "F&B Outlets & Culinary", icon: UtensilsCrossed },
+  { id: "POMEC", label: "POMEC / Engineering", icon: Wrench },
+  { id: "A&G", label: "Admin & General (A&G)", icon: Building2 },
+  { id: "HRD", label: "Human Resources (HRD)", icon: Users },
+  { id: "S&M", label: "Sales & Marketing (S&M)", icon: TrendingUp },
+  { id: "MOD", label: "Minor Operated Depts", icon: Sparkles },
+  { id: "Non-Op", label: "Non-Operating Expenses", icon: Shield },
+  { id: "Other", label: "Other Operating Expenses", icon: Tag },
 ];
 
 export const DEPARTMENT_ACCOUNTS: Record<string, string[]> = {
@@ -312,15 +312,30 @@ const getSourceLabel = (id?: string): "DML" | "PR" | "SR" | null => {
 };
 
 const getDeptGroup = (deptStr?: string): string => {
-  const d = (deptStr || "").toLowerCase();
-  if (d.includes("room") || d.includes("fo") || d.includes("front office") || d.includes("hk") || d.includes("housekeeping")) return "Rooms";
-  if (d.includes("food") || d.includes("bev") || d.includes("f&b") || d.includes("kitchen") || d.includes("resto") || d.includes("lounge") || d.includes("banquet")) return "F&B";
-  if (d.includes("pomec") || d.includes("eng") || d.includes("maintenance") || d.includes("pln") || d.includes("energy")) return "POMEC";
-  if (d.includes("ag") || d.includes("admin") || d.includes("general")) return "A&G";
-  if (d.includes("hr") || d.includes("human")) return "HRD";
-  if (d.includes("sm") || d.includes("sales") || d.includes("marketing") || d.includes("promo")) return "S&M";
-  if (d.includes("spa") || d.includes("laundry") || d.includes("mod")) return "MOD";
-  if (d.includes("nonop") || d.includes("non-op") || d.includes("fee") || d.includes("pbb") || d.includes("insurance")) return "Non-Op";
+  if (!deptStr) return "Other";
+  // Primary: exact key lookup from USALI_DEPARTMENTS — most reliable, avoids substring false-positives
+  const found = USALI_DEPARTMENTS.find(dep => dep.key === deptStr);
+  if (found && found.group !== "all") return found.group;
+
+  // Secondary: fallback for legacy / non-standard strings (e.g. from PR/SR/DML sources)
+  const d = deptStr.toLowerCase();
+  // Rooms — use startsWith or exact equality; NEVER d.includes("fo") which also matches "Cost of Food"
+  if (d.startsWith("rooms") || d === "front office" || d === "housekeeping" || d === "fo" || d === "hk") return "Rooms";
+  // F&B — use startsWith to avoid accidental matches in category names like "Cost of Food (COGS)"
+  if (d.startsWith("f&b") || d === "fnb" || d === "food & beverage") return "F&B";
+  if (d.includes("kitchen") || d.includes("restaurant") || d.includes("banquet") || d.includes("sky lounge")) return "F&B";
+  // POMEC
+  if (d.includes("pomec") || d.includes("engineering") || d.includes("maintenance") || d.includes("energy")) return "POMEC";
+  // A&G
+  if (d.includes("administrative") || d === "admin & general" || d === "a&g") return "A&G";
+  // HRD
+  if (d.includes("human resources") || d === "hrd") return "HRD";
+  // S&M
+  if (d.includes("sales & marketing") || d === "s&m") return "S&M";
+  // MOD
+  if (d.startsWith("mod -") || d === "mod") return "MOD";
+  // Non-Op
+  if (d.includes("non-operating") || d.includes("non operating")) return "Non-Op";
   return "Other";
 };
 
@@ -367,24 +382,55 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
   const [editData,    setEditData]    = useState<PnlExpenseItem | null>(null);
   const [loading,     setLoading]     = useState(false);
 
-  const [newRows, setNewRows] = useState<Partial<PnlExpenseItem>[]>([
-    { category: "Electricity (PLN)", department: "POMEC / Engineering", description: "", amount: 0, date: today() },
-  ]);
+  // ── KPI Detail Modal ──
+  interface KpiDetailModal {
+    title:    string;
+    subtitle?: string;
+    items:    PnlExpenseItem[];
+  }
+  const [detailModal, setDetailModal] = useState<KpiDetailModal | null>(null);
+
+  const [newRows, setNewRows] = useState<Partial<PnlExpenseItem>[]>(() => [{
+    date:          new Date().toISOString().split("T")[0],
+    department:    "POMEC / Engineering",
+    category:      "",
+    vendor:        "",
+    voucherNo:     "",
+    paymentMethod: "CASH" as const,
+    amount:        0,
+    taxAmount:     0,
+    description:   "",
+  }]);
 
   function today() { return new Date().toISOString().split("T")[0]; }
+
+  const PAYMENT_METHODS: { value: PnlExpenseItem["paymentMethod"]; label: string }[] = [
+    { value: "CASH",        label: "Cash" },
+    { value: "TRANSFER",    label: "Bank Transfer" },
+    { value: "DEBIT",       label: "Debit Card" },
+    { value: "CREDIT_CARD", label: "Credit Card" },
+    { value: "GIRO",        label: "Giro" },
+    { value: "CHEQUE",      label: "Cheque" },
+  ];
+
+  const EMPTY_ROW = (): Partial<PnlExpenseItem> => ({
+    date:          today(),
+    department:    "POMEC / Engineering",
+    category:      DEPARTMENT_ACCOUNTS["POMEC / Engineering"]?.[0] || "",
+    vendor:        "",
+    voucherNo:     "",
+    paymentMethod: "CASH",
+    amount:        0,
+    taxIncluded:   false,
+    taxAmount:     0,
+    description:   "",
+  });
 
   const addRow = () => {
     const defaultDept = activeFilterTab !== "all"
       ? (activeDepartments.find(d => d.group === activeFilterTab)?.key || "POMEC / Engineering")
       : "POMEC / Engineering";
-    const available = DEPARTMENT_ACCOUNTS[defaultDept] || DEFAULT_CATEGORIES;
-    setNewRows(r => [...r, { 
-      category: available[0] || "Other", 
-      department: defaultDept, 
-      description: "", 
-      amount: 0, 
-      date: today() 
-    }]);
+    setNewRows(r => [...r, { ...EMPTY_ROW(), department: defaultDept, category: DEPARTMENT_ACCOUNTS[defaultDept]?.[0] || "" }]);
   };
 
   const removeRow = (idx: number) => {
@@ -411,7 +457,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
 
       const docRef = doc(getHotelCollection(db, "global_pnl_reports"), month);
       await setDoc(docRef, { expenses: [...expenses, ...newEntries] }, { merge: true });
-      setNewRows([{ category: "Electricity (PLN)", department: "POMEC / Engineering", description: "", amount: 0, date: today() }]);
+      setNewRows([EMPTY_ROW()]);
       setIsAdding(false);
       onRefresh();
     } catch (err) {
@@ -488,16 +534,18 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
   const topSpendingDept = useMemo(() => {
     let topName = "—";
     let topVal = 0;
+    let topId  = "all";
     DEPARTMENT_FILTER_TABS.forEach(t => {
       if (t.id !== "all") {
         const val = departmentCounts[t.id]?.total || 0;
         if (val > topVal) {
-          topVal = val;
+          topVal  = val;
           topName = t.label;
+          topId   = t.id;
         }
       }
     });
-    return { name: topName, amount: topVal, percent: totalOpex > 0 ? ((topVal / totalOpex) * 100).toFixed(1) : "0" };
+    return { name: topName, amount: topVal, percent: totalOpex > 0 ? ((topVal / totalOpex) * 100).toFixed(1) : "0", deptId: topId };
   }, [departmentCounts, totalOpex]);
 
   const avgExpense = useMemo(() => {
@@ -514,7 +562,9 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
       list = list.filter(e =>
         (e.description || "").toLowerCase().includes(q) ||
         (e.category || "").toLowerCase().includes(q) ||
-        (e.department || "").toLowerCase().includes(q)
+        (e.department || "").toLowerCase().includes(q) ||
+        (e.voucherNo || "").toLowerCase().includes(q) ||
+        (e.vendor || "").toLowerCase().includes(q)
       );
     }
     return list;
@@ -532,13 +582,23 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
         <div className={s.headerBanner}>
           <div className={s.titleGroup}>
             <div className={s.titleIcon}>
-              <Receipt size={22} />
+              <Receipt size={20} />
             </div>
             <div className={s.titleText}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="bg-slate-900 text-white dark:bg-[#285f47] dark:text-white font-mono text-[10px] px-2 py-0.5 rounded font-bold tracking-wider uppercase">
+                  SCHEDULE 03 · OPERATIONAL
+                </span>
+                <span className="text-[11px] font-semibold text-[#1e4d3a] dark:text-[#52a37f] uppercase tracking-wider bg-[#f0f7f3] dark:bg-[#1e4d3a]/30 px-2 py-0.5 rounded border border-[#c4decb] dark:border-[#285f47]">
+                  Undistributed &amp; Direct Opex
+                </span>
+              </div>
               <h2 className={s.mainTitle}>
-                OPERATIONAL <span className={s.mainTitleHighlight}>EXPENSES</span> (USALI)
+                OPERATIONAL EXPENSES <span className={s.mainTitleHighlight}>· OPERATING COST LEDGER</span>
               </h2>
-              <p className={s.subTitle}>Alokasi Pengeluaran 8 Departemen Perhotelan &amp; Mutasi Audit</p>
+              <p className={s.subTitle}>
+                Cash Out Voucher Ledger (BKK) · 8 Cost Center Departments · Direct Operating Expenses &amp; Undistributed Costs
+              </p>
             </div>
           </div>
 
@@ -546,67 +606,122 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
             className={s.addEntryBtn}
             onClick={() => setIsAdding(v => !v)}
           >
-            {isAdding ? <X size={15} /> : <Plus size={15} />}
-            {isAdding ? "Batal Entri" : "Tambah Pengeluaran"}
+            {isAdding ? <X size={14} /> : <Plus size={14} />}
+            {isAdding ? "Close Form" : "+ New Cash Out Voucher"}
           </button>
         </div>
 
-        {/* ── Executive KPI Stat Cards ── */}
+        {/* ── Executive KPI Stat Cards (clickable → detail modal) ── */}
         <div className={s.kpiGrid}>
-          <div className={s.kpiCard}>
+
+          {/* Card 1 – Total Operating Expenses */}
+          <div
+            className={s.kpiCard}
+            style={{ cursor: "pointer" }}
+            role="button"
+            tabIndex={0}
+            onClick={() => setDetailModal({
+              title:    "Total Operating Expenses",
+              subtitle: `Period: ${month} · ${expenses.length} Vouchers`,
+              items:    [...expenses].sort((a, b) => (b.amount || 0) - (a.amount || 0)),
+            })}
+          >
             <div className={s.kpiTopRow}>
-              <span className={s.kpiLabel}>Total Beban Operasional</span>
+              <span className={s.kpiLabel}>Total Operating Expenses</span>
               <div className={s.kpiIconContainer}><Receipt size={15} /></div>
             </div>
-            <span className={s.kpiMainNumber} style={{ color: "#0284c7" }}>
+            <span className={s.kpiMainNumber} style={{ color: "#1e4d3a" }}>
               {formatIDR(totalOpex)}
             </span>
             <span className={s.kpiFooterText}>
-              Periode Bulan {month}
+              Posting Period: {month}
+              <ArrowUpRight size={10} style={{ marginLeft: 4, opacity: 0.5 }} />
             </span>
           </div>
 
-          <div className={s.kpiCard}>
+          {/* Card 2 – Largest Cost Center */}
+          <div
+            className={s.kpiCard}
+            style={{ cursor: "pointer" }}
+            role="button"
+            tabIndex={0}
+            onClick={() => {
+              const topItems = expenses
+                .filter(e => getDeptGroup(e.department || e.category) === topSpendingDept.deptId)
+                .sort((a, b) => (b.amount || 0) - (a.amount || 0));
+              setDetailModal({
+                title:    `Largest Cost Center: ${topSpendingDept.name}`,
+                subtitle: `${formatIDR(topSpendingDept.amount)} · ${topSpendingDept.percent}% of total`,
+                items:    topItems,
+              });
+            }}
+          >
             <div className={s.kpiTopRow}>
-              <span className={s.kpiLabel}>Pengeluaran Tertinggi</span>
+              <span className={s.kpiLabel}>Largest Cost Center</span>
               <div className={s.kpiIconContainer}><PieChart size={15} /></div>
             </div>
             <span className={s.kpiMainNumber} style={{ fontSize: "16px", color: "#d97706" }}>
               {topSpendingDept.name}
             </span>
             <span className={s.kpiFooterText}>
-              {formatIDR(topSpendingDept.amount)} ({topSpendingDept.percent}% dari total)
+              {formatIDR(topSpendingDept.amount)} ({topSpendingDept.percent}% of total)
+              <ArrowUpRight size={10} style={{ marginLeft: 4, opacity: 0.5 }} />
             </span>
           </div>
 
-          <div className={s.kpiCard}>
+          {/* Card 3 – Total Vouchers */}
+          <div
+            className={s.kpiCard}
+            style={{ cursor: "pointer" }}
+            role="button"
+            tabIndex={0}
+            onClick={() => setDetailModal({
+              title:    "All Transactions & Vouchers",
+              subtitle: `${expenses.length} vouchers · sorted newest first`,
+              items:    [...expenses].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()),
+            })}
+          >
             <div className={s.kpiTopRow}>
-              <span className={s.kpiLabel}>Total Mutasi / Kwitansi</span>
+              <span className={s.kpiLabel}>Total Transactions / Vouchers</span>
               <div className={s.kpiIconContainer}><Layers size={15} /></div>
             </div>
             <span className={s.kpiMainNumber}>
-              {expenses.length} <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}>Transaksi</span>
+              {expenses.length} <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}>Vouchers</span>
             </span>
             <span className={s.kpiFooterText}>
-              {displayedExpenses.length} transaksi pada filter aktif
+              {displayedExpenses.length} vouchers in active filter
+              <ArrowUpRight size={10} style={{ marginLeft: 4, opacity: 0.5 }} />
             </span>
           </div>
 
-          <div className={s.kpiCard}>
+          {/* Card 4 – Average per Voucher */}
+          <div
+            className={s.kpiCard}
+            style={{ cursor: "pointer" }}
+            role="button"
+            tabIndex={0}
+            onClick={() => setDetailModal({
+              title:    "Transaction Audit (Ranked by Amount)",
+              subtitle: `Average: ${formatIDR(avgExpense)} per voucher`,
+              items:    [...expenses].sort((a, b) => (b.amount || 0) - (a.amount || 0)),
+            })}
+          >
             <div className={s.kpiTopRow}>
-              <span className={s.kpiLabel}>Rata-rata per Transaksi</span>
+              <span className={s.kpiLabel}>Average per Voucher</span>
               <div className={s.kpiIconContainer}><ArrowUpRight size={15} /></div>
             </div>
             <span className={s.kpiMainNumber} style={{ color: "#059669" }}>
               {formatIDR(avgExpense)}
             </span>
             <span className={s.kpiFooterText}>
-              Beban rata-rata per nota
+              Average expense per voucher
+              <ArrowUpRight size={10} style={{ marginLeft: 4, opacity: 0.5 }} />
             </span>
           </div>
+
         </div>
 
-        {/* ── Bulk Entry Drawer ── */}
+        {/* ── Formulir Entri Pengeluaran Operasional ── */}
         <AnimatePresence mode="popLayout">
           {isAdding && (
             <motion.div
@@ -619,104 +734,170 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
               <div className={s.entryDrawerHeader}>
                 <span className={s.drawerTagBadge}>
                   <Sparkles size={13} />
-                  Entri Cepat Pengeluaran Departemen · {newRows.length} baris
+                  Cash Out Voucher Entry · Period {month} · {newRows.length} {newRows.length === 1 ? "row" : "rows"}
+                </span>
+                <span style={{ fontSize: 11, color: "var(--oe-text-subtle)", fontStyle: "italic" }}>
+                  International Hospitality Accounting Standard
                 </span>
               </div>
 
               <div className={s.rowList}>
                 {newRows.map((row, idx) => {
                   const deptCategories = DEPARTMENT_ACCOUNTS[row.department || ""] || DEFAULT_CATEGORIES;
+                  const dppValue = row.taxIncluded && row.taxAmount
+                    ? (row.amount || 0) - (row.taxAmount || 0)
+                    : (row.amount || 0);
                   return (
                     <div key={idx} className={s.entryRowBox}>
-                      {/* Date */}
-                      <div className={s.formField}>
-                        <label className={s.formLabel}>Tanggal</label>
-                        <input
-                          type="date"
-                          className={`${s.formControl} ${s.dateControl}`}
-                          value={row.date || ""}
-                          onChange={e => patchRow(idx, { date: e.target.value })}
-                        />
-                      </div>
 
-                      {/* Department */}
-                      <div className={s.formField}>
-                        <label className={s.formLabel}>Departemen</label>
-                        <select
-                          className={`${s.formControl} ${s.selectControl}`}
-                          value={row.department || ""}
-                          onChange={e => {
-                            const dept = e.target.value;
-                            const available = DEPARTMENT_ACCOUNTS[dept] || DEFAULT_CATEGORIES;
-                            patchRow(idx, { 
-                              department: dept,
-                              category: available[0] || ""
-                            });
-                          }}
+                      {/* ── ROW HEADER ── */}
+                      <div className={s.entryRowHeader}>
+                        <span className={s.entryRowNum}>#{String(idx + 1).padStart(2, "0")}</span>
+                        <span className={`${s.deptPill} ${getDeptPillClass(row.department || "")}`} style={{ fontSize: 10 }}>
+                          {getDeptGroup(row.department || "")}
+                        </span>
+                        <button
+                          className={s.deleteRowBtn}
+                          onClick={() => removeRow(idx)}
+                          disabled={newRows.length <= 1}
+                          title="Remove line"
                         >
-                          {activeDepartments.map(d => (
-                            <option key={d.key} value={d.key}>{d.label}</option>
-                          ))}
-                        </select>
+                          <Minus size={13} /> Remove
+                        </button>
                       </div>
 
-                      {/* Category / Account */}
-                      <div className={s.formField}>
-                        <label className={s.formLabel}>Akun Beban USALI</label>
-                        <select
-                          className={`${s.formControl} ${s.selectControl}`}
-                          value={row.category || ""}
-                          onChange={e => patchRow(idx, { category: e.target.value })}
-                          required
-                        >
-                          <option value="">Pilih Akun Beban…</option>
-                          {deptCategories.map(cat => (
-                            <option key={cat} value={cat}>
-                              {cat}
-                            </option>
-                          ))}
-                        </select>
+                      {/* ── GRID ROW 1: Date · Dept · Expense Account ── */}
+                      <div className={s.entryGrid3}>
+                        <div className={s.formField}>
+                          <label className={s.formLabel}>Posting Date <span className={s.formRequired}>*</span></label>
+                          <input
+                            type="date"
+                            className={`${s.formControl} ${s.dateControl}`}
+                            value={row.date || ""}
+                            onChange={e => patchRow(idx, { date: e.target.value })}
+                          />
+                        </div>
+
+                        <div className={s.formField}>
+                          <label className={s.formLabel}>Cost Center / Department <span className={s.formRequired}>*</span></label>
+                          <select
+                            className={`${s.formControl} ${s.selectControl}`}
+                            value={row.department || ""}
+                            onChange={e => {
+                              const dept = e.target.value;
+                              patchRow(idx, { department: dept, category: DEPARTMENT_ACCOUNTS[dept]?.[0] || "" });
+                            }}
+                          >
+                            {activeDepartments.map(d => (
+                              <option key={d.key} value={d.key}>{d.label}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className={s.formField}>
+                          <label className={s.formLabel}>Operating Cost Account <span className={s.formRequired}>*</span></label>
+                          <select
+                            className={`${s.formControl} ${s.selectControl}`}
+                            value={row.category || ""}
+                            onChange={e => patchRow(idx, { category: e.target.value })}
+                          >
+                            <option value="">— Select Expense Account —</option>
+                            {deptCategories.map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
 
-                      {/* Amount */}
-                      <div className={s.formField}>
-                        <label className={s.formLabel}>Nominal (IDR)</label>
-                        <input
-                          type="number"
-                          min="0"
-                          onWheel={(e) => e.currentTarget.blur()}
-                          onKeyDown={(e) => {
-                            if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
-                              e.preventDefault();
-                            }
-                          }}
-                          placeholder="0"
-                          className={s.formControl}
-                          value={row.amount || ""}
-                          onChange={e => patchRow(idx, { amount: Number(e.target.value) })}
-                        />
+                      {/* ── GRID ROW 2: Voucher No · Payee / Vendor · Payment Method ── */}
+                      <div className={s.entryGrid3}>
+                        <div className={s.formField}>
+                          <label className={s.formLabel}>Voucher / Receipt No.</label>
+                          <input
+                            type="text"
+                            placeholder="Voucher / BKK Number"
+                            className={s.formControl}
+                            value={row.voucherNo || ""}
+                            onChange={e => patchRow(idx, { voucherNo: e.target.value })}
+                          />
+                        </div>
+
+                        <div className={s.formField}>
+                          <label className={s.formLabel}>Payee / Supplier / Vendor</label>
+                          <input
+                            type="text"
+                            placeholder="Vendor or Payee Name"
+                            className={s.formControl}
+                            value={row.vendor || ""}
+                            onChange={e => patchRow(idx, { vendor: e.target.value })}
+                          />
+                        </div>
+
+                        <div className={s.formField}>
+                          <label className={s.formLabel}>Payment Method</label>
+                          <select
+                            className={`${s.formControl} ${s.selectControl}`}
+                            value={row.paymentMethod || "CASH"}
+                            onChange={e => patchRow(idx, { paymentMethod: e.target.value as PnlExpenseItem["paymentMethod"] })}
+                          >
+                            {PAYMENT_METHODS.map(pm => (
+                              <option key={pm.value} value={pm.value}>{pm.label}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
 
-                      {/* Description */}
+                      {/* ── GRID ROW 3: Net DPP · VAT · Total ── */}
+                      <div className={s.entryGrid3}>
+                        <div className={s.formField}>
+                          <label className={s.formLabel}>Net Amount (DPP) <span className={s.formRequired}>*</span></label>
+                          <input
+                            type="number" min="0"
+                            onWheel={e => e.currentTarget.blur()}
+                            onKeyDown={e => { if (["-","e","E","+"].includes(e.key)) e.preventDefault(); }}
+                            placeholder="0"
+                            className={s.formControl}
+                            value={row.amount || ""}
+                            onChange={e => patchRow(idx, { amount: Number(e.target.value) })}
+                          />
+                          <span className={s.formHint}>Net expense before VAT/tax</span>
+                        </div>
+
+                        <div className={s.formField}>
+                          <label className={s.formLabel}>VAT / Tax Amount</label>
+                          <input
+                            type="number" min="0"
+                            onWheel={e => e.currentTarget.blur()}
+                            onKeyDown={e => { if (["-","e","E","+"].includes(e.key)) e.preventDefault(); }}
+                            placeholder="0"
+                            className={s.formControl}
+                            value={row.taxAmount || ""}
+                            onChange={e => patchRow(idx, { taxAmount: Number(e.target.value) })}
+                          />
+                          <span className={s.formHint}>Leave 0 if non-taxable</span>
+                        </div>
+
+                        <div className={s.formField}>
+                          <label className={s.formLabel}>Total Disbursement</label>
+                          <div className={s.totalAmountDisplay}>
+                            {formatIDR((row.amount || 0) + (row.taxAmount || 0))}
+                          </div>
+                          <span className={s.formHint}>Net DPP + Tax</span>
+                        </div>
+                      </div>
+
+                      {/* ── ROW 4: Description / Remarks ── */}
                       <div className={s.formField}>
-                        <label className={s.formLabel}>Keterangan / Vendor</label>
+                        <label className={s.formLabel}>Description / Transaction Remarks</label>
                         <input
                           type="text"
-                          placeholder="No. nota / vendor / keterangan..."
+                          placeholder="Operational expense details, voucher remarks or memo..."
                           className={s.formControl}
                           value={row.description || ""}
                           onChange={e => patchRow(idx, { description: e.target.value })}
                         />
                       </div>
 
-                      <button
-                        className={s.deleteRowBtn}
-                        onClick={() => removeRow(idx)}
-                        disabled={newRows.length <= 1}
-                        title="Hapus baris"
-                      >
-                        <Minus size={15} />
-                      </button>
                     </div>
                   );
                 })}
@@ -725,15 +906,19 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
               <div className={s.drawerActions}>
                 <button className={s.addMoreRowsBtn} onClick={addRow}>
                   <Plus size={14} />
-                  Tambah Baris Baru
+                  Add Line
                 </button>
 
-                <button className={s.saveAllEntriesBtn} onClick={handleSaveAll} disabled={loading}>
-                  {loading
-                    ? <span className={s.loadingSpinner} />
-                    : <><Save size={14} /> Simpan Semua Transaksi</>
-                  }
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span className={s.drawerTotalBadge}>
+                    Total: <b>{formatIDR(newRows.reduce((sum, r) => sum + (r.amount || 0) + (r.taxAmount || 0), 0))}</b>
+                  </span>
+                  <button className={s.saveAllEntriesBtn} onClick={handleSaveAll} disabled={loading}>
+                    {loading
+                      ? <span className={s.loadingSpinner} />
+                      : <><Save size={14} /> Post to Ledger</>}
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -767,7 +952,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
             <Search size={14} className={s.searchIconLeft} />
             <input
               type="text"
-              placeholder="Cari transaksi, vendor, atau akun..."
+              placeholder="Search voucher no, payee/vendor, account, description..."
               className={s.searchField}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -781,7 +966,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
 
           <div className={s.subtotalBadgeBanner}>
             <span>
-              Menampilkan: <b>{DEPARTMENT_FILTER_TABS.find(t => t.id === activeFilterTab)?.label}</b> ({displayedExpenses.length} baris)
+              Cost Center: <b>{DEPARTMENT_FILTER_TABS.find(t => t.id === activeFilterTab)?.label}</b> ({displayedExpenses.length} {displayedExpenses.length === 1 ? "entry" : "entries"})
             </span>
             <span>
               Subtotal: <span className={s.subtotalDigits}>{formatIDR(activeSubtotal)}</span>
@@ -789,31 +974,34 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
           </div>
         </div>
 
-        {/* ── Audit Ledger Table ── */}
+        {/* ── Audit Ledger Jurnal Pengeluaran ── */}
         <div className={s.tableContainer}>
           <div className={s.tableScrollArea}>
             <table className={s.ledgerTable}>
               <thead className={s.ledgerTableHead}>
                 <tr>
-                  <th style={{ width: "110px" }}>Tanggal</th>
-                  <th style={{ width: "170px" }}>Departemen</th>
-                  <th style={{ width: "200px" }}>Akun USALI</th>
-                  <th>Keterangan / No. Nota</th>
-                  <th className={s.textRightAlign} style={{ width: "160px" }}>Nominal (IDR)</th>
-                  <th style={{ width: "80px", textAlign: "right" }}>Aksi</th>
+                  <th style={{ width: "36px", textAlign: "center" }}>#</th>
+                  <th style={{ width: "105px" }}>Posting Date</th>
+                  <th style={{ width: "165px" }}>Cost Center</th>
+                  <th style={{ width: "190px" }}>Expense Account</th>
+                  <th style={{ width: "145px" }}>Payee / Vendor</th>
+                  <th>Description &amp; Voucher No</th>
+                  <th style={{ width: "85px", textAlign: "center" }}>Payment</th>
+                  <th className={s.textRightAlign} style={{ width: "140px" }}>Amount (IDR)</th>
+                  <th style={{ width: "75px", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {displayedExpenses.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className={s.emptyStateWrapper}>
+                    <td colSpan={9} className={s.emptyStateWrapper}>
                       <div className={s.emptyStateContent}>
                         <AlertCircle size={24} style={{ color: "#94a3b8" }} />
                         <span style={{ fontWeight: 600, color: "var(--oe-text-muted)" }}>
-                          Tidak ada mutasi pengeluaran ditemukan
+                          No expense ledger records found
                         </span>
                         <span style={{ fontSize: "11px", color: "var(--oe-text-subtle)" }}>
-                          {searchQuery ? `Tidak ada hasil untuk kata kunci "${searchQuery}"` : `Belum ada beban yang dicatat pada kategori ${DEPARTMENT_FILTER_TABS.find(t => t.id === activeFilterTab)?.label}`}
+                          {searchQuery ? `No results found for "${searchQuery}"` : `No expense transactions posted for: ${DEPARTMENT_FILTER_TABS.find(t => t.id === activeFilterTab)?.label}`}
                         </span>
                       </div>
                     </td>
@@ -824,17 +1012,18 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                     const isEditing   = editingId === item.id;
                     const source      = getSourceLabel(item.id);
                     const isLocked    = source !== null;
-
-                    const tdFirst = isEditing ? s.cellItemEditing : s.cellItem;
-                    const tdMid   = isEditing ? s.cellItemEditing : s.cellItem;
-                    const tdLast  = isEditing ? s.cellItemEditing : s.cellItem;
-
+                    const td = isEditing ? s.cellItemEditing : s.cellItem;
                     const editDeptCategories = DEPARTMENT_ACCOUNTS[editData?.department || ""] || DEFAULT_CATEGORIES;
+                    const pmLabel = PAYMENT_METHODS.find(p => p.value === item.paymentMethod)?.label || (item.paymentMethod || "—");
 
                     return (
                       <tr key={item.id || i} className={s.tableRow}>
-                        {/* ── Date ── */}
-                        <td className={tdFirst}>
+
+                        {/* # */}
+                        <td className={td} style={{ fontSize: 11, color: "var(--oe-text-subtle)", textAlign: "center", fontFamily: "var(--oe-font-mono)" }}>{i + 1}</td>
+
+                        {/* Date */}
+                        <td className={td}>
                           {isEditing ? (
                             <input
                               type="date"
@@ -846,15 +1035,14 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                             <span className={s.dateDisplay}>
                               <CalendarIcon size={12} style={{ color: "var(--oe-text-subtle)" }} />
                               {item.date
-                                ? new Date(item.date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "2-digit" })
-                                : "—"
-                              }
+                                ? new Date(item.date).toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" })
+                                : "—"}
                             </span>
                           )}
                         </td>
 
-                        {/* ── Department ── */}
-                        <td className={tdMid}>
+                        {/* Department */}
+                        <td className={td}>
                           {isEditing ? (
                             <select
                               className={`${s.formControl} ${s.selectControl}`}
@@ -864,11 +1052,9 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                               {activeDepartments.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
                             </select>
                           ) : (
-                            <div style={{ display: "flex", alignItems: "center" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
                               {source && (
-                                <span className={`${s.originBadge} ${s[`origin${source}`]}`}>
-                                  {source}
-                                </span>
+                                <span className={`${s.originBadge} ${s[`origin${source}`]}`}>{source}</span>
                               )}
                               <span className={`${s.deptPill} ${getDeptPillClass(item.department || item.category)}`}>
                                 {item.department || "Other"}
@@ -877,19 +1063,17 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                           )}
                         </td>
 
-                        {/* ── Category ── */}
-                        <td className={tdMid}>
+                        {/* Expense Account */}
+                        <td className={td}>
                           {isEditing ? (
                             <select
                               className={`${s.formControl} ${s.selectControl}`}
                               value={editData?.category || ""}
                               onChange={e => setEditData(d => d ? { ...d, category: e.target.value } : null)}
                             >
-                              <option value="">Pilih Akun…</option>
+                              <option value="">— Select Account —</option>
                               {editDeptCategories.map(cat => (
-                                <option key={cat} value={cat}>
-                                  {cat}
-                                </option>
+                                <option key={cat} value={cat}>{cat}</option>
                               ))}
                             </select>
                           ) : (
@@ -900,56 +1084,126 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                           )}
                         </td>
 
-                        {/* ── Description ── */}
-                        <td className={tdMid}>
+                        {/* Vendor */}
+                        <td className={td}>
                           {isEditing ? (
                             <input
                               className={s.formControl}
-                              value={editData?.description || ""}
-                              onChange={e => setEditData(d => d ? { ...d, description: e.target.value } : null)}
+                              placeholder="Vendor / Payee Name..."
+                              value={editData?.vendor || ""}
+                              onChange={e => setEditData(d => d ? { ...d, vendor: e.target.value } : null)}
                             />
                           ) : (
-                            <span className={s.notesText} title={item.description || ""}>
-                              {item.description || "—"}
+                            <span className={s.notesText} title={item.vendor || ""}>
+                              {item.vendor || <span style={{ color: "var(--oe-text-subtle)" }}>—</span>}
                             </span>
                           )}
                         </td>
 
-                        {/* ── Amount ── */}
-                        <td className={tdMid} style={{ textAlign: "right" }}>
+                        {/* Description & Voucher */}
+                        <td className={td}>
                           {isEditing ? (
-                            <input
-                              type="number"
-                              min="0"
-                              onWheel={(e) => e.currentTarget.blur()}
-                              onKeyDown={(e) => {
-                                if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
-                                  e.preventDefault();
-                                }
-                              }}
-                              className={s.formControl}
-                              style={{ textAlign: "right" }}
-                              value={editData?.amount || ""}
-                              onChange={e => setEditData(d => d ? { ...d, amount: Number(e.target.value) } : null)}
-                            />
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                              <input
+                                className={s.formControl}
+                                placeholder="Voucher / BKK Number"
+                                value={editData?.voucherNo || ""}
+                                onChange={e => setEditData(d => d ? { ...d, voucherNo: e.target.value } : null)}
+                                style={{ fontSize: 11, fontFamily: "var(--oe-font-mono)" }}
+                              />
+                              <input
+                                className={s.formControl}
+                                placeholder="Expense description or memo"
+                                value={editData?.description || ""}
+                                onChange={e => setEditData(d => d ? { ...d, description: e.target.value } : null)}
+                              />
+                            </div>
                           ) : (
-                            <span className={s.amountDisplay}>
-                              {formatIDR(item.amount || 0)}
+                            <div>
+                              <span className={s.notesText} title={item.description || ""}>
+                                {item.description || "—"}
+                              </span>
+                              {item.voucherNo && (
+                                <span className={s.voucherBadge}>{item.voucherNo}</span>
+                              )}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Payment Method */}
+                        <td className={td} style={{ textAlign: "center" }}>
+                          {isEditing ? (
+                            <select
+                              className={`${s.formControl} ${s.selectControl}`}
+                              value={editData?.paymentMethod || "CASH"}
+                              onChange={e => setEditData(d => d ? { ...d, paymentMethod: e.target.value as PnlExpenseItem["paymentMethod"] } : null)}
+                            >
+                              {PAYMENT_METHODS.map(pm => (
+                                <option key={pm.value} value={pm.value}>{pm.label}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className={`${s.paymentBadge} ${s[`pay_${item.paymentMethod || "CASH"}`]}`}>
+                              {item.paymentMethod === "CASH" ? "Cash" :
+                               item.paymentMethod === "TRANSFER" ? "TRF" :
+                               item.paymentMethod === "CREDIT_CARD" ? "CC" :
+                               item.paymentMethod === "DEBIT" ? "Debit" :
+                               item.paymentMethod === "GIRO" ? "Giro" :
+                               item.paymentMethod === "CHEQUE" ? "Cheque" : "—"}
                             </span>
+                          )}
+                        </td>
+
+                        {/* Amount */}
+                        <td className={td} style={{ textAlign: "right" }}>
+                          {isEditing ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                              <input
+                                type="number" min="0"
+                                onWheel={e => e.currentTarget.blur()}
+                                onKeyDown={e => { if (["-","e","E","+"].includes(e.key)) e.preventDefault(); }}
+                                className={s.formControl}
+                                style={{ textAlign: "right", fontFamily: "var(--oe-font-mono)" }}
+                                placeholder="Net DPP"
+                                value={editData?.amount || ""}
+                                onChange={e => setEditData(d => d ? { ...d, amount: Number(e.target.value) } : null)}
+                              />
+                              <input
+                                type="number" min="0"
+                                onWheel={e => e.currentTarget.blur()}
+                                onKeyDown={e => { if (["-","e","E","+"].includes(e.key)) e.preventDefault(); }}
+                                className={s.formControl}
+                                style={{ textAlign: "right", fontSize: 10, fontFamily: "var(--oe-font-mono)" }}
+                                placeholder="VAT/Tax"
+                                value={editData?.taxAmount || ""}
+                                onChange={e => setEditData(d => d ? { ...d, taxAmount: Number(e.target.value) } : null)}
+                              />
+                            </div>
+                          ) : (
+                            <div style={{ textAlign: "right" }}>
+                              <span className={s.amountDisplay}>
+                                {formatIDR(item.amount || 0)}
+                              </span>
+                              {item.taxAmount && item.taxAmount > 0 && (
+                                <div style={{ fontSize: 10, color: "var(--oe-text-subtle)", marginTop: 1 }}>
+                                  Tax: {formatIDR(item.taxAmount)}
+                                </div>
+                              )}
+                            </div>
                           )}
                         </td>
 
                         {/* ── Actions ── */}
-                        <td className={tdLast}>
+                        <td className={td}>
                           <div className={s.actionRow}>
                             {isLocked ? (
-                              <span className={s.lockedIndicator} title="Terkunci dari modul purchasing/store">Terkunci</span>
+                              <span className={s.lockedIndicator} title="Locked from purchasing/store module">Locked</span>
                             ) : isEditing ? (
                               <>
-                                <button className={`${s.tableActionBtn} ${s.btnSave}`} onClick={handleSaveEdit} title="Simpan">
+                                <button className={`${s.tableActionBtn} ${s.btnSave}`} onClick={handleSaveEdit} title="Save">
                                   <Check size={13} />
                                 </button>
-                                <button className={`${s.tableActionBtn} ${s.btnCancel}`} onClick={handleCancelEdit} title="Batal">
+                                <button className={`${s.tableActionBtn} ${s.btnCancel}`} onClick={handleCancelEdit} title="Cancel">
                                   <X size={13} />
                                 </button>
                               </>
@@ -965,7 +1219,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                                 <button
                                   className={`${s.tableActionBtn} ${s.btnDelete}`}
                                   onClick={() => handleDelete(item.id || "")}
-                                  title="Hapus"
+                                  title="Delete"
                                 >
                                   <Trash2 size={12} />
                                 </button>
@@ -983,6 +1237,158 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
         </div>
 
       </div>
+
+      {/* ════════════════════════════════════════════
+          KPI Detail Modal — drill-down per card
+          ════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {detailModal && (
+          <motion.div
+            key="kpi-detail-backdrop"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => setDetailModal(null)}
+            style={{
+              position: "fixed", inset: 0,
+              background: "rgba(15,23,42,0.55)",
+              backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              zIndex: 200, padding: 16,
+            }}
+          >
+            <motion.div
+              key="kpi-detail-panel"
+              initial={{ opacity: 0, scale: 0.97, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 20 }}
+              transition={{ type: "spring", stiffness: 420, damping: 34 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: "#fff", borderRadius: 6,
+                width: "100%", maxWidth: 920, maxHeight: "90vh",
+                display: "flex", flexDirection: "column", overflow: "hidden",
+                boxShadow: "0 20px 50px rgba(15,23,42,0.25)",
+                border: "1px solid #cbd5e1",
+              }}
+            >
+              {/* ── Modal Header ── */}
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexShrink: 0, background: "#f8fafc" }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#0f172a", background: "#e2e8f0", border: "1px solid #cbd5e1", padding: "2px 8px", borderRadius: 4 }}>TRANSACTION AUDIT LEDGER</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: "#475569", background: "#ffffff", border: "1px solid #cbd5e1", padding: "2px 8px", borderRadius: 4, fontFamily: "var(--oe-font-mono)" }}>PERIOD {month}</span>
+                  </div>
+                  <h3 style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", margin: 0, lineHeight: 1.3 }}>{detailModal.title}</h3>
+                  {detailModal.subtitle && <p style={{ fontSize: 12, color: "#64748b", margin: "3px 0 0" }}>{detailModal.subtitle}</p>}
+                </div>
+                <button
+                  onClick={() => setDetailModal(null)}
+                  style={{ width: 28, height: 28, background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#475569", flexShrink: 0 }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+
+              {/* ── Stats Strip ── */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, padding: "12px 20px", background: "#f1f5f9", borderBottom: "1px solid #e2e8f0", flexShrink: 0 }}>
+                {[
+                  { label: "Total Vouchers",  value: String(detailModal.items.length),  color: "#0f172a" },
+                  { label: "Total Amount",     value: formatIDR(detailModal.items.reduce((s, e) => s + (e.amount || 0), 0)), color: "#1e4d3a" },
+                  { label: "Average / Voucher", value: formatIDR(detailModal.items.length > 0 ? Math.round(detailModal.items.reduce((s, e) => s + (e.amount || 0), 0) / detailModal.items.length) : 0), color: "#1e4d3a" },
+                ].map(card => (
+                  <div key={card.label} style={{ background: "#fff", borderRadius: 4, padding: "10px 14px", border: "1px solid #cbd5e1" }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>{card.label}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: card.color, fontFamily: "var(--oe-font-mono)" }}>{card.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Expense Table ── */}
+              <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+                  <colgroup>
+                    <col style={{ width: 36 }} />
+                    <col style={{ width: 105 }} />
+                    <col style={{ width: 160 }} />
+                    <col style={{ width: 180 }} />
+                    <col />
+                    <col style={{ width: 140 }} />
+                  </colgroup>
+                  <thead style={{ position: "sticky", top: 0, background: "#0f172a", zIndex: 1 }}>
+                    <tr style={{ borderBottom: "1px solid #1e293b" }}>
+                      {(["#", "Posting Date", "Cost Center", "Expense Account", "Description & Voucher No", "Amount (IDR)"] as const).map((col, i) => (
+                        <th key={col} style={{ padding: "9px 12px", fontSize: 10, fontWeight: 800, color: "#f8fafc", textAlign: i === 5 ? "right" : "left", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detailModal.items.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} style={{ textAlign: "center", padding: "56px 16px", color: "#94a3b8", fontSize: 13 }}>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                            <Receipt size={26} style={{ opacity: 0.3 }} />
+                            <span>No expense vouchers found</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      detailModal.items.map((item, idx) => {
+                        const src = getSourceLabel(item.id);
+                        return (
+                          <tr
+                            key={item.id || idx}
+                            style={{ borderBottom: "1px solid #f8fafc" }}
+                            onMouseEnter={e => (e.currentTarget.style.background = "#f8fafc")}
+                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                          >
+                            <td style={{ padding: "11px 14px", fontSize: 11, color: "#94a3b8", fontFamily: "monospace" }}>{idx + 1}</td>
+                            <td style={{ padding: "11px 14px", fontSize: 12, color: "#475569" }}>
+                              {item.date
+                                ? new Date(item.date).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })
+                                : "—"}
+                            </td>
+                            <td style={{ padding: "11px 14px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                {src && (
+                                  <span className={`${s.originBadge} ${s[`origin${src}`]}`} style={{ fontSize: 9 }}>{src}</span>
+                                )}
+                                <span className={`${s.deptPill} ${getDeptPillClass(item.department || item.category)}`} style={{ fontSize: 10 }}>
+                                  {item.department || "—"}
+                                </span>
+                              </div>
+                            </td>
+                            <td style={{ padding: "11px 14px", fontSize: 12, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {item.category || "—"}
+                            </td>
+                            <td style={{ padding: "11px 14px", fontSize: 12, color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={item.description || ""}>
+                              {item.description || "—"}
+                            </td>
+                            <td style={{ padding: "11px 14px", fontSize: 13, fontWeight: 600, color: "#dc2626", textAlign: "right", fontFamily: "monospace" }}>
+                              {formatIDR(item.amount || 0)}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* ── Modal Footer ── */}
+              <div style={{ padding: "12px 26px", borderTop: "1px solid #f1f5f9", background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+                <span style={{ fontSize: 12, color: "#94a3b8" }}>{detailModal.items.length} {detailModal.items.length === 1 ? "voucher" : "vouchers"}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", fontFamily: "monospace" }}>
+                  Total: {formatIDR(detailModal.items.reduce((s, e) => s + (e.amount || 0), 0))}
+                </span>
+              </div>
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };

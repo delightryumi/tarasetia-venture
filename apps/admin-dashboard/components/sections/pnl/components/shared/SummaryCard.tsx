@@ -41,19 +41,26 @@ export function SummaryCard({
         >
             <div className="flex flex-col h-full justify-between gap-3 w-full">
                 <div className={classes.header}>
-                    <div
-                        style={{ backgroundColor: accent ? `${accent}10` : undefined, color: accent || undefined }}
-                        className={classes.iconBox}
-                    >
-                        {icon}
+                    <div className={classes.headerLeft}>
+                        <div
+                            style={{ backgroundColor: accent ? `${accent}15` : undefined, color: accent || undefined }}
+                            className={classes.iconBox}
+                        >
+                            {icon}
+                        </div>
+                        <span className={`${classes.label} ${labelColorClass}`} title={label}>
+                            {label}
+                        </span>
                     </div>
-                    <span className={`${classes.label} ${labelColorClass}`}>
-                        {label}
-                    </span>
+                    {onClick && (
+                        <span className={classes.drilldownIcon} title="View Ledger Detail">
+                            ↗
+                        </span>
+                    )}
                 </div>
                 <div className={classes.valueContainer}>
                     <span className={classes.value}>
-                        {loading ? "—" : (formatter ? formatter(value) : `Rp ${value.toLocaleString("id-ID")}`)}
+                        {loading ? "—" : (formatter ? formatter(value) : `Rp ${Math.round(value || 0).toLocaleString("id-ID")}`)}
                     </span>
                 </div>
             </div>

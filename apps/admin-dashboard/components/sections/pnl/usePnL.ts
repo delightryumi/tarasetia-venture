@@ -9,7 +9,8 @@ import { usePayrollData } from "./hooks/usePayrollData";
 
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, getDocs } from "firebase/firestore";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export { YEARS, MONTHS };
 
@@ -21,6 +22,8 @@ export const usePnL = () => {
     const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
     const [pnlResult, setPnlResult] = useState<GlobalPnLResult | null>(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [ratePlans, setRatePlans] = useState<any[]>([]);
+    const [hotelBreakfastRate, setHotelBreakfastRate] = useState<number | undefined>(undefined);
 
     useEffect(() => {
         let codeToUse = activeHotelCode;
@@ -50,9 +53,22 @@ export const usePnL = () => {
 
                 const isStartupMode = isStartupPlan || (activeModules.length > 0 && !hasFO && !hasHK);
                 setIsStartup(isStartupMode);
+
+                const bRate = Number(data.settings?.breakfastRate || data.settings?.defaultBreakfastRate || data.breakfastRate);
+                if (bRate > 0) {
+                    setHotelBreakfastRate(bRate);
+                }
             }
         }, (err) => {
             console.error("Error listening to hotel doc in usePnL:", err);
+        });
+
+        getDocs(getHotelCollection(db, "ratePlans", codeToUse)).then((snap) => {
+            const list: any[] = [];
+            snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+            setRatePlans(list);
+        }).catch((err) => {
+            console.warn("Could not fetch ratePlans in usePnL:", err);
         });
 
         return () => unsubscribe();
@@ -171,7 +187,9 @@ export const usePnL = () => {
                 posComplimentValue,
                 posRevOther,
                 posExpOther,
-                payrollExpense
+                payrollExpense,
+                ratePlans,
+                hotelBreakfastRate
             );
 
             result.pnlResult.revAlacarte = result.pnlResult.revTotalFnb;
@@ -205,7 +223,8 @@ export const usePnL = () => {
             posGrossRevenue, posNettRevenue, posServiceCharge, posTaxAmount, posLostBreakageAmount, posTotalServiceTax, posComplimentValue,
             posServiceRate, posTaxRateIndividual, posLostBreakageRate, posTaxRateCombined,
             serviceChargePercentage, lostBreakagePercentage,
-            forecastOcc, forecastRevPar, payrollExpense
+            forecastOcc, forecastRevPar, payrollExpense,
+            ratePlans, hotelBreakfastRate
         ]);
 
     return {

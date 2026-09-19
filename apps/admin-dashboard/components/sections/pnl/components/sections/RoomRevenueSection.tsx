@@ -19,17 +19,26 @@ export function RoomRevenueSection({ pnlResult, loading, rise, onCardClick }: Ro
     return (
         <div className={styles.sectionWrapper}>
             <div className={styles.sectionHeader}>
+                <div className={styles.sectionBadgeRow}>
+                    <span className={styles.scheduleBadge}>SCHEDULE 01 · ROOMS</span>
+                    <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                        Operated Department
+                    </span>
+                </div>
                 <h2 className={styles.sectionTitle}>
-                    <Hotel size={28} /> Room <span className={styles.sectionTitleHighlight}>Revenue</span>
+                    <Hotel size={20} className="text-emerald-600 dark:text-emerald-400" />
+                    ROOMS DIVISION <span className={styles.sectionTitleHighlight}>· ROOM REVENUE &amp; OCCUPANCY METRICS</span>
                 </h2>
-                <p className={styles.sectionSubtitle}>Accommodation & Misc Income</p>
+                <p className={styles.sectionSubtitle}>
+                    Accommodation Revenue, Operating Ratios (OCC, ARR, RevPAR) &amp; Direct Housekeeping Operating Expenses
+                </p>
             </div>
             <div className={styles.innerContainer}>
-                <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8 xl:gap-10">
+                <motion.div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4">
                     <SummaryCard
                         label="Revenue Hotel Collect"
-                        icon={<Store size={18} />}
-                        accent="#3b82f6"
+                        icon={<Store size={16} />}
+                        accent="#059669"
                         value={pnlResult?.card3_RevHotelCollect || 0}
                         loading={loading}
                         variants={rise}
@@ -37,7 +46,7 @@ export function RoomRevenueSection({ pnlResult, loading, rise, onCardClick }: Ro
                     />
                     <SummaryCard
                         label="Revenue Online/Transfer Collect"
-                        icon={<Sparkles size={18} />}
+                        icon={<Sparkles size={16} />}
                         accent="#8b5cf6"
                         value={pnlResult?.card3_RevNexuraCollect || 0}
                         loading={loading}
@@ -46,8 +55,8 @@ export function RoomRevenueSection({ pnlResult, loading, rise, onCardClick }: Ro
                     />
                     <SummaryCard
                         label="Revenue Room"
-                        icon={<Hotel size={18} />}
-                        accent="#3b82f6"
+                        icon={<Hotel size={16} />}
+                        accent="#059669"
                         value={pnlResult?.revRoom || 0}
                         loading={loading}
                         variants={rise}

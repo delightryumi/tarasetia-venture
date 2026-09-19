@@ -126,13 +126,13 @@ export function AuditLedger({
                             type="text" 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search"
+                            placeholder="Search Confirmation No., Guest, Channel..."
                             style={{
                                 padding: '6px 12px 6px 32px',
                                 fontSize: '12px',
                                 border: '1px solid #cbd5e1',
                                 borderRadius: '6px',
-                                width: '240px',
+                                width: '260px',
                                 outline: 'none',
                                 color: '#0f172a',
                                 backgroundColor: '#ffffff'
@@ -156,7 +156,7 @@ export function AuditLedger({
                                 color: '#334155',
                                 cursor: 'pointer'
                             }}
-                            title="Klik untuk menghapus filter"
+                            title="Click to clear filter"
                         >
                             <span>Filter: {activeFilter}</span>
                             <span style={{ color: '#ef4444', fontWeight: 800, marginLeft: '4px' }}>✕</span>
@@ -168,7 +168,7 @@ export function AuditLedger({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button 
                         type="button"
-                        onClick={() => toast.info("Filter lanjutan aktif berdasarkan rentang tanggal & status.")}
+                        onClick={() => toast.info("Advanced filter active by date range & reservation status.")}
                         style={{
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -184,7 +184,7 @@ export function AuditLedger({
                         }}
                     >
                         <SlidersHorizontal size={13} />
-                        <span>Advanced Search</span>
+                        <span>Advanced Filter</span>
                     </button>
 
                     <button 
@@ -192,7 +192,7 @@ export function AuditLedger({
                         onClick={() => {
                             if (onRefresh) {
                                 onRefresh();
-                                toast.success("Data transaksi diperbarui");
+                                toast.success("Ledger transactions refreshed");
                             } else {
                                 window.location.reload();
                             }
@@ -233,7 +233,7 @@ export function AuditLedger({
                         }}
                     >
                         <Download size={13} />
-                        <span>Export</span>
+                        <span>Export Excel</span>
                     </button>
                 </div>
             </div>
@@ -244,14 +244,14 @@ export function AuditLedger({
                     <thead style={{ backgroundColor: '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
                         <tr>
                             <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#595959', width: '130px' }}>
-                                Status
+                                Reservation Status
                             </th>
                             <th 
                                 onClick={() => setSortAsc(prev => !prev)}
                                 style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#595959', cursor: 'pointer', width: '160px' }}
                             >
                                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                    <span>Unique ID</span>
+                                    <span>Confirmation No.</span>
                                     <ArrowUpDown size={12} style={{ opacity: 0.6 }} />
                                 </div>
                             </th>
@@ -259,24 +259,24 @@ export function AuditLedger({
                                 Property
                             </th>
                             <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#595959' }}>
-                                Customer
+                                Guest Name / Account
                             </th>
                             <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#595959', width: '220px' }}>
-                                Dates
+                                Stay Period
                             </th>
-                            <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#595959', width: '110px' }}>
-                                Rooms Count
+                            <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#595959', width: '100px' }}>
+                                Rooms
                             </th>
                             <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#595959', width: '80px' }}>
                                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', justifyContent: 'center' }}>
-                                    <span>Acked</span>
+                                    <span>Channel ACK</span>
                                     <HelpCircle size={11} style={{ opacity: 0.6 }} />
                                 </div>
                             </th>
-                            <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: 600, color: '#595959', width: '130px' }}>
-                                Total
+                            <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: 600, color: '#595959', width: '140px' }}>
+                                Folio Balance
                             </th>
-                            <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#595959', width: '80px' }}>
+                            <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#595959', width: '90px' }}>
                                 Actions
                             </th>
                         </tr>
@@ -285,7 +285,7 @@ export function AuditLedger({
                         {filteredBookings.length === 0 ? (
                             <tr>
                                 <td colSpan={9} style={{ textAlign: 'center', padding: '48px 16px', color: '#8c8c8c' }}>
-                                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 500 }}>No bookings found.</p>
+                                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 500 }}>No transaction records found for this period.</p>
                                 </td>
                             </tr>
                         ) : (
@@ -332,9 +332,9 @@ export function AuditLedger({
                                                         <span>New</span>
                                                     </span>
                                                 ) : (
-                                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#52c41a', fontWeight: 600 }}>
-                                                        <CheckCircle2 size={13} color="#52c41a" />
-                                                        <span>New</span>
+                                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#16a34a', fontWeight: 600 }}>
+                                                        <CheckCircle2 size={13} color="#16a34a" />
+                                                        <span>Confirmed</span>
                                                     </span>
                                                 )}
                                             </div>
@@ -354,7 +354,7 @@ export function AuditLedger({
 
                                         {/* Customer */}
                                         <td style={{ padding: '12px 16px', fontSize: '12px', color: '#262626', fontWeight: 500 }}>
-                                            {booking.guestName || booking.incomeCategory || (isOther ? "Other Income" : "General Sale")}
+                                            {booking.guestName || booking.incomeCategory || (isOther ? "Other Non-Room Income" : "Direct Guest Folio")}
                                         </td>
 
                                         {/* Dates */}
@@ -375,8 +375,8 @@ export function AuditLedger({
                                         </td>
 
                                         {/* Total */}
-                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: 500, color: '#262626' }}>
-                                            IDR {totalAmt.toLocaleString('en-US')}
+                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: 600, color: '#262626' }}>
+                                            IDR {totalAmt.toLocaleString('id-ID')}
                                         </td>
 
                                         {/* Actions: View text link ala Channex */}
@@ -387,9 +387,9 @@ export function AuditLedger({
                                                 style={{
                                                     background: 'none',
                                                     border: 'none',
-                                                    color: '#1890ff',
+                                                    color: '#0284c7',
                                                     fontSize: '12px',
-                                                    fontWeight: 500,
+                                                    fontWeight: 600,
                                                     cursor: 'pointer',
                                                     padding: 0,
                                                     textDecoration: 'none'
@@ -397,7 +397,7 @@ export function AuditLedger({
                                                 onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
                                                 onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
                                             >
-                                                View
+                                                View Folio
                                             </button>
                                         </td>
                                     </tr>

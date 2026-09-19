@@ -89,7 +89,7 @@ export function PNLSection() {
     return (
         <motion.div
             variants={stagger} initial="hidden" animate="show"
-            className="w-full max-w-[1440px] mx-auto px-6 md:px-10 py-8 flex flex-col gap-12 font-instrument"
+            className="w-full max-w-[1440px] mx-auto px-4 md:px-8 py-6 flex flex-col gap-8 font-instrument"
         >
             {/* Header */}
             <PNLHeader
@@ -129,7 +129,7 @@ export function PNLSection() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -12 }}
-                        className="flex flex-col gap-10"
+                        className="flex flex-col gap-6"
                     >
                         <PNLCharts
                             viewMode={viewMode}
@@ -192,19 +192,24 @@ export function PNLSection() {
             {viewMode === "monthly" ? (
                 <ExpenseSection isStartup={isStartup} month={month} expenses={expenses} onRefresh={fetchData} />
             ) : loading ? (
-                <div className="bg-white dark:bg-[#1a1a1a] border border-stone-100 dark:border-[#262626] rounded-2xl p-10 text-center shadow-xl shadow-stone-200/20 dark:shadow-none">
-                    <p className="text-stone-500 dark:text-[#a1a1aa] animate-pulse font-medium">Memuat data Profit & Loss...</p>
+                <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-md p-8 text-center shadow-sm">
+                    <p className="text-slate-500 dark:text-slate-400 animate-pulse font-medium text-sm">Loading Profit &amp; Loss Financial Statements...</p>
                 </div>
             ) : (
-                <div className="bg-white dark:bg-[#1a1a1a] border border-stone-100 dark:border-[#262626] rounded-[10px] p-10 text-center shadow-xl shadow-stone-200/20 dark:shadow-none">
-                    <div className="w-16 h-16 bg-stone-50 dark:bg-[#1f1f1f] rounded-[10px] flex items-center justify-center mx-auto mb-6 text-stone-300 dark:text-[#a1a1aa]">
-                        <Receipt size={32} />
+                <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-md p-8 text-center shadow-sm">
+                    <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-md flex items-center justify-center mx-auto mb-4 text-slate-500 dark:text-slate-400">
+                        <Receipt size={24} />
                     </div>
-                    <h3 className="text-xl font-bold text-stone-800 dark:text-stone-100 mb-2 uppercase tracking-tight">Annual Expense Audit</h3>
-                    <p className="text-stone-400 dark:text-[#a1a1aa] text-[13px] max-w-md mx-auto leading-relaxed">
-                        The yearly PnL view provides a consolidated report of all operational costs. To edit or add specific expenses, please switch back to{" "}
-                        <button onClick={() => setViewMode("monthly")} className="mx-1 text-sage font-bold hover:underline">
-                            Monthly View
+                    <div className="inline-block px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider">
+                        ANNUAL FINANCIAL CONSOLIDATION
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2 uppercase tracking-tight">
+                        Annual Operating Cost Consolidation
+                    </h3>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs max-w-lg mx-auto leading-relaxed">
+                        The annual view consolidates all operational expenses across the full fiscal year. To record or audit direct cash disbursements and vouchers, switch back to{" "}
+                        <button onClick={() => setViewMode("monthly")} className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
+                            Monthly Ledger
                         </button>.
                     </p>
                 </div>

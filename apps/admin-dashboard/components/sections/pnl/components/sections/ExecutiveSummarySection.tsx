@@ -58,14 +58,23 @@ export function ExecutiveSummarySection({
     return (
         <div className={styles.sectionWrapper}>
             <div className={styles.sectionHeader}>
+                <div className={styles.sectionBadgeRow}>
+                    <span className={styles.scheduleBadge}>CONSOLIDATED STATEMENT</span>
+                    <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                        Executive Summary &amp; Reconciliation
+                    </span>
+                </div>
                 <h2 className={styles.sectionTitle}>
-                    <TrendingUp size={28} /> Executive <span className={styles.sectionTitleHighlight}>Summary</span>
+                    <TrendingUp size={20} className="text-emerald-600 dark:text-emerald-400" />
+                    CONSOLIDATED P&amp;L <span className={styles.sectionTitleHighlight}>· EXECUTIVE SUMMARY, GOP &amp; OWNER RECONCILIATION</span>
                 </h2>
-                <p className={styles.sectionSubtitle}>Overall PnL Conclusion</p>
+                <p className={styles.sectionSubtitle}>
+                    Total Gross Hotel Revenue, Gross Operating Profit (GOP), Deductions, Management Fees &amp; Owner Reconciliation
+                </p>
             </div>
 
             <div className={styles.innerContainer}>
-                <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8 xl:gap-10">
+                <motion.div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4">
 
                     {/* ── REVENUES ── */}
                     {!isStartup && (

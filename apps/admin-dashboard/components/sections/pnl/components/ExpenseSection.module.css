@@ -66,7 +66,7 @@
 }
 
 :global(.dark) .titleIconBadge {
-  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #ffffff;
 }
 
@@ -84,7 +84,7 @@
 }
 
 .titleAccent {
-  color: #0284c7;
+  color: #059669;
 }
 
 .subtitle {
@@ -120,12 +120,12 @@
 .addBtn:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
 }
 
 :global(.dark) .addBtn {
-  background: #38bdf8;
-  color: #0f172a;
+  background: #059669;
+  color: #ffffff;
 }
 
 :global(.dark) .addBtn:hover {
@@ -188,14 +188,14 @@
   height: 28px;
   border-radius: 8px;
   background: #ffffff;
-  color: #0284c7;
+  color: #059669;
   border: 1px solid #e2e8f0;
 }
 
 :global(.dark) .kpiIconBox {
   background: #0f172a;
   border-color: #334155;
-  color: #38bdf8;
+  color: #34d399;
 }
 
 .kpiValue {

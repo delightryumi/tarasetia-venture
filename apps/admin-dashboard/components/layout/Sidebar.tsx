@@ -185,7 +185,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 pathname === "/invoice" ||
                 pathname === "/rate-inventory" ||
                 pathname.startsWith("/rate-inventory") ||
-                pathname.startsWith("/confirmation-letter")
+                pathname.startsWith("/confirmation-letter") ||
+                pathname.startsWith("/revenue-breakdown")
             ) {
                 localStorage.setItem("active_module", "front-office");
                 setActiveModule("front-office");
@@ -258,7 +259,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         let items = allNavItems;
         if (activeModule === "front-office") {
             items = allNavItems.filter((item) =>
-                ["overview", "forecast", "rate-inventory", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id)
+                ["overview", "forecast", "revenue-breakdown", "rate-inventory", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id)
             );
         } else if (activeModule === "housekeeping") {
             items = allNavItems.filter((item) =>

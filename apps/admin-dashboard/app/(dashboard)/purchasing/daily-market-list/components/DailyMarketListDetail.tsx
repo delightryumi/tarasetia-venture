@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Coffee, Check } from 'lucide-react';
+import { Coffee, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PStatusChip } from '@/components/purchasing/ui/PStatusChip';
 import { PButton } from '@/components/purchasing/ui/PButton';
 import { formatRupiah } from '@/lib/purchasing/utils';
-import s from '../../shared-page.module.css';
+import s from '../DailyMarketList.module.css';
 
 interface DailyMarketListDetailProps {
   selectedDml: any;
@@ -35,6 +35,13 @@ export default function DailyMarketListDetail({
   onPrint,
   onUpdatePaymentStatus
 }: DailyMarketListDetailProps) {
+  if (!selectedDml) return null;
+
+  const status = selectedDml.status || 'draft';
+  const isDraft = status === 'draft' || status === 'submitted' || status === 'approved';
+  const isSubmitted = status === 'submitted' || status === 'approved';
+  const isApproved = status === 'approved';
+
   return (
     <AnimatePresence>
       {selectedDml && (
@@ -58,17 +65,48 @@ export default function DailyMarketListDetail({
             className={s.detailPanel}
           >
             <div className={s.detailHeader}>
-              <span className={s.detailDocNum}>{selectedDml.dml_number}</span>
-              <PStatusChip status={selectedDml.status} />
+              <div>
+                <span className={s.detailDocNum}>{selectedDml.dml_number}</span>
+                <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 500 }}>
+                  Culinary Fresh Market Procurement
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <PStatusChip status={selectedDml.status} />
+                <button 
+                  type="button" 
+                  onClick={onClose} 
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', padding: 4 }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
+
+            {/* Workflow Stepper */}
+            <div className={s.stepperContainer}>
+              <div className={`${s.stepperItem} ${isDraft ? s.stepperActive : ''}`}>
+                <div className={s.stepperDot}>1</div>
+                <div className={s.stepperLabel}>Draft (Chef)</div>
+              </div>
+              <div className={`${s.stepperItem} ${isSubmitted ? s.stepperActive : ''}`}>
+                <div className={s.stepperDot}>2</div>
+                <div className={s.stepperLabel}>Verified</div>
+              </div>
+              <div className={`${s.stepperItem} ${isApproved ? s.stepperActive : ''}`}>
+                <div className={s.stepperDot}>3</div>
+                <div className={s.stepperLabel}>Approved</div>
+              </div>
+            </div>
+
             <div className={s.detailBody}>
+              {/* Meta Grid */}
               <div className={s.detailMeta}>
                 <div className={s.detailMetaItem}>
                   <div className={s.detailMetaLabel}>Department</div>
                   <div className={s.detailMetaValue}>
                     {selectedDml.department || 'Food & Beverage'}
                     {selectedDml.department === 'Food & Beverage' && selectedDml.fb_category && ` (${selectedDml.fb_category})`}
-                    {selectedDml.department === 'Food & Beverage' && selectedDml.event_category && ` - ${selectedDml.event_category}`}
                   </div>
                 </div>
                 <div className={s.detailMetaItem}>
@@ -77,66 +115,97 @@ export default function DailyMarketListDetail({
                 </div>
                 <div className={s.detailMetaItem}>
                   <div className={s.detailMetaLabel}>Total Cost</div>
-                  <div className={s.detailMetaValue}>{formatRupiah(selectedDml.total_cost)}</div>
+                  <div className={s.detailMetaValue} style={{ color: '#1e4d3a', fontWeight: 800 }}>
+                    {formatRupiah(selectedDml.total_cost)}
+                  </div>
                 </div>
-                {selectedDml.order_date && (
-                  <div className={s.detailMetaItem}>
-                    <div className={s.detailMetaLabel}>Order Date</div>
-                    <div className={s.detailMetaValue}>{new Date(selectedDml.order_date).toLocaleDateString('id-ID')}</div>
+                <div className={s.detailMetaItem}>
+                  <div className={s.detailMetaLabel}>Market Date</div>
+                  <div className={s.detailMetaValue}>
+                    {selectedDml.order_date 
+                      ? new Date(selectedDml.order_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
+                      : selectedDml.date?.toDate 
+                        ? selectedDml.date.toDate().toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
+                        : new Date(selectedDml.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })}
                   </div>
-                )}
-                {selectedDml.delivery_date && (
-                  <div className={s.detailMetaItem}>
-                    <div className={s.detailMetaLabel}>Expected Delivery</div>
-                    <div className={s.detailMetaValue}>{selectedDml.delivery_date?.toDate ? selectedDml.delivery_date.toDate().toLocaleDateString('id-ID') : new Date(selectedDml.delivery_date).toLocaleDateString('id-ID')}</div>
-                  </div>
-                )}
+                </div>
               </div>
-              <div className={s.detailItems}>
-                {selectedDml.items.map((item: any, idx: number) => (
-                  <div key={idx} className={s.detailItem} style={{ alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className={s.detailItemName}>{item.name}</div>
-                      <div className={s.detailItemNote}>{item.category}{item.supplier_name ? ` · ${item.supplier_name}` : ''}</div>
-                      <div style={{ marginTop: 6 }}>
-                        <select
-                          value={item.paymentStatus || 'paid'}
-                          onChange={(e) => onUpdatePaymentStatus && onUpdatePaymentStatus(idx, e.target.value)}
-                          className={s.filterSelect}
-                          style={{ 
-                            padding: '1px 6px', 
-                            fontSize: '11px', 
-                            height: '22px', 
-                            minWidth: '85px', 
-                            cursor: 'pointer',
-                            fontWeight: 600,
-                            borderRadius: '4px',
-                            background: (item.paymentStatus || 'paid') === 'tempo' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
-                            color: (item.paymentStatus || 'paid') === 'tempo' ? '#ef4444' : '#10b981',
-                            border: `1px solid ${(item.paymentStatus || 'paid') === 'tempo' ? '#ef4444' : '#10b981'}`,
-                            outline: 'none'
-                          }}
-                        >
-                          <option value="paid" style={{ color: '#10b981', background: 'var(--p-canvas)' }}>Paid</option>
-                          <option value="tempo" style={{ color: '#ef4444', background: 'var(--p-canvas)' }}>Tempo</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className={s.detailItemQty}>
-                      {item.qty_ordered} {item.unit} · {formatRupiah(item.unit_price || 0)}
-                      <div style={{ fontSize: 11, color: 'var(--p-muted)', marginTop: 2 }}>
-                        Total: {formatRupiah(item.total || (item.qty_ordered * (item.unit_price || 0)))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+
+              {/* Items Breakdown Table */}
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#64748b', marginBottom: 8 }}>
+                  Market Checklist Items ({(selectedDml.items || []).length})
+                </div>
+                <table className={s.detailItemsTable}>
+                  <thead>
+                    <tr>
+                      <th>Product / Vendor</th>
+                      <th style={{ textAlign: 'center' }}>Settlement</th>
+                      <th style={{ textAlign: 'center' }}>Qty</th>
+                      <th style={{ textAlign: 'right' }}>Unit Cost</th>
+                      <th style={{ textAlign: 'right' }}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(selectedDml.items || []).map((item: any, idx: number) => (
+                      <tr key={idx}>
+                        <td>
+                          <div style={{ fontWeight: 600, color: '#0f172a' }}>{item.name}</div>
+                          <div style={{ fontSize: 11, color: '#64748b' }}>
+                            {item.category}{item.supplier_name ? ` · ${item.supplier_name}` : ''}
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <select
+                            value={item.paymentStatus || 'paid'}
+                            onChange={(e) => onUpdatePaymentStatus && onUpdatePaymentStatus(idx, e.target.value)}
+                            style={{ 
+                              padding: '2px 8px', 
+                              fontSize: '11px', 
+                              fontWeight: 700,
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              background: (item.paymentStatus || 'paid') === 'tempo' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                              color: (item.paymentStatus || 'paid') === 'tempo' ? '#ef4444' : '#10b981',
+                              border: `1px solid ${(item.paymentStatus || 'paid') === 'tempo' ? '#ef4444' : '#10b981'}`,
+                              outline: 'none'
+                            }}
+                          >
+                            <option value="paid">PAID</option>
+                            <option value="tempo">TEMPO</option>
+                          </select>
+                        </td>
+                        <td style={{ textAlign: 'center', fontFamily: 'var(--p-font-mono, monospace)', fontWeight: 600 }}>
+                          {item.qty_ordered} <span style={{ fontSize: 11, color: '#64748b' }}>{item.unit}</span>
+                        </td>
+                        <td style={{ textAlign: 'right', fontFamily: 'var(--p-font-mono, monospace)', fontSize: 12 }}>
+                          {formatRupiah(item.unit_price || 0)}
+                        </td>
+                        <td style={{ textAlign: 'right', fontFamily: 'var(--p-font-mono, monospace)', fontWeight: 700, color: '#1e4d3a' }}>
+                          {formatRupiah(item.total || (item.qty_ordered * (item.unit_price || 0)))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <div className={s.darkCard}>
-                <div className={s.darkCardLabel}>Estimated Market Cost</div>
-                <div className={s.darkCardValue}>{formatRupiah(selectedDml.total_cost)}</div>
+
+              {/* Total Highlight */}
+              <div className={s.totalHighlightCard}>
+                <div className={s.totalHighlightLabel}>Total Direct Culinary Cost</div>
+                <div className={s.totalHighlightValue}>{formatRupiah(selectedDml.total_cost)}</div>
               </div>
+
+              {selectedDml.notes && (
+                <div className={s.remarksCard}>
+                  <div className={s.remarksTitle}>Market Notes</div>
+                  <div className={s.remarksBody}>{selectedDml.notes}</div>
+                </div>
+              )}
             </div>
-            <div className={s.actionRow} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', width: '100%' }}>
+
+            {/* Action Row */}
+            <div className={s.actionRow}>
               {selectedDml.status === 'draft' && (
                 <>
                   <PButton variant="secondary" size="sm" onClick={onEdit}>
@@ -162,10 +231,9 @@ export default function DailyMarketListDetail({
                   Delete
                 </PButton>
               )}
-              <PButton variant="secondary" size="sm" onClick={onPrint} className={s.printBtn}>
+              <PButton variant="secondary" size="sm" onClick={onPrint}>
                 <Coffee size={14} /> Print DML
               </PButton>
-              <PButton variant="secondary" size="sm" style={{ marginLeft: 'auto' }} onClick={onClose}>Close</PButton>
             </div>
           </motion.div>
         </>

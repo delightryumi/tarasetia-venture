@@ -97,7 +97,8 @@ export const MobileBottomNav = () => {
                 pathname === '/digital-checkin' ||
                 pathname === '/invoice' ||
                 pathname.startsWith('/rate-inventory') ||
-                pathname.startsWith('/confirmation-letter')
+                pathname.startsWith('/confirmation-letter') ||
+                pathname.startsWith('/revenue-breakdown')
             ) {
                 localStorage.setItem("active_module", "front-office");
                 setActiveModule("front-office");
@@ -243,7 +244,7 @@ export const MobileBottomNav = () => {
 
         let items = allNavItems;
         if (activeModule === "front-office") {
-            items = allNavItems.filter(item => ["overview", "forecast", "rate-inventory", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id));
+            items = allNavItems.filter(item => ["overview", "forecast", "revenue-breakdown", "rate-inventory", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id));
         } else if (activeModule === "housekeeping") {
             items = allNavItems.filter(item => ["overview", "forecast", "purchase-order"].includes(item.id));
         } else if (activeModule === "accounting") {
@@ -338,7 +339,7 @@ export const MobileBottomNav = () => {
                                         router.push(`/budgeting?module=accounting`);
                                     } else if (item.id === "inventory-control") {
                                         router.push(`/inventory-control?module=${activeModule}`);
-                                    } else if (item.id === "overview" || item.id === "forecast" || item.id === "confirmation-letter" || item.id === "invoice" || item.id === "digital-checkin") {
+                                    } else if (item.id === "overview" || item.id === "forecast" || item.id === "confirmation-letter" || item.id === "invoice" || item.id === "digital-checkin" || item.id === "revenue-breakdown") {
                                         router.push(`/${item.id}?module=${activeModule}`);
                                     } else {
                                         router.push(`/${item.id}`);

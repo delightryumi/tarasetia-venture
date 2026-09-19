@@ -99,7 +99,7 @@ export function ExpandedMode({
                                                     router.push(`/budgeting?module=accounting`);
                                                 } else if (item.id === "inventory-control") {
                                                     router.push(`/inventory-control?module=${activeModule}`);
-                                                } else if (item.id === "overview" || item.id === "forecast" || item.id === "confirmation-letter") {
+                                                } else if (item.id === "overview" || item.id === "forecast" || item.id === "confirmation-letter" || item.id === "revenue-breakdown") {
                                                     router.push(`/${item.id}?module=${activeModule}`);
                                                 } else {
                                                     router.push(`/${item.id}`);
@@ -148,7 +148,7 @@ export function ExpandedMode({
                                 router.push(`/budgeting?module=accounting`);
                             } else if (item.id === "inventory-control") {
                                 router.push(`/inventory-control?module=${activeModule}`);
-                            } else if (item.id === "overview" || item.id === "forecast" || item.id === "confirmation-letter") {
+                            } else if (item.id === "overview" || item.id === "forecast" || item.id === "confirmation-letter" || item.id === "revenue-breakdown") {
                                 router.push(`/${item.id}?module=${activeModule}`);
                             } else {
                                 router.push(`/${item.id}`);

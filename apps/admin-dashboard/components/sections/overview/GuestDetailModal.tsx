@@ -10,7 +10,9 @@ import {
     User,
     X,
     Printer,
-    Lock
+    Lock,
+    CreditCard,
+    Edit3
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
@@ -20,7 +22,9 @@ import { VoidConfirmModal } from "./VoidConfirmModal";
 import { CancelConfirmModal } from "./CancelConfirmModal";
 import { GuestEditForm } from "./components/GuestEditForm";
 import { GuestFolioView } from "./components/GuestFolioView";
+import { PaymentMethodEditModal } from "./PaymentMethodEditModal";
 import styles from "./OverviewStyles.module.css";
+import footerStyles from "./GuestDetailFooter.module.css";
 import "./FolioAesthetic.css";
 
 interface GuestDetailModalProps {
@@ -50,6 +54,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
     const canCancel = isSuperadmin || user?.permissions?.fo_cancel === true;
     const canVoid = isSuperadmin || user?.permissions?.fo_void === true;
     const [isEditMode, setIsEditMode] = React.useState(initialEditing);
+    const [showPaymentModal, setShowPaymentModal] = React.useState(false);
     const [showConfirmVoid, setShowConfirmVoid] = React.useState(false);
     const [showConfirmCancel, setShowConfirmCancel] = React.useState(false);
     const [formData, setFormData] = React.useState({
@@ -447,7 +452,8 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 if (docSnap.exists()) {
                     const currentEntries = docSnap.data().entries || [];
                     const purged = currentEntries.filter((e: any) => !isBookingMatch(e, guest, formData));
-                    await updateDoc(docRef, { entries: [...purged, cleanedEntry], date: dateStr });
+                    const sanitizedEntries = [...purged, cleanedEntry].map((item: any) => cleanUndefined(item));
+                    await updateDoc(docRef, { entries: sanitizedEntries, date: dateStr });
                 } else {
                     await setDoc(docRef, { entries: [cleanedEntry], date: dateStr });
                 }
@@ -514,7 +520,8 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                                  (guest.id && e.refBookingId === guest.id);
                                 return !isLinked;
                             });
-                            await updateDoc(docRef, { entries: [...purged, cleanedEntry], date: dateStr });
+                            const sanitizedEntries = [...purged, cleanedEntry].map((item: any) => cleanUndefined(item));
+                            await updateDoc(docRef, { entries: sanitizedEntries, date: dateStr });
                         } else {
                             await setDoc(docRef, { entries: [cleanedEntry], date: dateStr }, { merge: true });
                         }
@@ -657,15 +664,15 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 {/* Header ala Channex */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--f-hairline)', padding: '16px 20px', backgroundColor: 'var(--f-surface-soft, #f8fafc)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <button onClick={onClose} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Tutup">
+                        <button onClick={onClose} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Close">
                             <X size={16} />
                         </button>
                         <div>
                             <h2 className={styles.headerTitle} style={{ fontSize: '15px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span>{isEditMode ? "Ubah Booking" : `Booking ${guest.bookingId || guest.voucherCode || 'MTR-Ref'}`}</span>
+                                <span>{isEditMode ? "Modify Reservation" : `Reservation #${guest.bookingId || guest.voucherCode || 'MTR-Ref'}`}</span>
                             </h2>
                             <span style={{ fontSize: '10px', color: 'var(--f-muted)', fontWeight: 500 }}>
-                                {isEditMode ? "Sesuaikan rincian kamar & pembayaran" : "Detail Reservasi & Audit Ledger"}
+                                {isEditMode ? "Adjust room type, rate & settlement details" : "Reservation Folio & Audit Ledger Details"}
                             </span>
                         </div>
                     </div>
@@ -691,10 +698,33 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                     color: 'var(--f-ink, #0f172a)',
                                     cursor: 'pointer'
                                 }}
-                                title="Cetak Guest Registration Card (GRC)"
+                                title="Print Guest Registration Card (GRC)"
                             >
                                 <Printer size={13} />
-                                <span>Print</span>
+                                <span>Print GRC</span>
+                            </button>
+                        )}
+                        {!isEditMode && (
+                            <button
+                                type="button"
+                                onClick={() => setShowPaymentModal(true)}
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '6px 12px',
+                                    borderRadius: '6px',
+                                    backgroundColor: '#f0f9ff',
+                                    border: '1px solid #bae6fd',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    color: '#0284c7',
+                                    cursor: 'pointer'
+                                }}
+                                title="Modify folio payment method & billing channel"
+                            >
+                                <CreditCard size={13} />
+                                <span>Modify Payment</span>
                             </button>
                         )}
                         {!isEditMode && (
@@ -713,10 +743,10 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                         color: '#64748b',
                                         cursor: 'not-allowed'
                                     }}
-                                    title="Reservasi dari Channel Manager (OTA) terkunci. Perubahan tanggal, kamar, atau harga harus dilakukan melalui OTA terkait."
+                                    title="Reservation locked by OTA Channel Manager. Date and room modifications must be handled via OTA extranet."
                                 >
                                     <Lock size={12} />
-                                    <span>Channex Locked</span>
+                                    <span>Locked (OTA)</span>
                                 </div>
                             ) : (
                                 <button
@@ -735,9 +765,10 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                         color: '#fff',
                                         cursor: 'pointer'
                                     }}
-                                    title="Alokasi Kamar / Edit"
+                                    title="Edit Room & Folio Details"
                                 >
-                                    <span>Allocate / Edit</span>
+                                    <Edit3 size={13} />
+                                    <span>Edit Folio</span>
                                 </button>
                             )
                         )}
@@ -756,84 +787,134 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                     ) : (
                         <GuestFolioView 
                             guest={guest} 
+                            onEditPayment={() => setShowPaymentModal(true)}
                         />
                     )}
                 </div>
 
-                {/* Footer Actions */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', padding: '16px', borderTop: '1px solid var(--f-hairline)', backgroundColor: 'var(--f-canvas)' }}>
+                {/* Footer Actions (Clean PMS Toolbar Layout with Safe Right Clearance) */}
+                <div className={footerStyles.footerContainer}>
                     {isEditMode ? (
-                        <>
-                            <button onClick={() => setIsEditMode(false)} className={styles.btnSecondary} style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px' }}>Abort</button>
-                            <button onClick={handleSave} className={styles.btnPrimary} style={{ width: 'auto', padding: '0 20px', height: '36px', borderRadius: '8px' }}>
-                                <Save size={14} /> Save Folio
+                        <div className={footerStyles.toolbarRow} style={{ justifyContent: 'flex-end' }}>
+                            <button 
+                                type="button" 
+                                onClick={() => setIsEditMode(false)} 
+                                className={`${footerStyles.btnAction} ${footerStyles.btnSecondary}`}
+                            >
+                                Cancel
                             </button>
-                        </>
+                            <button 
+                                type="button" 
+                                onClick={handleSave} 
+                                className={`${footerStyles.btnAction} ${footerStyles.btnPrimary}`}
+                            >
+                                <Save size={13} />
+                                <span>Save Folio</span>
+                            </button>
+                        </div>
                     ) : (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <button onClick={onClose} className={styles.btnSecondary} style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px' }}>Close</button>
+                        <div className={footerStyles.toolbarRow}>
+                            <div className={footerStyles.groupLeft}>
                                 <button 
+                                    type="button" 
+                                    onClick={onClose} 
+                                    className={`${footerStyles.btnAction} ${footerStyles.btnClose}`}
+                                    title="Close reservation folio"
+                                >
+                                    Close
+                                </button>
+                                <button 
+                                    type="button" 
                                     onClick={() => {
                                         const bParam = guest.bookingId ? `&bookingId=${encodeURIComponent(guest.bookingId)}` : '';
                                         const gParam = guest.guestName ? `&guestName=${encodeURIComponent(guest.guestName)}` : '';
                                         router.push(`/digital-checkin?autoOpen=true${gParam}${bParam}`);
                                     }} 
-                                    className={styles.btnSecondary} 
-                                    style={{ height: '36px', padding: '0 14px', fontSize: '10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
-                                    title="Buka form Guest Registration Card"
+                                    className={`${footerStyles.btnAction} ${footerStyles.btnGrc}`}
+                                    title="Print Guest Registration Card (GRC)"
                                 >
-                                    <Printer size={13} /> Cetak GRC
+                                    <Printer size={13} />
+                                    <span>Print GRC</span>
                                 </button>
                             </div>
-                            <div style={{ display: 'flex', gap: '8px' }}>
+                            <div className={footerStyles.groupRight}>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPaymentModal(true)}
+                                    className={`${footerStyles.btnAction} ${footerStyles.btnPayment}`}
+                                    title="Modify folio payment method & billing channel (Synced to Accounting)"
+                                >
+                                    <CreditCard size={13} />
+                                    <span>Modify Payment</span>
+                                </button>
                                 {!isChannexLocked ? (
-                                    <button onClick={() => setIsEditMode(true)} className={styles.btnSecondary} style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px', fontWeight: 700 }}>Modify</button>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setIsEditMode(true)} 
+                                        className={`${footerStyles.btnAction} ${footerStyles.btnModify}`}
+                                        title="Edit room and folio charges"
+                                    >
+                                        <Edit3 size={13} />
+                                        <span>Edit Folio</span>
+                                    </button>
                                 ) : (
                                     <button 
                                         disabled 
-                                        className={styles.btnSecondary} 
-                                        style={{ height: '36px', padding: '0 14px', fontSize: '10px', borderRadius: '8px', fontWeight: 600, opacity: 0.6, cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '5px' }}
-                                        title="Reservasi OTA terkunci (ReadOnly)"
+                                        className={`${footerStyles.btnAction} ${footerStyles.btnReadOnly}`} 
+                                        title="OTA reservation locked from Channel Manager (ReadOnly)"
                                     >
-                                        <Lock size={12} /> Read Only
+                                        <Lock size={12} />
+                                        <span>Locked (OTA)</span>
                                     </button>
                                 )}
                                 {guest.status !== "CANCELLED" && guest.status !== "CANCEL" && guest.status !== "VOID" && guest.status !== "VOIDED" && (
                                     <button 
+                                        type="button" 
                                         onClick={() => {
                                             if (!canCancel) {
-                                                toast.error("Anda tidak memiliki izin untuk membatalkan booking.");
+                                                toast.error("You do not have permission to cancel reservations.");
                                                 return;
                                             }
                                             setShowConfirmCancel(true);
                                         }} 
-                                        className={styles.btnWarning}
-                                        style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', opacity: !canCancel ? 0.6 : 1, cursor: !canCancel ? 'not-allowed' : undefined }}
-                                        title={!canCancel ? "Tidak memiliki izin Cancel Booking" : undefined}
+                                        className={`${footerStyles.btnAction} ${footerStyles.btnCancel}`}
+                                        style={{ opacity: !canCancel ? 0.6 : 1, cursor: !canCancel ? 'not-allowed' : undefined }}
+                                        title={!canCancel ? "No cancellation permission" : "Cancel this reservation"}
                                     >
-                                        Cancel Booking
+                                        Cancel Reservation
                                     </button>
                                 )}
                                 <button 
+                                    type="button" 
                                     onClick={() => {
                                         if (!canVoid) {
-                                            toast.error("Anda tidak memiliki izin untuk melakukan void booking.");
+                                            toast.error("You do not have permission to void reservations.");
                                             return;
                                         }
                                         setShowConfirmVoid(true);
                                     }} 
-                                    className={styles.btnDanger}
-                                    style={{ height: '36px', padding: '0 16px', fontSize: '10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', opacity: !canVoid ? 0.6 : 1, cursor: !canVoid ? 'not-allowed' : undefined }}
-                                    title={!canVoid ? "Tidak memiliki izin Void Booking" : undefined}
+                                    className={`${footerStyles.btnAction} ${footerStyles.btnVoid}`}
+                                    style={{ opacity: !canVoid ? 0.6 : 1, cursor: !canVoid ? 'not-allowed' : undefined }}
+                                    title={!canVoid ? "No void permission" : "Void this reservation transaction"}
                                 >
-                                    <Trash2 size={14} /> Void Entry
+                                    <Trash2 size={13} />
+                                    <span>Void Transaction</span>
                                 </button>
                             </div>
                         </div>
                     )}
                 </div>
             </div>
+
+            <PaymentMethodEditModal
+                isOpen={showPaymentModal}
+                guest={guest}
+                onClose={() => setShowPaymentModal(false)}
+                onSuccess={() => {
+                    if (onSave) onSave();
+                    onClose();
+                }}
+            />
 
             <VoidConfirmModal 
                 isOpen={showConfirmVoid}

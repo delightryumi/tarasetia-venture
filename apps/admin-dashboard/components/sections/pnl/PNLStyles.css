@@ -3,15 +3,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
 
 :root {
-    --sage: var(--sidebar-link-active-bg, #181d26);
-    --peach: var(--primary, #3b82f6);
+    --sage: var(--sidebar-link-active-bg, #1e4d3a);
+    --peach: #1e4d3a;
     --rich-black: #1A1C14;
     --stone-bg: #fafaf9;
 }
 
 .dark {
     --sage: #ffffff;
-    --peach: #3b82f6;
+    --peach: #52a37f;
 }
 
 .font-instrument { font-family: 'Instrument Sans', sans-serif; }
@@ -64,90 +64,93 @@
     background: var(--sage);
 }
 
-/* Date Picker Dropdown Custom Classes */
+/* Date Picker Dropdown Custom Classes - Hospitality ERP Standard */
 .datepicker-dropdown {
     position: absolute;
     top: 100%;
-    margin-top: 16px;
+    margin-top: 6px;
     right: 0;
-    width: 320px; /* w-80 */
+    left: auto;
+    width: 290px;
     background-color: #ffffff;
-    border-radius: 16px; /* rounded-2xl */
-    border: 1px solid #f5f5f4; /* border-stone-100 */
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* shadow-2xl */
-    padding: 24px; /* p-6 */
-    z-index: 100;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 14px 34px -4px rgba(15, 23, 42, 0.22);
+    padding: 16px;
+    z-index: 999;
 }
 
 .datepicker-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
+    gap: 16px;
 }
 
 .datepicker-column {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
 }
 
 .datepicker-header {
-    font-size: 12px; /* text-xs */
-    font-weight: 800; /* font-extrabold */
-    color: #a8a29e; /* text-stone-400 */
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
     text-transform: uppercase;
-    letter-spacing: 0.1em; /* tracking-widest */
+    letter-spacing: 0.06em;
     margin: 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .datepicker-list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
 }
 
 .datepicker-btn {
     width: 100%;
     text-align: left;
-    padding: 8px 12px; /* px-3 py-2 */
-    border-radius: 8px; /* rounded-lg */
-    font-size: 14px; /* text-sm */
-    font-weight: 700; /* font-bold */
-    transition: background-color 0.2s, color 0.2s;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background-color 0.15s, color 0.15s;
     border: none;
     cursor: pointer;
 }
 
 .datepicker-btn-active {
-    background-color: #1c1917; /* bg-stone-900 */
+    background-color: #1e4d3a;
     color: #ffffff;
 }
 
 .datepicker-btn-inactive {
     background-color: transparent;
-    color: #44403c; /* text-stone-600 */
+    color: #334155;
 }
 
 .datepicker-btn-inactive:hover {
-    background-color: #fafaf9; /* hover:bg-stone-50 */
+    background-color: #f0f7f3;
+    color: #1e4d3a;
 }
 
 /* Custom scrollable month list */
 .datepicker-months-scroll {
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));
-
-    max-height: 192px; /* max-h-48 */
+    max-height: 192px;
     overflow-y: auto;
-    padding-right: 8px;
-    gap: 4px;
+    padding-right: 6px;
+    gap: 3px;
 }
 
 /* --- Dark Mode Overrides --- */
 .dark .datepicker-dropdown {
-    background-color: #1a1a1a;
-    border-color: #262626;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    background-color: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
 }
 
 .dark .datepicker-header {
@@ -159,12 +162,12 @@
 }
 
 .dark .datepicker-btn-inactive:hover {
-    background-color: #1f1f1f;
-    color: #ffffff;
+    background-color: rgba(82, 163, 127, 0.2);
+    color: #52a37f;
 }
 
 .dark .datepicker-btn-active {
-    background-color: #333333;
+    background-color: #285f47;
     color: #ffffff;
 }
 

@@ -5,6 +5,7 @@ import {
   InvestorItem,
   DrillDownData
 } from "../pnl-utils";
+import { detectBreakfastAllocation } from "../breakfast-utils";
 import { ExtendedTransaction, HotelMaster, PropertyStat, PnLCalculationResult } from "./types";
 
 export function processPnLData(
@@ -33,7 +34,9 @@ export function processPnLData(
   posComplimentValue: number = 0,
   posRevOther: number = 0,
   posExpOther: number = 0,
-  payrollExpense: number = 0
+  payrollExpense: number = 0,
+  ratePlans: any[] = [],
+  hotelBreakfastRate?: number
 ): PnLCalculationResult {
   const ledgerRevenue = transactions.reduce((sum, t) => sum + t.amount, 0);
   const totalExtraIncome = customIncomes.reduce((sum, t) => sum + t.amount, 0);
@@ -198,9 +201,19 @@ export function processPnLData(
   
   const expOperational = expFrontOfficeAndPurchasing + otherManualExpenses;
 
+  // Extract package breakfast revenue from room transactions (USALI Departmental Split)
+  let packageBreakfastRevenue = 0;
+
   const ledgerRoomRevenue = transactions
     .filter(isAccommodation)
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => {
+      const alloc = detectBreakfastAllocation(t, { ratePlans, hotelBreakfastRate });
+      if (alloc.hasBreakfast && !alloc.isPreSplit && alloc.breakfastAmount > 0) {
+        packageBreakfastRevenue += alloc.breakfastAmount;
+        return sum + alloc.netRoomAmount;
+      }
+      return sum + Number(t.amount || 0);
+    }, 0);
 
   // KPI calculations
   const totalRooms = allHotels.reduce((sum, h) => sum + (h.roomCount || 0), 0);
@@ -213,13 +226,29 @@ export function processPnLData(
   const arr = roomsSold ? ledgerRoomRevenue / roomsSold : 0;
   const revPar = roomsAvailable ? ledgerRoomRevenue / roomsAvailable : 0;
 
+  const isOta = (t: any) => {
+    const ch = (t.channel || "").toLowerCase();
+    return ch && !["direct", "walk-in", "internal", "-"].includes(ch);
+  };
+
   const revenueHotelCollect = transactions
     .filter(isAccommodation)
-    .reduce((sum, t) => sum + (Number(t.paidCash) || 0) + (Number(t.paidEdc) || 0) + (Number(t.paidQris) || 0) + (Number((t as any).paidTransfer) || 0), 0);
+    .reduce((sum, t) => {
+      const isOtaTx = isOta(t);
+      const cash = Number(t.paidCash || 0);
+      const edc = Number(t.paidEdc || 0);
+      const qris = Number(t.paidQris || 0);
+      const transfer = isOtaTx ? 0 : Number(t.paidTransfer || 0);
+      return sum + cash + edc + qris + transfer;
+    }, 0);
 
   const revenueNexuraCollect = transactions
     .filter(isAccommodation)
-    .reduce((sum, t) => sum + (Number((t as any).paidOta) || Number(t.paidTransfer) || 0), 0);
+    .reduce((sum, t) => {
+      const isOtaTx = isOta(t);
+      const otaPay = Number(t.paidOta || (isOtaTx ? t.paidTransfer || t.amount : 0));
+      return sum + otaPay;
+    }, 0);
 
   const isFnbRevenue = (t: any) => {
       if (isAccommodation(t)) return false;
@@ -238,7 +267,7 @@ export function processPnLData(
 
   const ledgerFnbFoodRevenue = transactions
     .filter(t => !isAccommodation(t) && isFnbRevenue(t) && !isFnbBeverage(t))
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + t.amount, 0) + packageBreakfastRevenue;
 
   const ledgerFnbBevRevenue = transactions
     .filter(t => !isAccommodation(t) && isFnbRevenue(t) && isFnbBeverage(t))

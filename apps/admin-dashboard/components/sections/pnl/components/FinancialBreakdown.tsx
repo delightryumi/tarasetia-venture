@@ -4,12 +4,11 @@ import React from "react";
 import { motion } from "framer-motion";
 import { 
   TrendingUp, Receipt, PieChart, 
-  Calculator, Wallet, Percent, ArrowRight
+  Calculator, Wallet, Percent, ArrowRight, ShieldCheck
 } from "lucide-react";
 import { formatIDR, GlobalPnLResult, PnlIncomeItem } from "@/lib/pnl-utils";
 import styles from "./FinancialBreakdown.module.css";
 
-// --- INTERFACES ---
 interface FinancialBreakdownProps {
   isStartup?: boolean;
   pnlResult: GlobalPnLResult;
@@ -31,32 +30,9 @@ interface FinancialBreakdownProps {
   lostBreakagePercentage?: number;
 }
 
-const EmptyDash = () => <span className={`${styles.emptyDash} ${styles.fontMonoJb}`}>--</span>;
+const EmptyDash = () => <span className={styles.emptyDash}>—</span>;
 
-const SectionHeader = ({ icon: Icon, title, subtitle, themeColor }: any) => {
-  const colors: any = {
-    emerald: styles.sectionIconEmerald, 
-    rose: styles.sectionIconRose,
-    blue: styles.sectionIconBlue,
-    zinc: styles.sectionIconZinc
-  };
-  const activeColor = colors[themeColor] || styles.sectionIconZinc;
-
-  return (
-    <div className={styles.sectionHeader}>
-      <div className={`${styles.sectionIconBox} ${activeColor}`}>
-        <Icon size={18} strokeWidth={2} />
-      </div>
-      <div className={styles.sectionHeaderRight}>
-        <h3 className={styles.sectionTitle}>{title}</h3>
-        <p className={styles.sectionSubtitle}>{subtitle}</p>
-      </div>
-      <div className={styles.sectionDivider}></div>
-    </div>
-  );
-};
-
-interface TableRowProps {
+interface StatementTableRowProps {
   label: string;
   subLabel?: string;
   rate?: string;
@@ -66,7 +42,15 @@ interface TableRowProps {
   highlight?: boolean;
 }
 
-const TableRow = ({ label, subLabel, rate, value, isNegative, isTotal, highlight }: TableRowProps) => {
+const StatementTableRow = ({
+  label,
+  subLabel,
+  rate,
+  value,
+  isNegative,
+  isTotal,
+  highlight
+}: StatementTableRowProps) => {
   const adjustedValue = isNegative ? -Math.abs(value) : value;
   const displayVal = adjustedValue !== null && adjustedValue !== undefined && adjustedValue !== 0 
     ? formatIDR(adjustedValue) 
@@ -75,17 +59,17 @@ const TableRow = ({ label, subLabel, rate, value, isNegative, isTotal, highlight
   if (isTotal) {
     const amountColor = adjustedValue < 0 ? styles.totalAmountNegative : styles.totalAmountPositive;
     return (
-      <tr className={styles.rowGroup}>
-        <td className={styles.tdFirstTotal}>
-          <div className={styles.labelBox}>
-            <span className={styles.totalLabel}>{label}</span>
-            {subLabel && <span className={styles.totalSubLabel}>{subLabel}</span>}
+      <tr className={`${styles.row} ${styles.rowTotal}`}>
+        <td className={styles.tdLabel}>
+          <div className={styles.labelWrapper}>
+            <div className={styles.labelLine}>
+              <span className={styles.totalLabel}>{label}</span>
+              {rate && <span className={styles.rateBadge}>{rate}</span>}
+            </div>
+            {subLabel && <span className={styles.labelSub}>{subLabel}</span>}
           </div>
         </td>
-        <td className={`${styles.tdMidTotal} ${styles.tdCenter} ${styles.rateText} ${styles.fontMonoJb}`}>
-          {rate || "—"}
-        </td>
-        <td className={`${styles.tdLastTotal} ${styles.fontMonoJb} ${styles.totalAmount} ${amountColor}`}>
+        <td className={`${styles.tdAmount} ${styles.totalAmount} ${amountColor}`}>
           {displayVal || <EmptyDash />}
         </td>
       </tr>
@@ -93,62 +77,67 @@ const TableRow = ({ label, subLabel, rate, value, isNegative, isTotal, highlight
   }
 
   const rowClass = highlight 
-    ? `${styles.rowGroup} ${styles.rowHighlight}` 
-    : styles.rowGroup;
+    ? `${styles.row} ${styles.rowHighlight}` 
+    : styles.row;
 
-  const labelColor = highlight ? styles.tdHighlightLabel : styles.labelMain;
-  const amountColor = adjustedValue < 0 
+  const labelClass = highlight ? styles.highlightLabel : styles.labelMain;
+  const amountClass = adjustedValue < 0 
     ? styles.amountNegative 
     : highlight 
-      ? styles.tdHighlightAmount 
+      ? styles.highlightAmount 
       : styles.amountPositive;
 
   return (
     <tr className={rowClass}>
-      <td className={styles.tdFirst}>
-        <div className={styles.labelBox}>
-          <span className={`${styles.labelMain} ${labelColor}`}>{label}</span>
+      <td className={styles.tdLabel}>
+        <div className={styles.labelWrapper}>
+          <div className={styles.labelLine}>
+            <span className={labelClass}>{label}</span>
+            {rate && <span className={styles.rateBadge}>{rate}</span>}
+          </div>
           {subLabel && <span className={styles.labelSub}>{subLabel}</span>}
         </div>
       </td>
-      <td className={`${styles.tdMid} ${styles.tdCenter} ${styles.rateText} ${styles.fontMonoJb}`}>
-        {rate || "—"}
-      </td>
-      <td className={`${styles.tdLast} ${styles.fontMonoJb} ${styles.amountText} ${amountColor}`}>
+      <td className={`${styles.tdAmount} ${amountClass}`}>
         {displayVal || <EmptyDash />}
       </td>
     </tr>
   );
 };
 
-const rise = {
-  hidden: { opacity: 0, y: 12 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] } },
-};
-
 export default function FinancialBreakdown({
   isStartup = false,
-  pnlResult, sharedExpensesTotal, mgmtExpensesTotal, vatPercentage,
-  retainedPercent, setRetainedPercent, mgmtFeeRoomPercentage = 0, mgmtFeeFnbPercentage = 0,
-  serviceChargePercentage = 0, lostBreakagePercentage = 0
+  pnlResult,
+  mgmtExpensesTotal,
+  vatPercentage,
+  retainedPercent,
+  setRetainedPercent,
+  mgmtFeeRoomPercentage = 0,
+  mgmtFeeFnbPercentage = 0,
+  serviceChargePercentage = 0,
+  lostBreakagePercentage = 0
 }: FinancialBreakdownProps) {
-  
   if (!pnlResult) return null;
 
-  // Values aligned to Executive Summary card section
-  const val_revRoom = pnlResult.revRoom || 0;
+  // ── Statement I: Operating Revenues ──
+  const val_revRoom = pnlResult.revRoom || pnlResult.ledgerRoomRevenue || 0;
   const val_revTotalFnb = pnlResult.revTotalFnb || 0;
-  const val_revBanquet = pnlResult.revBanquet || 0;
+  const val_revBanquet = pnlResult.revBanquet || pnlResult.revBanquetRevenue || 0;
   const val_card5_Other = pnlResult.card5_OtherRevenue || 0;
+  const val_card2_NonComm = pnlResult.card2_NonCommRevenue || 0;
   const val_card1_TotalRevenue = pnlResult.card1_TotalRevenue || 0;
 
+  // ── Statement II: Departmental Operating Expenses ──
   const val_expHousekeeping = pnlResult.expHousekeeping || 0;
   const val_expAlacarte = pnlResult.expAlacarte || 0;
   const val_expBanquet = pnlResult.expBanquet || 0;
   const val_expPomec = pnlResult.expPomec || 0;
   const val_expOperational = pnlResult.expOperational || 0;
+  const val_expPayroll = pnlResult.expPayroll || 0;
+  const val_compliments = (pnlResult.foComplimentValue || 0) + (pnlResult.posComplimentValue || 0);
   const val_card8_TotalExpenses = pnlResult.card8_TotalExpenses || 0;
 
+  // ── Statement III: GOP & Owner Reconciliation Flow ──
   const val_card7_TotalGOP = pnlResult.card7_TotalGOP || 0;
   const val_card11_VAT = pnlResult.card11_VAT || 0;
   const val_summaryServiceCharge = pnlResult.summaryServiceCharge || 0;
@@ -157,6 +146,7 @@ export default function FinancialBreakdown({
   const val_card9_FeeGrossFnb = pnlResult.card9_FeeGrossFnb || 0;
   const val_card12_ReconOwner = pnlResult.card12_ReconOwner || 0;
 
+  // ── Shareholder Distribution & Management Cash Flow ──
   const calculatedInvestors = pnlResult.investorDistributions?.map(inv => ({
     ...inv,
     calculatedAmount: inv.amount
@@ -164,122 +154,280 @@ export default function FinancialBreakdown({
   
   const mgmtShareData = calculatedInvestors.length > 0 ? calculatedInvestors[0] : null;
   const mgmtShareAmount = mgmtShareData ? mgmtShareData.calculatedAmount : 0;
-  
   const retainedEarningsValue = mgmtShareAmount * (retainedPercent / 100);
   const totalSisaManagement = mgmtShareAmount - retainedEarningsValue - mgmtExpensesTotal;
 
   return (
     <motion.section 
-      variants={rise} 
-      initial="hidden" 
-      animate="show" 
-      className={`${styles.section} ${styles.fontInstrument}`}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      className={styles.section}
     >
-      <div className={styles.outerCard}>
-        {/* Header */}
-        <div className={styles.header}>
+      <div className={styles.containerCard}>
+        {/* ── Section Header ── */}
+        <div className={styles.headerCard}>
           <div className={styles.headerLeft}>
-            <h2 className={styles.title}>
-              <Receipt size={24} /> Financial <span className={styles.titleAccent}>Breakdown</span>
-            </h2>
-            <p className={styles.subtitle}>Detailed PnL Audit Table</p>
+            <div className={styles.headerTitleRow}>
+              <span className={styles.headerIcon}>
+                <Receipt size={20} />
+              </span>
+              <h2 className={styles.title}>Detailed Financial Breakdown</h2>
+            </div>
+            <p className={styles.subtitle}>
+              Audited Operating Statement &bull; Departmental Revenues, Operational Expenses &amp; Profit Flow
+            </p>
+          </div>
+          <div className={styles.headerBadges}>
+            <span className={styles.badgeStandard}>
+              <span className={styles.badgeDot} />
+              Audited Operating Accounts
+            </span>
           </div>
         </div>
 
-        {/* Inner Tray */}
-        <div className={styles.innerTray}>
-          {/* ── TOP ROW: 3 sections inline ── */}
-          <div className={styles.grid3}>
-            {/* SECTION 1: REVENUE */}
-            <div className={styles.tableCard}>
-              <SectionHeader icon={TrendingUp} title="I. Revenues" subtitle="Income sources audit" themeColor="emerald" />
-              <div className={styles.tableScroll}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr className={styles.tableHead}>
-                      <th>Line Item / Description</th>
-                      <th className={styles.thCenter}>Rate</th>
-                      <th className={styles.thRight}>Amount (IDR)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {!isStartup && <TableRow label="Room Revenue" subLabel="Accommodation & lodging earnings" value={val_revRoom} />}
-                    <TableRow label="Total F&B A la Carte Revenue" subLabel="Outlet restaurant, bar & room service" value={val_revTotalFnb} />
-                    <TableRow label="Total Banquet Revenue" subLabel="MICE events & corporate functions" value={val_revBanquet} />
-                    <TableRow label="Other Revenue" subLabel="Miscellaneous manual & ledger collection" value={val_card5_Other} />
-                    <TableRow label="Total Gross Revenue" subLabel="Overall combined hotel revenue" value={val_card1_TotalRevenue} isTotal={true} />
-                  </tbody>
-                </table>
+        {/* ── 3-Column Statement Grid ── */}
+        <div className={styles.statementsGrid}>
+          {/* STATEMENT I: REVENUES */}
+          <div className={styles.statementCard}>
+            <div className={styles.statementHeader}>
+              <div className={`${styles.statementIconBox} ${styles.iconRevenue}`}>
+                <TrendingUp size={16} />
+              </div>
+              <div className={styles.statementTitleCol}>
+                <h3 className={styles.statementTitle}>I. Operating Revenues</h3>
+                <p className={styles.statementSubtitle}>Core departmental revenue sources</p>
               </div>
             </div>
 
-            {/* SECTION 2: OPERATIONAL EXPENSES */}
-            <div className={styles.tableCard}>
-              <SectionHeader icon={Receipt} title="II. Expenses" subtitle="Departmental costs & operational deductions" themeColor="rose" />
-              <div className={styles.tableScroll}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr className={styles.tableHead}>
-                      <th>Line Item / Description</th>
-                      <th className={styles.thCenter}>Rate</th>
-                      <th className={styles.thRight}>Amount (IDR)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                     {!isStartup && <TableRow label="Housekeeping Expenses" subLabel="Guest supplies, laundry & linen costs" value={val_expHousekeeping} isNegative />}
-                     <TableRow label="Total F&B A la Carte Expenses" subLabel="A la carte kitchen, bar & beverage raw materials" value={val_expAlacarte} isNegative />
-                     <TableRow label="Total Banquet Expenses" subLabel="Event banquet catering & external sourcing costs" value={val_expBanquet} isNegative />
-                     <TableRow label="POMEC / Maintenance Expenses" subLabel="Property operation, engineering & energy costs" value={val_expPomec} isNegative />
-                     <TableRow label="Operational Expenses" subLabel="Purchasing, general office, administrative & other" value={val_expOperational} isNegative />
-                     <TableRow label="Compliment Deductions" subLabel="POS complimentary items given to guests" value={pnlResult.posComplimentValue || 0} isNegative />
-                     <TableRow label="Total Operational Expenses" subLabel="Sum of all operational departmental costs" value={val_card8_TotalExpenses + (pnlResult.posComplimentValue || 0)} isTotal={true} />
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* SECTION 3: NET PROFIT */}
-            <div className={styles.tableCard}>
-              <SectionHeader icon={Calculator} title="III. GOP & Net Profit Flow" subtitle="Profit Reconciliation" themeColor="emerald" />
-              <div className={styles.tableScroll}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr className={styles.tableHead}>
-                      <th>Line Item / Description</th>
-                      <th className={styles.thCenter}>Rate</th>
-                      <th className={styles.thRight}>Amount (IDR)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                     <TableRow label="Total GOP" subLabel="Gross operating profit (Revenues - Expenses)" value={val_card7_TotalGOP} highlight />
-                     <TableRow label="VAT Input" subLabel="Value-added tax deductions" rate={`${vatPercentage}%`} value={val_card11_VAT} isNegative />
-                     <TableRow label="Service Charge" subLabel="Staff service charge allocations" rate={`${serviceChargePercentage}%`} value={val_summaryServiceCharge} isNegative />
-                     <TableRow label="Lost & Breakage" subLabel="Asset shrinkage buffer" rate={`${lostBreakagePercentage}%`} value={val_summaryLostBreakage} isNegative />
-                     {!isStartup && <TableRow label="Management Fee - Room" subLabel="Room management system fee" rate={`${mgmtFeeRoomPercentage}%`} value={val_card9_FeeGrossRoom} isNegative />}
-                     <TableRow label="Management Fee - F&B" subLabel="Food & beverage management fee" rate={`${mgmtFeeFnbPercentage}%`} value={val_card9_FeeGrossFnb} isNegative />
-                     <TableRow label="Compliment Deductions" subLabel="POS complimentary items given to guests" value={pnlResult.posComplimentValue || 0} isNegative />
-                     <TableRow label="Net Profit (Recon Owner)" subLabel="Final owner reconciliation settlement" value={val_card12_ReconOwner} isTotal={true} />
-                  </tbody>
-                </table>
-              </div>
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr className={styles.tableHead}>
+                    <th>Revenue Center / Line Item</th>
+                    <th className={styles.thRight}>Amount (IDR)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!isStartup && (
+                    <StatementTableRow 
+                      label="Room Division" 
+                      subLabel="Accommodation & lodging earnings" 
+                      value={val_revRoom} 
+                    />
+                  )}
+                  <StatementTableRow 
+                    label="Food & Beverage (A la Carte)" 
+                    subLabel="Outlet restaurant, bar & room service" 
+                    value={val_revTotalFnb} 
+                  />
+                  <StatementTableRow 
+                    label="Banquet & Events" 
+                    subLabel="MICE events & corporate functions" 
+                    value={val_revBanquet} 
+                  />
+                  <StatementTableRow 
+                    label="Other Operated Depts (MOD)" 
+                    subLabel="Laundry, transport & miscellaneous" 
+                    value={val_card5_Other} 
+                  />
+                  {val_card2_NonComm > 0 && (
+                    <StatementTableRow 
+                      label="Sundry & Non-Operating" 
+                      subLabel="Concessions & commissions" 
+                      value={val_card2_NonComm} 
+                    />
+                  )}
+                  <StatementTableRow 
+                    label="Total Gross Revenue" 
+                    subLabel="Combined operating revenue" 
+                    value={val_card1_TotalRevenue} 
+                    isTotal={true} 
+                  />
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* SECTION 4: DISTRIBUTION */}
+          {/* STATEMENT II: EXPENSES */}
+          <div className={styles.statementCard}>
+            <div className={styles.statementHeader}>
+              <div className={`${styles.statementIconBox} ${styles.iconExpense}`}>
+                <Receipt size={16} />
+              </div>
+              <div className={styles.statementTitleCol}>
+                <h3 className={styles.statementTitle}>II. Operating Expenses</h3>
+                <p className={styles.statementSubtitle}>Departmental costs &amp; cost of sales</p>
+              </div>
+            </div>
+
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr className={styles.tableHead}>
+                    <th>Cost Center / Expense Item</th>
+                    <th className={styles.thRight}>Amount (IDR)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!isStartup && (
+                    <StatementTableRow 
+                      label="Housekeeping Division" 
+                      subLabel="Guest supplies, laundry & room linen" 
+                      value={val_expHousekeeping} 
+                      isNegative 
+                    />
+                  )}
+                  <StatementTableRow 
+                    label="Food & Beverage (A la Carte)" 
+                    subLabel="Kitchen, bar & beverage raw materials" 
+                    value={val_expAlacarte} 
+                    isNegative 
+                  />
+                  <StatementTableRow 
+                    label="Banquet & Catering Operations" 
+                    subLabel="Banquet event supplies & catering costs" 
+                    value={val_expBanquet} 
+                    isNegative 
+                  />
+                  <StatementTableRow 
+                    label="POMEC / Property Engineering" 
+                    subLabel="Maintenance, repairs & energy utilities" 
+                    value={val_expPomec} 
+                    isNegative 
+                  />
+                  <StatementTableRow 
+                    label="Administration & Operations" 
+                    subLabel="Purchasing, general office & admin" 
+                    value={val_expOperational} 
+                    isNegative 
+                  />
+                  {val_expPayroll > 0 && (
+                    <StatementTableRow 
+                      label="Payroll & Staffing" 
+                      subLabel="Staff wages & employee benefits" 
+                      value={val_expPayroll} 
+                      isNegative 
+                    />
+                  )}
+                  {val_compliments > 0 && (
+                    <StatementTableRow 
+                      label="Complimentary Allowances" 
+                      subLabel="POS & FO complimentary guest items" 
+                      value={val_compliments} 
+                      isNegative 
+                    />
+                  )}
+                  <StatementTableRow 
+                    label="Total Operating Expenses" 
+                    subLabel="Sum of all operational costs (Opex)" 
+                    value={val_card8_TotalExpenses} 
+                    isTotal={true} 
+                  />
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* STATEMENT III: GOP & OWNER RECONCILIATION */}
+          <div className={styles.statementCard}>
+            <div className={styles.statementHeader}>
+              <div className={`${styles.statementIconBox} ${styles.iconRecon}`}>
+                <Calculator size={16} />
+              </div>
+              <div className={styles.statementTitleCol}>
+                <h3 className={styles.statementTitle}>III. GOP &amp; Profit Flow</h3>
+                <p className={styles.statementSubtitle}>Operational margin to net owner profit</p>
+              </div>
+            </div>
+
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr className={styles.tableHead}>
+                    <th>Metric / Reconciliation Item</th>
+                    <th className={styles.thRight}>Amount (IDR)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <StatementTableRow 
+                    label="Total GOP" 
+                    subLabel="Gross Operating Profit (Gross Rev - Opex)" 
+                    value={val_card7_TotalGOP} 
+                    highlight 
+                  />
+                  <StatementTableRow 
+                    label="Value-Added Tax (VAT)" 
+                    subLabel="Output tax liability" 
+                    rate={`${vatPercentage}%`} 
+                    value={val_card11_VAT} 
+                    isNegative 
+                  />
+                  <StatementTableRow 
+                    label="Service Charge" 
+                    subLabel="Employee service allocation" 
+                    rate={`${serviceChargePercentage}%`} 
+                    value={val_summaryServiceCharge} 
+                    isNegative 
+                  />
+                  <StatementTableRow 
+                    label="Lost & Breakage Reserve" 
+                    subLabel="Property shrinkage buffer" 
+                    rate={`${lostBreakagePercentage}%`} 
+                    value={val_summaryLostBreakage} 
+                    isNegative 
+                  />
+                  {!isStartup && (
+                    <StatementTableRow 
+                      label="Management Fee - Room" 
+                      subLabel="Room management system fee" 
+                      rate={`${mgmtFeeRoomPercentage}%`} 
+                      value={val_card9_FeeGrossRoom} 
+                      isNegative 
+                    />
+                  )}
+                  <StatementTableRow 
+                    label="Management Fee - F&B" 
+                    subLabel="F&B management operations fee" 
+                    rate={`${mgmtFeeFnbPercentage}%`} 
+                    value={val_card9_FeeGrossFnb} 
+                    isNegative 
+                  />
+                  <StatementTableRow 
+                    label="Net Profit (Recon Owner)" 
+                    subLabel="Net distributable profit to property owner" 
+                    value={val_card12_ReconOwner} 
+                    isTotal={true} 
+                  />
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* ── SECTION 4: SHAREHOLDER DISTRIBUTION AUDIT ── */}
+        {calculatedInvestors.length > 0 && (
           <div className={styles.distCard}>
-            <SectionHeader icon={PieChart} title="IV. Distribution Audit" subtitle="Shareholder equity allocation" themeColor="blue" />
+            <div className={styles.statementHeader} style={{ marginBottom: 0 }}>
+              <div className={`${styles.statementIconBox} ${styles.iconRevenue}`}>
+                <PieChart size={16} />
+              </div>
+              <div className={styles.statementTitleCol}>
+                <h3 className={styles.statementTitle}>IV. Shareholder Equity Allocation</h3>
+                <p className={styles.statementSubtitle}>Pro-rata net profit distribution across ownership partners</p>
+              </div>
+            </div>
+
             <div className={styles.distGrid}>
               {calculatedInvestors.map((inv, i) => (
                 <div key={i} className={styles.investorCard}>
                   <div className={styles.investorHeader}>
-                    <div className={styles.shareBadge}>
-                      {inv.share}%
-                    </div>
-                    <span className={styles.investorMeta}>Equity Allocation</span>
+                    <span className={styles.shareBadge}>{inv.share}%</span>
+                    <span className={styles.investorMeta}>Equity Share</span>
                   </div>
                   <div>
                     <p className={styles.investorName}>{inv.name}</p>
-                    <p className={`${styles.investorAmount} ${styles.fontMonoJb}`}>
+                    <p className={styles.investorAmount}>
                       {formatIDR(inv.calculatedAmount)}
                     </p>
                   </div>
@@ -287,70 +435,77 @@ export default function FinancialBreakdown({
               ))}
             </div>
           </div>
+        )}
 
-          {/* SECTION 5: MGMT CASHFLOW */}
-          {mgmtShareData && (
-            <div className={styles.mgmtCard}>
-              <div className={styles.mgmtHeader}>
-                <div className={styles.mgmtHeaderLeft}>
-                  <div className={styles.mgmtHeaderIcon}><Wallet size={18}/></div>
-                  <div>
-                    <h3 className={styles.mgmtHeaderTitle}>Management Cash Flow</h3>
-                    <p className={styles.mgmtHeaderSubtitle}>Internal Audit</p>
-                  </div>
+        {/* ── SECTION 5: MANAGEMENT COMPANY CASH FLOW & SETTLEMENT ── */}
+        {mgmtShareData && (
+          <div className={styles.mgmtCard}>
+            <div className={styles.mgmtHeader}>
+              <div className={styles.headerTitleRow}>
+                <span className={styles.headerIcon}>
+                  <Wallet size={18} />
+                </span>
+                <div>
+                  <h3 className={styles.statementTitle}>Management Company Cash Flow &amp; Settlement</h3>
+                  <p className={styles.statementSubtitle}>Internal Operator Disbursable Reconciliation</p>
                 </div>
               </div>
-              
-              <div className={styles.mgmtBody}>
-                <div className={styles.mgmtStatsGrid}>
-                  <div className={styles.mgmtStatCol}>
-                    <p className={styles.mgmtStatMeta}>Gross Management Share</p>
-                    <p className={`${styles.mgmtStatVal} ${styles.fontMonoJb}`}>{formatIDR(mgmtShareAmount)}</p>
-                  </div>
-                  
-                  <div className={styles.mgmtStatCol}>
-                    <p className={styles.mgmtStatMeta}>Retained Earnings</p>
-                    <div className={styles.retainedActionBox}>
-                      <p className={`${styles.mgmtStatValNegative} ${styles.fontMonoJb}`}>-{formatIDR(retainedEarningsValue)}</p>
-                      <div className={styles.retainedInputWrap}>
-                        <input 
-                          type="number" 
-                          min="0" 
-                          max="100"
-                          onWheel={(e) => e.currentTarget.blur()}
-                          onKeyDown={(e) => {
-                            if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
-                              e.preventDefault();
-                            }
-                          }}
-                          value={retainedPercent}
-                          onChange={(e) => setRetainedPercent(Number(e.target.value))}
-                          className={styles.retainedInput}
-                        />
-                        <Percent size={8} className={styles.percentIcon}/>
-                      </div>
+              <span className={styles.badgeStandard}>
+                <ShieldCheck size={12} />
+                Internal Operator Audit
+              </span>
+            </div>
+            
+            <div className={styles.mgmtBody}>
+              <div className={styles.mgmtStatsGrid}>
+                <div className={styles.mgmtStatCol}>
+                  <p className={styles.mgmtStatMeta}>Gross Management Share</p>
+                  <p className={styles.mgmtStatVal}>{formatIDR(mgmtShareAmount)}</p>
+                </div>
+                
+                <div className={styles.mgmtStatCol}>
+                  <p className={styles.mgmtStatMeta}>Retained Earnings Reserve</p>
+                  <div className={styles.retainedActionBox}>
+                    <p className={styles.mgmtStatValNegative}>-{formatIDR(retainedEarningsValue)}</p>
+                    <div className={styles.retainedInputWrap}>
+                      <input 
+                        type="number" 
+                        min="0" 
+                        max="100"
+                        onWheel={(e) => e.currentTarget.blur()}
+                        onKeyDown={(e) => {
+                          if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
+                            e.preventDefault();
+                          }
+                        }}
+                        value={retainedPercent}
+                        onChange={(e) => setRetainedPercent(Number(e.target.value))}
+                        className={styles.retainedInput}
+                      />
+                      <Percent size={10} className={styles.percentIcon} />
                     </div>
-                  </div>
-                  
-                  <div className={styles.mgmtStatCol}>
-                    <p className={styles.mgmtStatMeta}>Operational Cost</p>
-                    <p className={`${styles.mgmtStatValNegative} ${styles.fontMonoJb}`}>-{formatIDR(mgmtExpensesTotal)}</p>
                   </div>
                 </div>
                 
-                <div className={styles.settlementCard}>
-                  <span className={styles.settlementMeta}>Net Cash Disbursement</span>
-                  <p className={`${styles.settlementAmount} ${styles.fontMonoJb}`}>{formatIDR(totalSisaManagement)}</p>
-                  <button className={styles.settlementBtn}>
-                    Process Settlement <ArrowRight size={14}/>
-                  </button>
+                <div className={styles.mgmtStatCol}>
+                  <p className={styles.mgmtStatMeta}>Operator Internal Cost</p>
+                  <p className={styles.mgmtStatValNegative}>-{formatIDR(mgmtExpensesTotal)}</p>
                 </div>
               </div>
+              
+              <div className={styles.settlementCard}>
+                <div className={styles.settlementInfo}>
+                  <span className={styles.settlementMeta}>Net Cash Disbursement to Operator</span>
+                  <p className={styles.settlementAmount}>{formatIDR(totalSisaManagement)}</p>
+                </div>
+                <button className={styles.settlementBtn}>
+                  Process Settlement <ArrowRight size={13} />
+                </button>
+              </div>
             </div>
-          )}
-
-        </div>{/* /innerTray */}
-      </div>{/* /outerCard */}
+          </div>
+        )}
+      </div>
     </motion.section>
   );
 }

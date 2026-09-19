@@ -24,11 +24,11 @@ export function CancelConfirmModal({ isOpen, itemName, onConfirm, onCancel }: Ca
                         className="delete-modal-card"
                     >
                         <h3 className="delete-modal-title">
-                            Cancel Booking
+                            Cancel Reservation
                         </h3>
                         <div className="delete-modal-desc">
                             <p>
-                                Apakah Anda yakin ingin membatalkan pemesanan ini? Tindakan ini akan melepaskan inventory kamar untuk <strong>{itemName}</strong>.
+                                Are you sure you want to cancel this reservation? Room inventory for <strong>{itemName}</strong> will be released and revenue will be excluded from the accounting ledger.
                             </p>
                         </div>
 
@@ -38,14 +38,14 @@ export function CancelConfirmModal({ isOpen, itemName, onConfirm, onCancel }: Ca
                                 className="delete-modal-btn-cancel"
                                 style={{ cursor: "pointer" }}
                             >
-                                Abort
+                                Dismiss
                             </button>
                             <button 
                                 onClick={onConfirm}
                                 className="delete-modal-btn-delete"
-                                style={{ backgroundColor: "#f59e0b", color: "#ffffff", cursor: "pointer" }}
+                                style={{ backgroundColor: "#d97706", color: "#ffffff", cursor: "pointer" }}
                             >
-                                Cancel Booking
+                                Cancel Reservation
                             </button>
                         </div>
                     </motion.div>

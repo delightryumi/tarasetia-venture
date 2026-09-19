@@ -9,8 +9,9 @@ import { useSuppliers } from '@/hooks/purchasing/useSuppliers';
 import { toast } from 'sonner';
 import { PButton } from '@/components/purchasing/ui/PButton';
 import { useAuth } from '@/context/AuthContext';
-import s from '../shared-page.module.css';
+import s from './PurchaseRequisition.module.css';
 import { pushCostToPnL, removeCostFromPnL } from '@/lib/purchasing/pnlHelper';
+import { formatRupiah } from '@/lib/purchasing/utils';
 
 // Subcomponents
 import PurchaseRequisitionTable from './components/PurchaseRequisitionTable';
@@ -44,19 +45,64 @@ export default function PurchaseRequisitionPage() {
 
   // Filters
   const [dateFilter, setDateFilter] = useState(() => getTodayStr());
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'received' | null>(null);
+  const [activeKpiFilter, setActiveKpiFilter] = useState<'all' | 'pending' | 'received' | 'value' | null>(null);
 
   // Delete modal states
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const filteredPrs = useMemo(() => {
-    return prs.filter(pr => {
+    let result = prs.filter(pr => {
+      if (statusFilter === 'pending' && !(pr.status === 'draft' || pr.status === 'submitted')) return false;
+      if (statusFilter === 'received' && !(pr.status === 'received' || pr.status === 'approved')) return false;
       if (!dateFilter) return true;
       const dateObj = pr.created_at?.toDate ? pr.created_at.toDate() : new Date(pr.created_at);
       const dateString = dateObj.toISOString().split('T')[0];
       return dateString === dateFilter;
     });
-  }, [prs, dateFilter]);
+
+    if (activeKpiFilter === 'value') {
+      result = [...result].sort((a, b) => (Number(b.total_estimated) || 0) - (Number(a.total_estimated) || 0));
+    }
+    return result;
+  }, [prs, dateFilter, statusFilter, activeKpiFilter]);
+
+  const handleKpiClick = (type: 'all' | 'pending' | 'received' | 'value') => {
+    if (activeKpiFilter === type) {
+      setActiveKpiFilter(null);
+      setStatusFilter(null);
+      setDateFilter(getTodayStr());
+      return;
+    }
+    setActiveKpiFilter(type);
+    if (type === 'all') {
+      setStatusFilter(null);
+      setDateFilter('');
+    } else if (type === 'pending') {
+      setStatusFilter('pending');
+      setDateFilter('');
+    } else if (type === 'received') {
+      setStatusFilter('received');
+      setDateFilter('');
+    } else if (type === 'value') {
+      setStatusFilter(null);
+      setDateFilter('');
+    }
+  };
+
+  const kpis = useMemo(() => {
+    const totalCount = prs.length;
+    const pendingCount = prs.filter(p => p.status === 'draft' || p.status === 'submitted').length;
+    const receivedCount = prs.filter(p => p.status === 'received').length;
+    const totalVal = prs.reduce((acc, p) => acc + (Number(p.total_estimated) || 0), 0);
+    return {
+      totalCount,
+      pendingCount,
+      receivedCount,
+      totalVal
+    };
+  }, [prs]);
 
   const handleOpenCreate = () => {
     setSelectedPrForForm(null);
@@ -166,10 +212,10 @@ export default function PurchaseRequisitionPage() {
           });
         }
       }
-      toast.success('Goods received. Inventory updated.');
+      toast.success('Goods received, catalog stock and last purchase price updated.');
       setSelectedPr(null);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to process goods receipt.');
+      toast.error(err.message || 'Failed to receive goods.');
     }
   };
 
@@ -203,9 +249,9 @@ export default function PurchaseRequisitionPage() {
         });
       }
       
-      toast.success('Tipe pembayaran item berhasil diperbarui');
+      toast.success('Payment status updated successfully.');
     } catch (e: any) {
-      toast.error(e.message || 'Gagal mengupdate tipe pembayaran');
+      toast.error(e.message || 'Failed to update payment status.');
     }
   };
 
@@ -213,34 +259,213 @@ export default function PurchaseRequisitionPage() {
     window.print();
   };
 
+  // FULL PAGE DOCUMENT VIEW (not a popup)
+  if (isFormOpen) {
+    return (
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" className={s.container}>
+        <PurchaseRequisitionForm 
+          isOpen={true}
+          onClose={() => setIsFormOpen(false)}
+          initialData={selectedPrForForm}
+          items={items}
+          suppliers={suppliers}
+          user={user}
+          onSave={handleSaveForm}
+        />
+      </motion.div>
+    );
+  }
+
   return (
-    <motion.div variants={fadeUp} initial="hidden" animate="visible">
+    <motion.div variants={fadeUp} initial="hidden" animate="visible" className={s.container}>
       {/* Screen Content Wrapper (hidden when printing) */}
       <div className={s.printHideRoot}>
-        {/* Header */}
-        <div className={s.header}>
-          <div>
-            <h1 className={s.title}>Purchase Requisitions</h1>
-            <p className={s.subtitle}>Manage external vendor orders, approvals, and goods receiving.</p>
+        {/* Header Card */}
+        <div className={s.headerCard}>
+          <div className={s.topRibbon}>
+            <div className={s.ribbonLeft}>
+              <span className={s.ribbonBadge}>PR</span>
+              <span className={s.ribbonDivider}>/</span>
+              <span className={s.ribbonTitle}>External Supplier Procurement</span>
+            </div>
+            <div className={s.statusLive}>
+              <span className={s.liveDot} />
+              Vendor Operations
+            </div>
           </div>
-          <PButton onClick={handleOpenCreate}>
-            <Plus size={16} strokeWidth={2} />
-            New PR
-          </PButton>
+
+          <div className={s.headerRow}>
+            <div className={s.titleArea}>
+              <div className={s.titleWithBadge}>
+                <h1 className={s.title}>Purchase Requisitions</h1>
+                <span className={s.titleBadge}>Supplier Orders</span>
+              </div>
+              <p className={s.subtitle}>
+                Manage external vendor orders, financial approvals, receiving inspections, and warehouse intake.
+              </p>
+            </div>
+            <div className={s.headerActions}>
+              <button type="button" className={s.actionCtaBtn} onClick={handleOpenCreate}>
+                <Plus size={16} strokeWidth={2.5} />
+                <span>New Purchase Requisition</span>
+              </button>
+            </div>
+          </div>
+
+          {/* KPI Summary Cards - Clickable Filters */}
+          <div className={s.kpiGrid}>
+            <div 
+              role="button"
+              tabIndex={0}
+              className={`${s.kpiCard} ${activeKpiFilter === 'all' ? s.kpiCardActive : ''}`}
+              onClick={() => handleKpiClick('all')}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleKpiClick('all'); }}
+              title="Klik untuk tampilkan semua request tanpa batas tanggal"
+            >
+              <div className={s.kpiHeader}>
+                <span className={s.kpiLabel}>Total Requisitions</span>
+                {activeKpiFilter === 'all' ? (
+                  <span className={s.kpiActiveTag}>● Active</span>
+                ) : (
+                  <span className={s.kpiIcon}>📦</span>
+                )}
+              </div>
+              <div className={s.kpiValueRow}>
+                <span className={s.kpiValue}>{kpis.totalCount}</span>
+                <span className={s.kpiSub}>Registered vendor orders</span>
+              </div>
+            </div>
+
+            <div 
+              role="button"
+              tabIndex={0}
+              className={`${s.kpiCard} ${activeKpiFilter === 'pending' ? s.kpiCardActive : ''}`}
+              onClick={() => handleKpiClick('pending')}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleKpiClick('pending'); }}
+              title="Klik untuk filter PR yang menunggu persetujuan / verifikasi"
+            >
+              <div className={s.kpiHeader}>
+                <span className={s.kpiLabel}>Pending Approval</span>
+                {activeKpiFilter === 'pending' ? (
+                  <span className={s.kpiActiveTag}>● Active</span>
+                ) : (
+                  <span className={s.kpiIcon}>⏳</span>
+                )}
+              </div>
+              <div className={s.kpiValueRow}>
+                <span className={s.kpiValue} style={{ color: '#d97706' }}>{kpis.pendingCount}</span>
+                <span className={s.kpiSub}>Awaiting financial sign-off</span>
+              </div>
+            </div>
+
+            <div 
+              role="button"
+              tabIndex={0}
+              className={`${s.kpiCard} ${activeKpiFilter === 'received' ? s.kpiCardActive : ''}`}
+              onClick={() => handleKpiClick('received')}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleKpiClick('received'); }}
+              title="Klik untuk filter PR yang barangnya sudah diterima"
+            >
+              <div className={s.kpiHeader}>
+                <span className={s.kpiLabel}>Goods Received</span>
+                {activeKpiFilter === 'received' ? (
+                  <span className={s.kpiActiveTag}>● Active</span>
+                ) : (
+                  <span className={s.kpiIcon}>📥</span>
+                )}
+              </div>
+              <div className={s.kpiValueRow}>
+                <span className={s.kpiValue} style={{ color: '#1e4d3a' }}>{kpis.receivedCount}</span>
+                <span className={s.kpiSub}>Stock accepted & catalogued</span>
+              </div>
+            </div>
+
+            <div 
+              role="button"
+              tabIndex={0}
+              className={`${s.kpiCard} ${activeKpiFilter === 'value' ? s.kpiCardActive : ''}`}
+              onClick={() => handleKpiClick('value')}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleKpiClick('value'); }}
+              title="Klik untuk mengurutkan PR berdasarkan nilai estimasi pengadaan tertinggi"
+            >
+              <div className={s.kpiHeader}>
+                <span className={s.kpiLabel}>Procurement Value</span>
+                {activeKpiFilter === 'value' ? (
+                  <span className={s.kpiActiveTag}>● Sorted</span>
+                ) : (
+                  <span className={s.kpiIcon}>💰</span>
+                )}
+              </div>
+              <div className={s.kpiValueRow}>
+                <span className={s.kpiValue} style={{ fontSize: '18px' }}>{formatRupiah(kpis.totalVal)}</span>
+                <span className={s.kpiSub}>Total estimated commitment</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Filter Bar */}
         <div className={s.filterBar}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--p-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Requisition Date</span>
-            <input type="date" className={s.filterSelect} value={dateFilter} onChange={e => setDateFilter(e.target.value)} />
+          <div className={s.filterGroup}>
+            <span className={s.filterLabel}>Requisition Date</span>
+            <input 
+              type="date" 
+              className={s.filterInput} 
+              value={dateFilter} 
+              onChange={e => {
+                setDateFilter(e.target.value);
+                setActiveKpiFilter(null);
+              }} 
+            />
+          </div>
+          <div className={s.filterActions}>
+            <button 
+              type="button" 
+              className={s.filterTodayBtn}
+              onClick={() => {
+                setDateFilter(getTodayStr());
+                setActiveKpiFilter(null);
+              }}
+            >
+              Today
+            </button>
             {dateFilter && (
-              <PButton variant="secondary" onClick={() => setDateFilter('')} style={{ padding: '0 12px', height: 40, fontSize: 13 }}>
+              <button 
+                type="button" 
+                className={s.filterClearBtn}
+                onClick={() => setDateFilter('')}
+              >
                 Clear Filter
-              </PButton>
+              </button>
             )}
           </div>
         </div>
+
+        {/* Active Filter Banner */}
+        {activeKpiFilter && (
+          <div className={s.activeFilterBanner}>
+            <div className={s.activeFilterText}>
+              <span>⚡ Filter Aktif:</span>
+              <strong>
+                {activeKpiFilter === 'all' && `Menampilkan Seluruh Requisition (${filteredPrs.length} records)`}
+                {activeKpiFilter === 'pending' && `Status: Menunggu Persetujuan (${filteredPrs.length} records)`}
+                {activeKpiFilter === 'received' && `Status: Barang Diterima / Approved (${filteredPrs.length} records)`}
+                {activeKpiFilter === 'value' && `Urutan: Nilai Estimasi Tertinggi (${filteredPrs.length} records)`}
+              </strong>
+            </div>
+            <button 
+              type="button" 
+              className={s.activeFilterResetBtn}
+              onClick={() => {
+                setActiveKpiFilter(null);
+                setStatusFilter(null);
+                setDateFilter(getTodayStr());
+              }}
+            >
+              Reset Filter
+            </button>
+          </div>
+        )}
 
         {/* Table & Detail */}
         <div className={s.twoPanel}>
@@ -264,17 +489,6 @@ export default function PurchaseRequisitionPage() {
             onUpdatePaymentStatus={handleUpdatePaymentStatus}
           />
         </div>
-
-        {/* Slider Form */}
-        <PurchaseRequisitionForm 
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          initialData={selectedPrForForm}
-          items={items}
-          suppliers={suppliers}
-          user={user}
-          onSave={handleSaveForm}
-        />
 
         {/* Delete Confirmation Modal */}
         <DeleteConfirmModal 

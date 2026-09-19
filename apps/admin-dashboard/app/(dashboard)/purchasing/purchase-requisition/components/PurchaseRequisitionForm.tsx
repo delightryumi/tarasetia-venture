@@ -1,23 +1,24 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, ArrowLeft, User, Calendar } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckCircle2, FileSpreadsheet, ShoppingBag, CreditCard, Plus, Trash2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PButton } from '@/components/purchasing/ui/PButton';
 import SearchableSelect from '@/components/purchasing/ui/SearchableSelect';
 import { formatRupiah } from '@/lib/purchasing/utils';
 import { toast } from 'sonner';
-import s from '../../shared-page.module.css';
+import s from '../../RequisitionFormModal.module.css';
 
-const DEPARTMENTS = ["Food & Beverage", "Front Office", "Housekeeping", "Accounting", "Purchasing", "POMEC"];
+const DEPARTMENTS = [
+  { name: "Food & Beverage", code: "500" },
+  { name: "Front Office", code: "400" },
+  { name: "Housekeeping", code: "450" },
+  { name: "POMEC", code: "600" },
+  { name: "Accounting", code: "700" },
+  { name: "Purchasing", code: "750" },
+];
+
 const FB_CATEGORIES = ["Food", "Beverage"];
 const EVENT_CATEGORIES = ["A la Carte", "Banquet"];
-
-const slideInFull = {
-  hidden: { x: '100%' },
-  visible: { x: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as any } },
-  exit: { x: '100%', transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as any } },
-};
 
 function getTodayStr() {
   const d = new Date();
@@ -46,7 +47,7 @@ export default function PurchaseRequisitionForm({
   const [orderDate, setOrderDate] = useState(getTodayStr());
   const [deliveryDate, setDeliveryDate] = useState('');
   const [notes, setNotes] = useState('');
-  const [department, setDepartment] = useState(DEPARTMENTS[0]);
+  const [department, setDepartment] = useState(DEPARTMENTS[0].name);
   const [fbCategory, setFbCategory] = useState(FB_CATEGORIES[0]);
   const [eventCategory, setEventCategory] = useState(EVENT_CATEGORIES[0]);
   const [paymentStatus, setPaymentStatus] = useState<'paid' | 'tempo'>('paid');
@@ -60,7 +61,7 @@ export default function PurchaseRequisitionForm({
         ? initialData.delivery_date.toDate().toISOString().split('T')[0]
         : (initialData.delivery_date ? new Date(initialData.delivery_date).toISOString().split('T')[0] : '');
       setDeliveryDate(formattedDate);
-      setDepartment(initialData.department || DEPARTMENTS[0]);
+      setDepartment(initialData.department || DEPARTMENTS[0].name);
       setPaymentStatus(initialData.paymentStatus || 'paid');
       
       const loadedFbCat = initialData.fb_category || FB_CATEGORIES[0];
@@ -77,14 +78,14 @@ export default function PurchaseRequisitionForm({
         return {
           item_id: foundItem?.id || i.item_id || '',
           qty: i.qty,
-          estimated_price: i.estimated_price,
-          supplier_id: foundSupplier?.id || i.supplier_id || ''
+          estimated_price: i.estimated_price || foundItem?.last_purchase_price || 0,
+          supplier_id: foundSupplier?.id || i.supplier_id || foundItem?.default_supplier_id || ''
         };
       }));
     } else {
       setOrderDate(getTodayStr());
       setDeliveryDate('');
-      setDepartment(DEPARTMENTS[0]);
+      setDepartment(DEPARTMENTS[0].name);
       setFbCategory(FB_CATEGORIES[0]);
       setEventCategory(EVENT_CATEGORIES[0]);
       setPaymentStatus('paid');
@@ -96,38 +97,39 @@ export default function PurchaseRequisitionForm({
   const handleSave = async (targetStatus: 'draft' | 'submitted') => {
     const invalid = prItems.some(i => !i.item_id || i.qty <= 0 || !i.supplier_id);
     if (invalid) {
-      toast.error('Please select item, quantity, and supplier for all rows.');
+      toast.error('Pastikan setiap baris barang memiliki barang, jumlah (>0), dan supplier yang valid.');
       return;
     }
 
     const payloadItems = prItems.map(pi => {
       const orig = items.find(i => i.id === pi.item_id)!;
-      const sup = suppliers.find(s => s.id === pi.supplier_id)!;
-      return { 
-        item_id: pi.item_id, 
-        name: orig.name, 
-        unit: orig.unit, 
-        qty: Number(pi.qty), 
-        estimated_price: Number(pi.estimated_price), 
-        actual_price: 0, 
-        supplier_id: pi.supplier_id, 
-        supplier_name: sup?.name || '' 
+      const sup = suppliers.find(s => s.id === pi.supplier_id);
+      const estPrice = Number(pi.estimated_price || 0);
+      return {
+        item_id: pi.item_id,
+        name: orig?.name || 'Item',
+        unit: orig?.unit || 'pcs',
+        qty: Number(pi.qty),
+        estimated_price: estPrice,
+        total_estimated: Number(pi.qty) * estPrice,
+        supplier_id: pi.supplier_id,
+        supplier_name: sup?.name || ''
       };
     });
 
-    const totalEst = payloadItems.reduce((a, i) => a + i.qty * i.estimated_price, 0);
-    const extraData = { 
-      department, 
-      fb_category: department === 'Food & Beverage' ? fbCategory : null, 
-      event_category: department === 'Food & Beverage' ? eventCategory : null 
+    const totalEstimated = payloadItems.reduce((a, i) => a + (i.total_estimated || 0), 0);
+    const extraData = {
+      department,
+      fb_category: department === 'Food & Beverage' ? fbCategory : null,
+      event_category: department === 'Food & Beverage' ? eventCategory : null
     };
 
     const finalData = {
-      items: payloadItems,
-      total_estimated: totalEst,
-      delivery_date: deliveryDate ? new Date(deliveryDate) : null,
       notes,
+      items: payloadItems,
+      total_estimated: totalEstimated,
       order_date: orderDate,
+      delivery_date: deliveryDate ? new Date(deliveryDate) : null,
       paymentStatus,
       ...extraData
     };
@@ -135,202 +137,376 @@ export default function PurchaseRequisitionForm({
     await onSave(targetStatus, finalData);
   };
 
+  const handleRemoveRow = (idx: number) => setPrItems(r => r.filter((_, i) => i !== idx));
+
+  const handleItemChange = (idx: number, field: string, value: any) => {
+    setPrItems(r => r.map((row, i) => {
+      if (i === idx) {
+        if (field === 'item_id') {
+          const found = items.find(it => it.id === value);
+          return {
+            ...row,
+            item_id: value,
+            estimated_price: found?.last_purchase_price || 0,
+            supplier_id: found?.default_supplier_id || row.supplier_id
+          };
+        }
+        return { ...row, [field]: value };
+      }
+      return row;
+    }));
+  };
+
+  const totalCalculatedCost = prItems.reduce((acc, curr) => acc + (curr.qty * curr.estimated_price), 0);
+
+  if (!isOpen) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            className={s.createSliderBackdrop}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
-          <motion.div
-            className={s.createSlider}
-            variants={slideInFull}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-          >
-            {/* Header */}
-            <div className={s.createSliderHeader}>
-              <button className={s.createSliderBackBtn} onClick={onClose}>
-                <ArrowLeft size={18} />
-              </button>
-              <div className={s.createSliderHeaderInfo}>
-                <h2 className={s.createSliderTitle}>{initialData ? 'Edit Purchase Requisition' : 'New Purchase Requisition'}</h2>
-                <p className={s.createSliderSubtitle}>Submit an external vendor order request for approval and procurement.</p>
+    <div className={s.pageWrapper}>
+      {/* Top ERP Breadcrumb & Navigation Bar */}
+      <div className={s.navBar}>
+        <button type="button" className={s.backBtn} onClick={onClose}>
+          <ArrowLeft size={16} />
+          <span>Kembali ke Jurnal Purchase Requisition</span>
+        </button>
+        <div className={s.navBreadcrumb}>
+          <span>Purchasing</span>
+          <span className={s.navBreadcrumbDivider}>/</span>
+          <span>Purchase Requisitions</span>
+          <span className={s.navBreadcrumbDivider}>/</span>
+          <span className={s.navBreadcrumbActive}>
+            {initialData ? `Edit PR #${initialData.pr_number || initialData.id?.slice(0,8)}` : 'New Purchase Order Requisition'}
+          </span>
+        </div>
+      </div>
+
+      {/* Main Full-Page ERP Document */}
+      <div className={s.documentCard}>
+        {/* Enterprise Header */}
+        <div className={s.docHeader}>
+          <div className={s.headerLeft}>
+            <div className={s.docIconBox}>
+              <ShoppingBag size={22} />
+            </div>
+            <div className={s.headerTitleGroup}>
+              <div className={s.headerTopMeta}>
+                <span className={s.docCodeBadge}>FORM PR-01</span>
+                <span className={s.docTypeSubtitle}>External Vendor Procurement Voucher</span>
               </div>
+              <h1 className={s.docTitle}>
+                {initialData ? 'Edit Purchase Requisition Order' : 'Form Purchase Requisition Baru'}
+                <span className={s.hotelBadge}>Vendor Procurement & AP</span>
+              </h1>
+            </div>
+          </div>
+
+          <div className={s.headerRight}>
+            <span className={s.statusIndicator}>
+              {initialData?.status ? String(initialData.status).toUpperCase() : 'NEW ORDER'}
+            </span>
+          </div>
+        </div>
+
+        {/* Document Body */}
+        <div className={s.docBody}>
+          {/* Section 1: Department Cost Allocation & Payment Terms */}
+          <div className={s.formSection}>
+            <div className={s.sectionHeader}>
+              <div className={s.sectionTitleGroup}>
+                <span className={s.sectionStep}>1</span>
+                <span className={s.sectionTitle}>Cost Center Allocation & Settlement Terms</span>
+              </div>
+              <span className={s.sectionNote}>Pusat Beban Biaya & Metode Pembayaran Supplier</span>
             </div>
 
-            {/* Body */}
-            <div className={s.createSliderBody}>
-              {/* Meta Info Bar */}
-              <div className={s.metaInfoBar}>
-                <div className={s.metaInfoItem}>
-                  <span className={s.metaInfoLabel}><User size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Requested By</span>
-                  <span className={s.metaInfoValue}>{initialData ? (initialData.requested_by_name || initialData.requested_by || user?.displayName || (user as any)?.name || user?.email) : (user?.displayName || (user as any)?.name || user?.email || 'Purchasing')}</span>
-                </div>
-                <div className={s.metaInfoItem}>
-                  <span className={s.metaInfoLabel}>Account / UID</span>
-                  <span className={s.metaInfoValue} style={{ fontSize: 12, color: 'var(--p-muted)' }}>{user?.email || user?.uid || '—'}</span>
-                </div>
-                <div className={s.metaInfoItem}>
-                  <span className={s.metaInfoLabel}>Role</span>
-                  <span className={s.metaInfoValue}>{(user as any)?.role || 'Staff'}</span>
-                </div>
+            {/* Department Grid */}
+            <div className={s.fieldItem}>
+              <label className={s.fieldLabel}>Requesting Department (Cost Center)</label>
+              <div className={s.deptSelectorGrid}>
+                {DEPARTMENTS.map(dep => (
+                  <button
+                    type="button"
+                    key={dep.name}
+                    className={`${s.deptBtn} ${department === dep.name ? s.deptBtnActive : ''}`}
+                    onClick={() => setDepartment(dep.name)}
+                  >
+                    <span className={s.deptCode}>DEPT {dep.code}</span>
+                    <span className={s.deptName}>{dep.name}</span>
+                  </button>
+                ))}
               </div>
 
-              {/* Date Inputs */}
-              <div className={s.dateInputsGrid}>
-                <div className={s.formField}>
-                  <label className={s.formLabel}><Calendar size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Order Date (Tanggal Order)</label>
-                  <input className={s.formInput} type="date" value={orderDate} onChange={e => setOrderDate(e.target.value)} required />
-                </div>
-                <div className={s.formField}>
-                  <label className={s.formLabel}><Calendar size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Target Delivery Date (Tanggal Datang)</label>
-                  <input className={s.formInput} type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} required />
-                </div>
-              </div>
-
-              {/* Department Selection */}
-              <div className={s.formField} style={{ marginBottom: 24 }}>
-                <label className={s.formLabel}>Department (Cost Allocation)</label>
-                <div className={s.chipGroup}>
-                  {DEPARTMENTS.map(dep => (
-                    <button type="button" key={dep} className={`${s.chip} ${department === dep ? s.chipActive : ''}`} onClick={() => setDepartment(dep)}>{dep}</button>
-                  ))}
-                </div>
-                {department === 'Food & Beverage' && (
-                  <div style={{ marginTop: 12, paddingLeft: 12, borderLeft: '2px solid var(--p-hairline)' }}>
-                    <label className={s.formLabel} style={{ fontSize: 11, color: 'var(--p-muted)' }}>F&B Category</label>
-                    <div className={s.chipGroup}>
-                      {FB_CATEGORIES.map(cat => (
-                        <button
-                          type="button"
-                          key={cat}
-                          className={`${s.chip} ${fbCategory === cat ? s.chipActive : ''}`}
-                          onClick={() => {
-                            setFbCategory(cat);
-                            if (cat === 'Beverage') {
-                              setEventCategory('A la Carte');
-                            }
-                          }}
-                          style={{ padding: '4px 12px', fontSize: 12 }}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-                    <label className={s.formLabel} style={{ fontSize: 11, color: 'var(--p-muted)', marginTop: 8 }}>Service Type</label>
-                    <div className={s.chipGroup}>
-                      {EVENT_CATEGORIES.filter(cat => !(fbCategory === 'Beverage' && cat === 'Banquet')).map(cat => (
-                        <button type="button" key={cat} className={`${s.chip} ${eventCategory === cat ? s.chipActive : ''}`} onClick={() => setEventCategory(cat)} style={{ padding: '4px 12px', fontSize: 12 }}>{cat}</button>
-                      ))}
-                    </div>
+              {/* F&B Sub-allocation */}
+              {department === 'Food & Beverage' && (
+                <div className={s.subAllocationBar}>
+                  <div className={s.subAllocationGroup}>
+                    <span className={s.subAllocationLabel}>Sub Category:</span>
+                    {FB_CATEGORIES.map(cat => (
+                      <button
+                        type="button"
+                        key={cat}
+                        className={`${s.pillBtn} ${fbCategory === cat ? s.pillBtnActive : ''}`}
+                        onClick={() => {
+                          setFbCategory(cat);
+                          if (cat === 'Beverage') setEventCategory('A la Carte');
+                        }}
+                      >
+                        {cat === 'Food' ? '5010 - Food Cost' : '5020 - Beverage Cost'}
+                      </button>
+                    ))}
                   </div>
-                )}
+
+                  <div className={s.subAllocationGroup} style={{ marginLeft: 16 }}>
+                    <span className={s.subAllocationLabel}>Outlet / Service:</span>
+                    {EVENT_CATEGORIES.filter(cat => !(fbCategory === 'Beverage' && cat === 'Banquet')).map(cat => (
+                      <button
+                        type="button"
+                        key={cat}
+                        className={`${s.pillBtn} ${eventCategory === cat ? s.pillBtnActive : ''}`}
+                        onClick={() => setEventCategory(cat)}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+                {/* Dates & Settlement Row */}
+                <div className={s.fieldGrid3}>
+                  <div className={s.fieldItem}>
+                    <label className={s.fieldLabel}>
+                      <Calendar size={12} />
+                      PR Order Date (Tanggal Pengajuan)
+                    </label>
+                    <input 
+                      className={`${s.fieldInput} ${s.fieldInputMono}`}
+                      type="date" 
+                      value={orderDate} 
+                      onChange={e => setOrderDate(e.target.value)} 
+                      required 
+                    />
+                  </div>
+
+                  <div className={s.fieldItem}>
+                    <label className={s.fieldLabel}>
+                      <Calendar size={12} />
+                      Required Delivery Date (Target Terima)
+                    </label>
+                    <input 
+                      className={`${s.fieldInput} ${s.fieldInputMono}`}
+                      type="date" 
+                      value={deliveryDate} 
+                      onChange={e => setDeliveryDate(e.target.value)} 
+                    />
+                  </div>
+
+                  <div className={s.fieldItem}>
+                    <label className={s.fieldLabel}>
+                      <CreditCard size={12} />
+                      Settlement Terms (Pembayaran)
+                    </label>
+                    <select 
+                      className={s.fieldSelect}
+                      value={paymentStatus} 
+                      onChange={(e: any) => setPaymentStatus(e.target.value)}
+                    >
+                      <option value="paid">💵 Tunai / Langsung Lunas (Cash/Bank Transfer)</option>
+                      <option value="tempo">📄 Tempo / Kredit Supplier (Accounts Payable 30-60d)</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
-              {/* Item Rows */}
-              <div className={s.itemRowsHeader}>
-                <span className={s.itemRowsLabel}>Procurement Lines</span>
-              </div>
-              
-              <div style={{ marginBottom: 16 }}>
-                <SearchableSelect 
-                  items={items.filter(it => (it.procurement_module || 'SR') === 'PR' && !prItems.find(pi => pi.item_id === it.id))}
-                  value=""
-                  placeholder="Search and select an item to add to the list..."
-                  onChange={(val: string) => {
-                    const foundItem = items.find(it => it.id === val);
-                    if (foundItem) {
-                      setPrItems(r => [...r, { item_id: val, qty: 1, estimated_price: foundItem.last_purchase_price || 0, supplier_id: foundItem.default_supplier_id || '' }]);
-                    }
-                  }}
-                  showStock={false}
-                />
-              </div>
+              {/* Section 2: PR Line Items */}
+              <div className={s.formSection}>
+                <div className={s.sectionHeader}>
+                  <div className={s.sectionTitleGroup}>
+                    <span className={s.sectionStep}>2</span>
+                    <span className={s.sectionTitle}>Procurement Item Lines & Supplier Assignment</span>
+                  </div>
+                  <span className={s.sectionNote}>Penetapan Supplier & Estimasi Harga</span>
+                </div>
 
-              <table className={s.excelTable}>
-                <thead>
-                  <tr>
-                    <th>Nama Barang</th>
-                    <th>Jumlah</th>
-                    <th>Unit</th>
-                    <th>Supplier</th>
-                    <th className={s.excelThRight}>Harga Satuan</th>
-                    <th className={s.excelThRight}>Total</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {prItems.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--p-muted)', fontSize: 13 }}>
-                        No items added yet. Search above to add items.
-                      </td>
-                    </tr>
-                  ) : (() => {
-                    const enriched = prItems.map((pi, idx) => ({ ...pi, _idx: idx, _item: items.find(i => i.id === pi.item_id) }));
-                    const grouped: Record<string, typeof enriched> = {};
-                    enriched.forEach(e => { const cat = e._item?.category || 'Uncategorized'; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(e); });
-                    const sortedCats = Object.keys(grouped).sort();
-                    return sortedCats.flatMap(cat => [
-                      <tr key={`cat-${cat}`} className={s.categoryHeaderRow}>
-                        <td colSpan={7} className={s.categoryHeaderCell}>{cat}</td>
-                      </tr>,
-                      ...grouped[cat].map(e => (
-                        <tr key={e._idx}>
-                          <td style={{ minWidth: 200, paddingLeft: 24 }}>
-                            <div style={{ fontWeight: 500, color: 'var(--p-ink)' }}>{e._item?.name}</div>
-                          </td>
-                          <td style={{ width: 80 }}>
-                            <input className={s.formInput} type="number" min={0} step="any" value={e.qty} onChange={ev => setPrItems(r => r.map((row, i) => i === e._idx ? { ...row, qty: Number(ev.target.value) } : row))} required />
-                          </td>
-                          <td className={s.excelTdCenter} style={{ width: 60, color: 'var(--p-muted)', fontSize: 12 }}>{e._item?.unit || '—'}</td>
-                          <td style={{ width: 140, fontSize: 13, color: 'var(--p-ink)', verticalAlign: 'middle' }}>
-                            {suppliers.find(sup => sup.id === e.supplier_id)?.name || e._item?.default_supplier_name || 'No Supplier'}
-                          </td>
-                          <td style={{ width: 140 }}>
-                            <input className={s.formInput} type="text" readOnly value={formatRupiah(e.estimated_price)} style={{ backgroundColor: 'var(--p-surface-soft)', color: 'var(--p-muted)' }} />
-                          </td>
-                          <td className={s.excelTdRight} style={{ width: 120 }}>
-                            {formatRupiah((e.qty || 0) * (e.estimated_price || 0))}
-                          </td>
-                          <td className={s.excelNoCol}>
-                            <button type="button" className={s.removeBtn} onClick={() => setPrItems(r => r.filter((_, i) => i !== e._idx))}><X size={14} /></button>
+                <div className={s.searchToolbar}>
+                  <SearchableSelect 
+                    items={items.filter(it => (it.procurement_module || 'PR') === 'PR' && !prItems.find(pi => pi.item_id === it.id))}
+                    value=""
+                    placeholder="🔍 Cari barang katalog pengadaan luar atau masukkan SKU..."
+                    onChange={(val: string) => {
+                      const foundItem = items.find(it => it.id === val);
+                      if (foundItem) {
+                        setPrItems(r => [...r, { 
+                          item_id: val, 
+                          qty: 1, 
+                          estimated_price: foundItem.last_purchase_price || 0, 
+                          supplier_id: foundItem.default_supplier_id || (suppliers[0]?.id || '') 
+                        }]);
+                      }
+                    }}
+                    showStock={false}
+                  />
+                </div>
+
+                <div className={s.itemTableWrapper}>
+                  <table className={s.itemTable}>
+                    <thead>
+                      <tr>
+                        <th style={{ width: 40, textAlign: 'center' }}>#</th>
+                        <th>Item Description</th>
+                        <th style={{ width: 80, textAlign: 'center' }}>Unit</th>
+                        <th style={{ minWidth: 160 }}>Assigned Supplier</th>
+                        <th style={{ width: 95, textAlign: 'right' }}>Order Qty</th>
+                        <th style={{ width: 130, textAlign: 'right' }}>Est. Unit Price</th>
+                        <th style={{ width: 130, textAlign: 'right' }}>Line Total</th>
+                        <th style={{ width: 44, textAlign: 'center' }}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {prItems.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} style={{ textAlign: 'center', padding: '36px 16px', color: '#94a3b8' }}>
+                            <FileSpreadsheet size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+                            <div style={{ fontWeight: 600, fontSize: 13, color: '#64748b' }}>Belum ada item pembelian</div>
+                            <div style={{ fontSize: 12 }}>Pilih barang di atas untuk menambahkan baris pengadaan dan supplier.</div>
                           </td>
                         </tr>
-                      ))
-                    ]);
-                  })()}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colSpan={5} style={{ textAlign: 'right' }}>Total Estimated Cost:</td>
-                    <td className={s.excelTdRight}>{formatRupiah(prItems.reduce((acc, curr) => acc + (curr.qty * curr.estimated_price), 0))}</td>
-                    <td></td>
-                  </tr>
-                </tfoot>
-              </table>
+                      ) : (() => {
+                        const enriched = prItems.map((pi, idx) => ({ ...pi, _idx: idx, _item: items.find(i => i.id === pi.item_id) }));
+                        const grouped: Record<string, typeof enriched> = {};
+                        enriched.forEach(e => { const cat = e._item?.category || 'General Procurement'; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(e); });
+                        const sortedCats = Object.keys(grouped).sort();
+                        
+                        let counter = 1;
+                        return sortedCats.flatMap(cat => [
+                          <tr key={`cat-${cat}`} className={s.rowCategoryHeader}>
+                            <td colSpan={8} className={s.categoryCell}>
+                              📦 {cat}
+                            </td>
+                          </tr>,
+                          ...grouped[cat].map(e => (
+                            <tr key={e._idx}>
+                              <td style={{ textAlign: 'center', color: '#94a3b8', fontFamily: 'monospace' }}>
+                                {counter++}
+                              </td>
+                              <td>
+                                <div className={s.itemNameCell}>{e._item?.name}</div>
+                                <div style={{ fontSize: 11, color: '#94a3b8' }}>SKU: {e._item?.sku || 'PR-ITEM'}</div>
+                              </td>
+                              <td style={{ textAlign: 'center', color: '#64748b', fontWeight: 600 }}>
+                                {e._item?.unit || 'pcs'}
+                              </td>
+                              <td>
+                                <select 
+                                  className={s.fieldSelect} 
+                                  style={{ height: 32, fontSize: 12, padding: '0 8px' }}
+                                  value={e.supplier_id} 
+                                  onChange={ev => handleItemChange(e._idx, 'supplier_id', ev.target.value)}
+                                  required
+                                >
+                                  <option value="">-- Pilih Supplier Resmi --</option>
+                                  {suppliers.map(sup => (
+                                    <option key={sup.id} value={sup.id}>{sup.name}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td style={{ textAlign: 'right' }}>
+                                <input 
+                                  className={s.tableInputNumber} 
+                                  type="number" 
+                                  min={0.1} 
+                                  step="any" 
+                                  value={e.qty} 
+                                  onChange={ev => handleItemChange(e._idx, 'qty', Number(ev.target.value))} 
+                                  required 
+                                />
+                              </td>
+                              <td style={{ textAlign: 'right' }}>
+                                <input 
+                                  className={s.tableInputNumber} 
+                                  style={{ width: 110 }}
+                                  type="number" 
+                                  min={0} 
+                                  step="any" 
+                                  value={e.estimated_price} 
+                                  onChange={ev => handleItemChange(e._idx, 'estimated_price', Number(ev.target.value))} 
+                                  required 
+                                />
+                              </td>
+                              <td className={s.tableTotalCell}>
+                                {formatRupiah((e.qty || 0) * (e.estimated_price || 0))}
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <button 
+                                  type="button" 
+                                  className={s.removeRowBtn} 
+                                  onClick={() => handleRemoveRow(e._idx)}
+                                  title="Hapus baris"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ]);
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
 
-              <div className={s.formField} style={{ marginBottom: 0 }}>
-                <label className={s.formLabel}>Purchase Order Memo</label>
-                <textarea className={s.formTextarea} placeholder="Instructions, delivery notes, brand preferences…" value={notes} onChange={e => setNotes(e.target.value)} />
+                {/* Financial Summary Box */}
+                <div className={s.summaryFooterBox}>
+                  <div className={s.summaryLeft}>
+                    <span className={s.summaryCount}>{prItems.length} Purchase Requisition Lines</span>
+                    <span className={s.summaryAllocation}>
+                      Payment Terms: <strong>{paymentStatus === 'paid' ? 'Cash / Transfer' : 'Tempo (AP Vendor Credit)'}</strong> &bull; Charged To: <strong>{department}</strong>
+                    </span>
+                  </div>
+                  <div className={s.summaryRight}>
+                    <span className={s.summaryTotalLabel}>Total Estimated Order:</span>
+                    <span className={s.summaryTotalValue}>{formatRupiah(totalCalculatedCost)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Justification & Purchase Purpose */}
+              <div className={s.formSection}>
+                <div className={s.sectionHeader}>
+                  <div className={s.sectionTitleGroup}>
+                    <span className={s.sectionStep}>3</span>
+                    <span className={s.sectionTitle}>Procurement Justification & Delivery Notes</span>
+                  </div>
+                  <span className={s.sectionNote}>Alasan Pembelian & Catatan Khusus Vendor</span>
+                </div>
+
+                <div className={s.fieldItem}>
+                  <textarea 
+                    className={s.remarksTextarea} 
+                    placeholder="Masukkan justifikasi pengadaan barang (contoh: Penambahan stok operasional Q3, Kebutuhan renovasi villa, Penggantian peralatan dapur yang rusak)..." 
+                    value={notes} 
+                    onChange={e => setNotes(e.target.value)} 
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Footer */}
-            <div className={s.createSliderFooter}>
-              <PButton variant="secondary" onClick={onClose}>Cancel</PButton>
-              <PButton variant="secondary" onClick={() => handleSave('draft')}>Save Draft</PButton>
-              <PButton variant="primary" onClick={() => handleSave('submitted')}>Submit Requisition</PButton>
+            {/* Document Action Footer */}
+            <div className={s.docFooter}>
+              <button type="button" className={s.btnSecondary} onClick={onClose}>
+                Batal / Discard
+              </button>
+              <div className={s.footerActionsRight}>
+                <button type="button" className={s.btnSecondary} onClick={() => handleSave('draft')}>
+                  Simpan Draft
+                </button>
+                <button type="button" className={s.btnSubmit} onClick={() => handleSave('submitted')}>
+                  <CheckCircle2 size={16} />
+                  Submit Purchase Requisition
+                </button>
+              </div>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+          </div>
+        </div>
   );
 }

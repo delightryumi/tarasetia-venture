@@ -246,6 +246,15 @@ export default function ThermalReceipt({
           .receipt-print-wrapper img {
             opacity: 1 !important;
             background: transparent !important;
+            visibility: visible !important;
+            display: block !important;
+          }
+          .powered-by-logo {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            height: 24px !important;
+            width: auto !important;
           }
         }
       `}</style>
@@ -530,7 +539,7 @@ export default function ThermalReceipt({
           <div className="flex flex-col items-center justify-center mt-3 pt-2 border-t border-dotted border-neutral-300">
             <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center no-underline text-inherit cursor-pointer">
               <span className="text-[7.5px] text-neutral-500 lowercase tracking-widest font-black mb-1">powered by</span>
-              <img src="/channels/1.png" alt="My Tara" className="h-6 w-auto object-contain" />
+              <img src="/channels/1.png" alt="My Tara" className="powered-by-logo h-6 w-auto object-contain" />
             </a>
           </div>
         </>

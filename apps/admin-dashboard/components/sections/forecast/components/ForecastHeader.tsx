@@ -38,9 +38,9 @@ export function ForecastHeader({
                         <Waves size={15} />
                     </div>
                     <div className={styles.headerMeta}>
-                        <span className={styles.headerSubtitle}>Forecast Analytics</span>
+                        <span className={styles.headerSubtitle}>Front Office Operations & POS Analytics</span>
                         <h1 className={styles.headerTitle}>
-                            Forecast <span style={{ color: '#8d7a52' }}>& POS</span>
+                            Front Office <span style={{ color: '#8d7a52' }}>& Forecast</span>
                         </h1>
                     </div>
                 </div>
@@ -106,7 +106,7 @@ export function ForecastHeader({
                             onClick={() => setDisplayMode("cards")}
                             className={`${styles.toggleBtn} ${displayMode === "cards" ? styles.toggleBtnActive : ""}`}
                             style={{ padding: "0 12px", height: "36px" }}
-                            title="Card View"
+                            title="Card Summary View"
                         >
                             <LayoutDashboard size={16} />
                         </button>
@@ -114,7 +114,7 @@ export function ForecastHeader({
                             onClick={() => setDisplayMode("charts")}
                             className={`${styles.toggleBtn} ${displayMode === "charts" ? styles.toggleBtnActive : ""}`}
                             style={{ padding: "0 12px", height: "36px" }}
-                            title="Analytics View"
+                            title="Analytics Trend View"
                         >
                             <TrendingUp size={16} />
                         </button>

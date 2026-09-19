@@ -88,6 +88,23 @@ const TableBodyRecords: React.FC<TableBodyRecordsProps> = ({ data }) => {
     }, 1000); // Simulate a delay
   }, [data]);
 
+  const handlePaymentUpdated = (id: string, newMethod: string, isCompliment?: boolean) => {
+    setRecordsData(prev => prev.map(item => {
+      if (item.id === id) {
+        const isComp = isCompliment !== undefined ? isCompliment : (newMethod === 'compliment');
+        return {
+          ...item,
+          paymentMethod: newMethod,
+          isCompliment: isComp,
+          totalAmount: isComp 
+            ? '0' 
+            : (item.totalAmount && parseFloat(item.totalAmount) > 0 ? item.totalAmount : String(item.complimentValue || 0))
+        };
+      }
+      return item;
+    }));
+  };
+
   return (
     <TableBody>
       {loading
@@ -148,7 +165,10 @@ const TableBodyRecords: React.FC<TableBodyRecordsProps> = ({ data }) => {
                 {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}
               </TableCell>
               <TableCell>
-                <Dropdown records={item} />
+                <Dropdown 
+                  records={item} 
+                  onPaymentUpdated={(newMethod, isComp) => handlePaymentUpdated(item.id, newMethod, isComp)}
+                />
               </TableCell>
             </TableRow>
           );

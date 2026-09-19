@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 
 interface GuestFolioViewProps {
     guest: any;
+    onEditPayment?: () => void;
 }
 
 // Format date to Channex standard e.g. "Fri, Sep 18, 2026"
@@ -104,7 +105,7 @@ const formatTimelineDateParts = (d: Date) => {
     return { date: y, time: `${h}:${m}:${s}` };
 };
 
-export function GuestFolioView({ guest }: GuestFolioViewProps) {
+export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
     const { user, activeHotelName } = useAuth();
     const router = useRouter();
     const [clientIp, setClientIp] = useState<string>("192.168.1.104");
@@ -478,7 +479,7 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                     {/* Section: Status & Identifiers (Key-Value 2 Columns) */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '150px', color: '#8c8c8c' }}>Status:</span>
+                            <span style={{ width: '160px', color: '#8c8c8c' }}>Status Reservasi:</span>
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                                 <span style={{
                                     display: 'inline-flex',
@@ -486,12 +487,12 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                                     padding: '1px 8px',
                                     borderRadius: '4px',
                                     fontSize: '11px',
-                                    fontWeight: 500,
+                                    fontWeight: 600,
                                     border: isCancelled ? '1px solid #d9d9d9' : '1px solid #b7eb8f',
                                     backgroundColor: isCancelled ? '#f5f5f5' : '#f6ffed',
                                     color: isCancelled ? '#8c8c8c' : '#52c41a'
                                 }}>
-                                    {isCancelled ? 'Cancelled' : (guest.status || 'New')}
+                                    {isCancelled ? 'Dibatalkan (Cancelled)' : (guest.status || 'Aktif')}
                                 </span>
                                 {isUnmapped && (
                                     <span style={{
@@ -500,7 +501,7 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                                         padding: '1px 8px',
                                         borderRadius: '4px',
                                         fontSize: '11px',
-                                        fontWeight: 500,
+                                        fontWeight: 600,
                                         border: '1px solid #ffa39e',
                                         backgroundColor: '#fff1f0',
                                         color: '#cf1322'
@@ -512,26 +513,26 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '150px', color: '#8c8c8c' }}>Source / OTA:</span>
-                            <span style={{ color: '#262626', fontWeight: 500 }}>{guest.channel || 'Traveloka'}</span>
+                            <span style={{ width: '160px', color: '#8c8c8c' }}>Sumber / Saluran OTA:</span>
+                            <span style={{ color: '#262626', fontWeight: 600 }}>{guest.channel || 'Direct Web'}</span>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '150px', color: '#8c8c8c' }}>Channel:</span>
-                            <span style={{ color: '#1890ff', fontWeight: 500, cursor: 'pointer' }}>
-                                {guest.isOTA ? 'Open Channel' : 'Direct Web'}
+                            <span style={{ width: '160px', color: '#8c8c8c' }}>Kategori Distribusi:</span>
+                            <span style={{ color: '#1890ff', fontWeight: 600 }}>
+                                {guest.isOTA ? 'Channel Manager (OTA)' : 'Direct Web / Booking Engine'}
                             </span>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '150px', color: '#8c8c8c' }}>Reservation ID:</span>
+                            <span style={{ width: '160px', color: '#8c8c8c' }}>No. Reservasi (Folio ID):</span>
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontFamily: 'var(--f-font-mono, monospace)', color: '#262626', fontWeight: 500 }}>{reservationId}</span>
+                                <span style={{ fontFamily: 'var(--f-font-mono, monospace)', color: '#262626', fontWeight: 600 }}>{reservationId}</span>
                                 <button 
                                     type="button" 
                                     onClick={() => handleCopy('resId', reservationId)} 
                                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#8c8c8c' }}
-                                    title="Copy Reservation ID"
+                                    title="Salin No. Reservasi"
                                 >
                                     {copiedField === 'resId' ? <Check size={12} color="#52c41a" /> : <Copy size={12} />}
                                 </button>
@@ -539,14 +540,14 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '150px', color: '#8c8c8c' }}>Booking ID:</span>
+                            <span style={{ width: '160px', color: '#8c8c8c' }}>ID Booking PMS:</span>
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                                 <span style={{ fontFamily: 'var(--f-font-mono, monospace)', color: '#262626' }}>{channexBookingId}</span>
                                 <button 
                                     type="button" 
                                     onClick={() => handleCopy('bId', channexBookingId)} 
                                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#8c8c8c' }}
-                                    title="Copy Booking ID"
+                                    title="Salin ID Booking"
                                 >
                                     {copiedField === 'bId' ? <Check size={12} color="#52c41a" /> : <Copy size={12} />}
                                 </button>
@@ -554,14 +555,14 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '150px', color: '#8c8c8c' }}>Revision ID:</span>
+                            <span style={{ width: '160px', color: '#8c8c8c' }}>ID Revisi Folio:</span>
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                                 <span style={{ fontFamily: 'var(--f-font-mono, monospace)', color: '#262626' }}>{revisionId}</span>
                                 <button 
                                     type="button" 
                                     onClick={() => handleCopy('revId', revisionId)} 
                                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#8c8c8c' }}
-                                    title="Copy Revision ID"
+                                    title="Salin ID Revisi"
                                 >
                                     {copiedField === 'revId' ? <Check size={12} color="#52c41a" /> : <Copy size={12} />}
                                 </button>
@@ -569,18 +570,18 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '150px', color: '#8c8c8c' }}>OTA Reservation ID:</span>
+                            <span style={{ width: '160px', color: '#8c8c8c' }}>ID Referensi OTA:</span>
                             <span style={{ fontFamily: 'var(--f-font-mono, monospace)', color: '#262626' }}>{otaReservationId}</span>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '150px', color: '#8c8c8c' }}>Booked At:</span>
+                            <span style={{ width: '160px', color: '#8c8c8c' }}>Waktu Pemesanan:</span>
                             <span style={{ color: '#262626' }}>{formatDateTimeWithSeconds(guest.timestamp || bookingDate.toISOString())}</span>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '150px', color: '#8c8c8c' }}>Property:</span>
-                            <span style={{ color: '#1890ff', cursor: 'pointer' }}>
+                            <span style={{ width: '160px', color: '#8c8c8c' }}>Unit / Properti:</span>
+                            <span style={{ color: '#1890ff', fontWeight: 500 }}>
                                 {activeHotelName || guest.propertyName || "—"}
                             </span>
                         </div>
@@ -589,32 +590,32 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                     {/* Section: Checkin Details */}
                     <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px', marginBottom: '20px' }}>
                         <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: 600, color: '#262626' }}>
-                            Checkin Details
+                            Informasi Kedatangan & Durasi (Stay Details)
                         </h4>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '150px', color: '#8c8c8c' }}>Checkin Date:</span>
-                                <span style={{ color: '#262626', fontWeight: 500 }}>{formatLongDate(checkIn)}</span>
+                                <span style={{ width: '160px', color: '#8c8c8c' }}>Tanggal Check-in:</span>
+                                <span style={{ color: '#262626', fontWeight: 600 }}>{formatLongDate(checkIn)}</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '150px', color: '#8c8c8c' }}>Checkout Date:</span>
-                                <span style={{ color: '#262626', fontWeight: 500 }}>{formatLongDate(checkOut)}</span>
+                                <span style={{ width: '160px', color: '#8c8c8c' }}>Tanggal Check-out:</span>
+                                <span style={{ color: '#262626', fontWeight: 600 }}>{formatLongDate(checkOut)}</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '150px', color: '#8c8c8c' }}>Arrival Time:</span>
-                                <span style={{ color: '#262626' }}>{guest.arrivalHour || "2:00 PM"}</span>
+                                <span style={{ width: '160px', color: '#8c8c8c' }}>Estimasi Kedatangan:</span>
+                                <span style={{ color: '#262626' }}>{guest.arrivalHour || "14:00 WIB"}</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '150px', color: '#8c8c8c' }}>Nights:</span>
-                                <span style={{ color: '#262626' }}>{nights}</span>
+                                <span style={{ width: '160px', color: '#8c8c8c' }}>Durasi Menginap:</span>
+                                <span style={{ color: '#262626', fontWeight: 600 }}>{nights} Malam</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '150px', color: '#8c8c8c' }}>Rooms:</span>
-                                <span style={{ color: '#262626' }}>1</span>
+                                <span style={{ width: '160px', color: '#8c8c8c' }}>Jumlah Kamar:</span>
+                                <span style={{ color: '#262626' }}>1 Unit</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '150px', color: '#8c8c8c' }}>Occupancy:</span>
-                                <span style={{ color: '#262626' }}>A: 2  C: 0  I: 0</span>
+                                <span style={{ width: '160px', color: '#8c8c8c' }}>Kapasitas Tamu:</span>
+                                <span style={{ color: '#262626' }}>Dewasa: 2 | Anak: 0 | Bayi: 0</span>
                             </div>
                         </div>
                     </div>
@@ -622,23 +623,23 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                     {/* Section: Customer */}
                     <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px', marginBottom: '20px' }}>
                         <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: 600, color: '#262626' }}>
-                            Customer
+                            Profil Tamu (Guest Profile)
                         </h4>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '150px', color: '#8c8c8c' }}>Name:</span>
-                                <span style={{ color: '#262626', fontWeight: 500 }}>{guest.guestName || "Budi Santoso"}</span>
+                                <span style={{ width: '160px', color: '#8c8c8c' }}>Nama Lengkap:</span>
+                                <span style={{ color: '#262626', fontWeight: 600 }}>{guest.guestName || "Tamu Hotel"}</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '150px', color: '#8c8c8c' }}>Mail:</span>
-                                <span style={{ color: '#262626' }}>{guest.email || "budi.santoso@gmail.com"}</span>
+                                <span style={{ width: '160px', color: '#8c8c8c' }}>Email:</span>
+                                <span style={{ color: '#262626' }}>{guest.email || "—"}</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '150px', color: '#8c8c8c' }}>Phone:</span>
-                                <span style={{ color: '#262626' }}>{guest.phone || "+628123456789"}</span>
+                                <span style={{ width: '160px', color: '#8c8c8c' }}>No. Handphone:</span>
+                                <span style={{ color: '#262626' }}>{guest.phone || "—"}</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '150px', color: '#8c8c8c' }}>Country:</span>
+                                <span style={{ width: '160px', color: '#8c8c8c' }}>Kewarganegaraan:</span>
                                 <span style={{ color: '#262626' }}>{guest.nationality || "ID"}</span>
                             </div>
                         </div>
@@ -647,10 +648,10 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                     {/* Section: Rooms (Accordion) */}
                     <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px', marginBottom: '20px' }}>
                         <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: 600, color: '#262626' }}>
-                            Rooms
+                            Rincian Kamar & Tarif Harian (Room Charges)
                         </h4>
                         
-                        <div style={{ border: '1px solid #f0f0f0', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ border: '1px solid #f0f0f0', borderRadius: '6px', overflow: 'hidden' }}>
                             {/* Accordion Header */}
                             <div 
                                 onClick={() => setRoomAccordionOpen(prev => !prev)}
@@ -664,13 +665,13 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                                 }}
                             >
                                 <span style={{ fontSize: '12px', fontWeight: 600, color: '#262626', textTransform: 'capitalize' }}>
-                                    {guest.roomType || "Deluxe Cottage"}
+                                    {guest.roomType || "Standard Room"}
                                 </span>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                     <span style={{ fontSize: '11px', color: '#8c8c8c' }}>
                                         {formatChannexDate(checkIn)} - {formatChannexDate(checkOut)}
                                     </span>
-                                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#262626' }}>
+                                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#262626' }}>
                                         IDR {totalAmount.toLocaleString('en-US')}
                                     </span>
                                     {roomAccordionOpen ? <ChevronUp size={14} color="#8c8c8c" /> : <ChevronDown size={14} color="#8c8c8c" />}
@@ -681,14 +682,14 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                             {roomAccordionOpen && (
                                 <div style={{ padding: '14px', backgroundColor: '#ffffff', borderTop: '1px solid #f0f0f0' }}>
                                     <div style={{ fontSize: '11px', fontWeight: 600, color: '#595959', marginBottom: '8px' }}>
-                                        Price Breakdown
+                                        Tarif Harian (Daily Rates)
                                     </div>
                                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', marginBottom: '12px' }}>
                                         <thead>
                                             <tr style={{ borderBottom: '1px solid #f0f0f0', textAlign: 'left', color: '#8c8c8c' }}>
-                                                <th style={{ padding: '4px 0' }}>Date</th>
+                                                <th style={{ padding: '4px 0' }}>Tanggal</th>
                                                 <th style={{ padding: '4px 0' }}>Rate Plan</th>
-                                                <th style={{ padding: '4px 0', textAlign: 'right' }}>Price</th>
+                                                <th style={{ padding: '4px 0', textAlign: 'right' }}>Tarif</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -696,7 +697,7 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                                                 <tr key={dIdx} style={{ borderBottom: '1px solid #fafafa' }}>
                                                     <td style={{ padding: '6px 0', color: '#595959' }}>{day.date}</td>
                                                     <td style={{ padding: '6px 0', color: '#595959' }}>{guest.ratePlanName || "Standard Rate Plan"}</td>
-                                                    <td style={{ padding: '6px 0', textAlign: 'right', fontWeight: 500, color: '#262626' }}>
+                                                    <td style={{ padding: '6px 0', textAlign: 'right', fontWeight: 600, color: '#262626' }}>
                                                         IDR {day.price.toLocaleString('en-US')}
                                                     </td>
                                                 </tr>
@@ -706,16 +707,16 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
 
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', color: '#595959', borderTop: '1px solid #f0f0f0', paddingTop: '8px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <span>Subtotal</span>
-                                            <span style={{ fontWeight: 600, color: '#262626' }}>IDR {totalAmount.toLocaleString('en-US')}</span>
+                                            <span>Subtotal Kamar:</span>
+                                            <span style={{ fontWeight: 700, color: '#262626' }}>IDR {totalAmount.toLocaleString('en-US')}</span>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <span>Guests</span>
-                                            <span>{guest.guestName || "Budi Santoso"}</span>
+                                            <span>Tamu Terdaftar:</span>
+                                            <span>{guest.guestName || "Tamu Hotel"}</span>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <span>Occupancy</span>
-                                            <span>A: 2  C: 0  I: 0</span>
+                                            <span>Okupansi:</span>
+                                            <span>Dewasa: 2 | Anak: 0</span>
                                         </div>
                                     </div>
                                 </div>
@@ -727,7 +728,7 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                     {guest.note && (
                         <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px', marginBottom: '20px' }}>
                             <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: 600, color: '#262626' }}>
-                                Notes
+                                Catatan Khusus (Special Request / Notes)
                             </h4>
                             <p style={{ margin: 0, fontSize: '12px', color: '#595959', lineHeight: '1.5' }}>
                                 {guest.note}
@@ -735,43 +736,97 @@ export function GuestFolioView({ guest }: GuestFolioViewProps) {
                         </div>
                     )}
 
-                    {/* Section: Booking Expenses */}
+                    {/* Section: Booking Expenses & Settlement */}
                     <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px' }}>
                         <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: 600, color: '#262626' }}>
-                            Booking Expenses
+                            Rincian Biaya & Alokasi Pembayaran (Folio Settlement)
                         </h4>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: '#8c8c8c' }}>Total:</span>
-                                <span style={{ fontWeight: 600, color: '#262626' }}>IDR {totalAmount.toLocaleString('en-US')}</span>
-                            </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: '#8c8c8c' }}>Payment Collect:</span>
-                                <span style={{ fontWeight: 600, color: (guest.paymentCollect === 'channel' || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? '#1890ff' : '#d48806' }}>
-                                    {(guest.paymentCollect === 'channel' || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) 
-                                        ? 'Channel Collect (OTA Collect)' 
-                                        : 'Property Collect (Hotel Collect)'}
-                                </span>
+                                <span style={{ color: '#8c8c8c' }}>Total Tagihan Menginap:</span>
+                                <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '13px' }}>IDR {totalAmount.toLocaleString('en-US')}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: '#8c8c8c' }}>Payment Method:</span>
-                                <span style={{ color: '#262626' }}>
-                                    {(guest.paymentCollect === 'channel' || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property'))
-                                        ? (guest.paymentType === 'virtual_card' ? 'Virtual Credit Card (VCC)' : 'Channel Collect / VCC')
-                                        : (guest.paidCash > 0 ? 'Cash at Hotel' : (guest.paidCard > 0 ? 'EDC / Credit Card' : 'Pay at Hotel (Cash/Card)'))}
-                                </span>
+
+                            {/* INLINE PAYMENT METHOD & PAYMENT COLLECT */}
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '10px 14px',
+                                backgroundColor: '#f8fafc',
+                                borderRadius: '8px',
+                                border: '1px solid #e2e8f0',
+                                margin: '4px 0',
+                                gap: '8px',
+                                flexWrap: 'wrap'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                    <span style={{ color: '#64748b', fontSize: '11px', fontWeight: 600 }}>Metode & Penagihan:</span>
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                        <span style={{
+                                            padding: '2px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '11px',
+                                            fontWeight: 700,
+                                            backgroundColor: (guest.paymentCollect === 'channel' || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? '#eff6ff' : '#fef3c7',
+                                            border: `1px solid ${(guest.paymentCollect === 'channel' || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? '#bfdbfe' : '#fde68a'}`,
+                                            color: (guest.paymentCollect === 'channel' || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? '#1d4ed8' : '#b45309'
+                                        }}>
+                                            {(guest.paymentCollect === 'channel' || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? 'OTA Collect (Channel)' : 'Hotel Collect (Property)'}
+                                        </span>
+                                        <span style={{
+                                            padding: '2px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '11px',
+                                            fontWeight: 700,
+                                            backgroundColor: '#ffffff',
+                                            border: '1px solid #cbd5e1',
+                                            color: '#0f172a'
+                                        }}>
+                                            {guest.paymentMethod || (
+                                                (guest.paymentCollect === 'channel' || (guest.isOTA && guest.paymentCollect !== 'property'))
+                                                    ? (guest.paymentType === 'virtual_card' ? 'Virtual Credit Card (VCC)' : 'OTA City Ledger / VCC')
+                                                    : (Number(guest.paidTransfer || 0) > 0 ? 'Bank Transfer' : (Number(guest.paidQris || 0) > 0 ? 'QRIS Payment' : (Number(guest.paidEdc || 0) > 0 ? 'EDC / Mesin Kartu' : (Number(guest.paidCash || 0) > 0 ? 'Kas / Tunai' : 'Bayar di Hotel'))))
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+                                {onEditPayment && (
+                                    <button
+                                        type="button"
+                                        onClick={onEditPayment}
+                                        style={{
+                                            padding: '3px 10px',
+                                            fontSize: '11px',
+                                            fontWeight: 700,
+                                            borderRadius: '5px',
+                                            border: '1px solid #7dd3fc',
+                                            backgroundColor: '#f0f9ff',
+                                            color: '#0284c7',
+                                            cursor: 'pointer',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px'
+                                        }}
+                                        title="Ubah metode pembayaran & penagihan (In-place & ter-push ke Accounting)"
+                                    >
+                                        <CreditCard size={12} />
+                                        <span>Ubah</span>
+                                    </button>
+                                )}
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: '#8c8c8c' }}>Collection Status:</span>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ color: '#8c8c8c' }}>Status Penagihan:</span>
                                 <span style={{ 
-                                    fontWeight: 600,
-                                    color: (guest.paymentStatus?.includes('Lunas') || guest.paymentStatus?.includes('LUNAS') || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? '#52c41a' : '#faad14' 
+                                    fontWeight: 700,
+                                    color: (guest.paymentStatus?.includes('Lunas') || guest.paymentStatus?.includes('LUNAS') || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? '#16a34a' : '#d97706' 
                                 }}>
-                                    {(guest.paymentStatus?.includes('Lunas') || guest.paymentStatus?.includes('LUNAS') || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? 'LUNAS (Prepaid by OTA)' : 'DUE ON ARRIVAL (Pay at Hotel)'}
+                                    {(guest.paymentStatus?.includes('Lunas') || guest.paymentStatus?.includes('LUNAS') || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? 'LUNAS (Settled / Prepaid)' : 'TAGIHAN SAAT KEDATANGAN (Pay at Hotel)'}
                                 </span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: '#8c8c8c' }}>Deposits:</span>
+                                <span style={{ color: '#8c8c8c' }}>Deposit / Uang Muka:</span>
                                 <span style={{ color: '#262626' }}>-</span>
                             </div>
                         </div>

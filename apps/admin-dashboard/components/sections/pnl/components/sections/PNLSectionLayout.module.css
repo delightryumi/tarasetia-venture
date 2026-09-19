@@ -1,99 +1,141 @@
 /* ================================================================
    PNLSectionLayout.module.css
-   Localized, encapsulated styles for section panels.
-   Aligns with DESIGN.md spacing and aesthetic rules.
+   Hospitality ERP Layout Standard (VHP / Power Pro / Realta / DSI)
+   Crisp enterprise panels, professional borders, and structured accounting hierarchy.
    ================================================================ */
 
 .sectionWrapper {
-  padding: 40px;
+  padding: 18px 22px;
   background-color: #ffffff;
-  border-radius: 32px;
-  border: 1px solid #f5f5f4; /* border-stone-100 */
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
-  transition: box-shadow 0.5s ease;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   width: 100%;
   box-sizing: border-box;
 }
 
 .sectionWrapper:hover {
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  border-color: #94a3b8;
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
 }
 
 .sectionHeader {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 32px;
+  gap: 5px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sectionBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.scheduleBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2.5px 8px;
+  border-radius: 4px;
+  background-color: #0f172a;
+  color: #f8fafc;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .sectionTitle {
-  font-size: 18px; /* Reduced for mobile to prevent 3 lines */
+  font-size: 16px;
   font-weight: 800;
-  color: #1c1917; /* stone-900 */
+  color: #0f172a;
   letter-spacing: -0.015em;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
   line-height: 1.3;
 }
 
 .sectionTitleHighlight {
-  color: var(--sage, #788069);
+  color: #059669;
 }
 
 @media (min-width: 768px) {
   .sectionTitle {
-    font-size: 24px;
-    font-weight: 900;
+    font-size: 18px;
+    font-weight: 800;
   }
 }
 
 .sectionSubtitle {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
-  color: #a8a29e; /* stone-400 */
-  text-transform: uppercase;
-  letter-spacing: 0.3em;
+  color: #64748b;
+  letter-spacing: 0.02em;
   margin: 0;
 }
 
 .innerContainer {
-  padding: 40px;
-  background-color: rgba(245, 245, 244, 0.7); /* bg-stone-100/70 */
-  border-radius: 24px;
-  border: 1px solid rgba(229, 229, 224, 0.5); /* border-stone-200/50 */
-  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+  padding: 12px 14px;
+  background-color: #f8fafc;
+  border-radius: 5px;
+  border: 1px solid #e2e8f0;
   width: 100%;
   box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
   .sectionWrapper {
-    padding: 20px;
-    border-radius: 20px;
+    padding: 12px 10px;
+    border-radius: 6px;
   }
   .innerContainer {
-    padding: 16px;
-    border-radius: 16px;
+    padding: 8px;
+    border-radius: 4px;
   }
 }
 
 /* --- Dark Mode Overrides --- */
 :global(.dark) .sectionWrapper {
-  background-color: #1a1a1a;
-  border-color: #262626;
+  background-color: #0f172a;
+  border-color: #1e293b;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .sectionWrapper:hover {
+  border-color: #334155;
+}
+
+:global(.dark) .sectionHeader {
+  border-bottom-color: #1e293b;
+}
+
+:global(.dark) .scheduleBadge {
+  background-color: #059669;
+  color: #ffffff;
 }
 
 :global(.dark) .sectionTitle {
-  color: #f4f4f5;
+  color: #f8fafc;
+}
+
+:global(.dark) .sectionTitleHighlight {
+  color: #34d399;
 }
 
 :global(.dark) .sectionSubtitle {
-  color: #a1a1aa;
+  color: #94a3b8;
 }
 
 :global(.dark) .innerContainer {
-  background-color: #1f1f1f;
-  border-color: #333333;
+  background-color: #131d31;
+  border-color: #1e293b;
 }
+

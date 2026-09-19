@@ -5,7 +5,7 @@ import {
     Gift, Package, Globe, Users, ClipboardText,
     Coffee, Pulse, Storefront, FileImage,
     Notebook, UsersThree, Bed, Info, ShoppingCart,
-    IdentificationCard, FileXls, ChartBar, SlidersHorizontal
+    IdentificationCard, FileXls, ChartBar, SlidersHorizontal, Receipt
 } from "@phosphor-icons/react";
 import { NavItemType } from "./types";
 import { SpringOptions } from "framer-motion";
@@ -18,6 +18,7 @@ export const DISTANCE = 200;
 export const allNavItems: NavItemType[] = [
     { id: "overview", label: "Overview", icon: <ChartPie size={18} weight="bold" /> },
     { id: "forecast", label: "Forecast", icon: <TrendUp size={18} weight="bold" /> },
+    { id: "revenue-breakdown", label: "Revenue Breakdown", icon: <Receipt size={18} weight="bold" /> },
     { id: "rate-inventory", label: "Rate & Inventory", icon: <SlidersHorizontal size={18} weight="bold" /> },
     { id: "invoice", label: "Invoice", icon: <FileText size={18} weight="bold" /> },
     { id: "digital-checkin", label: "GRC (Guest Card)", icon: <IdentificationCard size={18} weight="bold" /> },

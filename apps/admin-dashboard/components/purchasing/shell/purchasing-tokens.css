@@ -1,43 +1,56 @@
 /* purchasing-tokens.css
-   Imported ONLY by PurchasingShell — never globally.
-   All design tokens scoped to .purchasing-root to prevent global bleed. */
+   Hospitality ERP Purchasing Design Tokens
+   Soft Luxury Hotel Pine & Slate Palette (#1e4d3a, #285f47, #52a37f)
+   Aligned with Accounting (PnL & DSR) and International Hotel ERP Standards */
 
 .purchasing-root {
   /* ── Surfaces ── */
   --p-canvas:          #ffffff;
-  --p-surface-soft:    #f5f2eb;
-  --p-surface-strong:  var(--sidebar-border, #e4d7b4);
-  --p-surface-dark:    var(--sidebar-link-active-bg, #181d26);
-  --p-hairline:        var(--sidebar-border, rgba(141, 122, 82, 0.12));
-  --p-shadow:          0 10px 30px -10px rgba(24, 29, 38, 0.08), 0 1px 3px -1px rgba(0, 0, 0, 0.02);
+  --p-surface-soft:    #f8fafc;
+  --p-surface-strong:  #f1f5f9;
+  --p-surface-dark:    #0f172a;
+  --p-hairline:        #e2e8f0;
+  --p-shadow:          0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+  --p-shadow-lg:       0 12px 32px -4px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
 
-  /* ── Signature ── */
-  --p-coral:           #b85d3c;
-  --p-forest:          var(--sidebar-link-active-bg, #181d26);
-  --p-cream:           #f1ede0;
-  --p-peach:           var(--sidebar-border, #e4d7b4);
-  --p-mint:            var(--sidebar-link-hover-bg, #8d9a86);
-  --p-yellow:          #eedba5;
-  --p-mustard:         var(--sidebar-link-active-bg, #181d26);
+  /* ── Signature Luxury Hotel Pine & Accents ── */
+  --p-pine:            #1e4d3a;
+  --p-pine-hover:      #285f47;
+  --p-pine-light:      #eaf3ee;
+  --p-forest:          #1e4d3a;
+  --p-mint:            #52a37f;
+  --p-coral:           #e11d48;
+  --p-amber:           #d97706;
+  --p-amber-light:     #fef3c7;
+  --p-sky:             #0284c7;
+  --p-sky-light:       #e0f2fe;
+  --p-cream:           #f8fafc;
 
   /* ── Text ── */
-  --p-ink:             #25221b;
-  --p-body:            #444036;
-  --p-muted:           #787466;
+  --p-ink:             #0f172a;
+  --p-body:            #334155;
+  --p-muted:           #64748b;
   --p-on-dark:         #ffffff;
 
   /* ── Actions ── */
-  --p-primary:         var(--sidebar-link-active-bg, #181d26);
-  --p-primary-active:  var(--sidebar-link-active-bg, #181d26);
-  --p-primary-text:    var(--sidebar-link-active-text, #ffffff);
-  --p-link:            var(--sidebar-link-active-bg, #181d26);
+  --p-primary:         #1e4d3a;
+  --p-primary-active:  #285f47;
+  --p-primary-text:    #ffffff;
+  --p-link:            #1e4d3a;
 
   /* ── Semantic ── */
-  --p-success:         #22c55e;
-  --p-success-border:  #22c55e;
-  --p-danger:          #b85d3c;
-  --p-info:            var(--sidebar-link-active-bg, #181d26);
-  --p-info-border:     var(--sidebar-border, #e4d7b4);
+  --p-success:         #10b981;
+  --p-success-bg:      #ecfdf5;
+  --p-success-border:  #a7f3d0;
+  --p-danger:          #ef4444;
+  --p-danger-bg:       #fef2f2;
+  --p-danger-border:   #fecaca;
+  --p-warning:         #f59e0b;
+  --p-warning-bg:      #fffbeb;
+  --p-warning-border:  #fde68a;
+  --p-info:            #0284c7;
+  --p-info-bg:         #f0f9ff;
+  --p-info-border:     #bae6fd;
 
   /* ── Spacing ── */
   --p-space-xxs:       4px;
@@ -47,51 +60,66 @@
   --p-space-lg:        24px;
   --p-space-xl:        32px;
   --p-space-xxl:       48px;
-  --p-space-section:   96px;
 
   /* ── Radius ── */
   --p-radius-sm:       6px;
   --p-radius-md:       10px;
-  --p-radius-lg:       12px;
+  --p-radius-lg:       14px;
+  --p-radius-xl:       18px;
   --p-radius-full:     9999px;
 
   /* ── Typography ── */
-  /* Using Geist (already loaded globally) — a clean grotesque matching Haas aesthetic */
   --p-font:            var(--font-geist-sans), 'Inter', system-ui, -apple-system, sans-serif;
-  --p-font-size-xl:    32px;
-  --p-font-size-lg:    24px;
-  --p-font-size-md:    20px;
-  --p-font-size-sm:    18px;
-  --p-font-size-label: 16px;
-  --p-font-size-body:  14px;
-  --p-font-size-caption: 13px;
+  --p-font-mono:       'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  --p-font-size-xl:    28px;
+  --p-font-size-lg:    22px;
+  --p-font-size-md:    18px;
+  --p-font-size-sm:    16px;
+  --p-font-size-label: 14px;
+  --p-font-size-body:  13px;
+  --p-font-size-caption: 12px;
 
   /* ── Animation ── */
   --p-ease-out:        cubic-bezier(0.16, 1, 0.3, 1);
-  --p-ease-in-out:     cubic-bezier(0.4, 0, 0.2, 1);
   --p-duration-fast:   150ms;
   --p-duration-base:   250ms;
-  --p-duration-slow:   400ms;
 }
 
 /* ── Dark Mode Overrides ── */
 :root.dark .purchasing-root,
 html.dark .purchasing-root,
 .dark .purchasing-root {
-  /* Surfaces - Matching POS */
-  --p-canvas:          #212121; /* 0 0% 13% */
-  --p-surface-soft:    #262626; /* 0 0% 15% */
-  --p-surface-strong:  #2e2e2e; /* 0 0% 18% */
-  --p-surface-dark:    #1a1a1a; /* 0 0% 10% */
-  --p-hairline:        #383530; /* 39 9% 20% */
-  --p-shadow:          0 10px 30px -10px rgba(0, 0, 0, 0.7);
+  --p-canvas:          #0b1120;
+  --p-surface-soft:    #0f172a;
+  --p-surface-strong:  #1e293b;
+  --p-surface-dark:    #020617;
+  --p-hairline:        #1e293b;
+  --p-shadow:          0 10px 30px -10px rgba(0, 0, 0, 0.6);
+  --p-shadow-lg:       0 20px 40px -12px rgba(0, 0, 0, 0.8);
 
-  /* Text - Matching POS */
-  --p-ink:             #dfd6c6; /* 39 31% 82% */
-  --p-body:            #b0a99c; /* 39 9% 65% */
-  --p-muted:           #918b80; /* roughly 39 9% 55% */
+  --p-pine:            #285f47;
+  --p-pine-hover:      #337357;
+  --p-pine-light:      rgba(40, 95, 71, 0.25);
+  --p-forest:          #285f47;
+  --p-mint:            #52a37f;
+  --p-cream:           #0f172a;
+
+  --p-ink:             #f8fafc;
+  --p-body:            #cbd5e1;
+  --p-muted:           #94a3b8;
   --p-on-dark:         #ffffff;
 
-  /* Semantic - Matching POS */
-  --p-cream:           #262626; /* match card bg */
+  --p-primary:         #285f47;
+  --p-primary-active:  #52a37f;
+  --p-primary-text:    #ffffff;
+  --p-link:            #52a37f;
+
+  --p-success-bg:      rgba(16, 185, 129, 0.12);
+  --p-success-border:  rgba(16, 185, 129, 0.28);
+  --p-danger-bg:       rgba(239, 68, 68, 0.12);
+  --p-danger-border:   rgba(239, 68, 68, 0.28);
+  --p-warning-bg:      rgba(245, 158, 11, 0.12);
+  --p-warning-border:  rgba(245, 158, 11, 0.28);
+  --p-info-bg:         rgba(2, 132, 199, 0.12);
+  --p-info-border:     rgba(2, 132, 199, 0.28);
 }

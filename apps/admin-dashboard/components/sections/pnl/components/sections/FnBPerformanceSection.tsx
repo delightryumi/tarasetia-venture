@@ -23,18 +23,27 @@ export function FnBPerformanceSection({ pnlResult, loading, rise, onCardClick }:
     return (
         <div className={styles.sectionWrapper}>
             <div className={styles.sectionHeader}>
+                <div className={styles.sectionBadgeRow}>
+                    <span className={styles.scheduleBadge}>SCHEDULE 02 · COST AUDIT</span>
+                    <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                        Cost of Sales Analysis
+                    </span>
+                </div>
                 <h2 className={styles.sectionTitle}>
-                    <Activity size={28} /> F&B <span className={styles.sectionTitleHighlight}>Performance</span>
+                    <Activity size={20} className="text-emerald-600 dark:text-emerald-400" />
+                    F&amp;B COST OF SALES &amp; OPERATING RATIOS <span className={styles.sectionTitleHighlight}>· DEPARTMENTAL MARGIN AUDIT</span>
                 </h2>
-                <p className={styles.sectionSubtitle}>Revenue Vs Expenses Analysis</p>
+                <p className={styles.sectionSubtitle}>
+                    Food Cost %, Beverage Cost %, and Banquet Cost % Ratios Relative to Net Departmental Revenue
+                </p>
             </div>
 
             <div className={styles.innerContainer}>
-                <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 xl:gap-10">
+                <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3 md:gap-4">
                     <VsCard
                         label="Food A la Carte Performance"
-                        icon={<Store size={18} />}
-                        accent="#14b8a6"
+                        icon={<Store size={16} />}
+                        accent="#10b981"
                         revenue={pnlResult?.revFoodAlacarte || 0}
                         expenses={pnlResult?.expFoodAlacarte || 0}
                         loading={loading}
@@ -49,8 +58,8 @@ export function FnBPerformanceSection({ pnlResult, loading, rise, onCardClick }:
                     />
                     <VsCard
                         label="Banquet Performance"
-                        icon={<Store size={18} />}
-                        accent="#eab308"
+                        icon={<Store size={16} />}
+                        accent="#059669"
                         revenue={pnlResult?.revBanquet || 0}
                         expenses={pnlResult?.expBanquet || 0}
                         loading={loading}
@@ -65,8 +74,8 @@ export function FnBPerformanceSection({ pnlResult, loading, rise, onCardClick }:
                     />
                     <VsCard
                         label="Total F&B A la Carte Performance"
-                        icon={<Store size={18} />}
-                        accent="#f59e0b"
+                        icon={<Store size={16} />}
+                        accent="#047857"
                         revenue={pnlResult?.revAlacarte || 0}
                         expenses={pnlResult?.expAlacarte || 0}
                         loading={loading}
@@ -81,8 +90,8 @@ export function FnBPerformanceSection({ pnlResult, loading, rise, onCardClick }:
                     />
                     <VsCard
                         label="Beverage A la Carte Performance"
-                        icon={<Store size={18} />}
-                        accent="#0ea5e9"
+                        icon={<Store size={16} />}
+                        accent="#10b981"
                         revenue={pnlResult?.revBeverageAlacarte || 0}
                         expenses={pnlResult?.expBeverageAlacarte || 0}
                         loading={loading}

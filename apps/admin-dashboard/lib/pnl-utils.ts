@@ -23,6 +23,13 @@ export interface PnlExpenseItem {
   description?: string;
   paymentStatus?: string;
   paymentDate?: string;
+  /* ── USALI Hotel Standard Fields ── */
+  voucherNo?: string;       // No. Bukti / No. Kwitansi
+  vendor?: string;          // Nama Supplier / Vendor
+  paymentMethod?: "CASH" | "TRANSFER" | "CREDIT_CARD" | "DEBIT" | "GIRO" | "CHEQUE"; // Cara Bayar
+  taxIncluded?: boolean;    // Apakah nominal sudah termasuk PPN
+  taxAmount?: number;       // Nilai PPN (jika dipisah)
+  notes?: string;           // Catatan internal
 }
 
 export interface InvestorItem {
