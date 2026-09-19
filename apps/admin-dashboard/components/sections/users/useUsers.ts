@@ -22,7 +22,7 @@ const ALL_KEYS = [
     "module_pos", "module_front_office", "module_housekeeping", 
     "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel", "module_hrd",
     // Front Office & Housekeeping
-    "overview", "digital-checkin", "forecast", "rate-inventory", "confirmation-letter", "inventory-control", "invoice", "purchase-order",
+    "overview", "digital-checkin", "forecast", "revenue-breakdown", "rate-inventory", "confirmation-letter", "inventory-control", "invoice", "purchase-order",
     // Granular Rate & Inventory & FO Transaction permissions
     "fo_stopsell", "fo_rate_change", "fo_inventory_change", "fo_cancel", "fo_void",
     // Accounting
@@ -100,6 +100,7 @@ export const useUsers = (menuItems: any[]) => {
 
             const hasFrontOffice = u.permissions.module_front_office !== false && (u.permissions.overview === true || isFullRole);
             if (hasFrontOffice) {
+                if (u.permissions["revenue-breakdown"] === undefined) updates["permissions.revenue-breakdown"] = true;
                 if (u.permissions["rate-inventory"] === undefined) updates["permissions.rate-inventory"] = true;
                 if (u.permissions["confirmation-letter"] === undefined) updates["permissions.confirmation-letter"] = true;
                 if (u.permissions["fo_stopsell"] === undefined) updates["permissions.fo_stopsell"] = isFullRole || u.permissions["rate-inventory"] === true;

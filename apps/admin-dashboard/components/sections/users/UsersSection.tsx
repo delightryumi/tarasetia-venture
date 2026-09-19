@@ -10,7 +10,7 @@ import {
     Gift, Package, Users, ShoppingCart, Banknote, Building2,
     BedDouble, Coffee, ShoppingBag, Calculator, Store, User as UserIcon, Archive, Star,
     Camera, ClipboardList, Layers, BarChart2, Zap, FileSpreadsheet, SlidersHorizontal, Globe,
-    Ban, Tag, XCircle, Trash2
+    Ban, Tag, XCircle, Trash2, Receipt
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -68,6 +68,7 @@ const PERMISSION_TREE: PermissionModule[] = [
             { id: "digital-checkin", label: "GRC (Guest Card)", icon: <FileText size={14} /> },
             { id: "confirmation-letter", label: "Confirmation Letter (CL)", icon: <FileText size={14} /> },
             { id: "forecast", label: "Forecast", icon: <TrendingUp size={14} /> },
+            { id: "revenue-breakdown", label: "Revenue Breakdown", icon: <Receipt size={14} /> },
             { id: "rate-inventory", label: "Rate & Inventory (Akses Menu)", icon: <SlidersHorizontal size={14} /> },
             { id: "fo_stopsell", label: "↳ Akses Stop Sell (Buka/Tutup Jual)", icon: <Ban size={14} /> },
             { id: "fo_rate_change", label: "↳ Akses Merubah Rate / Harga", icon: <Tag size={14} /> },
