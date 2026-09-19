@@ -300,7 +300,9 @@ export default function DailyMarketListPage() {
   };
 
   const handlePrint = () => {
-    window.print();
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   // FULL PAGE DOCUMENT VIEW (not a popup)
@@ -323,7 +325,7 @@ export default function DailyMarketListPage() {
   return (
     <motion.div variants={fadeUp} initial="hidden" animate="visible" className={s.container}>
       {/* Screen Content Wrapper (hidden when printing) */}
-      <div className={s.printHideRoot}>
+      <div className={`${s.printHideRoot} no-print`}>
         {/* Header Card */}
         <div className={s.headerCard}>
           <div className={s.topRibbon}>

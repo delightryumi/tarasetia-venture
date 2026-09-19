@@ -4,6 +4,7 @@ import React from 'react';
 import { formatRupiah } from '@/lib/purchasing/utils';
 import s from '../../PurchasingPrint.module.css';
 import { useSettings } from '@/hooks/useSettings';
+import { useAuth } from '@/context/AuthContext';
 
 interface DailyMarketListPrintProps {
   selectedDml: any;
@@ -13,8 +14,10 @@ export default function DailyMarketListPrint({ selectedDml }: DailyMarketListPri
   if (!selectedDml) return null;
 
   const { branding, property, pos } = useSettings();
+  const { activeHotelName } = useAuth();
   const hotelInfo = property || pos;
   const logoSrc = branding?.lightLogo || branding?.logoUrl || branding?.darkLogo;
+  const partnerName = hotelInfo?.name || activeHotelName || 'HOTEL & RESORT';
 
   const formatDate = (val: any) => {
     if (!val) return '—';
@@ -42,7 +45,7 @@ export default function DailyMarketListPrint({ selectedDml }: DailyMarketListPri
           {logoSrc ? (
             <img src={logoSrc} alt="Logo" className={s.printLogo} />
           ) : (
-            <div className={s.printCompany}>{hotelInfo?.name || 'BUMI ANYOM HOTEL'}</div>
+            <div className={s.printCompany}>{partnerName}</div>
           )}
           {hotelInfo?.address && <div className={s.printCompanyAddr}>{hotelInfo.address}</div>}
           {(hotelInfo?.phone || hotelInfo?.email) && (

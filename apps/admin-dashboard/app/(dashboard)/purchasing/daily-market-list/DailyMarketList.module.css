@@ -790,7 +790,10 @@
 /* ── Side Detail Drawer ── */
 .drawerBackdrop {
   position: fixed;
-  inset: 0;
+  top: 60px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(4px);
   z-index: 50;
@@ -798,11 +801,12 @@
 
 .detailPanel {
   position: fixed;
-  top: 0;
+  top: 60px;
   right: 0;
   bottom: 0;
   width: 520px;
   max-width: 90vw;
+  height: calc(100vh - 60px);
   background: #ffffff;
   z-index: 51;
   box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
@@ -1075,4 +1079,16 @@
 :global(.dark) .actionRow {
   background: #1e293b;
   border-top-color: #334155;
+}
+
+@media print {
+  .printHideRoot,
+  .drawerBackdrop,
+  .detailPanel,
+  .actionRow,
+  .twoPanel,
+  .headerCard {
+    display: none !important;
+    visibility: hidden !important;
+  }
 }

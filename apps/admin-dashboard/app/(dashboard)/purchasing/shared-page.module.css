@@ -194,10 +194,10 @@
 /* ── Detail Panel ── */
 .detailPanel {
   position: fixed;
-  top: 0;
+  top: 60px;
   right: 0;
   width: 480px;
-  height: 100vh;
+  height: calc(100vh - 60px);
   background: var(--p-canvas);
   border-left: 1px solid var(--p-hairline);
   box-shadow: -10px 0 40px rgba(24, 29, 38, 0.08);

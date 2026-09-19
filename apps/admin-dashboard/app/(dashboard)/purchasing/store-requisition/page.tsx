@@ -214,7 +214,9 @@ export default function StoreRequisitionPage() {
   };
 
   const handlePrint = () => {
-    window.print();
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   // FULL PAGE DOCUMENT VIEW (not a popup)
@@ -237,7 +239,7 @@ export default function StoreRequisitionPage() {
   return (
     <motion.div variants={fadeUp} initial="hidden" animate="visible" className={s.container}>
       {/* Screen Content Wrapper (hidden when printing) */}
-      <div className={s.printHideRoot}>
+      <div className={`${s.printHideRoot} no-print`}>
         {/* Header Card */}
         <div className={s.headerCard}>
           <div className={s.topRibbon}>
@@ -455,7 +457,7 @@ export default function StoreRequisitionPage() {
       </div>
 
       {/* Printable Template (hidden on screen) */}
-      <StoreRequisitionPrint selectedSr={selectedSr} />
+      {selectedSr && <StoreRequisitionPrint selectedSr={selectedSr} />}
     </motion.div>
   );
 }

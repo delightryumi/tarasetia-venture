@@ -23,7 +23,7 @@ const slideInRight = {
   exit: { x: '100%', transition: { duration: 0.22 } },
 };
 
-export default function StockOpnameDetail({ opname, onClose, onApprove, onPrint }: StockOpnameDetailProps) {
+export default function StockOpnameDetail({ opname, onClose, onApprove, onDelete, onPrint }: StockOpnameDetailProps) {
   if (!opname) return null;
 
   const { property, pos } = useSettings();

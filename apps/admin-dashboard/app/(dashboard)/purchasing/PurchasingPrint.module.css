@@ -11,6 +11,7 @@
 @media print {
   .printHideRoot {
     display: none !important;
+    visibility: hidden !important;
   }
 
   .printArea {
@@ -20,7 +21,7 @@
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 auto !important;
-    padding: 16mm 18mm 18mm 18mm !important;
+    padding: 10mm 14mm 14mm 14mm !important;
     background: #ffffff !important;
     color: #0f172a !important;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
@@ -222,6 +223,20 @@
   margin-bottom: 18px;
   font-size: 11px;
   box-sizing: border-box;
+  page-break-inside: auto;
+}
+
+.printTable thead {
+  display: table-header-group;
+}
+
+.printTable tbody {
+  display: table-row-group;
+}
+
+.printTable tbody tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .printTable thead th {

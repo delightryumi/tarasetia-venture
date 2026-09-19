@@ -360,7 +360,10 @@
 /* ── Detail Drawer (Hotel Audit Sheet View) ── */
 .drawerBackdrop {
   position: fixed;
-  inset: 0;
+  top: 60px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(2px);
   z-index: 990;
@@ -368,11 +371,12 @@
 
 .drawer {
   position: fixed;
-  top: 0;
+  top: 60px;
   right: 0;
   bottom: 0;
   width: 580px;
   max-width: 95vw;
+  height: calc(100vh - 60px);
   background: #ffffff;
   z-index: 1000;
   box-shadow: -6px 0 24px rgba(0, 0, 0, 0.15);
