@@ -164,7 +164,7 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
     date,
     hotelCode,
     hotelName,
-    totalPropertyRooms = 39,
+    totalPropertyRooms = 8,
     budgetDoc,
     allTransactions = [],
     todayTransactions = [],

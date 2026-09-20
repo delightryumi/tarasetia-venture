@@ -693,15 +693,30 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {daysList.map((day, dIdx) => (
-                                                <tr key={dIdx} style={{ borderBottom: '1px solid #fafafa' }}>
-                                                    <td style={{ padding: '6px 0', color: '#595959' }}>{day.date}</td>
-                                                    <td style={{ padding: '6px 0', color: '#595959' }}>{guest.ratePlanName || "Standard Rate Plan"}</td>
-                                                    <td style={{ padding: '6px 0', textAlign: 'right', fontWeight: 600, color: '#262626' }}>
-                                                        IDR {day.price.toLocaleString('en-US')}
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                            {daysList.map((day, dIdx) => {
+                                                const isWithBreakfast = guest.hasBreakfast || 
+                                                    guest.rateCode === 'BB' || 
+                                                    String(guest.rateCode || '').toUpperCase().includes('BB') ||
+                                                    String(guest.ratePlanName || '').toLowerCase().includes('breakfast') ||
+                                                    String(guest.description || '').toLowerCase().includes('breakfast') ||
+                                                    Number(guest.breakfastAmount || 0) > 0;
+
+                                                const displayRatePlan = guest.ratePlanName 
+                                                    ? (guest.ratePlanName.toLowerCase().includes('breakfast') && !guest.ratePlanName.includes('RBF') ? `${guest.ratePlanName} (RBF)` : guest.ratePlanName)
+                                                    : (isWithBreakfast 
+                                                        ? "With Breakfast (BB / RBF)" 
+                                                        : (guest.rateCode === 'RO' ? "Room Only (RO)" : (guest.rateCode && guest.rateCode !== '-' ? guest.rateCode : "Standard Rate Plan")));
+
+                                                return (
+                                                    <tr key={dIdx} style={{ borderBottom: '1px solid #fafafa' }}>
+                                                        <td style={{ padding: '6px 0', color: '#595959' }}>{day.date}</td>
+                                                        <td style={{ padding: '6px 0', color: '#595959' }}>{displayRatePlan}</td>
+                                                        <td style={{ padding: '6px 0', textAlign: 'right', fontWeight: 600, color: '#262626' }}>
+                                                            IDR {day.price.toLocaleString('en-US')}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
 

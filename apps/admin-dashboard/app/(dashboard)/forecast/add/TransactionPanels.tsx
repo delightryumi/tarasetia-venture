@@ -474,6 +474,7 @@ export function TransactionEntryForm({
                                                         const matched = ratePlans.find((p) => p.id === val || p.code === val);
                                                         if (matched) {
                                                             updateRoom(idx, "rateCode", matched.code || matched.name);
+                                                            updateRoom(idx, "ratePlanName", matched.name);
                                                             const applicableRate = (matched.roomRates && matched.roomRates[rm.roomTypeId])
                                                                 ? Number(matched.roomRates[rm.roomTypeId])
                                                                 : Number(matched.baseRate || 0);

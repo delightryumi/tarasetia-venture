@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { formatIDR } from "@/lib/pnl-utils";
 import { YearlyBudgetDocument, BudgetMonthData, createDefaultBudgetMonthData } from "@/lib/budget-types";
 import { ArrowUpRight, ArrowDownRight, Minus, Calendar, TrendingUp } from "lucide-react";
+import { AuditDetailModal } from "./AuditDetailModal";
+import { ActualBreakdownItem } from "../hooks/usePNLBudget";
 import styles from "../pnl-budget.module.css";
 
 interface MonthlyActualVsBudgetTabProps {
@@ -39,9 +41,69 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
   hotelRoomCount,
 }) => {
   const [mode, setMode] = useState<"mtd" | "ytd">("mtd");
+  const [detailModal, setDetailModal] = useState<{
+    isOpen: boolean;
+    code: string;
+    title: string;
+    actualAmount: number;
+    budgetAmount: number;
+    items: ActualBreakdownItem[];
+    isCostOrExpense: boolean;
+  }>({
+    isOpen: false,
+    code: "",
+    title: "",
+    actualAmount: 0,
+    budgetAmount: 0,
+    items: [],
+    isCostOrExpense: true,
+  });
 
   const monthNum = parseInt(monthKey, 10);
   const monthName = MONTH_NAMES.find((m) => m.key === monthKey)?.name || "Bulan";
+
+  const handleOpenDetail = (
+    code: string,
+    title: string,
+    bucketKeys: string | string[],
+    aAmt: number,
+    bAmt: number,
+    isCostOrExpense: boolean = true
+  ) => {
+    const keys = Array.isArray(bucketKeys) ? bucketKeys : [bucketKeys];
+    let collectedItems: ActualBreakdownItem[] = [];
+
+    if (mode === "mtd") {
+      keys.forEach((k) => {
+        if (actualData?.breakdown?.[k]) {
+          collectedItems = collectedItems.concat(actualData.breakdown[k]);
+        }
+      });
+    } else {
+      // YTD: kumpulkan dari bulan 1 sampai monthNum
+      for (let m = 1; m <= monthNum; m++) {
+        const mKey = String(m).padStart(2, "0");
+        const monthActual = allActualMonthlyData[mKey];
+        if (monthActual?.breakdown) {
+          keys.forEach((k) => {
+            if (monthActual.breakdown[k]) {
+              collectedItems = collectedItems.concat(monthActual.breakdown[k]);
+            }
+          });
+        }
+      }
+    }
+
+    setDetailModal({
+      isOpen: true,
+      code,
+      title,
+      actualAmount: aAmt,
+      budgetAmount: bAmt,
+      items: collectedItems,
+      isCostOrExpense,
+    });
+  };
 
   // Compute MTD and YTD values
   let roomsAvail = 0;
@@ -462,37 +524,72 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
               <td className={styles.colCode}>3000</td>
               <td colSpan={5}>2. PENDAPATAN OPERASIONAL (OPERATING REVENUE)</td>
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("3013", "Room Revenue (Kamar)", "roomRevenue", aRoomRev, bRoomRev, false)}
+              title="Klik untuk melihat rincian pendapatan kamar"
+            >
               <td className={styles.colCode}>3013</td>
-              <td className={styles.colDesc}>Room Revenue (Kamar)</td>
+              <td className={styles.colDesc}>
+                Room Revenue (Kamar)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aRoomRev)}</td>
               <td className={styles.colAmount}>{formatIDR(bRoomRev)}</td>
               {renderVarCell(aRoomRev, bRoomRev)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("3023", "Food & Beverage Revenue", "fnbRevenue", aFnbRev, bFnbRev, false)}
+              title="Klik untuk melihat rincian pendapatan resto & bar"
+            >
               <td className={styles.colCode}>3023</td>
-              <td className={styles.colDesc}>Food & Beverage Revenue</td>
+              <td className={styles.colDesc}>
+                Food & Beverage Revenue
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aFnbRev)}</td>
               <td className={styles.colAmount}>{formatIDR(bFnbRev)}</td>
               {renderVarCell(aFnbRev, bFnbRev)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("3033", "Minor Operating Departments (Laundry, Spa)", "modRevenue", aModRev, bModRev, false)}
+              title="Klik untuk melihat rincian pendapatan laundry & spa"
+            >
               <td className={styles.colCode}>3033</td>
-              <td className={styles.colDesc}>Minor Operating Departments (Laundry, Spa)</td>
+              <td className={styles.colDesc}>
+                Minor Operating Departments (Laundry, Spa)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aModRev)}</td>
               <td className={styles.colAmount}>{formatIDR(bModRev)}</td>
               {renderVarCell(aModRev, bModRev)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("3043", "Other Income (Space Rental, Transport, Misc)", "otherIncome", aOtherInc, bOtherInc, false)}
+              title="Klik untuk melihat rincian pendapatan lain-lain"
+            >
               <td className={styles.colCode}>3043</td>
-              <td className={styles.colDesc}>Other Income (Space Rental, Transport, Misc)</td>
+              <td className={styles.colDesc}>
+                Other Income (Space Rental, Transport, Misc)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aOtherInc)}</td>
               <td className={styles.colAmount}>{formatIDR(bOtherInc)}</td>
               {renderVarCell(aOtherInc, bOtherInc)}
             </tr>
-            <tr className={styles.subTotalRow}>
+            <tr
+              className={`${styles.subTotalRow} ${styles.clickableRow}`}
+              onClick={() => handleOpenDetail("3999", "TOTAL OPERATING REVENUE", ["roomRevenue", "fnbRevenue", "modRevenue", "otherIncome"], aTotNetRev, bTotNetRev, false)}
+              title="Klik untuk melihat seluruh rincian pendapatan operasional"
+            >
               <td className={styles.colCode}>3999</td>
-              <td className={styles.colDesc}>TOTAL OPERATING REVENUE</td>
+              <td className={styles.colDesc}>
+                TOTAL OPERATING REVENUE
+                <span className={styles.inspectHint}>🔍 Semua Pendapatan</span>
+              </td>
               <td className={styles.colAmount} style={{ color: "#0284c7" }}>{formatIDR(aTotNetRev)}</td>
               <td className={styles.colAmount}>{formatIDR(bTotNetRev)}</td>
               {renderVarCell(aTotNetRev, bTotNetRev)}
@@ -503,37 +600,73 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
               <td className={styles.colCode}>4000</td>
               <td colSpan={5}>3. HARGA POKOK PENJUALAN (COST OF SALES)</td>
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("4014", "Cost of Rooms (Guest Supplies, Linen)", "roomCogs", aRoomCogs, bRoomCogs, true)}
+              title="Klik untuk melihat rincian transaksi dokumen"
+            >
               <td className={styles.colCode}>4014</td>
-              <td className={styles.colDesc}>Cost of Rooms (Guest Supplies, Linen)</td>
+              <td className={styles.colDesc}>
+                Cost of Rooms (Guest Supplies, Linen)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aRoomCogs)}</td>
               <td className={styles.colAmount}>{formatIDR(bRoomCogs)}</td>
               {renderVarCell(aRoomCogs, bRoomCogs, true)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("4024", "Cost of F&B (Food & Beverage Ingredients)", "fnbCogs", aFnbCogs, bFnbCogs, true)}
+              title="Klik untuk melihat rincian transaksi dokumen (SR, DML, PR)"
+            >
               <td className={styles.colCode}>4024</td>
-              <td className={styles.colDesc}>Cost of F&B (Food & Beverage Ingredients)</td>
+              <td className={styles.colDesc}>
+                Cost of F&B (Food & Beverage Ingredients)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aFnbCogs)}</td>
               <td className={styles.colAmount}>{formatIDR(bFnbCogs)}</td>
               {renderVarCell(aFnbCogs, bFnbCogs, true)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("4034", "Cost of Minor Departments", "modCogs", aModCogs, bModCogs, true)}
+              title="Klik untuk melihat rincian transaksi dokumen"
+            >
               <td className={styles.colCode}>4034</td>
-              <td className={styles.colDesc}>Cost of Minor Departments</td>
+              <td className={styles.colDesc}>
+                Cost of Minor Departments
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aModCogs)}</td>
               <td className={styles.colAmount}>{formatIDR(bModCogs)}</td>
               {renderVarCell(aModCogs, bModCogs, true)}
             </tr>
-            <tr className={styles.subTotalRow}>
+            <tr
+              className={`${styles.subTotalRow} ${styles.clickableRow}`}
+              onClick={() => handleOpenDetail("4999", "TOTAL COST OF SALES", ["roomCogs", "fnbCogs", "modCogs"], aTotCogs, bTotCogs, true)}
+              title="Klik untuk melihat semua rincian HPP (Cost of Sales)"
+            >
               <td className={styles.colCode}>4999</td>
-              <td className={styles.colDesc}>TOTAL COST OF SALES</td>
+              <td className={styles.colDesc}>
+                TOTAL COST OF SALES
+                <span className={styles.inspectHint}>🔍 Semua COGS</span>
+              </td>
               <td className={styles.colAmount} style={{ color: "#e11d48" }}>{formatIDR(aTotCogs)}</td>
               <td className={styles.colAmount}>{formatIDR(bTotCogs)}</td>
               {renderVarCell(aTotCogs, bTotCogs, true)}
             </tr>
-            <tr className={styles.subTotalRow} style={{ background: "#f0fdf4" }}>
+            <tr
+              className={`${styles.subTotalRow} ${styles.clickableRow}`}
+              style={{ background: "#f0fdf4" }}
+              onClick={() => handleOpenDetail("4990", "GROSS PROFIT (Pendapatan - HPP)", ["roomRevenue", "fnbRevenue", "modRevenue", "otherIncome", "roomCogs", "fnbCogs", "modCogs"], aGrossProfit, bGrossProfit, false)}
+              title="Klik untuk melihat rincian pembentuk Laba Kotor"
+            >
               <td className={styles.colCode}>4990</td>
-              <td className={styles.colDesc} style={{ color: "#166534" }}>GROSS PROFIT</td>
+              <td className={styles.colDesc} style={{ color: "#166534" }}>
+                GROSS PROFIT
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount} style={{ color: "#16a34a" }}>{formatIDR(aGrossProfit)}</td>
               <td className={styles.colAmount}>{formatIDR(bGrossProfit)}</td>
               {renderVarCell(aGrossProfit, bGrossProfit)}
@@ -544,30 +677,58 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
               <td className={styles.colCode}>5000</td>
               <td colSpan={5}>4. BIAYA OPERASIONAL DEPARTEMEN (DEPARTMENTAL EXPENSES)</td>
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("5015", "Room Department (FO & HK Payroll & Expenses)", "roomExp", aRoomExp, bRoomExp, true)}
+              title="Klik untuk melihat rincian biaya Room Dept"
+            >
               <td className={styles.colCode}>5015</td>
-              <td className={styles.colDesc}>Room Department (FO & HK Payroll & Expenses)</td>
+              <td className={styles.colDesc}>
+                Room Department (FO & HK Payroll & Expenses)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aRoomExp)}</td>
               <td className={styles.colAmount}>{formatIDR(bRoomExp)}</td>
               {renderVarCell(aRoomExp, bRoomExp, true)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("5025", "Food & Beverage Department Expenses", "fnbExp", aFnbExp, bFnbExp, true)}
+              title="Klik untuk melihat rincian biaya F&B Dept"
+            >
               <td className={styles.colCode}>5025</td>
-              <td className={styles.colDesc}>Food & Beverage Department Expenses</td>
+              <td className={styles.colDesc}>
+                Food & Beverage Department Expenses
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aFnbExp)}</td>
               <td className={styles.colAmount}>{formatIDR(bFnbExp)}</td>
               {renderVarCell(aFnbExp, bFnbExp, true)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("5035", "Minor Operating Department Expenses", "modExp", aModExp, bModExp, true)}
+              title="Klik untuk melihat rincian biaya MOD"
+            >
               <td className={styles.colCode}>5035</td>
-              <td className={styles.colDesc}>Minor Operating Department Expenses</td>
+              <td className={styles.colDesc}>
+                Minor Operating Department Expenses
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aModExp)}</td>
               <td className={styles.colAmount}>{formatIDR(bModExp)}</td>
               {renderVarCell(aModExp, bModExp, true)}
             </tr>
-            <tr className={styles.subTotalRow}>
+            <tr
+              className={`${styles.subTotalRow} ${styles.clickableRow}`}
+              onClick={() => handleOpenDetail("5999", "TOTAL DEPARTMENTAL PROFIT (TDP)", ["roomExp", "fnbExp", "modExp"], aTdp, bTdp, false)}
+              title="Klik untuk melihat rincian biaya operasional departemen"
+            >
               <td className={styles.colCode}>5999</td>
-              <td className={styles.colDesc}>TOTAL DEPARTMENTAL PROFIT (TDP)</td>
+              <td className={styles.colDesc}>
+                TOTAL DEPARTMENTAL PROFIT (TDP)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount} style={{ color: "#2563eb" }}>{formatIDR(aTdp)}</td>
               <td className={styles.colAmount}>{formatIDR(bTdp)}</td>
               {renderVarCell(aTdp, bTdp)}
@@ -578,46 +739,88 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
               <td className={styles.colCode}>6000</td>
               <td colSpan={5}>5. BIAYA TIDAK TERDISTRIBUSI (UNDISTRIBUTED EXPENSES)</td>
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("6015", "Administration & General (A&G)", "agExp", aAgExp, bAgExp, true)}
+              title="Klik untuk melihat rincian biaya A&G"
+            >
               <td className={styles.colCode}>6015</td>
-              <td className={styles.colDesc}>Administration & General (A&G)</td>
+              <td className={styles.colDesc}>
+                Administration & General (A&G)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aAgExp)}</td>
               <td className={styles.colAmount}>{formatIDR(bAgExp)}</td>
               {renderVarCell(aAgExp, bAgExp, true)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("6025", "Human Resources (HRD & Training)", "hrdExp", aHrdExp, bHrdExp, true)}
+              title="Klik untuk melihat rincian biaya HRD"
+            >
               <td className={styles.colCode}>6025</td>
-              <td className={styles.colDesc}>Human Resources (HRD & Training)</td>
+              <td className={styles.colDesc}>
+                Human Resources (HRD & Training)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aHrdExp)}</td>
               <td className={styles.colAmount}>{formatIDR(bHrdExp)}</td>
               {renderVarCell(aHrdExp, bHrdExp, true)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("6035", "Sales & Marketing (SM & OTA Commissions)", "smExp", aSmExp, bSmExp, true)}
+              title="Klik untuk melihat rincian biaya Sales & Marketing"
+            >
               <td className={styles.colCode}>6035</td>
-              <td className={styles.colDesc}>Sales & Marketing (SM & OTA Commissions)</td>
+              <td className={styles.colDesc}>
+                Sales & Marketing (SM & OTA Commissions)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aSmExp)}</td>
               <td className={styles.colAmount}>{formatIDR(bSmExp)}</td>
               {renderVarCell(aSmExp, bSmExp, true)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("6045", "POMEC (Property Ops, Maintenance & Energy)", "pomecExp", aPomecExp, bPomecExp, true)}
+              title="Klik untuk melihat rincian biaya POMEC"
+            >
               <td className={styles.colCode}>6045</td>
-              <td className={styles.colDesc}>POMEC (Property Ops, Maintenance & Energy)</td>
+              <td className={styles.colDesc}>
+                POMEC (Property Ops, Maintenance & Energy)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aPomecExp)}</td>
               <td className={styles.colAmount}>{formatIDR(bPomecExp)}</td>
               {renderVarCell(aPomecExp, bPomecExp, true)}
             </tr>
-            <tr className={styles.subTotalRow}>
+            <tr
+              className={`${styles.subTotalRow} ${styles.clickableRow}`}
+              onClick={() => handleOpenDetail("6999", "TOTAL UNDISTRIBUTED EXPENSES", ["agExp", "hrdExp", "smExp", "pomecExp"], aTotUoe, bTotUoe, true)}
+              title="Klik untuk melihat semua rincian biaya tidak terdistribusi"
+            >
               <td className={styles.colCode}>6999</td>
-              <td className={styles.colDesc}>TOTAL UNDISTRIBUTED EXPENSES</td>
+              <td className={styles.colDesc}>
+                TOTAL UNDISTRIBUTED EXPENSES
+                <span className={styles.inspectHint}>🔍 Semua UOE</span>
+              </td>
               <td className={styles.colAmount} style={{ color: "#e11d48" }}>{formatIDR(aTotUoe)}</td>
               <td className={styles.colAmount}>{formatIDR(bTotUoe)}</td>
               {renderVarCell(aTotUoe, bTotUoe, true)}
             </tr>
 
             {/* ── 6. GROSS OPERATING PROFIT (GOP) ── */}
-            <tr className={styles.gopRow}>
+            <tr
+              className={`${styles.gopRow} ${styles.clickableRow}`}
+              onClick={() => handleOpenDetail("7000", "GROSS OPERATING PROFIT (GOP)", ["roomRevenue", "fnbRevenue", "modRevenue", "otherIncome", "roomCogs", "fnbCogs", "modCogs", "roomExp", "fnbExp", "modExp", "agExp", "hrdExp", "smExp", "pomecExp"], aGop, bGop, false)}
+              title="Klik untuk melihat seluruh rincian laba operasional hotel"
+            >
               <td className={styles.colCode}>7000</td>
-              <td className={styles.colDesc}>GROSS OPERATING PROFIT (GOP)</td>
+              <td className={styles.colDesc}>
+                GROSS OPERATING PROFIT (GOP)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount} style={{ color: aGop >= 0 ? "#1e40af" : "#dc2626" }}>
                 {formatIDR(aGop)}
               </td>
@@ -630,67 +833,157 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
               <td className={styles.colCode}>8000</td>
               <td colSpan={5}>6. BIAYA NON-OPERASIONAL & FEES (NON-OPERATING)</td>
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("8011", "Exp. Management Fees (Base Fee)", "nonOpBaseFee", aNonOpBaseFee, bNonOpBaseFee, true)}
+            >
               <td className={styles.colCode}>8011</td>
-              <td className={styles.colDesc}>Exp. Management Fees (Base Fee)</td>
+              <td className={styles.colDesc}>
+                Exp. Management Fees (Base Fee)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aNonOpBaseFee)}</td>
               <td className={styles.colAmount}>{formatIDR(bNonOpBaseFee)}</td>
               {renderVarCell(aNonOpBaseFee, bNonOpBaseFee, true)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("8012", "Exp. Incentive Fees", "nonOpIncentiveFee", aNonOpIncentiveFee, bNonOpIncentiveFee, true)}
+            >
               <td className={styles.colCode}>8012</td>
-              <td className={styles.colDesc}>Exp. Incentive Fees</td>
+              <td className={styles.colDesc}>
+                Exp. Incentive Fees
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aNonOpIncentiveFee)}</td>
               <td className={styles.colAmount}>{formatIDR(bNonOpIncentiveFee)}</td>
               {renderVarCell(aNonOpIncentiveFee, bNonOpIncentiveFee, true)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("8013", "Exp. Franchise / Royalty Fee", "nonOpFranchiseFee", aNonOpFranchiseFee, bNonOpFranchiseFee, true)}
+            >
               <td className={styles.colCode}>8013</td>
-              <td className={styles.colDesc}>Exp. Franchise / Royalty Fee</td>
+              <td className={styles.colDesc}>
+                Exp. Franchise / Royalty Fee
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aNonOpFranchiseFee)}</td>
               <td className={styles.colAmount}>{formatIDR(bNonOpFranchiseFee)}</td>
               {renderVarCell(aNonOpFranchiseFee, bNonOpFranchiseFee, true)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("8021", "Exp. Building & Property Insurance", "nonOpInsurance", aNonOpInsurance, bNonOpInsurance, true)}
+            >
               <td className={styles.colCode}>8021</td>
-              <td className={styles.colDesc}>Exp. Building & Property Insurance</td>
+              <td className={styles.colDesc}>
+                Exp. Building & Property Insurance
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aNonOpInsurance)}</td>
               <td className={styles.colAmount}>{formatIDR(bNonOpInsurance)}</td>
               {renderVarCell(aNonOpInsurance, bNonOpInsurance, true)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("8022", "Exp. Property Tax (PBB)", "nonOpPropertyTax", aNonOpPropertyTax, bNonOpPropertyTax, true)}
+            >
               <td className={styles.colCode}>8022</td>
-              <td className={styles.colDesc}>Exp. Property Tax (PBB)</td>
+              <td className={styles.colDesc}>
+                Exp. Property Tax (PBB)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aNonOpPropertyTax)}</td>
               <td className={styles.colAmount}>{formatIDR(bNonOpPropertyTax)}</td>
               {renderVarCell(aNonOpPropertyTax, bNonOpPropertyTax, true)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("8031", "Exp. Bank Interest & Financing Charges", "nonOpBankInterest", aNonOpBankInterest, bNonOpBankInterest, true)}
+            >
               <td className={styles.colCode}>8031</td>
-              <td className={styles.colDesc}>Exp. Bank Interest & Financing Charges</td>
+              <td className={styles.colDesc}>
+                Exp. Bank Interest & Financing Charges
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aNonOpBankInterest)}</td>
               <td className={styles.colAmount}>{formatIDR(bNonOpBankInterest)}</td>
               {renderVarCell(aNonOpBankInterest, bNonOpBankInterest, true)}
             </tr>
-            <tr>
+            <tr
+              className={styles.clickableRow}
+              onClick={() => handleOpenDetail("8041", "Exp. Depreciation & Amortization", "nonOpDepreciation", aNonOpDepreciation, bNonOpDepreciation, true)}
+            >
               <td className={styles.colCode}>8041</td>
-              <td className={styles.colDesc}>Exp. Depreciation & Amortization</td>
+              <td className={styles.colDesc}>
+                Exp. Depreciation & Amortization
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount}>{formatIDR(aNonOpDepreciation)}</td>
               <td className={styles.colAmount}>{formatIDR(bNonOpDepreciation)}</td>
               {renderVarCell(aNonOpDepreciation, bNonOpDepreciation, true)}
             </tr>
-            <tr className={styles.subTotalRow}>
+            <tr
+              className={`${styles.subTotalRow} ${styles.clickableRow}`}
+              onClick={() =>
+                handleOpenDetail(
+                  "8999",
+                  "TOTAL OTHER NON-OPERATING EXPENSES",
+                  [
+                    "nonOpBaseFee",
+                    "nonOpIncentiveFee",
+                    "nonOpFranchiseFee",
+                    "nonOpInsurance",
+                    "nonOpPropertyTax",
+                    "nonOpBankInterest",
+                    "nonOpDepreciation",
+                  ],
+                  aNonOp,
+                  bNonOp,
+                  true
+                )
+              }
+              title="Klik untuk melihat semua rincian biaya non-operasional"
+            >
               <td className={styles.colCode}>8999</td>
-              <td className={styles.colDesc}>TOTAL OTHER NON-OPERATING EXPENSES</td>
+              <td className={styles.colDesc}>
+                TOTAL OTHER NON-OPERATING EXPENSES
+                <span className={styles.inspectHint}>🔍 Semua Non-Op</span>
+              </td>
               <td className={styles.colAmount} style={{ color: "#e11d48" }}>{formatIDR(aNonOp)}</td>
               <td className={styles.colAmount}>{formatIDR(bNonOp)}</td>
               {renderVarCell(aNonOp, bNonOp, true)}
             </tr>
 
             {/* ── 8. NET OPERATING INCOME (NOI) ── */}
-            <tr className={styles.noiRow}>
+            <tr
+              className={`${styles.noiRow} ${styles.clickableRow}`}
+              onClick={() =>
+                handleOpenDetail(
+                  "9000",
+                  "NET OPERATING INCOME (NOI / NET PROFIT)",
+                  [
+                    "nonOpBaseFee",
+                    "nonOpIncentiveFee",
+                    "nonOpFranchiseFee",
+                    "nonOpInsurance",
+                    "nonOpPropertyTax",
+                    "nonOpBankInterest",
+                    "nonOpDepreciation",
+                  ],
+                  aNoi,
+                  bNoi,
+                  false
+                )
+              }
+              title="Klik untuk melihat rincian biaya non-operasional & laba bersih"
+            >
               <td className={styles.colCode}>9000</td>
-              <td className={styles.colDesc}>NET OPERATING INCOME (NOI / NET PROFIT)</td>
+              <td className={styles.colDesc}>
+                NET OPERATING INCOME (NOI / NET PROFIT)
+                <span className={styles.inspectHint}>🔍 Rincian</span>
+              </td>
               <td className={styles.colAmount} style={{ color: aNoi >= 0 ? "#047857" : "#dc2626" }}>
                 {formatIDR(aNoi)}
               </td>
@@ -700,6 +993,19 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
           </tbody>
         </table>
       </div>
+
+      {/* Audit Detail Modal */}
+      <AuditDetailModal
+        isOpen={detailModal.isOpen}
+        onClose={() => setDetailModal((prev) => ({ ...prev, isOpen: false }))}
+        code={detailModal.code}
+        title={detailModal.title}
+        period={`${mode === "mtd" ? monthName : `Jan - ${monthName}`} ${year} (${mode.toUpperCase()})`}
+        actualAmount={detailModal.actualAmount}
+        budgetAmount={detailModal.budgetAmount}
+        items={detailModal.items}
+        isCostOrExpense={detailModal.isCostOrExpense}
+      />
     </div>
   );
 };

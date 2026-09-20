@@ -47,7 +47,9 @@ export function PNLSection() {
         rawTransactions, customIncomes, posOrders, nonCommissionRevenue,
         startingBalance, fixedAssetsValue, updateFixedAssetsValue,
         vatPaid, updateVatPaid, feePaid, updateFeePaid, scPaid, updateScPaid, lbPaid, updateLbPaid,
-        payrollDetails
+        payrollDetails,
+        ratePlans,
+        hotelBreakfastRate
     } = usePnL();
 
     const [retainedPercent, setRetainedPercent] = React.useState(0);
@@ -65,7 +67,8 @@ export function PNLSection() {
     const drillDown = useDrillDown({
         pnlResult, rawTransactions, customIncomes, expenses, posOrders,
         vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage,
-        month, payrollDetails
+        month, payrollDetails,
+        ratePlans, hotelBreakfastRate
     });
 
     /* ── Export handlers ── */

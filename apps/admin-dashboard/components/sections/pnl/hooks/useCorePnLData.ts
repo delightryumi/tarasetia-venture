@@ -32,16 +32,36 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
             // Fetch properties (hotels)
             const propertiesSnap = await getDocs(collection(db, "hotels"));
             const hotelList: HotelMaster[] = [];
-            propertiesSnap.forEach((docSnap) => {
+            for (const docSnap of propertiesSnap.docs) {
                 const d = docSnap.data();
-                // Tambahkan roomCount jika tersedia di dokumen properti
-                const roomCount = typeof d.roomCount === 'number' ? d.roomCount : (typeof d.totalRooms === 'number' ? d.totalRooms : 0);
+                let roomCount = typeof d.roomCount === 'number' ? d.roomCount : (typeof d.totalRooms === 'number' ? d.totalRooms : 0);
+                if (!roomCount || roomCount === 0) {
+                    try {
+                        const rtSnap = await getDocs(getHotelCollection(db, "roomTypes", docSnap.id));
+                        let subCount = 0;
+                        rtSnap.forEach(rt => {
+                            const rData = rt.data();
+                            if (Array.isArray(rData.physicalRooms) && rData.physicalRooms.length > 0) {
+                                subCount += rData.physicalRooms.length;
+                            } else if (typeof rData.roomCount === 'number' && rData.roomCount > 0) {
+                                subCount += rData.roomCount;
+                            } else if (typeof rData.totalRooms === 'number' && rData.totalRooms > 0) {
+                                subCount += rData.totalRooms;
+                            } else {
+                                subCount += 1;
+                            }
+                        });
+                        if (subCount > 0) roomCount = subCount;
+                    } catch (e) {
+                        // ignore fallback error
+                    }
+                }
                 hotelList.push({
                   id: docSnap.id,
                   name: d.Nama || d.name || `Property ${docSnap.id}`,
                   roomCount,
                 });
-            });
+            }
             setAllHotels(hotelList);
 
             // Fetch global PnL reports

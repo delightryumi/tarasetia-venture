@@ -783,7 +783,7 @@ export const useBudgetExport = ({
     const startDeptRow = 6;
     depts.forEach((d) => {
       const s = d.salary;
-      const hc = budgetDoc?.manning?.departments?.[d.key as any]?.headcount || 1;
+      const hc = (budgetDoc?.manning?.departments as any)?.[d.key]?.headcount || 1;
       const row = wsManning.addRow([
         d.label,
         hc,

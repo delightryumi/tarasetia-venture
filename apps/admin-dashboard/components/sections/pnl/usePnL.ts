@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { processPnLData } from "@/lib/pnl-logic";
+import { processPnLData } from "@/lib/pnl-engine/process";
 import { GlobalPnLResult } from "@/lib/pnl-utils";
 import { useCorePnLData } from "./hooks/useCorePnLData";
 import { useForecast } from "../forecast/useForecast";
@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot, getDocs } from "firebase/firestore";
 import { getHotelCollection } from "@/lib/firestoreHelper";
+import { detectBreakfastAllocation } from "@/lib/breakfast-utils";
 
 export { YEARS, MONTHS };
 
@@ -160,6 +161,21 @@ export const usePnL = () => {
         };
 
         useEffect(() => {
+            const currentHotelCode = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") : null);
+            const isSingleHotel = currentHotelCode && currentHotelCode !== "0";
+            const targetHotels = isSingleHotel
+                ? allHotels.filter(h => h.id === currentHotelCode)
+                : allHotels;
+
+            let resolvedTotalRooms = targetHotels.reduce((sum, h) => sum + (h.roomCount || 0), 0);
+            if (resolvedTotalRooms === 0 && isSingleHotel) {
+                const single = allHotels.find(h => h.id === currentHotelCode);
+                resolvedTotalRooms = single?.roomCount || 8;
+            }
+            if (resolvedTotalRooms === 0) resolvedTotalRooms = 8;
+
+            const effectiveHotels = targetHotels.length > 0 ? targetHotels : allHotels;
+
             // Forecast data fetched via hook above
             const result = processPnLData(
                 rawTransactions,
@@ -171,7 +187,7 @@ export const usePnL = () => {
                 viewMode,
                 vatPercentage,
                 hotelGopPercentages,
-                allHotels,
+                effectiveHotels,
                 mgmtFeeRoomPercentage,
                 mgmtFeeFnbPercentage,
                 posRevAlacarte,
@@ -209,14 +225,89 @@ export const usePnL = () => {
             result.pnlResult.posLostBreakageRate = posLostBreakageRate;
             result.pnlResult.posTaxRateCombined = posTaxRateCombined;
 
-            const totalRooms = allHotels.reduce((sum, h) => sum + (h.roomCount || 0), 0);
-            // Override OCC and RevPAR with forecast values for consistency
-            result.pnlResult.occ = forecastOcc ?? 0;
-            result.pnlResult.revPar = forecastRevPar ?? 0;
-            // Preserve existing KPI calculation if needed
+            const totalRooms = resolvedTotalRooms;
+            const daysInPeriod = viewMode === "monthly"
+                ? new Date(Number(month.split('-')[0]), Number(month.split('-')[1]), 0).getDate()
+                : 365;
+            const roomsAvailable = totalRooms * daysInPeriod;
+
+            // Synchronize Room Payment Method metrics directly from rawTransactions
+            const isAccTx = (t: any) => {
+                const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+                const isPelunasan = t.isHidden || t.isPelunasan || t.type === "pelunasan_ar" || t.type === "pelunasan_reversal" || t.guestName?.startsWith("Koreksi Tanggal Pelunasan") || t.guestName?.startsWith("Pelunasan Piutang");
+                return !isPOS && !isPelunasan && (t.type === "accommodation" || (!t.type && t.guestName));
+            };
+            const isOtaTx = (t: any) => {
+                const ch = (t.channel || "").toLowerCase().trim();
+                return ch !== "" && !["direct", "walk-in", "internal", "-", "direct / walk-in", "offline"].includes(ch);
+            };
+
+            const roomsSold = rawTransactions
+                .filter(isAccTx)
+                .reduce((sum, t: any) => sum + Math.max(1, Number(t.roomsCount || t.roomCount || t.quantity) || 1), 0);
+
+            // Compute precise OCC, ARR, and RevPAR (ensuring RevPAR = ARR * (OCC/100))
+            result.pnlResult.totalRooms = totalRooms;
+            result.pnlResult.daysInPeriod = daysInPeriod;
+            result.pnlResult.roomsAvailable = roomsAvailable;
+            result.pnlResult.roomsSold = roomsSold;
+            result.pnlResult.ledgerRoomRevenue = result.pnlResult.revRoom || 0;
+
+            if (roomsAvailable > 0) {
+                result.pnlResult.occ = (roomsSold / roomsAvailable) * 100;
+                result.pnlResult.arr = roomsSold > 0 ? (result.pnlResult.revRoom || 0) / roomsSold : 0;
+                result.pnlResult.revPar = (result.pnlResult.revRoom || 0) / roomsAvailable;
+            } else if (forecastOcc !== undefined && forecastOcc > 0) {
+                result.pnlResult.occ = forecastOcc;
+                result.pnlResult.revPar = forecastRevPar ?? 0;
+                result.pnlResult.arr = (result.pnlResult.occ > 0) ? (result.pnlResult.revPar / (result.pnlResult.occ / 100)) : (result.pnlResult.arr || 0);
+            }
             result.pnlResult.kpiRevPar = (result.pnlResult.card1_TotalRevenue || 0) / (totalRooms || 1);
 
-            setPnlResult(result.pnlResult);
+            const getNetRoomAmount = (t: any) => {
+                const alloc = detectBreakfastAllocation(t, { ratePlans, hotelBreakfastRate });
+                return (alloc.hasBreakfast && !alloc.isPreSplit && alloc.breakfastAmount > 0)
+                    ? alloc.netRoomAmount
+                    : Number(t.amount || 0);
+            };
+
+            const calcCash = rawTransactions
+                .filter(isAccTx)
+                .filter(t => {
+                    if (isOtaTx(t)) return false;
+                    const pm = (t.paymentMethod || "").toLowerCase().trim();
+                    const isCashOnly = pm === "cash" || pm === "tunai" || (Number(t.paidCash || 0) > 0 && !pm.includes("qris") && !pm.includes("transfer") && !pm.includes("bank") && !pm.includes("edc") && !pm.includes("ledger"));
+                    return isCashOnly;
+                })
+                .reduce((sum, t) => sum + getNetRoomAmount(t), 0);
+
+            const calcDirectCashless = rawTransactions
+                .filter(isAccTx)
+                .filter(t => {
+                    if (isOtaTx(t)) return false;
+                    const pm = (t.paymentMethod || "").toLowerCase().trim();
+                    const isCashOnly = pm === "cash" || pm === "tunai" || (Number(t.paidCash || 0) > 0 && !pm.includes("qris") && !pm.includes("transfer") && !pm.includes("bank") && !pm.includes("edc") && !pm.includes("ledger"));
+                    return !isCashOnly;
+                })
+                .reduce((sum, t) => sum + getNetRoomAmount(t), 0);
+
+            const calcOtaBreakdown: Record<string, number> = {};
+            const calcOta = rawTransactions
+                .filter(isAccTx)
+                .filter(isOtaTx)
+                .reduce((sum, t) => {
+                    const amt = getNetRoomAmount(t);
+                    const chName = (t.channel || "").trim() || "Other OTA";
+                    calcOtaBreakdown[chName] = (calcOtaBreakdown[chName] || 0) + amt;
+                    return sum + amt;
+                }, 0);
+
+            result.pnlResult.revCashHotel = calcCash;
+            result.pnlResult.revDirectCashless = calcDirectCashless;
+            result.pnlResult.revOta = calcOta;
+            result.pnlResult.otaBreakdown = calcOtaBreakdown;
+
+            setPnlResult({ ...result.pnlResult });
         }, [
             rawTransactions, customIncomes, nonCommissionRevenue, expenses, investors, vatPercentage, hotelGopPercentages, allHotels, mgmtFeeRoomPercentage, mgmtFeeFnbPercentage,
             posRevAlacarte, posRevBanquet, posRevFood, posRevBeverage, posRevOther, posExpAlacarte, posExpBanquet, posExpFood, posExpBeverage, posExpOther,
@@ -260,6 +351,8 @@ export const usePnL = () => {
         showDatePicker, setShowDatePicker,
         fetchData,
         posOrders,
-        payrollDetails
+        payrollDetails,
+        ratePlans,
+        hotelBreakfastRate
     };
 };

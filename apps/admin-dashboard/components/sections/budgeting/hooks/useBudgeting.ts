@@ -39,7 +39,7 @@ export const useBudgeting = () => {
   const hotelName = activeHotelName || "BUMI ANYOM RESORT";
 
   // Data states
-  const [hotelRoomCount, setHotelRoomCount] = useState<number>(39);
+  const [hotelRoomCount, setHotelRoomCount] = useState<number>(8);
   const [loadingBudget, setLoadingBudget] = useState(false);
   const [loadingActuals, setLoadingActuals] = useState(false);
   const [savingBudget, setSavingBudget] = useState(false);
@@ -69,7 +69,7 @@ export const useBudgeting = () => {
 
   // 1. Fetch Hotel Room Count from CPanel (hotels doc or roomTypes)
   const fetchHotelRoomCount = useCallback(async (code: string) => {
-    if (!code) return 39;
+    if (!code) return 8;
     try {
       let count = 0;
       // Check hotels master doc
@@ -114,12 +114,12 @@ export const useBudgeting = () => {
         });
       }
 
-      const finalCount = count > 0 ? count : 39;
+      const finalCount = count > 0 ? count : 8;
       setHotelRoomCount(finalCount);
       return finalCount;
     } catch (e) {
       console.error("Error fetching hotel room count:", e);
-      return 39;
+      return 8;
     }
   }, []);
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   FileSpreadsheet,
@@ -185,7 +186,7 @@ export const BudgetingSection: React.FC = () => {
       className={styles.container}
     >
       {/* Header */}
-      <motion.header variants={rise} className={styles.header}>
+      <motion.header variants={rise as any} className={styles.header}>
         <div className={styles.headerTitleGroup}>
           <div className={styles.badgeCategory}>
             <div className={styles.badgeIcon}>
@@ -199,6 +200,54 @@ export const BudgetingSection: React.FC = () => {
           <p className={styles.subTitle} style={{ marginTop: "4px" }}>
             {hotelName} • {hotelRoomCount} Kamar Fisik (CPanel) • Target Revenue, COGS, Expenses & GOP
           </p>
+
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginTop: "10px" }}>
+            <Link
+              href="/pnl?module=accounting"
+              style={{
+                padding: "6px 14px",
+                borderRadius: "8px",
+                fontSize: "12px",
+                fontWeight: 600,
+                textDecoration: "none",
+                backgroundColor: "#f8fafc",
+                color: "#475569",
+                border: "1px solid #cbd5e1",
+              }}
+            >
+              P&amp;L Live Ledger
+            </Link>
+            <Link
+              href="/pnl-budget?module=accounting"
+              style={{
+                padding: "6px 14px",
+                borderRadius: "8px",
+                fontSize: "12px",
+                fontWeight: 600,
+                textDecoration: "none",
+                backgroundColor: "#f8fafc",
+                color: "#475569",
+                border: "1px solid #cbd5e1",
+              }}
+            >
+              P&amp;L Actual vs Budget
+            </Link>
+            <Link
+              href="/budgeting?module=accounting"
+              style={{
+                padding: "6px 14px",
+                borderRadius: "8px",
+                fontSize: "12px",
+                fontWeight: 700,
+                textDecoration: "none",
+                backgroundColor: "#1e4d3a",
+                color: "#ffffff",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+              }}
+            >
+              Budgeting &amp; DSR
+            </Link>
+          </div>
 
           {/* Audit Log Badge */}
           {budgetDoc?.lastUpdatedBy && (

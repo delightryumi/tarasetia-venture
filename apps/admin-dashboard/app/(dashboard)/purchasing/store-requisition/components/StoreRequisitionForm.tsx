@@ -111,6 +111,20 @@ export default function StoreRequisitionForm({
       return;
     }
 
+    // Validate qty_requested does not exceed current stock (SR only — barang harus ada di gudang)
+    const overStock = reqItems.find(ri => {
+      const item = items.find(it => it.id === ri.item_id);
+      const stock = Number(item?.current_stock ?? 0);
+      return Number(ri.qty_requested) > stock;
+    });
+    if (overStock) {
+      const item = items.find(it => it.id === overStock.item_id);
+      toast.error(
+        `❌ Kuantitas SR melebihi stok yang tersedia!\n"${item?.name}" — Stok sisa: ${item?.current_stock ?? 0} ${item?.unit || 'pcs'}, diminta: ${overStock.qty_requested}.`
+      );
+      return;
+    }
+
     const payloadItems = reqItems.map(ri => {
       const orig = items.find(item => item.id === ri.item_id)!;
       const sup = suppliers.find(s => s.id === ri.supplier_id);
@@ -395,14 +409,27 @@ export default function StoreRequisitionForm({
                             </td>
                             <td style={{ textAlign: 'right' }}>
                               <input 
-                                className={s.tableInputNumber} 
+                                className={`${s.tableInputNumber} ${Number(e.qty_requested) > curStock ? s.inputExceedStock : ''}`}
                                 type="number" 
-                                min={0.1} 
+                                min={0.1}
+                                max={curStock > 0 ? curStock : undefined}
                                 step="any" 
                                 value={e.qty_requested} 
-                                onChange={ev => handleItemChange(e._idx, 'qty_requested', Number(ev.target.value))} 
+                                onWheel={ev => ev.currentTarget.blur()}
+                                onChange={ev => {
+                                  const val = Number(ev.target.value);
+                                  if (curStock > 0 && val > curStock) {
+                                    toast.warning(`Maks qty SR adalah sisa stok: ${curStock} ${e._item?.unit || 'pcs'}`);
+                                    handleItemChange(e._idx, 'qty_requested', curStock);
+                                  } else {
+                                    handleItemChange(e._idx, 'qty_requested', val);
+                                  }
+                                }}
                                 required 
                               />
+                              {curStock <= 0 && (
+                                <div style={{ fontSize: 10, color: '#ef4444', marginTop: 2, fontWeight: 600 }}>Stok habis!</div>
+                              )}
                             </td>
                             <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#475569', fontWeight: 600 }}>
                               {formatRupiah(e.unit_price)}

@@ -139,7 +139,8 @@ export default function DailyMarketListPage() {
     if (!deleteTargetId) return;
     try {
       const dml = dmls.find(d => d.id === deleteTargetId);
-      if (dml && dml.status === 'submitted') {
+      // Hapus dari PnL jika sudah approved (status yang dicatat ke PnL)
+      if (dml && (dml.status === 'approved' || dml.status === 'submitted')) {
         await removeCostFromPnL(`dml-${deleteTargetId}`, dml.order_date || dml.date);
       }
       await deleteDML(deleteTargetId);
@@ -183,24 +184,8 @@ export default function DailyMarketListPage() {
         toast.success(`Daily Market List ${targetStatus === 'draft' ? 'saved as draft' : 'submitted successfully'}.`);
       }
 
-      if (targetStatus === 'submitted' && targetId) {
-        const freshDoc = await dmlService.getById(targetId);
-        if (freshDoc) {
-          await pushCostToPnL({
-            docId: `dml-${targetId}`,
-            docNum: freshDoc.dml_number,
-            department: formData.department,
-            amount: formData.total_cost,
-            date: formData.order_date,
-            description: formData.notes || `Daily Market List ${freshDoc.dml_number}`,
-            fbCategory: formData.department === 'Food & Beverage' ? formData.fb_category : null,
-            eventCategory: formData.department === 'Food & Beverage' ? formData.event_category : null,
-            items: freshDoc.items || []
-          });
-        }
-      } else if (targetStatus === 'draft' && targetId) {
-        await removeCostFromPnL(`dml-${targetId}`, formData.order_date);
-      }
+      // PnL hanya dicatat saat Approve — tidak saat submit/draft
+      // (handleApprove yang akan push ke PnL)
 
       setIsFormOpen(false);
     } catch (err: any) {
@@ -215,20 +200,9 @@ export default function DailyMarketListPage() {
         verified_by: user?.uid || 'system', 
         verified_by_name: user?.email || 'F&B Director' 
       });
-      
-      await pushCostToPnL({
-        docId: `dml-${dml.id}`,
-        docNum: dml.dml_number,
-        department: dml.department || 'Food & Beverage',
-        amount: dml.total_cost || 0,
-        date: dml.order_date || dml.date,
-        description: dml.notes || `Daily Market List ${dml.dml_number}`,
-        fbCategory: dml.fb_category || null,
-        eventCategory: dml.event_category || null,
-        items: dml.items || []
-      });
 
-      toast.success('Daily Market List verified and submitted.');
+      // PnL tidak dicatat di sini — hanya saat Approve
+      toast.success('Daily Market List verified. Menunggu approval manager.');
       setSelectedDml(null);
     } catch (err: any) {
       toast.error(err.message || 'Failed to verify.');
@@ -278,7 +252,7 @@ export default function DailyMarketListPage() {
         items: updatedItems
       }));
 
-      if (selectedDml.status === 'submitted' || selectedDml.status === 'approved') {
+      if (selectedDml.status === 'approved') {
         await pushCostToPnL({
           docId: `dml-${selectedDml.id}`,
           docNum: selectedDml.dml_number,

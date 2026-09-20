@@ -59,7 +59,7 @@ type DeptTabKey = "pnl" | "room" | "fnb" | "mod" | "ag" | "hrd" | "sm" | "pomec"
 export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
   year,
   budgetDoc,
-  hotelRoomCount = 39,
+  hotelRoomCount = 8,
   onSelectMonth,
 }) => {
   const [activeTab, setActiveTab] = useState<DeptTabKey>("pnl");
@@ -1011,15 +1011,53 @@ export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
                 {renderMatrixRow({
                   code: "4021",
                   description: "Food Cost",
-                  values: monthsData.map((m) => m.data.deptFnB?.cogs?.foodCost || 0),
-                  total: monthsData.reduce((acc, m) => acc + (m.data.deptFnB?.cogs?.foodCost || 0), 0),
+                  values: monthsData.map((m) => {
+                    const c = m.data.deptFnB?.cogs;
+                    return (
+                      (c?.restaurant?.costFood || 0) +
+                      (c?.kitchen?.costFood || 0) +
+                      (c?.lounge?.costFood || 0) +
+                      (c?.banquet?.costFood || 0) +
+                      (c?.roomService?.costFood || 0) || ((c as any)?.foodCost || 0)
+                    );
+                  }),
+                  total: monthsData.reduce((acc, m) => {
+                    const c = m.data.deptFnB?.cogs;
+                    return (
+                      acc +
+                      ((c?.restaurant?.costFood || 0) +
+                        (c?.kitchen?.costFood || 0) +
+                        (c?.lounge?.costFood || 0) +
+                        (c?.banquet?.costFood || 0) +
+                        (c?.roomService?.costFood || 0) || ((c as any)?.foodCost || 0))
+                    );
+                  }, 0),
                   indent: true,
                 })}
                 {renderMatrixRow({
                   code: "4022",
                   description: "Beverage Cost",
-                  values: monthsData.map((m) => m.data.deptFnB?.cogs?.beverageCost || 0),
-                  total: monthsData.reduce((acc, m) => acc + (m.data.deptFnB?.cogs?.beverageCost || 0), 0),
+                  values: monthsData.map((m) => {
+                    const c = m.data.deptFnB?.cogs;
+                    return (
+                      (c?.restaurant?.costBeverage || 0) +
+                      (c?.kitchen?.costBeverage || 0) +
+                      (c?.lounge?.costBeverage || 0) +
+                      (c?.banquet?.costBeverage || 0) +
+                      (c?.roomService?.costBeverage || 0) || ((c as any)?.beverageCost || 0)
+                    );
+                  }),
+                  total: monthsData.reduce((acc, m) => {
+                    const c = m.data.deptFnB?.cogs;
+                    return (
+                      acc +
+                      ((c?.restaurant?.costBeverage || 0) +
+                        (c?.kitchen?.costBeverage || 0) +
+                        (c?.lounge?.costBeverage || 0) +
+                        (c?.banquet?.costBeverage || 0) +
+                        (c?.roomService?.costBeverage || 0) || ((c as any)?.beverageCost || 0))
+                    );
+                  }, 0),
                   indent: true,
                 })}
                 {renderMatrixRow({
@@ -1037,22 +1075,22 @@ export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
                   values: monthsData.map((m) => {
                     const f = m.data.deptFnB;
                     return (
-                      (f?.salary?.restaurant?.total || 0) +
-                      (f?.salary?.kitchen?.total || 0) +
-                      (f?.salary?.lounge?.total || 0) +
-                      (f?.salary?.banquet?.total || 0) +
-                      (f?.salary?.roomService?.total || 0)
+                      (f?.restaurant?.salary?.total || 0) +
+                      (f?.kitchen?.salary?.total || 0) +
+                      (f?.lounge?.salary?.total || 0) +
+                      (f?.banquet?.salary?.total || 0) +
+                      (f?.roomService?.salary?.total || 0)
                     );
                   }),
                   total: monthsData.reduce((acc, m) => {
                     const f = m.data.deptFnB;
                     return (
                       acc +
-                      (f?.salary?.restaurant?.total || 0) +
-                      (f?.salary?.kitchen?.total || 0) +
-                      (f?.salary?.lounge?.total || 0) +
-                      (f?.salary?.banquet?.total || 0) +
-                      (f?.salary?.roomService?.total || 0)
+                      (f?.restaurant?.salary?.total || 0) +
+                      (f?.kitchen?.salary?.total || 0) +
+                      (f?.lounge?.salary?.total || 0) +
+                      (f?.banquet?.salary?.total || 0) +
+                      (f?.roomService?.salary?.total || 0)
                     );
                   }, 0),
                   indent: true,
@@ -1063,22 +1101,22 @@ export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
                   values: monthsData.map((m) => {
                     const f = m.data.deptFnB;
                     return (
-                      (f?.expenses?.restaurant?.total || 0) +
-                      (f?.expenses?.kitchen?.total || 0) +
-                      (f?.expenses?.lounge?.total || 0) +
-                      (f?.expenses?.banquet?.total || 0) +
-                      (f?.expenses?.roomService?.total || 0)
+                      (f?.restaurant?.expenses?.total || 0) +
+                      (f?.kitchen?.expenses?.total || 0) +
+                      (f?.lounge?.expenses?.total || 0) +
+                      (f?.banquet?.expenses?.total || 0) +
+                      (f?.roomService?.expenses?.total || 0)
                     );
                   }),
                   total: monthsData.reduce((acc, m) => {
                     const f = m.data.deptFnB;
                     return (
                       acc +
-                      (f?.expenses?.restaurant?.total || 0) +
-                      (f?.expenses?.kitchen?.total || 0) +
-                      (f?.expenses?.lounge?.total || 0) +
-                      (f?.expenses?.banquet?.total || 0) +
-                      (f?.expenses?.roomService?.total || 0)
+                      (f?.restaurant?.expenses?.total || 0) +
+                      (f?.kitchen?.expenses?.total || 0) +
+                      (f?.lounge?.expenses?.total || 0) +
+                      (f?.banquet?.expenses?.total || 0) +
+                      (f?.roomService?.expenses?.total || 0)
                     );
                   }, 0),
                   indent: true,
@@ -1294,8 +1332,8 @@ export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
                   { key: "gmExcom" as const, label: "Executive Committee (EXCOM / GM)", code: "GM", getPayroll: (m: BudgetMonthData) => m.deptAg?.salary?.total || 0 },
                   { key: "frontOffice" as const, label: "Front Office (FO)", code: "FO", getPayroll: (m: BudgetMonthData) => m.deptRooms?.frontOffice?.salary?.total || 0 },
                   { key: "housekeeping" as const, label: "Housekeeping (HK)", code: "HK", getPayroll: (m: BudgetMonthData) => m.deptRooms?.housekeeping?.salary?.total || 0 },
-                  { key: "fnbKitchen" as const, label: "F&B Kitchen (Prod)", code: "FB-K", getPayroll: (m: BudgetMonthData) => m.deptFnB?.salary?.kitchen?.total || 0 },
-                  { key: "fnbService" as const, label: "F&B Service (Rest & Bar)", code: "FB-S", getPayroll: (m: BudgetMonthData) => (m.deptFnB?.salary?.restaurant?.total || 0) + (m.deptFnB?.salary?.lounge?.total || 0) + (m.deptFnB?.salary?.banquet?.total || 0) + (m.deptFnB?.salary?.roomService?.total || 0) },
+                  { key: "fnbKitchen" as const, label: "F&B Kitchen (Prod)", code: "FB-K", getPayroll: (m: BudgetMonthData) => m.deptFnB?.kitchen?.salary?.total || 0 },
+                  { key: "fnbService" as const, label: "F&B Service (Rest & Bar)", code: "FB-S", getPayroll: (m: BudgetMonthData) => (m.deptFnB?.restaurant?.salary?.total || 0) + (m.deptFnB?.lounge?.salary?.total || 0) + (m.deptFnB?.banquet?.salary?.total || 0) + (m.deptFnB?.roomService?.salary?.total || 0) },
                   { key: "salesMarketing" as const, label: "Sales & Marketing (SM)", code: "SM", getPayroll: (m: BudgetMonthData) => m.deptSm?.salary?.total || 0 },
                   { key: "accounting" as const, label: "Accounting & Admin (AG)", code: "AG", getPayroll: (m: BudgetMonthData) => m.deptAg?.salary?.total || 0 },
                   { key: "hrd" as const, label: "Human Resources (HRD)", code: "HRD", getPayroll: (m: BudgetMonthData) => m.deptHrd?.salary?.total || 0 },

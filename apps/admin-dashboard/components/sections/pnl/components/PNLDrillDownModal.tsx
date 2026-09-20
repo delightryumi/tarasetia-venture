@@ -69,6 +69,28 @@ export function PNLDrillDownModal({
     drillDownTab, setDrillDownTab,
     onExportDrillExcel, month,
 }: PNLDrillDownModalProps) {
+    const isOtaCard = selectedDrillDown?.title === "OTA Revenue";
+    const otaBreakdown = React.useMemo(() => {
+        if (!isOtaCard || !selectedDrillDown?.items) return [];
+        const map = new Map<string, { channel: string; total: number; count: number }>();
+        let grandTotal = 0;
+        selectedDrillDown.items.forEach(item => {
+            const ch = (item.docType || item.source || "Other OTA").trim();
+            const amt = Number(item.amount || 0);
+            grandTotal += amt;
+            const cur = map.get(ch) || { channel: ch, total: 0, count: 0 };
+            cur.total += amt;
+            cur.count += 1;
+            map.set(ch, cur);
+        });
+        return Array.from(map.values())
+            .map(i => ({
+                ...i,
+                percent: grandTotal > 0 ? (i.total / grandTotal) * 100 : 0
+            }))
+            .sort((a, b) => b.total - a.total);
+    }, [isOtaCard, selectedDrillDown]);
+
     return (
         <AnimatePresence>
             {isOpen && selectedDrillDown && modalData && (
@@ -82,7 +104,7 @@ export function PNLDrillDownModal({
                         background: "rgba(0,0,0,0.55)",
                         backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        zIndex: 50, padding: 16,
+                        zIndex: 100, padding: 16,
                     }}
                 >
                     <motion.div
@@ -94,7 +116,7 @@ export function PNLDrillDownModal({
                         onClick={(e) => e.stopPropagation()}
                         style={{
                             background: T.surface, border: T.borderSm, borderRadius: 14,
-                            width: "100%", maxWidth: 900, maxHeight: "90vh",
+                            width: "95vw", maxWidth: 1260, maxHeight: "90vh",
                             display: "flex", flexDirection: "column", overflow: "hidden",
                         }}
                     >
@@ -318,6 +340,66 @@ export function PNLDrillDownModal({
                             </div>
                         )}
 
+                        {/* ── OTA REVENUE CHANNEL BREAKDOWN ── */}
+                        {isOtaCard && otaBreakdown.length > 0 && (
+                            <div style={{ padding: "14px 28px", background: T.surface2, borderBottom: T.border, flexShrink: 0 }}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 6 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        <span style={{ fontSize: 11, fontWeight: 700, color: T.textSec, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                                            Breakdown Revenue per Channel OTA
+                                        </span>
+                                        <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(139, 92, 246, 0.12)", color: "#8b5cf6", fontWeight: 700, fontFamily: T.mono }}>
+                                            {otaBreakdown.length} Channels
+                                        </span>
+                                    </div>
+                                    <span style={{ fontSize: 11, color: T.textSec }}>
+                                        Klik kartu channel untuk memfilter data transaksi
+                                    </span>
+                                </div>
+                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10 }}>
+                                    {otaBreakdown.map((ch) => {
+                                        const isActive = drillDownSearchQuery.toLowerCase() === ch.channel.toLowerCase();
+                                        return (
+                                            <button
+                                                key={ch.channel}
+                                                type="button"
+                                                onClick={() => setDrillDownSearchQuery(isActive ? "" : ch.channel)}
+                                                style={{
+                                                    padding: "10px 14px",
+                                                    borderRadius: 10,
+                                                    border: isActive ? "2px solid #8b5cf6" : T.border,
+                                                    background: isActive ? "rgba(139, 92, 246, 0.1)" : T.surface,
+                                                    boxShadow: isActive ? "0 0 0 1px #8b5cf6" : "none",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    gap: 4,
+                                                    textAlign: "left",
+                                                    cursor: "pointer",
+                                                    transition: "all 0.15s ease",
+                                                }}
+                                            >
+                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                                                    <span style={{ fontSize: 12, fontWeight: 700, color: T.textPri, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                        {ch.channel}
+                                                    </span>
+                                                    <span style={{ fontSize: 10, fontFamily: T.mono, color: "#8b5cf6", fontWeight: 700 }}>
+                                                        {ch.percent.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--f-income-color, #059669)", fontFamily: T.mono }}>
+                                                    {formatIDR(ch.total)}
+                                                </div>
+                                                <div style={{ fontSize: 10, color: T.textSec, display: "flex", justifyContent: "space-between" }}>
+                                                    <span>{ch.count} {ch.count === 1 ? "booking" : "bookings"}</span>
+                                                    {isActive && <span style={{ color: "#8b5cf6", fontWeight: 600 }}>Active Filter ✕</span>}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                         {/* ── CONTROLS ── */}
                         <div style={{ padding: "12px 28px", borderBottom: T.border, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", flexShrink: 0 }}>
                             {/* Tabs */}
@@ -365,78 +447,163 @@ export function PNLDrillDownModal({
                         <div style={{ flex: 1 }}>
                             {/* Desktop */}
                             <div className={styles.desktopView}>
-                                <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
-                                    <colgroup>
-                                        <col style={{ width: 44 }} /><col style={{ width: 114 }} />
-                                        <col /><col style={{ width: 94 }} />
-                                        <col style={{ width: 128 }} /><col style={{ width: 90 }} /><col style={{ width: 120 }} />
-                                        <col style={{ width: 72 }} />
-                                    </colgroup>
-                                    <thead>
-                                        <tr style={{ background: T.surface2, borderBottom: T.border, position: "sticky", top: 0, zIndex: 1 }}>
-                                            {(["#", "Source", "Description", "Dept", "Document", "Discount", "Amount", "Date"] as const).map((col, i) => (
-                                                <th key={col} style={{ padding: "10px 16px", fontSize: 10, fontWeight: 500, color: T.textSec, textAlign: (i === 5 || i === 6) ? "right" : "left", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>
-                                                    {col}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {modalData.filtered.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={8} style={{ textAlign: "center", padding: "64px 16px", color: T.textSec, fontSize: 13 }}>
-                                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-                                                        <Receipt size={28} style={{ opacity: 0.3 }} />
-                                                        <span>No transaction logs matching filters</span>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            modalData.filtered.map((item: PnLDetailedItem, index: number) => {
-                                                const isExpense = item.type === "expense";
-                                                const isCancelled = !!(item as any).isCancelled;
-                                                return (
-                                                    <tr
-                                                        key={item.id ?? index}
-                                                        style={{
-                                                            borderBottom: T.border,
-                                                            ...(isCancelled ? { textDecoration: 'line-through', opacity: 0.45 } : {})
-                                                        }}
-                                                        onMouseEnter={(e) => (e.currentTarget.style.background = T.surface2)}
-                                                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                                                    >
-                                                        <td style={{ padding: "13px 16px", fontSize: 11, color: T.textSec, fontFamily: T.mono }}>{index + 1}</td>
-                                                        <td style={{ padding: "13px 16px" }}><SourcePill label={item.source ?? "—"} /></td>
-                                                        <td style={{ padding: "13px 16px", fontSize: 13, color: T.textPri }}>
-                                                            <div style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }} title={item.description}>
-                                                                {item.description}
-                                                                {isCancelled && <span style={{ marginLeft: 6, fontSize: 10, color: '#ef4444', fontWeight: 700, textDecoration: 'none' }}>[CANCEL]</span>}
+                                {(() => {
+                                    const titleStr = (selectedDrillDown?.title || "").toLowerCase();
+                                    const isRoomSection = titleStr.includes("room") || 
+                                                          titleStr.includes("cash in hotel") || 
+                                                          titleStr.includes("ota revenue") ||
+                                                          titleStr.includes("direct cashless") ||
+                                                          titleStr.includes("occ") ||
+                                                          titleStr.includes("arr") ||
+                                                          titleStr.includes("revpar") ||
+                                                          (modalData?.filtered || []).some(i => i.department === "Rooms" || !!i.ratePlan || !!i.breakfastAmount);
+                                    const deductionColLabel = isRoomSection ? "Breakfast Allocation" : "Deduction";
+                                    const fourthColLabel = isRoomSection ? "Rate Plan" : "Dept";
+                                    const amountColLabel = isRoomSection ? "Net Room Rev" : "Amount";
+
+                                    return (
+                                        <table style={{ width: "100%", minWidth: 1060, borderCollapse: "collapse", tableLayout: "fixed" }}>
+                                            <colgroup>
+                                                <col style={{ width: 44 }} />
+                                                <col style={{ width: 140 }} />
+                                                <col />
+                                                <col style={{ width: 140 }} />
+                                                <col style={{ width: 155 }} />
+                                                <col style={{ width: 155 }} />
+                                                <col style={{ width: 150 }} />
+                                                <col style={{ width: 105 }} />
+                                            </colgroup>
+                                            <thead>
+                                                <tr style={{ background: T.surface2, borderBottom: T.border, position: "sticky", top: 0, zIndex: 1 }}>
+                                                    {[
+                                                        { label: "#", align: "left" },
+                                                        { label: "Source", align: "left" },
+                                                        { label: "Description", align: "left" },
+                                                        { label: fourthColLabel, align: "left" },
+                                                        { label: "Document", align: "left" },
+                                                        { label: deductionColLabel, align: "right" },
+                                                        { label: amountColLabel, align: "right" },
+                                                        { label: "Date", align: "left" },
+                                                    ].map((col) => (
+                                                        <th key={col.label} style={{ padding: "10px 14px", fontSize: 10, fontWeight: 600, color: T.textSec, textAlign: col.align as any, textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>
+                                                            {col.label}
+                                                        </th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {modalData.filtered.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={8} style={{ textAlign: "center", padding: "64px 16px", color: T.textSec, fontSize: 13 }}>
+                                                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                                                                <Receipt size={28} style={{ opacity: 0.3 }} />
+                                                                <span>No transaction logs matching filters</span>
                                                             </div>
-                                                            {!isCancelled && item.taxAmount !== undefined && item.taxAmount > 0 && (
-                                                                <div style={{ fontSize: 10, color: T.textSec, marginTop: 4, display: "flex", gap: 8, alignItems: "center" }}>
-                                                                    <span>Net (DPP): {formatIDR(item.nettAmount || 0)}</span>
-                                                                    <span style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--f-hairline, rgba(0,0,0,0.15))", display: "inline-block" }} />
-                                                                    <span>Tax, Service &amp; PB1: {formatIDR(item.taxAmount)}</span>
-                                                                </div>
-                                                            )}
                                                         </td>
-                                                        <td style={{ padding: "13px 16px", fontSize: 12, color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.department ?? "—"}</td>
-                                                        <td style={{ padding: "13px 16px" }}>
-                                                            {item.docType ? <DocTag label={item.docType} /> : <span style={{ color: T.textSec, fontSize: 12 }}>—</span>}
-                                                        </td>
-                                                        <td style={{ padding: "13px 16px", fontSize: 11, textAlign: "right", fontFamily: T.mono, color: "var(--f-expense-color)" }}>
-                                                            {item.discount && item.discount > 0 ? `−${formatIDR(item.discount)}` : "—"}
-                                                        </td>
-                                                        <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 500, textAlign: "right", fontFamily: T.mono, color: isCancelled ? T.textSec : (isExpense ? "var(--f-expense-color)" : "var(--f-income-color)") }}>
-                                                            <div>{isCancelled ? "—" : (isExpense ? "−" : "+")}{!isCancelled && formatIDR(item.amount)}</div>
-                                                        </td>
-                                                        <td style={{ padding: "13px 16px", fontSize: 11, color: T.textSec, fontFamily: T.mono }}>{item.date ?? "N/A"}</td>
                                                     </tr>
-                                                );
-                                            })
-                                        )}
-                                    </tbody>
-                                </table>
+                                                ) : (
+                                                    modalData.filtered.map((item: PnLDetailedItem, index: number) => {
+                                                        const isExpense = item.type === "expense";
+                                                        const isCancelled = !!(item as any).isCancelled;
+                                                        const deductionAmount = (item.breakfastAmount && item.breakfastAmount > 0)
+                                                            ? item.breakfastAmount
+                                                            : (item.discount && item.discount > 0 ? item.discount : 0);
+
+                                                        return (
+                                                            <tr
+                                                                key={`${item.id || 'item'}-${item.date || ''}-${index}`}
+                                                                style={{
+                                                                    borderBottom: T.border,
+                                                                    ...(isCancelled ? { textDecoration: 'line-through', opacity: 0.45 } : {})
+                                                                }}
+                                                                onMouseEnter={(e) => (e.currentTarget.style.background = T.surface2)}
+                                                                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                                                            >
+                                                                <td style={{ padding: "12px 14px", fontSize: 11, color: T.textSec, fontFamily: T.mono }}>{index + 1}</td>
+                                                                <td style={{ padding: "12px 14px", overflow: "hidden", maxWidth: 145 }}>
+                                                                    <SourcePill label={item.source ?? "—"} />
+                                                                </td>
+                                                                <td style={{ padding: "12px 14px", fontSize: 13, color: T.textPri, overflow: "hidden" }}>
+                                                                    <div style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", fontWeight: 500 }} title={item.description}>
+                                                                        {item.description}
+                                                                        {isCancelled && <span style={{ marginLeft: 6, fontSize: 10, color: '#ef4444', fontWeight: 700, textDecoration: 'none' }}>[CANCEL]</span>}
+                                                                    </div>
+                                                                    {!isCancelled && item.taxAmount !== undefined && item.taxAmount > 0 && (
+                                                                        <div style={{ fontSize: 10, color: T.textSec, marginTop: 4, display: "flex", gap: 6, alignItems: "center" }}>
+                                                                            <span>Net: {formatIDR(item.nettAmount || 0)}</span>
+                                                                            <span style={{ width: 3, height: 3, borderRadius: "50%", background: "currentColor", opacity: 0.4 }} />
+                                                                            <span>Tax &amp; Serv: {formatIDR(item.taxAmount)}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </td>
+                                                                <td style={{ padding: "12px 14px", overflow: "hidden", maxWidth: 140 }}>
+                                                                    {isRoomSection ? (
+                                                                        item.ratePlan ? (
+                                                                            <span
+                                                                                style={{
+                                                                                    display: "inline-block",
+                                                                                    maxWidth: "100%",
+                                                                                    fontSize: 10.5,
+                                                                                    fontWeight: 600,
+                                                                                    padding: "2px 8px",
+                                                                                    borderRadius: 5,
+                                                                                    background: item.ratePlan.toLowerCase().includes("bb") || item.ratePlan.toLowerCase().includes("breakfast")
+                                                                                        ? "rgba(245, 158, 11, 0.12)"
+                                                                                        : "rgba(59, 130, 246, 0.1)",
+                                                                                    color: item.ratePlan.toLowerCase().includes("bb") || item.ratePlan.toLowerCase().includes("breakfast")
+                                                                                        ? "#b45309"
+                                                                                        : "#1d4ed8",
+                                                                                    border: item.ratePlan.toLowerCase().includes("bb") || item.ratePlan.toLowerCase().includes("breakfast")
+                                                                                        ? "1px solid rgba(245, 158, 11, 0.3)"
+                                                                                        : "1px solid rgba(59, 130, 246, 0.22)",
+                                                                                    whiteSpace: "nowrap",
+                                                                                    overflow: "hidden",
+                                                                                    textOverflow: "ellipsis",
+                                                                                    boxSizing: "border-box",
+                                                                                }}
+                                                                                title={`Rate Plan: ${item.ratePlan}`}
+                                                                            >
+                                                                                {item.ratePlan}
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span style={{ color: T.textSec, fontSize: 12 }}>—</span>
+                                                                        )
+                                                                    ) : (
+                                                                        <span style={{ fontSize: 12, color: T.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-block", maxWidth: "100%" }} title={item.department ?? ""}>
+                                                                            {item.department ?? "—"}
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                                <td style={{ padding: "12px 14px", overflow: "hidden", maxWidth: 160 }}>
+                                                                    {item.docType ? <DocTag label={item.docType} /> : <span style={{ color: T.textSec, fontSize: 12 }}>—</span>}
+                                                                </td>
+                                                                <td style={{ padding: "12px 14px", fontSize: 12, textAlign: "right", fontFamily: T.mono, whiteSpace: "nowrap" }}>
+                                                                    {deductionAmount > 0 ? (
+                                                                        <span
+                                                                            style={{
+                                                                                color: item.breakfastAmount && item.breakfastAmount > 0 ? "#dc2626" : "var(--f-expense-color)",
+                                                                                fontWeight: 600,
+                                                                            }}
+                                                                            title={item.breakfastAmount && item.breakfastAmount > 0 ? "Alokasi Sarapan (Masuk Pendapatan F&B)" : "Discount / Deduction"}
+                                                                        >
+                                                                            −{formatIDR(deductionAmount)}
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span style={{ color: T.textSec }}>—</span>
+                                                                    )}
+                                                                </td>
+                                                                <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 600, textAlign: "right", fontFamily: T.mono, color: isCancelled ? T.textSec : (isExpense ? "var(--f-expense-color)" : "var(--f-income-color)") }}>
+                                                                    <div>{isCancelled ? "—" : (isExpense ? "−" : "+")}{!isCancelled && formatIDR(item.amount)}</div>
+                                                                </td>
+                                                                <td style={{ padding: "12px 14px", fontSize: 11, color: T.textSec, fontFamily: T.mono, whiteSpace: "nowrap" }}>{item.date ?? "N/A"}</td>
+                                                            </tr>
+                                                        );
+                                                    })
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    );
+                                })()}
                             </div>
 
                             {/* Mobile cards */}
@@ -452,7 +619,7 @@ export function PNLDrillDownModal({
                                         const isCancelled = !!(item as any).isCancelled;
                                         return (
                                             <motion.div
-                                                key={item.id ?? index}
+                                                key={`${item.id || 'item'}-${item.date || ''}-${index}`}
                                                 initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                                                 transition={{ duration: 0.18, delay: Math.min(index * 0.012, 0.25) }}
                                                 style={{
@@ -467,10 +634,51 @@ export function PNLDrillDownModal({
                                                     <SourcePill label={item.source ?? "—"} />
                                                     <span style={{ fontSize: 11, color: T.textSec, fontFamily: T.mono }}>{item.date ?? "N/A"}</span>
                                                 </div>
-                                                <p style={{ fontSize: 13, fontWeight: 500, color: T.textPri, marginBottom: 12, lineHeight: 1.4 }}>
+                                                <p style={{ fontSize: 13, fontWeight: 500, color: T.textPri, marginBottom: 8, lineHeight: 1.4 }}>
                                                     {item.description}
                                                     {isCancelled && <span style={{ marginLeft: 6, fontSize: 10, color: '#ef4444', fontWeight: 700, textDecoration: 'none' }}>[CANCEL]</span>}
                                                 </p>
+                                                {(item.ratePlan || (item.breakfastAmount && item.breakfastAmount > 0)) && (
+                                                    <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 10, flexWrap: "wrap" }}>
+                                                        {item.ratePlan && (
+                                                            <span
+                                                                style={{
+                                                                    fontSize: 10,
+                                                                    fontWeight: 600,
+                                                                    padding: "1.5px 7px",
+                                                                    borderRadius: 4,
+                                                                    background: item.ratePlan.toLowerCase().includes("bb") || item.ratePlan.toLowerCase().includes("breakfast")
+                                                                        ? "rgba(245, 158, 11, 0.12)"
+                                                                        : "rgba(59, 130, 246, 0.1)",
+                                                                    color: item.ratePlan.toLowerCase().includes("bb") || item.ratePlan.toLowerCase().includes("breakfast")
+                                                                        ? "#b45309"
+                                                                        : "#1d4ed8",
+                                                                    border: item.ratePlan.toLowerCase().includes("bb") || item.ratePlan.toLowerCase().includes("breakfast")
+                                                                        ? "1px solid rgba(245, 158, 11, 0.28)"
+                                                                        : "1px solid rgba(59, 130, 246, 0.22)"
+                                                                }}
+                                                            >
+                                                                Plan: {item.ratePlan}
+                                                            </span>
+                                                        )}
+                                                        {item.breakfastAmount && item.breakfastAmount > 0 ? (
+                                                             <span
+                                                                style={{
+                                                                    fontSize: 10,
+                                                                    fontWeight: 500,
+                                                                    padding: "1.5px 7px",
+                                                                    borderRadius: 4,
+                                                                    background: "rgba(239, 68, 68, 0.08)",
+                                                                    color: "#dc2626",
+                                                                    border: "1px solid rgba(239, 68, 68, 0.2)"
+                                                                }}
+                                                                title="Alokasi Sarapan (Masuk Pendapatan F&B)"
+                                                            >
+                                                                Breakfast Allocation: −{formatIDR(item.breakfastAmount)}
+                                                            </span>
+                                                        ) : null}
+                                                    </div>
+                                                )}
                                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 12, borderTop: T.border }}>
                                                     <div>
                                                         <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>Department</p>

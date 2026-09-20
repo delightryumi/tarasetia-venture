@@ -907,24 +907,9 @@ export const useTransactionForm = () => {
                     const rawBreakfastAmt = hasBreakfast ? dynamicBreakfastRate * adultsCount : 0;
                     // Cap breakfast so it never exceeds 45% of total room charge (safety against extreme discounts)
                     const breakfastAmount = Math.min(rawBreakfastAmt, Math.round(finalAmount * 0.45));
-                    const netRoomAmount = finalAmount - breakfastAmount;
 
-                    const breakfastRatio = finalAmount > 0 ? (breakfastAmount / finalAmount) : 0;
-                    const bftCash = Math.round(finalCash * breakfastRatio);
-                    const bftEdc = Math.round(finalEdc * breakfastRatio);
-                    const bftQris = Math.round(finalQris * breakfastRatio);
-                    const bftTransfer = Math.round(finalTransfer * breakfastRatio);
-                    const bftOta = Math.round(finalOta * breakfastRatio);
-                    const bftPayHotel = bftCash + bftEdc + bftQris + bftTransfer;
-                    const bftPayTransfer = bftOta + bftTransfer;
-
-                    const roomCash = finalCash - bftCash;
-                    const roomEdc = finalEdc - bftEdc;
-                    const roomQris = finalQris - bftQris;
-                    const roomTransfer = finalTransfer - bftTransfer;
-                    const roomOta = finalOta - bftOta;
-                    const roomPayHotel = roomCash + roomEdc + roomQris + roomTransfer;
-                    const roomPayTransfer = roomOta + roomTransfer;
+                    const resolvedRatePlanName = matchedRatePlan?.name || rm.ratePlanName || (hasBreakfast ? "With Breakfast (BB)" : "Room Only (RO)");
+                    const resolvedRateCode = matchedRatePlan?.code || rm.rateCode || form.rateCode || (hasBreakfast ? "BB" : "-");
 
                     transactionEntries.push({
                         type: "accommodation",
@@ -944,8 +929,12 @@ export const useTransactionForm = () => {
                         company: form.company || "-",
                         bookingType: form.bookingType || "Confirmed",
                         businessSource: form.businessSource || "Direct / Walk-in",
-                        rateCode: rm.rateCode || form.rateCode || "-",
-                        ratePlanId: rm.ratePlanId || "",
+                        rateCode: resolvedRateCode,
+                        ratePlanId: rm.ratePlanId || matchedRatePlan?.id || "",
+                        ratePlanName: resolvedRatePlanName,
+                        hasBreakfast: hasBreakfast,
+                        breakfastRate: dynamicBreakfastRate,
+                        breakfastAmount: breakfastAmount,
                         pax: adultsCount,
                         adults: adultsCount,
                         children: Number(rm.children || 0),
@@ -965,19 +954,19 @@ export const useTransactionForm = () => {
                         nights: 1,
                         channel: form.channel,
                         voucherCode: form.voucherCode,
-                        amount: netRoomAmount,
+                        amount: finalAmount,
                         totalAmount: totalGross,
-                        paidCash: roomCash,
-                        paidEdc: roomEdc,
-                        paidQris: roomQris,
-                        paidTransfer: roomTransfer,
-                        paidOta: roomOta,
-                        payHotel: roomPayHotel,
-                        payTransfer: roomPayTransfer,
-                        paidAmount1: roomPayHotel,
-                        paidAmount2: roomPayTransfer,
-                        initialPayHotel: roomPayHotel,
-                        initialPayTransfer: roomPayTransfer,
+                        paidCash: finalCash,
+                        paidEdc: finalEdc,
+                        paidQris: finalQris,
+                        paidTransfer: finalTransfer,
+                        paidOta: finalOta,
+                        payHotel: finalPayHotel,
+                        payTransfer: finalPayTransfer,
+                        paidAmount1: finalPayHotel,
+                        paidAmount2: finalPayTransfer,
+                        initialPayHotel: finalPayHotel,
+                        initialPayTransfer: finalPayTransfer,
                         paymentMethod: pm,
                         paymentStatus: dailyStatus,
                         source: form.channel === "Walk-in" ? "Walk-in" : "OTA",
@@ -986,7 +975,7 @@ export const useTransactionForm = () => {
                         staffEmail: user?.email || "",
                         propertyName: activeHotelName || "",
                         note: form.note,
-                        description: (hasBreakfast && breakfastAmount > 0) ? "[USALI Room Charge (Net of Breakfast)]" : undefined,
+                        description: form.note || undefined,
                         timestamp: new Date().toISOString(),
                         isCompliment: form.isCompliment,
                         complimentReason: form.isCompliment ? form.complimentReason : undefined,
@@ -994,75 +983,6 @@ export const useTransactionForm = () => {
                         sendEmailVoucher: form.sendEmailVoucher,
                         enableGuestPortal: form.enableGuestPortal
                     });
-
-
-                    // Companion F&B Entry for Breakfast Package (USALI Standard 1)
-                    if (hasBreakfast && breakfastAmount > 0) {
-                        transactionEntries.push({
-                            type: "other_income",
-                            department: "F&B",
-                            category: "F&B",
-                            subCategory: "breakfast",
-                            description: `Package Breakfast (${adultsCount} Pax) - ${roomTypeName}`,
-                            salutation: form.salutation || "Mr.",
-                            guestName: fullGuestName,
-                            rawGuestName: form.guestName,
-                            bookingId: `${form.bookingId || `RES-${Date.now().toString().slice(-6)}`}-BFT`,
-                            phone: form.phone || "",
-                            nik: form.nik || "",
-                            nationality: form.nationality || "INDONESIA",
-                            email: form.email || "",
-                            address: form.address || "",
-                            zipCode: form.zipCode || "",
-                            country: form.country || "Indonesia",
-                            state: form.state || "",
-                            city: form.city || "",
-                            company: form.company || "-",
-                            bookingType: form.bookingType || "Confirmed",
-                            businessSource: form.businessSource || "Direct / Walk-in",
-                            rateCode: rm.rateCode || form.rateCode || "-",
-                            ratePlanId: rm.ratePlanId || "",
-                            pax: adultsCount,
-                            adults: adultsCount,
-                            children: Number(rm.children || 0),
-                            checkInDate: form.checkIn,
-                            checkInTime: form.checkInTime || "02:00 PM",
-                            checkOutDate: form.checkOut,
-                            checkOutTime: form.checkOutTime || "12:00 PM",
-                            effectiveDate: dateStr,
-                            roomType: roomTypeName,
-                            roomTypeId: rm.roomTypeId || "",
-                            roomNumber: rm.roomNumber || `Room ${rIdx + 1}`,
-                            roomCount: 1,
-                            roomIndex: rIdx,
-                            totalRoomsInBooking: roomList.length,
-                            nights: 1,
-                            channel: form.channel,
-                            voucherCode: form.voucherCode,
-                            amount: breakfastAmount,
-                            totalAmount: breakfastAmount,
-                            paidCash: bftCash,
-                            paidEdc: bftEdc,
-                            paidQris: bftQris,
-                            paidTransfer: bftTransfer,
-                            paidOta: bftOta,
-                            payHotel: bftPayHotel,
-                            payTransfer: bftPayTransfer,
-                            paidAmount1: bftPayHotel,
-                            paidAmount2: bftPayTransfer,
-                            initialPayHotel: bftPayHotel,
-                            initialPayTransfer: bftPayTransfer,
-                            paymentMethod: pm,
-                            paymentStatus: dailyStatus,
-                            source: form.channel === "Walk-in" ? "Walk-in" : "OTA",
-                            status: form.bookingType === "Inquiry" ? "INQUIRY" : (form.bookingType === "Tentative / Hold" ? "HOLD" : "CONFIRMED"),
-                            staffName: form.staffName,
-                            note: `USALI Package Revenue Split from Room Booking (${form.bookingId || "Direct"})`,
-                            timestamp: new Date().toISOString(),
-                            sendEmailVoucher: false,
-                            enableGuestPortal: false
-                        });
-                    }
                 }
             });
         } else {

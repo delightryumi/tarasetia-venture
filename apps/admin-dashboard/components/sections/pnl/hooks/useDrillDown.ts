@@ -16,12 +16,14 @@ interface UseDrillDownOptions {
     lostBreakagePercentage:  number;
     month:                   string;
     payrollDetails?:         any[];
+    ratePlans?:              any[];
+    hotelBreakfastRate?:     number;
 }
 
 export function useDrillDown({
     pnlResult, rawTransactions, customIncomes, expenses, posOrders,
     vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage,
-    payrollDetails
+    payrollDetails, ratePlans = [], hotelBreakfastRate
 }: UseDrillDownOptions) {
     const [selectedDrillDown,    setSelectedDrillDown]    = React.useState<DrillDownData | null>(null);
     const [isDrillDownModalOpen, setIsDrillDownModalOpen] = React.useState(false);
@@ -33,7 +35,7 @@ export function useDrillDown({
         let drillDown = getDrillDownData(
             cardId, rawTransactions, customIncomes, expenses, posOrders,
             vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage,
-            payrollDetails
+            payrollDetails, pnlResult, ratePlans, hotelBreakfastRate
         );
 
         if (drillDown && drillDown.items) {

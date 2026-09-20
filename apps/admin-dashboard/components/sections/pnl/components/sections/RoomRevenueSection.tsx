@@ -36,25 +36,34 @@ export function RoomRevenueSection({ pnlResult, loading, rise, onCardClick }: Ro
             <div className={styles.innerContainer}>
                 <motion.div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4">
                     <SummaryCard
-                        label="Revenue Hotel Collect"
+                        label="Revenue Cash in Hotel"
                         icon={<Store size={16} />}
                         accent="#059669"
-                        value={pnlResult?.card3_RevHotelCollect || 0}
+                        value={pnlResult?.revCashHotel ?? 0}
                         loading={loading}
                         variants={rise}
                         onClick={onCardClick}
                     />
                     <SummaryCard
-                        label="Revenue Online/Transfer Collect"
+                        label="Room Revenue Transfer/EDC/QRIS"
                         icon={<Sparkles size={16} />}
-                        accent="#8b5cf6"
-                        value={pnlResult?.card3_RevNexuraCollect || 0}
+                        accent="#0284c7"
+                        value={pnlResult?.revDirectCashless ?? 0}
                         loading={loading}
                         variants={rise}
                         onClick={onCardClick}
                     />
                     <SummaryCard
-                        label="Revenue Room"
+                        label="OTA Revenue"
+                        icon={<TrendingUp size={16} />}
+                        accent="#8b5cf6"
+                        value={pnlResult?.revOta ?? 0}
+                        loading={loading}
+                        variants={rise}
+                        onClick={onCardClick}
+                    />
+                    <SummaryCard
+                        label="Total Room Revenue"
                         icon={<Hotel size={16} />}
                         accent="#059669"
                         value={pnlResult?.revRoom || 0}

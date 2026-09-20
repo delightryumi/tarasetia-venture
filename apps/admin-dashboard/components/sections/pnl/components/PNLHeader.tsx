@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
     LayoutDashboard, TrendingUp, Download, FileText, Calendar, ChevronDown
@@ -47,6 +48,55 @@ export const PNLHeader: React.FC<PNLHeaderProps> = ({
                     <span className={s.statusDot} />
                     <span>STATUS: ACTIVE AUDIT / LIVE LEDGER</span>
                 </div>
+            </div>
+
+            {/* Accounting Modules Switcher Bar */}
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", padding: "4px 0 8px 0" }}>
+                <Link
+                    href="/pnl?module=accounting"
+                    style={{
+                        padding: "6px 14px",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        textDecoration: "none",
+                        backgroundColor: "#1e4d3a",
+                        color: "#ffffff",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                    }}
+                >
+                    P&amp;L Live Ledger
+                </Link>
+                <Link
+                    href="/pnl-budget?module=accounting"
+                    style={{
+                        padding: "6px 14px",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                        backgroundColor: "#f8fafc",
+                        color: "#475569",
+                        border: "1px solid #cbd5e1"
+                    }}
+                >
+                    P&amp;L Actual vs Budget
+                </Link>
+                <Link
+                    href="/budgeting?module=accounting"
+                    style={{
+                        padding: "6px 14px",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                        backgroundColor: "#f8fafc",
+                        color: "#475569",
+                        border: "1px solid #cbd5e1"
+                    }}
+                >
+                    Budgeting &amp; DSR
+                </Link>
             </div>
 
             {/* Main Header Title & Export Actions */}

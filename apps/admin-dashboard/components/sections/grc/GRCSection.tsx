@@ -50,6 +50,10 @@ interface GuestEntryItem {
     email?: string;
     company?: string;
     rateCode?: string;
+    ratePlanName?: string;
+    hasBreakfast?: boolean;
+    dailyRate?: number;
+    nights?: number;
     pax?: number;
     upgradeFrom?: string;
     upgradeTo?: string;
@@ -171,6 +175,8 @@ export function GRCSection() {
                 const totalStayAmount = group.reduce((sum, item) => sum + (Number(item.amount) || Number(item.totalAmount) || 0), 0);
                 const checkInDate = rep.checkInDate || rep.checkIn || rep._docDate;
                 const checkOutDate = rep.checkOutDate || rep.checkOut || "";
+                const stayNights = group.length || 1;
+                const dailyRate = Number(rep.amount) || Math.round(totalStayAmount / stayNights);
 
                 const isExtend = Boolean(checkInDate < todayStr && checkOutDate > todayStr);
 
@@ -181,7 +187,9 @@ export function GRCSection() {
                 const nationality = group.find(e => e.nationality)?.nationality || rep.nationality || "INDONESIA";
                 const email = group.find(e => e.email)?.email || rep.email || "";
                 const company = group.find(e => e.company)?.company || rep.company || "-";
-                const rateCode = group.find(e => e.rateCode)?.rateCode || rep.rateCode || "-";
+                const rateCode = group.find(e => e.rateCode && e.rateCode !== '-')?.rateCode || rep.rateCode || "-";
+                const ratePlanName = group.find(e => e.ratePlanName)?.ratePlanName || rep.ratePlanName || "";
+                const hasBreakfast = group.some(e => e.hasBreakfast) || rep.hasBreakfast || false;
                 const pax = group.find(e => e.pax)?.pax || rep.pax || 1;
                 const upgradeFrom = group.find(e => e.upgradeFrom)?.upgradeFrom || rep.upgradeFrom || "";
                 const upgradeTo = group.find(e => e.upgradeTo)?.upgradeTo || rep.upgradeTo || "";
@@ -194,8 +202,10 @@ export function GRCSection() {
                     roomType: rep.roomType || "-",
                     roomNumber: rep.roomNumber || "-",
                     channel: rep.channel || "Walk-in",
-                    amount: totalStayAmount || rep.amount || 0,
-                    totalAmount: totalStayAmount || rep.amount || 0,
+                    amount: dailyRate,
+                    totalAmount: totalStayAmount || (dailyRate * stayNights),
+                    dailyRate,
+                    nights: stayNights,
                     status: rep.status || "Pending",
                     paymentStatus: rep.paymentStatus || rep.status || "Pending",
                     checkInDate,
@@ -210,6 +220,8 @@ export function GRCSection() {
                     email,
                     company,
                     rateCode,
+                    ratePlanName,
+                    hasBreakfast,
                     pax,
                     upgradeFrom,
                     upgradeTo,
@@ -260,12 +272,26 @@ export function GRCSection() {
         const isChannelOta = guest.channel && guest.channel.toLowerCase() !== "walk-in";
         const isCompany = guest.channel && guest.channel.toLowerCase().includes("corporate");
 
+        const isWithBreakfast = guest.hasBreakfast || 
+            guest.rateCode === 'BB' || 
+            String(guest.rateCode || '').toUpperCase().includes('BB') ||
+            String(guest.ratePlanName || '').toLowerCase().includes('breakfast') ||
+            String(guest.rateCode || '').toUpperCase().includes('RBF');
+
+        const resolvedRateCode = (guest.rateCode && guest.rateCode !== '-')
+            ? (guest.rateCode === 'BB' ? 'BB / RBF' : guest.rateCode)
+            : (isWithBreakfast ? 'BB / RBF' : (guest.ratePlanName || '-'));
+
+        const calculatedRoomRate = guest.dailyRate || 
+            (guest.amount && Number(guest.amount) > 0 ? Number(guest.amount) : 0) ||
+            (guest.totalAmount && guest.nights ? Math.round(guest.totalAmount / guest.nights) : Number(guest.totalAmount || 0));
+
         const data: GRCData = {
             roomNumber: guest.roomNumber && guest.roomNumber !== "-" ? guest.roomNumber : "",
-            roomRate: guest.totalAmount || guest.amount || 0,
+            roomRate: calculatedRoomRate,
             bookingId: guest.bookingId || "",
             roomType: guest.roomType && guest.roomType !== "-" ? guest.roomType : "",
-            rateCode: guest.rateCode || "-",
+            rateCode: resolvedRateCode,
             noOfPax: guest.pax || 1,
             upgradeFrom: guest.upgradeFrom || "",
             upgradeTo: guest.upgradeTo || "",

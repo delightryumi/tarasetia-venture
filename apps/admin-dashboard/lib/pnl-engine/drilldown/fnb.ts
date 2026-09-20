@@ -1,16 +1,7 @@
 import { PnlIncomeItem, PnlExpenseItem, DrillDownData } from "../../pnl-utils";
 import { ExtendedTransaction } from "../types";
-
-export interface DrillDownContext {
-  rawTransactions: ExtendedTransaction[];
-  customIncomes: PnlIncomeItem[];
-  expenses: PnlExpenseItem[];
-  posOrders: any[];
-  vatPercentage: number;
-  mgmtFeePercentage: number;
-  serviceChargePercentage: number;
-  lostBreakagePercentage: number;
-}
+import { DrillDownContext } from "./index";
+import { detectBreakfastAllocation } from "../../breakfast-utils";
 
 function getFbExpenses(expenses: PnlExpenseItem[]) {
   const validExpenses = expenses.filter(e => !!e);
@@ -60,6 +51,72 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
   let items: any[] = [];
   const { rawTransactions, customIncomes, expenses, posOrders, vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage } = ctx;
 
+  const isAccommodation = (t: any) => {
+    const isPOS = t.guestName?.startsWith("POS Order") || !!t.posItems || !!t.revenueType;
+    const isPelunasan = t.isHidden || t.isPelunasan || t.type === "pelunasan_ar" || t.type === "pelunasan_reversal" || t.guestName?.startsWith("Koreksi Tanggal Pelunasan") || t.guestName?.startsWith("Pelunasan Piutang");
+    return !isPOS && !isPelunasan && (t.type === "accommodation" || (!t.type && t.guestName));
+  };
+
+  const isFnbRevenue = (t: any) => {
+    if (isAccommodation(t)) return false;
+    const dept = (t.department || "").toLowerCase();
+    const cat = (t.category || "").toLowerCase();
+    const subCat = (t.subCategory || "").toLowerCase();
+    const desc = (t.description || t.note || "").toLowerCase();
+    return dept.includes("f&b") || cat.includes("f&b") || subCat === "breakfast" || desc.includes("breakfast") || desc.includes("sarapan");
+  };
+
+  const isFnbBeverage = (t: any) => {
+    const subCat = (t.subCategory || "").toLowerCase();
+    const desc = (t.description || t.note || "").toLowerCase();
+    return subCat.includes("bev") || desc.includes("beverage") || desc.includes("drink") || desc.includes("minum");
+  };
+
+  // Extract package breakfast from room transactions
+  const packageBreakfastItems: any[] = [];
+  rawTransactions.filter(isAccommodation).forEach((t, idx) => {
+    const alloc = detectBreakfastAllocation(t, { ratePlans: ctx.ratePlans || [], hotelBreakfastRate: ctx.hotelBreakfastRate });
+    if (alloc.hasBreakfast && !alloc.isPreSplit && alloc.breakfastAmount > 0) {
+      packageBreakfastItems.push({
+        id: `pkg-bf-${(t as any).id || t.bookingId}_${t.date || ''}_${idx}`,
+        type: 'income',
+        source: 'Room Package Breakfast',
+        description: `Breakfast Package: ${t.guestName || 'Guest'} (${t.roomType || 'Room'})`,
+        amount: alloc.breakfastAmount,
+        date: (t.date || t.effectiveDate || t.checkInDate || (t as any).checkIn || ''),
+        department: 'Food & Beverage',
+        docType: 'Package Breakfast'
+      });
+    }
+  });
+
+  // Extract ledger F&B transactions
+  const ledgerFoodItems = rawTransactions
+    .filter(t => !isAccommodation(t) && isFnbRevenue(t) && !isFnbBeverage(t))
+    .map((t, idx) => ({
+      id: (t as any).id || (t.bookingId ? `${t.bookingId}_${t.date || ''}_${idx}` : Math.random().toString()),
+      type: 'income',
+      source: t.channel || 'Ledger (F&B)',
+      description: t.guestName || (t as any).description || 'Food Sales (Front Office)',
+      amount: t.amount,
+      date: (t.date || t.effectiveDate || t.checkInDate || (t as any).checkIn || ''),
+      department: 'Food & Beverage',
+      docType: 'Ledger F&B'
+    }));
+
+  const ledgerBevItems = rawTransactions
+    .filter(t => !isAccommodation(t) && isFnbRevenue(t) && isFnbBeverage(t))
+    .map((t, idx) => ({
+      id: (t as any).id || (t.bookingId ? `${t.bookingId}_${t.date || ''}_${idx}` : Math.random().toString()),
+      type: 'income',
+      source: t.channel || 'Ledger (F&B)',
+      description: t.guestName || (t as any).description || 'Beverage Sales (Front Office)',
+      amount: t.amount,
+      date: (t.date || t.effectiveDate || t.checkInDate || (t as any).checkIn || ''),
+      department: 'Food & Beverage',
+      docType: 'Ledger F&B'
+    }));
+
   switch (cardId) {
     case "Food A La Carte Revenue": {
       const normal    = posOrders.filter(o => o.category === 'food' && !o.isCancelled);
@@ -67,6 +124,8 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
       items = [
         ...normal,
         ...cancelled,
+        ...ledgerFoodItems,
+        ...packageBreakfastItems,
         ...customIncomes
           .filter(i => (i.category || "").toLowerCase().includes("food") && (i.name || "").toLowerCase().includes("a la carte"))
           .map(i => ({
@@ -89,6 +148,7 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
       items = [
         ...normal,
         ...cancelled,
+        ...ledgerBevItems,
         ...customIncomes
           .filter(i => (i.category || "").toLowerCase().includes("beverage") && (i.name || "").toLowerCase().includes("a la carte"))
           .map(i => ({
@@ -133,6 +193,9 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
       items = [
         ...normal,
         ...cancelled,
+        ...ledgerFoodItems,
+        ...packageBreakfastItems,
+        ...ledgerBevItems,
         ...customIncomes
           .filter(i => ((i.category || "").toLowerCase().includes("food") || (i.category || "").toLowerCase().includes("beverage")) && !(i.name || "").toLowerCase().includes("banquet") && !(i.category || "").toLowerCase().includes("banquet"))
           .map(i => ({
@@ -156,6 +219,8 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
         const incomes = [
           ...normal,
           ...cancelled,
+          ...ledgerFoodItems,
+          ...packageBreakfastItems,
           ...customIncomes
             .filter(i => (i.category || "").toLowerCase().includes("food") && (i.name || "").toLowerCase().includes("a la carte"))
             .map(i => ({
@@ -263,6 +328,9 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
         const incomes = [
           ...normal,
           ...cancelled,
+          ...ledgerFoodItems,
+          ...packageBreakfastItems,
+          ...ledgerBevItems,
           ...customIncomes
             .filter(i => ((i.category || "").toLowerCase().includes("food") || (i.category || "").toLowerCase().includes("beverage")) && (i.name || "").toLowerCase().includes("a la carte"))
             .map(i => ({
@@ -315,6 +383,7 @@ export function getFnbDrillDown(cardId: string, ctx: DrillDownContext): any[] | 
         const incomes = [
           ...normal,
           ...cancelled,
+          ...ledgerBevItems,
           ...customIncomes
             .filter(i => (i.category || "").toLowerCase().includes("beverage") && (i.name || "").toLowerCase().includes("a la carte"))
             .map(i => ({

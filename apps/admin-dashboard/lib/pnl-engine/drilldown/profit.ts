@@ -48,7 +48,7 @@ export function getProfitDrillDown(cardId: string, ctx: DrillDownContext): any[]
             department: 'Rooms',
             docType: 'Room Booking',
             amount: t.amount,
-            date: t.date || 'N/A'
+            date: (t.date || t.effectiveDate || t.checkInDate || (t as any).checkIn || '')
           }));
 
         const fnbAlacarteRev = [
@@ -96,7 +96,7 @@ export function getProfitDrillDown(cardId: string, ctx: DrillDownContext): any[]
               department: 'N/A',
               docType: 'Ledger Other',
               amount: t.amount,
-              date: t.date || 'N/A'
+              date: (t.date || t.effectiveDate || t.checkInDate || (t as any).checkIn || '')
             })),
           ...customIncomes
             .filter(i => !isFnbOrBanquetCustomIncome(i))

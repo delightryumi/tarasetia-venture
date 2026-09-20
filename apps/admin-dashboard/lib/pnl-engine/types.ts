@@ -15,6 +15,10 @@ export interface ExtendedTransaction {
   paidEdc?: number;
   paidQris?: number;
   paidOta?: number;
+  paymentMethod?: string;
+  payHotel?: number;
+  payTransfer?: number;
+  payNexura?: number;
   feePercentage: number;
   status: string;
   channel: string;

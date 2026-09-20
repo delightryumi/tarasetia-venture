@@ -11,6 +11,9 @@ export interface DrillDownContext {
   serviceChargePercentage: number;
   lostBreakagePercentage: number;
   payrollDetails?: any[];
+  pnlResult?: any;
+  ratePlans?: any[];
+  hotelBreakfastRate?: number;
 }
 
 import { getRevenueDrillDown } from './revenue';
@@ -29,7 +32,10 @@ export function getDrillDownData(
   mgmtFeePercentage: number = 0,
   serviceChargePercentage: number = 0,
   lostBreakagePercentage: number = 0,
-  payrollDetails: any[] = []
+  payrollDetails: any[] = [],
+  pnlResult?: any,
+  ratePlans: any[] = [],
+  hotelBreakfastRate?: number
 ): DrillDownData {
   let items: any[] = [];
   let title = cardId;
@@ -39,13 +45,29 @@ export function getDrillDownData(
   else if (cardId.startsWith("Service Charge")) normalizedCardId = "Service Charge";
   else if (cardId.startsWith("Lost & Breakage")) normalizedCardId = "Lost & Breakage";
   else if (cardId.startsWith("Management Fee")) normalizedCardId = "Management Fee";
-  else if (cardId === "Room Revenue") normalizedCardId = "Revenue Room";
+  else if (cardId === "Total Room Revenue" || cardId === "Room Revenue" || cardId === "Revenue Room") normalizedCardId = "Total Room Revenue";
+  else if (cardId === "Revenue Cash in Hotel" || cardId === "Revenue Hotel Collect") normalizedCardId = "Revenue Cash in Hotel";
+  else if (cardId === "Room Revenue Transfer/EDC/QRIS" || cardId === "Revenue Online/Transfer Collect" || cardId === "Revenue Nexura Collect") normalizedCardId = "Room Revenue Transfer/EDC/QRIS";
+  else if (cardId === "OTA Revenue") normalizedCardId = "OTA Revenue";
   else if (cardId === "Total Banquet Revenue") normalizedCardId = "Banquet Revenue";
   else if (cardId === "Compliment Deductions") normalizedCardId = "Compliment Deductions";
-  else if (cardId === "Revenue Online/Transfer Collect") normalizedCardId = "Revenue Nexura Collect";
-  else if (cardId === "OCC" || cardId === "ARR" || cardId === "RevPAR") normalizedCardId = "Revenue Room";
+  else if (cardId === "OCC" || cardId === "ARR" || cardId === "RevPAR") normalizedCardId = "Total Room Revenue";
+  else if (cardId.toLowerCase().includes("pomec") || cardId.toLowerCase().includes("maintenance")) normalizedCardId = "POMEC / Maintenance Expenses";
 
-  const ctx: DrillDownContext = { rawTransactions, customIncomes, expenses, posOrders, vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage, payrollDetails };
+  const ctx: DrillDownContext = {
+    rawTransactions,
+    customIncomes,
+    expenses,
+    posOrders,
+    vatPercentage,
+    mgmtFeePercentage,
+    serviceChargePercentage,
+    lostBreakagePercentage,
+    payrollDetails,
+    pnlResult,
+    ratePlans,
+    hotelBreakfastRate
+  };
   
   let result = getRevenueDrillDown(normalizedCardId, ctx);
   if (result) { items = result; }

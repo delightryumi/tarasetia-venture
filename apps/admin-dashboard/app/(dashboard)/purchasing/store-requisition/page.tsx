@@ -176,6 +176,7 @@ export default function StoreRequisitionPage() {
       
       const sr = srs.find(s => s.id === id);
       if (sr) {
+        // Push cost ke P&L
         await pushCostToPnL({
           docId: `sr-${id}`,
           docNum: sr.sr_number,
@@ -186,9 +187,19 @@ export default function StoreRequisitionPage() {
           fbCategory: sr.fb_category || null,
           eventCategory: sr.event_category || null
         });
+
+        // Kurangi stok master barang saat SR di-approve
+        for (const item of (sr.items || [])) {
+          const masterItem = items.find(i => i.id === item.item_id);
+          if (masterItem) {
+            await updateItem(item.item_id, {
+              current_stock: Math.max(0, (masterItem.current_stock || 0) - Number(item.qty_requested || 0))
+            });
+          }
+        }
       }
 
-      toast.success('Requisition approved.');
+      toast.success('Requisition approved & stok master telah dikurangi.');
       setSelectedSr(null);
     } catch (err: any) {
       toast.error(err.message || 'Failed to approve.');
@@ -197,16 +208,10 @@ export default function StoreRequisitionPage() {
 
   const handleFulfill = async (sr: any) => {
     try {
+      // Fulfill hanya sebagai konfirmasi fisik barang sudah dikeluarkan
+      // Stok sudah dikurangi saat Approve — tidak perlu potong lagi di sini
       await fulfillSR(sr.id, (sr.items || []).map((i: any) => ({ ...i, qty_fulfilled: i.qty_requested })));
-      for (const item of (sr.items || [])) {
-        const cat = items.find(i => i.id === item.item_id);
-        if (cat) {
-          await updateItem(item.item_id, {
-            current_stock: Math.max(0, (cat.current_stock || 0) - Number(item.qty_requested || 0))
-          });
-        }
-      }
-      toast.success('Stock fulfilled and released.');
+      toast.success('Store Requisition marked as fulfilled.');
       setSelectedSr(null);
     } catch (err: any) {
       toast.error(err.message || 'Failed to fulfill.');

@@ -47,6 +47,10 @@ export interface GlobalPnLResult {
   card2_NonCommRevenue: number;
   card3_RevHotelCollect: number;
   card3_RevNexuraCollect: number;
+  revCashHotel?: number;
+  revDirectCashless?: number;
+  revOta?: number;
+  otaBreakdown?: Record<string, number>;
   card4_PenaltyFee: number;
   card5_OtherRevenue: number;
   card6_GOP: number;
@@ -134,6 +138,8 @@ export interface PnLDetailedItem {
   discount?: number;
   nettAmount?: number;
   taxAmount?: number;
+  ratePlan?: string;
+  breakfastAmount?: number;
 }
 
 export interface DrillDownData {

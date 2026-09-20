@@ -95,6 +95,8 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
                 cleanDayEntries.forEach((t: any) => {
                     transactions.push({
                         ...t,
+                        // Resolve date: prefer t.date → effectiveDate → checkInDate → document-level date
+                        date: t.date || t.effectiveDate || t.checkInDate || t.checkIn || data.date || '',
                         propertyId: hotelId,
                         amount: Number(t.amount) || 0,
                         paidCash: Number(t.payHotel ?? t.paidCash ?? t.paidAmount1 ?? 0),

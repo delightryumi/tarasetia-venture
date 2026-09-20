@@ -83,7 +83,9 @@ export const SmDeptTab: React.FC<SmDeptTabProps> = ({ monthData, onChange }) => 
                       onChange={(e) => {
                         const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
                         onChange((d) => {
-                          d.deptSm.expenses[row.key as keyof typeof sm.expenses] = val;
+                          if (d.deptSm) {
+                            d.deptSm.expenses[row.key as keyof typeof sm.expenses] = val;
+                          }
                         });
                       }}
                       onWheel={(e) => e.currentTarget.blur()}

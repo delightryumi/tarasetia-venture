@@ -543,15 +543,17 @@ export interface BudgetMonthData {
   profitSummary?: ProfitSummary;
 
   // ── DEEP DEPARTMENTAL BUDGET SECTIONS (1:1 EXCEL MIRROR) ──
-  deptRooms?: RoomDepartmentBudget;
-  deptFnB?: FbDepartmentBudget;
-  deptMod?: ModDepartmentBudget;
-  deptAg?: AgDepartmentBudget;
-  deptHrd?: HrdDepartmentBudget;
-  deptSm?: SmDepartmentBudget;
-  deptPomec?: PomecDepartmentBudget;
-  deptNonOp?: NonOpDepartmentBudget;
-  summaryPnl?: SummaryPnLBudget;
+  deptRooms: RoomDepartmentBudget;
+  deptRoom?: RoomDepartmentBudget;
+  deptFnB: FbDepartmentBudget;
+  deptFnb?: FbDepartmentBudget;
+  deptMod: ModDepartmentBudget;
+  deptAg: AgDepartmentBudget;
+  deptHrd: HrdDepartmentBudget;
+  deptSm: SmDepartmentBudget;
+  deptPomec: PomecDepartmentBudget;
+  deptNonOp: NonOpDepartmentBudget;
+  summaryPnl: SummaryPnLBudget;
 }
 
 export interface CostOfSales {

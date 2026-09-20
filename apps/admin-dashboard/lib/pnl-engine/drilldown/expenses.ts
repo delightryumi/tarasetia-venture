@@ -18,6 +18,35 @@ export function getExpenseDrillDown(cardId: string, ctx: DrillDownContext): any[
   const { rawTransactions, customIncomes, expenses, posOrders, vatPercentage, mgmtFeePercentage, serviceChargePercentage, lostBreakagePercentage } = ctx;
 
   switch (cardId) {
+    case "POMEC / Maintenance Expenses":
+    case "POMEC / Property Engineering":
+    case "POMEC / Engineering":
+    case "Property Maintenance & Energy (POMEC)":
+    case "POMEC":
+      items = expenses
+        .filter(e => {
+          if (!e) return false;
+          const deptLower = (e.department || "").toLowerCase();
+          const catLower = (e.category || "").toLowerCase();
+          const nameLower = (e.name || "").toLowerCase();
+          const descLower = (e.description || "").toLowerCase();
+          return deptLower.includes('pomec') || deptLower.includes('eng') || deptLower.includes('maintenance') ||
+                 catLower.includes('pomec') || catLower.includes('maintenance') || catLower.includes('pln') || catLower.includes('electricity') ||
+                 nameLower.includes('pomec') || nameLower.includes('engineering') || descLower.includes('pomec') || descLower.includes('maintenance');
+        })
+        .map(e => ({
+          id: e.id || Math.random().toString(),
+          type: 'expense',
+          source: e.id?.startsWith('sr-') ? 'SR' : (e.id?.startsWith('dml-') ? 'DML' : (e.id?.startsWith('pr-') ? 'PR' : 'Manual Expense')),
+          description: e.description || e.name || 'POMEC / Maintenance Expense',
+          amount: e.amount,
+          date: e.date || 'N/A',
+          department: e.department || 'POMEC / Engineering',
+          category: e.category,
+          documentId: e.id?.startsWith('sr-') || e.id?.startsWith('dml-') || e.id?.startsWith('pr-') ? e.id : undefined,
+          docType: e.id?.startsWith('sr-') ? 'SR' : (e.id?.startsWith('dml-') ? 'DML' : (e.id?.startsWith('pr-') ? 'PR' : 'Manual')),
+        }));
+      break;
     case "Housekeeping Expenses":
       items = expenses
         .filter(e => e && (e.department || "").toLowerCase() === 'housekeeping')

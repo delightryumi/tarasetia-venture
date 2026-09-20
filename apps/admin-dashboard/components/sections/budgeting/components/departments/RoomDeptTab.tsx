@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { BudgetMonthData, RoomDepartmentBudget } from "@/lib/budget-types";
+import { BudgetMonthData, RoomDepartmentBudget, createDefaultRoomDepartment } from "@/lib/budget-types";
 import { formatIDR } from "@/lib/pnl-utils";
 import { SalaryWagesForm } from "../common/SalaryWagesForm";
 import styles from "../../budgeting.module.css";
@@ -584,7 +584,9 @@ export const RoomDeptTab: React.FC<RoomDeptTabProps> = ({
                           onChange={(e) => {
                             const val = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10) || 0;
                             onChange((d) => {
-                              d.deptRooms.housekeeping.expenses[row.key] = val;
+                              if (d.deptRooms) {
+                                d.deptRooms.housekeeping.expenses[row.key] = val;
+                              }
                             });
                           }}
                           onWheel={(e) => e.currentTarget.blur()}

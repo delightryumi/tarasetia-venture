@@ -86,7 +86,7 @@ type DeptTabKey = "pnl" | "room" | "fnb" | "mod" | "ag" | "hrd" | "sm" | "pomec"
 export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
   year,
   budgetDoc,
-  hotelRoomCount = 39,
+  hotelRoomCount = 8,
   onSave,
   saving,
   saveSuccess,

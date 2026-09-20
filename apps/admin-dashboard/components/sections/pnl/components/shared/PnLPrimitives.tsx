@@ -20,10 +20,17 @@ export function SourcePill({ label }: { label: string }) {
     };
     return (
         <span
+            title={label}
             style={{
-                display: "inline-flex", alignItems: "center",
+                display: "inline-block",
+                maxWidth: "100%",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                verticalAlign: "middle",
+                boxSizing: "border-box",
                 padding: "3px 9px", borderRadius: 99, fontSize: 10, fontWeight: 500,
-                letterSpacing: "0.04em", textTransform: "uppercase", whiteSpace: "nowrap",
+                letterSpacing: "0.04em", textTransform: "uppercase",
                 background: s.bg, color: s.color, border: `0.5px solid ${s.border}`,
             }}
         >
@@ -38,13 +45,21 @@ export function SourcePill({ label }: { label: string }) {
 export function DocTag({ label }: { label: string }) {
     return (
         <span
+            title={label}
             style={{
-                display: "inline-flex", padding: "3px 8px",
+                display: "inline-block",
+                maxWidth: "100%",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                verticalAlign: "middle",
+                boxSizing: "border-box",
+                padding: "3px 8px",
                 background: "var(--color-bg-2, #F5F5F3)",
                 border: "0.5px solid rgba(0,0,0,0.12)", borderRadius: 6,
                 fontSize: 10, fontWeight: 500,
                 color: "var(--color-text-2, #888)",
-                textTransform: "uppercase", letterSpacing: "0.04em", whiteSpace: "nowrap",
+                textTransform: "uppercase", letterSpacing: "0.04em",
             }}
         >
             {label}

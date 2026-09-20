@@ -136,7 +136,7 @@ export function processPnLData(
   const frontOfficeAndPurchasingExpenseItems = expenses
     .filter(e => {
       const deptLower = (e.department || "").toLowerCase();
-      return deptLower.includes('front office') || deptLower.includes('fo') || deptLower.includes('purchasing');
+      return deptLower.includes('front office') || deptLower === 'fo' || /\bfo\b/.test(deptLower) || deptLower.includes('purchasing');
     });
   const expFrontOfficeAndPurchasing = frontOfficeAndPurchasingExpenseItems.reduce((sum, e) => sum + e.amount, 0);
 
@@ -173,7 +173,7 @@ export function processPnLData(
       const isFood = fbCatLower.includes('food') || fbCatLower.includes('makanan') || cleanCat.includes('food') || cleanCat.includes('makanan') || cleanName.includes('food') || cleanName.includes('makanan') || cleanDesc.includes('food') || cleanDesc.includes('makanan');
       
       const isFB = isBanquet || isBeverage || isFood || deptLower.includes('f&b') || deptLower.includes('kitchen') || deptLower.includes('resto');
-      const isFOorPurchasing = deptLower.includes('front office') || deptLower.includes('fo') || deptLower.includes('purchasing');
+      const isFOorPurchasing = deptLower.includes('front office') || deptLower === 'fo' || /\bfo\b/.test(deptLower) || deptLower.includes('purchasing');
       const isPOMEC = deptLower.includes('pomec') || deptLower.includes('eng') || deptLower.includes('maintenance') ||
                       catLower.includes('pomec') || catLower.includes('maintenance') || catLower.includes('pln') || catLower.includes('electricity') ||
                       nameLower.includes('pomec') || nameLower.includes('engineering');
@@ -221,34 +221,62 @@ export function processPnLData(
     ? new Date(Number(period.split('-')[0]), Number(period.split('-')[1]), 0).getDate()
     : 365;
   const roomsAvailable = totalRooms * daysInPeriod;
-  const roomsSold = transactions.filter(isAccommodation).length;
+  const roomsSold = transactions
+    .filter(isAccommodation)
+    .reduce((sum, t: any) => sum + Math.max(1, Number(t.roomsCount || t.roomCount || t.quantity) || 1), 0);
   const occ = roomsAvailable ? (roomsSold / roomsAvailable) * 100 : 0;
   const arr = roomsSold ? ledgerRoomRevenue / roomsSold : 0;
   const revPar = roomsAvailable ? ledgerRoomRevenue / roomsAvailable : 0;
 
   const isOta = (t: any) => {
-    const ch = (t.channel || "").toLowerCase();
-    return ch && !["direct", "walk-in", "internal", "-"].includes(ch);
+    const ch = (t.channel || "").toLowerCase().trim();
+    return ch !== "" && !["direct", "walk-in", "internal", "-", "direct / walk-in", "offline"].includes(ch);
   };
 
-  const revenueHotelCollect = transactions
+  const getNetRoomAmount = (t: any) => {
+    const alloc = detectBreakfastAllocation(t, { ratePlans, hotelBreakfastRate });
+    return (alloc.hasBreakfast && !alloc.isPreSplit && alloc.breakfastAmount > 0)
+      ? alloc.netRoomAmount
+      : Number(t.amount || 0);
+  };
+
+  // 1. Revenue Cash in Hotel = semua payment metode cash (terpotong alokasi sarapan jika paket BB)
+  const revCashHotel = transactions
     .filter(isAccommodation)
+    .filter(t => {
+      if (isOta(t)) return false;
+      const pm = (t.paymentMethod || "").toLowerCase().trim();
+      const isCashOnly = pm === "cash" || pm === "tunai" || (Number(t.paidCash || 0) > 0 && !pm.includes("qris") && !pm.includes("transfer") && !pm.includes("bank") && !pm.includes("edc") && !pm.includes("ledger"));
+      return isCashOnly;
+    })
+    .reduce((sum, t) => sum + getNetRoomAmount(t), 0);
+
+  // 2. Direct Cashless (Transfer / EDC / QRIS / City Ledger) (terpotong alokasi sarapan jika paket BB)
+  const revDirectCashless = transactions
+    .filter(isAccommodation)
+    .filter(t => {
+      if (isOta(t)) return false;
+      const pm = (t.paymentMethod || "").toLowerCase().trim();
+      const isCashOnly = pm === "cash" || pm === "tunai" || (Number(t.paidCash || 0) > 0 && !pm.includes("qris") && !pm.includes("transfer") && !pm.includes("bank") && !pm.includes("edc") && !pm.includes("ledger"));
+      return !isCashOnly;
+    })
+    .reduce((sum, t) => sum + getNetRoomAmount(t), 0);
+
+  // 3. OTA Revenue (terpotong alokasi sarapan jika paket BB)
+  const otaBreakdown: Record<string, number> = {};
+  const revOta = transactions
+    .filter(isAccommodation)
+    .filter(isOta)
     .reduce((sum, t) => {
-      const isOtaTx = isOta(t);
-      const cash = Number(t.paidCash || 0);
-      const edc = Number(t.paidEdc || 0);
-      const qris = Number(t.paidQris || 0);
-      const transfer = isOtaTx ? 0 : Number(t.paidTransfer || 0);
-      return sum + cash + edc + qris + transfer;
+      const amt = getNetRoomAmount(t);
+      const chName = (t.channel || "").trim() || "Other OTA";
+      otaBreakdown[chName] = (otaBreakdown[chName] || 0) + amt;
+      return sum + amt;
     }, 0);
 
-  const revenueNexuraCollect = transactions
-    .filter(isAccommodation)
-    .reduce((sum, t) => {
-      const isOtaTx = isOta(t);
-      const otaPay = Number(t.paidOta || (isOtaTx ? t.paidTransfer || t.amount : 0));
-      return sum + otaPay;
-    }, 0);
+  // Hotel Collect & Online Collect compatibility
+  const revenueHotelCollect = revCashHotel;
+  const revenueNexuraCollect = revDirectCashless + revOta;
 
   const isFnbRevenue = (t: any) => {
       if (isAccommodation(t)) return false;
@@ -292,6 +320,10 @@ export function processPnLData(
     card2_NonCommRevenue: 0,
     card3_RevHotelCollect: revenueHotelCollect,
     card3_RevNexuraCollect: revenueNexuraCollect,
+    revCashHotel,
+    revDirectCashless,
+    revOta,
+    otaBreakdown,
     card4_PenaltyFee: 0,
     card5_OtherRevenue: otherRevenueTotal + foComplimentValue + posComplimentValue, // Include compliments in other/total category breakdown
     card6_GOP: totalRevenue - totalOperationalExpenses, 
