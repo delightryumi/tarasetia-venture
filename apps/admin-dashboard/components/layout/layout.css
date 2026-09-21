@@ -328,6 +328,10 @@
     padding: 40px;
 }
 
+.main-scroll-container.main-scroll-container-wide {
+    padding: 16px 20px 40px 20px;
+}
+
 /* No padding and pure clean canvas for superadmin full-width page */
 .dashboard-wrapper.no-sidebar {
     background-color: #ffffff;

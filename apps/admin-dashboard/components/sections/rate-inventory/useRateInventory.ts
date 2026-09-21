@@ -492,10 +492,39 @@ export const useRateInventory = () => {
                         currentChildRate = Math.round(currentChildRate * 1.11);
                     }
 
+                    // Restrictions: Min Stay, CTA, CTD
+                    const minStayKey = `min_${rp.id}_${dateStr}`;
+                    const ctaKey = `cta_${rp.id}_${dateStr}`;
+                    const ctdKey = `ctd_${rp.id}_${dateStr}`;
+
+                    let currentMinStay = Number((rp as any).minStay || 1);
+                    if (stagedUpdates[minStayKey] !== undefined) {
+                        currentMinStay = Number(stagedUpdates[minStayKey]) || 1;
+                    } else if (dayOverride?.minStay?.[rp.id] !== undefined) {
+                        currentMinStay = Number(dayOverride.minStay[rp.id]) || 1;
+                    }
+
+                    let currentCta = !!(rp as any).closedToArrival;
+                    if (stagedUpdates[ctaKey] !== undefined) {
+                        currentCta = !!stagedUpdates[ctaKey];
+                    } else if (dayOverride?.cta?.[rp.id] !== undefined) {
+                        currentCta = !!dayOverride.cta[rp.id];
+                    }
+
+                    let currentCtd = !!(rp as any).closedToDeparture;
+                    if (stagedUpdates[ctdKey] !== undefined) {
+                        currentCtd = !!stagedUpdates[ctdKey];
+                    } else if (dayOverride?.ctd?.[rp.id] !== undefined) {
+                        currentCtd = !!dayOverride.ctd[rp.id];
+                    }
+
                     rpDaysStatus[dateStr] = {
                         ...baseDay,
                         rate: currentRate,
                         stopSell: currentStopSell,
+                        minStay: currentMinStay,
+                        closedToArrival: currentCta,
+                        closedToDeparture: currentCtd,
                         extraAdultRate: currentAdultRate,
                         extraChildRate: currentChildRate,
                         isChannelCustom
@@ -603,6 +632,9 @@ export const useRateInventory = () => {
             const dateEditsMap: Record<string, {
                 rates?: Record<string, number>;
                 stopSell?: Record<string, boolean>;
+                minStay?: Record<string, number>;
+                cta?: Record<string, boolean>;
+                ctd?: Record<string, boolean>;
                 extraAdultRates?: Record<string, number>;
                 extraChildRates?: Record<string, number>;
                 inventoryOverrides?: Record<string, number>;
@@ -675,6 +707,18 @@ export const useRateInventory = () => {
                     const id = parts.slice(1, parts.length - 1).join("_");
                     if (!dateEditsMap[dateStr].inventoryOverrides) dateEditsMap[dateStr].inventoryOverrides = {};
                     dateEditsMap[dateStr].inventoryOverrides![id] = Number(value) || 0;
+                } else if (type === "min") {
+                    const id = parts.slice(1, parts.length - 1).join("_");
+                    if (!dateEditsMap[dateStr].minStay) dateEditsMap[dateStr].minStay = {};
+                    dateEditsMap[dateStr].minStay![id] = Math.max(1, Number(value) || 1);
+                } else if (type === "cta") {
+                    const id = parts.slice(1, parts.length - 1).join("_");
+                    if (!dateEditsMap[dateStr].cta) dateEditsMap[dateStr].cta = {};
+                    dateEditsMap[dateStr].cta![id] = !!value;
+                } else if (type === "ctd") {
+                    const id = parts.slice(1, parts.length - 1).join("_");
+                    if (!dateEditsMap[dateStr].ctd) dateEditsMap[dateStr].ctd = {};
+                    dateEditsMap[dateStr].ctd![id] = !!value;
                 }
             });
 
@@ -701,6 +745,9 @@ export const useRateInventory = () => {
                     hotelCode: activeHotelCode,
                     rates: { ...(currentDoc.rates || {}), ...(edits.rates || {}) },
                     stopSell: { ...(currentDoc.stopSell || {}), ...(edits.stopSell || {}) },
+                    minStay: { ...(currentDoc.minStay || {}), ...(edits.minStay || {}) },
+                    cta: { ...(currentDoc.cta || {}), ...(edits.cta || {}) },
+                    ctd: { ...(currentDoc.ctd || {}), ...(edits.ctd || {}) },
                     extraAdultRates: { ...(currentDoc.extraAdultRates || {}), ...(edits.extraAdultRates || {}) },
                     extraChildRates: { ...(currentDoc.extraChildRates || {}), ...(edits.extraChildRates || {}) },
                     inventoryOverrides: { ...(currentDoc.inventoryOverrides || {}), ...(edits.inventoryOverrides || {}) },
@@ -713,8 +760,41 @@ export const useRateInventory = () => {
 
             await batch.commit();
             setStagedUpdates({});
-            toast.success(`Berhasil menyimpan ${unsavedCount} perubahan ke database. Menyinkronkan ke Channex...`);
-            syncAriToChannex();
+            toast.success(`Berhasil menyimpan ${unsavedCount} perubahan ke database. Menyinkronkan delta ke Channex...`);
+
+            // Build delta payload for exact 1-call batch sync (Certification Standard)
+            const deltaRates: any[] = [];
+            const deltaAvail: any[] = [];
+
+            Object.entries(dateEditsMap).forEach(([dStr, edits]) => {
+                const rpIds = new Set([
+                    ...Object.keys(edits.rates || {}),
+                    ...Object.keys(edits.stopSell || {}),
+                    ...Object.keys(edits.minStay || {}),
+                    ...Object.keys(edits.cta || {}),
+                    ...Object.keys(edits.ctd || {})
+                ]);
+
+                rpIds.forEach(rpId => {
+                    const item: any = { ratePlanId: rpId, date: dStr };
+                    if (edits.rates?.[rpId] !== undefined) item.rate = edits.rates[rpId];
+                    if (edits.stopSell?.[rpId] !== undefined) item.stopSell = edits.stopSell[rpId];
+                    if (edits.minStay?.[rpId] !== undefined) item.minStay = edits.minStay[rpId];
+                    if (edits.cta?.[rpId] !== undefined) item.closedToArrival = edits.cta[rpId];
+                    if (edits.ctd?.[rpId] !== undefined) item.closedToDeparture = edits.ctd[rpId];
+                    deltaRates.push(item);
+                });
+
+                if (edits.inventoryOverrides) {
+                    Object.entries(edits.inventoryOverrides).forEach(([rtId, qty]) => {
+                        deltaAvail.push({ roomTypeId: rtId, date: dStr, qty: Number(qty) || 0 });
+                    });
+                }
+            });
+
+            if (deltaRates.length > 0 || deltaAvail.length > 0) {
+                syncDeltaToChannex({ rates: deltaRates, availability: deltaAvail });
+            }
         } catch (err: any) {
             console.error("Error saving ARI changes:", err);
             toast.error(`Gagal menyimpan perubahan: ${err.message}`);
@@ -821,6 +901,36 @@ export const useRateInventory = () => {
                         });
                     }
 
+                    if (params.minStayAction === "set" && params.minStayValue !== undefined) {
+                        targetRatePlans.forEach(rp => {
+                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), minStay: params.minStayValue! };
+                        });
+                    } else if (params.minStayAction === "remove") {
+                        targetRatePlans.forEach(rp => {
+                            if (newChRates[rp.id]) delete newChRates[rp.id].minStay;
+                        });
+                    }
+
+                    if (params.ctaAction === "close") {
+                        targetRatePlans.forEach(rp => {
+                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), closedToArrival: true };
+                        });
+                    } else if (params.ctaAction === "open") {
+                        targetRatePlans.forEach(rp => {
+                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), closedToArrival: false };
+                        });
+                    }
+
+                    if (params.ctdAction === "close") {
+                        targetRatePlans.forEach(rp => {
+                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), closedToDeparture: true };
+                        });
+                    } else if (params.ctdAction === "open") {
+                        targetRatePlans.forEach(rp => {
+                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), closedToDeparture: false };
+                        });
+                    }
+
                     if (params.inventoryAction === "set" && params.inventoryValue !== undefined) {
                         targetRoomTypes.forEach(rt => {
                             newChAllotments[rt.id] = { allotmentLimit: params.inventoryValue!, isCustom: true };
@@ -845,6 +955,9 @@ export const useRateInventory = () => {
                 } else {
                     const newRates = { ...(currentDoc.rates || {}) };
                     const newStopSell = { ...(currentDoc.stopSell || {}) };
+                    const newMinStay = { ...(currentDoc.minStay || {}) };
+                    const newCta = { ...(currentDoc.cta || {}) };
+                    const newCtd = { ...(currentDoc.ctd || {}) };
                     const newInv = { ...(currentDoc.inventoryOverrides || {}) };
 
                     // Apply Rate Adjustments
@@ -874,6 +987,27 @@ export const useRateInventory = () => {
                         targetRatePlans.forEach(rp => { newStopSell[rp.id] = false; });
                     }
 
+                    // Apply Min Stay
+                    if (params.minStayAction === "set" && params.minStayValue !== undefined) {
+                        targetRatePlans.forEach(rp => { newMinStay[rp.id] = params.minStayValue!; });
+                    } else if (params.minStayAction === "remove") {
+                        targetRatePlans.forEach(rp => { delete newMinStay[rp.id]; });
+                    }
+
+                    // Apply CTA
+                    if (params.ctaAction === "close") {
+                        targetRatePlans.forEach(rp => { newCta[rp.id] = true; });
+                    } else if (params.ctaAction === "open") {
+                        targetRatePlans.forEach(rp => { newCta[rp.id] = false; });
+                    }
+
+                    // Apply CTD
+                    if (params.ctdAction === "close") {
+                        targetRatePlans.forEach(rp => { newCtd[rp.id] = true; });
+                    } else if (params.ctdAction === "open") {
+                        targetRatePlans.forEach(rp => { newCtd[rp.id] = false; });
+                    }
+
                     // Apply Inventory Override
                     if (params.inventoryAction === "set" && params.inventoryValue !== undefined) {
                         targetRoomTypes.forEach(rt => { newInv[rt.id] = params.inventoryValue!; });
@@ -884,6 +1018,9 @@ export const useRateInventory = () => {
                         hotelCode: activeHotelCode,
                         rates: newRates,
                         stopSell: newStopSell,
+                        minStay: newMinStay,
+                        cta: newCta,
+                        ctd: newCtd,
                         inventoryOverrides: newInv,
                         updatedAt: new Date().toISOString()
                     }, { merge: true });
@@ -891,9 +1028,63 @@ export const useRateInventory = () => {
             });
 
             await batch.commit();
+
+            // Build delta payload for exact 1-call batch sync (Certification Standard)
+            const deltaRates: any[] = [];
+            const deltaAvail: any[] = [];
+
+            affectedDates.forEach(dateStr => {
+                const existingDoc = ariOverridesMap[dateStr] || {};
+                const hasRateChange = params.rateAction !== "none";
+                const hasStopSellChange = params.stopSellAction !== "none";
+                const hasMinStayChange = params.minStayAction && params.minStayAction !== "none";
+                const hasCtaChange = params.ctaAction && params.ctaAction !== "none";
+                const hasCtdChange = params.ctdAction && params.ctdAction !== "none";
+
+                if (hasRateChange || hasStopSellChange || hasMinStayChange || hasCtaChange || hasCtdChange) {
+                    targetRatePlans.forEach(rp => {
+                        const item: any = { ratePlanId: rp.id, date: dateStr };
+                        if (hasRateChange) {
+                            const basePrice = Number(rp.baseRate || 0);
+                            const currPrice = existingDoc.rates?.[rp.id] !== undefined ? existingDoc.rates[rp.id] : basePrice;
+                            let finalPrice = currPrice;
+                            if (params.rateAction === "set" && params.rateValue !== undefined) finalPrice = params.rateValue;
+                            else if (params.rateAction === "inc_amount" && params.rateValue !== undefined) finalPrice = currPrice + params.rateValue;
+                            else if (params.rateAction === "dec_amount" && params.rateValue !== undefined) finalPrice = Math.max(0, currPrice - params.rateValue);
+                            else if (params.rateAction === "inc_percent" && params.rateValue !== undefined) finalPrice = Math.round(currPrice * (1 + params.rateValue / 100));
+                            else if (params.rateAction === "dec_percent" && params.rateValue !== undefined) finalPrice = Math.max(0, Math.round(currPrice * (1 - params.rateValue / 100)));
+                            item.rate = finalPrice;
+                        }
+                        if (params.stopSellAction === "close") item.stopSell = true;
+                        else if (params.stopSellAction === "open") item.stopSell = false;
+
+                        if (params.minStayAction === "set" && params.minStayValue !== undefined) item.minStay = params.minStayValue;
+                        else if (params.minStayAction === "remove") item.minStay = null;
+
+                        if (params.ctaAction === "close") item.closedToArrival = true;
+                        else if (params.ctaAction === "open") item.closedToArrival = false;
+
+                        if (params.ctdAction === "close") item.closedToDeparture = true;
+                        else if (params.ctdAction === "open") item.closedToDeparture = false;
+
+                        deltaRates.push(item);
+                    });
+                }
+
+                if (params.inventoryAction === "set" && params.inventoryValue !== undefined) {
+                    targetRoomTypes.forEach(rt => {
+                        deltaAvail.push({ roomTypeId: rt.id, date: dateStr, qty: params.inventoryValue! });
+                    });
+                }
+            });
+
             setBulkModalOpen(false);
-            toast.success(`Bulk Update berhasil diterapkan pada ${affectedDates.length} tanggal. Menyinkronkan ke Channex...`);
-            syncAriToChannex();
+            if (deltaRates.length > 0 || deltaAvail.length > 0) {
+                toast.success(`Bulk Update berhasil diterapkan pada ${affectedDates.length} tanggal. Menyinkronkan delta ke Channex...`);
+                await syncDeltaToChannex({ rates: deltaRates, availability: deltaAvail });
+            } else {
+                toast.success(`Bulk Update berhasil diterapkan pada ${affectedDates.length} tanggal.`);
+            }
         } catch (err: any) {
             console.error("Error applying bulk update:", err);
             toast.error(`Gagal menerapkan Bulk Update: ${err.message}`);
@@ -932,6 +1123,13 @@ export const useRateInventory = () => {
                         ...dateList.map(d => rp.days[d]?.stopSell ? "CLOSED" : "OPEN")
                     ];
                     rows.push(stopRow);
+
+                    const minStayRow = [
+                        `  ${rp.ratePlanName}`,
+                        "MIN_STAY",
+                        ...dateList.map(d => String(rp.days[d]?.minStay ?? 1))
+                    ];
+                    rows.push(minStayRow);
                 });
             });
 
@@ -952,8 +1150,40 @@ export const useRateInventory = () => {
         }
     };
 
-    // Push ARI to Channex OTAs (Supports per-room sync or all)
-    const syncAriToChannex = async (roomTypeId?: string) => {
+    // Delta sync to Channex (exact 1 call for restrictions and/or 1 call for availability)
+    const syncDeltaToChannex = async (deltaPayload: { rates?: any[]; availability?: any[] }) => {
+        if (!activeHotelCode) return;
+        setSyncingAri(true);
+        try {
+            const res = await fetch("/api/channex/sync-ari", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    hotelCode: activeHotelCode,
+                    type: "delta",
+                    delta: deltaPayload
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setLastSyncedAt(new Date().toLocaleTimeString("id-ID"));
+                const taskMsg = data.taskIds && data.taskIds.length > 0
+                    ? ` (Task ID: ${data.taskIds.join(", ")})`
+                    : "";
+                toast.success(`Delta sync ke Channex berhasil!${taskMsg}`);
+            } else {
+                toast.error(data.message || "Gagal delta sync ke Channex.");
+            }
+        } catch (err: any) {
+            console.error("Channex delta sync error:", err);
+            toast.error("Gagal koneksi ke Channex API untuk delta sync.");
+        } finally {
+            setSyncingAri(false);
+        }
+    };
+
+    // Push ARI to Channex OTAs (Supports 500 days full sync or per-room sync)
+    const syncAriToChannex = async (roomTypeId?: string, daysAhead: number = 500) => {
         if (!activeHotelCode) return;
         setSyncingAri(true);
         if (roomTypeId) setSyncingRoomTypeId(roomTypeId);
@@ -965,15 +1195,17 @@ export const useRateInventory = () => {
                     hotelCode: activeHotelCode,
                     type: "full_sync",
                     startDate: dateList[0],
-                    endDate: dateList[dateList.length - 1],
-                    daysAhead: dateList.length || 14,
+                    daysAhead: daysAhead, // Default to 500 days for Channex PMS Certification Test 1
                     roomTypeId: roomTypeId || undefined
                 })
             });
             const data = await res.json();
             if (data.success) {
                 setLastSyncedAt(new Date().toLocaleTimeString("id-ID"));
-                toast.success(roomTypeId ? "Stok kamar berhasil disinkronkan ke OTAs." : "ARI berhasil disinkronkan ke Channex & seluruh OTAs.");
+                const taskMsg = data.taskIds && data.taskIds.length > 0
+                    ? ` (Task IDs: ${data.taskIds.join(", ")})`
+                    : "";
+                toast.success(roomTypeId ? `Stok kamar berhasil disinkronkan ke OTAs.${taskMsg}` : `Full ARI 500 hari berhasil disinkronkan ke Channex!${taskMsg}`);
             } else {
                 toast.error(data.message || "Gagal menyinkronkan ke Channex.");
             }
@@ -1022,6 +1254,7 @@ export const useRateInventory = () => {
         applyBulkUpdate,
         exportGridToCsv,
         syncAriToChannex,
+        syncDeltaToChannex,
         loading,
         saving,
         syncingAri,

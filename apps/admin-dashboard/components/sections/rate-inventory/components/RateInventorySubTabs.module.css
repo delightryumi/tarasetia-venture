@@ -4,24 +4,27 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
     background-color: #f5f2eb;
-    padding: 8px 16px 0 16px;
+    padding: 5px 12px 0 12px;
     border-bottom: 1px solid rgba(141, 122, 82, 0.18);
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
     width: 100%;
     box-sizing: border-box;
+    overflow-x: visible;
 }
 
 .subTabsGroup {
     display: flex;
     align-items: flex-end;
-    gap: 6px;
+    gap: 2px;
+    flex-shrink: 0;
 }
 
 .tabItem {
-    padding: 8px 18px;
-    font-size: 12px;
+    padding: 6px 10px;
+    font-size: 11.5px;
     font-weight: 600;
     color: #515154;
     background: transparent;
@@ -53,16 +56,17 @@
 .subTabsActions {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding-bottom: 8px;
+    gap: 5px;
+    padding-bottom: 5px;
+    flex-shrink: 0;
 }
 
 .actionBtnSecondary {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 30px;
-    padding: 0 12px;
+    gap: 4px;
+    height: 28px;
+    padding: 0 8px;
     font-size: 11px;
     font-weight: 600;
     color: #383838;
@@ -72,6 +76,7 @@
     cursor: pointer;
     transition: all 0.15s ease;
     font-family: inherit;
+    white-space: nowrap;
 }
 
 .actionBtnSecondary:hover {
@@ -83,9 +88,9 @@
 .actionBtnPrimary {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 30px;
-    padding: 0 14px;
+    gap: 4px;
+    height: 28px;
+    padding: 0 10px;
     font-size: 11px;
     font-weight: 700;
     color: #ffffff;
@@ -96,6 +101,7 @@
     transition: all 0.15s ease;
     box-shadow: 0 2px 6px rgba(24, 29, 38, 0.15);
     font-family: inherit;
+    white-space: nowrap;
 }
 
 .actionBtnPrimary:hover {
@@ -114,5 +120,15 @@
     background-color: rgba(141, 122, 82, 0.08);
     border-radius: 4px;
     height: 26px;
+    white-space: nowrap;
+}
+
+.spinIcon {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 

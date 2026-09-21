@@ -71,17 +71,21 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // 3. Action: Full Property Sync (Stage 3 Certification: Exact 2 Calls)
+        // 3. Action: Full Property Sync (Stage 3 Certification: Exact 2 Calls, 500 Days)
         if (action === "test_full_sync") {
-            const syncResult = await channexSyncService.fullPropertySync(hotelCode, 365);
+            const syncResult = await channexSyncService.fullPropertySync(hotelCode, 500);
+            const taskStr = syncResult.taskIds?.length > 0 ? ` (Task IDs: ${syncResult.taskIds.join(", ")})` : "";
             return NextResponse.json({
                 success: syncResult.success,
                 stage: 2,
-                title: "Full Property ARI Sync (2-Call Bulk Standard)",
+                title: "Full Property ARI Sync (2-Call Bulk Standard, 500 Hari)",
                 message: syncResult.success
-                    ? `Full sync 365 hari berhasil dieksekusi tepat dalam 2 API Call bulk (Availability & Rate Restrictions)!`
+                    ? `Full sync 500 hari berhasil dieksekusi tepat dalam 2 API Call bulk (Availability & Rate Restrictions)!${taskStr}`
                     : `Gagal menjalankan Full sync: ${syncResult.message || "Unknown error"}`,
                 callsCount: 2,
+                taskIds: syncResult.taskIds,
+                availabilityTaskId: syncResult.availabilityTaskId,
+                restrictionsTaskId: syncResult.restrictionsTaskId,
                 detail: syncResult
             });
         }

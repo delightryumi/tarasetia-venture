@@ -869,14 +869,177 @@ export class ChannexSyncService {
         };
 
         console.log(`[ChannexSync] Pushing Rate update to Channex for Rate Plan ${ratePlanId} (${effectiveDateFrom} - ${dateTo}): Rp ${rate}`);
-        return await channexClient.pushRestrictions(payload, customApiKey, env);
+        const result = await channexClient.pushRestrictions(payload, customApiKey, env);
+        const taskId = result?.data?.[0]?.id || result?.data?.id;
+        return { ...result, taskId };
     }
 
     /**
-     * Stage 3 Certification Requirement: Full Property Sync (2-Call Exact Standard)
+     * Delta Batch Push for Staged UI Edits (Compliance with Channex Rate Limits & 1-Call Standard)
+     * Batches all rate, min_stay, stop_sell, CTA, CTD updates into 1 call to /restrictions
+     * Batches all inventory allotment updates into 1 call to /availability
      */
-    async fullPropertySync(hotelCode: string, daysAhead: number = 365): Promise<{
+    async pushDeltaBatch(hotelCode: string, deltaPayload: {
+        rates?: Array<{
+            ratePlanId: string;
+            date?: string;
+            dateFrom?: string;
+            dateTo?: string;
+            rate?: number;
+            minStay?: number;
+            stopSell?: boolean;
+            closedToArrival?: boolean;
+            closedToDeparture?: boolean;
+        }>;
+        availability?: Array<{
+            roomTypeId: string;
+            date?: string;
+            dateFrom?: string;
+            dateTo?: string;
+            qty: number;
+        }>;
+    }): Promise<{
         success: boolean;
+        taskIds: string[];
+        restrictionsTaskId?: string;
+        availabilityTaskId?: string;
+        latencyMs: number;
+        message: string;
+    }> {
+        const startTime = Date.now();
+        const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
+        if (!hotelDoc.exists) {
+            throw new Error(`Hotel [${hotelCode}] not found`);
+        }
+
+        const hotelData = hotelDoc.data();
+        const channexPropertyId = hotelData?.channexPropertyId || hotelData?.channelManager?.channexPropertyId || hotelData?.channelManager?.propertyId;
+        const customApiKey = hotelData?.channelManager?.apiKey || process.env.CHANNEX_API_KEY;
+        const env = hotelData?.channelManager?.environment || hotelData?.channelManager?.env || (process.env.CHANNEX_ENV as any) || "staging";
+
+        if (!channexPropertyId) {
+            throw new Error(`Hotel ${hotelCode} has no Channex Property ID configured.`);
+        }
+
+        // Fetch Room Types and Rate Plans to resolve channex IDs if needed
+        const roomTypesSnap = await adminDb.collection(`hotels/${hotelCode}/roomTypes`).get();
+        const roomTypes = roomTypesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        const ratePlansSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
+        const ratePlans = ratePlansSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        const taskIds: string[] = [];
+        let restrictionsTaskId: string | undefined;
+        let availabilityTaskId: string | undefined;
+
+        // 1. Process Restrictions & Rates Batch
+        const rateItems = deltaPayload.rates || [];
+        if (rateItems.length > 0) {
+            const restrictionValues: any[] = [];
+            for (const r of rateItems) {
+                const rp: any = ratePlans.find((p: any) => p.id === r.ratePlanId || (p as any).channexRatePlanId === r.ratePlanId);
+                const channexRatePlanId = rp?.channexRatePlanId || r.ratePlanId;
+
+                const valObj: any = {
+                    property_id: channexPropertyId,
+                    rate_plan_id: channexRatePlanId
+                };
+
+                if (r.date) {
+                    valObj.date = r.date;
+                } else if (r.dateFrom && r.dateTo) {
+                    valObj.date_from = r.dateFrom;
+                    valObj.date_to = r.dateTo;
+                }
+
+                if (r.rate !== undefined && r.rate !== null) valObj.rate = Math.round(Number(r.rate));
+                if (r.minStay !== undefined && r.minStay !== null) {
+                    valObj.min_stay_arrival = Number(r.minStay);
+                    valObj.min_stay_through = Number(r.minStay);
+                }
+                if (r.stopSell !== undefined) valObj.stop_sell = Boolean(r.stopSell);
+                if (r.closedToArrival !== undefined) valObj.closed_to_arrival = Boolean(r.closedToArrival);
+                if (r.closedToDeparture !== undefined) valObj.closed_to_departure = Boolean(r.closedToDeparture);
+
+                restrictionValues.push(valObj);
+            }
+
+            if (restrictionValues.length > 0) {
+                console.log(`[ChannexSync] Executing Delta Batch Restrictions (${restrictionValues.length} items) in 1 API call...`);
+                const restRes = await channexClient.pushRestrictions({ values: restrictionValues }, customApiKey, env);
+                restrictionsTaskId = restRes?.data?.[0]?.id || restRes?.data?.id;
+                if (restrictionsTaskId) taskIds.push(restrictionsTaskId);
+            }
+        }
+
+        // 2. Process Availability Batch
+        const availItems = deltaPayload.availability || [];
+        if (availItems.length > 0) {
+            const availValues: any[] = [];
+            for (const a of availItems) {
+                const rt: any = roomTypes.find((t: any) => t.id === a.roomTypeId || (t as any).channexRoomTypeId === a.roomTypeId);
+                const channexRoomTypeId = rt?.channexRoomTypeId || a.roomTypeId;
+
+                const valObj: any = {
+                    property_id: channexPropertyId,
+                    room_type_id: channexRoomTypeId,
+                    availability: Math.max(0, Math.round(Number(a.qty)))
+                };
+
+                if (a.date) {
+                    valObj.date = a.date;
+                } else if (a.dateFrom && a.dateTo) {
+                    valObj.date_from = a.dateFrom;
+                    valObj.date_to = a.dateTo;
+                }
+
+                availValues.push(valObj);
+            }
+
+            if (availValues.length > 0) {
+                console.log(`[ChannexSync] Executing Delta Batch Availability (${availValues.length} items) in 1 API call...`);
+                const availRes = await channexClient.pushAvailability({ values: availValues }, customApiKey, env);
+                availabilityTaskId = availRes?.data?.[0]?.id || availRes?.data?.id;
+                if (availabilityTaskId) taskIds.push(availabilityTaskId);
+            }
+        }
+
+        const latencyMs = Date.now() - startTime;
+
+        // Log to channex_task_logs
+        try {
+            await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).add({
+                task_type: "POST /delta_sync (Batch Standard)",
+                entity: `Delta Update: ${rateItems.length} rates/restrictions, ${availItems.length} inventory slots`,
+                status: "SUCCESS",
+                inserted_at: new Date().toISOString(),
+                latency_ms: latencyMs,
+                task_ids: taskIds,
+                message: `Delta Batch update completed in ${taskIds.length} API call(s). Task IDs: ${taskIds.join(", ")}`,
+                ota_responses: []
+            });
+        } catch (logErr) {
+            console.warn("Could not save delta task log:", logErr);
+        }
+
+        return {
+            success: true,
+            taskIds,
+            restrictionsTaskId,
+            availabilityTaskId,
+            latencyMs,
+            message: `Delta Batch sync successful (${latencyMs}ms). Task IDs: ${taskIds.join(", ") || "OK"}`
+        };
+    }
+
+    /**
+     * Stage 3 Certification Requirement: Full Property Sync (2-Call Exact Standard, 500 Days)
+     */
+    async fullPropertySync(hotelCode: string, daysAhead: number = 500): Promise<{
+        success: boolean;
+        taskIds: string[];
+        availabilityTaskId?: string;
+        restrictionsTaskId?: string;
         availabilityCount: number;
         restrictionsCount: number;
         latencyMs: number;
@@ -997,31 +1160,43 @@ export class ChannexSyncService {
             Object.entries(overridesMap).forEach(([overrideDate, oData]) => {
                 const hasRateOverride = oData.rates && oData.rates[rp.id] !== undefined;
                 const hasStopSellOverride = oData.stopSell && oData.stopSell[rp.id] !== undefined;
+                const hasMinStayOverride = oData.minStay && oData.minStay[rp.id] !== undefined;
+                const hasCtaOverride = oData.cta && oData.cta[rp.id] !== undefined;
+                const hasCtdOverride = oData.ctd && oData.ctd[rp.id] !== undefined;
 
-                if (hasRateOverride || hasStopSellOverride) {
+                if (hasRateOverride || hasStopSellOverride || hasMinStayOverride || hasCtaOverride || hasCtdOverride) {
                     const customRate = hasRateOverride ? Number(oData.rates[rp.id]) : basePrice;
                     const customStopSell = hasStopSellOverride ? !!oData.stopSell[rp.id] : stopSell;
+                    const customMinStay = hasMinStayOverride ? Number(oData.minStay[rp.id]) : minStay;
+                    const customCta = hasCtaOverride ? !!oData.cta[rp.id] : closedToArrival;
+                    const customCtd = hasCtdOverride ? !!oData.ctd[rp.id] : closedToDeparture;
 
                     restrictionValues.push({
                         property_id: channexPropertyId,
                         rate_plan_id: channexRatePlanId,
                         date: overrideDate,
                         rate: Math.round(Number(customRate)),
-                        min_stay_arrival: minStay,
-                        min_stay_through: minStay,
+                        min_stay_arrival: customMinStay,
+                        min_stay_through: customMinStay,
                         stop_sell: customStopSell,
-                        closed_to_arrival: closedToArrival,
-                        closed_to_departure: closedToDeparture
+                        closed_to_arrival: customCta,
+                        closed_to_departure: customCtd
                     });
                 }
             });
         }
+
+        const taskIds: string[] = [];
+        let availabilityTaskId: string | undefined;
+        let restrictionsTaskId: string | undefined;
 
         // EXECUTE CALL 1: POST /availability
         console.log(`[FullSync] Executing Call 1/2: Pushing ${availabilityValues.length} availability slots...`);
         let availRes = null;
         if (availabilityValues.length > 0) {
             availRes = await channexClient.pushAvailability({ values: availabilityValues }, customApiKey, env);
+            availabilityTaskId = availRes?.data?.[0]?.id || availRes?.data?.id;
+            if (availabilityTaskId) taskIds.push(availabilityTaskId);
         }
 
         // EXECUTE CALL 2: POST /restrictions
@@ -1029,6 +1204,8 @@ export class ChannexSyncService {
         let restRes = null;
         if (restrictionValues.length > 0) {
             restRes = await channexClient.pushRestrictions({ values: restrictionValues }, customApiKey, env);
+            restrictionsTaskId = restRes?.data?.[0]?.id || restRes?.data?.id;
+            if (restrictionsTaskId) taskIds.push(restrictionsTaskId);
         }
 
         const latencyMs = Date.now() - startTime;
@@ -1036,12 +1213,13 @@ export class ChannexSyncService {
         // Log to channex_task_logs
         try {
             await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).add({
-                task_type: "POST /full_sync (2-Call Standard)",
+                task_type: "POST /full_sync (2-Call Standard, 500 Days)",
                 entity: `All Room Types (${roomTypes.length}) & Rate Plans (${ratePlans.length})`,
                 status: "SUCCESS",
                 inserted_at: new Date().toISOString(),
                 latency_ms: latencyMs,
-                message: `Full Property Sync (${daysAhead} days) completed in 2 API calls. Availability: ${availabilityValues.length} slots, Restrictions: ${restrictionValues.length} rules.`,
+                task_ids: taskIds,
+                message: `Full Property Sync (${daysAhead} days) completed in 2 API calls. Task IDs: ${taskIds.join(", ")}`,
                 ota_responses: []
             });
         } catch (logErr) {
@@ -1050,10 +1228,13 @@ export class ChannexSyncService {
 
         return {
             success: true,
+            taskIds,
+            availabilityTaskId,
+            restrictionsTaskId,
             availabilityCount: availabilityValues.length,
             restrictionsCount: restrictionValues.length,
             latencyMs,
-            message: `Full Property ARI Sync (${daysAhead} days) successfully sent in exactly 2 API calls (${latencyMs}ms).`
+            message: `Full Property ARI Sync (${daysAhead} days) successfully sent in exactly 2 API calls (${latencyMs}ms). Task IDs: ${taskIds.join(", ")}`
         };
     }
 

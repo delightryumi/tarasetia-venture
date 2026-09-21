@@ -21,12 +21,28 @@ export async function POST(req: NextRequest) {
         defaultEnd.setDate(defaultEnd.getDate() + 30);
         const end = endDate || defaultEnd.toISOString().split("T")[0];
 
+        if (type === "delta") {
+            const { delta } = body;
+            const result = await channexSyncService.pushDeltaBatch(hotelCode, delta || {});
+            return NextResponse.json({
+                success: true,
+                message: result.message,
+                taskIds: result.taskIds,
+                restrictionsTaskId: result.restrictionsTaskId,
+                availabilityTaskId: result.availabilityTaskId,
+                latencyMs: result.latencyMs
+            });
+        }
+
         if (type === "full_sync") {
-            const daysAhead = Number(body.daysAhead) || 365;
+            const daysAhead = Number(body.daysAhead) || 500;
             const result = await channexSyncService.fullPropertySync(hotelCode, daysAhead);
             return NextResponse.json({
                 success: true,
                 message: result.message,
+                taskIds: result.taskIds,
+                availabilityTaskId: result.availabilityTaskId,
+                restrictionsTaskId: result.restrictionsTaskId,
                 availabilityCount: result.availabilityCount,
                 restrictionsCount: result.restrictionsCount,
                 latencyMs: result.latencyMs
@@ -36,6 +52,7 @@ export async function POST(req: NextRequest) {
         if (type === "rates" && ratePlanId && rate !== undefined) {
             const result = await channexSyncService.pushRateUpdate(hotelCode, ratePlanId, start, end, Number(rate), restrictions);
             const latency = Date.now() - startTime;
+            const taskId = result?.taskId;
 
             try {
                 await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).add({
@@ -44,7 +61,8 @@ export async function POST(req: NextRequest) {
                     status: "SUCCESS",
                     inserted_at: new Date().toISOString(),
                     latency_ms: latency,
-                    message: `Pembaruan harga (${start} s/d ${end}) berhasil didistribusikan ke Channex ARI.`,
+                    task_ids: taskId ? [taskId] : [],
+                    message: `Pembaruan harga (${start} s/d ${end}) berhasil didistribusikan ke Channex ARI. Task ID: ${taskId || "N/A"}`,
                     ota_responses: []
                 });
             } catch (logErr) {
@@ -53,7 +71,8 @@ export async function POST(req: NextRequest) {
 
             return NextResponse.json({
                 success: true,
-                message: `Rates pushed successfully to Channex for ${start} - ${end}`,
+                message: `Rates pushed successfully to Channex for ${start} - ${end}. Task ID: ${taskId || "OK"}`,
+                taskId,
                 result
             });
         }

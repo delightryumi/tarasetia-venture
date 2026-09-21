@@ -67,12 +67,12 @@ export function RateInventoryFilterBar({
                     className={styles.selectDropdown}
                     style={{ fontWeight: 600, minWidth: "220px" }}
                 >
-                    <option value="all">🌐 Semua Saluran (Common Pool / Tergabung)</option>
+                    <option value="all">🌐 All Channels (Common Pool)</option>
                     {separatedChannels.map(([code, cfg]: [string, any]) => {
                         const modeBadge = 
-                            cfg.separationMode === "separated_rate" ? "• [Tarif Terpisah]" :
-                            cfg.separationMode === "separated_allotment" ? "• [Allotment Terpisah]" :
-                            "• [Tarif & Allotment Terpisah]";
+                            cfg.separationMode === "separated_rate" ? "• [Separate Rates]" :
+                            cfg.separationMode === "separated_allotment" ? "• [Separate Allotment]" :
+                            "• [Separate Rates & Allotment]";
                         return (
                             <option key={code} value={code}>
                                 {cfg.icon || "🏨"} {cfg.channelName || code} {modeBadge}
@@ -149,7 +149,7 @@ export function RateInventoryFilterBar({
                             onChange={e => setTaxInclusive(e.target.checked)}
                             className={styles.checkboxInput}
                         />
-                        <span>Tarif Sudah Termasuk Pajak (PB1)</span>
+                        <span>Tax Inclusive (PB1 / VAT)</span>
                     </label>
                 </div>
             </div>
@@ -162,7 +162,7 @@ export function RateInventoryFilterBar({
                         onClick={() => onResetStaged()}
                         disabled={saving}
                         className={styles.btnReset}
-                        title="Batalkan perubahan yang belum disimpan"
+                        title="Discard unsaved changes"
                     >
                         <RotateCcw size={13} />
                         <span>Reset ({unsavedCount})</span>
@@ -178,7 +178,7 @@ export function RateInventoryFilterBar({
                     className={`${styles.btnSave} ${unsavedCount > 0 ? styles.btnSaveDirty : ""}`}
                 >
                     <Save size={13} />
-                    <span>{saving ? "Menyimpan..." : unsavedCount > 0 ? `Save Changes (${unsavedCount})` : "Save"}</span>
+                    <span>{saving ? "Saving..." : unsavedCount > 0 ? `Save Changes (${unsavedCount})` : "Save Changes"}</span>
                 </button>
             </div>
         </div>

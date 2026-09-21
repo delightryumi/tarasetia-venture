@@ -1098,7 +1098,7 @@ export function ChannelManagerSection() {
         }
     }, [activeTab, activeHotelCode]);
 
-    // Force Push All ARI to Channex
+    // Force Push All ARI to Channex (Full Property Sync 500 Days)
     const handleSyncAllAri = async () => {
         if (!activeHotelCode) return;
         setSyncingAri(true);
@@ -1108,18 +1108,20 @@ export function ChannelManagerSection() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     hotelCode: activeHotelCode,
-                    type: "availability"
+                    type: "full_sync",
+                    daysAhead: 500
                 })
             });
 
             const data = await res.json();
             if (data.success) {
-                toast.success("Ketersediaan & Harga Berhasil Di-push ke Seluruh Saluran OTA!");
+                const taskMsg = data.taskIds && data.taskIds.length > 0 ? ` (Task IDs: ${data.taskIds.join(", ")})` : "";
+                toast.success(`Ketersediaan (500 Hari) & Harga Berhasil Di-push ke Channex!${taskMsg}`);
                 setSyncLog(prev => [
                     {
                         time: new Date().toLocaleTimeString(),
                         status: "SUCCESS",
-                        message: `Force Push ARI Sukses untuk Hotel [${activeHotelCode}] ke 68+ jaringan OTA.`
+                        message: `Full Sync ARI (500 Hari) Sukses untuk Hotel [${activeHotelCode}] ke Channex.${taskMsg}`
                     },
                     ...prev
                 ]);

@@ -16,6 +16,8 @@ import styles from "./ChannelActionLogs.module.css";
 
 export interface ChannelTaskLog {
     id: string;
+    task_id?: string;
+    task_ids?: string[];
     action: string;
     task_type?: string;
     channelName: string;
@@ -653,6 +655,34 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                         {selectedEvent.user}
                                     </span>
                                 </div>
+                                {(selectedEvent.task_id || (selectedEvent.task_ids && selectedEvent.task_ids.length > 0)) && (
+                                    <div className={styles.metaRow}>
+                                        <span className={styles.metaLabel}>Channex Task ID:</span>
+                                        <span className={styles.metaValue} style={{ fontFamily: "var(--font-mono-jb, monospace)", color: "#2563eb", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                                            <span>{selectedEvent.task_id || selectedEvent.task_ids?.join(", ")}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const val = selectedEvent.task_id || selectedEvent.task_ids?.join(", ") || "";
+                                                    navigator.clipboard.writeText(val);
+                                                    toast.success("Channex Task ID copied to clipboard!");
+                                                }}
+                                                style={{
+                                                    border: "1px solid #cbd5e1",
+                                                    borderRadius: "4px",
+                                                    padding: "2px 8px",
+                                                    fontSize: "11px",
+                                                    cursor: "pointer",
+                                                    backgroundColor: "#f1f5f9",
+                                                    color: "#0f172a"
+                                                }}
+                                                title="Copy for PMS Certification Form"
+                                            >
+                                                Copy
+                                            </button>
+                                        </span>
+                                    </div>
+                                )}
                                 {selectedEvent.reason && (
                                     <div className={styles.metaRow}>
                                         <span className={styles.metaLabel}>Reason:</span>

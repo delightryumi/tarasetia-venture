@@ -63,6 +63,8 @@ export function RateInventorySection() {
                 onExportCsv={exportGridToCsv}
                 onOpenBulkModal={() => setBulkModalOpen(true)}
                 taxInclusive={taxInclusive}
+                onSyncAll={() => syncAriToChannex(undefined, 500)}
+                syncingAri={syncingAri}
             />
 
             {/* 2. Modular Filter & Controls Bar */}

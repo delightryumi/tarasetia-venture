@@ -82,6 +82,8 @@ export async function GET(req: NextRequest) {
             return {
                 id: doc.id,
                 action,
+                task_id: data.task_id || (Array.isArray(data.task_ids) ? data.task_ids[0] : undefined),
+                task_ids: data.task_ids || (data.task_id ? [data.task_id] : []),
                 task_type: data.task_type || action,
                 channelName: data.channelName || data.channel_name || "MyTara Open Channel",
                 channelCode: data.channelCode || "open_channel",
@@ -118,6 +120,8 @@ export async function GET(req: NextRequest) {
                         return {
                             id: t.id,
                             action,
+                            task_id: t.id,
+                            task_ids: [t.id],
                             task_type: t.attributes?.task_type || action,
                             channelName: "MyTara Open Channel",
                             channelCode: "open_channel",

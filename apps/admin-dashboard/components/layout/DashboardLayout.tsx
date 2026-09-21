@@ -308,7 +308,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                     className="main-content"
                     style={hideSidebar ? { marginLeft: 0, maxWidth: "100vw", width: "100%", paddingTop: 0 } : undefined}
                 >
-                    <div className="main-scroll-container">
+                    <div className={`main-scroll-container ${isChannelManagerPage || pathname.startsWith("/rate-inventory") ? "main-scroll-container-wide" : ""}`}>
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={pathname}

@@ -6,7 +6,10 @@ export type { ChannelSeparationMode };
 export type RateInventoryTab =
     | "inventory"
     | "rates"
-    | "stopsell";
+    | "stopsell"
+    | "minstay"
+    | "cta"
+    | "ctd";
 
 export interface DayInventoryStatus {
     date: string; // YYYY-MM-DD
@@ -19,6 +22,9 @@ export interface DayInventoryStatus {
     availableRooms: number;
     occupancyPercent: number;
     stopSell: boolean;
+    minStay?: number;
+    closedToArrival?: boolean;
+    closedToDeparture?: boolean;
     rate: number;
     extraAdultRate: number;
     extraChildRate: number;
@@ -61,4 +67,8 @@ export interface BulkUpdateParams {
     stopSellAction: "none" | "open" | "close";
     inventoryAction: "none" | "set";
     inventoryValue?: number;
+    minStayAction?: "none" | "set" | "remove";
+    minStayValue?: number;
+    ctaAction?: "none" | "open" | "close";
+    ctdAction?: "none" | "open" | "close";
 }

@@ -67,6 +67,10 @@ export function BulkUpdateModal({
     const [stopSellAction, setStopSellAction] = useState<BulkUpdateParams["stopSellAction"]>("none");
     const [inventoryAction, setInventoryAction] = useState<BulkUpdateParams["inventoryAction"]>("none");
     const [inventoryValue, setInventoryValue] = useState<number>(0);
+    const [minStayAction, setMinStayAction] = useState<BulkUpdateParams["minStayAction"]>("none");
+    const [minStayValue, setMinStayValue] = useState<number>(1);
+    const [ctaAction, setCtaAction] = useState<BulkUpdateParams["ctaAction"]>("none");
+    const [ctdAction, setCtdAction] = useState<BulkUpdateParams["ctdAction"]>("none");
 
     if (!isOpen) return null;
 
@@ -95,7 +99,11 @@ export function BulkUpdateModal({
             rateValue: rateAction !== "none" ? rateValue : undefined,
             stopSellAction,
             inventoryAction,
-            inventoryValue: inventoryAction === "set" ? inventoryValue : undefined
+            inventoryValue: inventoryAction === "set" ? inventoryValue : undefined,
+            minStayAction,
+            minStayValue: minStayAction === "set" ? minStayValue : undefined,
+            ctaAction,
+            ctdAction
         });
     };
 
@@ -408,6 +416,88 @@ export function BulkUpdateModal({
                                     </span>
                                 </div>
                             )}
+                        </div>
+
+                        {/* D. Restrictions Adjustment (Min Stay, CTA, CTD) */}
+                        <div className={`${styles.actionCard} ${(minStayAction !== "none" || ctaAction !== "none" || ctdAction !== "none") ? styles.actionCardActive : ""}`}>
+                            <div className={styles.actionCardHeader}>
+                                <div>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                        <SlidersHorizontal size={15} style={{ color: "#d97706" }} />
+                                        <span className={styles.actionCardTitle}>
+                                            Pembatasan Reservasi (Min Stay, CTA, CTD)
+                                        </span>
+                                    </div>
+                                    <p className={styles.actionCardSubtitle} style={{ marginTop: "2px" }}>
+                                        Atur syarat minimal menginap dan kunci check-in (CTA) / check-out (CTD)
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginTop: "12px" }}>
+                                {/* Min Stay */}
+                                <div>
+                                    <label style={{ fontSize: "11px", fontWeight: 600, color: "#475569", display: "block", marginBottom: "4px" }}>
+                                        Minimum Stay (Malam):
+                                    </label>
+                                    <div style={{ display: "flex", gap: "6px" }}>
+                                        <select
+                                            value={minStayAction}
+                                            onChange={e => setMinStayAction(e.target.value as any)}
+                                            className={styles.selectField}
+                                            style={{ height: "30px", fontSize: "11px" }}
+                                        >
+                                            <option value="none">Tidak Diubah</option>
+                                            <option value="set">Tetapkan Min Stay</option>
+                                        </select>
+                                        {minStayAction === "set" && (
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                max={30}
+                                                value={minStayValue}
+                                                onChange={e => setMinStayValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                                                className={styles.inputField}
+                                                style={{ width: "60px", height: "30px", fontSize: "11px", fontWeight: 700 }}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* CTA */}
+                                <div>
+                                    <label style={{ fontSize: "11px", fontWeight: 600, color: "#475569", display: "block", marginBottom: "4px" }}>
+                                        Closed to Arrival (CTA):
+                                    </label>
+                                    <select
+                                        value={ctaAction}
+                                        onChange={e => setCtaAction(e.target.value as any)}
+                                        className={styles.selectField}
+                                        style={{ height: "30px", fontSize: "11px" }}
+                                    >
+                                        <option value="none">Tidak Diubah</option>
+                                        <option value="close">🚫 Tutup Check-in (CTA ON)</option>
+                                        <option value="open">✓ Buka Check-in (CTA OFF)</option>
+                                    </select>
+                                </div>
+
+                                {/* CTD */}
+                                <div>
+                                    <label style={{ fontSize: "11px", fontWeight: 600, color: "#475569", display: "block", marginBottom: "4px" }}>
+                                        Closed to Departure (CTD):
+                                    </label>
+                                    <select
+                                        value={ctdAction}
+                                        onChange={e => setCtdAction(e.target.value as any)}
+                                        className={styles.selectField}
+                                        style={{ height: "30px", fontSize: "11px" }}
+                                    >
+                                        <option value="none">Tidak Diubah</option>
+                                        <option value="close">🚫 Tutup Check-out (CTD ON)</option>
+                                        <option value="open">✓ Buka Check-out (CTD OFF)</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

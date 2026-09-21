@@ -100,9 +100,9 @@ export function RateInventoryGrid({
 
                         {dateList.map(dateStr => {
                             const dObj = new Date(dateStr);
-                            const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dObj.getDay()];
+                            const dayName = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][dObj.getDay()];
                             const dayNum = String(dObj.getDate()).padStart(2, "0");
-                            const monthName = ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"][dObj.getMonth()];
+                            const monthName = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][dObj.getMonth()];
                             const isWeekend = dObj.getDay() === 0 || dObj.getDay() === 6;
 
                             return (
@@ -239,15 +239,81 @@ export function RateInventoryGrid({
                                                             }}
                                                             className={allStop ? styles.badgeClosed : styles.badgeOpen}
                                                             style={!canStopSell ? { cursor: "not-allowed", opacity: 0.6 } : undefined}
-                                                            title={!canStopSell ? "Anda tidak memiliki izin untuk merubah Stop Sell" : `Klik untuk toggle Stop Sell seluruh rate plan (${channelFilter})`}
+                                                            title={!canStopSell ? "No permission" : `Toggle Stop Sell for all rate plans (${channelFilter})`}
                                                         >
-                                                            {allStop ? "🚫 CLOSED" : "OPEN"}
+                                                            {allStop ? "CLOSED" : "OPEN"}
                                                         </button>
                                                     </td>
                                                 );
                                             }
 
-                                            // 3. RATES TAB: Read-only inventory available count indicator
+                                            // 3. CTA TAB: Room Type Master Toggle
+                                            if (activeTab === "cta") {
+                                                const allCta = rt.ratePlans.length > 0 && rt.ratePlans.every(rp => !!rp.days[dateStr]?.closedToArrival);
+                                                return (
+                                                    <td
+                                                        key={dateStr}
+                                                        className={`${styles.colDay} ${styles.dataCell} ${isWeekend ? styles.colWeekend : ""}`}
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            disabled={!canStopSell}
+                                                            onClick={() => {
+                                                                if (!canStopSell) return;
+                                                                const targetState = !allCta;
+                                                                rt.ratePlans.forEach(rp => {
+                                                                    const rpCtaKey = `cta_${rp.ratePlanId}_${dateStr}`;
+                                                                    stageEdit(rpCtaKey, targetState);
+                                                                });
+                                                            }}
+                                                            className={allCta ? styles.badgeClosed : styles.badgeOpen}
+                                                            style={
+                                                                !canStopSell 
+                                                                    ? { cursor: "not-allowed", opacity: 0.6 } 
+                                                                    : (allCta ? { backgroundColor: "#ea580c", borderColor: "#c2410c", color: "#ffffff" } : undefined)
+                                                            }
+                                                            title={!canStopSell ? "No permission" : `Toggle Closed to Arrival (CTA) for all rate plans`}
+                                                        >
+                                                            {allCta ? "CLOSED" : "OPEN"}
+                                                        </button>
+                                                    </td>
+                                                );
+                                            }
+
+                                            // 4. CTD TAB: Room Type Master Toggle
+                                            if (activeTab === "ctd") {
+                                                const allCtd = rt.ratePlans.length > 0 && rt.ratePlans.every(rp => !!rp.days[dateStr]?.closedToDeparture);
+                                                return (
+                                                    <td
+                                                        key={dateStr}
+                                                        className={`${styles.colDay} ${styles.dataCell} ${isWeekend ? styles.colWeekend : ""}`}
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            disabled={!canStopSell}
+                                                            onClick={() => {
+                                                                if (!canStopSell) return;
+                                                                const targetState = !allCtd;
+                                                                rt.ratePlans.forEach(rp => {
+                                                                    const rpCtdKey = `ctd_${rp.ratePlanId}_${dateStr}`;
+                                                                    stageEdit(rpCtdKey, targetState);
+                                                                });
+                                                            }}
+                                                            className={allCtd ? styles.badgeClosed : styles.badgeOpen}
+                                                            style={
+                                                                !canStopSell 
+                                                                    ? { cursor: "not-allowed", opacity: 0.6 } 
+                                                                    : (allCtd ? { backgroundColor: "#7c3aed", borderColor: "#6d28d9", color: "#ffffff" } : undefined)
+                                                            }
+                                                            title={!canStopSell ? "No permission" : `Toggle Closed to Departure (CTD) for all rate plans`}
+                                                        >
+                                                            {allCtd ? "CLOSED" : "OPEN"}
+                                                        </button>
+                                                    </td>
+                                                );
+                                            }
+
+                                            // 5. RATES / MIN STAY: Read-only inventory available count indicator
                                             return (
                                                 <td
                                                     key={dateStr}
@@ -367,13 +433,110 @@ export function RateInventoryGrid({
                                                                             }}
                                                                             className={isStopSell ? styles.badgeClosed : styles.badgeOpen}
                                                                             style={!canStopSell ? { cursor: "not-allowed", opacity: 0.6 } : undefined}
-                                                                            title={!canStopSell ? "Anda tidak memiliki izin untuk merubah Stop Sell" : (isStopSell ? "🚫 STOP SELL" : "OPEN")}
+                                                                            title={!canStopSell ? "No permission" : (isStopSell ? "Stop Sell Active (Closed)" : "Open for Sale")}
                                                                         >
-                                                                            {isStopSell ? "🚫 STOP SELL" : "OPEN"}
+                                                                            {isStopSell ? "CLOSED" : "OPEN"}
                                                                         </button>
                                                                     </td>
                                                                 );
                                                             }
+
+                                                            // Min Stay Tab Render
+                                                            if (activeTab === "minstay") {
+                                                                const minStay = dayStat?.minStay ?? 1;
+                                                                const minStayKey = `min_${rp.ratePlanId}_${dateStr}`;
+                                                                return (
+                                                                    <td
+                                                                        key={dateStr}
+                                                                        className={`${styles.colDay} ${styles.dataCell} ${isWeekend ? styles.colWeekend : ""}`}
+                                                                    >
+                                                                        <input
+                                                                            type="number"
+                                                                            min={1}
+                                                                            max={30}
+                                                                            value={minStay}
+                                                                            disabled={!canChangeRate}
+                                                                            onChange={e => {
+                                                                                if (!canChangeRate) return;
+                                                                                const val = Math.max(1, parseInt(e.target.value, 10) || 1);
+                                                                                stageEdit(minStayKey, val);
+                                                                            }}
+                                                                            onWheel={e => e.currentTarget.blur()}
+                                                                            className={styles.invInput}
+                                                                            style={{
+                                                                                textAlign: "center",
+                                                                                fontWeight: 700,
+                                                                                color: minStay > 1 ? "#2563eb" : "#334155",
+                                                                                backgroundColor: minStay > 1 ? "#eff6ff" : undefined,
+                                                                                borderColor: minStay > 1 ? "#93c5fd" : undefined
+                                                                            }}
+                                                                            title={!canChangeRate ? "No permission" : `Minimum Stay: ${minStay} nights`}
+                                                                        />
+                                                                    </td>
+                                                                );
+                                                            }
+
+                                                            // CTA Tab Render (Closed to Arrival)
+                                                            if (activeTab === "cta") {
+                                                                const isCta = !!dayStat?.closedToArrival;
+                                                                const ctaKey = `cta_${rp.ratePlanId}_${dateStr}`;
+                                                                return (
+                                                                    <td
+                                                                        key={dateStr}
+                                                                        className={`${styles.colDay} ${styles.dataCell} ${isCta ? styles.cellStopSell : ""} ${isWeekend ? styles.colWeekend : ""}`}
+                                                                    >
+                                                                        <button
+                                                                            type="button"
+                                                                            disabled={!canStopSell}
+                                                                            onClick={() => {
+                                                                                if (!canStopSell) return;
+                                                                                stageEdit(ctaKey, !isCta);
+                                                                            }}
+                                                                            className={isCta ? styles.badgeClosed : styles.badgeOpen}
+                                                                            style={
+                                                                                !canStopSell 
+                                                                                    ? { cursor: "not-allowed", opacity: 0.6 } 
+                                                                                    : (isCta ? { backgroundColor: "#ea580c", borderColor: "#c2410c", color: "#ffffff" } : undefined)
+                                                                            }
+                                                                            title={!canStopSell ? "No permission" : (isCta ? "Closed to Arrival (No Check-In)" : "Open for Arrival")}
+                                                                        >
+                                                                            {isCta ? "CLOSED" : "OPEN"}
+                                                                        </button>
+                                                                    </td>
+                                                                );
+                                                            }
+
+                                                            // CTD Tab Render (Closed to Departure)
+                                                            if (activeTab === "ctd") {
+                                                                const isCtd = !!dayStat?.closedToDeparture;
+                                                                const ctdKey = `ctd_${rp.ratePlanId}_${dateStr}`;
+                                                                return (
+                                                                    <td
+                                                                        key={dateStr}
+                                                                        className={`${styles.colDay} ${styles.dataCell} ${isCtd ? styles.cellStopSell : ""} ${isWeekend ? styles.colWeekend : ""}`}
+                                                                    >
+                                                                        <button
+                                                                            type="button"
+                                                                            disabled={!canStopSell}
+                                                                            onClick={() => {
+                                                                                if (!canStopSell) return;
+                                                                                stageEdit(ctdKey, !isCtd);
+                                                                            }}
+                                                                            className={isCtd ? styles.badgeClosed : styles.badgeOpen}
+                                                                            style={
+                                                                                !canStopSell 
+                                                                                    ? { cursor: "not-allowed", opacity: 0.6 } 
+                                                                                    : (isCtd ? { backgroundColor: "#7c3aed", borderColor: "#6d28d9", color: "#ffffff" } : undefined)
+                                                                            }
+                                                                            title={!canStopSell ? "No permission" : (isCtd ? "Closed to Departure (No Check-Out)" : "Open for Departure")}
+                                                                        >
+                                                                            {isCtd ? "CLOSED" : "OPEN"}
+                                                                        </button>
+                                                                    </td>
+                                                                );
+                                                            }
+
+
 
                                                             return null;
                                                         })}
