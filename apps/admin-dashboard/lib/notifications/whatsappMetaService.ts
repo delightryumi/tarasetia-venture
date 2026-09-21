@@ -118,6 +118,18 @@ export async function sendMetaWhatsAppMessage({
                 raw: data
             };
         } else {
+            // Auto-fallback: If blocked by 24-hour customer service window, fallback to official pre-approved template
+            if (data.error?.code === 131047 && !templateName) {
+                console.log("[Meta WhatsApp] Outside 24h customer window. Retrying with official template hello_world...");
+                return sendMetaWhatsAppMessage({
+                    to: cleanTo,
+                    templateName: "hello_world",
+                    templateLanguage: "en_US",
+                    accessToken: activeToken,
+                    phoneNumberId: activePhoneId
+                });
+            }
+
             const errorMsg = data.error?.message || data.error?.error_user_msg || JSON.stringify(data);
             console.error(`[Meta WhatsApp API Error] HTTP ${response.status}:`, data);
             return {

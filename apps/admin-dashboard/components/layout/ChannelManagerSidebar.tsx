@@ -27,7 +27,8 @@ import {
     ArrowLeft,
     CheckCircle2,
     Bell,
-    Users
+    Users,
+    Compass
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import "./layout.css";
@@ -103,6 +104,12 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
     };
 
     const MENU_GROUPS: CmMenuGroup[] = [
+        {
+            title: "Panduan & Roadmap Produksi",
+            items: [
+                { id: "tutorial", label: "Peta Alur & Tutorial Go-Live", shortLabel: "Tutorial", icon: Compass, badge: "Peta Alur", badgeColor: "#0284c7" }
+            ]
+        },
         {
             title: "OTA Distribution & Connectivity",
             items: [
@@ -269,22 +276,22 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                                         onClick={() => handleSelectTab(item.id)}
                                         className="nav-item"
                                         style={{
-                                            backgroundColor: isActive ? "#1e3a2f" : "transparent",
-                                            color: isActive ? "#ffffff" : "#334155",
+                                            backgroundColor: isActive ? "#eff6ff" : "transparent",
+                                            color: isActive ? "#1d4ed8" : "#334155",
                                             fontWeight: isActive ? 700 : 500,
-                                            border: "none",
-                                            boxShadow: isActive ? "0 2px 5px rgba(30, 58, 47, 0.25)" : "none",
+                                            border: isActive ? "1px solid #bfdbfe" : "1px solid transparent",
+                                            boxShadow: isActive ? "0 1px 3px rgba(37, 99, 235, 0.08)" : "none",
                                             position: "relative"
                                         }}
                                         title={item.label}
                                     >
                                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: "20px" }}>
-                                            <IconComponent size={16} color={isActive ? "#ffffff" : "#64748b"} />
+                                            <IconComponent size={16} color={isActive ? "#2563eb" : "#64748b"} />
                                         </div>
 
                                         {!isCollapsed && (
                                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: 1, minWidth: 0, gap: "6px" }}>
-                                                <span className="nav-label" style={{ fontSize: "12px", color: isActive ? "#ffffff" : "#1e293b" }}>
+                                                <span className="nav-label" style={{ fontSize: "12px", color: isActive ? "#1d4ed8" : "#1e293b" }}>
                                                     {item.label}
                                                 </span>
                                                 {item.badge && (
@@ -293,8 +300,8 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                                                         fontWeight: 700,
                                                         padding: "1px 6px",
                                                         borderRadius: "9999px",
-                                                        background: isActive ? "rgba(255, 255, 255, 0.25)" : "#dcfce7",
-                                                        color: isActive ? "#ffffff" : item.badgeColor || "#166534",
+                                                        background: isActive ? "#dbeafe" : "#f1f5f9",
+                                                        color: isActive ? "#1e40af" : item.badgeColor || "#475569",
                                                         flexShrink: 0
                                                     }}>
                                                         {item.badge}
@@ -330,7 +337,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                 )}
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     {!isCollapsed && (
-                        <span style={{ fontWeight: 700, color: "#1e3a2f" }}>CRS v2.6</span>
+                        <span style={{ fontWeight: 700, color: "#334155" }}>CRS v2.6</span>
                     )}
                     {/* PWA Notification Settings Bell Button */}
                     <button

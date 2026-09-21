@@ -46,7 +46,8 @@ import {
     Tag,
     Users,
     Sparkles,
-    DownloadCloud
+    DownloadCloud,
+    Compass
 } from "lucide-react";
 import styles from "./ChannelManager.module.css";
 import { OtaLogo } from "./OtaLogo";
@@ -67,6 +68,7 @@ import { ChannelGoogleHotelsTab } from "./ChannelGoogleHotelsTab";
 import { ChannelDynamicPricingTab } from "./ChannelDynamicPricingTab";
 import { ChannelPromotionsTab } from "./ChannelPromotionsTab";
 import { ChannelPaymentTokenizationTab } from "./ChannelPaymentTokenizationTab";
+import { ChannelTutorialTab } from "./ChannelTutorialTab";
 import { TravelAgentTab } from "./TravelAgentTab";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, deleteField } from "firebase/firestore";
@@ -182,7 +184,7 @@ export function ChannelManagerSection() {
     const { ratePlans, loading: loadingRates, saving: savingRates, updateRatePlan, seedDefaultRatePlans } = useRatePlans();
     const { roomTypes, loading: loadingRooms } = useRoomTypes();
 
-    type ChannelTabType = "rooms" | "rateplans" | "matrix" | "mapping" | "dynamic_pricing" | "catalog" | "travel_agents" | "rules" | "google" | "promotions" | "content" | "messages" | "reviews" | "logs" | "payments" | "iframe" | "sandbox" | "golive" | "sync";
+    type ChannelTabType = "tutorial" | "rooms" | "rateplans" | "matrix" | "mapping" | "dynamic_pricing" | "catalog" | "travel_agents" | "rules" | "google" | "promotions" | "content" | "messages" | "reviews" | "logs" | "payments" | "iframe" | "sandbox" | "golive" | "sync";
     const [activeTab, setActiveTab] = useState<ChannelTabType>("mapping");
     const [isVccModalOpen, setIsVccModalOpen] = useState<boolean>(false);
     const [isTaxesModalOpen, setIsTaxesModalOpen] = useState<boolean>(false);
@@ -193,7 +195,7 @@ export function ChannelManagerSection() {
             if (typeof window !== "undefined") {
                 const params = new URLSearchParams(window.location.search);
                 const tabParam = params.get("tab");
-                if (tabParam && ["rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "iframe", "sandbox", "golive", "sync"].includes(tabParam)) {
+                if (tabParam && ["tutorial", "rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "iframe", "sandbox", "golive", "sync"].includes(tabParam)) {
                     setActiveTab(tabParam as any);
                 }
             }
@@ -203,7 +205,7 @@ export function ChannelManagerSection() {
 
         const handleCustomTabChange = (e: any) => {
             const tab = typeof e.detail === "string" ? e.detail : e.detail?.tab;
-            if (tab && ["rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "iframe", "sandbox", "golive", "sync"].includes(tab)) {
+            if (tab && ["tutorial", "rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "iframe", "sandbox", "golive", "sync"].includes(tab)) {
                 setActiveTab(tab as any);
             }
         };
@@ -228,6 +230,13 @@ export function ChannelManagerSection() {
     };
 
     const TAB_METADATA: Record<ChannelTabType, { title: string; subtitle: string; icon: React.ElementType; badge?: string; badgeColor?: string }> = {
+        tutorial: {
+            title: "Peta Alur & Panduan Go-Live Produksi",
+            subtitle: "Panduan operasional step-by-step: mulai dari registrasi akun, strategi pilot 1 hotel & 6 OTA, skenario uji coba, hingga rollout 20 hotel tanpa risiko.",
+            icon: Compass,
+            badge: "5 Tahap Roadmap",
+            badgeColor: "#0284c7"
+        },
         mapping: {
             title: "Channel Mapping & Rate Parity",
             subtitle: "Manage PMS-to-OTA room mapping, rate plan codes, commission structures, and channel-level rate & inventory separation rules.",
@@ -559,8 +568,9 @@ export function ChannelManagerSection() {
         {
             id: "system",
             label: "System & Connectivity",
-            badge: "6",
+            badge: "7",
             tabs: [
+                { id: "tutorial", label: "🧭 Peta Alur Go-Live" },
                 { id: "payments", label: "💳 Stripe & PCI Card Vault" },
                 { id: "sandbox", label: "🧪 Certification Sandbox" },
                 { id: "logs", label: "ARI Transmission Logs" },
@@ -1494,6 +1504,15 @@ export function ChannelManagerSection() {
                     </div>
                 );
             })()}
+
+            {/* TAB: PETA ALUR & TUTORIAL GO-LIVE PRODUKSI */}
+            {activeTab === "tutorial" && (
+                <ChannelTutorialTab
+                    onNavigateTab={handleSelectTab}
+                    activeHotelCode={activeHotelCode}
+                    activeHotelName={activeHotelName}
+                />
+            )}
 
             {/* TAB 0: MASTER KATEGORI KAMAR & ALLOTMENT (ROOM TYPE INLINE SETUP) */}
             {activeTab === "rooms" && (
@@ -3226,7 +3245,11 @@ export function ChannelManagerSection() {
                                                         Notifikasi WhatsApp Fonnte:
                                                     </span>
                                                     <span style={{ color: simulatedResult.whatsapp.success ? "#15803d" : "#b45309" }}>
-                                                        {simulatedResult.whatsapp.success ? `Terkirim ke Owner (ID: ${simulatedResult.whatsapp.messageId || "Sent"})` : (simulatedResult.whatsapp.reason || simulatedResult.whatsapp.error || "Belum Terkirim")}
+                                                        {simulatedResult.whatsapp.success
+                                                            ? (simulatedResult.whatsapp.process === "pending"
+                                                                ? `Diterima Fonnte (Antrean/Pending - ID: ${simulatedResult.whatsapp.messageId || "Sent"})`
+                                                                : `Terkirim ke Owner (ID: ${simulatedResult.whatsapp.messageId || "Sent"})`)
+                                                            : (simulatedResult.whatsapp.reason || simulatedResult.whatsapp.error || "Belum Terkirim")}
                                                     </span>
                                                 </div>
                                                 {!simulatedResult.whatsapp.success && (

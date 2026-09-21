@@ -46,7 +46,7 @@ export async function sendFonnteMessage({
     target: string;
     message: string;
     token?: string;
-}): Promise<{ success: boolean; id?: string; error?: string; raw?: any }> {
+}): Promise<{ success: boolean; id?: string; error?: string; raw?: any; process?: string; detail?: string }> {
     const activeToken = (token || DEFAULT_FONNTE_TOKEN).trim();
     const cleanTarget = normalizePhoneNumber(target);
 
@@ -83,6 +83,8 @@ export async function sendFonnteMessage({
             return {
                 success: true,
                 id: firstId || "sent",
+                process: data.process || "sent",
+                detail: data.detail || "",
                 raw: data
             };
         } else {
@@ -110,7 +112,7 @@ export async function sendFonnteMessage({
 export async function sendWhatsAppNotificationToOwner(
     hotelCode: string,
     payload: WhatsAppNotificationPayload
-): Promise<{ success: boolean; reason?: string; error?: string; messageId?: string }> {
+): Promise<{ success: boolean; reason?: string; error?: string; messageId?: string; process?: string; detail?: string }> {
     if (!hotelCode) return { success: false, reason: "hotelCode is required" };
 
     try {
@@ -204,6 +206,7 @@ export async function sendWhatsAppNotificationToOwner(
         });
 
         // Audit log in Firestore
+        const isQueued = result.success && (result.raw?.process === "pending" || (result as any).process === "pending");
         await adminDb.collection("hotels").doc(hotelCode).collection("whatsapp_logs").add({
             timestamp: new Date().toISOString(),
             gateway: "fonnte",
@@ -212,14 +215,17 @@ export async function sendWhatsAppNotificationToOwner(
             bookingRef: payload.bookingRef,
             guestName: payload.guestName,
             channelName: payload.channelName,
-            status: result.success ? "DELIVERED" : "FAILED",
+            status: result.success ? (isQueued ? "QUEUED" : "DELIVERED") : "FAILED",
             messageId: result.id || null,
+            detail: (result as any).detail || result.raw?.detail || null,
             error: result.error || null
         }).catch(() => {});
 
         return {
             success: result.success,
             messageId: result.id,
+            process: (result as any).process || (result.success ? "sent" : "failed"),
+            detail: (result as any).detail || null,
             error: result.error,
             reason: result.error
         };

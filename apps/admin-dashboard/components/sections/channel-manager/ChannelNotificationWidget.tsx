@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Bell, BellOff, Volume2, Smartphone, Check, AlertCircle, Send, MessageSquare, Save, ShieldCheck, ExternalLink } from "lucide-react";
+import { Bell, BellOff, Volume2, Smartphone, Globe, Check, AlertCircle, Send, MessageSquare, Save, ShieldCheck, ExternalLink } from "lucide-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
 import styles from "./ChannelNotificationWidget.module.css";
@@ -24,16 +24,21 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
         sendTestPush
     } = usePushNotifications(hotelCode, userEmail);
 
-    // ── WhatsApp Fonnte State ──
+    // ── WhatsApp Notification State ──
+    const [gateway, setGateway] = useState<"meta" | "fonnte">("meta");
     const [waEnabled, setWaEnabled] = useState<boolean>(true);
     const [ownerPhone, setOwnerPhone] = useState<string>("");
     const [fonnteToken, setFonnteToken] = useState<string>("");
+    const [metaPhoneNumberId, setMetaPhoneNumberId] = useState<string>("");
+    const [metaAccessToken, setMetaAccessToken] = useState<string>("");
     const [notifyNewBooking, setNotifyNewBooking] = useState<boolean>(true);
     const [notifyCancellation, setNotifyCancellation] = useState<boolean>(true);
     const [loadingWa, setLoadingWa] = useState<boolean>(false);
     const [savingWa, setSavingWa] = useState<boolean>(false);
     const [testingWa, setTestingWa] = useState<boolean>(false);
     const [hasSystemToken, setHasSystemToken] = useState<boolean>(false);
+    const [hasMetaToken, setHasMetaToken] = useState<boolean>(false);
+    const [systemPhoneId, setSystemPhoneId] = useState<string>("");
 
     // Fetch hotel-specific WhatsApp notification settings
     useEffect(() => {
@@ -47,14 +52,23 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
             .then(data => {
                 if (!isMounted) return;
                 if (data.success && data.config) {
+                    setGateway(data.config.gateway || "meta");
                     setWaEnabled(data.config.enabled ?? true);
                     setOwnerPhone(data.config.ownerPhone || "");
                     setFonnteToken(data.config.fonnteToken || "");
+                    setMetaPhoneNumberId(data.config.phoneNumberId || "");
+                    setMetaAccessToken(data.config.accessToken || "");
                     setNotifyNewBooking(data.config.notifyOnNewBooking ?? true);
                     setNotifyCancellation(data.config.notifyOnCancellation ?? true);
                 }
                 if (data.systemDefaults?.hasFonnteToken) {
                     setHasSystemToken(true);
+                }
+                if (data.systemDefaults?.hasMetaToken) {
+                    setHasMetaToken(true);
+                }
+                if (data.systemDefaults?.phoneNumberId) {
+                    setSystemPhoneId(data.systemDefaults.phoneNumberId);
                 }
             })
             .catch(err => {
@@ -81,10 +95,12 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                     hotelCode,
                     action: "save_config",
                     config: {
-                        gateway: "fonnte",
+                        gateway,
                         enabled: waEnabled,
                         ownerPhone: ownerPhone.trim(),
                         fonnteToken: fonnteToken.trim(),
+                        phoneNumberId: metaPhoneNumberId.trim(),
+                        accessToken: metaAccessToken.trim(),
                         notifyOnNewBooking: notifyNewBooking,
                         notifyOnCancellation: notifyCancellation
                     }
@@ -122,9 +138,11 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                     action: "test_send",
                     testRecipient: ownerPhone.trim(),
                     config: {
-                        gateway: "fonnte",
+                        gateway,
                         ownerPhone: ownerPhone.trim(),
-                        fonnteToken: fonnteToken.trim()
+                        fonnteToken: fonnteToken.trim(),
+                        phoneNumberId: metaPhoneNumberId.trim(),
+                        accessToken: metaAccessToken.trim()
                     }
                 })
             });
@@ -145,22 +163,27 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
     const isGranted = permission === "granted" && isSubscribed;
     const isDenied = permission === "denied";
 
+    const isMetaConfigured = !!ownerPhone && waEnabled && (metaAccessToken || hasMetaToken);
+    const isFonnteConfigured = !!ownerPhone && waEnabled && (fonnteToken || hasSystemToken);
+
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "16px" }}>
-            {/* ── CARD 1: WHATSAPP NOTIFICATION TO OWNER (FONNTE GATEWAY) ── */}
+            {/* ── CARD 1: WHATSAPP NOTIFICATION TO OWNER (META OFFICIAL & FONNTE) ── */}
             <div className={styles.waCard}>
                 <div className={styles.topRow}>
                     <div className={styles.titleArea}>
-                        <div className={styles.iconCircle} style={{ background: "#ecfdf5", color: "#10b981" }}>
+                        <div className={styles.iconCircle} style={{ background: gateway === "meta" ? "#eff6ff" : "#ecfdf5", color: gateway === "meta" ? "#2563eb" : "#10b981" }}>
                             <MessageSquare size={18} />
                         </div>
                         <div>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <h4 className={styles.titleText}>Notifikasi WhatsApp Owner (Fonnte Gateway)</h4>
-                                {ownerPhone && waEnabled && (fonnteToken || hasSystemToken) ? (
+                                <h4 className={styles.titleText}>
+                                    {gateway === "meta" ? "Notifikasi WhatsApp Owner (Meta Official Cloud API)" : "Notifikasi WhatsApp Owner (Fonnte Gateway)"}
+                                </h4>
+                                {(gateway === "meta" ? isMetaConfigured : isFonnteConfigured) ? (
                                     <span className={styles.badgeActive}>
                                         <span className={`${styles.dot} ${styles.dotGreen}`} />
-                                        <span>Fonnte Siap &amp; Aktif</span>
+                                        <span>{gateway === "meta" ? "Meta Cloud Aktif" : "Fonnte Siap & Aktif"}</span>
                                     </span>
                                 ) : (
                                     <span className={styles.badgeInactive}>
@@ -176,90 +199,166 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                     </div>
                 </div>
 
-                <div className={styles.waFormGrid}>
-                    <div className={styles.waInputGroup}>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                            <div>
-                                <label className={styles.waLabel}>
-                                    Nomor WhatsApp Owner / Penerima Notifikasi:
-                                </label>
-                                <input
-                                    type="text"
-                                    value={ownerPhone}
-                                    onChange={e => setOwnerPhone(e.target.value)}
-                                    placeholder="Contoh: 08123456789 atau 628123456789"
-                                    className={styles.waInput}
-                                    style={{ width: "100%", marginTop: "4px" }}
-                                    disabled={loadingWa || savingWa}
-                                />
-                            </div>
+                {/* Gateway Switcher Tabs */}
+                <div>
+                    <div className={styles.gatewaySegmentedBar}>
+                        <button
+                            type="button"
+                            onClick={() => setGateway("meta")}
+                            className={`${styles.gatewayTab} ${gateway === "meta" ? styles.gatewayTabActiveMeta : ""}`}
+                        >
+                            <Globe size={14} />
+                            <span>WhatsApp Official (Meta Cloud API)</span>
+                            <span className={styles.recommendTag}>Tanpa HP</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setGateway("fonnte")}
+                            className={`${styles.gatewayTab} ${gateway === "fonnte" ? styles.gatewayTabActiveFonnte : ""}`}
+                        >
+                            <Smartphone size={14} />
+                            <span>Fonnte Gateway (Scan QR Web)</span>
+                        </button>
+                    </div>
+                </div>
 
-                            <div>
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                    <label className={styles.waLabel}>
-                                        Fonnte Device API Token:
-                                    </label>
-                                    <a
-                                        href="https://md.fonnte.com/new/device.php"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{ fontSize: "11px", color: "#2563eb", display: "inline-flex", alignItems: "center", gap: "2px", textDecoration: "none" }}
-                                    >
-                                        <span>Ambil di Fonnte</span>
-                                        <ExternalLink size={10} />
-                                    </a>
-                                </div>
-                                <input
-                                    type="password"
-                                    value={fonnteToken}
-                                    onChange={e => setFonnteToken(e.target.value)}
-                                    placeholder="Salin Token dari menu Device di Fonnte"
-                                    className={styles.waInput}
-                                    style={{ width: "100%", marginTop: "4px" }}
-                                    disabled={loadingWa || savingWa}
-                                />
-                            </div>
+                {/* Form Fields: Full Width Responsive Grid */}
+                {gateway === "meta" ? (
+                    /* ── META OFFICIAL 3-COLUMN FORM ── */
+                    <div className={styles.waInputsGrid}>
+                        <div className={styles.waField}>
+                            <label className={styles.waLabel}>
+                                Nomor WhatsApp Owner / GM:
+                            </label>
+                            <input
+                                type="text"
+                                value={ownerPhone}
+                                onChange={e => setOwnerPhone(e.target.value)}
+                                placeholder="Contoh: 08123456789 atau 628123456789"
+                                className={styles.waInput}
+                                disabled={loadingWa || savingWa}
+                            />
                         </div>
 
-                        <div className={styles.waCheckboxes}>
-                            <label className={styles.waCheckboxLabel}>
-                                <input
-                                    type="checkbox"
-                                    checked={waEnabled}
-                                    onChange={e => setWaEnabled(e.target.checked)}
-                                />
-                                <span>Aktifkan Notifikasi WhatsApp</span>
+                        <div className={styles.waField}>
+                            <label className={styles.waLabel}>
+                                Meta Phone Number ID:
                             </label>
+                            <input
+                                type="text"
+                                value={metaPhoneNumberId}
+                                onChange={e => setMetaPhoneNumberId(e.target.value)}
+                                placeholder={systemPhoneId ? `Default Sistem (${systemPhoneId})` : "Salin Phone Number ID dari Meta"}
+                                className={styles.waInput}
+                                disabled={loadingWa || savingWa}
+                            />
+                        </div>
 
-                            <label className={styles.waCheckboxLabel}>
-                                <input
-                                    type="checkbox"
-                                    checked={notifyNewBooking}
-                                    onChange={e => setNotifyNewBooking(e.target.checked)}
-                                    disabled={!waEnabled}
-                                />
-                                <span>Notif Booking Baru Masuk</span>
-                            </label>
-
-                            <label className={styles.waCheckboxLabel}>
-                                <input
-                                    type="checkbox"
-                                    checked={notifyCancellation}
-                                    onChange={e => setNotifyCancellation(e.target.checked)}
-                                    disabled={!waEnabled}
-                                />
-                                <span>Notif Pembatalan OTA</span>
-                            </label>
+                        <div className={styles.waField}>
+                            <div className={styles.waLabelRow}>
+                                <span className={styles.waLabel}>Meta Access Token:</span>
+                                <a
+                                    href="https://developers.facebook.com/apps/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={styles.waExtLink}
+                                >
+                                    <span>Meta Dev Portal</span>
+                                    <ExternalLink size={10} />
+                                </a>
+                            </div>
+                            <input
+                                type="password"
+                                value={metaAccessToken}
+                                onChange={e => setMetaAccessToken(e.target.value)}
+                                placeholder={hasMetaToken ? "Menggunakan Token Server (.env.local)" : "Tempel Token EAAB..."}
+                                className={styles.waInput}
+                                disabled={loadingWa || savingWa}
+                            />
                         </div>
                     </div>
+                ) : (
+                    /* ── FONNTE 2-COLUMN FORM ── */
+                    <div className={styles.waInputsGrid2Col}>
+                        <div className={styles.waField}>
+                            <label className={styles.waLabel}>
+                                Nomor WhatsApp Owner / GM:
+                            </label>
+                            <input
+                                type="text"
+                                value={ownerPhone}
+                                onChange={e => setOwnerPhone(e.target.value)}
+                                placeholder="Contoh: 08123456789 atau 628123456789"
+                                className={styles.waInput}
+                                disabled={loadingWa || savingWa}
+                            />
+                        </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div className={styles.waField}>
+                            <div className={styles.waLabelRow}>
+                                <span className={styles.waLabel}>Fonnte Device API Token:</span>
+                                <a
+                                    href="https://md.fonnte.com/new/device.php"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={styles.waExtLink}
+                                >
+                                    <span>Ambil di Fonnte</span>
+                                    <ExternalLink size={10} />
+                                </a>
+                            </div>
+                            <input
+                                type="password"
+                                value={fonnteToken}
+                                onChange={e => setFonnteToken(e.target.value)}
+                                placeholder="Salin Token dari menu Device di Fonnte"
+                                className={styles.waInput}
+                                disabled={loadingWa || savingWa}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Bottom Row: Checkboxes on Left, Action Buttons on Right */}
+                <div className={styles.waBottomControls}>
+                    <div className={styles.waCheckboxes}>
+                        <label className={styles.waCheckboxLabel}>
+                            <input
+                                type="checkbox"
+                                checked={waEnabled}
+                                onChange={e => setWaEnabled(e.target.checked)}
+                            />
+                            <span>Aktifkan Notifikasi WhatsApp</span>
+                        </label>
+
+                        <label className={styles.waCheckboxLabel}>
+                            <input
+                                type="checkbox"
+                                checked={notifyNewBooking}
+                                onChange={e => setNotifyNewBooking(e.target.checked)}
+                                disabled={!waEnabled}
+                            />
+                            <span>Notif Booking Baru Masuk</span>
+                        </label>
+
+                        <label className={styles.waCheckboxLabel}>
+                            <input
+                                type="checkbox"
+                                checked={notifyCancellation}
+                                onChange={e => setNotifyCancellation(e.target.checked)}
+                                disabled={!waEnabled}
+                            />
+                            <span>Notif Pembatalan OTA</span>
+                        </label>
+                    </div>
+
+                    <div className={styles.waBtnRow}>
                         <button
                             type="button"
                             onClick={handleSaveWaConfig}
                             disabled={savingWa || loadingWa}
                             className={styles.btnSuccess}
-                            title="Simpan nomor WhatsApp dan token Fonnte untuk hotel ini"
+                            title="Simpan pengaturan WhatsApp untuk hotel ini"
                         >
                             <Save size={14} className={savingWa ? "animate-spin" : ""} />
                             <span>{savingWa ? "Menyimpan..." : "Simpan Pengaturan WA"}</span>
@@ -278,10 +377,15 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                     </div>
                 </div>
 
-                <div className={styles.metaInfoBar}>
+                {/* Info Bar at Bottom */}
+                <div className={styles.metaInfoBar} style={{ background: gateway === "meta" ? "#eff6ff" : "#f0fdf4", border: `1px solid ${gateway === "meta" ? "#bfdbfe" : "#bbf7d0"}`, color: gateway === "meta" ? "#1e40af" : "#166534" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <ShieldCheck size={14} color="#10b981" />
-                        <span><b>Fonnte WhatsApp Engine</b> • Tanpa verifikasi dokumen Meta • Pesan langsung terkirim secara instan</span>
+                        <ShieldCheck size={14} color={gateway === "meta" ? "#2563eb" : "#10b981"} />
+                        <span>
+                            {gateway === "meta" 
+                                ? <b>WhatsApp Cloud API Resmi (Meta) • 100% Serverless Cloud • Tanpa HP Fisik • 24/7 Selalu Aktif</b> 
+                                : <b>Fonnte WhatsApp Engine • Tanpa verifikasi dokumen Meta • Pesan dikirim melalui HP pribadi</b>}
+                        </span>
                     </div>
                     <span>🔒 Multi-tenant terisolasi per hotel</span>
                 </div>

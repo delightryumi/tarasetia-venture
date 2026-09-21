@@ -130,10 +130,10 @@ export async function POST(req: NextRequest) {
                     otaName
                 }).catch(err => console.warn("[Webhook Push] Warning:", err?.message));
 
-                // Dispatch WhatsApp Notification to Hotel Owner (Fonnte Gateway & Meta Cloud API)
+                // Dispatch WhatsApp Notification to Hotel Owner (Auto-routed: Meta Official or Fonnte)
                 try {
-                    const { sendWhatsAppNotificationToOwner: sendFonnte } = await import("@/lib/notifications/whatsappFonnteService");
-                    sendFonnte(hotelCode, {
+                    const { dispatchWhatsAppNotification } = await import("@/lib/notifications/whatsappDispatcher");
+                    dispatchWhatsAppNotification(hotelCode, {
                         event: isCancel ? "booking_cancellation" : (payload.event === "booking_modification" ? "booking_modification" : "booking_new"),
                         channelName: otaName,
                         bookingRef,

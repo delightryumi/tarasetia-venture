@@ -18,7 +18,7 @@ export class ChannexClient {
     constructor(apiKey?: string, isProduction?: boolean) {
         const env = process.env.CHANNEX_ENV || (isProduction ? "production" : "staging");
         this.defaultBaseUrl = env === "production" 
-            ? "https://app.channex.io/api/v1" 
+            ? "https://api.channex.io/api/v1" 
             : "https://staging.channex.io/api/v1";
             
         this.apiKey = apiKey || process.env.CHANNEX_API_KEY || "";
@@ -27,7 +27,7 @@ export class ChannexClient {
     public getBaseUrl(environment?: "staging" | "production"): string {
         if (environment) {
             return environment === "production"
-                ? "https://app.channex.io/api/v1"
+                ? "https://api.channex.io/api/v1"
                 : "https://staging.channex.io/api/v1";
         }
         return this.defaultBaseUrl;

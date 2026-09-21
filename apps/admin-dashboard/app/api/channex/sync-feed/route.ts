@@ -148,9 +148,9 @@ export async function POST(req: NextRequest) {
                             console.warn(`[Channex Feed Poll] Warning ACK failed for ${revisionId}:`, ackErr.message);
                         }
 
-                        // Dispatch WhatsApp Notification to Hotel Owner (Fonnte Gateway)
+                        // Dispatch WhatsApp Notification to Hotel Owner (Auto-routed: Meta Official or Fonnte)
                         try {
-                            const { sendWhatsAppNotificationToOwner } = await import("@/lib/notifications/whatsappFonnteService");
+                            const { dispatchWhatsAppNotification } = await import("@/lib/notifications/whatsappDispatcher");
                             const guestName = (booking.customer?.name || `${booking.customer?.first_name || ""} ${booking.customer?.last_name || ""}`).trim() || "Tamu OTA";
                             const isCancel = rev.event === "booking_cancellation" || booking.status === "cancelled";
                             const roomsList = booking.rooms || [];
@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
                             const bookingRef = booking.channel_booking_id || booking.ota_reservation_code || booking.id || revisionId;
                             const totalPrice = Number(booking.total_price || booking.amount || (booking as any)?.total_amount) || 0;
 
-                            sendWhatsAppNotificationToOwner(hotelCode, {
+                            dispatchWhatsAppNotification(hotelCode, {
                                 event: isCancel ? "booking_cancellation" : (rev.event === "booking_modification" ? "booking_modification" : "booking_new"),
                                 channelName: booking.channel_name || "OTA Channel",
                                 bookingRef,

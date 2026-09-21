@@ -144,6 +144,22 @@ export interface ChannexBooking {
     currency: string;
     payment_type?: "channel_collect" | "hotel_collect" | "virtual_card";
     payment_collect?: string;
+    ota_commission?: number | string;
+    commission_percent?: number | string;
+    promo_percent?: number | string;
+    revenue_recording_mode?: string;
+    is_net_rate?: boolean;
+    pricing_model?: "net" | "gross";
+    guarantee?: {
+        is_virtual?: boolean;
+        type?: string;
+        meta?: {
+            virtual_card_current_balance?: number;
+            virtual_card_currency_code?: string;
+            virtual_card_effective_date?: string;
+            virtual_card_expiration_date?: string;
+        };
+    };
     customer?: ChannexBookingCustomer;
     guest?: ChannexBookingCustomer;
     rooms: ChannexBookingRoom[];
@@ -180,6 +196,10 @@ export interface ChannexWebhookPayload {
     message?: any;
     review?: any;
     is_simulation?: boolean;
+    ota_commission_percent?: number;
+    ota_promo_percent?: number;
+    ota_commission?: number;
+    revenue_recording_mode?: string;
 }
 
 export interface MyTaraRatePlan {

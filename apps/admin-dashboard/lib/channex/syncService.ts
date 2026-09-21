@@ -181,23 +181,91 @@ export class ChannexSyncService {
         const chanKey = channelName.toLowerCase().trim();
         const catalogDefaultComm = defaultCommissions[chanKey] || 15;
 
-        // Commission & Promo percentage
-        const commissionPercent = Number(
-            (payload as any).ota_commission_percent ??
-            (booking as any)?.commission_percent ??
-            matchedChannel?.commissionPercent ??
-            hotelData.settings?.defaultOtaCommission ??
-            catalogDefaultComm
-        );
+        // ── 3-TIER FINANCIAL RECONCILIATION ENGINE (Net vs Gross Standards) ──
+        // Check Model 3: B2B Wholesaler Net Rate (e.g. Hotelbeds, WebBeds, MG Bedbank)
+        const isWholesaler = matchedChannel?.pricingModel === "net" ||
+            (booking as any)?.pricing_model === "net" ||
+            (payload as any)?.pricing_model === "net" ||
+            Boolean((booking as any)?.is_net_rate);
 
-        const promoDeductionPercent = Number(
-            (payload as any).ota_promo_percent ??
-            (booking as any)?.promo_percent ??
-            matchedChannel?.promoDeductionPercent ??
-            0
+        // Check Model 2A: Virtual Credit Card (VCC) Balance in Channex guarantee metadata
+        const vccBalanceRaw = Number(
+            (booking as any)?.guarantee?.meta?.virtual_card_current_balance ??
+            (payload as any)?.guarantee?.meta?.virtual_card_current_balance ??
+            (booking as any)?.virtual_card_current_balance ??
+            (payload as any)?.virtual_card_current_balance
         );
+        const hasVccBalance = !isNaN(vccBalanceRaw) && vccBalanceRaw > 0 && isChannelCollect;
 
-        const totalDeductionPercent = Math.min(100, Math.max(0, commissionPercent + promoDeductionPercent));
+        // Check Model 2B: Explicit OTA Commission from Channex (e.g. Booking.com / Airbnb)
+        const explicitCommissionRaw = Number(
+            (booking as any)?.ota_commission ??
+            (payload as any)?.ota_commission ??
+            (booking as any)?.commission_amount
+        );
+        const hasExplicitCommission = !isNaN(explicitCommissionRaw) && explicitCommissionRaw > 0;
+
+        let finalNetToHotel = 0;
+        let finalCommissionAmount = 0;
+        let finalCommissionPercent = 0;
+        let finalPromoPercent = 0;
+        let finalPromoAmount = 0;
+        let finalTotalDeductions = 0;
+
+        if (isWholesaler) {
+            // Model 3: Wholesaler contracts on Net Rate. booking.amount is ALREADY Net to Hotel!
+            finalCommissionAmount = 0;
+            finalCommissionPercent = 0;
+            finalPromoPercent = 0;
+            finalPromoAmount = 0;
+            finalTotalDeductions = 0;
+            finalNetToHotel = totalPrice;
+        } else if (hasVccBalance) {
+            // Model 2A: VCC Loaded Balance is the exact Net to Hotel authorized for charging
+            finalNetToHotel = Math.min(totalPrice, vccBalanceRaw);
+            finalTotalDeductions = Math.max(0, totalPrice - finalNetToHotel);
+            if (hasExplicitCommission) {
+                finalCommissionAmount = Math.min(finalTotalDeductions, explicitCommissionRaw);
+                finalPromoAmount = Math.max(0, finalTotalDeductions - finalCommissionAmount);
+            } else {
+                finalCommissionAmount = finalTotalDeductions;
+                finalPromoAmount = 0;
+            }
+            finalCommissionPercent = totalPrice > 0 ? Math.round((finalCommissionAmount / totalPrice) * 100 * 10) / 10 : 0;
+            finalPromoPercent = totalPrice > 0 ? Math.round((finalPromoAmount / totalPrice) * 100 * 10) / 10 : 0;
+        } else if (hasExplicitCommission) {
+            // Model 2B: Explicit OTA Commission sent by Channex
+            finalCommissionAmount = Math.min(totalPrice, explicitCommissionRaw);
+            finalCommissionPercent = totalPrice > 0 ? Math.round((finalCommissionAmount / totalPrice) * 100 * 10) / 10 : 0;
+            finalPromoPercent = Number((payload as any).ota_promo_percent ?? (booking as any)?.promo_percent ?? matchedChannel?.promoDeductionPercent ?? 0);
+            finalPromoAmount = Math.round(totalPrice * (finalPromoPercent / 100));
+            finalTotalDeductions = Math.min(totalPrice, finalCommissionAmount + finalPromoAmount);
+            finalNetToHotel = Math.max(0, totalPrice - finalTotalDeductions);
+        } else {
+            // Model 1 / Fallback: Calculated from Channel Config or Catalog Defaults
+            finalCommissionPercent = Number(
+                (payload as any).ota_commission_percent ??
+                (booking as any)?.commission_percent ??
+                matchedChannel?.commissionPercent ??
+                hotelData.settings?.defaultOtaCommission ??
+                catalogDefaultComm
+            );
+            finalPromoPercent = Number(
+                (payload as any).ota_promo_percent ??
+                (booking as any)?.promo_percent ??
+                matchedChannel?.promoDeductionPercent ??
+                0
+            );
+            const totalDeductionPercentCalc = Math.min(100, Math.max(0, finalCommissionPercent + finalPromoPercent));
+            finalCommissionAmount = Math.round(totalPrice * (finalCommissionPercent / 100));
+            finalPromoAmount = Math.round(totalPrice * (finalPromoPercent / 100));
+            finalTotalDeductions = Math.round(totalPrice * (totalDeductionPercentCalc / 100));
+            finalNetToHotel = Math.max(0, totalPrice - finalTotalDeductions);
+        }
+
+        const commissionPercent = finalCommissionPercent;
+        const promoDeductionPercent = finalPromoPercent;
+        const totalDeductionPercent = totalPrice > 0 ? Math.round((finalTotalDeductions / totalPrice) * 100 * 10) / 10 : 0;
 
         // Revenue Recording Mode: "net" (Net to Hotel) vs "gross" (Gross Sell Rate)
         const revenueRecordingMode = (
@@ -421,11 +489,11 @@ export class ChannexSyncService {
                     const rawDailyAmount = bookedRoom.days && bookedRoom.days[i] ? Number(bookedRoom.days[i].amount) : avgNightlyRate;
                     const grossDailyAmount = rawDailyAmount;
 
-                    // Calculate Commission, Promo Deductions, and Net to Hotel
-                    const dailyCommissionAmount = Math.round(grossDailyAmount * (commissionPercent / 100));
-                    const dailyPromoAmount = Math.round(grossDailyAmount * (promoDeductionPercent / 100));
-                    const dailyDeductions = Math.round(grossDailyAmount * (totalDeductionPercent / 100));
-                    const dailyNetToHotel = Math.max(0, grossDailyAmount - dailyDeductions);
+                    // Calculate Commission, Promo Deductions, and Net to Hotel (Prorated per room night)
+                    const dailyNetToHotel = roomNights > 0 ? Math.round(finalNetToHotel / roomNights) : finalNetToHotel;
+                    const dailyCommissionAmount = roomNights > 0 ? Math.round(finalCommissionAmount / roomNights) : finalCommissionAmount;
+                    const dailyPromoAmount = roomNights > 0 ? Math.round(finalPromoAmount / roomNights) : finalPromoAmount;
+                    const dailyDeductions = Math.max(0, grossDailyAmount - dailyNetToHotel);
 
                     // If hotel accounting mode is "net", revenue recorded is net to hotel.
                     // If "gross", revenue recorded is full gross guest price.
@@ -637,10 +705,10 @@ export class ChannexSyncService {
         }
 
         const totalGross = totalPrice;
-        const totalCommission = Math.round(totalGross * (commissionPercent / 100));
-        const totalPromo = Math.round(totalGross * (promoDeductionPercent / 100));
-        const totalDeductions = Math.round(totalGross * (totalDeductionPercent / 100));
-        const totalNetToHotel = Math.max(0, totalGross - totalDeductions);
+        const totalCommission = finalCommissionAmount;
+        const totalPromo = finalPromoAmount;
+        const totalDeductions = finalTotalDeductions;
+        const totalNetToHotel = finalNetToHotel;
         const totalRecordedRevenue = revenueRecordingMode === "net" ? totalNetToHotel : totalGross;
 
         return {
@@ -649,15 +717,17 @@ export class ChannexSyncService {
             bookingId: otaBookingId,
             financials: {
                 guestPaidGross: totalGross,
-                otaCommissionPercent: commissionPercent,
+                otaCommissionPercent: finalCommissionPercent,
                 otaCommissionAmount: totalCommission,
-                otaPromoPercent: promoDeductionPercent,
+                otaPromoPercent: finalPromoPercent,
                 otaPromoAmount: totalPromo,
                 totalDeductions,
                 netToHotel: totalNetToHotel,
+                vccBalance: hasVccBalance ? vccBalanceRaw : null,
+                isWholesalerNet: isWholesaler,
                 recordedRevenue: totalRecordedRevenue,
                 revenueRecordingMode: revenueRecordingMode.toUpperCase(),
-                currency: "IDR"
+                currency: booking.currency || "IDR"
             }
         };
     }

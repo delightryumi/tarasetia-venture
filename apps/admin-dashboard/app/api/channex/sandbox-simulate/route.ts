@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
             paymentCollect = "channel",
             commissionPercent,
             promoPercent,
+            pricingModel,
             revenueRecordingMode = "net",
             bookingIdToCancel,
             bookingIdToModify
@@ -123,6 +124,19 @@ export async function POST(req: NextRequest) {
                     payment_collect: paymentCollect === "property" ? "property" : "channel",
                     commission_percent: commissionPercent !== undefined ? Number(commissionPercent) : undefined,
                     promo_percent: promoPercent !== undefined ? Number(promoPercent) : undefined,
+                    ota_commission: commissionPercent !== undefined 
+                        ? Math.round((Number(totalPrice) || 1200000) * (Number(commissionPercent) / 100))
+                        : undefined,
+                    guarantee: paymentCollect !== "property" ? {
+                        is_virtual: true,
+                        meta: {
+                            virtual_card_current_balance: Math.round(
+                                (Number(totalPrice) || 1200000) * (1 - (Number(commissionPercent || 15) + Number(promoPercent || 0)) / 100)
+                            ),
+                            virtual_card_currency_code: "IDR"
+                        }
+                    } : undefined,
+                    pricing_model: pricingModel,
                     revenue_recording_mode: revenueRecordingMode || "net",
                     customer: {
                         name: guestName,
@@ -157,14 +171,14 @@ export async function POST(req: NextRequest) {
                 }, { status: 400 });
             }
 
-            // Dispatch WhatsApp Notification to Hotel Owner (Fonnte Gateway & Meta Cloud API)
+            // Dispatch WhatsApp Notification to Hotel Owner (Auto-routed: Meta Official or Fonnte)
             let waResult: any = null;
             try {
-                const { sendWhatsAppNotificationToOwner } = await import("@/lib/notifications/whatsappFonnteService");
+                const { dispatchWhatsAppNotification } = await import("@/lib/notifications/whatsappDispatcher");
                 const roomDoc = roomTypeId ? await adminDb.collection(`hotels/${hotelCode}/roomTypes`).doc(roomTypeId).get() : null;
                 const roomName = roomDoc?.data()?.name || "Standard Room";
 
-                waResult = await sendWhatsAppNotificationToOwner(hotelCode, {
+                waResult = await dispatchWhatsAppNotification(hotelCode, {
                     event: "booking_new",
                     channelName,
                     bookingRef: simulatedBookingId,
@@ -177,7 +191,7 @@ export async function POST(req: NextRequest) {
                     netToHotel: (result as any)?.financials?.netToHotel,
                     otaCommission: (result as any)?.financials?.otaCommissionAmount
                 });
-                console.log(`[Sandbox WA Notification] Sent to owner for ${hotelCode}:`, waResult);
+                console.log(`[Sandbox WA Notification] Sent to owner for ${hotelCode} (${waResult.gateway}):`, waResult);
             } catch (waErr: any) {
                 console.warn("[Sandbox WhatsApp Notification Warning]:", waErr?.message);
                 waResult = { success: false, error: waErr.message };
@@ -294,8 +308,8 @@ export async function POST(req: NextRequest) {
 
             let waCancelResult: any = null;
             try {
-                const { sendWhatsAppNotificationToOwner } = await import("@/lib/notifications/whatsappFonnteService");
-                waCancelResult = await sendWhatsAppNotificationToOwner(hotelCode, {
+                const { dispatchWhatsAppNotification } = await import("@/lib/notifications/whatsappDispatcher");
+                waCancelResult = await dispatchWhatsAppNotification(hotelCode, {
                     event: "booking_cancellation",
                     channelName,
                     bookingRef: bookingIdToCancel,

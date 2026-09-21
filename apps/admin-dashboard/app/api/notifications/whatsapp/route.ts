@@ -119,10 +119,14 @@ export async function POST(req: NextRequest) {
             }
 
             if (testResult.success) {
+                const isPending = (testResult as any).process === "pending";
                 return NextResponse.json({
                     success: true,
-                    message: `Pesan uji coba WhatsApp berhasil dikirim ke nomor ${targetPhone}!`,
-                    messageId: testResult.messageId
+                    message: isPending
+                        ? `Permintaan diterima Fonnte (Antrean/Queue: ID ${testResult.messageId}). Pastikan WhatsApp pada nomor device Fonnte sedang terhubung.`
+                        : `Pesan uji coba WhatsApp berhasil dikirim ke nomor ${targetPhone}!`,
+                    messageId: testResult.messageId,
+                    process: (testResult as any).process
                 });
             } else {
                 return NextResponse.json({
