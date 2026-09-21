@@ -78,69 +78,146 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        console.log(`[Channex Feed Poll] Querying unacknowledged booking revisions from ${environment}...`);
-        const feedRes = await channexClient.getBookingRevisionFeed(customApiKey, environment);
-        const revisions = feedRes?.data || [];
-
-        console.log(`[Channex Feed Poll] Found ${revisions.length} unacknowledged revisions.`);
-
+        console.log(`[Channex Feed Poll] Starting feed drainage from ${environment}...`);
+        
         const results: any[] = [];
         let successCount = 0;
         let ackCount = 0;
+        let totalRevisionsFound = 0;
+        const MAX_DRAIN_PAGES = 10;
+        let pageCount = 0;
+        let hasMore = true;
 
-        for (const rev of revisions) {
-            const revisionId = rev.id;
-            const booking = rev.attributes || rev;
-            const propertyId = booking.property_id || rev.relationships?.property?.data?.id;
+        while (hasMore && pageCount < MAX_DRAIN_PAGES) {
+            pageCount++;
+            const feedRes = await channexClient.getBookingRevisionFeed(customApiKey, environment);
+            const revisions = feedRes?.data || [];
+            const meta = feedRes?.meta || {};
 
-            const webhookPayload = {
-                event: (booking.status === "cancelled" ? "booking_cancellation" : "booking_new") as any,
-                property_id: propertyId,
-                booking_revision_id: revisionId,
-                booking: {
-                    id: booking.id || revisionId,
-                    property_id: propertyId,
-                    ...booking
-                },
-                inserted_at: rev.inserted_at || new Date().toISOString()
-            };
+            if (revisions.length === 0) {
+                break;
+            }
 
-            try {
-                const ingestRes = await channexSyncService.processIncomingBookingWebhook(webhookPayload);
-                successCount++;
+            totalRevisionsFound += revisions.length;
+            console.log(`[Channex Feed Poll] Batch ${pageCount}: Found ${revisions.length} revisions (Total pending: ${meta.total ?? revisions.length}).`);
 
-                // Send ACK immediately
-                try {
-                    await channexClient.acknowledgeBooking(revisionId, customApiKey, environment);
-                    ackCount++;
-                } catch (ackErr: any) {
-                    console.warn(`[Channex Feed Poll] Warning ACK failed for ${revisionId}:`, ackErr.message);
+            for (const rev of revisions) {
+                const revisionId = rev.id;
+                const booking = rev.attributes || rev;
+                const propertyId = booking.property_id || rev.relationships?.property?.data?.id;
+
+                // Skip and ACK revisions for properties not mapped in My Tara to avoid wedging the account feed
+                const mappedHotel = propertyId ? await channexSyncService.findHotelCodeByChannexPropertyId(propertyId) : null;
+                if (!mappedHotel) {
+                    console.warn(`[Channex Feed Poll] Property [${propertyId}] is not mapped in My Tara. Skipping and ACK-ing to keep feed unblocked.`);
+                    try {
+                        await channexClient.acknowledgeBooking(revisionId, customApiKey, environment);
+                        ackCount++;
+                    } catch (ackErr: any) {
+                        console.warn(`[Channex Feed Poll] Warning ACK failed for stray revision ${revisionId}:`, ackErr.message);
+                    }
+                    results.push({
+                        revisionId,
+                        status: "SKIPPED_UNMAPPED_PROPERTY",
+                        propertyId
+                    });
+                    continue;
                 }
 
-                results.push({
-                    revisionId,
-                    status: "PROCESSED",
-                    bookingId: ingestRes.bookingId
-                });
-            } catch (ingestErr: any) {
-                console.error(`[Channex Feed Poll] Error ingesting revision ${revisionId}:`, ingestErr);
-                results.push({
-                    revisionId,
-                    status: "FAILED",
-                    error: ingestErr.message
-                });
+                const webhookPayload = {
+                    event: (booking.status === "cancelled" ? "booking_cancellation" : "booking_new") as any,
+                    property_id: propertyId,
+                    booking_revision_id: revisionId,
+                    booking: {
+                        id: booking.id || revisionId,
+                        property_id: propertyId,
+                        ...booking
+                    },
+                    inserted_at: rev.inserted_at || new Date().toISOString()
+                };
+
+                try {
+                    const ingestRes = await channexSyncService.processIncomingBookingWebhook(webhookPayload);
+                    if (ingestRes.success) {
+                        successCount++;
+                        // Send ACK immediately after applying successfully
+                        try {
+                            await channexClient.acknowledgeBooking(revisionId, customApiKey, environment);
+                            ackCount++;
+                        } catch (ackErr: any) {
+                            console.warn(`[Channex Feed Poll] Warning ACK failed for ${revisionId}:`, ackErr.message);
+                        }
+
+                        // Dispatch WhatsApp Notification to Hotel Owner (Fonnte Gateway)
+                        try {
+                            const { sendWhatsAppNotificationToOwner } = await import("@/lib/notifications/whatsappFonnteService");
+                            const guestName = (booking.customer?.name || `${booking.customer?.first_name || ""} ${booking.customer?.last_name || ""}`).trim() || "Tamu OTA";
+                            const isCancel = rev.event === "booking_cancellation" || booking.status === "cancelled";
+                            const roomsList = booking.rooms || [];
+                            const roomCount = roomsList.length;
+                            const primaryRoomName = roomsList[0]?.room_type_name || "Kamar Hotel";
+                            const roomName = roomCount > 1 
+                                ? `${primaryRoomName} (${roomCount} Kamar)` 
+                                : primaryRoomName;
+                            const bookingRef = booking.channel_booking_id || booking.ota_reservation_code || booking.id || revisionId;
+                            const totalPrice = Number(booking.total_price || booking.amount || (booking as any)?.total_amount) || 0;
+
+                            sendWhatsAppNotificationToOwner(hotelCode, {
+                                event: isCancel ? "booking_cancellation" : (rev.event === "booking_modification" ? "booking_modification" : "booking_new"),
+                                channelName: booking.channel_name || "OTA Channel",
+                                bookingRef,
+                                guestName,
+                                roomName,
+                                arrivalDate: booking.arrival_date || "-",
+                                departureDate: booking.departure_date || "-",
+                                totalPrice,
+                                paymentStatus: booking.payment_type || "Sesuai OTA",
+                                netToHotel: (ingestRes as any)?.financials?.netToHotel,
+                                otaCommission: (ingestRes as any)?.financials?.otaCommissionAmount
+                            }).catch(() => {});
+                        } catch (waErr: any) {
+                            console.warn("[Sync Feed WhatsApp Notification Warning]:", waErr?.message);
+                        }
+
+                        results.push({
+                            revisionId,
+                            status: "PROCESSED",
+                            bookingId: ingestRes.bookingId
+                        });
+                    } else {
+                        console.warn(`[Channex Feed Poll] Ingestion unsuccessful for ${revisionId}:`, ingestRes.message);
+                        results.push({
+                            revisionId,
+                            status: "FAILED",
+                            error: ingestRes.message
+                        });
+                    }
+                } catch (ingestErr: any) {
+                    console.error(`[Channex Feed Poll] Error ingesting revision ${revisionId}:`, ingestErr);
+                    results.push({
+                        revisionId,
+                        status: "FAILED",
+                        error: ingestErr.message
+                    });
+                }
+            }
+
+            // Stop draining if feed is drained or last page was smaller than default limit
+            if (!meta.total || meta.total <= revisions.length || revisions.length < 10) {
+                hasMore = false;
             }
         }
 
         return NextResponse.json({
             success: true,
-            totalRevisionsFound: revisions.length,
+            totalRevisionsFound,
             processedCount: successCount,
             ackedCount: ackCount,
+            pagesDrained: pageCount,
             results,
-            message: revisions.length === 0 
+            message: totalRevisionsFound === 0 
                 ? "Semua revisi reservasi dari Channex sudah sinkron (0 pending feed)."
-                : `Berhasil memproses ${successCount} dari ${revisions.length} reservasi tertunda dan mengirim ${ackCount} ACK ke Channex.`
+                : `Berhasil memproses ${successCount} dari ${totalRevisionsFound} reservasi tertunda dan mengirim ${ackCount} ACK ke Channex (Drained in ${pageCount} page(s)).`
         });
     } catch (error: any) {
         console.error("[Channex Sync Feed Error]:", error);

@@ -151,10 +151,7 @@ export async function POST(req: NextRequest) {
 
             if (customApiKey) {
                 try {
-                    const pciRes = await channexClient.request<any>(`/bookings/${targetBooking.channexBookingId}/pci_view`, {
-                        method: "POST",
-                        customApiKey
-                    });
+                    const pciRes = await channexClient.createPciCardViewToken(targetBooking.channexBookingId, customApiKey);
 
                     if (pciRes?.data?.attributes?.card) {
                         const c = pciRes.data.attributes.card;

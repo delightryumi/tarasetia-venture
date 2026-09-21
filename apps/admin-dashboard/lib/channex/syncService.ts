@@ -12,6 +12,67 @@ import {
     ChannexRestrictionsPayload
 } from "./types";
 
+/**
+ * Helper to compress consecutive daily availability into run-length encoded date ranges (Channex Standard)
+ */
+function compressAvailabilityRanges(
+    dailyList: Array<{ dateStr: string; qty: number }>,
+    propertyId: string,
+    roomTypeId: string
+): any[] {
+    if (!dailyList || dailyList.length === 0) return [];
+    const ranges: any[] = [];
+    let rangeStart = dailyList[0].dateStr;
+    let rangeEnd = dailyList[0].dateStr;
+    let currentQty = dailyList[0].qty;
+
+    for (let i = 1; i < dailyList.length; i++) {
+        const item = dailyList[i];
+        if (item.qty === currentQty) {
+            rangeEnd = item.dateStr;
+        } else {
+            if (rangeStart === rangeEnd) {
+                ranges.push({
+                    property_id: propertyId,
+                    room_type_id: roomTypeId,
+                    date: rangeStart,
+                    availability: currentQty
+                });
+            } else {
+                ranges.push({
+                    property_id: propertyId,
+                    room_type_id: roomTypeId,
+                    date_from: rangeStart,
+                    date_to: rangeEnd,
+                    availability: currentQty
+                });
+            }
+            rangeStart = item.dateStr;
+            rangeEnd = item.dateStr;
+            currentQty = item.qty;
+        }
+    }
+
+    if (rangeStart === rangeEnd) {
+        ranges.push({
+            property_id: propertyId,
+            room_type_id: roomTypeId,
+            date: rangeStart,
+            availability: currentQty
+        });
+    } else {
+        ranges.push({
+            property_id: propertyId,
+            room_type_id: roomTypeId,
+            date_from: rangeStart,
+            date_to: rangeEnd,
+            availability: currentQty
+        });
+    }
+
+    return ranges;
+}
+
 export class ChannexSyncService {
     /**
      * Resolves the internal hotelCode from a given Channex Property UUID
@@ -51,7 +112,7 @@ export class ChannexSyncService {
     /**
      * Processes incoming Booking Webhook from Channex (Booking.com, Agoda, Traveloka, Tiket.com, etc.)
      */
-    async processIncomingBookingWebhook(payload: ChannexWebhookPayload, explicitHotelCode?: string): Promise<{ success: boolean; message: string; bookingId?: string }> {
+    async processIncomingBookingWebhook(payload: ChannexWebhookPayload, explicitHotelCode?: string): Promise<{ success: boolean; message: string; bookingId?: string; financials?: any }> {
         const { event, property_id, booking } = payload;
 
         if (!booking || !property_id) {
@@ -63,13 +124,13 @@ export class ChannexSyncService {
             return { success: false, message: `No active hotel found for Channex Property ID: ${property_id}` };
         }
 
-        const channelName = booking.channel_name || "OTA";
-        const otaBookingId = booking.channel_booking_id || booking.id;
+        const channelName = booking.channel_name || (booking as any)?.ota_name || "OTA";
+        const otaBookingId = booking.channel_booking_id || (booking as any)?.ota_reservation_code || booking.id;
         const guest = booking.customer || booking.guest || {};
         const guestName = (guest.name || `${guest.first_name || ""} ${guest.last_name || ""}`).trim() || "OTA Guest";
         const arrivalDate = booking.arrival_date;
         const departureDate = booking.departure_date;
-        const totalPrice = Number(booking.total_price) || 0;
+        const totalPrice = Number(booking.total_price || (booking as any)?.amount || (booking as any)?.total_amount) || 0;
         const isChannelCollect = booking.payment_type === "channel_collect" 
             || booking.payment_type === "virtual_card" 
             || booking.payment_collect === "channel"
@@ -95,6 +156,57 @@ export class ChannexSyncService {
         const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
         const hotelData = hotelDoc.data() || {};
         const propertyName = hotelData.name || hotelData.propertyName || "Setara Demo Partner";
+
+        // Channel Commission & Revenue Recording Mode (Net to Hotel vs Gross)
+        const channelConfigs = hotelData.channelConfigs || hotelData.channels || {};
+        const matchedChannel = Object.values(channelConfigs).find((ch: any) => 
+            ch.channelName?.toLowerCase().includes(channelName.toLowerCase()) ||
+            channelName.toLowerCase().includes(ch.channelName?.toLowerCase() || "") ||
+            ch.code?.toLowerCase() === channelName.toLowerCase().replace(/[^a-z0-9]/g, "_")
+        ) as any;
+
+        const defaultCommissions: Record<string, number> = {
+            "booking.com": 15,
+            "agoda": 17,
+            "traveloka": 18,
+            "tiket.com": 15,
+            "tiket": 15,
+            "expedia": 18,
+            "trip.com": 15,
+            "airbnb": 14,
+            "klook": 15,
+            "hotelbeds": 20
+        };
+
+        const chanKey = channelName.toLowerCase().trim();
+        const catalogDefaultComm = defaultCommissions[chanKey] || 15;
+
+        // Commission & Promo percentage
+        const commissionPercent = Number(
+            (payload as any).ota_commission_percent ??
+            (booking as any)?.commission_percent ??
+            matchedChannel?.commissionPercent ??
+            hotelData.settings?.defaultOtaCommission ??
+            catalogDefaultComm
+        );
+
+        const promoDeductionPercent = Number(
+            (payload as any).ota_promo_percent ??
+            (booking as any)?.promo_percent ??
+            matchedChannel?.promoDeductionPercent ??
+            0
+        );
+
+        const totalDeductionPercent = Math.min(100, Math.max(0, commissionPercent + promoDeductionPercent));
+
+        // Revenue Recording Mode: "net" (Net to Hotel) vs "gross" (Gross Sell Rate)
+        const revenueRecordingMode = (
+            (payload as any).revenue_recording_mode ||
+            (booking as any)?.revenue_recording_mode ||
+            matchedChannel?.pricingModel ||
+            hotelData.settings?.revenueRecordingMode ||
+            "net"
+        ).toLowerCase() === "gross" ? "gross" : "net";
 
         // 1. GHOST BOOKING CLEANUP & CANCELLATION RETENTION (Certification Stage 5B & Audit Requirement)
         const affectedDates = new Set<string>();
@@ -306,7 +418,18 @@ export class ChannexSyncService {
                     const dateStr = currentDate.toISOString().split("T")[0];
                     affectedDates.add(dateStr);
 
-                    const dailyAmount = bookedRoom.days && bookedRoom.days[i] ? Number(bookedRoom.days[i].amount) : avgNightlyRate;
+                    const rawDailyAmount = bookedRoom.days && bookedRoom.days[i] ? Number(bookedRoom.days[i].amount) : avgNightlyRate;
+                    const grossDailyAmount = rawDailyAmount;
+
+                    // Calculate Commission, Promo Deductions, and Net to Hotel
+                    const dailyCommissionAmount = Math.round(grossDailyAmount * (commissionPercent / 100));
+                    const dailyPromoAmount = Math.round(grossDailyAmount * (promoDeductionPercent / 100));
+                    const dailyDeductions = Math.round(grossDailyAmount * (totalDeductionPercent / 100));
+                    const dailyNetToHotel = Math.max(0, grossDailyAmount - dailyDeductions);
+
+                    // If hotel accounting mode is "net", revenue recorded is net to hotel.
+                    // If "gross", revenue recorded is full gross guest price.
+                    const dailyAmount = revenueRecordingMode === "net" ? dailyNetToHotel : grossDailyAmount;
 
                     // USALI Standard 1: Package Revenue Allocation
                     // Allocate breakfast portion to F&B, remaining to Room Accommodation
@@ -347,6 +470,16 @@ export class ChannexSyncService {
                         nights: 1,
                         amount: isCancelled ? 0 : netRoomAmount,
                         totalAmount: isCancelled ? 0 : netRoomAmount,
+                        grossAmount: isCancelled ? 0 : grossDailyAmount,
+                        netToHotel: isCancelled ? 0 : dailyNetToHotel,
+                        otaCommissionPercent: commissionPercent,
+                        otaCommissionAmount: isCancelled ? 0 : dailyCommissionAmount,
+                        otaPromoPercent: promoDeductionPercent,
+                        otaPromoAmount: isCancelled ? 0 : dailyPromoAmount,
+                        totalDeductionPercent: totalDeductionPercent,
+                        totalDeductionAmount: isCancelled ? 0 : dailyDeductions,
+                        revenueRecordingMode: revenueRecordingMode.toUpperCase(),
+                        reconStatus: "PENDING_RECON",
                         paidCash: 0,
                         paidAmount1: 0,
                         paidTransfer: roomPayTransfer,
@@ -362,7 +495,7 @@ export class ChannexSyncService {
                         status: isCancelled ? "CANCELLED" : finalStatus,
                         propertyName,
                         staffName: "Channex Channel Manager",
-                        note: `OTA Booking via ${channelName}. Ref: ${otaBookingId}.${isWithBreakfast ? ' [USALI Room Charge (Net of Breakfast)]' : ''} ${isCancelled ? '[CANCELLED]' : ''} ${booking.notes || ""}`.trim(),
+                        note: `OTA Booking via ${channelName}. Ref: ${otaBookingId}.${isWithBreakfast ? ' [USALI Room Charge (Net of Breakfast)]' : ''} [Recon: ${revenueRecordingMode === 'net' ? 'Net-to-Hotel' : 'Gross'}] ${isCancelled ? '[CANCELLED]' : ''} ${booking.notes || ""}`.trim(),
                         timestamp: new Date().toISOString(),
                         isOTA: true,
                         channexRaw: {
@@ -503,10 +636,29 @@ export class ChannexSyncService {
             console.log(`[ChannexSync] Simulated revision ${revisionId}: ACK processed locally (skipping external Channex call).`);
         }
 
+        const totalGross = totalPrice;
+        const totalCommission = Math.round(totalGross * (commissionPercent / 100));
+        const totalPromo = Math.round(totalGross * (promoDeductionPercent / 100));
+        const totalDeductions = Math.round(totalGross * (totalDeductionPercent / 100));
+        const totalNetToHotel = Math.max(0, totalGross - totalDeductions);
+        const totalRecordedRevenue = revenueRecordingMode === "net" ? totalNetToHotel : totalGross;
+
         return {
             success: true,
             message: `Booking ${otaBookingId} (${isCancelled ? 'CANCELLED' : event}) for ${guestName} processed successfully into Hotel [${hotelCode}].`,
-            bookingId: otaBookingId
+            bookingId: otaBookingId,
+            financials: {
+                guestPaidGross: totalGross,
+                otaCommissionPercent: commissionPercent,
+                otaCommissionAmount: totalCommission,
+                otaPromoPercent: promoDeductionPercent,
+                otaPromoAmount: totalPromo,
+                totalDeductions,
+                netToHotel: totalNetToHotel,
+                recordedRevenue: totalRecordedRevenue,
+                revenueRecordingMode: revenueRecordingMode.toUpperCase(),
+                currency: "IDR"
+            }
         };
     }
 
@@ -522,16 +674,25 @@ export class ChannexSyncService {
             return null;
         }
 
+        const todayStr = new Date().toISOString().split("T")[0];
+        // Never send past dates — Channex rejects them
+        if (endDateStr < todayStr) {
+            console.log(`[ChannexSync] Entire requested range is in the past (${startDateStr} s/d ${endDateStr}). Skipping push to Channex.`);
+            return null;
+        }
+
+        const effectiveStartStr = startDateStr < todayStr ? todayStr : startDateStr;
+        const start = new Date(effectiveStartStr);
+        const end = new Date(endDateStr);
+
         const roomTypesSnap = await adminDb.collection(`hotels/${hotelCode}/roomTypes`).get();
         const roomTypes = roomTypesSnap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
 
-        const start = new Date(startDateStr);
-        const end = new Date(endDateStr);
         const availabilityValues: any[] = [];
 
         // Query daily revenue documents in date range
         const dailySnap = await adminDb.collection(`hotels/${hotelCode}/daily_revenue`)
-            .where("date", ">=", startDateStr)
+            .where("date", ">=", effectiveStartStr)
             .where("date", "<=", endDateStr)
             .get();
 
@@ -543,7 +704,7 @@ export class ChannexSyncService {
 
         // Query ari_overrides in date range (for inventory and rate overrides from Tara PMS grid)
         const overridesSnap = await adminDb.collection(`hotels/${hotelCode}/ari_overrides`)
-            .where("date", ">=", startDateStr)
+            .where("date", ">=", effectiveStartStr)
             .where("date", "<=", endDateStr)
             .get();
 
@@ -556,6 +717,7 @@ export class ChannexSyncService {
         for (const rt of roomTypes as any[]) {
             const channexRoomTypeId = rt.channexRoomTypeId || rt.id;
             const totalAllotment = parseInt(rt.roomCount) || parseInt(rt.totalRooms) || (rt.physicalRooms?.length || 1);
+            const dailySlots: Array<{ dateStr: string; qty: number }> = [];
 
             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const dateStr = d.toISOString().split("T")[0];
@@ -578,18 +740,17 @@ export class ChannexSyncService {
                     availableQty = Number(dayOverride.inventoryOverrides[rt.id]);
                 }
 
-                availabilityValues.push({
-                    property_id: channexPropertyId,
-                    room_type_id: channexRoomTypeId,
-                    date: dateStr,
-                    availability: availableQty
-                });
+                dailySlots.push({ dateStr, qty: availableQty });
             }
+
+            // Run-length range compression
+            const compressed = compressAvailabilityRanges(dailySlots, channexPropertyId, channexRoomTypeId);
+            availabilityValues.push(...compressed);
         }
 
         if (availabilityValues.length > 0) {
             const payload: ChannexAvailabilityPayload = { values: availabilityValues };
-            console.log(`[ChannexSync] Pushing ${availabilityValues.length} availability slots to Channex for Property ${channexPropertyId}`);
+            console.log(`[ChannexSync] Pushing ${availabilityValues.length} compressed availability ranges to Channex for Property ${channexPropertyId}`);
             const hotelData = hotelDoc.data();
             const customApiKey = hotelData?.channelManager?.apiKey || process.env.CHANNEX_API_KEY;
             const env = hotelData?.channelManager?.environment || hotelData?.channelManager?.env || (process.env.CHANNEX_ENV as any) || "staging";
@@ -613,14 +774,21 @@ export class ChannexSyncService {
             return null;
         }
 
+        const todayStr = new Date().toISOString().split("T")[0];
+        if (dateTo < todayStr) {
+            console.log(`[ChannexSync] Skipping rate push for past dates (${dateFrom} s/d ${dateTo}) as Channex rejects past dates.`);
+            return null;
+        }
+        const effectiveDateFrom = dateFrom < todayStr ? todayStr : dateFrom;
+
         const payload: ChannexRestrictionsPayload = {
             values: [
                 {
                     property_id: channexPropertyId,
                     rate_plan_id: ratePlanId,
-                    date_from: dateFrom,
+                    date_from: effectiveDateFrom,
                     date_to: dateTo,
-                    rate: Number(rate).toFixed(2),
+                    rate: Math.round(Number(rate)),
                     min_stay_arrival: restrictions?.minStay || 1,
                     min_stay_through: restrictions?.minStay || 1,
                     stop_sell: !!restrictions?.stopSell,
@@ -630,7 +798,7 @@ export class ChannexSyncService {
             ]
         };
 
-        console.log(`[ChannexSync] Pushing Rate update to Channex for Rate Plan ${ratePlanId} (${dateFrom} - ${dateTo}): Rp ${rate}`);
+        console.log(`[ChannexSync] Pushing Rate update to Channex for Rate Plan ${ratePlanId} (${effectiveDateFrom} - ${dateTo}): Rp ${rate}`);
         return await channexClient.pushRestrictions(payload, customApiKey, env);
     }
 
@@ -702,6 +870,7 @@ export class ChannexSyncService {
         for (const rt of roomTypes as any[]) {
             const channexRoomTypeId = rt.channexRoomTypeId || rt.id;
             const totalAllotment = parseInt(rt.roomCount) || parseInt(rt.totalRooms) || (rt.physicalRooms?.length || 1);
+            const dailySlots: Array<{ dateStr: string; qty: number }> = [];
 
             for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
                 const dateStr = d.toISOString().split("T")[0];
@@ -723,13 +892,11 @@ export class ChannexSyncService {
                     availableQty = Number(dayOverride.inventoryOverrides[rt.id]);
                 }
 
-                availabilityValues.push({
-                    property_id: channexPropertyId,
-                    room_type_id: channexRoomTypeId,
-                    date: dateStr,
-                    availability: availableQty
-                });
+                dailySlots.push({ dateStr, qty: availableQty });
             }
+
+            const compressed = compressAvailabilityRanges(dailySlots, channexPropertyId, channexRoomTypeId);
+            availabilityValues.push(...compressed);
         }
 
         // 4. Build Restrictions / Rates Payload (Call 2)
@@ -748,7 +915,7 @@ export class ChannexSyncService {
                 rate_plan_id: channexRatePlanId,
                 date_from: startDateStr,
                 date_to: endDateStr,
-                rate: Number(basePrice).toFixed(2),
+                rate: Math.round(Number(basePrice)),
                 min_stay_arrival: minStay,
                 min_stay_through: minStay,
                 stop_sell: stopSell,
@@ -769,7 +936,7 @@ export class ChannexSyncService {
                         property_id: channexPropertyId,
                         rate_plan_id: channexRatePlanId,
                         date: overrideDate,
-                        rate: Number(customRate).toFixed(2),
+                        rate: Math.round(Number(customRate)),
                         min_stay_arrival: minStay,
                         min_stay_through: minStay,
                         stop_sell: customStopSell,

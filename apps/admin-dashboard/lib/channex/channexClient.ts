@@ -18,7 +18,7 @@ export class ChannexClient {
     constructor(apiKey?: string, isProduction?: boolean) {
         const env = process.env.CHANNEX_ENV || (isProduction ? "production" : "staging");
         this.defaultBaseUrl = env === "production" 
-            ? "https://api.channex.io/api/v1" 
+            ? "https://app.channex.io/api/v1" 
             : "https://staging.channex.io/api/v1";
             
         this.apiKey = apiKey || process.env.CHANNEX_API_KEY || "";
@@ -27,7 +27,7 @@ export class ChannexClient {
     public getBaseUrl(environment?: "staging" | "production"): string {
         if (environment) {
             return environment === "production"
-                ? "https://api.channex.io/api/v1"
+                ? "https://app.channex.io/api/v1"
                 : "https://staging.channex.io/api/v1";
         }
         return this.defaultBaseUrl;
@@ -180,6 +180,38 @@ export class ChannexClient {
         }, customApiKey, environment);
     }
 
+    /**
+     * Read back Availability per Room Type (for verification / audit)
+     * URL: GET /availability?filter[property_id]=UUID&filter[date][gte]=YYYY-MM-DD&filter[date][lte]=YYYY-MM-DD
+     */
+    async getAvailability(
+        propertyId: string, 
+        dateFrom: string, 
+        dateTo: string, 
+        customApiKey?: string, 
+        environment?: "staging" | "production"
+    ): Promise<any> {
+        const query = `/availability?filter[property_id]=${propertyId}&filter[date][gte]=${dateFrom}&filter[date][lte]=${dateTo}`;
+        return this.request<{ data: Record<string, Record<string, number>> }>(query, { method: "GET" }, customApiKey, environment);
+    }
+
+    /**
+     * Read back Rates & Restrictions per Rate Plan (filter[restrictions] is MANDATORY in Channex)
+     * URL: GET /restrictions?filter[property_id]=UUID&filter[date][gte]=...&filter[date][lte]=...&filter[restrictions]=...
+     */
+    async getRestrictions(
+        propertyId: string, 
+        dateFrom: string, 
+        dateTo: string, 
+        restrictions: string[] | string = ["rate", "min_stay_arrival", "stop_sell"], 
+        customApiKey?: string, 
+        environment?: "staging" | "production"
+    ): Promise<any> {
+        const restrParam = Array.isArray(restrictions) ? restrictions.join(",") : restrictions;
+        const query = `/restrictions?filter[property_id]=${propertyId}&filter[date][gte]=${dateFrom}&filter[date][lte]=${dateTo}&filter[restrictions]=${restrParam}`;
+        return this.request<{ data: Record<string, Record<string, any>> }>(query, { method: "GET" }, customApiKey, environment);
+    }
+
     // ==========================================
     // 5. WHITE-LABEL CHANNEL MAPPING IFRAME
     // ==========================================
@@ -268,6 +300,50 @@ export class ChannexClient {
     ): Promise<any> {
         return this.request<{ meta: any }>(`/booking_revisions/${bookingRevisionId}/ack`, {
             method: "POST"
+        }, customApiKey, environment);
+    }
+
+    /**
+     * Pull single authoritative booking revision by ID (used for Webhook Hydration: notification payload -> pull source of truth)
+     * URL: GET /api/v1/booking_revisions/:id
+     */
+    async getBookingRevision(
+        bookingRevisionId: string,
+        customApiKey?: string,
+        environment?: "staging" | "production"
+    ): Promise<any> {
+        return this.request<{ data: any }>(`/booking_revisions/${bookingRevisionId}`, {
+            method: "GET"
+        }, customApiKey, environment);
+    }
+
+    /**
+     * Manual Time-Scoped Booking Recovery (used after >30min outage to backfill missed revisions)
+     * URL: GET /api/v1/bookings?filter[inserted_at][gte]=<outage_start>&...
+     */
+    async getBookings(
+        filter: {
+            propertyId?: string;
+            insertedAtGte?: string;
+            arrivalDateGte?: string;
+            departureDateLte?: string;
+            limit?: number;
+            page?: number;
+        } = {},
+        customApiKey?: string,
+        environment?: "staging" | "production"
+    ): Promise<any> {
+        const params = new URLSearchParams();
+        if (filter.propertyId) params.append("filter[property_id]", filter.propertyId);
+        if (filter.insertedAtGte) params.append("filter[inserted_at][gte]", filter.insertedAtGte);
+        if (filter.arrivalDateGte) params.append("filter[arrival_date][gte]", filter.arrivalDateGte);
+        if (filter.departureDateLte) params.append("filter[departure_date][lte]", filter.departureDateLte);
+        if (filter.limit) params.append("limit", String(filter.limit));
+        if (filter.page) params.append("page", String(filter.page));
+
+        const query = `/bookings?${params.toString()}`;
+        return this.request<{ data: any[]; meta: any }>(query, {
+            method: "GET"
         }, customApiKey, environment);
     }
 

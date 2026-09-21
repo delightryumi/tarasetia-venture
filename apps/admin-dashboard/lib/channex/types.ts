@@ -160,6 +160,11 @@ export type ChannexWebhookEventType =
     | "booking_unmapped_room"
     | "booking_unmapped_rate"
     | "ari"
+    | "rate"
+    | "restriction"
+    | "message"
+    | "review"
+    | "updated_review"
     | "sync_error"
     | "sync_warning"
     | "rate_error";

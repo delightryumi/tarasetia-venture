@@ -25,6 +25,9 @@ export async function POST(req: NextRequest) {
             newDepartureDate,
             totalPrice = 1250000,
             paymentCollect = "channel",
+            commissionPercent,
+            promoPercent,
+            revenueRecordingMode = "net",
             bookingIdToCancel,
             bookingIdToModify
         } = body;
@@ -76,7 +79,7 @@ export async function POST(req: NextRequest) {
                 title: "Full Property ARI Sync (2-Call Bulk Standard)",
                 message: syncResult.success
                     ? `Full sync 365 hari berhasil dieksekusi tepat dalam 2 API Call bulk (Availability & Rate Restrictions)!`
-                    : `Gagal menjalankan Full sync: ${syncResult.error}`,
+                    : `Gagal menjalankan Full sync: ${syncResult.message || "Unknown error"}`,
                 callsCount: 2,
                 detail: syncResult
             });
@@ -101,6 +104,9 @@ export async function POST(req: NextRequest) {
                 property_id: channexPropertyId,
                 inserted_at: new Date().toISOString(),
                 booking_revision_id: `rev_${Date.now()}`,
+                ota_commission_percent: commissionPercent !== undefined ? Number(commissionPercent) : undefined,
+                ota_promo_percent: promoPercent !== undefined ? Number(promoPercent) : undefined,
+                revenue_recording_mode: revenueRecordingMode || "net",
                 booking: {
                     id: simulatedBookingId,
                     property_id: channexPropertyId,
@@ -113,8 +119,11 @@ export async function POST(req: NextRequest) {
                     departure_date: checkout,
                     total_price: Number(totalPrice) || 1200000,
                     currency: "IDR",
-                    payment_type: paymentCollect === "property" ? "cash" : "virtual_card",
+                    payment_type: paymentCollect === "property" ? "hotel_collect" : "virtual_card",
                     payment_collect: paymentCollect === "property" ? "property" : "channel",
+                    commission_percent: commissionPercent !== undefined ? Number(commissionPercent) : undefined,
+                    promo_percent: promoPercent !== undefined ? Number(promoPercent) : undefined,
+                    revenue_recording_mode: revenueRecordingMode || "net",
                     customer: {
                         name: guestName,
                         email: guestEmail,
@@ -132,7 +141,7 @@ export async function POST(req: NextRequest) {
                     ],
                     inserted_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
-                }
+                } as any
             };
 
             const result = await channexSyncService.processIncomingBookingWebhook(payload, hotelCode);
@@ -148,12 +157,40 @@ export async function POST(req: NextRequest) {
                 }, { status: 400 });
             }
 
+            // Dispatch WhatsApp Notification to Hotel Owner (Fonnte Gateway & Meta Cloud API)
+            let waResult: any = null;
+            try {
+                const { sendWhatsAppNotificationToOwner } = await import("@/lib/notifications/whatsappFonnteService");
+                const roomDoc = roomTypeId ? await adminDb.collection(`hotels/${hotelCode}/roomTypes`).doc(roomTypeId).get() : null;
+                const roomName = roomDoc?.data()?.name || "Standard Room";
+
+                waResult = await sendWhatsAppNotificationToOwner(hotelCode, {
+                    event: "booking_new",
+                    channelName,
+                    bookingRef: simulatedBookingId,
+                    guestName,
+                    roomName,
+                    arrivalDate: checkin,
+                    departureDate: checkout,
+                    totalPrice: Number(totalPrice) || 700000,
+                    paymentStatus: paymentCollect === "property" ? "Property Collect (Pay at Hotel)" : "Channel Collect (OTA VCC)",
+                    netToHotel: (result as any)?.financials?.netToHotel,
+                    otaCommission: (result as any)?.financials?.otaCommissionAmount
+                });
+                console.log(`[Sandbox WA Notification] Sent to owner for ${hotelCode}:`, waResult);
+            } catch (waErr: any) {
+                console.warn("[Sandbox WhatsApp Notification Warning]:", waErr?.message);
+                waResult = { success: false, error: waErr.message };
+            }
+
             return NextResponse.json({
                 success: true,
                 stage: 3,
                 title: "Simulated Booking Ingestion",
                 message: `Simulasi reservasi ${simulatedBookingId} dari ${channelName} berhasil diproses ke PMS, kamar diblokir, dan ACK terkirim!`,
                 bookingId: result.bookingId,
+                financials: (result as any)?.financials || null,
+                whatsapp: waResult,
                 simulatedPayload: payload
             });
         }
@@ -255,12 +292,32 @@ export async function POST(req: NextRequest) {
 
             const result = await channexSyncService.processIncomingBookingWebhook(payload, hotelCode);
 
+            let waCancelResult: any = null;
+            try {
+                const { sendWhatsAppNotificationToOwner } = await import("@/lib/notifications/whatsappFonnteService");
+                waCancelResult = await sendWhatsAppNotificationToOwner(hotelCode, {
+                    event: "booking_cancellation",
+                    channelName,
+                    bookingRef: bookingIdToCancel,
+                    guestName: "Tamu OTA (Simulasi)",
+                    roomName: "Kamar Hotel",
+                    arrivalDate: arrivalDate || new Date().toISOString().split("T")[0],
+                    departureDate: departureDate || new Date().toISOString().split("T")[0],
+                    totalPrice: 0,
+                    paymentStatus: "CANCELLED"
+                });
+            } catch (waErr: any) {
+                console.warn("[Sandbox WA Cancel Warning]:", waErr?.message);
+                waCancelResult = { success: false, error: waErr.message };
+            }
+
             return NextResponse.json({
                 success: true,
                 stage: 5,
                 title: "Booking Cancellation & Stock Release",
                 message: `Simulasi pembatalan reservasi ${bookingIdToCancel} berhasil diproses. Stok kamar dikembalikan ke pool ketersediaan PMS & OTA!`,
-                result
+                result,
+                whatsapp: waCancelResult
             });
         }
 

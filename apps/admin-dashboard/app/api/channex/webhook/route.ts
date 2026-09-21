@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { channexSyncService } from "@/lib/channex/syncService";
+import { channexClient } from "@/lib/channex/channexClient";
+import { adminDb } from "@/lib/firebaseAdmin";
 import { ChannexWebhookPayload } from "@/lib/channex/types";
 
 /**
@@ -19,20 +21,80 @@ export async function POST(req: NextRequest) {
         }
 
         const payload = (await req.json()) as ChannexWebhookPayload;
-        console.log(`[Channex Webhook] Received Event: ${payload?.event}, Property: ${payload?.property_id}`);
+        const eventType = payload?.event || (payload as any)?.type;
+        console.log(`[Channex Webhook] Received Event: ${eventType}, Property: ${payload?.property_id || (payload as any)?.payload?.property_id}`);
 
-        if (!payload || !payload.event) {
+        if (!payload || !eventType) {
             return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
         }
 
+        // Standardize event name if passed in nested format
+        payload.event = eventType;
+
         // 1. Handle Booking Events (new, modification, cancellation)
-        if (payload.event === "booking" || payload.event === "booking_new" || payload.event === "booking_modification" || payload.event === "booking_cancellation" || payload.booking) {
+        const isBookingEvent = payload.event === "booking" || 
+            payload.event === "booking_new" || 
+            payload.event === "booking_modification" || 
+            payload.event === "booking_cancellation" || 
+            Boolean(payload.booking) || 
+            Boolean((payload as any)?.payload?.booking_id);
+
+        if (isBookingEvent) {
+            // Extract revision ID and property ID if webhook came in lightweight notification shape
+            const nestedPayload = (payload as any)?.payload || {};
+            const revisionId = payload.booking_revision_id || 
+                nestedPayload.revision_id || 
+                (payload as any).revision_id || 
+                (payload.booking as any)?.revision_id;
+            
+            const propertyId = payload.property_id || 
+                nestedPayload.property_id || 
+                (payload.booking as any)?.property_id;
+
+            if (propertyId) {
+                payload.property_id = propertyId;
+            }
+
+            // Hydrate authoritative full booking payload via GET /booking_revisions/:id if payload.booking is missing or incomplete
+            if (revisionId && (!payload.booking || !payload.booking.rooms || payload.booking.rooms.length === 0)) {
+                try {
+                    const resolvedHotel = propertyId ? await channexSyncService.findHotelCodeByChannexPropertyId(propertyId) : null;
+                    let customApiKey = process.env.CHANNEX_API_KEY;
+                    let env: "staging" | "production" = (process.env.CHANNEX_ENV as any) || "staging";
+
+                    if (resolvedHotel) {
+                        const hDoc = await adminDb.collection("hotels").doc(resolvedHotel).get();
+                        const hData = hDoc.data();
+                        customApiKey = hData?.channelManager?.apiKey || customApiKey;
+                        env = hData?.channelManager?.environment || hData?.channelManager?.env || env;
+                    }
+
+                    console.log(`[Channex Webhook Hydration] Pulling authoritative revision ${revisionId} from Channex...`);
+                    const revRes = await channexClient.getBookingRevision(revisionId, customApiKey, env);
+                    const revData = revRes?.data;
+                    const bookingAttrs = revData?.attributes || revData;
+
+                    if (bookingAttrs) {
+                        payload.property_id = payload.property_id || bookingAttrs.property_id;
+                        payload.booking_revision_id = revisionId;
+                        payload.booking = {
+                            id: bookingAttrs.id || nestedPayload.booking_id || revisionId,
+                            property_id: payload.property_id,
+                            ...bookingAttrs
+                        };
+                        console.log(`[Channex Webhook Hydration] Successfully hydrated revision ${revisionId} for Guest: ${(bookingAttrs as any)?.customer?.name}`);
+                    }
+                } catch (hydrErr: any) {
+                    console.warn(`[Channex Webhook Hydration Warning] Could not fetch revision ${revisionId}:`, hydrErr.message);
+                }
+            }
+
             const result = await channexSyncService.processIncomingBookingWebhook(payload);
 
             // Broadcast Web Push to staff devices
-            const propertyId = payload.property_id || (payload.booking as any)?.property_id;
-            const hotelCode = propertyId 
-                ? await channexSyncService.findHotelCodeByChannexPropertyId(propertyId)
+            const targetPropertyId = payload.property_id || (payload.booking as any)?.property_id || propertyId;
+            const hotelCode = targetPropertyId 
+                ? await channexSyncService.findHotelCodeByChannexPropertyId(targetPropertyId)
                 : null;
 
             if (hotelCode) {
@@ -40,8 +102,14 @@ export async function POST(req: NextRequest) {
                 const isCancel = payload.event === "booking_cancellation" || (bookingData as any)?.status === "cancelled";
                 const guestName = `${(bookingData as any)?.customer?.name || ""} ${(bookingData as any)?.customer?.surname || ""}`.trim() || "Tamu OTA";
                 const otaName = (bookingData as any)?.ota_name || (bookingData as any)?.channel_name || "OTA";
-                const roomName = (bookingData as any)?.rooms?.[0]?.room_type_name || "Kamar Hotel";
-                const bookingRef = (bookingData as any)?.booking_id || result.bookingId || "Booking";
+                const roomsList = (bookingData as any)?.rooms || [];
+                const roomCount = roomsList.length;
+                const primaryRoomName = roomsList[0]?.room_type_name || "Kamar Hotel";
+                const roomName = roomCount > 1 
+                    ? `${primaryRoomName} (${roomCount} Kamar)` 
+                    : primaryRoomName;
+                const bookingRef = (bookingData as any)?.channel_booking_id || (bookingData as any)?.ota_reservation_code || (bookingData as any)?.booking_id || result.bookingId || "Booking";
+                const totalPrice = Number((bookingData as any)?.total_price || (bookingData as any)?.amount || (bookingData as any)?.total_amount) || 0;
 
                 const pushTitle = isCancel
                     ? `🚨 Pembatalan Reservasi! [${otaName}]`
@@ -61,6 +129,26 @@ export async function POST(req: NextRequest) {
                     bookingId: bookingRef,
                     otaName
                 }).catch(err => console.warn("[Webhook Push] Warning:", err?.message));
+
+                // Dispatch WhatsApp Notification to Hotel Owner (Fonnte Gateway & Meta Cloud API)
+                try {
+                    const { sendWhatsAppNotificationToOwner: sendFonnte } = await import("@/lib/notifications/whatsappFonnteService");
+                    sendFonnte(hotelCode, {
+                        event: isCancel ? "booking_cancellation" : (payload.event === "booking_modification" ? "booking_modification" : "booking_new"),
+                        channelName: otaName,
+                        bookingRef,
+                        guestName,
+                        roomName,
+                        arrivalDate: (bookingData as any)?.arrival_date || "-",
+                        departureDate: (bookingData as any)?.departure_date || "-",
+                        totalPrice: totalPrice,
+                        paymentStatus: (bookingData as any)?.payment_type || "Sesuai OTA",
+                        netToHotel: (result as any)?.financials?.netToHotel,
+                        otaCommission: (result as any)?.financials?.otaCommissionAmount
+                    }).catch(waErr => console.warn("[Webhook WhatsApp Notification Warning]:", waErr?.message));
+                } catch (waErr: any) {
+                    console.warn("[Webhook WhatsApp Import Warning]:", waErr?.message);
+                }
             }
 
             return NextResponse.json({

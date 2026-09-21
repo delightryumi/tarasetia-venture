@@ -44,7 +44,9 @@ import {
     Table,
     LayoutGrid,
     Tag,
-    Users
+    Users,
+    Sparkles,
+    DownloadCloud
 } from "lucide-react";
 import styles from "./ChannelManager.module.css";
 import { OtaLogo } from "./OtaLogo";
@@ -58,6 +60,7 @@ import { ChannelReviewsTab } from "./ChannelReviewsTab";
 import { ChannelAvailabilityRulesTab } from "./ChannelAvailabilityRulesTab";
 import { ChannelVccViewerModal } from "./ChannelVccViewerModal";
 import { ChannelActionLogsTab } from "./ChannelActionLogsTab";
+import { ChannelNotificationWidget } from "./ChannelNotificationWidget";
 import { ChannelTaxesModal } from "./ChannelTaxesModal";
 import { ChannelContentPushTab } from "./ChannelContentPushTab";
 import { ChannelGoogleHotelsTab } from "./ChannelGoogleHotelsTab";
@@ -352,6 +355,8 @@ export function ChannelManagerSection() {
     const [syncingMaster, setSyncingMaster] = useState<boolean>(false);
     const [syncingChannex, setSyncingChannex] = useState<boolean>(false);
     const [testingOta, setTestingOta] = useState<boolean>(false);
+    const [fetchingOtaMapping, setFetchingOtaMapping] = useState<boolean>(false);
+    const [otaExtranetRooms, setOtaExtranetRooms] = useState<Record<string, any[]>>({});
     const [iframeUrl, setIframeUrl] = useState<string>("");
     const [loadingIframe, setLoadingIframe] = useState<boolean>(false);
     const [showApiKey, setShowApiKey] = useState<boolean>(false);
@@ -377,20 +382,35 @@ export function ChannelManagerSection() {
     ]);
 
     // Sandbox Simulator States
-    const [simChannel, setSimChannel] = useState<string>("Booking.com");
+    const [simChannel, setSimChannel] = useState<string>("Traveloka");
     const [simGuestName, setSimGuestName] = useState<string>("Budi Santoso (Test Sandbox)");
     const [simGuestEmail, setSimGuestEmail] = useState<string>("budi.sandbox@test.com");
     const [simRoomTypeId, setSimRoomTypeId] = useState<string>("");
-    const [simPrice, setSimPrice] = useState<number>(1250000);
+    const [simPrice, setSimPrice] = useState<number>(700000);
+    const [simCommissionPercent, setSimCommissionPercent] = useState<number>(18);
+    const [simPromoPercent, setSimPromoPercent] = useState<number>(10);
+    const [simRevenueMode, setSimRevenueMode] = useState<"net" | "gross">("net");
     const [simCheckin, setSimCheckin] = useState<string>(() => new Date().toISOString().split("T")[0]);
     const [simCheckout, setSimCheckout] = useState<string>(() => {
         const d = new Date();
-        d.setDate(d.getDate() + 2);
+        d.setDate(d.getDate() + 1);
         return d.toISOString().split("T")[0];
     });
     const [simPaymentCollect, setSimPaymentCollect] = useState<"channel" | "property">("channel");
     const [simulating, setSimulating] = useState<boolean>(false);
     const [simulatedResult, setSimulatedResult] = useState<any>(null);
+
+    const handleSimChannelChange = (chanName: string) => {
+        setSimChannel(chanName);
+        const catalogItem = CHANNEX_OTA_CATALOG.find(c => 
+            c.name.toLowerCase() === chanName.toLowerCase() || 
+            chanName.toLowerCase().includes(c.name.toLowerCase()) ||
+            c.code.toLowerCase() === chanName.toLowerCase().replace(/[^a-z0-9]/g, "_")
+        );
+        if (catalogItem) {
+            setSimCommissionPercent(catalogItem.defaultCommission);
+        }
+    };
 
     // Test Ping Mapping State
     const [pingingMap, setPingingMap] = useState<Record<string, boolean>>({});
@@ -725,6 +745,121 @@ export function ChannelManagerSection() {
         }
     };
 
+    // Helper: Auto-fetch Room Types & Rate Plans from OTA Extranet via Channex mapping_details
+    const handleFetchOtaMapping = async (code: string) => {
+        if (!activeHotelCode || activeHotelCode === "0") return;
+        const targetChannel = channelConfigs[code];
+        if (!targetChannel?.hotelId) {
+            toast.warning("Silakan masukkan Hotel ID Extranet terlebih dahulu sebelum menarik data dari OTA.");
+            return;
+        }
+
+        setFetchingOtaMapping(true);
+        try {
+            const res = await fetch("/api/channex/channels", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    hotelCode: activeHotelCode,
+                    action: "mapping_details",
+                    channelCode: code,
+                    channelData: {
+                        ...targetChannel,
+                        hotelId: targetChannel.hotelId
+                    }
+                })
+            });
+            const data = await res.json();
+            if (data.success && data.data) {
+                const rawRooms = data.data.rooms || (Array.isArray(data.data) ? data.data : []);
+                if (rawRooms.length === 0) {
+                    toast.info(`Koneksi terhubung, namun OTA (${targetChannel.channelName}) belum mengembalikan data kamar. Pastikan Channex sudah disetujui sebagai provider di portal Extranet.`);
+                    return;
+                }
+
+                setOtaExtranetRooms(prev => ({
+                    ...prev,
+                    [code]: rawRooms
+                }));
+
+                // Intelligent Auto-Matching
+                const newRoomMappings = { ...(targetChannel.roomMappings || {}) };
+                const newRateMappings = { ...(targetChannel.rateMappings || {}) };
+                let autoMatchedRooms = 0;
+                let autoMatchedRates = 0;
+
+                // Flatten all OTA rates
+                const allOtaRates: Array<{ id: string | number; title: string; roomId: string | number }> = [];
+                rawRooms.forEach((r: any) => {
+                    (r.rates || []).forEach((rate: any) => {
+                        allOtaRates.push({
+                            id: rate.id,
+                            title: `${r.title ? r.title + ' -> ' : ''}${rate.title || 'Standard'}`,
+                            roomId: r.id
+                        });
+                    });
+                });
+
+                // Auto-match room types
+                roomTypes.forEach(rt => {
+                    if (newRoomMappings[rt.id]) return; // keep if already mapped
+                    const pmsName = rt.name.toLowerCase().trim();
+                    const matched = rawRooms.find((r: any) => {
+                        const otaName = (r.title || r.name || "").toLowerCase().trim();
+                        return otaName.includes(pmsName) || pmsName.includes(otaName) ||
+                            pmsName.split(" ").some((word: string) => word.length > 3 && otaName.includes(word));
+                    });
+                    if (matched) {
+                        newRoomMappings[rt.id] = String(matched.id);
+                        autoMatchedRooms++;
+                    }
+                });
+
+                // Auto-match rate plans
+                ratePlans.forEach(rp => {
+                    if (newRateMappings[rp.id]) return; // keep if already mapped
+                    const pmsRateName = (rp.name || "").toLowerCase().trim();
+                    const targetRoomOtaId = rp.roomTypeId ? newRoomMappings[rp.roomTypeId] : null;
+
+                    const candidateRates = targetRoomOtaId 
+                        ? allOtaRates.filter(rate => String(rate.roomId) === String(targetRoomOtaId))
+                        : allOtaRates;
+
+                    const matchedRate = candidateRates.find(rate => {
+                        const otaRName = rate.title.toLowerCase();
+                        const isBb = pmsRateName.includes("breakfast") || pmsRateName.includes("bb");
+                        const otaIsBb = otaRName.includes("breakfast") || otaRName.includes("bb");
+                        if (isBb && otaIsBb) return true;
+                        if (!isBb && !otaIsBb) return true;
+                        return otaRName.includes(pmsRateName) || pmsRateName.includes(otaRName);
+                    }) || candidateRates[0];
+
+                    if (matchedRate) {
+                        newRateMappings[rp.id] = String(matchedRate.id);
+                        autoMatchedRates++;
+                    }
+                });
+
+                setChannelConfigs(prev => ({
+                    ...prev,
+                    [code]: {
+                        ...prev[code],
+                        roomMappings: newRoomMappings,
+                        rateMappings: newRateMappings
+                    }
+                }));
+
+                toast.success(`Berhasil menarik ${rawRooms.length} kamar dan ${allOtaRates.length} tarif dari Extranet ${targetChannel.channelName}! Otomatis memetakan ${autoMatchedRooms} kamar & ${autoMatchedRates} tarif.`);
+            } else {
+                toast.error(data.message || "Gagal menarik data pemetaan dari OTA. Pastikan Hotel ID valid dan Channex sudah disetujui di portal Extranet.");
+            }
+        } catch (err: any) {
+            toast.error(`Gagal menghubungi OTA: ${err.message}`);
+        } finally {
+            setFetchingOtaMapping(false);
+        }
+    };
+
     // Helper: Connect a new channel from catalog
     const handleConnectChannel = (catalogItem: typeof CHANNEX_OTA_CATALOG[0]) => {
         const newChannel: ChannelMappingConfig = {
@@ -1046,6 +1181,9 @@ export function ChannelManagerSection() {
                     departureDate: simCheckout,
                     totalPrice: simPrice,
                     paymentCollect: simPaymentCollect,
+                    commissionPercent: simCommissionPercent,
+                    promoPercent: simPromoPercent,
+                    revenueRecordingMode: simRevenueMode,
                     bookingIdToCancel: simulatedResult?.bookingId || undefined
                 })
             });
@@ -1546,7 +1684,9 @@ export function ChannelManagerSection() {
 
             {/* TAB 2: PEMETAAN ID EXTRANET OTA (ROOM ID & RATE PLAN ID MAPPING) */}
             {activeTab === "mapping" && (
-                <div className={styles.gridCard}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <ChannelNotificationWidget hotelCode={activeHotelCode} />
+                    <div className={styles.gridCard}>
                     <div className={styles.gridToolbar}>
                         <div>
                             <span className={styles.mappingHeaderTitle}>
@@ -1734,6 +1874,24 @@ export function ChannelManagerSection() {
 
                                     <button
                                         type="button"
+                                        onClick={() => handleFetchOtaMapping(selectedChannelCode)}
+                                        disabled={fetchingOtaMapping}
+                                        className={styles.btnActionSecondary}
+                                        style={{
+                                            background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+                                            color: "#ffffff",
+                                            border: "none",
+                                            fontWeight: 600,
+                                            boxShadow: "0 2px 4px rgba(79, 70, 229, 0.25)"
+                                        }}
+                                        title="Tarik daftar kamar & rate plan langsung dari OTA Extranet secara otomatis berdasarkan Hotel ID"
+                                    >
+                                        <RefreshCw size={13} className={fetchingOtaMapping ? "animate-spin" : ""} />
+                                        <span>{fetchingOtaMapping ? "Menarik Kamar..." : "Tarik Kamar & Tarif OTA"}</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
                                         onClick={() => promptResetAllMappings(selectedChannelCode, channelConfigs[selectedChannelCode].channelName)}
                                         className={styles.btnActionWarning}
                                         title="Clear all Room and Rate Plan mappings for this channel"
@@ -1819,9 +1977,16 @@ export function ChannelManagerSection() {
 
                             {/* Room Mapping Sub-Table */}
                             <div>
-                                <span className={styles.mappingSectionHeading}>
-                                    1. Room Type Mapping (PMS to OTA):
-                                </span>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                                    <span className={styles.mappingSectionHeading} style={{ margin: 0 }}>
+                                        1. Room Type Mapping (PMS to OTA):
+                                    </span>
+                                    {otaExtranetRooms[selectedChannelCode] && otaExtranetRooms[selectedChannelCode].length > 0 && (
+                                        <span style={{ fontSize: "11px", color: "#166534", backgroundColor: "#dcfce7", padding: "3px 8px", borderRadius: "12px", border: "1px solid #86efac", fontWeight: 600 }}>
+                                            ✨ {otaExtranetRooms[selectedChannelCode].length} Kamar Extranet Terhubung
+                                        </span>
+                                    )}
+                                </div>
                                 <table className={styles.dsiTable}>
                                     <thead>
                                         <tr>
@@ -1834,6 +1999,7 @@ export function ChannelManagerSection() {
                                     <tbody>
                                         {roomTypes.map(rt => {
                                             const val = channelConfigs[selectedChannelCode]?.roomMappings?.[rt.id] || "";
+                                            const availableOtaRooms = otaExtranetRooms[selectedChannelCode] || [];
                                             return (
                                                 <tr key={rt.id} className={styles.dsiRow}>
                                                     <td>
@@ -1869,25 +2035,53 @@ export function ChannelManagerSection() {
                                                     </td>
                                                     <td>
                                                         <div className={styles.mappingInputRow}>
-                                                            <input
-                                                                type="text"
-                                                                value={val}
-                                                                onChange={e => {
-                                                                    const newVal = e.target.value;
-                                                                    setChannelConfigs(prev => ({
-                                                                        ...prev,
-                                                                        [selectedChannelCode]: {
-                                                                            ...prev[selectedChannelCode],
-                                                                            roomMappings: {
-                                                                                ...(prev[selectedChannelCode]?.roomMappings || {}),
-                                                                                [rt.id]: newVal
+                                                            {availableOtaRooms.length > 0 ? (
+                                                                <select
+                                                                    value={val}
+                                                                    onChange={e => {
+                                                                        const newVal = e.target.value;
+                                                                        setChannelConfigs(prev => ({
+                                                                            ...prev,
+                                                                            [selectedChannelCode]: {
+                                                                                ...prev[selectedChannelCode],
+                                                                                roomMappings: {
+                                                                                    ...(prev[selectedChannelCode]?.roomMappings || {}),
+                                                                                    [rt.id]: newVal
+                                                                                }
                                                                             }
-                                                                        }
-                                                                    }));
-                                                                }}
-                                                                placeholder={`OTA Room ID (e.g. 101)`}
-                                                                className={`${styles.cellInput} ${styles.mappingInputField}`}
-                                                            />
+                                                                        }));
+                                                                    }}
+                                                                    className={`${styles.cellSelect} ${styles.mappingInputField}`}
+                                                                    style={{ fontSize: "12px", width: "100%", fontWeight: val ? 600 : 400 }}
+                                                                >
+                                                                    <option value="">-- Pilih Kamar OTA Extranet --</option>
+                                                                    {availableOtaRooms.map((r: any) => (
+                                                                        <option key={r.id} value={String(r.id)}>
+                                                                            {r.title || `Room ${r.id}`} (ID: {r.id})
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            ) : (
+                                                                <input
+                                                                    type="text"
+                                                                    value={val}
+                                                                    onChange={e => {
+                                                                        const newVal = e.target.value;
+                                                                        setChannelConfigs(prev => ({
+                                                                            ...prev,
+                                                                            [selectedChannelCode]: {
+                                                                                ...prev[selectedChannelCode],
+                                                                                roomMappings: {
+                                                                                    ...(prev[selectedChannelCode]?.roomMappings || {}),
+                                                                                    [rt.id]: newVal
+                                                                                }
+                                                                            }
+                                                                        }));
+                                                                    }}
+                                                                    placeholder={`OTA Room ID (e.g. 101)`}
+                                                                    className={`${styles.cellInput} ${styles.mappingInputField}`}
+                                                                />
+                                                            )}
                                                             {val && (
                                                                 <button
                                                                     type="button"
@@ -1943,6 +2137,17 @@ export function ChannelManagerSection() {
                                     <tbody>
                                         {ratePlans.map(rp => {
                                             const val = channelConfigs[selectedChannelCode]?.rateMappings?.[rp.id] || "";
+                                            const currentOtaRooms = otaExtranetRooms[selectedChannelCode] || [];
+                                            const flatOtaRates: Array<{ id: string | number; title: string }> = [];
+                                            currentOtaRooms.forEach((r: any) => {
+                                                (r.rates || []).forEach((rate: any) => {
+                                                    flatOtaRates.push({
+                                                        id: rate.id,
+                                                        title: `${r.title ? r.title + ' -> ' : ''}${rate.title || 'Standard'} (ID: ${rate.id})`
+                                                    });
+                                                });
+                                            });
+
                                             return (
                                                 <tr key={rp.id} className={styles.dsiRow}>
                                                     <td>
@@ -1982,25 +2187,53 @@ export function ChannelManagerSection() {
                                                     </td>
                                                     <td>
                                                         <div className={styles.mappingInputRow}>
-                                                            <input
-                                                                type="text"
-                                                                value={val}
-                                                                onChange={e => {
-                                                                    const newVal = e.target.value;
-                                                                    setChannelConfigs(prev => ({
-                                                                        ...prev,
-                                                                        [selectedChannelCode]: {
-                                                                            ...prev[selectedChannelCode],
-                                                                            rateMappings: {
-                                                                                ...(prev[selectedChannelCode]?.rateMappings || {}),
-                                                                                [rp.id]: newVal
+                                                            {flatOtaRates.length > 0 ? (
+                                                                <select
+                                                                    value={val}
+                                                                    onChange={e => {
+                                                                        const newVal = e.target.value;
+                                                                        setChannelConfigs(prev => ({
+                                                                            ...prev,
+                                                                            [selectedChannelCode]: {
+                                                                                ...prev[selectedChannelCode],
+                                                                                rateMappings: {
+                                                                                    ...(prev[selectedChannelCode]?.rateMappings || {}),
+                                                                                    [rp.id]: newVal
+                                                                                }
                                                                             }
-                                                                        }
-                                                                    }));
-                                                                }}
-                                                                placeholder={`OTA Rate ID (e.g. 201)`}
-                                                                className={`${styles.cellInput} ${styles.mappingInputField}`}
-                                                            />
+                                                                        }));
+                                                                    }}
+                                                                    className={`${styles.cellSelect} ${styles.mappingInputField}`}
+                                                                    style={{ fontSize: "12px", width: "100%", fontWeight: val ? 600 : 400 }}
+                                                                >
+                                                                    <option value="">-- Pilih Rate Plan OTA Extranet --</option>
+                                                                    {flatOtaRates.map((rate: any) => (
+                                                                        <option key={rate.id} value={String(rate.id)}>
+                                                                            {rate.title}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            ) : (
+                                                                <input
+                                                                    type="text"
+                                                                    value={val}
+                                                                    onChange={e => {
+                                                                        const newVal = e.target.value;
+                                                                        setChannelConfigs(prev => ({
+                                                                            ...prev,
+                                                                            [selectedChannelCode]: {
+                                                                                ...prev[selectedChannelCode],
+                                                                                rateMappings: {
+                                                                                    ...(prev[selectedChannelCode]?.rateMappings || {}),
+                                                                                    [rp.id]: newVal
+                                                                                }
+                                                                            }
+                                                                        }));
+                                                                    }}
+                                                                    placeholder={`OTA Rate ID (e.g. 201)`}
+                                                                    className={`${styles.cellInput} ${styles.mappingInputField}`}
+                                                                />
+                                                            )}
                                                             {val && (
                                                                 <button
                                                                     type="button"
@@ -2093,7 +2326,8 @@ export function ChannelManagerSection() {
                         </div>
                     )}
                 </div>
-            )}
+            </div>
+        )}
 
             {/* TAB 3: KATALOG 68+ SALURAN OTA (+ TAMBAH SALURAN BARU) */}
             {activeTab === "catalog" && (
@@ -2679,15 +2913,16 @@ export function ChannelManagerSection() {
                                     <label className={styles.sandboxFieldLabel}>Saluran OTA Sumber:</label>
                                     <select
                                         value={simChannel}
-                                        onChange={e => setSimChannel(e.target.value)}
+                                        onChange={e => handleSimChannelChange(e.target.value)}
                                         className={`${styles.cellSelect} ${styles.sandboxSelect}`}
                                     >
-                                        <option value="Booking.com">Booking.com</option>
-                                        <option value="Agoda">Agoda</option>
-                                        <option value="Traveloka">Traveloka</option>
-                                        <option value="Tiket.com">Tiket.com</option>
-                                        <option value="Expedia">Expedia</option>
-                                        <option value="Airbnb">Airbnb</option>
+                                        <option value="Traveloka">Traveloka (Default Komisi 18%)</option>
+                                        <option value="Booking.com">Booking.com (Default Komisi 15%)</option>
+                                        <option value="Agoda">Agoda (Default Komisi 17%)</option>
+                                        <option value="Tiket.com">Tiket.com (Default Komisi 15%)</option>
+                                        <option value="Expedia">Expedia (Default Komisi 18%)</option>
+                                        <option value="Airbnb">Airbnb (Default Komisi 14%)</option>
+                                        <option value="Trip.com">Trip.com (Default Komisi 15%)</option>
                                     </select>
                                 </div>
 
@@ -2736,13 +2971,56 @@ export function ChannelManagerSection() {
                                 </div>
 
                                 <div>
-                                    <label className={styles.sandboxFieldLabel}>Total Harga Reservasi (Rp):</label>
+                                    <label className={styles.sandboxFieldLabel}>Harga Jual / Tamu Bayar di OTA (Gross Rp):</label>
                                     <input
                                         type="number"
                                         value={simPrice}
                                         onChange={e => setSimPrice(Number(e.target.value) || 0)}
                                         className={`${styles.cellInput} ${styles.sandboxInput}`}
                                     />
+                                </div>
+
+                                <div className={styles.sandboxGrid2Col}>
+                                    <div>
+                                        <label className={styles.sandboxFieldLabel}>Komisi OTA ({simChannel}) %:</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            value={simCommissionPercent}
+                                            onChange={e => setSimCommissionPercent(Number(e.target.value) || 0)}
+                                            className={`${styles.cellInput} ${styles.sandboxInput}`}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className={styles.sandboxFieldLabel}>Diskon Promo / Biaya Tambahan %:</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            value={simPromoPercent}
+                                            onChange={e => setSimPromoPercent(Number(e.target.value) || 0)}
+                                            className={`${styles.cellInput} ${styles.sandboxInput}`}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className={styles.sandboxFieldLabel}>Mode Pencatatan di Daily Revenue Tara:</label>
+                                    <select
+                                        value={simRevenueMode}
+                                        onChange={e => setSimRevenueMode(e.target.value as any)}
+                                        className={`${styles.cellSelect} ${styles.sandboxInput}`}
+                                        style={{
+                                            fontWeight: 600,
+                                            color: simRevenueMode === "net" ? "#166534" : "#1e40af",
+                                            background: simRevenueMode === "net" ? "#f0fdf4" : "#eff6ff",
+                                            borderColor: simRevenueMode === "net" ? "#86efac" : "#bfdbfe"
+                                        }}
+                                    >
+                                        <option value="net">🟢 Net to Hotel (Uang Bersih Cair ke Rekening / VCC - Rekonsiliasi 100% Cocok)</option>
+                                        <option value="gross">🔵 Gross Rate (Nilai Penuh yang Dibayar Tamu di OTA)</option>
+                                    </select>
                                 </div>
 
                                 <div>
@@ -2756,6 +3034,85 @@ export function ChannelManagerSection() {
                                         <option value="property">Property Collect (Pay at Hotel - Tamu Bayar di Hotel)</option>
                                     </select>
                                 </div>
+
+                                {/* LIVE FINANCIAL RECONCILIATION PREVIEW */}
+                                {(() => {
+                                    const gross = simPrice;
+                                    const commAmount = Math.round(gross * (simCommissionPercent / 100));
+                                    const promoAmount = Math.round(gross * (simPromoPercent / 100));
+                                    const totalDeduct = commAmount + promoAmount;
+                                    const netToHotel = Math.max(0, gross - totalDeduct);
+                                    const recordedAmount = simRevenueMode === "net" ? netToHotel : gross;
+
+                                    return (
+                                        <div style={{
+                                            background: "#f8fafc",
+                                            border: "1px solid #cbd5e1",
+                                            borderRadius: "8px",
+                                            padding: "12px",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            gap: "6px",
+                                            marginTop: "4px"
+                                        }}>
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", fontWeight: 700, borderBottom: "1px solid #e2e8f0", paddingBottom: "4px" }}>
+                                                <span style={{ color: "#0f172a" }}>💳 KALKULASI REKONSILIASI KEUANGAN:</span>
+                                                <span style={{
+                                                    fontSize: "10px",
+                                                    padding: "2px 6px",
+                                                    borderRadius: "4px",
+                                                    fontWeight: 700,
+                                                    background: simRevenueMode === "net" ? "#dcfce7" : "#dbeafe",
+                                                    color: simRevenueMode === "net" ? "#15803d" : "#1d4ed8"
+                                                }}>
+                                                    {simRevenueMode === "net" ? "MODE: NET TO HOTEL" : "MODE: GROSS RATE"}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#475569" }}>
+                                                <span>Tamu Bayar di {simChannel} (Gross):</span>
+                                                <span style={{ fontWeight: 600 }}>Rp {gross.toLocaleString("id-ID")}</span>
+                                            </div>
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#dc2626" }}>
+                                                <span>Potongan Komisi OTA ({simCommissionPercent}%):</span>
+                                                <span>-Rp {commAmount.toLocaleString("id-ID")}</span>
+                                            </div>
+                                            {simPromoPercent > 0 && (
+                                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#d97706" }}>
+                                                    <span>Potongan Promo / Tax ({simPromoPercent}%):</span>
+                                                    <span>-Rp {promoAmount.toLocaleString("id-ID")}</span>
+                                                </div>
+                                            )}
+                                            <div style={{
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                fontSize: "12px",
+                                                fontWeight: 700,
+                                                color: "#15803d",
+                                                borderTop: "1px dashed #cbd5e1",
+                                                paddingTop: "6px"
+                                            }}>
+                                                <span>Net to Hotel (Transfer Masuk Bank/VCC):</span>
+                                                <span>Rp {netToHotel.toLocaleString("id-ID")}</span>
+                                            </div>
+                                            <div style={{
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                alignItems: "center",
+                                                fontSize: "11px",
+                                                fontWeight: 700,
+                                                color: simRevenueMode === "net" ? "#166534" : "#1e40af",
+                                                background: simRevenueMode === "net" ? "#dcfce7" : "#eff6ff",
+                                                border: simRevenueMode === "net" ? "1px solid #86efac" : "1px solid #bfdbfe",
+                                                padding: "6px 8px",
+                                                borderRadius: "4px",
+                                                marginTop: "2px"
+                                            }}>
+                                                <span>📊 Tertampil di Daily Revenue Tara:</span>
+                                                <span style={{ fontSize: "12px" }}>Rp {recordedAmount.toLocaleString("id-ID")}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
 
                                 <div className={styles.sandboxBtnRow}>
                                     <button
@@ -2805,11 +3162,81 @@ export function ChannelManagerSection() {
                                 </span>
 
                                 {simulatedResult ? (
-                                    <div>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                                         <div className={simulatedResult.success !== false ? styles.sandboxResultSuccess : styles.sandboxResultError}>
                                             {simulatedResult.success !== false ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
                                             <span>{simulatedResult.message || (simulatedResult.success !== false ? "Simulasi Berhasil" : "Simulasi Gagal")}</span>
                                         </div>
+
+                                        {/* FINANCIAL BREAKDOWN CARD IN DIAGNOSTICS */}
+                                        {simulatedResult.financials && (
+                                            <div style={{
+                                                background: "#ffffff",
+                                                border: "1px solid #10b981",
+                                                borderRadius: "8px",
+                                                padding: "12px",
+                                                boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                                            }}>
+                                                <div style={{ fontSize: "11px", fontWeight: 700, color: "#065f46", marginBottom: "8px", display: "flex", justifyContent: "space-between" }}>
+                                                    <span>💰 HASIL REKONSILIASI KEUANGAN PMS:</span>
+                                                    <span style={{ color: "#059669" }}>STATUS: SIAP MATCHING (PENDING_RECON)</span>
+                                                </div>
+                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "11px" }}>
+                                                    <div style={{ background: "#f8fafc", padding: "6px", borderRadius: "4px" }}>
+                                                        <span style={{ color: "#64748b", display: "block", fontSize: "10px" }}>Gross Tamu Bayar:</span>
+                                                        <strong style={{ color: "#0f172a" }}>Rp {Number(simulatedResult.financials.guestPaidGross).toLocaleString("id-ID")}</strong>
+                                                    </div>
+                                                    <div style={{ background: "#fef2f2", padding: "6px", borderRadius: "4px" }}>
+                                                        <span style={{ color: "#991b1b", display: "block", fontSize: "10px" }}>Komisi OTA ({simulatedResult.financials.otaCommissionPercent}%):</span>
+                                                        <strong style={{ color: "#dc2626" }}>-Rp {Number(simulatedResult.financials.otaCommissionAmount).toLocaleString("id-ID")}</strong>
+                                                    </div>
+                                                    {simulatedResult.financials.otaPromoAmount > 0 && (
+                                                        <div style={{ background: "#fffbeb", padding: "6px", borderRadius: "4px" }}>
+                                                            <span style={{ color: "#92400e", display: "block", fontSize: "10px" }}>Potongan Promo ({simulatedResult.financials.otaPromoPercent}%):</span>
+                                                            <strong style={{ color: "#d97706" }}>-Rp {Number(simulatedResult.financials.otaPromoAmount).toLocaleString("id-ID")}</strong>
+                                                        </div>
+                                                    )}
+                                                    <div style={{ background: "#f0fdf4", padding: "6px", borderRadius: "4px" }}>
+                                                        <span style={{ color: "#166534", display: "block", fontSize: "10px" }}>Net to Hotel (Bank/VCC):</span>
+                                                        <strong style={{ color: "#15803d", fontSize: "12px" }}>Rp {Number(simulatedResult.financials.netToHotel).toLocaleString("id-ID")}</strong>
+                                                    </div>
+                                                    <div style={{ background: "#eff6ff", padding: "6px", borderRadius: "4px", gridColumn: simulatedResult.financials.otaPromoAmount > 0 ? "span 1" : "span 2" }}>
+                                                        <span style={{ color: "#1e40af", display: "block", fontSize: "10px" }}>Tercatat di Revenue PMS ({simulatedResult.financials.revenueRecordingMode}):</span>
+                                                        <strong style={{ color: "#1d4ed8", fontSize: "12px" }}>Rp {Number(simulatedResult.financials.recordedRevenue).toLocaleString("id-ID")}</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* WHATSAPP NOTIFICATION STATUS */}
+                                        {simulatedResult.whatsapp && (
+                                            <div style={{
+                                                background: simulatedResult.whatsapp.success ? "#f0fdf4" : "#fffbeb",
+                                                border: `1px solid ${simulatedResult.whatsapp.success ? "#86efac" : "#fde68a"}`,
+                                                borderRadius: "6px",
+                                                padding: "8px 12px",
+                                                fontSize: "11px",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "space-between"
+                                            }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                                    <span style={{ fontSize: "14px" }}>{simulatedResult.whatsapp.success ? "📱" : "⚠️"}</span>
+                                                    <span style={{ fontWeight: 600, color: simulatedResult.whatsapp.success ? "#166534" : "#92400e" }}>
+                                                        Notifikasi WhatsApp Fonnte:
+                                                    </span>
+                                                    <span style={{ color: simulatedResult.whatsapp.success ? "#15803d" : "#b45309" }}>
+                                                        {simulatedResult.whatsapp.success ? `Terkirim ke Owner (ID: ${simulatedResult.whatsapp.messageId || "Sent"})` : (simulatedResult.whatsapp.reason || simulatedResult.whatsapp.error || "Belum Terkirim")}
+                                                    </span>
+                                                </div>
+                                                {!simulatedResult.whatsapp.success && (
+                                                    <span style={{ fontSize: "10px", color: "#64748b" }}>
+                                                        (Cek nomor HP owner &amp; token Fonnte di tab Pemetaan)
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+
                                         <div className={styles.consoleBox}>
                                             {JSON.stringify(simulatedResult, null, 2)}
                                         </div>
@@ -2819,7 +3246,7 @@ export function ChannelManagerSection() {
                                         <Terminal size={32} className={styles.sandboxEmptyIcon} />
                                         <span>Siap menerima simulasi webhook.</span>
                                         <span className={styles.sandboxEmptyHelp}>
-                                            Klik tombol "Injeksi Reservasi Baru" untuk menguji pembuatan reservasi di Front Office &amp; pemotongan stok otomatis di Rate &amp; Inventory.
+                                            Atur harga (misal Rp 700.000), tentukan komisi &amp; mode revenue, lalu klik "Injeksi Reservasi" untuk melihat bagaimana sistem Tara memisahkan komisi dan mencocokkan Net to Hotel.
                                         </span>
                                     </div>
                                 )}

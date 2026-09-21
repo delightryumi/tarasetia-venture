@@ -311,11 +311,18 @@ export async function POST(req: NextRequest) {
                         const isPrimary = !seenRatePlanIds.has(channexRateId);
                         seenRatePlanIds.add(channexRateId);
 
+                        const parsedRoomCode = (!isNaN(Number(otaRoomCode)) && String(otaRoomCode).trim() !== "") 
+                            ? parseInt(String(otaRoomCode), 10) 
+                            : otaRoomCode;
+                        const parsedRateCode = (!isNaN(Number(otaRateCode)) && String(otaRateCode).trim() !== "") 
+                            ? parseInt(String(otaRateCode), 10) 
+                            : otaRateCode;
+
                         ratePlansPayload.push({
                             rate_plan_id: channexRateId,
                             settings: {
-                                room_type_code: String(otaRoomCode),
-                                rate_plan_code: String(otaRateCode),
+                                room_type_code: parsedRoomCode,
+                                rate_plan_code: parsedRateCode,
                                 occupancy: capacity,
                                 pricing_type: "OBP",
                                 primary_occ: isPrimary,
