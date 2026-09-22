@@ -75,7 +75,7 @@ export default function SelectModulePage() {
         let modules = data.billing?.activeModules || [];
         // Map old cpanel key to cpanel-full or cpanel-only
         if (modules.includes('cpanel')) {
-          modules = modules.filter(m => m !== 'cpanel');
+          modules = modules.filter((m: string) => m !== 'cpanel');
           const plan = data.billing?.plan || 'premium';
           if (plan === 'basic') {
             if (!modules.includes('cpanel-only')) modules.push('cpanel-only');
@@ -88,7 +88,7 @@ export default function SelectModulePage() {
           if (plan === 'basic') {
             modules = ['pos', 'cpanel-only'];
           } else {
-            modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'hrd', 'cpanel-full'];
+            modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'hrd', 'innalytics', 'cpanel-full'];
           }
         }
         setActiveModules(modules);
@@ -207,14 +207,22 @@ export default function SelectModulePage() {
   };
 
   const hasAccess = (moduleKey: string) => {
-    // Active modules restrictions if loaded (CPanel is always allowed for basic settings)
-    if (activeModules !== null && moduleKey !== 'cpanel') {
+    // Active modules restrictions if loaded (CPanel and Inalytics are always allowed)
+    if (activeModules !== null && moduleKey !== 'cpanel' && moduleKey !== 'innalytics' && moduleKey !== 'inalytics') {
       if (!activeModules.includes(moduleKey)) {
         return false;
       }
     }
 
     if (isSuperadmin) return true;
+
+    // Inalytics is accessible by default for hotel business intelligence
+    if (moduleKey === 'innalytics' || moduleKey === 'inalytics') {
+      if (userPermissions && userPermissions['module_innalytics'] === false) {
+        return false;
+      }
+      return true;
+    }
 
     if (!userPermissions) return false;
 
@@ -275,6 +283,16 @@ export default function SelectModulePage() {
       active: hasAccess('front-office'),
       icon: 'domain',
       image: '/images/modules/fo.png',
+      colSpan: 1 as const,
+    },
+    {
+      title: 'Inalytics',
+      subtitle: 'Analytics & Intelligence',
+      description: 'Performance, channels & statistical reports',
+      href: '/innalytics',
+      active: true,
+      icon: 'trending_up',
+      image: '/images/modules/innalytics.png',
       colSpan: 1 as const,
     },
     {

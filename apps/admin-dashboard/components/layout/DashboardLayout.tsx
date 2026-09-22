@@ -72,7 +72,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                     if (plan === 'basic') {
                         modules = ['pos', 'cpanel-only'];
                     } else {
-                        modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'cpanel-full'];
+                        modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'innalytics', 'cpanel-full'];
                     }
                 }
                 setActiveModules(modules);
@@ -89,7 +89,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
             const moduleParam = searchParams.get("module");
 
             const isPathForbidden = (path: string, mod: string | null) => {
-                if (path === '/select-module' || path === '/superadmin' || path === '/login') {
+                if (path === '/select-module' || path === '/superadmin' || path === '/login' || path.startsWith('/innalytics')) {
                     return false;
                 }
 
@@ -220,7 +220,8 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
 
     const isSuperadminPage = pathname === "/superadmin";
     const isChannelManagerPage = pathname === "/channel-manager";
-    const hideSidebar = isSuperadminPage || pathname === "/inventory-control";
+    const isInnalyticsPage = pathname.startsWith("/innalytics");
+    const hideSidebar = isSuperadminPage || pathname === "/inventory-control" || isInnalyticsPage;
 
     return (
         <div className={`flex flex-col min-h-screen select-none ${isSuperadminPage ? 'bg-white dark:bg-[#09090b]' : 'bg-transparent'}`}>
@@ -232,7 +233,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                 />
             )}
             <div className={`dashboard-wrapper ${isCollapsed ? "collapsed" : ""} ${!isCollapsed ? "mobile-open" : ""} ${hideSidebar ? "no-sidebar" : ""}`}>
-                {!isSuperadminPage && (
+                {!isSuperadminPage && !isInnalyticsPage && (
                     <header className="dashboard-top-bar">
                         <div className="dashboard-top-bar-inner">
                             <StatusWidget 
@@ -308,7 +309,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                     className="main-content"
                     style={hideSidebar ? { marginLeft: 0, maxWidth: "100vw", width: "100%", paddingTop: 0 } : undefined}
                 >
-                    <div className={`main-scroll-container ${isChannelManagerPage || pathname.startsWith("/rate-inventory") ? "main-scroll-container-wide" : ""}`}>
+                    <div className={`main-scroll-container ${isChannelManagerPage || pathname.startsWith("/rate-inventory") || isInnalyticsPage ? "main-scroll-container-wide" : ""}`}>
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={pathname}
@@ -323,7 +324,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                             </motion.div>
                         </AnimatePresence>
 
-                        {!isSuperadminPage && (
+                        {!isSuperadminPage && !isInnalyticsPage && (
                             <footer className="dashboard-footer-clean">
                                 <a
                                     href={
@@ -345,7 +346,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                         )}
                     </div>
                 </main>
-                {!isSuperadminPage && <MobileBottomNav />}
+                {!isSuperadminPage && !isInnalyticsPage && <MobileBottomNav />}
                 <BillingAlertModal />
             </div>
         </div>
