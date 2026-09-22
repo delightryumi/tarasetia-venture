@@ -1212,3 +1212,128 @@
   cursor: pointer;
 }
 
+/* ==========================================================================
+   PRINT MEDIA RULES - CLEAN STIMULSOFT DOCUMENT PRINTING
+   ========================================================================== */
+@media print {
+  /* Hide all innalytics topbar, sidebars, headers, and toolbars */
+  .topHeader,
+  .reportsSidebar,
+  .reportsTopTabHeader,
+  .viewerToolbar,
+  .filterBar,
+  .drawerBackdrop,
+  .drawerContent,
+  .reportFormContainer {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm !important;
+  }
+
+  .innalyticsRoot,
+  .reportsLayout,
+  .reportContentArea,
+  .stimulsoftViewer,
+  .viewerCanvasArea {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .paperSheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    height: auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    overflow: visible !important;
+  }
+
+  .reportHeaderSection {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    margin-bottom: 12px !important;
+    border-bottom: none !important;
+  }
+
+  .reportHotelName {
+    font-size: 16pt !important;
+    font-weight: 700 !important;
+    color: #000000 !important;
+  }
+
+  .reportMainTitle {
+    font-size: 16pt !important;
+    font-weight: 700 !important;
+    color: #881337 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .reportCriteriaSummary {
+    font-size: 8.5pt !important;
+    color: #111827 !important;
+    border-bottom: 1.5px solid #000000 !important;
+    padding-bottom: 5px !important;
+    margin-bottom: 14px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 16px !important;
+  }
+
+  .reportDataTable {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 8.5pt !important;
+  }
+
+  .reportDataTable thead {
+    display: table-header-group !important;
+  }
+
+  .reportDataTable th {
+    border-bottom: 1.5px solid #000000 !important;
+    padding: 5px 6px !important;
+    font-weight: 700 !important;
+    color: #000000 !important;
+    background-color: transparent !important;
+  }
+
+  .reportDataTable td {
+    padding: 4px 6px !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    color: #000000 !important;
+  }
+
+  .reportDataTable tr {
+    page-break-inside: avoid !important;
+  }
+
+  .reportDataTable .subtotalRow td {
+    font-weight: 700 !important;
+    border-top: 1.5px solid #000000 !important;
+    border-bottom: 2px solid #000000 !important;
+    background-color: transparent !important;
+  }
+}
+
+

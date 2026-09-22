@@ -173,8 +173,29 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ activeHotelCode }) => 
 
   return (
     <div className={styles.reportsLayout}>
+      {/* Explicit Print Rules to ensure only the report paper is printed */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @media print {
+            @page {
+              size: A4 portrait;
+              margin: 10mm 12mm !important;
+            }
+            body {
+              background: #ffffff !important;
+              color: #000000 !important;
+              font-size: 10pt !important;
+            }
+            header, nav, aside, .dashboard-top-bar, .dashboard-sidebar, .dock-mode-sidebar, .expanded-mode-sidebar, .status-widget-container, .dashboard-footer-clean, .mobile-bottom-nav, .no-print {
+              display: none !important;
+              visibility: hidden !important;
+            }
+          }
+        `
+      }} />
+
       {/* Left Sidebar */}
-      <div className={styles.reportsSidebar}>
+      <div className={`${styles.reportsSidebar} no-print`}>
         {/* Search Header */}
         <div className={styles.sidebarSearchArea}>
           <input
@@ -254,7 +275,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ activeHotelCode }) => 
       {/* Main Content Area */}
       <div className={styles.reportContentArea}>
         {/* Top Active Tab Header */}
-        <div className={styles.reportsTopTabHeader}>
+        <div className={`${styles.reportsTopTabHeader} no-print`}>
           <div className={styles.activeTabUnderline}>{activeMeta?.title}</div>
         </div>
 
@@ -412,7 +433,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ activeHotelCode }) => 
           /* Stimulsoft Style Interactive Document Viewer */
           <div className={styles.stimulsoftViewer}>
             {/* Viewer Top Toolbar */}
-            <div className={styles.viewerToolbar}>
+            <div className={`${styles.viewerToolbar} no-print`}>
               <button
                 className={styles.toolbarToolBtn}
                 onClick={() => setIsViewerOpen(false)}
@@ -545,8 +566,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ activeHotelCode }) => 
                         </td>
                       </tr>
                     ) : (
-                      generatedReportData.map((row) => (
-                        <tr key={row.id}>
+                      generatedReportData.map((row, idx) => (
+                        <tr key={`${row.id}_${row.roomNumber || ''}_${row.checkInDate || ''}_${row.entryDate || ''}_${idx}`}>
                           <td>{row.id}</td>
                           <td>{row.guestName}</td>
                           <td>{row.roomNumber}</td>

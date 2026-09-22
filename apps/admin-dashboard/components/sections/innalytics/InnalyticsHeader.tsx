@@ -30,7 +30,7 @@ export const InnalyticsHeader: React.FC<InnalyticsHeaderProps> = ({
   const [showPropertyModal, setShowPropertyModal] = useState(false);
 
   return (
-    <header className={styles.topHeader}>
+    <header className={`${styles.topHeader} no-print`}>
       {/* Left: Brand Logo, Hotel Name & Property ID */}
       <div className={styles.headerLeft}>
         <img

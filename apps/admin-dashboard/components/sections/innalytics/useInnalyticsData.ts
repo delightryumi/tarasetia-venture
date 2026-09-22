@@ -276,11 +276,14 @@ export function useInnalyticsData(
     const hotelCancMap: Record<string, any[]> = {};
 
     const unsubs = hotelCodesToQuery.map(({ code: hCode, name: hName }) => {
-      const q = query(
-        getHotelCollection(db, 'daily_revenue', hCode),
-        where('date', '>=', filters.startDate),
-        where('date', '<=', filters.endDate)
-      );
+      // When reportBy is 'booking_date', we must query all daily revenue docs to find bookings made in this period regardless of stay date
+      const q = filters.reportBy === 'booking_date'
+        ? query(getHotelCollection(db, 'daily_revenue', hCode))
+        : query(
+            getHotelCollection(db, 'daily_revenue', hCode),
+            where('date', '>=', filters.startDate),
+            where('date', '<=', filters.endDate)
+          );
 
       return onSnapshot(
         q,
@@ -410,88 +413,139 @@ export function useInnalyticsData(
     });
 
     return () => unsubs.forEach((unsub) => unsub());
-  }, [activeHotelCode, filters.startDate, filters.endDate, filters.filterBy, accessibleHotels]);
+  }, [activeHotelCode, filters.startDate, filters.endDate, filters.reportBy, filters.filterBy, accessibleHotels]);
 
   // 3. Process transactions using PnL's EXACT net room formula & room nights formula
   const processedTransactions = useMemo(() => {
-    return cleanTransactions.map((t) => {
-      const alloc = detectBreakfastAllocation(t, { ratePlans, hotelBreakfastRate });
-      const netRoomAmount =
-        alloc.hasBreakfast && !alloc.isPreSplit && alloc.breakfastAmount > 0
-          ? alloc.netRoomAmount
-          : Number(t.amount || 0);
+    return cleanTransactions
+      .map((t) => {
+        const alloc = detectBreakfastAllocation(t, { ratePlans, hotelBreakfastRate });
+        const netRoomAmount =
+          alloc.hasBreakfast && !alloc.isPreSplit && alloc.breakfastAmount > 0
+            ? alloc.netRoomAmount
+            : Number(t.amount || 0);
 
-      const roomNights = Math.max(
-        1,
-        Number(t.roomsCount || t.roomCount || t.quantity) || 1
-      );
+        const roomNights = Math.max(
+          1,
+          Number(t.roomsCount || t.roomCount || t.quantity) || 1
+        );
 
-      const entryDate =
-        t.date || t.effectiveDate || t.checkInDate || t.checkIn || t.docDate || '';
+        const checkInDate = String(t.checkInDate || t.checkIn || t.docDate || t.date || '').slice(0, 10);
+        const checkOutDate = String(t.checkOutDate || t.checkOut || checkInDate).slice(0, 10);
+        const entryDate = String(t.date || t.effectiveDate || t.docDate || checkInDate).slice(0, 10);
 
-      const checkInDate = t.checkInDate || t.checkIn || entryDate;
-      const checkOutDate = t.checkOutDate || t.checkOut || checkInDate;
-      const bookingDate =
-        t.bookingDate || (t.timestamp ? new Date(t.timestamp).toISOString().slice(0, 10) : checkInDate);
+        // Booking Date: Extracted from input/creation timestamp or booking date
+        let bookingDate = '';
+        if (t.bookingDate) {
+          bookingDate = String(t.bookingDate).slice(0, 10);
+        } else if (t.bookedAt) {
+          bookingDate = String(t.bookedAt).slice(0, 10);
+        } else if (t.createdAt) {
+          bookingDate = typeof t.createdAt === 'string'
+            ? t.createdAt.slice(0, 10)
+            : new Date(t.createdAt).toISOString().slice(0, 10);
+        } else if (t.channexRaw?.inserted_at || t.channexRaw?.created_at) {
+          bookingDate = String(t.channexRaw.inserted_at || t.channexRaw.created_at).slice(0, 10);
+        } else if (t.timestamp) {
+          bookingDate = typeof t.timestamp === 'string'
+            ? t.timestamp.slice(0, 10)
+            : new Date(t.timestamp).toISOString().slice(0, 10);
+        } else {
+          bookingDate = checkInDate;
+        }
 
-      let leadTime = 0;
-      if (bookingDate && checkInDate) {
-        const bTime = new Date(bookingDate).getTime();
-        const cTime = new Date(checkInDate).getTime();
-        leadTime = Math.max(0, Math.round((cTime - bTime) / (1000 * 60 * 60 * 24)));
-      }
+        let leadTime = 0;
+        if (bookingDate && checkInDate) {
+          const bTime = new Date(bookingDate).getTime();
+          const cTime = new Date(checkInDate).getTime();
+          leadTime = Math.max(0, Math.round((cTime - bTime) / (1000 * 60 * 60 * 24)));
+        }
 
-      const channel = normalizeChannel(t);
-      const roomTypeName = roomTypesMap[t.roomTypeId] || t.roomType || 'Standard';
-      const ratePlanName = t.ratePlanName || t.ratePlan || 'Standard Rate';
-      const rateTypeName = t.rateType || (alloc.hasBreakfast ? 'Bed & Breakfast' : 'Room Only');
+        const channel = normalizeChannel(t);
+        const roomTypeName = roomTypesMap[t.roomTypeId] || t.roomType || 'Standard';
+        const ratePlanName = t.ratePlanName || t.ratePlan || 'Standard Rate';
+        const rateTypeName = t.rateType || (alloc.hasBreakfast ? 'Bed & Breakfast' : 'Room Only');
 
-      const travelAgent = (
-        t.travelAgent ||
-        t.travelAgentName ||
-        t.agentName ||
-        t.agent ||
-        (t.channelType === 'travel_agent' ? t.channel : '') ||
-        ''
-      ).trim();
+        const travelAgent = (
+          t.travelAgent ||
+          t.travelAgentName ||
+          t.agentName ||
+          t.agent ||
+          (t.channelType === 'travel_agent' ? t.channel : '') ||
+          ''
+        ).trim();
 
-      const country = (
-        t.country ||
-        t.guestCountry ||
-        t.nationality ||
-        'Indonesia'
-      ).trim();
+        const country = (
+          t.country ||
+          t.guestCountry ||
+          t.nationality ||
+          'Indonesia'
+        ).trim();
 
-      return {
-        id: t.bookingId || t.id || `${entryDate}_${t.roomNumber}_${t.guestName}`,
-        bookingId: t.bookingId || '',
-        hotelCode: t.hotelCode || t.hotelId || activeHotelCode,
-        hotelName: t.hotelName || '',
-        guestName: t.guestName || 'Guest',
-        roomNumber: t.roomNumber || '-',
-        roomType: roomTypeName,
-        ratePlan: ratePlanName,
-        rateType: rateTypeName,
-        promotion: t.promotion || t.promoCode || '',
-        package: t.package || t.packageName || '',
-        channel,
-        travelAgent,
-        country,
-        entryDate,
-        docDate: t.docDate,
-        bookingDate,
-        checkInDate,
-        checkOutDate,
-        leadTime,
-        netRoomAmount,
-        revenue: netRoomAmount,
-        roomNights,
-        isCancelled: false,
-        status: t.status || 'Confirmed',
-        raw: t
-      };
-    });
-  }, [cleanTransactions, ratePlans, hotelBreakfastRate, roomTypesMap, activeHotelCode]);
+        return {
+          id: t.bookingId || t.id || `${entryDate}_${t.roomNumber}_${t.guestName}`,
+          bookingId: t.bookingId || '',
+          hotelCode: t.hotelCode || t.hotelId || activeHotelCode,
+          hotelName: t.hotelName || '',
+          guestName: t.guestName || 'Guest',
+          roomNumber: t.roomNumber || '-',
+          roomType: roomTypeName,
+          ratePlan: ratePlanName,
+          rateType: rateTypeName,
+          promotion: t.promotion || t.promoCode || '',
+          package: t.package || t.packageName || '',
+          channel,
+          travelAgent,
+          country,
+          entryDate,
+          docDate: t.docDate,
+          bookingDate,
+          checkInDate,
+          checkOutDate,
+          leadTime,
+          netRoomAmount,
+          revenue: netRoomAmount,
+          roomNights,
+          isCancelled: false,
+          status: t.status || 'Confirmed',
+          raw: t
+        };
+      })
+      .filter((tx) => {
+        // Correct separation: booking_date uses bookingDate; stay_date uses entryDate (stay/audit night)
+        const targetDate = filters.reportBy === 'booking_date' ? tx.bookingDate : tx.entryDate;
+        return targetDate >= filters.startDate && targetDate <= filters.endDate;
+      });
+  }, [cleanTransactions, ratePlans, hotelBreakfastRate, roomTypesMap, activeHotelCode, filters.reportBy, filters.startDate, filters.endDate]);
+
+  // Cancelled transactions filtered by period mode (booking_date vs stay_date)
+  const processedCancelledTransactions = useMemo(() => {
+    return cancelledTransactions
+      .map((t) => {
+        const checkInDate = String(t.checkInDate || t.checkIn || t.docDate || t.date || '').slice(0, 10);
+        const entryDate = String(t.date || t.effectiveDate || t.docDate || checkInDate).slice(0, 10);
+
+        let bookingDate = '';
+        if (t.bookingDate) bookingDate = String(t.bookingDate).slice(0, 10);
+        else if (t.bookedAt) bookingDate = String(t.bookedAt).slice(0, 10);
+        else if (t.createdAt) bookingDate = typeof t.createdAt === 'string' ? t.createdAt.slice(0, 10) : new Date(t.createdAt).toISOString().slice(0, 10);
+        else if (t.channexRaw?.inserted_at || t.channexRaw?.created_at) bookingDate = String(t.channexRaw.inserted_at || t.channexRaw.created_at).slice(0, 10);
+        else if (t.timestamp) bookingDate = typeof t.timestamp === 'string' ? t.timestamp.slice(0, 10) : new Date(t.timestamp).toISOString().slice(0, 10);
+        else bookingDate = checkInDate;
+
+        return {
+          ...t,
+          bookingDate,
+          entryDate,
+          checkInDate,
+          isCancelled: true
+        };
+      })
+      .filter((c) => {
+        const targetDate = filters.reportBy === 'booking_date' ? c.bookingDate : c.entryDate;
+        return targetDate >= filters.startDate && targetDate <= filters.endDate;
+      });
+  }, [cancelledTransactions, filters.reportBy, filters.startDate, filters.endDate]);
 
   // 4. Generate all dates in the selected range for time-series charts
   const dateRangeList = useMemo(() => {
@@ -656,7 +710,7 @@ export function useInnalyticsData(
         const hTxs = processedTransactions.filter(
           (tx) => tx.hotelCode === hCode || tx.hotelName === hName || (!tx.hotelCode && hCode === activeHotelCode)
         );
-        const hCancels = cancelledTransactions.filter(
+        const hCancels = processedCancelledTransactions.filter(
           (c) => c.hotelCode === hCode || c.hotelName === hName || (!c.hotelCode && hCode === activeHotelCode)
         );
 
@@ -787,7 +841,7 @@ export function useInnalyticsData(
           return tAg === agLower || tCh === agLower || tSrc.includes(agLower);
         });
 
-        const aCancels = cancelledTransactions.filter((c) => {
+        const aCancels = processedCancelledTransactions.filter((c) => {
           const tAg = (c.travelAgent || c.travelAgentName || c.agent || '').toLowerCase();
           const tCh = (c.channel || '').toLowerCase();
           const tSrc = (c.source || '').toLowerCase();
@@ -917,7 +971,7 @@ export function useInnalyticsData(
         const cTxs = processedTransactions.filter(
           (tx) => (tx.country || '').toLowerCase() === cLower
         );
-        const cCancels = cancelledTransactions.filter(
+        const cCancels = processedCancelledTransactions.filter(
           (c) => (c.country || c.guestCountry || c.nationality || '').toLowerCase() === cLower
         );
 
@@ -1093,7 +1147,7 @@ export function useInnalyticsData(
 
     // Cancellation calculations
     const cancellationTable: ChannelMetric[] = activeChannels.map((ch) => {
-      const chCancelled = cancelledTransactions.filter(
+      const chCancelled = processedCancelledTransactions.filter(
         (c) => normalizeChannel(c) === ch
       ).length;
       const chBooked = bookMap[ch] || 0;
@@ -1102,7 +1156,7 @@ export function useInnalyticsData(
       return { channel: ch, value: pct, secondaryValue: chCancelled };
     });
 
-    const totalCancelledCount = cancelledTransactions.length;
+    const totalCancelledCount = processedCancelledTransactions.length;
     const totalReservations = totalUniqueBookings + totalCancelledCount;
     const overallCancellationRate =
       totalReservations > 0
