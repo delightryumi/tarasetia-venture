@@ -225,9 +225,7 @@ export const useRevenueBreakdown = () => {
       );
 
       const snap = await getDocs(q);
-      const parsedRows: RevenueBreakdownRow[] = [];
-
-      let globalIdx = 0;
+      const allEntriesRaw: any[] = [];
 
       snap.forEach((docSnap) => {
         const data = docSnap.data();
@@ -235,43 +233,112 @@ export const useRevenueBreakdown = () => {
         const entries = data.entries || [];
 
         entries.forEach((e: any) => {
-          // 1. Exclude POS transactions (food & beverage / banquet)
+          // 1. Exclude POS transactions (food & beverage / banquet) & package extras
           const isPOS = e.guestName?.startsWith("POS Order") || 
                         Array.isArray(e.posItems) || 
-                        (e.revenueType && e.revenueType !== "accommodation" && e.revenueType !== "breakfast");
+                        Boolean(e.posItems) ||
+                        (e.revenueType && e.revenueType !== "accommodation") ||
+                        (e.bookingId && String(e.bookingId).endsWith("-BFT"));
           if (isPOS) return;
 
           // 2. Exclude pelunasan AR
           const isPelunasan = e.isPelunasan || 
                               e.type === "pelunasan_ar" || 
                               e.type === "pelunasan_reversal" ||
-                              e.guestName?.startsWith("Pelunasan Piutang") ||
-                              e.guestName?.startsWith("Koreksi Tanggal");
+                              String(e.guestName || "").startsWith("Pelunasan Piutang") ||
+                              String(e.guestName || "").startsWith("Koreksi Tanggal");
           if (isPelunasan) return;
 
-          // 3. Status check
+          // 3. Status check: VOID, DELETED & HIDDEN entries are never counted
           const st = String(e.status || "").toUpperCase();
           const pst = String(e.paymentStatus || "").toUpperCase();
-          const isVoidOrCancelled = e.isDeleted || e.isHidden || 
-                                    st === "VOID" || st === "VOIDED" || st === "CANCEL" || st === "CANCELLED" ||
-                                    pst === "VOID" || pst === "VOIDED" || pst === "CANCEL" || pst === "CANCELLED";
-          
-          if (isVoidOrCancelled && !includeCancelled) {
-            return;
-          }
+          const gst = String(e.guestStatus || "").toLowerCase();
+          const isVoid = st === "VOID" || st === "VOIDED" || 
+                         pst === "VOID" || pst === "VOIDED" || 
+                         gst === "void" || 
+                         e.isDeleted === true || 
+                         e.isVoid === true || 
+                         e.isHidden === true;
+          if (isVoid) return;
 
-          // 4. Resolve room identification
+          const checkInDate = e.checkInDate || e.checkIn || e.effectiveDate || docDate;
+          const checkOutDate = e.checkOutDate || e.checkOut || "";
+
+          allEntriesRaw.push({
+            ...e,
+            checkInDate,
+            checkOutDate,
+            _docId: docSnap.id,
+            _docDate: docDate
+          });
+        });
+      });
+
+      // 4. Group accommodation entries by reservation (100% aligned with useOverview)
+      const accommodationGroups: Record<string, any[]> = {};
+      allEntriesRaw.forEach((e) => {
+        const normGuestName = (e.guestName || "").trim().toLowerCase();
+        const roomIdent = String(e.roomNumber || e.roomTypeId || e.roomType || '').trim();
+        const cIn = e.checkInDate || '';
+        const cOut = e.checkOutDate || '';
+        const cleanBookingId = String(e.bookingId || e.voucherCode || "").replace(/-BFT$/i, "").trim();
+
+        const key = (normGuestName && cIn) 
+          ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}` 
+          : (cleanBookingId ? `b_${cleanBookingId}` : `t_${e.timestamp}`);
+
+        if (!accommodationGroups[key]) {
+          accommodationGroups[key] = [];
+        }
+        accommodationGroups[key].push(e);
+      });
+
+      const parsedRows: RevenueBreakdownRow[] = [];
+      let globalIdx = 0;
+
+      Object.values(accommodationGroups).forEach((group) => {
+        // Check if ANY entry in this reservation has CANCEL / CANCELLED / NO-SHOW status
+        const isCancelled = group.some((e) => {
+          const st = String(e.status || "").toUpperCase();
+          const pst = String(e.paymentStatus || "").toUpperCase();
+          const gst = String(e.guestStatus || "").toLowerCase();
+          return st === "CANCELLED" || st === "CANCEL" || 
+                 pst === "CANCELLED" || pst === "CANCEL" || 
+                 gst === "cancelled" || gst === "cancel" ||
+                 st.includes("CANCEL") || pst.includes("CANCEL") ||
+                 st === "NO-SHOW" || pst === "NO-SHOW" || gst === "no-show";
+        });
+
+        if (isCancelled && !includeCancelled) {
+          return;
+        }
+
+        // Deduplicate entries per distinct docDate (audit date)
+        group.sort((a, b) => {
+          const tA = new Date(a.timestamp || a._docDate || 0).getTime();
+          const tB = new Date(b.timestamp || b._docDate || 0).getTime();
+          return tA - tB;
+        });
+
+        const dateMap: Record<string, any> = {};
+        group.forEach((item) => {
+          const dKey = item._docDate || item.effectiveDate || item.checkInDate || 'default';
+          dateMap[dKey] = item;
+        });
+
+        Object.values(dateMap).forEach((e) => {
+          // Resolve room identification
           let room = String(e.roomNumber || e.rooms?.[0]?.roomNumber || e.room || "").trim();
           if (!room || room === "AUTO" || room === "undefined") {
             room = e.roomType ? String(e.roomType).slice(0, 4).toUpperCase() : "101";
           }
 
-          // 5. Quantity & Gross
+          // Quantity & Gross
           const qty = Number(e.roomCount || e.quantity || 1) || 1;
           const gross = Math.round(Number(e.amount ?? e.totalAmount ?? e.price ?? 0));
           const price = qty > 0 ? Math.round(gross / qty) : gross;
 
-          // 6. Exact VHP Formula (21% Tax & Service):
+          // Exact VHP Formula (21% Tax & Service):
           // Nett = Gross / 1.21
           // Service = (Gross - Nett) * (11 / 21)
           // Tax = (Gross - Nett) - Service
@@ -287,6 +354,7 @@ export const useRevenueBreakdown = () => {
             tax = taxAndService - service;
           }
 
+          const docDate = e._docDate || e.effectiveDate || startDate;
           const guestName = (e.guestName || "WALK-IN GUEST").toUpperCase().trim();
           const company = determineCompany(e);
           const noBill = determineNoBill(e, docDate, globalIdx);
@@ -294,7 +362,7 @@ export const useRevenueBreakdown = () => {
           const firstPaymentFound = determineFirstPayment(e, company);
 
           parsedRows.push({
-            id: e.id || `${docSnap.id}_${globalIdx}`,
+            id: e.id || `${e._docId || 'dr'}_${globalIdx}`,
             auditDate: formatAuditDate(e.effectiveDate || docDate),
             rawDate: e.effectiveDate || docDate,
             room,
@@ -309,8 +377,8 @@ export const useRevenueBreakdown = () => {
             nett,
             usr,
             firstPaymentFound,
-            status: e.status || "SUCCESS",
-            paymentStatus: e.paymentStatus || "Lunas",
+            status: isCancelled ? "CANCELLED" : (e.status || "CONFIRMED"),
+            paymentStatus: isCancelled ? "CANCELLED" : (e.paymentStatus || "Lunas"),
           });
 
           globalIdx++;
@@ -338,16 +406,20 @@ export const useRevenueBreakdown = () => {
     fetchRevenueData();
   }, [fetchRevenueData]);
 
-  // Grand total calculation
+  // Grand total calculation: exclude cancelled rows from totals
   const grandTotal: RevenueBreakdownGrandTotal = useMemo(() => {
     return rows.reduce(
-      (acc, r) => ({
-        qty: acc.qty + r.qty,
-        gross: acc.gross + r.gross,
-        service: acc.service + r.service,
-        tax: acc.tax + r.tax,
-        nett: acc.nett + r.nett,
-      }),
+      (acc, r) => {
+        const isCancelled = r.status === "CANCELLED" || r.status === "CANCEL";
+        if (isCancelled) return acc;
+        return {
+          qty: acc.qty + r.qty,
+          gross: acc.gross + r.gross,
+          service: acc.service + r.service,
+          tax: acc.tax + r.tax,
+          nett: acc.nett + r.nett,
+        };
+      },
       { qty: 0, gross: 0, service: 0, tax: 0, nett: 0 }
     );
   }, [rows]);

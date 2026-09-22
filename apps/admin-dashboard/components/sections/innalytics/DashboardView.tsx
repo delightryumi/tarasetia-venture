@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   BarChart2,
   AlignJustify,
   Download,
   SlidersHorizontal,
-  RefreshCw
+  RefreshCw,
+  Calendar
 } from 'lucide-react';
 import styles from './innalytics.module.css';
 import { WidgetCard, LegendDef } from './WidgetCard';
@@ -14,7 +15,6 @@ import {
   MultiLineChart,
   DualAxisChart,
   DonutChart,
-  CHANNEL_COLORS,
   getChannelColor
 } from './WidgetCharts';
 import { SingleMetricTable, DualMetricTable } from './WidgetTables';
@@ -22,13 +22,29 @@ import { FilterDrawer } from './FilterDrawer';
 import {
   InnalyticsFilterState,
   useInnalyticsData,
-  ALL_CHANNELS
+  PORTFOLIO_HOTELS
 } from './useInnalyticsData';
 import { exportToExcel } from './exportHelper';
+import { useAuth } from '@/context/AuthContext';
 
 interface DashboardViewProps {
   activeHotelCode: string;
 }
+
+const MONTH_NAMES_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+const formatMonthDisplay = (ymStr: string) => {
+  if (!ymStr) return 'Sep-2026';
+  const parts = ymStr.split('-');
+  if (parts.length < 2) return ymStr;
+  const y = parts[0];
+  const m = parts[1];
+  const idx = parseInt(m, 10) - 1;
+  return `${MONTH_NAMES_SHORT[idx] || m}-${y}`;
+};
 
 const MONTH_OPTIONS = [
   { value: '2026-09', label: 'September 2026 (Live Audit)' },
@@ -43,10 +59,40 @@ const MONTH_OPTIONS = [
 ];
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode }) => {
+  const { user, hotelsList } = useAuth();
+
+  // Determine accessible hotels based on user role & allowedOutlets
+  const accessibleHotels = useMemo(() => {
+    let list = hotelsList && hotelsList.length > 0 ? hotelsList : PORTFOLIO_HOTELS;
+
+    if (
+      user &&
+      user.role !== 'superadmin' &&
+      user.allowedOutlets &&
+      user.allowedOutlets.length > 0
+    ) {
+      list = list.filter((h: any) => {
+        const code = String(h.hotelCode || h.id || h.code || '');
+        const name = String(h.name || h.hotelName || '');
+        return user.allowedOutlets!.some(
+          (outlet: string) =>
+            outlet.toLowerCase() === code.toLowerCase() ||
+            outlet.toLowerCase() === name.toLowerCase() ||
+            name.toLowerCase().includes(outlet.toLowerCase())
+        );
+      });
+    }
+
+    return list.map((h: any, idx: number) => ({
+      code: String(h.hotelCode || h.id || h.code || idx),
+      name: String(h.name || h.hotelName || 'Hotel')
+    }));
+  }, [hotelsList, user]);
+
   // Default to CURRENT MONTH (matching PnL at /pnl?module=accounting)
   const now = new Date();
   const curYear = now.getFullYear();
-  const curMonth = now.getMonth(); // 0-indexed
+  const curMonth = now.getMonth();
   const lastDayCurMonth = new Date(curYear, curMonth + 1, 0).getDate();
   const defaultStartDate = `${curYear}-${String(curMonth + 1).padStart(2, '0')}-01`;
   const defaultEndDate = `${curYear}-${String(curMonth + 1).padStart(2, '0')}-${String(lastDayCurMonth).padStart(2, '0')}`;
@@ -55,24 +101,53 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
   const [selectedMonth, setSelectedMonth] = useState(defaultMonthStr);
 
   const [filters, setFilters] = useState<InnalyticsFilterState>({
-    reportBy: 'stay_date', // Direct 1:1 alignment with PnL daily revenue audit dates
-    filterBy: 'channel',
+    reportBy: 'stay_date',
+    filterBy: 'hotel',
     selectedChannels: [],
+    selectedHotels: [],
+    selectedEntities: [],
     filterType: 'Monthly',
     startDate: defaultStartDate,
     endDate: defaultEndDate,
     variance: false,
+    dayWise: false,
     discardNoData: false
   });
 
-  const [isTableView, setIsTableView] = useState(false);
+  const [isTableView, setIsTableView] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const { loading, lastUpdated, aggregated, filteredEntries } = useInnalyticsData(
-    activeHotelCode,
-    filters
-  );
+  const {
+    loading,
+    lastUpdated,
+    aggregated,
+    dynamicChannels,
+    dynamicTravelAgents
+  } = useInnalyticsData(activeHotelCode, filters, accessibleHotels);
+
+  const isHotelFilter = filters.filterBy === 'hotel';
+
+  const getDimensionLabel = (filterBy: string) => {
+    switch (filterBy) {
+      case 'hotel':
+        return 'Hotel';
+      case 'channel':
+        return 'Channel';
+      case 'country':
+        return 'Country';
+      case 'travel_agent':
+        return 'Travelagent';
+      case 'room_type':
+        return 'Room Type';
+      case 'rate_plan':
+        return 'Rate Plan';
+      default:
+        return 'Channel';
+    }
+  };
+
+  const dimensionLabel = getDimensionLabel(filters.filterBy);
 
   const handleMonthChange = (mVal: string) => {
     setSelectedMonth(mVal);
@@ -94,11 +169,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
     return `${d}/${m}/${y}`;
   };
 
-  const dateRangeText = `${formatDisplayDate(filters.startDate)} - ${formatDisplayDate(filters.endDate)}`;
+  const dateRangeText = filters.filterType === 'Monthly'
+    ? formatMonthDisplay(filters.startDate ? filters.startDate.slice(0, 7) : selectedMonth)
+    : `${formatDisplayDate(filters.startDate)} - ${formatDisplayDate(filters.endDate)}`;
 
-  // Generate channel legends using dynamic colors
+  // Generate legends using dynamic colors
   const channelLegends: LegendDef[] = (
-    filters.selectedChannels.length > 0 ? filters.selectedChannels : aggregated.activeChannels
+    filters.selectedChannels.length > 0
+      ? filters.selectedChannels
+      : aggregated.activeChannels
   ).map((ch, idx) => ({
     label: ch,
     color: getChannelColor(ch, idx)
@@ -106,7 +185,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
 
   const handleExport = () => {
     const exportRows = aggregated.revenueTable.map((r, i) => ({
-      Channel: r.channel,
+      [dimensionLabel]: r.channel,
       'Revenue (Rp)': r.value,
       Bookings: aggregated.bookingsTable[i]?.value || 0,
       'Room Nights': aggregated.roomNightsTable[i]?.value || 0,
@@ -115,7 +194,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
       'ADR (Rp)': aggregated.adrTable[i]?.value || 0
     }));
 
-    exportToExcel(exportRows, `innalytics_summary_${filters.startDate}_to_${filters.endDate}`);
+    exportToExcel(
+      exportRows,
+      `innalytics_${filters.filterBy}_${filters.startDate}_to_${filters.endDate}`
+    );
   };
 
   return (
@@ -139,35 +221,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
             }}
             title="Directly connected to Accounting PnL revenue ledger"
           >
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: '#10b981'
+              }}
+            />
             PnL Ledger Synced
           </span>
         </div>
 
         <div className={styles.toolbarActions}>
-          {/* Quick Month Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '6px' }}>
-            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>Month:</span>
-            <select
+          {/* Quick Month Selector matching IPMS247 pill style */}
+          <div className={styles.datePickerBox} style={{ width: '135px', height: '32px', marginRight: '6px' }} title="Change Month">
+            <span className={styles.datePickerText}>
+              {formatMonthDisplay(selectedMonth)}
+            </span>
+            <Calendar size={14} className={styles.datePickerIcon} />
+            <input
+              type="month"
+              className={styles.hiddenNativeInput}
               value={selectedMonth}
               onChange={(e) => handleMonthChange(e.target.value)}
-              style={{
-                fontSize: '12px',
-                fontWeight: 600,
-                color: '#1e293b',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                border: '1px solid #cbd5e1',
-                backgroundColor: '#ffffff',
-                cursor: 'pointer'
-              }}
-            >
-              {MONTH_OPTIONS.map((mo) => (
-                <option key={mo.value} value={mo.value}>
-                  {mo.label}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           {/* View Toggle: Chart vs Table */}
@@ -218,14 +296,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
         </div>
       </div>
 
-      {/* 12 Analytics Widgets Grid */}
+      {/* Analytics Widgets Grid: All 12 widgets complete for both Hotel & Channel */}
       <div className={styles.widgetGrid}>
         {/* ROW 1: Revenue, Bookings, Room Nights */}
         <WidgetCard
           title="Revenue"
           dateRangeText={dateRangeText}
           isTableView={isTableView}
-          hasData={aggregated.totals.revenue > 0}
+          hasData={aggregated.revenueTable.length > 0}
           chartComponent={
             <MultiLineChart
               data={aggregated.seriesArray}
@@ -236,12 +314,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           }
           tableComponent={
             <SingleMetricTable
-              labelCol="Channel"
+              labelCol={dimensionLabel}
               valCol="Total ( Rp )"
               data={aggregated.revenueTable}
               isCurrency={true}
               totalLabel="Total"
               totalValue={aggregated.totals.revenue}
+              showTotal={true}
             />
           }
           legends={channelLegends}
@@ -251,7 +330,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           title="Bookings"
           dateRangeText={dateRangeText}
           isTableView={isTableView}
-          hasData={aggregated.totals.bookings > 0}
+          hasData={aggregated.bookingsTable.length > 0}
           chartComponent={
             <MultiLineChart
               data={aggregated.seriesArray}
@@ -261,11 +340,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           }
           tableComponent={
             <SingleMetricTable
-              labelCol="Channel"
+              labelCol={dimensionLabel}
               valCol="Bookings"
               data={aggregated.bookingsTable}
               totalLabel="Total"
               totalValue={aggregated.totals.bookings}
+              showTotal={true}
             />
           }
           legends={channelLegends}
@@ -275,7 +355,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           title="Room Nights"
           dateRangeText={dateRangeText}
           isTableView={isTableView}
-          hasData={aggregated.totals.roomNights > 0}
+          hasData={aggregated.roomNightsTable.length > 0}
           chartComponent={
             <MultiLineChart
               data={aggregated.seriesArray}
@@ -285,11 +365,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           }
           tableComponent={
             <SingleMetricTable
-              labelCol="Channel"
+              labelCol={dimensionLabel}
               valCol="Room Nights"
               data={aggregated.roomNightsTable}
               totalLabel="Total"
               totalValue={aggregated.totals.roomNights}
+              showTotal={true}
             />
           }
           legends={channelLegends}
@@ -300,7 +381,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           title="Booking Lead Time"
           dateRangeText={dateRangeText}
           isTableView={isTableView}
-          hasData={aggregated.totals.bookings > 0}
+          hasData={aggregated.leadTimeTable.length > 0}
           chartComponent={
             <MultiLineChart
               data={aggregated.seriesArray}
@@ -310,11 +391,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           }
           tableComponent={
             <SingleMetricTable
-              labelCol="Channel"
+              labelCol={dimensionLabel}
               valCol="Booking Lead Time"
               data={aggregated.leadTimeTable}
               totalLabel="Avg."
               totalValue={aggregated.totals.avgLeadTime}
+              showTotal={true}
             />
           }
           legends={channelLegends}
@@ -324,7 +406,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           title="Cancellation %"
           dateRangeText={dateRangeText}
           isTableView={isTableView}
-          hasData={aggregated.totals.cancellationRate > 0}
+          hasData={aggregated.cancellationTable.length > 0}
           chartComponent={
             <DonutChart
               data={aggregated.cancellationTable.map((c) => ({
@@ -335,12 +417,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           }
           tableComponent={
             <SingleMetricTable
-              labelCol="Channel"
+              labelCol={dimensionLabel}
               valCol="Cancellation %"
               data={aggregated.cancellationTable}
               isPercent={true}
               totalLabel="Avg."
               totalValue={aggregated.totals.cancellationRate}
+              showTotal={true}
             />
           }
           legends={channelLegends}
@@ -419,7 +502,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           ]}
         />
 
-        {/* ROW 4: Package, Bookings %, Average Room Rate */}
+        {/* ROW 4: Package, Bookings %, Average Room Rate (ARR) */}
         <WidgetCard
           title="Package"
           dateRangeText={dateRangeText}
@@ -442,7 +525,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           title="Bookings %"
           dateRangeText={dateRangeText}
           isTableView={isTableView}
-          hasData={aggregated.totals.bookings > 0}
+          hasData={aggregated.bookingsPercentTable.length > 0}
           chartComponent={
             <DonutChart
               data={aggregated.bookingsPercentTable.map((b) => ({
@@ -453,12 +536,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           }
           tableComponent={
             <SingleMetricTable
-              labelCol="Channel"
+              labelCol={dimensionLabel}
               valCol="Booking %"
               data={aggregated.bookingsPercentTable}
               isPercent={true}
               totalLabel="Total"
               totalValue={100}
+              showTotal={true}
             />
           }
           legends={channelLegends}
@@ -468,7 +552,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           title="Average Room Rate"
           dateRangeText={dateRangeText}
           isTableView={isTableView}
-          hasData={aggregated.totals.adr > 0}
+          hasData={aggregated.adrTable.length > 0}
           chartComponent={
             <MultiLineChart
               data={aggregated.seriesArray}
@@ -479,12 +563,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
           }
           tableComponent={
             <SingleMetricTable
-              labelCol="Channel"
+              labelCol={dimensionLabel}
               valCol="Average Room Rate ( Rp )"
               data={aggregated.adrTable}
               isCurrency={true}
               totalLabel="Total Avg."
               totalValue={aggregated.totals.adr}
+              showTotal={true}
             />
           }
           legends={channelLegends}
@@ -496,8 +581,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         filters={filters}
-        onApply={(newFilters) => setFilters(newFilters)}
-        availableChannels={aggregated.allDiscoveredChannels}
+        onApply={(newFilters) => {
+          setFilters(newFilters);
+        }}
+        availableChannels={dynamicChannels}
+        availableHotels={accessibleHotels}
+        availableTravelAgents={dynamicTravelAgents}
       />
     </div>
   );

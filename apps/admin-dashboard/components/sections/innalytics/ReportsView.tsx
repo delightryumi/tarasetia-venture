@@ -86,6 +86,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ activeHotelCode }) => 
     reportBy: dateType === 'booked' ? 'booking_date' : 'stay_date',
     filterBy: 'channel',
     selectedChannels: selectedChannel === 'All' ? [] : [selectedChannel],
+    selectedHotels: [],
     filterType: 'Custom Date Range',
     startDate: fromDate,
     endDate: toDate,

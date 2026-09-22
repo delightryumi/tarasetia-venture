@@ -31,10 +31,17 @@ export const InnalyticsHeader: React.FC<InnalyticsHeaderProps> = ({
 
   return (
     <header className={styles.topHeader}>
-      {/* Left: Hotel Name & Property ID */}
+      {/* Left: Brand Logo, Hotel Name & Property ID */}
       <div className={styles.headerLeft}>
-        <div className={styles.propertyName}>{activeHotelName || 'Titik Damai Nexura Collection'}</div>
-        <div className={styles.propertyId}>{activeHotelCode || '61872'}</div>
+        <img
+          src="/channels/5.png"
+          alt="My Tara"
+          className={styles.headerLogo}
+        />
+        <div className={styles.headerPropertyText}>
+          <div className={styles.propertyName}>{activeHotelName || 'Titik Damai Nexura Collection'}</div>
+          <div className={styles.propertyId}>{activeHotelCode || '61872'}</div>
+        </div>
       </div>
 
       {/* Right: Quick Access & Navigation */}
@@ -77,11 +84,6 @@ export const InnalyticsHeader: React.FC<InnalyticsHeaderProps> = ({
         >
           <BarChart3 size={18} />
         </button>
-
-        {/* Badge 'B.' */}
-        <div className={styles.iconBadge} title="Business Analytics">
-          B.
-        </div>
 
         {/* User Avatar */}
         <div className={styles.avatarCircle} title={user?.email || 'User'}>

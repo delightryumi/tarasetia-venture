@@ -4,8 +4,8 @@
   width: 100%;
   min-height: 100vh;
   background-color: #f4f6f9;
-  color: #2b364c;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #1e293b;
+  font-family: var(--font-geist-sans), 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -30,6 +30,18 @@
 }
 
 .headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerLogo {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+}
+
+.headerPropertyText {
   display: flex;
   flex-direction: column;
 }
@@ -79,19 +91,6 @@
   color: #1a202c;
   border: 1.5px solid #2b364c;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.iconBadge {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background-color: #1a202c;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .avatarCircle {
@@ -425,6 +424,13 @@
   border-bottom: 1px solid #edf2f7;
 }
 
+.cleanTable td:first-child {
+  max-width: 145px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .cleanTable td:last-child {
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -583,14 +589,206 @@
   color: #e53e3e;
 }
 
+/* Hotel Multi-Select Component */
+.hotelSelectWrapper {
+  position: relative;
+}
+
+.hotelSelectBox {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  padding: 4px 8px;
+  min-height: 38px;
+  background-color: #ffffff;
+  cursor: pointer;
+  gap: 6px;
+  flex-wrap: wrap;
+  transition: border-color 0.15s ease;
+}
+
+.hotelSelectBox:focus-within {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 1px #3182ce;
+}
+
+.hotelChipsArea {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  flex: 1;
+}
+
+.hotelChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #f1f5f9;
+  color: #1e293b;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid #e2e8f0;
+}
+
+.hotelChipClose {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.hotelChipClose:hover {
+  color: #ef4444;
+}
+
+.hotelCountBadge {
+  display: inline-flex;
+  align-items: center;
+  background-color: #e2e8f0;
+  color: #334155;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.hotelSearchInput {
+  border: none;
+  outline: none;
+  font-size: 12px;
+  color: #1e293b;
+  min-width: 60px;
+  flex: 1;
+  background: transparent;
+  padding: 2px 4px;
+}
+
+.hotelSearchIcon {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.hotelDropdownMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  z-index: 60;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.hotelDropdownHeader {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #f8fafc;
+  user-select: none;
+}
+
+.hotelDropdownHeader:hover {
+  background-color: #f1f5f9;
+}
+
+.hotelDropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: #1e293b;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  user-select: none;
+}
+
+.hotelDropdownItem:hover {
+  background-color: #f8fafc;
+}
+
+.hotelDropdownItemSelected {
+  font-weight: 600;
+  background-color: #fcfcfc;
+}
+
+.hotelDropdownItemCheck {
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+}
+
 .dateRangeRow {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.dateRangeRow input {
+.datePickerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.datePickerBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #b9c9dc;
+  border-radius: 20px;
+  height: 34px;
+  padding: 0 14px;
+  background-color: #ffffff;
+  position: relative;
+  cursor: pointer;
   flex: 1;
+  transition: all 0.15s ease;
+}
+
+.datePickerBox:hover, .datePickerBox:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.datePickerText {
+  font-size: 13px;
+  color: #273142;
+  font-weight: 500;
+  user-select: none;
+  font-family: inherit;
+}
+
+.datePickerIcon {
+  color: #94a3b8;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.hiddenNativeInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
 }
 
 .checkboxLabel {
@@ -957,3 +1155,60 @@
   border-top: 1px solid #000000;
   border-bottom: 2px solid #000000;
 }
+
+/* Pill-shaped Date & Month Pickers matching IPMS247 */
+.datePickerRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.datePickerBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 150px;
+  height: 34px;
+  padding: 0 14px;
+  background-color: #ffffff;
+  border: 1px solid #c9d6df;
+  border-radius: 18px;
+  position: relative;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.datePickerBox:hover {
+  border-color: #94a3b8;
+}
+
+.datePickerBox:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.datePickerText {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  user-select: none;
+  font-family: inherit;
+}
+
+.datePickerIcon {
+  color: #718096;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.hiddenNativeInput {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+

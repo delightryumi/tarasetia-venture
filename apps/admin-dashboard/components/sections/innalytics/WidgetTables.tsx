@@ -12,6 +12,7 @@ interface SingleMetricTableProps {
   isPercent?: boolean;
   totalLabel?: string;
   totalValue?: number;
+  showTotal?: boolean;
 }
 
 export const SingleMetricTable: React.FC<SingleMetricTableProps> = ({
@@ -21,7 +22,8 @@ export const SingleMetricTable: React.FC<SingleMetricTableProps> = ({
   isCurrency = false,
   isPercent = false,
   totalLabel = 'Total',
-  totalValue
+  totalValue,
+  showTotal = true
 }) => {
   const calculatedTotal = totalValue !== undefined
     ? totalValue
@@ -53,10 +55,12 @@ export const SingleMetricTable: React.FC<SingleMetricTableProps> = ({
               <td>{formatValue(row.value)}</td>
             </tr>
           ))}
-          <tr className={styles.totalRow}>
-            <td>{totalLabel}</td>
-            <td>{formatValue(calculatedTotal)}</td>
-          </tr>
+          {showTotal && (
+            <tr className={styles.totalRow}>
+              <td>{totalLabel}</td>
+              <td>{formatValue(calculatedTotal)}</td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

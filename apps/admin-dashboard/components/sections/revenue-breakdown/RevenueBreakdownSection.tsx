@@ -377,23 +377,33 @@ export const RevenueBreakdownSection: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.id}>
-                      <td className={styles.textLeft}>{row.auditDate}</td>
-                      <td className={styles.textCenter}>{row.room}</td>
-                      <td className={styles.textLeft} title={row.name}>{row.name}</td>
-                      <td className={styles.textLeft} title={row.company}>{row.company}</td>
-                      <td className={styles.textCenter}>{row.noBill}</td>
-                      <td className={styles.textCenter}>{row.qty}</td>
-                      <td className={styles.textRight}>{formatNumber(row.price)}</td>
-                      <td className={styles.textRight}>{formatNumber(row.gross)}</td>
-                      <td className={styles.textRight}>{formatNumber(row.service)}</td>
-                      <td className={styles.textRight}>{formatNumber(row.tax)}</td>
-                      <td className={styles.textRight}>{formatNumber(row.nett)}</td>
-                      <td className={styles.textCenter}>{row.usr}</td>
-                      <td className={styles.textLeft} title={row.firstPaymentFound}>{row.firstPaymentFound}</td>
-                    </tr>
-                  ))}
+                  {rows.map((row) => {
+                    const isCancelled = row.status === "CANCELLED" || row.status === "CANCEL";
+                    return (
+                      <tr key={row.id} style={isCancelled ? { opacity: 0.7, backgroundColor: '#fff1f2' } : undefined}>
+                        <td className={styles.textLeft}>{row.auditDate}</td>
+                        <td className={styles.textCenter}>{row.room}</td>
+                        <td className={styles.textLeft} title={row.name}>
+                          <span style={isCancelled ? { textDecoration: 'line-through' } : undefined}>{row.name}</span>
+                          {isCancelled && (
+                            <span style={{ marginLeft: 6, fontSize: '10px', color: '#dc2626', fontWeight: 700, padding: '1px 5px', borderRadius: '4px', backgroundColor: '#fee2e2' }}>
+                              BATAL
+                            </span>
+                          )}
+                        </td>
+                        <td className={styles.textLeft} title={row.company}>{row.company}</td>
+                        <td className={styles.textCenter}>{row.noBill}</td>
+                        <td className={styles.textCenter}>{row.qty}</td>
+                        <td className={styles.textRight}>{formatNumber(row.price)}</td>
+                        <td className={styles.textRight} style={isCancelled ? { textDecoration: 'line-through' } : undefined}>{formatNumber(row.gross)}</td>
+                        <td className={styles.textRight}>{formatNumber(row.service)}</td>
+                        <td className={styles.textRight}>{formatNumber(row.tax)}</td>
+                        <td className={styles.textRight}>{formatNumber(row.nett)}</td>
+                        <td className={styles.textCenter}>{row.usr}</td>
+                        <td className={styles.textLeft} title={row.firstPaymentFound}>{row.firstPaymentFound}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
                 <tfoot>
                   <tr className={styles.grandTotalRow}>
