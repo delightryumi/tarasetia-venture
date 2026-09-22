@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
     }, [activeHotelCode, user?.role]);
 
-    // Fetch hotels list if superadmin or has multiple allowedOutlets
+    // Fetch hotels list if superadmin or has allowedOutlets / assigned hotel
     useEffect(() => {
         if (user && user.role === "superadmin") {
             const unsubscribe = onSnapshot(collection(db, "hotels"), (snapshot) => {
@@ -112,17 +112,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setHotelsList(list);
             });
             return () => unsubscribe();
-        } else if (user && user.allowedOutlets && user.allowedOutlets.length > 1) {
+        } else if (user && user.allowedOutlets && user.allowedOutlets.length > 0) {
             const unsubscribe = onSnapshot(collection(db, "hotels"), (snapshot) => {
                 const list: any[] = [];
                 snapshot.forEach((doc) => {
-                    if (user.allowedOutlets?.includes(doc.id)) {
+                    if (user.allowedOutlets?.includes(doc.id) || (user.hotelCode && doc.id === user.hotelCode)) {
                         list.push({ ...doc.data(), hotelCode: doc.id });
                     }
                 });
                 setHotelsList(list);
             });
             return () => unsubscribe();
+        } else if (user && user.hotelCode) {
+            const docRef = doc(db, "hotels", user.hotelCode);
+            getDoc(docRef).then((snap) => {
+                if (snap.exists()) {
+                    setHotelsList([{ ...snap.data(), hotelCode: snap.id }]);
+                } else {
+                    setHotelsList([]);
+                }
+            }).catch(() => {
+                setHotelsList([]);
+            });
         } else {
             setHotelsList([]);
         }

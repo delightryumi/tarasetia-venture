@@ -63,31 +63,58 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
 
   // Determine accessible hotels based on user role & allowedOutlets
   const accessibleHotels = useMemo(() => {
-    let list = hotelsList && hotelsList.length > 0 ? hotelsList : PORTFOLIO_HOTELS;
-
-    if (
-      user &&
-      user.role !== 'superadmin' &&
-      user.allowedOutlets &&
-      user.allowedOutlets.length > 0
-    ) {
-      list = list.filter((h: any) => {
-        const code = String(h.hotelCode || h.id || h.code || '');
-        const name = String(h.name || h.hotelName || '');
-        return user.allowedOutlets!.some(
-          (outlet: string) =>
-            outlet.toLowerCase() === code.toLowerCase() ||
-            outlet.toLowerCase() === name.toLowerCase() ||
-            name.toLowerCase().includes(outlet.toLowerCase())
-        );
-      });
+    // 1. Superadmin has access to all hotels
+    if (user?.role === 'superadmin') {
+      const list = hotelsList && hotelsList.length > 0 ? hotelsList : PORTFOLIO_HOTELS;
+      return list.map((h: any, idx: number) => ({
+        code: String(h.hotelCode || h.id || h.code || idx),
+        name: String(h.name || h.hotelName || 'Hotel')
+      }));
     }
 
-    return list.map((h: any, idx: number) => ({
-      code: String(h.hotelCode || h.id || h.code || idx),
-      name: String(h.name || h.hotelName || 'Hotel')
-    }));
-  }, [hotelsList, user]);
+    // 2. Non-superadmin: ONLY hotels from hotelsList that match allowedOutlets / hotelCode
+    if (hotelsList && hotelsList.length > 0) {
+      let filtered = hotelsList;
+      if (user?.allowedOutlets && user.allowedOutlets.length > 0) {
+        filtered = filtered.filter((h: any) => {
+          const code = String(h.hotelCode || h.id || h.code || '');
+          const name = String(h.name || h.hotelName || '');
+          return user.allowedOutlets!.some(
+            (outlet: string) =>
+              outlet.toLowerCase() === code.toLowerCase() ||
+              outlet.toLowerCase() === name.toLowerCase() ||
+              name.toLowerCase().includes(outlet.toLowerCase())
+          );
+        });
+      } else if (user?.hotelCode) {
+        filtered = filtered.filter((h: any) => {
+          const code = String(h.hotelCode || h.id || h.code || '');
+          return code === user.hotelCode;
+        });
+      }
+
+      if (filtered.length > 0) {
+        return filtered.map((h: any, idx: number) => ({
+          code: String(h.hotelCode || h.id || h.code || idx),
+          name: String(h.name || h.hotelName || 'Hotel')
+        }));
+      }
+    }
+
+    // Fallback for non-superadmin: only show their own hotel codes (never other hotels)
+    const userCodes = user?.allowedOutlets && user.allowedOutlets.length > 0
+      ? user.allowedOutlets
+      : (user?.hotelCode ? [user.hotelCode] : (activeHotelCode ? [activeHotelCode] : []));
+
+    if (userCodes.length > 0) {
+      return userCodes.map((c) => ({
+        code: c,
+        name: c === activeHotelCode && activeHotelName ? activeHotelName : `Hotel ${c}`
+      }));
+    }
+
+    return [{ code: activeHotelCode || '14034', name: activeHotelName || 'Hotel' }];
+  }, [hotelsList, user, activeHotelCode, activeHotelName]);
 
   // Default to CURRENT MONTH (matching PnL at /pnl?module=accounting)
   const now = new Date();

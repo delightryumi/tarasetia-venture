@@ -95,7 +95,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
   const hotelList =
     availableHotels && availableHotels.length > 0
       ? availableHotels
-      : PORTFOLIO_HOTELS;
+      : [];
 
   const filteredHotelsList = hotelList.filter((h) =>
     h.name.toLowerCase().includes(hotelSearchQuery.toLowerCase())
