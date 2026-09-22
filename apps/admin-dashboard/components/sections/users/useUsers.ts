@@ -190,6 +190,7 @@ export const useUsers = (menuItems: any[]) => {
                         } else {
                             if (!modules.includes('cpanel-full')) modules.push('cpanel-full');
                         }
+                    }
                     if (modules.includes('front-office') || modules.includes('accounting')) {
                         if (!modules.includes('innalytics')) modules.push('innalytics');
                     }
