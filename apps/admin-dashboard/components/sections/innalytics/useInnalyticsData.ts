@@ -151,6 +151,7 @@ export function useInnalyticsData(
   const [loading, setLoading] = useState(true);
   const [cleanTransactions, setCleanTransactions] = useState<any[]>([]);
   const [cancelledTransactions, setCancelledTransactions] = useState<any[]>([]);
+  const [voidTransactions, setVoidTransactions] = useState<any[]>([]);
   const [ratePlans, setRatePlans] = useState<any[]>([]);
   const [hotelBreakfastRate, setHotelBreakfastRate] = useState<number | undefined>(undefined);
   const [roomTypesMap, setRoomTypesMap] = useState<Record<string, string>>({});
@@ -274,6 +275,7 @@ export function useInnalyticsData(
 
     const hotelAccMap: Record<string, any[]> = {};
     const hotelCancMap: Record<string, any[]> = {};
+    const hotelVoidMap: Record<string, any[]> = {};
 
     const unsubs = hotelCodesToQuery.map(({ code: hCode, name: hName }) => {
       // When reportBy is 'booking_date', we must query all daily revenue docs to find bookings made in this period regardless of stay date
@@ -290,6 +292,7 @@ export function useInnalyticsData(
         (querySnapshot) => {
           const hotelClean: any[] = [];
           const hotelCancelled: any[] = [];
+          const hotelVoid: any[] = [];
 
           querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
@@ -298,6 +301,7 @@ export function useInnalyticsData(
 
             const dayAccommodationGroups: Record<string, any[]> = {};
             const dayCancelledGroups: Record<string, any[]> = {};
+            const dayVoidGroups: Record<string, any[]> = {};
 
             (data.entries || []).forEach((t: any) => {
               const isPOS =
@@ -311,6 +315,8 @@ export function useInnalyticsData(
               const gst = String(t.guestStatus || '').toLowerCase();
 
               const isDeleted = t.isDeleted || t.isHidden;
+              if (isDeleted) return;
+
               const isVoid =
                 status === 'VOID' ||
                 status === 'VOIDED' ||
@@ -318,8 +324,6 @@ export function useInnalyticsData(
                 payStatus === 'VOIDED' ||
                 gst === 'void' ||
                 t.isVoid === true;
-
-              if (isDeleted || isVoid) return;
 
               const isPelunasan =
                 t.isPelunasan ||
@@ -361,6 +365,12 @@ export function useInnalyticsData(
 
               const enhancedEntry = { ...t, docDate, hotelId, hotelCode: hCode, hotelName: hName };
 
+              if (isVoid) {
+                if (!dayVoidGroups[key]) dayVoidGroups[key] = [];
+                dayVoidGroups[key].push(enhancedEntry);
+                return;
+              }
+
               if (isCancel) {
                 if (!dayCancelledGroups[key]) dayCancelledGroups[key] = [];
                 dayCancelledGroups[key].push(enhancedEntry);
@@ -390,18 +400,31 @@ export function useInnalyticsData(
               });
               hotelCancelled.push(group[group.length - 1]);
             });
+
+            Object.values(dayVoidGroups).forEach((group) => {
+              group.sort((a, b) => {
+                const tA = new Date(a.timestamp || 0).getTime();
+                const tB = new Date(b.timestamp || 0).getTime();
+                return tA - tB;
+              });
+              hotelVoid.push(group[group.length - 1]);
+            });
           });
 
           hotelAccMap[hCode] = hotelClean;
           hotelCancMap[hCode] = hotelCancelled;
+          hotelVoidMap[hCode] = hotelVoid;
 
           const mergedAcc: any[] = [];
           const mergedCanc: any[] = [];
+          const mergedVoid: any[] = [];
           Object.values(hotelAccMap).forEach((list) => mergedAcc.push(...list));
           Object.values(hotelCancMap).forEach((list) => mergedCanc.push(...list));
+          Object.values(hotelVoidMap).forEach((list) => mergedVoid.push(...list));
 
           setCleanTransactions(mergedAcc);
           setCancelledTransactions(mergedCanc);
+          setVoidTransactions(mergedVoid);
           setLoading(false);
           setLastUpdated(new Date());
         },
@@ -482,6 +505,14 @@ export function useInnalyticsData(
           'Indonesia'
         ).trim();
 
+        const pax = Math.max(1, Number(t.pax || t.adults || t.guestCount || 1));
+        const breakfastAmount = alloc.breakfastAmount || 0;
+        const grossAmount = Number(t.grossAmount || t.amount || 0);
+        const paymentMethod = t.paymentMethod || 'Direct';
+        const paymentStatus = t.paymentStatus || 'Paid';
+        const notes = t.remarks || t.notes || t.specialRequest || '';
+        const createdBy = t.userName || t.createdBy || t.cashier || 'Front Desk';
+
         return {
           id: t.bookingId || t.id || `${entryDate}_${t.roomNumber}_${t.guestName}`,
           bookingId: t.bookingId || '',
@@ -504,9 +535,17 @@ export function useInnalyticsData(
           checkOutDate,
           leadTime,
           netRoomAmount,
+          breakfastAmount,
+          grossAmount,
           revenue: netRoomAmount,
           roomNights,
+          pax,
+          paymentMethod,
+          paymentStatus,
+          notes,
+          createdBy,
           isCancelled: false,
+          isVoid: false,
           status: t.status || 'Confirmed',
           raw: t
         };
@@ -523,6 +562,7 @@ export function useInnalyticsData(
     return cancelledTransactions
       .map((t) => {
         const checkInDate = String(t.checkInDate || t.checkIn || t.docDate || t.date || '').slice(0, 10);
+        const checkOutDate = String(t.checkOutDate || t.checkOut || checkInDate).slice(0, 10);
         const entryDate = String(t.date || t.effectiveDate || t.docDate || checkInDate).slice(0, 10);
 
         let bookingDate = '';
@@ -533,19 +573,87 @@ export function useInnalyticsData(
         else if (t.timestamp) bookingDate = typeof t.timestamp === 'string' ? t.timestamp.slice(0, 10) : new Date(t.timestamp).toISOString().slice(0, 10);
         else bookingDate = checkInDate;
 
+        const roomTypeName = roomTypesMap[t.roomTypeId] || t.roomType || 'Standard';
+        const channel = normalizeChannel(t);
+        const roomNights = Math.max(1, Number(t.roomsCount || t.roomCount || t.quantity) || 1);
+        const lostRevenue = Number(t.amount || t.rate || 0);
+        const cancelledDate = String(t.cancelledAt || t.cancelledDate || t.docDate || entryDate).slice(0, 10);
+        const cancellationReason = t.cancellationReason || t.cancelReason || t.remarks || 'Guest Cancellation';
+
         return {
-          ...t,
+          id: t.bookingId || t.id || `${entryDate}_${t.roomNumber}_${t.guestName}`,
+          bookingId: t.bookingId || '',
+          hotelCode: t.hotelCode || t.hotelId || activeHotelCode,
+          hotelName: t.hotelName || '',
+          guestName: t.guestName || 'Guest',
+          roomNumber: t.roomNumber || '-',
+          roomType: roomTypeName,
+          channel,
+          travelAgent: (t.travelAgent || t.agentName || '').trim(),
+          country: (t.country || t.guestCountry || 'Indonesia').trim(),
           bookingDate,
           entryDate,
           checkInDate,
-          isCancelled: true
+          checkOutDate,
+          cancelledDate,
+          cancellationReason,
+          roomNights,
+          revenue: lostRevenue,
+          netRoomAmount: lostRevenue,
+          isCancelled: true,
+          isVoid: false,
+          status: t.status || 'Cancelled',
+          raw: t
         };
       })
       .filter((c) => {
         const targetDate = filters.reportBy === 'booking_date' ? c.bookingDate : c.entryDate;
         return targetDate >= filters.startDate && targetDate <= filters.endDate;
       });
-  }, [cancelledTransactions, filters.reportBy, filters.startDate, filters.endDate]);
+  }, [cancelledTransactions, roomTypesMap, activeHotelCode, filters.reportBy, filters.startDate, filters.endDate]);
+
+  // Void transactions filtered by period mode (booking_date vs stay_date)
+  const processedVoidTransactions = useMemo(() => {
+    return voidTransactions
+      .map((t) => {
+        const checkInDate = String(t.checkInDate || t.checkIn || t.docDate || t.date || '').slice(0, 10);
+        const checkOutDate = String(t.checkOutDate || t.checkOut || checkInDate).slice(0, 10);
+        const entryDate = String(t.date || t.effectiveDate || t.docDate || checkInDate).slice(0, 10);
+        const voidDate = String(t.voidedAt || t.voidDate || entryDate).slice(0, 10);
+        const channel = normalizeChannel(t);
+        const roomTypeName = roomTypesMap[t.roomTypeId] || t.roomType || 'Standard';
+        const voidAmount = Number(t.amount || t.revenue || 0);
+        const voidReason = t.voidReason || t.reason || t.remarks || 'Voided by Front Office';
+        const voidedBy = t.voidedBy || t.cashier || t.userName || 'Front Desk';
+
+        return {
+          id: t.bookingId || t.id || `${entryDate}_${t.roomNumber || 'void'}_${t.guestName || 'guest'}`,
+          bookingId: t.bookingId || '',
+          hotelCode: t.hotelCode || t.hotelId || activeHotelCode,
+          hotelName: t.hotelName || '',
+          guestName: t.guestName || 'Guest',
+          roomNumber: t.roomNumber || '-',
+          roomType: roomTypeName,
+          channel,
+          amount: voidAmount,
+          revenue: voidAmount,
+          voidReason,
+          voidDate,
+          voidedBy,
+          entryDate,
+          checkInDate,
+          checkOutDate,
+          isVoid: true,
+          isCancelled: false,
+          status: 'Voided',
+          raw: t
+        };
+      })
+      .filter((v) => {
+        const targetDate = filters.reportBy === 'booking_date' ? (v.bookingDate || v.voidDate) : v.entryDate;
+        return targetDate >= filters.startDate && targetDate <= filters.endDate;
+      });
+  }, [voidTransactions, roomTypesMap, activeHotelCode, filters.reportBy, filters.startDate, filters.endDate]);
 
   // 4. Generate all dates in the selected range for time-series charts
   const dateRangeList = useMemo(() => {
@@ -1265,6 +1373,9 @@ export function useInnalyticsData(
     loading,
     lastUpdated,
     filteredEntries: processedTransactions,
+    cancelledEntries: processedCancelledTransactions,
+    voidEntries: processedVoidTransactions,
+    rawEntries: cleanTransactions,
     aggregated,
     roomTypesMap,
     ratePlansMap: {},
