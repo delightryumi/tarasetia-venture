@@ -298,6 +298,8 @@ export const UsersSection: React.FC = () => {
                     submenus: mod.submenus.filter(s => ["users", "logo"].includes(s.id))
                 };
             }
+        }
+
         if (mod.id === "module_innalytics") {
             if (safeActiveModules.includes("innalytics") || safeActiveModules.includes("front-office") || safeActiveModules.includes("accounting")) {
                 return mod;
