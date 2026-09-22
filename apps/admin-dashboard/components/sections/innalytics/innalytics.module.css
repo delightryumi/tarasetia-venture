@@ -1213,6 +1213,183 @@
 }
 
 /* ==========================================================================
+   RESPONSIVE DESIGN RULES (DESKTOP, TABLET & MOBILE)
+   ========================================================================== */
+.toolbarTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1280px) {
+  .widgetGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    padding: 16px 16px 50px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .propertyName {
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .reportsSidebar {
+    width: 240px;
+  }
+}
+
+@media (max-width: 900px) {
+  .reportsLayout {
+    flex-direction: column;
+    min-height: auto;
+  }
+  .reportsSidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+    max-height: 220px;
+  }
+  .reportFormContainer {
+    padding: 16px 12px;
+  }
+  .paperSheet {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 20px 14px !important;
+    box-shadow: none !important;
+    border-radius: 6px;
+  }
+  .viewerCanvasArea {
+    padding: 12px 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .reportDataTable {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .topHeader {
+    padding: 0 12px;
+    height: 52px;
+    gap: 8px;
+  }
+  .headerLeft {
+    min-width: 0;
+    flex: 1 1 auto;
+    gap: 8px;
+  }
+  .headerLogo {
+    height: 24px;
+  }
+  .headerPropertyText {
+    min-width: 0;
+  }
+  .propertyName {
+    font-size: 13px;
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .propertyId {
+    font-size: 10px;
+  }
+  .navShortcut {
+    display: none !important;
+  }
+  .switchPropertyText {
+    display: none !important;
+  }
+  .switchPropertyBtn {
+    padding: 5px 8px;
+    gap: 3px;
+  }
+  .headerRight {
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .toolbar {
+    padding: 10px 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .toolbarTitleGroup {
+    justify-content: space-between;
+    width: 100%;
+  }
+  .pageTitle {
+    font-size: 16px;
+  }
+  .toolbarActions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 6px;
+  }
+  .datePickerBox {
+    flex: 1;
+    min-width: 110px;
+    height: 32px;
+    padding: 0 10px;
+  }
+  .datePickerText {
+    font-size: 12px;
+  }
+  .widgetGrid {
+    grid-template-columns: 1fr;
+    padding: 12px 10px 60px 10px;
+    gap: 12px;
+  }
+  .viewerToolbar {
+    height: auto;
+    min-height: 38px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  .drawerContent {
+    width: 100% !important;
+    max-width: 100vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .topHeader {
+    padding: 0 8px;
+  }
+  .propertyName {
+    max-width: 105px;
+  }
+  .toolbarActions {
+    gap: 4px;
+  }
+  .actionBtn {
+    width: 30px;
+    height: 30px;
+  }
+  .viewToggleBtn {
+    width: 28px;
+    height: 28px;
+  }
+  .refreshIndicator {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+}
+
+/* ==========================================================================
    PRINT MEDIA RULES - CLEAN STIMULSOFT DOCUMENT PRINTING
    ========================================================================== */
 @media print {

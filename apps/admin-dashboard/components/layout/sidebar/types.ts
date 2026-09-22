@@ -6,7 +6,7 @@ export type SectionType =
     | "about" | "gallery" | "footer"
     | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "revenue-breakdown" | "pnl" | "pnl-budget" | "users" | "superadmin" | "inventory-control" | "channel-manager" | "rate-inventory" | "confirmation-letter"
     | "purchasing" | "store-requisition" | "purchase-requisition" | "daily-market-list" | "stock-opname" | "items" | "suppliers"
-    | "purchase-order" | "food-beverage-product" | "food-beverage-realtime" | "hrd" | "statements" | "budgeting" | "dsr";
+    | "purchase-order" | "food-beverage-product" | "food-beverage-realtime" | "hrd" | "statements" | "budgeting" | "dsr" | "innalytics";
 
 export interface NavItemType {
     id: SectionType;

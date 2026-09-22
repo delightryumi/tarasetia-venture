@@ -108,14 +108,14 @@ const MODULE_DEFINITIONS: Record<string, ModuleMeta> = {
         color: "#e11d48",
         defaultRoute: "/pos",
     },
-    "channel-manager": {
-        id: "channel-manager",
-        label: "Channel Manager",
-        shortName: "CM",
-        subtitle: "OTA 2-Way Sync",
-        icon: Globe,
-        color: "#0284c7",
-        defaultRoute: "/channel-manager",
+    "innalytics": {
+        id: "innalytics",
+        label: "Inalytics",
+        shortName: "INA",
+        subtitle: "Hotel Intelligence & Reports",
+        icon: TrendingUp,
+        color: "#059669",
+        defaultRoute: "/innalytics",
     },
 };
 
@@ -181,6 +181,8 @@ export const MobileBottomNav = () => {
         activeSection = "food-beverage-product";
     } else if (pathParts[1] === "food-beverage" && pathParts[2] === "realtime") {
         activeSection = "food-beverage-realtime";
+    } else if (pathParts[1] === "innalytics") {
+        activeSection = "innalytics";
     } else {
         activeSection = pathParts[1] || "overview";
     }
@@ -188,6 +190,11 @@ export const MobileBottomNav = () => {
     // 3. Sync active module
     useEffect(() => {
         if (typeof window !== "undefined") {
+            if (pathname.startsWith('/innalytics')) {
+                localStorage.setItem("active_module", "innalytics");
+                setActiveModule("innalytics");
+                return;
+            }
             if (pathname.startsWith('/purchasing')) {
                 localStorage.setItem("active_module", "purchasing");
                 setActiveModule("purchasing");
@@ -306,8 +313,9 @@ export const MobileBottomNav = () => {
 
     // 5. Complete list of all nav items across all modules
     const allNavItems: NavItemDef[] = useMemo(() => [
-        // Front Office
+        // Front Office & Inalytics
         { id: "overview", label: "Overview", shortLabel: "Overview", icon: <BarChart2 size={16} /> },
+        { id: "innalytics", label: "Inalytics", shortLabel: "Inalytics", icon: <TrendingUp size={16} /> },
         { id: "forecast", label: "Forecast", shortLabel: "Forecast", icon: <TrendingUp size={16} /> },
         { id: "revenue-breakdown", label: "Revenue Breakdown", shortLabel: "Revenue", icon: <Receipt size={16} /> },
         { id: "rate-inventory", label: "Rate & Inventory", shortLabel: "Rate & Inv", icon: <SlidersHorizontal size={16} /> },
@@ -363,6 +371,7 @@ export const MobileBottomNav = () => {
         if (!isSuperadmin && userPermissions) {
             const moduleMap: Record<string, string> = {
                 "front-office": "module_front_office",
+                "innalytics": "module_innalytics",
                 "housekeeping": "module_housekeeping",
                 "accounting": "module_accounting",
                 "food-beverage": "module_food_beverage",
@@ -380,7 +389,11 @@ export const MobileBottomNav = () => {
         if (activeModule === "front-office") {
             items = allNavItems.filter(item => [
                 "overview", "forecast", "revenue-breakdown", "rate-inventory", 
-                "invoice", "digital-checkin", "confirmation-letter", "purchase-order"
+                "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"
+            ].includes(item.id));
+        } else if (activeModule === "innalytics") {
+            items = allNavItems.filter(item => [
+                "innalytics", "overview", "forecast", "revenue-breakdown"
             ].includes(item.id));
         } else if (activeModule === "housekeeping") {
             items = allNavItems.filter(item => [
@@ -439,7 +452,9 @@ export const MobileBottomNav = () => {
     // 7. Navigation dispatcher
     const handleNavigate = (itemId: string) => {
         setIsMenuHubOpen(false);
-        if (itemId === "purchasing") {
+        if (itemId === "innalytics") {
+            router.push(`/innalytics`);
+        } else if (itemId === "purchasing") {
             router.push(`/purchasing?module=purchasing`);
         } else if (["store-requisition", "purchase-requisition", "daily-market-list", "stock-opname", "items", "suppliers"].includes(itemId)) {
             router.push(`/purchasing/${itemId}?module=purchasing`);

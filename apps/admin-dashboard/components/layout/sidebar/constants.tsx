@@ -24,6 +24,7 @@ export const allNavItems: NavItemType[] = [
     { id: "digital-checkin", label: "GRC (Guest Card)", icon: <IdentificationCard size={18} weight="bold" /> },
     { id: "confirmation-letter", label: "Confirmation Letter (CL)", icon: <FileText size={18} weight="bold" /> },
     { id: "channel-manager", label: "Channel Manager", icon: <Globe size={18} weight="bold" /> },
+    { id: "innalytics", label: "Inalytics", icon: <TrendUp size={18} weight="bold" /> },
     { id: "pos", label: "POS Terminal", icon: <Storefront size={18} weight="bold" /> },
     { id: "pnl", label: "P&L Statement", icon: <Notebook size={18} weight="bold" /> },
     { id: "pnl-budget", label: "P&L Actual vs Budget", icon: <ChartBar size={18} weight="bold" /> },

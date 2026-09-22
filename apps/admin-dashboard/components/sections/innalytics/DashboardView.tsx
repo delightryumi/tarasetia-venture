@@ -59,7 +59,7 @@ const MONTH_OPTIONS = [
 ];
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode }) => {
-  const { user, hotelsList } = useAuth();
+  const { user, hotelsList, activeHotelName } = useAuth();
 
   // Determine accessible hotels based on user role & allowedOutlets
   const accessibleHotels = useMemo(() => {
@@ -231,7 +231,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
       {/* Dashboard Sub-header / Toolbar */}
       <div className={styles.toolbar}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className={styles.toolbarTitleGroup}>
           <h1 className={styles.pageTitle}>Dashboard</h1>
           <span
             style={{

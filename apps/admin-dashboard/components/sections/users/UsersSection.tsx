@@ -81,6 +81,14 @@ const PERMISSION_TREE: PermissionModule[] = [
         ]
     },
     {
+        id: "module_innalytics",
+        label: "Inalytics (Intelligence & Reports)",
+        icon: <TrendingUp size={14} />,
+        submenus: [
+            { id: "innalytics", label: "Inalytics Dashboard & Reports", icon: <TrendingUp size={14} /> },
+        ]
+    },
+    {
         id: "module_housekeeping",
         label: "House Keeping",
         icon: <BedDouble size={14} />,

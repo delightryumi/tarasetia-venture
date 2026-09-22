@@ -47,21 +47,21 @@ export const InnalyticsHeader: React.FC<InnalyticsHeaderProps> = ({
       {/* Right: Quick Access & Navigation */}
       <div className={styles.headerRight}>
         {/* PMS Building Icon (Back to Select Module / PMS) */}
-        <Link href="/select-module" title="Back to PMS Module Hub">
+        <Link href="/select-module" title="Back to PMS Module Hub" className={styles.navShortcut}>
           <button className={styles.iconButton}>
             <Building2 size={18} />
           </button>
         </Link>
 
         {/* Channel Manager Link */}
-        <Link href="/channel-manager" title="Go to Channel Manager">
+        <Link href="/channel-manager" title="Go to Channel Manager" className={styles.navShortcut}>
           <button className={styles.iconButton}>
             <Globe size={18} />
           </button>
         </Link>
 
         {/* Cashier / Folio */}
-        <Link href="/pos" title="POS / Cashier">
+        <Link href="/pos" title="POS / Cashier" className={styles.navShortcut}>
           <button className={styles.iconButton}>
             <Wallet size={18} />
           </button>
@@ -97,7 +97,7 @@ export const InnalyticsHeader: React.FC<InnalyticsHeaderProps> = ({
             onClick={() => setShowPropertyModal(!showPropertyModal)}
           >
             <Repeat size={12} />
-            <span>Switch Property</span>
+            <span className={styles.switchPropertyText}>Switch Property</span>
             <ChevronRight size={12} />
           </button>
 

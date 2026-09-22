@@ -39,6 +39,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         activeSection = "food-beverage-product";
     } else if (pathParts[1] === "food-beverage" && pathParts[2] === "realtime") {
         activeSection = "food-beverage-realtime";
+    } else if (pathParts[1] === "innalytics") {
+        activeSection = "innalytics";
     } else {
         activeSection = (pathParts[1] as SectionType) || "overview";
     }
@@ -174,6 +176,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 setActiveModule("purchasing");
                 return;
             }
+            if (pathname.startsWith("/innalytics")) {
+                localStorage.setItem("active_module", "innalytics");
+                setActiveModule("innalytics");
+                return;
+            }
             if (pathname.startsWith("/hrd")) {
                 localStorage.setItem("active_module", "hrd");
                 setActiveModule("hrd");
@@ -243,6 +250,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         if (!isSuperadmin && userPermissions) {
             const moduleMap: Record<string, string> = {
                 "front-office": "module_front_office",
+                "innalytics": "module_innalytics",
                 "housekeeping": "module_housekeeping",
                 "accounting": "module_accounting",
                 "food-beverage": "module_food_beverage",
@@ -259,7 +267,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         let items = allNavItems;
         if (activeModule === "front-office") {
             items = allNavItems.filter((item) =>
-                ["overview", "forecast", "revenue-breakdown", "rate-inventory", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id)
+                ["overview", "forecast", "revenue-breakdown", "rate-inventory", "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id)
+            );
+        } else if (activeModule === "innalytics") {
+            items = allNavItems.filter((item) =>
+                ["innalytics", "overview", "forecast", "revenue-breakdown"].includes(item.id)
             );
         } else if (activeModule === "housekeeping") {
             items = allNavItems.filter((item) =>
