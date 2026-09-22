@@ -190,15 +190,17 @@ export const useUsers = (menuItems: any[]) => {
                         } else {
                             if (!modules.includes('cpanel-full')) modules.push('cpanel-full');
                         }
+                    if (modules.includes('front-office') || modules.includes('accounting')) {
+                        if (!modules.includes('innalytics')) modules.push('innalytics');
                     }
                     if (modules.length === 0) {
                         const plan = data.billing?.plan || 'enterprise';
                         if (plan === 'startup') {
                             modules = ["pos", "hrd", "cpanel-only"];
                         } else if (plan === 'bisnis') {
-                            modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"];
+                            modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "innalytics", "hrd", "cpanel-only"];
                         } else {
-                            modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-full"];
+                            modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "innalytics", "hrd", "cpanel-full"];
                         }
                     }
                     setActiveModules(modules);
