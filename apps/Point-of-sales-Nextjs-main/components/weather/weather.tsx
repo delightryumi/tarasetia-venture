@@ -9,8 +9,6 @@ function WeatherComponent(): React.ReactNode {
   const [weather, setWeather] = useState<any>(null);
   const [iconUrl, setIconUrl] = useState<string>('');
 
-  // API key for accessing weather data
-  const apiKey = process.env.WEATHER_API; // Replace with your API key
 
   // Skeleton component to display loading animation
   const Skeleton = () => {
@@ -55,9 +53,7 @@ function WeatherComponent(): React.ReactNode {
 
   useEffect(() => {
     const fetchWeather = (queryParam: string) => {
-      fetch(
-        `https://api.openweathermap.org/data/2.5/weather?${queryParam}&appid=${apiKey}&units=metric`
-      )
+      fetch(`/api/weather?${queryParam}`)
         .then((response) => {
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

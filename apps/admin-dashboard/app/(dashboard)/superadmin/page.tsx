@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import {
@@ -364,10 +364,13 @@ export default function SuperadminPage() {
 
     try {
       let defaultPasswordInfo = "";
-      if (email.trim()) {
+        const token = auth.currentUser ? await auth.currentUser.getIdToken() : "";
         const res = await fetch("/api/hotels/register-admin", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            ...(token ? { "Authorization": `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ email: email.trim(), hotelCode: isEditing ? currentHotelCode : code, hotelName: name.trim() }),
         });
         const data = await res.json();

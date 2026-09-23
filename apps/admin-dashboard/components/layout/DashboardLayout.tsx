@@ -9,10 +9,11 @@ import { BillingAlertModal } from "./BillingAlertModal";
 import { BillingSuspendedModal } from "./BillingSuspendedModal";
 import { GlobalOrderNotifier } from "./GlobalOrderNotifier";
 import { motion, AnimatePresence } from "framer-motion";
-import { ExternalLink, Bell } from "lucide-react";
+import { ExternalLink, Bell, ShieldAlert } from "lucide-react";
 import { useFooter } from "../sections/footer/useFooter";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { isPathAllowedForUser } from "@/lib/permissionCheck";
 import gsap from "gsap";
 import "./layout.css";
 
@@ -59,7 +60,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                 let modules = data.billing?.activeModules || [];
                 // Map old cpanel key to cpanel-full or cpanel-only
                 if (modules.includes('cpanel')) {
-                    modules = modules.filter(m => m !== 'cpanel');
+                    modules = modules.filter((m: string) => m !== 'cpanel');
                     const plan = data.billing?.plan || 'premium';
                     if (plan === 'basic') {
                         if (!modules.includes('cpanel-only')) modules.push('cpanel-only');
@@ -83,77 +84,22 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
         return () => unsubscribe();
     }, [activeHotelCode, user]);
 
+    const [moduleParam, setModuleParam] = useState<string | null>(null);
+
     React.useEffect(() => {
-        if (activeModules !== null) {
+        if (typeof window !== "undefined") {
             const searchParams = new URLSearchParams(window.location.search);
-            const moduleParam = searchParams.get("module");
-
-            const isPathForbidden = (path: string, mod: string | null) => {
-                if (path === '/select-module' || path === '/superadmin' || path === '/login') {
-                    return false;
-                }
-                if (path.startsWith('/innalytics')) {
-                    return activeModules !== null && !activeModules.includes('innalytics') && !activeModules.includes('inalytics');
-                }
-
-                // If cpanel-full is not active, block forbidden landing page sub-paths
-                if (activeModules !== null && !activeModules.includes('cpanel-full')) {
-                    const forbiddenCPanelPaths = [
-                        '/hero',
-                        '/room-type',
-                        '/about',
-                        '/gallery',
-                        '/footer',
-                        '/attractions',
-                        '/promo',
-                        '/packages',
-                        '/seo'
-                    ];
-                    if (forbiddenCPanelPaths.some(p => path === p || path.startsWith(p + '/'))) {
-                        return true;
-                    }
-                }
-
-                // Map route pathnames to module keys
-                let pathModule: string | null = null;
-                if (path.startsWith('/purchasing')) {
-                    pathModule = 'purchasing';
-                } else if (path.startsWith('/food-beverage')) {
-                    pathModule = 'food-beverage';
-                } else if (path.startsWith('/accounting') || path === '/pnl' || path === '/pnl-budget' || path === '/statements' || path === '/dsr' || path === '/budgeting') {
-                    pathModule = 'accounting';
-                } else if (path === '/invoice' || path === '/revenue-breakdown') {
-                    pathModule = 'front-office';
-                } else if (path === '/overview' || path === '/forecast') {
-                    if (mod) {
-                        pathModule = mod;
-                    } else {
-                        const hasFO = activeModules.includes('front-office');
-                        const hasHK = activeModules.includes('housekeeping');
-                        if (!hasFO && !hasHK) {
-                            return true;
-                        }
-                        return false;
-                    }
-                }
-
-                const resolvedModule = mod || pathModule;
-
-                // CPanel module itself is allowed for Logo and Users settings even if cpanel-full is not in activeModules
-                if (resolvedModule && resolvedModule !== 'cpanel') {
-                    if (!activeModules.includes(resolvedModule)) {
-                        return true;
-                    }
-                }
-
-                return false;
-            };
-
-            if (isPathForbidden(pathname, moduleParam)) {
-                router.push('/select-module');
-            }
+            setModuleParam(searchParams.get("module"));
         }
-    }, [pathname, activeModules, router]);
+    }, [pathname]);
+
+    const isPathAllowed = isPathAllowedForUser(pathname, moduleParam, user, activeModules);
+
+    React.useEffect(() => {
+        if (!loading && user && !isPathAllowed) {
+            router.push('/select-module');
+        }
+    }, [pathname, isPathAllowed, user, loading, router]);
 
 
 
@@ -296,10 +242,12 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                             setIsCollapsed={setIsCollapsed}
                         />
                     ) : (
-                        <Sidebar
-                            isCollapsed={isCollapsed}
-                            setIsCollapsed={setIsCollapsed}
-                        />
+                        <React.Suspense fallback={<aside className="sidebar" />}>
+                            <Sidebar
+                                isCollapsed={isCollapsed}
+                                setIsCollapsed={setIsCollapsed}
+                            />
+                        </React.Suspense>
                     )
                 )}
                 {/* Mobile Overlay */}
@@ -313,7 +261,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                     className="main-content"
                     style={hideSidebar ? { marginLeft: 0, maxWidth: "100vw", width: "100%", paddingTop: 0 } : undefined}
                 >
-                    <div className={`main-scroll-container ${isChannelManagerPage || pathname.startsWith("/rate-inventory") || isInnalyticsPage || isFnbRealtimePage || pathname.startsWith("/users") ? "main-scroll-container-wide" : ""}`} style={isFnbRealtimePage ? { padding: 0, maxWidth: "100%", margin: 0 } : undefined}>
+                    <div className={`main-scroll-container ${isChannelManagerPage || pathname.startsWith("/rate-inventory") || isInnalyticsPage || isFnbRealtimePage || pathname.startsWith("/users") || pathname.startsWith("/hrd") ? "main-scroll-container-wide" : ""}`} style={isFnbRealtimePage ? { padding: 0, maxWidth: "100%", margin: 0 } : undefined}>
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={pathname}
@@ -325,7 +273,25 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                                 className="section-wrapper"
                                 style={isFnbRealtimePage ? { padding: 0, maxWidth: "100%", margin: 0 } : undefined}
                             >
-                                {children}
+                                {isPathAllowed ? (
+                                    children
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+                                        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 text-amber-500">
+                                            <ShieldAlert size={32} />
+                                        </div>
+                                        <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-100 mb-2">Akses Halaman Dibatasi</h2>
+                                        <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-md mb-6 leading-relaxed">
+                                            Akun Anda tidak memiliki hak akses untuk membuka halaman ini. Hubungi General Manager atau Administrator hotel untuk pembaharuan izin akun Anda.
+                                        </p>
+                                        <button
+                                            onClick={() => router.push('/select-module')}
+                                            className="px-5 py-2.5 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium hover:opacity-90 transition-all shadow-sm"
+                                        >
+                                            Kembali ke Menu Utama
+                                        </button>
+                                    </div>
+                                )}
                             </motion.div>
                         </AnimatePresence>
 
@@ -351,7 +317,11 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                         )}
                     </div>
                 </main>
-                {!isSuperadminPage && !isInnalyticsPage && !isFnbRealtimePage && <MobileBottomNav />}
+                {!isSuperadminPage && !isInnalyticsPage && !isFnbRealtimePage && (
+                    <React.Suspense fallback={null}>
+                        <MobileBottomNav />
+                    </React.Suspense>
+                )}
                 <BillingAlertModal />
             </div>
         </div>

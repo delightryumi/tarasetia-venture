@@ -25,6 +25,8 @@ import { LoginSection } from '@/components/sections/login/LoginSection';
 import { db } from '@/lib/firebase';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { hasPermission, isUserSuperadmin } from '@/lib/permissionCheck';
+import { COMPREHENSIVE_PERMISSION_GROUPS } from '@/components/sections/users/permissionConfig';
 
 // Import newly created modular components
 import { IntroSection } from '@/components/select-module/IntroSection';
@@ -45,10 +47,10 @@ export default function SelectModulePage() {
     setActiveHotelCode
   } = useAuth();
   const router = useRouter();
-  const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
-  const [isSuperadmin, setIsSuperadmin] = useState(false);
-  const [userRole, setUserRole] = useState<string>("");
-  const [loadingPerms, setLoadingPerms] = useState(true);
+  const isSuperadmin = isUserSuperadmin(user);
+  const userPermissions = user?.permissions || {};
+  const userRole = user?.role || "";
+  const loadingPerms = authLoading;
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('system');
   const [showGrid, setShowGrid] = useState(false);
@@ -142,49 +144,6 @@ export default function SelectModulePage() {
     };
   }, []);
 
-  const fetchPermissions = async () => {
-    if (!user?.email) {
-      setLoadingPerms(false);
-      return;
-    }
-
-    // Fallback cepat: jika AuthContext sudah konfirmasi superadmin
-    if ((user as any).role === "superadmin") {
-      setIsSuperadmin(true);
-      setLoadingPerms(false);
-      return;
-    }
-
-    try {
-      const userDocId = user.email.toLowerCase().replace(/[@.]/g, '_');
-      const userSnap = await getDoc(
-        doc(getHotelCollection(db, "users_master"), userDocId)
-      );
-
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        const role = userData.role;
-        setUserRole(role || "");
-
-        if (role === "superadmin") {
-          setIsSuperadmin(true);
-          setLoadingPerms(false);
-          return;
-        }
-
-        setUserPermissions(userData.permissions || {});
-      }
-    } catch (err) {
-      console.error("Error fetching permissions:", err);
-    } finally {
-      setLoadingPerms(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPermissions();
-  }, [user, activeHotelCode]);
-
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
@@ -207,57 +166,115 @@ export default function SelectModulePage() {
   };
 
   const hasAccess = (moduleKey: string) => {
-    // Active modules restrictions if loaded (CPanel is always allowed for basic settings)
+    // 1. Superadmin has full unrestricted access to all modules in the platform
+    if (isSuperadmin) return true;
+
+    // 2. Active modules restrictions if loaded (CPanel is always allowed for basic settings)
     if (activeModules !== null && moduleKey !== 'cpanel') {
       if (!activeModules.includes(moduleKey)) {
         return false;
       }
     }
 
-    if (isSuperadmin) return true;
+    if (!user) return false;
 
-    if (!userPermissions) return false;
+    // Special check for channel-manager: superadmin or explicit second backup
+    if (moduleKey === 'channel-manager') {
+      return (
+        user?.permissions?.['channel-manager'] === true &&
+        hasPermission(user, 'channel-manager', 'module_channel_manager')
+      );
+    }
+
+    // Match all permission groups for this module
+    const groups = COMPREHENSIVE_PERMISSION_GROUPS.filter(
+      (g) => g.moduleKey === moduleKey
+    );
+
+    if (groups.length > 0) {
+      // Return true if module group permission is granted, or ANY individual sub-permission is granted
+      return groups.some((group) => {
+        if (hasPermission(user, group.id, group.id)) return true;
+        return group.permissions.some((p) => hasPermission(user, p.id, group.id));
+      });
+    }
+
+    // Fallback direct check
+    return hasPermission(user, moduleKey);
+  };
+
+  const getModuleFirstHref = (moduleKey: string, fallback: string): string => {
+    if (isSuperadmin) return fallback;
+    if (!user) return fallback;
 
     switch (moduleKey) {
-      case 'innalytics':
-      case 'inalytics':
-        return userPermissions['module_innalytics'] !== undefined
-          ? !!userPermissions['module_innalytics']
-          : userPermissions['innalytics'] !== false;
-      case 'pos':
-        return userPermissions['module_pos'] !== undefined
-          ? !!userPermissions['module_pos']
-          : userPermissions['pos'] !== false;
       case 'front-office':
-        return userPermissions['module_front_office'] !== undefined
-          ? !!userPermissions['module_front_office']
-          : (userPermissions['overview'] !== false || userPermissions['forecast'] !== false || userPermissions['invoice'] !== false);
+        if (hasPermission(user, 'overview', 'module_front_office')) return '/overview?module=front-office';
+        if (hasPermission(user, 'fo_walkin', 'module_front_office')) return '/forecast/add?module=front-office';
+        if (hasPermission(user, 'rate-inventory', 'module_front_office')) return '/rate-inventory?module=front-office';
+        if (hasPermission(user, 'forecast', 'module_front_office')) return '/forecast?module=front-office';
+        if (hasPermission(user, 'revenue-breakdown', 'module_front_office')) return '/revenue-breakdown?module=front-office';
+        if (hasPermission(user, 'invoice', 'module_front_office')) return '/invoice?module=front-office';
+        if (hasPermission(user, 'digital-checkin', 'module_front_office')) return '/digital-checkin?module=front-office';
+        if (hasPermission(user, 'confirmation-letter', 'module_front_office')) return '/confirmation-letter?module=front-office';
+        if (hasPermission(user, 'inventory-control', 'module_front_office')) return '/inventory-control?module=front-office';
+        if (hasPermission(user, 'purchase-order', 'module_front_office')) return '/front-office/purchase-order';
+        return fallback;
+
       case 'housekeeping':
-        return userPermissions['module_housekeeping'] !== undefined
-          ? !!userPermissions['module_housekeeping']
-          : (userPermissions['overview'] !== false || userPermissions['forecast'] !== false);
-      case 'accounting':
-        return userPermissions['module_accounting'] !== undefined
-          ? !!userPermissions['module_accounting']
-          : (userPermissions['pnl'] !== false || userPermissions['pnl-budget'] !== false || userPermissions['dsr'] !== false || userPermissions['budgeting'] !== false || userPermissions['statements'] !== false);
-      case 'purchasing':
-        return userPermissions['module_purchasing'] !== undefined
-          ? !!userPermissions['module_purchasing']
-          : userPermissions['purchasing'] !== false;
+        if (hasPermission(user, 'hk_overview', 'module_housekeeping') || hasPermission(user, 'overview', 'module_housekeeping')) {
+          return '/overview?module=housekeeping';
+        }
+        if (hasPermission(user, 'forecast', 'module_housekeeping')) return '/forecast?module=housekeeping';
+        if (hasPermission(user, 'purchase-order', 'module_housekeeping')) return '/housekeeping/purchase-order';
+        return fallback;
+
       case 'food-beverage':
-        return userPermissions['module_food_beverage'] !== undefined
-          ? !!userPermissions['module_food_beverage']
-          : userPermissions['food-beverage'] !== false;
-      case 'cpanel':
-        return userPermissions['module_cpanel'] !== undefined
-          ? !!userPermissions['module_cpanel']
-          : userPermissions['users'] !== false;
+        if (hasPermission(user, 'food-beverage-ledger', 'module_food_beverage')) return '/food-beverage/ledger?module=food-beverage';
+        if (hasPermission(user, 'food-beverage-performance', 'module_food_beverage')) return '/food-beverage/performance?module=food-beverage';
+        if (hasPermission(user, 'food-beverage-realtime', 'module_food_beverage')) return '/food-beverage/realtime?module=food-beverage';
+        if (hasPermission(user, 'purchase-order', 'module_food_beverage')) return '/food-beverage/purchase-order';
+        return fallback;
+
+      case 'purchasing':
+        if (hasPermission(user, 'purchasing', 'module_purchasing')) return '/purchasing';
+        if (hasPermission(user, 'store-requisition', 'module_purchasing')) return '/purchasing/store-requisition';
+        if (hasPermission(user, 'purchase-requisition', 'module_purchasing')) return '/purchasing/purchase-requisition';
+        if (hasPermission(user, 'daily-market-list', 'module_purchasing')) return '/purchasing/daily-market-list';
+        if (hasPermission(user, 'purchase-order', 'module_purchasing')) return '/purchasing/purchase-order';
+        if (hasPermission(user, 'stock-opname', 'module_purchasing')) return '/purchasing/stock-opname';
+        if (hasPermission(user, 'items', 'module_purchasing')) return '/purchasing/items';
+        if (hasPermission(user, 'suppliers', 'module_purchasing')) return '/purchasing/suppliers';
+        return fallback;
+
+      case 'accounting':
+        if (hasPermission(user, 'pnl', 'module_accounting')) return '/pnl?module=accounting';
+        if (hasPermission(user, 'pnl-budget', 'module_accounting')) return '/pnl-budget?module=accounting';
+        if (hasPermission(user, 'dsr', 'module_accounting')) return '/dsr?module=accounting';
+        if (hasPermission(user, 'budgeting', 'module_accounting')) return '/budgeting?module=accounting';
+        if (hasPermission(user, 'statements', 'module_accounting')) return '/statements?module=accounting';
+        if (hasPermission(user, 'purchase-order', 'module_accounting')) return '/accounting/purchase-order';
+        return fallback;
+
+      case 'innalytics':
+        if (hasPermission(user, 'innalytics', 'module_innalytics')) return '/innalytics?view=dashboard';
+        if (hasPermission(user, 'ina_reports', 'module_innalytics')) return '/innalytics?view=reports';
+        return fallback;
+
       case 'hrd':
-        return userPermissions['module_hrd'] !== undefined
-          ? !!userPermissions['module_hrd']
-          : userPermissions['hrd'] !== false;
+        if (hasPermission(user, 'hrd', 'module_hrd')) return '/hrd?module=hrd&tab=staf';
+        if (hasPermission(user, 'hrd_attendance', 'module_hrd')) return '/hrd?module=hrd&tab=monitor';
+        if (hasPermission(user, 'hrd_shifts', 'module_hrd')) return '/hrd?module=hrd&tab=shift';
+        if (hasPermission(user, 'hrd_scheduling', 'module_hrd')) return '/hrd?module=hrd&tab=plotting';
+        if (hasPermission(user, 'hrd_leaves', 'module_hrd')) return '/hrd?module=hrd&tab=pengajuan';
+        if (hasPermission(user, 'hrd_overtime', 'module_hrd')) return '/hrd?module=hrd&tab=lembur';
+        if (hasPermission(user, 'hrd_reports', 'module_hrd')) return '/hrd?module=hrd&tab=laporan';
+        if (hasPermission(user, 'hrd_payroll', 'module_hrd')) return '/hrd?module=hrd&tab=penggajian';
+        if (hasPermission(user, 'hrd_settings', 'module_hrd')) return '/hrd?module=hrd&tab=setting';
+        return fallback;
+
       default:
-        return false;
+        return fallback;
     }
   };
 
@@ -276,7 +293,7 @@ export default function SelectModulePage() {
       title: 'Front Office',
       subtitle: 'Reception & Desk',
       description: 'Reservations & guest services',
-      href: '/overview?module=front-office',
+      href: getModuleFirstHref('front-office', '/overview?module=front-office'),
       active: hasAccess('front-office'),
       icon: 'domain',
       image: '/images/modules/fo.png',
@@ -286,7 +303,7 @@ export default function SelectModulePage() {
       title: 'Inalytics',
       subtitle: 'Analytics & Intelligence',
       description: 'Performance, channels & statistical reports',
-      href: '/innalytics',
+      href: getModuleFirstHref('innalytics', '/innalytics'),
       active: hasAccess('innalytics'),
       icon: 'trending_up',
       image: '/images/modules/innalytics.png',
@@ -296,7 +313,7 @@ export default function SelectModulePage() {
       title: 'House Keeping',
       subtitle: 'Cleaning & Status',
       description: 'Room checkouts & maintenance',
-      href: '/overview?module=housekeeping',
+      href: getModuleFirstHref('housekeeping', '/overview?module=housekeeping'),
       active: hasAccess('housekeeping'),
       icon: 'cleaning_services',
       image: '/images/modules/hk.png',
@@ -306,7 +323,7 @@ export default function SelectModulePage() {
       title: 'Food & Beverage',
       subtitle: 'Dining & Services',
       description: 'Restaurant, room service & kitchen',
-      href: '/food-beverage/ledger?module=food-beverage',
+      href: getModuleFirstHref('food-beverage', '/food-beverage/ledger?module=food-beverage'),
       active: hasAccess('food-beverage'),
       icon: 'restaurant',
       image: '/images/modules/fb.png',
@@ -316,7 +333,7 @@ export default function SelectModulePage() {
       title: 'Purchasing',
       subtitle: 'Inventory & Stock',
       description: 'Suppliers, orders & materials',
-      href: '/purchasing',
+      href: getModuleFirstHref('purchasing', '/purchasing'),
       active: hasAccess('purchasing'),
       icon: 'inventory',
       image: '/images/modules/purchasing.png',
@@ -326,7 +343,7 @@ export default function SelectModulePage() {
       title: 'Accounting',
       subtitle: 'Finance & Ledger',
       description: 'Balances, reports & audits',
-      href: '/pnl?module=accounting',
+      href: getModuleFirstHref('accounting', '/pnl?module=accounting'),
       active: hasAccess('accounting'),
       icon: 'calculate',
       image: '/images/modules/accounting.png',
@@ -336,7 +353,7 @@ export default function SelectModulePage() {
       title: 'HRD & Absensi',
       subtitle: 'Staff & Shift',
       description: 'Manage staff, attendance & payroll',
-      href: '/hrd?module=hrd',
+      href: getModuleFirstHref('hrd', '/hrd?module=hrd'),
       active: hasAccess('hrd'),
       icon: 'badge',
       image: '/images/modules/hrd.png',
@@ -344,8 +361,9 @@ export default function SelectModulePage() {
     },
   ];
 
-  // Tambahkan kartu Channel Manager & Superadmin secara dinamis HANYA untuk superadmin
-  if (isSuperadmin) {
+  // Channel Manager: Khusus Superadmin atau user yang ditunjuk sebagai Second Backup
+  const canAccessChannelManager = isSuperadmin || (user?.permissions?.['channel-manager'] === true && hasPermission(user, 'channel-manager', 'module_channel_manager'));
+  if (canAccessChannelManager) {
     menus.push({
       title: 'Channel Manager',
       subtitle: 'OTA & Distribution',
@@ -356,6 +374,10 @@ export default function SelectModulePage() {
       image: '/images/modules/channel-manager.png',
       colSpan: 1 as const,
     });
+  }
+
+  // Superadmin: HANYA mutlak untuk confirmed Superadmin
+  if (isSuperadmin) {
     menus.push({
       title: 'Superadmin',
       subtitle: 'Central Registry',
@@ -423,7 +445,7 @@ export default function SelectModulePage() {
             )}
 
             {/* Hotel Selector / Badge */}
-            {isSuperadmin ? (
+            {isSuperadmin || (hotelsList && hotelsList.length > 1) ? (
               <div className={`relative hidden sm:flex items-center h-9 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[13px] transition-all ${styles.hotelBadge}`}>
                 <select
                   value={activeHotelCode}
@@ -440,7 +462,7 @@ export default function SelectModulePage() {
                     paddingLeft: '12px',
                   }}
                 >
-                  <option value="0">— Superadmin (tidak ada preview) —</option>
+                  {isSuperadmin && <option value="0">— Superadmin (tidak ada preview) —</option>}
                   {hotelsList && hotelsList.length > 0 && (
                     hotelsList.map((hotel) => (
                       <option key={hotel.hotelCode} value={hotel.hotelCode}>
@@ -530,7 +552,7 @@ export default function SelectModulePage() {
                       {/* Active Hotel Info (Mobile only) */}
                       <div className="px-3 py-2 bg-[#f8fafc] dark:bg-white/[0.03] rounded-[10px] mb-2 flex flex-col gap-0.5 border-t border-slate-200 dark:border-white/[0.08] pt-2 mt-1 sm:hidden">
                         <span className="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest">Active Hotel</span>
-                        {isSuperadmin ? (
+                        {isSuperadmin || (hotelsList && hotelsList.length > 1) ? (
                           <select
                             value={activeHotelCode}
                             onChange={(e) => {
@@ -539,7 +561,7 @@ export default function SelectModulePage() {
                             }}
                             className="w-full mt-1 border border-slate-300 dark:border-white/[0.08] rounded-[6px] py-1 px-2 text-xs bg-white dark:bg-[#1c1c1e] text-neutral-900 dark:text-[#f4f4f5] focus:outline-none"
                           >
-                            <option value="0">— Superadmin (tidak ada preview) —</option>
+                            {isSuperadmin && <option value="0">— Superadmin (tidak ada preview) —</option>}
                             {hotelsList && hotelsList.length > 0 && (
                               hotelsList.map((hotel) => (
                                 <option key={hotel.hotelCode} value={hotel.hotelCode}>
@@ -557,31 +579,35 @@ export default function SelectModulePage() {
                         )}
                       </div>
 
-                      {hasAccess('cpanel') && (
+                      {(hasPermission(user, 'logo', 'module_cpanel') || hasPermission(user, 'users', 'module_cpanel')) && (
                         <>
-                          <button
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              router.push('/logo?module=cpanel');
-                            }}
-                            className={styles.dropdownItem}
-                          >
-                            <Settings className={styles.dropdownIcon} />
-                            <span>CPanel</span>
-                          </button>
+                          {hasPermission(user, 'logo', 'module_cpanel') && (
+                            <button
+                              onClick={() => {
+                                setIsMenuOpen(false);
+                                router.push('/logo?module=cpanel');
+                              }}
+                              className={styles.dropdownItem}
+                            >
+                              <Settings className={styles.dropdownIcon} />
+                              <span>CPanel</span>
+                            </button>
+                          )}
 
-                          <button
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              router.push('/users?module=cpanel');
-                            }}
-                            className={styles.dropdownItem}
-                          >
-                            <Users className={styles.dropdownIcon} />
-                            <span>User Settings</span>
-                          </button>
+                          {hasPermission(user, 'users', 'module_cpanel') && (
+                            <button
+                              onClick={() => {
+                                setIsMenuOpen(false);
+                                router.push('/users?module=cpanel');
+                              }}
+                              className={styles.dropdownItem}
+                            >
+                              <Users className={styles.dropdownIcon} />
+                              <span>User Settings</span>
+                            </button>
+                          )}
 
-                          {(user?.role === "admin" || userRole === "admin") && (
+                          {(isSuperadmin || user?.role === "admin" || userRole === "admin") && (
                             <button
                               onClick={() => {
                                 setIsMenuOpen(false);
@@ -652,7 +678,7 @@ export default function SelectModulePage() {
             menus={menus.filter(m => m.active)}
             user={user}
             isSuperadmin={isSuperadmin}
-            onRefresh={fetchPermissions}
+            onRefresh={async () => {}}
             onSignOut={signOutUser}
             isRefreshing={loadingPerms}
           />

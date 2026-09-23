@@ -5,7 +5,8 @@ import {
     Gift, Package, Globe, Users, ClipboardText,
     Coffee, Pulse, Storefront, FileImage,
     Notebook, UsersThree, Bed, Info, ShoppingCart,
-    IdentificationCard, FileXls, ChartBar, SlidersHorizontal, Receipt
+    IdentificationCard, FileXls, ChartBar, SlidersHorizontal, Receipt,
+    CalendarCheck, UserCheck, Clock, CurrencyCircleDollar, PlusCircle
 } from "@phosphor-icons/react";
 import { NavItemType } from "./types";
 import { SpringOptions } from "framer-motion";
@@ -44,7 +45,17 @@ export const allNavItems: NavItemType[] = [
     { id: "seo", label: "SEO & Metadata", icon: <Globe size={18} weight="bold" /> },
     { id: "users", label: "Manajemen User", icon: <Users size={18} weight="bold" /> },
     { id: "superadmin", label: "Super Admin", icon: <Gear size={18} weight="bold" /> },
-    { id: "hrd", label: "HRD & Absensi", icon: <ClipboardText size={18} weight="bold" /> },
+    { id: "hrd", label: "Manajemen Staf", icon: <Users size={18} weight="bold" /> },
+    { id: "hrd_attendance", label: "Monitor Presensi & GPS", icon: <UserCheck size={18} weight="bold" /> },
+    { id: "hrd_shifts", label: "Master Shift Dasar", icon: <Clock size={18} weight="bold" /> },
+    { id: "hrd_scheduling", label: "Plotting Jadwal & Roster", icon: <CalendarCheck size={18} weight="bold" /> },
+    { id: "hrd_leaves", label: "Pengajuan Cuti & Izin", icon: <ClipboardText size={18} weight="bold" /> },
+    { id: "hrd_overtime", label: "Persetujuan Lembur", icon: <SlidersHorizontal size={18} weight="bold" /> },
+    { id: "hrd_reports", label: "Rekap Laporan Absensi", icon: <ChartBar size={18} weight="bold" /> },
+    { id: "hrd_payroll", label: "Penggajian Payroll", icon: <CurrencyCircleDollar size={18} weight="bold" /> },
+    { id: "hrd_settings", label: "Setting Lokasi & QR", icon: <Gear size={18} weight="bold" /> },
+    { id: "ina_reports", label: "Laporan & Statistik OTA", icon: <ChartBar size={18} weight="bold" /> },
+    { id: "fo_walkin", label: "Input Booking (Walk-In)", icon: <PlusCircle size={18} weight="bold" /> },
 
     { id: "purchasing", label: "Dasbor", icon: <House size={18} weight="bold" /> },
     { id: "store-requisition", label: "Store Requisition", icon: <FileText size={18} weight="bold" /> },

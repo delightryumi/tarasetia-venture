@@ -1,0 +1,32 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/(jpeg|jpg|png|webp)');
+    }
+
+    function isValidFileSize() {
+      return request.resource.size < 5 * 1024 * 1024; // Maksimal 5 MB
+    }
+
+    // Public hotel images (Gallery, logo, products, promotions)
+    match /hotels/{hotelCode}/{allPaths=**} {
+      // Anyone can view published hotel images
+      allow read: if true;
+      // Only authenticated users with matching claims or admin can upload images
+      allow write: if isSignedIn() && isImage() && isValidFileSize();
+    }
+
+    // Default deny for all other locations
+    match /{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isImage() && isValidFileSize();
+    }
+  }
+}

@@ -11,6 +11,7 @@ import styles from "@/app/select-module/select-module.module.css";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getHotelCollection } from "@/lib/firestoreHelper";
+import { hasPermission, isUserSuperadmin } from "@/lib/permissionCheck";
 
 interface StatusWidgetProps {
     onMenuClick?: () => void;
@@ -22,9 +23,8 @@ export const StatusWidget = () => {
     const pathname = usePathname();
     const router = useRouter();
     const { user, signOutUser, activeHotelCode, activeHotelName, hotelsList, setActiveHotelCode } = useAuth();
-    const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
-    const [isSuperadmin, setIsSuperadmin] = useState(false);
-    const [userRole, setUserRole] = useState<string>("");
+    const isSuperadmin = isUserSuperadmin(user);
+    const userRole = user?.role || "";
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('system');
     const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -60,50 +60,9 @@ export const StatusWidget = () => {
         }
     };
 
-    const fetchPermissions = async () => {
-        if (!user?.email) return;
-        try {
-            // Fast path: AuthContext sudah konfirmasi superadmin
-            if ((user as any).role === "superadmin") {
-                setIsSuperadmin(true);
-                return;
-            }
-            const userDocId = user.email.toLowerCase().replace(/[@.]/g, '_');
-            const userSnap = await getDoc(
-                doc(getHotelCollection(db, "users_master"), userDocId)
-            );
-            if (userSnap.exists()) {
-                const userData = userSnap.data();
-                const role = userData.role;
-                setUserRole(role || "");
-                if (role === "superadmin") {
-                    setIsSuperadmin(true);
-                    return;
-                }
-                setUserPermissions(userData.permissions || {});
-            }
-        } catch (err) {
-            console.error("Error fetching permissions in StatusWidget:", err);
-        }
-    };
-
-
-    useEffect(() => {
-        fetchPermissions();
-    }, [user, activeHotelCode]);
-
-    const hasAccess = (moduleKey: string) => {
-        if (isSuperadmin) return true;
-        if (!userPermissions) return false;
-        switch (moduleKey) {
-            case 'cpanel':
-                return userPermissions['module_cpanel'] !== undefined
-                    ? !!userPermissions['module_cpanel']
-                    : userPermissions['users'] !== false;
-            default:
-                return false;
-        }
-    };
+    const canAccessCpanel = hasPermission(user, 'logo', 'module_cpanel');
+    const canAccessUsers = hasPermission(user, 'users', 'module_cpanel');
+    const canAccessProfile = isSuperadmin || user?.role?.toLowerCase() === "admin";
 
     return (
         <div className="status-widget-container flex items-center justify-between w-full z-50">
@@ -239,31 +198,35 @@ export const StatusWidget = () => {
                                         </span>
                                     </div>
 
-                                    {hasAccess('cpanel') && (
+                                    {(canAccessCpanel || canAccessUsers || canAccessProfile) && (
                                         <>
-                                            <button
-                                                onClick={() => {
-                                                    setIsMenuOpen(false);
-                                                    router.push('/logo?module=cpanel');
-                                                }}
-                                                className={styles.dropdownItem}
-                                            >
-                                                <Settings className={styles.dropdownIcon} />
-                                                <span>CPanel</span>
-                                            </button>
+                                            {canAccessCpanel && (
+                                                <button
+                                                    onClick={() => {
+                                                        setIsMenuOpen(false);
+                                                        router.push('/logo?module=cpanel');
+                                                    }}
+                                                    className={styles.dropdownItem}
+                                                >
+                                                    <Settings className={styles.dropdownIcon} />
+                                                    <span>CPanel</span>
+                                                </button>
+                                            )}
 
-                                            <button
-                                                onClick={() => {
-                                                    setIsMenuOpen(false);
-                                                    router.push('/users?module=cpanel');
-                                                }}
-                                                className={styles.dropdownItem}
-                                            >
-                                                <Users className={styles.dropdownIcon} />
-                                                <span>User Settings</span>
-                                            </button>
+                                            {canAccessUsers && (
+                                                <button
+                                                    onClick={() => {
+                                                        setIsMenuOpen(false);
+                                                        router.push('/users?module=cpanel');
+                                                    }}
+                                                    className={styles.dropdownItem}
+                                                >
+                                                    <Users className={styles.dropdownIcon} />
+                                                    <span>User Settings</span>
+                                                </button>
+                                            )}
 
-                                            {(user?.role === "admin" || userRole === "admin") && (
+                                            {canAccessProfile && (
                                                 <button
                                                     onClick={() => {
                                                         setIsMenuOpen(false);

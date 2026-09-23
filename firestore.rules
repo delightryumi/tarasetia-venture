@@ -34,7 +34,10 @@ service cloud.firestore {
 
     // Memverifikasi apakah user memiliki izin akses ke hotelCode yang diminta (Multi-Tenancy)
     function isAssignedToHotel(hotelCode) {
-      return isSignedIn() && request.auth.token.hotelCode == hotelCode;
+      return isSignedIn() && (
+        request.auth.token.hotelCode == hotelCode || 
+        (request.auth.token.allowedOutlets != null && hotelCode in request.auth.token.allowedOutlets)
+      );
     }
 
     // Memverifikasi izin spesifik dari map klaim token (jika disematkan)
@@ -49,9 +52,9 @@ service cloud.firestore {
     // MULTI-HOTEL CRS TENANT ISOLATION RULES
     // =========================================================================
 
-    // Koleksi Master Hotels: Hanya Superadmin yang bisa mengelola registrasi hotel
+    // Koleksi Master Hotels: Hanya Superadmin atau Staff resmi hotel yang bisa membaca
     match /hotels/{hotelCode} {
-      allow read: if isSignedIn(); 
+      allow read: if isSuperadmin() || isAssignedToHotel(hotelCode); 
       allow write: if isSuperadmin();
 
       // Sub-koleksi operasional milik hotelCode tertentu (Kamar, POS, PNL, Keuangan)

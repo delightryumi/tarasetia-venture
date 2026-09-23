@@ -15,9 +15,6 @@ const nextConfig = {
       'via.placeholder.com',
     ],
   },
-  env: {
-    WEATHER_API: process.env.WEATHER_API,
-  },
 };
 
 export default nextConfig;

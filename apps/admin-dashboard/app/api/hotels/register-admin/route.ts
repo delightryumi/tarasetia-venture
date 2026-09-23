@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
 import { sendWelcomeEmail } from "@/lib/emailHelper";
 import { adminAuth } from "@/lib/firebaseAdmin";
+import { getAuthenticatedUser } from "@/lib/security/serverAuth";
+import { sanitizeIdentifier, isValidEmail } from "@/lib/security/inputSanitizer";
+import crypto from "crypto";
 
 export async function POST(request: Request) {
   try {
-    const { email, hotelCode, hotelName } = await request.json();
+    const authUser = await getAuthenticatedUser(request);
+    const body = await request.json();
+    const { email: rawEmail, hotelCode: rawHotelCode, hotelName } = body;
+
+    const email = (rawEmail || "").trim().toLowerCase();
+    const hotelCode = sanitizeIdentifier(rawHotelCode);
 
     if (!email || !hotelCode) {
       return NextResponse.json(
@@ -13,15 +21,24 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log("DEBUG ENV DI SERVER-SIDE API:");
-    console.log("- SMTP_HOST:", process.env.SMTP_HOST);
-    console.log("- SMTP_PORT:", process.env.SMTP_PORT);
-    console.log("- SMTP_USER:", process.env.SMTP_USER);
-    console.log("- SMTP_PASS:", process.env.SMTP_PASS ? "TERSEDIA (Panjang: " + process.env.SMTP_PASS.length + ")" : "UNDEFINED / KOSONG");
-    console.log("- SMTP_FROM_EMAIL:", process.env.SMTP_FROM_EMAIL);
+    if (!isValidEmail(email)) {
+      return NextResponse.json(
+        { error: "Format alamat email tidak valid." },
+        { status: 400 }
+      );
+    }
 
-    // Generate password default yang aman dan unik: Setara[hotelCode]!
-    const defaultPassword = `Setara${hotelCode}!`;
+    // Role check: Only authenticated Superadmin can register hotel admins
+    if (!authUser || !authUser.isSuperadmin) {
+      return NextResponse.json(
+        { error: "Akses Ditolak: Hanya Superadmin yang berwenang mendaftarkan admin hotel." },
+        { status: 403 }
+      );
+    }
+
+    // Generate strong unique random temporary password
+    const randomSuffix = crypto.randomBytes(4).toString("hex");
+    const defaultPassword = `Setara!${randomSuffix}`;
 
     let uid = "";
     let alreadyExists = false;
@@ -49,7 +66,7 @@ export async function POST(request: Request) {
       if (err.code === "auth/user-not-found") {
         // Create new Auth user
         const newUser = await adminAuth.createUser({
-          email: email.trim(),
+          email,
           password: defaultPassword,
           displayName: `${hotelName || "Outlet"} Admin`,
         });
@@ -58,7 +75,8 @@ export async function POST(request: Request) {
         // Set custom claims
         await adminAuth.setCustomUserClaims(uid, { role: "admin", hotelCode, allowedOutlets: [hotelCode] });
       } else {
-        throw err;
+        console.error("Auth error in register-admin:", err);
+        return NextResponse.json({ error: "Gagal memproses pendaftaran user di autentikasi." }, { status: 500 });
       }
     }
 
@@ -68,35 +86,41 @@ export async function POST(request: Request) {
         message: "Email sudah terdaftar di Auth, claims berhasil diperbarui dan dokumen akan ditautkan.",
         alreadyExists: true,
         defaultPassword: null,
-        emailSent: false
       });
     }
 
-    // Kirim email sambutan menggunakan Nodemailer SMTP
+    // Send Welcome Email jika akun baru dibuat
     let emailSent = false;
+    let emailError = "";
+
     try {
-      emailSent = await sendWelcomeEmail({
-        toEmail: email.trim(),
-        hotelCode,
-        hotelName: hotelName || "Properti CRS Baru",
-        defaultPassword
+      await sendWelcomeEmail({
+        toEmail: email,
+        adminName: `${hotelName || "Outlet"} Admin`,
+        hotelName: hotelName || "Hotel Anda",
+        hotelCode: hotelCode,
+        password: defaultPassword,
       });
-    } catch (emailErr) {
-      console.error("Gagal mengirim email selamat datang:", emailErr);
+      emailSent = true;
+    } catch (mailErr: any) {
+      console.error("Gagal mengirim email onboarding ke", email, ":", mailErr);
+      emailError = mailErr?.message || "Gagal mengirim email";
     }
 
     return NextResponse.json({
       success: true,
-      message: "Akun autentikasi berhasil dibuat.",
-      uid,
+      message: emailSent 
+        ? "Akun admin hotel berhasil dibuat dan email berisi kredensial telah dikirimkan."
+        : "Akun admin hotel berhasil dibuat. (Email otomatis gagal dikirimkan).",
       defaultPassword,
-      emailSent
+      emailSent,
+      emailError: emailSent ? null : emailError,
+      alreadyExists: false,
     });
-
   } catch (error: any) {
-    console.error("Error in register-admin API:", error);
+    console.error("Error registering admin:", error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan internal server." },
+      { error: "Gagal memproses registrasi admin hotel." },
       { status: 500 }
     );
   }

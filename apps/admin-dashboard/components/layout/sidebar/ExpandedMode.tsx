@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { SquaresFour, CaretDown, Lock } from "@phosphor-icons/react";
 import { NavItemType } from "./types";
+import { navigateToSidebarItem } from "./navigation";
 
 interface GroupedNavType {
     title: string;
@@ -22,6 +23,7 @@ interface ExpandedModeProps {
     expandedGroups: Record<string, boolean>;
     toggleGroup: (title: string) => void;
     setIsCollapsed: (collapsed: boolean) => void;
+    onItemClick?: (itemId: string) => void;
 }
 
 export function ExpandedMode({
@@ -35,6 +37,7 @@ export function ExpandedMode({
     expandedGroups,
     toggleGroup,
     setIsCollapsed,
+    onItemClick,
 }: ExpandedModeProps) {
     const isItemLocked = (itemId: string) => {
         if (isSuperadmin) return false;
@@ -88,38 +91,11 @@ export function ExpandedMode({
                                             transition={{ duration: 0.2 }}
                                             className={`nav-item ${activeSection === item.id ? "active" : ""}`}
                                             onClick={() => {
-                                                if (item.id === "purchasing") {
-                                                    router.push(`/purchasing?module=purchasing`);
-                                                } else if (["store-requisition", "purchase-requisition", "daily-market-list", "stock-opname", "items", "suppliers"].includes(item.id)) {
-                                                    router.push(`/purchasing/${item.id}?module=purchasing`);
-                                                } else if (item.id === "purchase-order") {
-                                                    router.push(`/${activeModule}/purchase-order`);
-                                                } else if (item.id === "food-beverage-ledger") {
-                                                    router.push(`/food-beverage/ledger?module=food-beverage`);
-                                                } else if (item.id === "food-beverage-performance") {
-                                                    router.push(`/food-beverage/performance?module=food-beverage`);
-                                                } else if (item.id === "food-beverage-product") {
-                                                    router.push(`/food-beverage/ledger?module=food-beverage`);
-                                                } else if (item.id === "food-beverage-realtime") {
-                                                    router.push(`/food-beverage/realtime?module=food-beverage`);
-                                                } else if (item.id === "pnl") {
-                                                    router.push(`/pnl?module=accounting`);
-                                                } else if (item.id === "statements") {
-                                                    router.push(`/statements?module=accounting`);
-                                                } else if (item.id === "pnl-budget") {
-                                                    router.push(`/pnl-budget?module=accounting`);
-                                                } else if (item.id === "dsr") {
-                                                    router.push(`/dsr?module=accounting`);
-                                                } else if (item.id === "budgeting") {
-                                                    router.push(`/budgeting?module=accounting`);
-                                                } else if (item.id === "inventory-control") {
-                                                    router.push(`/inventory-control?module=${activeModule}`);
-                                                } else if (item.id === "overview" || item.id === "forecast" || item.id === "confirmation-letter" || item.id === "revenue-breakdown") {
-                                                    router.push(`/${item.id}?module=${activeModule}`);
+                                                if (onItemClick) {
+                                                    onItemClick(item.id);
                                                 } else {
-                                                    router.push(`/${item.id}`);
+                                                    navigateToSidebarItem(item.id, activeModule, router, setIsCollapsed);
                                                 }
-                                                if (window.innerWidth <= 1024) setIsCollapsed(true);
                                             }}
                                         >
                                             {item.icon}
@@ -147,38 +123,11 @@ export function ExpandedMode({
                         transition={{ duration: 0.2 }}
                         className={`nav-item ${activeSection === item.id ? "active" : ""}`}
                         onClick={() => {
-                            if (item.id === "purchasing") {
-                                router.push(`/purchasing?module=purchasing`);
-                            } else if (["store-requisition", "purchase-requisition", "daily-market-list", "stock-opname", "items", "suppliers"].includes(item.id)) {
-                                router.push(`/purchasing/${item.id}?module=purchasing`);
-                            } else if (item.id === "purchase-order") {
-                                router.push(`/${activeModule}/purchase-order`);
-                            } else if (item.id === "food-beverage-ledger") {
-                                router.push(`/food-beverage/ledger?module=food-beverage`);
-                            } else if (item.id === "food-beverage-performance") {
-                                router.push(`/food-beverage/performance?module=food-beverage`);
-                            } else if (item.id === "food-beverage-product") {
-                                router.push(`/food-beverage/ledger?module=food-beverage`);
-                            } else if (item.id === "food-beverage-realtime") {
-                                router.push(`/food-beverage/realtime?module=food-beverage`);
-                            } else if (item.id === "pnl") {
-                                router.push(`/pnl?module=accounting`);
-                            } else if (item.id === "statements") {
-                                router.push(`/statements?module=accounting`);
-                            } else if (item.id === "pnl-budget") {
-                                router.push(`/pnl-budget?module=accounting`);
-                            } else if (item.id === "dsr") {
-                                router.push(`/dsr?module=accounting`);
-                            } else if (item.id === "budgeting") {
-                                router.push(`/budgeting?module=accounting`);
-                            } else if (item.id === "inventory-control") {
-                                router.push(`/inventory-control?module=${activeModule}`);
-                            } else if (item.id === "overview" || item.id === "forecast" || item.id === "confirmation-letter" || item.id === "revenue-breakdown") {
-                                router.push(`/${item.id}?module=${activeModule}`);
+                            if (onItemClick) {
+                                onItemClick(item.id);
                             } else {
-                                router.push(`/${item.id}`);
+                                navigateToSidebarItem(item.id, activeModule, router, setIsCollapsed);
                             }
-                            if (window.innerWidth <= 1024) setIsCollapsed(true);
                         }}
                     >
                         {item.icon}

@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { 
     MoreVertical, Edit3, Trash2, Lock, Building2, 
-    ShieldCheck, Crown, ShieldAlert, FileText, Smartphone
+    ShieldCheck, Crown, ShieldAlert, FileText, Smartphone, Globe
 } from "lucide-react";
 import { UserProfile } from "../types";
+import { hasPermission, isUserSuperadmin } from "@/lib/permissionCheck";
 import styles from "./UserTable.module.css";
 
 interface UserTableProps {
@@ -13,6 +14,7 @@ interface UserTableProps {
     onChangePasswordClick: (user: UserProfile) => void;
     onAssignHotelClick: (user: UserProfile) => void;
     onViewLogsClick?: (user: UserProfile) => void;
+    onToggleStatus?: (userId: string, newStatus: "active" | "inactive") => Promise<void>;
     authUser?: any;
     hotelsList?: Array<{ hotelCode: string; name: string }>;
 }
@@ -24,6 +26,7 @@ export const UserTable: React.FC<UserTableProps> = ({
     onChangePasswordClick,
     onAssignHotelClick,
     onViewLogsClick,
+    onToggleStatus,
     authUser,
     hotelsList = []
 }) => {
@@ -31,11 +34,9 @@ export const UserTable: React.FC<UserTableProps> = ({
     const [activeStatuses, setActiveStatuses] = useState<Record<string, boolean>>({});
     const menuRef = useRef<HTMLDivElement>(null);
 
-    const isRequesterSuperadmin = 
-        authUser?.role?.toLowerCase() === "superadmin" || 
-        authUser?.role?.toLowerCase() === "super_admin" ||
-        authUser?.role?.toLowerCase() === "super admin" ||
-        authUser?.email?.toLowerCase() === "superadmin@setara.co.id";
+    const isRequesterSuperadmin = isUserSuperadmin(authUser);
+    const canManageUsers = isRequesterSuperadmin || hasPermission(authUser, 'sec_user_manage', 'module_security');
+    const canToggleStatus = canManageUsers;
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -49,11 +50,21 @@ export const UserTable: React.FC<UserTableProps> = ({
     }, []);
 
     const toggleUserStatus = (userId: string, isOwnerUser: boolean) => {
-        if (isOwnerUser) return; // Cannot disable hotel owner
+        if (isOwnerUser || !canToggleStatus) return; // Hanya superadmin/admin property boleh toggle
+        const targetUser = users.find(u => u.id === userId);
+        const currentActive = activeStatuses[userId] !== undefined 
+            ? activeStatuses[userId] 
+            : (targetUser?.status ? targetUser.status === "active" : true);
+        const nextActive = !currentActive;
+        const nextStatus = nextActive ? "active" : "inactive";
+
         setActiveStatuses(prev => ({
             ...prev,
-            [userId]: prev[userId] !== undefined ? !prev[userId] : false
+            [userId]: nextActive
         }));
+        if (onToggleStatus) {
+            onToggleStatus(userId, nextStatus);
+        }
     };
 
     return (
@@ -83,23 +94,23 @@ export const UserTable: React.FC<UserTableProps> = ({
                                 !user.createdBy
                             );
 
-                            const isLockedFromCurrentViewer = (isSuperadminUser || isSystemAdmin) && !isRequesterSuperadmin;
+                            const isLockedFromCurrentViewer = ((isSuperadminUser || isSystemAdmin) && !isRequesterSuperadmin) || !canManageUsers;
                             const isMenuOpen = openMenuId === user.id;
 
-                            const isUserActive = activeStatuses[user.id] !== undefined ? activeStatuses[user.id] : true;
+                            const isUserActive = activeStatuses[user.id] !== undefined ? activeStatuses[user.id] : (user.status ? user.status === "active" : true);
                             const outletCount = user.allowedOutlets && user.allowedOutlets.length > 0 ? user.allowedOutlets.length : 1;
 
                             return (
                                 <tr key={user.id} className={styles.tr}>
-                                    {/* Column 1: Toggle Switch */}
+                                     {/* Column 1: Toggle Switch */}
                                     <td className={`${styles.td} ${styles.tdStatus}`}>
                                         <button
                                             type="button"
-                                            disabled={isOwnerUser || isLockedFromCurrentViewer}
+                                            disabled={isOwnerUser || isLockedFromCurrentViewer || !canToggleStatus}
                                             onClick={() => toggleUserStatus(user.id, isOwnerUser)}
-                                            className={`${styles.toggleSwitch} ${isUserActive ? styles.toggleOn : styles.toggleOff}`}
-                                            title={isOwnerUser ? "Owner account must remain active" : (isUserActive ? "Active" : "Inactive")}
-                                            style={isOwnerUser ? { opacity: 0.85, cursor: "default" } : {}}
+                                            className={`${styles.toggleSwitch} ${isUserActive ? styles.toggleOn : styles.toggleOff} ${!canToggleStatus ? styles.toggleLocked : ""}`}
+                                            title={isOwnerUser ? "Owner account must remain active" : (!canToggleStatus ? "Hanya Admin/Superadmin bisa ubah status" : (isUserActive ? "Active" : "Inactive"))}
+                                            style={(isOwnerUser || !canToggleStatus) ? { opacity: 0.85, cursor: !canToggleStatus ? "not-allowed" : "default" } : {}}
                                         >
                                             <span className={`${styles.toggleThumb} ${isUserActive ? styles.toggleThumbOn : styles.toggleThumbOff}`} />
                                             <span className={`${styles.toggleLabel} ${isUserActive ? styles.toggleLabelOn : styles.toggleLabelOff}`}>
@@ -141,10 +152,30 @@ export const UserTable: React.FC<UserTableProps> = ({
 
                                     {/* Column 3: User Role Name */}
                                     <td className={styles.td}>
-                                        <div style={{ display: "inline-flex", alignItems: "center" }}>
+                                        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                                             <span className={styles.roleBadge}>
                                                 {isSuperadminUser ? "Master Superadmin" : (user.role || "Staff")}
                                             </span>
+                                            {user.permissions?.["channel-manager"] === true && !isSuperadminUser && (
+                                                <span 
+                                                    style={{
+                                                        display: "inline-flex",
+                                                        alignItems: "center",
+                                                        gap: "4px",
+                                                        padding: "2px 7px",
+                                                        borderRadius: "6px",
+                                                        fontSize: "11px",
+                                                        fontWeight: 600,
+                                                        background: "rgba(37,99,235,0.08)",
+                                                        color: "#2563eb",
+                                                        border: "1px solid rgba(37,99,235,0.2)"
+                                                    }}
+                                                    title="Ditunjuk Superadmin sebagai Second Backup Channel Manager"
+                                                >
+                                                    <Globe size={11} />
+                                                    CM Backup
+                                                </span>
+                                            )}
                                             {outletCount > 1 && (
                                                 <span className={styles.outletsBadge} title={`Assigned to ${outletCount} properties`}>
                                                     <Building2 size={11} />

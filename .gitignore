@@ -1,4 +1,23 @@
-node_modules 
-.next 
-.turbo 
+node_modules
+.next
+.turbo
 apps/admin-dashboard/scratch/
+
+# Environment and sensitive keys
+.env
+.env*
+*.env
+*.env.local
+*.local
+serviceAccount*.json
+firebase-debug.log
+firebase-debug.*.log
+*.pem
+*.key
+
+# Local SQLite databases
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+prisma/*.db

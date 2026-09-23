@@ -3,7 +3,7 @@
   background: var(--s-surface-card);
   border: 1px solid var(--s-hairline);
   border-radius: var(--s-radius-lg);
-  margin-bottom: var(--s-space-lg);
+  margin-bottom: var(--s-space-md);
   overflow: hidden;
 }
 
@@ -11,26 +11,27 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--s-space-lg) var(--s-space-xl);
+  padding: 12px 18px;
   border-bottom: 1px solid var(--s-hairline);
 }
 
 @media (max-width: 768px) {
   .cardHeader {
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
+    padding: 10px 14px;
   }
 }
 
 .cardTitle {
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--s-ink);
   margin: 0;
 }
 
 .cardBody {
-  padding: var(--s-space-xl);
+  padding: 14px 18px;
 }
 
 /* KPI row */

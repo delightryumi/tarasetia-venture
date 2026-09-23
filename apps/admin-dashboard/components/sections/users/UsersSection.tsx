@@ -10,7 +10,7 @@ import {
     Gift, Package, Users, ShoppingCart, Banknote, Building2,
     BedDouble, Coffee, ShoppingBag, Calculator, Store, User as UserIcon, Archive, Star,
     Camera, ClipboardList, Layers, BarChart2, Zap, FileSpreadsheet, SlidersHorizontal, Globe,
-    Ban, Tag, XCircle, Trash2, Receipt
+    Ban, Tag, XCircle, Trash2, Receipt, ShieldAlert
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import { UserTable } from "./components/UserTable";
 import { RoleManagementTable, SystemRoleItem } from "./components/RoleManagementTable";
 import { RolePermissionDrawer } from "./components/RolePermissionDrawer";
 import { getStandardRolePermissions } from "./permissionConfig";
+import { hasPermission, isUserSuperadmin } from "@/lib/permissionCheck";
 import { AssignHotelDrawer } from "./components/AssignHotelDrawer";
 import { BlockedUsersTab } from "./components/BlockedUsersTab";
 import { SecurityPreferencesTab } from "./components/SecurityPreferencesTab";
@@ -188,6 +189,14 @@ const rise = {
 
 export const UsersSection: React.FC = () => {
     const { user: authUser, activeHotelCode, hotelsList } = useAuth();
+    const isSuper = isUserSuperadmin(authUser);
+    const canAccessUsers = isSuper || hasPermission(authUser, 'users', 'module_cpanel');
+    const canManageUsers = isSuper || hasPermission(authUser, 'sec_user_manage', 'module_security');
+    const canManageRoles = isSuper || hasPermission(authUser, 'sec_role_manage', 'module_security');
+    const canViewDevices = isSuper || hasPermission(authUser, 'sec_device_activity', 'module_security');
+    const canViewActivity = isSuper || hasPermission(authUser, 'sec_user_activity', 'module_security');
+    const canManageSecurity = isSuper || hasPermission(authUser, 'sec_policies', 'module_security');
+
     const { 
         users, loading, activeModules,
         handleSaveUser, handleDeleteUser, togglePermission, toggleModulePermission,
@@ -196,6 +205,13 @@ export const UsersSection: React.FC = () => {
 
     type TabType = "users" | "roles" | "blocked" | "devices" | "activity" | "security";
     const [activeTab, setActiveTab] = useState<TabType>("users");
+
+    React.useEffect(() => {
+        if (!canManageRoles && activeTab === "roles") {
+            setActiveTab("users");
+        }
+    }, [canManageRoles, activeTab]);
+
     const [searchQuery, setSearchQuery] = useState("");
     const [externalUsersOnly, setExternalUsersOnly] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -299,7 +315,10 @@ export const UsersSection: React.FC = () => {
             name: target.name,
             email: target.email,
             role: target.role,
-            allowedOutlets: outlets
+            allowedOutlets: outlets,
+            permissions: target.permissions || {},
+            status: target.status,
+            hotelCode: target.hotelCode || activeHotelCode
         }, target);
     };
 
@@ -385,6 +404,18 @@ export const UsersSection: React.FC = () => {
             });
         } catch (error: any) {
             toast.error(error.message || "Gagal mengubah password.");
+        }
+    };
+
+    const handleToggleUserStatus = async (userId: string, newStatus: "active" | "inactive") => {
+        try {
+            await updateDoc(doc(getHotelCollection(db, "users_master", activeHotelCode), userId), {
+                status: newStatus,
+                updatedAt: new Date().toISOString()
+            });
+            toast.success(`Status akun berhasil diubah menjadi ${newStatus === "active" ? "Aktif" : "Nonaktif"}.`);
+        } catch (err: any) {
+            toast.error("Gagal memperbarui status akun: " + (err.message || ""));
         }
     };
 
@@ -488,6 +519,20 @@ export const UsersSection: React.FC = () => {
 
     const tabMeta = getTabMeta();
 
+    if (!canAccessUsers) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+                <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 text-amber-500">
+                    <ShieldAlert size={32} />
+                </div>
+                <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-100 mb-2">Akses Dibatasi</h2>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-md mb-6 leading-relaxed">
+                    Akun Anda tidak memiliki hak akses untuk membuka halaman manajemen user. Hubungi General Manager atau Administrator properti untuk pembaharuan izin.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div className={styles.container}>
             {/* ─── Top Tabs Bar (IPMS Standard) ─── */}
@@ -500,41 +545,51 @@ export const UsersSection: React.FC = () => {
                     >
                         Users
                     </button>
-                    <button 
-                        type="button"
-                        onClick={() => { setActiveTab("roles"); setSearchQuery(""); }}
-                        className={`${styles.ipmsTabItem} ${activeTab === "roles" ? styles.ipmsTabItemActive : ""}`}
-                    >
-                        User Role
-                    </button>
-                    <button 
-                        type="button"
-                        onClick={() => { setActiveTab("blocked"); setSearchQuery(""); }}
-                        className={`${styles.ipmsTabItem} ${activeTab === "blocked" ? styles.ipmsTabItemActive : ""}`}
-                    >
-                        Blocked Users
-                    </button>
-                    <button 
-                        type="button"
-                        onClick={() => { setActiveTab("devices"); setSearchQuery(""); }}
-                        className={`${styles.ipmsTabItem} ${activeTab === "devices" ? styles.ipmsTabItemActive : ""}`}
-                    >
-                        Device Activity
-                    </button>
-                    <button 
-                        type="button"
-                        onClick={() => { setActiveTab("activity"); setSearchQuery(""); }}
-                        className={`${styles.ipmsTabItem} ${activeTab === "activity" ? styles.ipmsTabItemActive : ""}`}
-                    >
-                        User Activity
-                    </button>
-                    <button 
-                        type="button"
-                        onClick={() => { setActiveTab("security"); setSearchQuery(""); }}
-                        className={`${styles.ipmsTabItem} ${activeTab === "security" ? styles.ipmsTabItemActive : ""}`}
-                    >
-                        Security Preferences
-                    </button>
+                    {canManageRoles && (
+                        <button 
+                            type="button"
+                            onClick={() => { setActiveTab("roles"); setSearchQuery(""); }}
+                            className={`${styles.ipmsTabItem} ${activeTab === "roles" ? styles.ipmsTabItemActive : ""}`}
+                        >
+                            User Role
+                        </button>
+                    )}
+                    {canManageUsers && (
+                        <button 
+                            type="button"
+                            onClick={() => { setActiveTab("blocked"); setSearchQuery(""); }}
+                            className={`${styles.ipmsTabItem} ${activeTab === "blocked" ? styles.ipmsTabItemActive : ""}`}
+                        >
+                            Blocked Users
+                        </button>
+                    )}
+                    {canViewDevices && (
+                        <button 
+                            type="button"
+                            onClick={() => { setActiveTab("devices"); setSearchQuery(""); }}
+                            className={`${styles.ipmsTabItem} ${activeTab === "devices" ? styles.ipmsTabItemActive : ""}`}
+                        >
+                            Device Activity
+                        </button>
+                    )}
+                    {canViewActivity && (
+                        <button 
+                            type="button"
+                            onClick={() => { setActiveTab("activity"); setSearchQuery(""); }}
+                            className={`${styles.ipmsTabItem} ${activeTab === "activity" ? styles.ipmsTabItemActive : ""}`}
+                        >
+                            User Activity
+                        </button>
+                    )}
+                    {canManageSecurity && (
+                        <button 
+                            type="button"
+                            onClick={() => { setActiveTab("security"); setSearchQuery(""); }}
+                            className={`${styles.ipmsTabItem} ${activeTab === "security" ? styles.ipmsTabItemActive : ""}`}
+                        >
+                            Security Preferences
+                        </button>
+                    )}
                 </div>
 
                 {/* Section Header: Title & Subtitle */}
@@ -573,7 +628,7 @@ export const UsersSection: React.FC = () => {
                             )}
                         </div>
 
-                        {activeTab === "users" && (
+                        {activeTab === "users" && canManageUsers && (
                             <button 
                                 type="button"
                                 onClick={openCreateDrawer}
@@ -610,6 +665,7 @@ export const UsersSection: React.FC = () => {
                                 onChangePasswordClick={openChangePassword}
                                 onAssignHotelClick={openAssignHotelDrawer}
                                 onViewLogsClick={() => setActiveTab("activity")}
+                                onToggleStatus={handleToggleUserStatus}
                                 authUser={authUser}
                                 hotelsList={hotelsList}
                             />
@@ -688,6 +744,7 @@ export const UsersSection: React.FC = () => {
                 authUser={authUser}
                 hotelsList={hotelsList}
                 activeHotelCode={activeHotelCode}
+                activeModules={activeModules}
             />
 
             {/* ─── Assign Hotel Drawer ─── */}
@@ -717,6 +774,7 @@ export const UsersSection: React.FC = () => {
                         activeHotelCode={activeHotelCode}
                         users={users}
                         onSaveRolePermissions={handleSaveRolePermissions}
+                        activeModules={activeModules}
                     />
                 )}
             </AnimatePresence>

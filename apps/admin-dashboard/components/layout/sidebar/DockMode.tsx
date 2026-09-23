@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { SquaresFour, SignOut } from "@phosphor-icons/react";
 import { DockNavItem } from "./DockNavItem";
 import { NavItemType } from "./types";
+import { navigateToSidebarItem } from "./navigation";
 
 interface DockModeProps {
     navItems: NavItemType[];
@@ -15,6 +16,7 @@ interface DockModeProps {
     router: ReturnType<typeof useRouter>;
     setIsCollapsed: (collapsed: boolean) => void;
     handleLogout: () => void;
+    onItemClick?: (itemId: string) => void;
 }
 
 export function DockMode({
@@ -25,6 +27,7 @@ export function DockMode({
     router,
     setIsCollapsed,
     handleLogout,
+    onItemClick,
 }: DockModeProps) {
     return (
         <div
@@ -57,38 +60,11 @@ export function DockMode({
                         isActive={activeSection === item.id}
                         mouseY={mouseY}
                         onClick={() => {
-                            if (item.id === "purchasing") {
-                                router.push(`/purchasing?module=purchasing`);
-                            } else if (["store-requisition", "purchase-requisition", "daily-market-list", "stock-opname", "items", "suppliers"].includes(item.id)) {
-                                router.push(`/purchasing/${item.id}?module=purchasing`);
-                            } else if (item.id === "purchase-order") {
-                                router.push(`/${activeModule}/purchase-order`);
-                            } else if (item.id === "food-beverage-ledger") {
-                                router.push(`/food-beverage/ledger?module=food-beverage`);
-                            } else if (item.id === "food-beverage-performance") {
-                                router.push(`/food-beverage/performance?module=food-beverage`);
-                            } else if (item.id === "food-beverage-product") {
-                                router.push(`/food-beverage/ledger?module=food-beverage`);
-                            } else if (item.id === "food-beverage-realtime") {
-                                router.push(`/food-beverage/realtime?module=food-beverage`);
-                            } else if (item.id === "pnl") {
-                                router.push(`/pnl?module=accounting`);
-                            } else if (item.id === "statements") {
-                                router.push(`/statements?module=accounting`);
-                            } else if (item.id === "pnl-budget") {
-                                router.push(`/pnl-budget?module=accounting`);
-                            } else if (item.id === "dsr") {
-                                router.push(`/dsr?module=accounting`);
-                            } else if (item.id === "budgeting") {
-                                router.push(`/budgeting?module=accounting`);
-                            } else if (item.id === "inventory-control") {
-                                router.push(`/inventory-control?module=${activeModule}`);
-                            } else if (item.id === "overview" || item.id === "forecast" || item.id === "confirmation-letter" || item.id === "revenue-breakdown") {
-                                router.push(`/${item.id}?module=${activeModule}`);
+                            if (onItemClick) {
+                                onItemClick(item.id);
                             } else {
-                                router.push(`/${item.id}`);
+                                navigateToSidebarItem(item.id, activeModule, router, setIsCollapsed);
                             }
-                            if (window.innerWidth <= 1024) setIsCollapsed(true);
                         }}
                     />
                 ))}

@@ -67,12 +67,14 @@
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 10px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    max-height: 180px;
+    gap: 6px;
+    max-height: 186px;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
 }
 
 .hotelRow {
@@ -180,8 +182,30 @@
 }
 
 /* ── Role Permissions Matrix in UserDrawer ── */
+.permLockedBanner {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #92400e;
+    font-size: 11.5px;
+    line-height: 1.4;
+}
+
+.permRowLocked {
+    opacity: 0.72;
+    cursor: not-allowed !important;
+}
+
+.permRowLocked:hover {
+    background: #ffffff !important;
+}
+
 .permSection {
-    margin-top: 20px;
+    margin-top: 4px;
     padding-top: 18px;
     border-top: 1px solid #e2e8f0;
     display: flex;
@@ -255,9 +279,9 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 340px;
-    overflow-y: auto;
-    padding-right: 4px;
+    /* no inner scroll — parent .drawerBody handles scrolling */
+    max-height: none;
+    overflow: visible;
 }
 
 .permGroupCard {
@@ -351,47 +375,110 @@
     font-weight: 700;
     color: #b91c1c;
     background: #fef2f2;
-    padding: 1px 4px;
-    border-radius: 3px;
+    padding: 1px 5px;
+    border-radius: 4px;
     border: 1px solid #fecaca;
+    white-space: nowrap;
+}
+
+.actionBadge {
+    font-size: 9px;
+    font-weight: 700;
+    color: #4338ca;
+    background: #eef2ff;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid #c7d2fe;
+    white-space: nowrap;
+}
+
+.roadmapBadge {
+    font-size: 9px;
+    font-weight: 700;
+    color: #b45309;
+    background: #fffbeb;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid #fde68a;
+    white-space: nowrap;
+}
+
+.addonActiveBadge {
+    font-size: 9px;
+    font-weight: 700;
+    color: #047857;
+    background: #ecfdf5;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid #a7f3d0;
+    white-space: nowrap;
+}
+
+.addonLockedBadge {
+    font-size: 9px;
+    font-weight: 700;
+    color: #9a3412;
+    background: #fff7ed;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid #fed7aa;
+    white-space: nowrap;
+}
+
+.permSwitchRoadmap {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
 }
 
 .permSwitch {
     position: relative;
-    width: 32px;
-    height: 18px;
-    border-radius: 9px;
-    border: none;
+    width: 36px;
+    height: 20px;
+    border-radius: 999px;
+    border: 1px solid transparent;
     cursor: pointer;
-    transition: background-color 0.2s ease;
-    padding: 2px;
     flex-shrink: 0;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    transition: background 0.22s ease, border-color 0.22s ease, opacity 0.15s ease;
 }
 
 .permSwitchOn {
     background: #0f172a;
+    border-color: #0f172a;
 }
 
 .permSwitchOff {
-    background: #cbd5e1;
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+}
+
+.permSwitch:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .permSwitchThumb {
     position: absolute;
-    width: 14px;
-    height: 14px;
+    top: 1px;
+    left: 1px;
+    width: 16px;
+    height: 16px;
     background: #ffffff;
     border-radius: 50%;
-    transition: transform 0.2s ease;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .permSwitchThumbOn {
-    right: 2px;
+    transform: translateX(16px);
 }
 
 .permSwitchThumbOff {
-    left: 2px;
+    transform: translateX(0);
 }
 
 /* ── Module Tags / Filter Chips for User Drawer ── */
@@ -474,5 +561,159 @@
 .moduleTagActive .tagCountBadgeActive {
     background: #10b981;
     color: #ffffff;
+}
+
+/* ── Viewer-only role card (non-admin) ── */
+.viewerRoleCard {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.viewerRoleCardHeader {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.viewerRoleIcon {
+    color: #64748b;
+}
+
+.viewerRoleLabel {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.viewerRoleBadgeLocked {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #92400e;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    padding: 2px 7px;
+    border-radius: 999px;
+}
+
+.viewerRoleValueRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.viewerRoleValue {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    text-transform: capitalize;
+}
+
+.viewerRoleHint {
+    margin: 0;
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+
+/* ── Viewer-only permission list ── */
+.viewerPermIntro {
+    font-size: 11px;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.viewerPermModule {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.viewerPermModuleHead {
+    padding: 9px 12px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.viewerPermModuleTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.viewerPermModuleCount {
+    font-size: 10px;
+    font-weight: 700;
+    color: #059669;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    padding: 2px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.viewerPermItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 7px 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.viewerPermItem:last-child {
+    border-bottom: none;
+}
+
+.viewerPermCheck {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: #10b981;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+}
+
+.viewerPermItemLabel {
+    font-size: 12px;
+    font-weight: 500;
+    color: #1e293b;
+    line-height: 1.3;
+}
+
+.viewerPermItemDesc {
+    font-size: 10.5px;
+    color: #94a3b8;
+    line-height: 1.3;
+}
+
+.viewerEmptyState {
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    color: #94a3b8;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
 }
 

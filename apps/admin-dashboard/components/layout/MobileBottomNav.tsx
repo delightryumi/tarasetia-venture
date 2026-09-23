@@ -9,14 +9,15 @@ import {
     Calculator, ShieldCheck, Receipt, SlidersHorizontal, 
     Globe, Layers, X, ChevronRight, Check, Sparkles, 
     Building2, BedDouble, LayoutGrid, ArrowRight, User,
-    Lock
+    Lock, CalendarCheck, UserCheck, Clock, DollarSign, PlusCircle
 } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { getHotelCollection } from "@/lib/firestoreHelper";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
+import { hasPermission, isUserSuperadmin } from "@/lib/permissionCheck";
+import { getSidebarItemHref } from "./sidebar/navigation";
 import s from "./MobileBottomNav.module.css";
 
 interface NavItemDef {
@@ -122,12 +123,13 @@ const MODULE_DEFINITIONS: Record<string, ModuleMeta> = {
 
 export const MobileBottomNav = () => {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const router = useRouter();
     const { user, signOutUser, activeHotelCode, activeHotelName } = useAuth();
     
     const [activeModules, setActiveModules] = useState<string[] | null>(null);
-    const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
-    const [isSuperadmin, setIsSuperadmin] = useState(false);
+    const isSuperadmin = isUserSuperadmin(user);
+    const userPermissions = user?.permissions || {};
     const [activeModule, setActiveModule] = useState<string>("front-office");
     const [isMenuHubOpen, setIsMenuHubOpen] = useState(false);
     const [menuHubTab, setMenuHubTab] = useState<"menus" | "modules">("menus");
@@ -144,7 +146,7 @@ export const MobileBottomNav = () => {
                 const data = docSnap.data();
                 let modules = data.billing?.activeModules || [];
                 if (modules.includes('cpanel')) {
-                    modules = modules.filter(m => m !== 'cpanel');
+                    modules = modules.filter((m: string) => m !== 'cpanel');
                     const plan = data.billing?.plan || 'premium';
                     if (plan === 'basic') {
                         if (!modules.includes('cpanel-only')) modules.push('cpanel-only');
@@ -187,7 +189,25 @@ export const MobileBottomNav = () => {
     } else if (pathParts[1] === "food-beverage" && pathParts[2] === "realtime") {
         activeSection = "food-beverage-realtime";
     } else if (pathParts[1] === "innalytics") {
-        activeSection = "innalytics";
+        const view = searchParams?.get("view");
+        if (view === "reports") {
+            activeSection = "ina_reports";
+        } else {
+            activeSection = "innalytics";
+        }
+    } else if (pathParts[1] === "hrd") {
+        const tab = searchParams?.get("tab") || "staf";
+        if (tab === "monitor") activeSection = "hrd_attendance";
+        else if (tab === "shift") activeSection = "hrd_shifts";
+        else if (tab === "plotting") activeSection = "hrd_scheduling";
+        else if (tab === "pengajuan") activeSection = "hrd_leaves";
+        else if (tab === "lembur") activeSection = "hrd_overtime";
+        else if (tab === "laporan") activeSection = "hrd_reports";
+        else if (tab === "penggajian") activeSection = "hrd_payroll";
+        else if (tab === "setting") activeSection = "hrd_settings";
+        else activeSection = "hrd";
+    } else if (pathname === "/forecast/add") {
+        activeSection = "fo_walkin";
     } else {
         activeSection = pathParts[1] || "overview";
     }
@@ -251,8 +271,7 @@ export const MobileBottomNav = () => {
                 return;
             }
 
-            const params = new URLSearchParams(window.location.search);
-            const modParam = params.get("module");
+            const modParam = searchParams?.get("module");
             if (modParam) {
                 localStorage.setItem("active_module", modParam);
                 setActiveModule(modParam);
@@ -266,64 +285,23 @@ export const MobileBottomNav = () => {
                 }
             }
         }
-    }, [pathname]);
+    }, [pathname, searchParams]);
 
     // Close menu hub automatically on route change
     useEffect(() => {
         setIsMenuHubOpen(false);
     }, [pathname]);
 
-    // 4. Sync permissions
-    useEffect(() => {
-        const fetchPermissions = async () => {
-            if (!user?.email) return;
-
-            const isSuperEmail =
-                user.email.toLowerCase() === "superadmin@setara.co.id" ||
-                user.email.toLowerCase() === "nexura.management@gmail.com";
-            const userRole = (user as any).role?.toLowerCase();
-
-            if (userRole === "superadmin" || isSuperEmail) {
-                setIsSuperadmin(true);
-                return;
-            }
-
-            try {
-                const userDocId = user.email.toLowerCase().replace(/[@.]/g, '_');
-                const userSnap = await getDoc(
-                    doc(getHotelCollection(db, "users_master"), userDocId)
-                );
-                
-                if (userSnap.exists()) {
-                    const userData = userSnap.data();
-                    if (userData.role?.toLowerCase() === "superadmin") {
-                        setIsSuperadmin(true);
-                        return;
-                    }
-                    setIsSuperadmin(false);
-                    setUserPermissions(userData.permissions || {});
-                } else {
-                    setIsSuperadmin(false);
-                    setUserPermissions({});
-                }
-            } catch (err) {
-                console.error("Error fetching permissions:", err);
-                setIsSuperadmin(false);
-                setUserPermissions({});
-            }
-        };
-
-        fetchPermissions();
-    }, [user]);
-
     // 5. Complete list of all nav items across all modules
     const allNavItems: NavItemDef[] = useMemo(() => [
         // Front Office & Inalytics
         { id: "overview", label: "Overview", shortLabel: "Overview", icon: <BarChart2 size={16} /> },
-        { id: "innalytics", label: "Inalytics", shortLabel: "Inalytics", icon: <TrendingUp size={16} /> },
+        { id: "fo_walkin", label: "Input Booking (Walk-In)", shortLabel: "Walk-In", icon: <PlusCircle size={16} /> },
         { id: "forecast", label: "Forecast", shortLabel: "Forecast", icon: <TrendingUp size={16} /> },
         { id: "revenue-breakdown", label: "Revenue Breakdown", shortLabel: "Revenue", icon: <Receipt size={16} /> },
         { id: "rate-inventory", label: "Rate & Inventory", shortLabel: "Rate & Inv", icon: <SlidersHorizontal size={16} /> },
+        { id: "innalytics", label: "Inalytics Dashboard", shortLabel: "Inalytics", icon: <TrendingUp size={16} /> },
+        { id: "ina_reports", label: "Laporan & Statistik OTA", shortLabel: "Lap. OTA", icon: <BarChart2 size={16} /> },
         { id: "invoice", label: "Invoice Desk", shortLabel: "Invoice", icon: <FileText size={16} /> },
         { id: "digital-checkin", label: "GRC (Guest Card)", shortLabel: "GRC", icon: <FileText size={16} /> },
         { id: "confirmation-letter", label: "Confirmation Letter", shortLabel: "CL", icon: <FileText size={16} /> },
@@ -355,7 +333,15 @@ export const MobileBottomNav = () => {
         { id: "purchase-order", label: "Purchase Order (PO)", shortLabel: "PO List", icon: <ClipboardList size={16} /> },
 
         // HRD
-        { id: "hrd", label: "HRD & Absensi", shortLabel: "HRD", icon: <ClipboardList size={16} /> },
+        { id: "hrd", label: "Manajemen Staf", shortLabel: "Staf", icon: <Users size={16} /> },
+        { id: "hrd_attendance", label: "Monitor Presensi & GPS", shortLabel: "Presensi", icon: <UserCheck size={16} /> },
+        { id: "hrd_shifts", label: "Master Shift Dasar", shortLabel: "Shift", icon: <Clock size={16} /> },
+        { id: "hrd_scheduling", label: "Plotting Jadwal & Roster", shortLabel: "Roster", icon: <CalendarCheck size={16} /> },
+        { id: "hrd_leaves", label: "Pengajuan Cuti & Izin", shortLabel: "Cuti", icon: <FileText size={16} /> },
+        { id: "hrd_overtime", label: "Persetujuan Lembur", shortLabel: "Lembur", icon: <SlidersHorizontal size={16} /> },
+        { id: "hrd_reports", label: "Rekap Laporan Absensi", shortLabel: "Laporan", icon: <BarChart2 size={16} /> },
+        { id: "hrd_payroll", label: "Penggajian Payroll", shortLabel: "Payroll", icon: <DollarSign size={16} /> },
+        { id: "hrd_settings", label: "Setting Lokasi & QR", shortLabel: "Setting", icon: <Settings size={16} /> },
 
         // CPanel
         { id: "logo", label: "Logo & Branding", shortLabel: "Logo", icon: <FileImage size={16} /> },
@@ -375,36 +361,31 @@ export const MobileBottomNav = () => {
 
     // 6. Filter submenus for current active module
     const currentModuleNavItems = useMemo(() => {
-        if (!isSuperadmin && userPermissions) {
-            const moduleMap: Record<string, string> = {
-                "front-office": "module_front_office",
-                "innalytics": "module_innalytics",
-                "housekeeping": "module_housekeeping",
-                "accounting": "module_accounting",
-                "food-beverage": "module_food_beverage",
-                "purchasing": "module_purchasing",
-                "cpanel": "module_cpanel",
-                "hrd": "module_hrd"
-            };
-            const moduleKey = moduleMap[activeModule];
-            if (moduleKey && userPermissions[moduleKey] === false) {
-                return [];
-            }
-        }
+        const moduleMap: Record<string, string> = {
+            "front-office": "module_front_office",
+            "innalytics": "module_innalytics",
+            "housekeeping": "module_housekeeping",
+            "accounting": "module_accounting",
+            "food-beverage": "module_food_beverage",
+            "purchasing": "module_purchasing",
+            "cpanel": "module_cpanel",
+            "hrd": "module_hrd"
+        };
+        const moduleKey = moduleMap[activeModule];
 
         let items = allNavItems;
-        const hasInnalytics = activeModules === null || activeModules.includes("innalytics") || activeModules.includes("inalytics");
+        const hasInnalytics = isSuperadmin || activeModules === null || activeModules.includes("innalytics") || activeModules.includes("inalytics");
         if (activeModule === "front-office") {
             items = allNavItems.filter(item => {
                 if (item.id === "innalytics" && !hasInnalytics) return false;
                 return [
-                    "overview", "forecast", "revenue-breakdown", "rate-inventory", 
+                    "overview", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", 
                     "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"
                 ].includes(item.id);
             });
         } else if (activeModule === "innalytics") {
             items = allNavItems.filter(item => [
-                "innalytics", "overview", "forecast", "revenue-breakdown"
+                "innalytics", "ina_reports", "overview", "forecast", "revenue-breakdown"
             ].includes(item.id));
         } else if (activeModule === "housekeeping") {
             items = allNavItems.filter(item => [
@@ -415,11 +396,18 @@ export const MobileBottomNav = () => {
                 "pnl", "pnl-budget", "dsr", "budgeting", "statements", "purchase-order"
             ].includes(item.id));
         } else if (activeModule === "food-beverage") {
-            items = allNavItems.filter(item => [
-                "food-beverage-ledger", "food-beverage-performance", "food-beverage-realtime", "purchase-order"
-            ].includes(item.id));
+            const hasRealtime = isSuperadmin || activeModules === null || activeModules.includes("food-beverage-realtime") || activeModules.includes("pos-realtime");
+            items = allNavItems.filter(item => {
+                if (item.id === "food-beverage-realtime" && !hasRealtime) return false;
+                return [
+                    "food-beverage-ledger", "food-beverage-performance", "food-beverage-realtime", "purchase-order"
+                ].includes(item.id);
+            });
         } else if (activeModule === "hrd") {
-            items = allNavItems.filter(item => ["hrd"].includes(item.id));
+            items = allNavItems.filter(item => [
+                "hrd", "hrd_attendance", "hrd_shifts", "hrd_scheduling", 
+                "hrd_leaves", "hrd_overtime", "hrd_reports", "hrd_payroll", "hrd_settings"
+            ].includes(item.id));
         } else if (activeModule === "purchasing") {
             items = allNavItems.filter(item => [
                 "purchasing", "store-requisition", "purchase-requisition", 
@@ -429,15 +417,18 @@ export const MobileBottomNav = () => {
             if (activeSection === "users") {
                 items = allNavItems.filter(item => ["users", "superadmin"].includes(item.id));
             } else {
-                if (activeModules !== null && !activeModules.includes('cpanel-full')) {
+                if (!isSuperadmin && activeModules !== null && !activeModules.includes('cpanel-full')) {
                     items = allNavItems.filter(item => ["logo"].includes(item.id));
                 } else {
                     const cpanelAllowedIds = [
                         "logo", "hero", "room-type", "about", "gallery", 
                         "footer", "attractions", "promo", "packages", "seo", "users"
                     ];
-                    if (isSuperadmin) {
+                    const canAccessCM = isSuperadmin || (user?.permissions?.["channel-manager"] === true && hasPermission(user, "channel-manager", "module_channel_manager"));
+                    if (canAccessCM) {
                         cpanelAllowedIds.push("channel-manager");
+                    }
+                    if (isSuperadmin) {
                         cpanelAllowedIds.push("superadmin");
                     }
                     items = allNavItems.filter(item => cpanelAllowedIds.includes(item.id));
@@ -446,56 +437,28 @@ export const MobileBottomNav = () => {
         }
 
         // Filter out POS terminal from items
-        items = items.filter(item => item.id !== "pos");
-
-        const isAdminUser = user?.role?.toLowerCase() === "admin";
-        
-        let finalItems = items;
+        const canAccessCM = isSuperadmin || (user?.permissions?.["channel-manager"] === true && hasPermission(user, "channel-manager", "module_channel_manager"));
+        let finalItems = items.filter(item => item.id !== "pos");
         if (!isSuperadmin) {
-            finalItems = finalItems.filter(item => item.id !== "superadmin" && item.id !== "channel-manager");
+            finalItems = finalItems.filter(item => item.id !== "superadmin");
+        }
+        if (!canAccessCM) {
+            finalItems = finalItems.filter(item => item.id !== "channel-manager");
         }
 
-        return (isSuperadmin || isAdminUser)
+        return isSuperadmin
             ? finalItems
-            : finalItems.filter(item => userPermissions?.[item.id] === true);
-    }, [activeModule, allNavItems, isSuperadmin, userPermissions, activeModules, activeSection, user?.role]);
+            : finalItems.filter((item) => {
+                if (item.id === "superadmin") return false;
+                if (item.id === "channel-manager") return canAccessCM;
+                return hasPermission(user, item.id, moduleKey);
+            });
+    }, [activeModule, allNavItems, isSuperadmin, user, activeModules, activeSection]);
 
     // 7. Navigation dispatcher
     const handleNavigate = (itemId: string) => {
         setIsMenuHubOpen(false);
-        if (itemId === "innalytics") {
-            router.push(`/innalytics`);
-        } else if (itemId === "purchasing") {
-            router.push(`/purchasing?module=purchasing`);
-        } else if (["store-requisition", "purchase-requisition", "daily-market-list", "stock-opname", "items", "suppliers"].includes(itemId)) {
-            router.push(`/purchasing/${itemId}?module=purchasing`);
-        } else if (itemId === "purchase-order") {
-            router.push(`/${activeModule}/purchase-order`);
-        } else if (itemId === "food-beverage-ledger") {
-            router.push(`/food-beverage/ledger?module=food-beverage`);
-        } else if (itemId === "food-beverage-performance") {
-            router.push(`/food-beverage/performance?module=food-beverage`);
-        } else if (itemId === "food-beverage-product") {
-            router.push(`/food-beverage/ledger?module=food-beverage`);
-        } else if (itemId === "food-beverage-realtime") {
-            router.push(`/food-beverage/realtime?module=food-beverage`);
-        } else if (itemId === "pnl") {
-            router.push(`/pnl?module=accounting`);
-        } else if (itemId === "statements") {
-            router.push(`/statements?module=accounting`);
-        } else if (itemId === "pnl-budget") {
-            router.push(`/pnl-budget?module=accounting`);
-        } else if (itemId === "dsr") {
-            router.push(`/dsr?module=accounting`);
-        } else if (itemId === "budgeting") {
-            router.push(`/budgeting?module=accounting`);
-        } else if (itemId === "inventory-control") {
-            router.push(`/inventory-control?module=${activeModule}`);
-        } else if (["overview", "forecast", "revenue-breakdown", "rate-inventory", "confirmation-letter", "invoice", "digital-checkin"].includes(itemId)) {
-            router.push(`/${itemId}?module=${activeModule}`);
-        } else {
-            router.push(`/${itemId}`);
-        }
+        router.push(getSidebarItemHref(itemId, activeModule));
     };
 
     // 8. Module switcher

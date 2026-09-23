@@ -21,8 +21,8 @@
   --s-secondary-btn-text: #1a1a1a;
   --s-secondary-btn-border: rgba(141, 122, 82, 0.2);
 
-  padding: var(--s-space-xl);
-  max-width: 1280px;
+  padding: 4px 12px 36px 12px;
+  max-width: 1400px;
   margin: 0 auto;
   font-family: var(--s-font);
   color: var(--s-body);
@@ -30,7 +30,7 @@
 
 @media (max-width: 768px) {
   .page {
-    padding: var(--s-space-md);
+    padding: 4px 8px 32px 8px;
   }
 }
 
@@ -50,9 +50,9 @@
 
 /* Page header */
 .pageHeader {
-  margin-bottom: var(--s-space-xl);
+  margin-bottom: 12px;
   border-bottom: 1px solid var(--s-hairline);
-  padding-bottom: var(--s-space-lg);
+  padding-bottom: 8px;
 }
 
 .pageTitle {

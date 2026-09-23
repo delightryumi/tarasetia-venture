@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import { motion, useMotionValue } from "framer-motion";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { getHotelCollection } from "@/lib/firestoreHelper";
+import { hasPermission, isUserSuperadmin } from "@/lib/permissionCheck";
 
 // Import modular types, constants, and subcomponents
 import { SidebarProps, SectionType, NavItemType } from "./sidebar/types";
@@ -17,15 +18,24 @@ import { SidebarHeader } from "./sidebar/SidebarHeader";
 import { SidebarFooter } from "./sidebar/SidebarFooter";
 import { DockMode } from "./sidebar/DockMode";
 import { ExpandedMode } from "./sidebar/ExpandedMode";
+import { navigateToSidebarItem } from "./sidebar/navigation";
 
 export const Sidebar: React.FC<SidebarProps> = ({
     isCollapsed,
     setIsCollapsed,
 }) => {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const router = useRouter();
 
-    // Determine active section based on route path
+    const [optimisticSection, setOptimisticSection] = useState<string | null>(null);
+
+    // Reset optimistic override whenever route or query params update
+    useEffect(() => {
+        setOptimisticSection(null);
+    }, [pathname, searchParams]);
+
+    // Determine active section based on route path & query parameters
     let activeSection: SectionType = "overview";
     const pathParts = pathname.split("/");
     if (pathParts[1] === "purchasing") {
@@ -44,16 +54,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
     } else if (pathParts[1] === "food-beverage" && pathParts[2] === "realtime") {
         activeSection = "food-beverage-realtime";
     } else if (pathParts[1] === "innalytics") {
-        activeSection = "innalytics";
+        const view = searchParams?.get("view");
+        if (view === "reports") {
+            activeSection = "ina_reports";
+        } else {
+            activeSection = "innalytics";
+        }
+    } else if (pathParts[1] === "hrd") {
+        const tab = searchParams?.get("tab") || "staf";
+        if (tab === "monitor") activeSection = "hrd_attendance";
+        else if (tab === "shift") activeSection = "hrd_shifts";
+        else if (tab === "plotting") activeSection = "hrd_scheduling";
+        else if (tab === "pengajuan") activeSection = "hrd_leaves";
+        else if (tab === "lembur") activeSection = "hrd_overtime";
+        else if (tab === "laporan") activeSection = "hrd_reports";
+        else if (tab === "penggajian") activeSection = "hrd_payroll";
+        else if (tab === "setting") activeSection = "hrd_settings";
+        else activeSection = "hrd";
+    } else if (pathname === "/forecast/add") {
+        activeSection = "fo_walkin";
     } else {
         activeSection = (pathParts[1] as SectionType) || "overview";
     }
 
+    const effectiveActiveSection = (optimisticSection as SectionType) || activeSection;
+
+    const handleItemClick = (itemId: string) => {
+        setOptimisticSection(itemId);
+        navigateToSidebarItem(itemId, activeModule, router, setIsCollapsed);
+    };
+
     const { user, signOutUser, activeHotelCode, activeHotelName } = useAuth();
     const [activeModules, setActiveModules] = useState<string[] | null>(null);
     const [activeModule, setActiveModule] = useState<string>("front-office");
-    const [userPermissions, setUserPermissions] = useState<Record<string, boolean> | null>(null);
-    const [isSuperadmin, setIsSuperadmin] = useState(false);
+    const isSuperadmin = isUserSuperadmin(user);
+    const userPermissions = user?.permissions || {};
     const mouseY = useMotionValue(Infinity);
 
     // Expand state for submenus
@@ -66,6 +101,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         "Permintaan": true,
         "Operasional": true,
         "Master Data": true,
+        "Personil": true,
+        "Jadwal & Shift": true,
+        "Pengajuan": true,
+        "Kompensasi": true,
+        "Pengaturan": true,
     });
 
     const toggleGroup = (title: string) => {
@@ -123,56 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         return () => unsubscribe();
     }, [activeHotelCode]);
 
-    // 2. Fetch user permissions
-    useEffect(() => {
-        const fetchPermissions = async () => {
-            if (!user?.email) {
-                setIsSuperadmin(false);
-                setUserPermissions(null);
-                return;
-            }
-
-            const isSuperEmail =
-                user.email.toLowerCase() === "superadmin@setara.co.id" ||
-                user.email.toLowerCase() === "nexura.management@gmail.com";
-            const userRole = (user as any).role?.toLowerCase();
-
-            if (userRole === "superadmin" || isSuperEmail) {
-                setIsSuperadmin(true);
-                return;
-            }
-
-            try {
-                const userDocId = user.email.toLowerCase().replace(/[@.]/g, "_");
-                const userSnap = await getDoc(
-                    doc(getHotelCollection(db, "users_master"), userDocId)
-                );
-
-                if (userSnap.exists()) {
-                    const userData = userSnap.data();
-                    const role = userData.role?.toLowerCase();
-
-                    if (role === "superadmin") {
-                        setIsSuperadmin(true);
-                        return;
-                    }
-
-                    setIsSuperadmin(false);
-                    setUserPermissions(userData.permissions || {});
-                } else {
-                    setIsSuperadmin(false);
-                    setUserPermissions({});
-                }
-            } catch (err) {
-                console.error("Error fetching permissions:", err);
-                setIsSuperadmin(false);
-                setUserPermissions({});
-            }
-        };
-        fetchPermissions();
-    }, [user]);
-
-    // 3. Track current module via pathname and query parameters
+    // 2. Track current module via pathname and query parameters
     useEffect(() => {
         if (typeof window !== "undefined") {
             if (pathname.startsWith("/purchasing")) {
@@ -232,8 +223,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 return;
             }
 
-            const params = new URLSearchParams(window.location.search);
-            const modParam = params.get("module");
+            const modParam = searchParams?.get("module");
             if (modParam) {
                 localStorage.setItem("active_module", modParam);
                 setActiveModule(modParam);
@@ -247,37 +237,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }
             }
         }
-    }, [pathname]);
+    }, [pathname, searchParams]);
 
     // 4. Filter navigation items based on active module and user permissions
     const getFilteredNavItems = (): NavItemType[] => {
-        if (!isSuperadmin && userPermissions) {
-            const moduleMap: Record<string, string> = {
-                "front-office": "module_front_office",
-                "innalytics": "module_innalytics",
-                "housekeeping": "module_housekeeping",
-                "accounting": "module_accounting",
-                "food-beverage": "module_food_beverage",
-                "purchasing": "module_purchasing",
-                "cpanel": "module_cpanel",
-                "hrd": "module_hrd",
-            };
-            const moduleKey = moduleMap[activeModule];
-            if (moduleKey && userPermissions[moduleKey] === false) {
-                return [];
-            }
-        }
+        const moduleMap: Record<string, string> = {
+            "front-office": "module_front_office",
+            "innalytics": "module_innalytics",
+            "housekeeping": "module_housekeeping",
+            "accounting": "module_accounting",
+            "food-beverage": "module_food_beverage",
+            "purchasing": "module_purchasing",
+            "cpanel": "module_cpanel",
+            "hrd": "module_hrd",
+        };
+        const moduleKey = moduleMap[activeModule];
 
         let items = allNavItems;
-        const hasInnalytics = activeModules === null || activeModules.includes("innalytics") || activeModules.includes("inalytics");
+        const hasInnalytics = isSuperadmin || activeModules === null || activeModules.includes("innalytics") || activeModules.includes("inalytics");
         if (activeModule === "front-office") {
             items = allNavItems.filter((item) => {
                 if (item.id === "innalytics" && !hasInnalytics) return false;
-                return ["overview", "forecast", "revenue-breakdown", "rate-inventory", "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id);
+                return ["overview", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id);
             });
         } else if (activeModule === "innalytics") {
             items = allNavItems.filter((item) =>
-                ["innalytics", "overview", "forecast", "revenue-breakdown"].includes(item.id)
+                ["innalytics", "ina_reports"].includes(item.id)
             );
         } else if (activeModule === "housekeeping") {
             items = allNavItems.filter((item) =>
@@ -288,11 +273,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ["pnl", "pnl-budget", "dsr", "budgeting", "statements", "purchase-order"].includes(item.id)
             );
         } else if (activeModule === "food-beverage") {
-            items = allNavItems.filter((item) =>
-                ["food-beverage-ledger", "food-beverage-performance", "food-beverage-realtime", "purchase-order"].includes(item.id)
-            );
+            const hasRealtime = isSuperadmin || activeModules === null || activeModules.includes("food-beverage-realtime") || activeModules.includes("pos-realtime");
+            items = allNavItems.filter((item) => {
+                if (item.id === "food-beverage-realtime" && !hasRealtime) return false;
+                return ["food-beverage-ledger", "food-beverage-performance", "food-beverage-realtime", "purchase-order"].includes(item.id);
+            });
         } else if (activeModule === "hrd") {
-            items = allNavItems.filter((item) => ["hrd"].includes(item.id));
+            items = allNavItems.filter((item) =>
+                [
+                    "hrd",
+                    "hrd_attendance",
+                    "hrd_shifts",
+                    "hrd_scheduling",
+                    "hrd_leaves",
+                    "hrd_overtime",
+                    "hrd_reports",
+                    "hrd_payroll",
+                    "hrd_settings"
+                ].includes(item.id)
+            );
         } else if (activeModule === "purchasing") {
             items = allNavItems.filter((item) =>
                 [
@@ -311,7 +310,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     item.id === "users" || (item.id === "superadmin" && isSuperadmin)
                 );
             } else {
-                if (activeModules !== null && !activeModules.includes("cpanel-full")) {
+                if (!isSuperadmin && activeModules !== null && !activeModules.includes("cpanel-full")) {
                     items = allNavItems.filter((item) => ["logo"].includes(item.id));
                 } else {
                     const cpanelAllowedIds = [
@@ -326,8 +325,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         "packages",
                         "seo",
                     ];
-                    if (isSuperadmin) {
+                    const canAccessCM = isSuperadmin || (user?.permissions?.["channel-manager"] === true && hasPermission(user, "channel-manager", "module_channel_manager"));
+                    if (canAccessCM) {
                         cpanelAllowedIds.push("channel-manager");
+                    }
+                    if (isSuperadmin) {
                         cpanelAllowedIds.push("superadmin");
                     }
                     items = allNavItems.filter((item) => cpanelAllowedIds.includes(item.id));
@@ -338,19 +340,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
         // Filter out POS terminal from other modules
         items = items.filter((item) => item.id !== "pos");
 
-        const isAdminUser = user?.role?.toLowerCase() === "admin";
-
+        const canAccessCM = isSuperadmin || (user?.permissions?.["channel-manager"] === true && hasPermission(user, "channel-manager", "module_channel_manager"));
         let finalItems = items;
-        // Strictly filter out superadmin and channel-manager from any user that is not confirmed superadmin
+        // Strictly filter out superadmin menu from anyone who is not confirmed superadmin
         if (!isSuperadmin) {
-            finalItems = finalItems.filter((item) => item.id !== "superadmin" && item.id !== "channel-manager");
+            finalItems = finalItems.filter((item) => item.id !== "superadmin");
+        }
+        // Strictly filter out channel-manager from anyone without CM authority
+        if (!canAccessCM) {
+            finalItems = finalItems.filter((item) => item.id !== "channel-manager");
         }
 
         return isSuperadmin
             ? finalItems
-            : isAdminUser
-            ? finalItems.filter((item) => item.id !== "superadmin" && item.id !== "channel-manager")
-            : finalItems.filter((item) => item.id !== "superadmin" && item.id !== "channel-manager" && userPermissions?.[item.id] === true);
+            : finalItems.filter((item) => {
+                if (item.id === "superadmin") return false;
+                if (item.id === "channel-manager") return canAccessCM;
+                return hasPermission(user, item.id, moduleKey);
+            });
     };
 
     const navItems = getFilteredNavItems();
@@ -359,6 +366,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const getGroupedNavItems = () => {
         if (activeModule === "cpanel") {
             const groups: { title: string; items: NavItemType[] }[] = [];
+            const canAccessCM = isSuperadmin || (user?.permissions?.["channel-manager"] === true && hasPermission(user, "channel-manager", "module_channel_manager"));
 
             const layoutItems = navItems.filter((item) =>
                 ["logo", "hero", "about", "gallery", "footer"].includes(item.id)
@@ -367,7 +375,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ["room-type", "attractions", "packages"].includes(item.id)
             );
             const marketingItems = navItems.filter((item) =>
-                ["promo", "seo"].includes(item.id) || (item.id === "channel-manager" && isSuperadmin)
+                ["promo", "seo"].includes(item.id) || (item.id === "channel-manager" && canAccessCM)
             );
             const systemItems = navItems.filter((item) =>
                 item.id === "users" || (item.id === "superadmin" && isSuperadmin)
@@ -397,6 +405,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
             if (reqItems.length > 0) groups.push({ title: "Permintaan", items: reqItems });
             if (opsItems.length > 0) groups.push({ title: "Operasional", items: opsItems });
             if (masterItems.length > 0) groups.push({ title: "Master Data", items: masterItems });
+
+            return groups;
+        }
+
+        if (activeModule === "hrd") {
+            const groups: { title: string; items: NavItemType[] }[] = [];
+
+            const personalItems = navItems.filter((item) =>
+                ["hrd", "hrd_attendance"].includes(item.id)
+            );
+            const scheduleItems = navItems.filter((item) =>
+                ["hrd_shifts", "hrd_scheduling"].includes(item.id)
+            );
+            const requestItems = navItems.filter((item) =>
+                ["hrd_leaves", "hrd_overtime"].includes(item.id)
+            );
+            const compensationItems = navItems.filter((item) =>
+                ["hrd_payroll", "hrd_reports"].includes(item.id)
+            );
+            const configItems = navItems.filter((item) =>
+                ["hrd_settings"].includes(item.id)
+            );
+
+            if (personalItems.length > 0) groups.push({ title: "Personil", items: personalItems });
+            if (scheduleItems.length > 0) groups.push({ title: "Jadwal & Shift", items: scheduleItems });
+            if (requestItems.length > 0) groups.push({ title: "Pengajuan", items: requestItems });
+            if (compensationItems.length > 0) groups.push({ title: "Kompensasi", items: compensationItems });
+            if (configItems.length > 0) groups.push({ title: "Pengaturan", items: configItems });
 
             return groups;
         }
@@ -452,18 +488,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {isCollapsed ? (
                 <DockMode
                     navItems={navItems}
-                    activeSection={activeSection}
+                    activeSection={effectiveActiveSection}
                     activeModule={activeModule}
                     mouseY={mouseY}
                     router={router}
                     setIsCollapsed={setIsCollapsed}
                     handleLogout={handleLogout}
+                    onItemClick={handleItemClick}
                 />
             ) : (
                 <ExpandedMode
                     navItems={navItems}
                     groupedNavItems={groupedNavItems}
-                    activeSection={activeSection}
+                    activeSection={effectiveActiveSection}
                     activeModule={activeModule}
                     activeModules={activeModules}
                     isSuperadmin={isSuperadmin}
@@ -471,6 +508,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     expandedGroups={expandedGroups}
                     toggleGroup={toggleGroup}
                     setIsCollapsed={setIsCollapsed}
+                    onItemClick={handleItemClick}
                 />
             )}
 

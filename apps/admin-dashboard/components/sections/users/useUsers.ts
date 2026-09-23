@@ -3,7 +3,7 @@ import {
     collection, setDoc, doc, updateDoc, 
     deleteDoc, onSnapshot, query, orderBy, getDoc
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { UserProfile } from "./types";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { useAuth } from "@/context/AuthContext";
@@ -259,10 +259,12 @@ export const useUsers = (menuItems: any[]) => {
     const handleSaveUser = async (formData: any, editingUser: UserProfile | null) => {
         try {
             const method = editingUser ? "PUT" : "POST";
+            const token = auth.currentUser ? await auth.currentUser.getIdToken() : "";
             const response = await fetch("/api/users", {
                 method,
                 headers: {
                     "Content-Type": "application/json",
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
                 },
                 body: JSON.stringify({
                     ...formData,
@@ -295,10 +297,12 @@ export const useUsers = (menuItems: any[]) => {
             const targetUser = users.find(u => u.id === id);
             if (!targetUser) throw new Error("User not found");
 
+            const token = auth.currentUser ? await auth.currentUser.getIdToken() : "";
             const response = await fetch("/api/users", {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
                 },
                 body: JSON.stringify({
                     email: targetUser.email,

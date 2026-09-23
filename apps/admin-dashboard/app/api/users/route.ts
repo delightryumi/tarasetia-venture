@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { resolveLocationFromReq } from "@/lib/geoHelper";
+import { getAuthenticatedUser } from "@/lib/security/serverAuth";
+import { emailToDocId, sanitizeIdentifier, isValidEmail } from "@/lib/security/inputSanitizer";
 
 const ALL_KEYS = [
     // Modules
@@ -46,24 +48,65 @@ async function logActivity(data: {
 // POST: Create User & Set Multi-Hotel Claims
 export async function POST(request: Request) {
   try {
+    const authUser = await getAuthenticatedUser(request);
     const body = await request.json();
     const { 
-        email, password, name, role, hotelCode, permissions, 
+        email, password, name, role, hotelCode: rawHotelCode, permissions, 
         allowedOutlets: rawAllowedOutlets,
-        requesterRole, requesterEmail 
+        timeZone
     } = body;
 
+    const hotelCode = sanitizeIdentifier(rawHotelCode);
     if (!email || !password || !name || !role || !hotelCode) {
-      return NextResponse.json({ error: "Missing required fields (email, password, name, role, hotelCode)" }, { status: 400 });
+      return NextResponse.json({ error: "Kolom wajib belum lengkap (email, password, name, role, hotelCode)" }, { status: 400 });
+    }
+
+    if (!isValidEmail(email)) {
+      return NextResponse.json({ error: "Format alamat email tidak valid." }, { status: 400 });
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const docId = cleanEmail.replace(/[@.]/g, "_");
+    const docId = emailToDocId(cleanEmail);
 
-    // ── ROLE HIERARCHY PROTECTION ──
+    // ── ROLE HIERARCHY & SERVER-SIDE AUTH VERIFICATION ──
     const targetRoleLower = role.toLowerCase();
-    const isRequesterSuper = requesterRole?.toLowerCase() === "superadmin" || requesterEmail?.toLowerCase() === "superadmin@setara.co.id";
     
+    // Determine whether caller is verified superadmin
+    let isRequesterSuper = authUser?.isSuperadmin ?? false;
+
+    // Verify non-superadmin rights
+    if (!isRequesterSuper) {
+        const callerEmail = authUser?.email || body.requesterEmail?.trim().toLowerCase();
+        if (!callerEmail) {
+            return NextResponse.json({ error: "Akses Ditolak: Kredensial otentikasi tidak ditemukan." }, { status: 401 });
+        }
+
+        // Verify hotel assignment
+        if (authUser && authUser.hotelCode && authUser.hotelCode !== hotelCode) {
+            const hasOutlet = authUser.allowedOutlets && authUser.allowedOutlets.includes(hotelCode);
+            if (!hasOutlet) {
+                return NextResponse.json({ error: "Akses Ditolak: Anda tidak memiliki akses ke properti hotel ini." }, { status: 403 });
+            }
+        }
+
+        try {
+            const reqDocId = emailToDocId(callerEmail);
+            const reqSnap = await adminDb.doc(`hotels/${hotelCode}/users_master/${reqDocId}`).get();
+            if (reqSnap.exists) {
+                const reqData = reqSnap.data() || {};
+                const reqPerms = reqData.permissions || {};
+                const reqRole = (reqData.role || "").toLowerCase();
+                if (reqRole !== "superadmin" && reqPerms["sec_user_manage"] === false) {
+                    return NextResponse.json({
+                        error: "Akses Ditolak: Akun Anda tidak memiliki izin kelola staf (sec_user_manage)."
+                    }, { status: 403 });
+                }
+            }
+        } catch (e) {
+            console.warn("Could not verify requester permissions:", e);
+        }
+    }
+
     // Only Superadmin can create a Superadmin user
     if (targetRoleLower === "superadmin" && !isRequesterSuper) {
         return NextResponse.json({ 
@@ -74,92 +117,108 @@ export async function POST(request: Request) {
     // Multi-Hotel assignment restriction: HANYA Superadmin yang berhak mengatur hak multi-hotel
     let allowedOutlets: string[];
     if (isRequesterSuper && Array.isArray(rawAllowedOutlets) && rawAllowedOutlets.length > 0) {
-        allowedOutlets = Array.from(new Set([...rawAllowedOutlets, hotelCode]));
+        allowedOutlets = Array.from(new Set([...rawAllowedOutlets.map(sanitizeIdentifier), hotelCode]));
     } else {
-        // Non-superadmin cannot assign multi-hotel, locked to the hotelCode
         allowedOutlets = [hotelCode];
     }
 
+    // Default permissions dictionary
+    let finalPermissions: Record<string, boolean> = {};
+    ALL_KEYS.forEach((key) => {
+      finalPermissions[key] = false;
+    });
+
+    if (permissions && typeof permissions === "object") {
+      finalPermissions = { ...finalPermissions, ...permissions };
+    }
+
     let uid = "";
+    let alreadyExists = false;
+
     try {
-      // Check if user already exists in Firebase Auth
       const existingUser = await adminAuth.getUserByEmail(cleanEmail);
       uid = existingUser.uid;
-      
-      const currentClaims = existingUser.customClaims || {};
-      const existingOutlets = Array.isArray(currentClaims.allowedOutlets) ? currentClaims.allowedOutlets : [];
-      allowedOutlets = Array.from(new Set([...existingOutlets, ...allowedOutlets]));
+      alreadyExists = true;
 
-      // Update custom claims with multi-hotel access
-      await adminAuth.setCustomUserClaims(uid, { 
-          ...currentClaims, 
-          role, 
-          hotelCode, 
-          allowedOutlets 
+      // Update custom claims for existing user
+      await adminAuth.setCustomUserClaims(uid, {
+        role,
+        hotelCode,
+        allowedOutlets,
+        permissions: finalPermissions,
       });
-    } catch (err: any) {
-      if (err.code === "auth/user-not-found") {
-        // Create new Firebase Auth user
+
+      // Update password if provided
+      if (password && password.trim() !== "") {
+        await adminAuth.updateUser(uid, {
+          password,
+          displayName: name,
+        });
+      }
+    } catch (authError: any) {
+      if (authError.code === "auth/user-not-found") {
         const newUser = await adminAuth.createUser({
           email: cleanEmail,
-          password: password,
+          password,
           displayName: name,
         });
         uid = newUser.uid;
-        
-        // Set custom claims
-        await adminAuth.setCustomUserClaims(uid, { 
-            role, 
-            hotelCode, 
-            allowedOutlets 
+
+        await adminAuth.setCustomUserClaims(uid, {
+          role,
+          hotelCode,
+          allowedOutlets,
+          permissions: finalPermissions,
         });
       } else {
-        throw err;
+        console.error("Error in Firebase Auth user creation:", authError);
+        return NextResponse.json({ error: "Gagal membuat akun autentikasi pengguna." }, { status: 500 });
       }
     }
 
-    // Determine permissions
-    const isSuper = targetRoleLower === "superadmin";
-    let finalPerms = permissions;
-    if (!finalPerms) {
-      finalPerms = {};
-      ALL_KEYS.forEach(k => {
-        finalPerms[k] = isSuper;
-      });
-    }
-
     const userData = {
+      uid,
+      name,
       email: cleanEmail,
-      name: name.trim(),
       role,
       hotelCode,
       allowedOutlets,
-      uid,
-      permissions: finalPerms,
-      isOwner: false,
-      createdBy: requesterEmail || "owner",
+      permissions: finalPermissions,
+      isBlocked: false,
+      loginCount: 0,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      lastActive: new Date().toISOString(),
     };
 
-    // Propagate profile to all assigned hotels in allowedOutlets
+    // Save to primary hotel collection
+    await adminDb.doc(`hotels/${hotelCode}/users_master/${docId}`).set(userData, { merge: true });
+
+    // Distribute to all assigned hotel outlets
     for (const outletCode of allowedOutlets) {
-        await adminDb.doc(`hotels/${outletCode}/users_master/${docId}`).set(userData, { merge: true });
+      if (outletCode !== hotelCode) {
+        await adminDb.doc(`hotels/${outletCode}/users_master/${docId}`).set({
+          ...userData,
+          hotelCode: outletCode,
+        }, { merge: true }).catch(err => {
+          console.warn(`Could not sync user to outlet ${outletCode}:`, err);
+        });
+      }
     }
 
-    // Also persist in global users_master
+    // Save to global users_master
     await adminDb.doc(`users_master/${docId}`).set(userData, { merge: true });
 
     // Log Activity
-    const { ip: ipAddress, location } = await resolveLocationFromReq(request, body.timeZone);
+    const { ip: ipAddress, location } = await resolveLocationFromReq(request, timeZone);
     await logActivity({
         hotelCode,
-        userId: uid,
-        userName: name.trim(),
+        userId: docId,
+        userName: name,
         userEmail: cleanEmail,
-        action: "CREATE_USER",
+        action: alreadyExists ? "LINK_USER" : "CREATE_USER",
         module: "USER_MANAGEMENT",
-        description: `Akun staf baru dibuat dengan role '${role}' dan ditugaskan ke ${allowedOutlets.length} properti (${allowedOutlets.join(", ")}).`,
+        description: `Akun user '${name}' (${role}) telah ${alreadyExists ? "ditautkan & diperbarui" : "dibuat"} di hotel ini.`,
         ipAddress,
         location
     });
@@ -167,26 +226,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, uid, allowedOutlets });
   } catch (error: any) {
     console.error("Error creating user:", error);
-    return NextResponse.json({ error: error.message || "Failed to create user" }, { status: 500 });
+    return NextResponse.json({ error: "Gagal memproses pembuatan user." }, { status: 500 });
   }
 }
 
 // PUT: Update User & Multi-Hotel Claims
 export async function PUT(request: Request) {
   try {
+    const authUser = await getAuthenticatedUser(request);
     const body = await request.json();
     const { 
-        email, password, name, role, hotelCode, permissions, 
+        email, password, name, role, hotelCode: rawHotelCode, permissions, 
         allowedOutlets: rawAllowedOutlets,
-        requesterRole, requesterEmail 
+        timeZone
     } = body;
 
+    const hotelCode = sanitizeIdentifier(rawHotelCode);
     if (!email || !hotelCode) {
-      return NextResponse.json({ error: "Email and hotelCode are required" }, { status: 400 });
+      return NextResponse.json({ error: "Email dan hotelCode wajib diisi." }, { status: 400 });
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const docId = cleanEmail.replace(/[@.]/g, "_");
+    const docId = emailToDocId(cleanEmail);
 
     // Fetch existing user to enforce role hierarchy protection
     let existingDoc: any = null;
@@ -198,104 +259,148 @@ export async function PUT(request: Request) {
         if (globalUserSnap.exists) existingDoc = globalUserSnap.data();
     }
 
-    const isRequesterSuper = requesterRole?.toLowerCase() === "superadmin" || requesterEmail?.toLowerCase() === "superadmin@setara.co.id";
+    let isRequesterSuper = authUser?.isSuperadmin ?? false;
+
+    // Non-superadmin validation
+    if (!isRequesterSuper) {
+        const callerEmail = authUser?.email || body.requesterEmail?.trim().toLowerCase();
+        if (!callerEmail) {
+            return NextResponse.json({ error: "Akses Ditolak: Sesi otentikasi tidak valid." }, { status: 401 });
+        }
+
+        try {
+            const reqDocId = emailToDocId(callerEmail);
+            const reqSnap = await adminDb.doc(`hotels/${hotelCode}/users_master/${reqDocId}`).get();
+            if (reqSnap.exists) {
+                const reqData = reqSnap.data() || {};
+                const reqPerms = reqData.permissions || {};
+                const reqRole = (reqData.role || "").toLowerCase();
+                if (reqRole !== "superadmin" && reqPerms["sec_user_manage"] === false) {
+                    return NextResponse.json({
+                        error: "Akses Ditolak: Akun Anda tidak memiliki izin kelola staf (sec_user_manage)."
+                    }, { status: 403 });
+                }
+            }
+        } catch (e) {
+            console.warn("Could not verify requester permissions:", e);
+        }
+    }
+
     const currentRoleLower = (existingDoc?.role || "").toLowerCase();
     const targetRoleLower = (role || existingDoc?.role || "").toLowerCase();
 
     // Protection 1: Non-superadmin cannot edit a Superadmin account
     if (currentRoleLower === "superadmin" && !isRequesterSuper) {
         return NextResponse.json({ 
-            error: "Akses Ditolak: Akun Superadmin dilindungi dan hanya dapat diedit oleh Superadmin." 
+            error: "Akses Ditolak: Akun Superadmin hanya dapat dimodifikasi oleh Superadmin." 
         }, { status: 403 });
     }
 
-    // Protection 2: Non-superadmin cannot promote someone to Superadmin
+    // Protection 2: Non-superadmin cannot elevate someone to Superadmin
     if (targetRoleLower === "superadmin" && !isRequesterSuper) {
         return NextResponse.json({ 
-            error: "Akses Ditolak: Anda tidak memiliki wewenang untuk memberikan role Superadmin." 
+            error: "Akses Ditolak: Hanya Superadmin yang berhak menetapkan role Superadmin." 
         }, { status: 403 });
     }
 
-    // Protection 3: Primary Hotel Owner Admin is LOCKED — role cannot be changed!
-    // Exception: Users created by the owner (existingDoc?.createdBy or !isOwnerAccount) CAN be modified freely
+    // Protection 3: Primary Hotel Owner Admin cannot have their role changed by normal admins
     const hotelDocSnap = await adminDb.doc(`hotels/${hotelCode}`).get();
     const hotelDocData = hotelDocSnap.exists ? hotelDocSnap.data() : null;
     const hotelOwnerEmail = (hotelDocData?.email || "").trim().toLowerCase();
     const isOwnerAccount = (existingDoc?.isOwner === true || (hotelOwnerEmail && cleanEmail === hotelOwnerEmail)) && !existingDoc?.createdBy;
 
-    if (isOwnerAccount && role && role.toLowerCase() !== currentRoleLower) {
+    if (isOwnerAccount && !isRequesterSuper && targetRoleLower !== "admin" && targetRoleLower !== "administrator") {
         return NextResponse.json({ 
-            error: "Akses Ditolak: Role Admin Owner utama dari pendaftaran terkunci dan tidak dapat diubah." 
+            error: "Akses Ditolak: Akun Admin Utama (Owner Properti) tidak dapat diubah rolenya oleh staf lain." 
         }, { status: 403 });
     }
 
-    // Get Firebase Auth User
-    const userRecord = await adminAuth.getUserByEmail(cleanEmail);
-    const uid = userRecord.uid;
-
-    // Update Auth Profile
-    const updateParams: any = {};
-    if (name) updateParams.displayName = name;
-    if (password) updateParams.password = password;
-
-    if (Object.keys(updateParams).length > 0) {
-      await adminAuth.updateUser(uid, updateParams);
-    }
-
-    // Multi-Hotel calculation: HANYA Superadmin yang berhak mengubah multi-hotel
+    // Multi-Hotel assignment restriction
     let allowedOutlets: string[];
-    if (isRequesterSuper && Array.isArray(rawAllowedOutlets) && rawAllowedOutlets.length > 0) {
-        allowedOutlets = Array.from(new Set([...rawAllowedOutlets, hotelCode]));
+    if (isRequesterSuper) {
+        if (Array.isArray(rawAllowedOutlets) && rawAllowedOutlets.length > 0) {
+            allowedOutlets = Array.from(new Set([...rawAllowedOutlets.map(sanitizeIdentifier), hotelCode]));
+        } else {
+            allowedOutlets = existingDoc?.allowedOutlets || [hotelCode];
+        }
     } else {
-        // Non-superadmin retains existing assigned outlets or defaults to current hotel
         allowedOutlets = existingDoc?.allowedOutlets || [hotelCode];
     }
 
-    // Update Claims
-    await adminAuth.setCustomUserClaims(uid, { 
-        role: role || existingDoc?.role, 
-        hotelCode,
-        allowedOutlets 
+    let uid = existingDoc?.uid;
+    try {
+      const userRecord = await adminAuth.getUserByEmail(cleanEmail);
+      uid = userRecord.uid;
+    } catch (authErr: any) {
+      if (authErr.code === "auth/user-not-found") {
+        // Auto-provision Auth user if missing
+        const newPassword = password && password.trim() !== "" ? password.trim() : `User${Date.now()}!`;
+        const newUser = await adminAuth.createUser({
+          email: cleanEmail,
+          password: newPassword,
+          displayName: name || existingDoc?.name || cleanEmail.split("@")[0],
+        });
+        uid = newUser.uid;
+      } else {
+        console.error("Auth fetch error:", authErr);
+        return NextResponse.json({ error: "Gagal memverifikasi user di sistem autentikasi." }, { status: 500 });
+      }
+    }
+
+    // Update password if provided
+    if (password && password.trim() !== "") {
+      try {
+        await adminAuth.updateUser(uid, { password: password.trim() });
+      } catch (err: any) {
+        return NextResponse.json({ error: `Gagal memperbarui kata sandi: ${err.message}` }, { status: 400 });
+      }
+    }
+
+    // Update custom claims
+    await adminAuth.setCustomUserClaims(uid, {
+      role: role || existingDoc?.role || "user",
+      hotelCode,
+      allowedOutlets,
+      permissions: permissions || existingDoc?.permissions || {},
     });
 
-    // Update Firestore Document
     const updateData: any = {
-        updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
-    if (name) updateData.name = name.trim();
+    if (name) updateData.name = name;
     if (role) updateData.role = role;
     if (permissions) updateData.permissions = permissions;
     updateData.allowedOutlets = allowedOutlets;
 
-    // Update across all assigned hotels
+    // Update primary hotel
+    await adminDb.doc(`hotels/${hotelCode}/users_master/${docId}`).set(updateData, { merge: true });
+
+    // Sync across outlets
     for (const outletCode of allowedOutlets) {
-      await adminDb.doc(`hotels/${outletCode}/users_master/${docId}`).set(updateData, { merge: true });
+      if (outletCode !== hotelCode) {
+        await adminDb.doc(`hotels/${outletCode}/users_master/${docId}`).set({
+          ...existingDoc,
+          ...updateData,
+          hotelCode: outletCode,
+        }, { merge: true }).catch(err => {
+          console.warn(`Could not sync updated user to outlet ${outletCode}:`, err);
+        });
+      }
     }
 
-    // If previously assigned to hotels that are now unassigned, remove them from those hotels
-    const previousOutlets: string[] = existingDoc?.allowedOutlets || [];
-    const removedOutlets = previousOutlets.filter(c => !allowedOutlets.includes(c));
-    for (const remCode of removedOutlets) {
-        try {
-            await adminDb.doc(`hotels/${remCode}/users_master/${docId}`).delete();
-        } catch (e) {
-            console.warn(`Could not remove user from unassigned hotel ${remCode}:`, e);
-        }
-    }
-
-    // Also update global users_master
+    // Update global users_master
     await adminDb.doc(`users_master/${docId}`).set(updateData, { merge: true });
 
     // Log Activity
-    const { ip: ipAddress, location } = await resolveLocationFromReq(request, body.timeZone);
+    const { ip: ipAddress, location } = await resolveLocationFromReq(request, timeZone);
     await logActivity({
         hotelCode,
-        userId: uid,
-        userName: name?.trim() || existingDoc?.name || cleanEmail,
+        userId: docId,
+        userName: name || existingDoc?.name || cleanEmail,
         userEmail: cleanEmail,
         action: "UPDATE_USER",
         module: "USER_MANAGEMENT",
-        description: `Profil dan hak akses staf diperbarui. Role: '${role || existingDoc?.role}', Assigned Hotels: ${allowedOutlets.join(", ")}.`,
+        description: `Profil user '${name || cleanEmail}' (${role || existingDoc?.role}) telah diperbarui.`,
         ipAddress,
         location
     });
@@ -303,29 +408,56 @@ export async function PUT(request: Request) {
     return NextResponse.json({ success: true, allowedOutlets });
   } catch (error: any) {
     console.error("Error updating user:", error);
-    return NextResponse.json({ error: error.message || "Failed to update user" }, { status: 500 });
+    return NextResponse.json({ error: "Gagal memperbarui data user." }, { status: 500 });
   }
 }
 
 // DELETE: Remove User
 export async function DELETE(request: Request) {
   try {
+    const authUser = await getAuthenticatedUser(request);
     const body = await request.json();
-    const { email, hotelCode, requesterRole, requesterEmail, timeZone } = body;
+    const { email, hotelCode: rawHotelCode, timeZone } = body;
 
+    const hotelCode = sanitizeIdentifier(rawHotelCode);
     if (!email || !hotelCode) {
-      return NextResponse.json({ error: "Email and hotelCode are required" }, { status: 400 });
+      return NextResponse.json({ error: "Email dan hotelCode wajib diisi." }, { status: 400 });
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const docId = cleanEmail.replace(/[@.]/g, "_");
+    const docId = emailToDocId(cleanEmail);
 
-    // Check user data before deletion
     const userDocRef = adminDb.doc(`hotels/${hotelCode}/users_master/${docId}`);
     const snap = await userDocRef.get();
     const userData = snap.data();
 
-    const isRequesterSuper = requesterRole?.toLowerCase() === "superadmin" || requesterEmail?.toLowerCase() === "superadmin@setara.co.id";
+    let isRequesterSuper = authUser?.isSuperadmin ?? false;
+
+    // Non-superadmin must have sec_user_manage permission
+    if (!isRequesterSuper) {
+        const callerEmail = authUser?.email || body.requesterEmail?.trim().toLowerCase();
+        if (!callerEmail) {
+            return NextResponse.json({ error: "Akses Ditolak: Sesi otentikasi tidak valid." }, { status: 401 });
+        }
+
+        try {
+            const reqDocId = emailToDocId(callerEmail);
+            const reqSnap = await adminDb.doc(`hotels/${hotelCode}/users_master/${reqDocId}`).get();
+            if (reqSnap.exists) {
+                const reqData = reqSnap.data() || {};
+                const reqPerms = reqData.permissions || {};
+                const reqRole = (reqData.role || "").toLowerCase();
+                if (reqRole !== "superadmin" && reqPerms["sec_user_manage"] === false) {
+                    return NextResponse.json({
+                        error: "Akses Ditolak: Akun Anda tidak memiliki izin kelola staf (sec_user_manage)."
+                    }, { status: 403 });
+                }
+            }
+        } catch (e) {
+            console.warn("Could not verify requester permissions:", e);
+        }
+    }
+
     if (userData?.role?.toLowerCase() === "superadmin" && !isRequesterSuper) {
         return NextResponse.json({ 
             error: "Akses Ditolak: Akun Superadmin dilindungi dan tidak dapat dihapus oleh Admin hotel." 
@@ -345,7 +477,6 @@ export async function DELETE(request: Request) {
     }
 
     try {
-      // Find Auth User and Delete
       const userRecord = await adminAuth.getUserByEmail(cleanEmail);
       await adminAuth.deleteUser(userRecord.uid);
     } catch (authErr: any) {
@@ -380,6 +511,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Error deleting user:", error);
-    return NextResponse.json({ error: error.message || "Failed to delete user" }, { status: 500 });
+    return NextResponse.json({ error: "Gagal menghapus user dari sistem." }, { status: 500 });
   }
 }

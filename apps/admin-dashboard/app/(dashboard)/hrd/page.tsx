@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
-import { HrdTabs, type HrdTab } from "./HrdTabs";
 import { LiveMonitorTable } from "./LiveMonitorTable";
 import { StaffTable } from "./StaffTable";
 import { ShiftTable } from "./ShiftTable";
@@ -17,14 +17,76 @@ import { QrCodeDisplay } from "./QrCodeDisplay";
 import { FlexibleShiftPlanner } from "./FlexibleShiftPlanner";
 import { AnnouncementSettingCard } from "./AnnouncementSettingCard";
 import { CompanySettingCard } from "./CompanySettingCard";
-import type { Shift } from "./types";
+import type { Shift, HrdTab } from "./types";
 import styles from "./hrd.module.css";
 
-export default function HrdPage() {
+const VALID_TABS: HrdTab[] = ["staf", "monitor", "shift", "plotting", "pengajuan", "lembur", "laporan", "penggajian", "setting"];
+
+const TAB_METADATA: Record<HrdTab, { title: string; category: string; description: string }> = {
+  staf: {
+    category: "Personil",
+    title: "Manajemen Staf",
+    description: "Kelola profil data karyawan, NIK, PIN absensi mandiri, divisi, dan status aktif",
+  },
+  monitor: {
+    category: "Personil",
+    title: "Monitor Presensi & GPS",
+    description: "Pemantauan kehadiran real-time hari ini dengan verifikasi foto selfie dan koordinat GPS",
+  },
+  shift: {
+    category: "Jadwal & Shift",
+    title: "Master Shift Dasar",
+    description: "Konfigurasi jam kerja shift, waktu toleransi keterlambatan, dan jam kepulangan",
+  },
+  plotting: {
+    category: "Jadwal & Shift",
+    title: "Plotting Jadwal & Roster",
+    description: "Penyusunan dan distribusi jadwal kerja berkala karyawan per divisi",
+  },
+  pengajuan: {
+    category: "Pengajuan",
+    title: "Pengajuan Cuti & Izin",
+    description: "Validasi dan persetujuan pengajuan cuti tahunan, sakit, dan izin ketidakhadiran staf",
+  },
+  lembur: {
+    category: "Pengajuan",
+    title: "Persetujuan Lembur",
+    description: "Tinjauan klaim kerja lembur (overtime) karyawan sebelum direkapitulasi ke payroll",
+  },
+  laporan: {
+    category: "Kompensasi",
+    title: "Rekap Laporan Absensi",
+    description: "Rekapitulasi bulanan total jam kerja, keterlambatan, alpa, dan performa kehadiran",
+  },
+  penggajian: {
+    category: "Kompensasi",
+    title: "Penggajian Payroll",
+    description: "Perhitungan kalkulasi gaji karyawan otomatis berdasarkan kehadiran, lembur, dan denda",
+  },
+  setting: {
+    category: "Pengaturan",
+    title: "Setting Lokasi & QR",
+    description: "Pengaturan radius geofencing presensi GPS kantor, QR code check-in, dan pengumuman",
+  },
+};
+
+function HrdPageContent() {
   const { user, activeHotelCode } = useAuth();
-  const [activeTab, setActiveTab] = useState<HrdTab>("monitor");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const tabQuery = searchParams.get("tab") as HrdTab | null;
+  const initialTab: HrdTab = tabQuery && VALID_TABS.includes(tabQuery) ? tabQuery : "staf";
+  const [activeTab, setActiveTab] = useState<HrdTab>(initialTab);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loadingShifts, setLoadingShifts] = useState(true);
+
+  // Sync tab with URL parameter changes
+  useEffect(() => {
+    if (tabQuery && VALID_TABS.includes(tabQuery)) {
+      setActiveTab(tabQuery);
+    }
+  }, [tabQuery]);
 
   const hotelCode = activeHotelCode || (user as any)?.hotelCode || "";
 
@@ -55,16 +117,32 @@ export default function HrdPage() {
     );
   }
 
+  const currentMeta = TAB_METADATA[activeTab] || TAB_METADATA.staf;
+
   return (
     <div className={styles.page}>
-      {/* Page header */}
+      {/* Header section synchronized with sidebar selection */}
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>HRD & Absensi</h1>
-        <p className={styles.pageSubtitle}>Manajemen karyawan, shift, absensi, dan laporan payroll</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+          <span
+            style={{
+              fontSize: "11px",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              fontWeight: 700,
+              color: "var(--s-muted)",
+              background: "rgba(141, 122, 82, 0.08)",
+              padding: "2px 8px",
+              borderRadius: "4px",
+              border: "1px solid var(--s-hairline)",
+            }}
+          >
+            HRD • {currentMeta.category}
+          </span>
+        </div>
+        <h1 className={styles.pageTitle}>{currentMeta.title}</h1>
+        <p className={styles.pageSubtitle}>{currentMeta.description}</p>
       </div>
-
-      {/* Tabs */}
-      <HrdTabs activeTab={activeTab} onChange={setActiveTab} />
 
       {/* Content */}
       {activeTab === "monitor" && <LiveMonitorTable hotelCode={hotelCode} shifts={shifts} />}
@@ -116,5 +194,13 @@ export default function HrdPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function HrdPage() {
+  return (
+    <Suspense fallback={<div className={styles.page}><p style={{ color: "var(--s-muted)", fontSize: 13 }}>Memuat modul HRD...</p></div>}>
+      <HrdPageContent />
+    </Suspense>
   );
 }

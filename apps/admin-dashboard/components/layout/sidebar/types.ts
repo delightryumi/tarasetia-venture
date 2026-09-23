@@ -6,7 +6,9 @@ export type SectionType =
     | "about" | "gallery" | "footer"
     | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "revenue-breakdown" | "pnl" | "pnl-budget" | "users" | "superadmin" | "inventory-control" | "channel-manager" | "rate-inventory" | "confirmation-letter"
     | "purchasing" | "store-requisition" | "purchase-requisition" | "daily-market-list" | "stock-opname" | "items" | "suppliers"
-    | "purchase-order" | "food-beverage-ledger" | "food-beverage-performance" | "food-beverage-product" | "food-beverage-realtime" | "hrd" | "statements" | "budgeting" | "dsr" | "innalytics";
+    | "purchase-order" | "food-beverage-ledger" | "food-beverage-performance" | "food-beverage-product" | "food-beverage-realtime" | "hrd" | "statements" | "budgeting" | "dsr" | "innalytics"
+    | "hrd_scheduling" | "hrd_attendance" | "hrd_leaves" | "hrd_payroll" | "ina_reports" | "fo_walkin"
+    | "hrd_shifts" | "hrd_overtime" | "hrd_reports" | "hrd_settings";
 
 export interface NavItemType {
     id: SectionType;

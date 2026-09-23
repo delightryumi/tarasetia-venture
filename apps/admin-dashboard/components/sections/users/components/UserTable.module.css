@@ -149,6 +149,16 @@
     color: #64748b;
 }
 
+.toggleLocked {
+    filter: grayscale(0.35);
+    opacity: 0.9 !important;
+}
+
+.toggleLocked:disabled {
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+
 /* ── User Profile Cell ── */
 .userCell {
     display: flex;

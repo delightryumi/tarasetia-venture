@@ -4,6 +4,7 @@ export type AttendanceStatus = 'hadir' | 'terlambat' | 'alpa' | 'libur';
 export type LeaveType = 'izin' | 'sakit' | 'cuti';
 export type LeaveStatus = 'pending' | 'approved' | 'rejected';
 export type EmploymentType = 'staff' | 'dw';
+export type HrdTab = 'monitor' | 'staf' | 'shift' | 'plotting' | 'pengajuan' | 'lembur' | 'laporan' | 'penggajian' | 'setting';
 
 export interface PayrollConfig {
   baseSalary: number;             // Gaji pokok bulanan (jika staff) atau upah harian (jika DW)

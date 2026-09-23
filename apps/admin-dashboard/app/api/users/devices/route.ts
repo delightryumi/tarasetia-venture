@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
         const { ip: ipAddress, location } = await resolveLocationFromReq(req, body.timeZone, body.location);
 
         const { deviceType, os, browser } = parseUserAgent(rawUa);
-        const docId = sessionId || `${userEmail.replace(/[@.]/g, "_")}_${os.replace(/\s+/g, "")}_${browser.replace(/\s+/g, "")}`;
+        const docId = sessionId || `${userEmail.replace(/[@.]/g, "_")}_${os.replace(/[\s\/\\]+/g, "")}_${browser.replace(/[\s\/\\]+/g, "")}`;
 
         const sessionData = {
             id: docId,

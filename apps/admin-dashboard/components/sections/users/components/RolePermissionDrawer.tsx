@@ -11,7 +11,9 @@ import {
     COMPREHENSIVE_PERMISSION_GROUPS, 
     TOTAL_PERMISSIONS_COUNT, 
     getStandardRolePermissions,
-    PermissionGroup 
+    PermissionGroup,
+    isPermissionAddon,
+    isAddonActiveForHotel
 } from "../permissionConfig";
 import { SystemRoleItem } from "./RoleManagementTable";
 import { UserProfile } from "../types";
@@ -27,6 +29,7 @@ interface RolePermissionDrawerProps {
     activeHotelCode?: string;
     users: UserProfile[];
     onSaveRolePermissions: (roleName: string, permissions: Record<string, boolean>, syncToUsers: boolean) => Promise<void>;
+    activeModules?: string[] | null;
 }
 
 export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
@@ -35,16 +38,17 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
     role,
     activeHotelCode,
     users,
-    onSaveRolePermissions
+    onSaveRolePermissions,
+    activeModules = []
 }) => {
     const [permissions, setPermissions] = useState<Record<string, boolean>>(() => {
-        return role ? getStandardRolePermissions(role.name) : {};
+        return role ? getStandardRolePermissions(role.name, activeModules) : {};
     });
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedTag, setSelectedTag] = useState<string>("all");
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
         const initial: Record<string, boolean> = {};
-        COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
+        COMPREHENSIVE_PERMISSION_GROUPS.filter(g => !g.isSuperadminOnly).forEach(g => {
             initial[g.id] = true;
         });
         return initial;
@@ -69,14 +73,14 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
         if (!role) return;
 
         // 1. Immediately apply full standard preset for this role
-        const standard = getStandardRolePermissions(role.name);
+        const standard = getStandardRolePermissions(role.name, activeModules);
         setPermissions(standard);
         setSelectedTag("all");
         setSearchQuery("");
 
         // 2. Expand all groups immediately
         const initialExpanded: Record<string, boolean> = {};
-        COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
+        COMPREHENSIVE_PERMISSION_GROUPS.filter(g => !g.isSuperadminOnly).forEach(g => {
             initialExpanded[g.id] = true;
         });
         setExpandedGroups(initialExpanded);
@@ -87,9 +91,17 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
             getDoc(doc(db, "hotels", activeHotelCode, "roles_permissions", roleId))
                 .then(snap => {
                     if (snap.exists() && snap.data().permissions) {
+                        const fetched = snap.data().permissions;
+                        // Enforce add-on rules on fetched permissions
+                        if (!isAddonActiveForHotel("food-beverage-realtime", activeModules)) {
+                            fetched["food-beverage-realtime"] = false;
+                        }
+                        if (!isAddonActiveForHotel("pos_self_order", activeModules)) {
+                            fetched["pos_self_order"] = false;
+                        }
                         setPermissions(prev => ({
                             ...standard,
-                            ...snap.data().permissions
+                            ...fetched
                         }));
                     }
                 })
@@ -97,27 +109,49 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
                     console.warn("Background role fetch note:", err);
                 });
         }
-    }, [role?.id, role?.name, activeHotelCode]);
+    }, [role?.id, role?.name, activeHotelCode, JSON.stringify(activeModules)]);
 
     if (!isOpen || !role) return null;
 
     // Toggle single permission
     const togglePermission = (permId: string) => {
-        setPermissions(prev => ({
-            ...prev,
-            [permId]: !prev[permId]
-        }));
+        const parentGroup = COMPREHENSIVE_PERMISSION_GROUPS.find(g => g.permissions.some(p => p.id === permId));
+        const targetPerm = parentGroup?.permissions.find(p => p.id === permId);
+        if (targetPerm?.isComingSoon) return;
+
+        const addon = isPermissionAddon(permId);
+        if (addon.isAddon && !isAddonActiveForHotel(permId, activeModules)) return;
+
+        setPermissions(prev => {
+            const nextVal = !prev[permId];
+            const next = {
+                ...prev,
+                [permId]: nextVal
+            };
+            if (parentGroup) {
+                const anyActive = parentGroup.permissions.some(p => p.id === permId ? nextVal : next[p.id] === true);
+                next[parentGroup.id] = anyActive;
+            }
+            return next;
+        });
     };
 
     // Toggle entire module
     const toggleModuleGroup = (group: PermissionGroup) => {
-        const allActive = group.permissions.every(p => permissions[p.id] === true);
+        const availablePerms = group.permissions.filter(p => {
+            if (p.isComingSoon) return false;
+            const addon = isPermissionAddon(p.id);
+            if (addon.isAddon && !isAddonActiveForHotel(p.id, activeModules)) return false;
+            return true;
+        });
+        if (availablePerms.length === 0) return;
+        const allActive = availablePerms.every(p => permissions[p.id] === true);
         const nextState = !allActive;
 
         setPermissions(prev => {
             const next = { ...prev };
             next[group.id] = nextState;
-            group.permissions.forEach(p => {
+            availablePerms.forEach(p => {
                 next[p.id] = nextState;
             });
             return next;
@@ -125,31 +159,42 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
 
         toast.info(
             nextState 
-                ? `Semua hak akses modul ${group.shortLabel || group.label} diaktifkan.` 
-                : `Semua hak akses modul ${group.shortLabel || group.label} dinonaktifkan.`
+                ? `Semua hak akses aktif modul ${group.shortLabel || group.label} diaktifkan.` 
+                : `Semua hak akses aktif modul ${group.shortLabel || group.label} dinonaktifkan.`
         );
     };
 
     // Quick Actions
     const handleGrantAll = () => {
         const next: Record<string, boolean> = {};
-        COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
+        COMPREHENSIVE_PERMISSION_GROUPS.filter(g => !g.isSuperadminOnly).forEach(g => {
             next[g.id] = true;
             g.permissions.forEach(p => {
-                next[p.id] = true;
+                const addon = isPermissionAddon(p.id);
+                if (addon.isAddon && !isAddonActiveForHotel(p.id, activeModules)) return;
+                if (!p.isComingSoon) {
+                    next[p.id] = true;
+                }
             });
         });
         setPermissions(next);
-        toast.success("Seluruh izin di semua 12 modul hotel telah diaktifkan.");
+        toast.success("Seluruh izin aktif di semua modul hotel telah diaktifkan.");
     };
 
     const handleRevokeAll = () => {
-        setPermissions({});
+        const next: Record<string, boolean> = {};
+        COMPREHENSIVE_PERMISSION_GROUPS.filter(g => !g.isSuperadminOnly).forEach(g => {
+            next[g.id] = false;
+            g.permissions.forEach(p => {
+                next[p.id] = false;
+            });
+        });
+        setPermissions(next);
         toast.info("Seluruh izin akses modul telah dinonaktifkan.");
     };
 
     const handleResetStandard = () => {
-        const preset = getStandardRolePermissions(role.name);
+        const preset = getStandardRolePermissions(role.name, activeModules);
         setPermissions(preset);
         toast.info(`Hak akses dikembalikan ke standar industri hotel untuk role ${role.name}.`);
     };
@@ -186,6 +231,7 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
 
     // Filter Groups by Selected Tag & Search Query
     const filteredGroups = COMPREHENSIVE_PERMISSION_GROUPS.filter(group => {
+        if (group.isSuperadminOnly) return false;
         if (selectedTag !== "all" && group.id !== selectedTag) return false;
         return true;
     }).map(group => {
@@ -362,7 +408,7 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
                                 {activePermsCount}/{TOTAL_PERMISSIONS_COUNT}
                             </span>
                         </button>
-                        {COMPREHENSIVE_PERMISSION_GROUPS.map(g => {
+                        {COMPREHENSIVE_PERMISSION_GROUPS.filter(g => !g.isSuperadminOnly).map(g => {
                             const activeCount = g.permissions.filter(p => permissions[p.id] === true).length;
                             const isSelected = selectedTag === g.id;
                             return (
@@ -480,14 +526,20 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
                                     {isExpanded && (
                                         <div className={styles.itemsList}>
                                             {group.permissions.map(perm => {
-                                                const isChecked = permissions[perm.id] === true;
+                                                const addon = isPermissionAddon(perm.id);
+                                                const isAddonDisabled = addon.isAddon && !isAddonActiveForHotel(perm.id, activeModules);
+                                                const isRoadmap = perm.isComingSoon === true;
+                                                const isLocked = isRoadmap || isAddonDisabled;
+                                                const isChecked = isAddonDisabled ? false : permissions[perm.id] === true;
 
                                                 return (
                                                     <div 
                                                         key={perm.id} 
-                                                        className={styles.permItemRow}
-                                                        onClick={() => togglePermission(perm.id)}
-                                                        style={{ cursor: "pointer" }}
+                                                        className={styles.permItemRow} 
+                                                        onClick={() => {
+                                                            if (!isLocked) togglePermission(perm.id);
+                                                        }}
+                                                        style={{ cursor: isLocked ? "not-allowed" : "pointer" }}
                                                     >
                                                         <div className={styles.permInfoCluster}>
                                                             <div className={styles.permLabelRow}>
@@ -498,19 +550,45 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
                                                                         Otoritas Sensitif
                                                                     </span>
                                                                 )}
+                                                                {perm.isAction && (
+                                                                    <span className={styles.actionBadge} title="Otoritas Tombol / Fitur Aksi">
+                                                                        Otoritas Tombol
+                                                                    </span>
+                                                                )}
+                                                                {isRoadmap && (
+                                                                    <span className={styles.roadmapBadge} title="Fitur dalam peta pengembangan (Roadmap)">
+                                                                        Segera Hadir
+                                                                    </span>
+                                                                )}
+                                                                {addon.isAddon && !isAddonDisabled && (
+                                                                    <span className={styles.addonActiveBadge} title="Add-on aktif pada properti hotel">
+                                                                        Add-on Aktif
+                                                                    </span>
+                                                                )}
+                                                                {isAddonDisabled && (
+                                                                    <span className={styles.addonLockedBadge} title={`Memerlukan aktivasi Add-on ${addon.addonName} pada paket hotel`}>
+                                                                        Add-on Belum Berlangganan
+                                                                    </span>
+                                                                )}
                                                             </div>
-                                                            <p className={styles.permDescription}>{perm.description}</p>
+                                                            <p className={styles.permDescription}>
+                                                                {perm.description}
+                                                                {isRoadmap && " (Roadmap / Segera Hadir)"}
+                                                                {isAddonDisabled && ` (Fitur Add-on: Memerlukan aktivasi ${addon.addonName} oleh Superadmin)`}
+                                                            </p>
                                                         </div>
 
                                                         <button
                                                             type="button"
+                                                            disabled={isLocked}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                togglePermission(perm.id);
+                                                                if (!isLocked) togglePermission(perm.id);
                                                             }}
-                                                            className={`${styles.switch} ${isChecked ? styles.switchOn : styles.switchOff}`}
+                                                            className={`${styles.switch} ${isLocked ? styles.switchRoadmap : isChecked ? styles.switchOn : styles.switchOff}`}
+                                                            title={isRoadmap ? "Fitur sedang dalam pengembangan (Roadmap)" : isAddonDisabled ? `Memerlukan aktivasi Add-on ${addon.addonName} pada paket properti` : isChecked ? "Nonaktifkan hak akses" : "Aktifkan hak akses"}
                                                         >
-                                                            <span className={`${styles.switchThumb} ${isChecked ? styles.switchThumbOn : styles.switchThumbOff}`} />
+                                                            <span className={`${styles.switchThumb} ${isChecked && !isLocked ? styles.switchThumbOn : styles.switchThumbOff}`} />
                                                         </button>
                                                     </div>
                                                 );
