@@ -17,7 +17,7 @@ import { adminDb } from "@/lib/firebaseAdmin";
  */
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
+        const body = await req.json().catch(() => ({}));
         const { hotelCode } = body;
 
         if (!hotelCode) {
@@ -30,35 +30,39 @@ export async function POST(req: NextRequest) {
         }
 
         const hotelData = hotelDoc.data();
-        const customApiKey = hotelData?.channelManager?.apiKey || process.env.CHANNEX_API_KEY;
-        const env: "staging" | "production" = (hotelData?.channelManager?.env || hotelData?.channelManager?.environment || process.env.CHANNEX_ENV || "staging") as any;
+        const customApiKey = body.apiKey || hotelData?.channelManager?.apiKey || process.env.CHANNEX_API_KEY;
+        const env: "staging" | "production" = (body.env || hotelData?.channelManager?.env || hotelData?.channelManager?.environment || process.env.CHANNEX_ENV || "staging") as any;
 
         if (!customApiKey) {
             return NextResponse.json({
-                error: "CHANNEX_API_KEY is not configured. Set it in .env.local or hotel's channelManager.apiKey."
+                error: "API Key belum diisi. Masukkan API Key di dashboard atau konfigurasi server."
             }, { status: 400 });
         }
 
-        // Build webhook URL from environment
-        const webhookBaseUrl = process.env.NEXT_PUBLIC_CHANNEX_WEBHOOK_URL
+        // Build webhook URL from request body, hotel doc, or environment
+        const webhookBaseUrl = body.webhookUrl
+            || hotelData?.channelManager?.webhookUrl
+            || process.env.NEXT_PUBLIC_CHANNEX_WEBHOOK_URL
             || process.env.NEXT_PUBLIC_DASHBOARD_URL
-            || "https://yourdomain.com";
+            || "https://live.mytara.id";
 
         const webhookUrl = webhookBaseUrl.endsWith("/api/channex/webhook")
             ? webhookBaseUrl
             : `${webhookBaseUrl.replace(/\/$/, "")}/api/channex/webhook`;
 
-        const webhookSecret = process.env.CHANNEX_WEBHOOK_SECRET;
+        const webhookSecret = body.webhookSecret 
+            || hotelData?.channelManager?.webhookSecret 
+            || process.env.CHANNEX_WEBHOOK_SECRET;
 
         if (!webhookSecret) {
             return NextResponse.json({
-                error: "CHANNEX_WEBHOOK_SECRET is not configured. Set it in .env.local first."
+                error: "Webhook Secret belum diisi. Masukkan atau generate Webhook Secret di dashboard terlebih dahulu."
             }, { status: 400 });
         }
 
         if (!webhookUrl.startsWith("https://")) {
             return NextResponse.json({
-                error: `Channex requires HTTPS webhook URL. Current URL is: ${webhookUrl}. Update NEXT_PUBLIC_CHANNEX_WEBHOOK_URL in .env.local.`
+                error: `Channex mewajibkan HTTPS untuk URL Webhook. URL saat ini: ${webhookUrl}`
             }, { status: 400 });
         }
 
@@ -72,15 +76,32 @@ export async function POST(req: NextRequest) {
 
         const webhookId = result?.data?.id;
 
-        // Store webhook registration details in Firestore for tracking
+        // Store webhook registration details and credentials in Firestore for hotel
         await adminDb.collection("hotels").doc(hotelCode).set({
             channelManager: {
+                apiKey: customApiKey,
+                env,
                 webhookId,
                 webhookUrl,
+                webhookSecret,
                 webhookRegisteredAt: new Date().toISOString(),
                 webhookEnv: env
             }
         }, { merge: true });
+
+        // Also store in system_settings/channex so any incoming webhook can authenticate globally
+        try {
+            await adminDb.collection("system_settings").doc("channex").set({
+                webhookSecret,
+                webhookUrl,
+                webhookId,
+                env,
+                updatedAt: new Date().toISOString(),
+                updatedByHotel: hotelCode
+            }, { merge: true });
+        } catch (sysErr) {
+            console.warn("[Register Webhook] Could not write system_settings:", sysErr);
+        }
 
         // Log to channex_task_logs
         await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).add({
@@ -98,7 +119,7 @@ export async function POST(req: NextRequest) {
             webhookId,
             webhookUrl,
             environment: env,
-            message: `✅ Webhook berhasil didaftarkan ke Channex [${env}]. ID: ${webhookId}. Channex akan mengirimkan semua booking events ke: ${webhookUrl}`
+            message: `✅ Webhook berhasil didaftarkan ke Channex [${env}]! ID: ${webhookId}. Semua reservasi OTA akan dikirim ke: ${webhookUrl}`
         });
 
     } catch (error: any) {
@@ -132,7 +153,7 @@ export async function GET(req: NextRequest) {
         webhookEnv: cm.webhookEnv || null,
         isRegistered: !!cm.webhookId,
         currentWebhookUrlFromEnv: process.env.NEXT_PUBLIC_CHANNEX_WEBHOOK_URL || null,
-        webhookSecretConfigured: !!process.env.CHANNEX_WEBHOOK_SECRET,
+        webhookSecretConfigured: !!(cm.webhookSecret || process.env.CHANNEX_WEBHOOK_SECRET),
         apiKeyConfigured: !!(cm.apiKey || process.env.CHANNEX_API_KEY)
     });
 }

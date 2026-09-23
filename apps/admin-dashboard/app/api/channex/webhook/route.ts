@@ -12,19 +12,26 @@ import { ChannexWebhookPayload } from "@/lib/channex/types";
 export async function POST(req: NextRequest) {
     try {
         const authHeader = req.headers.get("x-channex-webhook-secret") || req.headers.get("authorization");
-        const expectedSecret = process.env.CHANNEX_WEBHOOK_SECRET;
+        let expectedSecret = process.env.CHANNEX_WEBHOOK_SECRET;
 
-        // Channex Certification: CHANNEX_WEBHOOK_SECRET must be configured in production
+        // Fallback: Check system_settings in Firestore if not configured in environment
         if (!expectedSecret) {
-            console.error("[Channex Webhook] ⚠️  CHANNEX_WEBHOOK_SECRET environment variable is not set! Configure this to secure your webhook endpoint.");
+            try {
+                const sysDoc = await adminDb.collection("system_settings").doc("channex").get();
+                if (sysDoc.exists) {
+                    expectedSecret = sysDoc.data()?.webhookSecret;
+                }
+            } catch (err) {
+                console.warn("[Channex Webhook] Could not fetch system_settings for secret:", err);
+            }
         }
 
-        // Verify Secret if configured in environment
+        // Verify Secret if configured in environment or Firestore
         if (expectedSecret && authHeader !== expectedSecret && authHeader !== `Bearer ${expectedSecret}`) {
             console.warn("[Channex Webhook] Unauthorized request received. Invalid secret.");
-            // Per Channex spec: return 200 even for auth failures to prevent retry storms,
-            // but log it for security monitoring
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        } else if (!expectedSecret) {
+            console.warn("[Channex Webhook] ⚠️  CHANNEX_WEBHOOK_SECRET is not configured in env or database. Skipping strict auth verification for testing.");
         }
 
         const payload = (await req.json()) as ChannexWebhookPayload;

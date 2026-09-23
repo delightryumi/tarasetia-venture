@@ -71,7 +71,7 @@ import { ChannelPaymentTokenizationTab } from "./ChannelPaymentTokenizationTab";
 import { ChannelTutorialTab } from "./ChannelTutorialTab";
 import { TravelAgentTab } from "./TravelAgentTab";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, deleteField } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc, deleteField } from "firebase/firestore";
 import { toast } from "sonner";
 
 import { ChannelSeparationMode } from "@/lib/channex/types";
@@ -348,7 +348,17 @@ export function ChannelManagerSection() {
     // Environment Switcher: Staging / Sandbox vs Live Production
     const [channexEnv, setChannexEnv] = useState<"staging" | "production">("staging");
     const [channexApiKey, setChannexApiKey] = useState<string>("");
+    const [channexWebhookSecret, setChannexWebhookSecret] = useState<string>("");
+    const [showWebhookSecret, setShowWebhookSecret] = useState<boolean>(false);
     const [channexPropertyId, setChannexPropertyId] = useState<string>("");
+    const [webhookRegistrationStatus, setWebhookRegistrationStatus] = useState<{
+        isRegistered: boolean;
+        webhookId?: string;
+        webhookUrl?: string;
+        webhookRegisteredAt?: string;
+    } | null>(null);
+    const [registeringWebhook, setRegisteringWebhook] = useState<boolean>(false);
+    const [checkingWebhookStatus, setCheckingWebhookStatus] = useState<boolean>(false);
     
     // Connected Channels Map
     const [channelConfigs, setChannelConfigs] = useState<Record<string, ChannelMappingConfig>>({});
@@ -471,7 +481,19 @@ export function ChannelManagerSection() {
                     const cm = data.channelManager || {};
                     setChannexEnv(cm.env || "staging");
                     setChannexApiKey(cm.apiKey || "");
+                    setChannexWebhookSecret(cm.webhookSecret || "");
                     setChannexPropertyId(data.channexPropertyId || cm.channexPropertyId || "");
+
+                    if (cm.webhookId) {
+                        setWebhookRegistrationStatus({
+                            isRegistered: true,
+                            webhookId: cm.webhookId,
+                            webhookUrl: cm.webhookUrl,
+                            webhookRegisteredAt: cm.webhookRegisteredAt
+                        });
+                    } else {
+                        setWebhookRegistrationStatus(null);
+                    }
 
                     // Load only genuine configured channels from Firestore (no dummy defaults)
                     const initialChannels: Record<string, ChannelMappingConfig> = {};
@@ -601,13 +623,29 @@ export function ChannelManagerSection() {
                 channelManager: {
                     env: channexEnv,
                     apiKey: channexApiKey,
+                    webhookSecret: channexWebhookSecret,
                     channexPropertyId,
                     channels: channelConfigs,
                     isSyncActive: true,
                     updatedAt: new Date().toISOString()
                 }
             });
-            toast.success("Konfigurasi Komisi, Harga Net/Gross, & Pemetaan ID OTA Berhasil Disimpan!");
+
+            // Sinkronkan juga ke collection system_settings jika webhookSecret diisi
+            if (channexWebhookSecret) {
+                try {
+                    await setDoc(doc(db, "system_settings", "channex"), {
+                        webhookSecret: channexWebhookSecret,
+                        env: channexEnv,
+                        updatedAt: new Date().toISOString(),
+                        updatedByHotel: activeHotelCode
+                    }, { merge: true });
+                } catch (sysErr) {
+                    console.warn("Could not save to system_settings:", sysErr);
+                }
+            }
+
+            toast.success("Konfigurasi Kredensial, API Key & Webhook Berhasil Disimpan!");
 
             // Log event to Channel Events with current user
             const currentChan = selectedChannelCode ? channelConfigs[selectedChannelCode] : null;
@@ -2944,7 +2982,7 @@ export function ChannelManagerSection() {
                                         <option value="">-- Pilih Tipe Kamar --</option>
                                         {roomTypes.map(rt => (
                                             <option key={rt.id} value={rt.id}>
-                                                {rt.name} (Tersedia: {rt.totalRooms || 0})
+                                                {rt.name} (Tersedia: {(rt as any).totalRooms || 0})
                                             </option>
                                         ))}
                                     </select>
@@ -3187,7 +3225,207 @@ export function ChannelManagerSection() {
                                     </button>
                                 </div>
                                 <p className={styles.fieldHelpMuted}>
-                                    Daftarkan URL di atas pada konfigurasi Webhook agar reservasi dari OTA otomatis masuk ke Front Office &amp; Forecast kamar.
+                                    URL endpoint publik My Tara yang akan menerima kiriman reservasi, perubahan, dan pembatalan dari Channex.
+                                </p>
+                            </div>
+
+                            {/* Field D: Webhook Secret (Shared Secret) */}
+                            <div>
+                                <div className={styles.credentialsFieldHeader}>
+                                    <label className={styles.credentialsLabelBold}>
+                                        Webhook Shared Secret (Keamanan Callback): <span className={styles.requiredAsterisk}>*</span>
+                                    </label>
+                                    <span className={styles.credentialsExtLink}>
+                                        Verifikasi Keaslian Pengirim Webhook
+                                    </span>
+                                </div>
+                                <div className={styles.inputGroupRow}>
+                                    <input
+                                        type={showWebhookSecret ? "text" : "password"}
+                                        value={channexWebhookSecret}
+                                        onChange={e => setChannexWebhookSecret(e.target.value)}
+                                        placeholder="Generate otomatis atau masukkan string acak 32 karakter"
+                                        className={`${styles.cellInput} ${styles.apiKeyInput}`}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowWebhookSecret(prev => !prev)}
+                                        className={`${styles.btnActionSecondary} ${styles.btnApiKeyToggle}`}
+                                        title={showWebhookSecret ? "Sembunyikan Secret" : "Tampilkan Secret"}
+                                    >
+                                        {showWebhookSecret ? "Hide" : "Show"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const array = new Uint8Array(16);
+                                            window.crypto.getRandomValues(array);
+                                            const hex = Array.from(array, byte => byte.toString(16).padStart(2, "0")).join("");
+                                            setChannexWebhookSecret(hex);
+                                            toast.info("Webhook Secret baru (32 hex) berhasil di-generate! Klik 'Simpan Konfigurasi Saluran'.");
+                                        }}
+                                        className={styles.btnActionSecondary}
+                                        title="Generate string acak 32 hex"
+                                    >
+                                        <Sparkles size={12} />
+                                        <span>Generate Acak</span>
+                                    </button>
+                                    {channexWebhookSecret && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(channexWebhookSecret);
+                                                toast.success("Webhook Secret disalin ke clipboard!");
+                                            }}
+                                            className={styles.btnActionSecondary}
+                                            title="Salin Secret"
+                                        >
+                                            <Copy size={12} />
+                                        </button>
+                                    )}
+                                </div>
+                                <p className={styles.fieldHelpMuted}>
+                                    Kunci rahasia ini digunakan untuk memvalidasi header <code>x-channex-webhook-secret</code> agar hanya Channex yang dapat mengirim booking.
+                                </p>
+                            </div>
+
+                            {/* Section E: Status Registrasi & 1-Click Register Channex Webhook */}
+                            <div style={{
+                                background: webhookRegistrationStatus?.isRegistered ? "#f0fdf4" : "#f8fafc",
+                                border: `1px solid ${webhookRegistrationStatus?.isRegistered ? "#86efac" : "#e2e8f0"}`,
+                                borderRadius: "8px",
+                                padding: "14px 16px",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "10px"
+                            }}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        {webhookRegistrationStatus?.isRegistered ? (
+                                            <CheckCircle2 size={16} color="#16a34a" />
+                                        ) : (
+                                            <AlertTriangle size={16} color="#eab308" />
+                                        )}
+                                        <span style={{ fontSize: "12px", fontWeight: 700, color: webhookRegistrationStatus?.isRegistered ? "#15803d" : "#475569" }}>
+                                            {webhookRegistrationStatus?.isRegistered
+                                                ? `✓ Webhook Aktif Terdaftar di Channex (ID: ${webhookRegistrationStatus.webhookId})`
+                                                : "Webhook Belum Terdaftar ke Channex"}
+                                        </span>
+                                    </div>
+                                    <div style={{ display: "flex", gap: "8px" }}>
+                                        <button
+                                            type="button"
+                                            disabled={checkingWebhookStatus}
+                                            onClick={async () => {
+                                                if (!activeHotelCode || activeHotelCode === "0") return;
+                                                setCheckingWebhookStatus(true);
+                                                try {
+                                                    const res = await fetch(`/api/channex/register-webhook?hotelCode=${activeHotelCode}`);
+                                                    const data = await res.json();
+                                                    if (data.isRegistered) {
+                                                        setWebhookRegistrationStatus({
+                                                            isRegistered: true,
+                                                            webhookId: data.webhookId,
+                                                            webhookUrl: data.webhookUrl,
+                                                            webhookRegisteredAt: data.webhookRegisteredAt
+                                                        });
+                                                        toast.success(`Webhook terverifikasi aktif (ID: ${data.webhookId})`);
+                                                    } else {
+                                                        setWebhookRegistrationStatus(null);
+                                                        toast.info("Webhook belum terdaftar di Channex.");
+                                                    }
+                                                } catch (err: any) {
+                                                    toast.error("Gagal memeriksa status: " + err.message);
+                                                } finally {
+                                                    setCheckingWebhookStatus(false);
+                                                }
+                                            }}
+                                            className={styles.btnActionSecondary}
+                                            style={{ height: "30px", fontSize: "11px" }}
+                                        >
+                                            <RefreshCw size={11} className={checkingWebhookStatus ? "animate-spin" : ""} />
+                                            <span>{checkingWebhookStatus ? "Mengecek..." : "Periksa Status"}</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={registeringWebhook || !channexApiKey.trim()}
+                                            onClick={async () => {
+                                                if (!activeHotelCode || activeHotelCode === "0") {
+                                                    toast.error("Pilih hotel aktif terlebih dahulu.");
+                                                    return;
+                                                }
+                                                if (!channexApiKey.trim()) {
+                                                    toast.error("API Key wajib diisi terlebih dahulu!");
+                                                    return;
+                                                }
+                                                let secretToUse = channexWebhookSecret.trim();
+                                                if (!secretToUse) {
+                                                    const array = new Uint8Array(16);
+                                                    window.crypto.getRandomValues(array);
+                                                    secretToUse = Array.from(array, byte => byte.toString(16).padStart(2, "0")).join("");
+                                                    setChannexWebhookSecret(secretToUse);
+                                                }
+
+                                                setRegisteringWebhook(true);
+                                                try {
+                                                    // 1. Simpan konfigurasi ke Firestore hotel
+                                                    const docRef = doc(db, "hotels", activeHotelCode);
+                                                    await updateDoc(docRef, {
+                                                        channexPropertyId,
+                                                        channelManager: {
+                                                            env: channexEnv,
+                                                            apiKey: channexApiKey,
+                                                            webhookSecret: secretToUse,
+                                                            channexPropertyId,
+                                                            channels: channelConfigs,
+                                                            isSyncActive: true,
+                                                            updatedAt: new Date().toISOString()
+                                                        }
+                                                    });
+
+                                                    // 2. Daftarkan langsung ke Channex API
+                                                    const webhookUrl = `${window.location.origin}/api/channex/webhook`;
+                                                    const res = await fetch("/api/channex/register-webhook", {
+                                                        method: "POST",
+                                                        headers: { "Content-Type": "application/json" },
+                                                        body: JSON.stringify({
+                                                            hotelCode: activeHotelCode,
+                                                            apiKey: channexApiKey,
+                                                            webhookSecret: secretToUse,
+                                                            webhookUrl,
+                                                            env: channexEnv
+                                                        })
+                                                    });
+
+                                                    const data = await res.json();
+                                                    if (res.ok && data.success) {
+                                                        toast.success(`Berhasil! Webhook terdaftar di Channex (ID: ${data.webhookId})`);
+                                                        setWebhookRegistrationStatus({
+                                                            isRegistered: true,
+                                                            webhookId: data.webhookId,
+                                                            webhookUrl: data.webhookUrl,
+                                                            webhookRegisteredAt: new Date().toISOString()
+                                                        });
+                                                    } else {
+                                                        toast.error(data.error || "Gagal mendaftarkan webhook ke Channex.");
+                                                    }
+                                                } catch (err: any) {
+                                                    console.error("Register webhook error:", err);
+                                                    toast.error("Error: " + (err.message || "Gagal menghubungi server"));
+                                                } finally {
+                                                    setRegisteringWebhook(false);
+                                                }
+                                            }}
+                                            className={styles.btnActionPrimary}
+                                            style={{ height: "30px", fontSize: "11px", background: "#16a34a", borderColor: "#15803d" }}
+                                        >
+                                            <Zap size={11} />
+                                            <span>{registeringWebhook ? "Mendaftarkan ke Channex..." : "⚡ 1-Click Daftarkan ke Channex"}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>
+                                    Klik <b>⚡ 1-Click Daftarkan ke Channex</b> untuk otomatis mendaftarkan endpoint My Tara ke server Channex tanpa perlu membuka extranet Channex ataupun Firebase Console.
                                 </p>
                             </div>
 

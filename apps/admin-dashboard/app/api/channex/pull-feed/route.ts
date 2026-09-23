@@ -19,7 +19,7 @@ import { adminDb } from "@/lib/firebaseAdmin";
  * Route: POST /api/channex/pull-feed         (Manual trigger with optional hotelCode)
  *
  * Vercel cron.json config (add to vercel.json):
- * { "crons": [{ "path": "/api/channex/pull-feed", "schedule": "*/15 * * * *" }] }
+ * { "crons": [{ "path": "/api/channex/pull-feed", "schedule": "every 15 minutes" }] }
  */
 export const maxDuration = 60; // 60 second timeout for feed processing
 
@@ -35,8 +35,15 @@ async function handlePullFeed(req: NextRequest) {
     const startTime = Date.now();
 
     // Security: Verify Vercel Cron secret or internal API secret
-    const authHeader = req.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET || process.env.CHANNEX_WEBHOOK_SECRET;
+    let cronSecret = process.env.CRON_SECRET || process.env.CHANNEX_WEBHOOK_SECRET;
+    if (!cronSecret) {
+        try {
+            const sysDoc = await adminDb.collection("system_settings").doc("channex").get();
+            if (sysDoc.exists) {
+                cronSecret = sysDoc.data()?.cronSecret || sysDoc.data()?.webhookSecret;
+            }
+        } catch {}
+    }
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
         // Allow internal calls without auth (same-origin Next.js server)
         const isInternalCall = req.headers.get("x-internal-call") === "1";
