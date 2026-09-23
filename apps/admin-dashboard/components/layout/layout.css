@@ -28,12 +28,16 @@
     margin-left: var(--sidebar-width);
     width: calc(100vw - var(--sidebar-width));
     max-width: calc(100vw - var(--sidebar-width));
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .dashboard-wrapper.collapsed .main-content {
     margin-left: 100px;
     width: calc(100vw - 100px);
     max-width: calc(100vw - 100px);
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .sidebar.collapsed {
@@ -326,10 +330,12 @@
     overflow-y: auto;
     overflow-x: hidden;
     padding: 40px;
+    scrollbar-gutter: stable;
 }
 
 .main-scroll-container.main-scroll-container-wide {
     padding: 16px 20px 40px 20px;
+    scrollbar-gutter: stable;
 }
 
 /* No padding and pure clean canvas for superadmin full-width page */

@@ -15,9 +15,17 @@ import {
 
 import { toast } from "sonner";
 import { useUsers, ROLES } from "./useUsers";
-import { UserCard } from "./components/UserCard";
+import { UserTable } from "./components/UserTable";
+import { RoleManagementTable, SystemRoleItem } from "./components/RoleManagementTable";
+import { RolePermissionDrawer } from "./components/RolePermissionDrawer";
+import { getStandardRolePermissions } from "./permissionConfig";
+import { AssignHotelDrawer } from "./components/AssignHotelDrawer";
+import { BlockedUsersTab } from "./components/BlockedUsersTab";
+import { SecurityPreferencesTab } from "./components/SecurityPreferencesTab";
 import { useAuth } from "@/context/AuthContext";
-import { RoleCard } from "./components/RoleCard";
+import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { getHotelCollection } from "@/lib/firestoreHelper";
 import { UserDrawer } from "./components/UserDrawer";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { ChangePasswordModal } from "./components/ChangePasswordModal";
@@ -186,11 +194,21 @@ export const UsersSection: React.FC = () => {
         handleChangePassword
     } = useUsers([]);
 
-    const [activeTab, setActiveTab] = useState<"users" | "permissions" | "activity" | "devices">("users");
+    type TabType = "users" | "roles" | "blocked" | "devices" | "activity" | "security";
+    const [activeTab, setActiveTab] = useState<TabType>("users");
     const [searchQuery, setSearchQuery] = useState("");
+    const [externalUsersOnly, setExternalUsersOnly] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Assign Hotel Drawer
+    const [isAssignHotelOpen, setIsAssignHotelOpen] = useState(false);
+    const [assignHotelTarget, setAssignHotelTarget] = useState<UserProfile | null>(null);
+
+    // Role Privileges Drawer State
+    const [isRoleDrawerOpen, setIsRoleDrawerOpen] = useState(false);
+    const [selectedRoleForPermissions, setSelectedRoleForPermissions] = useState<SystemRoleItem | null>(null);
 
     // Delete Confirmation State
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -204,9 +222,10 @@ export const UsersSection: React.FC = () => {
     const [formData, setFormData] = useState({
         email: "",
         name: "",
-        role: "Kasir",
+        role: "General Manager",
         password: "",
-        allowedOutlets: [] as string[]
+        allowedOutlets: [] as string[],
+        permissions: getStandardRolePermissions("General Manager")
     });
 
     const openCreateDrawer = () => {
@@ -214,15 +233,21 @@ export const UsersSection: React.FC = () => {
         setFormData({ 
             email: "", 
             name: "", 
-            role: "Kasir", 
+            role: "General Manager", 
             password: "",
-            allowedOutlets: activeHotelCode ? [activeHotelCode] : []
+            allowedOutlets: activeHotelCode ? [activeHotelCode] : [],
+            permissions: getStandardRolePermissions("General Manager")
         });
         setIsDrawerOpen(true);
     };
 
     const openEditDrawer = (user: UserProfile) => {
         setEditingUser(user);
+        const standardPerms = getStandardRolePermissions(user.role || "Staff");
+        const existingPerms = user.permissions && Object.keys(user.permissions).length > 0 
+            ? { ...standardPerms, ...user.permissions }
+            : standardPerms;
+
         setFormData({ 
             email: user.email, 
             name: user.name, 
@@ -230,9 +255,15 @@ export const UsersSection: React.FC = () => {
             password: "",
             allowedOutlets: user.allowedOutlets && user.allowedOutlets.length > 0 
                 ? user.allowedOutlets 
-                : (activeHotelCode ? [activeHotelCode] : [])
+                : (activeHotelCode ? [activeHotelCode] : []),
+            permissions: existingPerms
         });
         setIsDrawerOpen(true);
+    };
+
+    const openAssignHotelDrawer = (user: UserProfile) => {
+        setAssignHotelTarget(user);
+        setIsAssignHotelOpen(true);
     };
 
     // Open Change Password Modal
@@ -242,7 +273,7 @@ export const UsersSection: React.FC = () => {
 
     const onSave = async () => {
         if (!formData.name || !formData.email) {
-            toast.error("Please fill in all required fields.");
+            toast.error("Semua field wajib diisi.");
             return;
         }
 
@@ -251,14 +282,77 @@ export const UsersSection: React.FC = () => {
             await handleSaveUser(formData, editingUser);
             setIsDrawerOpen(false);
             
-            toast.success(editingUser ? "Personnel profile updated." : "New personnel created.", {
-                description: `${formData.name} has been synchronized with the database.`,
-                className: "luxury-toast",
+            toast.success(editingUser ? "Profil user berhasil diperbarui." : "User baru berhasil dibuat.", {
+                description: `${formData.name} telah tersinkronisasi dengan database hotel.`,
             });
-        } catch (error) {
-            toast.error("Failed to save personnel profile.");
+        } catch (error: any) {
+            toast.error(error.message || "Gagal menyimpan profil user.");
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleSaveOutlets = async (userId: string, outlets: string[]) => {
+        const target = users.find(u => u.id === userId);
+        if (!target) return;
+        await handleSaveUser({
+            name: target.name,
+            email: target.email,
+            role: target.role,
+            allowedOutlets: outlets
+        }, target);
+    };
+
+    // Save Role Permissions and sync to users with this role
+    const handleSaveRolePermissions = async (
+        roleName: string, 
+        newPermissions: Record<string, boolean>, 
+        syncToUsers: boolean
+    ) => {
+        if (!activeHotelCode) {
+            throw new Error("Pilih properti hotel terlebih dahulu.");
+        }
+        const roleId = roleName.toLowerCase().replace(/\s+/g, '_');
+
+        // 1. Save to hotel-specific roles_permissions collection
+        await setDoc(doc(db, "hotels", activeHotelCode, "roles_permissions", roleId), {
+            roleId,
+            roleName,
+            permissions: newPermissions,
+            updatedAt: new Date().toISOString(),
+            updatedBy: authUser?.email || "Admin"
+        }, { merge: true });
+
+        // Also save to global roles_master as reference
+        try {
+            await setDoc(doc(db, "roles_master", roleId), {
+                roleId,
+                roleName,
+                permissions: newPermissions,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+        } catch (e) {
+            console.warn("Global roles_master update ignored:", e);
+        }
+
+        // 2. Sync directly to all existing users in this hotel with this role
+        if (syncToUsers) {
+            const target = roleName.toLowerCase();
+            const matchingUsers = users.filter(u => {
+                const uRole = u.role?.toLowerCase() || "";
+                return uRole === target ||
+                    (target === "administrator" && uRole === "admin") ||
+                    (target === "admin" && uRole === "administrator");
+            });
+            for (const targetUser of matchingUsers) {
+                try {
+                    await updateDoc(doc(getHotelCollection(db, "users_master", activeHotelCode), targetUser.id), {
+                        permissions: newPermissions
+                    });
+                } catch (err) {
+                    console.error("Gagal sinkronisasi izin ke user:", targetUser.email, err);
+                }
+            }
         }
     };
 
@@ -272,12 +366,11 @@ export const UsersSection: React.FC = () => {
         setIsDeleting(true);
         try {
             await handleDeleteUser(deleteTarget.id);
-            toast.success("Personnel removed successfully.", {
-                description: `${deleteTarget.name} has been purged from the database.`,
-                className: "luxury-toast",
+            toast.success("User berhasil dihapus.", {
+                description: `${deleteTarget.name} telah dihapus dari sistem.`,
             });
-        } catch (error) {
-            toast.error("Failed to delete personnel.");
+        } catch (error: any) {
+            toast.error(error.message || "Gagal menghapus user.");
         } finally {
             setIsDeleting(false);
             setDeleteTarget(null);
@@ -289,17 +382,20 @@ export const UsersSection: React.FC = () => {
             await handleChangePassword(userId, newPassword);
             toast.success("Password Changed", {
                 description: "Password berhasil diperbarui.",
-                className: "luxury-toast",
             });
-        } catch (error) {
-            toast.error("Gagal mengubah password.");
+        } catch (error: any) {
+            toast.error(error.message || "Gagal mengubah password.");
         }
     };
 
-    const filteredUsers = users.filter(u => 
-        (u.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
-        (u.email || "").toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredUsers = users.filter(u => {
+        const query = searchQuery.toLowerCase();
+        const matchesQuery = (u.name || "").toLowerCase().includes(query) || (u.email || "").toLowerCase().includes(query) || (u.role || "").toLowerCase().includes(query);
+        if (externalUsersOnly) {
+            return matchesQuery && (u.allowedOutlets && u.allowedOutlets.length > 1);
+        }
+        return matchesQuery;
+    });
 
     const safeActiveModules = activeModules || [];
 
@@ -352,151 +448,228 @@ export const UsersSection: React.FC = () => {
         return null;
     }).filter(Boolean) as PermissionModule[];
 
+    // Tab titles and descriptions
+    const getTabMeta = () => {
+        switch (activeTab) {
+            case "users":
+                return {
+                    title: "User Management",
+                    subtitle: "Manage all users in the system. Add new users, update details, assign roles, reset passwords, or deactivate users when needed."
+                };
+            case "roles":
+                return {
+                    title: "Role Management",
+                    subtitle: "Define and manage user roles. Set permissions for each role to control access to different features and ensure secure, role-based responsibility."
+                };
+            case "blocked":
+                return {
+                    title: "Blocked Users",
+                    subtitle: "View and manage accounts that have been blocked due to security violations or multiple failed login attempts."
+                };
+            case "devices":
+                return {
+                    title: "Device Activity",
+                    subtitle: "Monitor active devices and login sessions connected to your hotel account."
+                };
+            case "activity":
+                return {
+                    title: "User Activity",
+                    subtitle: "Track user activity across your property management system."
+                };
+            case "security":
+                return {
+                    title: "Security Preferences",
+                    subtitle: "Configure system-wide password complexity, session duration, and multi-factor authentication policies."
+                };
+            default:
+                return { title: "User Management", subtitle: "" };
+        }
+    };
+
+    const tabMeta = getTabMeta();
+
     return (
         <div className={styles.container}>
-            {/* ─── Header ─── */}
-            <motion.header variants={rise} initial="hidden" animate="show" className={styles.header}>
+            {/* ─── Top Tabs Bar (IPMS Standard) ─── */}
+            <div className={styles.header}>
+                <div className={styles.ipmsTabsBar}>
+                    <button 
+                        type="button"
+                        onClick={() => { setActiveTab("users"); setSearchQuery(""); }}
+                        className={`${styles.ipmsTabItem} ${activeTab === "users" ? styles.ipmsTabItemActive : ""}`}
+                    >
+                        Users
+                    </button>
+                    <button 
+                        type="button"
+                        onClick={() => { setActiveTab("roles"); setSearchQuery(""); }}
+                        className={`${styles.ipmsTabItem} ${activeTab === "roles" ? styles.ipmsTabItemActive : ""}`}
+                    >
+                        User Role
+                    </button>
+                    <button 
+                        type="button"
+                        onClick={() => { setActiveTab("blocked"); setSearchQuery(""); }}
+                        className={`${styles.ipmsTabItem} ${activeTab === "blocked" ? styles.ipmsTabItemActive : ""}`}
+                    >
+                        Blocked Users
+                    </button>
+                    <button 
+                        type="button"
+                        onClick={() => { setActiveTab("devices"); setSearchQuery(""); }}
+                        className={`${styles.ipmsTabItem} ${activeTab === "devices" ? styles.ipmsTabItemActive : ""}`}
+                    >
+                        Device Activity
+                    </button>
+                    <button 
+                        type="button"
+                        onClick={() => { setActiveTab("activity"); setSearchQuery(""); }}
+                        className={`${styles.ipmsTabItem} ${activeTab === "activity" ? styles.ipmsTabItemActive : ""}`}
+                    >
+                        User Activity
+                    </button>
+                    <button 
+                        type="button"
+                        onClick={() => { setActiveTab("security"); setSearchQuery(""); }}
+                        className={`${styles.ipmsTabItem} ${activeTab === "security" ? styles.ipmsTabItemActive : ""}`}
+                    >
+                        Security Preferences
+                    </button>
+                </div>
+
+                {/* Section Header: Title & Subtitle */}
                 <div className={styles.headerTitleSec}>
-                    <div className={styles.subTitle}>
-                        <ShieldCheck size={12} />
-                        <span>Security & Administration</span>
-                    </div>
-                    <h1 className={styles.title}>
-                        User <span className={styles.titleHighlight}>Management</span>
-                    </h1>
+                    <h1 className={styles.pageTitle}>{tabMeta.title}</h1>
+                    <p className={styles.pageSubtitle}>{tabMeta.subtitle}</p>
                 </div>
 
-                <div className={styles.headerActions}>
-                    <div className={styles.tabGroup}>
-                        <button 
-                            onClick={() => setActiveTab("users")}
-                            className={`${styles.tabButton} ${activeTab === "users" ? styles.tabButtonActive : ""}`}
-                        >
-                            Users
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab("permissions")}
-                            className={`${styles.tabButton} ${activeTab === "permissions" ? styles.tabButtonActive : ""}`}
-                        >
-                            Permissions
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab("activity")}
-                            className={`${styles.tabButton} ${activeTab === "activity" ? styles.tabButtonActive : ""}`}
-                        >
-                            User Activity
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab("devices")}
-                            className={`${styles.tabButton} ${activeTab === "devices" ? styles.tabButtonActive : ""}`}
-                        >
-                            Device Activity
-                        </button>
-                    </div>
-                    
-                    {activeTab === "users" && (
-                        <button 
-                            onClick={openCreateDrawer}
-                            className={styles.primaryButton}
-                        >
-                            <Plus size={14} />
-                            Add User
-                        </button>
-                    )}
-                </div>
-            </motion.header>
+                {/* Toolbar for Users & Roles tab */}
+                {(activeTab === "users" || activeTab === "roles") && (
+                    <div className={styles.toolbarRow}>
+                        <div className={styles.toolbarLeft}>
+                            <div className={styles.searchWrapper}>
+                                <input 
+                                    type="text"
+                                    placeholder={activeTab === "users" ? "Search User" : "Search User Role"}
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className={styles.searchInputIpms}
+                                />
+                                <div className={styles.searchIconRight}>
+                                    <Search size={15} />
+                                </div>
+                            </div>
 
-            {/* ─── Main Content ─── */}
+                            {activeTab === "users" && (
+                                <label className={styles.externalUsersCheck}>
+                                    <input 
+                                        type="checkbox"
+                                        checked={externalUsersOnly}
+                                        onChange={(e) => setExternalUsersOnly(e.target.checked)}
+                                        style={{ width: "16px", height: "16px", accentColor: "#0f172a", cursor: "pointer" }}
+                                    />
+                                    <span>External Users</span>
+                                </label>
+                            )}
+                        </div>
+
+                        {activeTab === "users" && (
+                            <button 
+                                type="button"
+                                onClick={openCreateDrawer}
+                                className={styles.addBtnSquare}
+                                title="Add User"
+                            >
+                                <Plus size={18} />
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* ─── Main Content Tabs ─── */}
             <AnimatePresence mode="wait">
                 {activeTab === "users" ? (
                     <motion.section 
                         key="users-tab"
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className={styles.usersTabContent}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15 }}
                     >
-                        {/* Search Bar */}
-                        <div className={styles.searchWrapper}>
-                            <div className={styles.searchIcon}>
-                                <Search size={16} />
-                            </div>
-                            <input 
-                                type="text"
-                                placeholder="Search by name or email..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className={styles.searchInput}
-                            />
-                        </div>
-
-                        {/* User Grid */}
                         {loading ? (
                             <div className={styles.loadingContainer}>
                                 <div className={styles.spinner}></div>
                                 <p className={styles.loadingText}>Syncing Personnel Database...</p>
                             </div>
                         ) : (
-                            <motion.div 
-                                variants={stagger}
-                                initial="hidden"
-                                animate="show"
-                                className={styles.userGrid}
-                            >
-                                {filteredUsers.map((user) => (
-                                    <UserCard 
-                                        key={user.id}
-                                        user={user}
-                                        onEdit={openEditDrawer}
-                                        onDelete={onDelete}
-                                        variants={rise}
-                                        onChangePasswordClick={openChangePassword}
-                                        authUser={authUser}
-                                        hotelsList={hotelsList}
-                                    />
-                                ))}
-                            </motion.div>
+                            <UserTable 
+                                users={filteredUsers}
+                                onEdit={openEditDrawer}
+                                onDelete={onDelete}
+                                onChangePasswordClick={openChangePassword}
+                                onAssignHotelClick={openAssignHotelDrawer}
+                                onViewLogsClick={() => setActiveTab("activity")}
+                                authUser={authUser}
+                                hotelsList={hotelsList}
+                            />
                         )}
                     </motion.section>
-                ) : activeTab === "permissions" ? (
+                ) : activeTab === "roles" ? (
                     <motion.section 
-                        key="perms-tab"
-                        initial={{ opacity: 0, y: 10 }}
+                        key="roles-tab"
+                        initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className={styles.roleGrid}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15 }}
                     >
-                        {users.map((u) => (
-                            <RoleCard 
-                                key={u.id}
-                                user={u}
-                                permissionTree={filteredPermissionTree}
-                                onToggle={togglePermission}
-                                onToggleModule={toggleModulePermission}
-                            />
-                        ))}
+                        <RoleManagementTable 
+                            searchQuery={searchQuery}
+                            onEditRolePermissions={(role) => {
+                                setSelectedRoleForPermissions(role);
+                                setIsRoleDrawerOpen(true);
+                            }}
+                        />
+                    </motion.section>
+                ) : activeTab === "blocked" ? (
+                    <motion.section 
+                        key="blocked-tab"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15 }}
+                    >
+                        <BlockedUsersTab />
+                    </motion.section>
+                ) : activeTab === "devices" ? (
+                    <motion.section 
+                        key="devices-tab"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15 }}
+                    >
+                        <DeviceActivityTab hotelCode={activeHotelCode} />
                     </motion.section>
                 ) : activeTab === "activity" ? (
                     <motion.section 
                         key="activity-tab"
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15 }}
                     >
                         <UserActivityTab hotelCode={activeHotelCode} />
                     </motion.section>
                 ) : (
                     <motion.section 
-                        key="devices-tab"
-                        initial={{ opacity: 0, y: 10 }}
+                        key="security-tab"
+                        initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15 }}
                     >
-                        <DeviceActivityTab hotelCode={activeHotelCode} />
+                        <SecurityPreferencesTab />
                     </motion.section>
                 )}
             </AnimatePresence>
@@ -517,6 +690,37 @@ export const UsersSection: React.FC = () => {
                 activeHotelCode={activeHotelCode}
             />
 
+            {/* ─── Assign Hotel Drawer ─── */}
+            <AssignHotelDrawer
+                isOpen={isAssignHotelOpen}
+                onClose={() => {
+                    setIsAssignHotelOpen(false);
+                    setAssignHotelTarget(null);
+                }}
+                user={assignHotelTarget}
+                hotelsList={hotelsList}
+                activeHotelCode={activeHotelCode}
+                authUser={authUser}
+                onSaveOutlets={handleSaveOutlets}
+            />
+
+            {/* ─── Role Permissions Matrix Drawer ─── */}
+            <AnimatePresence>
+                {isRoleDrawerOpen && selectedRoleForPermissions && (
+                    <RolePermissionDrawer
+                        isOpen={isRoleDrawerOpen}
+                        onClose={() => {
+                            setIsRoleDrawerOpen(false);
+                            setSelectedRoleForPermissions(null);
+                        }}
+                        role={selectedRoleForPermissions}
+                        activeHotelCode={activeHotelCode}
+                        users={users}
+                        onSaveRolePermissions={handleSaveRolePermissions}
+                    />
+                )}
+            </AnimatePresence>
+
             {/* ─── Change Password Modal ─── */}
             <ChangePasswordModal
                 isOpen={!!passwordChangeTarget}
@@ -529,7 +733,6 @@ export const UsersSection: React.FC = () => {
                             await handleChangePassword(passwordChangeTarget.id, password);
                             toast.success("Password Changed", {
                                 description: "Password berhasil diperbarui.",
-                                className: "luxury-toast",
                             });
                             setPasswordChangeTarget(null);
                         } catch (error: any) {
@@ -546,7 +749,7 @@ export const UsersSection: React.FC = () => {
             <ConfirmModal
                 isOpen={!!deleteTarget}
                 variant="delete"
-                title="Hapus Personnel"
+                title="Hapus User"
                 message={`Apakah Anda yakin ingin menghapus ${deleteTarget?.name || "user ini"} dari sistem? Tindakan ini tidak dapat dibatalkan.`}
                 confirmLabel="Hapus"
                 cancelLabel="Batal"

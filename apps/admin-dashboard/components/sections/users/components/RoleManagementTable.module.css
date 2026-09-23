@@ -1,0 +1,189 @@
+/* RoleManagementTable.module.css */
+
+.tableContainer {
+    width: 100%;
+    max-width: 100%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    overflow: visible;
+    box-sizing: border-box;
+}
+
+.tableScrollWrapper {
+    width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+    color: #1e293b;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.table thead {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.th {
+    padding: 12px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    letter-spacing: 0.02em;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+    user-select: none;
+    box-sizing: border-box;
+}
+
+.thStatus {
+    width: 64px;
+    padding-left: 16px;
+    padding-right: 8px;
+}
+
+.thAction {
+    width: 110px;
+    text-align: right;
+    padding-right: 16px;
+}
+
+.tr {
+    transition: background 0.15s ease;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.tr:hover {
+    background: #f8fafc;
+}
+
+.tr:last-child td {
+    border-bottom: none;
+}
+
+.td {
+    padding: 14px 18px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+}
+
+.tdStatus {
+    padding-left: 20px;
+    width: 60px;
+}
+
+.tdAction {
+    text-align: right;
+    padding-right: 20px;
+}
+
+.roleNameText {
+    font-weight: 550;
+    color: #0f172a;
+    font-size: 13px;
+}
+
+.parentRoleText {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.actionsGroup {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.actionIconBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.actionIconBtn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+.actionIconBtnDanger:hover {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+/* ── Toggle Switch (On / Off) ── */
+.toggleSwitch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 44px;
+    height: 22px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    padding: 2px;
+}
+
+.toggleOn {
+    background: #1e293b;
+}
+
+.toggleOff {
+    background: #cbd5e1;
+}
+
+.toggleThumb {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: #ffffff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.toggleThumbOn {
+    right: 2px;
+}
+
+.toggleThumbOff {
+    left: 2px;
+}
+
+.toggleLabel {
+    position: absolute;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #ffffff;
+    pointer-events: none;
+}
+
+.toggleLabelOn {
+    left: 6px;
+}
+
+.toggleLabelOff {
+    right: 6px;
+    color: #64748b;
+}

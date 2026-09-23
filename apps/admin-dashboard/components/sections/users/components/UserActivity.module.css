@@ -134,26 +134,32 @@
 }
 
 .thTime {
-    padding: 12px 16px;
-    width: 180px;
+    padding: 10px 14px;
+    width: 150px;
+    white-space: nowrap;
 }
 
 .thUser {
-    padding: 12px 16px;
-    width: 200px;
+    padding: 10px 14px;
+    width: 180px;
 }
 
 .thAction {
-    padding: 12px 16px;
-    width: 160px;
+    padding: 10px 14px;
+    width: 140px;
 }
 
 .thDesc {
-    padding: 12px 16px;
+    padding: 10px 14px;
+}
+
+.thLocation {
+    padding: 10px 14px;
+    width: 160px;
 }
 
 .thIp {
-    padding: 12px 16px;
+    padding: 10px 14px;
     width: 130px;
 }
 

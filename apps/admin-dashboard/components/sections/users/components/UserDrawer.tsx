@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Plus, User, Mail, RefreshCw, Check, Lock, Building2, CheckSquare, Square, Shield } from "lucide-react";
+import { 
+    X, Plus, User, Mail, RefreshCw, Check, Lock, Building2, 
+    CheckSquare, Square, Shield, SlidersHorizontal, ChevronDown, ChevronUp, AlertTriangle 
+} from "lucide-react";
 import { UserProfile } from "../types";
+import { COMPREHENSIVE_PERMISSION_GROUPS, getStandardRolePermissions, TOTAL_PERMISSIONS_COUNT } from "../permissionConfig";
 import drawerStyles from "./UserDrawer.module.css";
 import styles from "../UsersStyles.module.css";
 
@@ -92,6 +96,72 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
         if (isAccountLocked) return;
         setFormData({ ...formData, allowedOutlets: activeHotelCode ? [activeHotelCode] : [] });
     };
+
+    // Permission Matrix State for User
+    const [permSearch, setPermSearch] = useState("");
+    const [permTag, setPermTag] = useState("all");
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+
+    const currentPermissions: Record<string, boolean> = formData.permissions || getStandardRolePermissions(formData.role || "General Manager");
+
+    const togglePermission = (permId: string) => {
+        if (isAccountLocked) return;
+        const nextPerms = {
+            ...currentPermissions,
+            [permId]: !currentPermissions[permId]
+        };
+        setFormData({
+            ...formData,
+            permissions: nextPerms
+        });
+    };
+
+    const toggleModuleGroup = (group: any) => {
+        if (isAccountLocked) return;
+        const allActive = group.permissions.every((p: any) => currentPermissions[p.id] === true);
+        const nextState = !allActive;
+        const nextPerms = { ...currentPermissions };
+        nextPerms[group.id] = nextState;
+        group.permissions.forEach((p: any) => {
+            nextPerms[p.id] = nextState;
+        });
+        setFormData({
+            ...formData,
+            permissions: nextPerms
+        });
+    };
+
+    const resetPermissions = () => {
+        if (isAccountLocked) return;
+        const std = getStandardRolePermissions(formData.role || "General Manager");
+        setFormData({
+            ...formData,
+            permissions: std
+        });
+    };
+
+    const activePermsCount = Object.entries(currentPermissions).filter(([key, val]) => 
+        val === true && !key.startsWith("module_")
+    ).length;
+
+    const filteredGroups = COMPREHENSIVE_PERMISSION_GROUPS.filter(group => {
+        if (permTag !== "all" && group.id !== permTag) return false;
+        return true;
+    }).map(group => {
+        const q = permSearch.toLowerCase().trim();
+        if (!q) return group;
+        const matchesGroup = group.label.toLowerCase().includes(q) || group.description.toLowerCase().includes(q);
+        const filteredPerms = group.permissions.filter(p => 
+            p.label.toLowerCase().includes(q) || 
+            p.description.toLowerCase().includes(q) ||
+            p.id.toLowerCase().includes(q)
+        );
+        if (matchesGroup) return group;
+        if (filteredPerms.length > 0) {
+            return { ...group, permissions: filteredPerms };
+        }
+        return null;
+    }).filter(Boolean) as typeof COMPREHENSIVE_PERMISSION_GROUPS;
 
     return (
         <>
@@ -308,7 +378,10 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                                         key={role}
                                         type="button"
                                         disabled={isRoleLocked || isAccountLocked}
-                                        onClick={() => setFormData({...formData, role})}
+                                        onClick={() => {
+                                            const newPerms = getStandardRolePermissions(role);
+                                            setFormData({ ...formData, role, permissions: newPerms });
+                                        }}
                                         className={`${styles.roleSelectBtn} ${isSelected ? styles.roleSelectBtnActive : ""} ${(isRoleLocked || isAccountLocked) ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                         {role === "superadmin" ? "Superadmin (Chain)" : role}
@@ -337,6 +410,157 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                                 <Lock size={10} /> Hanya Superadmin yang dapat mengubah Role Admin/Superadmin.
                             </p>
                         )}
+                    </div>
+
+                    {/* ─── Role Permissions Matrix Section ─── */}
+                    <div className={drawerStyles.permSection}>
+                        <div className={drawerStyles.permHeader}>
+                            <div className={drawerStyles.permTitleCluster}>
+                                <span className={drawerStyles.permTitle}>
+                                    <SlidersHorizontal size={14} />
+                                    Hak Akses & Privileges Role
+                                </span>
+                                <p className={drawerStyles.permSubtitle}>
+                                    {activePermsCount} dari {TOTAL_PERMISSIONS_COUNT} izin aktif untuk role <b>{formData.role}</b>
+                                </p>
+                            </div>
+                            {!isAccountLocked && (
+                                <button
+                                    type="button"
+                                    onClick={resetPermissions}
+                                    className={drawerStyles.btnResetPerm}
+                                    title="Reset hak akses ke standar role"
+                                >
+                                    Reset Standar Role
+                                </button>
+                            )}
+                        </div>
+
+                        <input
+                            type="text"
+                            placeholder="Cari izin fitur, laporan, void, diskon..."
+                            value={permSearch}
+                            onChange={(e) => setPermSearch(e.target.value)}
+                            className={drawerStyles.permSearchInput}
+                        />
+
+                        {/* Module Tags / Filter Chips */}
+                        <div className={drawerStyles.moduleTagsBar}>
+                            <button
+                                type="button"
+                                onClick={() => setPermTag("all")}
+                                className={`${drawerStyles.moduleTag} ${permTag === "all" ? drawerStyles.moduleTagActive : ""}`}
+                            >
+                                Semua
+                                <span className={`${drawerStyles.tagCountBadge} ${activePermsCount > 0 ? drawerStyles.tagCountBadgeActive : ""}`}>
+                                    {activePermsCount}
+                                </span>
+                            </button>
+                            {COMPREHENSIVE_PERMISSION_GROUPS.map(g => {
+                                const activeCount = g.permissions.filter(p => currentPermissions[p.id] === true).length;
+                                const isSelected = permTag === g.id;
+                                return (
+                                    <button
+                                        key={g.id}
+                                        type="button"
+                                        onClick={() => setPermTag(g.id)}
+                                        className={`${drawerStyles.moduleTag} ${isSelected ? drawerStyles.moduleTagActive : ""}`}
+                                    >
+                                        {g.shortLabel || g.label.split(" (")[0]}
+                                        <span className={`${drawerStyles.tagCountBadge} ${activeCount > 0 ? drawerStyles.tagCountBadgeActive : ""}`}>
+                                            {activeCount}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className={drawerStyles.permListBox}>
+                            {filteredGroups.map(group => {
+                                const isExpanded = expandedGroups[group.id] !== false;
+                                const activeInGroup = group.permissions.filter(p => currentPermissions[p.id] === true).length;
+                                const isAllInGroupActive = group.permissions.length > 0 && activeInGroup === group.permissions.length;
+
+                                return (
+                                    <div key={group.id} className={drawerStyles.permGroupCard}>
+                                        <div 
+                                            className={drawerStyles.permGroupHeader}
+                                            onClick={() => setExpandedGroups(prev => ({ ...prev, [group.id]: !isExpanded }))}
+                                        >
+                                            <span className={drawerStyles.permGroupTitle}>
+                                                {group.label}
+                                            </span>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                                <button
+                                                    type="button"
+                                                    disabled={isAccountLocked}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleModuleGroup(group);
+                                                    }}
+                                                    style={{
+                                                        fontSize: "10.5px",
+                                                        fontWeight: 600,
+                                                        padding: "2px 8px",
+                                                        borderRadius: "4px",
+                                                        border: "1px solid #cbd5e1",
+                                                        background: isAllInGroupActive ? "#fef2f2" : "#f1f5f9",
+                                                        color: isAllInGroupActive ? "#b91c1c" : "#0f172a",
+                                                        cursor: "pointer"
+                                                    }}
+                                                >
+                                                    {isAllInGroupActive ? "Matikan Modul" : "Pilih Semua"}
+                                                </button>
+                                                <span className={`${drawerStyles.permCountBadge} ${activeInGroup > 0 ? drawerStyles.permCountBadgeActive : ""}`}>
+                                                    {activeInGroup} / {group.permissions.length}
+                                                </span>
+                                                {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                            </div>
+                                        </div>
+
+                                        {isExpanded && (
+                                            <div className={drawerStyles.permItemsContainer}>
+                                                {group.permissions.map(p => {
+                                                    const isChecked = currentPermissions[p.id] === true;
+                                                    return (
+                                                        <div 
+                                                            key={p.id}
+                                                            className={drawerStyles.permRow}
+                                                            onClick={() => togglePermission(p.id)}
+                                                        >
+                                                            <div className={drawerStyles.permLabelCluster}>
+                                                                <span className={drawerStyles.permLabelText}>
+                                                                    {p.label}
+                                                                    {p.isDangerous && (
+                                                                        <span className={drawerStyles.sensitiveBadge}>
+                                                                            Sensitif
+                                                                        </span>
+                                                                    )}
+                                                                </span>
+                                                                <span className={drawerStyles.permDescText}>
+                                                                    {p.description}
+                                                                </span>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                disabled={isAccountLocked}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    togglePermission(p.id);
+                                                                }}
+                                                                className={`${drawerStyles.permSwitch} ${isChecked ? drawerStyles.permSwitchOn : drawerStyles.permSwitchOff}`}
+                                                            >
+                                                                <span className={`${drawerStyles.permSwitchThumb} ${isChecked ? drawerStyles.permSwitchThumbOn : drawerStyles.permSwitchThumbOff}`} />
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
 

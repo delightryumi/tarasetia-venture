@@ -313,7 +313,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                     className="main-content"
                     style={hideSidebar ? { marginLeft: 0, maxWidth: "100vw", width: "100%", paddingTop: 0 } : undefined}
                 >
-                    <div className={`main-scroll-container ${isChannelManagerPage || pathname.startsWith("/rate-inventory") || isInnalyticsPage || isFnbRealtimePage ? "main-scroll-container-wide" : ""}`} style={isFnbRealtimePage ? { padding: 0, maxWidth: "100%", margin: 0 } : undefined}>
+                    <div className={`main-scroll-container ${isChannelManagerPage || pathname.startsWith("/rate-inventory") || isInnalyticsPage || isFnbRealtimePage || pathname.startsWith("/users") ? "main-scroll-container-wide" : ""}`} style={isFnbRealtimePage ? { padding: 0, maxWidth: "100%", margin: 0 } : undefined}>
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={pathname}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
     collection, setDoc, doc, updateDoc, 
     deleteDoc, onSnapshot, query, orderBy, getDoc
@@ -7,9 +7,22 @@ import { db } from "@/lib/firebase";
 import { UserProfile } from "./types";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { useAuth } from "@/context/AuthContext";
+import { getStandardRolePermissions } from "./permissionConfig";
 
 export const ROLES = [
+    "Administrator",
     "General Manager", 
+    "Front Office Manager",
+    "Front Office Associate",
+    "Reservation Associate",
+    "Night Auditor",
+    "Housekeeping Manager", 
+    "Food & Beverage Manager",
+    "Cashier (POS)", 
+    "Revenue Manager",
+    "Finance & Accounting",
+    "Purchasing Officer",
+    // Backward compatibility
     "House Keeping", 
     "Purchasing", 
     "Kasir", 
@@ -48,6 +61,8 @@ export const useUsers = (menuItems: any[]) => {
     const [activeModules, setActiveModules] = useState<string[]>([]);
     const { activeHotelCode, user: authUser } = useAuth();
     const hotelCode = activeHotelCode;
+    const hasSyncedRef = useRef(false);
+    const hasMigratedRef = useRef(false);
 
     const migrateUsersPermissions = async (needsMigrationList: UserProfile[]) => {
         for (const u of needsMigrationList) {
@@ -57,19 +72,31 @@ export const useUsers = (menuItems: any[]) => {
             
             if (roleId) {
                 try {
-                    const roleSnap = await getDoc(doc(db, "roles_master", roleId));
-                    if (roleSnap.exists()) {
-                        initialPerms = roleSnap.data().permissions || {};
+                    if (hotelCode) {
+                        const hotelRoleSnap = await getDoc(doc(db, "hotels", hotelCode, "roles_permissions", roleId));
+                        if (hotelRoleSnap.exists() && hotelRoleSnap.data().permissions) {
+                            initialPerms = hotelRoleSnap.data().permissions || {};
+                        }
+                    }
+                    if (Object.keys(initialPerms).length === 0) {
+                        const roleSnap = await getDoc(doc(db, "roles_master", roleId));
+                        if (roleSnap.exists()) {
+                            initialPerms = roleSnap.data().permissions || {};
+                        }
                     }
                 } catch (e) {
-                    console.error("Error fetching legacy role perms for user:", u.email, e);
+                    console.error("Error fetching role perms for user:", u.email, e);
                 }
             }
             
             if (Object.keys(initialPerms).length === 0) {
-                ALL_KEYS.forEach(k => {
-                    initialPerms[k] = isSuper;
-                });
+                if (isSuper) {
+                    ALL_KEYS.forEach(k => {
+                        initialPerms[k] = true;
+                    });
+                } else {
+                    initialPerms = getStandardRolePermissions(u.role || "Staff");
+                }
             }
             
             try {
@@ -138,6 +165,8 @@ export const useUsers = (menuItems: any[]) => {
 
     useEffect(() => {
         if (!hotelCode) return;
+        hasSyncedRef.current = false;
+        hasMigratedRef.current = false;
         // Listen to Users
         const unsubUsers = onSnapshot(query(getHotelCollection(db, "users_master", hotelCode), orderBy("name")), async (snap) => {
             const list: UserProfile[] = [];
@@ -165,10 +194,16 @@ export const useUsers = (menuItems: any[]) => {
             // Proactive Migration: if any user has no permissions map, migrate them in background
             const needsMigration = list.filter(u => !u.permissions);
             if (needsMigration.length > 0) {
-                migrateUsersPermissions(needsMigration);
+                if (!hasMigratedRef.current) {
+                    hasMigratedRef.current = true;
+                    migrateUsersPermissions(needsMigration);
+                }
             } else {
-                // Check if existing users need new menu sync
-                syncNewSubmenusToUsers(list);
+                // Check if existing users need new menu sync (once per mount/hotel change)
+                if (!hasSyncedRef.current) {
+                    hasSyncedRef.current = true;
+                    syncNewSubmenusToUsers(list);
+                }
             }
 
             // Hide superadmin users from regular property admins, show for superadmin
