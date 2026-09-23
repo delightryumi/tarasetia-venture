@@ -19,7 +19,11 @@ export const UserCard: React.FC<UserCardProps> = ({
 }) => {
     const isSuperadminUser = user.role?.toLowerCase() === "superadmin";
     const isSystemAdmin = user.email === "nexura.management@gmail.com" || user.email === "superadmin@setara.co.id";
-    const isRequesterSuperadmin = authUser?.role?.toLowerCase() === "superadmin";
+    const isRequesterSuperadmin = 
+        authUser?.role?.toLowerCase() === "superadmin" || 
+        authUser?.role?.toLowerCase() === "super_admin" ||
+        authUser?.role?.toLowerCase() === "super admin" ||
+        authUser?.email?.toLowerCase() === "superadmin@setara.co.id";
     
     // Non-superadmin cannot touch a Superadmin user
     const isLockedFromCurrentViewer = (isSuperadminUser || isSystemAdmin) && !isRequesterSuperadmin;
@@ -128,7 +132,7 @@ export const UserCard: React.FC<UserCardProps> = ({
                                             className={styles.dropdownItem}
                                         >
                                             <Edit3 size={14} />
-                                            <span>Edit User &amp; Hotels</span>
+                                            <span>{isRequesterSuperadmin ? "Edit User & Multi-Hotel" : "Edit Profil User"}</span>
                                         </button>
                                         
                                         {onChangePasswordClick && (

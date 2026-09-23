@@ -27,9 +27,13 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
     
     // Check if the role selection should be locked
     const isEditingAdmin = editingUser?.role?.toLowerCase() === "admin" || formData.role?.toLowerCase() === "admin";
-    const isEditingSuperadmin = editingUser?.role?.toLowerCase() === "superadmin" || formData.role?.toLowerCase() === "superadmin";
-    const isSuperadminLoggedIn = authUser?.role?.toLowerCase() === "superadmin";
+    const isSuperadminLoggedIn = 
+        authUser?.role?.toLowerCase() === "superadmin" || 
+        authUser?.role?.toLowerCase() === "super_admin" ||
+        authUser?.role?.toLowerCase() === "super admin" ||
+        authUser?.email?.toLowerCase() === "superadmin@setara.co.id";
     
+    const isEditingSuperadmin = editingUser?.role?.toLowerCase() === "superadmin" || formData.role?.toLowerCase() === "superadmin";
     // Non-superadmin cannot edit a Superadmin account or promote to Superadmin
     const isAccountLocked = isEditingSuperadmin && !isSuperadminLoggedIn;
     const lockRoleSelection = (isEditingAdmin || isEditingSuperadmin) && !isSuperadminLoggedIn;
