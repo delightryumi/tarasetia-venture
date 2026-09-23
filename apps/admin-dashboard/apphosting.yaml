@@ -22,14 +22,13 @@ environmentVariables:
   - variable: "CHANNEX_ENV"
     value: "staging"
 
-  # URL publik webhook My Tara (HTTPS wajib, ganti dengan domain asli Anda)
-  # Contoh: https://admin.mytarahotel.com/api/channex/webhook
+  # URL publik webhook My Tara (HTTPS wajib)
   - variable: "NEXT_PUBLIC_CHANNEX_WEBHOOK_URL"
-    value: "https://YOUR-DOMAIN.web.app/api/channex/webhook"
+    value: "https://live.mytara.id/api/channex/webhook"
 
   # Dashboard URL (untuk redirect & notifikasi)
   - variable: "NEXT_PUBLIC_DASHBOARD_URL"
-    value: "https://YOUR-DOMAIN.web.app"
+    value: "https://live.mytara.id"
 
   # ─── Secrets (Dikelola via Firebase Secret Manager) ──────────────────────
   # CARA BUAT SECRET:
