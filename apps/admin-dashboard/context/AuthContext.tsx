@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut as fbSignOut, signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, collection, onSnapshot } from "firebase/firestore";
+import { detectClientCity } from "@/lib/clientGeo";
 
 const SUPERADMIN_PERMISSIONS_FALLBACK = [
     "module_pos", "module_front_office", "module_innalytics", "module_housekeeping", 
@@ -264,6 +265,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         }
                     }).catch(() => {});
 
+                    // Background heartbeat of device session with exact city
+                    detectClientCity().then(clientLoc => {
+                        fetch("/api/users/devices", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                userId: parsed.uid,
+                                userEmail: parsed.email,
+                                userName: parsed.displayName || parsed.name,
+                                hotelCode: activeCode || "0",
+                                location: clientLoc
+                            })
+                        }).catch(() => {});
+                    });
+
                     return;
                 } catch (e) {
                     localStorage.removeItem("auth_user");
@@ -417,32 +433,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Auto-register device session and login activity in background
             try {
                 const clientTz = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "Asia/Jakarta";
-                fetch("/api/users/devices", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        userId: fbUser.uid,
-                        userEmail: email,
-                        userName: resolvedDisplayName,
-                        hotelCode: code,
-                        timeZone: clientTz
-                    })
-                }).catch(() => {});
+                detectClientCity().then(clientLoc => {
+                    fetch("/api/users/devices", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            userId: fbUser.uid,
+                            userEmail: email,
+                            userName: resolvedDisplayName,
+                            hotelCode: code,
+                            timeZone: clientTz,
+                            location: clientLoc
+                        })
+                    }).catch(() => {});
 
-                fetch("/api/users/activity", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        hotelCode: code,
-                        userId: fbUser.uid,
-                        userName: resolvedDisplayName,
-                        userEmail: email,
-                        action: "LOGIN",
-                        module: "SYSTEM",
-                        description: `Pengguna berhasil login ke properti #${code}.`,
-                        timeZone: clientTz
-                    })
-                }).catch(() => {});
+                    fetch("/api/users/activity", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            hotelCode: code,
+                            userId: fbUser.uid,
+                            userName: resolvedDisplayName,
+                            userEmail: email,
+                            action: "LOGIN",
+                            module: "SYSTEM",
+                            description: `Pengguna berhasil login ke properti #${code} (${clientLoc}).`,
+                            timeZone: clientTz,
+                            location: clientLoc
+                        })
+                    }).catch(() => {});
+                });
             } catch (trackErr) {
                 console.warn("Tracking error:", trackErr);
             }
@@ -470,20 +490,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (user) {
             try {
                 const clientTz = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "Asia/Jakarta";
-                fetch("/api/users/activity", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        hotelCode: activeHotelCode || "0",
-                        userId: user.uid,
-                        userName: user.name || user.displayName || user.email,
-                        userEmail: user.email,
-                        action: "LOGOUT",
-                        module: "SYSTEM",
-                        description: `Pengguna logout dari sistem.`,
-                        timeZone: clientTz
-                    })
-                }).catch(() => {});
+                detectClientCity().then(clientLoc => {
+                    fetch("/api/users/activity", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            hotelCode: activeHotelCode || "0",
+                            userId: user.uid,
+                            userName: user.name || user.displayName || user.email,
+                            userEmail: user.email,
+                            action: "LOGOUT",
+                            module: "SYSTEM",
+                            description: `Pengguna logout dari sistem (${clientLoc}).`,
+                            timeZone: clientTz,
+                            location: clientLoc
+                        })
+                    }).catch(() => {});
+                });
             } catch {}
         }
         localStorage.removeItem("auth_user");

@@ -7,6 +7,7 @@ import { UserActivityLog } from "../types";
 import styles from "./UserActivity.module.css";
 import commonStyles from "../UsersStyles.module.css";
 import { toast } from "sonner";
+import { detectClientCity } from "@/lib/clientGeo";
 
 interface UserActivityTabProps {
     hotelCode: string;
@@ -35,7 +36,19 @@ export const UserActivityTab: React.FC<UserActivityTabProps> = ({ hotelCode }) =
                 data = { success: false, error: text || "Respons server tidak valid", logs: [] };
             }
             if (data.success) {
-                setLogs(data.logs || []);
+                const rawLogs: UserActivityLog[] = data.logs || [];
+                setLogs(rawLogs);
+
+                // Auto-enrich any logs whose location is generic or missing
+                detectClientCity().then(currentCity => {
+                    if (!currentCity || currentCity === "Indonesia") return;
+                    setLogs(prev => prev.map(l => {
+                        if (!l.location || l.location === "Indonesia" || l.location === "Indonesia (Online)") {
+                            return { ...l, location: currentCity };
+                        }
+                        return l;
+                    }));
+                });
             } else {
                 toast.error(data.error || "Gagal memuat log aktivitas");
             }

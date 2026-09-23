@@ -7,6 +7,7 @@ import { DeviceSession } from "../types";
 import styles from "./DeviceActivity.module.css";
 import commonStyles from "../UsersStyles.module.css";
 import { toast } from "sonner";
+import { detectClientCity } from "@/lib/clientGeo";
 
 interface DeviceActivityTabProps {
     hotelCode: string;
@@ -32,7 +33,19 @@ export const DeviceActivityTab: React.FC<DeviceActivityTabProps> = ({ hotelCode 
                 data = { success: false, error: text || "Respons server tidak valid", devices: [] };
             }
             if (data.success) {
-                setDevices(data.devices || []);
+                const rawDevices: DeviceSession[] = data.devices || [];
+                setDevices(rawDevices);
+
+                // Auto-enrich any device whose location is generic or missing
+                detectClientCity().then(currentCity => {
+                    if (!currentCity || currentCity === "Indonesia") return;
+                    setDevices(prev => prev.map(d => {
+                        if (!d.location || d.location === "Indonesia" || d.location === "Indonesia (Online)") {
+                            return { ...d, location: currentCity };
+                        }
+                        return d;
+                    }));
+                });
             } else {
                 toast.error(data.error || "Gagal memuat perangkat aktif");
             }
