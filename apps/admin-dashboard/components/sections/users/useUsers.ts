@@ -232,12 +232,20 @@ export const useUsers = (menuItems: any[]) => {
                 body: JSON.stringify({
                     ...formData,
                     hotelCode,
+                    requesterRole: authUser?.role,
+                    requesterEmail: authUser?.email,
                 }),
             });
 
             if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.error || "Failed to save user");
+                let errorMsg = "Failed to save user";
+                try {
+                    const errData = await response.json();
+                    errorMsg = errData.error || errorMsg;
+                } catch {
+                    errorMsg = (await response.text().catch(() => "")) || errorMsg;
+                }
+                throw new Error(errorMsg);
             }
             return true;
         } catch (error) {
@@ -259,12 +267,20 @@ export const useUsers = (menuItems: any[]) => {
                 body: JSON.stringify({
                     email: targetUser.email,
                     hotelCode,
+                    requesterRole: authUser?.role,
+                    requesterEmail: authUser?.email,
                 }),
             });
 
             if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.error || "Failed to delete user");
+                let errorMsg = "Failed to delete user";
+                try {
+                    const errData = await response.json();
+                    errorMsg = errData.error || errorMsg;
+                } catch {
+                    errorMsg = (await response.text().catch(() => "")) || errorMsg;
+                }
+                throw new Error(errorMsg);
             }
             return true;
         } catch (error) {

@@ -48,19 +48,31 @@ export async function GET(req: NextRequest) {
             query = query.where("hotelCode", "==", hotelCode);
         }
 
-        const snapshot = await query.orderBy("lastActive", "desc").limit(40).get();
-        const devices: any[] = [];
-        snapshot.forEach(doc => {
-            devices.push({
-                id: doc.id,
-                ...doc.data()
+        let devices: any[] = [];
+        try {
+            const snapshot = await query.orderBy("lastActive", "desc").limit(40).get();
+            snapshot.forEach(doc => {
+                devices.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
             });
-        });
+        } catch (idxErr: any) {
+            console.warn("[Device GET Fallback]:", idxErr.message);
+            const snapshot = await query.limit(40).get();
+            snapshot.forEach(doc => {
+                devices.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            devices.sort((a, b) => new Date(b.lastActive || 0).getTime() - new Date(a.lastActive || 0).getTime());
+        }
 
         return NextResponse.json({ success: true, devices });
     } catch (error: any) {
         console.error("[Device GET Error]:", error);
-        return NextResponse.json({ success: false, error: error.message, devices: [] }, { status: 500 });
+        return NextResponse.json({ success: false, error: error.message, devices: [] });
     }
 }
 

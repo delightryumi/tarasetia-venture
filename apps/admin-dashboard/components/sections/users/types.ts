@@ -8,6 +8,8 @@ export interface UserProfile {
     hotelCode?: string;
     allowedOutlets?: string[];
     permissions?: Record<string, boolean>;
+    isOwner?: boolean;
+    createdBy?: string;
     createdAt?: string;
     updatedAt?: string;
 }

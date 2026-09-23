@@ -23,28 +23,31 @@ export async function GET(req: NextRequest) {
             logsRef = adminDb.collection("system_activity_logs");
         }
 
-        let query = logsRef.orderBy("timestamp", "desc").limit(limitCount);
-
-        if (userId) {
-            query = query.where("userId", "==", userId);
-        }
-        if (moduleFilter && moduleFilter !== "all") {
-            query = query.where("module", "==", moduleFilter);
-        }
-
-        const snapshot = await query.get();
-        const logs: any[] = [];
-        snapshot.forEach(doc => {
-            logs.push({
-                id: doc.id,
-                ...doc.data()
+        let logs: any[] = [];
+        try {
+            const snapshot = await logsRef.orderBy("timestamp", "desc").limit(limitCount * 2).get();
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (userId && data.userId !== userId) return;
+                if (moduleFilter && moduleFilter !== "all" && data.module !== moduleFilter) return;
+                logs.push({
+                    id: doc.id,
+                    ...data
+                });
             });
-        });
+            logs = logs.slice(0, limitCount);
+        } catch (queryErr: any) {
+            console.warn("[User Activity Query Fallback]:", queryErr.message);
+            const snapshot = await logsRef.limit(limitCount).get();
+            snapshot.forEach(doc => {
+                logs.push({ id: doc.id, ...doc.data() });
+            });
+        }
 
         return NextResponse.json({ success: true, logs });
     } catch (error: any) {
         console.error("[User Activity GET Error]:", error);
-        return NextResponse.json({ success: false, error: error.message, logs: [] }, { status: 500 });
+        return NextResponse.json({ success: false, error: error.message, logs: [] });
     }
 }
 

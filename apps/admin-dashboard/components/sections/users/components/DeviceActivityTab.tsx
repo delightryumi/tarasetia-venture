@@ -24,7 +24,13 @@ export const DeviceActivityTab: React.FC<DeviceActivityTabProps> = ({ hotelCode 
             if (hotelCode) queryParams.set("hotelCode", hotelCode);
 
             const res = await fetch(`/api/users/devices?${queryParams.toString()}`);
-            const data = await res.json();
+            let data: any = { success: false, devices: [] };
+            try {
+                data = await res.json();
+            } catch {
+                const text = await res.text().catch(() => "");
+                data = { success: false, error: text || "Respons server tidak valid", devices: [] };
+            }
             if (data.success) {
                 setDevices(data.devices || []);
             } else {
@@ -48,7 +54,13 @@ export const DeviceActivityTab: React.FC<DeviceActivityTabProps> = ({ hotelCode 
             const res = await fetch(`/api/users/devices?sessionId=${encodeURIComponent(sessionId)}`, {
                 method: "DELETE"
             });
-            const data = await res.json();
+            let data: any = { success: false };
+            try {
+                data = await res.json();
+            } catch {
+                const text = await res.text().catch(() => "");
+                data = { success: false, error: text || "Respons server tidak valid" };
+            }
             if (res.ok && data.success) {
                 toast.success(`Sesi untuk ${userName} berhasil diputuskan.`);
                 setDevices(prev => prev.map(d => d.id === sessionId ? { ...d, status: "revoked" } : d));

@@ -117,6 +117,7 @@ export async function POST(request: Request) {
       email: email.trim(),
       name: `${businessName} Admin`,
       role: "admin",
+      isOwner: true,
       hotelCode,
       uid,
       permissions: finalPerms,

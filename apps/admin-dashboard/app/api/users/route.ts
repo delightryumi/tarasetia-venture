@@ -134,6 +134,8 @@ export async function POST(request: Request) {
       allowedOutlets,
       uid,
       permissions: finalPerms,
+      isOwner: false,
+      createdBy: requesterEmail || "owner",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -206,6 +208,19 @@ export async function PUT(request: Request) {
     if (targetRoleLower === "superadmin" && !isRequesterSuper) {
         return NextResponse.json({ 
             error: "Akses Ditolak: Anda tidak memiliki wewenang untuk memberikan role Superadmin." 
+        }, { status: 403 });
+    }
+
+    // Protection 3: Primary Hotel Owner Admin is LOCKED — role cannot be changed!
+    // Exception: Users created by the owner (existingDoc?.createdBy or !isOwnerAccount) CAN be modified freely
+    const hotelDocSnap = await adminDb.doc(`hotels/${hotelCode}`).get();
+    const hotelDocData = hotelDocSnap.exists ? hotelDocSnap.data() : null;
+    const hotelOwnerEmail = (hotelDocData?.email || "").trim().toLowerCase();
+    const isOwnerAccount = (existingDoc?.isOwner === true || (hotelOwnerEmail && cleanEmail === hotelOwnerEmail)) && !existingDoc?.createdBy;
+
+    if (isOwnerAccount && role && role.toLowerCase() !== currentRoleLower) {
+        return NextResponse.json({ 
+            error: "Akses Ditolak: Role Admin Owner utama dari pendaftaran terkunci dan tidak dapat diubah." 
         }, { status: 403 });
     }
 
@@ -305,6 +320,18 @@ export async function DELETE(request: Request) {
     if (userData?.role?.toLowerCase() === "superadmin" && !isRequesterSuper) {
         return NextResponse.json({ 
             error: "Akses Ditolak: Akun Superadmin dilindungi dan tidak dapat dihapus oleh Admin hotel." 
+        }, { status: 403 });
+    }
+
+    // Protection: Primary Hotel Owner Admin cannot be deleted
+    const hotelDocSnap = await adminDb.doc(`hotels/${hotelCode}`).get();
+    const hotelDocData = hotelDocSnap.exists ? hotelDocSnap.data() : null;
+    const hotelOwnerEmail = (hotelDocData?.email || "").trim().toLowerCase();
+    const isOwnerAccount = (userData?.isOwner === true || (hotelOwnerEmail && cleanEmail === hotelOwnerEmail)) && !userData?.createdBy;
+
+    if (isOwnerAccount) {
+        return NextResponse.json({ 
+            error: "Akses Ditolak: Akun Admin Owner utama dari pendaftaran properti dilindungi dan tidak dapat dihapus." 
         }, { status: 403 });
     }
 

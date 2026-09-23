@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Edit3, Trash2, Lock, MoreVertical, Building2, ShieldCheck, Shield } from "lucide-react";
+import { Mail, Edit3, Trash2, Lock, MoreVertical, Building2, ShieldCheck, Shield, Crown } from "lucide-react";
 import { UserProfile } from "../types";
 import styles from "../UsersStyles.module.css";
 
@@ -25,6 +25,14 @@ export const UserCard: React.FC<UserCardProps> = ({
         authUser?.role?.toLowerCase() === "super admin" ||
         authUser?.email?.toLowerCase() === "superadmin@setara.co.id";
     
+    // Detect if this user is the primary Admin Owner registered with the hotel
+    const userHotel = hotelsList.find(h => h.hotelCode === user.hotelCode);
+    const hotelOwnerEmail = (userHotel as any)?.email?.toLowerCase();
+    const isOwnerUser = Boolean(
+        (user.isOwner === true || (hotelOwnerEmail && user.email?.toLowerCase() === hotelOwnerEmail)) && 
+        !user.createdBy
+    );
+
     // Non-superadmin cannot touch a Superadmin user
     const isLockedFromCurrentViewer = (isSuperadminUser || isSystemAdmin) && !isRequesterSuperadmin;
 
@@ -78,6 +86,22 @@ export const UserCard: React.FC<UserCardProps> = ({
                             }}>
                                 {isSuperadminUser ? "Master Superadmin" : user.role}
                             </span>
+                            {isOwnerUser && (
+                                <span style={{
+                                    fontSize: "10px",
+                                    background: "#fef3c7",
+                                    color: "#b45309",
+                                    padding: "1px 6px",
+                                    borderRadius: "8px",
+                                    fontWeight: 600,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "3px"
+                                }}>
+                                    <Crown size={10} />
+                                    Hotel Owner (Terkunci)
+                                </span>
+                            )}
                             {outletCount > 1 && (
                                 <span style={{
                                     fontSize: "10px",
@@ -149,17 +173,31 @@ export const UserCard: React.FC<UserCardProps> = ({
                                             </button>
                                         )}
                                         
-                                        <button 
-                                            type="button"
-                                            onClick={() => {
-                                                onDelete(user.id, user.name);
-                                                setIsOpen(false);
-                                            }}
-                                            className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
-                                        >
-                                            <Trash2 size={14} />
-                                            <span>Delete User</span>
-                                        </button>
+                                        {!isOwnerUser ? (
+                                            <button 
+                                                type="button"
+                                                onClick={() => {
+                                                    onDelete(user.id, user.name);
+                                                    setIsOpen(false);
+                                                }}
+                                                className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
+                                            >
+                                                <Trash2 size={14} />
+                                                <span>Delete User</span>
+                                            </button>
+                                        ) : (
+                                            <div style={{
+                                                padding: "6px 12px",
+                                                fontSize: "11px",
+                                                color: "#94a3b8",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "6px"
+                                            }}>
+                                                <Lock size={12} />
+                                                <span>Owner Terproteksi</span>
+                                            </div>
+                                        )}
                                     </motion.div>
                                 )}
                             </AnimatePresence>

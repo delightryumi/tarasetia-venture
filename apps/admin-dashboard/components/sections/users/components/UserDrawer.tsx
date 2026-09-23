@@ -25,6 +25,14 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
     hotelsList = [], activeHotelCode
 }) => {
     
+    // Detect if editing the initial primary Admin Owner from registration
+    const activeHotel = hotelsList.find(h => h.hotelCode === activeHotelCode);
+    const hotelOwnerEmail = (activeHotel as any)?.email?.toLowerCase();
+    const isOwnerUser = Boolean(
+        (editingUser?.isOwner === true || (hotelOwnerEmail && editingUser?.email?.toLowerCase() === hotelOwnerEmail)) && 
+        !editingUser?.createdBy
+    );
+
     // Check if the role selection should be locked
     const isEditingAdmin = editingUser?.role?.toLowerCase() === "admin" || formData.role?.toLowerCase() === "admin";
     const isSuperadminLoggedIn = 
@@ -36,7 +44,12 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
     const isEditingSuperadmin = editingUser?.role?.toLowerCase() === "superadmin" || formData.role?.toLowerCase() === "superadmin";
     // Non-superadmin cannot edit a Superadmin account or promote to Superadmin
     const isAccountLocked = isEditingSuperadmin && !isSuperadminLoggedIn;
-    const lockRoleSelection = (isEditingAdmin || isEditingSuperadmin) && !isSuperadminLoggedIn;
+    
+    // Role selection is strictly locked for:
+    // 1. Initial Admin Owner (isOwnerUser) — their role is permanent
+    // 2. Editing Admin/Superadmin by non-superadmin
+    // EXCEPTION: Users created by the owner (!isOwnerUser) can have their roles edited freely!
+    const isRoleLocked = isOwnerUser || ((isEditingAdmin || isEditingSuperadmin) && !isSuperadminLoggedIn);
 
     // Filter available roles: only superadmin can assign 'superadmin' role
     const availableRoles = isSuperadminLoggedIn 
@@ -279,6 +292,14 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                                 {formData.role?.toLowerCase() === "superadmin" ? 'Level 5 (Superadmin)' : (formData.role?.toLowerCase() === "admin" ? 'Level 3 (Admin Hotel)' : 'Level 1 (Staff)')}
                             </span>
                         </div>
+
+                        {isOwnerUser && (
+                            <div className={drawerStyles.ownerLockedAlert}>
+                                <Lock size={14} style={{ flexShrink: 0 }} />
+                                <span><b>Role Owner Terkunci:</b> Akun Admin Owner dari pendaftaran awal terkunci permanen. Hanya user/staf tambahan yang dibuat oleh Owner yang rolenya dapat diubah.</span>
+                            </div>
+                        )}
+
                         <div className={styles.roleButtonGrid}>
                             {availableRoles.map((role) => {
                                 const isSelected = formData.role === role;
@@ -286,9 +307,9 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                                     <button 
                                         key={role}
                                         type="button"
-                                        disabled={lockRoleSelection || isAccountLocked}
+                                        disabled={isRoleLocked || isAccountLocked}
                                         onClick={() => setFormData({...formData, role})}
-                                        className={`${styles.roleSelectBtn} ${isSelected ? styles.roleSelectBtnActive : ""} ${(lockRoleSelection || isAccountLocked) ? "opacity-50 cursor-not-allowed" : ""}`}
+                                        className={`${styles.roleSelectBtn} ${isSelected ? styles.roleSelectBtnActive : ""} ${(isRoleLocked || isAccountLocked) ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                         {role === "superadmin" ? "Superadmin (Chain)" : role}
                                     </button>
@@ -300,14 +321,18 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                                 <button 
                                     key="admin"
                                     type="button"
-                                    disabled={lockRoleSelection || isAccountLocked}
-                                    className={`${styles.roleSelectBtn} ${styles.roleSelectBtnActive} ${(lockRoleSelection || isAccountLocked) ? "opacity-50 cursor-not-allowed" : ""}`}
+                                    disabled={isRoleLocked || isAccountLocked}
+                                    className={`${styles.roleSelectBtn} ${styles.roleSelectBtnActive} ${(isRoleLocked || isAccountLocked) ? "opacity-50 cursor-not-allowed" : ""}`}
                                 >
                                     Admin (Owner)
                                 </button>
                             )}
                         </div>
-                        {lockRoleSelection && !isAccountLocked && (
+                        {isOwnerUser ? (
+                            <p className={drawerStyles.roleLockNotice}>
+                                <Lock size={10} /> Akun Admin Owner utama tidak dapat diubah rolenya.
+                            </p>
+                        ) : isRoleLocked && !isAccountLocked && (
                             <p className={drawerStyles.roleLockNotice}>
                                 <Lock size={10} /> Hanya Superadmin yang dapat mengubah Role Admin/Superadmin.
                             </p>

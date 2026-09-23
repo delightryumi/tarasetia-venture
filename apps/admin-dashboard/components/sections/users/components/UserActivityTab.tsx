@@ -27,7 +27,13 @@ export const UserActivityTab: React.FC<UserActivityTabProps> = ({ hotelCode }) =
             queryParams.set("limit", "80");
 
             const res = await fetch(`/api/users/activity?${queryParams.toString()}`);
-            const data = await res.json();
+            let data: any = { success: false, logs: [] };
+            try {
+                data = await res.json();
+            } catch {
+                const text = await res.text().catch(() => "");
+                data = { success: false, error: text || "Respons server tidak valid", logs: [] };
+            }
             if (data.success) {
                 setLogs(data.logs || []);
             } else {

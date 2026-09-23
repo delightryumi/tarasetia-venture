@@ -380,6 +380,7 @@ export default function SuperadminPage() {
           const userDocId = email.trim().toLowerCase().replace(/[@.]/g, "_");
           await setDoc(doc(db, "hotels", isEditing ? currentHotelCode : code, "users_master", userDocId), {
             email: email.trim().toLowerCase(), name: `${name.trim()} Admin`, role: "admin",
+            isOwner: true,
             createdAt: new Date().toISOString(),
             permissions: {
               module_pos: true, module_front_office: true, module_housekeeping: true,
