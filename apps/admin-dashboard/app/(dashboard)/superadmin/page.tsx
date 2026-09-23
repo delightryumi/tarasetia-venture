@@ -312,9 +312,9 @@ export default function SuperadminPage() {
       if (hotel.billing?.plan === "basic" || hotel.billing?.plan === "startup") {
         modules = ["pos", "hrd", "cpanel-only"];
       } else if (hotel.billing?.plan === "bisnis") {
-        modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"];
+        modules = ["pos", "front-office", "innalytics", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"];
       } else {
-        modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-full"];
+        modules = ["pos", "front-office", "innalytics", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-full", "pos-self-order", "food-beverage-realtime"];
       }
     }
     setActiveModules(modules);

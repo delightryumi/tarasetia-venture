@@ -3,7 +3,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { SquaresFour, CaretDown } from "@phosphor-icons/react";
+import { SquaresFour, CaretDown, Lock } from "@phosphor-icons/react";
 import { NavItemType } from "./types";
 
 interface GroupedNavType {
@@ -16,6 +16,8 @@ interface ExpandedModeProps {
     groupedNavItems: GroupedNavType[] | null;
     activeSection: string;
     activeModule: string;
+    activeModules?: string[] | null;
+    isSuperadmin?: boolean;
     router: ReturnType<typeof useRouter>;
     expandedGroups: Record<string, boolean>;
     toggleGroup: (title: string) => void;
@@ -27,11 +29,20 @@ export function ExpandedMode({
     groupedNavItems,
     activeSection,
     activeModule,
+    activeModules,
+    isSuperadmin,
     router,
     expandedGroups,
     toggleGroup,
     setIsCollapsed,
 }: ExpandedModeProps) {
+    const isItemLocked = (itemId: string) => {
+        if (isSuperadmin) return false;
+        if (itemId === "food-beverage-realtime") {
+            return activeModules !== null && !activeModules.includes("food-beverage-realtime") && !activeModules.includes("pos-realtime");
+        }
+        return false;
+    };
     return (
         <nav className="nav-group flex flex-col gap-1.5 flex-1 overflow-y-auto px-3">
              <motion.button
@@ -83,8 +94,12 @@ export function ExpandedMode({
                                                     router.push(`/purchasing/${item.id}?module=purchasing`);
                                                 } else if (item.id === "purchase-order") {
                                                     router.push(`/${activeModule}/purchase-order`);
+                                                } else if (item.id === "food-beverage-ledger") {
+                                                    router.push(`/food-beverage/ledger?module=food-beverage`);
+                                                } else if (item.id === "food-beverage-performance") {
+                                                    router.push(`/food-beverage/performance?module=food-beverage`);
                                                 } else if (item.id === "food-beverage-product") {
-                                                    router.push(`/food-beverage/product?module=food-beverage`);
+                                                    router.push(`/food-beverage/ledger?module=food-beverage`);
                                                 } else if (item.id === "food-beverage-realtime") {
                                                     router.push(`/food-beverage/realtime?module=food-beverage`);
                                                 } else if (item.id === "pnl") {
@@ -109,6 +124,12 @@ export function ExpandedMode({
                                         >
                                             {item.icon}
                                             <span className="nav-label truncate">{item.label}</span>
+                                            {isItemLocked(item.id) && (
+                                                <span className="ml-auto text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1 shrink-0">
+                                                    <Lock size={10} weight="bold" />
+                                                    Add-on
+                                                </span>
+                                            )}
                                         </motion.button>
                                     ))}
                                 </motion.div>
@@ -132,8 +153,12 @@ export function ExpandedMode({
                                 router.push(`/purchasing/${item.id}?module=purchasing`);
                             } else if (item.id === "purchase-order") {
                                 router.push(`/${activeModule}/purchase-order`);
+                            } else if (item.id === "food-beverage-ledger") {
+                                router.push(`/food-beverage/ledger?module=food-beverage`);
+                            } else if (item.id === "food-beverage-performance") {
+                                router.push(`/food-beverage/performance?module=food-beverage`);
                             } else if (item.id === "food-beverage-product") {
-                                router.push(`/food-beverage/product?module=food-beverage`);
+                                router.push(`/food-beverage/ledger?module=food-beverage`);
                             } else if (item.id === "food-beverage-realtime") {
                                 router.push(`/food-beverage/realtime?module=food-beverage`);
                             } else if (item.id === "pnl") {
@@ -160,6 +185,12 @@ export function ExpandedMode({
                         <span className="nav-label truncate">
                             {item.label}
                         </span>
+                        {isItemLocked(item.id) && (
+                            <span className="ml-auto text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1 shrink-0">
+                                <Lock size={10} weight="bold" />
+                                Add-on
+                            </span>
+                        )}
                     </motion.button>
                 ))
             )}

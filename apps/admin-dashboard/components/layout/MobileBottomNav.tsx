@@ -8,7 +8,8 @@ import {
     LogOut, Coffee, ClipboardList, Activity, BookOpen, 
     Calculator, ShieldCheck, Receipt, SlidersHorizontal, 
     Globe, Layers, X, ChevronRight, Check, Sparkles, 
-    Building2, BedDouble, LayoutGrid, ArrowRight, User
+    Building2, BedDouble, LayoutGrid, ArrowRight, User,
+    Lock
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
@@ -79,7 +80,7 @@ const MODULE_DEFINITIONS: Record<string, ModuleMeta> = {
         subtitle: "Dining, POS & Kitchen",
         icon: Coffee,
         color: "#ea580c",
-        defaultRoute: "/food-beverage/product?module=food-beverage",
+        defaultRoute: "/food-beverage/ledger?module=food-beverage",
     },
     "hrd": {
         id: "hrd",
@@ -177,8 +178,12 @@ export const MobileBottomNav = () => {
         pathParts[2] === "purchase-order"
     ) {
         activeSection = "purchase-order";
+    } else if (pathParts[1] === "food-beverage" && pathParts[2] === "ledger") {
+        activeSection = "food-beverage-ledger";
+    } else if (pathParts[1] === "food-beverage" && pathParts[2] === "performance") {
+        activeSection = "food-beverage-performance";
     } else if (pathParts[1] === "food-beverage" && pathParts[2] === "product") {
-        activeSection = "food-beverage-product";
+        activeSection = "food-beverage-ledger";
     } else if (pathParts[1] === "food-beverage" && pathParts[2] === "realtime") {
         activeSection = "food-beverage-realtime";
     } else if (pathParts[1] === "innalytics") {
@@ -341,6 +346,8 @@ export const MobileBottomNav = () => {
         { id: "suppliers", label: "Supplier List", shortLabel: "Supplier", icon: <Users size={16} /> },
 
         // Food & Beverage
+        { id: "food-beverage-ledger", label: "Ledger Overview", shortLabel: "Ledger", icon: <BookOpen size={16} /> },
+        { id: "food-beverage-performance", label: "Category Performance", shortLabel: "Performance", icon: <PieChart size={16} /> },
         { id: "food-beverage-product", label: "F&B Products", shortLabel: "Products", icon: <Coffee size={16} /> },
         { id: "food-beverage-realtime", label: "POS Real-time", shortLabel: "Real-time", icon: <Activity size={16} /> },
 
@@ -386,11 +393,15 @@ export const MobileBottomNav = () => {
         }
 
         let items = allNavItems;
+        const hasInnalytics = activeModules === null || activeModules.includes("innalytics") || activeModules.includes("inalytics");
         if (activeModule === "front-office") {
-            items = allNavItems.filter(item => [
-                "overview", "forecast", "revenue-breakdown", "rate-inventory", 
-                "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"
-            ].includes(item.id));
+            items = allNavItems.filter(item => {
+                if (item.id === "innalytics" && !hasInnalytics) return false;
+                return [
+                    "overview", "forecast", "revenue-breakdown", "rate-inventory", 
+                    "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"
+                ].includes(item.id);
+            });
         } else if (activeModule === "innalytics") {
             items = allNavItems.filter(item => [
                 "innalytics", "overview", "forecast", "revenue-breakdown"
@@ -405,7 +416,7 @@ export const MobileBottomNav = () => {
             ].includes(item.id));
         } else if (activeModule === "food-beverage") {
             items = allNavItems.filter(item => [
-                "food-beverage-product", "food-beverage-realtime", "purchase-order"
+                "food-beverage-ledger", "food-beverage-performance", "food-beverage-realtime", "purchase-order"
             ].includes(item.id));
         } else if (activeModule === "hrd") {
             items = allNavItems.filter(item => ["hrd"].includes(item.id));
@@ -460,8 +471,12 @@ export const MobileBottomNav = () => {
             router.push(`/purchasing/${itemId}?module=purchasing`);
         } else if (itemId === "purchase-order") {
             router.push(`/${activeModule}/purchase-order`);
+        } else if (itemId === "food-beverage-ledger") {
+            router.push(`/food-beverage/ledger?module=food-beverage`);
+        } else if (itemId === "food-beverage-performance") {
+            router.push(`/food-beverage/performance?module=food-beverage`);
         } else if (itemId === "food-beverage-product") {
-            router.push(`/food-beverage/product?module=food-beverage`);
+            router.push(`/food-beverage/ledger?module=food-beverage`);
         } else if (itemId === "food-beverage-realtime") {
             router.push(`/food-beverage/realtime?module=food-beverage`);
         } else if (itemId === "pnl") {
@@ -700,6 +715,11 @@ export const MobileBottomNav = () => {
                                                             <div className={s.menuCardName}>
                                                                 {item.label}
                                                             </div>
+                                                            {!isSuperadmin && activeModules !== null && item.id === "food-beverage-realtime" && !activeModules.includes("food-beverage-realtime") && !activeModules.includes("pos-realtime") && (
+                                                                <div className="text-[10px] text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1 mt-0.5">
+                                                                    <Lock size={10} /> Add-on
+                                                                </div>
+                                                            )}
                                                             {isActive && (
                                                                 <div className={s.menuCardStatus}>
                                                                     <Check size={10} strokeWidth={3} /> Sedang Aktif

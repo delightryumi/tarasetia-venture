@@ -63,8 +63,12 @@ export function DockMode({
                                 router.push(`/purchasing/${item.id}?module=purchasing`);
                             } else if (item.id === "purchase-order") {
                                 router.push(`/${activeModule}/purchase-order`);
+                            } else if (item.id === "food-beverage-ledger") {
+                                router.push(`/food-beverage/ledger?module=food-beverage`);
+                            } else if (item.id === "food-beverage-performance") {
+                                router.push(`/food-beverage/performance?module=food-beverage`);
                             } else if (item.id === "food-beverage-product") {
-                                router.push(`/food-beverage/product?module=food-beverage`);
+                                router.push(`/food-beverage/ledger?module=food-beverage`);
                             } else if (item.id === "food-beverage-realtime") {
                                 router.push(`/food-beverage/realtime?module=food-beverage`);
                             } else if (item.id === "pnl") {

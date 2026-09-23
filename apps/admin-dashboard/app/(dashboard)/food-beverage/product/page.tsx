@@ -1,5 +1,5 @@
-import FoodBeverageProductPage from '@/components/fnb-product/FoodBeverageProductPage';
+import { redirect } from 'next/navigation';
 
 export default function FnbProductPageRoute() {
-  return <FoodBeverageProductPage />;
+  redirect('/food-beverage/ledger?module=food-beverage');
 }

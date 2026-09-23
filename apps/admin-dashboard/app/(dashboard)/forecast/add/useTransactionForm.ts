@@ -185,7 +185,7 @@ export const useTransactionForm = () => {
         if (moduleParam === "purchasing") {
             redirectPath = "/purchasing?module=purchasing";
         } else if (moduleParam === "food-beverage") {
-            redirectPath = "/food-beverage/product?module=food-beverage";
+            redirectPath = "/food-beverage/ledger?module=food-beverage";
         } else if (moduleParam === "accounting") {
             redirectPath = "/pnl?module=accounting";
         } else if (moduleParam === "cpanel") {

@@ -89,8 +89,11 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
             const moduleParam = searchParams.get("module");
 
             const isPathForbidden = (path: string, mod: string | null) => {
-                if (path === '/select-module' || path === '/superadmin' || path === '/login' || path.startsWith('/innalytics')) {
+                if (path === '/select-module' || path === '/superadmin' || path === '/login') {
                     return false;
+                }
+                if (path.startsWith('/innalytics')) {
+                    return activeModules !== null && !activeModules.includes('innalytics') && !activeModules.includes('inalytics');
                 }
 
                 // If cpanel-full is not active, block forbidden landing page sub-paths
@@ -221,10 +224,11 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     const isSuperadminPage = pathname === "/superadmin";
     const isChannelManagerPage = pathname === "/channel-manager";
     const isInnalyticsPage = pathname.startsWith("/innalytics");
-    const hideSidebar = isSuperadminPage || pathname === "/inventory-control" || isInnalyticsPage;
+    const isFnbRealtimePage = pathname.startsWith("/food-beverage/realtime");
+    const hideSidebar = isSuperadminPage || pathname === "/inventory-control" || isInnalyticsPage || isFnbRealtimePage;
 
     return (
-        <div className={`flex flex-col min-h-screen select-none ${isSuperadminPage ? 'bg-white dark:bg-[#09090b]' : 'bg-transparent'}`}>
+        <div className={`flex flex-col min-h-screen select-none ${isSuperadminPage ? 'bg-white dark:bg-[#09090b]' : isFnbRealtimePage ? 'bg-[#fbfaf8] text-stone-900' : 'bg-transparent'}`}>
             {/* Global POS order notifier — active on every page */}
             {activeHotelCode && activeHotelCode !== '0' && (
                 <GlobalOrderNotifier
@@ -233,7 +237,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                 />
             )}
             <div className={`dashboard-wrapper ${isCollapsed ? "collapsed" : ""} ${!isCollapsed ? "mobile-open" : ""} ${hideSidebar ? "no-sidebar" : ""}`}>
-                {!isSuperadminPage && !isInnalyticsPage && (
+                {!isSuperadminPage && !isInnalyticsPage && !isFnbRealtimePage && (
                     <header className="dashboard-top-bar">
                         <div className="dashboard-top-bar-inner">
                             <StatusWidget 
@@ -309,7 +313,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                     className="main-content"
                     style={hideSidebar ? { marginLeft: 0, maxWidth: "100vw", width: "100%", paddingTop: 0 } : undefined}
                 >
-                    <div className={`main-scroll-container ${isChannelManagerPage || pathname.startsWith("/rate-inventory") || isInnalyticsPage ? "main-scroll-container-wide" : ""}`}>
+                    <div className={`main-scroll-container ${isChannelManagerPage || pathname.startsWith("/rate-inventory") || isInnalyticsPage || isFnbRealtimePage ? "main-scroll-container-wide" : ""}`} style={isFnbRealtimePage ? { padding: 0, maxWidth: "100%", margin: 0 } : undefined}>
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={pathname}
@@ -319,12 +323,13 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                                 exit={{ opacity: 0, y: -10 }}
                                 transition={{ duration: 0.3 }}
                                 className="section-wrapper"
+                                style={isFnbRealtimePage ? { padding: 0, maxWidth: "100%", margin: 0 } : undefined}
                             >
                                 {children}
                             </motion.div>
                         </AnimatePresence>
 
-                        {!isSuperadminPage && !isInnalyticsPage && (
+                        {!isSuperadminPage && !isInnalyticsPage && !isFnbRealtimePage && (
                             <footer className="dashboard-footer-clean">
                                 <a
                                     href={
@@ -346,7 +351,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                         )}
                     </div>
                 </main>
-                {!isSuperadminPage && !isInnalyticsPage && <MobileBottomNav />}
+                {!isSuperadminPage && !isInnalyticsPage && !isFnbRealtimePage && <MobileBottomNav />}
                 <BillingAlertModal />
             </div>
         </div>

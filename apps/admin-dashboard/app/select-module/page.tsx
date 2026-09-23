@@ -207,8 +207,8 @@ export default function SelectModulePage() {
   };
 
   const hasAccess = (moduleKey: string) => {
-    // Active modules restrictions if loaded (CPanel and Inalytics are always allowed)
-    if (activeModules !== null && moduleKey !== 'cpanel' && moduleKey !== 'innalytics' && moduleKey !== 'inalytics') {
+    // Active modules restrictions if loaded (CPanel is always allowed for basic settings)
+    if (activeModules !== null && moduleKey !== 'cpanel') {
       if (!activeModules.includes(moduleKey)) {
         return false;
       }
@@ -216,17 +216,14 @@ export default function SelectModulePage() {
 
     if (isSuperadmin) return true;
 
-    // Inalytics is accessible by default for hotel business intelligence
-    if (moduleKey === 'innalytics' || moduleKey === 'inalytics') {
-      if (userPermissions && userPermissions['module_innalytics'] === false) {
-        return false;
-      }
-      return true;
-    }
-
     if (!userPermissions) return false;
 
     switch (moduleKey) {
+      case 'innalytics':
+      case 'inalytics':
+        return userPermissions['module_innalytics'] !== undefined
+          ? !!userPermissions['module_innalytics']
+          : userPermissions['innalytics'] !== false;
       case 'pos':
         return userPermissions['module_pos'] !== undefined
           ? !!userPermissions['module_pos']
@@ -290,7 +287,7 @@ export default function SelectModulePage() {
       subtitle: 'Analytics & Intelligence',
       description: 'Performance, channels & statistical reports',
       href: '/innalytics',
-      active: true,
+      active: hasAccess('innalytics'),
       icon: 'trending_up',
       image: '/images/modules/innalytics.png',
       colSpan: 1 as const,
@@ -309,7 +306,7 @@ export default function SelectModulePage() {
       title: 'Food & Beverage',
       subtitle: 'Dining & Services',
       description: 'Restaurant, room service & kitchen',
-      href: '/food-beverage/product?module=food-beverage',
+      href: '/food-beverage/ledger?module=food-beverage',
       active: hasAccess('food-beverage'),
       icon: 'restaurant',
       image: '/images/modules/fb.png',

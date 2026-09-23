@@ -35,8 +35,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         pathParts[2] === "purchase-order"
     ) {
         activeSection = "purchase-order";
+    } else if (pathParts[1] === "food-beverage" && pathParts[2] === "ledger") {
+        activeSection = "food-beverage-ledger";
+    } else if (pathParts[1] === "food-beverage" && pathParts[2] === "performance") {
+        activeSection = "food-beverage-performance";
     } else if (pathParts[1] === "food-beverage" && pathParts[2] === "product") {
-        activeSection = "food-beverage-product";
+        activeSection = "food-beverage-ledger";
     } else if (pathParts[1] === "food-beverage" && pathParts[2] === "realtime") {
         activeSection = "food-beverage-realtime";
     } else if (pathParts[1] === "innalytics") {
@@ -265,10 +269,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }
 
         let items = allNavItems;
+        const hasInnalytics = activeModules === null || activeModules.includes("innalytics") || activeModules.includes("inalytics");
         if (activeModule === "front-office") {
-            items = allNavItems.filter((item) =>
-                ["overview", "forecast", "revenue-breakdown", "rate-inventory", "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id)
-            );
+            items = allNavItems.filter((item) => {
+                if (item.id === "innalytics" && !hasInnalytics) return false;
+                return ["overview", "forecast", "revenue-breakdown", "rate-inventory", "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id);
+            });
         } else if (activeModule === "innalytics") {
             items = allNavItems.filter((item) =>
                 ["innalytics", "overview", "forecast", "revenue-breakdown"].includes(item.id)
@@ -283,7 +289,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             );
         } else if (activeModule === "food-beverage") {
             items = allNavItems.filter((item) =>
-                ["food-beverage-product", "food-beverage-realtime", "purchase-order"].includes(item.id)
+                ["food-beverage-ledger", "food-beverage-performance", "food-beverage-realtime", "purchase-order"].includes(item.id)
             );
         } else if (activeModule === "hrd") {
             items = allNavItems.filter((item) => ["hrd"].includes(item.id));
@@ -459,6 +465,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     groupedNavItems={groupedNavItems}
                     activeSection={activeSection}
                     activeModule={activeModule}
+                    activeModules={activeModules}
+                    isSuperadmin={isSuperadmin}
                     router={router}
                     expandedGroups={expandedGroups}
                     toggleGroup={toggleGroup}

@@ -34,7 +34,7 @@ const ALL_KEYS = [
     "purchasing", "store-requisition", "purchase-requisition", "daily-market-list", 
     "stock-opname", "items", "suppliers",
     // Food & Beverage
-    "food-beverage-product", "food-beverage-realtime",
+    "food-beverage-ledger", "food-beverage-performance", "food-beverage-product", "food-beverage-realtime",
     // POS submenus & granular permissions
     "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings", "pos_self_order",
     "pos_cancel", "pos_void",
@@ -118,6 +118,12 @@ export const useUsers = (menuItems: any[]) => {
                 if (u.permissions["pos_void"] === undefined) updates["permissions.pos_void"] = isFullRole || u.permissions["trans_void"] === true;
             }
 
+            const hasFnB = u.permissions.module_food_beverage !== false && (u.permissions["food-beverage-product"] === true || u.permissions["food-beverage-ledger"] === true || isFullRole);
+            if (hasFnB) {
+                if (u.permissions["food-beverage-ledger"] === undefined) updates["permissions.food-beverage-ledger"] = true;
+                if (u.permissions["food-beverage-performance"] === undefined) updates["permissions.food-beverage-performance"] = true;
+            }
+
 
 
             if (Object.keys(updates).length > 0) {
@@ -191,9 +197,6 @@ export const useUsers = (menuItems: any[]) => {
                             if (!modules.includes('cpanel-full')) modules.push('cpanel-full');
                         }
                     }
-                    if (modules.includes('front-office') || modules.includes('accounting')) {
-                        if (!modules.includes('innalytics')) modules.push('innalytics');
-                    }
                     if (modules.length === 0) {
                         const plan = data.billing?.plan || 'enterprise';
                         if (plan === 'startup') {
@@ -201,7 +204,7 @@ export const useUsers = (menuItems: any[]) => {
                         } else if (plan === 'bisnis') {
                             modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "innalytics", "hrd", "cpanel-only"];
                         } else {
-                            modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "innalytics", "hrd", "cpanel-full"];
+                            modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "innalytics", "hrd", "cpanel-full", "pos-self-order", "food-beverage-realtime"];
                         }
                     }
                     setActiveModules(modules);

@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 const ALL_MODULES = [
   { id: "pos", label: "Point of Sales (POS)" },
   { id: "front-office", label: "Front Office" },
+  { id: "innalytics", label: "Inalytics (Intelligence & Reports)" },
   { id: "housekeeping", label: "Housekeeping" },
   { id: "food-beverage", label: "Food & Beverage" },
   { id: "purchasing", label: "Purchasing" },
@@ -14,13 +15,36 @@ const ALL_MODULES = [
   { id: "hrd", label: "HRD & Absensi" },
   { id: "cpanel-only", label: "CPanel Only (User & Logo)" },
   { id: "cpanel-full", label: "CPanel Full (Landing Page)" },
-  { id: "pos-self-order", label: "Self-Ordering" },
+  { id: "pos-self-order", label: "Self-Ordering (Add-on)" },
+  { id: "food-beverage-realtime", label: "POS Real-time / KDS (Add-on)" },
 ];
 
 const PACKAGE_PRESETS: Record<string, string[]> = {
   startup: ["pos", "hrd", "cpanel-only"],
-  bisnis: ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"],
-  enterprise: ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-full", "pos-self-order"],
+  bisnis: [
+    "pos",
+    "front-office",
+    "innalytics",
+    "housekeeping",
+    "food-beverage",
+    "purchasing",
+    "accounting",
+    "hrd",
+    "cpanel-only",
+  ],
+  enterprise: [
+    "pos",
+    "front-office",
+    "innalytics",
+    "housekeeping",
+    "food-beverage",
+    "purchasing",
+    "accounting",
+    "hrd",
+    "cpanel-full",
+    "pos-self-order",
+    "food-beverage-realtime",
+  ],
 };
 
 interface HotelFormModalProps {

@@ -54,6 +54,8 @@ export const allNavItems: NavItemType[] = [
     { id: "items", label: "Master Barang", icon: <Package size={18} weight="bold" /> },
     { id: "suppliers", label: "Supplier", icon: <UsersThree size={18} weight="bold" /> },
     { id: "purchase-order", label: "Purchase Order", icon: <ClipboardText size={18} weight="bold" /> },
+    { id: "food-beverage-ledger", label: "Ledger Overview", icon: <Notebook size={18} weight="bold" /> },
+    { id: "food-beverage-performance", label: "Category Performance", icon: <ChartPie size={18} weight="bold" /> },
     { id: "food-beverage-product", label: "F&B Product", icon: <Coffee size={18} weight="bold" /> },
     { id: "food-beverage-realtime", label: "POS Real-time", icon: <Pulse size={18} weight="bold" /> },
 ];

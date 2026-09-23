@@ -104,7 +104,8 @@ const PERMISSION_TREE: PermissionModule[] = [
         label: "Food & Beverage",
         icon: <Coffee size={14} />,
         submenus: [
-            { id: "food-beverage-product", label: "F&B Product", icon: <Coffee size={14} /> },
+            { id: "food-beverage-ledger", label: "Ledger Overview", icon: <FileText size={14} /> },
+            { id: "food-beverage-performance", label: "Category Performance", icon: <PieChart size={14} /> },
             { id: "food-beverage-realtime", label: "POS Real-time", icon: <Zap size={14} /> },
             { id: "purchase-order", label: "Purchase Order", icon: <ShoppingCart size={14} /> },
         ]
@@ -300,13 +301,36 @@ export const UsersSection: React.FC = () => {
             }
         }
 
+        if (mod.id === "module_pos") {
+            if (!safeActiveModules.includes("pos")) return null;
+            const hasSelfOrder = safeActiveModules.includes("pos-self-order");
+            return {
+                ...mod,
+                submenus: hasSelfOrder 
+                    ? mod.submenus 
+                    : mod.submenus.filter(s => s.id !== "pos_self_order")
+            };
+        }
+
+        if (mod.id === "module_food_beverage") {
+            if (!safeActiveModules.includes("food-beverage")) return null;
+            const hasRealtime = safeActiveModules.includes("food-beverage-realtime") || safeActiveModules.includes("pos-realtime");
+            return {
+                ...mod,
+                submenus: hasRealtime 
+                    ? mod.submenus 
+                    : mod.submenus.filter(s => s.id !== "food-beverage-realtime")
+            };
+        }
+
         if (mod.id === "module_innalytics") {
-            if (safeActiveModules.includes("innalytics") || safeActiveModules.includes("front-office") || safeActiveModules.includes("accounting")) {
+            if (safeActiveModules.includes("innalytics")) {
                 return mod;
             }
+            return null;
         }
         
-        const mappedId = mod.id.replace("module_", "").replace("_", "-");
+        const mappedId = mod.id.replace("module_", "").replace(/_/g, "-");
         if (safeActiveModules.includes(mappedId)) return mod;
         
         return null;
