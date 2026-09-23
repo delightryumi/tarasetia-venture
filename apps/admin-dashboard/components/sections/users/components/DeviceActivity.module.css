@@ -1,0 +1,210 @@
+/* DeviceActivity.module.css — Dedicated Modular CSS for Device Activity & Session Management */
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.headerCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.headerTitle {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0;
+    color: #0f172a;
+}
+
+.headerSubtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin: 4px 0 0 0;
+}
+
+.btnRefresh {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #1e293b;
+    transition: all 0.15s ease;
+}
+
+.btnRefresh:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+}
+
+.devicesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 14px;
+}
+
+.deviceCard {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    transition: box-shadow 0.15s ease;
+}
+
+.deviceCard:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+}
+
+.deviceCardActive {
+    border: 1px solid #e2e8f0;
+}
+
+.deviceCardRevoked {
+    border: 1px solid #fecaca;
+    background: #fffafa;
+}
+
+.cardHeaderRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.deviceMetaCluster {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.deviceIconBox {
+    padding: 8px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.deviceTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.deviceSubtitle {
+    font-size: 11px;
+    color: #64748b;
+    text-transform: capitalize;
+}
+
+.statusBadgeActive {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.statusBadgeRevoked {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.sessionDetails {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 11px;
+    color: #475569;
+}
+
+.detailRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detailLabel {
+    color: #94a3b8;
+}
+
+.detailValueBold {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.detailValueMono {
+    font-family: monospace;
+    color: #475569;
+}
+
+.cardFooter {
+    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btnRevoke {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #dc2626;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.15s ease;
+}
+
+.btnRevoke:hover:not(:disabled) {
+    background: #fee2e2;
+}
+
+.btnRevoke:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.emptyStateContainer {
+    grid-column: 1 / -1;
+    padding: 40px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.emptyIcon {
+    margin: 0 auto 8px auto;
+    opacity: 0.5;
+}

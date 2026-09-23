@@ -46,7 +46,7 @@ export const useUsers = (menuItems: any[]) => {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeModules, setActiveModules] = useState<string[]>([]);
-    const { activeHotelCode } = useAuth();
+    const { activeHotelCode, user: authUser } = useAuth();
     const hotelCode = activeHotelCode;
 
     const migrateUsersPermissions = async (needsMigrationList: UserProfile[]) => {
@@ -171,8 +171,9 @@ export const useUsers = (menuItems: any[]) => {
                 syncNewSubmenusToUsers(list);
             }
 
-            // Hide superadmin users from the client UI list
-            const clientVisibleUsers = list.filter(u => u.role?.toLowerCase() !== "superadmin");
+            // Hide superadmin users from regular property admins, show for superadmin
+            const isSuperViewer = authUser?.role?.toLowerCase() === "superadmin";
+            const clientVisibleUsers = isSuperViewer ? list : list.filter(u => u.role?.toLowerCase() !== "superadmin");
             setUsers(clientVisibleUsers);
             setLoading(false);
         }, (err) => {

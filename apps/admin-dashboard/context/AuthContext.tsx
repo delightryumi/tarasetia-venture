@@ -414,6 +414,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 permissions: userInfo.permissions || {},
             };
 
+            // Auto-register device session and login activity in background
+            try {
+                fetch("/api/users/devices", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        userId: fbUser.uid,
+                        userEmail: email,
+                        userName: resolvedDisplayName,
+                        hotelCode: code
+                    })
+                }).catch(() => {});
+
+                fetch("/api/users/activity", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode: code,
+                        userId: fbUser.uid,
+                        userName: resolvedDisplayName,
+                        userEmail: email,
+                        action: "LOGIN",
+                        module: "SYSTEM",
+                        description: `Pengguna berhasil login ke properti #${code}.`
+                    })
+                }).catch(() => {});
+            } catch (trackErr) {
+                console.warn("Tracking error:", trackErr);
+            }
+
             localStorage.setItem("auth_user", JSON.stringify(customUser));
             setUser(customUser);
 
@@ -434,6 +464,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const signOutUser = async () => {
+        if (user) {
+            try {
+                fetch("/api/users/activity", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode: activeHotelCode || "0",
+                        userId: user.uid,
+                        userName: user.name || user.displayName || user.email,
+                        userEmail: user.email,
+                        action: "LOGOUT",
+                        module: "SYSTEM",
+                        description: `Pengguna logout dari sistem.`
+                    })
+                }).catch(() => {});
+            } catch {}
+        }
         localStorage.removeItem("auth_user");
         localStorage.removeItem("active_hotel_code");
         setUser(null);

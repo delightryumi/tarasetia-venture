@@ -21,6 +21,8 @@ import { RoleCard } from "./components/RoleCard";
 import { UserDrawer } from "./components/UserDrawer";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { ChangePasswordModal } from "./components/ChangePasswordModal";
+import { UserActivityTab } from "./components/UserActivityTab";
+import { DeviceActivityTab } from "./components/DeviceActivityTab";
 import { UserProfile } from "./types";
 import styles from "./UsersStyles.module.css";
 
@@ -177,14 +179,14 @@ const rise = {
 };
 
 export const UsersSection: React.FC = () => {
-    const { user: authUser } = useAuth();
+    const { user: authUser, activeHotelCode, hotelsList } = useAuth();
     const { 
         users, loading, activeModules,
         handleSaveUser, handleDeleteUser, togglePermission, toggleModulePermission,
         handleChangePassword
     } = useUsers([]);
 
-    const [activeTab, setActiveTab] = useState<"users" | "permissions">("users");
+    const [activeTab, setActiveTab] = useState<"users" | "permissions" | "activity" | "devices">("users");
     const [searchQuery, setSearchQuery] = useState("");
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
@@ -196,7 +198,6 @@ export const UsersSection: React.FC = () => {
 
     // Password Change State
     const [passwordChangeTarget, setPasswordChangeTarget] = useState<UserProfile | null>(null);
-    // Removed unused newPassword state; ChangePasswordModal manages its own state.
     const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     // Form State
@@ -204,18 +205,33 @@ export const UsersSection: React.FC = () => {
         email: "",
         name: "",
         role: "Kasir",
-        password: ""
+        password: "",
+        allowedOutlets: [] as string[]
     });
 
     const openCreateDrawer = () => {
         setEditingUser(null);
-        setFormData({ email: "", name: "", role: "Kasir", password: "" });
+        setFormData({ 
+            email: "", 
+            name: "", 
+            role: "Kasir", 
+            password: "",
+            allowedOutlets: activeHotelCode ? [activeHotelCode] : []
+        });
         setIsDrawerOpen(true);
     };
 
     const openEditDrawer = (user: UserProfile) => {
         setEditingUser(user);
-        setFormData({ email: user.email, name: user.name, role: user.role, password: "" });
+        setFormData({ 
+            email: user.email, 
+            name: user.name, 
+            role: user.role, 
+            password: "",
+            allowedOutlets: user.allowedOutlets && user.allowedOutlets.length > 0 
+                ? user.allowedOutlets 
+                : (activeHotelCode ? [activeHotelCode] : [])
+        });
         setIsDrawerOpen(true);
     };
 
@@ -364,6 +380,18 @@ export const UsersSection: React.FC = () => {
                         >
                             Permissions
                         </button>
+                        <button 
+                            onClick={() => setActiveTab("activity")}
+                            className={`${styles.tabButton} ${activeTab === "activity" ? styles.tabButtonActive : ""}`}
+                        >
+                            User Activity
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab("devices")}
+                            className={`${styles.tabButton} ${activeTab === "devices" ? styles.tabButtonActive : ""}`}
+                        >
+                            Device Activity
+                        </button>
                     </div>
                     
                     {activeTab === "users" && (
@@ -424,12 +452,14 @@ export const UsersSection: React.FC = () => {
                                         onDelete={onDelete}
                                         variants={rise}
                                         onChangePasswordClick={openChangePassword}
+                                        authUser={authUser}
+                                        hotelsList={hotelsList}
                                     />
                                 ))}
                             </motion.div>
                         )}
                     </motion.section>
-                ) : (
+                ) : activeTab === "permissions" ? (
                     <motion.section 
                         key="perms-tab"
                         initial={{ opacity: 0, y: 10 }}
@@ -448,6 +478,26 @@ export const UsersSection: React.FC = () => {
                             />
                         ))}
                     </motion.section>
+                ) : activeTab === "activity" ? (
+                    <motion.section 
+                        key="activity-tab"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <UserActivityTab hotelCode={activeHotelCode} />
+                    </motion.section>
+                ) : (
+                    <motion.section 
+                        key="devices-tab"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <DeviceActivityTab hotelCode={activeHotelCode} />
+                    </motion.section>
                 )}
             </AnimatePresence>
 
@@ -463,6 +513,8 @@ export const UsersSection: React.FC = () => {
                 isSaving={isSaving}
                 onChangePassword={onChangePassword}
                 authUser={authUser}
+                hotelsList={hotelsList}
+                activeHotelCode={activeHotelCode}
             />
 
             {/* ─── Change Password Modal ─── */}

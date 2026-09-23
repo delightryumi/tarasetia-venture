@@ -3,7 +3,7 @@ import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 
 const ALL_KEYS = [
     // Modules
-    "module_pos", "module_front_office", "module_housekeeping", 
+    "module_pos", "module_front_office", "module_innalytics", "module_housekeeping", 
     "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel", "module_hrd",
     // Submenus
     "overview", "digital-checkin", "forecast", "inventory-control", "invoice", 
@@ -16,17 +16,67 @@ const ALL_KEYS = [
     "hrd"
 ];
 
-// POST: Create User & Set Claims
+// Helper to log user activity
+async function logActivity(data: {
+    hotelCode: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    action: string;
+    module: string;
+    description: string;
+    ipAddress?: string;
+}) {
+    try {
+        const logDoc = {
+            ...data,
+            timestamp: new Date().toISOString()
+        };
+        // Log to hotel-level user_activities
+        await adminDb.collection(`hotels/${data.hotelCode}/user_activities`).add(logDoc);
+        // Also log to global system_activity_logs for master audit trail
+        await adminDb.collection("system_activity_logs").add(logDoc);
+    } catch (err) {
+        console.warn("[User Activity Log Warning]:", err);
+    }
+}
+
+// POST: Create User & Set Multi-Hotel Claims
 export async function POST(request: Request) {
   try {
-    const { email, password, name, role, hotelCode, permissions } = await request.json();
+    const body = await request.json();
+    const { 
+        email, password, name, role, hotelCode, permissions, 
+        allowedOutlets: rawAllowedOutlets,
+        requesterRole, requesterEmail 
+    } = body;
 
     if (!email || !password || !name || !role || !hotelCode) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json({ error: "Missing required fields (email, password, name, role, hotelCode)" }, { status: 400 });
     }
 
     const cleanEmail = email.trim().toLowerCase();
     const docId = cleanEmail.replace(/[@.]/g, "_");
+
+    // ── ROLE HIERARCHY PROTECTION ──
+    const targetRoleLower = role.toLowerCase();
+    const isRequesterSuper = requesterRole?.toLowerCase() === "superadmin" || requesterEmail?.toLowerCase() === "superadmin@setara.co.id";
+    
+    // Only Superadmin can create a Superadmin user
+    if (targetRoleLower === "superadmin" && !isRequesterSuper) {
+        return NextResponse.json({ 
+            error: "Akses Ditolak: Hanya Superadmin yang berhak membuat akun dengan role Superadmin." 
+        }, { status: 403 });
+    }
+
+    // Multi-Hotel assignment restriction: HANYA Superadmin yang berhak mengatur hak multi-hotel
+    let allowedOutlets: string[];
+    if (isRequesterSuper && Array.isArray(rawAllowedOutlets) && rawAllowedOutlets.length > 0) {
+        allowedOutlets = Array.from(new Set([...rawAllowedOutlets, hotelCode]));
+    } else {
+        // Non-superadmin cannot assign multi-hotel, locked to the hotelCode
+        allowedOutlets = [hotelCode];
+    }
 
     let uid = "";
     try {
@@ -35,16 +85,16 @@ export async function POST(request: Request) {
       uid = existingUser.uid;
       
       const currentClaims = existingUser.customClaims || {};
-      let allowedOutlets: string[] = Array.isArray(currentClaims.allowedOutlets) 
-        ? [...currentClaims.allowedOutlets] 
-        : (currentClaims.hotelCode ? [currentClaims.hotelCode as string] : []);
-      
-      if (!allowedOutlets.includes(hotelCode)) {
-        allowedOutlets.push(hotelCode);
-      }
+      const existingOutlets = Array.isArray(currentClaims.allowedOutlets) ? currentClaims.allowedOutlets : [];
+      allowedOutlets = Array.from(new Set([...existingOutlets, ...allowedOutlets]));
 
-      // Update custom claims
-      await adminAuth.setCustomUserClaims(uid, { ...currentClaims, role, hotelCode, allowedOutlets });
+      // Update custom claims with multi-hotel access
+      await adminAuth.setCustomUserClaims(uid, { 
+          ...currentClaims, 
+          role, 
+          hotelCode, 
+          allowedOutlets 
+      });
     } catch (err: any) {
       if (err.code === "auth/user-not-found") {
         // Create new Firebase Auth user
@@ -56,14 +106,18 @@ export async function POST(request: Request) {
         uid = newUser.uid;
         
         // Set custom claims
-        await adminAuth.setCustomUserClaims(uid, { role, hotelCode, allowedOutlets: [hotelCode] });
+        await adminAuth.setCustomUserClaims(uid, { 
+            role, 
+            hotelCode, 
+            allowedOutlets 
+        });
       } else {
         throw err;
       }
     }
 
     // Determine permissions
-    const isSuper = role === "superadmin";
+    const isSuper = targetRoleLower === "superadmin";
     let finalPerms = permissions;
     if (!finalPerms) {
       finalPerms = {};
@@ -72,29 +126,53 @@ export async function POST(request: Request) {
       });
     }
 
-    // Save profile to Firestore
-    const userDocRef = adminDb.doc(`hotels/${hotelCode}/users_master/${docId}`);
-    await userDocRef.set({
+    const userData = {
       email: cleanEmail,
       name: name.trim(),
       role,
       hotelCode,
+      allowedOutlets,
       uid,
       permissions: finalPerms,
-      createdAt: new Date().toISOString()
-    }, { merge: true });
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
 
-    return NextResponse.json({ success: true, uid });
+    // Propagate profile to all assigned hotels in allowedOutlets
+    for (const outletCode of allowedOutlets) {
+        await adminDb.doc(`hotels/${outletCode}/users_master/${docId}`).set(userData, { merge: true });
+    }
+
+    // Also persist in global users_master
+    await adminDb.doc(`users_master/${docId}`).set(userData, { merge: true });
+
+    // Log Activity
+    await logActivity({
+        hotelCode,
+        userId: uid,
+        userName: name.trim(),
+        userEmail: cleanEmail,
+        action: "CREATE_USER",
+        module: "USER_MANAGEMENT",
+        description: `Akun staf baru dibuat dengan role '${role}' dan ditugaskan ke ${allowedOutlets.length} properti (${allowedOutlets.join(", ")}).`
+    });
+
+    return NextResponse.json({ success: true, uid, allowedOutlets });
   } catch (error: any) {
     console.error("Error creating user:", error);
     return NextResponse.json({ error: error.message || "Failed to create user" }, { status: 500 });
   }
 }
 
-// PUT: Update User & Claims
+// PUT: Update User & Multi-Hotel Claims
 export async function PUT(request: Request) {
   try {
-    const { email, password, name, role, hotelCode, permissions } = await request.json();
+    const body = await request.json();
+    const { 
+        email, password, name, role, hotelCode, permissions, 
+        allowedOutlets: rawAllowedOutlets,
+        requesterRole, requesterEmail 
+    } = body;
 
     if (!email || !hotelCode) {
       return NextResponse.json({ error: "Email and hotelCode are required" }, { status: 400 });
@@ -102,6 +180,34 @@ export async function PUT(request: Request) {
 
     const cleanEmail = email.trim().toLowerCase();
     const docId = cleanEmail.replace(/[@.]/g, "_");
+
+    // Fetch existing user to enforce role hierarchy protection
+    let existingDoc: any = null;
+    const hotelUserSnap = await adminDb.doc(`hotels/${hotelCode}/users_master/${docId}`).get();
+    if (hotelUserSnap.exists) {
+        existingDoc = hotelUserSnap.data();
+    } else {
+        const globalUserSnap = await adminDb.doc(`users_master/${docId}`).get();
+        if (globalUserSnap.exists) existingDoc = globalUserSnap.data();
+    }
+
+    const isRequesterSuper = requesterRole?.toLowerCase() === "superadmin" || requesterEmail?.toLowerCase() === "superadmin@setara.co.id";
+    const currentRoleLower = (existingDoc?.role || "").toLowerCase();
+    const targetRoleLower = (role || existingDoc?.role || "").toLowerCase();
+
+    // Protection 1: Non-superadmin cannot edit a Superadmin account
+    if (currentRoleLower === "superadmin" && !isRequesterSuper) {
+        return NextResponse.json({ 
+            error: "Akses Ditolak: Akun Superadmin dilindungi dan hanya dapat diedit oleh Superadmin." 
+        }, { status: 403 });
+    }
+
+    // Protection 2: Non-superadmin cannot promote someone to Superadmin
+    if (targetRoleLower === "superadmin" && !isRequesterSuper) {
+        return NextResponse.json({ 
+            error: "Akses Ditolak: Anda tidak memiliki wewenang untuk memberikan role Superadmin." 
+        }, { status: 403 });
+    }
 
     // Get Firebase Auth User
     const userRecord = await adminAuth.getUserByEmail(cleanEmail);
@@ -116,23 +222,62 @@ export async function PUT(request: Request) {
       await adminAuth.updateUser(uid, updateParams);
     }
 
-    // Update Claims if role changes
-    if (role) {
-      await adminAuth.setCustomUserClaims(uid, { role, hotelCode });
+    // Multi-Hotel calculation: HANYA Superadmin yang berhak mengubah multi-hotel
+    let allowedOutlets: string[];
+    if (isRequesterSuper && Array.isArray(rawAllowedOutlets) && rawAllowedOutlets.length > 0) {
+        allowedOutlets = Array.from(new Set([...rawAllowedOutlets, hotelCode]));
+    } else {
+        // Non-superadmin retains existing assigned outlets or defaults to current hotel
+        allowedOutlets = existingDoc?.allowedOutlets || [hotelCode];
     }
 
+    // Update Claims
+    await adminAuth.setCustomUserClaims(uid, { 
+        role: role || existingDoc?.role, 
+        hotelCode,
+        allowedOutlets 
+    });
+
     // Update Firestore Document
-    const updateData: any = {};
+    const updateData: any = {
+        updatedAt: new Date().toISOString()
+    };
     if (name) updateData.name = name.trim();
     if (role) updateData.role = role;
     if (permissions) updateData.permissions = permissions;
+    updateData.allowedOutlets = allowedOutlets;
 
-    if (Object.keys(updateData).length > 0) {
-      const userDocRef = adminDb.doc(`hotels/${hotelCode}/users_master/${docId}`);
-      await userDocRef.update(updateData);
+    // Update across all assigned hotels
+    for (const outletCode of allowedOutlets) {
+      await adminDb.doc(`hotels/${outletCode}/users_master/${docId}`).set(updateData, { merge: true });
     }
 
-    return NextResponse.json({ success: true });
+    // If previously assigned to hotels that are now unassigned, remove them from those hotels
+    const previousOutlets: string[] = existingDoc?.allowedOutlets || [];
+    const removedOutlets = previousOutlets.filter(c => !allowedOutlets.includes(c));
+    for (const remCode of removedOutlets) {
+        try {
+            await adminDb.doc(`hotels/${remCode}/users_master/${docId}`).delete();
+        } catch (e) {
+            console.warn(`Could not remove user from unassigned hotel ${remCode}:`, e);
+        }
+    }
+
+    // Also update global users_master
+    await adminDb.doc(`users_master/${docId}`).set(updateData, { merge: true });
+
+    // Log Activity
+    await logActivity({
+        hotelCode,
+        userId: uid,
+        userName: name?.trim() || existingDoc?.name || cleanEmail,
+        userEmail: cleanEmail,
+        action: "UPDATE_USER",
+        module: "USER_MANAGEMENT",
+        description: `Profil dan hak akses staf diperbarui. Role: '${role || existingDoc?.role}', Assigned Hotels: ${allowedOutlets.join(", ")}.`
+    });
+
+    return NextResponse.json({ success: true, allowedOutlets });
   } catch (error: any) {
     console.error("Error updating user:", error);
     return NextResponse.json({ error: error.message || "Failed to update user" }, { status: 500 });
@@ -142,7 +287,7 @@ export async function PUT(request: Request) {
 // DELETE: Remove User
 export async function DELETE(request: Request) {
   try {
-    const { email, hotelCode } = await request.json();
+    const { email, hotelCode, requesterRole, requesterEmail } = await request.json();
 
     if (!email || !hotelCode) {
       return NextResponse.json({ error: "Email and hotelCode are required" }, { status: 400 });
@@ -151,20 +296,47 @@ export async function DELETE(request: Request) {
     const cleanEmail = email.trim().toLowerCase();
     const docId = cleanEmail.replace(/[@.]/g, "_");
 
+    // Check user data before deletion
+    const userDocRef = adminDb.doc(`hotels/${hotelCode}/users_master/${docId}`);
+    const snap = await userDocRef.get();
+    const userData = snap.data();
+
+    const isRequesterSuper = requesterRole?.toLowerCase() === "superadmin" || requesterEmail?.toLowerCase() === "superadmin@setara.co.id";
+    if (userData?.role?.toLowerCase() === "superadmin" && !isRequesterSuper) {
+        return NextResponse.json({ 
+            error: "Akses Ditolak: Akun Superadmin dilindungi dan tidak dapat dihapus oleh Admin hotel." 
+        }, { status: 403 });
+    }
+
     try {
       // Find Auth User and Delete
       const userRecord = await adminAuth.getUserByEmail(cleanEmail);
       await adminAuth.deleteUser(userRecord.uid);
     } catch (authErr: any) {
-      // If user not in Auth, just ignore and proceed with Firestore deletion
       if (authErr.code !== "auth/user-not-found") {
         throw authErr;
       }
     }
 
-    // Delete Firestore Document
-    const userDocRef = adminDb.doc(`hotels/${hotelCode}/users_master/${docId}`);
-    await userDocRef.delete();
+    // Delete across all assigned hotels
+    const allowedOutlets: string[] = userData?.allowedOutlets || [hotelCode];
+    for (const code of allowedOutlets) {
+        await adminDb.doc(`hotels/${code}/users_master/${docId}`).delete().catch(() => {});
+    }
+
+    // Delete global users_master
+    await adminDb.doc(`users_master/${docId}`).delete().catch(() => {});
+
+    // Log Activity
+    await logActivity({
+        hotelCode,
+        userId: docId,
+        userName: userData?.name || cleanEmail,
+        userEmail: cleanEmail,
+        action: "DELETE_USER",
+        module: "USER_MANAGEMENT",
+        description: `Akun user '${userData?.name || cleanEmail}' telah dihapus dari sistem.`
+    });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

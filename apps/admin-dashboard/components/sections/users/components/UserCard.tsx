@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Edit3, Trash2, Lock, MoreVertical } from "lucide-react";
+import { Mail, Edit3, Trash2, Lock, MoreVertical, Building2, ShieldCheck, Shield } from "lucide-react";
 import { UserProfile } from "../types";
 import styles from "../UsersStyles.module.css";
 
@@ -10,10 +10,20 @@ interface UserCardProps {
     onDelete: (id: string, name: string) => void;
     variants: any;
     onChangePasswordClick?: (user: UserProfile) => void;
+    authUser?: any;
+    hotelsList?: Array<{ hotelCode: string; name: string }>;
 }
 
-export const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, variants, onChangePasswordClick }) => {
-    const isSystemAdmin = user.email === "nexura.management@gmail.com";
+export const UserCard: React.FC<UserCardProps> = ({ 
+    user, onEdit, onDelete, variants, onChangePasswordClick, authUser, hotelsList = []
+}) => {
+    const isSuperadminUser = user.role?.toLowerCase() === "superadmin";
+    const isSystemAdmin = user.email === "nexura.management@gmail.com" || user.email === "superadmin@setara.co.id";
+    const isRequesterSuperadmin = authUser?.role?.toLowerCase() === "superadmin";
+    
+    // Non-superadmin cannot touch a Superadmin user
+    const isLockedFromCurrentViewer = (isSuperadminUser || isSystemAdmin) && !isRequesterSuperadmin;
+
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -26,11 +36,17 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, vari
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    const outletCount = user.allowedOutlets && user.allowedOutlets.length > 0 ? user.allowedOutlets.length : 1;
     
     return (
         <motion.div 
             variants={variants}
             className={styles.userCard}
+            style={{
+                border: isSuperadminUser ? "1px solid #fef08a" : undefined,
+                background: isSuperadminUser ? "#fffdf5" : undefined
+            }}
         >
             <div className={styles.cardHeader}>
                 <div className={styles.profileInfo}>
@@ -42,16 +58,47 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, vari
                         />
                     </div>
                     <div className={styles.nameRoleCluster}>
-                        <h3 className={styles.userName}>{user.name}</h3>
-                        <span className={styles.userRole}>{user.role}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <h3 className={styles.userName}>{user.name}</h3>
+                            {isSuperadminUser && (
+                                <span title="Master Superadmin" style={{ display: "inline-flex", color: "#ca8a04" }}>
+                                    <ShieldCheck size={14} />
+                                </span>
+                            )}
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "2px" }}>
+                            <span className={styles.userRole} style={{
+                                background: isSuperadminUser ? "#fef9c3" : undefined,
+                                color: isSuperadminUser ? "#a16207" : undefined,
+                                fontWeight: isSuperadminUser ? 700 : undefined
+                            }}>
+                                {isSuperadminUser ? "Master Superadmin" : user.role}
+                            </span>
+                            {outletCount > 1 && (
+                                <span style={{
+                                    fontSize: "10px",
+                                    background: "#eff6ff",
+                                    color: "#1d4ed8",
+                                    padding: "1px 6px",
+                                    borderRadius: "8px",
+                                    fontWeight: 600,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "3px"
+                                }}>
+                                    <Building2 size={10} />
+                                    {outletCount} Hotel Chain
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
                 
                 <div className={styles.cardActions}>
-                    {isSystemAdmin ? (
-                        <div className={styles.lockBadge}>
+                    {isLockedFromCurrentViewer ? (
+                        <div className={styles.lockBadge} title="Akun Superadmin dilindungi dari modifikasi Admin properti">
                             <Lock size={10} />
-                            <span>System Lock</span>
+                            <span>Protected</span>
                         </div>
                     ) : (
                         <div className={styles.dropdownContainer} ref={menuRef}>
@@ -81,7 +128,7 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, vari
                                             className={styles.dropdownItem}
                                         >
                                             <Edit3 size={14} />
-                                            <span>Edit User</span>
+                                            <span>Edit User &amp; Hotels</span>
                                         </button>
                                         
                                         {onChangePasswordClick && (
@@ -116,23 +163,24 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete, vari
                     )}
                 </div>
             </div>
-            
-            <div className={styles.cardBody}>
-                <div className={styles.cardDetailItem}>
-                    <Mail size={12} className={styles.mailIcon} />
-                    <span>{user.email}</span>
-                </div>
-            </div>
 
-            <div className={styles.cardFooter}>
-                <span className={styles.footerLeftActive}>
-                    <span className={styles.footerLeftActiveCircle}></span>
-                    Active Profile
-                </span>
-                <span className={styles.footerRightSecure}>
-                    <Lock size={9} />
-                    Secure
-                </span>
+            <div className={styles.cardBody}>
+                <div className={styles.contactItem}>
+                    <Mail size={12} className={styles.contactIcon} />
+                    <span className={styles.contactText}>{user.email}</span>
+                </div>
+                {user.allowedOutlets && user.allowedOutlets.length > 0 && (
+                    <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px dashed #f1f5f9" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "#64748b" }}>
+                            <Building2 size={11} />
+                            <span>Properti:</span>
+                            <span style={{ color: "#334155", fontWeight: 500 }}>
+                                {user.allowedOutlets.slice(0, 3).join(", ")}
+                                {user.allowedOutlets.length > 3 ? ` +${user.allowedOutlets.length - 3} lainnya` : ""}
+                            </span>
+                        </div>
+                    </div>
+                )}
             </div>
         </motion.div>
     );

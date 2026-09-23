@@ -1,0 +1,166 @@
+/* UserDrawer.module.css — Dedicated Modular CSS for User Creation & Multi-Hotel Assignment */
+
+.lockedAlert {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #b91c1c;
+    font-size: 12px;
+}
+
+.lockedAlertText {
+    margin: 0;
+    line-height: 1.4;
+}
+
+.hotelSectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.hotelHeaderTitleCluster {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hotelHeaderIcon {
+    color: #2563eb;
+}
+
+.hotelCountBadge {
+    font-size: 11px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.hotelHelpText {
+    font-size: 11px;
+    color: #64748b;
+    margin: 0;
+}
+
+.hotelListBox {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.hotelRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.1s ease;
+}
+
+.hotelRowActive {
+    background: #ffffff;
+    border: 1px solid #bfdbfe;
+}
+
+.hotelRowInactive {
+    background: transparent;
+    border: 1px solid transparent;
+}
+
+.hotelRowInactive:hover {
+    background: #f1f5f9;
+}
+
+.hotelRowDisabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.hotelInfoCluster {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hotelCheckIconChecked {
+    color: #2563eb;
+}
+
+.hotelCheckIconUnchecked {
+    color: #94a3b8;
+}
+
+.hotelName {
+    font-size: 12px;
+    color: #1e293b;
+}
+
+.hotelNameBold {
+    font-weight: 600;
+}
+
+.hotelMetaCluster {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hotelCodeBadge {
+    font-size: 10px;
+    color: #64748b;
+    font-family: monospace;
+}
+
+.hotelActiveTag {
+    font-size: 9px;
+    background: #fef3c7;
+    color: #b45309;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.hotelQuickActions {
+    display: flex;
+    gap: 8px;
+}
+
+.btnQuickAction {
+    font-size: 11px;
+    padding: 4px 8px;
+    background: transparent;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #334155;
+    transition: all 0.15s ease;
+}
+
+.btnQuickAction:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.roleLockNotice {
+    font-size: 11px;
+    color: #ef4444;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
