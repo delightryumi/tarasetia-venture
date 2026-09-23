@@ -13,5 +13,41 @@ scripts:
   run: "pnpm --filter admin-dashboard start"
 
 environmentVariables:
+  # ─── Runtime ───────────────────────────────────────────────────────────────
   - variable: "NODE_VERSION"
     value: "20"
+
+  # ─── Channex Channel Manager ─────────────────────────────────────────────
+  # "staging" selama proses sertifikasi Channex, ganti ke "production" setelah approved
+  - variable: "CHANNEX_ENV"
+    value: "staging"
+
+  # URL publik webhook My Tara (HTTPS wajib, ganti dengan domain asli Anda)
+  # Contoh: https://admin.mytarahotel.com/api/channex/webhook
+  - variable: "NEXT_PUBLIC_CHANNEX_WEBHOOK_URL"
+    value: "https://YOUR-DOMAIN.web.app/api/channex/webhook"
+
+  # Dashboard URL (untuk redirect & notifikasi)
+  - variable: "NEXT_PUBLIC_DASHBOARD_URL"
+    value: "https://YOUR-DOMAIN.web.app"
+
+  # ─── Secrets (Dikelola via Firebase Secret Manager) ──────────────────────
+  # CARA BUAT SECRET:
+  # 1. Buka: console.firebase.google.com → App Hosting → [backend] → Secrets
+  #    ATAU: console.cloud.google.com → Secret Manager → Create Secret
+  # 2. Nama secret HARUS sama persis seperti di bawah
+  # 3. Setelah dibuat, klik "Grant Access" untuk service account App Hosting
+  # ─────────────────────────────────────────────────────────────────────────
+
+  # Channex User API Key (dari staging.channex.io → Profile → API Keys)
+  - variable: "CHANNEX_API_KEY"
+    secret: "CHANNEX_API_KEY"
+
+  # Shared secret untuk verifikasi webhook Channex (string acak 32 karakter)
+  # Generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+  - variable: "CHANNEX_WEBHOOK_SECRET"
+    secret: "CHANNEX_WEBHOOK_SECRET"
+
+  # Secret untuk mengamankan endpoint cron /api/channex/pull-feed
+  - variable: "CRON_SECRET"
+    secret: "CRON_SECRET"
