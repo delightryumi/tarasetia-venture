@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
     Activity, Search, RefreshCw, Clock, 
-    User, Globe, Shield, Laptop
+    User, Globe, Shield, Laptop, MapPin
 } from "lucide-react";
 import { UserActivityLog } from "../types";
 import styles from "./UserActivity.module.css";
@@ -141,7 +141,7 @@ export const UserActivityTab: React.FC<UserActivityTabProps> = ({ hotelCode }) =
                             <th className={styles.thUser}>Pengguna (Staff)</th>
                             <th className={styles.thAction}>Aksi &amp; Modul</th>
                             <th className={styles.thDesc}>Rincian Perubahan / Aktivitas</th>
-                            <th className={styles.thIp}>Alamat IP</th>
+                            <th className={styles.thLocation}>Lokasi &amp; IP</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -164,7 +164,7 @@ export const UserActivityTab: React.FC<UserActivityTabProps> = ({ hotelCode }) =
                                 return (
                                     <tr key={log.id} className={styles.tableRow}>
                                         <td className={styles.tdTime}>
-                                            <div className={styles.timeCluster}>
+                                             <div className={styles.timeCluster}>
                                                 <Clock size={12} className={styles.timeIcon} />
                                                 <span>{formatTime(log.timestamp)}</span>
                                             </div>
@@ -191,8 +191,12 @@ export const UserActivityTab: React.FC<UserActivityTabProps> = ({ hotelCode }) =
                                         <td className={styles.tdDesc}>
                                             {log.description}
                                         </td>
-                                        <td className={styles.tdIp}>
-                                            {log.ipAddress || "127.0.0.1"}
+                                        <td className={styles.tdLocation}>
+                                            <div className={styles.locationCluster} title={log.location || "Indonesia"}>
+                                                <MapPin size={11} className={styles.locationIcon} />
+                                                <span className={styles.locationText}>{log.location || "Indonesia"}</span>
+                                            </div>
+                                            <div className={styles.ipSubtitle}>{log.ipAddress || "127.0.0.1"}</div>
                                         </td>
                                     </tr>
                                 );

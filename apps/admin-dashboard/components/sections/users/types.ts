@@ -37,6 +37,7 @@ export interface UserActivityLog {
     description: string;
     ipAddress?: string;
     deviceInfo?: string;
+    location?: string;
     timestamp: string;
 }
 
@@ -50,6 +51,7 @@ export interface DeviceSession {
     os: string;
     browser: string;
     ipAddress: string;
+    location?: string;
     userAgent?: string;
     lastActive: string;
     isCurrent?: boolean;

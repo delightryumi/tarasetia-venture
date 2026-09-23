@@ -416,6 +416,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             // Auto-register device session and login activity in background
             try {
+                const clientTz = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "Asia/Jakarta";
                 fetch("/api/users/devices", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -423,7 +424,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         userId: fbUser.uid,
                         userEmail: email,
                         userName: resolvedDisplayName,
-                        hotelCode: code
+                        hotelCode: code,
+                        timeZone: clientTz
                     })
                 }).catch(() => {});
 
@@ -437,7 +439,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         userEmail: email,
                         action: "LOGIN",
                         module: "SYSTEM",
-                        description: `Pengguna berhasil login ke properti #${code}.`
+                        description: `Pengguna berhasil login ke properti #${code}.`,
+                        timeZone: clientTz
                     })
                 }).catch(() => {});
             } catch (trackErr) {
@@ -466,6 +469,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const signOutUser = async () => {
         if (user) {
             try {
+                const clientTz = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "Asia/Jakarta";
                 fetch("/api/users/activity", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -476,7 +480,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         userEmail: user.email,
                         action: "LOGOUT",
                         module: "SYSTEM",
-                        description: `Pengguna logout dari sistem.`
+                        description: `Pengguna logout dari sistem.`,
+                        timeZone: clientTz
                     })
                 }).catch(() => {});
             } catch {}

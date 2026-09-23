@@ -234,6 +234,7 @@ export const useUsers = (menuItems: any[]) => {
                     hotelCode,
                     requesterRole: authUser?.role,
                     requesterEmail: authUser?.email,
+                    timeZone: typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined,
                 }),
             });
 
@@ -269,6 +270,7 @@ export const useUsers = (menuItems: any[]) => {
                     hotelCode,
                     requesterRole: authUser?.role,
                     requesterEmail: authUser?.email,
+                    timeZone: typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined,
                 }),
             });
 

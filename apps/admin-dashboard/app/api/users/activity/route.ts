@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { resolveLocationFromReq } from "@/lib/geoHelper";
 
 /**
  * User Activity & Audit Trail API
@@ -63,9 +64,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "action and userEmail are required" }, { status: 400 });
         }
 
-        // Get IP from headers
-        const forwardedFor = req.headers.get("x-forwarded-for");
-        const ipAddress = forwardedFor ? forwardedFor.split(",")[0].trim() : "127.0.0.1";
+        // Resolve IP and Geographical Location
+        const { ip: ipAddress, location } = await resolveLocationFromReq(req, body.timeZone, body.location);
 
         const logDoc = {
             hotelCode: hotelCode || "0",
@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
             module: module || "SYSTEM",
             description: description || "",
             ipAddress,
+            location,
             deviceInfo: deviceInfo || req.headers.get("user-agent") || "Browser",
             timestamp: new Date().toISOString()
         };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
     Laptop, Smartphone, Tablet, Globe, Clock, 
-    RefreshCw, ShieldAlert
+    RefreshCw, ShieldAlert, MapPin
 } from "lucide-react";
 import { DeviceSession } from "../types";
 import styles from "./DeviceActivity.module.css";
@@ -165,6 +165,13 @@ export const DeviceActivityTab: React.FC<DeviceActivityTabProps> = ({ hotelCode 
                                         <div className={styles.detailRow}>
                                             <span className={styles.detailLabel}>Pengguna:</span>
                                             <span className={styles.detailValueBold}>{device.userName} ({device.userEmail})</span>
+                                        </div>
+                                        <div className={styles.detailRow}>
+                                            <span className={styles.detailLabel}>Lokasi:</span>
+                                            <span className={styles.locationTag} title={device.location || "Indonesia (Online)"}>
+                                                <MapPin size={11} color="#ef4444" />
+                                                <span>{device.location || "Indonesia (Online)"}</span>
+                                            </span>
                                         </div>
                                         <div className={styles.detailRow}>
                                             <span className={styles.detailLabel}>Alamat IP:</span>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { resolveLocationFromReq } from "@/lib/geoHelper";
 
 /**
  * Device Activity & Session Management API
@@ -86,8 +87,7 @@ export async function POST(req: NextRequest) {
         }
 
         const rawUa = req.headers.get("user-agent") || "";
-        const forwardedFor = req.headers.get("x-forwarded-for");
-        const ipAddress = forwardedFor ? forwardedFor.split(",")[0].trim() : "127.0.0.1";
+        const { ip: ipAddress, location } = await resolveLocationFromReq(req, body.timeZone, body.location);
 
         const { deviceType, os, browser } = parseUserAgent(rawUa);
         const docId = sessionId || `${userEmail.replace(/[@.]/g, "_")}_${os.replace(/\s+/g, "")}_${browser.replace(/\s+/g, "")}`;
@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
             os,
             browser,
             ipAddress,
+            location,
             userAgent: rawUa,
             lastActive: new Date().toISOString(),
             status: "active"

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
+import { resolveLocationFromReq } from "@/lib/geoHelper";
 
 const ALL_KEYS = [
     // Modules
@@ -26,6 +27,7 @@ async function logActivity(data: {
     module: string;
     description: string;
     ipAddress?: string;
+    location?: string;
 }) {
     try {
         const logDoc = {
@@ -149,6 +151,7 @@ export async function POST(request: Request) {
     await adminDb.doc(`users_master/${docId}`).set(userData, { merge: true });
 
     // Log Activity
+    const { ip: ipAddress, location } = await resolveLocationFromReq(request, body.timeZone);
     await logActivity({
         hotelCode,
         userId: uid,
@@ -156,7 +159,9 @@ export async function POST(request: Request) {
         userEmail: cleanEmail,
         action: "CREATE_USER",
         module: "USER_MANAGEMENT",
-        description: `Akun staf baru dibuat dengan role '${role}' dan ditugaskan ke ${allowedOutlets.length} properti (${allowedOutlets.join(", ")}).`
+        description: `Akun staf baru dibuat dengan role '${role}' dan ditugaskan ke ${allowedOutlets.length} properti (${allowedOutlets.join(", ")}).`,
+        ipAddress,
+        location
     });
 
     return NextResponse.json({ success: true, uid, allowedOutlets });
@@ -282,6 +287,7 @@ export async function PUT(request: Request) {
     await adminDb.doc(`users_master/${docId}`).set(updateData, { merge: true });
 
     // Log Activity
+    const { ip: ipAddress, location } = await resolveLocationFromReq(request, body.timeZone);
     await logActivity({
         hotelCode,
         userId: uid,
@@ -289,7 +295,9 @@ export async function PUT(request: Request) {
         userEmail: cleanEmail,
         action: "UPDATE_USER",
         module: "USER_MANAGEMENT",
-        description: `Profil dan hak akses staf diperbarui. Role: '${role || existingDoc?.role}', Assigned Hotels: ${allowedOutlets.join(", ")}.`
+        description: `Profil dan hak akses staf diperbarui. Role: '${role || existingDoc?.role}', Assigned Hotels: ${allowedOutlets.join(", ")}.`,
+        ipAddress,
+        location
     });
 
     return NextResponse.json({ success: true, allowedOutlets });
@@ -302,7 +310,8 @@ export async function PUT(request: Request) {
 // DELETE: Remove User
 export async function DELETE(request: Request) {
   try {
-    const { email, hotelCode, requesterRole, requesterEmail } = await request.json();
+    const body = await request.json();
+    const { email, hotelCode, requesterRole, requesterEmail, timeZone } = body;
 
     if (!email || !hotelCode) {
       return NextResponse.json({ error: "Email and hotelCode are required" }, { status: 400 });
@@ -355,6 +364,7 @@ export async function DELETE(request: Request) {
     await adminDb.doc(`users_master/${docId}`).delete().catch(() => {});
 
     // Log Activity
+    const { ip: ipAddress, location } = await resolveLocationFromReq(request, timeZone);
     await logActivity({
         hotelCode,
         userId: docId,
@@ -362,7 +372,9 @@ export async function DELETE(request: Request) {
         userEmail: cleanEmail,
         action: "DELETE_USER",
         module: "USER_MANAGEMENT",
-        description: `Akun user '${userData?.name || cleanEmail}' telah dihapus dari sistem.`
+        description: `Akun user '${userData?.name || cleanEmail}' telah dihapus dari sistem.`,
+        ipAddress,
+        location
     });
 
     return NextResponse.json({ success: true });

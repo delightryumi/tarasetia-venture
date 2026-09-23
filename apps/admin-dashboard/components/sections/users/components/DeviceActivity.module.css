@@ -166,6 +166,19 @@
     color: #475569;
 }
 
+.locationTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    color: #1e293b;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
 .cardFooter {
     border-top: 1px solid #f1f5f9;
     padding-top: 10px;
