@@ -12,6 +12,31 @@ import {
     ChannexRestrictionsPayload
 } from "./types";
 
+// ============================================================
+// CHANNEX RATE LIMITER — In-process token bucket
+// Limit: 10 Availability + 10 Restrictions requests per minute per property
+// We conservatively use one global semaphore with 3s minimum gap between
+// consecutive outgoing ARI requests to stay well within limits.
+// Source: docs.channex.io "API Rate Limits"
+// ============================================================
+const _ariCallTimestamps: Map<string, number> = new Map(); // propertyId -> last call timestamp
+
+/**
+ * Throttle ARI API calls per Channex property to comply with 20 req/min limit.
+ * Waits the required minimum interval before allowing the next call.
+ */
+async function throttleAriCall(propertyId: string, minIntervalMs: number = 3200): Promise<void> {
+    const lastCall = _ariCallTimestamps.get(propertyId) || 0;
+    const now = Date.now();
+    const elapsed = now - lastCall;
+    if (elapsed < minIntervalMs) {
+        const wait = minIntervalMs - elapsed;
+        console.log(`[ChannexRateLimit] Throttling ARI call for property ${propertyId} — waiting ${wait}ms to respect 20 req/min limit...`);
+        await new Promise(resolve => setTimeout(resolve, wait));
+    }
+    _ariCallTimestamps.set(propertyId, Date.now());
+}
+
 /**
  * Helper to compress consecutive daily availability into run-length encoded date ranges (Channex Standard)
  */
@@ -824,6 +849,8 @@ export class ChannexSyncService {
             const hotelData = hotelDoc.data();
             const customApiKey = hotelData?.channelManager?.apiKey || process.env.CHANNEX_API_KEY;
             const env = hotelData?.channelManager?.environment || hotelData?.channelManager?.env || (process.env.CHANNEX_ENV as any) || "staging";
+            // Throttle to respect Channex 10 availability req/min limit
+            await throttleAriCall(channexPropertyId);
             return await channexClient.pushAvailability(payload, customApiKey, env);
         }
 
@@ -1190,19 +1217,21 @@ export class ChannexSyncService {
         let availabilityTaskId: string | undefined;
         let restrictionsTaskId: string | undefined;
 
-        // EXECUTE CALL 1: POST /availability
+        // EXECUTE CALL 1: POST /availability (with rate limit throttle)
         console.log(`[FullSync] Executing Call 1/2: Pushing ${availabilityValues.length} availability slots...`);
         let availRes = null;
         if (availabilityValues.length > 0) {
+            await throttleAriCall(channexPropertyId);
             availRes = await channexClient.pushAvailability({ values: availabilityValues }, customApiKey, env);
             availabilityTaskId = availRes?.data?.[0]?.id || availRes?.data?.id;
             if (availabilityTaskId) taskIds.push(availabilityTaskId);
         }
 
-        // EXECUTE CALL 2: POST /restrictions
+        // EXECUTE CALL 2: POST /restrictions (with rate limit throttle)
         console.log(`[FullSync] Executing Call 2/2: Pushing ${restrictionValues.length} rate restriction ranges...`);
         let restRes = null;
         if (restrictionValues.length > 0) {
+            await throttleAriCall(channexPropertyId);
             restRes = await channexClient.pushRestrictions({ values: restrictionValues }, customApiKey, env);
             restrictionsTaskId = restRes?.data?.[0]?.id || restRes?.data?.id;
             if (restrictionsTaskId) taskIds.push(restrictionsTaskId);

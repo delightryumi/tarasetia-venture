@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/channex/pull-feed",
+      "schedule": "*/15 * * * *",
+      "description": "Channex Booking Feed Pull Fallback (Every 15 minutes) - Required for PMS Certification"
+    }
+  ]
+}

@@ -205,7 +205,7 @@ export function ChannelMessagesTab({ hotelCode }: Props) {
                         </div>
                         <div style={{ fontSize: "11px", color: "#059669", display: "flex", alignItems: "center", gap: "4px" }}>
                             <CheckCheck size={14} />
-                            <span>Terkoneksi Channex 2-Way Messaging</span>
+                            <span>Terkoneksi Direct 2-Way Messaging</span>
                         </div>
                     </div>
 

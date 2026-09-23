@@ -404,7 +404,7 @@ export function TravelAgentTab({
                                         <span className={`${styles.badge} ${styles.badgeOta}`}>Online Travel Agency</span>
                                     </td>
                                     <td className={styles.td}>
-                                        <span style={{ fontSize: "11px", color: "#2563eb", fontWeight: 600 }}>● Channex 2-Way Sync</span>
+                                        <span style={{ fontSize: "11px", color: "#2563eb", fontWeight: 600 }}>● Direct 2-Way OTA Sync</span>
                                     </td>
                                     <td className={styles.td} style={{ color: "#64748b" }}>
                                         Extranet Property ID: {ota.hotelId || "Connected"}

@@ -22,7 +22,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
         accountStatus: "NOT_CONFIGURED",
         autoPreAuthOnBooking: true,
         autoCaptureOnCheckin: false,
-        pciComplianceLevel: "PCI-DSS Level 1 (Vaulted by Channex)",
+        pciComplianceLevel: "PCI-DSS Level 1 (Encrypted Vault)",
         lastTokenizedAt: undefined
     });
 
@@ -44,7 +44,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
                             accountStatus: payCfg.stripePublishableKey ? "CONNECTED" : "NOT_CONFIGURED",
                             autoPreAuthOnBooking: payCfg.autoPreAuthOnBooking ?? true,
                             autoCaptureOnCheckin: !!payCfg.autoCaptureOnCheckin,
-                            pciComplianceLevel: payCfg.pciComplianceLevel || "PCI-DSS Level 1 (Vaulted by Channex)",
+                            pciComplianceLevel: payCfg.pciComplianceLevel || "PCI-DSS Level 1 (Encrypted Vault)",
                             lastTokenizedAt: payCfg.lastTokenizedAt
                         });
                     }
@@ -78,7 +78,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
             });
 
             setConfig(updatedConfig);
-            toast.success("Konfigurasi Pembayaran & Vault Tokenisasi Channex berhasil disimpan!");
+            toast.success("Konfigurasi Pembayaran & Vault Tokenisasi Kartu berhasil disimpan!");
         } catch (err: any) {
             console.error("Error saving Payment Tokenization config:", err);
             toast.error("Gagal menyimpan konfigurasi tokenisasi.");
@@ -103,7 +103,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
                 <div className={styles.titleGroup}>
                     <div className={styles.title}>
                         <CreditCard size={18} color="#1e3a2f" />
-                        <span>Channex Stripe Tokenization App &amp; PCI-DSS Card Vault</span>
+                        <span>Stripe Tokenization &amp; PCI-DSS Card Vault</span>
                         {config.accountStatus === "CONNECTED" ? (
                             <span className={styles.badgeConnected}>● STRIPE VAULT TERHUBUNG</span>
                         ) : (
@@ -111,7 +111,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
                         )}
                     </div>
                     <span className={styles.desc}>
-                        Enkripsi nomor kartu kredit tamu OTA &amp; Virtual Credit Card (VCC) tanpa pernah menyentuh server lokal hotel demi memenuhi standar audit PCI DSS Level 1 resmi Channex.
+                        Enkripsi nomor kartu kredit tamu OTA &amp; Virtual Credit Card (VCC) secara end-to-end tanpa pernah menyentuh server lokal hotel demi memenuhi standar audit kepatuhan PCI-DSS Level 1.
                     </span>
                 </div>
             </div>
@@ -122,7 +122,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
                 <div>
                     <b>Jaminan Keamanan PCI DSS Level 1 Certified:</b>
                     <p style={{ margin: "4px 0 0 0" }}>
-                        Saat reservasi dengan kartu kredit diterima dari Booking.com, Expedia, atau Agoda, nomor kartu mentah langsung diamankan di brankas Channex PCI Vault. Server My Tara hanya memproses token aman (Stripe Token `pm_...` atau `tok_...`) untuk penagihan, sehingga hotel terbebas dari risiko kebocoran data kartu (0% PCI Liability).
+                        Saat reservasi dengan kartu kredit diterima dari OTA, nomor kartu mentah langsung diamankan dalam brankas PCI Vault berstandar enkripsi perbankan. Sistem hotel hanya memproses token aman (Stripe Token `pm_...` atau `tok_...`) untuk penagihan, sehingga hotel terbebas dari risiko kebocoran data kartu (0% PCI Liability).
                     </p>
                 </div>
             </div>
@@ -146,7 +146,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
 
                 <div className={styles.formGrid}>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Aktifkan Vault Tokenisasi Channex Stripe</label>
+                        <label className={styles.label}>Aktifkan Vault Tokenisasi Stripe</label>
                         <select
                             value={config.isEnabled ? "true" : "false"}
                             onChange={e => setConfig(prev => ({ ...prev, isEnabled: e.target.value === "true" }))}

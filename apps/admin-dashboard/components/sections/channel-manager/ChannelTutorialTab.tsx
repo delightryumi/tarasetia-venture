@@ -51,17 +51,17 @@ export const ChannelTutorialTab: React.FC<Props> = ({
     const STEPS = [
         {
             num: 1,
-            title: "Beli / Daftar Akun Channex Produksi",
+            title: "Aktivasi Kredensial & Webhook Distribusi",
             subtitle: "Dapatkan API Key & daftarkan Webhook",
             badge: "Langkah 1: Akun & Kredensial",
-            desc: "Daftarkan akun komersial di portal resmi Channex.io, ambil Production User API Key, dan daftarkan Webhook URL My Tara untuk menerima booking otomatis."
+            desc: "Konfigurasikan Production API Key, Property ID, dan daftarkan Webhook URL My Tara untuk menerima reservasi OTA otomatis secara instan."
         },
         {
             num: 2,
             title: "Pilot Rollout (1 Hotel, 6 OTA Utama)",
             subtitle: "Pilih hotel unggulan & hubungkan extranet",
             badge: "Langkah 2: Strategi Pilot Hotel",
-            desc: "Jangan langsung menyambungkan 20 hotel sekaligus! Fokuskan pada 1 hotel pilot flagship dengan 6 OTA terbesar di Indonesia untuk memetakan kamar & tarif."
+            desc: "Fokuskan pada 1 hotel pilot flagship dengan 6 OTA terbesar di Indonesia untuk memetakan kategori kamar & struktur tarif (Rate Plans)."
         },
         {
             num: 3,
@@ -79,10 +79,10 @@ export const ChannelTutorialTab: React.FC<Props> = ({
         },
         {
             num: 5,
-            title: "Ekspansi Bertahap ke 20 Hotel",
+            title: "Ekspansi Bertahap ke Seluruh Properti",
             subtitle: "Rollout bertahap 5 hotel per batch",
             badge: "Langkah 5: Skala Penuh (Scale-Up)",
-            desc: "Setelah hotel pilot terbukti 100% tanpa kendala, tambahkan 19 hotel lainnya secara bertahap (5 hotel per batch) dengan aman dan terukur."
+            desc: "Setelah hotel pilot terbukti 100% tanpa kendala, tambahkan hotel lainnya secara bertahap (5 hotel per batch) dengan aman dan terukur."
         }
     ];
 
@@ -94,9 +94,9 @@ export const ChannelTutorialTab: React.FC<Props> = ({
             extranetName: "Booking.com Extranet",
             steps: [
                 "Masuk ke admin.booking.com > menu 'Account' > 'Channel Manager'.",
-                "Klik 'Connect your channel manager' dan cari provider 'Channex'.",
+                "Klik 'Connect your channel manager' dan hubungkan penyedia Channel Manager resmi.",
                 "Pilih opsi koneksi 2-arah (Rates, Availability, & Bookings).",
-                "Konfirmasi aktivasi setelah Channex mengirim permintaan koneksi."
+                "Konfirmasi aktivasi koneksi saluran."
             ]
         },
         {
@@ -106,7 +106,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
             extranetName: "Agoda YCS Extranet",
             steps: [
                 "Masuk ke ycs.agoda.com > menu 'Settings' > 'Channel Manager'.",
-                "Pilih channel manager provider: 'Channex'.",
+                "Pilih opsi koneksi Channel Manager terintegrasi.",
                 "Pilih tipe integrasi Full ARI & Booking Retrieval.",
                 "Simpan perubahan dan petakan Room Type ID di tab Pemetaan Saluran My Tara."
             ]
@@ -118,7 +118,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
             extranetName: "TERA Traveloka",
             steps: [
                 "Masuk ke tera.traveloka.com > menu 'Property Profile' > 'Channel Manager'.",
-                "Ajukan aktivasi Channex ke Market Coordinator (MC) atau pilih Channex di daftar.",
+                "Ajukan aktivasi Channel Manager ke Market Coordinator (MC) atau pilih di daftar penyedia.",
                 "Petakan Room ID dan Rate Plan ID sesuai kode di My Tara.",
                 "Status akan aktif setelah diverifikasi oleh tim Traveloka."
             ]
@@ -130,7 +130,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
             extranetName: "Tiket.com Extranet",
             steps: [
                 "Masuk ke extranet.tiket.com > menu 'Channel Manager'.",
-                "Hubungkan properti hotel Anda ke provider 'Channex'.",
+                "Hubungkan properti hotel Anda ke integrasi Channel Manager 2-Arah.",
                 "Pastikan allotment dan base price sudah tersinkronisasi via Full ARI Sync.",
                 "Aktifkan koneksi reservasi masuk."
             ]
@@ -142,7 +142,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
             extranetName: "Expedia Partner Central",
             steps: [
                 "Masuk ke partnercentral.expedia.com > 'Rooms and Rates' > 'Expedia Connectivity'.",
-                "Pilih sistem koneksi: 'Channex' sebagai Channel Manager.",
+                "Pilih sistem koneksi 2-Way Channel Manager.",
                 "Pilih koneksi 2-arah (Availability & Rates + Booking Retrieval).",
                 "Konfirmasi perjanjian koneksi."
             ]
@@ -153,8 +153,8 @@ export const ChannelTutorialTab: React.FC<Props> = ({
             commission: "14% - 15% (Host-Only)",
             extranetName: "Airbnb Host Console",
             steps: [
-                "Otentikasi langsung via OAuth di tab Console SSO / Channex Channel Hub.",
-                "Login akun Airbnb Host dan berikan izin integrasi Channex.",
+                "Otentikasi langsung via OAuth di tab Console SSO / Saluran Terhubung.",
+                "Login akun Airbnb Host dan berikan izin integrasi Channel Manager.",
                 "Petakan listing kamar ke kategori tipe kamar My Tara.",
                 "Harga dan kalender ketersediaan akan langsung terhubung real-time."
             ]
@@ -168,7 +168,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
         },
         {
             q: "Berapa lama jeda waktu pembaruan harga atau ketersediaan dari My Tara sampai ke OTA?",
-            a: "Sinkronisasi ARI Channex bersifat instant push melalui WebSocket/REST API. Biasanya perubahan harga atau stop-sell sudah aktif di extranet OTA dalam waktu 1 hingga 3 detik setelah Anda menekan tombol simpan atau mengubah ketersediaan di PMS."
+            a: "Sinkronisasi ARI bersifat instant push melalui koneksi 2-Way Real-time. Biasanya perubahan harga atau stop-sell sudah aktif di extranet OTA dalam waktu 1 hingga 3 detik setelah Anda menekan tombol simpan atau mengubah ketersediaan di PMS."
         },
         {
             q: "Bagaimana cara melakukan tes booking asli tanpa merugi?",
@@ -176,7 +176,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
         },
         {
             q: "Apakah saat komputer hotel mati atau internet mati, booking OTA tetap bisa masuk?",
-            a: "Ya! Sistem My Tara berbasis cloud (serverless Next.js & Google Firestore). Webhook dari Channex diterima langsung oleh cloud server 24/7. Notifikasi WhatsApp juga otomatis terkirim langsung ke HP Owner/GM meskipun komputer kasir hotel sedang offline."
+            a: "Ya! Sistem My Tara berbasis cloud (serverless Next.js & Google Firestore). Webhook dari saluran distribusi diterima langsung oleh cloud server 24/7. Notifikasi WhatsApp juga otomatis terkirim langsung ke HP Owner/GM meskipun komputer kasir hotel sedang offline."
         }
     ];
 
@@ -193,10 +193,10 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                     <span>Peta Alur &amp; Tutorial Go-Live Produksi</span>
                 </div>
                 <h2 className={styles.heroTitle}>
-                    Panduan Lengkap Implementasi Produksi Channel Manager (Channex.io)
+                    Panduan Lengkap Implementasi &amp; Distribusi Channel Manager
                 </h2>
                 <p className={styles.heroDesc}>
-                    Ikuti strategi <strong>Pilot Rollout 5 Tahap</strong> yang telah terbukti di industri perhotelan. Mulai dari aktivasi 1 hotel pilot dengan 6 OTA utama, verifikasi end-to-end dengan tes booking refundable, hingga peluncuran massal ke seluruh 20 hotel jaringan Anda dengan risiko nol.
+                    Ikuti strategi <strong>Pilot Rollout 5 Tahap</strong> yang telah terbukti di industri perhotelan. Mulai dari aktivasi 1 hotel pilot dengan 6 OTA utama, verifikasi end-to-end dengan tes booking refundable, hingga peluncuran massal ke seluruh hotel jaringan Anda dengan risiko nol.
                 </p>
 
                 <div className={styles.heroMetrics}>
@@ -224,7 +224,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                         </div>
                         <div>
                             <div className={styles.metricVal}>8 / 8 Lulus</div>
-                            <div className={styles.metricLbl}>Standar Sertifikasi Channex PMS</div>
+                            <div className={styles.metricLbl}>Standar Sertifikasi Distribusi Global &amp; OTA</div>
                         </div>
                     </div>
                     <div className={styles.metricItem}>
@@ -232,7 +232,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                             <Sparkles size={19} />
                         </div>
                         <div>
-                            <div className={styles.metricVal}>20 Hotel</div>
+                            <div className={styles.metricVal}>Multi-Hotel</div>
                             <div className={styles.metricLbl}>Target Ekspansi Skala Penuh</div>
                         </div>
                     </div>
@@ -366,10 +366,10 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     </div>
                                     <div className={styles.checkContent}>
                                         <div className={`${styles.checkTitle} ${completedTasks["1-1"] ? styles.checkTitleDone : ""}`}>
-                                            1. Beli / Aktivasi Akun Komersial di app.channex.io
+                                            1. Aktivasi Kredensial &amp; Property Binding
                                         </div>
                                         <div className={styles.checkDesc}>
-                                            Daftarkan akun organisasi hotel Anda di <a href="https://app.channex.io" target="_blank" rel="noreferrer" className={styles.externalLink}>app.channex.io</a>. Channex menyediakan masa uji coba gratis (Free Trial) atau paket aktivasi langganan per-properti.
+                                            Pastikan akun integrasi hotel Anda telah disiapkan. Salin Production API Key dan Property GUID untuk mengaktifkan sinkronisasi 2-arah.
                                         </div>
                                     </div>
                                 </div>
@@ -383,10 +383,10 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     </div>
                                     <div className={styles.checkContent}>
                                         <div className={`${styles.checkTitle} ${completedTasks["1-2"] ? styles.checkTitleDone : ""}`}>
-                                            2. Buat &amp; Salin Production User API Key
+                                            2. Konfigurasikan Production API Key
                                         </div>
                                         <div className={styles.checkDesc}>
-                                            Di dashboard Channex, masuk ke menu <b>Settings &gt; API Keys</b>. Klik <i>Create API Key</i> dan salin kunci tersebut (format: <code>ch_live_...</code>).
+                                            Di menu kredensial, masukkan API Key produksi dan Property ID hotel Anda untuk menghubungkan jalur transmisi ARI.
                                         </div>
                                     </div>
                                 </div>
@@ -400,10 +400,10 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     </div>
                                     <div className={styles.checkContent}>
                                         <div className={`${styles.checkTitle} ${completedTasks["1-3"] ? styles.checkTitleDone : ""}`}>
-                                            3. Daftarkan Webhook Callback URL di Channex
+                                            3. Daftarkan Webhook Callback URL
                                         </div>
                                         <div className={styles.checkDesc}>
-                                            Di dashboard Channex, buka <b>Settings &gt; Webhooks</b>. Tambahkan URL webhook produksi My Tara di bawah ini agar semua reservasi dari OTA otomatis masuk ke Front Office:
+                                            Daftarkan URL webhook produksi My Tara di bawah ini agar semua reservasi dari OTA otomatis masuk ke Front Office secara instan:
                                             <div className={styles.webhookRow}>
                                                 <code className={styles.webhookCode}>
                                                     {currentWebhookUrl}
@@ -434,10 +434,10 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     </div>
                                     <div className={styles.checkContent}>
                                         <div className={`${styles.checkTitle} ${completedTasks["1-4"] ? styles.checkTitleDone : ""}`}>
-                                            4. Alihkan Mode Server ke Production di My Tara
+                                            4. Alihkan Mode Server ke Production Live
                                         </div>
                                         <div className={styles.checkDesc}>
-                                            Buka tab <b>Kredensial API &amp; Go-Live</b> di My Tara, tempelkan API Key produksi Anda, lalu klik tombol <b>Alihkan ke Mode Production Live</b> dan simpan.
+                                            Buka tab <b>Kredensial API &amp; Go-Live</b> di My Tara, pastikan API Key terpasang, lalu klik tombol <b>Alihkan ke Mode Production Live</b> dan simpan.
                                         </div>
                                     </div>
                                 </div>
@@ -447,7 +447,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                         <div className={styles.alertCallout}>
                             <AlertTriangle size={18} className={styles.alertIcon} />
                             <div className={styles.alertText}>
-                                <strong>Catatan Penting:</strong> Endpoint produksi resmi Channex yang digunakan oleh My Tara adalah <code>https://api.channex.io/api/v1</code>. Sistem sudah dikonfigurasi otomatis dengan standar retry backoff sehingga tidak akan drop saat jaringan sibuk.
+                                <strong>Standar Distribusi:</strong> Saluran transmisi ARI My Tara telah terintegrasi dengan protokol resmi enterprise dan dilengkapi retry backoff cerdas agar transaksi reservasi masuk tidak pernah terlewat.
                             </div>
                         </div>
                     </div>
@@ -462,7 +462,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                 <span>Panduan Menghubungkan 6 OTA Terbesar di Indonesia (Hotel Pilot: {activeHotelName}):</span>
                             </div>
                             <p className={styles.stepSubDesc}>
-                                Masuk ke masing-masing extranet OTA berikut untuk mengubah penyedia channel manager menjadi <b>Channex</b>:
+                                Masuk ke masing-masing extranet OTA berikut untuk menghubungkan penyedia koneksi Channel Manager:
                             </p>
 
                             <div className={styles.otaCardsGrid}>
@@ -491,7 +491,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                         <div className={styles.alertCallout}>
                             <Sparkles size={18} className={styles.alertIcon} />
                             <div className={styles.alertText}>
-                                <strong>Tips Sukses Pemetaan:</strong> Setelah memilih Channex di extranet OTA, buka tab <b>Pemetaan Saluran (Mapping)</b> di My Tara. Klik <i>'Pindai Kamar &amp; Rate dari OTA'</i> untuk mengaitkan tipe kamar lokal dengan ID kamar OTA secara otomatis tanpa input manual yang melelahkan.
+                                <strong>Tips Sukses Pemetaan:</strong> Buka tab <b>Pemetaan Saluran (Mapping)</b> di My Tara. Klik <i>'Pindai Kamar &amp; Rate dari OTA'</i> untuk mengaitkan tipe kamar lokal dengan ID kamar OTA secara otomatis tanpa input manual.
                             </div>
                         </div>
                     </div>

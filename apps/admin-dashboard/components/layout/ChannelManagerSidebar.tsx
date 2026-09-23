@@ -221,7 +221,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                         </div>
                         <div style={{ overflow: "hidden" }}>
                             <div style={{ fontSize: "12px", fontWeight: 800, color: "#0f172a", whiteSpace: "nowrap" }}>
-                                Channex Channel Suite
+                                Global Channel Manager
                             </div>
                             <div style={{ fontSize: "10px", color: "#64748b", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
                                 {activeHotelName || "My Tara Hotel"} ({activeHotelCode})
@@ -332,7 +332,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                 {!isCollapsed && (
                     <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                         <CheckCircle2 size={12} color="#16a34a" />
-                        <span>Channex 2-Way Sync</span>
+                        <span>Direct 2-Way OTA Sync</span>
                     </span>
                 )}
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>

@@ -49,7 +49,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
             if (data.success) {
                 toast.success(data.message);
             } else {
-                toast.error(data.message || "Gagal melakukan ping ke Channex");
+                toast.error(data.message || "Gagal melakukan verifikasi status ke Channel Manager");
             }
         } catch (err: any) {
             toast.error(`Koneksi Ping Error: ${err.message}`);
@@ -427,10 +427,10 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                                     </span>
                                                     <span
                                                         className={`${styles.idPill} ${plan.channexRatePlanId ? styles.idPillChannex : ""}`}
-                                                        onClick={() => copyToClipboard(plan.channexRatePlanId || "", "Channex Rate Plan ID")}
-                                                        title="Klik untuk salin UUID Rate Plan Channex"
+                                                        onClick={() => copyToClipboard(plan.channexRatePlanId || "", "Channel Rate Plan ID")}
+                                                        title="Klik untuk salin UUID Channel Rate Plan"
                                                     >
-                                                        <Copy size={10} /> Channex ID: <b>{plan.channexRatePlanId || "(Belum Sync)"}</b>
+                                                        <Copy size={10} /> Channel ID: <b>{plan.channexRatePlanId || "(Belum Sync)"}</b>
                                                     </span>
                                                 </div>
                                             </div>

@@ -111,7 +111,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
             });
             const data = await res.json();
             if (data.success) {
-                toast.success(data.message || "Feed ARI Google Hotel berhasil disinkronkan ke Google Hotel Center via Channex!");
+                toast.success(data.message || "Feed ARI Google Hotel berhasil disinkronkan ke Google Hotel Center!");
                 setConfig(prev => ({
                     ...prev,
                     lastSyncAt: new Date().toISOString()
@@ -152,7 +152,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                         )}
                     </div>
                     <span className={styles.desc}>
-                        Channex secara resmi terhubung dengan Google Hotel Ads &amp; Free Booking Links. Tamu di Google Search dapat mengklik langsung untuk booking di My Tara Booking Engine tanpa komisi OTA.
+                        Sistem terhubung secara resmi dengan Google Hotel Ads &amp; Free Booking Links. Tamu di Google Search dapat mengklik tautan langsung untuk memesan di My Tara Booking Engine tanpa komisi OTA.
                     </span>
                 </div>
 
@@ -162,7 +162,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                         onClick={handleSyncFeed}
                         disabled={syncing || !config.isEnabled}
                         className={styles.btnSecondary}
-                        title="Kirim Feed ARI dan Metadata Kamar ke Google Hotel Center via Channex"
+                        title="Kirim Feed ARI dan Metadata Kamar ke Google Hotel Center"
                     >
                         <Zap size={14} className={syncing ? "animate-spin" : ""} color="#f59e0b" />
                         <span>{syncing ? "Mendorong Feed..." : "Sinkron ARI Feed ke Google"}</span>
@@ -202,7 +202,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
             <div className={styles.infoBanner}>
                 <ShieldCheck size={20} style={{ flexShrink: 0, marginTop: "2px" }} />
                 <div>
-                    <b>Keuntungan Google Free Booking Links melalui Channex:</b>
+                    <b>Keuntungan Google Free Booking Links:</b>
                     <p style={{ margin: "4px 0 0 0" }}>
                         Listing hotel Anda akan muncul di hasil pencarian Google Hotel Search dengan label tautan situs resmi. Tamu yang menekan tombol pesan akan langsung diarahkan ke landing page booking engine My Tara Anda dengan harga real-time tanpa potongan komisi perantara.
                     </p>
@@ -236,14 +236,14 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                             <option value="false">Nonaktifkan Saluran</option>
                             <option value="true">Aktifkan Google Free Booking Links &amp; ARI</option>
                         </select>
-                        <span className={styles.hint}>Channex akan mulai memancarkan ketersediaan dan harga kamar hotel Anda ke katalog Google.</span>
+                        <span className={styles.hint}>Sistem akan mulai memancarkan ketersediaan dan harga kamar hotel Anda ke katalog Google.</span>
                     </div>
 
                     <div className={styles.formGroup}>
                         <label className={styles.label}>Google Hotel Center Account ID</label>
                         <input
                             type="text"
-                            placeholder="Contoh: 1234567890 (Opsional jika dikelola Channex)"
+                            placeholder="Contoh: 1234567890 (Opsional jika dikelola secara otomatis)"
                             value={config.googleHotelCenterId || ""}
                             onChange={e => setConfig(prev => ({ ...prev, googleHotelCenterId: e.target.value.trim() }))}
                             className={styles.input}

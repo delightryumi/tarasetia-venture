@@ -156,7 +156,7 @@ export function ChannelTaxesModal({
                                 <span>Sinkronisasi Otomatis ke Ekstranet:</span>
                             </div>
                             <div>
-                                Sistem Channex akan menyematkan Tax Breakdown ini saat menayangkan harga di Booking.com, Agoda, dan Google Hotel Ads sesuai dengan regulasi perpajakan yang berlaku.
+                                Sistem Channel Manager akan menyematkan Tax Breakdown ini saat menayangkan harga di OTA Channels dan Google Hotel Ads sesuai dengan regulasi perpajakan yang berlaku.
                             </div>
                         </div>
                     </div>

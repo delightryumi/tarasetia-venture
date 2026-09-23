@@ -143,10 +143,10 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                 <div className={styles.titleGroup}>
                     <div className={styles.title}>
                         <Tag size={18} color="#1e3a2f" />
-                        <span>Manajemen Promosi Saluran OTA (Channex Promotion Manager)</span>
+                        <span>Manajemen Promosi Saluran OTA (Channel Promotion Engine)</span>
                     </div>
                     <span className={styles.desc}>
-                        Atur promo diskon khusus langsung ke extranet Booking.com, Airbnb, dan Agoda melalui integrasi Channex Promotions API tanpa login extranet terpisah.
+                        Atur penawaran promo dan diskon khusus secara terpusat langsung ke seluruh extranet OTA tanpa perlu login terpisah.
                     </span>
                 </div>
 
