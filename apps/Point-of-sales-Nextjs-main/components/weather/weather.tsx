@@ -85,7 +85,7 @@ function WeatherComponent(): React.ReactNode {
     } else {
       fetchWeather('q=Jakarta,ID');
     }
-  }, [apiKey]);
+  }, []);
 
   // Display skeleton loading animation if weather data is not available yet
   if (!weather) {

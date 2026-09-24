@@ -364,6 +364,7 @@ export default function SuperadminPage() {
 
     try {
       let defaultPasswordInfo = "";
+      if (email.trim()) {
         const token = auth.currentUser ? await auth.currentUser.getIdToken() : "";
         const res = await fetch("/api/hotels/register-admin", {
           method: "POST",
