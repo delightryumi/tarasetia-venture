@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth } from "@/lib/firebaseAdmin";
+import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 
 export interface AuthenticatedUser {
     uid: string;
@@ -36,15 +36,38 @@ export async function getAuthenticatedUser(request: Request | NextRequest): Prom
             return null;
         }
 
-        const decodedToken = await adminAuth.verifyIdToken(token);
+        // Check revoked to immediately reject tokens of deleted or revoked users
+        const decodedToken = await adminAuth.verifyIdToken(token, true);
         const email = (decodedToken.email || "").toLowerCase();
         const role = (decodedToken.role || "").toLowerCase();
         
-        // Superadmin whitelist & custom claims validation
-        const isSuperadmin = 
+        let isSuperadmin = 
             role === "superadmin" || 
+            role === "super_admin" ||
+            role === "super admin" ||
             email === "superadmin@setara.co.id" || 
             email === "nexura.management@gmail.com";
+
+        if (!isSuperadmin && email) {
+            try {
+                const docId = email.replace(/[@.]/g, "_");
+                const snap = await adminDb.doc(`users_master/${docId}`).get();
+                if (!snap.exists) {
+                    // User was deleted from the database
+                    return null;
+                }
+                const data = snap.data();
+                if (data?.status === "inactive") {
+                    // User was deactivated
+                    return null;
+                }
+                if ((data?.role || "").toLowerCase() === "superadmin" || data?.isSuperadmin === true) {
+                    isSuperadmin = true;
+                }
+            } catch (err) {
+                console.warn("[ServerAuth] Fallback superadmin check error:", err);
+            }
+        }
 
         return {
             uid: decodedToken.uid,

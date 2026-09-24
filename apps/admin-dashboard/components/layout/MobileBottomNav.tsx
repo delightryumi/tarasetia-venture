@@ -380,7 +380,7 @@ export const MobileBottomNav = () => {
                 if (item.id === "innalytics" && !hasInnalytics) return false;
                 return [
                     "overview", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", 
-                    "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"
+                    "inventory-control", "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"
                 ].includes(item.id);
             });
         } else if (activeModule === "innalytics") {
@@ -400,7 +400,7 @@ export const MobileBottomNav = () => {
             items = allNavItems.filter(item => {
                 if (item.id === "food-beverage-realtime" && !hasRealtime) return false;
                 return [
-                    "food-beverage-ledger", "food-beverage-performance", "food-beverage-realtime", "purchase-order"
+                    "food-beverage-ledger", "food-beverage-performance", "food-beverage-product", "food-beverage-realtime", "purchase-order"
                 ].includes(item.id);
             });
         } else if (activeModule === "hrd") {

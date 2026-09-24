@@ -483,8 +483,9 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
                     ) : (
                         filteredGroups.map(group => {
                             const isExpanded = expandedGroups[group.id] !== false;
-                            const activeInGroup = group.permissions.filter(p => permissions[p.id] === true).length;
-                            const isAllInGroupActive = group.permissions.length > 0 && activeInGroup === group.permissions.length;
+                            const availablePermsInGroup = group.permissions.filter(p => !p.isComingSoon);
+                            const activeInGroup = availablePermsInGroup.filter(p => permissions[p.id] === true).length;
+                            const isAllInGroupActive = availablePermsInGroup.length > 0 && activeInGroup === availablePermsInGroup.length;
 
                             return (
                                 <div key={group.id} className={styles.groupCard}>
@@ -501,7 +502,7 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
                                                 <h4 className={styles.groupTitle}>{group.label}</h4>
                                             </div>
                                             <span className={`${styles.groupCountBadge} ${activeInGroup > 0 ? styles.groupCountBadgeActive : ""}`}>
-                                                {activeInGroup} / {group.permissions.length}
+                                                {activeInGroup} / {availablePermsInGroup.length}
                                             </span>
                                         </div>
 

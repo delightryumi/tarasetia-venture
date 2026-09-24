@@ -258,7 +258,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         if (activeModule === "front-office") {
             items = allNavItems.filter((item) => {
                 if (item.id === "innalytics" && !hasInnalytics) return false;
-                return ["overview", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id);
+                return ["overview", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", "inventory-control", "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id);
             });
         } else if (activeModule === "innalytics") {
             items = allNavItems.filter((item) =>
@@ -276,7 +276,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             const hasRealtime = isSuperadmin || activeModules === null || activeModules.includes("food-beverage-realtime") || activeModules.includes("pos-realtime");
             items = allNavItems.filter((item) => {
                 if (item.id === "food-beverage-realtime" && !hasRealtime) return false;
-                return ["food-beverage-ledger", "food-beverage-performance", "food-beverage-realtime", "purchase-order"].includes(item.id);
+                return ["food-beverage-ledger", "food-beverage-performance", "food-beverage-product", "food-beverage-realtime", "purchase-order"].includes(item.id);
             });
         } else if (activeModule === "hrd") {
             items = allNavItems.filter((item) =>

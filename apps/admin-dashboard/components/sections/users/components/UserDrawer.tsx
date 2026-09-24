@@ -12,6 +12,7 @@ import {
     isPermissionAddon,
     isAddonActiveForHotel
 } from "../permissionConfig";
+import { isUserAdmin, isUserSuperadmin } from "@/lib/permissionCheck";
 import drawerStyles from "./UserDrawer.module.css";
 import styles from "../UsersStyles.module.css";
 
@@ -45,27 +46,21 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
     );
 
     // Check if the role selection should be locked
-    const isEditingAdmin = editingUser?.role?.toLowerCase() === "admin" || formData.role?.toLowerCase() === "admin";
-    const isSuperadminLoggedIn = 
-        authUser?.role?.toLowerCase() === "superadmin" || 
-        authUser?.role?.toLowerCase() === "super_admin" ||
-        authUser?.role?.toLowerCase() === "super admin" ||
-        authUser?.email?.toLowerCase() === "superadmin@setara.co.id";
+    const isSuperadminLoggedIn = isUserSuperadmin(authUser);
+    const isCallerAdminOrOwner = isUserAdmin(authUser) || authUser?.isOwner === true || (hotelOwnerEmail && authUser?.email?.toLowerCase() === hotelOwnerEmail);
     
     const isEditingSuperadmin = editingUser?.role?.toLowerCase() === "superadmin" || formData.role?.toLowerCase() === "superadmin";
     // Non-superadmin cannot edit a Superadmin account or promote to Superadmin
     const isAccountLocked = isEditingSuperadmin && !isSuperadminLoggedIn;
 
-    // Permission matrix hanya boleh diedit oleh superadmin atau admin property.
-    // Role lain (GM, FOM, Receptionist, dll) hanya view-only — tidak bisa setup permission sendiri.
-    const canEditPermissions = isSuperadminLoggedIn || authUser?.role?.toLowerCase() === "admin" || authUser?.role?.toLowerCase() === "administrator";
+    // Permission matrix: Superadmin can edit all users across all hotels; Admin/Owner can edit all users in their hotel
+    const canEditPermissions = isSuperadminLoggedIn || isCallerAdminOrOwner;
     const isPermLocked = !canEditPermissions || isAccountLocked;
     
-    // Role selection is strictly locked for:
-    // 1. Initial Admin Owner (isOwnerUser) — their role is permanent
-    // 2. Editing Admin/Superadmin by non-superadmin
-    // EXCEPTION: Users created by the owner (!isOwnerUser) can have their roles edited freely!
-    const isRoleLocked = isOwnerUser || ((isEditingAdmin || isEditingSuperadmin) && !isSuperadminLoggedIn);
+    // Role selection is locked for:
+    // 1. Initial Admin Owner (isOwnerUser) - protected from non-superadmin
+    // 2. Editing Superadmin by non-superadmin
+    const isRoleLocked = (!isSuperadminLoggedIn && isOwnerUser) || isAccountLocked;
 
     // Filter available roles: only superadmin can assign 'superadmin' role
     const availableRoles = isSuperadminLoggedIn 
@@ -114,7 +109,25 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
     const [permTag, setPermTag] = useState("all");
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
-    const currentPermissions: Record<string, boolean> = formData.permissions || getStandardRolePermissions(formData.role || "General Manager", activeModules);
+    const currentPermissions: Record<string, boolean> = React.useMemo(() => {
+        const source = formData.permissions || getStandardRolePermissions(formData.role || "General Manager", activeModules);
+        const sanitized: Record<string, boolean> = { ...source };
+        COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
+            g.permissions.forEach(p => {
+                if (p.isComingSoon) {
+                    sanitized[p.id] = false;
+                }
+            });
+        });
+        return sanitized;
+    }, [formData.permissions, formData.role, activeModules]);
+
+    const isPermissionActive = (p: any): boolean => {
+        if (p.isComingSoon) return false;
+        const addon = isPermissionAddon(p.id);
+        if (addon.isAddon && !isAddonActiveForHotel(p.id, activeModules)) return false;
+        return currentPermissions[p.id] === true;
+    };
 
     const togglePermission = (permId: string) => {
         if (isPermLocked) return;
@@ -174,9 +187,10 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
         });
     };
 
-    const activePermsCount = Object.entries(currentPermissions).filter(([key, val]) => 
-        val === true && !key.startsWith("module_")
-    ).length;
+    const activePermsCount = COMPREHENSIVE_PERMISSION_GROUPS
+        .filter(g => !g.isSuperadminOnly)
+        .flatMap(g => g.permissions)
+        .filter(p => isPermissionActive(p)).length;
 
     const filteredGroups = COMPREHENSIVE_PERMISSION_GROUPS.filter(group => {
         if (group.isSuperadminOnly) return false;
@@ -280,23 +294,28 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                         </div>
                     </div>
 
-                    {!editingUser && (
-                        <div className={styles.drawerFormGroup}>
-                            <label className={styles.drawerFormLabel}>Initial Password</label>
-                            <div className={styles.drawerInputWrapper}>
-                                <div className={styles.drawerInputIcon}>
-                                    <Lock size={14} />
-                                </div>
-                                <input 
-                                    type="password"
-                                    value={formData.password || ""}
-                                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                                    placeholder="••••••••"
-                                    className={styles.drawerInput}
-                                />
+                    <div className={styles.drawerFormGroup}>
+                        <label className={styles.drawerFormLabel}>
+                            {editingUser ? "Ganti Password (Kosongkan jika tidak ingin diubah)" : "Initial Password"}
+                        </label>
+                        <div className={styles.drawerInputWrapper}>
+                            <div className={styles.drawerInputIcon}>
+                                <Lock size={14} />
                             </div>
+                            <input 
+                                type="password"
+                                value={formData.password || ""}
+                                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                                placeholder={editingUser ? "Masukkan password baru (min. 6 karakter)" : "••••••••"}
+                                className={styles.drawerInput}
+                            />
                         </div>
-                    )}
+                        {formData.password && formData.password.length > 0 && formData.password.length < 6 && (
+                            <span style={{ fontSize: "11px", color: "#ef4444", marginTop: "4px", display: "block" }}>
+                                Minimal 6 karakter
+                            </span>
+                        )}
+                    </div>
 
                     {/* ── MULTI-HOTEL PROPERTY ASSIGNMENT (HANYA UNTUK SUPERADMIN) ── */}
                     {isSuperadminLoggedIn ? (
@@ -415,7 +434,7 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                                             type="button"
                                             disabled={isRoleLocked || isAccountLocked}
                                             onClick={() => {
-                                                const newPerms = getStandardRolePermissions(role);
+                                                const newPerms = getStandardRolePermissions(role, activeModules);
                                                 setFormData({ ...formData, role, permissions: newPerms });
                                             }}
                                             className={`${styles.roleSelectBtn} ${isSelected ? styles.roleSelectBtnActive : ""} ${(isRoleLocked || isAccountLocked) ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -590,7 +609,7 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                             {(() => {
                                 const viewerGroups = filteredGroups
                                     .map(g => {
-                                        const activeOnly = g.permissions.filter(p => currentPermissions[p.id] === true);
+                                        const activeOnly = g.permissions.filter(p => isPermissionActive(p));
                                         if (activeOnly.length === 0) return null;
                                         return { ...g, permissions: activeOnly };
                                     })
@@ -668,7 +687,7 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                                     </span>
                                 </button>
                                 {COMPREHENSIVE_PERMISSION_GROUPS.filter(g => !g.isSuperadminOnly).map(g => {
-                                    const activeCount = g.permissions.filter(p => currentPermissions[p.id] === true).length;
+                                    const activeCount = g.permissions.filter(p => isPermissionActive(p)).length;
                                     const isSelected = permTag === g.id;
                                     return (
                                         <button
@@ -689,8 +708,9 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                             <div className={drawerStyles.permListBox}>
                                 {filteredGroups.map(group => {
                                     const isExpanded = expandedGroups[group.id] !== false;
-                                    const activeInGroup = group.permissions.filter(p => currentPermissions[p.id] === true).length;
-                                    const isAllInGroupActive = group.permissions.length > 0 && activeInGroup === group.permissions.length;
+                                    const availablePermsInGroup = group.permissions.filter(p => !p.isComingSoon);
+                                    const activeInGroup = group.permissions.filter(p => isPermissionActive(p)).length;
+                                    const isAllInGroupActive = availablePermsInGroup.length > 0 && activeInGroup === availablePermsInGroup.length;
                                     return (
                                         <div key={group.id} className={drawerStyles.permGroupCard}>
                                             <div 
@@ -712,7 +732,7 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                                                         {isAllInGroupActive ? "Matikan Modul" : "Pilih Semua"}
                                                     </button>
                                                     <span className={`${drawerStyles.permCountBadge} ${activeInGroup > 0 ? drawerStyles.permCountBadgeActive : ""}`}>
-                                                        {activeInGroup} / {group.permissions.length}
+                                                        {activeInGroup} / {availablePermsInGroup.length}
                                                     </span>
                                                     {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                                                 </div>

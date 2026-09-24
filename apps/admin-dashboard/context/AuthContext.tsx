@@ -5,6 +5,7 @@ import { onAuthStateChanged, signOut as fbSignOut, signInWithEmailAndPassword } 
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, collection, onSnapshot } from "firebase/firestore";
 import { detectClientCity } from "@/lib/clientGeo";
+import { toast } from "sonner";
 
 const SUPERADMIN_PERMISSIONS_FALLBACK = [
     "module_pos", "module_front_office", "module_innalytics", "module_housekeeping", 
@@ -143,13 +144,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Real-time sync of user permissions, profile, and allowedOutlets from users_master
     useEffect(() => {
-        if (!user?.email || !activeHotelCode || activeHotelCode === "0") return;
+        if (!user?.email) return;
+        const isSuper = user.role?.toLowerCase() === "superadmin" || 
+                        user.email?.toLowerCase() === "superadmin@setara.co.id" || 
+                        user.email?.toLowerCase() === "admin@setara.co.id";
+
         const userDocId = user.email.toLowerCase().replace(/[@.]/g, "_");
-        const userDocRef = doc(db, `hotels/${activeHotelCode}/users_master`, userDocId);
-        const unsubscribe = onSnapshot(userDocRef, (snap) => {
+        const docRef = (activeHotelCode && activeHotelCode !== "0")
+            ? doc(db, `hotels/${activeHotelCode}/users_master`, userDocId)
+            : doc(db, "users_master", userDocId);
+
+        const unsubscribe = onSnapshot(docRef, (snap) => {
             if (snap.exists()) {
                 const data = snap.data();
-                if (data.status === "inactive") {
+                if (data.status === "inactive" && !isSuper) {
                     toast.error("Akun Anda telah dinonaktifkan oleh Administrator.");
                     signOutUser();
                     return;
@@ -168,16 +176,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     localStorage.setItem("auth_user", JSON.stringify(updated));
                     return updated;
                 });
+            } else {
+                // Document was deleted from Firestore
+                if (!isSuper) {
+                    toast.error("Akun Anda telah dihapus dari sistem.");
+                    signOutUser();
+                }
             }
         }, (err) => {
             console.error("Error listening to user permissions in AuthContext:", err);
         });
-        return () => unsubscribe();
+
+        // Periodic auth validity heartbeat & window focus check
+        const checkAuthAlive = async () => {
+            if (auth.currentUser && !isSuper) {
+                try {
+                    await auth.currentUser.reload();
+                } catch (authErr: any) {
+                    if (authErr?.code === "auth/user-not-found" || authErr?.code === "auth/user-disabled") {
+                        toast.error("Akun Anda telah dihapus dari sistem.");
+                        signOutUser();
+                    }
+                }
+            }
+        };
+
+        const onFocus = () => {
+            checkAuthAlive();
+        };
+
+        window.addEventListener("focus", onFocus);
+        const aliveInterval = setInterval(checkAuthAlive, 15000);
+
+        return () => {
+            unsubscribe();
+            window.removeEventListener("focus", onFocus);
+            clearInterval(aliveInterval);
+        };
     }, [user?.email, activeHotelCode]);
 
     // Helper to fetch user's real name, permissions, and assigned outlets from users_master
-    const fetchUserName = async (email: string, code?: string): Promise<{ name: string; role?: string; hotelCode?: string; permissions?: Record<string, boolean>; allowedOutlets?: string[] }> => {
-        if (!email) return { name: "" };
+    const fetchUserName = async (email: string, code?: string): Promise<{ exists: boolean; name: string; role?: string; hotelCode?: string; permissions?: Record<string, boolean>; allowedOutlets?: string[]; status?: string }> => {
+        if (!email) return { exists: false, name: "" };
         const docId = email.toLowerCase().replace(/[@.]/g, "_");
         if (code && code !== "0") {
             try {
@@ -186,9 +226,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 if (snap.exists()) {
                     const data = snap.data();
                     return {
+                        exists: true,
                         name: data.name || data.displayName || data.full_name || "",
                         role: data.role || "",
                         hotelCode: data.hotelCode || code,
+                        status: data.status,
                         permissions: data.permissions || {},
                         allowedOutlets: Array.isArray(data.allowedOutlets) ? data.allowedOutlets : []
                     };
@@ -203,9 +245,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (globalSnap.exists()) {
                 const data = globalSnap.data();
                 return {
+                    exists: true,
                     name: data.name || data.displayName || data.full_name || "",
                     role: data.role || "",
                     hotelCode: data.hotelCode || "",
+                    status: data.status,
                     permissions: data.permissions || {},
                     allowedOutlets: Array.isArray(data.allowedOutlets) ? data.allowedOutlets : []
                 };
@@ -213,7 +257,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (e) {
             console.error("Error fetching user from global users_master:", e);
         }
-        return { name: "" };
+        return { exists: false, name: "" };
     };
 
     // Sync session on load
@@ -262,12 +306,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     // Background sync real name, permissions, and assigned outlets from users_master
                     const activeCode = localStorage.getItem("active_hotel_code") || parsed.hotelCode;
                     fetchUserName(parsed.email, activeCode).then(info => {
+                        const isSuper = parsed.role?.toLowerCase() === "superadmin" || 
+                                        parsed.email?.toLowerCase() === "superadmin@setara.co.id" || 
+                                        parsed.email?.toLowerCase() === "admin@setara.co.id";
+                        if (!info.exists && !isSuper) {
+                            toast.error("Akun Anda telah dihapus dari sistem.");
+                            signOutUser();
+                            return;
+                        }
+                        if (info.status === "inactive" && !isSuper) {
+                            toast.error("Akun Anda telah dinonaktifkan oleh Administrator.");
+                            signOutUser();
+                            return;
+                        }
                         if (info.name || info.permissions || info.allowedOutlets) {
                             const updated: CustomUser = {
                                 ...parsed,
                                 displayName: info.name || parsed.displayName,
                                 name: info.name || parsed.name,
                                 role: info.role || parsed.role,
+                                status: info.status,
                                 allowedOutlets: info.allowedOutlets && info.allowedOutlets.length > 0 ? info.allowedOutlets : parsed.allowedOutlets || [],
                                 permissions: info.permissions || parsed.permissions || {}
                             };
@@ -316,6 +374,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                     const code = localStorage.getItem("active_hotel_code") || hotelCode;
                     const userInfo = await fetchUserName(email, code);
+
+                    if (!userInfo.exists && !isSuperadminEmail && role !== "superadmin") {
+                        toast.error("Akun Anda telah dihapus dari sistem.");
+                        await signOutUser();
+                        return;
+                    }
+                    if (userInfo.status === "inactive" && !isSuperadminEmail && role !== "superadmin") {
+                        toast.error("Akun Anda telah dinonaktifkan oleh Administrator.");
+                        await signOutUser();
+                        return;
+                    }
 
                     if (!role && userInfo.role) {
                         role = userInfo.role;

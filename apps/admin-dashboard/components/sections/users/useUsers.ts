@@ -22,7 +22,10 @@ export const ROLES = [
     "Revenue Manager",
     "Finance & Accounting",
     "Purchasing Officer",
+    "Human Resource",
     // Backward compatibility
+    "HR",
+    "HRD",
     "House Keeping", 
     "Purchasing", 
     "Kasir", 
@@ -362,21 +365,35 @@ export const useUsers = (menuItems: any[]) => {
             const targetUser = users.find(u => u.id === userId);
             if (!targetUser) throw new Error("User not found");
 
+            const token = auth.currentUser ? await auth.currentUser.getIdToken() : "";
             const response = await fetch("/api/users", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
                 },
                 body: JSON.stringify({
                     email: targetUser.email,
                     password: newPassword,
-                    hotelCode,
+                    hotelCode: targetUser.hotelCode || hotelCode,
+                    name: targetUser.name,
+                    role: targetUser.role,
+                    permissions: targetUser.permissions || {},
+                    requesterRole: authUser?.role,
+                    requesterEmail: authUser?.email,
+                    timeZone: typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined,
                 }),
             });
 
             if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.error || "Failed to change password");
+                let errorMsg = "Failed to change password";
+                try {
+                    const errData = await response.json();
+                    errorMsg = errData.error || errorMsg;
+                } catch {
+                    errorMsg = (await response.text().catch(() => "")) || errorMsg;
+                }
+                throw new Error(errorMsg);
             }
             console.log(`Password for user ${userId} has been changed successfully.`);
             return true;

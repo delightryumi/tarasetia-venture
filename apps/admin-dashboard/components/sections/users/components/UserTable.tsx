@@ -4,7 +4,7 @@ import {
     ShieldCheck, Crown, ShieldAlert, FileText, Smartphone, Globe
 } from "lucide-react";
 import { UserProfile } from "../types";
-import { hasPermission, isUserSuperadmin } from "@/lib/permissionCheck";
+import { hasPermission, isUserSuperadmin, isUserAdmin } from "@/lib/permissionCheck";
 import styles from "./UserTable.module.css";
 
 interface UserTableProps {
@@ -35,7 +35,8 @@ export const UserTable: React.FC<UserTableProps> = ({
     const menuRef = useRef<HTMLDivElement>(null);
 
     const isRequesterSuperadmin = isUserSuperadmin(authUser);
-    const canManageUsers = isRequesterSuperadmin || hasPermission(authUser, 'sec_user_manage', 'module_security');
+    const isRequesterAdminOrOwner = isUserAdmin(authUser) || authUser?.isOwner === true;
+    const canManageUsers = isRequesterSuperadmin || isRequesterAdminOrOwner || hasPermission(authUser, 'sec_user_manage', 'module_security');
     const canToggleStatus = canManageUsers;
 
     // Close menu when clicking outside

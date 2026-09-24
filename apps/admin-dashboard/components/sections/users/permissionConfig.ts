@@ -297,6 +297,13 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
     const result: Record<string, boolean> = {};
 
     const sanitizeResult = (perms: Record<string, boolean>) => {
+        COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
+            g.permissions.forEach(p => {
+                if (p.isComingSoon) {
+                    perms[p.id] = false;
+                }
+            });
+        });
         if (activeModules) {
             if (!isAddonActiveForHotel("food-beverage-realtime", activeModules)) {
                 perms["food-beverage-realtime"] = false;
@@ -308,9 +315,12 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
         return perms;
     };
 
-    // Default: semua module terkunci (false). Hanya role yang eksplisit diizinkan yang bernilai true.
+    // Default: semua module dan seluruh izin sub-menu terkunci (false). Hanya izin yang eksplisit diizinkan untuk role yang bernilai true.
     COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
         result[g.id] = false;
+        g.permissions.forEach(p => {
+            result[p.id] = false;
+        });
     });
 
     // 1. Administrator & Superadmin gets 100% of all privileges
@@ -351,7 +361,7 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
             "module_front_office", "overview", "digital-checkin", "fo_checkin", "fo_checkout", 
             "fo_room_move", "fo_walkin", "confirmation-letter", "forecast", "revenue-breakdown", 
             "rate-inventory", "fo_stopsell", "fo_rate_change", "fo_inventory_change", "fo_cancel", 
-            "fo_void", "fo_discount", "fo_refund", "inventory-control", "invoice", "purchase-order",
+            "fo_void", "fo_discount", "fo_refund", "inventory-control", "invoice",
             // Night Audit
             "module_night_audit", "dsr", "na_cashier_audit",
             // POS
@@ -401,12 +411,11 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
         return sanitizeResult(result);
     }
 
-    // 7. Housekeeping Manager: Full HK, store requisitions, lost and found, room attendant roster, maintenance
+    // 7. Housekeeping Manager: Full HK, lost and found, room attendant roster, maintenance
     if (roleLower === "housekeeping manager" || roleLower === "hk manager") {
         const allowed = [
             "module_housekeeping", "hk_overview", "hk_status_change", "hk_inspection", "hk_ooo",
-            "hk_attendant_assign", "hk_discrepancy", "hk_lost_found", "hk_amenities", "hk_maintenance",
-            "module_purchasing", "purchasing", "store-requisition"
+            "hk_attendant_assign", "hk_discrepancy", "hk_lost_found", "hk_amenities", "hk_maintenance"
         ];
         allowed.forEach(k => { result[k] = true; });
         return sanitizeResult(result);
@@ -418,8 +427,7 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
             "module_food_beverage", "food-beverage-ledger", "food-beverage-performance",
             "food-beverage-realtime", "fnb_menu_recipe", "fnb_spoilage", "fnb_banquet",
             "module_pos", "pos_home", "pos_lexupos", "pos_cashier", "pos_room_charge", "pos_split_bill", "pos_kot",
-            "pos_product", "pos_records", "pos_cancel", "pos_void", "pos_discount", "pos_reprint", "pos_settlement", "pos_settings", "pos_self_order",
-            "module_purchasing", "purchasing", "store-requisition", "daily-market-list"
+            "pos_product", "pos_records", "pos_cancel", "pos_void", "pos_discount", "pos_reprint", "pos_settlement", "pos_settings", "pos_self_order"
         ];
         allowed.forEach(k => { result[k] = true; });
         return sanitizeResult(result);
@@ -451,7 +459,6 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
         const allowed = [
             "module_accounting", "pnl", "pnl-budget", "dsr", "budgeting", "statements",
             "accounting_ar", "accounting_ap", "accounting_bank", "accounting_tax",
-            "module_purchasing", "purchasing", "purchase-order", "purchase-requisition", "stock-opname",
             "module_night_audit", "dsr", "na_trial_balance"
         ];
         allowed.forEach(k => { result[k] = true; });
@@ -468,8 +475,15 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
         return sanitizeResult(result);
     }
 
-    // 13. HRD Manager / Staf HRD: Full HRD portal, scheduling, attendance GPS, leaves & payroll
-    if (roleLower === "hrd" || roleLower === "hrd manager" || roleLower === "hr" || roleLower === "personalia") {
+    // 13. Human Resource / HR / HRD Manager: Full HRD portal, scheduling, attendance GPS, leaves & payroll
+    if (
+        roleLower === "human resource" || 
+        roleLower === "human resources" || 
+        roleLower === "hr" || 
+        roleLower === "hrd" || 
+        roleLower === "hrd manager" || 
+        roleLower === "personalia"
+    ) {
         const allowed = [
             "module_hrd", "hrd", "hrd_attendance", "hrd_shifts", "hrd_scheduling", 
             "hrd_leaves", "hrd_overtime", "hrd_reports", "hrd_payroll", "hrd_settings"
@@ -489,8 +503,7 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
 
     if (roleLower === "kitchen") {
         const allowed = [
-            "module_food_beverage", "food-beverage-realtime", "fnb_menu_recipe", "fnb_spoilage",
-            "module_purchasing", "store-requisition", "daily-market-list"
+            "module_food_beverage", "food-beverage-realtime", "fnb_menu_recipe", "fnb_spoilage"
         ];
         allowed.forEach(k => { result[k] = true; });
         return sanitizeResult(result);

@@ -25,7 +25,7 @@ import { LoginSection } from '@/components/sections/login/LoginSection';
 import { db } from '@/lib/firebase';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
-import { hasPermission, isUserSuperadmin } from '@/lib/permissionCheck';
+import { hasPermission, isUserSuperadmin, hasModuleAccess } from '@/lib/permissionCheck';
 import { COMPREHENSIVE_PERMISSION_GROUPS } from '@/components/sections/users/permissionConfig';
 
 // Import newly created modular components
@@ -169,14 +169,13 @@ export default function SelectModulePage() {
     // 1. Superadmin has full unrestricted access to all modules in the platform
     if (isSuperadmin) return true;
 
-    // 2. Active modules restrictions if loaded (CPanel is always allowed for basic settings)
-    if (activeModules !== null && moduleKey !== 'cpanel') {
-      if (!activeModules.includes(moduleKey)) {
-        return false;
-      }
-    }
-
     if (!user) return false;
+
+    // 2. Property Admins & Owners have full access to their hotel's modules
+    const roleLower = (user.role || "").toLowerCase().trim();
+    if (roleLower === "admin" || roleLower === "administrator" || roleLower === "owner" || (user as any).isOwner === true) {
+      return true;
+    }
 
     // Special check for channel-manager: superadmin or explicit second backup
     if (moduleKey === 'channel-manager') {
@@ -186,21 +185,8 @@ export default function SelectModulePage() {
       );
     }
 
-    // Match all permission groups for this module
-    const groups = COMPREHENSIVE_PERMISSION_GROUPS.filter(
-      (g) => g.moduleKey === moduleKey
-    );
-
-    if (groups.length > 0) {
-      // Return true if module group permission is granted, or ANY individual sub-permission is granted
-      return groups.some((group) => {
-        if (hasPermission(user, group.id, group.id)) return true;
-        return group.permissions.some((p) => hasPermission(user, p.id, group.id));
-      });
-    }
-
-    // Fallback direct check
-    return hasPermission(user, moduleKey);
+    // Always unlock and show menu if user has at least 1 permission in this module!
+    return hasModuleAccess(user, moduleKey);
   };
 
   const getModuleFirstHref = (moduleKey: string, fallback: string): string => {

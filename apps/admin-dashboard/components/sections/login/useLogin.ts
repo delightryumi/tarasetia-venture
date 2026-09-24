@@ -17,14 +17,21 @@ export const useLogin = () => {
         setLoading(true);
 
         try {
-            await loginWithFirestore(email, password, hotelCode);
+            await loginWithFirestore(email.trim().toLowerCase(), password, hotelCode.trim());
         } catch (err: any) {
             console.error(err);
-            setError(
-                err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.message === "Invalid Hotel Code"
-                    ? "Email, Password, atau Partner Code salah."
-                    : "Gagal login. Silakan coba lagi."
-            );
+            if (err.code === "auth/too-many-requests") {
+                setError("Terlalu banyak percobaan gagal. Silakan tunggu beberapa saat atau hubungi Admin.");
+            } else if (
+                err.code === "auth/invalid-credential" || 
+                err.code === "auth/user-not-found" || 
+                err.code === "auth/wrong-password" ||
+                err.message === "Invalid Hotel Code"
+            ) {
+                setError("Email, Password, atau Partner Code salah.");
+            } else {
+                setError(err.message || "Gagal login. Silakan coba lagi.");
+            }
         } finally {
             setLoading(false);
         }

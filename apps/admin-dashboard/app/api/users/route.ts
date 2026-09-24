@@ -3,6 +3,7 @@ import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { resolveLocationFromReq } from "@/lib/geoHelper";
 import { getAuthenticatedUser } from "@/lib/security/serverAuth";
 import { emailToDocId, sanitizeIdentifier, isValidEmail } from "@/lib/security/inputSanitizer";
+import { COMPREHENSIVE_PERMISSION_GROUPS } from "@/components/sections/users/permissionConfig";
 
 const ALL_KEYS = [
     // Modules
@@ -18,6 +19,17 @@ const ALL_KEYS = [
     "pos_home", "pos_lexupos", "pos_cashier", "pos_product", "pos_records", "pos_settings", "pos_self_order",
     "hrd"
 ];
+
+function getAllPermissionKeys(): string[] {
+    const keys = new Set<string>(ALL_KEYS);
+    COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
+        keys.add(g.id);
+        g.permissions.forEach(p => {
+            keys.add(p.id);
+        });
+    });
+    return Array.from(keys);
+}
 
 // Helper to log user activity
 async function logActivity(data: {
@@ -73,37 +85,77 @@ export async function POST(request: Request) {
     
     // Determine whether caller is verified superadmin
     let isRequesterSuper = authUser?.isSuperadmin ?? false;
+    const callerEmail = authUser?.email || body.requesterEmail?.trim().toLowerCase();
+
+    if (!isRequesterSuper && callerEmail) {
+        if (
+            callerEmail === "superadmin@setara.co.id" || 
+            callerEmail === "nexura.management@gmail.com"
+        ) {
+            isRequesterSuper = true;
+        } else {
+            try {
+                const reqDocId = emailToDocId(callerEmail);
+                const globalSnap = await adminDb.doc(`users_master/${reqDocId}`).get();
+                if (globalSnap.exists) {
+                    const gData = globalSnap.data();
+                    if ((gData?.role || "").toLowerCase() === "superadmin" || gData?.isSuperadmin === true) {
+                        isRequesterSuper = true;
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not check global superadmin:", e);
+            }
+        }
+    }
 
     // Verify non-superadmin rights
     if (!isRequesterSuper) {
-        const callerEmail = authUser?.email || body.requesterEmail?.trim().toLowerCase();
         if (!callerEmail) {
             return NextResponse.json({ error: "Akses Ditolak: Kredensial otentikasi tidak ditemukan." }, { status: 401 });
         }
 
-        // Verify hotel assignment
-        if (authUser && authUser.hotelCode && authUser.hotelCode !== hotelCode) {
-            const hasOutlet = authUser.allowedOutlets && authUser.allowedOutlets.includes(hotelCode);
-            if (!hasOutlet) {
-                return NextResponse.json({ error: "Akses Ditolak: Anda tidak memiliki akses ke properti hotel ini." }, { status: 403 });
+        const reqDocId = emailToDocId(callerEmail);
+
+        // Check if caller is hotel owner
+        const hotelDocSnap = await adminDb.doc(`hotels/${hotelCode}`).get();
+        const hotelDocData = hotelDocSnap.exists ? hotelDocSnap.data() : null;
+        const hotelOwnerEmail = (hotelDocData?.email || "").trim().toLowerCase();
+        const isCallerHotelOwner = hotelOwnerEmail && callerEmail === hotelOwnerEmail;
+
+        let callerRole = "";
+        let callerPerms: Record<string, boolean> = {};
+        let callerIsOwner = false;
+
+        const reqHotelSnap = await adminDb.doc(`hotels/${hotelCode}/users_master/${reqDocId}`).get();
+        if (reqHotelSnap.exists) {
+            const reqData = reqHotelSnap.data() || {};
+            callerRole = (reqData.role || "").toLowerCase();
+            callerPerms = reqData.permissions || {};
+            callerIsOwner = reqData.isOwner === true;
+        } else {
+            const reqGlobalSnap = await adminDb.doc(`users_master/${reqDocId}`).get();
+            if (reqGlobalSnap.exists) {
+                const reqData = reqGlobalSnap.data() || {};
+                callerRole = (reqData.role || "").toLowerCase();
+                callerPerms = reqData.permissions || {};
+                callerIsOwner = reqData.isOwner === true;
             }
         }
 
-        try {
-            const reqDocId = emailToDocId(callerEmail);
-            const reqSnap = await adminDb.doc(`hotels/${hotelCode}/users_master/${reqDocId}`).get();
-            if (reqSnap.exists) {
-                const reqData = reqSnap.data() || {};
-                const reqPerms = reqData.permissions || {};
-                const reqRole = (reqData.role || "").toLowerCase();
-                if (reqRole !== "superadmin" && reqPerms["sec_user_manage"] === false) {
-                    return NextResponse.json({
-                        error: "Akses Ditolak: Akun Anda tidak memiliki izin kelola staf (sec_user_manage)."
-                    }, { status: 403 });
-                }
-            }
-        } catch (e) {
-            console.warn("Could not verify requester permissions:", e);
+        const isCallerAdminOrOwner = 
+            isCallerHotelOwner ||
+            callerIsOwner ||
+            callerRole === "admin" ||
+            callerRole === "administrator" ||
+            callerRole === "owner" ||
+            callerRole === "hotel owner" ||
+            callerRole === "hotel admin";
+
+        if (!isCallerAdminOrOwner && callerPerms["sec_user_manage"] === false) {
+            return NextResponse.json({
+                error: "Akses Ditolak: Akun Anda tidak memiliki izin kelola staf (sec_user_manage)."
+            }, { status: 403 });
         }
     }
 
@@ -124,12 +176,14 @@ export async function POST(request: Request) {
 
     // Default permissions dictionary
     let finalPermissions: Record<string, boolean> = {};
-    ALL_KEYS.forEach((key) => {
+    getAllPermissionKeys().forEach((key) => {
       finalPermissions[key] = false;
     });
 
     if (permissions && typeof permissions === "object") {
-      finalPermissions = { ...finalPermissions, ...permissions };
+      Object.entries(permissions).forEach(([k, v]) => {
+        finalPermissions[k] = v === true;
+      });
     }
 
     let uid = "";
@@ -140,13 +194,17 @@ export async function POST(request: Request) {
       uid = existingUser.uid;
       alreadyExists = true;
 
-      // Update custom claims for existing user
-      await adminAuth.setCustomUserClaims(uid, {
-        role,
-        hotelCode,
-        allowedOutlets,
-        permissions: finalPermissions,
-      });
+      // Update custom claims for existing user (keep under 1000-byte limit)
+      try {
+        await adminAuth.setCustomUserClaims(uid, {
+          role,
+          hotelCode,
+          allowedOutlets,
+          isSuperadmin: isRequesterSuper && role === "superadmin",
+        });
+      } catch (cErr: any) {
+        console.warn("setCustomUserClaims warning:", cErr?.message || cErr);
+      }
 
       // Update password if provided
       if (password && password.trim() !== "") {
@@ -164,12 +222,16 @@ export async function POST(request: Request) {
         });
         uid = newUser.uid;
 
-        await adminAuth.setCustomUserClaims(uid, {
-          role,
-          hotelCode,
-          allowedOutlets,
-          permissions: finalPermissions,
-        });
+        try {
+          await adminAuth.setCustomUserClaims(uid, {
+            role,
+            hotelCode,
+            allowedOutlets,
+            isSuperadmin: isRequesterSuper && role === "superadmin",
+          });
+        } catch (cErr: any) {
+          console.warn("setCustomUserClaims warning:", cErr?.message || cErr);
+        }
       } else {
         console.error("Error in Firebase Auth user creation:", authError);
         return NextResponse.json({ error: "Gagal membuat akun autentikasi pengguna." }, { status: 500 });
@@ -260,29 +322,78 @@ export async function PUT(request: Request) {
     }
 
     let isRequesterSuper = authUser?.isSuperadmin ?? false;
+    const callerEmail = authUser?.email || body.requesterEmail?.trim().toLowerCase();
+
+    // Check if caller is superadmin via email or users_master fallback
+    if (!isRequesterSuper && callerEmail) {
+        if (
+            callerEmail === "superadmin@setara.co.id" || 
+            callerEmail === "nexura.management@gmail.com"
+        ) {
+            isRequesterSuper = true;
+        } else {
+            try {
+                const reqDocId = emailToDocId(callerEmail);
+                const globalSnap = await adminDb.doc(`users_master/${reqDocId}`).get();
+                if (globalSnap.exists) {
+                    const gData = globalSnap.data();
+                    if ((gData?.role || "").toLowerCase() === "superadmin" || gData?.isSuperadmin === true) {
+                        isRequesterSuper = true;
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not check global superadmin:", e);
+            }
+        }
+    }
 
     // Non-superadmin validation
     if (!isRequesterSuper) {
-        const callerEmail = authUser?.email || body.requesterEmail?.trim().toLowerCase();
         if (!callerEmail) {
             return NextResponse.json({ error: "Akses Ditolak: Sesi otentikasi tidak valid." }, { status: 401 });
         }
 
-        try {
-            const reqDocId = emailToDocId(callerEmail);
-            const reqSnap = await adminDb.doc(`hotels/${hotelCode}/users_master/${reqDocId}`).get();
-            if (reqSnap.exists) {
-                const reqData = reqSnap.data() || {};
-                const reqPerms = reqData.permissions || {};
-                const reqRole = (reqData.role || "").toLowerCase();
-                if (reqRole !== "superadmin" && reqPerms["sec_user_manage"] === false) {
-                    return NextResponse.json({
-                        error: "Akses Ditolak: Akun Anda tidak memiliki izin kelola staf (sec_user_manage)."
-                    }, { status: 403 });
-                }
+        const reqDocId = emailToDocId(callerEmail);
+
+        // Check if caller is hotel owner
+        const hotelDocSnap = await adminDb.doc(`hotels/${hotelCode}`).get();
+        const hotelDocData = hotelDocSnap.exists ? hotelDocSnap.data() : null;
+        const hotelOwnerEmail = (hotelDocData?.email || "").trim().toLowerCase();
+        const isCallerHotelOwner = hotelOwnerEmail && callerEmail === hotelOwnerEmail;
+
+        let callerRole = "";
+        let callerPerms: Record<string, boolean> = {};
+        let callerIsOwner = false;
+
+        const reqHotelSnap = await adminDb.doc(`hotels/${hotelCode}/users_master/${reqDocId}`).get();
+        if (reqHotelSnap.exists) {
+            const reqData = reqHotelSnap.data() || {};
+            callerRole = (reqData.role || "").toLowerCase();
+            callerPerms = reqData.permissions || {};
+            callerIsOwner = reqData.isOwner === true;
+        } else {
+            const reqGlobalSnap = await adminDb.doc(`users_master/${reqDocId}`).get();
+            if (reqGlobalSnap.exists) {
+                const reqData = reqGlobalSnap.data() || {};
+                callerRole = (reqData.role || "").toLowerCase();
+                callerPerms = reqData.permissions || {};
+                callerIsOwner = reqData.isOwner === true;
             }
-        } catch (e) {
-            console.warn("Could not verify requester permissions:", e);
+        }
+
+        const isCallerAdminOrOwner = 
+            isCallerHotelOwner ||
+            callerIsOwner ||
+            callerRole === "admin" ||
+            callerRole === "administrator" ||
+            callerRole === "owner" ||
+            callerRole === "hotel owner" ||
+            callerRole === "hotel admin";
+
+        if (!isCallerAdminOrOwner && callerPerms["sec_user_manage"] === false) {
+            return NextResponse.json({
+                error: "Akses Ditolak: Akun Anda tidak memiliki izin kelola staf (sec_user_manage)."
+            }, { status: 403 });
         }
     }
 
@@ -328,48 +439,82 @@ export async function PUT(request: Request) {
     }
 
     let uid = existingDoc?.uid;
+    let authUserRecord: any = null;
+
     try {
-      const userRecord = await adminAuth.getUserByEmail(cleanEmail);
-      uid = userRecord.uid;
+      authUserRecord = await adminAuth.getUserByEmail(cleanEmail);
+      uid = authUserRecord.uid;
     } catch (authErr: any) {
-      if (authErr.code === "auth/user-not-found") {
-        // Auto-provision Auth user if missing
-        const newPassword = password && password.trim() !== "" ? password.trim() : `User${Date.now()}!`;
-        const newUser = await adminAuth.createUser({
-          email: cleanEmail,
-          password: newPassword,
-          displayName: name || existingDoc?.name || cleanEmail.split("@")[0],
-        });
-        uid = newUser.uid;
-      } else {
-        console.error("Auth fetch error:", authErr);
-        return NextResponse.json({ error: "Gagal memverifikasi user di sistem autentikasi." }, { status: 500 });
+      if (uid) {
+        try {
+          authUserRecord = await adminAuth.getUser(uid);
+          uid = authUserRecord.uid;
+        } catch {
+          // not found by UID either
+        }
+      }
+      if (!authUserRecord) {
+        if (authErr.code === "auth/user-not-found" || !uid) {
+          // Auto-provision Auth user if missing
+          const newPassword = password && password.trim() !== "" ? password.trim() : `User${Date.now()}!`;
+          const newUser = await adminAuth.createUser({
+            email: cleanEmail,
+            password: newPassword,
+            displayName: name || existingDoc?.name || cleanEmail.split("@")[0],
+          });
+          uid = newUser.uid;
+          authUserRecord = newUser;
+        } else {
+          console.error("Auth fetch error:", authErr);
+          return NextResponse.json({ error: "Gagal memverifikasi user di sistem autentikasi." }, { status: 500 });
+        }
       }
     }
 
     // Update password if provided
     if (password && password.trim() !== "") {
+      const cleanPass = password.trim();
+      if (cleanPass.length < 6) {
+        return NextResponse.json({ error: "Password baru minimal 6 karakter." }, { status: 400 });
+      }
       try {
-        await adminAuth.updateUser(uid, { password: password.trim() });
+        await adminAuth.updateUser(uid, { password: cleanPass });
+        console.log(`[AUTH] Password for UID ${uid} (${cleanEmail}) updated successfully.`);
       } catch (err: any) {
+        console.error("Failed to update password:", err);
         return NextResponse.json({ error: `Gagal memperbarui kata sandi: ${err.message}` }, { status: 400 });
       }
     }
 
-    // Update custom claims
-    await adminAuth.setCustomUserClaims(uid, {
-      role: role || existingDoc?.role || "user",
-      hotelCode,
-      allowedOutlets,
-      permissions: permissions || existingDoc?.permissions || {},
-    });
+    // Update custom claims (keep under 1000-byte limit)
+    try {
+      await adminAuth.setCustomUserClaims(uid, {
+        role: role || existingDoc?.role || "user",
+        hotelCode,
+        allowedOutlets,
+        isSuperadmin: isRequesterSuper && (role === "superadmin" || existingDoc?.role === "superadmin"),
+      });
+    } catch (cErr: any) {
+      console.warn("setCustomUserClaims warning in PUT:", cErr?.message || cErr);
+    }
 
     const updateData: any = {
       updatedAt: new Date().toISOString(),
+      uid,
+      email: cleanEmail,
     };
     if (name) updateData.name = name;
     if (role) updateData.role = role;
-    if (permissions) updateData.permissions = permissions;
+    if (permissions && typeof permissions === "object") {
+      let finalPermissions: Record<string, boolean> = {};
+      getAllPermissionKeys().forEach(k => {
+        finalPermissions[k] = false;
+      });
+      Object.entries(permissions).forEach(([k, v]) => {
+        finalPermissions[k] = v === true;
+      });
+      updateData.permissions = finalPermissions;
+    }
     updateData.allowedOutlets = allowedOutlets;
 
     // Update primary hotel
@@ -391,24 +536,28 @@ export async function PUT(request: Request) {
     // Update global users_master
     await adminDb.doc(`users_master/${docId}`).set(updateData, { merge: true });
 
-    // Log Activity
-    const { ip: ipAddress, location } = await resolveLocationFromReq(request, timeZone);
-    await logActivity({
-        hotelCode,
-        userId: docId,
-        userName: name || existingDoc?.name || cleanEmail,
-        userEmail: cleanEmail,
-        action: "UPDATE_USER",
-        module: "USER_MANAGEMENT",
-        description: `Profil user '${name || cleanEmail}' (${role || existingDoc?.role}) telah diperbarui.`,
-        ipAddress,
-        location
-    });
+    // Log Activity (fail-safe)
+    try {
+      const { ip: ipAddress, location } = await resolveLocationFromReq(request, timeZone);
+      await logActivity({
+          hotelCode,
+          userId: docId,
+          userName: name || existingDoc?.name || cleanEmail,
+          userEmail: cleanEmail,
+          action: "UPDATE_USER",
+          module: "USER_MANAGEMENT",
+          description: `Profil user '${name || cleanEmail}' (${role || existingDoc?.role}) telah diperbarui.`,
+          ipAddress,
+          location
+      });
+    } catch (logErr) {
+      console.warn("logActivity warning in PUT:", logErr);
+    }
 
     return NextResponse.json({ success: true, allowedOutlets });
   } catch (error: any) {
     console.error("Error updating user:", error);
-    return NextResponse.json({ error: "Gagal memperbarui data user." }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Gagal memperbarui data user." }, { status: 500 });
   }
 }
 
@@ -477,18 +626,34 @@ export async function DELETE(request: Request) {
     }
 
     try {
-      const userRecord = await adminAuth.getUserByEmail(cleanEmail);
-      await adminAuth.deleteUser(userRecord.uid);
+      let authUid = userData?.uid;
+      if (!authUid) {
+        try {
+          const userRecord = await adminAuth.getUserByEmail(cleanEmail);
+          authUid = userRecord.uid;
+        } catch (e: any) {
+          if (e.code !== "auth/user-not-found") throw e;
+        }
+      }
+      if (authUid) {
+        await adminAuth.revokeRefreshTokens(authUid).catch(() => {});
+        await adminAuth.deleteUser(authUid).catch(() => {});
+      }
     } catch (authErr: any) {
       if (authErr.code !== "auth/user-not-found") {
-        throw authErr;
+        console.warn("Could not delete user from Firebase Auth:", authErr);
       }
     }
 
-    // Delete across all assigned hotels
-    const allowedOutlets: string[] = userData?.allowedOutlets || [hotelCode];
-    for (const code of allowedOutlets) {
-        await adminDb.doc(`hotels/${code}/users_master/${docId}`).delete().catch(() => {});
+    // Delete across current hotel and all assigned hotels
+    const allOutletCodes = Array.from(new Set([
+        hotelCode,
+        ...(Array.isArray(userData?.allowedOutlets) ? userData.allowedOutlets : [])
+    ]));
+    for (const code of allOutletCodes) {
+        if (code) {
+            await adminDb.doc(`hotels/${code}/users_master/${docId}`).delete().catch(() => {});
+        }
     }
 
     // Delete global users_master

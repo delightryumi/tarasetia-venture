@@ -26,11 +26,9 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     const [showConfirm, setShowConfirm] = useState(false);
     const [touched, setTouched] = useState(false);
 
-    const passwordPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\[\]{};':"\\|,.<>\/\?]).{6,}$/;
     const mismatch = touched && confirmPassword.length > 0 && password !== confirmPassword;
     const match = touched && confirmPassword.length > 0 && password === confirmPassword;
-    const meetsPattern = passwordPattern.test(password);
-    const isValid = password.length >= 6 && meetsPattern && password === confirmPassword;
+    const isValid = password.length >= 6 && password === confirmPassword;
 
     // Reset on open/close
     useEffect(() => {
@@ -118,9 +116,6 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                                 </div>
                                 {password.length > 0 && password.length < 6 && (
                                     <span className={styles.changePwdHint}>Minimal 6 karakter</span>
-                                )}
-                                {password.length > 0 && !meetsPattern && (
-                                    <span className={styles.changePwdHint}>Harus ada huruf besar, angka, dan karakter khusus</span>
                                 )}
                             </div>
 

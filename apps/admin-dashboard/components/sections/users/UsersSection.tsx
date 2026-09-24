@@ -259,7 +259,7 @@ export const UsersSection: React.FC = () => {
 
     const openEditDrawer = (user: UserProfile) => {
         setEditingUser(user);
-        const standardPerms = getStandardRolePermissions(user.role || "Staff");
+        const standardPerms = getStandardRolePermissions(user.role || "Staff", activeModules);
         const existingPerms = user.permissions && Object.keys(user.permissions).length > 0 
             ? { ...standardPerms, ...user.permissions }
             : standardPerms;
@@ -290,6 +290,11 @@ export const UsersSection: React.FC = () => {
     const onSave = async () => {
         if (!formData.name || !formData.email) {
             toast.error("Semua field wajib diisi.");
+            return;
+        }
+
+        if (formData.password && formData.password.trim() !== "" && formData.password.trim().length < 6) {
+            toast.error("Password baru minimal 6 karakter.");
             return;
         }
 

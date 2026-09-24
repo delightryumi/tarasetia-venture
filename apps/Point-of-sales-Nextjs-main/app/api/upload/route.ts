@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminStorage } from '@/lib/firebaseAdmin';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 

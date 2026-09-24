@@ -3,6 +3,8 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, query, where, limit, getDoc } from 'firebase/firestore';
 import { hashPassword } from '@/lib/auth/passwordHash';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     // 1. Verify Authorization Header

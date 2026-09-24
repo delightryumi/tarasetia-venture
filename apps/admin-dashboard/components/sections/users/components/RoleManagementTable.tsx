@@ -23,7 +23,8 @@ export const HOTEL_SYSTEM_ROLES: SystemRoleItem[] = [
     { id: "cashier_pos", name: "Cashier (POS)", parentRole: "Food & Beverage Manager", description: "Kasir outlet POS, bill settlement, split bill, & shift handover", isSystemDefault: true },
     { id: "revenue_manager", name: "Revenue Manager", parentRole: "General Manager", description: "Manajemen harga dinamis, stop sell, kuota kamar, & Channel Manager", isSystemDefault: true },
     { id: "finance_accounting", name: "Finance & Accounting", parentRole: "General Manager", description: "Laporan P&L, City Ledger AR, hutang AP, pajak PB1, & rekonsiliasi", isSystemDefault: true },
-    { id: "purchasing_officer", name: "Purchasing Officer", parentRole: "General Manager", description: "Pengadaan barang, PO supplier, penerimaan GRN, & stock opname", isSystemDefault: true }
+    { id: "purchasing_officer", name: "Purchasing Officer", parentRole: "General Manager", description: "Pengadaan barang, PO supplier, penerimaan GRN, & stock opname", isSystemDefault: true },
+    { id: "human_resource", name: "Human Resource", parentRole: "General Manager", description: "Pengelolaan staf karyawan, presensi biometrik GPS, permohonan cuti, & administrasi HRD", isSystemDefault: true }
 ];
 
 interface RoleManagementTableProps {
