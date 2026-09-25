@@ -16,13 +16,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'POS Terminal | MyTara',
+  title: 'Tara',
   description: 'MyTara Point of Sales System',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'MyTara POS',
+    title: 'Tara',
   },
   icons: {
     icon: '/favicon.ico',

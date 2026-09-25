@@ -1,126 +1,176 @@
-/* RateInventorySubTabs.module.css — My Tara Luxury Hotel Theme */
+/* RateInventorySubTabs.module.css — Professional Hospitality Theme */
 
 .subTabsBar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    background-color: #f5f2eb;
-    padding: 5px 12px 0 12px;
-    border-bottom: 1px solid rgba(141, 122, 82, 0.18);
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
+    gap: 12px;
+    background-color: #ffffff;
+    padding: 10px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
     width: 100%;
     box-sizing: border-box;
-    overflow-x: visible;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    flex-wrap: wrap;
+}
+
+:global(.dark) .subTabsBar {
+    background-color: #111827;
+    border-color: #374151;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .subTabsGroup {
     display: flex;
-    align-items: flex-end;
-    gap: 2px;
-    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
 .tabItem {
-    padding: 6px 10px;
-    font-size: 11.5px;
-    font-weight: 600;
-    color: #515154;
-    background: transparent;
-    border: 1px solid transparent;
-    border-bottom: none;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
+    padding: 8px 16px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.15s ease;
     white-space: nowrap;
     font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+:global(.dark) .tabItem {
+    background-color: #1f2937;
+    border-color: #374151;
+    color: #cbd5e1;
 }
 
 .tabItem:hover {
-    color: #181d26;
-    background-color: rgba(255, 255, 255, 0.6);
+    color: #0f172a;
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+:global(.dark) .tabItem:hover {
+    background-color: #374151;
+    color: #ffffff;
 }
 
 .tabItemActive {
-    background-color: #faf8f4;
-    color: #181d26;
+    background-color: #2563eb !important;
+    color: #ffffff !important;
     font-weight: 800;
-    border: 1px solid rgba(141, 122, 82, 0.22);
-    border-bottom: 2px solid #faf8f4;
-    margin-bottom: -1px;
-    box-shadow: 0 -2px 6px rgba(141, 122, 82, 0.05);
+    border-color: #1d4ed8 !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
 }
 
 .subTabsActions {
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding-bottom: 5px;
-    flex-shrink: 0;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .actionBtnSecondary {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    height: 28px;
-    padding: 0 8px;
-    font-size: 11px;
-    font-weight: 600;
-    color: #383838;
-    background-color: #faf8f4;
-    border: 1px solid rgba(141, 122, 82, 0.2);
-    border-radius: 6px;
+    gap: 6px;
+    height: 36px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.15s ease;
     font-family: inherit;
     white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
-.actionBtnSecondary:hover {
-    background-color: #ebe7d7;
-    border-color: rgba(141, 122, 82, 0.35);
-    color: #181d26;
+:global(.dark) .actionBtnSecondary {
+    background-color: #1f2937;
+    border-color: #4b5563;
+    color: #f8fafc;
+}
+
+.actionBtnSecondary:hover:not(:disabled) {
+    background-color: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+:global(.dark) .actionBtnSecondary:hover:not(:disabled) {
+    background-color: #374151;
+}
+
+.actionBtnSecondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .actionBtnPrimary {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    height: 28px;
-    padding: 0 10px;
-    font-size: 11px;
-    font-weight: 700;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
+    font-size: 12px;
+    font-weight: 800;
     color: #ffffff;
-    background-color: #181d26;
-    border: 1px solid #181d26;
-    border-radius: 6px;
+    background-color: #0f172a;
+    border: 1px solid #0f172a;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.15s ease;
-    box-shadow: 0 2px 6px rgba(24, 29, 38, 0.15);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
     font-family: inherit;
     white-space: nowrap;
 }
 
+:global(.dark) .actionBtnPrimary {
+    background-color: #f8fafc;
+    color: #0f172a;
+    border-color: #f8fafc;
+}
+
 .actionBtnPrimary:hover {
-    background-color: #262626;
-    box-shadow: 0 3px 8px rgba(24, 29, 38, 0.25);
+    background-color: #1e293b;
+    border-color: #1e293b;
+}
+
+:global(.dark) .actionBtnPrimary:hover {
+    background-color: #e2e8f0;
 }
 
 .infoBadgeText {
-    font-size: 10px;
-    font-weight: 600;
-    color: #736342;
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 0 6px;
-    background-color: rgba(141, 122, 82, 0.08);
-    border-radius: 4px;
-    height: 26px;
+    gap: 5px;
+    padding: 0 10px;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    height: 36px;
     white-space: nowrap;
+}
+
+:global(.dark) .infoBadgeText {
+    background-color: #1f2937;
+    border-color: #374151;
+    color: #cbd5e1;
 }
 
 .spinIcon {
@@ -131,4 +181,3 @@
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
-

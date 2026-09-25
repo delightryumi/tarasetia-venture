@@ -65,7 +65,7 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
     const handleCreateRule = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title.trim()) {
-            toast.error("Nama aturan wajib diisi.");
+            toast.error("Rule title is required.");
             return;
         }
 
@@ -92,24 +92,24 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
             });
             const data = await res.json();
             if (data.success) {
-                toast.success(data.message);
+                toast.success(data.message || "Channel allotment rule created successfully.");
                 setIsModalOpen(false);
                 fetchRules();
                 // Reset form
                 setTitle("");
                 setLimitValue(2);
             } else {
-                toast.error(data.error || "Gagal membuat aturan");
+                toast.error(data.error || "Failed to create allotment rule");
             }
         } catch (err) {
-            toast.error("Terjadi kesalahan jaringan.");
+            toast.error("Network communication error.");
         } finally {
             setSaving(false);
         }
     };
 
     const handleDeleteRule = async (ruleId: string, ruleTitle: string) => {
-        if (!confirm(`Hapus aturan alokasi '${ruleTitle}'?`)) return;
+        if (!confirm(`Delete allotment rule '${ruleTitle}'?`)) return;
 
         try {
             const res = await fetch(`/api/channex/rules?hotelCode=${hotelCode}&ruleId=${ruleId}`, {
@@ -117,13 +117,13 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
             });
             const data = await res.json();
             if (data.success) {
-                toast.success("Aturan berhasil dihapus.");
+                toast.success("Rule deleted successfully.");
                 setRules(prev => prev.filter(r => r.id !== ruleId));
             } else {
-                toast.error(data.error || "Gagal menghapus aturan");
+                toast.error(data.error || "Failed to delete rule");
             }
         } catch (err) {
-            toast.error("Gagal menghapus aturan.");
+            toast.error("Failed to delete allotment rule.");
         }
     };
 
@@ -134,13 +134,13 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
     };
 
     const allDays = [
-        { code: "mo", label: "Sen" },
-        { code: "tu", label: "Sel" },
-        { code: "we", label: "Rab" },
-        { code: "th", label: "Kam" },
-        { code: "fr", label: "Jum" },
-        { code: "sa", label: "Sab" },
-        { code: "su", label: "Min" }
+        { code: "mo", label: "Mon" },
+        { code: "tu", label: "Tue" },
+        { code: "we", label: "Wed" },
+        { code: "th", label: "Thu" },
+        { code: "fr", label: "Fri" },
+        { code: "sa", label: "Sat" },
+        { code: "su", label: "Sun" }
     ];
 
     return (
@@ -150,10 +150,10 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                 <div className={styles.titleGroup}>
                     <div className={styles.title}>
                         <Sliders size={16} color="#1e3a2f" />
-                        <span>Channel Availability Rules (Yield Management &amp; Batas Kuota Saluran)</span>
+                        <span>Channel Availability Rules (Yield Management &amp; Allotment Limits)</span>
                     </div>
                     <span className={styles.desc}>
-                        Atur pembatasan kuota kamar (Max Availability) atau penutupan selektif (Close Out) pada saluran OTA tertentu tanpa memengaruhi penjualan saluran lainnya.
+                        Configure room quota caps (Max Availability) or selective stop-sells (Close Out) on designated OTA channels without restricting other distribution channels.
                     </span>
                 </div>
 
@@ -162,7 +162,7 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                         type="button"
                         onClick={fetchRules}
                         style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}
-                        title="Segarkan Aturan"
+                        title="Refresh Rules"
                     >
                         <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
                     </button>
@@ -172,7 +172,7 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                         className={styles.btnAdd}
                     >
                         <Plus size={14} />
-                        <span>Buat Aturan Alokasi Baru</span>
+                        <span>Create Allotment Rule</span>
                     </button>
                 </div>
             </div>
@@ -182,13 +182,13 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                 <table className={styles.rulesTable}>
                     <thead>
                         <tr>
-                            <th className={styles.th}>Nama Aturan</th>
-                            <th className={styles.th}>Jenis Aturan</th>
-                            <th className={styles.th}>Saluran OTA Terkena</th>
-                            <th className={styles.th}>Batas Kuota / Nilai</th>
-                            <th className={styles.th}>Periode Berlaku</th>
-                            <th className={styles.th}>Hari Aktif</th>
-                            <th className={styles.th} style={{ textAlign: "right" }}>Aksi</th>
+                            <th className={styles.th}>Rule Name</th>
+                            <th className={styles.th}>Rule Type</th>
+                            <th className={styles.th}>Target Channels</th>
+                            <th className={styles.th}>Quota Limit / Value</th>
+                            <th className={styles.th}>Date Range</th>
+                            <th className={styles.th}>Active Days</th>
+                            <th className={styles.th} style={{ textAlign: "right" }}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -203,7 +203,7 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                                     </td>
                                     <td className={styles.td}>
                                         <span className={`${styles.badgeType} ${isCloseOut ? styles.typeCloseOut : styles.typeMax}`}>
-                                            {isCloseOut ? "🛑 Close Out Saluran" : "⚡ Max Availability"}
+                                            {isCloseOut ? "Close Out" : "Max Availability"}
                                         </span>
                                     </td>
                                     <td className={styles.td}>
@@ -217,14 +217,14 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                                     </td>
                                     <td className={styles.td}>
                                         {isCloseOut ? (
-                                            <span style={{ color: "#b91c1c", fontWeight: 700 }}>Penjualan Ditutup (0 Kamar)</span>
+                                            <span style={{ color: "#b91c1c", fontWeight: 700 }}>Stop Sell (0 Rooms)</span>
                                         ) : (
-                                            <span>Maks <b>{r.value} Kamar</b> / Hari</span>
+                                            <span>Max <b>{r.value} Rooms</b> / Day</span>
                                         )}
                                     </td>
                                     <td className={styles.td}>
                                         <div style={{ fontSize: "11px", color: "#334155" }}>
-                                            {r.start_date} <span style={{ color: "#94a3b8" }}>s/d</span> {r.end_date}
+                                            {r.start_date} <span style={{ color: "#94a3b8" }}>to</span> {r.end_date}
                                         </div>
                                     </td>
                                     <td className={styles.td}>
@@ -244,7 +244,7 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                                             type="button"
                                             onClick={() => handleDeleteRule(r.id, r.title)}
                                             style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: "4px" }}
-                                            title="Hapus Aturan Ini"
+                                            title="Delete Rule"
                                         >
                                             <Trash2 size={14} />
                                         </button>
@@ -256,7 +256,7 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                         {rules.length === 0 && (
                             <tr>
                                 <td colSpan={7} style={{ textAlign: "center", padding: "30px", color: "#94a3b8" }}>
-                                    Belum ada aturan pembatasan kuota saluran. Klik tombol "Buat Aturan Alokasi Baru" untuk menambahkan.
+                                    No channel allotment rules configured. Click &quot;Create Allotment Rule&quot; to define channel caps or stop sells.
                                 </td>
                             </tr>
                         )}
@@ -269,7 +269,7 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                 <div className={styles.modalBackdrop}>
                     <div className={styles.modalContent}>
                         <div className={styles.modalHeader}>
-                            <div className={styles.modalTitle}>Buat Aturan Pembatasan Saluran OTA</div>
+                            <div className={styles.modalTitle}>Create Channel Allotment Rule</div>
                             <button
                                 type="button"
                                 onClick={() => setIsModalOpen(false)}
@@ -282,32 +282,32 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                         <form onSubmit={handleCreateRule}>
                             <div className={styles.modalBody}>
                                 <div className={styles.formGroup}>
-                                    <label className={styles.label}>Nama / Deskripsi Aturan</label>
+                                    <label className={styles.label}>Rule Title / Description</label>
                                     <input
                                         type="text"
                                         value={title}
                                         onChange={e => setTitle(e.target.value)}
-                                        placeholder="Contoh: Batas Kuota Agoda Weekend Peak Season"
+                                        placeholder="e.g. Agoda Weekend Peak Season Allotment Cap"
                                         className={styles.input}
                                         required
                                     />
                                 </div>
 
                                 <div className={styles.formGroup}>
-                                    <label className={styles.label}>Jenis Aturan (Action Type)</label>
+                                    <label className={styles.label}>Rule Action Type</label>
                                     <select
                                         value={ruleType}
                                         onChange={e => setRuleType(e.target.value as any)}
                                         className={styles.input}
                                     >
-                                        <option value="max_availability">Max Availability (Batasi kuota maksimal penjualan di OTA)</option>
-                                        <option value="close_out">Close Out (Tutup total penjualan di OTA terpilih)</option>
+                                        <option value="max_availability">Max Availability (Cap maximum sellable inventory on channel)</option>
+                                        <option value="close_out">Close Out (Stop all sales on selected channel)</option>
                                     </select>
                                 </div>
 
                                 {ruleType === "max_availability" && (
                                     <div className={styles.formGroup}>
-                                        <label className={styles.label}>Batas Maksimal Kamar yang Boleh Dijual</label>
+                                        <label className={styles.label}>Maximum Rooms Sellable</label>
                                         <input
                                             type="number"
                                             min={1}
@@ -320,7 +320,7 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                                 )}
 
                                 <div className={styles.formGroup}>
-                                    <label className={styles.label}>Saluran OTA yang Diberlakukan</label>
+                                    <label className={styles.label}>Target Channel</label>
                                     <select
                                         value={selectedChannel}
                                         onChange={e => setSelectedChannel(e.target.value)}
@@ -337,7 +337,7 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
 
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                                     <div className={styles.formGroup}>
-                                        <label className={styles.label}>Mulai Tanggal</label>
+                                        <label className={styles.label}>Start Date</label>
                                         <input
                                             type="date"
                                             value={startDate}
@@ -347,7 +347,7 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                                         />
                                     </div>
                                     <div className={styles.formGroup}>
-                                        <label className={styles.label}>Sampai Tanggal</label>
+                                        <label className={styles.label}>End Date</label>
                                         <input
                                             type="date"
                                             value={endDate}
@@ -359,7 +359,7 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                                 </div>
 
                                 <div className={styles.formGroup}>
-                                    <label className={styles.label}>Pilih Hari Berlaku</label>
+                                    <label className={styles.label}>Applicable Days of Week</label>
                                     <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "4px" }}>
                                         {allDays.map(d => (
                                             <button
@@ -390,14 +390,14 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                                     onClick={() => setIsModalOpen(false)}
                                     className={styles.btnCancel}
                                 >
-                                    Batal
+                                    Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={saving}
                                     className={styles.btnSave}
                                 >
-                                    {saving ? "Menyimpan ke Channex..." : "Terapkan Aturan"}
+                                    {saving ? "Applying to Channex..." : "Apply Rule"}
                                 </button>
                             </div>
                         </form>

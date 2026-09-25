@@ -1,0 +1,222 @@
+/* RateInventoryOverviewCards.module.css — Professional Hospitality Editorial Cards */
+
+.overviewGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.kpiCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    box-sizing: border-box;
+}
+
+:global(.dark) .kpiCard {
+    background: #111827;
+    border-color: #374151;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.kpiCard:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+}
+
+:global(.dark) .kpiCard:hover {
+    border-color: #4b5563;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.kpiLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.kpiLabel {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+:global(.dark) .kpiLabel {
+    color: #9ca3af;
+}
+
+.kpiValueRow {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.kpiValue {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+    font-family: inherit;
+}
+
+:global(.dark) .kpiValue {
+    color: #f8fafc;
+}
+
+.kpiSubtext {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+:global(.dark) .kpiSubtext {
+    color: #9ca3af;
+}
+
+.kpiBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.badgeGreen {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+:global(.dark) .badgeGreen {
+    background: #064e3b;
+    color: #6ee7b7;
+    border-color: #047857;
+}
+
+.badgeBlue {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+:global(.dark) .badgeBlue {
+    background: #1e3a8a;
+    color: #93c5fd;
+    border-color: #2563eb;
+}
+
+.badgeAmber {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+:global(.dark) .badgeAmber {
+    background: #78350f;
+    color: #fcd34d;
+    border-color: #b45309;
+}
+
+.badgePurple {
+    background: #f5f3ff;
+    color: #5b21b6;
+    border: 1px solid #ddd6fe;
+}
+
+:global(.dark) .badgePurple {
+    background: #3b0764;
+    color: #d8b4fe;
+    border-color: #7e22ce;
+}
+
+.kpiIconWrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.iconRooms {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #dbeafe;
+}
+
+:global(.dark) .iconRooms {
+    background: #1e3a8a;
+    color: #93c5fd;
+    border-color: #2563eb;
+}
+
+.iconRates {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #d1fae5;
+}
+
+:global(.dark) .iconRates {
+    background: #064e3b;
+    color: #6ee7b7;
+    border-color: #047857;
+}
+
+.iconToday {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fef3c7;
+}
+
+:global(.dark) .iconToday {
+    background: #78350f;
+    color: #fcd34d;
+    border-color: #b45309;
+}
+
+.iconSync {
+    background: #f5f3ff;
+    color: #7c3aed;
+    border: 1px solid #ede9fe;
+}
+
+:global(.dark) .iconSync {
+    background: #3b0764;
+    color: #d8b4fe;
+    border-color: #7e22ce;
+}
+
+.spinIcon {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .overviewGrid {
+        grid-template-columns: 1fr;
+    }
+}

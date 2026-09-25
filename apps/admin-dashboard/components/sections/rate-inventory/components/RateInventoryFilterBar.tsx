@@ -42,7 +42,6 @@ export function RateInventoryFilterBar({
     onResetStaged,
     onSaveAllChanges
 }: RateInventoryFilterBarProps) {
-    // Only display channels that are mapped/connected AND explicitly set to a separated mode
     const separatedChannels = Object.entries(channelConfigs || {}).filter(([_, cfg]: [string, any]) => {
         if (!cfg || cfg.isActive === false) return false;
         const isMapped = !!cfg.hotelId || Object.keys(cfg.roomMappings || {}).length > 0;
@@ -50,7 +49,6 @@ export function RateInventoryFilterBar({
         return cfg.separationMode === "separated_rate" || cfg.separationMode === "separated_allotment" || cfg.separationMode === "separated_both";
     });
 
-    // Auto-reset filter to "all" if selected channel is no longer separated
     React.useEffect(() => {
         if (channelFilter !== "all" && !separatedChannels.some(([code]) => code === channelFilter)) {
             setChannelFilter("all");
@@ -60,12 +58,12 @@ export function RateInventoryFilterBar({
     return (
         <div className={styles.filterBar}>
             <div className={styles.filterLeftGroup}>
-                {/* Channel Selector (Common Pool vs Specific Separated OTA) */}
+                {/* 1. Channel Selector */}
                 <select
                     value={channelFilter}
                     onChange={e => setChannelFilter(e.target.value)}
                     className={styles.selectDropdown}
-                    style={{ fontWeight: 600, minWidth: "220px" }}
+                    style={{ minWidth: "230px" }}
                 >
                     <option value="all">🌐 All Channels (Common Pool)</option>
                     {separatedChannels.map(([code, cfg]: [string, any]) => {
@@ -81,7 +79,7 @@ export function RateInventoryFilterBar({
                     })}
                 </select>
 
-                {/* Room Type Selector */}
+                {/* 2. Room Type Selector */}
                 <select
                     value={roomTypeFilter}
                     onChange={e => setRoomTypeFilter(e.target.value)}
@@ -93,7 +91,7 @@ export function RateInventoryFilterBar({
                     ))}
                 </select>
 
-                {/* Rate Mode Radio Buttons */}
+                {/* 3. Rate Mode Radios */}
                 <div className={styles.radioGroup}>
                     <label className={styles.radioLabel}>
                         <input
@@ -115,7 +113,7 @@ export function RateInventoryFilterBar({
                             onChange={() => setRateMode("extra_adult")}
                             className={styles.radioInput}
                         />
-                        <span>Extra Adult Rates</span>
+                        <span>Extra Adult</span>
                     </label>
                     <label className={styles.radioLabel}>
                         <input
@@ -126,11 +124,11 @@ export function RateInventoryFilterBar({
                             onChange={() => setRateMode("extra_child")}
                             className={styles.radioInput}
                         />
-                        <span>Extra Child Rates</span>
+                        <span>Extra Child</span>
                     </label>
                 </div>
 
-                {/* Checkboxes */}
+                {/* 4. Toggles */}
                 <div className={styles.checkboxGroup}>
                     <label className={styles.checkboxLabel}>
                         <input
@@ -139,7 +137,7 @@ export function RateInventoryFilterBar({
                             onChange={e => setHideDerived(e.target.checked)}
                             className={styles.checkboxInput}
                         />
-                        <span>Hide Derived Rate Plans</span>
+                        <span>Hide Derived Rates</span>
                     </label>
 
                     <label className={styles.checkboxLabel}>
@@ -154,7 +152,7 @@ export function RateInventoryFilterBar({
                 </div>
             </div>
 
-            {/* Right Action Buttons */}
+            {/* 5. Right Action Buttons */}
             <div className={styles.filterRightGroup}>
                 {unsavedCount > 0 && (
                     <button
@@ -162,10 +160,10 @@ export function RateInventoryFilterBar({
                         onClick={() => onResetStaged()}
                         disabled={saving}
                         className={styles.btnReset}
-                        title="Discard unsaved changes"
+                        title="Discard all unsaved edits"
                     >
-                        <RotateCcw size={13} />
-                        <span>Reset ({unsavedCount})</span>
+                        <RotateCcw size={14} />
+                        <span>Discard ({unsavedCount})</span>
                     </button>
                 )}
 
@@ -175,10 +173,10 @@ export function RateInventoryFilterBar({
                         onSaveAllChanges().catch(err => console.error("Error saving changes:", err));
                     }}
                     disabled={saving || unsavedCount === 0}
-                    className={`${styles.btnSave} ${unsavedCount > 0 ? styles.btnSaveDirty : ""}`}
+                    className={[styles.btnSave, unsavedCount > 0 ? styles.btnSaveDirty : ""].filter(Boolean).join(" ")}
                 >
-                    <Save size={13} />
-                    <span>{saving ? "Saving..." : unsavedCount > 0 ? `Save Changes (${unsavedCount})` : "Save Changes"}</span>
+                    <Save size={14} />
+                    <span>{saving ? "Saving Changes..." : unsavedCount > 0 ? `Save Changes (${unsavedCount})` : "Save Changes"}</span>
                 </button>
             </div>
         </div>

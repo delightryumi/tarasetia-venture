@@ -26,6 +26,7 @@ import { PaymentMethodEditModal } from "./PaymentMethodEditModal";
 import styles from "./OverviewStyles.module.css";
 import footerStyles from "./GuestDetailFooter.module.css";
 import "./FolioAesthetic.css";
+import { resolveBookingIdentifiers } from "@/lib/channelHelper";
 
 interface GuestDetailModalProps {
     guest: any;
@@ -668,11 +669,11 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                             <X size={16} />
                         </button>
                         <div>
-                            <h2 className={styles.headerTitle} style={{ fontSize: '15px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span>{isEditMode ? "Modify Reservation" : `Reservation #${guest.bookingId || guest.voucherCode || 'MTR-Ref'}`}</span>
+                            <h2 className={styles.headerTitle} style={{ fontSize: '15px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span>{isEditMode ? "Modify Reservation" : `Booking ${resolveBookingIdentifiers(guest).reservationId}`}</span>
                             </h2>
-                            <span style={{ fontSize: '10px', color: 'var(--f-muted)', fontWeight: 500 }}>
-                                {isEditMode ? "Adjust room type, rate & settlement details" : "Reservation Folio & Audit Ledger Details"}
+                            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>
+                                {isEditMode ? "Adjust room type, rate & settlement details" : "Channex Channel Manager Integrated Folio"}
                             </span>
                         </div>
                     </div>
@@ -690,18 +691,18 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                     alignItems: 'center',
                                     gap: '6px',
                                     padding: '6px 14px',
-                                    borderRadius: '6px',
+                                    borderRadius: '4px',
                                     backgroundColor: '#fff',
-                                    border: '1px solid var(--f-hairline, #e2e8f0)',
-                                    fontSize: '11px',
-                                    fontWeight: 700,
-                                    color: 'var(--f-ink, #0f172a)',
+                                    border: '1px solid #d9d9d9',
+                                    fontSize: '12px',
+                                    fontWeight: 500,
+                                    color: '#262626',
                                     cursor: 'pointer'
                                 }}
-                                title="Print Guest Registration Card (GRC)"
+                                title="Print Registration / Folio"
                             >
                                 <Printer size={13} />
-                                <span>Print GRC</span>
+                                <span>Print</span>
                             </button>
                         )}
                         {!isEditMode && (

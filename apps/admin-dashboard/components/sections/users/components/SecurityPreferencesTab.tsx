@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { ShieldCheck, KeyRound, Clock, Smartphone, MapPin, Save } from "lucide-react";
+import { KeyRound, Clock, MapPin, Save } from "lucide-react";
 import { toast } from "sonner";
+import styles from "./SecurityPreferences.module.css";
 
 export const SecurityPreferencesTab: React.FC = () => {
     const [preferences, setPreferences] = useState({
@@ -23,83 +24,77 @@ export const SecurityPreferencesTab: React.FC = () => {
     };
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-            <div style={{
-                background: "#ffffff",
-                border: "1px solid #e2e8f0",
-                borderRadius: "8px",
-                padding: "24px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "24px"
-            }}>
+        <div className={styles.container}>
+            <div className={styles.card}>
                 {/* Section 1: Password Policy */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <div style={{ padding: "6px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                <div className={styles.section}>
+                    <div className={styles.sectionHeader}>
+                        <div className={styles.iconBox}>
                             <KeyRound size={18} color="#0f172a" />
                         </div>
                         <div>
-                            <h4 style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Kebijakan Kata Sandi (Password Policy)</h4>
-                            <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Standar keamanan kredensial akun pengguna dan staf properti.</p>
+                            <h4 className={styles.sectionTitle}>Kebijakan Kata Sandi (Password Policy)</h4>
+                            <p className={styles.sectionSubtitle}>Standar keamanan kredensial akun pengguna dan staf properti.</p>
                         </div>
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px", paddingLeft: "36px" }}>
-                        <div>
-                            <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#334155", marginBottom: "6px" }}>
-                                Masa Berlaku Password (Hari)
-                            </label>
-                            <select 
-                                value={preferences.passwordExpiryDays}
-                                onChange={(e) => setPreferences({ ...preferences, passwordExpiryDays: e.target.value })}
-                                style={{ width: "100%", height: "36px", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "0 10px", fontSize: "13px", background: "#ffffff" }}
-                            >
-                                <option value="30">30 Hari (Sangat Ketat)</option>
-                                <option value="60">60 Hari</option>
-                                <option value="90">90 Hari (Standar Hotel)</option>
-                                <option value="180">180 Hari</option>
-                                <option value="0">Tidak Pernah Kedaluwarsa</option>
-                            </select>
-                        </div>
+                    <div className={styles.contentRow}>
+                        <div className={styles.gridTwoCol}>
+                            <div>
+                                <label className={styles.fieldLabel}>
+                                    Masa Berlaku Password (Hari)
+                                </label>
+                                <select 
+                                    className={styles.selectInput}
+                                    value={preferences.passwordExpiryDays}
+                                    onChange={(e) => setPreferences({ ...preferences, passwordExpiryDays: e.target.value })}
+                                >
+                                    <option value="30">30 Hari (Sangat Ketat)</option>
+                                    <option value="60">60 Hari</option>
+                                    <option value="90">90 Hari (Standar Hotel)</option>
+                                    <option value="180">180 Hari</option>
+                                    <option value="0">Tidak Pernah Kedaluwarsa</option>
+                                </select>
+                            </div>
 
-                        <div>
-                            <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#334155", marginBottom: "6px" }}>
-                                Batas Percobaan Login Gagal
-                            </label>
-                            <select 
-                                value={preferences.lockoutAttempts}
-                                onChange={(e) => setPreferences({ ...preferences, lockoutAttempts: e.target.value })}
-                                style={{ width: "100%", height: "36px", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "0 10px", fontSize: "13px", background: "#ffffff" }}
-                            >
-                                <option value="3">3 Kali Percobaan</option>
-                                <option value="5">5 Kali Percobaan (Rekomendasi)</option>
-                                <option value="10">10 Kali Percobaan</option>
-                            </select>
+                            <div>
+                                <label className={styles.fieldLabel}>
+                                    Batas Percobaan Login Gagal
+                                </label>
+                                <select 
+                                    className={styles.selectInput}
+                                    value={preferences.lockoutAttempts}
+                                    onChange={(e) => setPreferences({ ...preferences, lockoutAttempts: e.target.value })}
+                                >
+                                    <option value="3">3 Kali Percobaan</option>
+                                    <option value="5">5 Kali Percobaan (Rekomendasi)</option>
+                                    <option value="10">10 Kali Percobaan</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div style={{ height: "1px", background: "#f1f5f9" }} />
+                <div className={styles.divider} />
 
                 {/* Section 2: Session & Authentication */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <div style={{ padding: "6px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                <div className={styles.section}>
+                    <div className={styles.sectionHeader}>
+                        <div className={styles.iconBox}>
                             <Clock size={18} color="#0f172a" />
                         </div>
                         <div>
-                            <h4 style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Batas Waktu Sesi (Session Idle Timeout)</h4>
-                            <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Otomatis logout saat terminal atau browser ditinggalkan tidak aktif.</p>
+                            <h4 className={styles.sectionTitle}>Batas Waktu Sesi (Session Idle Timeout)</h4>
+                            <p className={styles.sectionSubtitle}>Otomatis logout saat terminal atau browser ditinggalkan tidak aktif.</p>
                         </div>
                     </div>
 
-                    <div style={{ paddingLeft: "36px" }}>
+                    <div className={styles.contentRow}>
                         <select 
+                            className={styles.selectInput}
+                            style={{ maxWidth: "320px" }}
                             value={preferences.idleTimeoutMinutes}
                             onChange={(e) => setPreferences({ ...preferences, idleTimeoutMinutes: e.target.value })}
-                            style={{ maxWidth: "320px", width: "100%", height: "36px", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "0 10px", fontSize: "13px", background: "#ffffff" }}
                         >
                             <option value="15">15 Menit (Terminal Publik / Kasir)</option>
                             <option value="30">30 Menit (Standar Back-Office)</option>
@@ -109,55 +104,42 @@ export const SecurityPreferencesTab: React.FC = () => {
                     </div>
                 </div>
 
-                <div style={{ height: "1px", background: "#f1f5f9" }} />
+                <div className={styles.divider} />
 
                 {/* Section 3: Geolocation Tracking & Security */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <div style={{ padding: "6px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                <div className={styles.section}>
+                    <div className={styles.sectionHeader}>
+                        <div className={styles.iconBox}>
                             <MapPin size={18} color="#0f172a" />
                         </div>
                         <div>
-                            <h4 style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Pelacakan Geografis & Anomali Kota</h4>
-                            <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Peringatan otomatis saat akun staf diakses dari kota atau negara yang tidak wajar.</p>
+                            <h4 className={styles.sectionTitle}>Pelacakan Geografis & Anomali Kota</h4>
+                            <p className={styles.sectionSubtitle}>Peringatan otomatis saat akun staf diakses dari kota atau negara yang tidak wajar.</p>
                         </div>
                     </div>
 
-                    <div style={{ paddingLeft: "36px" }}>
-                        <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "#1e293b", cursor: "pointer" }}>
+                    <div className={styles.contentRow}>
+                        <label className={styles.checkboxLabel}>
                             <input 
                                 type="checkbox"
+                                className={styles.checkboxInput}
                                 checked={preferences.geoAnomalyAlert}
                                 onChange={(e) => setPreferences({ ...preferences, geoAnomalyAlert: e.target.checked })}
-                                style={{ width: "16px", height: "16px", accentColor: "#0f172a", cursor: "pointer" }}
                             />
                             <span>Aktifkan audit IP & nama kota real-time pada setiap login perangkat</span>
                         </label>
                     </div>
                 </div>
 
-                <div style={{ height: "1px", background: "#f1f5f9" }} />
+                <div className={styles.divider} />
 
                 {/* Action button */}
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <div className={styles.footerRow}>
                     <button
                         type="button"
+                        className={styles.saveBtn}
                         onClick={handleSave}
                         disabled={isSaving}
-                        style={{
-                            height: "38px",
-                            padding: "0 20px",
-                            borderRadius: "6px",
-                            background: "#0f172a",
-                            color: "#ffffff",
-                            fontSize: "13px",
-                            fontWeight: 600,
-                            border: "none",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px"
-                        }}
                     >
                         <Save size={15} />
                         {isSaving ? "Menyimpan..." : "Simpan Preferensi Keamanan"}

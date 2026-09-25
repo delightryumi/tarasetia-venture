@@ -267,6 +267,15 @@
     transition: background 0.2s ease;
     position: relative;
     cursor: pointer;
+    border: none;
+    outline: none;
+    padding: 0;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.toggleTrack:focus-visible {
+    box-shadow: 0 0 0 2px #1e3a2f;
 }
 
 .toggleTrackOn {
@@ -287,6 +296,36 @@
 
 .toggleThumbOn {
     transform: translateX(18px);
+}
+
+.simulationBox {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.simulationHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.simulationTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.simulationNote {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+    margin: 0;
 }
 
 /* ── Test Buttons ── */

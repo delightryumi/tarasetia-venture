@@ -82,12 +82,12 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
 
             const data = await res.json();
             if (data.success) {
-                toast.success(data.message);
+                toast.success(data.message || "Promotion created successfully.");
                 setIsModalOpen(false);
                 setTitle("");
                 fetchPromotions();
             } else {
-                toast.error(data.error || "Gagal membuat promosi saluran.");
+                toast.error(data.error || "Failed to create channel promotion.");
             }
         } catch (err: any) {
             toast.error(`Error: ${err.message}`);
@@ -97,7 +97,7 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
     };
 
     const handleDeletePromotion = async (id: string, name: string) => {
-        if (!confirm(`Hapus promosi '${name}'? Tindakan ini akan mencabut diskon di extranet OTA.`)) return;
+        if (!confirm(`Delete promotion '${name}'? This will revoke the discount on connected OTA extranets.`)) return;
 
         try {
             const res = await fetch(`/api/channex/promotions?hotelCode=${hotelCode}&promoId=${id}`, {
@@ -105,23 +105,23 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
             });
             const data = await res.json();
             if (data.success) {
-                toast.success(data.message);
+                toast.success(data.message || "Promotion deleted successfully.");
                 setPromotions(prev => prev.filter(p => p.id !== id));
             } else {
-                toast.error(data.error || "Gagal menghapus promosi");
+                toast.error(data.error || "Failed to delete promotion.");
             }
         } catch (err: any) {
-            toast.error("Gagal menghapus promosi saluran.");
+            toast.error("Failed to delete channel promotion.");
         }
     };
 
     const getPromoTypeLabel = (type: string) => {
         switch (type) {
-            case "mobile_only": return "📱 Diskon Khusus Pengguna Mobile App";
-            case "high_rated_guest": return "⭐ Diskon Tamu Loyal / Genius";
-            case "last_minute": return "⚡ Diskon Last Minute";
-            case "early_bird": return "🌅 Diskon Pesan Jauh Hari (Early Bird)";
-            case "los": return "📅 Diskon Masa Inap Panjang (LOS)";
+            case "mobile_only": return "Mobile Rate (Smartphone Exclusive Discount)";
+            case "high_rated_guest": return "Loyalty & Genius Program Discount";
+            case "last_minute": return "Last-Minute Booking Discount";
+            case "early_bird": return "Early Bird Advance Purchase Discount";
+            case "los": return "Extended Stay Discount (Minimum LOS)";
             default: return type;
         }
     };
@@ -143,10 +143,10 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                 <div className={styles.titleGroup}>
                     <div className={styles.title}>
                         <Tag size={18} color="#1e3a2f" />
-                        <span>Manajemen Promosi Saluran OTA (Channel Promotion Engine)</span>
+                        <span>OTA Channel Promotion Engine</span>
                     </div>
                     <span className={styles.desc}>
-                        Atur penawaran promo dan diskon khusus secara terpusat langsung ke seluruh extranet OTA tanpa perlu login terpisah.
+                        Centrally configure and publish promotional campaigns and targeted discounts across connected OTA extranets without separate portal logins.
                     </span>
                 </div>
 
@@ -155,10 +155,10 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                         type="button"
                         onClick={fetchPromotions}
                         className={styles.btnSecondary}
-                        title="Segarkan daftar promosi"
+                        title="Refresh promotions list"
                     >
                         <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
-                        <span>Segarkan</span>
+                        <span>Refresh</span>
                     </button>
                     <button
                         type="button"
@@ -166,7 +166,7 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                         className={styles.btnPrimary}
                     >
                         <Plus size={14} />
-                        <span>+ Buat Promosi Saluran</span>
+                        <span>+ Create Channel Promotion</span>
                     </button>
                 </div>
             </div>
@@ -176,13 +176,13 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                 <table className={styles.table}>
                     <thead>
                         <tr>
-                            <th className={styles.th}>Nama Promosi</th>
-                            <th className={styles.th}>Target Saluran OTA</th>
-                            <th className={styles.th}>Tipe Program Promosi</th>
-                            <th className={styles.th}>Besar Diskon</th>
-                            <th className={styles.th}>Periode Berlaku</th>
+                            <th className={styles.th}>Promotion Campaign</th>
+                            <th className={styles.th}>Target Channel</th>
+                            <th className={styles.th}>Promotion Program Type</th>
+                            <th className={styles.th}>Discount Value</th>
+                            <th className={styles.th}>Stay Validity Period</th>
                             <th className={styles.th}>Status</th>
-                            <th className={styles.th} style={{ textAlign: "right" }}>Aksi</th>
+                            <th className={styles.th} style={{ textAlign: "right" }}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -196,7 +196,7 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                                 </td>
                                 <td className={styles.td}>
                                     {getPromoTypeLabel(p.promoType)}
-                                    {p.minLos ? ` (Min. ${p.minLos} Malam)` : ""}
+                                    {p.minLos ? ` (Min. ${p.minLos} Nights)` : ""}
                                 </td>
                                 <td className={styles.td}>
                                     <span style={{ fontWeight: 800, color: "#16a34a", fontSize: "13px" }}>
@@ -204,13 +204,13 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                                     </span>
                                 </td>
                                 <td className={styles.td} style={{ fontSize: "11px", color: "#64748b" }}>
-                                    {p.startDate} s/d {p.endDate}
+                                    {p.startDate} to {p.endDate}
                                 </td>
                                 <td className={styles.td}>
                                     {p.isActive ? (
-                                        <span className={styles.badgeActive}>● AKTIF DI OTA</span>
+                                        <span className={styles.badgeActive}>● ACTIVE ON OTA</span>
                                     ) : (
-                                        <span className={styles.badgeInactive}>○ NON-AKTIF</span>
+                                        <span className={styles.badgeInactive}>○ INACTIVE</span>
                                     )}
                                 </td>
                                 <td className={styles.td} style={{ textAlign: "right" }}>
@@ -218,7 +218,7 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                                         type="button"
                                         onClick={() => handleDeletePromotion(p.id, p.title)}
                                         style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444" }}
-                                        title="Hapus promosi ini"
+                                        title="Delete promotion"
                                     >
                                         <Trash2 size={15} />
                                     </button>
@@ -229,7 +229,7 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                         {promotions.length === 0 && (
                             <tr>
                                 <td colSpan={7} style={{ textAlign: "center", padding: "36px", color: "#94a3b8" }}>
-                                    Belum ada promosi OTA aktif. Buat promosi baru untuk meningkatkan visibilitas dan konversi di Booking.com atau Airbnb.
+                                    No active OTA promotions found. Create a promotion to boost visibility and conversions on Booking.com, Agoda, and Airbnb.
                                 </td>
                             </tr>
                         )}
@@ -237,12 +237,12 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                 </table>
             </div>
 
-            {/* Modal Buat Promosi */}
+            {/* Modal Create Promotion */}
             {isModalOpen && (
                 <div className={styles.modalOverlay}>
                     <div className={styles.modalContent}>
                         <div className={styles.modalHeader}>
-                            <span className={styles.modalTitle}>✨ Buat Promosi Saluran OTA Baru</span>
+                            <span className={styles.modalTitle}>Create Channel Promotion Campaign</span>
                             <button
                                 type="button"
                                 onClick={() => setIsModalOpen(false)}
@@ -256,12 +256,12 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                             <div className={styles.modalBody}>
                                 <div>
                                     <label style={{ fontSize: "12px", fontWeight: 600, color: "#334155", display: "block", marginBottom: "4px" }}>
-                                        Nama Promosi
+                                        Promotion Name
                                     </label>
                                     <input
                                         type="text"
                                         required
-                                        placeholder="Contoh: Mobile Booking Deal 10%"
+                                        placeholder="e.g. Mobile Booking Deal 10%"
                                         value={title}
                                         onChange={e => setTitle(e.target.value)}
                                         style={{ width: "100%", padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
@@ -271,7 +271,7 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                                     <div>
                                         <label style={{ fontSize: "12px", fontWeight: 600, color: "#334155", display: "block", marginBottom: "4px" }}>
-                                            Saluran Target
+                                            Target Channel
                                         </label>
                                         <select
                                             value={channelCode}
@@ -287,7 +287,7 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
 
                                     <div>
                                         <label style={{ fontSize: "12px", fontWeight: 600, color: "#334155", display: "block", marginBottom: "4px" }}>
-                                            Persentase Diskon (%)
+                                            Discount Percentage (%)
                                         </label>
                                         <input
                                             type="number"
@@ -302,25 +302,25 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
 
                                 <div>
                                     <label style={{ fontSize: "12px", fontWeight: 600, color: "#334155", display: "block", marginBottom: "4px" }}>
-                                        Tipe Program Promosi
+                                        Promotion Program Type
                                     </label>
                                     <select
                                         value={promoType}
                                         onChange={e => setPromoType(e.target.value as any)}
                                         style={{ width: "100%", padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
                                     >
-                                        <option value="mobile_only">📱 Mobile Rate (Diskon Khusus Pengguna Smartphone)</option>
-                                        <option value="high_rated_guest">⭐ High-Rated Guest / Genius Program Discount</option>
-                                        <option value="last_minute">⚡ Last Minute Booking Discount</option>
-                                        <option value="early_bird">🌅 Early Bird Advance Purchase</option>
-                                        <option value="los">📅 Minimum Length of Stay (LOS) Deal</option>
+                                        <option value="mobile_only">Mobile Rate (Smartphone Exclusive Discount)</option>
+                                        <option value="high_rated_guest">High-Rated Guest / Genius Program Discount</option>
+                                        <option value="last_minute">Last-Minute Booking Discount</option>
+                                        <option value="early_bird">Early Bird Advance Purchase Discount</option>
+                                        <option value="los">Minimum Length of Stay (LOS) Deal</option>
                                     </select>
                                 </div>
 
                                 {promoType === "los" && (
                                     <div>
                                         <label style={{ fontSize: "12px", fontWeight: 600, color: "#334155", display: "block", marginBottom: "4px" }}>
-                                            Minimal Malam Menginap (Min LOS)
+                                            Minimum Nights Stay (Min LOS)
                                         </label>
                                         <input
                                             type="number"
@@ -336,7 +336,7 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                                     <div>
                                         <label style={{ fontSize: "12px", fontWeight: 600, color: "#334155", display: "block", marginBottom: "4px" }}>
-                                            Mulai Berlaku
+                                            Start Date
                                         </label>
                                         <input
                                             type="date"
@@ -348,7 +348,7 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
 
                                     <div>
                                         <label style={{ fontSize: "12px", fontWeight: 600, color: "#334155", display: "block", marginBottom: "4px" }}>
-                                            Berakhir Pada
+                                            End Date
                                         </label>
                                         <input
                                             type="date"
@@ -366,14 +366,14 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                                     onClick={() => setIsModalOpen(false)}
                                     className={styles.btnSecondary}
                                 >
-                                    Batal
+                                    Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={saving}
                                     className={styles.btnPrimary}
                                 >
-                                    {saving ? "Menyimpan..." : "Aktifkan Promosi ke OTA"}
+                                    {saving ? "Publishing..." : "Publish Promotion to OTA"}
                                 </button>
                             </div>
                         </form>

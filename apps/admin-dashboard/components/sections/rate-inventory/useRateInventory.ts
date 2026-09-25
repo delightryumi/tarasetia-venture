@@ -164,8 +164,16 @@ export const useRateInventory = () => {
                 rps.push({
                     id: docSnap.id,
                     hotelCode: activeHotelCode,
+                    ...data,
                     roomTypeId: data.roomTypeId || "",
                     roomTypeName: data.roomTypeName || "",
+                    roomTypeIds: Array.isArray(data.roomTypeIds) && data.roomTypeIds.length > 0
+                        ? data.roomTypeIds
+                        : (data.roomTypeId ? [data.roomTypeId] : []),
+                    roomTypeNames: Array.isArray(data.roomTypeNames)
+                        ? data.roomTypeNames
+                        : (data.roomTypeName ? [data.roomTypeName] : []),
+                    roomRates: data.roomRates || {},
                     name: data.name || "Standard Rate",
                     code: data.code || docSnap.id,
                     baseRate: Number(data.baseRate ?? data.rate ?? 0),
@@ -299,7 +307,8 @@ export const useRateInventory = () => {
             const rtPlans = ratePlans.filter(rp => 
                 rp.roomTypeId === rt.id || 
                 (Array.isArray(rp.roomTypeIds) && rp.roomTypeIds.includes(rt.id)) ||
-                (rp.roomTypeName && rp.roomTypeName.trim().toLowerCase() === rt.name.trim().toLowerCase())
+                (rp.roomTypeName && rp.roomTypeName.trim().toLowerCase() === rt.name.trim().toLowerCase()) ||
+                (Array.isArray(rp.roomTypeNames) && rp.roomTypeNames.some(name => name?.trim().toLowerCase() === rt.name?.trim().toLowerCase()))
             );
 
             // Days status for room type summary row (inventory)
@@ -539,7 +548,7 @@ export const useRateInventory = () => {
                     roomTypeName: rt.name,
                     mealsIncluded: !!rp.mealsIncluded,
                     currency: rp.currency || "IDR",
-                    baseRate: rp.baseRate,
+                    baseRate: Number(rp.roomRates?.[rt.id] ?? rp.baseRate ?? rt.basePrice ?? 0),
                     days: rpDaysStatus
                 };
             });
@@ -619,7 +628,7 @@ export const useRateInventory = () => {
     // Discard all staged changes
     const resetStaged = useCallback(() => {
         setStagedUpdates({});
-        toast.info("Perubahan lokal berhasil dibatalkan.");
+        toast.info("Local changes discarded.");
     }, []);
 
     // Save all staged changes in batch to Firestore (Persisting both Common Pool & Per-Channel Overrides)
@@ -760,7 +769,7 @@ export const useRateInventory = () => {
 
             await batch.commit();
             setStagedUpdates({});
-            toast.success(`Berhasil menyimpan ${unsavedCount} perubahan ke database. Menyinkronkan delta ke Channex...`);
+            toast.success(`Successfully saved ${unsavedCount} change(s) to database. Syncing delta to Channex...`);
 
             // Build delta payload for exact 1-call batch sync (Certification Standard)
             const deltaRates: any[] = [];
@@ -826,23 +835,23 @@ export const useRateInventory = () => {
             }
 
             if (affectedDates.length === 0) {
-                toast.warning("Tidak ada tanggal yang cocok dengan kriteria hari yang dipilih.");
+                toast.warning("No dates match the selected day criteria.");
                 setSaving(false);
                 return;
             }
 
             if (params.rateAction !== "none" && !canChangeRate) {
-                toast.error("Anda tidak memiliki izin untuk merubah Rate / Harga.");
+                toast.error("You do not have permission to modify Rates.");
                 setSaving(false);
                 return;
             }
             if (params.stopSellAction !== "none" && !canStopSell) {
-                toast.error("Anda tidak memiliki izin untuk merubah Stop Sell.");
+                toast.error("You do not have permission to modify Stop Sell.");
                 setSaving(false);
                 return;
             }
             if (params.inventoryAction !== "none" && !canChangeInventory) {
-                toast.error("Anda tidak memiliki izin untuk merubah Inventory.");
+                toast.error("You do not have permission to modify Inventory.");
                 setSaving(false);
                 return;
             }
@@ -1080,14 +1089,14 @@ export const useRateInventory = () => {
 
             setBulkModalOpen(false);
             if (deltaRates.length > 0 || deltaAvail.length > 0) {
-                toast.success(`Bulk Update berhasil diterapkan pada ${affectedDates.length} tanggal. Menyinkronkan delta ke Channex...`);
+                toast.success(`Bulk Update applied to ${affectedDates.length} date(s). Syncing delta to Channex...`);
                 await syncDeltaToChannex({ rates: deltaRates, availability: deltaAvail });
             } else {
-                toast.success(`Bulk Update berhasil diterapkan pada ${affectedDates.length} tanggal.`);
+                toast.success(`Bulk Update applied to ${affectedDates.length} date(s).`);
             }
         } catch (err: any) {
             console.error("Error applying bulk update:", err);
-            toast.error(`Gagal menerapkan Bulk Update: ${err.message}`);
+            toast.error(`Failed to apply Bulk Update: ${err.message}`);
         } finally {
             setSaving(false);
         }
@@ -1143,10 +1152,10 @@ export const useRateInventory = () => {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-            toast.success("Grid Rates & Inventory berhasil diexport ke CSV.");
+            toast.success("Rates & Inventory matrix exported to CSV successfully.");
         } catch (err: any) {
             console.error("Export error:", err);
-            toast.error("Gagal export CSV: " + (err?.message || String(err)));
+            toast.error("Failed to export CSV: " + (err?.message || String(err)));
         }
     };
 
@@ -1166,17 +1175,17 @@ export const useRateInventory = () => {
             });
             const data = await res.json();
             if (data.success) {
-                setLastSyncedAt(new Date().toLocaleTimeString("id-ID"));
+                setLastSyncedAt(new Date().toLocaleTimeString("en-US"));
                 const taskMsg = data.taskIds && data.taskIds.length > 0
                     ? ` (Task ID: ${data.taskIds.join(", ")})`
                     : "";
-                toast.success(`Delta sync ke Channex berhasil!${taskMsg}`);
+                toast.success(`Delta sync to Channex successful!${taskMsg}`);
             } else {
-                toast.error(data.message || "Gagal delta sync ke Channex.");
+                toast.error(data.message || "Delta sync to Channex failed.");
             }
         } catch (err: any) {
             console.error("Channex delta sync error:", err);
-            toast.error("Gagal koneksi ke Channex API untuk delta sync.");
+            toast.error("Failed to connect to Channex API for delta sync.");
         } finally {
             setSyncingAri(false);
         }
@@ -1201,17 +1210,17 @@ export const useRateInventory = () => {
             });
             const data = await res.json();
             if (data.success) {
-                setLastSyncedAt(new Date().toLocaleTimeString("id-ID"));
+                setLastSyncedAt(new Date().toLocaleTimeString("en-US"));
                 const taskMsg = data.taskIds && data.taskIds.length > 0
                     ? ` (Task IDs: ${data.taskIds.join(", ")})`
                     : "";
-                toast.success(roomTypeId ? `Stok kamar berhasil disinkronkan ke OTAs.${taskMsg}` : `Full ARI 500 hari berhasil disinkronkan ke Channex!${taskMsg}`);
+                toast.success(roomTypeId ? `Room inventory successfully synced to OTAs.${taskMsg}` : `Full 500-day ARI successfully synced to Channex!${taskMsg}`);
             } else {
-                toast.error(data.message || "Gagal menyinkronkan ke Channex.");
+                toast.error(data.message || "Failed to sync to Channex.");
             }
         } catch (err: any) {
             console.error("Channex sync error:", err);
-            toast.error("Gagal koneksi ke Channex API.");
+            toast.error("Failed to connect to Channex API.");
         } finally {
             setSyncingAri(false);
             setSyncingRoomTypeId(null);

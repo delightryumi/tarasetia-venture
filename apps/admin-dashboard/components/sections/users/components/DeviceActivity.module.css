@@ -55,8 +55,14 @@
 
 .devicesGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 14px;
+}
+
+@media (max-width: 480px) {
+    .devicesGrid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .deviceCard {

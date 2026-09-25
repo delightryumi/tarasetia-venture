@@ -349,3 +349,33 @@
     opacity: 0.4;
     cursor: not-allowed;
 }
+
+@media (max-width: 640px) {
+    .confirmOverlay {
+        padding: 16px;
+    }
+    .confirmPanel,
+    .changePwdModalPanel {
+        max-width: 100%;
+        width: 100%;
+    }
+    .confirmHeader,
+    .confirmBody,
+    .changePwdModalHeader,
+    .changePwdModalBody {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    .confirmFooter,
+    .changePwdModalFooter {
+        padding: 14px 16px;
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+    .confirmFooter button,
+    .changePwdModalFooter button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+

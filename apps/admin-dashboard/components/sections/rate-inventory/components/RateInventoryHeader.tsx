@@ -23,14 +23,17 @@ export function RateInventoryHeader({
         <header className={styles.header}>
             <div className={styles.headerLeft}>
                 <div className={styles.iconBox}>
-                    <Bed size={20} />
+                    <Bed size={22} />
                 </div>
                 <div className={styles.hotelTitleGroup}>
-                    <span className={styles.hotelName}>
-                        {activeHotelName || "My Tara Hotel"}
-                    </span>
-                    <span className={styles.hotelCode}>
-                        Code: {activeHotelCode || "0"} • Rates &amp; Inventory Management
+                    <div className={styles.hotelName}>
+                        <span>{activeHotelName || "My Tara Partner"}</span>
+                        <span className={styles.hotelCodeBadge}>
+                            Code: {activeHotelCode || "0"}
+                        </span>
+                    </div>
+                    <span className={styles.hotelSubtitle}>
+                        Physical Inventory Control &amp; Master Rate Management (ARI)
                     </span>
                 </div>
             </div>
@@ -38,7 +41,7 @@ export function RateInventoryHeader({
             <div className={styles.headerRight}>
                 {lastSyncedAt && (
                     <span className={styles.syncText}>
-                        Last OTA Sync: <strong>{lastSyncedAt}</strong>
+                        Last Synced: <strong>{lastSyncedAt}</strong>
                     </span>
                 )}
 
@@ -47,9 +50,9 @@ export function RateInventoryHeader({
                     onClick={onSyncAri}
                     disabled={syncingAri || !activeHotelCode}
                     className={styles.btnSync}
-                    title="Push active ARI matrix to connected OTAs"
+                    title="Push active ARI matrix changes to all connected distribution channels"
                 >
-                    <RefreshCw size={14} className={syncingAri ? "animate-spin" : ""} />
+                    <RefreshCw size={14} className={syncingAri ? styles.spinIcon : ""} />
                     <span>{syncingAri ? "Syncing..." : "Sync ARI to OTAs"}</span>
                 </button>
             </div>

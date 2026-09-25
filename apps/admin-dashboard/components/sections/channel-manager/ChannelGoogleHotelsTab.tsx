@@ -87,10 +87,10 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                 status: prev.isEnabled ? (prev.googleHotelCenterId ? "ACTIVE" : "PENDING") : "DISCONNECTED"
             }));
 
-            toast.success("Konfigurasi Google Hotel Search & Free Booking Links berhasil disimpan!");
+            toast.success("Google Hotel Search & Free Booking Links configuration saved successfully.");
         } catch (err: any) {
             console.error("Error saving Google Hotel config:", err);
-            toast.error("Gagal menyimpan konfigurasi Google Hotels.");
+            toast.error("Failed to save Google Hotels configuration.");
         } finally {
             setSaving(false);
         }
@@ -111,16 +111,16 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
             });
             const data = await res.json();
             if (data.success) {
-                toast.success(data.message || "Feed ARI Google Hotel berhasil disinkronkan ke Google Hotel Center!");
+                toast.success(data.message || "Google Hotel ARI feed synchronized successfully with Google Hotel Center.");
                 setConfig(prev => ({
                     ...prev,
                     lastSyncAt: new Date().toISOString()
                 }));
             } else {
-                toast.error(data.error || "Gagal sinkronisasi feed Google Hotel.");
+                toast.error(data.error || "Failed to synchronize Google Hotel feed.");
             }
         } catch (err: any) {
-            toast.error(`Koneksi Feed Error: ${err.message}`);
+            toast.error(`Feed Connection Error: ${err.message}`);
         } finally {
             setSyncing(false);
         }
@@ -130,7 +130,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
         return (
             <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
                 <RefreshCw size={24} className="animate-spin" style={{ margin: "0 auto 10px" }} />
-                <span>Memuat konfigurasi Google Hotel Search...</span>
+                <span>Loading Google Hotel Search configuration...</span>
             </div>
         );
     }
@@ -146,13 +146,13 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                         {config.status === "ACTIVE" ? (
                             <span className={styles.statusBadgeActive}>● LIVE GOOGLE LINKS</span>
                         ) : config.status === "PENDING" ? (
-                            <span className={styles.statusBadgePending}>⏳ MENUNGGU ID HOTEL CENTER</span>
+                            <span className={styles.statusBadgePending}>⏳ PENDING HOTEL CENTER ID</span>
                         ) : (
-                            <span className={styles.statusBadgeDisconnected}>○ NON-AKTIF</span>
+                            <span className={styles.statusBadgeDisconnected}>○ INACTIVE</span>
                         )}
                     </div>
                     <span className={styles.desc}>
-                        Sistem terhubung secara resmi dengan Google Hotel Ads &amp; Free Booking Links. Tamu di Google Search dapat mengklik tautan langsung untuk memesan di My Tara Booking Engine tanpa komisi OTA.
+                        Direct metasearch integration with Google Hotel Ads and Free Booking Links. Guests searching on Google can click straight through to your My Tara Direct Booking Engine with zero OTA commissions.
                     </span>
                 </div>
 
@@ -162,10 +162,10 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                         onClick={handleSyncFeed}
                         disabled={syncing || !config.isEnabled}
                         className={styles.btnSecondary}
-                        title="Kirim Feed ARI dan Metadata Kamar ke Google Hotel Center"
+                        title="Synchronize ARI Feed and Room Metadata to Google Hotel Center"
                     >
-                        <Zap size={14} className={syncing ? "animate-spin" : ""} color="#f59e0b" />
-                        <span>{syncing ? "Mendorong Feed..." : "Sinkron ARI Feed ke Google"}</span>
+                        <RefreshCw size={14} className={syncing ? "animate-spin" : ""} color="#2563eb" />
+                        <span>{syncing ? "Pushing Feed..." : "Sync ARI Feed to Google"}</span>
                     </button>
                 </div>
             </div>
@@ -173,9 +173,9 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
             {/* Metric Overview (Zero Dummy Data: Real Counts Only) */}
             <div className={styles.statsGrid}>
                 <div className={styles.statCard}>
-                    <span className={styles.statLabel}>Status Google Hotel Center</span>
+                    <span className={styles.statLabel}>Google Hotel Center Status</span>
                     <span className={styles.statValue} style={{ fontSize: "16px", color: config.isEnabled ? "#16a34a" : "#64748b" }}>
-                        {config.isEnabled ? (config.googleHotelCenterId ? "Terverifikasi" : "Menunggu ID") : "Belum Terhubung"}
+                        {config.isEnabled ? (config.googleHotelCenterId ? "Verified" : "Pending Account ID") : "Disconnected"}
                     </span>
                 </div>
                 <div className={styles.statCard}>
@@ -185,15 +185,15 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                     </span>
                 </div>
                 <div className={styles.statCard}>
-                    <span className={styles.statLabel}>Kebijakan Pajak Google</span>
+                    <span className={styles.statLabel}>Google Rate Tax Policy</span>
                     <span className={styles.statValue} style={{ fontSize: "16px" }}>
-                        {config.taxPolicy === "inclusive" ? "Harga Termasuk Pajak (Nett)" : "Sebelum Pajak"}
+                        {config.taxPolicy === "inclusive" ? "Tax & Service Inclusive (Gross)" : "Tax Exclusive (Net Rate)"}
                     </span>
                 </div>
                 <div className={styles.statCard}>
-                    <span className={styles.statLabel}>Terakhir Sinkron ARI Feed</span>
+                    <span className={styles.statLabel}>Last ARI Feed Sync</span>
                     <span className={styles.statValue} style={{ fontSize: "14px", color: "#64748b" }}>
-                        {config.lastSyncAt ? new Date(config.lastSyncAt).toLocaleString("id-ID") : "Belum Pernah"}
+                        {config.lastSyncAt ? new Date(config.lastSyncAt).toLocaleString("en-US") : "Never"}
                     </span>
                 </div>
             </div>
@@ -202,9 +202,9 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
             <div className={styles.infoBanner}>
                 <ShieldCheck size={20} style={{ flexShrink: 0, marginTop: "2px" }} />
                 <div>
-                    <b>Keuntungan Google Free Booking Links:</b>
+                    <b>Benefits of Google Free Booking Links:</b>
                     <p style={{ margin: "4px 0 0 0" }}>
-                        Listing hotel Anda akan muncul di hasil pencarian Google Hotel Search dengan label tautan situs resmi. Tamu yang menekan tombol pesan akan langsung diarahkan ke landing page booking engine My Tara Anda dengan harga real-time tanpa potongan komisi perantara.
+                        Your hotel listing will appear on Google Hotel Search labeled with an official site link badge. Travelers clicking the link are routed straight to your My Tara direct booking engine with real-time rates and live room availability.
                     </p>
                 </div>
             </div>
@@ -213,7 +213,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
             <form onSubmit={handleSave} className={styles.card}>
                 <div className={styles.cardHeader}>
                     <span className={styles.cardTitle}>
-                        ⚙️ Pengaturan Integrasi Google Hotel Center
+                        Google Hotel Center Integration Settings
                     </span>
                     <button
                         type="submit"
@@ -221,38 +221,38 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                         className={styles.btnPrimary}
                     >
                         <Save size={14} />
-                        <span>{saving ? "Menyimpan..." : "Simpan Pengaturan"}</span>
+                        <span>{saving ? "Saving..." : "Save Settings"}</span>
                     </button>
                 </div>
 
                 <div className={styles.formGrid}>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Aktifkan Google Hotel Search</label>
+                        <label className={styles.label}>Enable Google Hotel Search</label>
                         <select
                             value={config.isEnabled ? "true" : "false"}
                             onChange={e => setConfig(prev => ({ ...prev, isEnabled: e.target.value === "true" }))}
                             className={styles.select}
                         >
-                            <option value="false">Nonaktifkan Saluran</option>
-                            <option value="true">Aktifkan Google Free Booking Links &amp; ARI</option>
+                            <option value="false">Disable Channel</option>
+                            <option value="true">Enable Google Free Booking Links &amp; ARI</option>
                         </select>
-                        <span className={styles.hint}>Sistem akan mulai memancarkan ketersediaan dan harga kamar hotel Anda ke katalog Google.</span>
+                        <span className={styles.hint}>Broadcasts room availability and rates to the global Google travel index.</span>
                     </div>
 
                     <div className={styles.formGroup}>
                         <label className={styles.label}>Google Hotel Center Account ID</label>
                         <input
                             type="text"
-                            placeholder="Contoh: 1234567890 (Opsional jika dikelola secara otomatis)"
+                            placeholder="e.g. 1234567890 (Optional if automatically managed)"
                             value={config.googleHotelCenterId || ""}
                             onChange={e => setConfig(prev => ({ ...prev, googleHotelCenterId: e.target.value.trim() }))}
                             className={styles.input}
                         />
-                        <span className={styles.hint}>Jika hotel memiliki Google Business Profile/Hotel Center mandiri, cantumkan Account ID di sini.</span>
+                        <span className={styles.hint}>Specify your Google Hotel Center account ID if managed independently.</span>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Landing Page URL Format (Direct Engine)</label>
+                        <label className={styles.label}>Direct Engine Landing Page URL Format</label>
                         <input
                             type="url"
                             placeholder="https://setara.my.id/booking?hotel=..."
@@ -260,24 +260,24 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                             onChange={e => setConfig(prev => ({ ...prev, landingPageUrl: e.target.value.trim() }))}
                             className={styles.input}
                         />
-                        <span className={styles.hint}>URL halaman tempat tamu mendarat setelah mengklik tautan Google.</span>
+                        <span className={styles.hint}>Target URL where guests land upon clicking the Google direct booking link.</span>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Format Pajak Tampilan Google (Tax Policy)</label>
+                        <label className={styles.label}>Google Rate Display Tax Policy</label>
                         <select
                             value={config.taxPolicy}
                             onChange={e => setConfig(prev => ({ ...prev, taxPolicy: e.target.value as any }))}
                             className={styles.select}
                         >
-                            <option value="inclusive">Harga Final Termasuk Pajak &amp; Layanan (Direkomendasikan di Indonesia)</option>
-                            <option value="exclusive">Harga Dasar Belum Termasuk Pajak (Exclusive)</option>
+                            <option value="inclusive">Tax &amp; Service Inclusive (All-Inclusive Pricing)</option>
+                            <option value="exclusive">Tax Exclusive (Net Room Rate)</option>
                         </select>
-                        <span className={styles.hint}>Sesuai standar Google Hotel Search regional Indonesia (All-Inclusive Pricing).</span>
+                        <span className={styles.hint}>Complies with Google Hotel Search pricing display standards.</span>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Mata Uang Transmisi Google</label>
+                        <label className={styles.label}>Transmission Currency</label>
                         <select
                             value={config.currency}
                             onChange={e => setConfig(prev => ({ ...prev, currency: e.target.value }))}

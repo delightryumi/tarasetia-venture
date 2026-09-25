@@ -1,0 +1,275 @@
+.headerRow {
+    background-color: #f8fafc;
+    position: sticky;
+    top: 0;
+    z-index: 25;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+:global(.dark) .headerRow {
+    background-color: #111827;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.colTitle {
+    width: 290px;
+    min-width: 290px;
+    max-width: 290px;
+    position: sticky;
+    left: 0;
+    z-index: 30;
+    background-color: #f8fafc;
+    border-right: 2px solid #cbd5e1;
+    border-bottom: 2px solid #cbd5e1;
+    box-sizing: border-box;
+    padding: 0;
+}
+
+:global(.dark) .colTitle {
+    background-color: #111827;
+    border-right-color: #4b5563;
+    border-bottom-color: #4b5563;
+}
+
+.dateNavControl {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px;
+    height: 48px;
+    gap: 6px;
+    box-sizing: border-box;
+}
+
+.navBtnGroup {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.dateStepperBtn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #334155;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+:global(.dark) .dateStepperBtn {
+    background-color: #1f2937;
+    border-color: #4b5563;
+    color: #cbd5e1;
+}
+
+.dateStepperBtn:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+:global(.dark) .dateStepperBtn:hover {
+    background-color: #374151;
+    color: #ffffff;
+    border-color: #6b7280;
+}
+
+.btnToday {
+    height: 28px;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #1d4ed8;
+    font-size: 10.5px;
+    font-weight: 700;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+:global(.dark) .btnToday {
+    background-color: #1e3a8a;
+    border-color: #3b82f6;
+    color: #93c5fd;
+}
+
+.btnToday:hover {
+    background-color: #dbeafe;
+    border-color: #93c5fd;
+}
+
+:global(.dark) .btnToday:hover {
+    background-color: #1d4ed8;
+}
+
+.datePickerInput {
+    height: 28px;
+    padding: 0 4px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #0f172a;
+    background-color: #ffffff;
+    outline: none;
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    font-family: inherit;
+    transition: all 0.15s ease;
+}
+
+:global(.dark) .datePickerInput {
+    background-color: #1f2937;
+    border-color: #4b5563;
+    color: #f8fafc;
+}
+
+.datePickerInput:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* Day Header Columns */
+.colDay {
+    width: 82px;
+    min-width: 82px;
+    max-width: 82px;
+    text-align: center;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 2px solid #cbd5e1;
+    box-sizing: border-box;
+    padding: 4px 2px;
+}
+
+:global(.dark) .colDay {
+    border-right-color: #374151;
+    border-bottom-color: #4b5563;
+}
+
+.colWeekend {
+    background-color: #f1f5f9;
+}
+
+:global(.dark) .colWeekend {
+    background-color: #182234;
+}
+
+.colToday {
+    background-color: #eff6ff !important;
+    border-left: 2px solid #3b82f6 !important;
+    border-right: 2px solid #3b82f6 !important;
+}
+
+:global(.dark) .colToday {
+    background-color: #172554 !important;
+    border-left-color: #60a5fa !important;
+    border-right-color: #60a5fa !important;
+}
+
+.dayOfWeek {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+:global(.dark) .dayOfWeek {
+    color: #94a3b8;
+}
+
+.dayOfWeekWeekend {
+    color: #e11d48;
+}
+
+:global(.dark) .dayOfWeekWeekend {
+    color: #fb7185;
+}
+
+.dayNumber {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+    margin: 1px 0;
+}
+
+:global(.dark) .dayNumber {
+    color: #f8fafc;
+}
+
+.monthLabel {
+    font-size: 9px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+:global(.dark) .monthLabel {
+    color: #9ca3af;
+}
+
+.todayTag {
+    display: inline-block;
+    margin-top: 1px;
+    padding: 0 4px;
+    border-radius: 3px;
+    font-size: 7.5px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    background-color: #2563eb;
+    color: #ffffff;
+}
+
+.jumpForwardTh {
+    width: 36px;
+    min-width: 36px;
+    text-align: center;
+    border-bottom: 2px solid #cbd5e1;
+    background-color: #f8fafc;
+}
+
+:global(.dark) .jumpForwardTh {
+    background-color: #111827;
+    border-bottom-color: #4b5563;
+}
+
+.jumpForwardBtn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #334155;
+    margin: 0 auto;
+    transition: all 0.15s ease;
+}
+
+:global(.dark) .jumpForwardBtn {
+    background-color: #1f2937;
+    border-color: #4b5563;
+    color: #cbd5e1;
+}
+
+.jumpForwardBtn:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}

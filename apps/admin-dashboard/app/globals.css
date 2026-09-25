@@ -100,6 +100,10 @@
 
   --font-outfit: "Outfit", sans-serif;
   --font-mono-jb: "JetBrains Mono", monospace;
+
+  /* Numeric display font: Inter tabular figures — matches Channex dashboard style */
+  --f-font-numeric: "Inter", var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --f-font-numeric-features: "tnum" 1, "lnum" 1, "kern" 1;
 }
 
 * {

@@ -1,0 +1,178 @@
+.cell {
+    padding: 3px 4px;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: center;
+    vertical-align: middle;
+    position: relative;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    transition: background-color 0.15s ease;
+}
+
+:global(.dark) .cell {
+    background-color: #1f2937;
+    border-right-color: #374151;
+    border-bottom-color: #374151;
+}
+
+.cellWeekend {
+    background-color: #f8fafc;
+}
+
+:global(.dark) .cellWeekend {
+    background-color: #182234;
+}
+
+.cellToday {
+    background-color: #eff6ff !important;
+    border-left: 2px solid #3b82f6 !important;
+    border-right: 2px solid #3b82f6 !important;
+}
+
+:global(.dark) .cellToday {
+    background-color: #172554 !important;
+    border-left-color: #60a5fa !important;
+    border-right-color: #60a5fa !important;
+}
+
+.cellDirty {
+    background-color: #fffbeb !important;
+    box-shadow: inset 0 0 0 1.5px #f59e0b;
+}
+
+:global(.dark) .cellDirty {
+    background-color: #451a03 !important;
+    box-shadow: inset 0 0 0 1.5px #fbbf24;
+}
+
+/* Number Inputs: Inventory, Rates, MinStay */
+.numberInput {
+    width: 100%;
+    height: 26px;
+    padding: 0 3px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: inherit;
+    color: #0f172a;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+}
+
+:global(.dark) .numberInput {
+    color: #f8fafc;
+    background-color: #111827;
+    border-color: #4b5563;
+}
+
+.numberInput:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+:global(.dark) .numberInput:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25);
+}
+
+.inputZero {
+    background-color: #fef2f2 !important;
+    color: #dc2626 !important;
+    border-color: #fca5a5 !important;
+}
+
+:global(.dark) .inputZero {
+    background-color: #450a0a !important;
+    color: #f87171 !important;
+    border-color: #7f1d1d !important;
+}
+
+.inputCapped {
+    background-color: #f5f3ff !important;
+    color: #6d28d9 !important;
+    border-color: #c4b5fd !important;
+}
+
+:global(.dark) .inputCapped {
+    background-color: #2e1065 !important;
+    color: #c4b5fd !important;
+    border-color: #7c3aed !important;
+}
+
+.inputDisabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+    background-color: #f1f5f9 !important;
+}
+
+:global(.dark) .inputDisabled {
+    background-color: #1f2937 !important;
+}
+
+/* Badges for Toggle States (Stop Sell, CTA, CTD) */
+.toggleBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 24px;
+    padding: 0 4px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    user-select: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.toggleOpen {
+    background-color: #ecfdf5;
+    color: #065f46;
+    border-color: #a7f3d0;
+}
+
+:global(.dark) .toggleOpen {
+    background-color: #064e3b;
+    color: #6ee7b7;
+    border-color: #047857;
+}
+
+.toggleOpen:hover:not(:disabled) {
+    background-color: #d1fae5;
+}
+
+.toggleClosed {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border-color: #fecaca;
+}
+
+:global(.dark) .toggleClosed {
+    background-color: #7f1d1d;
+    color: #fca5a5;
+    border-color: #991b1b;
+}
+
+.toggleClosed:hover:not(:disabled) {
+    background-color: #fee2e2;
+}
+
+.toggleWarning {
+    background-color: #fff7ed;
+    color: #9a3412;
+    border-color: #fed7aa;
+}
+
+:global(.dark) .toggleWarning {
+    background-color: #7c2d12;
+    color: #fdba74;
+    border-color: #9a3412;
+}

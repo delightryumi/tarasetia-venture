@@ -78,10 +78,10 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
             });
 
             setConfig(updatedConfig);
-            toast.success("Konfigurasi Pembayaran & Vault Tokenisasi Kartu berhasil disimpan!");
+            toast.success("Payment Gateway & Tokenization Vault configuration saved successfully.");
         } catch (err: any) {
             console.error("Error saving Payment Tokenization config:", err);
-            toast.error("Gagal menyimpan konfigurasi tokenisasi.");
+            toast.error("Failed to save tokenization configuration.");
         } finally {
             setSaving(false);
         }
@@ -91,7 +91,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
         return (
             <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
                 <RefreshCw size={24} className="animate-spin" style={{ margin: "0 auto 10px" }} />
-                <span>Memuat pengaturan Vault Tokenisasi PCI...</span>
+                <span>Loading PCI Tokenization Vault configuration...</span>
             </div>
         );
     }
@@ -105,13 +105,13 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
                         <CreditCard size={18} color="#1e3a2f" />
                         <span>Stripe Tokenization &amp; PCI-DSS Card Vault</span>
                         {config.accountStatus === "CONNECTED" ? (
-                            <span className={styles.badgeConnected}>● STRIPE VAULT TERHUBUNG</span>
+                            <span className={styles.badgeConnected}>● STRIPE VAULT CONNECTED</span>
                         ) : (
-                            <span className={styles.badgeNotConfigured}>○ BELUM TERKONFIGURASI</span>
+                            <span className={styles.badgeNotConfigured}>○ NOT CONFIGURED</span>
                         )}
                     </div>
                     <span className={styles.desc}>
-                        Enkripsi nomor kartu kredit tamu OTA &amp; Virtual Credit Card (VCC) secara end-to-end tanpa pernah menyentuh server lokal hotel demi memenuhi standar audit kepatuhan PCI-DSS Level 1.
+                        End-to-end encryption for OTA guest credit cards and Virtual Credit Cards (VCC) without storing raw cardholder data on local premises, maintaining PCI-DSS Level 1 compliance.
                     </span>
                 </div>
             </div>
@@ -120,9 +120,9 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
             <div className={styles.pciBanner}>
                 <ShieldCheck size={24} style={{ flexShrink: 0, marginTop: "2px", color: "#166534" }} />
                 <div>
-                    <b>Jaminan Keamanan PCI DSS Level 1 Certified:</b>
+                    <b>PCI DSS Level 1 Certified Protection:</b>
                     <p style={{ margin: "4px 0 0 0" }}>
-                        Saat reservasi dengan kartu kredit diterima dari OTA, nomor kartu mentah langsung diamankan dalam brankas PCI Vault berstandar enkripsi perbankan. Sistem hotel hanya memproses token aman (Stripe Token `pm_...` atau `tok_...`) untuk penagihan, sehingga hotel terbebas dari risiko kebocoran data kartu (0% PCI Liability).
+                        When credit card reservations are ingested from OTAs, raw card details are tokenized in a PCI-compliant vault. Hotel operations handle secure tokens (`pm_...` or `tok_...`) for settlements, eliminating merchant card liability.
                     </p>
                 </div>
             </div>
@@ -132,7 +132,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
                 <div className={styles.cardHeader}>
                     <span className={styles.cardTitle}>
                         <Lock size={16} color="#1e3a2f" />
-                        <span>Kredensial Gateway Pembayaran &amp; Kebijakan Penagihan Otomatis</span>
+                        <span>Payment Gateway Credentials &amp; Automated Settlement Rules</span>
                     </span>
                     <button
                         type="submit"
@@ -140,20 +140,20 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
                         className={styles.btnPrimary}
                     >
                         <Save size={14} />
-                        <span>{saving ? "Menyimpan..." : "Simpan Pengaturan Pembayaran"}</span>
+                        <span>{saving ? "Saving..." : "Save Payment Settings"}</span>
                     </button>
                 </div>
 
                 <div className={styles.formGrid}>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Aktifkan Vault Tokenisasi Stripe</label>
+                        <label className={styles.label}>Enable Stripe Tokenization Vault</label>
                         <select
                             value={config.isEnabled ? "true" : "false"}
                             onChange={e => setConfig(prev => ({ ...prev, isEnabled: e.target.value === "true" }))}
                             className={styles.select}
                         >
-                            <option value="false">Nonaktifkan Tokenisasi Otomatis</option>
-                            <option value="true">Aktifkan Brankas Tokenisasi Stripe</option>
+                            <option value="false">Disable Automated Tokenization</option>
+                            <option value="true">Enable Stripe Tokenization Vault</option>
                         </select>
                     </div>
 
@@ -161,41 +161,41 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
                         <label className={styles.label}>Stripe Publishable Key (Client Token)</label>
                         <input
                             type="text"
-                            placeholder="pk_live_... atau pk_test_..."
+                            placeholder="pk_live_... or pk_test_..."
                             value={config.stripePublishableKey || ""}
                             onChange={e => setConfig(prev => ({ ...prev, stripePublishableKey: e.target.value.trim() }))}
                             className={styles.input}
                         />
-                        <span className={styles.hint}>Kunci publik Stripe hotel untuk tokenisasi elemen kartu frontend.</span>
+                        <span className={styles.hint}>Hotel public Stripe key for frontend payment element tokenization.</span>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Otomatis Pre-Authorise Saldo saat Reservasi Diterima</label>
+                        <label className={styles.label}>Automatic Card Pre-Authorization on Inbound Booking</label>
                         <select
                             value={config.autoPreAuthOnBooking ? "true" : "false"}
                             onChange={e => setConfig(prev => ({ ...prev, autoPreAuthOnBooking: e.target.value === "true" }))}
                             className={styles.select}
                         >
-                            <option value="true">Ya, Cek Validitas Saldo Kartu Tamu Langsung (Pre-Auth 1 Night)</option>
-                            <option value="false">Jangan Pre-Auth, Simpan Token Kartu Saja</option>
+                            <option value="true">Yes, Verify Guest Card Balance (Pre-Auth 1st Night)</option>
+                            <option value="false">Do Not Pre-Auth, Store Card Token Only</option>
                         </select>
-                        <span className={styles.hint}>Mencegah reservasi palsu atau kartu tanpa saldo dari OTA.</span>
+                        <span className={styles.hint}>Prevents invalid card reservations and chargebacks from OTA channels.</span>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Otomatis Potong Saldo (Capture) Saat Tamu Check-In</label>
+                        <label className={styles.label}>Automatic Balance Capture at Guest Check-In</label>
                         <select
                             value={config.autoCaptureOnCheckin ? "true" : "false"}
                             onChange={e => setConfig(prev => ({ ...prev, autoCaptureOnCheckin: e.target.value === "true" }))}
                             className={styles.select}
                         >
-                            <option value="true">Otomatis Eksekusi Tagihan Penuh di Front Office saat Check-In</option>
-                            <option value="false">Tagih Manual Lewat Terminal Kasir PMS</option>
+                            <option value="true">Automatically Capture Full Accommodation Folio at Check-In</option>
+                            <option value="false">Settle Manually via Front Office Terminal</option>
                         </select>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Status Sertifikasi PCI</label>
+                        <label className={styles.label}>PCI Compliance Certification Level</label>
                         <input
                             type="text"
                             disabled

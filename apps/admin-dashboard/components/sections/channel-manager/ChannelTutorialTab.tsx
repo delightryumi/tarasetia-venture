@@ -10,14 +10,13 @@ import {
     HelpCircle,
     Check,
     Copy,
-    Sparkles,
     AlertTriangle,
     Key,
     Lock,
     Terminal,
-    Zap,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    Play
 } from "lucide-react";
 import styles from "./ChannelTutorialTab.module.css";
 import { toast } from "sonner";
@@ -51,132 +50,132 @@ export const ChannelTutorialTab: React.FC<Props> = ({
     const STEPS = [
         {
             num: 1,
-            title: "Aktivasi Kredensial & Webhook Distribusi",
-            subtitle: "Dapatkan API Key & daftarkan Webhook",
-            badge: "Langkah 1: Akun & Kredensial",
-            desc: "Konfigurasikan Production API Key, Property ID, dan daftarkan Webhook URL My Tara untuk menerima reservasi OTA otomatis secara instan."
+            title: "API Credentials & Webhook Activation",
+            subtitle: "Retrieve API Key & register Webhooks",
+            badge: "Stage 1: Account & Credentials",
+            desc: "Configure Production API Key, Property ID, and register the CRS Webhook URL to receive incoming OTA reservations in real time."
         },
         {
             num: 2,
-            title: "Pilot Rollout (1 Hotel, 6 OTA Utama)",
-            subtitle: "Pilih hotel unggulan & hubungkan extranet",
-            badge: "Langkah 2: Strategi Pilot Hotel",
-            desc: "Fokuskan pada 1 hotel pilot flagship dengan 6 OTA terbesar di Indonesia untuk memetakan kategori kamar & struktur tarif (Rate Plans)."
+            title: "Pilot Rollout (1 Hotel, 6 Primary OTAs)",
+            subtitle: "Select flagship property & connect extranets",
+            badge: "Stage 2: Pilot Property Strategy",
+            desc: "Focus on 1 flagship pilot hotel across 6 major global OTAs to map room categories and rate plans."
         },
         {
             num: 3,
-            title: "Protokol Pengujian Live (End-to-End)",
-            subtitle: "Uji ARI, Booking Refundable, & Batal",
-            badge: "Langkah 3: Uji Produksi Live",
-            desc: "Eksekusi 3 tes langsung di lapangan: Ubah harga kamar (cek di aplikasi OTA), buat 1 booking asli (Free Cancellation), lalu batalkan untuk memverifikasi auto-refund & stok kembali."
+            title: "End-to-End Live Testing Protocol",
+            subtitle: "Test ARI push, refundable bookings, & cancellations",
+            badge: "Stage 3: Live Production Testing",
+            desc: "Execute 3 standard verification tests: update room rates, create a real booking with free cancellation, and cancel it to confirm instant inventory return."
         },
         {
             num: 4,
-            title: "Masa Stabilisasi & Monitoring (3-7 Hari)",
-            subtitle: "Pantau transaksi riil & audit logs",
-            badge: "Langkah 4: Operasional Awal",
-            desc: "Biarkan hotel pilot melayani tamu OTA nyata selama beberapa hari. Pantau log sinkronisasi di tab Transmission Logs dan pastikan kasir Front Office lancar membaca tagihan."
+            title: "Stabilization & Monitoring (3-7 Days)",
+            subtitle: "Monitor live transactions & audit logs",
+            badge: "Stage 4: Initial Operations",
+            desc: "Run live guest transactions on the pilot property. Monitor synchronization in Transmission Logs and confirm front desk staff handles billing accurately."
         },
         {
             num: 5,
-            title: "Ekspansi Bertahap ke Seluruh Properti",
-            subtitle: "Rollout bertahap 5 hotel per batch",
-            badge: "Langkah 5: Skala Penuh (Scale-Up)",
-            desc: "Setelah hotel pilot terbukti 100% tanpa kendala, tambahkan hotel lainnya secara bertahap (5 hotel per batch) dengan aman dan terukur."
+            title: "Phased Multi-Property Expansion",
+            subtitle: "Batch rollout of 5 hotels per phase",
+            badge: "Stage 5: Full Scale-Up",
+            desc: "Following a verified pilot phase, onboard remaining portfolio hotels in batches of 5 properties with zero business disruption."
         }
     ];
 
     const MAJOR_OTAS = [
         {
             name: "Booking.com",
-            icon: "🅱️",
+            code: "BDC",
             commission: "15% (Property / VCC)",
             extranetName: "Booking.com Extranet",
             steps: [
-                "Masuk ke admin.booking.com > menu 'Account' > 'Channel Manager'.",
-                "Klik 'Connect your channel manager' dan hubungkan penyedia Channel Manager resmi.",
-                "Pilih opsi koneksi 2-arah (Rates, Availability, & Bookings).",
-                "Konfirmasi aktivasi koneksi saluran."
+                "Navigate to admin.booking.com > 'Account' > 'Channel Manager'.",
+                "Select 'Connect your channel manager' and choose the authorized connectivity provider.",
+                "Select 2-Way connection mode (Rates, Availability, & Bookings).",
+                "Confirm connection activation."
             ]
         },
         {
             name: "Agoda",
-            icon: "🅰️",
+            code: "AGD",
             commission: "17% (Agoda Collect / YCS)",
             extranetName: "Agoda YCS Extranet",
             steps: [
-                "Masuk ke ycs.agoda.com > menu 'Settings' > 'Channel Manager'.",
-                "Pilih opsi koneksi Channel Manager terintegrasi.",
-                "Pilih tipe integrasi Full ARI & Booking Retrieval.",
-                "Simpan perubahan dan petakan Room Type ID di tab Pemetaan Saluran My Tara."
+                "Navigate to ycs.agoda.com > 'Settings' > 'Channel Manager'.",
+                "Select integrated Channel Manager connection.",
+                "Choose Full ARI & Booking Retrieval mode.",
+                "Save changes and verify Room Type ID mappings in Channel Mapping."
             ]
         },
         {
             name: "Traveloka",
-            icon: "🕊️",
+            code: "TVL",
             commission: "18% (TERA Extranet)",
             extranetName: "TERA Traveloka",
             steps: [
-                "Masuk ke tera.traveloka.com > menu 'Property Profile' > 'Channel Manager'.",
-                "Ajukan aktivasi Channel Manager ke Market Coordinator (MC) atau pilih di daftar penyedia.",
-                "Petakan Room ID dan Rate Plan ID sesuai kode di My Tara.",
-                "Status akan aktif setelah diverifikasi oleh tim Traveloka."
+                "Navigate to tera.traveloka.com > 'Property Profile' > 'Channel Manager'.",
+                "Request Channel Manager activation via Market Coordinator or select authorized provider.",
+                "Map Room IDs and Rate Plan IDs matching CRS codes.",
+                "Connection activates upon Traveloka operational review."
             ]
         },
         {
             name: "Tiket.com",
-            icon: "🎫",
+            code: "TKT",
             commission: "15% (Tiket Extranet)",
             extranetName: "Tiket.com Extranet",
             steps: [
-                "Masuk ke extranet.tiket.com > menu 'Channel Manager'.",
-                "Hubungkan properti hotel Anda ke integrasi Channel Manager 2-Arah.",
-                "Pastikan allotment dan base price sudah tersinkronisasi via Full ARI Sync.",
-                "Aktifkan koneksi reservasi masuk."
+                "Navigate to extranet.tiket.com > 'Channel Manager'.",
+                "Link your property to the 2-Way Channel Manager integration.",
+                "Verify allotment and base rates synchronize via Full ARI Push.",
+                "Activate incoming reservation feed."
             ]
         },
         {
             name: "Expedia Partner",
-            icon: "✈️",
+            code: "EXP",
             commission: "18% (Expedia Collect / Hotel Collect)",
             extranetName: "Expedia Partner Central",
             steps: [
-                "Masuk ke partnercentral.expedia.com > 'Rooms and Rates' > 'Expedia Connectivity'.",
-                "Pilih sistem koneksi 2-Way Channel Manager.",
-                "Pilih koneksi 2-arah (Availability & Rates + Booking Retrieval).",
-                "Konfirmasi perjanjian koneksi."
+                "Navigate to partnercentral.expedia.com > 'Rooms and Rates' > 'Expedia Connectivity'.",
+                "Select 2-Way Channel Manager connectivity.",
+                "Choose 2-way mode (Availability & Rates + Booking Retrieval).",
+                "Confirm connection agreement."
             ]
         },
         {
             name: "Airbnb",
-            icon: "🏠",
+            code: "ABNB",
             commission: "14% - 15% (Host-Only)",
             extranetName: "Airbnb Host Console",
             steps: [
-                "Otentikasi langsung via OAuth di tab Console SSO / Saluran Terhubung.",
-                "Login akun Airbnb Host dan berikan izin integrasi Channel Manager.",
-                "Petakan listing kamar ke kategori tipe kamar My Tara.",
-                "Harga dan kalender ketersediaan akan langsung terhubung real-time."
+                "Authenticate directly via OAuth in Console SSO / Connected Channels.",
+                "Log into Airbnb Host account and grant Channel Manager API permissions.",
+                "Map listings to corresponding CRS room categories.",
+                "Rates and availability calendars synchronize instantly in real time."
             ]
         }
     ];
 
     const FAQS = [
         {
-            q: "Bagaimana cara membaca nominal booking: apakah tamu bayar Gross atau Net?",
-            a: "Tergantung model transaksi OTA: Untuk 'Property Collect' (Bayar di Hotel), tamu membayar 100% GROSS di kasir hotel, lalu OTA menagih komisi bulanan via Tax Invoice. Untuk 'Channel Collect' (VCC/Agoda Collect), tamu sudah bayar Gross di aplikasi, dan hotel menggesek Virtual Card yang saldonya sudah 100% NET TO HOTEL. Untuk Wholesaler (Hotelbeds), harga yang masuk sudah NET."
+            q: "How are booking amounts settled: does the guest pay Gross or Net?",
+            a: "Settlement depends on the OTA business model: For 'Property Collect' (Pay at Hotel), the guest pays 100% Gross at the front desk, and the OTA bills monthly commission via Tax Invoice. For 'Channel Collect' (VCC / Agoda Collect), the guest pays Gross in the app, and the hotel charges the Virtual Credit Card for the 100% Net remittance. For Wholesalers (Hotelbeds), rates received are Net."
         },
         {
-            q: "Berapa lama jeda waktu pembaruan harga atau ketersediaan dari My Tara sampai ke OTA?",
-            a: "Sinkronisasi ARI bersifat instant push melalui koneksi 2-Way Real-time. Biasanya perubahan harga atau stop-sell sudah aktif di extranet OTA dalam waktu 1 hingga 3 detik setelah Anda menekan tombol simpan atau mengubah ketersediaan di PMS."
+            q: "What is the expected latency for rate or inventory updates sent to OTAs?",
+            a: "ARI synchronization operates via direct real-time push. Rate changes or stop-sells typically reflect on OTA extranets within 1 to 3 seconds following updates in the CRS."
         },
         {
-            q: "Bagaimana cara melakukan tes booking asli tanpa merugi?",
-            a: "Gunakan opsi 'Free Cancellation' (Gratis Pembatalan). Buat reservasi untuk tanggal 2 minggu ke depan, bayar normal, tunggu hingga booking masuk ke My Tara dan WA berdering, verifikasi kamar terpotong, lalu batalkan pesanan tersebut di aplikasi OTA sebelum batas waktu pembatalan gratis berakhir. Uang Anda akan di-refund 100% oleh OTA."
+            q: "How can we execute live test bookings without financial loss?",
+            a: "Select a 'Free Cancellation' policy. Book a room 2 weeks ahead, confirm the incoming reservation webhook and WhatsApp notification, verify inventory deduction, then cancel the reservation before the free cancellation deadline for a full 100% refund."
         },
         {
-            q: "Apakah saat komputer hotel mati atau internet mati, booking OTA tetap bisa masuk?",
-            a: "Ya! Sistem My Tara berbasis cloud (serverless Next.js & Google Firestore). Webhook dari saluran distribusi diterima langsung oleh cloud server 24/7. Notifikasi WhatsApp juga otomatis terkirim langsung ke HP Owner/GM meskipun komputer kasir hotel sedang offline."
+            q: "Are incoming OTA reservations processed if hotel front desk computers are offline?",
+            a: "Yes. The CRS architecture operates 24/7 on serverless cloud infrastructure. Channel webhooks are ingested continuously, and WhatsApp owner alerts dispatch even if front desk workstations are powered down."
         }
     ];
 
@@ -186,17 +185,17 @@ export const ChannelTutorialTab: React.FC<Props> = ({
 
     return (
         <div className={styles.container}>
-            {/* 1. Hero Header Banner (Soft Light Modern Aesthetic) */}
+            {/* 1. Hero Header Banner */}
             <div className={styles.heroCard}>
                 <div className={styles.heroBadge}>
                     <Compass size={13} />
-                    <span>Peta Alur &amp; Tutorial Go-Live Produksi</span>
+                    <span>Production Go-Live &amp; Rollout Roadmap</span>
                 </div>
                 <h2 className={styles.heroTitle}>
-                    Panduan Lengkap Implementasi &amp; Distribusi Channel Manager
+                    Channel Manager Architecture &amp; Implementation Playbook
                 </h2>
                 <p className={styles.heroDesc}>
-                    Ikuti strategi <strong>Pilot Rollout 5 Tahap</strong> yang telah terbukti di industri perhotelan. Mulai dari aktivasi 1 hotel pilot dengan 6 OTA utama, verifikasi end-to-end dengan tes booking refundable, hingga peluncuran massal ke seluruh hotel jaringan Anda dengan risiko nol.
+                    Follow the industry-standard <strong>5-Stage Phased Rollout</strong>. Begin with 1 flagship pilot hotel across 6 core OTAs, verify end-to-end reliability through refundable booking tests, and expand seamlessly across your entire property portfolio with zero downtime.
                 </p>
 
                 <div className={styles.heroMetrics}>
@@ -205,8 +204,8 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                             <Building2 size={19} />
                         </div>
                         <div>
-                            <div className={styles.metricVal}>1 Hotel Pilot</div>
-                            <div className={styles.metricLbl}>Fase Uji Awal (Canary Release)</div>
+                            <div className={styles.metricVal}>1 Pilot Hotel</div>
+                            <div className={styles.metricLbl}>Canary Rollout Stage</div>
                         </div>
                     </div>
                     <div className={styles.metricItem}>
@@ -214,7 +213,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                             <Layers size={19} />
                         </div>
                         <div>
-                            <div className={styles.metricVal}>6 OTA Utama</div>
+                            <div className={styles.metricVal}>6 Major OTAs</div>
                             <div className={styles.metricLbl}>Booking, Agoda, Traveloka, Tiket, Expedia, Airbnb</div>
                         </div>
                     </div>
@@ -223,17 +222,17 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                             <ShieldCheck size={19} />
                         </div>
                         <div>
-                            <div className={styles.metricVal}>8 / 8 Lulus</div>
-                            <div className={styles.metricLbl}>Standar Sertifikasi Distribusi Global &amp; OTA</div>
+                            <div className={styles.metricVal}>8 / 8 Passed</div>
+                            <div className={styles.metricLbl}>Global Distribution &amp; OTA Standards</div>
                         </div>
                     </div>
                     <div className={styles.metricItem}>
                         <div className={`${styles.metricIconCircle} ${styles.iconIndigo}`}>
-                            <Sparkles size={19} />
+                            <Layers size={19} />
                         </div>
                         <div>
-                            <div className={styles.metricVal}>Multi-Hotel</div>
-                            <div className={styles.metricLbl}>Target Ekspansi Skala Penuh</div>
+                            <div className={styles.metricVal}>Multi-Property</div>
+                            <div className={styles.metricLbl}>Enterprise Portfolio Target</div>
                         </div>
                     </div>
                 </div>
@@ -254,7 +253,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                 <div className={`${styles.stepNumberCircle} ${isActive ? styles.stepNumberActive : isDone ? styles.stepNumberDone : ""}`}>
                                     {isDone ? <Check size={13} strokeWidth={3} /> : step.num}
                                 </div>
-                                <span className={styles.stepTabSubtitle}>Tahap {step.num}</span>
+                                <span className={styles.stepTabSubtitle}>Stage {step.num}</span>
                             </div>
                             <div className={styles.stepTabTitle}>{step.title}</div>
                         </div>
@@ -262,12 +261,12 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                 })}
             </div>
 
-            {/* 3. Detail Konten Tahap Aktif */}
+            {/* 3. Active Stage Content Details */}
             <div className={styles.stepDetailCard}>
                 <div className={styles.stepDetailHeader}>
                     <div>
                         <span className={styles.stepBadgePill}>
-                            <Sparkles size={12} />
+                            <Layers size={12} />
                             <span>{STEPS[currentStep - 1].badge}</span>
                         </span>
                         <h3 className={styles.stepDetailTitle}>{STEPS[currentStep - 1].title}</h3>
@@ -282,7 +281,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                 className={styles.btnActionPrimary}
                             >
                                 <Lock size={14} />
-                                <span>Buka Tab Kredensial &amp; Go-Live &rarr;</span>
+                                <span>Open Credentials &amp; Go-Live &rarr;</span>
                             </button>
                         )}
                         {currentStep === 2 && (
@@ -293,7 +292,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     className={styles.btnActionPrimary}
                                 >
                                     <Key size={14} />
-                                    <span>Buka Pemetaan Saluran &rarr;</span>
+                                    <span>Open Channel Mapping &rarr;</span>
                                 </button>
                                 <button
                                     type="button"
@@ -301,7 +300,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     className={styles.btnActionSecondary}
                                 >
                                     <Layers size={14} />
-                                    <span>Katalog 68+ OTA &rarr;</span>
+                                    <span>Browse 68+ OTA Catalog &rarr;</span>
                                 </button>
                             </>
                         )}
@@ -312,8 +311,8 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     onClick={() => onNavigateTab("sandbox")}
                                     className={styles.btnActionPrimary}
                                 >
-                                    <Zap size={14} />
-                                    <span>Buka Test Runner Sandbox &rarr;</span>
+                                    <Play size={14} />
+                                    <span>Open Test Runner Sandbox &rarr;</span>
                                 </button>
                                 <button
                                     type="button"
@@ -321,7 +320,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     className={styles.btnActionSecondary}
                                 >
                                     <Terminal size={14} />
-                                    <span>Cek Transmission Logs &rarr;</span>
+                                    <span>View Transmission Logs &rarr;</span>
                                 </button>
                             </>
                         )}
@@ -332,7 +331,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                 className={styles.btnActionPrimary}
                             >
                                 <Terminal size={14} />
-                                <span>Pantau Live Transmission Logs &rarr;</span>
+                                <span>Monitor Live Transmission Logs &rarr;</span>
                             </button>
                         )}
                         {currentStep === 5 && (
@@ -342,7 +341,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                 className={styles.btnActionPrimary}
                             >
                                 <Building2 size={14} />
-                                <span>Kelola Hotel Berikutnya &rarr;</span>
+                                <span>Manage Next Properties &rarr;</span>
                             </button>
                         )}
                     </div>
@@ -354,7 +353,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                         <div className={styles.checklistSection}>
                             <div className={styles.sectionHeading}>
                                 <CheckCircle2 size={16} className={styles.sectionIcon} />
-                                <span>Daftar Checklist Tindakan Tahap 1:</span>
+                                <span>Stage 1 Action Checklist:</span>
                             </div>
                             <div className={styles.checklistGrid}>
                                 <div
@@ -366,10 +365,10 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     </div>
                                     <div className={styles.checkContent}>
                                         <div className={`${styles.checkTitle} ${completedTasks["1-1"] ? styles.checkTitleDone : ""}`}>
-                                            1. Aktivasi Kredensial &amp; Property Binding
+                                            1. Credentials Activation &amp; Property Binding
                                         </div>
                                         <div className={styles.checkDesc}>
-                                            Pastikan akun integrasi hotel Anda telah disiapkan. Salin Production API Key dan Property GUID untuk mengaktifkan sinkronisasi 2-arah.
+                                            Ensure hotel connectivity accounts are provisioned. Bind Production API Key and Property GUID to establish 2-way data exchange.
                                         </div>
                                     </div>
                                 </div>
@@ -383,10 +382,10 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     </div>
                                     <div className={styles.checkContent}>
                                         <div className={`${styles.checkTitle} ${completedTasks["1-2"] ? styles.checkTitleDone : ""}`}>
-                                            2. Konfigurasikan Production API Key
+                                            2. Configure Production API Key
                                         </div>
                                         <div className={styles.checkDesc}>
-                                            Di menu kredensial, masukkan API Key produksi dan Property ID hotel Anda untuk menghubungkan jalur transmisi ARI.
+                                            Under API credentials, enter your production API Key and hotel Property ID to link the ARI transmission pipeline.
                                         </div>
                                     </div>
                                 </div>
@@ -400,10 +399,10 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     </div>
                                     <div className={styles.checkContent}>
                                         <div className={`${styles.checkTitle} ${completedTasks["1-3"] ? styles.checkTitleDone : ""}`}>
-                                            3. Daftarkan Webhook Callback URL
+                                            3. Register Webhook Callback URL
                                         </div>
                                         <div className={styles.checkDesc}>
-                                            Daftarkan URL webhook produksi My Tara di bawah ini agar semua reservasi dari OTA otomatis masuk ke Front Office secara instan:
+                                            Register the production CRS webhook endpoint below to ingest incoming OTA reservations into Front Office Folios in real time:
                                             <div className={styles.webhookRow}>
                                                 <code className={styles.webhookCode}>
                                                     {currentWebhookUrl}
@@ -413,12 +412,12 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         navigator.clipboard.writeText(currentWebhookUrl);
-                                                        toast.success("Webhook URL berhasil disalin!");
+                                                        toast.success("Webhook URL copied to clipboard!");
                                                     }}
                                                     className={styles.btnCopy}
                                                 >
                                                     <Copy size={12} />
-                                                    <span>Salin</span>
+                                                    <span>Copy</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -434,10 +433,10 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     </div>
                                     <div className={styles.checkContent}>
                                         <div className={`${styles.checkTitle} ${completedTasks["1-4"] ? styles.checkTitleDone : ""}`}>
-                                            4. Alihkan Mode Server ke Production Live
+                                            4. Switch Server Mode to Production Live
                                         </div>
                                         <div className={styles.checkDesc}>
-                                            Buka tab <b>Kredensial API &amp; Go-Live</b> di My Tara, pastikan API Key terpasang, lalu klik tombol <b>Alihkan ke Mode Production Live</b> dan simpan.
+                                            Navigate to <b>API Credentials &amp; Go-Live</b>, confirm your credentials, click <b>Switch to Production Live</b>, and save.
                                         </div>
                                     </div>
                                 </div>
@@ -447,7 +446,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                         <div className={styles.alertCallout}>
                             <AlertTriangle size={18} className={styles.alertIcon} />
                             <div className={styles.alertText}>
-                                <strong>Standar Distribusi:</strong> Saluran transmisi ARI My Tara telah terintegrasi dengan protokol resmi enterprise dan dilengkapi retry backoff cerdas agar transaksi reservasi masuk tidak pernah terlewat.
+                                <strong>Distribution Standards:</strong> ARI transmission pipelines comply with enterprise protocols, incorporating exponential retry backoff to ensure zero missed reservation deliveries.
                             </div>
                         </div>
                     </div>
@@ -459,24 +458,26 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                         <div className={styles.checklistSection}>
                             <div className={styles.sectionHeading}>
                                 <Building2 size={16} className={styles.sectionIcon} />
-                                <span>Panduan Menghubungkan 6 OTA Terbesar di Indonesia (Hotel Pilot: {activeHotelName}):</span>
+                                <span>6 Major OTA Connection Setup (Pilot Property: {activeHotelName}):</span>
                             </div>
                             <p className={styles.stepSubDesc}>
-                                Masuk ke masing-masing extranet OTA berikut untuk menghubungkan penyedia koneksi Channel Manager:
+                                Log into each channel extranet to designate your official Channel Manager connectivity provider:
                             </p>
 
                             <div className={styles.otaCardsGrid}>
                                 {MAJOR_OTAS.map((ota, idx) => (
                                     <div key={idx} className={styles.otaCard}>
                                         <div className={styles.otaCardHeader}>
-                                            <span className={styles.otaLogoIcon}>{ota.icon}</span>
+                                            <span style={{ fontSize: "12px", fontWeight: 700, padding: "2px 6px", background: "#f1f5f9", borderRadius: "4px", color: "#334155" }}>
+                                                {ota.code}
+                                            </span>
                                             <div>
                                                 <div className={styles.otaName}>{ota.name}</div>
-                                                <div className={styles.otaCommission}>Est. Komisi: {ota.commission}</div>
+                                                <div className={styles.otaCommission}>Est. Commission: {ota.commission}</div>
                                             </div>
                                         </div>
                                         <div className={styles.otaPortal}>
-                                            📍 Portal: {ota.extranetName}
+                                            Portal: {ota.extranetName}
                                         </div>
                                         <ol className={styles.otaStepsList}>
                                             {ota.steps.map((st, sIdx) => (
@@ -489,9 +490,9 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                         </div>
 
                         <div className={styles.alertCallout}>
-                            <Sparkles size={18} className={styles.alertIcon} />
+                            <CheckCircle2 size={18} className={styles.alertIcon} />
                             <div className={styles.alertText}>
-                                <strong>Tips Sukses Pemetaan:</strong> Buka tab <b>Pemetaan Saluran (Mapping)</b> di My Tara. Klik <i>'Pindai Kamar &amp; Rate dari OTA'</i> untuk mengaitkan tipe kamar lokal dengan ID kamar OTA secara otomatis tanpa input manual.
+                                <strong>Mapping Best Practice:</strong> In <b>Channel Mapping</b>, use <i>&quot;Scan Channels for Live IDs&quot;</i> to automatically link local room types with remote OTA inventory IDs.
                             </div>
                         </div>
                     </div>
@@ -502,8 +503,8 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                     <div>
                         <div className={styles.checklistSection}>
                             <div className={styles.sectionHeading}>
-                                <Zap size={16} className={styles.sectionIcon} />
-                                <span>3 Pengujian Lapangan Wajib (<em>End-to-End Test</em>):</span>
+                                <Play size={16} className={styles.sectionIcon} />
+                                <span>3 Mandatory End-to-End Field Verification Tests:</span>
                             </div>
 
                             <div className={styles.checklistGrid}>
@@ -516,10 +517,10 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     </div>
                                     <div className={styles.checkContent}>
                                         <div className={`${styles.checkTitle} ${completedTasks["3-1"] ? styles.checkTitleDone : ""}`}>
-                                            Tes 1: Uji Live ARI Push (Perubahan Harga &amp; Kamar)
+                                            Test 1: Live ARI Push Verification (Rates &amp; Availability)
                                         </div>
                                         <div className={styles.checkDesc}>
-                                            Ubah harga kamar di My Tara (misal naikkan Rp 10.000 untuk 3 hari ke depan). Buka aplikasi Traveloka / Booking.com sebagai tamu. Pastikan dalam waktu 1–3 detik harga di aplikasi OTA sudah berubah sesuai tarif baru.
+                                            Adjust a room rate in the CRS (e.g. increase by Rp 10,000 for the next 3 days). Search as a guest on Booking.com / Traveloka. Confirm the updated rate appears within 1-3 seconds.
                                         </div>
                                     </div>
                                 </div>
@@ -533,14 +534,14 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     </div>
                                     <div className={styles.checkContent}>
                                         <div className={`${styles.checkTitle} ${completedTasks["3-2"] ? styles.checkTitleDone : ""}`}>
-                                            Tes 2: Uji Pesanan Masuk Nyata (<em>Real Booking Test - Free Cancellation</em>)
+                                            Test 2: Real Booking Ingestion (Free Cancellation)
                                         </div>
                                         <div className={styles.checkDesc}>
-                                            Pesan 1 kamar lewat aplikasi Agoda atau Booking.com untuk tanggal 2 minggu ke depan dengan opsi <strong>Gratis Pembatalan (Free Cancellation)</strong>.
+                                            Book 1 room on Agoda or Booking.com 2 weeks in advance with <strong>Free Cancellation</strong>.
                                             <ul className={styles.testBulletList}>
-                                                <li>Pastikan webhook diterima dalam hitungan detik.</li>
-                                                <li>Pastikan stok kamar di Front Office PMS otomatis berkurang 1.</li>
-                                                <li>Pastikan WhatsApp Owner berdering menampilkan nominal Gross dan estimasi Net Payout.</li>
+                                                <li>Verify webhook arrival within seconds.</li>
+                                                <li>Confirm PMS Front Office inventory automatically decrements by 1.</li>
+                                                <li>Confirm Owner WhatsApp alert reflects Gross amount and Net payout.</li>
                                             </ul>
                                         </div>
                                     </div>
@@ -555,14 +556,14 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                     </div>
                                     <div className={styles.checkContent}>
                                         <div className={`${styles.checkTitle} ${completedTasks["3-3"] ? styles.checkTitleDone : ""}`}>
-                                            Tes 3: Uji Pembatalan Pesanan (<em>Real Cancellation Test</em>)
+                                            Test 3: Cancellation &amp; Inventory Release Test
                                         </div>
                                         <div className={styles.checkDesc}>
-                                            Batalkan pesanan uji coba tadi langsung di aplikasi OTA (uang Anda dikembalikan penuh 100% oleh OTA).
+                                            Cancel the test reservation on the OTA platform (eligible for 100% refund).
                                             <ul className={styles.testBulletList}>
-                                                <li>Pastikan webhook pembatalan masuk seketika.</li>
-                                                <li>Pastikan stok kamar di PMS otomatis bertambah kembali 1 (stok rilis).</li>
-                                                <li>Pastikan WhatsApp pembatalan masuk ke Owner.</li>
+                                                <li>Verify cancellation webhook reception instantly.</li>
+                                                <li>Confirm PMS inventory automatically increments by 1 (inventory release).</li>
+                                                <li>Verify cancellation notification delivery to Owner.</li>
                                             </ul>
                                         </div>
                                     </div>
@@ -573,7 +574,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                         <div className={styles.alertCallout}>
                             <ShieldCheck size={18} className={styles.alertIcon} />
                             <div className={styles.alertText}>
-                                <strong>Nol Kerugian Finansial:</strong> Dengan memesan kamar berstatus <em>Free Cancellation</em>, Anda menguji sirkulasi booking &amp; pembatalan riil tanpa mengeluarkan biaya sepeser pun.
+                                <strong>Zero Financial Exposure:</strong> Utilizing reservations with <em>Free Cancellation</em> enables full validation of booking and inventory lifecycles with zero operational cost.
                             </div>
                         </div>
                     </div>
@@ -585,7 +586,7 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                         <div className={styles.checklistSection}>
                             <div className={styles.sectionHeading}>
                                 <Terminal size={16} className={styles.sectionIcon} />
-                                <span>Aktivitas Selama Masa Stabilisasi (3 – 7 Hari):</span>
+                                <span>Stabilization Phase Operations (3-7 Days):</span>
                             </div>
 
                             <div className={styles.checklistGrid}>
@@ -594,9 +595,9 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                         <Check size={12} strokeWidth={3} />
                                     </div>
                                     <div className={styles.checkContent}>
-                                        <div className={styles.checkTitle}>1. Monitoring Rutin Transmission Logs</div>
+                                        <div className={styles.checkTitle}>1. Routine Transmission Log Auditing</div>
                                         <div className={styles.checkDesc}>
-                                            Buka tab <b>Transmission Logs</b> setiap pagi &amp; sore. Pastikan tidak ada pesan error merah atau peringatan <i>ACTION_REQUIRED (Unmapped Room)</i>.
+                                            Review <b>Transmission Logs</b> during morning and evening shifts. Ensure absence of red error states or unmapped room warnings.
                                         </div>
                                     </div>
                                 </div>
@@ -606,9 +607,9 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                         <Check size={12} strokeWidth={3} />
                                     </div>
                                     <div className={styles.checkContent}>
-                                        <div className={styles.checkTitle}>2. Evaluasi Kasir &amp; Front Office Folio</div>
+                                        <div className={styles.checkTitle}>2. Front Desk Folio &amp; Settlement Review</div>
                                         <div className={styles.checkDesc}>
-                                            Tanyakan kepada staf Front Office: Apakah status pembayaran 'Belum Bayar' (untuk Property Collect) dan 'Lunas VCC' (untuk Channel Collect) mudah dipahami dan tidak ada tamu yang tertagih dua kali.
+                                            Confirm Front Office staff understands payment markers: &apos;Pending Hotel Collect&apos; vs. &apos;Paid via Channel VCC&apos; to prevent double billing.
                                         </div>
                                     </div>
                                 </div>
@@ -618,9 +619,9 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                                         <Check size={12} strokeWidth={3} />
                                     </div>
                                     <div className={styles.checkContent}>
-                                        <div className={styles.checkTitle}>3. Uji Coba Gesek Virtual Card (VCC)</div>
+                                        <div className={styles.checkTitle}>3. Virtual Credit Card (VCC) Processing</div>
                                         <div className={styles.checkDesc}>
-                                            Saat ada tamu Agoda Collect atau Booking.com Online Payment yang check-in, staf kasir membuka tab <b>PCI Card Vault</b> dengan PIN keamanan untuk menggesek saldo VCC di mesin EDC hotel.
+                                            Upon guest check-in for Agoda Collect or Booking.com Online Payments, cashier accesses the <b>PCI Card Vault</b> with PIN verification to charge the VCC via hotel POS terminals.
                                         </div>
                                     </div>
                                 </div>
@@ -635,29 +636,29 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                         <div className={styles.checklistSection}>
                             <div className={styles.sectionHeading}>
                                 <Building2 size={16} className={styles.sectionIcon} />
-                                <span>Pola Ekspansi Bertahap ke 20 Hotel Jaringan (Batch Rollout):</span>
+                                <span>Portfolio Phased Expansion Pattern (Batch Rollout):</span>
                             </div>
 
                             <div className={styles.batchGrid}>
                                 <div className={`${styles.batchCard} ${styles.batch1}`}>
-                                    <div className={styles.batchTag1}>BATCH 1 (HARI KE 1-3)</div>
-                                    <div className={styles.batchTitle}>1 Hotel Pilot Flagship</div>
-                                    <div className={styles.batchDesc}>Bumi Anyom Resort (6 OTA terhubung live &amp; divalidasi)</div>
+                                    <div className={styles.batchTag1}>PHASE 1 (DAYS 1-3)</div>
+                                    <div className={styles.batchTitle}>1 Flagship Pilot Hotel</div>
+                                    <div className={styles.batchDesc}>Initial property live with 6 core OTAs verified</div>
                                 </div>
                                 <div className={`${styles.batchCard} ${styles.batch2}`}>
-                                    <div className={styles.batchTag2}>BATCH 2 (HARI KE 4-7)</div>
-                                    <div className={styles.batchTitle}>+5 Hotel Tambahan</div>
-                                    <div className={styles.batchDesc}>Ekspansi hotel tier 1 dengan tipe kamar sejenis</div>
+                                    <div className={styles.batchTag2}>PHASE 2 (DAYS 4-7)</div>
+                                    <div className={styles.batchTitle}>+5 Properties</div>
+                                    <div className={styles.batchDesc}>Expand to Tier 1 properties with standardized room structures</div>
                                 </div>
                                 <div className={`${styles.batchCard} ${styles.batch3}`}>
-                                    <div className={styles.batchTag3}>BATCH 3 (MINGGU KE-2)</div>
-                                    <div className={styles.batchTitle}>+7 Hotel Tambahan</div>
-                                    <div className={styles.batchDesc}>Ekspansi hotel tier 2 &amp; pelatihan staf FO</div>
+                                    <div className={styles.batchTag3}>PHASE 3 (WEEK 2)</div>
+                                    <div className={styles.batchTitle}>+7 Properties</div>
+                                    <div className={styles.batchDesc}>Onboard Tier 2 hotels and conduct front desk training</div>
                                 </div>
                                 <div className={`${styles.batchCard} ${styles.batch4}`}>
-                                    <div className={styles.batchTag4}>BATCH 4 (MINGGU KE-3)</div>
-                                    <div className={styles.batchTitle}>Sisa 7 Hotel (Total 20)</div>
-                                    <div className={styles.batchDesc}>Seluruh 20 hotel terhubung penuh ke 68+ OTA</div>
+                                    <div className={styles.batchTag4}>PHASE 4 (WEEK 3)</div>
+                                    <div className={styles.batchTitle}>Remaining Portfolio</div>
+                                    <div className={styles.batchDesc}>Complete network fully synchronized across global distribution</div>
                                 </div>
                             </div>
                         </div>
@@ -665,18 +666,18 @@ export const ChannelTutorialTab: React.FC<Props> = ({
                         <div className={styles.alertCallout}>
                             <CheckCircle2 size={18} className={styles.alertIcon} />
                             <div className={styles.alertText}>
-                                <strong>Multi-Tenant Otomatis:</strong> My Tara CRS sudah dirancang multi-tenant secara murni. Setiap hotel memiliki alokasi kamar fisik, tarif dinamis, dan nomor WhatsApp Owner sendiri-sendiri tanpa risiko data bercampur.
+                                <strong>Native Multi-Tenancy:</strong> The CRS architecture features multi-tenant isolation. Each hotel property operates independent room allotments, pricing rules, and alert numbers without data collision risk.
                             </div>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* 4. FAQ Tanya Jawab Kritis */}
+            {/* 4. Critical Pre-Production FAQ */}
             <div className={styles.faqSection}>
                 <div className={styles.sectionHeading}>
                     <HelpCircle size={16} className={styles.sectionIcon} />
-                    <span>Tanya Jawab Kritis (FAQ) Sebelum Masuk Produksi:</span>
+                    <span>Frequently Asked Questions (Pre-Production):</span>
                 </div>
 
                 <div className={styles.faqList}>

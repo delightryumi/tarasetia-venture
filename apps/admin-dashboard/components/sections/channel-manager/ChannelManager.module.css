@@ -2183,3 +2183,224 @@
     font-weight: 700;
     font-size: 12px;
 }
+
+/* ── Rate Matrix Section Styles ── */
+.matrixHeaderLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.matrixHeaderTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.matrixHeaderSubtitle {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.matrixControls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.matrixControlLabel {
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+}
+
+.matrixSelect {
+    height: 32px;
+    font-size: 12px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+}
+
+.matrixThStickyLeft {
+    min-width: 260px;
+    width: 260px;
+    text-align: left;
+    background-color: #f8fafc;
+    border-right: 2px solid #e2e8f0;
+}
+
+.matrixThBaseNet {
+    min-width: 140px;
+    width: 140px;
+    text-align: right;
+    background-color: #f1f5f9;
+    border-right: 2px solid #cbd5e1;
+}
+
+.matrixGroupHeader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px 8px;
+}
+
+.matrixPricingBadge {
+    font-size: 10px;
+    font-weight: 600;
+    color: #475569;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 1px 5px;
+    border-radius: 4px;
+}
+
+.matrixThPercent {
+    width: 80px;
+    min-width: 80px;
+    text-align: center;
+    font-size: 10px;
+    color: #64748b;
+}
+
+.matrixThGross {
+    width: 130px;
+    min-width: 130px;
+    text-align: right;
+    color: #15803d;
+    background-color: #f0fdf4;
+}
+
+.matrixThNet {
+    width: 130px;
+    min-width: 130px;
+    text-align: right;
+    color: #0369a1;
+    background-color: #f0f9ff;
+}
+
+.matrixEmptyCell {
+    text-align: center;
+    padding: 48px 24px;
+}
+
+.matrixEmptyContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.matrixBtnCreateRate {
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #1e3a2f;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.matrixBtnCreateRate:hover {
+    background-color: #2a4f40;
+}
+
+.matrixPlanCell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.matrixPlanTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.matrixPlanMeta {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.matrixBaseNetCell {
+    background-color: #f8fafc;
+    border-right: 2px solid #cbd5e1;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.matrixInputPercent {
+    width: 48px;
+    min-width: 48px;
+    text-align: center;
+    padding: 2px 4px;
+}
+
+.matrixEducationalBanner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 18px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    color: #166534;
+}
+
+.matrixBannerText {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.matrixMetricsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.matrixMetricCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.matrixMetricLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.matrixMetricValue {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+    font-family: var(--font-geist-mono, monospace);
+}
+
+.matrixMetricSub {
+    font-size: 11px;
+    color: #94a3b8;
+}
+

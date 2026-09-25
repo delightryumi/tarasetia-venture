@@ -116,11 +116,15 @@
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
-    overflow: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .table {
     width: 100%;
+    min-width: 680px;
     border-collapse: collapse;
     text-align: left;
     font-size: 12px;

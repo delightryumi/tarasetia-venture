@@ -23,8 +23,10 @@ import {
 } from "lucide-react";
 import styles from "../OverviewStyles.module.css";
 import { useAuth } from "@/context/AuthContext";
+import { isUserSuperadmin } from "@/lib/permissionCheck";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { resolveBookingIdentifiers } from "@/lib/channelHelper";
 
 interface GuestFolioViewProps {
     guest: any;
@@ -192,7 +194,7 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
     // staffName & staffEmail are now always saved on new transactions (since the fix).
     // For old data that has neither, show a neutral placeholder – do NOT use the current
     // logged-in user's info because that would show whoever is *viewing*, not whoever *created*.
-    const realStaffName = guest.staffName || guest.createdBy || guest.inputBy || "—";
+    const realStaffName = guest.staffName || guest.createdBy || guest.inputBy || "-";
     const realStaffEmail = guest.staffEmail || "";
     const realClientIp = guest.clientIp || guest.lastUpdatedIp || clientIp;
     // Format: "JULIAN (julian@hotel.id)" if email saved, else just "JULIAN"
@@ -476,149 +478,160 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                         </div>
                     )}
 
-                    {/* Section: Status & Identifiers (Key-Value 2 Columns) */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '160px', color: '#8c8c8c' }}>Status Reservasi:</span>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    padding: '1px 8px',
-                                    borderRadius: '4px',
-                                    fontSize: '11px',
-                                    fontWeight: 600,
-                                    border: isCancelled ? '1px solid #d9d9d9' : '1px solid #b7eb8f',
-                                    backgroundColor: isCancelled ? '#f5f5f5' : '#f6ffed',
-                                    color: isCancelled ? '#8c8c8c' : '#52c41a'
-                                }}>
-                                    {isCancelled ? 'Dibatalkan (Cancelled)' : (guest.status || 'Aktif')}
-                                </span>
-                                {isUnmapped && (
-                                    <span style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        padding: '1px 8px',
-                                        borderRadius: '4px',
-                                        fontSize: '11px',
-                                        fontWeight: 600,
-                                        border: '1px solid #ffa39e',
-                                        backgroundColor: '#fff1f0',
-                                        color: '#cf1322'
-                                    }}>
-                                        Unmapped Rate
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+                    {/* Section: Status & Identifiers (Exact Channex Alignment) */}
+                    {(() => {
+                        const ids = resolveBookingIdentifiers(guest);
+                        return (
+                            <>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+                                        <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>Status:</span>
+                                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                            <span style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                padding: '2px 8px',
+                                                borderRadius: '3px',
+                                                fontSize: '11px',
+                                                fontWeight: 600,
+                                                border: isCancelled ? '1px solid #ff4d4f' : '1px solid #52c41a',
+                                                backgroundColor: isCancelled ? '#fff1f0' : '#f6ffed',
+                                                color: isCancelled ? '#cf1322' : '#52c41a'
+                                            }}>
+                                                {isCancelled ? 'Cancelled' : (st === 'CONFIRMED' || st === 'NEW' ? 'New' : (guest.status || 'New'))}
+                                            </span>
+                                            {isUnmapped && (
+                                                <span style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '3px',
+                                                    fontSize: '11px',
+                                                    fontWeight: 600,
+                                                    border: '1px solid #ffa39e',
+                                                    backgroundColor: '#fff1f0',
+                                                    color: '#cf1322'
+                                                }}>
+                                                    Unmapped
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '160px', color: '#8c8c8c' }}>Sumber / Saluran OTA:</span>
-                            <span style={{ color: '#262626', fontWeight: 600 }}>{guest.channel || 'Direct Web'}</span>
-                        </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+                                        <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>Source / OTA:</span>
+                                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                            <img src={ids.channelLogo} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                            <span style={{ color: '#262626', fontWeight: 600 }}>{ids.channelName}</span>
+                                        </div>
+                                    </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '160px', color: '#8c8c8c' }}>Kategori Distribusi:</span>
-                            <span style={{ color: '#1890ff', fontWeight: 600 }}>
-                                {guest.isOTA ? 'Channel Manager (OTA)' : 'Direct Web / Booking Engine'}
-                            </span>
-                        </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+                                        <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>Channel:</span>
+                                        <span style={{ color: '#1890ff', fontWeight: 500, cursor: 'pointer' }} onClick={() => router.push('/channel-manager')}>
+                                            {ids.connectionChannel || 'Open Channel'}
+                                        </span>
+                                    </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '160px', color: '#8c8c8c' }}>No. Reservasi (Folio ID):</span>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontFamily: 'var(--f-font-mono, monospace)', color: '#262626', fontWeight: 600 }}>{reservationId}</span>
-                                <button 
-                                    type="button" 
-                                    onClick={() => handleCopy('resId', reservationId)} 
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#8c8c8c' }}
-                                    title="Salin No. Reservasi"
-                                >
-                                    {copiedField === 'resId' ? <Check size={12} color="#52c41a" /> : <Copy size={12} />}
-                                </button>
-                            </div>
-                        </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+                                        <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>Reservation ID:</span>
+                                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                            <span style={{ fontFamily: 'var(--f-font-mono, monospace)', color: '#262626', fontWeight: 600 }}>{ids.reservationId}</span>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => handleCopy('resId', ids.reservationId)} 
+                                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#1890ff' }}
+                                                title="Copy Reservation ID"
+                                            >
+                                                {copiedField === 'resId' ? <Check size={13} color="#52c41a" /> : <Copy size={13} />}
+                                            </button>
+                                        </div>
+                                    </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '160px', color: '#8c8c8c' }}>ID Booking PMS:</span>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontFamily: 'var(--f-font-mono, monospace)', color: '#262626' }}>{channexBookingId}</span>
-                                <button 
-                                    type="button" 
-                                    onClick={() => handleCopy('bId', channexBookingId)} 
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#8c8c8c' }}
-                                    title="Salin ID Booking"
-                                >
-                                    {copiedField === 'bId' ? <Check size={12} color="#52c41a" /> : <Copy size={12} />}
-                                </button>
-                            </div>
-                        </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+                                        <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>Booking ID:</span>
+                                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                            <span style={{ fontFamily: 'var(--f-font-mono, monospace)', color: '#262626' }}>{ids.bookingId}</span>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => handleCopy('bId', ids.bookingId)} 
+                                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#1890ff' }}
+                                                title="Copy Booking ID"
+                                            >
+                                                {copiedField === 'bId' ? <Check size={13} color="#52c41a" /> : <Copy size={13} />}
+                                            </button>
+                                        </div>
+                                    </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '160px', color: '#8c8c8c' }}>ID Revisi Folio:</span>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontFamily: 'var(--f-font-mono, monospace)', color: '#262626' }}>{revisionId}</span>
-                                <button 
-                                    type="button" 
-                                    onClick={() => handleCopy('revId', revisionId)} 
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#8c8c8c' }}
-                                    title="Salin ID Revisi"
-                                >
-                                    {copiedField === 'revId' ? <Check size={12} color="#52c41a" /> : <Copy size={12} />}
-                                </button>
-                            </div>
-                        </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+                                        <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>Revision ID:</span>
+                                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                            <span style={{ fontFamily: 'var(--f-font-mono, monospace)', color: '#262626' }}>{ids.revisionId}</span>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => handleCopy('revId', ids.revisionId)} 
+                                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#1890ff' }}
+                                                title="Copy Revision ID"
+                                            >
+                                                {copiedField === 'revId' ? <Check size={13} color="#52c41a" /> : <Copy size={13} />}
+                                            </button>
+                                        </div>
+                                    </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '160px', color: '#8c8c8c' }}>ID Referensi OTA:</span>
-                            <span style={{ fontFamily: 'var(--f-font-mono, monospace)', color: '#262626' }}>{otaReservationId}</span>
-                        </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+                                        <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>OTA Reservation ID:</span>
+                                        <span style={{ fontFamily: 'var(--f-font-mono, monospace)', color: '#262626' }}>{ids.otaReservationId}</span>
+                                    </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '160px', color: '#8c8c8c' }}>Waktu Pemesanan:</span>
-                            <span style={{ color: '#262626' }}>{formatDateTimeWithSeconds(guest.timestamp || bookingDate.toISOString())}</span>
-                        </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+                                        <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>Booked At:</span>
+                                        <span style={{ color: '#262626' }}>{formatLongDate(guest.timestamp || bookingDate.toISOString())}</span>
+                                    </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-                            <span style={{ width: '160px', color: '#8c8c8c' }}>Unit / Properti:</span>
-                            <span style={{ color: '#1890ff', fontWeight: 500 }}>
-                                {activeHotelName || guest.propertyName || "—"}
-                            </span>
-                        </div>
-                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+                                        <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>Property:</span>
+                                        <span style={{ color: '#1890ff', fontWeight: 500 }}>
+                                            {activeHotelName || guest.propertyName || "Setara Demo Partner"}
+                                        </span>
+                                    </div>
+                                </div>
 
-                    {/* Section: Checkin Details */}
-                    <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px', marginBottom: '20px' }}>
-                        <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: 600, color: '#262626' }}>
-                            Informasi Kedatangan & Durasi (Stay Details)
-                        </h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '160px', color: '#8c8c8c' }}>Tanggal Check-in:</span>
-                                <span style={{ color: '#262626', fontWeight: 600 }}>{formatLongDate(checkIn)}</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '160px', color: '#8c8c8c' }}>Tanggal Check-out:</span>
-                                <span style={{ color: '#262626', fontWeight: 600 }}>{formatLongDate(checkOut)}</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '160px', color: '#8c8c8c' }}>Estimasi Kedatangan:</span>
-                                <span style={{ color: '#262626' }}>{guest.arrivalHour || "14:00 WIB"}</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '160px', color: '#8c8c8c' }}>Durasi Menginap:</span>
-                                <span style={{ color: '#262626', fontWeight: 600 }}>{nights} Malam</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '160px', color: '#8c8c8c' }}>Jumlah Kamar:</span>
-                                <span style={{ color: '#262626' }}>1 Unit</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ width: '160px', color: '#8c8c8c' }}>Kapasitas Tamu:</span>
-                                <span style={{ color: '#262626' }}>Dewasa: 2 | Anak: 0 | Bayi: 0</span>
-                            </div>
-                        </div>
-                    </div>
+                                {/* Section: Checkin Details (Exact Channex Divider & Styling) */}
+                                <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px', marginBottom: '20px' }}>
+                                    <h4 style={{ margin: '0 0 14px 0', fontSize: '13px', fontWeight: 500, color: '#8c8c8c' }}>
+                                        Checkin Details
+                                    </h4>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>Checkin Date:</span>
+                                            <span style={{ color: '#262626' }}>{formatLongDate(checkIn)}</span>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>Checkout Date:</span>
+                                            <span style={{ color: '#262626' }}>{formatLongDate(checkOut)}</span>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>Arrival Time:</span>
+                                            <span style={{ color: '#262626' }}>{guest.arrivalHour || "2:00 PM"}</span>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>Nights:</span>
+                                            <span style={{ color: '#262626' }}>{nights}</span>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <span style={{ width: '160px', color: '#595959', textAlign: 'right', paddingRight: '16px' }}>Rooms:</span>
+                                            <span style={{ color: '#262626' }}>{guest.roomsCount || guest.roomCount || 1}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        );
+                    })()}
+
 
                     {/* Section: Customer */}
                     <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px', marginBottom: '20px' }}>
@@ -632,11 +645,11 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <span style={{ width: '160px', color: '#8c8c8c' }}>Email:</span>
-                                <span style={{ color: '#262626' }}>{guest.email || "—"}</span>
+                                <span style={{ color: '#262626' }}>{guest.email || "-"}</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <span style={{ width: '160px', color: '#8c8c8c' }}>No. Handphone:</span>
-                                <span style={{ color: '#262626' }}>{guest.phone || "—"}</span>
+                                <span style={{ color: '#262626' }}>{guest.phone || "-"}</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <span style={{ width: '160px', color: '#8c8c8c' }}>Kewarganegaraan:</span>
@@ -759,8 +772,68 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: '#8c8c8c' }}>Total Tagihan Menginap:</span>
-                                <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '13px' }}>IDR {totalAmount.toLocaleString('en-US')}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '13px' }}>IDR {totalAmount.toLocaleString('en-US')}</span>
+                                    {guest.revenueRecordingMode && (
+                                        <span style={{
+                                            fontSize: '9px',
+                                            fontWeight: 700,
+                                            padding: '2px 6px',
+                                            borderRadius: '4px',
+                                            backgroundColor: String(guest.revenueRecordingMode).toLowerCase() === 'gross' ? '#eff6ff' : '#ecfdf5',
+                                            color: String(guest.revenueRecordingMode).toLowerCase() === 'gross' ? '#1d4ed8' : '#047857',
+                                            border: `1px solid ${String(guest.revenueRecordingMode).toLowerCase() === 'gross' ? '#bfdbfe' : '#a7f3d0'}`
+                                        }}>
+                                            {String(guest.revenueRecordingMode).toUpperCase()} MODE
+                                        </span>
+                                    )}
+                                </div>
                             </div>
+
+                            {/* ── SUPERADMIN ONLY: NET VS GROSS FINANCIAL RECONCILIATION AUDIT ── */}
+                            {isUserSuperadmin(user) && (
+                                <div style={{
+                                    marginTop: '8px',
+                                    marginBottom: '8px',
+                                    padding: '12px 14px',
+                                    backgroundColor: '#f8fafc',
+                                    border: '1px solid #cbd5e1',
+                                    borderRadius: '8px'
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <ShieldAlert size={13} color="#0284c7" />
+                                            <span>Superadmin Audit: Net vs. Gross Reconciliation</span>
+                                        </span>
+                                        <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: '#e2e8f0', color: '#334155', fontWeight: 700 }}>
+                                            Policy: {String(guest.revenueRecordingMode || "NET").toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', fontSize: '11px' }}>
+                                        <div style={{ background: '#ffffff', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                                            <div style={{ color: '#64748b', fontSize: '10px' }}>OTA Retail Gross</div>
+                                            <div style={{ fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>
+                                                IDR {(Number(guest.grossAmount || guest.amount || totalAmount)).toLocaleString('en-US')}
+                                            </div>
+                                        </div>
+                                        <div style={{ background: '#ffffff', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                                            <div style={{ color: '#64748b', fontSize: '10px' }}>OTA Commission ({guest.otaCommissionPercent || 15}%)</div>
+                                            <div style={{ fontWeight: 700, color: '#dc2626', marginTop: '2px' }}>
+                                                - IDR {(Number(guest.otaCommissionAmount || Math.round((guest.grossAmount || totalAmount) * ((guest.otaCommissionPercent || 15) / 100)))).toLocaleString('en-US')}
+                                            </div>
+                                        </div>
+                                        <div style={{ background: '#ffffff', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                                            <div style={{ color: '#64748b', fontSize: '10px' }}>Net Hotel Payout</div>
+                                            <div style={{ fontWeight: 700, color: '#16a34a', marginTop: '2px' }}>
+                                                IDR {(Number(guest.netToHotel || (totalAmount - (guest.otaCommissionAmount || 0)))).toLocaleString('en-US')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{ fontSize: '10px', color: '#64748b', marginTop: '8px', lineHeight: '1.4' }}>
+                                        Accounting entry is booked at <b>IDR {totalAmount.toLocaleString('en-US')}</b> following the hotel CM <b>{String(guest.revenueRecordingMode || "NET").toUpperCase()}</b> policy. Staff without superadmin privileges only see this nominal.
+                                    </div>
+                                </div>
+                            )}
 
                             {/* INLINE PAYMENT METHOD & PAYMENT COLLECT */}
                             <div style={{
@@ -1015,7 +1088,7 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                                     <div style={{ display: 'flex', alignItems: 'center' }}>
                                         <span style={{ width: '160px', color: '#8c8c8c' }}>Property:</span>
                                         <span style={{ color: '#1890ff', cursor: 'pointer' }}>
-                                            {activeHotelName || guest.propertyName || "—"}
+                                            {activeHotelName || guest.propertyName || "-"}
                                         </span>
                                     </div>
                                 </div>

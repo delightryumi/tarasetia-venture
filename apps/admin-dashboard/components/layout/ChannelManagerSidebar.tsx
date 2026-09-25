@@ -105,17 +105,17 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
 
     const MENU_GROUPS: CmMenuGroup[] = [
         {
-            title: "Panduan & Roadmap Produksi",
+            title: "Setup & Onboarding",
             items: [
-                { id: "tutorial", label: "Peta Alur & Tutorial Go-Live", shortLabel: "Tutorial", icon: Compass, badge: "Peta Alur", badgeColor: "#0284c7" }
+                { id: "tutorial", label: "Go-Live Roadmap", shortLabel: "Roadmap", icon: Compass, badge: "Guide", badgeColor: "#0284c7" }
             ]
         },
         {
-            title: "OTA Distribution & Connectivity",
+            title: "OTA Distribution & Channels",
             items: [
-                { id: "mapping", label: "Channel Mapping", shortLabel: "Mapping", icon: Key, badge: "Rules", badgeColor: "#16a34a" },
+                { id: "mapping", label: "Channel Mapping", shortLabel: "Mapping", icon: Key, badge: "Parity", badgeColor: "#16a34a" },
                 { id: "catalog", label: "Channel Catalog (68+ OTAs)", shortLabel: "Catalog", icon: Globe },
-                { id: "travel_agents", label: "Travel Agent & Saluran", shortLabel: "Agents", icon: Users, badge: "Mitra", badgeColor: "#7e22ce" },
+                { id: "travel_agents", label: "Travel Agents & B2B", shortLabel: "B2B Agents", icon: Users, badge: "B2B", badgeColor: "#7e22ce" },
                 { id: "rules", label: "Yield & Inventory Rules", shortLabel: "Yield", icon: Shield },
                 { id: "google", label: "Google Hotel Links", shortLabel: "Google", icon: Search },
                 { id: "promotions", label: "Promotions & Deals", shortLabel: "Promos", icon: Tag },
@@ -128,7 +128,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                 { id: "rooms", label: "Room Types & Allotment", shortLabel: "Rooms", icon: BedDouble },
                 { id: "rateplans", label: "Rate Plans & Packages", shortLabel: "Rates", icon: Sliders },
                 { id: "matrix", label: "Rate Matrix (Net / Gross)", shortLabel: "Matrix", icon: Table },
-                { id: "dynamic_pricing", label: "Dynamic Pricing (RMS)", shortLabel: "RMS AI", icon: TrendingUp }
+                { id: "dynamic_pricing", label: "Dynamic Pricing (RMS)", shortLabel: "RMS", icon: TrendingUp }
             ]
         },
         {
@@ -143,7 +143,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
             items: [
                 { id: "payments", label: "PCI Card Vault & Stripe", shortLabel: "PCI Vault", icon: CreditCard },
                 { id: "logs", label: "ARI Transmission Logs", shortLabel: "Audit Logs", icon: Terminal },
-                { id: "sandbox", label: "🧪 Certification Sandbox", shortLabel: "Sandbox", icon: Zap },
+                { id: "sandbox", label: "Certification Sandbox", shortLabel: "Sandbox", icon: Zap },
                 { id: "iframe", label: "White-Label Hub (SSO)", shortLabel: "Hub SSO", icon: LayoutGrid },
                 { id: "golive", label: "API Credentials & Go-Live", shortLabel: "API Keys", icon: Lock },
                 { id: "sync", label: "Synchronization Feed", shortLabel: "Sync Feed", icon: RefreshCw }
@@ -164,7 +164,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 className="sidebar-toggle"
-                title={isCollapsed ? "Perluas Sidebar" : "Ciutkan Sidebar"}
+                title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
                 {isCollapsed ? (
                     <CaretRight size={12} weight="bold" />

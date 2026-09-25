@@ -68,7 +68,7 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
         if (!hotelCode) return;
 
         if (config.minRateGuardrail && config.maxRateGuardrail && config.minRateGuardrail > config.maxRateGuardrail) {
-            toast.error("Batas harga minimum tidak boleh lebih besar dari batas maksimum!");
+            toast.error("Minimum rate guardrail cannot exceed maximum rate guardrail!");
             return;
         }
 
@@ -82,10 +82,10 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
                 }
             });
 
-            toast.success("Konfigurasi Dynamic Pricing RMS berhasil disimpan!");
+            toast.success("Dynamic Pricing RMS configuration saved successfully.");
         } catch (err: any) {
             console.error("Error saving Dynamic Pricing config:", err);
-            toast.error("Gagal menyimpan konfigurasi Dynamic Pricing.");
+            toast.error("Failed to save Dynamic Pricing configuration.");
         } finally {
             setSaving(false);
         }
@@ -106,17 +106,17 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
             });
             const data = await res.json();
             if (data.success) {
-                toast.success(data.message || "Pembaruan rekomendasi harga RMS berhasil diterima!");
+                toast.success(data.message || "RMS rate recommendations received and applied successfully.");
                 setConfig(prev => ({
                     ...prev,
                     lastSyncAt: new Date().toISOString(),
                     lastSyncStatus: "SUCCESS"
                 }));
             } else {
-                toast.error(data.error || "Gagal sinkronisasi rekomendasi harga RMS.");
+                toast.error(data.error || "Failed to synchronize RMS rate recommendations.");
             }
         } catch (err: any) {
-            toast.error(`Error koneksi RMS: ${err.message}`);
+            toast.error(`RMS connection error: ${err.message}`);
         } finally {
             setSyncing(false);
         }
@@ -126,7 +126,7 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
         return (
             <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
                 <RefreshCw size={24} className="animate-spin" style={{ margin: "0 auto 10px" }} />
-                <span>Memuat pengaturan Dynamic Pricing RMS...</span>
+                <span>Loading Dynamic Pricing RMS configuration...</span>
             </div>
         );
     }
@@ -140,13 +140,13 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
                         <TrendingUp size={18} color="#1e3a2f" />
                         <span>Dynamic Pricing &amp; Revenue Management System (RMS) Connector</span>
                         {config.isEnabled ? (
-                            <span className={styles.badgeActive}>● AKTIF ({config.provider.toUpperCase()})</span>
+                            <span className={styles.badgeActive}>● ACTIVE ({config.provider.toUpperCase()})</span>
                         ) : (
-                            <span className={styles.badgeInactive}>○ NON-AKTIF</span>
+                            <span className={styles.badgeInactive}>○ INACTIVE</span>
                         )}
                     </div>
                     <span className={styles.desc}>
-                        Channex menghubungkan PMS My Tara secara 2-arah dengan engine AI yield &amp; dynamic pricing internasional (PriceLabs, Beyond Pricing, RoomPriceGenie).
+                        Connects My Tara PMS directly with international revenue management systems (PriceLabs, RoomPriceGenie, Beyond Pricing) for dynamic rate yield management.
                     </span>
                 </div>
 
@@ -156,10 +156,10 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
                         onClick={handleTestRmsSync}
                         disabled={syncing || !config.isEnabled}
                         className={styles.btnSecondary}
-                        title="Tarik rekomendasi harga terbaru dari RMS"
+                        title="Fetch latest rate recommendations from RMS"
                     >
                         <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
-                        <span>{syncing ? "Sinkronisasi..." : "Tarik Rekomendasi Tarif"}</span>
+                        <span>{syncing ? "Synchronizing..." : "Fetch Rate Recommendations"}</span>
                     </button>
                 </div>
             </div>
@@ -168,9 +168,9 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
             <div className={styles.banner}>
                 <ShieldCheck size={20} style={{ flexShrink: 0, marginTop: "2px" }} />
                 <div>
-                    <b>Keamanan Batasan Tarif (Rate Floor &amp; Ceiling Guardrails):</b>
+                    <b>Rate Floor &amp; Ceiling Guardrails:</b>
                     <p style={{ margin: "4px 0 0 0" }}>
-                        Untuk mencegah *pricing glitch* atau harga jual terlalu murah / terlalu mahal yang diajukan AI RMS, My Tara menerapkan filter batas atas dan batas bawah absolut sebelum diteruskan ke saluran OTA Channex.
+                        To protect against inadvertent pricing spikes or severe rate drops, My Tara enforces strict rate floor and ceiling guardrails before publishing rates to connected OTA channels.
                     </p>
                 </div>
             </div>
@@ -180,7 +180,7 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
                 <div className={styles.cardHeader}>
                     <span className={styles.cardTitle}>
                         <Sliders size={16} color="#1e3a2f" />
-                        <span>Konfigurasi Penyedia RMS &amp; Proteksi Tarif</span>
+                        <span>RMS Provider Configuration &amp; Rate Guardrails</span>
                     </span>
                     <button
                         type="submit"
@@ -188,13 +188,13 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
                         className={styles.btnPrimary}
                     >
                         <Save size={14} />
-                        <span>{saving ? "Menyimpan..." : "Simpan Pengaturan RMS"}</span>
+                        <span>{saving ? "Saving..." : "Save RMS Configuration"}</span>
                     </button>
                 </div>
 
                 <div className={styles.formGrid}>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Penyedia RMS (Dynamic Pricing Engine)</label>
+                        <label className={styles.label}>RMS Provider (Dynamic Pricing Engine)</label>
                         <select
                             value={config.provider}
                             onChange={e => setConfig(prev => ({ ...prev, provider: e.target.value as any }))}
@@ -208,43 +208,43 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Status Koneksi Integrasi</label>
+                        <label className={styles.label}>Integration Connection Status</label>
                         <select
                             value={config.isEnabled ? "true" : "false"}
                             onChange={e => setConfig(prev => ({ ...prev, isEnabled: e.target.value === "true" }))}
                             className={styles.select}
                         >
-                            <option value="false">Nonaktifkan Integrasi</option>
-                            <option value="true">Aktifkan Sinkronisasi Otomatis</option>
+                            <option value="false">Disable Integration</option>
+                            <option value="true">Enable Automated Synchronization</option>
                         </select>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>API Key / Webhook Token RMS</label>
+                        <label className={styles.label}>RMS API Key / Webhook Secret</label>
                         <input
                             type="password"
-                            placeholder="Kredensial API dari dashboard RMS..."
+                            placeholder="API credentials from RMS dashboard..."
                             value={config.apiKey || ""}
                             onChange={e => setConfig(prev => ({ ...prev, apiKey: e.target.value.trim() }))}
                             className={styles.input}
                         />
-                        <span className={styles.hint}>Digunakan untuk otorisasi webhook pembaruan harga harian.</span>
+                        <span className={styles.hint}>Used to authenticate inbound rate recommendation updates.</span>
                     </div>
 
                     <div className={styles.formGroup}>
                         <label className={styles.label}>RMS Property / Listing Identifier</label>
                         <input
                             type="text"
-                            placeholder="Contoh: PL-HOTEL-88912"
+                            placeholder="e.g. PL-HOTEL-88912"
                             value={config.propertyId || ""}
                             onChange={e => setConfig(prev => ({ ...prev, propertyId: e.target.value.trim() }))}
                             className={styles.input}
                         />
-                        <span className={styles.hint}>ID Properti yang terdaftar di akun PriceLabs atau RoomPriceGenie Anda.</span>
+                        <span className={styles.hint}>Property or listing ID configured in your PriceLabs or RoomPriceGenie account.</span>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Batas Tarif Minimum (Rate Floor Guardrail)</label>
+                        <label className={styles.label}>Minimum Rate (Rate Floor Guardrail)</label>
                         <input
                             type="number"
                             min={50000}
@@ -253,11 +253,11 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
                             onChange={e => setConfig(prev => ({ ...prev, minRateGuardrail: Number(e.target.value) || 0 }))}
                             className={styles.input}
                         />
-                        <span className={styles.hint}>Tarif tidak akan pernah turun di bawah nominal ini apapun rekomendasi AI.</span>
+                        <span className={styles.hint}>Rates will never drop below this threshold regardless of dynamic pricing models.</span>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Batas Tarif Maksimum (Rate Ceiling Guardrail)</label>
+                        <label className={styles.label}>Maximum Rate (Rate Ceiling Guardrail)</label>
                         <input
                             type="number"
                             min={100000}
@@ -266,18 +266,18 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
                             onChange={e => setConfig(prev => ({ ...prev, maxRateGuardrail: Number(e.target.value) || 0 }))}
                             className={styles.input}
                         />
-                        <span className={styles.hint}>Tarif tertinggi yang diizinkan untuk mencegah overpricing saat peak season.</span>
+                        <span className={styles.hint}>Maximum allowable rate to prevent overpricing during peak occupancy dates.</span>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Otomatis Dorong ke Saluran Channex</label>
+                        <label className={styles.label}>Automatic Push to Distribution Channels</label>
                         <select
                             value={config.autoPushToChannex ? "true" : "false"}
                             onChange={e => setConfig(prev => ({ ...prev, autoPushToChannex: e.target.value === "true" }))}
                             className={styles.select}
                         >
-                            <option value="true">Ya, Otomatis Push ke Seluruh OTA saat Rekomendasi Masuk</option>
-                            <option value="false">Tinjau Manual di Matriks Terlebih Dahulu</option>
+                            <option value="true">Yes, Automatically Push to All OTAs upon Recommendation Receipt</option>
+                            <option value="false">Review Manually in Rate Matrix First</option>
                         </select>
                     </div>
                 </div>

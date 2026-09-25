@@ -7,13 +7,118 @@
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    overflow: visible;
+    overflow: hidden;
     box-sizing: border-box;
+}
+
+.desktopTableWrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+    .desktopTableWrapper {
+        display: none;
+    }
+}
+
+.mobileCardsWrapper {
+    display: none;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    flex-direction: column;
+    gap: 10px;
+}
+
+@media (max-width: 767px) {
+    .mobileCardsWrapper {
+        display: flex;
+    }
+}
+
+.mobileRoleCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.mobileRoleHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.mobileRoleNameCluster {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.mobileRoleName {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.mobileParentBadge {
+    font-size: 11px;
+    color: #64748b;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 2px 6px;
+    width: fit-content;
+}
+
+.mobileRoleDesc {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.mobileRoleFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed #f1f5f9;
+}
+
+.mobilePermissionBtn {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.mobilePermissionBtn:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
 }
 
 .tableScrollWrapper {
     width: 100%;
-    overflow-x: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     box-sizing: border-box;
 }
 

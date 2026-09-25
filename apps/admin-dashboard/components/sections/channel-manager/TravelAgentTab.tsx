@@ -128,7 +128,7 @@ export function TravelAgentTab({
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formName.trim()) {
-            toast.error("Nama Travel Agent / Saluran wajib diisi");
+            toast.error("Travel Agent / Channel Account Name is required");
             return;
         }
 
@@ -155,11 +155,11 @@ export function TravelAgentTab({
             };
 
             await setDoc(agentDocRef, payload, { merge: true });
-            toast.success(editingAgent ? `Travel agent "${formName}" berhasil diperbarui!` : `Travel agent "${formName}" berhasil ditambahkan!`);
+            toast.success(editingAgent ? `Partner account "${formName}" updated successfully.` : `Partner account "${formName}" created successfully.`);
             setIsModalOpen(false);
         } catch (err: any) {
             console.error("Error saving travel agent:", err);
-            toast.error(err.message || "Gagal menyimpan travel agent.");
+            toast.error(err.message || "Failed to save travel agent.");
         } finally {
             setSaving(false);
         }
@@ -171,20 +171,20 @@ export function TravelAgentTab({
             await updateDoc(agentDocRef, {
                 isActive: !ag.isActive
             });
-            toast.success(`Status ${ag.name} diubah menjadi ${!ag.isActive ? "Aktif" : "Non-Aktif"}`);
+            toast.success(`Status for ${ag.name} set to ${!ag.isActive ? "Active" : "Inactive"}`);
         } catch (err: any) {
-            toast.error("Gagal mengubah status mitra.");
+            toast.error("Failed to update partner status.");
         }
     };
 
     const handleDelete = async (ag: TravelAgentItem) => {
-        if (!confirm(`Hapus mitra travel agent "${ag.name}"?`)) return;
+        if (!confirm(`Delete partner account "${ag.name}"?`)) return;
         try {
             const agentDocRef = doc(db, "hotels", hotelCode, "travel_agents", ag.id);
             await deleteDoc(agentDocRef);
-            toast.success(`Mitra "${ag.name}" berhasil dihapus.`);
+            toast.success(`Partner "${ag.name}" deleted successfully.`);
         } catch (err: any) {
-            toast.error("Gagal menghapus mitra.");
+            toast.error("Failed to delete partner account.");
         }
     };
 
@@ -450,7 +450,7 @@ export function TravelAgentTab({
                                             <span className={`${styles.badge} ${badgeClass}`}>{ag.category}</span>
                                         </td>
                                         <td className={styles.td}>
-                                            <span style={{ fontSize: "11px", color: "#7e22ce", fontWeight: 600 }}>● Mitra Manual PMS</span>
+                                            <span style={{ fontSize: "11px", color: "#7e22ce", fontWeight: 600 }}>● Direct B2B / Manual Contract</span>
                                         </td>
                                         <td className={styles.td}>
                                             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
@@ -468,7 +468,7 @@ export function TravelAgentTab({
                                                     </span>
                                                 )}
                                                 {!ag.contactPerson && !ag.phone && !ag.email && (
-                                                    <span style={{ color: "#94a3b8" }}>—</span>
+                                                    <span style={{ color: "#94a3b8" }}>-</span>
                                                 )}
                                             </div>
                                         </td>
@@ -477,10 +477,10 @@ export function TravelAgentTab({
                                                 type="button"
                                                 onClick={() => handleToggleActive(ag)}
                                                 style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                                                title="Klik untuk ubah status aktif"
+                                                title="Click to toggle active status"
                                             >
                                                 <span className={`${styles.badge} ${ag.isActive ? styles.badgeActive : styles.badgeInactive}`}>
-                                                    {ag.isActive ? "Aktif" : "Non-Aktif"}
+                                                    {ag.isActive ? "Active" : "Inactive"}
                                                 </span>
                                             </button>
                                         </td>
@@ -490,7 +490,7 @@ export function TravelAgentTab({
                                                     type="button"
                                                     onClick={() => openEditModal(ag)}
                                                     className={styles.actionBtn}
-                                                    title="Edit Mitra"
+                                                    title="Edit Account"
                                                 >
                                                     <Edit2 size={13} />
                                                 </button>

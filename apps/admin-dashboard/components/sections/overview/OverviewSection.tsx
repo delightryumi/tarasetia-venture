@@ -23,6 +23,7 @@ import { GuestDetailModal } from "./GuestDetailModal";
 import { VoidConfirmModal } from "./VoidConfirmModal";
 import { CancelConfirmModal } from "./CancelConfirmModal";
 import { GuestListDrawer } from "./GuestListDrawer";
+import { ChannexDashboardPanel } from "./ChannexDashboardPanel";
 
 const SAGE = "var(--sidebar-link-active-bg, #181d26)";
 const PEACH = "var(--sidebar-link-active-bg, #181d26)";
@@ -73,11 +74,33 @@ export function OverviewSection() {
         return `${yyyy}-${mm}-${dd}`;
     }, []);
 
+    const last7DaysStr = React.useMemo(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 6);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }, []);
+
+    const { monthStartStr, monthEndStr } = React.useMemo(() => {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const lastDay = new Date(yyyy, d.getMonth() + 1, 0).getDate();
+        return {
+            monthStartStr: `${yyyy}-${mm}-01`,
+            monthEndStr: `${yyyy}-${mm}-${String(lastDay).padStart(2, '0')}`
+        };
+    }, []);
+
     const [startDate, setStartDate] = React.useState(todayStr);
     const [endDate, setEndDate] = React.useState(todayStr);
 
     const isTodayActive = startDate === todayStr && endDate === todayStr;
     const isTomorrowActive = startDate === tomorrowStr && endDate === tomorrowStr;
+    const is7DaysActive = startDate === last7DaysStr && endDate === todayStr;
+    const isMonthActive = startDate === monthStartStr && endDate === monthEndStr;
 
     const { 
         loading, 
@@ -90,8 +113,13 @@ export function OverviewSection() {
     const [isEditing, setIsEditing] = React.useState(false);
     const [bookingToVoid, setBookingToVoid] = React.useState<any>(null);
     const [bookingToCancel, setBookingToCancel] = React.useState<any>(null);
+    const ledgerRef = React.useRef<HTMLDivElement>(null);
 
-    const dash = loading ? "—" : null;
+    const dash = loading ? "-" : null;
+
+    const scrollToLedger = () => {
+        ledgerRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
 
     const getDatesBetween = (checkInStr: string, checkOutStr: string, isAccommodation: boolean) => {
         if (!checkInStr) return [];
@@ -528,7 +556,7 @@ export function OverviewSection() {
 
             // ── Sheet 1: Master All Transactions (2 Sections) ──
             const masterHeader = [
-                ["LAPORAN AUDIT & TRANSAKSI FRONT OFFICE — LENGKAP"],
+                ["LAPORAN AUDIT & TRANSAKSI FRONT OFFICE - LENGKAP"],
                 [`Properti: ${hotelName.toUpperCase()}`],
                 [`Periode: ${periodStr} | Jam Sistem: ${sysTime} | Staf Cetak: ${staffStr}`],
                 [],
@@ -935,15 +963,19 @@ export function OverviewSection() {
                             <PlusCircle size={15} />
                         </div>
                         <div className={styles.headerMeta}>
-                            <span className={styles.headerSubtitle}>Operational Status</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className={styles.headerSubtitle}>{activeHotelName || "Nexura Hotel"}</span>
+                                <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                                <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700, textTransform: 'uppercase' }}>Live System</span>
+                            </div>
                             <h1 className={styles.headerTitle}>
-                                Command Center
+                                Front Office Command Center
                             </h1>
                         </div>
                     </div>
 
                     <div className={styles.headerRight}>
-                        {/* Today / Tomorrow Toggle */}
+                        {/* Quick Presets Toggle */}
                         <div className={styles.toggleWrapper}>
                             <motion.button 
                                 whileTap={{ scale: 0.97 }}
@@ -965,6 +997,26 @@ export function OverviewSection() {
                             >
                                 Tomorrow
                             </motion.button>
+                            <motion.button 
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => {
+                                    setStartDate(last7DaysStr);
+                                    setEndDate(todayStr);
+                                }}
+                                className={`${styles.toggleBtn} ${is7DaysActive ? styles.toggleBtnActive : ''}`}
+                            >
+                                7 Days
+                            </motion.button>
+                            <motion.button 
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => {
+                                    setStartDate(monthStartStr);
+                                    setEndDate(monthEndStr);
+                                }}
+                                className={`${styles.toggleBtn} ${isMonthActive ? styles.toggleBtnActive : ''}`}
+                            >
+                                Month
+                            </motion.button>
                         </div>
 
                         <div className={styles.vDivider} />
@@ -980,7 +1032,7 @@ export function OverviewSection() {
                                         const val = e.target.value;
                                         if (val) {
                                             setStartDate(val);
-                                            setEndDate(val);
+                                            if (val > endDate) setEndDate(val);
                                         }
                                     }} 
                                     className={styles.dateInput}
@@ -1043,24 +1095,48 @@ export function OverviewSection() {
             </header>
 
             <main className={styles.mainContainer}>
-                {/* SECTION 1: MOVEMENT GRID */}
+                {/* SECTION 1: CHANNEX EXECUTIVE DASHBOARD PANEL */}
+                <ChannexDashboardPanel
+                    bookings={latestBookings}
+                    startDate={startDate}
+                    endDate={endDate}
+                    hotelName={activeHotelName}
+                    onSelectBooking={(b) => {
+                        setSelectedGuest(b);
+                        setIsEditing(false);
+                    }}
+                    onDetailsClick={scrollToLedger}
+                />
+
+                {/* SECTION 2: OPERATIONAL MOVEMENT GRID */}
+                <div className={styles.sectionHeaderGroup}>
+                    <h3 className={styles.sectionTitle}>
+                        <LogIn size={15} style={{ color: "#334155" }} />
+                        Today's Operations
+                        <span className={styles.sectionBadge}>Front Desk Movements</span>
+                    </h3>
+                    <p className={styles.sectionSubtitle}>
+                        Direct check in, check out, and cancellation management
+                    </p>
+                </div>
+
                 <section className={styles.statGrid}>
                     <StatCard 
-                        accent="#212121" icon={<LogIn size={18} />} 
+                        accent="#059669" icon={<LogIn size={18} />} 
                         label={isTodayActive ? "Check In Today" : (isTomorrowActive ? "Check In Tomorrow" : `Check In (${startDate} to ${endDate})`)} 
                         count={dash || checkInCount} items={todayCheckIns}
                         onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
                         onStatusUpdate={handleStatusUpdate}
                     />
                     <StatCard 
-                        accent="#ef4444" icon={<Calendar size={18} />} 
+                        accent="#d97706" icon={<Calendar size={18} />} 
                         label={isTodayActive ? "Check Out Today" : (isTomorrowActive ? "Check Out Tomorrow" : `Check Out (${startDate} to ${endDate})`)} 
                         count={dash || checkOutCount} items={todayCheckOuts}
                         onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
                         onStatusUpdate={handleStatusUpdate}
                     />
                     <StatCard 
-                        accent="#ef4444" icon={<XCircle size={18} />} 
+                        accent="#dc2626" icon={<XCircle size={18} />} 
                         label={isTodayActive ? "Cancellations Today" : (isTomorrowActive ? "Cancellations Tomorrow" : `Cancellations (${startDate} to ${endDate})`)} 
                         count={dash || cancelCount} items={todayCanceled}
                         onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
@@ -1068,7 +1144,18 @@ export function OverviewSection() {
                     />
                 </section>
 
-                {/* SECTION 2: AUDIT LEDGER */}
+                {/* SECTION 3: AUDIT LEDGER */}
+                <div ref={ledgerRef} className={styles.sectionHeaderGroup}>
+                    <h3 className={styles.sectionTitle}>
+                        <FileText size={15} style={{ color: "#334155" }} />
+                        Transaction Audit & Ledger
+                        <span className={styles.sectionBadge}>{latestBookings.length} Records</span>
+                    </h3>
+                    <p className={styles.sectionSubtitle}>
+                        Detailed financial accounting audit, status mutations and multi-format exports
+                    </p>
+                </div>
+
                 <AuditLedger 
                     bookings={latestBookings}
                     activeHotelName={activeHotelName}
@@ -1092,8 +1179,8 @@ export function OverviewSection() {
                     onExportExcel={handleExportExcel}
                     onExportPDF={handleExportPDF}
                 />
-
             </main>
+
 
             {/* Right Drawer Overlay Popup */}
             <AnimatePresence>

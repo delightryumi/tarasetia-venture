@@ -1,17 +1,18 @@
-/* RateInventoryGrid.module.css — My Tara Luxury Hotel Enterprise Grid Theme */
-
 .gridScrollWrapper {
     width: 100%;
     overflow-x: auto;
-    background-color: #faf8f4;
-    border: 1px solid rgba(141, 122, 82, 0.18);
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 12px;
-    box-shadow: 0 4px 16px rgba(141, 122, 82, 0.05);
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
     position: relative;
-    max-height: calc(100vh - 220px);
-    overflow-y: auto;
     box-sizing: border-box;
+}
+
+:global(.dark) .gridScrollWrapper {
+    background-color: #111827;
+    border-color: #374151;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .gridTable {
@@ -19,490 +20,60 @@
     border-collapse: separate;
     border-spacing: 0;
     table-layout: fixed;
-    font-size: 11px;
-    font-family: var(--font-geist-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
-}
-
-/* ── Sticky Left Header / Dimensions ── */
-.colTitle {
-    width: 270px;
-    min-width: 270px;
-    max-width: 270px;
-    position: sticky;
-    left: 0;
-    z-index: 12;
-    background-color: #faf8f4;
-    border-right: 2px solid rgba(141, 122, 82, 0.3);
-    border-bottom: 1px solid rgba(141, 122, 82, 0.15);
-}
-
-.colDay {
-    width: 86px;
-    min-width: 86px;
-    max-width: 86px;
-    text-align: center;
-    border-right: 1px solid rgba(141, 122, 82, 0.12);
-    border-bottom: 1px solid rgba(141, 122, 82, 0.12);
-}
-
-.colWeekend {
-    background-color: rgba(141, 122, 82, 0.04);
-}
-
-.colToday {
-    background-color: #e1f5ee !important;
-    border-left: 1px solid rgba(15, 110, 86, 0.3) !important;
-    border-right: 1px solid rgba(15, 110, 86, 0.3) !important;
-}
-
-/* ── Sticky Top Date Header Row ── */
-.headerRow {
-    background: linear-gradient(180deg, #f5f2eb 0%, #ebe7d7 100%);
-    position: sticky;
-    top: 0;
-    z-index: 25;
-    box-shadow: 0 1px 3px rgba(141, 122, 82, 0.08);
-}
-
-.headerRow .colTitle {
-    background: #f5f2eb;
-    z-index: 30;
-}
-
-.dateNavControl {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 10px;
-    height: 46px;
-    gap: 6px;
-}
-
-.dateStepperBtn {
-    width: 26px;
-    height: 26px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #faf8f4;
-    border: 1px solid rgba(141, 122, 82, 0.25);
-    border-radius: 6px;
-    cursor: pointer;
-    color: #383838;
-    transition: all 0.15s ease;
-    flex-shrink: 0;
-}
-
-.dateStepperBtn:hover {
-    background-color: #ebe7d7;
-    color: #181d26;
-    border-color: rgba(141, 122, 82, 0.45);
-}
-
-.datePickerInput {
-    height: 26px;
-    padding: 0 6px;
-    border: 1px solid rgba(141, 122, 82, 0.25);
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    color: #181d26;
-    background-color: #fbf9f4;
-    outline: none;
-    cursor: pointer;
-    flex: 1;
-    text-align: center;
+    font-size: 12px;
     font-family: inherit;
 }
 
-.datePickerInput:focus {
-    border-color: #8d7a52;
-    box-shadow: 0 0 0 2px rgba(141, 122, 82, 0.18);
-}
-
-.dayHeaderCell {
-    padding: 6px 4px;
+.emptyStateCell {
+    padding: 60px 20px;
     text-align: center;
-    border-right: 1px solid rgba(141, 122, 82, 0.18);
-    border-bottom: 2px solid rgba(141, 122, 82, 0.3);
-    background-color: transparent;
-}
-
-.dayOfWeek {
-    font-size: 10px;
-    font-weight: 700;
-    color: #736342;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.dayNumber {
-    font-size: 14px;
-    font-weight: 800;
-    color: #181d26;
-    line-height: 1.1;
-    margin: 2px 0;
-    font-family: var(--font-mono-jb), 'JetBrains Mono', monospace;
-}
-
-.monthLabel {
-    font-size: 9px;
-    font-weight: 600;
-    color: #8d7a52;
-    text-transform: uppercase;
-}
-
-.jumpForwardBtn {
-    width: 26px;
-    height: 26px;
-    border-radius: 6px;
-    border: 1px solid rgba(141, 122, 82, 0.25);
-    background: #faf8f4;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #736342;
-    margin: 0 auto;
-    transition: all 0.15s ease;
-}
-
-.jumpForwardBtn:hover {
-    background: #ebe7d7;
-    color: #181d26;
-    border-color: rgba(141, 122, 82, 0.45);
-}
-
-/* ── 1. Master Room Type Header Row ── */
-.roomTypeRow {
-    background-color: #f5f2eb;
-    font-weight: 700;
-}
-
-.roomTypeTitleCell {
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #f5f2eb;
-    border-left: 4px solid #8d7a52;
-}
-
-.roomTypeBadge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    font-weight: 800;
-    color: #181d26;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 175px;
-}
-
-.roomTypeNameText {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.roomCountPill {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 4px;
-    background-color: #dfd3b2;
-    color: #736342;
-    border: 1px solid rgba(141, 122, 82, 0.2);
-    flex-shrink: 0;
-}
-
-.btnSyncRoom {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 700;
-    background-color: #faf8f4;
-    border: 1px solid rgba(141, 122, 82, 0.25);
-    color: #383838;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: all 0.15s ease;
-    font-family: inherit;
-}
-
-.btnSyncRoom:hover:not(:disabled) {
-    background-color: #181d26;
-    border-color: #181d26;
-    color: #ffffff;
-}
-
-.btnSyncRoom:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.roomTypeInvCell {
-    padding: 6px 4px;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 800;
-    color: #181d26;
-    border-right: 1px solid rgba(141, 122, 82, 0.15);
-    border-bottom: 1px solid rgba(141, 122, 82, 0.18);
-    font-family: var(--font-mono-jb), monospace;
-    background-color: #f5f2eb;
-}
-
-/* ── 2. Rate Plan Sub-Rows (Tree Hierarchy) ── */
-.ratePlanRow {
-    border-bottom: 1px solid rgba(141, 122, 82, 0.12);
-    background-color: #faf8f4;
-}
-
-.ratePlanRow:hover {
-    background-color: #f5f2eb;
-}
-
-.ratePlanTitleCell {
-    padding: 6px 12px 6px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #faf8f4;
-}
-
-.ratePlanRow:hover .ratePlanTitleCell {
-    background-color: #f5f2eb;
-}
-
-.ratePlanNameGroup {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.ratePlanTreePrefix {
-    color: #8d7a52;
-    font-family: monospace;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.ratePlanCodePill {
-    font-size: 9px;
-    font-weight: 700;
-    background-color: #f5f2eb;
-    color: #736342;
-    padding: 1px 4px;
-    border-radius: 3px;
-    border: 1px solid rgba(141, 122, 82, 0.2);
-    font-family: monospace;
-}
-
-.ratePlanName {
-    font-size: 11px;
-    font-weight: 600;
-    color: #212121;
-}
-
-.infoIcon {
-    color: #8d9884;
-    cursor: pointer;
-    transition: color 0.15s ease;
-}
-
-.infoIcon:hover {
-    color: #181d26;
-}
-
-/* ── Data Cells & Inline Editable Controls ── */
-.dataCell {
-    padding: 4px;
-    border-right: 1px solid rgba(141, 122, 82, 0.12);
-    border-bottom: 1px solid rgba(141, 122, 82, 0.12);
-    text-align: center;
-    vertical-align: middle;
-    position: relative;
-}
-
-.cellStopSell {
-    background-color: #fcebeb !important;
-}
-
-.rateInput {
-    width: 100%;
-    height: 26px;
-    padding: 0 4px;
-    text-align: right;
-    font-size: 11px;
-    font-weight: 700;
-    font-family: var(--font-mono-jb), 'JetBrains Mono', monospace;
-    color: #181d26;
-    background-color: #ffffff;
-    border: 1px solid rgba(141, 122, 82, 0.22);
-    border-radius: 6px;
-    outline: none;
-    transition: all 0.15s ease;
-}
-
-.rateInput:focus {
-    border-color: #8d7a52;
-    box-shadow: 0 0 0 2px rgba(141, 122, 82, 0.18);
     background-color: #ffffff;
 }
 
-.rateInputStopSell {
-    background-color: #fcebeb;
-    color: #a32d2d;
-    border-color: rgba(163, 45, 45, 0.4);
+:global(.dark) .emptyStateCell {
+    background-color: #111827;
 }
 
-.invInput {
-    width: 52px;
-    height: 26px;
-    padding: 0 4px;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 800;
-    font-family: var(--font-mono-jb), monospace;
-    color: #181d26;
-    background-color: #ffffff;
-    border: 1px solid rgba(141, 122, 82, 0.25);
-    border-radius: 6px;
-    outline: none;
-    transition: all 0.15s ease;
-    margin: 0 auto;
-    display: block;
-    -moz-appearance: textfield;
-}
-
-.invInput::-webkit-outer-spin-button,
-.invInput::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.invInput:focus {
-    border-color: #8d7a52;
-    box-shadow: 0 0 0 2px rgba(141, 122, 82, 0.18);
-    background-color: #ffffff;
-}
-
-.invInputZero {
-    background-color: #fcebeb;
-    color: #a32d2d;
-    border-color: rgba(163, 45, 45, 0.4);
-    font-weight: 900;
-}
-
-/* ── Restriction Toggle Badges ── */
-.badgeOpen {
-    display: inline-flex;
+.emptyStateContent {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 24px;
-    padding: 0 4px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 800;
-    background-color: #e1f5ee;
-    color: #0f6e56;
-    border: 1px solid rgba(15, 110, 86, 0.25);
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.12s ease;
+    gap: 12px;
 }
 
-.badgeOpen:hover {
-    background-color: #c8eee1;
-    border-color: rgba(15, 110, 86, 0.4);
-}
-
-.badgeClosed {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 24px;
-    padding: 0 4px;
-    border-radius: 4px;
-    font-size: 9px;
-    font-weight: 800;
-    background-color: #fcebeb;
-    color: #a32d2d;
-    border: 1px solid rgba(163, 45, 45, 0.35);
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.12s ease;
-}
-
-.badgeClosed:hover {
-    background-color: #f8d7d7;
-    border-color: rgba(163, 45, 45, 0.5);
-}
-
-/* ── 3. Bottom Summary Total Available Row (High-Contrast & Crystal Clear) ── */
-.totalAvailableRow {
-    background-color: #181d26;
-    position: sticky;
-    bottom: 0;
-    z-index: 20;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-}
-
-.totalAvailableTitleCell {
-    padding: 10px 14px;
+.emptyIconWrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background-color: #f1f5f9;
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 800;
-    color: #ffffff;
-    background-color: #181d26;
-    border-right: 2px solid rgba(141, 122, 82, 0.4);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.totalAvailableCell {
-    padding: 8px 4px;
-    text-align: center;
-    background-color: #181d26;
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.totalAvailBadge {
-    display: inline-flex;
-    align-items: center;
     justify-content: center;
-    min-width: 32px;
-    height: 24px;
-    padding: 0 6px;
-    font-size: 13px;
+    color: #64748b;
+}
+
+:global(.dark) .emptyIconWrapper {
+    background-color: #1f2937;
+    color: #9ca3af;
+}
+
+.emptyTitle {
+    font-size: 15px;
     font-weight: 800;
-    border-radius: 4px;
-    font-family: var(--font-mono-jb), 'JetBrains Mono', monospace;
+    color: #0f172a;
 }
 
-.totalAvailGood .totalAvailBadge {
-    color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.12);
+:global(.dark) .emptyTitle {
+    color: #f8fafc;
 }
 
-.totalAvailLow .totalAvailBadge {
-    color: #fef08a;
-    background-color: rgba(234, 179, 8, 0.22);
-    border: 1px solid rgba(234, 179, 8, 0.4);
+.emptySubtitle {
+    font-size: 12.5px;
+    color: #64748b;
+    max-width: 400px;
+    line-height: 1.4;
 }
 
-.totalAvailZero .totalAvailBadge {
-    color: #fca5a5;
-    background-color: rgba(220, 38, 38, 0.28);
-    border: 1px solid rgba(220, 38, 38, 0.5);
+:global(.dark) .emptySubtitle {
+    color: #9ca3af;
 }

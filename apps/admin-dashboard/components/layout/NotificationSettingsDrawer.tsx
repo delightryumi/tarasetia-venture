@@ -131,17 +131,25 @@ interface Props {
     userEmail?: string;
 }
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
     return (
-        <label className={styles.toggleSwitch}>
-            <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />
-            <div
-                className={`${styles.toggleTrack} ${checked ? styles.toggleTrackOn : ""}`}
-                onClick={() => onChange(!checked)}
-            >
-                <div className={`${styles.toggleThumb} ${checked ? styles.toggleThumbOn : ""}`} />
-            </div>
-        </label>
+        <button
+            type="button"
+            role="switch"
+            aria-checked={checked}
+            disabled={disabled}
+            className={`${styles.toggleTrack} ${checked ? styles.toggleTrackOn : ""}`}
+            onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!disabled) {
+                    onChange(!checked);
+                }
+            }}
+            aria-label="Toggle preference"
+        >
+            <span className={`${styles.toggleThumb} ${checked ? styles.toggleThumbOn : ""}`} />
+        </button>
     );
 }
 
@@ -164,30 +172,29 @@ export function NotificationSettingsDrawer({ isOpen, onClose, hotelCode, userId 
         } catch {/* ignore */}
     }, [userId, mounted]);
 
-    const savePrefs = useCallback((updated: NotificationPreferences) => {
-        setPrefs(updated);
-        try {
-            localStorage.setItem(PREFS_KEY(userId), JSON.stringify(updated));
-        } catch {/* ignore */}
-        if (hotelCode) {
-            fetch("/api/notifications/subscribe", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    hotelCode,
-                    subscription: null,
-                    userEmail: userEmail || "staff",
-                    preferences: updated
-                })
-            }).catch(() => {});
-        }
-    }, [userId, hotelCode, userEmail]);
-
     const togglePref = (key: keyof NotificationPreferences, value: boolean) => {
-        const updated = { ...prefs, [key]: value };
-        savePrefs(updated);
+        setPrefs(prev => {
+            const updated = { ...prev, [key]: value };
+            try {
+                localStorage.setItem(PREFS_KEY(userId), JSON.stringify(updated));
+            } catch {/* ignore */}
+            if (hotelCode) {
+                fetch("/api/notifications/subscribe", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode,
+                        subscription: null,
+                        userEmail: userEmail || "staff",
+                        preferences: updated
+                    })
+                }).catch(() => {});
+            }
+            return updated;
+        });
+
         const item = NOTIFICATION_ITEMS.find(i => i.key === key);
-        toast.success(`"${item?.label}" ${value ? "enabled" : "disabled"}.`, { duration: 1800 });
+        toast.success(`"${item?.label || key}" ${value ? "enabled" : "disabled"}.`, { duration: 1800 });
     };
 
     const isDenied = permission === "denied";
@@ -215,17 +222,35 @@ export function NotificationSettingsDrawer({ isOpen, onClose, hotelCode, userId 
                     </button>
                 </div>
 
-                {/* ── Device Permission Status Banner ── */}
+                {/* ── Device Permission Status Banner with Interactive Master Switch ── */}
                 <div className={styles.statusBanner}>
                     <div className={styles.statusLeft}>
                         <span className={`${styles.statusDot} ${isGranted ? styles.statusDotGreen : isDenied ? styles.statusDotRed : styles.statusDotGray}`} />
-                        <span style={{ fontWeight: 600, color: "#0f172a", fontSize: "12px" }}>
-                            {isGranted ? "Push Notifications Active on This Device" : isDenied ? "Notifications Blocked by Browser / OS" : "Push Notifications Not Yet Enabled"}
-                        </span>
+                        <div>
+                            <div style={{ fontWeight: 600, color: "#0f172a", fontSize: "12px", lineHeight: 1.2 }}>
+                                {isGranted ? "Push Notifications Active on This Device" : isDenied ? "Notifications Blocked by Browser / OS" : "Push Notifications Disabled"}
+                            </div>
+                            <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>
+                                {isGranted ? "Receiving sound & lockscreen alerts" : "Turn on to get instant sound & lockscreen alerts"}
+                            </div>
+                        </div>
                     </div>
-                    <span className={`${styles.statusBadge} ${isGranted ? styles.statusBadgeGreen : isDenied ? styles.statusBadgeRed : styles.statusBadgeGray}`}>
-                        {isGranted ? "● ACTIVE" : isDenied ? "● BLOCKED" : "● OFF"}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span className={`${styles.statusBadge} ${isGranted ? styles.statusBadgeGreen : isDenied ? styles.statusBadgeRed : styles.statusBadgeGray}`}>
+                            {isGranted ? "● ACTIVE" : isDenied ? "● BLOCKED" : "● OFF"}
+                        </span>
+                        <Toggle
+                            checked={isGranted}
+                            disabled={loading || isDenied}
+                            onChange={(enable) => {
+                                if (enable) {
+                                    subscribeToPush();
+                                } else {
+                                    unsubscribeFromPush();
+                                }
+                            }}
+                        />
+                    </div>
                 </div>
 
                 {/* ── Body ── */}
@@ -241,7 +266,7 @@ export function NotificationSettingsDrawer({ isOpen, onClose, hotelCode, userId 
                                         <span style={{ fontWeight: 700, color: "#b91c1c" }}>Notifications Blocked</span>
                                     </div>
                                     <p style={{ margin: "0", color: "#64748b", fontSize: "11px", lineHeight: "1.6" }}>
-                                        Your browser or OS is blocking push notifications from MyTara. To enable: go to <b>Device Settings &rarr; Apps &rarr; Browser &rarr; Notifications</b> and grant permission.
+                                        Your browser or OS is blocking push notifications. To enable: click the lock/settings icon near your browser address bar and choose <b>Notifications &rarr; Allow</b>.
                                     </p>
                                 </div>
                             ) : (
@@ -259,10 +284,18 @@ export function NotificationSettingsDrawer({ isOpen, onClose, hotelCode, userId 
                         </div>
                     )}
 
-                    {/* ── Quick Test Buttons (when active) ── */}
-                    {isGranted && (
-                        <div className={styles.section}>
-                            <div className={styles.sectionTitle}>Send Test Notification</div>
+                    {/* ── Interactive Sound & Alert Simulation (Always Available) ── */}
+                    <div className={styles.section}>
+                        <div className={styles.simulationBox}>
+                            <div className={styles.simulationHeader}>
+                                <span className={styles.simulationTitle}>Test Alerts & Audio Simulation</span>
+                                <span style={{ fontSize: "10px", background: "#e2e8f0", padding: "2px 6px", borderRadius: "4px", color: "#475569", fontWeight: 600 }}>
+                                    Local Audio & Web Push
+                                </span>
+                            </div>
+                            <p className={styles.simulationNote}>
+                                Click below to play the 5-star concierge chime and simulate an incoming transaction alert immediately.
+                            </p>
                             <div className={styles.testRow}>
                                 <button
                                     type="button"
@@ -271,7 +304,7 @@ export function NotificationSettingsDrawer({ isOpen, onClose, hotelCode, userId 
                                     disabled={testing}
                                 >
                                     <Send size={12} />
-                                    <span>🛎️ Test New Booking</span>
+                                    <span>🛎️ Simulate New Booking</span>
                                 </button>
                                 <button
                                     type="button"
@@ -280,11 +313,11 @@ export function NotificationSettingsDrawer({ isOpen, onClose, hotelCode, userId 
                                     disabled={testing}
                                 >
                                     <AlertCircle size={12} />
-                                    <span>🚨 Test Cancellation</span>
+                                    <span>🚨 Simulate Cancellation</span>
                                 </button>
                             </div>
                         </div>
-                    )}
+                    </div>
 
                     {/* ── Notification Type Toggles ── */}
                     <div className={styles.section}>

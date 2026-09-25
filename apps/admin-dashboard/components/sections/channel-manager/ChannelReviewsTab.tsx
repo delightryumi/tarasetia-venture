@@ -87,7 +87,7 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
             });
             const data = await res.json();
             if (data.success) {
-                toast.success("Balasan resmi hotel berhasil dikirimkan ke OTA!");
+                toast.success("Official management response posted to OTA successfully.");
                 setReviews(prev => prev.map(r => r.id === reviewId ? {
                     ...r,
                     is_replied: true,
@@ -96,10 +96,10 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
                 setReplyingId(null);
                 setReplyDraft("");
             } else {
-                toast.error(data.error || "Gagal mengirim balasan");
+                toast.error(data.error || "Failed to submit review response");
             }
         } catch (err) {
-            toast.error("Terjadi kesalahan jaringan.");
+            toast.error("Network communication error.");
         } finally {
             setSubmittingReply(false);
         }
@@ -115,18 +115,18 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
             {/* 1. Score Summary Metrics */}
             <div className={styles.scoreCardsGrid}>
                 <div className={styles.scoreCard} style={{ borderLeft: "4px solid #1e3a2f" }}>
-                    <span className={styles.scoreTitle}>Skor Rata-rata OTA</span>
+                    <span className={styles.scoreTitle}>Average OTA Score</span>
                     <div className={styles.scoreValueRow}>
                         <span className={styles.scoreValueLarge}>{summary.averageScore}</span>
                         <span className={styles.scoreScale}>/ 10</span>
                     </div>
                     <div style={{ fontSize: "11px", color: "#64748b" }}>
-                        Berdasarkan <b>{summary.totalReviews} ulasan</b> terverifikasi
+                        Based on <b>{summary.totalReviews} reviews</b> verified
                     </div>
                 </div>
 
                 <div className={styles.scoreCard}>
-                    <span className={styles.scoreTitle}>Kebersihan</span>
+                    <span className={styles.scoreTitle}>Cleanliness</span>
                     <div className={styles.scoreValueRow}>
                         <span className={styles.scoreValueLarge}>{summary.cleanliness}</span>
                         <span className={styles.scoreScale}>/ 10</span>
@@ -137,7 +137,7 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
                 </div>
 
                 <div className={styles.scoreCard}>
-                    <span className={styles.scoreTitle}>Pelayanan Staf</span>
+                    <span className={styles.scoreTitle}>Staff &amp; Service</span>
                     <div className={styles.scoreValueRow}>
                         <span className={styles.scoreValueLarge}>{summary.staff}</span>
                         <span className={styles.scoreScale}>/ 10</span>
@@ -148,7 +148,7 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
                 </div>
 
                 <div className={styles.scoreCard}>
-                    <span className={styles.scoreTitle}>Lokasi</span>
+                    <span className={styles.scoreTitle}>Location</span>
                     <div className={styles.scoreValueRow}>
                         <span className={styles.scoreValueLarge}>{summary.location}</span>
                         <span className={styles.scoreScale}>/ 10</span>
@@ -159,7 +159,7 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
                 </div>
 
                 <div className={styles.scoreCard}>
-                    <span className={styles.scoreTitle}>Kenyamanan & Nilai</span>
+                    <span className={styles.scoreTitle}>Comfort &amp; Value</span>
                     <div className={styles.scoreValueRow}>
                         <span className={styles.scoreValueLarge}>{summary.comfort}</span>
                         <span className={styles.scoreScale}>/ 10</span>
@@ -174,13 +174,13 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
             <div className={styles.toolbar}>
                 <div className={styles.filterGroup}>
                     <Filter size={14} color="#64748b" />
-                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#334155" }}>Filter Saluran:</span>
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#334155" }}>Channel Filter:</span>
                     <select
                         value={filterOta}
                         onChange={e => setFilterOta(e.target.value)}
                         className={styles.filterSelect}
                     >
-                        <option value="all">Semua OTA Global</option>
+                        <option value="all">All Global OTAs</option>
                         <option value="BookingCom">Booking.com</option>
                         <option value="AirBNB">Airbnb</option>
                         <option value="Expedia">Expedia</option>
@@ -189,13 +189,13 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
 
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <span style={{ fontSize: "11px", color: "#64748b" }}>
-                        Menampilkan <b>{filteredReviews.length}</b> ulasan
+                        Showing <b>{filteredReviews.length}</b> reviews
                     </span>
                     <button
                         type="button"
                         onClick={fetchReviews}
                         style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}
-                        title="Segarkan Ulasan"
+                        title="Refresh Reviews"
                     >
                         <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
                     </button>
@@ -214,21 +214,21 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
                                 <div className={styles.guestMeta}>
                                     <span className={styles.guestName}>{rev.guest_name}</span>
                                     <span className={styles.stayDetails}>
-                                        Booking #{rev.ota_reservation_id} • {rev.room_name} • Menginap: {rev.stay_date}
+                                        Booking #{rev.ota_reservation_id} • {rev.room_name} • Stay: {rev.stay_date}
                                     </span>
                                 </div>
                             </div>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                 <span className={styles.channelBadge}>{rev.ota}</span>
                                 <span style={{ fontSize: "11px", color: "#94a3b8" }}>
-                                    {new Date(rev.received_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                                    {new Date(rev.received_at).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
                                 </span>
                             </div>
                         </div>
 
                         {/* Review Content */}
                         <div className={styles.reviewBody}>
-                            "{rev.content}"
+                            &ldquo;{rev.content}&rdquo;
                         </div>
 
                         {/* Sub scores breakdown */}
@@ -246,19 +246,19 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
                             <div className={styles.replyBox}>
                                 <div className={styles.replyHeader}>
                                     <ShieldCheck size={14} />
-                                    <span>Tanggapan Resmi Manajemen Hotel:</span>
+                                    <span>Official Management Response:</span>
                                 </div>
                                 <div>{rev.reply.content}</div>
                             </div>
                         ) : replyingId === rev.id ? (
                             <div style={{ marginTop: "4px" }}>
-                                <span style={{ fontSize: "11px", fontWeight: 700, color: "#334155" }}>Ketik Balasan Resmi:</span>
+                                <span style={{ fontSize: "11px", fontWeight: 700, color: "#334155" }}>Write Management Response:</span>
                                 <div className={styles.replyForm}>
                                     <input
                                         type="text"
                                         value={replyDraft}
                                         onChange={e => setReplyDraft(e.target.value)}
-                                        placeholder="Tulis tanggapan manajemen kepada tamu ini..."
+                                        placeholder="Write an official hotel management response..."
                                         className={styles.replyInput}
                                     />
                                     <button
@@ -267,14 +267,14 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
                                         disabled={submittingReply}
                                         className={styles.btnReply}
                                     >
-                                        {submittingReply ? "Mengirim..." : "Kirim"}
+                                        {submittingReply ? "Posting..." : "Post Reply"}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setReplyingId(null)}
                                         style={{ background: "none", border: "1px solid #cbd5e1", borderRadius: "4px", padding: "0 10px", fontSize: "11px", cursor: "pointer" }}
                                     >
-                                        Batal
+                                        Cancel
                                     </button>
                                 </div>
                             </div>
@@ -301,7 +301,7 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
                                     }}
                                 >
                                     <Reply size={12} />
-                                    <span>Tanggapi Ulasan Ini</span>
+                                    <span>Respond to Review</span>
                                 </button>
                             </div>
                         )}

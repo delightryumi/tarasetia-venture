@@ -1,0 +1,173 @@
+/* SecurityPreferences.module.css */
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+    .card {
+        padding: 16px;
+        gap: 18px;
+    }
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.iconBox {
+    padding: 6px;
+    background: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sectionTitle {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.sectionSubtitle {
+    margin: 2px 0 0 0;
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.contentRow {
+    padding-left: 36px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+    .contentRow {
+        padding-left: 0;
+    }
+}
+
+.gridTwoCol {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+@media (max-width: 640px) {
+    .gridTwoCol {
+        grid-template-columns: 1fr;
+    }
+}
+
+.fieldLabel {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #334155;
+    margin-bottom: 6px;
+}
+
+.selectInput {
+    width: 100%;
+    height: 38px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 13px;
+    background: #ffffff;
+    color: #0f172a;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.selectInput:focus {
+    border-color: #0f172a;
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: #1e293b;
+    cursor: pointer;
+    line-height: 1.4;
+}
+
+.checkboxInput {
+    width: 16px;
+    height: 16px;
+    accent-color: #0f172a;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.divider {
+    height: 1px;
+    background: #f1f5f9;
+}
+
+.footerRow {
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+    .footerRow {
+        width: 100%;
+    }
+}
+
+.saveBtn {
+    height: 40px;
+    padding: 0 20px;
+    border-radius: 6px;
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.15s ease;
+}
+
+.saveBtn:hover:not(:disabled) {
+    background: #1e293b;
+}
+
+@media (max-width: 640px) {
+    .saveBtn {
+        width: 100%;
+    }
+}

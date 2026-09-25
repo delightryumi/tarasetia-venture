@@ -1,0 +1,539 @@
+/* AuditLedger.module.css - Precision-fit responsive audit ledger matching Channex PMS design */
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ── Toolbar ── */
+.toolbar {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.toolbarTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.toolbarTitleText {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.recordBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+  font-feature-settings: "tnum" 1;
+}
+
+.searchWrapper {
+  position: relative;
+  min-width: 240px;
+  max-width: 320px;
+  flex: 1;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 7px 12px 7px 32px;
+  font-size: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  color: #0f172a;
+  background: #ffffff;
+  box-sizing: border-box;
+  transition: border-color 150ms ease;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+}
+
+.searchInput:focus {
+  border-color: #0284c7;
+}
+
+.filterBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filterClear {
+  color: #ef4444;
+  font-weight: 800;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.toolbarBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms ease, border-color 150ms ease;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+}
+
+.toolbarBtnActive {
+  background-color: #f0fdf4 !important;
+  color: #16a34a !important;
+  border-color: #86efac !important;
+}
+
+/* ── Advanced Filter Panel ── */
+.advancedPanel {
+  padding: 14px 20px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  align-items: flex-end;
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filterFieldLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin: 0;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+}
+
+.filterSelect {
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1e293b;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+  transition: border-color 150ms ease;
+}
+
+.filterSelect:focus {
+  border-color: #0284c7;
+}
+
+.filterActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+}
+
+.resetBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #dc2626;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+.resetBtn:hover {
+  background-color: #fee2e2;
+}
+
+.toolbarBtn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+/* ── Table Container & Robust Non-overlapping Table Structure ── */
+.tableContainer {
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tableContainer::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tableContainer::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.tableElement {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+}
+
+.tableHead {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tableHeadCell {
+  padding: 12px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  white-space: nowrap;
+  border-bottom: 1px solid #e2e8f0;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+}
+
+.thSortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.thSortable:hover {
+  color: #0f172a;
+}
+
+.thSortInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tableRow {
+  background-color: #ffffff;
+  transition: background-color 120ms ease;
+}
+
+.tableRow:nth-child(even) {
+  background-color: #fafbfc;
+}
+
+.tableRow:hover {
+  background-color: #f1f5f9 !important;
+}
+
+.tableRowCancelled {
+  opacity: 0.7;
+}
+
+.tableCell {
+  padding: 12px 14px;
+  font-size: 12px;
+  color: #0f172a;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+}
+
+/* Column Dimensions & Styling */
+.colStatus {
+  width: 110px;
+  min-width: 110px;
+}
+
+.colResId {
+  width: 150px;
+  min-width: 150px;
+}
+
+.colChannel {
+  width: 140px;
+  min-width: 140px;
+}
+
+.colProperty {
+  width: 140px;
+  min-width: 140px;
+}
+
+.colGuest {
+  min-width: 180px;
+}
+
+.colDates {
+  width: 180px;
+  min-width: 180px;
+}
+
+.colRooms {
+  width: 70px;
+  min-width: 70px;
+  text-align: center;
+}
+
+.colTotal {
+  width: 130px;
+  min-width: 130px;
+  text-align: right;
+}
+
+.colAction {
+  width: 90px;
+  min-width: 90px;
+  text-align: center;
+}
+
+/* ── Content inside cells ── */
+.guestNameText {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.datesText {
+  font-size: 12px;
+  color: #475569;
+  font-weight: 500;
+  white-space: nowrap;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+  font-feature-settings: "tnum" 1;
+}
+
+.totalAmountText {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: right;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  white-space: nowrap;
+}
+
+.roomsText {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+  font-feature-settings: "tnum" 1;
+}
+
+.propertyNameText {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+/* ── Status Badges ── */
+.badgeConfirmed {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  white-space: nowrap;
+}
+
+.badgeCancelled {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  white-space: nowrap;
+}
+
+.badgeNew {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  white-space: nowrap;
+}
+
+/* ── Reservation ID cell ── */
+.resIdWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.resIdText {
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+  font-feature-settings: "tnum" 1;
+  font-weight: 600;
+  font-size: 12px;
+  color: #1e293b;
+}
+
+.copyBtn {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  transition: color 120ms ease;
+}
+
+.copyBtn:hover {
+  color: #0284c7;
+}
+
+/* ── Channel cell ── */
+.channelWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.channelLogoBox {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.channelLogoImg {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+.channelNameText {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+/* ── Actions ── */
+.actionBtn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  color: #0f172a;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 10px;
+  transition: background-color 150ms ease, border-color 150ms ease;
+  white-space: nowrap;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+}
+
+.actionBtn:hover {
+  background-color: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 48px 16px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+}

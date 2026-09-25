@@ -149,8 +149,12 @@ export class ChannexSyncService {
             return { success: false, message: `No active hotel found for Channex Property ID: ${property_id}` };
         }
 
-        const channelName = booking.channel_name || (booking as any)?.ota_name || "OTA";
-        const otaBookingId = booking.channel_booking_id || (booking as any)?.ota_reservation_code || booking.id;
+        const rawOta = (booking as any)?.ota_name || (booking as any)?.channel || (booking as any)?.ota;
+        const channelName = (rawOta && rawOta.toLowerCase() !== "open channel") ? rawOta : (booking.channel_name && booking.channel_name.toLowerCase() !== "open channel" ? booking.channel_name : (rawOta || "OTA"));
+        const otaBookingId = (booking as any)?.unique_id || booking.channel_booking_id || (booking as any)?.ota_reservation_code || booking.id;
+        const channexBookingId = booking.id;
+        const revisionId = (booking as any)?.revision_id || (payload as any)?.booking_revision_id || "";
+        const otaReservationId = (booking as any)?.ota_reservation_code || otaBookingId;
         const guest = booking.customer || booking.guest || {};
         const guestName = (guest.name || `${guest.first_name || ""} ${guest.last_name || ""}`).trim() || "OTA Guest";
         const arrivalDate = booking.arrival_date;
@@ -294,10 +298,11 @@ export class ChannexSyncService {
 
         // Revenue Recording Mode: "net" (Net to Hotel) vs "gross" (Gross Sell Rate)
         const revenueRecordingMode = (
+            hotelData.channelManager?.pricingModel ||
+            hotelData.settings?.revenueRecordingMode ||
             (payload as any).revenue_recording_mode ||
             (booking as any)?.revenue_recording_mode ||
             matchedChannel?.pricingModel ||
-            hotelData.settings?.revenueRecordingMode ||
             "net"
         ).toLowerCase() === "gross" ? "gross" : "net";
 
@@ -536,13 +541,21 @@ export class ChannexSyncService {
                     const entryObject = {
                         type: "accommodation",
                         guestName,
-                        bookingId: otaBookingId,
-                        channexBookingId: booking.id,
+                        bookingId: channexBookingId || otaBookingId,
+                        reservationId: otaBookingId,
+                        channexBookingId: channexBookingId || otaBookingId,
+                        revisionId: revisionId,
+                        channexRevisionId: revisionId,
+                        otaReservationId: otaReservationId,
+                        channel: channelName,
+                        source: channelName,
+                        otaName: channelName,
+                        company: channelName,
+                        connectionChannel: booking.channel_name || "Open Channel",
                         phone: guest.phone || "",
                         email: guest.email || "",
                         address: guest.address || "",
                         nationality: guest.country || "INDONESIA",
-                        company: channelName,
                         checkInDate: arrivalDate,
                         checkOutDate: departureDate,
                         effectiveDate: dateStr,
@@ -584,7 +597,6 @@ export class ChannexSyncService {
                         paymentStatus: isCancelled ? "CANCELLED" : paymentStatus,
                         payHotel: 0,
                         payTransfer: roomPayTransfer,
-                        source: "OTA",
                         status: isCancelled ? "CANCELLED" : finalStatus,
                         propertyName,
                         staffName: "Channex Channel Manager",
@@ -711,19 +723,19 @@ export class ChannexSyncService {
         }
 
         // Send Mandatory Channex Booking Acknowledgement (Certification Stage 5 Requirement)
-        const revisionId = payload.booking_revision_id || (payload.booking as any)?.revision_id || (booking as any)?.revision_id || booking.id;
-        const isUuid = Boolean(revisionId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(revisionId));
+        const ackRevisionId = payload.booking_revision_id || (payload.booking as any)?.revision_id || (booking as any)?.revision_id || booking.id;
+        const isUuid = Boolean(ackRevisionId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ackRevisionId));
 
-        if (revisionId && isUuid && !revisionId.startsWith("rev_") && !payload.is_simulation) {
+        if (ackRevisionId && isUuid && !ackRevisionId.startsWith("rev_") && !payload.is_simulation) {
             try {
                 const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
                 const hotelData = hotelDoc.data();
                 const customApiKey = hotelData?.channelManager?.apiKey || process.env.CHANNEX_API_KEY;
                 const env = hotelData?.channelManager?.environment || (process.env.CHANNEX_ENV as any) || "staging";
-                await channexClient.acknowledgeBooking(revisionId, customApiKey, env);
-                console.log(`[ChannexSync] Successfully sent Booking Acknowledge (ACK) for revision: ${revisionId}`);
+                await channexClient.acknowledgeBooking(ackRevisionId, customApiKey, env);
+                console.log(`[ChannexSync] Successfully sent Booking Acknowledge (ACK) for revision: ${ackRevisionId}`);
             } catch (ackErr: any) {
-                console.warn(`[ChannexSync] Warning: Failed to send ACK for booking revision ${revisionId}:`, ackErr.message);
+                console.warn(`[ChannexSync] Warning: Failed to send ACK for booking revision ${ackRevisionId}:`, ackErr.message);
             }
         } else if (payload.is_simulation || (revisionId && !isUuid)) {
             console.log(`[ChannexSync] Simulated revision ${revisionId}: ACK processed locally (skipping external Channex call).`);

@@ -57,101 +57,147 @@ export const RoleManagementTable: React.FC<RoleManagementTableProps> = ({
 
     return (
         <div className={styles.tableContainer}>
-            <div className={styles.tableScrollWrapper}>
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th className={`${styles.th} ${styles.thStatus}`}>Status</th>
-                            <th className={styles.th}>User Role Name</th>
-                            <th className={styles.th}>Parent Role</th>
-                            <th className={`${styles.th} ${styles.thAction}`}>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredRoles.map((role) => {
-                            const isActive = rolesStatus[role.id] !== undefined ? rolesStatus[role.id] : true;
-                            const isSuperAdminRole = role.id === "administrator";
+            {/* Desktop / Tablet Table View */}
+            <div className={styles.desktopTableWrapper}>
+                <div className={styles.tableScrollWrapper}>
+                    <table className={styles.table}>
+                        <thead>
+                            <tr>
+                                <th className={`${styles.th} ${styles.thStatus}`}>Status</th>
+                                <th className={styles.th}>User Role Name</th>
+                                <th className={styles.th}>Parent Role</th>
+                                <th className={`${styles.th} ${styles.thAction}`}>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredRoles.map((role) => {
+                                const isActive = rolesStatus[role.id] !== undefined ? rolesStatus[role.id] : true;
+                                const isSuperAdminRole = role.id === "administrator";
 
-                            return (
-                                <tr key={role.id} className={styles.tr}>
-                                    {/* Toggle Switch */}
-                                    <td className={`${styles.td} ${styles.tdStatus}`}>
-                                        <button
-                                            type="button"
-                                            disabled={isSuperAdminRole}
-                                            onClick={() => toggleRole(role.id, Boolean(role.isSystemDefault))}
-                                            className={`${styles.toggleSwitch} ${isActive ? styles.toggleOn : styles.toggleOff}`}
-                                            title={isSuperAdminRole ? "Administrator selalu aktif" : (isActive ? "Active" : "Inactive")}
-                                            style={isSuperAdminRole ? { opacity: 0.85, cursor: "default" } : {}}
-                                        >
-                                            <span className={`${styles.toggleThumb} ${isActive ? styles.toggleThumbOn : styles.toggleThumbOff}`} />
-                                            <span className={`${styles.toggleLabel} ${isActive ? styles.toggleLabelOn : styles.toggleLabelOff}`}>
-                                                {isActive ? "On" : "Off"}
-                                            </span>
-                                        </button>
-                                    </td>
-
-                                    {/* Role Name */}
-                                    <td 
-                                        className={styles.td}
-                                        onClick={() => onEditRolePermissions(role)}
-                                        style={{ cursor: "pointer" }}
-                                    >
-                                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                                            <span className={styles.roleNameText}>{role.name}</span>
-                                            <span style={{ fontSize: "11px", color: "#64748b" }}>{role.description}</span>
-                                        </div>
-                                    </td>
-
-                                    {/* Parent Role */}
-                                    <td className={styles.td}>
-                                        <span className={styles.parentRoleText}>{role.parentRole}</span>
-                                    </td>
-
-                                    {/* Actions */}
-                                    <td className={`${styles.td} ${styles.tdAction}`}>
-                                        <div className={styles.actionsGroup}>
-                                            {/* Edit Permissions button */}
-                                            <button
-                                                type="button"
-                                                onClick={() => onEditRolePermissions(role)}
-                                                className={styles.actionIconBtn}
-                                                title="Edit Role & Privileges"
-                                            >
-                                                <Edit3 size={14} />
-                                            </button>
-
-                                            {/* Delete button */}
+                                return (
+                                    <tr key={role.id} className={styles.tr}>
+                                        {/* Toggle Switch */}
+                                        <td className={`${styles.td} ${styles.tdStatus}`}>
                                             <button
                                                 type="button"
                                                 disabled={isSuperAdminRole}
-                                                onClick={() => {
-                                                    if (isSuperAdminRole) return;
-                                                    toast.error("Role bawaan sistem terlindungi.");
-                                                }}
-                                                className={`${styles.actionIconBtn} ${styles.actionIconBtnDanger}`}
-                                                style={isSuperAdminRole ? { opacity: 0.4, cursor: "not-allowed" } : {}}
-                                                title={isSuperAdminRole ? "Role bawaan sistem tidak dapat dihapus" : "Delete Role"}
+                                                onClick={() => toggleRole(role.id, Boolean(role.isSystemDefault))}
+                                                className={`${styles.toggleSwitch} ${isActive ? styles.toggleOn : styles.toggleOff}`}
+                                                title={isSuperAdminRole ? "Administrator selalu aktif" : (isActive ? "Active" : "Inactive")}
+                                                style={isSuperAdminRole ? { opacity: 0.85, cursor: "default" } : {}}
                                             >
-                                                <Trash2 size={14} />
+                                                <span className={`${styles.toggleThumb} ${isActive ? styles.toggleThumbOn : styles.toggleThumbOff}`} />
+                                                <span className={`${styles.toggleLabel} ${isActive ? styles.toggleLabelOn : styles.toggleLabelOff}`}>
+                                                    {isActive ? "On" : "Off"}
+                                                </span>
                                             </button>
+                                        </td>
 
-                                            {/* Configure Privileges */}
-                                            <button
-                                                type="button"
-                                                onClick={() => onEditRolePermissions(role)}
-                                                className={styles.actionIconBtn}
-                                                title="View Permissions Matrix"
-                                            >
-                                                <SlidersHorizontal size={14} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                                        {/* Role Name */}
+                                        <td 
+                                            className={styles.td}
+                                            onClick={() => onEditRolePermissions(role)}
+                                            style={{ cursor: "pointer" }}
+                                        >
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                                <span className={styles.roleNameText}>{role.name}</span>
+                                                <span style={{ fontSize: "11px", color: "#64748b" }}>{role.description}</span>
+                                            </div>
+                                        </td>
+
+                                        {/* Parent Role */}
+                                        <td className={styles.td}>
+                                            <span className={styles.parentRoleText}>{role.parentRole}</span>
+                                        </td>
+
+                                        {/* Actions */}
+                                        <td className={`${styles.td} ${styles.tdAction}`}>
+                                            <div className={styles.actionsGroup}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onEditRolePermissions(role)}
+                                                    className={styles.actionIconBtn}
+                                                    title="Edit Role & Privileges"
+                                                >
+                                                    <Edit3 size={14} />
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    disabled={isSuperAdminRole}
+                                                    onClick={() => {
+                                                        if (isSuperAdminRole) return;
+                                                        toast.error("Role bawaan sistem terlindungi.");
+                                                    }}
+                                                    className={`${styles.actionIconBtn} ${styles.actionIconBtnDanger}`}
+                                                    style={isSuperAdminRole ? { opacity: 0.4, cursor: "not-allowed" } : {}}
+                                                    title={isSuperAdminRole ? "Role bawaan sistem tidak dapat dihapus" : "Delete Role"}
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onEditRolePermissions(role)}
+                                                    className={styles.actionIconBtn}
+                                                    title="View Permissions Matrix"
+                                                >
+                                                    <SlidersHorizontal size={14} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Mobile View: Responsive Role Cards */}
+            <div className={styles.mobileCardsWrapper}>
+                {filteredRoles.map((role) => {
+                    const isActive = rolesStatus[role.id] !== undefined ? rolesStatus[role.id] : true;
+                    const isSuperAdminRole = role.id === "administrator";
+
+                    return (
+                        <div key={`m-role-${role.id}`} className={styles.mobileRoleCard}>
+                            <div className={styles.mobileRoleHeader}>
+                                <div className={styles.mobileRoleNameCluster}>
+                                    <span className={styles.mobileRoleName}>{role.name}</span>
+                                    <span className={styles.mobileParentBadge}>Parent: {role.parentRole}</span>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    disabled={isSuperAdminRole}
+                                    onClick={() => toggleRole(role.id, Boolean(role.isSystemDefault))}
+                                    className={`${styles.toggleSwitch} ${isActive ? styles.toggleOn : styles.toggleOff}`}
+                                    title={isSuperAdminRole ? "Administrator selalu aktif" : (isActive ? "Active" : "Inactive")}
+                                    style={isSuperAdminRole ? { opacity: 0.85, cursor: "default" } : {}}
+                                >
+                                    <span className={`${styles.toggleThumb} ${isActive ? styles.toggleThumbOn : styles.toggleThumbOff}`} />
+                                    <span className={`${styles.toggleLabel} ${isActive ? styles.toggleLabelOn : styles.toggleLabelOff}`}>
+                                        {isActive ? "On" : "Off"}
+                                    </span>
+                                </button>
+                            </div>
+
+                            <p className={styles.mobileRoleDesc}>{role.description}</p>
+
+                            <div className={styles.mobileRoleFooter}>
+                                <button
+                                    type="button"
+                                    onClick={() => onEditRolePermissions(role)}
+                                    className={styles.mobilePermissionBtn}
+                                >
+                                    <SlidersHorizontal size={14} />
+                                    <span>Atur Izin & Akses</span>
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

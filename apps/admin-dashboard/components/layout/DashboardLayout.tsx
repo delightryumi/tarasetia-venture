@@ -30,9 +30,25 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
             setIsCollapsed(true);
         }
     }, []);
+
+    // Global listener for components requesting sidebar toggle
+    React.useEffect(() => {
+        const handleToggle = () => setIsCollapsed(prev => !prev);
+        window.addEventListener("toggle-sidebar", handleToggle);
+        return () => window.removeEventListener("toggle-sidebar", handleToggle);
+    }, []);
+
     const { poweredByText, poweredByLink } = useFooter();
     const containerRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
+
+    // Auto-collapse sidebar on Rate & Inventory for full-screen view
+    React.useEffect(() => {
+        if (pathname && pathname.startsWith("/rate-inventory")) {
+            setIsCollapsed(true);
+        }
+    }, [pathname]);
+
     const [activeModules, setActiveModules] = useState<string[] | null>(null);
     const [isHotelActive, setIsHotelActive] = useState<boolean | null>(null);
     const [nextDueDate, setNextDueDate] = useState<string>("");
@@ -171,6 +187,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     const isChannelManagerPage = pathname === "/channel-manager";
     const isInnalyticsPage = pathname.startsWith("/innalytics");
     const isFnbRealtimePage = pathname.startsWith("/food-beverage/realtime");
+    const isRateInventoryPage = pathname?.startsWith("/rate-inventory");
     const hideSidebar = isSuperadminPage || pathname === "/inventory-control" || isInnalyticsPage || isFnbRealtimePage;
 
     return (
@@ -182,7 +199,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                     onBadgeChange={handleBadgeChange}
                 />
             )}
-            <div className={`dashboard-wrapper ${isCollapsed ? "collapsed" : ""} ${!isCollapsed ? "mobile-open" : ""} ${hideSidebar ? "no-sidebar" : ""}`}>
+            <div className={`dashboard-wrapper ${isCollapsed ? "collapsed" : ""} ${!isCollapsed ? "mobile-open" : ""} ${hideSidebar ? "no-sidebar" : ""} ${isRateInventoryPage ? "rate-inventory-fullview" : ""}`}>
                 {!isSuperadminPage && !isInnalyticsPage && !isFnbRealtimePage && (
                     <header className="dashboard-top-bar">
                         <div className="dashboard-top-bar-inner">

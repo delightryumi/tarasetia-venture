@@ -109,12 +109,12 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
 
             const data = await res.json();
             if (data.success) {
-                toast.success(data.message || "Pengaturan WhatsApp Owner berhasil disimpan!");
+                toast.success(data.message || "Owner WhatsApp settings saved successfully.");
             } else {
-                toast.error(data.error || "Gagal menyimpan pengaturan WhatsApp.");
+                toast.error(data.error || "Failed to save WhatsApp settings.");
             }
         } catch (err: any) {
-            toast.error("Gagal menghubungi server: " + err.message);
+            toast.error("Failed to connect to server: " + err.message);
         } finally {
             setSavingWa(false);
         }
@@ -124,7 +124,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
     const handleTestWa = async () => {
         if (!hotelCode) return;
         if (!ownerPhone.trim()) {
-            toast.warning("Silakan masukkan Nomor WhatsApp Owner terlebih dahulu sebelum melakukan tes.");
+            toast.warning("Please enter an Owner WhatsApp number before sending a test message.");
             return;
         }
 
@@ -149,12 +149,12 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
 
             const data = await res.json();
             if (data.success) {
-                toast.success(data.message || `Pesan tes WhatsApp berhasil dikirim ke nomor ${ownerPhone}!`);
+                toast.success(data.message || `Test message sent successfully to ${ownerPhone}!`);
             } else {
-                toast.error(`Tes WhatsApp: ${data.error || "Gagal mengirim pesan."}`);
+                toast.error(`WhatsApp Test: ${data.error || "Failed to send message."}`);
             }
         } catch (err: any) {
-            toast.error("Gagal melakukan tes: " + err.message);
+            toast.error("Test execution failed: " + err.message);
         } finally {
             setTestingWa(false);
         }
@@ -168,7 +168,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "16px" }}>
-            {/* ── CARD 1: WHATSAPP NOTIFICATION TO OWNER (META OFFICIAL & FONNTE) ── */}
+            {/* CARD 1: WHATSAPP NOTIFICATION TO OWNER (META OFFICIAL & FONNTE) */}
             <div className={styles.waCard}>
                 <div className={styles.topRow}>
                     <div className={styles.titleArea}>
@@ -178,22 +178,22 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                         <div>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                 <h4 className={styles.titleText}>
-                                    {gateway === "meta" ? "Notifikasi WhatsApp Owner (Meta Official Cloud API)" : "Notifikasi WhatsApp Owner (Fonnte Gateway)"}
+                                    {gateway === "meta" ? "Owner WhatsApp Notifications (Meta Official Cloud API)" : "Owner WhatsApp Notifications (Fonnte Gateway)"}
                                 </h4>
                                 {(gateway === "meta" ? isMetaConfigured : isFonnteConfigured) ? (
                                     <span className={styles.badgeActive}>
                                         <span className={`${styles.dot} ${styles.dotGreen}`} />
-                                        <span>{gateway === "meta" ? "Meta Cloud Aktif" : "Fonnte Siap & Aktif"}</span>
+                                        <span>{gateway === "meta" ? "Meta Cloud Active" : "Fonnte Active"}</span>
                                     </span>
                                 ) : (
                                     <span className={styles.badgeInactive}>
                                         <span className={`${styles.dot} ${styles.dotGray}`} />
-                                        <span>Belum Dikonfigurasi</span>
+                                        <span>Not Configured</span>
                                     </span>
                                 )}
                             </div>
                             <p className={styles.subtitleText}>
-                                Otomatis mengirim pesan chat WhatsApp ke nomor pribadi Owner / GM setiap kali ada reservasi baru atau pembatalan dari OTA (Booking.com, Agoda, dsb).
+                                Automatically dispatch WhatsApp notifications to Owner / GM for incoming reservations and cancellations from connected OTAs (Booking.com, Agoda, etc.).
                             </p>
                         </div>
                     </div>
@@ -209,7 +209,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                         >
                             <Globe size={14} />
                             <span>WhatsApp Official (Meta Cloud API)</span>
-                            <span className={styles.recommendTag}>Tanpa HP</span>
+                            <span className={styles.recommendTag}>Serverless</span>
                         </button>
                         <button
                             type="button"
@@ -217,24 +217,24 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                             className={`${styles.gatewayTab} ${gateway === "fonnte" ? styles.gatewayTabActiveFonnte : ""}`}
                         >
                             <Smartphone size={14} />
-                            <span>Fonnte Gateway (Scan QR Web)</span>
+                            <span>Fonnte Gateway (Web QR Device)</span>
                         </button>
                     </div>
                 </div>
 
                 {/* Form Fields: Full Width Responsive Grid */}
                 {gateway === "meta" ? (
-                    /* ── META OFFICIAL 3-COLUMN FORM ── */
+                    /* META OFFICIAL 3-COLUMN FORM */
                     <div className={styles.waInputsGrid}>
                         <div className={styles.waField}>
                             <label className={styles.waLabel}>
-                                Nomor WhatsApp Owner / GM:
+                                Owner / GM WhatsApp Number:
                             </label>
                             <input
                                 type="text"
                                 value={ownerPhone}
                                 onChange={e => setOwnerPhone(e.target.value)}
-                                placeholder="Contoh: 08123456789 atau 628123456789"
+                                placeholder="e.g. +628123456789 or 08123456789"
                                 className={styles.waInput}
                                 disabled={loadingWa || savingWa}
                             />
@@ -248,7 +248,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                 type="text"
                                 value={metaPhoneNumberId}
                                 onChange={e => setMetaPhoneNumberId(e.target.value)}
-                                placeholder={systemPhoneId ? `Default Sistem (${systemPhoneId})` : "Salin Phone Number ID dari Meta"}
+                                placeholder={systemPhoneId ? `System Default (${systemPhoneId})` : "Copy Phone Number ID from Meta Dev Console"}
                                 className={styles.waInput}
                                 disabled={loadingWa || savingWa}
                             />
@@ -271,24 +271,24 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                 type="password"
                                 value={metaAccessToken}
                                 onChange={e => setMetaAccessToken(e.target.value)}
-                                placeholder={hasMetaToken ? "Menggunakan Token Server (.env.local)" : "Tempel Token EAAB..."}
+                                placeholder={hasMetaToken ? "Using Server Environment Token" : "Paste EAAB... token"}
                                 className={styles.waInput}
                                 disabled={loadingWa || savingWa}
                             />
                         </div>
                     </div>
                 ) : (
-                    /* ── FONNTE 2-COLUMN FORM ── */
+                    /* FONNTE 2-COLUMN FORM */
                     <div className={styles.waInputsGrid2Col}>
                         <div className={styles.waField}>
                             <label className={styles.waLabel}>
-                                Nomor WhatsApp Owner / GM:
+                                Owner / GM WhatsApp Number:
                             </label>
                             <input
                                 type="text"
                                 value={ownerPhone}
                                 onChange={e => setOwnerPhone(e.target.value)}
-                                placeholder="Contoh: 08123456789 atau 628123456789"
+                                placeholder="e.g. +628123456789 or 08123456789"
                                 className={styles.waInput}
                                 disabled={loadingWa || savingWa}
                             />
@@ -303,7 +303,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                     rel="noopener noreferrer"
                                     className={styles.waExtLink}
                                 >
-                                    <span>Ambil di Fonnte</span>
+                                    <span>Get via Fonnte</span>
                                     <ExternalLink size={10} />
                                 </a>
                             </div>
@@ -311,7 +311,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                 type="password"
                                 value={fonnteToken}
                                 onChange={e => setFonnteToken(e.target.value)}
-                                placeholder="Salin Token dari menu Device di Fonnte"
+                                placeholder="Copy Token from Fonnte Device Settings"
                                 className={styles.waInput}
                                 disabled={loadingWa || savingWa}
                             />
@@ -328,7 +328,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                 checked={waEnabled}
                                 onChange={e => setWaEnabled(e.target.checked)}
                             />
-                            <span>Aktifkan Notifikasi WhatsApp</span>
+                            <span>Enable WhatsApp Alerts</span>
                         </label>
 
                         <label className={styles.waCheckboxLabel}>
@@ -338,7 +338,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                 onChange={e => setNotifyNewBooking(e.target.checked)}
                                 disabled={!waEnabled}
                             />
-                            <span>Notif Booking Baru Masuk</span>
+                            <span>Notify on New Reservation</span>
                         </label>
 
                         <label className={styles.waCheckboxLabel}>
@@ -348,7 +348,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                 onChange={e => setNotifyCancellation(e.target.checked)}
                                 disabled={!waEnabled}
                             />
-                            <span>Notif Pembatalan OTA</span>
+                            <span>Notify on OTA Cancellation</span>
                         </label>
                     </div>
 
@@ -358,10 +358,10 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                             onClick={handleSaveWaConfig}
                             disabled={savingWa || loadingWa}
                             className={styles.btnSuccess}
-                            title="Simpan pengaturan WhatsApp untuk hotel ini"
+                            title="Save WhatsApp settings for this property"
                         >
                             <Save size={14} className={savingWa ? "animate-spin" : ""} />
-                            <span>{savingWa ? "Menyimpan..." : "Simpan Pengaturan WA"}</span>
+                            <span>{savingWa ? "Saving..." : "Save WA Settings"}</span>
                         </button>
 
                         <button
@@ -369,10 +369,10 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                             onClick={handleTestWa}
                             disabled={testingWa || !ownerPhone}
                             className={styles.btnSecondary}
-                            title="Kirim pesan uji coba ke nomor WhatsApp yang dimasukkan"
+                            title="Send test message to specified WhatsApp number"
                         >
                             <Send size={13} className={testingWa ? "animate-spin" : ""} />
-                            <span>{testingWa ? "Mengirim..." : "Kirim Tes WhatsApp"}</span>
+                            <span>{testingWa ? "Sending..." : "Send Test WhatsApp"}</span>
                         </button>
                     </div>
                 </div>
@@ -383,15 +383,15 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                         <ShieldCheck size={14} color={gateway === "meta" ? "#2563eb" : "#10b981"} />
                         <span>
                             {gateway === "meta" 
-                                ? <b>WhatsApp Cloud API Resmi (Meta) • 100% Serverless Cloud • Tanpa HP Fisik • 24/7 Selalu Aktif</b> 
-                                : <b>Fonnte WhatsApp Engine • Tanpa verifikasi dokumen Meta • Pesan dikirim melalui HP pribadi</b>}
+                                ? <b>Official WhatsApp Cloud API (Meta) • Serverless • No Physical Phone Required • 24/7 Availability</b> 
+                                : <b>Fonnte WhatsApp Engine • Self-hosted device bridge • Messages dispatched through linked mobile device</b>}
                         </span>
                     </div>
-                    <span>🔒 Multi-tenant terisolasi per hotel</span>
+                    <span>Multi-tenant isolated per hotel property</span>
                 </div>
             </div>
 
-            {/* ── CARD 2: PWA WEB PUSH NOTIFICATION (BROWSER/LOCKSCREEN) ── */}
+            {/* CARD 2: PWA WEB PUSH NOTIFICATION (BROWSER/LOCKSCREEN) */}
             <div className={styles.card}>
                 <div className={styles.topRow}>
                     <div className={styles.titleArea}>
@@ -400,26 +400,26 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                         </div>
                         <div>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <h4 className={styles.titleText}>Notifikasi Layar &amp; Suara HP (PWA Push)</h4>
+                                <h4 className={styles.titleText}>Device Screen &amp; Audio Alerts (PWA Push Notifications)</h4>
                                 {isGranted ? (
                                     <span className={styles.badgeActive}>
                                         <span className={`${styles.dot} ${styles.dotGreen}`} />
-                                        <span>Aktif di Perangkat Ini</span>
+                                        <span>Active on This Device</span>
                                     </span>
                                 ) : isDenied ? (
                                     <span className={styles.badgeDenied}>
                                         <span className={`${styles.dot} ${styles.dotRed}`} />
-                                        <span>Izin Diblokir di Browser</span>
+                                        <span>Permission Blocked in Browser</span>
                                     </span>
                                 ) : (
                                     <span className={styles.badgeInactive}>
                                         <span className={`${styles.dot} ${styles.dotGray}`} />
-                                        <span>Belum Diaktifkan</span>
+                                        <span>Not Enabled</span>
                                     </span>
                                 )}
                             </div>
                             <p className={styles.subtitleText}>
-                                Peringatan instan booking baru &amp; pembatalan OTA di layar kunci HP dengan nada notifikasi bawaan ponsel Anda, jika browser HP mendukung Web Push.
+                                Instant alerts for new reservations and cancellations displayed on lockscreen with native sound notifications when supported by your browser.
                             </p>
                         </div>
                     </div>
@@ -431,10 +431,10 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                 onClick={subscribeToPush}
                                 disabled={loading || isDenied || !isSupported}
                                 className={styles.btnPrimary}
-                                title="Izinkan notifikasi push di ponsel atau browser ini"
+                                title="Enable push notifications on this device"
                             >
                                 <Bell size={14} className={loading ? "animate-spin" : ""} />
-                                <span>{loading ? "Memproses Izin..." : "Aktifkan Notifikasi di HP Ini"}</span>
+                                <span>{loading ? "Requesting Permission..." : "Enable Alerts on This Device"}</span>
                             </button>
                         )}
 
@@ -445,10 +445,10 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                     onClick={() => sendTestPush("booking_new")}
                                     disabled={testing}
                                     className={styles.btnSecondary}
-                                    title="Kirim notifikasi simulasi booking baru ke layar HP"
+                                    title="Send simulation notification for new reservation"
                                 >
                                     <Send size={13} className={testing ? "animate-spin" : ""} />
-                                    <span>Tes Notif Booking</span>
+                                    <span>Test New Booking Alert</span>
                                 </button>
 
                                 <button
@@ -456,10 +456,10 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                     onClick={() => sendTestPush("booking_cancelled")}
                                     disabled={testing}
                                     className={styles.btnSecondary}
-                                    title="Kirim notifikasi simulasi pembatalan booking ke layar HP"
+                                    title="Send simulation notification for reservation cancellation"
                                 >
                                     <AlertCircle size={13} color="#dc2626" />
-                                    <span>Tes Notif Pembatalan</span>
+                                    <span>Test Cancellation Alert</span>
                                 </button>
 
                                 <button
@@ -467,10 +467,10 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                     onClick={unsubscribeFromPush}
                                     disabled={loading}
                                     className={styles.btnDangerOutline}
-                                    title="Matikan notifikasi di perangkat ini"
+                                    title="Disable alerts on this device"
                                 >
                                     <BellOff size={13} />
-                                    <span>Nonaktifkan</span>
+                                    <span>Disable Alerts</span>
                                 </button>
                             </>
                         )}
@@ -481,15 +481,15 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                     <div className={styles.featureList}>
                         <div className={styles.featureItem}>
                             <Check size={13} color="#10b981" />
-                            <span>Layar Kunci (Lockscreen) &amp; Banner Pop-up</span>
+                            <span>Lockscreen &amp; Banner Notification Support</span>
                         </div>
                         <div className={styles.featureItem}>
                             <Volume2 size={13} color="#2563eb" />
-                            <span>Nada Notifikasi Default Bawaan HP</span>
+                            <span>Native Device Sound &amp; Vibration</span>
                         </div>
                         <div className={styles.featureItem}>
                             <Smartphone size={13} color="#059669" />
-                            <span>Serverless Scale-to-Zero (Biaya Server $0 / Gratis)</span>
+                            <span>Zero Infrastructure Cost Web Push</span>
                         </div>
                     </div>
                 </div>

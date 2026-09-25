@@ -1,0 +1,265 @@
+/* BookingSourcesCard.module.css - Modular Channex-grade Booking Sources Card */
+
+.cardContainer {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  gap: 12px;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.dateRangeText {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  border-bottom: 1px dashed #cbd5e1;
+  padding-bottom: 1px;
+  white-space: nowrap;
+}
+
+.body {
+  display: flex;
+  align-items: center;
+  padding: 24px 20px;
+  gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1;
+}
+
+@media (max-width: 640px) {
+  .body {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+  }
+}
+
+/* Donut Chart Container */
+.chartWrapper {
+  position: relative;
+  width: 170px;
+  height: 170px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donutSvg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+
+.donutBgRing {
+  fill: none;
+  stroke: #f1f5f9;
+  stroke-width: 6;
+}
+
+:global(.dark) .donutBgRing {
+  stroke: #1e293b;
+}
+
+.donutSegment {
+  fill: none;
+  stroke-width: 6;
+  cursor: pointer;
+  transition: stroke-width 0.2s ease, opacity 0.2s ease;
+}
+
+.donutSegment:hover,
+.donutSegmentActive {
+  stroke-width: 8;
+}
+
+.centerInfo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  width: 110px;
+}
+
+.centerLabel {
+  font-size: 13px;
+  font-weight: 400;
+  color: #64748b;
+  margin: 0 0 2px 0;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+:global(.dark) .centerLabel {
+  color: #94a3b8;
+}
+
+.centerValue {
+  font-size: 32px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.1;
+  margin: 0;
+  font-family: var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: -0.03em;
+}
+
+:global(.dark) .centerValue {
+  color: #f8fafc;
+}
+
+/* Sources Legend Breakdown List */
+.sourcesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.sourceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  gap: 8px;
+}
+
+.sourceRow:hover,
+.sourceRowActive {
+  background-color: #f8fafc;
+}
+
+.sourceLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.channelLogo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.channelName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceRight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.bookingCount {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  min-width: 18px;
+  text-align: right;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+  font-feature-settings: "tnum" 1;
+}
+
+.revenueAmount {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  min-width: 105px;
+  text-align: right;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+.sharePercent {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  min-width: 38px;
+  text-align: right;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+  font-feature-settings: "tnum" 1;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 20px 16px 20px;
+}
+
+.detailsLink {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0284c7;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.detailsLink:hover {
+  color: #0369a1;
+  text-decoration: underline;
+}
+
+.emptyState {
+  padding: 32px 16px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 500;
+  width: 100%;
+}

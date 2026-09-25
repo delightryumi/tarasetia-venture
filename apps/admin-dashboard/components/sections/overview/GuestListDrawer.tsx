@@ -3,7 +3,7 @@
 import React from "react";
 import { X, User, Calendar, Home, CreditCard, PlusCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import { getChannelLogo } from "./StatCard";
+import { getChannelLogo } from "@/lib/channelHelper";
 import styles from "./OverviewStyles.module.css";
 
 interface GuestListDrawerProps {

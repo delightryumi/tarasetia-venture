@@ -1,0 +1,218 @@
+/* StatCard.module.css - Modular styles for Operational Movement Stat Cards */
+
+.card {
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 100%;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding-bottom: 10px;
+  margin-bottom: 2px;
+}
+
+.cardHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cardIconBox {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background-color: #f8fafc;
+}
+
+.cardLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+  margin: 0;
+}
+
+.cardValue {
+  font-size: 32px;
+  font-weight: 800;
+  color: #0f172a;
+  font-family: var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 420px;
+  min-height: 140px;
+  overflow-y: auto;
+  padding-right: 4px;
+  flex: 1;
+}
+
+.noActivity {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 16px;
+  background-color: #f8fafc;
+  border: 1px dashed rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  flex: 1;
+  height: 100%;
+}
+
+.noActivityText {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* ── Guest Item Button ── */
+.guestItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background-color: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
+}
+
+.guestItem:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateX(2px);
+}
+
+.cancelledItem {
+  opacity: 0.6;
+  background-color: #fafafa;
+}
+
+.guestAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.guestAvatarImg {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.guestMainInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.guestName {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.extendBadge {
+  font-size: 8px;
+  font-weight: 700;
+  background-color: #fef3c7;
+  color: #b45309;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid #fde68a;
+  text-transform: uppercase;
+}
+
+.guestMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+}
+
+.guestSubtext {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+  margin: 0;
+}
+
+.guestAmount {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  margin: 0;
+}
+
+.paymentBadge {
+  font-size: 8px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.paymentLunas {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.paymentPending {
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.paymentCancelled {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}

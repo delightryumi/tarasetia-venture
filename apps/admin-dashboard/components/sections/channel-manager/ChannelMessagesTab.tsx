@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Send, MessageSquare, CheckCheck, Clock, Search, RefreshCw, Sparkles, Building2 } from "lucide-react";
+import { Send, MessageSquare, CheckCheck, Clock, Search, RefreshCw, FileText, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import styles from "./ChannelMessages.module.css";
 
@@ -104,14 +104,14 @@ export function ChannelMessagesTab({ hotelCode }: Props) {
             });
             const data = await res.json();
             if (data.success) {
-                toast.success("Balasan resmi berhasil dikirimkan ke tamu OTA!");
+                toast.success("Official response sent to OTA guest successfully.");
                 setMessages(prev => [...prev, data.sentMessage]);
                 setReplyText("");
             } else {
-                toast.error(data.error || "Gagal mengirim pesan");
+                toast.error(data.error || "Failed to send message");
             }
         } catch (err: any) {
-            toast.error("Terjadi kesalahan jaringan saat mengirim balasan.");
+            toast.error("Network communication error while sending message.");
         } finally {
             setSending(false);
         }
@@ -130,13 +130,13 @@ export function ChannelMessagesTab({ hotelCode }: Props) {
                     <div className={styles.sidebarTitle}>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                             <MessageSquare size={16} color="#1e3a2f" />
-                            <span>Kotak Masuk Tamu OTA</span>
+                            <span>OTA Guest Inbox</span>
                         </div>
                         <button
                             type="button"
                             onClick={fetchThreads}
                             style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}
-                            title="Segarkan Pesan"
+                            title="Refresh Messages"
                         >
                             <RefreshCw size={13} className={loadingThreads ? "animate-spin" : ""} />
                         </button>
@@ -146,7 +146,7 @@ export function ChannelMessagesTab({ hotelCode }: Props) {
                             type="text"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            placeholder="Cari nama tamu / Booking ID..."
+                            placeholder="Search guest name / Booking ID..."
                             className={styles.searchInput}
                         />
                     </div>
@@ -176,7 +176,7 @@ export function ChannelMessagesTab({ hotelCode }: Props) {
                                     <span>{th.room_type}</span>
                                 </div>
                                 <div className={styles.lastMessage}>
-                                    {th.last_message?.message || "Belum ada riwayat pesan"}
+                                    {th.last_message?.message || "No prior messages"}
                                 </div>
                             </div>
                         );
@@ -184,7 +184,7 @@ export function ChannelMessagesTab({ hotelCode }: Props) {
 
                     {filteredThreads.length === 0 && (
                         <div style={{ padding: "30px 16px", textAlign: "center", fontSize: "12px", color: "#94a3b8" }}>
-                            Tidak ada percakapan yang cocok.
+                            No matching conversations found.
                         </div>
                     )}
                 </div>
@@ -200,12 +200,12 @@ export function ChannelMessagesTab({ hotelCode }: Props) {
                                 <span className={styles.channelBadge}>{selectedThread.provider}</span>
                             </div>
                             <div className={styles.chatSubTitle}>
-                                Booking Ref: <b>{selectedThread.booking_id}</b> • Kamar: <b>{selectedThread.room_type}</b> • Stay: {selectedThread.checkin} s/d {selectedThread.checkout}
+                                Booking Ref: <b>{selectedThread.booking_id}</b> • Room: <b>{selectedThread.room_type}</b> • Stay: {selectedThread.checkin} to {selectedThread.checkout}
                             </div>
                         </div>
                         <div style={{ fontSize: "11px", color: "#059669", display: "flex", alignItems: "center", gap: "4px" }}>
                             <CheckCheck size={14} />
-                            <span>Terkoneksi Direct 2-Way Messaging</span>
+                            <span>Direct 2-Way Messaging Connected</span>
                         </div>
                     </div>
 
@@ -226,28 +226,28 @@ export function ChannelMessagesTab({ hotelCode }: Props) {
                     {/* Quick Replies Bar */}
                     <div className={styles.quickRepliesBar}>
                         <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
-                            <Sparkles size={12} color="#1e3a2f" /> Template Cepat:
+                            <FileText size={12} color="#1e3a2f" /> Quick Templates:
                         </span>
                         <button
                             type="button"
-                            onClick={() => handleSendMessage("Halo! Tentu, kami telah mencatat permintaan early check-in Anda dan akan memprioritaskan kamar Anda.")}
+                            onClick={() => handleSendMessage("Hello! We have noted your early check-in request and will prioritize your room preparation subject to availability upon arrival.")}
                             className={styles.btnQuick}
                         >
-                            Konfirmasi Early Check-In
+                            Early Check-In Confirmation
                         </button>
                         <button
                             type="button"
-                            onClick={() => handleSendMessage("Halo, untuk layanan antar-jemput bandara tersedia dengan biaya Rp 150.000 / mobil. Mohon infokan nomor penerbangan Anda.")}
+                            onClick={() => handleSendMessage("Hello! Airport transfer service is available upon advance booking. Please share your flight details and arrival time.")}
                             className={styles.btnQuick}
                         >
-                            Info Antar Jemput Bandara
+                            Airport Transfer Details
                         </button>
                         <button
                             type="button"
-                            onClick={() => handleSendMessage("Sarapan pagi buffet disajikan di Restoran Lantai 1 mulai pukul 06:00 hingga 10:00 WIB.")}
+                            onClick={() => handleSendMessage("Buffet breakfast is served daily at the main restaurant from 06:00 to 10:00.")}
                             className={styles.btnQuick}
                         >
-                            Waktu & Info Sarapan
+                            Breakfast Hours &amp; Location
                         </button>
                     </div>
 
@@ -263,7 +263,7 @@ export function ChannelMessagesTab({ hotelCode }: Props) {
                                     handleSendMessage();
                                 }
                             }}
-                            placeholder="Ketik balasan resmi hotel ke tamu OTA (Enter untuk kirim)..."
+                            placeholder="Type official hotel response to OTA guest (Enter to send)..."
                             className={styles.messageInput}
                         />
                         <button
@@ -273,14 +273,14 @@ export function ChannelMessagesTab({ hotelCode }: Props) {
                             className={styles.btnSend}
                         >
                             <Send size={14} />
-                            <span>{sending ? "Mengirim..." : "Kirim Balasan"}</span>
+                            <span>{sending ? "Sending..." : "Send Reply"}</span>
                         </button>
                     </div>
                 </div>
             ) : (
                 <div className={styles.emptyState}>
                     <MessageSquare size={36} color="#cbd5e1" />
-                    <span>Pilih percakapan di sebelah kiri untuk melihat pesan tamu.</span>
+                    <span>Select a conversation from the left to view guest messages.</span>
                 </div>
             )}
         </div>

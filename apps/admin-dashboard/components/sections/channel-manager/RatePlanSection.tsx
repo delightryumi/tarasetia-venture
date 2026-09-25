@@ -10,7 +10,7 @@ import {
     Edit2,
     Search,
     Coffee,
-    Sparkles,
+    TrendingUp,
     ShieldCheck,
     Layers,
     X,
@@ -49,10 +49,10 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
             if (data.success) {
                 toast.success(data.message);
             } else {
-                toast.error(data.message || "Gagal melakukan verifikasi status ke Channel Manager");
+                toast.error(data.message || "Failed to verify connection status with Channel Manager");
             }
         } catch (err: any) {
-            toast.error(`Koneksi Ping Error: ${err.message}`);
+            toast.error(`Ping connection error: ${err.message}`);
         } finally {
             setPingingId(null);
         }
@@ -61,7 +61,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
     const copyToClipboard = (text: string, label: string) => {
         if (!text) return;
         navigator.clipboard.writeText(text);
-        toast.success(`${label} disalin ke clipboard!`);
+        toast.success(`${label} copied to clipboard!`);
     };
     const {
         ratePlans,
@@ -185,7 +185,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (selectedRoomTypeIds.length === 0) {
-            toast.error("Pilih minimal 1 kategori kamar untuk rate plan ini!");
+            toast.error("Select at least 1 room category for this rate plan!");
             return;
         }
 
@@ -302,7 +302,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
 
                 <div className={styles.kpiCard}>
                     <div className={styles.kpiIconBox}>
-                        <Sparkles size={18} />
+                        <TrendingUp size={18} />
                     </div>
                     <div className={styles.kpiContent}>
                         <span className={styles.kpiLabel}>Average Base Rate (BAR)</span>
@@ -345,8 +345,8 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                             className={styles.btnSeed}
                             title="Auto-create standard Room Only & Bed and Breakfast plans for all room types"
                         >
-                            <Sparkles size={14} color="#b45309" />
-                            <span>⚡ Auto-Generate Standard (RO &amp; BB)</span>
+                            <TrendingUp size={14} color="#b45309" />
+                            <span>Auto-Generate Standard (RO &amp; BB)</span>
                         </button>
                     )}
 
@@ -379,7 +379,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                 className={styles.btnSeed}
                                 style={{ background: "#f0fdf4", borderColor: "#86efac", color: "#166534" }}
                             >
-                                <Sparkles size={14} />
+                                <TrendingUp size={14} />
                                 <span>Auto-Generate Standard Rates</span>
                             </button>
                         )}
@@ -414,23 +414,23 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                 {filteredPlans.map(plan => (
                                     <tr key={plan.id}>
                                         <td>
-                                            <div className={styles.planNameCell}>
+                                             <div className={styles.planNameCell}>
                                                 <span className={styles.planName}>{plan.name}</span>
                                                 <span className={styles.planCodeBadge}>{plan.code || "STD-01"}</span>
                                                 <div className={styles.idList}>
                                                     <span
                                                         className={styles.idPill}
-                                                        onClick={() => copyToClipboard(plan.id, "ID Rate Plan PMS")}
-                                                        title="Klik untuk salin ID Rate Plan Internal PMS"
+                                                        onClick={() => copyToClipboard(plan.id, "PMS Rate Plan ID")}
+                                                        title="Click to copy PMS internal rate plan ID"
                                                     >
                                                         <Copy size={10} /> PMS ID: <b>{plan.id}</b>
                                                     </span>
                                                     <span
                                                         className={`${styles.idPill} ${plan.channexRatePlanId ? styles.idPillChannex : ""}`}
                                                         onClick={() => copyToClipboard(plan.channexRatePlanId || "", "Channel Rate Plan ID")}
-                                                        title="Klik untuk salin UUID Channel Rate Plan"
+                                                        title="Click to copy Channel Rate Plan UUID"
                                                     >
-                                                        <Copy size={10} /> Channel ID: <b>{plan.channexRatePlanId || "(Belum Sync)"}</b>
+                                                        <Copy size={10} /> Channel ID: <b>{plan.channexRatePlanId || "(Not Synced)"}</b>
                                                     </span>
                                                 </div>
                                             </div>
@@ -564,7 +564,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                                     title="Ping test this rate plan against the distribution server"
                                                 >
                                                     <Activity size={11} className={pingingId === plan.id ? "animate-spin" : ""} />
-                                                    <span>{pingingId === plan.id ? "Pinging..." : "⚡ Ping ARI"}</span>
+                                                    <span>{pingingId === plan.id ? "Pinging..." : "Ping ARI"}</span>
                                                 </button>
                                             </div>
                                         </td>

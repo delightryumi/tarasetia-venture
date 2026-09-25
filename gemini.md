@@ -338,3 +338,18 @@ Modul dasbor manajerial yang hanya bisa diakses oleh *user* dengan hak akses khu
     *   `ManualCorrectionModal.tsx` - Fitur perbaikan data absen secara manual oleh HRD disertai catatan audit.
     *   `MonthlyReportTable.tsx` / `ReportDataGrid.tsx` / `ReportFilterBar.tsx` - Set perakitan rekapitulasi data kehadiran bulanan.
     *   `ExportReportButton.tsx` - Generator unduhan fail PDF/Excel mutlak untuk keperluan penggajian.
+
+---
+
+<!-- antislop:start -->
+## Antislop Rule & Skill Enforcement
+Untuk setiap pengerjaan UI, styling, copywriting, layout mobile, dan penulisan kode, filter antislop wajib selalu aktif:
+- Core filter (wajib selalu aktif): `.agents/skills/antislop/SKILL.md`
+- UI / visual craft: `.agents/skills/antislop-ui/SKILL.md`
+- People & Accessibility (WCAG contrast, keyboard navigation): `.agents/skills/antislop-human/SKILL.md`
+- Copywriting & Tone (Natural copy, bebas AI buzzwords & em dashes): `.agents/skills/antislop-copywriting/SKILL.md`
+- Mobile Layout & Responsive (No overflow, min 44px tap target): `.agents/skills/antislop-layoutmobile/SKILL.md`
+- Code Comments Hygiene: `.agents/skills/antislop-code/SKILL.md`
+
+Sebelum mulai pengerjaan UI, tanyakan kepada user kapan antislop diterapkan: SELAMA pengerjaan (DURING) atau SETELAH selesai (AFTER audit).
+<!-- antislop:end -->

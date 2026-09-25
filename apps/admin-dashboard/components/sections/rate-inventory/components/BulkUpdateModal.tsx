@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import {
     X,
     Calendar,
-    Zap,
     SlidersHorizontal,
     Check,
     Bed,
@@ -72,6 +71,18 @@ export function BulkUpdateModal({
     const [ctaAction, setCtaAction] = useState<BulkUpdateParams["ctaAction"]>("none");
     const [ctdAction, setCtdAction] = useState<BulkUpdateParams["ctdAction"]>("none");
 
+    // Close on Escape key press (WCAG AA Accessibility)
+    React.useEffect(() => {
+        if (!isOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                onClose();
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
     const toggleDay = (dayIndex: number) => {
@@ -108,13 +119,13 @@ export function BulkUpdateModal({
     };
 
     const DAYS_CONFIG = [
-        { idx: 1, label: "Sen" },
-        { idx: 2, label: "Sel" },
-        { idx: 3, label: "Rab" },
-        { idx: 4, label: "Kam" },
-        { idx: 5, label: "Jum" },
-        { idx: 6, label: "Sab" },
-        { idx: 0, label: "Min" }
+        { idx: 1, label: "Mon" },
+        { idx: 2, label: "Tue" },
+        { idx: 3, label: "Wed" },
+        { idx: 4, label: "Thu" },
+        { idx: 5, label: "Fri" },
+        { idx: 6, label: "Sat" },
+        { idx: 0, label: "Sun" }
     ];
 
     return (
@@ -122,30 +133,31 @@ export function BulkUpdateModal({
             <div className={styles.modalContent}>
                 <div className={styles.modalHeader}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Zap size={18} style={{ color: "#2563eb" }} />
-                        <h3 className={styles.modalTitle}>Bulk Update: Tarif, Allotment &amp; Stop Sell</h3>
+                        <SlidersHorizontal size={18} style={{ color: "#2563eb" }} />
+                        <h3 className={styles.modalTitle}>Bulk Update: Rates, Inventory &amp; Restrictions</h3>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
                         className={styles.closeBtn}
+                        aria-label="Close modal"
                     >
                         <X size={18} />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className={styles.modalBody}>
-                    {/* 1. Periode Tanggal & Hari */}
+                    {/* 1. Date Range & Days of Week */}
                     <div className={styles.sectionBox}>
                         <div className={styles.sectionTitle}>
                             <Calendar size={14} />
-                            <span>1. Periode Tanggal &amp; Pilihan Hari</span>
+                            <span>1. Date Range &amp; Days of Week</span>
                         </div>
 
                         <div className={styles.grid2Col}>
                             <div>
                                 <label className={styles.inputLabel}>
-                                    Dari Tanggal (From Date)
+                                    From Date
                                 </label>
                                 <input
                                     type="date"
@@ -157,7 +169,7 @@ export function BulkUpdateModal({
                             </div>
                             <div>
                                 <label className={styles.inputLabel}>
-                                    Sampai Tanggal (To Date)
+                                    To Date
                                 </label>
                                 <input
                                     type="date"
@@ -172,7 +184,7 @@ export function BulkUpdateModal({
                         <div style={{ marginTop: "12px" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
                                 <label className={styles.inputLabel} style={{ margin: 0 }}>
-                                    Hari Berlaku (Days of Week)
+                                    Active Days of Week
                                 </label>
                                 <div style={{ display: "flex", gap: "6px" }}>
                                     <button
@@ -180,7 +192,7 @@ export function BulkUpdateModal({
                                         onClick={() => setDayPreset("all")}
                                         className={styles.btnDayPreset}
                                     >
-                                        Semua
+                                        All
                                     </button>
                                     <button
                                         type="button"
@@ -217,17 +229,17 @@ export function BulkUpdateModal({
                         </div>
                     </div>
 
-                    {/* 2. Target Saluran (OTA), Tipe Kamar & Rate Plan */}
+                    {/* 2. Target Channel, Room Types & Rate Plans */}
                     <div className={styles.sectionBox}>
                         <div className={styles.sectionTitle}>
                             <SlidersHorizontal size={14} />
-                            <span>2. Target Saluran (OTA), Tipe Kamar &amp; Rate Plan</span>
+                            <span>2. Target Channel, Room Types &amp; Rate Plans</span>
                         </div>
 
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
                             <div>
                                 <label className={styles.inputLabel}>
-                                    Target Saluran Distribusi
+                                    Target Distribution Channel
                                 </label>
                                 <select
                                     value={selectedChannel}
@@ -235,7 +247,7 @@ export function BulkUpdateModal({
                                     className={styles.selectField}
                                     style={{ fontWeight: 600 }}
                                 >
-                                    <option value="all">🌐 Semua Saluran (Common Pool)</option>
+                                    <option value="all">🌐 All Channels (Common Pool)</option>
                                     {channelConfigs && Object.keys(channelConfigs).length > 0 ? (
                                         Object.entries(channelConfigs).map(([code, cfg]: [string, any]) => (
                                             <option key={code} value={code}>
@@ -255,14 +267,14 @@ export function BulkUpdateModal({
 
                             <div>
                                 <label className={styles.inputLabel}>
-                                    Tipe Kamar (Room Types)
+                                    Room Types
                                 </label>
                                 <select
                                     value={selectedRoomTypes[0] || "all"}
                                     onChange={e => setSelectedRoomTypes([e.target.value])}
                                     className={styles.selectField}
                                 >
-                                    <option value="all">Semua Tipe Kamar</option>
+                                    <option value="all">All Room Types</option>
                                     {roomTypes.map(rt => (
                                         <option key={rt.id} value={rt.id}>{rt.name}</option>
                                     ))}
@@ -271,14 +283,14 @@ export function BulkUpdateModal({
 
                             <div>
                                 <label className={styles.inputLabel}>
-                                    Rate Plan
+                                    Rate Plans
                                 </label>
                                 <select
                                     value={selectedRatePlans[0] || "all"}
                                     onChange={e => setSelectedRatePlans([e.target.value])}
                                     className={styles.selectField}
                                 >
-                                    <option value="all">Semua Rate Plan</option>
+                                    <option value="all">All Rate Plans</option>
                                     {ratePlans.map(rp => (
                                         <option key={rp.id} value={rp.id}>{rp.name} ({rp.code})</option>
                                     ))}
@@ -287,7 +299,7 @@ export function BulkUpdateModal({
                         </div>
                     </div>
 
-                    {/* 3. Action Updates (Rates, StopSell, Inventory) */}
+                    {/* 3. Action Updates (Rates, StopSell, Inventory, Restrictions) */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                         {/* A. Rate Adjustment */}
                         <div className={`${styles.actionCard} ${rateAction !== "none" ? styles.actionCardActive : ""}`}>
@@ -295,7 +307,7 @@ export function BulkUpdateModal({
                                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                                     <DollarSign size={15} style={{ color: "#16a34a" }} />
                                     <span className={styles.actionCardTitle}>
-                                        Perubahan Harga Kamar (Rate Adjustment)
+                                        Rate Adjustment (Pricing)
                                     </span>
                                 </div>
                                 <select
@@ -308,18 +320,18 @@ export function BulkUpdateModal({
                                     className={styles.selectField}
                                     style={{ width: "auto", height: "30px", opacity: !canChangeRate ? 0.6 : 1, cursor: !canChangeRate ? "not-allowed" : undefined }}
                                 >
-                                    <option value="none">{!canChangeRate ? "Tidak Diizinkan (No Permission)" : "Tidak Diubah"}</option>
-                                    <option value="set">Tetapkan Harga Pasti (Set Fixed Rp)</option>
-                                    <option value="inc_amount">Naikkan Sebesar (+Rp)</option>
-                                    <option value="dec_amount">Turunkan Sebesar (-Rp)</option>
-                                    <option value="inc_percent">Naikkan Persen (+%)</option>
-                                    <option value="dec_percent">Turunkan Persen (-%)</option>
+                                    <option value="none">{!canChangeRate ? "No Permission" : "No Change"}</option>
+                                    <option value="set">Set Fixed Rate (Exact Amount)</option>
+                                    <option value="inc_amount">Increase by Amount (+)</option>
+                                    <option value="dec_amount">Decrease by Amount (-)</option>
+                                    <option value="inc_percent">Increase by Percent (+%)</option>
+                                    <option value="dec_percent">Decrease by Percent (-%)</option>
                                 </select>
                             </div>
                             {rateAction !== "none" && canChangeRate && (
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "10px" }}>
                                     <label style={{ fontSize: "11px", color: "#64748b" }}>
-                                        Nilai Penyesuaian:
+                                        Adjustment Value:
                                     </label>
                                     <input
                                         type="number"
@@ -331,7 +343,7 @@ export function BulkUpdateModal({
                                         placeholder="0"
                                     />
                                     <span style={{ fontSize: "11px", color: "#64748b" }}>
-                                        {rateAction.includes("percent") ? "%" : "IDR (Rp)"}
+                                        {rateAction.includes("percent") ? "%" : "IDR"}
                                     </span>
                                 </div>
                             )}
@@ -344,11 +356,11 @@ export function BulkUpdateModal({
                                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                                         <Ban size={15} style={{ color: "#dc2626" }} />
                                         <span className={styles.actionCardTitle}>
-                                            Stop Sell (Buka / Tutup Penjualan)
+                                            Stop Sell (Open / Close Sales)
                                         </span>
                                     </div>
                                     <p className={styles.actionCardSubtitle} style={{ marginTop: "2px" }}>
-                                        Buka atau tutup ketersediaan booking untuk tanggal yang dipilih
+                                        Open or close sales availability for the selected dates
                                     </p>
                                 </div>
                                 <select
@@ -361,9 +373,9 @@ export function BulkUpdateModal({
                                     className={styles.selectField}
                                     style={{ width: "auto", height: "30px", opacity: !canStopSell ? 0.6 : 1, cursor: !canStopSell ? "not-allowed" : undefined }}
                                 >
-                                    <option value="none">{!canStopSell ? "Tidak Diizinkan (No Permission)" : "Tidak Diubah"}</option>
-                                    <option value="close">🚫 Tutup Penjualan (Stop Sell ON)</option>
-                                    <option value="open">✓ Buka Penjualan (Stop Sell OFF)</option>
+                                    <option value="none">{!canStopSell ? "No Permission" : "No Change"}</option>
+                                    <option value="close">🚫 Close Sales (Stop Sell ON)</option>
+                                    <option value="open">✓ Open Sales (Stop Sell OFF)</option>
                                 </select>
                             </div>
                         </div>
@@ -375,11 +387,11 @@ export function BulkUpdateModal({
                                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                                         <Bed size={15} style={{ color: "#2563eb" }} />
                                         <span className={styles.actionCardTitle}>
-                                            Ketersediaan Kamar (Inventory Quota)
+                                            Room Inventory (Availability Allotment)
                                         </span>
                                     </div>
                                     <p className={styles.actionCardSubtitle} style={{ marginTop: "2px" }}>
-                                        Tetapkan jumlah kuota kamar yang tersedia untuk tanggal yang dipilih
+                                        Set physical room inventory quota for the selected dates
                                     </p>
                                 </div>
                                 <select
@@ -392,14 +404,14 @@ export function BulkUpdateModal({
                                     className={styles.selectField}
                                     style={{ width: "auto", height: "30px", opacity: !canChangeInventory ? 0.6 : 1, cursor: !canChangeInventory ? "not-allowed" : undefined }}
                                 >
-                                    <option value="none">{!canChangeInventory ? "Tidak Diizinkan (No Permission)" : "Tidak Diubah"}</option>
-                                    <option value="set">Tetapkan Kuota (Set Availability)</option>
+                                    <option value="none">{!canChangeInventory ? "No Permission" : "No Change"}</option>
+                                    <option value="set">Set Available Units</option>
                                 </select>
                             </div>
                             {inventoryAction === "set" && (
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "10px" }}>
                                     <label style={{ fontSize: "11px", color: "#64748b" }}>
-                                        Jumlah Kamar Tersedia:
+                                        Available Units:
                                     </label>
                                     <input
                                         type="number"
@@ -412,7 +424,7 @@ export function BulkUpdateModal({
                                         placeholder="0"
                                     />
                                     <span style={{ fontSize: "11px", color: "#64748b" }}>
-                                        Kamar
+                                        Units
                                     </span>
                                 </div>
                             )}
@@ -425,11 +437,11 @@ export function BulkUpdateModal({
                                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                                         <SlidersHorizontal size={15} style={{ color: "#d97706" }} />
                                         <span className={styles.actionCardTitle}>
-                                            Pembatasan Reservasi (Min Stay, CTA, CTD)
+                                            Booking Restrictions (Min Stay, CTA, CTD)
                                         </span>
                                     </div>
                                     <p className={styles.actionCardSubtitle} style={{ marginTop: "2px" }}>
-                                        Atur syarat minimal menginap dan kunci check-in (CTA) / check-out (CTD)
+                                        Set minimum stay nights and control arrival (CTA) / departure (CTD) locks
                                     </p>
                                 </div>
                             </div>
@@ -438,7 +450,7 @@ export function BulkUpdateModal({
                                 {/* Min Stay */}
                                 <div>
                                     <label style={{ fontSize: "11px", fontWeight: 600, color: "#475569", display: "block", marginBottom: "4px" }}>
-                                        Minimum Stay (Malam):
+                                        Minimum Length of Stay (Nights):
                                     </label>
                                     <div style={{ display: "flex", gap: "6px" }}>
                                         <select
@@ -447,8 +459,8 @@ export function BulkUpdateModal({
                                             className={styles.selectField}
                                             style={{ height: "30px", fontSize: "11px" }}
                                         >
-                                            <option value="none">Tidak Diubah</option>
-                                            <option value="set">Tetapkan Min Stay</option>
+                                            <option value="none">No Change</option>
+                                            <option value="set">Set Min Stay</option>
                                         </select>
                                         {minStayAction === "set" && (
                                             <input
@@ -475,9 +487,9 @@ export function BulkUpdateModal({
                                         className={styles.selectField}
                                         style={{ height: "30px", fontSize: "11px" }}
                                     >
-                                        <option value="none">Tidak Diubah</option>
-                                        <option value="close">🚫 Tutup Check-in (CTA ON)</option>
-                                        <option value="open">✓ Buka Check-in (CTA OFF)</option>
+                                        <option value="none">No Change</option>
+                                        <option value="close">🚫 Closed to Arrival (CTA ON)</option>
+                                        <option value="open">✓ Open to Arrival (CTA OFF)</option>
                                     </select>
                                 </div>
 
@@ -492,9 +504,9 @@ export function BulkUpdateModal({
                                         className={styles.selectField}
                                         style={{ height: "30px", fontSize: "11px" }}
                                     >
-                                        <option value="none">Tidak Diubah</option>
-                                        <option value="close">🚫 Tutup Check-out (CTD ON)</option>
-                                        <option value="open">✓ Buka Check-out (CTD OFF)</option>
+                                        <option value="none">No Change</option>
+                                        <option value="close">🚫 Closed to Departure (CTD ON)</option>
+                                        <option value="open">✓ Open to Departure (CTD OFF)</option>
                                     </select>
                                 </div>
                             </div>
@@ -509,7 +521,7 @@ export function BulkUpdateModal({
                             disabled={saving}
                             className={styles.btnCancel}
                         >
-                            Batal
+                            Cancel
                         </button>
                         <button
                             type="submit"
@@ -517,7 +529,7 @@ export function BulkUpdateModal({
                             className={styles.btnSubmit}
                         >
                             <Check size={14} />
-                            <span>{saving ? "Menerapkan..." : "Terapkan Bulk Update"}</span>
+                            <span>{saving ? "Applying Updates..." : "Apply Bulk Update"}</span>
                         </button>
                     </div>
                 </form>

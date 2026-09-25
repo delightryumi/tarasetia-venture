@@ -66,10 +66,10 @@ export function ChannelTaxesModal({
                     updatedAt: new Date().toISOString()
                 }
             });
-            toast.success("Konfigurasi Pajak PB1 & Service Charge Saluran OTA Berhasil Disimpan!");
+            toast.success("Taxes & Service Charge configuration saved successfully.");
             onClose();
         } catch (err) {
-            toast.error("Gagal menyimpan konfigurasi pajak.");
+            toast.error("Failed to save tax configuration.");
         } finally {
             setSaving(false);
         }
@@ -81,7 +81,7 @@ export function ChannelTaxesModal({
                 <div className={styles.header}>
                     <div className={styles.title}>
                         <Receipt size={16} color="#1e3a2f" />
-                        <span>Pengaturan Pajak &amp; Service Charge Saluran (Taxes &amp; Fees Sets)</span>
+                        <span>Distribution Tax &amp; Service Charge Policy (Taxes &amp; Fees Sets)</span>
                     </div>
                     <button
                         type="button"
@@ -96,8 +96,8 @@ export function ChannelTaxesModal({
                     <div className={styles.body}>
                         <div className={styles.taxCard}>
                             <div className={styles.taxHeader}>
-                                <span className={styles.taxTitle}>1. Pajak Pembangunan 1 (PB1 / PHR Daerah)</span>
-                                <span style={{ fontSize: "11px", color: "#64748b" }}>Standar Pemda: 10%</span>
+                                <span className={styles.taxTitle}>1. Local Government Accommodation Tax (PB1 / City Tax)</span>
+                                <span style={{ fontSize: "11px", color: "#64748b" }}>Standard: 10%</span>
                             </div>
                             <div className={styles.taxInputRow}>
                                 <input
@@ -110,15 +110,15 @@ export function ChannelTaxesModal({
                                 />
                                 <span style={{ fontSize: "13px", fontWeight: 700 }}>%</span>
                                 <span style={{ fontSize: "11px", color: "#64748b" }}>
-                                    Diterapkan pada tarif akomodasi kamar di OTA.
+                                    Applied to room accommodation rates distributed to channels.
                                 </span>
                             </div>
                         </div>
 
                         <div className={styles.taxCard}>
                             <div className={styles.taxHeader}>
-                                <span className={styles.taxTitle}>2. Service Charge (Biaya Layanan Hotel)</span>
-                                <span style={{ fontSize: "11px", color: "#64748b" }}>Standar Hotel: 5% - 10%</span>
+                                <span className={styles.taxTitle}>2. Hotel Service Charge</span>
+                                <span style={{ fontSize: "11px", color: "#64748b" }}>Standard: 5% - 10%</span>
                             </div>
                             <div className={styles.taxInputRow}>
                                 <input
@@ -131,32 +131,32 @@ export function ChannelTaxesModal({
                                 />
                                 <span style={{ fontSize: "13px", fontWeight: 700 }}>%</span>
                                 <span style={{ fontSize: "11px", color: "#64748b" }}>
-                                    Didistribusikan sebagai service charge karyawan.
+                                    Distributed towards staff service fund.
                                 </span>
                             </div>
                         </div>
 
                         <div className={styles.taxCard}>
                             <div className={styles.taxHeader}>
-                                <span className={styles.taxTitle}>3. Model Penayangan Harga di Ekstranet OTA</span>
+                                <span className={styles.taxTitle}>3. Channel Extranet Price Presentation Model</span>
                             </div>
                             <select
                                 value={taxMode}
                                 onChange={e => setTaxMode(e.target.value as any)}
                                 className={styles.select}
                             >
-                                <option value="inclusive">Inclusive (Tarif kamar yang dipush sudah termasuk PB1 &amp; Service Charge)</option>
-                                <option value="exclusive">Exclusive (Pajak PB1 &amp; Service Charge ditambahkan otomatis di checkout OTA)</option>
+                                <option value="inclusive">Inclusive (Pushed rates already include tax &amp; service charge - Gross Pricing)</option>
+                                <option value="exclusive">Exclusive (Tax &amp; service charge calculated and added at OTA checkout - Net Pricing)</option>
                             </select>
                         </div>
 
                         <div className={styles.infoBox}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700 }}>
                                 <Info size={14} />
-                                <span>Sinkronisasi Otomatis ke Ekstranet:</span>
+                                <span>Automated Extranet Tax Synchronization:</span>
                             </div>
                             <div>
-                                Sistem Channel Manager akan menyematkan Tax Breakdown ini saat menayangkan harga di OTA Channels dan Google Hotel Ads sesuai dengan regulasi perpajakan yang berlaku.
+                                The Channel Manager embeds this tax policy when publishing rates to connected OTA channels and Google Hotel Ads in compliance with regional tax regulations.
                             </div>
                         </div>
                     </div>
@@ -167,14 +167,14 @@ export function ChannelTaxesModal({
                             onClick={onClose}
                             className={styles.btnCancel}
                         >
-                            Batal
+                            Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
                             className={styles.btnSave}
                         >
-                            {saving ? "Menyimpan..." : "Simpan Pengaturan Pajak"}
+                            {saving ? "Saving..." : "Save Tax Policy"}
                         </button>
                     </div>
                 </form>

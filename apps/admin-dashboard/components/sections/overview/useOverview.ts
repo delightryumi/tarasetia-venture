@@ -319,7 +319,20 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         }
                     });
                     
-                    const latest = [...todayTransactions]
+                    // Deduplicate: each unique booking should appear once in the feed
+                    const seenKeys = new Set<string>();
+                    const deduped = todayTransactions.filter(e => {
+                        const key = e.bookingId
+                            ? String(e.bookingId)
+                            : e._docId
+                            ? `${e._docId}_${e.guestName || ""}`
+                            : `${String(e.guestName || "").toLowerCase()}_${e.checkInDate || ""}_${e.checkOutDate || ""}`;
+                        if (seenKeys.has(key)) return false;
+                        seenKeys.add(key);
+                        return true;
+                    });
+
+                    const latest = deduped
                         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
                     
                     setStats(prev => {

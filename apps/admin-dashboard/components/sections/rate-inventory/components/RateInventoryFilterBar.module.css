@@ -1,166 +1,225 @@
-/* RateInventoryFilterBar.module.css — My Tara Luxury Hotel Theme */
+/* RateInventoryFilterBar.module.css — Professional Hospitality Theme */
 
 .filterBar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 16px;
-    background-color: #faf8f4;
-    border-left: 1px solid rgba(141, 122, 82, 0.18);
-    border-right: 1px solid rgba(141, 122, 82, 0.18);
-    border-bottom: 1px solid rgba(141, 122, 82, 0.18);
+    padding: 12px 18px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
     box-sizing: border-box;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+:global(.dark) .filterBar {
+    background-color: #111827;
+    border-color: #374151;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .filterLeftGroup {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
 }
 
 .selectDropdown {
-    height: 30px;
-    padding: 0 10px;
-    font-size: 11px;
+    height: 38px;
+    padding: 0 12px;
+    font-size: 12px;
     font-weight: 700;
-    color: #181d26;
-    background-color: #fbf9f4;
-    border: 1px solid rgba(141, 122, 82, 0.22);
-    border-radius: 6px;
+    color: #0f172a;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
     outline: none;
     cursor: pointer;
     transition: all 0.15s ease;
     font-family: inherit;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+:global(.dark) .selectDropdown {
+    background-color: #1f2937;
+    border-color: #4b5563;
+    color: #f8fafc;
 }
 
 .selectDropdown:hover {
-    background-color: #ebe7d7;
-    border-color: rgba(141, 122, 82, 0.4);
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+:global(.dark) .selectDropdown:hover {
+    background-color: #374151;
 }
 
 .selectDropdown:focus {
-    border-color: #8d7a52;
-    box-shadow: 0 0 0 2px rgba(141, 122, 82, 0.18);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     background-color: #ffffff;
+}
+
+:global(.dark) .selectDropdown:focus {
+    background-color: #111827;
+    border-color: #60a5fa;
 }
 
 .radioGroup {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 3px 8px;
-    background-color: #f5f2eb;
-    border: 1px solid rgba(141, 122, 82, 0.15);
-    border-radius: 6px;
+    padding: 4px 10px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+:global(.dark) .radioGroup {
+    background-color: #1f2937;
+    border-color: #374151;
 }
 
 .radioLabel {
     display: flex;
     align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    font-weight: 600;
-    color: #383838;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #475569;
     cursor: pointer;
     user-select: none;
 }
 
+:global(.dark) .radioLabel {
+    color: #cbd5e1;
+}
+
 .radioInput {
-    accent-color: #181d26;
+    accent-color: #2563eb;
     cursor: pointer;
 }
 
 .checkboxGroup {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
 .checkboxLabel {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 11px;
-    font-weight: 600;
-    color: #383838;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #475569;
     cursor: pointer;
     user-select: none;
 }
 
+:global(.dark) .checkboxLabel {
+    color: #cbd5e1;
+}
+
 .checkboxInput {
-    accent-color: #8d7a52;
+    accent-color: #2563eb;
     cursor: pointer;
 }
 
 .filterRightGroup {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .btnReset {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    height: 30px;
-    padding: 0 10px;
-    font-size: 11px;
-    font-weight: 600;
-    color: #a32d2d;
-    background-color: #fcebeb;
-    border: 1px solid rgba(163, 45, 45, 0.25);
-    border-radius: 6px;
+    gap: 6px;
+    height: 38px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #b91c1c;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.15s ease;
     font-family: inherit;
 }
 
+:global(.dark) .btnReset {
+    background-color: #450a0a;
+    border-color: #7f1d1d;
+    color: #fca5a5;
+}
+
 .btnReset:hover {
-    background-color: #f8d7d7;
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+}
+
+:global(.dark) .btnReset:hover {
+    background-color: #7f1d1d;
 }
 
 .btnSave {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    height: 30px;
-    padding: 0 14px;
-    font-size: 11px;
-    font-weight: 700;
+    height: 38px;
+    padding: 0 18px;
+    font-size: 12.5px;
+    font-weight: 800;
     color: #ffffff;
-    background-color: #181d26;
-    border: 1px solid #181d26;
-    border-radius: 6px;
+    background-color: #0f172a;
+    border: 1px solid #0f172a;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.15s ease;
     font-family: inherit;
-    box-shadow: 0 2px 6px rgba(24, 29, 38, 0.15);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+}
+
+:global(.dark) .btnSave {
+    background-color: #f8fafc;
+    color: #0f172a;
+    border-color: #f8fafc;
 }
 
 .btnSave:hover:not(:disabled) {
-    background-color: #262626;
+    background-color: #1e293b;
+    border-color: #1e293b;
+}
+
+:global(.dark) .btnSave:hover:not(:disabled) {
+    background-color: #e2e8f0;
 }
 
 .btnSave:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
-    background-color: #8d9884;
-    border-color: #6c7664;
+    background-color: #64748b;
+    border-color: #64748b;
 }
 
 .btnSaveDirty {
-    background-color: #0f6e56 !important;
-    border-color: #0d5a46 !important;
-    box-shadow: 0 2px 8px rgba(15, 110, 86, 0.35);
+    background-color: #059669 !important;
+    border-color: #047857 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 10px rgba(5, 150, 105, 0.4) !important;
     animation: pulseSave 2s infinite;
 }
 
 @keyframes pulseSave {
     0% { transform: scale(1); }
-    50% { transform: scale(1.03); }
+    50% { transform: scale(1.02); }
     100% { transform: scale(1); }
 }

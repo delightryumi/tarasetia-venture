@@ -188,18 +188,27 @@ export async function POST(req: NextRequest) {
         // Ingest booking directly into MyTara PMS (hotels/${hotelCode}/daily_revenue)
         // so it immediately appears in Overview, Forecast, Rate & Inventory, and all Accounting modules (PnL, DSR, etc.)
         const { channexSyncService } = await import("@/lib/channex/syncService");
+        const channexBookingFromResp = parsedResponse?.bookings?.[0];
+        const channexBookingId = channexBookingFromResp?.id || reservationId;
+        const channexUniqueId = channexBookingFromResp?.unique_id || reservationId;
+        const channexRevisionId = channexBookingFromResp?.revision_id || `rev_${Date.now()}`;
+
         const inboundPayload = {
             event: "booking_new",
             is_simulation: false,
             property_id: cmConfig.channexPropertyId || openChannelHotelCode || hotelCode,
             inserted_at: new Date().toISOString(),
-            booking_revision_id: `rev_${Date.now()}`,
+            booking_revision_id: channexRevisionId,
             booking: {
-                id: reservationId,
+                id: channexBookingId,
+                unique_id: channexUniqueId,
+                revision_id: channexRevisionId,
                 property_id: cmConfig.channexPropertyId || openChannelHotelCode || hotelCode,
                 channel_id: `chan_open_channel`,
-                channel_name: channelName,
-                channel_booking_id: reservationId,
+                channel_name: "Open Channel",
+                ota_name: channelName,
+                channel: channelName,
+                channel_booking_id: channexUniqueId,
                 ota_reservation_code: reservationId,
                 status: "new",
                 arrival_date: checkin,

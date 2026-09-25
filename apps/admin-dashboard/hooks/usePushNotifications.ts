@@ -14,6 +14,8 @@ function urlBase64ToUint8Array(base64String: string) {
     return outputArray;
 }
 
+import { playChimeSound } from "@/lib/notifications/sound";
+
 export function usePushNotifications(hotelCode: string, userEmail?: string) {
     const [isSupported, setIsSupported] = useState<boolean>(false);
     const [permission, setPermission] = useState<NotificationPermission>("default");
@@ -25,6 +27,13 @@ export function usePushNotifications(hotelCode: string, userEmail?: string) {
         if (typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window) {
             setIsSupported(true);
             setPermission(Notification.permission);
+
+            // Proactively register SW if not yet registered
+            navigator.serviceWorker.getRegistration().then(existing => {
+                if (!existing) {
+                    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(console.warn);
+                }
+            }).catch(console.warn);
 
             navigator.serviceWorker.ready.then(reg => {
                 reg.pushManager.getSubscription().then(sub => {
@@ -42,7 +51,14 @@ export function usePushNotifications(hotelCode: string, userEmail?: string) {
 
         setLoading(true);
         try {
-            // 1. Request OS / Browser notification permission
+            // 1. Ensure ServiceWorker is registered and active
+            let reg = await navigator.serviceWorker.getRegistration();
+            if (!reg) {
+                reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+            }
+            await navigator.serviceWorker.ready;
+
+            // 2. Request OS / Browser notification permission
             const perm = await Notification.requestPermission();
             setPermission(perm);
 
@@ -52,7 +68,7 @@ export function usePushNotifications(hotelCode: string, userEmail?: string) {
                 return false;
             }
 
-            // 2. Fetch VAPID public key from backend
+            // 3. Fetch VAPID public key from backend
             const keyRes = await fetch("/api/notifications/subscribe");
             const keyData = await keyRes.json();
             if (!keyData.success || !keyData.publicKey) {
@@ -61,18 +77,18 @@ export function usePushNotifications(hotelCode: string, userEmail?: string) {
 
             const applicationServerKey = urlBase64ToUint8Array(keyData.publicKey);
 
-            // 3. Register subscription with ServiceWorker
-            const reg = await navigator.serviceWorker.ready;
-            let sub = await reg.pushManager.getSubscription();
+            // 4. Register subscription with ServiceWorker
+            const swReg = await navigator.serviceWorker.ready;
+            let sub = await swReg.pushManager.getSubscription();
 
             if (!sub) {
-                sub = await reg.pushManager.subscribe({
+                sub = await swReg.pushManager.subscribe({
                     userVisibleOnly: true,
                     applicationServerKey
                 });
             }
 
-            // 4. Save subscription to hotel database
+            // 5. Save subscription to hotel database
             const saveRes = await fetch("/api/notifications/subscribe", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -86,6 +102,8 @@ export function usePushNotifications(hotelCode: string, userEmail?: string) {
 
             if (saveRes.ok) {
                 setIsSubscribed(true);
+                // Play celebratory bell sound
+                playChimeSound("new_booking");
                 toast.success("Notifikasi Layar & Suara Reservasi Berhasil Diaktifkan di Perangkat Ini!");
                 return true;
             } else {
@@ -122,6 +140,9 @@ export function usePushNotifications(hotelCode: string, userEmail?: string) {
 
     const sendTestPush = useCallback(async (type: "booking_new" | "booking_cancelled" = "booking_new") => {
         setTesting(true);
+        // Play local bell chime immediately for instant audio verification
+        playChimeSound(type === "booking_cancelled" ? "cancellation" : "new_booking");
+
         try {
             const res = await fetch("/api/notifications/send-test", {
                 method: "POST",
@@ -138,15 +159,15 @@ export function usePushNotifications(hotelCode: string, userEmail?: string) {
             const data = await res.json();
             if (data.success) {
                 if (data.sentCount > 0) {
-                    toast.success(`Tes notifikasi ${type === "booking_new" ? "Booking Baru" : "Pembatalan"} berhasil dikirim! Periksa layar HP Anda.`);
+                    toast.success(`Tes suara & notifikasi ${type === "booking_new" ? "Booking Baru" : "Pembatalan"} berhasil dikirim ke perangkat Anda!`);
                 } else {
-                    toast.warning("Tes notifikasi terkirim, namun belum ada perangkat terdaftar. Klik 'Aktifkan Notifikasi' terlebih dahulu.");
+                    toast.info(`🔔 Bunyi bel notifikasi dimainkan! Aktifkan "Enable Push Notifications" jika ingin pop-up muncul saat browser tertutup.`);
                 }
             } else {
-                toast.error(data.error || "Gagal mengirim tes notifikasi.");
+                toast.info("🔔 Bunyi bel notifikasi dimainkan secara lokal.");
             }
         } catch (err: any) {
-            toast.error(`Error: ${err.message}`);
+            toast.info(`🔔 Bunyi bel notifikasi dimainkan secara lokal.`);
         } finally {
             setTesting(false);
         }

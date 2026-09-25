@@ -1,18 +1,11 @@
 "use client";
 
-import React from "react";
-import {
-    Bed,
-    ChevronLeft,
-    ChevronRight,
-    ChevronsRight,
-    Info,
-    RefreshCw
-} from "lucide-react";
-import {
-    RateInventoryTab,
-    RoomTypeInventoryRow
-} from "../RateInventoryTypes";
+import React, { useMemo } from "react";
+import { Bed } from "lucide-react";
+import { RateInventoryTab, RoomTypeInventoryRow } from "../RateInventoryTypes";
+import { GridDateHeader } from "./grid/GridDateHeader";
+import { GridTotalAvailableRow } from "./grid/GridTotalAvailableRow";
+import { GridRoomTypeCard } from "./grid/GridRoomTypeCard";
 import styles from "./RateInventoryGrid.module.css";
 
 interface RateInventoryGridProps {
@@ -20,6 +13,7 @@ interface RateInventoryGridProps {
     setStartDate: (val: string) => void;
     dateList: string[];
     shiftDate: (days: number) => void;
+    jumpToToday?: () => void;
     activeTab: RateInventoryTab;
     matrix: RoomTypeInventoryRow[];
     totalDailyAvailable: Record<string, number>;
@@ -38,6 +32,7 @@ export function RateInventoryGrid({
     setStartDate,
     dateList,
     shiftDate,
+    jumpToToday,
     activeTab,
     matrix,
     totalDailyAvailable,
@@ -56,533 +51,86 @@ export function RateInventoryGrid({
     const isAllotmentSeparated = isChannelSpecific && (chSeparationMode === "separated_allotment" || chSeparationMode === "separated_both");
     const isRateSeparated = isChannelSpecific && (chSeparationMode === "separated_rate" || chSeparationMode === "separated_both");
 
-    const formatCurrencyDisplay = (val: number) => {
-        return Number(val || 0).toLocaleString("en-US", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        });
-    };
+    const todayStr = useMemo(() => {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+    }, []);
+
+    const totalPhysicalRooms = useMemo(() => {
+        return matrix.reduce((acc, rt) => acc + (rt.totalPhysicalRooms || 1), 0);
+    }, [matrix]);
 
     return (
         <div className={styles.gridScrollWrapper}>
             <table className={styles.gridTable}>
-                {/* Header Row: Date Navigation & Day Columns */}
+                {/* 1. Sticky Date Navigation Header */}
                 <thead>
-                    <tr className={styles.headerRow}>
-                        <th className={styles.colTitle}>
-                            <div className={styles.dateNavControl}>
-                                <button
-                                    type="button"
-                                    onClick={() => shiftDate(-14)}
-                                    className={styles.dateStepperBtn}
-                                    title="14 Hari Mundur"
-                                >
-                                    <ChevronLeft size={15} />
-                                </button>
-
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={e => setStartDate(e.target.value)}
-                                    className={styles.datePickerInput}
-                                />
-
-                                <button
-                                    type="button"
-                                    onClick={() => shiftDate(14)}
-                                    className={styles.dateStepperBtn}
-                                    title="14 Hari Maju"
-                                >
-                                    <ChevronRight size={15} />
-                                </button>
-                            </div>
-                        </th>
-
-                        {dateList.map(dateStr => {
-                            const dObj = new Date(dateStr);
-                            const dayName = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][dObj.getDay()];
-                            const dayNum = String(dObj.getDate()).padStart(2, "0");
-                            const monthName = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][dObj.getMonth()];
-                            const isWeekend = dObj.getDay() === 0 || dObj.getDay() === 6;
-
-                            return (
-                                <th
-                                    key={dateStr}
-                                    className={`${styles.colDay} ${styles.dayHeaderCell} ${isWeekend ? styles.colWeekend : ""}`}
-                                >
-                                    <div className={styles.dayOfWeek}>{dayName}</div>
-                                    <div className={styles.dayNumber}>{dayNum}</div>
-                                    <div className={styles.monthLabel}>{monthName}</div>
-                                </th>
-                            );
-                        })}
-
-                        <th style={{ width: "40px", minWidth: "40px", textAlign: "center" }}>
-                            <button
-                                type="button"
-                                onClick={() => shiftDate(14)}
-                                className={styles.jumpForwardBtn}
-                                title="Lompat 14 Hari ke Depan"
-                            >
-                                <ChevronsRight size={14} />
-                            </button>
-                        </th>
-                    </tr>
+                    <GridDateHeader
+                        startDate={startDate}
+                        setStartDate={setStartDate}
+                        dateList={dateList}
+                        shiftDate={shiftDate}
+                        jumpToToday={jumpToToday}
+                        todayStr={todayStr}
+                    />
                 </thead>
 
+                {/* 2. Room Categories & Rate Plans */}
                 <tbody>
                     {matrix.length === 0 ? (
                         <tr>
-                            <td colSpan={dateList.length + 2} style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
-                                Belum ada data tipe kamar untuk hotel ini.
+                            <td colSpan={dateList.length + 2} className={styles.emptyStateCell}>
+                                <div className={styles.emptyStateContent}>
+                                    <div className={styles.emptyIconWrapper}>
+                                        <Bed size={24} />
+                                    </div>
+                                    <div className={styles.emptyTitle}>
+                                        No Room Types Configured
+                                    </div>
+                                    <div className={styles.emptySubtitle}>
+                                        No room categories have been configured for this property yet. Please add room types in Master Rooms or Channel Manager.
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     ) : (
-                        matrix.map(rt => {
-                            return (
-                                <React.Fragment key={rt.roomTypeId}>
-                                    {/* 1. ROOM TYPE INVENTORY ROW */}
-                                    <tr className={styles.roomTypeRow}>
-                                        <td className={`${styles.colTitle} ${styles.roomTypeTitleCell}`}>
-                                            <div className={styles.roomTypeBadge}>
-                                                <Bed size={15} style={{ color: "#2563eb", flexShrink: 0 }} />
-                                                <span className={styles.roomTypeNameText}>{rt.roomTypeName}</span>
-                                                <span className={styles.roomCountPill} title="Total kamar fisik">
-                                                    {rt.totalPhysicalRooms}
-                                                </span>
-                                            </div>
-
-                                            {onSyncRoom && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        onSyncRoom(rt.roomTypeId).catch(err => console.error("Error syncing room:", err));
-                                                    }}
-                                                    disabled={syncingRoomTypeId === rt.roomTypeId}
-                                                    className={styles.btnSyncRoom}
-                                                    title={`Sync ketersediaan kamar ${rt.roomTypeName} ke seluruh OTA`}
-                                                >
-                                                    <RefreshCw size={11} className={syncingRoomTypeId === rt.roomTypeId ? "animate-spin" : ""} />
-                                                    <span>{syncingRoomTypeId === rt.roomTypeId ? "Syncing..." : "Sync"}</span>
-                                                </button>
-                                            )}
-                                        </td>
-
-                                        {dateList.map(dateStr => {
-                                            const dayStat = rt.days[dateStr];
-                                            const avail = dayStat?.availableRooms ?? 0;
-                                            const isWeekend = dayStat?.isWeekend;
-                                            const isZero = avail === 0;
-                                            const isChannelSpecific = channelFilter && channelFilter !== "all";
-                                            const invKey = isChannelSpecific 
-                                                ? `channelAllotment_${channelFilter}_${rt.roomTypeId}_${dateStr}`
-                                                : `inv_${rt.roomTypeId}_${dateStr}`;
-
-                                            // 1. INVENTORY TAB: Editable room type allotment
-                                            if (activeTab === "inventory") {
-                                                const canEditCellInv = canChangeInventory && (!isChannelSpecific || isAllotmentSeparated);
-                                                return (
-                                                    <td
-                                                        key={dateStr}
-                                                        className={`${styles.colDay} ${styles.dataCell} ${isWeekend ? styles.colWeekend : ""}`}
-                                                    >
-                                                        <input
-                                                            type="number"
-                                                            min={0}
-                                                            value={avail}
-                                                            disabled={!canEditCellInv}
-                                                            onChange={e => {
-                                                                if (!canEditCellInv) return;
-                                                                const val = Math.max(0, parseInt(e.target.value, 10) || 0);
-                                                                stageEdit(invKey, val);
-                                                            }}
-                                                            onWheel={e => e.currentTarget.blur()}
-                                                            className={`${styles.invInput} ${isZero ? styles.invInputZero : ""}`}
-                                                            style={{
-                                                                ...(!canEditCellInv ? { cursor: "not-allowed", opacity: 0.65, backgroundColor: "#f8fafc" } : {}),
-                                                                ...(dayStat?.isCapped ? { borderColor: "#8b5cf6", backgroundColor: "#f5f3ff", fontWeight: 700 } : {})
-                                                            }}
-                                                            title={
-                                                                !canChangeInventory 
-                                                                    ? "Anda tidak memiliki izin untuk merubah inventory" 
-                                                                    : (isChannelSpecific && !isAllotmentSeparated)
-                                                                        ? `[Tergabung] Allotment ${chConfig?.channelName || channelFilter} mengikuti Common Pool fisik`
-                                                                        : (dayStat?.isCapped 
-                                                                            ? `[Capped OTA] Batas kuota ${chConfig?.channelName || channelFilter}: ${avail} unit` 
-                                                                            : `Kapasitas fisik tersedia: ${avail} / ${rt.totalPhysicalRooms}`)
-                                                            }
-                                                        />
-                                                    </td>
-                                                );
-                                            }
-
-                                            // 2. STOP SELL TAB: Room Type Master Toggle
-                                            if (activeTab === "stopsell") {
-                                                const allStop = rt.ratePlans.length > 0 && rt.ratePlans.every(rp => !!rp.days[dateStr]?.stopSell);
-                                                return (
-                                                    <td
-                                                        key={dateStr}
-                                                        className={`${styles.colDay} ${styles.dataCell} ${isWeekend ? styles.colWeekend : ""}`}
-                                                    >
-                                                        <button
-                                                            type="button"
-                                                            disabled={!canStopSell}
-                                                            onClick={() => {
-                                                                if (!canStopSell) return;
-                                                                const targetState = !allStop;
-                                                                rt.ratePlans.forEach(rp => {
-                                                                    const rpStopKey = isChannelSpecific 
-                                                                        ? `channelStopSell_${channelFilter}_${rp.ratePlanId}_${dateStr}` 
-                                                                        : `stopSell_${rp.ratePlanId}_${dateStr}`;
-                                                                    stageEdit(rpStopKey, targetState);
-                                                                });
-                                                            }}
-                                                            className={allStop ? styles.badgeClosed : styles.badgeOpen}
-                                                            style={!canStopSell ? { cursor: "not-allowed", opacity: 0.6 } : undefined}
-                                                            title={!canStopSell ? "No permission" : `Toggle Stop Sell for all rate plans (${channelFilter})`}
-                                                        >
-                                                            {allStop ? "CLOSED" : "OPEN"}
-                                                        </button>
-                                                    </td>
-                                                );
-                                            }
-
-                                            // 3. CTA TAB: Room Type Master Toggle
-                                            if (activeTab === "cta") {
-                                                const allCta = rt.ratePlans.length > 0 && rt.ratePlans.every(rp => !!rp.days[dateStr]?.closedToArrival);
-                                                return (
-                                                    <td
-                                                        key={dateStr}
-                                                        className={`${styles.colDay} ${styles.dataCell} ${isWeekend ? styles.colWeekend : ""}`}
-                                                    >
-                                                        <button
-                                                            type="button"
-                                                            disabled={!canStopSell}
-                                                            onClick={() => {
-                                                                if (!canStopSell) return;
-                                                                const targetState = !allCta;
-                                                                rt.ratePlans.forEach(rp => {
-                                                                    const rpCtaKey = `cta_${rp.ratePlanId}_${dateStr}`;
-                                                                    stageEdit(rpCtaKey, targetState);
-                                                                });
-                                                            }}
-                                                            className={allCta ? styles.badgeClosed : styles.badgeOpen}
-                                                            style={
-                                                                !canStopSell 
-                                                                    ? { cursor: "not-allowed", opacity: 0.6 } 
-                                                                    : (allCta ? { backgroundColor: "#ea580c", borderColor: "#c2410c", color: "#ffffff" } : undefined)
-                                                            }
-                                                            title={!canStopSell ? "No permission" : `Toggle Closed to Arrival (CTA) for all rate plans`}
-                                                        >
-                                                            {allCta ? "CLOSED" : "OPEN"}
-                                                        </button>
-                                                    </td>
-                                                );
-                                            }
-
-                                            // 4. CTD TAB: Room Type Master Toggle
-                                            if (activeTab === "ctd") {
-                                                const allCtd = rt.ratePlans.length > 0 && rt.ratePlans.every(rp => !!rp.days[dateStr]?.closedToDeparture);
-                                                return (
-                                                    <td
-                                                        key={dateStr}
-                                                        className={`${styles.colDay} ${styles.dataCell} ${isWeekend ? styles.colWeekend : ""}`}
-                                                    >
-                                                        <button
-                                                            type="button"
-                                                            disabled={!canStopSell}
-                                                            onClick={() => {
-                                                                if (!canStopSell) return;
-                                                                const targetState = !allCtd;
-                                                                rt.ratePlans.forEach(rp => {
-                                                                    const rpCtdKey = `ctd_${rp.ratePlanId}_${dateStr}`;
-                                                                    stageEdit(rpCtdKey, targetState);
-                                                                });
-                                                            }}
-                                                            className={allCtd ? styles.badgeClosed : styles.badgeOpen}
-                                                            style={
-                                                                !canStopSell 
-                                                                    ? { cursor: "not-allowed", opacity: 0.6 } 
-                                                                    : (allCtd ? { backgroundColor: "#7c3aed", borderColor: "#6d28d9", color: "#ffffff" } : undefined)
-                                                            }
-                                                            title={!canStopSell ? "No permission" : `Toggle Closed to Departure (CTD) for all rate plans`}
-                                                        >
-                                                            {allCtd ? "CLOSED" : "OPEN"}
-                                                        </button>
-                                                    </td>
-                                                );
-                                            }
-
-                                            // 5. RATES / MIN STAY: Read-only inventory available count indicator
-                                            return (
-                                                <td
-                                                    key={dateStr}
-                                                    className={`${styles.colDay} ${styles.roomTypeInvCell} ${isWeekend ? styles.colWeekend : ""}`}
-                                                    style={{
-                                                        color: isZero ? "#dc2626" : (avail <= 2 ? "#d97706" : "#0f172a"),
-                                                        backgroundColor: isZero ? "#fee2e2" : undefined
-                                                    }}
-                                                    title={`Ketersediaan: ${avail} kamar`}
-                                                >
-                                                    {avail}
-                                                </td>
-                                            );
-                                        })}
-
-                                        <td style={{ borderRight: "none" }} />
-                                    </tr>
-
-                                    {/* 2. RATE PLANS CHILD ROWS (Visible on Rates & Stop Sell tabs) */}
-                                    {activeTab !== "inventory" && (
-                                        rt.ratePlans.length === 0 ? (
-                                            <tr className={styles.ratePlanRow}>
-                                                <td
-                                                    colSpan={dateList.length + 2}
-                                                    style={{
-                                                        padding: "8px 16px",
-                                                        fontSize: "11px",
-                                                        color: "#94a3b8",
-                                                        backgroundColor: "#f8fafc",
-                                                        borderBottom: "1px solid var(--grid-border, #e2e8f0)"
-                                                    }}
-                                                >
-                                                    ℹ️ Belum ada Rate Plan untuk tipe kamar ini. Tambahkan Rate Plan di menu Channel Manager Superadmin.
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            rt.ratePlans.map(rp => {
-                                                return (
-                                                    <tr key={rp.ratePlanId} className={styles.ratePlanRow}>
-                                                        <td className={`${styles.colTitle} ${styles.ratePlanTitleCell}`}>
-                                                            <div className={styles.ratePlanNameGroup}>
-                                                                <span className={styles.ratePlanTreePrefix}>└─</span>
-                                                                <span className={styles.ratePlanName}>
-                                                                    {rp.ratePlanName}
-                                                                </span>
-                                                                <span className={styles.ratePlanCodePill}>{rp.ratePlanCode}</span>
-                                                                <span className={styles.infoIcon} title={`${rp.ratePlanCode} • Base Net: Rp ${rp.baseRate?.toLocaleString()}`}>
-                                                                    <Info size={11} />
-                                                                </span>
-                                                            </div>
-                                                        </td>
-
-                                                        {dateList.map(dateStr => {
-                                                            const dayStat = rp.days[dateStr];
-                                                            const isWeekend = dayStat?.isWeekend;
-                                                            const isStopSell = !!dayStat?.stopSell;
-
-                                                            const isChannelSpecific = channelFilter && channelFilter !== "all";
-                                                            const rateKey = isChannelSpecific 
-                                                                ? `channelRate_${channelFilter}_${rp.ratePlanId}_${dateStr}` 
-                                                                : `rate_${rp.ratePlanId}_${dateStr}`;
-                                                            const stopSellKey = isChannelSpecific 
-                                                                ? `channelStopSell_${channelFilter}_${rp.ratePlanId}_${dateStr}` 
-                                                                : `stopSell_${rp.ratePlanId}_${dateStr}`;
-
-                                                            // Rates Tab Render
-                                                            if (activeTab === "rates") {
-                                                                const currentRate = dayStat?.rate ?? rp.baseRate;
-                                                                const canEditCellRate = canChangeRate && (!isChannelSpecific || isRateSeparated);
-                                                                return (
-                                                                    <td
-                                                                        key={dateStr}
-                                                                        className={`${styles.colDay} ${styles.dataCell} ${isStopSell ? styles.cellStopSell : ""} ${isWeekend ? styles.colWeekend : ""}`}
-                                                                    >
-                                                                        <input
-                                                                            type="text"
-                                                                            value={formatCurrencyDisplay(currentRate)}
-                                                                            disabled={!canEditCellRate}
-                                                                            onChange={e => {
-                                                                                if (!canEditCellRate) return;
-                                                                                const rawNum = Number(e.target.value.replace(/[^0-9.-]+/g, "")) || 0;
-                                                                                stageEdit(rateKey, rawNum);
-                                                                            }}
-                                                                            onWheel={e => e.currentTarget.blur()}
-                                                                            className={`${styles.rateInput} ${isStopSell ? styles.rateInputStopSell : ""}`}
-                                                                            style={{
-                                                                                ...(!canEditCellRate ? { cursor: "not-allowed", opacity: 0.65, backgroundColor: "#f8fafc" } : {}),
-                                                                                ...(dayStat?.isChannelCustom ? { borderColor: "#10b981", backgroundColor: "#ecfdf5", fontWeight: 700 } : {})
-                                                                            }}
-                                                                            title={
-                                                                                !canChangeRate 
-                                                                                    ? "Anda tidak memiliki izin untuk merubah rate" 
-                                                                                    : (isChannelSpecific && !isRateSeparated)
-                                                                                        ? `[Tergabung] Tarif ${chConfig?.channelName || channelFilter} mengikuti tarif dasar Common Pool`
-                                                                                        : (dayStat?.isChannelCustom 
-                                                                                            ? `[Custom OTA Rate] Rp ${currentRate.toLocaleString()}` 
-                                                                                            : `Rp ${currentRate.toLocaleString()}`)
-                                                                            }
-                                                                        />
-                                                                    </td>
-                                                                );
-                                                            }
-
-                                                            // Stop Sell Tab Render
-                                                            if (activeTab === "stopsell") {
-                                                                return (
-                                                                    <td
-                                                                        key={dateStr}
-                                                                        className={`${styles.colDay} ${styles.dataCell} ${isStopSell ? styles.cellStopSell : ""} ${isWeekend ? styles.colWeekend : ""}`}
-                                                                    >
-                                                                        <button
-                                                                            type="button"
-                                                                            disabled={!canStopSell}
-                                                                            onClick={() => {
-                                                                                if (!canStopSell) return;
-                                                                                stageEdit(stopSellKey, !isStopSell);
-                                                                            }}
-                                                                            className={isStopSell ? styles.badgeClosed : styles.badgeOpen}
-                                                                            style={!canStopSell ? { cursor: "not-allowed", opacity: 0.6 } : undefined}
-                                                                            title={!canStopSell ? "No permission" : (isStopSell ? "Stop Sell Active (Closed)" : "Open for Sale")}
-                                                                        >
-                                                                            {isStopSell ? "CLOSED" : "OPEN"}
-                                                                        </button>
-                                                                    </td>
-                                                                );
-                                                            }
-
-                                                            // Min Stay Tab Render
-                                                            if (activeTab === "minstay") {
-                                                                const minStay = dayStat?.minStay ?? 1;
-                                                                const minStayKey = `min_${rp.ratePlanId}_${dateStr}`;
-                                                                return (
-                                                                    <td
-                                                                        key={dateStr}
-                                                                        className={`${styles.colDay} ${styles.dataCell} ${isWeekend ? styles.colWeekend : ""}`}
-                                                                    >
-                                                                        <input
-                                                                            type="number"
-                                                                            min={1}
-                                                                            max={30}
-                                                                            value={minStay}
-                                                                            disabled={!canChangeRate}
-                                                                            onChange={e => {
-                                                                                if (!canChangeRate) return;
-                                                                                const val = Math.max(1, parseInt(e.target.value, 10) || 1);
-                                                                                stageEdit(minStayKey, val);
-                                                                            }}
-                                                                            onWheel={e => e.currentTarget.blur()}
-                                                                            className={styles.invInput}
-                                                                            style={{
-                                                                                textAlign: "center",
-                                                                                fontWeight: 700,
-                                                                                color: minStay > 1 ? "#2563eb" : "#334155",
-                                                                                backgroundColor: minStay > 1 ? "#eff6ff" : undefined,
-                                                                                borderColor: minStay > 1 ? "#93c5fd" : undefined
-                                                                            }}
-                                                                            title={!canChangeRate ? "No permission" : `Minimum Stay: ${minStay} nights`}
-                                                                        />
-                                                                    </td>
-                                                                );
-                                                            }
-
-                                                            // CTA Tab Render (Closed to Arrival)
-                                                            if (activeTab === "cta") {
-                                                                const isCta = !!dayStat?.closedToArrival;
-                                                                const ctaKey = `cta_${rp.ratePlanId}_${dateStr}`;
-                                                                return (
-                                                                    <td
-                                                                        key={dateStr}
-                                                                        className={`${styles.colDay} ${styles.dataCell} ${isCta ? styles.cellStopSell : ""} ${isWeekend ? styles.colWeekend : ""}`}
-                                                                    >
-                                                                        <button
-                                                                            type="button"
-                                                                            disabled={!canStopSell}
-                                                                            onClick={() => {
-                                                                                if (!canStopSell) return;
-                                                                                stageEdit(ctaKey, !isCta);
-                                                                            }}
-                                                                            className={isCta ? styles.badgeClosed : styles.badgeOpen}
-                                                                            style={
-                                                                                !canStopSell 
-                                                                                    ? { cursor: "not-allowed", opacity: 0.6 } 
-                                                                                    : (isCta ? { backgroundColor: "#ea580c", borderColor: "#c2410c", color: "#ffffff" } : undefined)
-                                                                            }
-                                                                            title={!canStopSell ? "No permission" : (isCta ? "Closed to Arrival (No Check-In)" : "Open for Arrival")}
-                                                                        >
-                                                                            {isCta ? "CLOSED" : "OPEN"}
-                                                                        </button>
-                                                                    </td>
-                                                                );
-                                                            }
-
-                                                            // CTD Tab Render (Closed to Departure)
-                                                            if (activeTab === "ctd") {
-                                                                const isCtd = !!dayStat?.closedToDeparture;
-                                                                const ctdKey = `ctd_${rp.ratePlanId}_${dateStr}`;
-                                                                return (
-                                                                    <td
-                                                                        key={dateStr}
-                                                                        className={`${styles.colDay} ${styles.dataCell} ${isCtd ? styles.cellStopSell : ""} ${isWeekend ? styles.colWeekend : ""}`}
-                                                                    >
-                                                                        <button
-                                                                            type="button"
-                                                                            disabled={!canStopSell}
-                                                                            onClick={() => {
-                                                                                if (!canStopSell) return;
-                                                                                stageEdit(ctdKey, !isCtd);
-                                                                            }}
-                                                                            className={isCtd ? styles.badgeClosed : styles.badgeOpen}
-                                                                            style={
-                                                                                !canStopSell 
-                                                                                    ? { cursor: "not-allowed", opacity: 0.6 } 
-                                                                                    : (isCtd ? { backgroundColor: "#7c3aed", borderColor: "#6d28d9", color: "#ffffff" } : undefined)
-                                                                            }
-                                                                            title={!canStopSell ? "No permission" : (isCtd ? "Closed to Departure (No Check-Out)" : "Open for Departure")}
-                                                                        >
-                                                                            {isCtd ? "CLOSED" : "OPEN"}
-                                                                        </button>
-                                                                    </td>
-                                                                );
-                                                            }
-
-
-
-                                                            return null;
-                                                        })}
-
-                                                        <td style={{ borderRight: "none" }} />
-                                                    </tr>
-                                                );
-                                            })
-                                        )
-                                    )}
-                                </React.Fragment>
-                            );
-                        })
+                        matrix.map((rt, rtIndex) => (
+                            <GridRoomTypeCard
+                                key={rt.roomTypeId}
+                                roomType={rt}
+                                index={rtIndex}
+                                dateList={dateList}
+                                todayStr={todayStr}
+                                activeTab={activeTab}
+                                channelFilter={channelFilter}
+                                channelConfigs={channelConfigs}
+                                isAllotmentSeparated={isAllotmentSeparated}
+                                isRateSeparated={isRateSeparated}
+                                canStopSell={canStopSell}
+                                canChangeRate={canChangeRate}
+                                canChangeInventory={canChangeInventory}
+                                stageEdit={stageEdit}
+                                onSyncRoom={onSyncRoom}
+                                syncingRoomTypeId={syncingRoomTypeId}
+                            />
+                        ))
                     )}
-
-                    {/* 3. BOTTOM SUMMARY ROW: Available Inventory (Total Hotel) */}
-                    <tr className={styles.totalAvailableRow}>
-                        <td className={`${styles.colTitle} ${styles.totalAvailableTitleCell}`}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                <span>TOTAL AVAILABLE</span>
-                                <span className={styles.infoIcon} title="Total kuota kamar fisik yang masih tersedia untuk seluruh hotel">
-                                    <Info size={12} />
-                                </span>
-                            </div>
-                        </td>
-
-                        {dateList.map(dateStr => {
-                            const totalAvail = totalDailyAvailable[dateStr] ?? 0;
-                            const isZero = totalAvail === 0;
-                            const isLow = totalAvail > 0 && totalAvail <= 2;
-
-                            return (
-                                <td
-                                    key={dateStr}
-                                    className={`${styles.colDay} ${styles.totalAvailableCell} ${isZero ? styles.totalAvailZero : isLow ? styles.totalAvailLow : styles.totalAvailGood}`}
-                                >
-                                    <span className={styles.totalAvailBadge}>
-                                        {totalAvail}
-                                    </span>
-                                </td>
-                            );
-                        })}
-
-                        <td style={{ borderRight: "none", backgroundColor: "#181d26" }} />
-                    </tr>
                 </tbody>
+
+                {/* 3. Sticky Bottom Total Available Row */}
+                {matrix.length > 0 && (
+                    <tfoot>
+                        <GridTotalAvailableRow
+                            dateList={dateList}
+                            todayStr={todayStr}
+                            totalDailyAvailable={totalDailyAvailable}
+                            totalPhysicalRooms={totalPhysicalRooms}
+                        />
+                    </tfoot>
+                )}
             </table>
         </div>
     );

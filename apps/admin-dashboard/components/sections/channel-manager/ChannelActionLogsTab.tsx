@@ -99,10 +99,10 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
             });
             const data = await res.json();
             if (data.success) {
-                toast.success(`Kebijakan retensi disetel ke ${days} hari (~${Math.round(days / 30)} bulan). ${data.purgedCount ? `Membersihkan ${data.purgedCount} log usang.` : "Semua log aman."}`);
+                toast.success(`Retention policy updated to ${days} days (~${Math.round(days / 30)} months). ${data.purgedCount ? `Purged ${data.purgedCount} obsolete logs.` : "All logs retained."}`);
                 fetchLogs();
             } else {
-                toast.error(data.error || "Gagal mengubah kebijakan retensi log");
+                toast.error(data.error || "Failed to update retention policy");
             }
         } catch (err: any) {
             toast.error(`Error: ${err.message}`);
@@ -111,7 +111,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
 
     // Manual Purge of Old Logs
     const handleManualPurge = async () => {
-        if (!confirm(`Hapus seluruh log yang berusia lebih dari ${retentionDays} hari (~${Math.round(retentionDays / 30)} bulan) untuk menghemat ruang Firebase?`)) {
+        if (!confirm(`Purge all task logs older than ${retentionDays} days (~${Math.round(retentionDays / 30)} months)?`)) {
             return;
         }
 
@@ -122,10 +122,10 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
             });
             const data = await res.json();
             if (data.success) {
-                toast.success(data.message || `Berhasil membersihkan ${data.deletedCount} log usang.`);
+                toast.success(data.message || `Successfully purged ${data.deletedCount} obsolete logs.`);
                 fetchLogs();
             } else {
-                toast.error(data.error || "Gagal membersihkan log usang");
+                toast.error(data.error || "Failed to purge obsolete logs");
             }
         } catch (err: any) {
             toast.error(`Error: ${err.message}`);
@@ -180,7 +180,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
     }, [filteredLogs, page, pageSize]);
 
     const formatTimestamp = (ts?: string) => {
-        if (!ts) return "—";
+        if (!ts) return "-";
         try {
             const d = new Date(ts);
             const pad = (n: number) => String(n).padStart(2, "0");
@@ -191,7 +191,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
     };
 
     const formatTimestampWithMs = (ts?: string) => {
-        if (!ts) return "—";
+        if (!ts) return "-";
         try {
             const d = new Date(ts);
             const pad = (n: number) => String(n).padStart(2, "0");
@@ -339,13 +339,13 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                 </div>
 
                 {/* Auto-Delete & Retention Badge */}
-                <div className={styles.retentionBadge} title="Pembersihan otomatis aktif di Firebase">
+                <div className={styles.retentionBadge} title="Automatic log purge active">
                     <span className={styles.retentionDot} />
-                    <span>Auto-Delete Aktif (Log &gt; {retentionDays} Hari / ~{Math.round(retentionDays / 30)} Bulan)</span>
+                    <span>Auto-Purge Active (Logs &gt; {retentionDays} Days / ~{Math.round(retentionDays / 30)} Months)</span>
                 </div>
             </div>
 
-            {/* PWA Push Notification System (Lockscreen Alerts & Android Default Ringtone) */}
+            {/* PWA Push Notification System (Lockscreen Alerts & Mobile Sound Notifications) */}
             <ChannelNotificationWidget hotelCode={hotelCode} />
 
             {/* Retention & Database Optimization Bar */}
@@ -353,20 +353,20 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                 <div className={styles.retentionLeft}>
                     <span className={styles.retentionTitle}>
                         <ShieldCheck size={16} color="#059669" />
-                        <span>Retensi Log Firebase:</span>
+                        <span>Log Retention:</span>
                     </span>
                     <select
                         value={retentionDays}
                         onChange={e => handleRetentionChange(Number(e.target.value))}
                         className={styles.retentionSelect}
-                        title="Atur jangka waktu auto-delete log agar Firebase tidak penuh"
+                        title="Configure automatic log purge threshold"
                     >
-                        <option value={30}>Simpan 30 Hari (1 Bulan)</option>
-                        <option value={60}>Simpan 60 Hari (2 Bulan) — Standar</option>
-                        <option value={90}>Simpan 90 Hari (3 Bulan) — Rekomendasi</option>
+                        <option value={30}>Keep 30 Days (1 Month)</option>
+                        <option value={60}>Keep 60 Days (2 Months) - Standard</option>
+                        <option value={90}>Keep 90 Days (3 Months) - Recommended</option>
                     </select>
                     <span style={{ color: "#64748b", fontSize: "11px" }}>
-                        Log yang lebih lama dari {retentionDays} hari otomatis dibersihkan secara berkala agar kuota database tidak membengkak.
+                        Logs older than {retentionDays} days are automatically purged to optimize storage quota.
                     </span>
                 </div>
 
@@ -375,10 +375,10 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                     onClick={handleManualPurge}
                     disabled={cleaningLogs}
                     className={styles.btnCleanLogs}
-                    title="Jalankan pembersihan log lama sekarang"
+                    title="Purge obsolete logs immediately"
                 >
                     <Trash2 size={13} className={cleaningLogs ? "animate-spin" : ""} />
-                    <span>{cleaningLogs ? "Membersihkan..." : "Bersihkan Log Usang Sekarang"}</span>
+                    <span>{cleaningLogs ? "Purging..." : "Purge Obsolete Logs Now"}</span>
                 </button>
             </div>
 
@@ -526,7 +526,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                     </td>
                                     <td className={styles.td}>
                                         <span style={{ fontSize: "12px", color: "#475569" }}>
-                                            {item.execution_time_ms ? `${item.execution_time_ms}` : "—"}
+                                            {item.execution_time_ms ? `${item.execution_time_ms}` : "-"}
                                         </span>
                                     </td>
                                     <td className={styles.td} style={{ textAlign: "right" }}>

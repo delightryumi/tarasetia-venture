@@ -56,7 +56,7 @@ export function RateInventorySection() {
 
     return (
         <div className={styles.container}>
-            {/* 1. Modular Sub-Tabs Bar */}
+            {/* 1. Sub-Tabs Bar (Inventory, Rates, Stop Sell, Min Stay, CTA, CTD) */}
             <RateInventorySubTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
@@ -67,7 +67,7 @@ export function RateInventorySection() {
                 syncingAri={syncingAri}
             />
 
-            {/* 2. Modular Filter & Controls Bar */}
+            {/* 3. Filter & Controls Bar */}
             <RateInventoryFilterBar
                 channelFilter={channelFilter}
                 setChannelFilter={setChannelFilter}
@@ -87,26 +87,39 @@ export function RateInventorySection() {
                 onSaveAllChanges={saveAllChanges}
             />
 
-            {/* 3. Modular Calendar Grid Table */}
-            <RateInventoryGrid
-                startDate={startDate}
-                setStartDate={setStartDate}
-                dateList={dateList}
-                shiftDate={shiftDate}
-                activeTab={activeTab}
-                matrix={matrix}
-                totalDailyAvailable={totalDailyAvailable}
-                stageEdit={stageEdit}
-                onSyncRoom={syncAriToChannex}
-                syncingRoomTypeId={syncingRoomTypeId}
-                canStopSell={canStopSell}
-                canChangeRate={canChangeRate}
-                canChangeInventory={canChangeInventory}
-                channelFilter={channelFilter}
-                channelConfigs={channelConfigs}
-            />
+            {/* 4. Calendar Grid Table or Loading State */}
+            {loading ? (
+                <div className={styles.loadingContainer}>
+                    <div className={styles.spinner} />
+                    <div className={styles.loadingText}>
+                        Loading Rates &amp; Inventory Matrix...
+                    </div>
+                    <div className={styles.loadingSubtext}>
+                        Synchronizing physical room inventory and master rate plans
+                    </div>
+                </div>
+            ) : (
+                <RateInventoryGrid
+                    startDate={startDate}
+                    setStartDate={setStartDate}
+                    dateList={dateList}
+                    shiftDate={shiftDate}
+                    jumpToToday={jumpToToday}
+                    activeTab={activeTab}
+                    matrix={matrix}
+                    totalDailyAvailable={totalDailyAvailable}
+                    stageEdit={stageEdit}
+                    onSyncRoom={syncAriToChannex}
+                    syncingRoomTypeId={syncingRoomTypeId}
+                    canStopSell={canStopSell}
+                    canChangeRate={canChangeRate}
+                    canChangeInventory={canChangeInventory}
+                    channelFilter={channelFilter}
+                    channelConfigs={channelConfigs}
+                />
+            )}
 
-            {/* 4. Modular Bulk Update Modal */}
+            {/* 5. Bulk Update Modal */}
             <BulkUpdateModal
                 isOpen={bulkModalOpen}
                 onClose={() => setBulkModalOpen(false)}

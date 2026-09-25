@@ -1,0 +1,116 @@
+.row {
+    background-color: #f1f5f9;
+    border-top: 2px solid #cbd5e1;
+    border-bottom: 2px solid #cbd5e1;
+    font-weight: 700;
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.05);
+}
+
+:global(.dark) .row {
+    background-color: #111827;
+    border-top-color: #4b5563;
+    border-bottom-color: #4b5563;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.colTitle {
+    width: 290px;
+    min-width: 290px;
+    max-width: 290px;
+    position: sticky;
+    left: 0;
+    z-index: 22;
+    background-color: #f1f5f9;
+    border-right: 2px solid #cbd5e1;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+:global(.dark) .colTitle {
+    background-color: #111827;
+    border-right-color: #4b5563;
+}
+
+.titleLabel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: 0.01em;
+}
+
+:global(.dark) .titleLabel {
+    color: #f1f5f9;
+}
+
+.titleBadge {
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 9.5px;
+    font-weight: 700;
+    background-color: #e2e8f0;
+    color: #475569;
+}
+
+:global(.dark) .titleBadge {
+    background-color: #374151;
+    color: #cbd5e1;
+}
+
+.colDay {
+    width: 82px;
+    min-width: 82px;
+    max-width: 82px;
+    text-align: center;
+    border-right: 1px solid #cbd5e1;
+    padding: 6px 2px;
+    box-sizing: border-box;
+}
+
+:global(.dark) .colDay {
+    border-right-color: #374151;
+}
+
+.colWeekend {
+    background-color: #e2e8f0;
+}
+
+:global(.dark) .colWeekend {
+    background-color: #1e293b;
+}
+
+.colToday {
+    background-color: #dbeafe !important;
+    border-left: 2px solid #3b82f6 !important;
+    border-right: 2px solid #3b82f6 !important;
+}
+
+:global(.dark) .colToday {
+    background-color: #1e3a8a !important;
+}
+
+.valueText {
+    font-size: 12.5px;
+    font-weight: 900;
+    color: #0f172a;
+}
+
+:global(.dark) .valueText {
+    color: #f8fafc;
+}
+
+.valueZero {
+    color: #dc2626 !important;
+}
+
+:global(.dark) .valueZero {
+    color: #f87171 !important;
+}
