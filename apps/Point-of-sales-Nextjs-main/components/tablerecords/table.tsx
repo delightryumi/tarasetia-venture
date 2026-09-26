@@ -92,7 +92,7 @@ export async function Records(props: PageProps) {
     <Card x-chunk="dashboard-06-chunk-0" className="h-full flex flex-col">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full pr-0 md:pr-6">
         <CardHeader className="pb-4 md:pb-6">
-          <CardTitle>Transaction Records</CardTitle>
+          <CardTitle>Records</CardTitle>
           <CardDescription>Manage your transaction history and reports.</CardDescription>
         </CardHeader>
         <div className="flex flex-wrap items-center gap-4 px-6 md:px-0 pb-4 md:pb-0">

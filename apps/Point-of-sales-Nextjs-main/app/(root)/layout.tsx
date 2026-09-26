@@ -917,7 +917,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
           {/* Main Content Area */}
           <div 
             className={`flex flex-col h-full overflow-hidden w-full transition-all duration-500 ${
-              isCollapsed ? "pl-[100px]" : "pl-[200px]"
+              isCollapsed ? "pl-[100px]" : "pl-[220px]"
             }`}
           >
             <main className={`flex-1 ${isLexuPos ? 'overflow-hidden p-0 pb-5 pr-5 pt-5' : 'overflow-y-auto p-4 lg:p-6 pb-4'} bg-slate-50 dark:bg-zinc-900/10 print:p-0 print:bg-white`}>

@@ -14,6 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
 import { getHotelCollection } from "@/lib/firestoreHelper";
+import { resolveBookingIdentifiers } from "@/lib/channelHelper";
 
 // Modular Imports
 import styles from "./OverviewStyles.module.css";
@@ -174,35 +175,70 @@ export function OverviewSection() {
     const isBookingMatch = (e: any, target: any) => {
         if (!e || !target) return false;
         
-        const targetBookingId = String(target.bookingId || "").trim();
-        const eBookingId = String(e.bookingId || "").trim();
-        if (targetBookingId !== "" && eBookingId !== "") {
-            if (targetBookingId === eBookingId || eBookingId === `${targetBookingId}-BFT` || targetBookingId === `${eBookingId}-BFT`) return true;
-            return false;
-        }
-        
-        const targetTimestamp = target.timestamp ? String(target.timestamp).trim() : "";
-        const eTimestamp = e.timestamp ? String(e.timestamp).trim() : "";
-        if (targetTimestamp !== "" && eTimestamp !== "" && targetTimestamp === eTimestamp) return true;
-        
-        const targetId = target.id ? String(target.id).trim() : "";
-        const eId = e.id ? String(e.id).trim() : "";
-        if (targetId !== "" && eId !== "" && targetId === eId) return true;
-        
-        const targetGuestName = String(target.guestName || "").trim().toLowerCase();
-        const eGuestName = String(e.guestName || "").trim().toLowerCase();
-        
-        if (targetGuestName !== "" && eGuestName !== "") {
-            if (targetGuestName === eGuestName) {
-                const targetCheckIn = target.checkInDate || target.checkIn || "";
-                const eCheckIn = e.checkInDate || e.checkIn || "";
-                if (targetCheckIn && eCheckIn) {
-                    return targetCheckIn === eCheckIn;
-                }
+        const gIds = resolveBookingIdentifiers(target);
+        const eIds = resolveBookingIdentifiers(e);
+
+        // 1. Match by bookingId (exact or -BFT)
+        if (gIds.bookingId && eIds.bookingId && gIds.bookingId !== "N/A" && eIds.bookingId !== "N/A") {
+            if (
+                gIds.bookingId === eIds.bookingId ||
+                `${gIds.bookingId}-BFT` === eIds.bookingId ||
+                `${eIds.bookingId}-BFT` === gIds.bookingId
+            ) {
                 return true;
             }
         }
-        
+
+        // 2. Match by OTA reservationId (e.g. RES-962734, TRK-...)
+        if (gIds.reservationId && eIds.reservationId && gIds.reservationId !== "N/A" && eIds.reservationId !== "N/A") {
+            if (gIds.reservationId === eIds.reservationId) return true;
+        }
+
+        // 3. Match by raw otaReservationId (e.g. 962734) or voucherCode
+        const gVoucher = String(target.voucherCode || gIds.otaReservationId || "").trim();
+        const eVoucher = String(e.voucherCode || eIds.otaReservationId || "").trim();
+        if (gVoucher && eVoucher && gVoucher !== "N/A" && eVoucher !== "N/A" && gVoucher === eVoucher) {
+            return true;
+        }
+
+        // 4. Match by explicit Channex Booking ID
+        const gChannex = String(target.channexBookingId || target.channexId || "").trim();
+        const eChannex = String(e.channexBookingId || e.channexId || "").trim();
+        if (gChannex && eChannex && gChannex === eChannex) {
+            return true;
+        }
+
+        // 5. Match by Firestore document ID or internal ID
+        const gId = String(target.id || target._id || "").trim();
+        const eId = String(e.id || e._id || "").trim();
+        if (gId && eId && gId === eId) return true;
+
+        // 6. Match by exact timestamp if present
+        const targetTimestamp = target.timestamp ? String(target.timestamp).trim() : "";
+        const eTimestamp = e.timestamp ? String(e.timestamp).trim() : "";
+        if (targetTimestamp !== "" && eTimestamp !== "" && targetTimestamp === eTimestamp) return true;
+
+        // 7. Match by Guest Name + Room or Checkin
+        const targetGuestName = String(target.guestName || "").trim().toLowerCase();
+        const eGuestName = String(e.guestName || "").trim().toLowerCase();
+
+        if (targetGuestName !== "" && eGuestName !== "") {
+            const cleanGName = targetGuestName.replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, "").trim();
+            const cleanEName = eGuestName.replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, "").trim();
+            if (cleanGName === cleanEName || targetGuestName === eGuestName || eGuestName.startsWith(cleanGName) || targetGuestName.startsWith(cleanEName)) {
+                const gRoom = String(target.roomNumber || target.room || "").trim();
+                const eRoom = String(e.roomNumber || e.room || "").trim();
+                if (gRoom && eRoom && gRoom === eRoom) {
+                    return true;
+                }
+                const targetCheckIn = String(target.checkInDate || target.checkIn || "").slice(0, 10);
+                const eCheckIn = String(e.checkInDate || e.checkIn || "").slice(0, 10);
+                if (targetCheckIn && eCheckIn && targetCheckIn === eCheckIn) {
+                    return true;
+                }
+            }
+        }
+
         // Linked pelunasan or reversal records
         if (e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal" || eGuestName.startsWith("koreksi tanggal pelunasan") || eGuestName.startsWith("pelunasan piutang")) {
             const cleanEGuestName = eGuestName
@@ -211,13 +247,13 @@ export function OverviewSection() {
                 .trim();
             if (
                 (targetTimestamp && (String(e.refTimestamp) === targetTimestamp || eTimestamp === targetTimestamp)) ||
-                (targetBookingId && (e.refBookingId === targetBookingId || eBookingId === targetBookingId)) ||
+                (gIds.bookingId && (e.refBookingId === gIds.bookingId || eIds.bookingId === gIds.bookingId)) ||
                 (targetGuestName && cleanEGuestName === targetGuestName)
             ) {
                 return true;
             }
         }
-        
+
         return false;
     };
 
@@ -230,14 +266,14 @@ export function OverviewSection() {
                 toast.error("Hotel Code is missing.");
                 return;
             }
-            const checkInDate = item.checkInDate || item.checkIn;
-            const checkOutDate = item.checkOutDate || item.checkOut;
-            const isAcc = item.type === "accommodation" || (!item.type && item.guestName && !item.guestName.startsWith("POS Order") && !item.posItems && !item.revenueType);
-            
-            const dates = getDatesBetween(checkInDate, checkOutDate, isAcc);
+            const dates = getCascadeDates(item);
             for (const d of dates) {
-                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
-                const docSnap = await getDoc(docRef);
+                let docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
+                let docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) {
+                    docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), d);
+                    docSnap = await getDoc(docRef);
+                }
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     const updatedEntries = entries.map((e: any) => {
@@ -308,8 +344,12 @@ export function OverviewSection() {
             const dates = getCascadeDates(bookingToVoid);
 
             for (const d of dates) {
-                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
-                const docSnap = await getDoc(docRef);
+                let docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
+                let docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) {
+                    docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), d);
+                    docSnap = await getDoc(docRef);
+                }
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     // Void completely deletes the matched transaction from daily entries
@@ -335,13 +375,13 @@ export function OverviewSection() {
             // Cascade void if it has a bookingId
             const bookingId = bookingToVoid.bookingId;
             if (bookingId) {
-                const posQuery = query(getHotelCollection(db, "pos_orders"), where("transactionId", "==", bookingId));
+                const posQuery = query(getHotelCollection(db, "pos_orders", hotelId), where("transactionId", "==", bookingId));
                 const posSnap = await getDocs(posQuery);
                 for (const d of posSnap.docs) {
                     await updateDoc(d.ref, { status: "VOID", isDeleted: true });
                 }
 
-                const revQuery = query(getHotelCollection(db, "revenue_transactions"), where("transactionId", "==", bookingId));
+                const revQuery = query(getHotelCollection(db, "revenue_transactions", hotelId), where("transactionId", "==", bookingId));
                 const revSnap = await getDocs(revQuery);
                 for (const d of revSnap.docs) {
                     await updateDoc(d.ref, { status: "VOID", isDeleted: true });
@@ -374,8 +414,12 @@ export function OverviewSection() {
             const cancelledByVal = user ? `${user.displayName} (${user.role || 'user'})` : "System";
 
             for (const d of dates) {
-                const docRef = doc(getHotelCollection(db, "daily_revenue"), `${hotelId}_${d}`);
-                const docSnap = await getDoc(docRef);
+                let docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
+                let docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) {
+                    docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), d);
+                    docSnap = await getDoc(docRef);
+                }
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     const mapped = entries.map((e: any) => {

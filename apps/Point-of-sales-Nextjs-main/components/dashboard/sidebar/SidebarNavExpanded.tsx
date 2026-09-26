@@ -54,7 +54,7 @@ export function SidebarNavExpanded({
             onClick={() => router.push(item.path)}
           >
             <span className="flex-shrink-0">{item.icon}</span>
-            <span className="truncate">{item.title}</span>
+            <span className="whitespace-nowrap font-medium text-[13px] tracking-tight">{item.title}</span>
           </motion.button>
         );
       })}

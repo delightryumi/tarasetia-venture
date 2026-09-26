@@ -208,39 +208,72 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
     const isBookingMatch = (e: any, target: any, newTarget?: any) => {
         if (!e) return false;
         
-        const targetBookingId = (target?.bookingId || newTarget?.bookingId || "").trim();
-        const targetTimestamp = target?.timestamp ? String(target.timestamp).trim() : (newTarget?.timestamp ? String(newTarget.timestamp).trim() : "");
-        const targetId = target?.id ? String(target.id).trim() : (newTarget?.id ? String(newTarget.id).trim() : "");
-        
-        const targetGuestName = (target?.guestName || "").trim().toLowerCase();
-        const newGuestName = (newTarget?.guestName || "").trim().toLowerCase();
-        
-        const eBookingId = (e.bookingId || "").trim();
-        const eTimestamp = e.timestamp ? String(e.timestamp).trim() : "";
-        const eId = e.id ? String(e.id).trim() : "";
-        const eGuestName = (e.guestName || "").trim().toLowerCase();
+        const gIds = resolveBookingIdentifiers(target || newTarget);
+        const eIds = resolveBookingIdentifiers(e);
 
-        // 1. Direct ID / Key matches
-        if (targetBookingId !== "" && eBookingId !== "") {
-            if (targetBookingId === eBookingId || eBookingId === `${targetBookingId}-BFT` || targetBookingId === `${eBookingId}-BFT`) return true;
-            return false; // If both have explicit bookingIds and they don't match, they are different bookings
-        }
-        if (targetTimestamp !== "" && eTimestamp !== "" && targetTimestamp === eTimestamp) return true;
-        if (targetId !== "" && eId !== "" && targetId === eId) return true;
-
-        // 2. Name + Room match (fallback for legacy records without bookingId)
-        const targetRoom = String(target?.roomNumber || newTarget?.roomNumber || "").trim();
-        const eRoom = String(e?.roomNumber || "").trim();
-        if (targetGuestName !== "" && eGuestName !== "") {
-            if (eGuestName === targetGuestName || (newGuestName !== "" && eGuestName === newGuestName)) {
-                if (targetRoom !== "" && eRoom !== "") {
-                    return targetRoom === eRoom;
-                }
+        // 1. Direct bookingId match or -BFT
+        if (gIds.bookingId && eIds.bookingId && gIds.bookingId !== "N/A" && eIds.bookingId !== "N/A") {
+            if (
+                gIds.bookingId === eIds.bookingId ||
+                `${gIds.bookingId}-BFT` === eIds.bookingId ||
+                `${eIds.bookingId}-BFT` === gIds.bookingId
+            ) {
                 return true;
             }
         }
 
-        // 3. Linked pelunasan / reversal check
+        // 2. OTA reservationId
+        if (gIds.reservationId && eIds.reservationId && gIds.reservationId !== "N/A" && eIds.reservationId !== "N/A") {
+            if (gIds.reservationId === eIds.reservationId) return true;
+        }
+
+        // 3. raw otaReservationId or voucherCode
+        const gVoucher = String(target?.voucherCode || newTarget?.voucherCode || gIds.otaReservationId || "").trim();
+        const eVoucher = String(e?.voucherCode || eIds.otaReservationId || "").trim();
+        if (gVoucher && eVoucher && gVoucher !== "N/A" && eVoucher !== "N/A" && gVoucher === eVoucher) {
+            return true;
+        }
+
+        // 4. Channex Booking ID
+        const gChannex = String(target?.channexBookingId || target?.channexId || newTarget?.channexBookingId || "").trim();
+        const eChannex = String(e?.channexBookingId || e?.channexId || "").trim();
+        if (gChannex && eChannex && gChannex === eChannex) {
+            return true;
+        }
+
+        // 5. Document ID or internal ID
+        const targetId = (target?.id || newTarget?.id || "").trim();
+        const eId = (e.id || "").trim();
+        if (targetId && eId && targetId === eId) return true;
+
+        // 6. Exact timestamp
+        const targetTimestamp = target?.timestamp ? String(target.timestamp).trim() : (newTarget?.timestamp ? String(newTarget.timestamp).trim() : "");
+        const eTimestamp = e.timestamp ? String(e.timestamp).trim() : "";
+        if (targetTimestamp && eTimestamp && targetTimestamp === eTimestamp) return true;
+
+        // 7. Name + Room or Checkin
+        const targetGuestName = (target?.guestName || "").trim().toLowerCase();
+        const newGuestName = (newTarget?.guestName || "").trim().toLowerCase();
+        const eGuestName = (e.guestName || "").trim().toLowerCase();
+
+        if ((targetGuestName || newGuestName) && eGuestName) {
+            const cleanGName = (targetGuestName || newGuestName).replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, "").trim();
+            const cleanEName = eGuestName.replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, "").trim();
+            if (cleanGName === cleanEName || eGuestName === targetGuestName || eGuestName === newGuestName || eGuestName.startsWith(cleanGName)) {
+                const targetRoom = String(target?.roomNumber || newTarget?.roomNumber || "").trim();
+                const eRoom = String(e?.roomNumber || "").trim();
+                if (targetRoom && eRoom && targetRoom === eRoom) {
+                    return true;
+                }
+                const targetCheckIn = String(target?.checkInDate || target?.checkIn || newTarget?.checkIn || "").slice(0, 10);
+                const eCheckIn = String(e?.checkInDate || e?.checkIn || "").slice(0, 10);
+                if (targetCheckIn && eCheckIn && targetCheckIn === eCheckIn) {
+                    return true;
+                }
+            }
+        }
+
+        // Linked pelunasan / reversal check
         if (e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal" || eGuestName.startsWith("koreksi tanggal pelunasan") || eGuestName.startsWith("pelunasan piutang")) {
             const cleanEGuestName = eGuestName
                 .replace(/^koreksi tanggal pelunasan\s*-\s*/i, "")
@@ -248,7 +281,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 .trim();
             if (
                 (targetTimestamp && (String(e.refTimestamp) === targetTimestamp || eTimestamp === targetTimestamp)) ||
-                (targetBookingId && (e.refBookingId === targetBookingId || eBookingId === targetBookingId)) ||
+                (gIds.bookingId && (e.refBookingId === gIds.bookingId || eIds.bookingId === gIds.bookingId)) ||
                 (targetGuestName && cleanEGuestName === targetGuestName) ||
                 (newGuestName && cleanEGuestName === newGuestName)
             ) {
@@ -333,8 +366,12 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             });
             
             for (const d of sweepDates) {
-                const oldRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
-                const oldSnap = await getDoc(oldRef);
+                let oldRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
+                let oldSnap = await getDoc(oldRef);
+                if (!oldSnap.exists()) {
+                    oldRef = doc(getHotelCollection(db, "daily_revenue", hotelId), d);
+                    oldSnap = await getDoc(oldRef);
+                }
                 if (oldSnap.exists()) {
                     const oldEntries = oldSnap.data().entries || [];
                     const filtered = oldEntries.filter((e: any) => !isBookingMatch(e, guest, formData));
@@ -554,8 +591,12 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             const dates = getCascadeDates(guest);
 
             for (const d of dates) {
-                const docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
-                const docSnap = await getDoc(docRef);
+                let docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
+                let docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) {
+                    docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), d);
+                    docSnap = await getDoc(docRef);
+                }
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     const remainingEntries = entries.filter((e: any) => !isBookingMatch(e, guest));
@@ -605,8 +646,12 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             const cancelledByVal = user ? `${user.displayName} (${user.role || 'user'})` : "System";
 
             for (const d of dates) {
-                const docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
-                const docSnap = await getDoc(docRef);
+                let docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
+                let docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) {
+                    docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), d);
+                    docSnap = await getDoc(docRef);
+                }
                 if (docSnap.exists()) {
                     const entries = docSnap.data().entries || [];
                     const mapped = entries.map((e: any) => {

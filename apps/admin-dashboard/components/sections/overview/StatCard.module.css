@@ -4,11 +4,11 @@
   background-color: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
-  padding: 18px;
+  padding: 14px 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -25,20 +25,20 @@
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  padding-bottom: 10px;
+  padding-bottom: 8px;
   margin-bottom: 2px;
 }
 
 .cardHeaderLeft {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .cardIconBox {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -50,27 +50,27 @@
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: #475569;
   margin: 0;
 }
 
 .cardValue {
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 800;
   color: #0f172a;
   font-family: var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   font-feature-settings: "tnum" 1, "lnum" 1;
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
   margin: 0;
 }
 
 .cardContent {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 420px;
+  gap: 6px;
+  max-height: 440px;
   min-height: 140px;
   overflow-y: auto;
   padding-right: 4px;
@@ -81,7 +81,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 36px 16px;
+  padding: 32px 16px;
   background-color: #f8fafc;
   border: 1px dashed rgba(0, 0, 0, 0.12);
   border-radius: 8px;
@@ -101,7 +101,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 8px 10px;
   background-color: #ffffff;
   border: 1px solid #f1f5f9;
   border-radius: 8px;
@@ -124,8 +124,8 @@
 }
 
 .guestAvatar {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
   background-color: #f8fafc;
   display: flex;
@@ -136,22 +136,53 @@
 }
 
 .guestAvatarImg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   object-fit: contain;
 }
 
 .guestMainInfo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .guestName {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: #0f172a;
   margin: 0;
+  line-height: 1.3;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.badgeGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.resBadge {
+  font-size: 9.5px;
+  font-family: var(--font-inter, 'Inter'), system-ui, sans-serif;
+  font-feature-settings: "tnum" 1;
+  font-weight: 600;
+  color: #475569;
+  background-color: #f1f5f9;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid #e2e8f0;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  display: inline-block;
+  line-height: 1.3;
 }
 
 .extendBadge {
@@ -163,25 +194,29 @@
   border-radius: 4px;
   border: 1px solid #fde68a;
   text-transform: uppercase;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  display: inline-block;
+  line-height: 1.3;
 }
 
 .guestMetaRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   margin-top: 3px;
 }
 
 .guestSubtext {
-  font-size: 11px;
+  font-size: 10.5px;
   color: #64748b;
   font-weight: 500;
   margin: 0;
 }
 
 .guestAmount {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   font-family: var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   font-feature-settings: "tnum" 1, "lnum" 1;
@@ -193,7 +228,7 @@
 .paymentBadge {
   font-size: 8px;
   font-weight: 800;
-  padding: 2px 6px;
+  padding: 2px 5px;
   border-radius: 4px;
   text-transform: uppercase;
   letter-spacing: 0.04em;

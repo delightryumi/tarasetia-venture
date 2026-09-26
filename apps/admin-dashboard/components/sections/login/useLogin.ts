@@ -17,7 +17,11 @@ export const useLogin = () => {
         setLoading(true);
 
         try {
-            await loginWithFirestore(email.trim().toLowerCase(), password, hotelCode.trim());
+            let resolvedEmail = email.trim().toLowerCase();
+            if (resolvedEmail === "superadmin" || resolvedEmail === "admin") {
+                resolvedEmail = `${resolvedEmail}@setara.co.id`;
+            }
+            await loginWithFirestore(resolvedEmail, password, hotelCode.trim());
         } catch (err: any) {
             console.error(err);
             if (err.code === "auth/too-many-requests") {

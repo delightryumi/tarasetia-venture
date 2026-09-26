@@ -81,7 +81,7 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                         onChange={(e) => setSearchQuery(e.target.value)}
                         style={{
                             width: '100%',
-                            height: '30px',
+                            height: '28px',
                             padding: '0 28px 0 28px',
                             fontSize: '11px',
                             borderRadius: '6px',
@@ -132,10 +132,10 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                                 className={`${styles.guestItem} ${isCancelled ? styles.cancelledItem : ''}`}
                             >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', minWidth: 0, gap: '8px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
                                         <div className={styles.guestAvatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, filter: isCancelled ? 'grayscale(100%)' : 'none', opacity: isCancelled ? 0.45 : 1 }}>
                                             {ids.channelName === "Booking Engine" ? (
-                                                <Globe size={14} className="text-stone-400 dark:text-stone-500" />
+                                                <Globe size={13} className="text-stone-400 dark:text-stone-500" />
                                             ) : (
                                                 <img src={ids.channelLogo} alt={ids.channelName} className={styles.guestAvatarImg} onError={(e) => { e.currentTarget.style.display = 'none'; e.stopPropagation(); }} />
                                             )}
@@ -143,45 +143,30 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <div className={styles.guestMainInfo}>
                                                 <p 
-                                                    className={styles.guestName} 
+                                                    className={styles.guestName}
+                                                    title={item.guestName || "General Sale"}
                                                     style={{ 
-                                                        margin: 0, 
-                                                        textOverflow: 'ellipsis', 
-                                                        overflow: 'hidden', 
-                                                        whiteSpace: 'nowrap',
                                                         color: isCancelled ? '#9ca3af' : undefined,
                                                         textDecoration: isCancelled ? 'line-through' : 'none'
                                                     }}
                                                 >
                                                     {item.guestName || "General Sale"}
                                                 </p>
-                                                {ids.reservationId && ids.reservationId !== "N/A" && (
-                                                    <span 
-                                                        style={{
-                                                            fontSize: '10px',
-                                                            fontFamily: "var(--font-inter, 'Inter'), system-ui, sans-serif",
-                                                            fontFeatureSettings: '"tnum" 1',
-                                                            fontWeight: 600,
-                                                            color: '#475569',
-                                                            backgroundColor: '#f1f5f9',
-                                                            padding: '1px 5px',
-                                                            borderRadius: '3px',
-                                                            border: '1px solid #e2e8f0',
-                                                            letterSpacing: '0.02em',
-                                                            flexShrink: 0
-                                                        }}
-                                                    >
-                                                        {ids.reservationId}
-                                                    </span>
-                                                )}
-                                                {item.isExtend && (
-                                                    <span className={styles.extendBadge}>Extend</span>
-                                                )}
+                                                <div className={styles.badgeGroup}>
+                                                    {ids.reservationId && ids.reservationId !== "N/A" && (
+                                                        <span className={styles.resBadge}>
+                                                            {ids.reservationId}
+                                                        </span>
+                                                    )}
+                                                    {item.isExtend && (
+                                                        <span className={styles.extendBadge}>Extend</span>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             <div className={styles.guestMetaRow}>
-                                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                                                    <BedDouble size={11} style={{ color: '#64748b', marginTop: '1px' }} />
+                                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '5px' }}>
+                                                    <BedDouble size={11} style={{ color: '#64748b', marginTop: '1px', flexShrink: 0 }} />
                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                         <p 
                                                             className={styles.guestSubtext} 
@@ -214,8 +199,8 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                                                 </div>
                                                 
                                                 {(item.type === 'accommodation' || (!item.type && item.guestName && !item.guestName.startsWith('POS Order') && !item.posItems && !item.revenueType)) && (
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: isCancelled ? 0.45 : 1 }}>
-                                                        <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--f-hairline)' }} />
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', opacity: isCancelled ? 0.45 : 1 }}>
+                                                        <div style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: 'var(--f-hairline)' }} />
                                                         <RoomStatusBadge current={item.roomStatus || 'dirty'} />
                                                         <GuestStatusBadge current={item.guestStatus || 'arriving'} />
                                                     </div>
@@ -223,12 +208,12 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                                             </div>
                                         </div>
                                     </div>
-                                    <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '8px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                    <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '6px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
                                         <p 
                                             className={styles.guestAmount} 
                                             style={{ 
                                                 margin: 0, 
-                                                lineHeight: 'none',
+                                                lineHeight: 1.2,
                                                 color: isCancelled ? '#9ca3af' : undefined,
                                                 textDecoration: isCancelled ? 'line-through' : 'none'
                                             }}

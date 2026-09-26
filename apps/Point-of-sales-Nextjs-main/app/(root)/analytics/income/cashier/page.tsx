@@ -190,19 +190,13 @@ export default function CashierHistoryPage() {
       <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
         
         <div className="flex items-center gap-4">
-          <Link 
-            href="/analytics/income"
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-neutral-200 dark:hover:bg-zinc-800 transition-colors text-neutral-600 dark:text-neutral-350"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
               <History className="w-6 h-6 text-neutral-600 dark:text-neutral-400" />
-              <span>Riwayat Shift Kasir (Income Analytics)</span>
+              <span>Laporan Shift Kasir</span>
             </h1>
             <p className="text-xs text-neutral-500 mt-1">
-              Klik pada salah satu baris shift untuk melihat rincian transaksi lengkap dan detail rekonsiliasi.
+              Rekonsiliasi laci kasir, rincian pembayaran tunai & non-tunai, dan cetak slip closing register.
             </p>
           </div>
         </div>

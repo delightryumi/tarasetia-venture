@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 500" preserveAspectRatio="xMidYBottom slice" fill="none">
+  <!-- Distant Background Layer (Very soft airy light grey) -->
+  <g fill="#eaedf2" opacity="0.9">
+    <!-- Far left high-rises -->
+    <rect x="0" y="340" width="45" height="160" />
+    <rect x="40" y="310" width="35" height="190" />
+    <polygon points="57,250 50,310 65,310" />
+    <rect x="70" y="360" width="30" height="140" />
+    
+    <!-- Mid-left distant towers -->
+    <rect x="180" y="270" width="50" height="230" />
+    <polygon points="205,170 195,270 215,270" />
+    <rect x="235" y="320" width="40" height="180" />
+    <rect x="270" y="290" width="35" height="210" />
+    <polygon points="287,220 280,290 295,290" />
+    <rect x="360" y="330" width="55" height="170" />
+    
+    <!-- Center distant skyline behind card -->
+    <rect x="520" y="350" width="40" height="150" />
+    <rect x="565" y="320" width="50" height="180" />
+    <rect x="620" y="280" width="45" height="220" />
+    <polygon points="642,200 635,280 650,280" />
+    <rect x="940" y="300" width="50" height="200" />
+    <rect x="995" y="260" width="40" height="240" />
+    <polygon points="1015,180 1005,260 1025,260" />
+    <rect x="1040" y="330" width="45" height="170" />
+    
+    <!-- Far right distant skyline -->
+    <rect x="1180" y="290" width="60" height="210" />
+    <polygon points="1210,190 1195,290 1225,290" />
+    <rect x="1245" y="320" width="50" height="180" />
+    <rect x="1350" y="280" width="45" height="220" />
+    <rect x="1440" y="330" width="50" height="170" />
+    <polygon points="1465,240 1455,330 1475,330" />
+    <rect x="1540" y="310" width="60" height="190" />
+  </g>
+
+  <!-- Midground / Foreground Layer (Subtle clean skyline silhouette) -->
+  <g fill="#dde2e8">
+    <!-- 1. Far Left building blocks -->
+    <rect x="0" y="370" width="35" height="130" />
+    <rect x="30" y="340" width="40" height="160" />
+    <rect x="65" y="400" width="50" height="100" />
+    
+    <!-- 2. Iconic needle / spire skyscraper (Left ~140px) -->
+    <rect x="120" y="360" width="35" height="140" />
+    <rect x="150" y="380" width="40" height="120" />
+    <path d="M195,500 L195,360 L205,330 L207,240 L209,140 L211,140 L213,240 L215,330 L225,360 L225,500 Z" />
+    
+    <!-- 3. Curved sail tower (Burj Al Arab style ~240px) -->
+    <rect x="230" y="390" width="45" height="110" />
+    <path d="M280,500 L280,310 C280,240 310,210 335,200 C325,245 320,330 330,500 Z" />
+    <!-- Sail antenna -->
+    <line x1="335" y1="200" x2="335" y2="170" stroke="#dde2e8" stroke-width="3" />
+    
+    <!-- 4. Twisted / sculptural modern tower (~340px) -->
+    <path d="M340,500 C340,420 335,340 350,300 C365,260 375,250 380,270 C385,310 375,370 385,500 Z" />
+    <!-- Tower hole / cutout -->
+    <ellipse cx="360" cy="330" rx="9" ry="18" fill="#f2f4f7" />
+    
+    <rect x="390" y="380" width="50" height="120" />
+    <rect x="435" y="410" width="40" height="90" />
+    <rect x="470" y="440" width="45" height="60" />
+
+    <!-- 5. Low mid buildings transitioning to center -->
+    <rect x="510" y="420" width="55" height="80" />
+    <rect x="560" y="445" width="60" height="55" />
+    <rect x="615" y="430" width="50" height="70" />
+    
+    <!-- 6. Low buildings under the card center -->
+    <rect x="660" y="460" width="80" height="40" />
+    <rect x="735" y="445" width="70" height="55" />
+    <rect x="800" y="465" width="85" height="35" />
+    <rect x="880" y="430" width="60" height="70" />
+
+    <!-- 7. Landmark Split / Gateway Tower (Right ~1100px) -->
+    <path d="M1080,500 L1080,240 C1080,180 1100,160 1115,160 L1125,160 C1140,160 1160,180 1160,240 L1160,500 Z" />
+    <!-- Gateway curved arch cutout -->
+    <path d="M1100,240 C1100,200 1110,185 1120,185 C1130,185 1140,200 1140,240 L1140,270 L1100,270 Z" fill="#f2f4f7" />
+    
+    <!-- 8. Telecom Spire / Tower (~1050px) -->
+    <rect x="1045" y="400" width="30" height="100" />
+    <path d="M1050,400 L1057,330 L1052,320 L1052,260 L1056,260 L1056,320 L1063,330 L1070,400 Z" />
+    <circle cx="1054" cy="315" r="7" />
+    <polygon points="1054,230 1052,260 1056,260" />
+
+    <!-- 9. Stepped modern high-rises (~1170px to 1350px) -->
+    <rect x="1165" y="380" width="40" height="120" />
+    <rect x="1200" y="350" width="45" height="150" />
+    <polygon points="1222,290 1205,350 1240,350" />
+    <rect x="1240" y="390" width="40" height="110" />
+    <rect x="1275" y="340" width="50" height="160" />
+    <polygon points="1300,280 1285,340 1315,340" />
+
+    <!-- 10. Angled-roof and twin-peak towers (~1330px to 1480px) -->
+    <path d="M1330,500 L1330,340 L1375,300 L1375,500 Z" />
+    <rect x="1380" y="370" width="45" height="130" />
+    <rect x="1420" y="340" width="40" height="160" />
+    <polygon points="1440,270 1425,340 1455,340" />
+    <rect x="1455" y="400" width="35" height="100" />
+
+    <!-- 11. Far right coastal / city buildings -->
+    <path d="M1495,500 L1495,340 L1530,310 L1530,500 Z" />
+    <rect x="1525" y="360" width="40" height="140" />
+    <rect x="1560" y="330" width="40" height="170" />
+  </g>
+</svg>

@@ -77,17 +77,37 @@ export default function CashierContainer() {
 
   const [restoName, setRestoName] = useState('LEXURA POS');
 
+  const getLoggedInCashierName = (): string => {
+    if (typeof window === 'undefined') return '';
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        const name = u.displayName || u.name || u.fullName || u.username || (u.email ? u.email.split('@')[0] : '');
+        if (name && typeof name === 'string' && name.trim()) return name.trim();
+      }
+    } catch (e) {}
+
+    try {
+      const authStr = localStorage.getItem('auth_user');
+      if (authStr) {
+        const au = JSON.parse(authStr);
+        const name = au.displayName || au.name || au.fullName || au.username || (au.email ? au.email.split('@')[0] : '');
+        if (name && typeof name === 'string' && name.trim()) return name.trim();
+      }
+    } catch (e) {}
+
+    return '';
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const rn = localStorage.getItem('restoName');
       if (rn) setRestoName(rn);
 
-      const userJson = localStorage.getItem('user');
-      if (userJson) {
-        try {
-          const user = JSON.parse(userJson);
-          if (user.name) setCashierNameInput(user.name);
-        } catch (e) {}
+      const loggedName = getLoggedInCashierName();
+      if (loggedName) {
+        setCashierNameInput(loggedName);
       }
     }
   }, []);
@@ -203,6 +223,13 @@ export default function CashierContainer() {
       if (!snapshot.empty) {
         const docSnap = snapshot.docs[0];
         const dbShift = { id: docSnap.id, ...docSnap.data() } as ShiftData;
+        const loggedName = getLoggedInCashierName();
+        if (loggedName && (!dbShift.cashierName || dbShift.cashierName.toLowerCase() === 'kasir' || dbShift.cashierName.toLowerCase() === 'budi')) {
+          dbShift.cashierName = loggedName;
+          updateDoc(doc(getHotelCollection(db, 'cashier_shifts', hotelCode), dbShift.id), {
+            cashierName: loggedName
+          }).catch(console.error);
+        }
 
         // Set up real-time listener on pos_orders for this active shift
         const ordersQ = query(
@@ -295,15 +322,17 @@ export default function CashierContainer() {
 
 
   const handleOpenShift = async () => {
-    if (!cashierNameInput) {
-      toast.error('Masukkan nama kasir');
+    const loggedName = getLoggedInCashierName();
+    const effectiveName = cashierNameInput?.trim() || loggedName || 'Kasir';
+    if (!effectiveName) {
+      toast.error('Nama kasir tidak ditemukan');
       return;
     }
     const hb = parseFloat(houseBankInput) || 0;
     try {
       const { restoId, hotelCode } = getUserInfo();
       const newShift = {
-        cashierName: cashierNameInput,
+        cashierName: effectiveName,
         openedAt: new Date().toISOString(),
         houseBank: hb,
         transactions: [],
@@ -312,7 +341,7 @@ export default function CashierContainer() {
         cashFlows: []
       };
 
-      const cleanName = cashierNameInput.replace(/[^A-Za-z]/g, '');
+      const cleanName = effectiveName.replace(/[^A-Za-z]/g, '');
       const prefix = cleanName.substring(0, 3).toUpperCase().padEnd(3, 'X');
       const randomNum = Math.floor(10000 + Math.random() * 90000);
       const shiftId = `${prefix}${randomNum}`;
@@ -322,9 +351,9 @@ export default function CashierContainer() {
       const shiftData = { id: shiftId, ...newShift } as ShiftData;
       setActiveShift(shiftData);
       localStorage.setItem('active_shift', JSON.stringify(shiftData));
-      setCashierNameInput('');
+      setCashierNameInput(loggedName || effectiveName);
       setHouseBankInput('0');
-      toast.success('Shift baru berhasil dibuka!');
+      toast.success('Register kasir baru berhasil dibuka!');
     } catch (e) {
       console.error('Error opening shift:', e);
       toast.error('Gagal membuka shift baru.');
@@ -352,19 +381,16 @@ export default function CashierContainer() {
       };
 
       await updateDoc(shiftRef, closedData);
-      toast.success('Shift berhasil ditutup!');
+      toast.success('Register kasir berhasil ditutup (Z-Report selesai)!');
       
       setActiveShift(null);
       localStorage.removeItem('active_shift');
       setCountedCashInput('');
       setClosingNotes('');
-      // Prefill cashierNameInput again from localStorage
-      const userJson = localStorage.getItem('user');
-      if (userJson) {
-        try {
-          const user = JSON.parse(userJson);
-          if (user.name) setCashierNameInput(user.name);
-        } catch (e) {}
+      // Prefill cashierNameInput again from logged-in user
+      const loggedName = getLoggedInCashierName();
+      if (loggedName) {
+        setCashierNameInput(loggedName);
       }
       loadShiftHistory(restoId, hotelCode);
     } catch (e) {
@@ -738,13 +764,13 @@ export default function CashierContainer() {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                           </span>
-                          Shift Aktif
+                          Register Kasir Aktif
                         </span>
                         <h2 className="text-xl font-black text-neutral-800 dark:text-white">{activeShift.cashierName}</h2>
                       </div>
                     </div>
                     <div className="flex flex-col items-start sm:items-end gap-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Waktu Mulai</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Waktu Buka Register</span>
                       <span className="font-semibold text-neutral-700 dark:text-neutral-300 text-sm">
                         {formatDate(activeShift.openedAt)}
                       </span>

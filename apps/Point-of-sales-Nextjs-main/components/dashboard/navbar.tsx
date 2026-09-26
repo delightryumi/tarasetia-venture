@@ -65,8 +65,11 @@ function Navbar({ isCollapsed = false }: { isCollapsed?: boolean }) {
   }, []);
 
   const visibleItems = NAVBAR_ITEMS.filter(item => {
-    const key = `pos_${item.title.toLowerCase()}`;
-    return canAccess(key);
+    const key = item.permissionKey || `pos_${item.title.toLowerCase().replace(/\s+/g, '_')}`;
+    return canAccess(key) || 
+      (item.path === '/records' && canAccess('pos_records')) ||
+      (item.path === '/analytics/income/cashier' && (canAccess('pos_settlement') || canAccess('pos_records') || canAccess('pos_cashier'))) ||
+      (item.path === '/analytics/income' && (canAccess('pos_home') || canAccess('pos_records')));
   });
 
   const handleLogout = () => {

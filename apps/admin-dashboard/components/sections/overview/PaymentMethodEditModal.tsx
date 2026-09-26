@@ -20,6 +20,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { useAuth } from "@/context/AuthContext";
+import { resolveBookingIdentifiers } from "@/lib/channelHelper";
 
 interface PaymentMethodEditModalProps {
   isOpen: boolean;
@@ -112,43 +113,86 @@ export function PaymentMethodEditModal({
     }
   };
 
-  // Helper to match booking cleanly
+  // Helper to match booking cleanly across OTA / Channex / Direct identifiers
   const isTargetBooking = (e: any): boolean => {
-    if (!e) return false;
-    const gBookingId = (guest.bookingId || guest.voucherCode || "").trim();
-    const eBookingId = (e.bookingId || e.voucherCode || "").trim();
-    if (gBookingId && eBookingId) {
-      if (gBookingId === eBookingId || `${gBookingId}-BFT` === eBookingId || `${eBookingId}-BFT` === gBookingId) {
+    if (!e || !guest) return false;
+
+    const gIds = resolveBookingIdentifiers(guest);
+    const eIds = resolveBookingIdentifiers(e);
+
+    // 1. Match by Channex UUID / bookingId
+    if (gIds.bookingId && eIds.bookingId && gIds.bookingId !== "N/A" && eIds.bookingId !== "N/A") {
+      if (
+        gIds.bookingId === eIds.bookingId ||
+        `${gIds.bookingId}-BFT` === eIds.bookingId ||
+        `${eIds.bookingId}-BFT` === gIds.bookingId
+      ) {
         return true;
       }
-      return false;
     }
 
+    // 2. Match by OTA reservationId (e.g. RES-962734, TRK-...)
+    if (gIds.reservationId && eIds.reservationId && gIds.reservationId !== "N/A" && eIds.reservationId !== "N/A") {
+      if (gIds.reservationId === eIds.reservationId) {
+        return true;
+      }
+    }
+
+    // 3. Match by raw otaReservationId (e.g. 962734) or voucherCode
+    const gVoucher = String(guest.voucherCode || gIds.otaReservationId || "").trim();
+    const eVoucher = String(e.voucherCode || eIds.otaReservationId || "").trim();
+    if (gVoucher && eVoucher && gVoucher !== "N/A" && eVoucher !== "N/A" && gVoucher === eVoucher) {
+      return true;
+    }
+
+    // 4. Match by explicit Channex Booking ID
+    const gChannex = String(guest.channexBookingId || guest.channexId || "").trim();
+    const eChannex = String(e.channexBookingId || e.channexId || "").trim();
+    if (gChannex && eChannex && gChannex === eChannex) {
+      return true;
+    }
+
+    // 5. Match by Firestore document ID or internal ID
+    const gId = String(guest.id || guest._id || "").trim();
+    const eId = String(e.id || e._id || "").trim();
+    if (gId && eId && gId === eId) return true;
+
+    // 6. Match by exact timestamp if present
     const gTimestamp = guest.timestamp ? String(guest.timestamp).trim() : "";
     const eTimestamp = e.timestamp ? String(e.timestamp).trim() : "";
     if (gTimestamp && eTimestamp && gTimestamp === eTimestamp) return true;
 
-    const gId = guest.id ? String(guest.id).trim() : "";
-    const eId = e.id ? String(e.id).trim() : "";
-    if (gId && eId && gId === eId) return true;
-
+    // 7. Match by Guest Name + Room or Checkin
     const gName = (guest.guestName || "").trim().toLowerCase();
     const eName = (e.guestName || "").trim().toLowerCase();
-    const gRoom = String(guest.roomNumber || "").trim();
-    const eRoom = String(e.roomNumber || "").trim();
-    if (gName && eName && gName === eName) {
-      if (gRoom && eRoom) return gRoom === eRoom;
-      return true;
+    if (gName && eName) {
+      const cleanGName = gName.replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, "").trim();
+      const cleanEName = eName.replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, "").trim();
+      if (cleanGName === cleanEName || gName === eName || eName.startsWith(cleanGName) || gName.startsWith(cleanEName)) {
+        const gRoom = String(guest.roomNumber || "").trim();
+        const eRoom = String(e.roomNumber || "").trim();
+        if (gRoom && eRoom && gRoom === eRoom) {
+          return true;
+        }
+        const gIn = String(guest.checkInDate || guest.checkIn || "").slice(0, 10);
+        const eIn = String(e.checkInDate || e.checkIn || "").slice(0, 10);
+        if (gIn && eIn && gIn === eIn) {
+          return true;
+        }
+      }
     }
+
     return false;
   };
 
   // Collect all cascade dates where this booking may be stored
   const getCascadeDates = (): string[] => {
     const dates = new Set<string>();
-    const addDate = (d?: string) => {
-      if (d && typeof d === "string" && d.includes("-") && d.length === 10) {
-        dates.add(d);
+    const addDate = (d?: any) => {
+      if (!d) return;
+      const s = String(d).trim();
+      if (s.length >= 10 && s.includes("-")) {
+        dates.add(s.slice(0, 10));
       }
     };
 
@@ -156,15 +200,23 @@ export function PaymentMethodEditModal({
     addDate(guest.checkOutDate || guest.checkOut);
     addDate(guest.effectiveDate);
     addDate(guest._docDate);
+    if (guest._docId && guest._docId.includes("_")) {
+      addDate(guest._docId.split("_")[1]);
+    }
 
-    // Add dates between checkin and checkout
-    const cIn = guest.checkInDate || guest.checkIn;
-    const cOut = guest.checkOutDate || guest.checkOut;
-    if (cIn && cOut && cOut > cIn) {
-      let curr = new Date(cIn);
-      const end = new Date(cOut);
+    // Add dates between checkin and checkout without UTC timezone drift
+    const cIn = String(guest.checkInDate || guest.checkIn || "").slice(0, 10);
+    const cOut = String(guest.checkOutDate || guest.checkOut || "").slice(0, 10);
+    if (cIn.includes("-") && cOut.includes("-")) {
+      const [ciY, ciM, ciD] = cIn.split("-").map(Number);
+      const [coY, coM, coD] = cOut.split("-").map(Number);
+      let curr = new Date(ciY, (ciM || 1) - 1, ciD || 1);
+      const end = new Date(coY, (coM || 1) - 1, coD || 1);
       while (curr <= end) {
-        dates.add(curr.toISOString().split("T")[0]);
+        const y = curr.getFullYear();
+        const m = String(curr.getMonth() + 1).padStart(2, "0");
+        const d = String(curr.getDate()).padStart(2, "0");
+        dates.add(`${y}-${m}-${d}`);
         curr.setDate(curr.getDate() + 1);
       }
     }
@@ -178,7 +230,11 @@ export function PaymentMethodEditModal({
       } catch {}
     }
 
-    return Array.from(dates).filter(Boolean).sort();
+    // Include today's date
+    const now = new Date();
+    dates.add(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`);
+
+    return Array.from(dates).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
   };
 
   const handleSave = async () => {
@@ -201,30 +257,45 @@ export function PaymentMethodEditModal({
       const finalPaymentCollect = selectedCollect;
       let finalIsOTA = selectedCollect === "channel";
 
-      if (selectedMethod === "transfer") {
-        finalPaidTransfer = totalAmount;
-        finalPaymentMethod = "Bank Transfer";
-      } else if (selectedMethod === "qris") {
-        finalPaidQris = totalAmount;
-        finalPaymentMethod = "QRIS Payment";
-      } else if (selectedMethod === "edc") {
-        finalPaidEdc = totalAmount;
-        finalPaymentMethod = "EDC / Mesin Kartu";
-      } else if (selectedMethod === "cash") {
-        finalPaidCash = totalAmount;
-        finalPaymentMethod = "Kas / Tunai";
-      } else if (selectedMethod === "ota") {
-        finalPaidOta = totalAmount;
-        finalPaymentMethod = "OTA Virtual / City Ledger";
-        finalIsOTA = true;
-      } else if (selectedMethod === "split") {
-        finalPaidCash = Number(splitCash) || 0;
-        finalPaidEdc = Number(splitEdc) || 0;
-        finalPaidQris = Number(splitQris) || 0;
-        finalPaidTransfer = Number(splitTransfer) || 0;
-        finalPaidOta = Number(splitOta) || 0;
-        finalPaymentMethod = "Split Payment";
-        finalIsOTA = finalPaidOta > 0 || selectedCollect === "channel";
+      if (paymentStatus === "Belum Bayar") {
+        finalPaidCash = 0;
+        finalPaidEdc = 0;
+        finalPaidQris = 0;
+        finalPaidTransfer = 0;
+        finalPaidOta = 0;
+        if (selectedCollect === "channel") {
+          finalPaymentMethod = "OTA Virtual / City Ledger";
+          finalIsOTA = true;
+        } else {
+          finalPaymentMethod = "Bayar di Hotel (Pending)";
+          finalIsOTA = false;
+        }
+      } else {
+        if (selectedMethod === "transfer") {
+          finalPaidTransfer = totalAmount;
+          finalPaymentMethod = "Bank Transfer";
+        } else if (selectedMethod === "qris") {
+          finalPaidQris = totalAmount;
+          finalPaymentMethod = "QRIS Payment";
+        } else if (selectedMethod === "edc") {
+          finalPaidEdc = totalAmount;
+          finalPaymentMethod = "EDC / Mesin Kartu";
+        } else if (selectedMethod === "cash") {
+          finalPaidCash = totalAmount;
+          finalPaymentMethod = "Kas / Tunai";
+        } else if (selectedMethod === "ota") {
+          finalPaidOta = totalAmount;
+          finalPaymentMethod = "OTA Virtual / City Ledger";
+          finalIsOTA = true;
+        } else if (selectedMethod === "split") {
+          finalPaidCash = Number(splitCash) || 0;
+          finalPaidEdc = Number(splitEdc) || 0;
+          finalPaidQris = Number(splitQris) || 0;
+          finalPaidTransfer = Number(splitTransfer) || 0;
+          finalPaidOta = Number(splitOta) || 0;
+          finalPaymentMethod = "Split Payment";
+          finalIsOTA = finalPaidOta > 0 || selectedCollect === "channel";
+        }
       }
 
       const finalPayHotel = finalPaidCash + finalPaidEdc + finalPaidQris + finalPaidTransfer;
@@ -235,18 +306,22 @@ export function PaymentMethodEditModal({
       let matchCount = 0;
 
       // Calculate nights to distribute daily amounts evenly across multi-night stays
-      const cIn = guest.checkInDate || guest.checkIn;
-      const cOut = guest.checkOutDate || guest.checkOut;
+      const cIn = String(guest.checkInDate || guest.checkIn || "").slice(0, 10);
+      const cOut = String(guest.checkOutDate || guest.checkOut || "").slice(0, 10);
       let nights = 1;
       if (cIn && cOut && cOut > cIn) {
         const diff = Math.round((new Date(cOut).getTime() - new Date(cIn).getTime()) / (1000 * 60 * 60 * 24));
         if (diff > 0) nights = diff;
       }
 
-      // 3. IN-PLACE UPDATE ONLY: Update existing entries, NEVER create double postings
+      // 3. IN-PLACE UPDATE ONLY: Update existing entries, checking both ID formats
       for (const d of sweepDates) {
-        const docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
-        const docSnap = await getDoc(docRef);
+        let docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), `${hotelId}_${d}`);
+        let docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) {
+          docRef = doc(getHotelCollection(db, "daily_revenue", hotelId), d);
+          docSnap = await getDoc(docRef);
+        }
         if (!docSnap.exists()) continue;
 
         const data = docSnap.data();
@@ -296,8 +371,22 @@ export function PaymentMethodEditModal({
         }
       }
 
+      // Update in-memory guest object so folio modal immediately updates visually
+      if (guest) {
+        guest.paymentStatus = paymentStatus;
+        guest.paymentMethod = finalPaymentMethod;
+        guest.paymentCollect = finalPaymentCollect;
+        guest.paidCash = finalPaidCash;
+        guest.paidEdc = finalPaidEdc;
+        guest.paidQris = finalPaidQris;
+        guest.paidTransfer = finalPaidTransfer;
+        guest.paidOta = finalPaidOta;
+        guest.payHotel = finalPayHotel;
+        guest.payTransfer = finalPayTransfer;
+      }
+
       if (matchCount > 0) {
-        toast.success(`Metode pembayaran & penagihan berhasil disinkronkan ke Accounting (${finalPaymentMethod} • ${finalPaymentCollect === "channel" ? "OTA Collect" : "Hotel Collect"})!`);
+        toast.success(`Metode pembayaran & penagihan berhasil disinkronkan (${finalPaymentMethod} • ${paymentStatus})!`);
       } else {
         toast.info("Catatan: Data pembayaran berhasil disesuaikan pada sesi ini.");
       }
@@ -470,7 +559,10 @@ export function PaymentMethodEditModal({
               {/* Bank Transfer */}
               <button
                 type="button"
-                onClick={() => setSelectedMethod("transfer")}
+                onClick={() => {
+                  setSelectedMethod("transfer");
+                  setPaymentStatus("Lunas");
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -497,7 +589,10 @@ export function PaymentMethodEditModal({
               {/* QRIS Payment */}
               <button
                 type="button"
-                onClick={() => setSelectedMethod("qris")}
+                onClick={() => {
+                  setSelectedMethod("qris");
+                  setPaymentStatus("Lunas");
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -524,7 +619,10 @@ export function PaymentMethodEditModal({
               {/* EDC / Card */}
               <button
                 type="button"
-                onClick={() => setSelectedMethod("edc")}
+                onClick={() => {
+                  setSelectedMethod("edc");
+                  setPaymentStatus("Lunas");
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -551,7 +649,10 @@ export function PaymentMethodEditModal({
               {/* Cash / Tunai */}
               <button
                 type="button"
-                onClick={() => setSelectedMethod("cash")}
+                onClick={() => {
+                  setSelectedMethod("cash");
+                  setPaymentStatus("Lunas");
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -581,6 +682,7 @@ export function PaymentMethodEditModal({
                 onClick={() => {
                   setSelectedMethod("ota");
                   setSelectedCollect("channel");
+                  setPaymentStatus("Lunas");
                 }}
                 style={{
                   display: "flex",
@@ -608,7 +710,10 @@ export function PaymentMethodEditModal({
               {/* Split Payment */}
               <button
                 type="button"
-                onClick={() => setSelectedMethod("split")}
+                onClick={() => {
+                  setSelectedMethod("split");
+                  setPaymentStatus("Lunas");
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -712,8 +817,9 @@ export function PaymentMethodEditModal({
                   color: "#0f172a"
                 }}
               >
-                <option value="Lunas">Paid / Settled in Full</option>
-                <option value="Pending">Pending / Pay at Hotel</option>
+                <option value="Lunas">Lunas (Paid / Settled in Full)</option>
+                <option value="Belum Bayar">Belum Bayar (Pending / Pay at Hotel)</option>
+                <option value="Pending">Pending</option>
               </select>
             </div>
             <div>

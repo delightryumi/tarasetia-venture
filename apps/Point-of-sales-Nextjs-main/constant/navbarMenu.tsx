@@ -1,43 +1,62 @@
 import {
   House,
-  Package,
-  ShoppingCart,
-  Archive,
-  Gear,
-  Storefront,
-  User,
+  ForkKnife,
+  Receipt,
+  CashRegister,
+  SlidersHorizontal,
+  DeviceTablet,
+  ClockCounterClockwise,
+  ChartBar,
 } from '@phosphor-icons/react';
 import { NavItem } from '@/types/Navbar';
 
 export const NAVBAR_ITEMS: NavItem[] = [
   {
-    title: 'Home',
+    title: 'Dashboard',
     path: '/home',
     icon: <House size={18} weight="bold" />,
+    permissionKey: 'pos_home',
   },
   {
-    title: 'LexuPos',
+    title: 'Terminal POS',
     path: '/lexupos',
-    icon: <Storefront size={18} weight="bold" />,
+    icon: <DeviceTablet size={18} weight="bold" />,
+    permissionKey: 'pos_lexupos',
   },
   {
-    title: 'Cashier',
+    title: 'Kasir',
     path: '/cashier',
-    icon: <User size={18} weight="bold" />,
+    icon: <CashRegister size={18} weight="bold" />,
+    permissionKey: 'pos_cashier',
   },
   {
-    title: 'Product',
+    title: 'Katalog Menu',
     path: '/product',
-    icon: <Package size={18} weight="bold" />,
+    icon: <ForkKnife size={18} weight="bold" />,
+    permissionKey: 'pos_product',
   },
   {
     title: 'Records',
     path: '/records',
-    icon: <Archive size={18} weight="bold" />,
+    icon: <Receipt size={18} weight="bold" />,
+    permissionKey: 'pos_records',
   },
   {
-    title: 'Settings',
+    title: 'Shift Kasir',
+    path: '/analytics/income/cashier',
+    icon: <ClockCounterClockwise size={18} weight="bold" />,
+    permissionKey: 'pos_settlement',
+  },
+  {
+    title: 'Analitik Omset',
+    path: '/analytics/income',
+    icon: <ChartBar size={18} weight="bold" />,
+    permissionKey: 'pos_home',
+  },
+  {
+    title: 'Konfigurasi',
     path: '/settings',
-    icon: <Gear size={18} weight="bold" />,
+    icon: <SlidersHorizontal size={18} weight="bold" />,
+    permissionKey: 'pos_settings',
   },
 ];

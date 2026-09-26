@@ -5,21 +5,21 @@ function TableHeadRecords() {
     <>
       <TableHeader>
         <TableRow>
-          <TableHead className="p-4 whitespace-nowrap">Transactions Id</TableHead>
-          <TableHead className="p-4 whitespace-nowrap">Tamu</TableHead>
-          <TableHead className="p-4 whitespace-nowrap">No Meja</TableHead>
-          <TableHead className="p-4 whitespace-nowrap">Kasir</TableHead>
-          <TableHead className="p-4 whitespace-nowrap text-center">Status</TableHead>
+          <TableHead className="p-4 whitespace-nowrap">No. Bill / Transaksi</TableHead>
+          <TableHead className="p-4 whitespace-nowrap">Nama Tamu / Kamar</TableHead>
+          <TableHead className="p-4 whitespace-nowrap">No. Meja</TableHead>
+          <TableHead className="p-4 whitespace-nowrap">Petugas Kasir</TableHead>
+          <TableHead className="p-4 whitespace-nowrap text-center">Status Bill</TableHead>
           <TableHead className="hidden md:table-cell p-4 whitespace-nowrap text-center">
-            Total Product Sales
+            Item Terjual
           </TableHead>
-          <TableHead className="p-4 whitespace-nowrap text-right">Discount</TableHead>
-          <TableHead className="p-4 whitespace-nowrap text-right">Total Amount</TableHead>
-          <TableHead className="p-4 whitespace-nowrap text-center">Metode Pembayaran</TableHead>
-          <TableHead className="p-4 whitespace-nowrap text-center">Alokasi Pendapatan</TableHead>
-          <TableHead className="hidden md:table-cell p-4 whitespace-nowrap">Create At</TableHead>
+          <TableHead className="p-4 whitespace-nowrap text-right">Diskon</TableHead>
+          <TableHead className="p-4 whitespace-nowrap text-right">Total Tagihan</TableHead>
+          <TableHead className="p-4 whitespace-nowrap text-center">Metode Settlement</TableHead>
+          <TableHead className="p-4 whitespace-nowrap text-center">Revenue Center</TableHead>
+          <TableHead className="hidden md:table-cell p-4 whitespace-nowrap">Waktu Posting</TableHead>
           <TableHead>
-            <span className="sr-only">Actions</span>
+            <span className="sr-only">Aksi</span>
           </TableHead>
         </TableRow>
       </TableHeader>

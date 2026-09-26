@@ -1,0 +1,581 @@
+/* ========================================================
+   TARA HOSPITALITY MANAGEMENT SYSTEM (CRS & PMS)
+   Clean Centered Authentication Portal
+   - Plain light-gray background (#f1f3f6)
+   - Centered minimal card matching user screenshot
+   - Bottom SVG architectural hospitality silhouette
+     (Custom tropical resort & Balinese pavilions, NOT Middle-East skyscrapers)
+   - 100% viewport fit without scrolling across 18" & 29" ultrawide
+   ======================================================== */
+
+.loginContainer {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: #f1f3f6;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #181d26;
+    overflow: hidden; /* Strict no scrollbar */
+    position: relative;
+}
+
+/* ========================================================
+   1. TOP UTILITY BAR (DISCREET)
+   ======================================================== */
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: clamp(10px, 2vh, 20px) clamp(16px, 2.5vw, 36px);
+    z-index: 20;
+}
+
+.topbarBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: #475569;
+    font-size: clamp(11.5px, 1.35vh, 12.5px);
+    font-weight: 600;
+    cursor: pointer;
+    padding: clamp(4px, 0.7vh, 6px) 10px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    backdrop-filter: blur(4px);
+}
+
+.topbarBtn:hover {
+    background: #ffffff;
+    color: #1e293b;
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+.langWrapper {
+    position: relative;
+}
+
+.langPopover {
+    position: absolute;
+    top: calc(100% + 5px);
+    right: 0;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    padding: 5px;
+    min-width: 170px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.langItem {
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #334155;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    font-family: inherit;
+}
+
+.langItem:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+.langItemActive {
+    background-color: #e2e8f0;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+/* ========================================================
+   2. CENTER STAGE: CLEAN WHITE CARD
+   ======================================================== */
+.centerStage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    padding: clamp(10px, 2vh, 24px) 16px;
+    margin-top: -20px;
+}
+
+.cleanCard {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 
+        0 20px 45px -10px rgba(0, 0, 0, 0.07),
+        0 4px 14px rgba(0, 0, 0, 0.02);
+    padding: clamp(22px, 3.4vh, 36px) clamp(24px, 3vw, 40px);
+    width: 100%;
+    max-width: 410px;
+    position: relative;
+    z-index: 15;
+}
+
+.cardHeader {
+    text-align: center;
+    margin-bottom: clamp(14px, 2.2vh, 22px);
+}
+
+.cardTitle {
+    font-size: clamp(22px, 3vh, 27px);
+    font-weight: 800;
+    color: #1e2530;
+    letter-spacing: -0.4px;
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+
+.cardSubtitle {
+    font-size: clamp(12.5px, 1.5vh, 13.5px);
+    color: #64748b;
+    line-height: 1.4;
+}
+
+/* Alert Error / Success */
+.alertError {
+    padding: 7px 11px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    line-height: 1.35;
+    margin-bottom: clamp(8px, 1.2vh, 14px);
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    text-align: center;
+}
+
+.alertSuccess {
+    padding: 7px 11px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    line-height: 1.35;
+    margin-bottom: clamp(8px, 1.2vh, 14px);
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+    text-align: center;
+}
+
+/* Form Controls */
+.authForm {
+    display: flex;
+    flex-direction: column;
+}
+
+.fieldGroup {
+    margin-bottom: clamp(10px, 1.6vh, 16px);
+    display: flex;
+    flex-direction: column;
+}
+
+.fieldLabel {
+    font-size: clamp(12px, 1.35vh, 13px);
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 5px;
+    display: block;
+    text-align: left;
+}
+
+.inputContainer {
+    display: flex;
+    align-items: center;
+    height: clamp(38px, 4.6vh, 44px);
+    background: #ffffff;
+    border: 1.5px solid #dcdfe4;
+    border-radius: 8px;
+    padding: 0 12px;
+    gap: 10px;
+    transition: all 0.15s ease;
+}
+
+.inputContainer:hover {
+    border-color: #b8bec8;
+}
+
+.inputContainer:focus-within {
+    border-color: #475569;
+    box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.08);
+}
+
+.inputIcon {
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.inputContainer:focus-within .inputIcon {
+    color: #475569;
+}
+
+.textInput {
+    flex: 1;
+    border: none;
+    outline: none;
+    height: 100%;
+    font-size: clamp(12.5px, 1.45vh, 13.5px);
+    color: #1e293b;
+    background: transparent;
+    font-family: inherit;
+}
+
+.textInput::placeholder {
+    color: #94a3b8;
+    font-size: clamp(12px, 1.35vh, 13px);
+}
+
+.passVisibilityToggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.passVisibilityToggle:hover {
+    color: #1e293b;
+}
+
+/* Primary Sign In Button (Clean Solid Gray/Slate Matching User Screenshot) */
+.primaryLoginBtn {
+    width: 100%;
+    height: clamp(40px, 4.8vh, 46px);
+    background-color: #6b7280;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: clamp(13px, 1.5vh, 14px);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    margin-top: 4px;
+}
+
+.primaryLoginBtn:hover:not(:disabled) {
+    background-color: #555b66;
+}
+
+.primaryLoginBtn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.primaryLoginBtn:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+}
+
+/* Forgot Password Row (Aligned to Right) */
+.forgotPassRow {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: clamp(10px, 1.5vh, 14px);
+}
+
+.forgotPassLink {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #334155;
+    font-weight: 500;
+    font-size: clamp(12px, 1.35vh, 13px);
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.15s ease;
+}
+
+.forgotPassLink:hover {
+    color: #0f172a;
+    text-decoration: underline;
+}
+
+
+
+/* ========================================================
+   3. CENTERED FOOTER: POWERED BY TARA
+   ======================================================== */
+.footerRow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: clamp(14px, 2.2vh, 22px);
+    z-index: 15;
+    user-select: none;
+}
+
+.poweredText {
+    font-size: clamp(12px, 1.4vh, 13px);
+    font-weight: 300;
+    color: #64748b;
+    letter-spacing: 0.4px;
+}
+
+.footerLogo {
+    height: clamp(20px, 2.6vh, 26px);
+    width: auto;
+    object-fit: contain;
+    opacity: 0.95;
+    display: block;
+}
+
+/* ========================================================
+   4. HOSPITALITY ARCHITECTURAL SILHOUETTE ACCENT (SVG)
+   ======================================================== */
+.skylineBackdrop {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: clamp(140px, 28vh, 260px);
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.skylineSvg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* ========================================================
+   5. MODAL DIALOGS
+   ======================================================== */
+.modalBackdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: fadeIn 0.15s ease-out;
+}
+
+.modalDialog {
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    max-width: 440px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    animation: scaleIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.modalHeader h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #181d26;
+}
+
+.modalClose {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.modalClose:hover {
+    background: #f1f5f9;
+    color: #181d26;
+}
+
+.modalDesc {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.contactItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #faf8f5;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    margin-bottom: 10px;
+}
+
+.contactLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.contactValue {
+    font-size: 13px;
+    font-weight: 700;
+    color: #181d26;
+}
+
+.contactLink {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #181d26;
+    text-decoration: none;
+    transition: color 0.15s ease;
+    display: inline-block;
+}
+
+.contactLink:hover {
+    color: #0f766e;
+    text-decoration: underline;
+}
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.modalBtn {
+    background: #f1f5f9;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.modalBtn:hover {
+    background: #e2e8f0;
+}
+
+/* ========================================================
+   6. RESPONSIVE MOBILE VIEWPORT (STRICT 1-SCREEN NO SCROLL)
+   ======================================================== */
+@media (max-width: 900px) {
+    .loginContainer {
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100dvh;
+        overflow: hidden;
+    }
+
+    .centerStage {
+        padding: 8px 14px;
+        margin-top: -10px;
+    }
+
+    .cleanCard {
+        padding: 18px 16px 14px 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        max-width: 360px;
+    }
+
+    .cardHeader {
+        margin-bottom: 12px;
+    }
+
+    .cardTitle {
+        font-size: 21px;
+        margin-bottom: 3px;
+    }
+
+    .cardSubtitle {
+        font-size: 12.5px;
+    }
+
+    .fieldGroup {
+        margin-bottom: 10px;
+    }
+
+    .fieldLabel {
+        font-size: 12px;
+        margin-bottom: 3px;
+    }
+
+    .inputContainer {
+        height: 38px;
+        padding: 0 10px;
+    }
+
+    .textInput {
+        font-size: 14px;
+    }
+
+    .primaryLoginBtn {
+        height: 42px;
+        font-size: 14px;
+    }
+
+    .forgotPassRow {
+        margin-top: 10px;
+    }
+
+    .securitySealRow {
+        margin-top: 12px;
+    }
+
+    .skylineBackdrop {
+        height: 120px;
+        opacity: 0.6;
+    }
+}
