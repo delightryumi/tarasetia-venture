@@ -313,11 +313,8 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         }
                     });
 
-                    nonAccommodationEntries.forEach((e) => {
-                        if (e._docDate >= startDateStr && e._docDate <= endDateStr) {
-                            todayTransactions.push(e);
-                        }
-                    });
+                    // Note: Overview Front Office only tracks front office accommodation bookings.
+                    // Other income is non-room revenue routed to Forecast and Accounting (P&L, DSR, Budgeting).
                     
                     // Deduplicate: each unique booking should appear once in the feed
                     const seenKeys = new Set<string>();

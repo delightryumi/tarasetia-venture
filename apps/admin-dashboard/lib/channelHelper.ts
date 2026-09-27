@@ -34,8 +34,12 @@ const OTA_CATALOG = [
  */
 export function resolveChannelName(item: any): string {
   if (!item) return "Walk-in";
+  if (item.type === "other_income") {
+    return item.channel || item.incomeCategory || "Other Income";
+  }
   if (typeof item === "string") {
     const s = item.trim().toLowerCase();
+    if (s.includes("other income") || s.includes("other_income")) return "Other Income";
     for (const ota of OTA_CATALOG) {
       if (s.includes(ota.key) || ota.prefixes.some(p => s.startsWith(p))) {
         return ota.name;
@@ -120,6 +124,20 @@ export function resolveBookingIdentifiers(item: any): ResolvedBookingIdentifiers
       otaReservationId: "N/A",
       channelName: "Walk-in",
       connectionChannel: "Front Office",
+      channelLogo: "/channels/walk_in.png"
+    };
+  }
+
+  if (item.type === "other_income") {
+    const resId = item.bookingId || item.id || `OTH-${item.timestamp?.toString().slice(-6) || "INC"}`;
+    const chName = item.channel || item.incomeCategory || "Other Income";
+    return {
+      reservationId: resId,
+      bookingId: resId,
+      revisionId: "N/A",
+      otaReservationId: resId,
+      channelName: chName,
+      connectionChannel: "Other Income",
       channelLogo: "/channels/walk_in.png"
     };
   }

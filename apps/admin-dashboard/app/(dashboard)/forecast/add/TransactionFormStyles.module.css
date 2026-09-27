@@ -1785,3 +1785,93 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ── Other Income Enhanced Form Styles ── */
+.otherIncomeCard {
+  background: var(--f-canvas);
+  border: 1px solid var(--f-hairline);
+  border-radius: var(--f-radius-lg);
+  padding: 24px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+}
+
+.otherQuickPayGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+@media (min-width: 640px) {
+  .otherQuickPayGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.otherQuickPayBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--f-hairline);
+  background: var(--f-surface);
+  color: var(--f-body);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.otherQuickPayBtn:hover {
+  background: var(--f-surface-soft);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.otherQuickPayBtnActive {
+  background: #15803d !important;
+  color: #ffffff !important;
+  border-color: #15803d !important;
+  box-shadow: 0 2px 4px rgba(21, 128, 61, 0.2);
+}
+
+.otherPaymentSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--f-surface);
+  border: 1px solid var(--f-hairline);
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+.otherComplimentCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--f-surface);
+  border: 1px solid var(--f-hairline);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.otherComplimentCard:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.otherComplimentCardActive {
+  background: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+}
+
+:global(.dark) .otherComplimentCardActive {
+  background: rgba(159, 18, 57, 0.15) !important;
+  border-color: rgba(225, 29, 72, 0.3) !important;
+}
+

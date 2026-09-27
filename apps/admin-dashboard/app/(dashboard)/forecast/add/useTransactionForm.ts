@@ -133,7 +133,7 @@ const INITIAL_FORM = {
     payHotel: "",
     payTransfer: "",
     totalAmount: "",
-    incomeType: "Other",
+    incomeType: "Other Income",
     note: "",
     staffName: "",
     isCompliment: false,
@@ -1011,17 +1011,27 @@ export const useTransactionForm = () => {
                 else pm = "Cash";
             }
 
+            const finalCategory = form.incomeType || "Other Income";
+            const finalDesc = form.guestName || finalCategory;
+            const newBookingId = form.bookingId || `OTH-${Date.now().toString().slice(-6)}`;
+
             transactionEntries = [{
                 type: "other_income",
-                guestName: form.guestName, // This stores the description for other income
-                incomeCategory: form.incomeType,
+                bookingId: newBookingId,
+                guestName: finalDesc,
+                description: finalDesc,
+                incomeCategory: finalCategory,
+                category: finalCategory,
                 note: form.note,
                 staffName: form.staffName || user?.displayName || user?.name || "Front Desk Staff",
                 staffEmail: user?.email || "",
                 propertyName: activeHotelName || "",
                 checkInDate: form.checkIn,
                 checkOutDate: form.checkIn,
+                effectiveDate: form.checkIn,
+                date: form.checkIn,
                 amount: finalAmount,
+                totalAmount: finalAmount,
                 paidCash: finalCash,
                 paidEdc: finalEdc,
                 paidQris: finalQris,
@@ -1035,7 +1045,8 @@ export const useTransactionForm = () => {
                 initialPayTransfer: finalPayTransfer,
                 paymentMethod: pm,
                 paymentStatus: incomeStatus,
-                source: "Walk-in", // Other income is generally considered walk-in
+                source: "Other Income",
+                channel: "Other Income",
                 status: "CONFIRMED",
                 timestamp: new Date().toISOString(),
                 isCompliment: form.isCompliment,

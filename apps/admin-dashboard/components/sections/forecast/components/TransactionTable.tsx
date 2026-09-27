@@ -234,7 +234,7 @@ export function TransactionTable({
                                                             );
                                                         })()}
                                                     </div>
-                                                    <span className={styles.guestSubtext} style={{ margin: 0, fontWeight: 700, color: "var(--f-light-muted)" }}>{entry.channel || "Internal"}</span>
+                                                    <span className={styles.guestSubtext} style={{ margin: 0, fontWeight: 700, color: "var(--f-light-muted)" }}>{entry.type === 'other_income' ? (entry.incomeCategory || "Other Income") : (entry.channel || "Internal")}</span>
                                                 </div>
                                             </td>
                                             {/* Financials */}

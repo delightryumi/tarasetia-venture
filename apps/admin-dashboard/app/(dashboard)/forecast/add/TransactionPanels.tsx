@@ -28,7 +28,7 @@ import {
 import { toast } from "sonner";
 import styles from "./TransactionFormStyles.module.css";
 import pmsStyles from "./AddReservation.module.css";
-import { CHANNELS, BOOKING_TYPES, ChannelOption } from "./useTransactionForm";
+import { CHANNELS, BOOKING_TYPES, OTHER_INCOME_TYPES, ChannelOption } from "./useTransactionForm";
 import Modal from "./Modal";
 import {
     SectionTitle,
@@ -826,6 +826,13 @@ export function TransactionEntryForm({
     }
 
     // OTHER INCOME ENTRY FORM
+    const otherCurrentPaid = (Number(form.paidCash) || 0) + 
+                            (Number(form.paidEdc) || 0) + 
+                            (Number(form.paidQris) || 0) + 
+                            (Number(form.paidTransfer) || 0);
+
+    const otherDueAmount = form.isCompliment ? 0 : Math.max(0, (Number(form.totalAmount) || 0) - otherCurrentPaid);
+
     return (
         <div className={styles.card}>
             <div className={styles.cardHeader}>
@@ -842,26 +849,36 @@ export function TransactionEntryForm({
 
             <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <SectionTitle number="01" label="Kategori & Keterangan Pendapatan Lain" />
+                    {/* Section 01: Klasifikasi & Keterangan */}
+                    <SectionTitle number="01" label="Klasifikasi & Keterangan Pendapatan Lain" />
                     
                     <div className={styles.formGrid}>
                         <div className={styles.formGroup}>
-                            <label className={styles.inputLabel}>Kategori Transaksi</label>
+                            <label className={styles.inputLabel}>Kategori Pendapatan Lain</label>
                             <OtherIncomeTypeSelect 
                                 value={form.incomeType}
-                                options={["Other"]}
+                                options={OTHER_INCOME_TYPES}
                                 onChange={(val: string) => updateForm("incomeType", val)}
                             />
                         </div>
+                        <DateCard 
+                            label="Tanggal Transaksi"
+                            value={form.checkIn}
+                            onChange={(val: string) => updateForm("checkIn", val)}
+                            type="check-in"
+                        />
+                    </div>
+
+                    <div className={styles.formGrid} style={{ marginTop: '4px' }}>
                         <TerminalInput 
-                            label="Keterangan (Description)"
+                            label="Keterangan / Rincian Layanan"
                             value={form.guestName}
                             onChange={(val: string) => updateForm("guestName", val)}
-                            placeholder="CONTOH: SEWA SEPEDA MOTOR / EXTRA BED"
-                            icon={User}
+                            placeholder="CONTOH: SEWA SEPEDA MOTOR / EXTRA BED / LAUNDRY"
+                            icon={FileText}
                         />
                         <TerminalInput 
-                            label="Nama Staff (Staff Name)"
+                            label="Nama Kasir / Staff FO"
                             value={form.staffName}
                             onChange={(val: string) => updateForm("staffName", val)}
                             placeholder="CONTOH: ADI / SARI"
@@ -869,41 +886,11 @@ export function TransactionEntryForm({
                         />
                     </div>
 
-                    <SectionTitle number="02" label="Tanggal & Pembayaran (Sesuai DSR)" />
-                    <div className={styles.formGrid} style={{ rowGap: '12px' }}>
-                        <div className={styles.colSpan2} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--f-surface)', border: '1px solid var(--f-hairline)', borderRadius: '8px' }}>
-                            <input 
-                                type="checkbox" 
-                                id="isComplimentOther"
-                                checked={!!form.isCompliment}
-                                onChange={(e) => updateForm("isCompliment", e.target.checked)}
-                                style={{ width: '16px', height: '16px', accentColor: 'var(--f-sage)' }}
-                            />
-                            <label htmlFor="isComplimentOther" style={{ fontSize: '12px', fontWeight: '600', color: 'var(--f-foreground)', cursor: 'pointer' }}>
-                                Tandai sebagai Compliment (Kompensasi / Gratis)
-                            </label>
-                        </div>
-
-                        {form.isCompliment && (
-                            <div className={styles.colSpan2}>
-                                <TerminalInput 
-                                    label="Alasan Compliment (Wajib)"
-                                    value={form.complimentReason}
-                                    onChange={(val: string) => updateForm("complimentReason", val)}
-                                    placeholder="CONTOH: KELUARGA OWNER / KOMPENSASI"
-                                    icon={AlertCircle}
-                                />
-                            </div>
-                        )}
-
-                        <DateCard 
-                            label="Tanggal Transaksi"
-                            value={form.checkIn}
-                            onChange={(val: string) => updateForm("checkIn", val)}
-                            type="check-in"
-                        />
+                    {/* Section 02: Nominal & Kompensasi */}
+                    <SectionTitle number="02" label="Nominal & Kompensasi Transaksi" />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <TerminalInput 
-                            label="Total Harga (Total Amount)"
+                            label="Total Nominal Transaksi (Total Amount)"
                             value={form.totalAmount}
                             onChange={(val: string) => {
                                 const num = Number(val) || 0;
@@ -918,12 +905,156 @@ export function TransactionEntryForm({
                             isAmount={true}
                         />
 
-                        {!form.isCompliment && (
-                            <>
+                        {/* Compliment Card */}
+                        <div 
+                            className={`${styles.otherComplimentCard} ${form.isCompliment ? styles.otherComplimentCardActive : ''}`}
+                            onClick={() => {
+                                const next = !form.isCompliment;
+                                updateForm("isCompliment", next);
+                                if (next) {
+                                    updateForm("paidCash", 0);
+                                    updateForm("paidEdc", 0);
+                                    updateForm("paidQris", 0);
+                                    updateForm("paidTransfer", 0);
+                                    updateForm("paidOta", 0);
+                                    updateForm("payHotel", 0);
+                                    updateForm("payTransfer", 0);
+                                }
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <input 
+                                    type="checkbox" 
+                                    id="isComplimentOther"
+                                    checked={!!form.isCompliment}
+                                    onChange={(e) => {
+                                        const next = e.target.checked;
+                                        updateForm("isCompliment", next);
+                                        if (next) {
+                                            updateForm("paidCash", 0);
+                                            updateForm("paidEdc", 0);
+                                            updateForm("paidQris", 0);
+                                            updateForm("paidTransfer", 0);
+                                            updateForm("paidOta", 0);
+                                            updateForm("payHotel", 0);
+                                            updateForm("payTransfer", 0);
+                                        }
+                                    }}
+                                    style={{ width: '16px', height: '16px', accentColor: '#e11d48', cursor: 'pointer' }}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                                <div>
+                                    <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--f-foreground)' }}>
+                                        Compliment / Bebas Biaya (Gratis)
+                                    </div>
+                                    <div style={{ fontSize: '11px', color: 'var(--f-muted)' }}>
+                                        Tandai jika pendapatan lain ini diberikan tanpa penagihan (fasilitas owner / kompensasi layanan)
+                                    </div>
+                                </div>
+                            </div>
+                            {form.isCompliment && (
+                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#e11d48', backgroundColor: '#ffe4e6', padding: '2px 8px', borderRadius: '4px' }}>
+                                    GRATIS
+                                </span>
+                            )}
+                        </div>
+
+                        {form.isCompliment && (
+                            <TerminalInput 
+                                label="Alasan Kompensasi / Compliment (Wajib)"
+                                value={form.complimentReason}
+                                onChange={(val: string) => updateForm("complimentReason", val)}
+                                placeholder="CONTOH: FASILITAS OWNER / KOMPENSASI AC RUSAK"
+                                icon={AlertCircle}
+                            />
+                        )}
+                    </div>
+
+                    {/* Section 03: Metode Pembayaran */}
+                    {!form.isCompliment && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <SectionTitle number="03" label="Metode Pembayaran (Sesuai DSR Kasir)" />
+                            
+                            {/* Quick Settlement Shortcuts */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--f-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                    ⚡ Shortcut 1-Click Settlement (Pelunasan Penuh):
+                                </span>
+                                <div className={styles.otherQuickPayGrid}>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const amt = Number(form.totalAmount) || 0;
+                                            updateForm("paidCash", amt);
+                                            updateForm("paidEdc", 0);
+                                            updateForm("paidQris", 0);
+                                            updateForm("paidTransfer", 0);
+                                            updateForm("payHotel", amt);
+                                            updateForm("payTransfer", 0);
+                                        }}
+                                        className={`${styles.otherQuickPayBtn} ${Number(form.paidCash) === Number(form.totalAmount) && (Number(form.totalAmount) || 0) > 0 ? styles.otherQuickPayBtnActive : ''}`}
+                                    >
+                                        💵 Lunas Cash
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const amt = Number(form.totalAmount) || 0;
+                                            updateForm("paidCash", 0);
+                                            updateForm("paidEdc", amt);
+                                            updateForm("paidQris", 0);
+                                            updateForm("paidTransfer", 0);
+                                            updateForm("payHotel", amt);
+                                            updateForm("payTransfer", 0);
+                                        }}
+                                        className={`${styles.otherQuickPayBtn} ${Number(form.paidEdc) === Number(form.totalAmount) && (Number(form.totalAmount) || 0) > 0 ? styles.otherQuickPayBtnActive : ''}`}
+                                    >
+                                        💳 Lunas EDC
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const amt = Number(form.totalAmount) || 0;
+                                            updateForm("paidCash", 0);
+                                            updateForm("paidEdc", 0);
+                                            updateForm("paidQris", amt);
+                                            updateForm("paidTransfer", 0);
+                                            updateForm("payHotel", amt);
+                                            updateForm("payTransfer", 0);
+                                        }}
+                                        className={`${styles.otherQuickPayBtn} ${Number(form.paidQris) === Number(form.totalAmount) && (Number(form.totalAmount) || 0) > 0 ? styles.otherQuickPayBtnActive : ''}`}
+                                    >
+                                        📱 Lunas QRIS
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const amt = Number(form.totalAmount) || 0;
+                                            updateForm("paidCash", 0);
+                                            updateForm("paidEdc", 0);
+                                            updateForm("paidQris", 0);
+                                            updateForm("paidTransfer", amt);
+                                            updateForm("payHotel", amt);
+                                            updateForm("payTransfer", amt);
+                                        }}
+                                        className={`${styles.otherQuickPayBtn} ${Number(form.paidTransfer) === Number(form.totalAmount) && (Number(form.totalAmount) || 0) > 0 ? styles.otherQuickPayBtnActive : ''}`}
+                                    >
+                                        🏦 Lunas Transfer
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Granular Settlement Inputs */}
+                            <div className={styles.formGrid}>
                                 <TerminalInput 
-                                    label="💵 Cash Tunai"
+                                    label="💵 Cash FO (Tunai Kasir)"
                                     value={form.paidCash}
-                                    onChange={(val: string) => updateForm("paidCash", Number(val) || 0)}
+                                    onChange={(val: string) => {
+                                        const num = Number(val) || 0;
+                                        updateForm("paidCash", num);
+                                        const otherH = (Number(form.paidEdc) || 0) + (Number(form.paidQris) || 0) + (Number(form.paidTransfer) || 0);
+                                        updateForm("payHotel", num + otherH);
+                                    }}
                                     placeholder="0"
                                     type="number"
                                     isAmount={true}
@@ -931,40 +1062,99 @@ export function TransactionEntryForm({
                                 <TerminalInput 
                                     label="💳 EDC BCA / Mandiri"
                                     value={form.paidEdc}
-                                    onChange={(val: string) => updateForm("paidEdc", Number(val) || 0)}
+                                    onChange={(val: string) => {
+                                        const num = Number(val) || 0;
+                                        updateForm("paidEdc", num);
+                                        const otherH = (Number(form.paidCash) || 0) + (Number(form.paidQris) || 0) + (Number(form.paidTransfer) || 0);
+                                        updateForm("payHotel", num + otherH);
+                                    }}
                                     placeholder="0"
                                     type="number"
                                     isAmount={true}
                                 />
                                 <TerminalInput 
-                                    label="📱 QRIS Payment"
+                                    label="📱 QRIS Hotel"
                                     value={form.paidQris}
-                                    onChange={(val: string) => updateForm("paidQris", Number(val) || 0)}
+                                    onChange={(val: string) => {
+                                        const num = Number(val) || 0;
+                                        updateForm("paidQris", num);
+                                        const otherH = (Number(form.paidCash) || 0) + (Number(form.paidEdc) || 0) + (Number(form.paidTransfer) || 0);
+                                        updateForm("payHotel", num + otherH);
+                                    }}
                                     placeholder="0"
                                     type="number"
                                     isAmount={true}
                                 />
                                 <TerminalInput 
-                                    label="🏦 Bank Transfer"
+                                    label="🏦 Bank Transfer Rekening Hotel"
                                     value={form.paidTransfer}
-                                    onChange={(val: string) => updateForm("paidTransfer", Number(val) || 0)}
+                                    onChange={(val: string) => {
+                                        const num = Number(val) || 0;
+                                        updateForm("paidTransfer", num);
+                                        const otherH = (Number(form.paidCash) || 0) + (Number(form.paidEdc) || 0) + (Number(form.paidQris) || 0);
+                                        updateForm("payHotel", num + otherH);
+                                        updateForm("payTransfer", num);
+                                    }}
                                     placeholder="0"
                                     type="number"
                                     isAmount={true}
                                 />
-                            </>
-                        )}
-                    </div>
-                </div>
+                            </div>
 
-                {/* General Notes */}
-                <div style={{ paddingTop: '8px' }}>
-                    <TerminalInput 
-                        label="Catatan Tambahan (Optional Notes)"
-                        value={form.note}
-                        onChange={(val: string) => updateForm("note", val)}
-                        placeholder="CONTOH: KETERANGAN TAMBAHAN TRANSAKSI"
-                    />
+                            {/* Live Payment Summary Bar */}
+                            <div className={styles.otherPaymentSummary}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <div>
+                                        <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--f-muted)', fontWeight: 600, display: 'block' }}>Total Tagihan</span>
+                                        <span style={{ fontSize: '14px', fontWeight: 700, fontFamily: 'var(--f-font-mono)', color: 'var(--f-foreground)' }}>
+                                            Rp {formatCurrency(Number(form.totalAmount) || 0)}
+                                        </span>
+                                    </div>
+                                    <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--f-hairline)' }} />
+                                    <div>
+                                        <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--f-muted)', fontWeight: 600, display: 'block' }}>Tercatat Dibayar</span>
+                                        <span style={{ fontSize: '14px', fontWeight: 700, fontFamily: 'var(--f-font-mono)', color: '#059669' }}>
+                                            Rp {formatCurrency(otherCurrentPaid)}
+                                        </span>
+                                    </div>
+                                    <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--f-hairline)' }} />
+                                    <div>
+                                        <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--f-muted)', fontWeight: 600, display: 'block' }}>Sisa (Due)</span>
+                                        <span style={{ fontSize: '14px', fontWeight: 700, fontFamily: 'var(--f-font-mono)', color: otherDueAmount > 0 ? '#d97706' : '#059669' }}>
+                                            Rp {formatCurrency(otherDueAmount)}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    {otherDueAmount === 0 && (Number(form.totalAmount) || 0) > 0 ? (
+                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', backgroundColor: '#dcfce7', color: '#15803d' }}>
+                                            ✓ Lunas
+                                        </span>
+                                    ) : otherCurrentPaid > 0 ? (
+                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', backgroundColor: '#fef3c7', color: '#b45309' }}>
+                                            Belum Lunas (Sisa Rp {formatCurrency(otherDueAmount)})
+                                        </span>
+                                    ) : (
+                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.06)', color: 'var(--f-muted)' }}>
+                                            Belum Bayar
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Section 04: Catatan Tambahan */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <SectionTitle number="04" label="Catatan Tambahan (Opsional)" />
+                        <TerminalInput 
+                            label="Catatan Transaksi"
+                            value={form.note}
+                            onChange={(val: string) => updateForm("note", val)}
+                            placeholder="CONTOH: TITIP KUNCI / TAMU KAMAR 102 / PERMINTAAN KHUSUS"
+                            icon={AlertCircle}
+                        />
+                    </div>
                 </div>
 
                 {/* Action Buttons */}
@@ -974,7 +1164,7 @@ export function TransactionEntryForm({
                     </button>
                     <button type="submit" className={styles.btnPrimary}>
                         <Plus size={15} />
-                        Tambah Ke Draft Review
+                        {isEditMode ? "Perbarui Transaksi" : "Tambah Ke Draft Review"}
                     </button>
                 </div>
             </form>
@@ -1035,7 +1225,7 @@ export function ReviewSidebar({
         if (!updateForm) return;
 
         if (totalGross <= 0) {
-            toast.warning("Silakan tentukan tipe kamar dan tarif terlebih dahulu.");
+            toast.warning(revenueType === 'other' ? "Silakan isi nominal transaksi terlebih dahulu." : "Silakan tentukan tipe kamar dan tarif terlebih dahulu.");
             return;
         }
 
@@ -1044,7 +1234,7 @@ export function ReviewSidebar({
             return;
         }
 
-        const isOTAChannel = form.channel && !["Walk-in", "Direct"].includes(form.channel);
+        const isOTAChannel = revenueType !== 'other' && form.channel && !["Walk-in", "Direct"].includes(form.channel);
 
         if (currentPaid === 0) {
             if (isOTAChannel) {
@@ -1107,30 +1297,39 @@ export function ReviewSidebar({
                 {/* Header */}
                 <div className={pmsStyles.billingHeader}>
                     <h2 className={pmsStyles.billingTitle}>
-                        {isEditMode ? "Billing Summary (Edit)" : "Billing Summary"}
+                        {isEditMode ? "Billing Summary (Edit)" : (revenueType === 'other' ? "Other Income Summary" : "Billing Summary")}
                     </h2>
-                    <span className={pmsStyles.badgeConfirm}>
-                        {form.bookingType || "Confirmed"}
+                    <span className={pmsStyles.badgeConfirm} style={revenueType === 'other' ? { backgroundColor: '#fef3c7', color: '#b45309', borderColor: '#fde68a' } : undefined}>
+                        {revenueType === 'other' ? (form.incomeType || "Other Income") : (form.bookingType || "Confirmed")}
                     </span>
                 </div>
 
-                {/* Stay Summary Row */}
-                <div className={pmsStyles.staySummaryRow}>
-                    <div className={pmsStyles.staySummaryCol}>
-                        <span className={pmsStyles.staySummaryLabel}>Check-in</span>
-                        <span className={pmsStyles.staySummaryDate}>{formatDateStandard(form.checkIn)}</span>
+                {/* Stay / Transaction Summary Row */}
+                {revenueType === 'other' ? (
+                    <div className={pmsStyles.staySummaryRow}>
+                        <div className={pmsStyles.staySummaryCol}>
+                            <span className={pmsStyles.staySummaryLabel}>Tanggal Transaksi</span>
+                            <span className={pmsStyles.staySummaryDate}>{formatDateStandard(form.checkIn)}</span>
+                        </div>
                     </div>
-                    <span className={pmsStyles.staySummaryArrow}>⟶</span>
-                    <div className={pmsStyles.staySummaryCol} style={{ alignItems: 'flex-end' }}>
-                        <span className={pmsStyles.staySummaryLabel}>Check-out</span>
-                        <span className={pmsStyles.staySummaryDate}>{formatDateStandard(form.checkOut)}</span>
+                ) : (
+                    <div className={pmsStyles.staySummaryRow}>
+                        <div className={pmsStyles.staySummaryCol}>
+                            <span className={pmsStyles.staySummaryLabel}>Check-in</span>
+                            <span className={pmsStyles.staySummaryDate}>{formatDateStandard(form.checkIn)}</span>
+                        </div>
+                        <span className={pmsStyles.staySummaryArrow}>⟶</span>
+                        <div className={pmsStyles.staySummaryCol} style={{ alignItems: 'flex-end' }}>
+                            <span className={pmsStyles.staySummaryLabel}>Check-out</span>
+                            <span className={pmsStyles.staySummaryDate}>{formatDateStandard(form.checkOut)}</span>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Financial Breakdown */}
                 <div className={pmsStyles.breakdownList}>
                     <div className={pmsStyles.breakdownItem}>
-                        <span>Room Charges</span>
+                        <span>{revenueType === 'other' ? "Other Income Amount" : "Room Charges"}</span>
                         <span style={{ fontWeight: 600, color: 'var(--pms-text-primary)' }}>
                             Rp {form.isCompliment ? "0.00" : (totalGross === 0 ? "0.00" : formatCurrency(totalGross))}
                         </span>
@@ -1163,8 +1362,9 @@ export function ReviewSidebar({
                     >
                         <option value="-Select-">-Select-</option>
                         <option value="Hotel / Front Desk">Hotel / Front Desk</option>
-                        <option value="OTA / City Ledger">OTA / City Ledger</option>
+                        {revenueType !== 'other' && <option value="OTA / City Ledger">OTA / City Ledger</option>}
                         <option value="Company / BTC">Company / BTC</option>
+                        {revenueType === 'other' && <option value="Direct Guest">Direct Guest</option>}
                     </select>
                 </div>
 
@@ -1182,7 +1382,9 @@ export function ReviewSidebar({
                             </label>
                         </div>
                         <p style={{ margin: '0 0 8px 0', fontSize: '10.5px', color: 'var(--pms-text-muted)', lineHeight: 1.35 }}>
-                            Pencatatan pembayaran bersifat opsional. Jika tidak diisi, pemesanan tetap diproses dengan status <b>Belum Bayar</b> dan langsung mengurangi ketersediaan inventori kamar.
+                            {revenueType === 'other' 
+                                ? "Pencatatan pembayaran bersifat opsional. Transaksi akan langsung tercatat dan tersinkronisasi ke DSR dan laporan keuangan."
+                                : "Pencatatan pembayaran bersifat opsional. Jika tidak diisi, pemesanan tetap diproses dengan status Belum Bayar dan langsung mengurangi ketersediaan inventori kamar."}
                         </p>
 
                         {form.paymentModeEnabled !== false && (
@@ -1256,22 +1458,24 @@ export function ReviewSidebar({
                                     >
                                         🏦 TRANSFER
                                     </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (!updateForm) return;
-                                            updateForm("paidCash", 0);
-                                            updateForm("paidEdc", 0);
-                                            updateForm("paidQris", 0);
-                                            updateForm("paidTransfer", 0);
-                                            updateForm("paidOta", totalGross);
-                                            updateForm("payHotel", 0);
-                                            updateForm("payTransfer", totalGross);
-                                        }}
-                                        className={`${pmsStyles.shortcutBtn} ${Number(form.paidOta || 0) === totalGross && totalGross > 0 ? pmsStyles.shortcutBtnActive : ''}`}
-                                    >
-                                        🌐 OTA
-                                    </button>
+                                    {revenueType !== 'other' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (!updateForm) return;
+                                                updateForm("paidCash", 0);
+                                                updateForm("paidEdc", 0);
+                                                updateForm("paidQris", 0);
+                                                updateForm("paidTransfer", 0);
+                                                updateForm("paidOta", totalGross);
+                                                updateForm("payHotel", 0);
+                                                updateForm("payTransfer", totalGross);
+                                            }}
+                                            className={`${pmsStyles.shortcutBtn} ${Number(form.paidOta || 0) === totalGross && totalGross > 0 ? pmsStyles.shortcutBtnActive : ''}`}
+                                        >
+                                            🌐 OTA
+                                        </button>
+                                    )}
                                 </div>
 
                                 {/* Granular Settlement Inputs */}
@@ -1329,19 +1533,21 @@ export function ReviewSidebar({
                                         type="number"
                                         isAmount={true}
                                     />
-                                    <TerminalInput 
-                                        label="🌐 OTA Virtual / City Ledger"
-                                        value={form.paidOta}
-                                        onChange={(val: string) => {
-                                            if (!updateForm) return;
-                                            const num = Number(val) || 0;
-                                            updateForm("paidOta", num);
-                                            updateForm("payTransfer", num + Number(form.paidTransfer || 0));
-                                        }}
-                                        placeholder="0"
-                                        type="number"
-                                        isAmount={true}
-                                    />
+                                    {revenueType !== 'other' && (
+                                        <TerminalInput 
+                                            label="🌐 OTA Virtual / City Ledger"
+                                            value={form.paidOta}
+                                            onChange={(val: string) => {
+                                                if (!updateForm) return;
+                                                const num = Number(val) || 0;
+                                                updateForm("paidOta", num);
+                                                updateForm("payTransfer", num + Number(form.paidTransfer || 0));
+                                            }}
+                                            placeholder="0"
+                                            type="number"
+                                            isAmount={true}
+                                        />
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -1438,7 +1644,9 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                                         <td>
                                             <div className={styles.detailCellInner}>
                                                 <div className={styles.detailCellRow1}>
-                                                    {channelLogo && (
+                                                    {item.type === 'other_income' ? (
+                                                        <Coffee className="w-4 h-4 text-amber-600 mr-1 flex-shrink-0" />
+                                                    ) : channelLogo && (
                                                         channelLogo === "globe" ? (
                                                             <Globe className="w-4 h-4 opacity-60 mr-1 flex-shrink-0" />
                                                         ) : (
@@ -1451,7 +1659,12 @@ export function QueueTable({ queue, removeFromQueue }: QueueTableProps) {
                                                     <span>{item.type === 'other_income' ? (item.incomeCategory || 'Other') : (item.roomType || 'Room')} {item.roomNumber || ''}</span>
                                                     <span className={styles.bulletSeparator} />
                                                     <span>Staff: {item.staffName || 'System'}</span>
-                                                    {item.type !== 'other_income' && (
+                                                    {item.type === 'other_income' ? (
+                                                        <>
+                                                            <span className={styles.bulletSeparator} />
+                                                            <span className={styles.channelTagText} style={{ backgroundColor: '#fef3c7', color: '#b45309', borderColor: '#fde68a' }}>OTHER INCOME</span>
+                                                        </>
+                                                    ) : (
                                                         <>
                                                             <span className={styles.bulletSeparator} />
                                                             <span className={styles.channelTagText}>{item.channel}</span>
