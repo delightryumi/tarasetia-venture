@@ -4,20 +4,19 @@ import React, { useState } from "react";
 import { 
     Copy, 
     Check, 
-    Coffee, 
+    Receipt, 
     Calendar, 
     Clock, 
     User, 
     CreditCard, 
-    Receipt,
     Building2, 
     CheckCircle2, 
     AlertCircle,
     Printer,
     FileText,
-    ShieldCheck,
     Coins,
-    Sparkles
+    Sparkles,
+    Shield
 } from "lucide-react";
 import styles from "../OverviewStyles.module.css";
 import { useAuth } from "@/context/AuthContext";
@@ -44,6 +43,34 @@ const formatLongDate = (dateStr?: string) => {
         });
     } catch {
         return dateStr;
+    }
+};
+
+const formatAuditTimestamp = (raw?: any, fallbackDate?: string) => {
+    if (!raw && !fallbackDate) return "-";
+    try {
+        const d = new Date(raw || fallbackDate);
+        if (isNaN(d.getTime())) return String(raw || fallbackDate);
+        
+        // If it was just a YYYY-MM-DD date string without time
+        const hasTime = typeof raw === "string" && (raw.includes("T") || raw.includes(":"));
+        const datePart = d.toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric"
+        });
+        
+        if (hasTime) {
+            const timePart = d.toLocaleTimeString("id-ID", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+            });
+            return `${datePart}, ${timePart} WIB`;
+        }
+        return datePart;
+    } catch {
+        return String(raw || fallbackDate);
     }
 };
 
@@ -74,17 +101,21 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
     };
 
     const isCancelled = guest.status === "CANCELLED" || guest.status === "CANCEL";
-
-    // Determine USALI Schedule classification
     const category = guest.category || guest.incomeCategory || guest.channel || "Other Income";
-    const isSchedule4Misc = ["extra bed", "cancellation", "space rental", "meeting", "sewa"].some(k => category.toLowerCase().includes(k));
-    const usaliSchedule = isSchedule4Misc 
-        ? "USALI Schedule 4: Miscellaneous Income" 
-        : "USALI Schedule 3: Other Operated Departments";
+    const staffName = guest.staffName || guest.createdBy || guest.inputBy || "Staff Front Desk";
+    const staffDisplay = guest.staffEmail ? `${staffName} (${guest.staffEmail})` : staffName;
+    const creationTimeStr = formatAuditTimestamp(guest.timestamp || guest.createdAt || guest.insertedAt, effectiveDate);
+
+    // Active settlement items
+    const paymentBreakdown: { label: string; amount: number; method: string }[] = [];
+    if (paidCash > 0) paymentBreakdown.push({ label: "Tunai / Cash Kasir FO", amount: paidCash, method: "Cash" });
+    if (paidEdc > 0) paymentBreakdown.push({ label: "EDC Kartu Debit / Kredit", amount: paidEdc, method: "EDC" });
+    if (paidQris > 0) paymentBreakdown.push({ label: "QRIS Kasir Hotel", amount: paidQris, method: "QRIS" });
+    if (paidTransfer > 0) paymentBreakdown.push({ label: "Transfer Rekening Bank Hotel", amount: paidTransfer, method: "Bank Transfer" });
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px", paddingBottom: "24px" }}>
-            {/* USALI Folio Header Card */}
+            {/* Voucher Header Card */}
             <div style={{ 
                 backgroundColor: "var(--f-surface, #ffffff)", 
                 border: "1px solid var(--f-hairline, #e2e8f0)", 
@@ -96,14 +127,14 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
                     <div>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                             <div style={{ width: "28px", height: "28px", borderRadius: "6px", backgroundColor: "#fef3c7", border: "1px solid #fde68a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <Coffee size={15} style={{ color: "#b45309" }} />
+                                <Receipt size={15} style={{ color: "#b45309" }} />
                             </div>
                             <span style={{ fontSize: "14px", fontWeight: 800, color: "var(--f-foreground, #0f172a)", letterSpacing: "0.02em" }}>
                                 {activeHotelName || "TARASÈTIA HOTEL & VENTURE"}
                             </span>
                         </div>
                         <p style={{ margin: 0, fontSize: "11px", fontWeight: 700, color: "#b45309", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                            {usaliSchedule}
+                            Voucher Pendapatan Kasir Non-Kamar
                         </p>
                     </div>
 
@@ -117,7 +148,7 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
                             color: isCancelled ? "#b91c1c" : guest.isCompliment ? "#e11d48" : dueAmount === 0 ? "#15803d" : "#b45309",
                             textTransform: "uppercase"
                         }}>
-                            {isCancelled ? "Void / Cancelled" : guest.isCompliment ? "Compliment (Gratis)" : dueAmount === 0 ? "Lunas" : "Belum Lunas"}
+                            {isCancelled ? "Void / Cancelled" : guest.isCompliment ? "Compliment" : dueAmount === 0 ? "Lunas" : "Belum Lunas"}
                         </span>
                         <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontFamily: "var(--f-font-mono, monospace)", color: "var(--f-muted, #64748b)" }}>
                             <span>{voucherId}</span>
@@ -125,7 +156,7 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
                                 type="button" 
                                 onClick={() => handleCopy("voucherId", voucherId)} 
                                 style={{ background: "none", border: "none", cursor: "pointer", padding: "2px", color: "var(--f-muted)" }}
-                                title="Salin ID Voucher"
+                                title="Salin Nomor Voucher"
                             >
                                 {copiedField === "voucherId" ? <Check size={11} color="#16a34a" /> : <Copy size={11} />}
                             </button>
@@ -164,10 +195,10 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
 
                     <div>
                         <span style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--f-muted, #64748b)", display: "block", marginBottom: "4px" }}>
-                            Kasir / Staff FO
+                            Petugas / Kasir FO
                         </span>
                         <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--f-foreground, #0f172a)" }}>
-                            {guest.staffName || "Staff Kasir Front Office"}
+                            {staffDisplay}
                         </span>
                     </div>
 
@@ -176,12 +207,12 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
                             Referensi Tamu / Kamar
                         </span>
                         <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--f-foreground, #0f172a)" }}>
-                            {guest.roomNumber ? `Posting ke Kamar #${guest.roomNumber}` : "Direct Sale (Non-Guest / Kasir Luar)"}
+                            {guest.roomNumber ? `Posting ke Kamar #${guest.roomNumber}` : "Direct Sale (Non-Kamar / Transaksi Langsung)"}
                         </span>
                     </div>
                 </div>
 
-                {/* Compliment Banner if active */}
+                {/* Compliment Details */}
                 {guest.isCompliment && (
                     <div style={{ 
                         marginTop: "16px", 
@@ -199,14 +230,14 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
                                 Transaksi Kompensasi / Compliment (Bebas Biaya)
                             </span>
                             <span style={{ fontSize: "11px", color: "#9f1239" }}>
-                                Alasan: {guest.complimentReason || "Fasilitas Owner / Kompensasi Tamu"}
+                                Alasan: {guest.complimentReason || "Kompensasi Layanan / Kebijakan Operasional Hotel"}
                             </span>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Financial Settlement Card (DSR Ledger Breakdown) */}
+            {/* Financial Settlement Card */}
             <div style={{ 
                 backgroundColor: "var(--f-surface, #ffffff)", 
                 border: "1px solid var(--f-hairline, #e2e8f0)", 
@@ -218,7 +249,7 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <Coins size={16} style={{ color: "#059669" }} />
                         <h3 style={{ fontSize: "13px", fontWeight: 700, margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                            Pencatatan Finansial &amp; Settlement (DSR)
+                            Rincian Pembayaran (Settlement)
                         </h3>
                     </div>
                     {onEditPayment && !isCancelled && (
@@ -252,34 +283,30 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
                     {!guest.isCompliment && (
                         <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "10px 12px", backgroundColor: "var(--f-surface-soft)", borderRadius: "8px" }}>
                             <span style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--f-muted)", letterSpacing: "0.05em" }}>
-                                Rincian Pembayaran Masuk:
+                                Metode Pembayaran Tercatat:
                             </span>
 
-                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
-                                <span>💵 Cash FO (Tunai Kasir):</span>
-                                <span style={{ fontWeight: 700, fontFamily: "var(--f-font-mono)" }}>Rp {formatCurrency(paidCash)}</span>
-                            </div>
-
-                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
-                                <span>💳 EDC BCA / Mandiri:</span>
-                                <span style={{ fontWeight: 700, fontFamily: "var(--f-font-mono)" }}>Rp {formatCurrency(paidEdc)}</span>
-                            </div>
-
-                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
-                                <span>📱 QRIS Hotel:</span>
-                                <span style={{ fontWeight: 700, fontFamily: "var(--f-font-mono)" }}>Rp {formatCurrency(paidQris)}</span>
-                            </div>
-
-                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
-                                <span>🏦 Bank Transfer Hotel:</span>
-                                <span style={{ fontWeight: 700, fontFamily: "var(--f-font-mono)" }}>Rp {formatCurrency(paidTransfer)}</span>
-                            </div>
+                            {paymentBreakdown.length > 0 ? (
+                                paymentBreakdown.map((item, i) => (
+                                    <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
+                                        <span>{item.label}:</span>
+                                        <span style={{ fontWeight: 700, fontFamily: "var(--f-font-mono)" }}>Rp {formatCurrency(item.amount)}</span>
+                                    </div>
+                                ))
+                            ) : (
+                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
+                                    <span>{guest.paymentMethod || "Tunai / Cash Kasir"}:</span>
+                                    <span style={{ fontWeight: 700, fontFamily: "var(--f-font-mono)" }}>
+                                        Rp {formatCurrency(Number(guest.payHotel || totalAmount))}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     )}
 
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "8px" }}>
                         <span style={{ fontSize: "12px", fontWeight: 700, color: dueAmount > 0 ? "#b45309" : "#059669" }}>
-                            {dueAmount > 0 ? "Sisa Tagihan (Due Amount):" : "Status Pelunasan:"}
+                            {dueAmount > 0 ? "Sisa Tagihan (Due Amount):" : "Status Pembayaran:"}
                         </span>
                         <span style={{ fontSize: "14px", fontWeight: 800, fontFamily: "var(--f-font-mono)", color: dueAmount > 0 ? "#b45309" : "#059669" }}>
                             {dueAmount > 0 ? `Rp ${formatCurrency(dueAmount)}` : "LUNAS (Rp 0)"}
@@ -288,68 +315,94 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
                 </div>
             </div>
 
-            {/* USALI Standards Compliance Box */}
-            <div style={{ 
-                backgroundColor: "#f8fafc", 
-                border: "1px solid #cbd5e1", 
-                borderRadius: "10px", 
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px"
-            }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <ShieldCheck size={16} style={{ color: "#0284c7" }} />
-                    <span style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", color: "#0f172a", letterSpacing: "0.05em" }}>
-                        Standar Akuntansi Perhotelan (USALI Compliance)
-                    </span>
-                </div>
-                <div style={{ fontSize: "11px", color: "#475569", lineHeight: "1.5" }}>
-                    • <b>Dampak Kamar:</b> 0 Kamar Terjual (0 Room Nights). Transaksi ini murni pendapatan tambahan dan <b>tidak mendistorsi</b> metrik okupansi (OCC), ARR, atau RevPAR kamar hotel.<br />
-                    • <b>Alur Akuntansi:</b> Otomatis terintegrasi ke <b>Card 5 (Other Income)</b> pada Laporan Laba Rugi (P&amp;L), DSR Harian Kasir, dan Buku Kas Bank.
-                </div>
-            </div>
-
-            {/* Audit Trail Timeline */}
+            {/* Audit Trail / Log Transaksi (Standard Hotel System) */}
             <div style={{ 
                 backgroundColor: "var(--f-surface, #ffffff)", 
                 border: "1px solid var(--f-hairline, #e2e8f0)", 
                 borderRadius: "10px", 
                 padding: "20px"
             }}>
-                <h4 style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", color: "var(--f-muted)", margin: "0 0 12px 0", letterSpacing: "0.05em" }}>
-                    Jejak Audit Transaksi
-                </h4>
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+                    <FileText size={15} style={{ color: "var(--f-muted)" }} />
+                    <h4 style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", color: "var(--f-muted)", margin: 0, letterSpacing: "0.05em" }}>
+                        Audit Trail / Log Transaksi
+                    </h4>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    {/* Event 1: Creation & Revenue Posting */}
                     <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", fontSize: "11px" }}>
-                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#10b981", marginTop: "4px" }} />
-                        <div>
-                            <span style={{ fontWeight: 700, color: "var(--f-foreground)" }}>Transaksi Dicatat di FO</span>
+                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#10b981", marginTop: "4px", flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                                <span style={{ fontWeight: 700, color: "var(--f-foreground)" }}>Posting Pendapatan (Revenue Posting)</span>
+                                <span style={{ color: "var(--f-muted)", fontSize: "10px" }}>{creationTimeStr}</span>
+                            </div>
+                            <span style={{ color: "var(--f-muted)", display: "block", marginTop: "2px" }}>
+                                Operator: {staffDisplay} • No. Voucher: <b style={{ fontFamily: "var(--f-font-mono)" }}>{voucherId}</b>
+                            </span>
                             <span style={{ color: "var(--f-muted)", display: "block" }}>
-                                Oleh: {guest.staffName || "Staff FO"} • Tanggal: {effectiveDate}
+                                Item: {category} ({guest.guestName || guest.description || "Pendapatan Lain"}) • Nominal: <b>Rp {formatCurrency(totalAmount)}</b>
                             </span>
                         </div>
                     </div>
 
+                    {/* Event 2: Settlement / Payment Recording */}
                     <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", fontSize: "11px" }}>
-                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#0284c7", marginTop: "4px" }} />
-                        <div>
-                            <span style={{ fontWeight: 700, color: "var(--f-foreground)" }}>Settlement Kasir</span>
-                            <span style={{ color: "var(--f-muted)", display: "block" }}>
-                                {guest.isCompliment ? "Compliment / Kompensasi disetujui" : `Tercatat dibayar Rp ${formatCurrency(currentPaid > 0 ? currentPaid : totalAmount)}`}
+                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: guest.isCompliment ? "#e11d48" : dueAmount === 0 ? "#059669" : "#d97706", marginTop: "4px", flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                                <span style={{ fontWeight: 700, color: "var(--f-foreground)" }}>
+                                    {guest.isCompliment ? "Otorisasi Compliment" : "Penerimaan Pembayaran (Settlement)"}
+                                </span>
+                                <span style={{ color: "var(--f-muted)", fontSize: "10px" }}>{creationTimeStr}</span>
+                            </div>
+                            <span style={{ color: "var(--f-muted)", display: "block", marginTop: "2px" }}>
+                                {guest.isCompliment 
+                                    ? `Compliment disetujui: ${guest.complimentReason || "Kompensasi Layanan"}`
+                                    : `Metode: ${guest.paymentMethod || "Cash"} • Status: ${dueAmount === 0 ? "Lunas" : "Belum Lunas"}`
+                                }
                             </span>
+                            {paymentBreakdown.length > 0 && (
+                                <span style={{ color: "var(--f-muted)", display: "block", fontSize: "10px" }}>
+                                    Rincian: {paymentBreakdown.map(p => `${p.method}: Rp ${formatCurrency(p.amount)}`).join(" | ")}
+                                </span>
+                            )}
                         </div>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", fontSize: "11px" }}>
-                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#f59e0b", marginTop: "4px" }} />
-                        <div>
-                            <span style={{ fontWeight: 700, color: "var(--f-foreground)" }}>Terposting ke DSR &amp; General Ledger</span>
-                            <span style={{ color: "var(--f-muted)", display: "block" }}>
-                                Akun USALI: {usaliSchedule} (Card 5 Other Income)
-                            </span>
+                    {/* Event 3: Cancellation / Void (if applicable) */}
+                    {isCancelled && (
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", fontSize: "11px" }}>
+                            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#ef4444", marginTop: "4px", flexShrink: 0 }} />
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                                    <span style={{ fontWeight: 700, color: "#b91c1c" }}>Transaksi Dibatalkan (Void)</span>
+                                </div>
+                                <span style={{ color: "#ef4444", display: "block", marginTop: "2px" }}>
+                                    Status transaksi telah diubah menjadi CANCELLED / VOID.
+                                </span>
+                            </div>
                         </div>
-                    </div>
+                    )}
+
+                    {/* Event 4: Modification Event (Only if real update metadata exists) */}
+                    {Boolean(guest.updatedAt || guest.modifiedAt) && (
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", fontSize: "11px" }}>
+                            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#6366f1", marginTop: "4px", flexShrink: 0 }} />
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                                    <span style={{ fontWeight: 700, color: "var(--f-foreground)" }}>Pembaruan Transaksi</span>
+                                    <span style={{ color: "var(--f-muted)", fontSize: "10px" }}>
+                                        {formatAuditTimestamp(guest.updatedAt || guest.modifiedAt)}
+                                    </span>
+                                </div>
+                                <span style={{ color: "var(--f-muted)", display: "block", marginTop: "2px" }}>
+                                    Operator: {guest.updatedBy || staffDisplay}
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

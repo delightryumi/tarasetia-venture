@@ -145,7 +145,7 @@ export function resolveBookingIdentifiers(item: any): ResolvedBookingIdentifiers
       revisionId: "N/A",
       otaReservationId: resId,
       channelName: chName,
-      connectionChannel: "Other Income (USALI)",
+      connectionChannel: "Other Income",
       channelLogo: "/channels/other_income.svg"
     };
   }

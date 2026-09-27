@@ -461,7 +461,7 @@ export function AuditLedger({
                                             </p>
                                             {isOther && (
                                                 <span style={{ fontSize: "10px", color: "var(--f-muted, #64748b)", display: "block", marginTop: "2px" }}>
-                                                    USALI Non-Room • Oleh: {booking.staffName || "Staff FO"}
+                                                    Pendapatan Non-Kamar • Kasir: {booking.staffName || "Staff FO"}
                                                 </span>
                                             )}
                                         </td>

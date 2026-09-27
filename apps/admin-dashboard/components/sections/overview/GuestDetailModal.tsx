@@ -724,7 +724,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                             </h2>
                             <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>
                                 {guest.type === 'other_income'
-                                    ? (isEditMode ? "Sesuaikan rincian, nominal & metode pembayaran" : "USALI Schedule 3/4 Non-Room Revenue Record")
+                                    ? (isEditMode ? "Sesuaikan rincian, nominal & metode pembayaran" : "Voucher Transaksi Pendapatan Kasir")
                                     : (isEditMode ? "Adjust room type, rate & settlement details" : "Channex Channel Manager Integrated Folio")}
                             </span>
                         </div>
