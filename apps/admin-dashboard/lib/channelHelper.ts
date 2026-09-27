@@ -25,6 +25,8 @@ const OTA_CATALOG = [
   { key: "hotelbeds", name: "Hotelbeds", logo: "/channels/hotelbeds.png", prefixes: ["hb"] },
   { key: "webbeds", name: "WebBeds", logo: "/channels/webbeds.png", prefixes: ["wb"] },
   { key: "klook", name: "Klook", logo: "/channels/klook.png", prefixes: ["klk"] },
+  { key: "other income", name: "Other Income", logo: "/channels/other_income.svg", prefixes: ["oth"] },
+  { key: "other_income", name: "Other Income", logo: "/channels/other_income.svg", prefixes: ["oth"] },
   { key: "booking engine", name: "Booking Engine", logo: "/channels/walk_in.png", prefixes: ["be", "web", "drc"] },
   { key: "walk-in", name: "Walk-in", logo: "/channels/walk_in.png", prefixes: ["win", "pos"] },
 ];
@@ -97,11 +99,17 @@ export function resolveChannelName(item: any): string {
  * Returns the channel logo image path
  */
 export function getChannelLogo(channelOrItem: any): string {
+  if (typeof channelOrItem === "object" && channelOrItem?.type === "other_income") {
+    return "/channels/other_income.svg";
+  }
   const channelName = typeof channelOrItem === "string" 
     ? resolveChannelName(channelOrItem) 
     : resolveChannelName(channelOrItem);
 
   const n = channelName.toLowerCase();
+  if (n.includes("other income") || n.includes("other_income")) {
+    return "/channels/other_income.svg";
+  }
   for (const ota of OTA_CATALOG) {
     if (n.includes(ota.key)) return ota.logo;
   }
@@ -137,8 +145,8 @@ export function resolveBookingIdentifiers(item: any): ResolvedBookingIdentifiers
       revisionId: "N/A",
       otaReservationId: resId,
       channelName: chName,
-      connectionChannel: "Other Income",
-      channelLogo: "/channels/walk_in.png"
+      connectionChannel: "Other Income (USALI)",
+      channelLogo: "/channels/other_income.svg"
     };
   }
 

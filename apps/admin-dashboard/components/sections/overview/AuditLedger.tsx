@@ -393,7 +393,6 @@ export function AuditLedger({
                                         key={idx}
                                         className={`${styles.tableRow} ${isCancelled ? styles.tableRowCancelled : ""}`}
                                     >
-                                        {/* Status */}
                                         <td className={`${styles.tableCell} ${styles.colStatus}`}>
                                             {isCancelled ? (
                                                 <span className={styles.badgeCancelled}>
@@ -410,8 +409,6 @@ export function AuditLedger({
                                                 </span>
                                             )}
                                         </td>
-
-                                        {/* Reservation ID with Copy */}
                                         <td className={`${styles.tableCell} ${styles.colResId}`}>
                                             <div className={styles.resIdWrap}>
                                                 <span className={styles.resIdText}>
@@ -427,11 +424,12 @@ export function AuditLedger({
                                                 </button>
                                             </div>
                                         </td>
-
-                                        {/* Channel / OTA */}
                                         <td className={`${styles.tableCell} ${styles.colChannel}`}>
                                             <div className={styles.channelWrap}>
-                                                <div className={styles.channelLogoBox}>
+                                                <div 
+                                                    className={styles.channelLogoBox}
+                                                    style={isOther ? { backgroundColor: "#fef3c7", borderColor: "#fde68a" } : undefined}
+                                                >
                                                     <img 
                                                         src={ids.channelLogo} 
                                                         alt={ids.channelName} 
@@ -440,47 +438,43 @@ export function AuditLedger({
                                                     />
                                                 </div>
                                                 <span className={styles.channelNameText}>
-                                                    {ids.channelName}
+                                                    {isOther ? (booking.incomeCategory || ids.channelName || "Other Income") : ids.channelName}
                                                 </span>
                                             </div>
                                         </td>
-
-                                        {/* Property */}
                                         <td className={`${styles.tableCell} ${styles.colProperty}`}>
                                             <span className={styles.propertyNameText} title={booking.propertyName || activeHotelName || "-"}>
                                                 {booking.propertyName || activeHotelName || "-"}
                                             </span>
                                         </td>
-
-                                        {/* Guest Name */}
                                         <td className={`${styles.tableCell} ${styles.colGuest}`}>
                                             <p 
                                                 className={styles.guestNameText} 
                                                 title={booking.guestName || booking.incomeCategory || (isOther ? "Other Non-Room Income" : "Direct Guest Folio")}
                                                 style={{
                                                     textDecoration: isCancelled ? "line-through" : "none",
-                                                    color: isCancelled ? "#94a3b8" : "#0f172a"
+                                                    color: isCancelled ? "#94a3b8" : "#0f172a",
+                                                    margin: 0
                                                 }}
                                             >
                                                 {booking.guestName || booking.incomeCategory || (isOther ? "Other Non-Room Income" : "Direct Guest Folio")}
                                             </p>
+                                            {isOther && (
+                                                <span style={{ fontSize: "10px", color: "var(--f-muted, #64748b)", display: "block", marginTop: "2px" }}>
+                                                    USALI Non-Room • Oleh: {booking.staffName || "Staff FO"}
+                                                </span>
+                                            )}
                                         </td>
-
-                                        {/* Dates */}
                                         <td className={`${styles.tableCell} ${styles.colDates}`}>
                                             <span className={styles.datesText}>
                                                 {dateDisplay}
                                             </span>
                                         </td>
-
-                                        {/* Rooms Count */}
                                         <td className={`${styles.tableCell} ${styles.colRooms}`}>
                                             <span className={styles.roomsText}>
                                                 {isOther ? "-" : (booking.roomCount || 1)}
                                             </span>
                                         </td>
-
-                                        {/* Total */}
                                         <td className={`${styles.tableCell} ${styles.colTotal}`}>
                                             <span 
                                                 className={styles.totalAmountText}
@@ -492,15 +486,13 @@ export function AuditLedger({
                                                 Rp {totalAmt.toLocaleString("id-ID")}
                                             </span>
                                         </td>
-
-                                        {/* Actions */}
                                         <td className={`${styles.tableCell} ${styles.colAction}`}>
                                             <button 
-                                                type="button"
+                                                type="button" 
                                                 onClick={() => onView(booking)}
                                                 className={styles.actionBtn}
                                             >
-                                                View Folio
+                                                {isOther ? "View Voucher" : "View Folio"}
                                             </button>
                                         </td>
                                     </tr>

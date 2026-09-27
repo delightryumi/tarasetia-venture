@@ -22,6 +22,7 @@ import { VoidConfirmModal } from "./VoidConfirmModal";
 import { CancelConfirmModal } from "./CancelConfirmModal";
 import { GuestEditForm } from "./components/GuestEditForm";
 import { GuestFolioView } from "./components/GuestFolioView";
+import { OtherIncomeFolioView } from "./components/OtherIncomeFolioView";
 import { PaymentMethodEditModal } from "./PaymentMethodEditModal";
 import styles from "./OverviewStyles.module.css";
 import footerStyles from "./GuestDetailFooter.module.css";
@@ -715,10 +716,16 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                         </button>
                         <div>
                             <h2 className={styles.headerTitle} style={{ fontSize: '15px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span>{isEditMode ? "Modify Reservation" : `Booking ${resolveBookingIdentifiers(guest).reservationId}`}</span>
+                                <span>
+                                    {guest.type === 'other_income' 
+                                        ? (isEditMode ? "Edit Pendapatan Lain" : `Other Income Voucher ${resolveBookingIdentifiers(guest).reservationId}`)
+                                        : (isEditMode ? "Modify Reservation" : `Booking ${resolveBookingIdentifiers(guest).reservationId}`)}
+                                </span>
                             </h2>
                             <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>
-                                {isEditMode ? "Adjust room type, rate & settlement details" : "Channex Channel Manager Integrated Folio"}
+                                {guest.type === 'other_income'
+                                    ? (isEditMode ? "Sesuaikan rincian, nominal & metode pembayaran" : "USALI Schedule 3/4 Non-Room Revenue Record")
+                                    : (isEditMode ? "Adjust room type, rate & settlement details" : "Channex Channel Manager Integrated Folio")}
                             </span>
                         </div>
                     </div>
@@ -727,9 +734,13 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                             <button
                                 type="button"
                                 onClick={() => {
-                                    const bParam = guest.bookingId ? `&bookingId=${encodeURIComponent(guest.bookingId)}` : '';
-                                    const gParam = guest.guestName ? `&guestName=${encodeURIComponent(guest.guestName)}` : '';
-                                    router.push(`/digital-checkin?autoOpen=true${gParam}${bParam}`);
+                                    if (guest.type === 'other_income') {
+                                        window.print();
+                                    } else {
+                                        const bParam = guest.bookingId ? `&bookingId=${encodeURIComponent(guest.bookingId)}` : '';
+                                        const gParam = guest.guestName ? `&guestName=${encodeURIComponent(guest.guestName)}` : '';
+                                        router.push(`/digital-checkin?autoOpen=true${gParam}${bParam}`);
+                                    }
                                 }}
                                 style={{
                                     display: 'inline-flex',
@@ -797,7 +808,16 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                             ) : (
                                 <button
                                     type="button"
-                                    onClick={() => setIsEditMode(true)}
+                                    onClick={() => {
+                                        if (guest.type === 'other_income') {
+                                            const targetDate = guest.effectiveDate || guest.checkInDate || guest.date || new Date().toISOString().split('T')[0];
+                                            const bId = guest.bookingId || "";
+                                            const ts = guest.timestamp || "";
+                                            router.push(`/forecast/add?date=${targetDate}&bookingId=${encodeURIComponent(bId)}&timestamp=${encodeURIComponent(ts)}&module=front-office&mode=edit&from=forecast`);
+                                        } else {
+                                            setIsEditMode(true);
+                                        }
+                                    }}
                                     style={{
                                         display: 'inline-flex',
                                         alignItems: 'center',
@@ -811,10 +831,10 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                         color: '#fff',
                                         cursor: 'pointer'
                                     }}
-                                    title="Edit Room & Folio Details"
+                                    title="Edit Details"
                                 >
                                     <Edit3 size={13} />
-                                    <span>Edit Folio</span>
+                                    <span>{guest.type === 'other_income' ? "Edit Transaksi" : "Edit Folio"}</span>
                                 </button>
                             )
                         )}
@@ -823,7 +843,12 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
                 {/* Content */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }} className="custom-scrollbar">
-                    {isEditMode ? (
+                    {guest.type === "other_income" ? (
+                        <OtherIncomeFolioView 
+                            guest={guest} 
+                            onEditPayment={() => setShowPaymentModal(true)} 
+                        />
+                    ) : isEditMode ? (
                         <GuestEditForm 
                             formData={formData} 
                             setFormData={setFormData} 
