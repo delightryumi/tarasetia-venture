@@ -14,7 +14,7 @@ export function VoidConfirmModal({ isOpen, itemName, onConfirm, onCancel }: Void
     const [passwordInput, setPasswordInput] = useState("");
 
     const handleConfirm = () => {
-        if (passwordInput !== 'admin123' && passwordInput !== 'owner123') {
+        if (passwordInput !== 'admin123') {
             toast.error("Password Admin salah! Proses void dibatalkan.");
             return;
         }

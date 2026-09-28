@@ -1,7 +1,7 @@
 import React from 'react';
 
 // ─── Print Mode ──────────────────────────────────────────────────────────────
-export type PrintMode = 'all' | 'kitchen' | 'bar';
+export type PrintMode = 'all' | 'kitchen' | 'bar' | 'checker';
 
 // ─── Receipt Item ────────────────────────────────────────────────────────────
 export interface ReceiptItemData {

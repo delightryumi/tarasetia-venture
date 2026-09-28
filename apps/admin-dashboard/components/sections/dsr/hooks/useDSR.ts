@@ -7,6 +7,7 @@ import { getHotelCollection } from "@/lib/firestoreHelper";
 import { useAuth } from "@/context/AuthContext";
 import { YearlyBudgetDocument, DSRReportResult, createDefaultBudgetMonthData } from "@/lib/budget-types";
 import { computeDSRReport, TransactionEntry, PosOrder, CustomIncomeItem } from "@/lib/dsr-engine";
+import { isStartupPlan } from "@/lib/hotelPlanHelper";
 
 export const useDSR = () => {
   const { activeHotelCode, activeHotelName } = useAuth();
@@ -30,6 +31,7 @@ export const useDSR = () => {
   const [hotelCode, setHotelCode] = useState<string>(getInitialHotelCode);
   const [hotelName, setHotelName] = useState<string>(getInitialHotelName);
   const [hotelRoomCount, setHotelRoomCount] = useState<number>(39);
+  const [isStartup, setIsStartup] = useState<boolean>(false);
 
   // Default to today's date YYYY-MM-DD
   const [selectedDate, setSelectedDate] = useState<string>(() => {
@@ -99,6 +101,7 @@ export const useDSR = () => {
       const hSnap = await getDoc(hotelRef);
       if (hSnap.exists()) {
         const hd = hSnap.data() as any;
+        setIsStartup(isStartupPlan(hd));
         count =
           typeof hd.roomCount === "number"
             ? hd.roomCount
@@ -335,6 +338,7 @@ export const useDSR = () => {
     hotelCode,
     hotelName,
     hotelRoomCount,
+    isStartup,
     loadingBudget,
     loadingActuals,
     budgetDoc,

@@ -12,6 +12,7 @@ import {
   recalculateBudgetMonthData,
 } from "@/lib/budget-types";
 import { detectBreakfastAllocation } from "@/lib/breakfast-utils";
+import { isStartupPlan } from "@/lib/hotelPlanHelper";
 
 export interface PnLComparisonRow {
   code: string;
@@ -87,6 +88,7 @@ export const usePNLBudget = () => {
 
   const [budgetDoc, setBudgetDoc] = useState<YearlyBudgetDocument | null>(null);
   const [hotelRoomCount, setHotelRoomCount] = useState<number>(8);
+  const [isStartup, setIsStartup] = useState<boolean>(false);
 
   // Live actual monthly data aggregated from transactions/orders/incomes/expenses
   const [actualMonthlyData, setActualMonthlyData] = useState<Record<string, ActualMonthlyPnLData>>({});
@@ -100,6 +102,7 @@ export const usePNLBudget = () => {
       const hSnap = await getDoc(hotelRef);
       if (hSnap.exists()) {
         const hd = hSnap.data() as any;
+        setIsStartup(isStartupPlan(hd));
         count =
           typeof hd.roomCount === "number"
             ? hd.roomCount
@@ -983,6 +986,7 @@ export const usePNLBudget = () => {
     hotelCode: effectiveHotelCode || activeHotelCode,
     hotelName: activeHotelName || "BUMI ANYOM RESORT",
     hotelRoomCount,
+    isStartup,
     selectedYear,
     setSelectedYear,
     selectedMonth,

@@ -56,8 +56,17 @@ export default function HistoryModal({
           if (shop.address) setOutletAddress(shop.address);
         } catch {}
       }
-      const savedLogo = localStorage.getItem('shopLogo');
-      if (savedLogo) setLogoUrl(savedLogo);
+      const updateLogo = () => {
+        const savedLogo = localStorage.getItem('shopLogo');
+        setLogoUrl(savedLogo || null);
+      };
+      updateLogo();
+      window.addEventListener('logoChanged', updateLogo);
+      window.addEventListener('storage', updateLogo);
+      return () => {
+        window.removeEventListener('logoChanged', updateLogo);
+        window.removeEventListener('storage', updateLogo);
+      };
     }
     // Fetch from /api/shopdata for most accurate outlet name
     fetch('/api/shopdata', { cache: 'no-store' })

@@ -11,6 +11,7 @@ import POSCartSidebar from '@/components/lexupos/POSCartSidebar';
 import PaymentWorkspace from '@/components/lexupos/PaymentWorkspace';
 import ProductDetailModalLexupos from '@/components/lexupos/ProductDetailModalLexupos';
 import POSCatalogView from '@/components/lexupos/POSCatalogView';
+import styles from '@/components/lexupos/LexuPos.module.css';
 
 // Hook containing all state and business logic
 import { useLexuPos } from './hooks/useLexuPos';
@@ -38,6 +39,7 @@ export default function LexuPosPage() {
     setTableNumber,
     notes,
     setNotes,
+    splitPaidCredit,
     revenueType,
     setRevenueType,
     paymentMethod,
@@ -68,19 +70,21 @@ export default function LexuPosPage() {
     handleHoldConfirm,
     handleProceed,
     executePayment,
+    handleConfirmSplitPayment,
     handleCloseReceipt,
     checkActiveShift,
     transactionId,
     receiptStatus,
     setReceiptStatus,
     heldOrderToPrint,
-    setHeldOrderToPrint
+    setHeldOrderToPrint,
+    activeSplitData
   } = useLexuPos();
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden print:hidden">
       <div className="flex flex-1 flex-col w-full h-full overflow-hidden">
-        <div className="w-full h-full flex md:rounded-xl overflow-hidden bg-white dark:bg-zinc-950 border-0 md:border border-neutral-200 dark:border-white/[0.1] shadow-none md:shadow-sm relative">
+        <div className={styles.posContainer}>
           {/* Dynamic Style Tag to completely hide browser scrollbars */}
           <style>{`
             .no-scrollbar::-webkit-scrollbar {
@@ -103,15 +107,15 @@ export default function LexuPosPage() {
           <ReceiptDialog
             isOpen={isReceiptOpen}
             onOpenChange={setIsReceiptOpen}
-            customerName={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.customerName : customerName}
+            customerName={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.customerName : (activeSplitData?.customerName || customerName)}
             tableNumber={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.tableNumber : tableNumber}
-            notes={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.notes : notes}
-            paymentMethod={receiptStatus === 'UNPAID' ? 'unpaid' : paymentMethod}
-            cart={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.cart : cart}
-            subtotal={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.subtotal : subtotal}
-            tax={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.tax : tax}
-            discount={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.discount : discount}
-            payableAmount={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.payableAmount : payableAmount}
+            notes={activeSplitData ? (notes ? `${notes} | ${activeSplitData.splitLabel}` : activeSplitData.splitLabel) : (receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.notes : notes)}
+            paymentMethod={activeSplitData ? activeSplitData.paymentMethod : (receiptStatus === 'UNPAID' ? 'unpaid' : paymentMethod)}
+            cart={activeSplitData ? activeSplitData.paidItems : (receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.cart : cart)}
+            subtotal={activeSplitData ? activeSplitData.subtotal : (receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.subtotal : subtotal)}
+            tax={activeSplitData ? activeSplitData.tax : (receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.tax : tax)}
+            discount={activeSplitData ? 0 : (receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.discount : discount)}
+            payableAmount={activeSplitData ? activeSplitData.payableAmount : (receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.payableAmount : payableAmount)}
             cashAmount={receiptStatus === 'UNPAID' ? '0' : cashAmount}
             cashierName={receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.cashierName : cashierName}
             status={receiptStatus}
@@ -130,7 +134,7 @@ export default function LexuPosPage() {
           {step === 'pos' ? (
             <>
               {/* Left Side: Product Selection */}
-              <div className={`flex-1 h-full flex min-w-0 ${showCart ? 'hidden lg:flex' : 'flex'}`}>
+              <div className={`${styles.catalogColumn} ${showCart ? 'hidden lg:flex' : 'flex'}`}>
                 <POSCatalogView
                   searchQuery={searchQuery}
                   setSearchQuery={setSearchQuery}
@@ -146,7 +150,7 @@ export default function LexuPosPage() {
               </div>
 
               {/* Right Side: Cart Summary */}
-              <div className={`h-full shrink-0 ${showCart ? 'flex w-full lg:w-auto' : 'hidden lg:flex'}`}>
+              <div className={`${styles.cartSidebarColumn} ${showCart ? 'flex w-full lg:w-[380px]' : 'hidden lg:flex'}`}>
                 <POSCartSidebar
                   customerName={customerName}
                   setCustomerName={setCustomerName}
@@ -171,6 +175,7 @@ export default function LexuPosPage() {
                   onBackToCatalog={() => setShowCart(false)}
                   onToggleCompliment={handleToggleCompliment}
                   onSetComplimentReason={handleSetComplimentReason}
+                  splitPaidCredit={splitPaidCredit}
                 />
               </div>
 
@@ -199,12 +204,15 @@ export default function LexuPosPage() {
               tax={tax}
               discount={discount}
               payableAmount={payableAmount}
+              splitPaidCredit={splitPaidCredit}
               paymentMethod={paymentMethod}
               setPaymentMethod={setPaymentMethod}
               cashAmount={cashAmount}
               setCashAmount={setCashAmount}
               onBackToPOS={() => setStep('pos')}
               onConfirmPayment={executePayment}
+              onConfirmSplitPayment={handleConfirmSplitPayment}
+              taxRatePercent={taxRatePercent}
               revenueType={revenueType}
               setRevenueType={setRevenueType}
             />

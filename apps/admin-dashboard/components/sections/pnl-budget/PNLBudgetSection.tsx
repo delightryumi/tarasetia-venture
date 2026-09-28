@@ -57,6 +57,7 @@ export const PNLBudgetSection: React.FC = () => {
   const {
     hotelName,
     hotelRoomCount,
+    isStartup,
     selectedYear,
     setSelectedYear,
     selectedMonth,
@@ -134,7 +135,7 @@ export const PNLBudgetSection: React.FC = () => {
             P&L Statement <span className={styles.titleAccent}>Actual vs Budget</span>
           </h1>
           <p className={styles.subTitle}>
-            {hotelName} • Komparasi Laba Rugi Operasional Realisasi vs Perencanaan Target USALI
+            {hotelName} • {isStartup ? "Outlet F&B & Resto UMKM • Komparasi Laba Rugi Operasional Target vs Realisasi" : "Komparasi Laba Rugi Operasional Realisasi vs Perencanaan Target USALI"}
           </p>
           <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginTop: "10px" }}>
             <Link
@@ -326,32 +327,36 @@ export const PNLBudgetSection: React.FC = () => {
           </div>
         </div>
 
-        <div className={styles.kpiCard}>
-          <span className={styles.kpiLabel}>Occupancy Rate</span>
-          <span className={styles.kpiValue} style={{ color: "#2563eb" }}>
-            {actOcc.toFixed(1)}%
-          </span>
-          <div className={styles.kpiComparison}>
-            <span style={{ color: "#78716c" }}>Target: {budOcc.toFixed(1)}% ({budRoomsSold} Rms)</span>
-            <span className={actOcc >= budOcc ? styles.variancePositive : styles.varianceNegative}>
-              {actOcc >= budOcc ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-              {(actOcc - budOcc).toFixed(1)}% pts
-            </span>
-          </div>
-        </div>
+        {!isStartup && (
+          <>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>Occupancy Rate</span>
+              <span className={styles.kpiValue} style={{ color: "#2563eb" }}>
+                {actOcc.toFixed(1)}%
+              </span>
+              <div className={styles.kpiComparison}>
+                <span style={{ color: "#78716c" }}>Target: {budOcc.toFixed(1)}% ({budRoomsSold} Rms)</span>
+                <span className={actOcc >= budOcc ? styles.variancePositive : styles.varianceNegative}>
+                  {actOcc >= budOcc ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                  {(actOcc - budOcc).toFixed(1)}% pts
+                </span>
+              </div>
+            </div>
 
-        <div className={styles.kpiCard}>
-          <span className={styles.kpiLabel}>Rooms Sold (Kamar Terjual)</span>
-          <span className={styles.kpiValue}>
-            {actRoomsSold} <span style={{ fontSize: "14px", fontWeight: 600, color: "#78716c" }}>/ {roomsAvail}</span>
-          </span>
-          <div className={styles.kpiComparison}>
-            <span style={{ color: "#78716c" }}>Target: {budRoomsSold} Kamar</span>
-            <span className={actRoomsSold >= budRoomsSold ? styles.variancePositive : styles.varianceNegative}>
-              {actRoomsSold >= budRoomsSold ? "+" : ""}{actRoomsSold - budRoomsSold} Rms
-            </span>
-          </div>
-        </div>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>Rooms Sold (Kamar Terjual)</span>
+              <span className={styles.kpiValue}>
+                {actRoomsSold} <span style={{ fontSize: "14px", fontWeight: 600, color: "#78716c" }}>/ {roomsAvail}</span>
+              </span>
+              <div className={styles.kpiComparison}>
+                <span style={{ color: "#78716c" }}>Target: {budRoomsSold} Kamar</span>
+                <span className={actRoomsSold >= budRoomsSold ? styles.variancePositive : styles.varianceNegative}>
+                  {actRoomsSold >= budRoomsSold ? "+" : ""}{actRoomsSold - budRoomsSold} Rms
+                </span>
+              </div>
+            </div>
+          </>
+        )}
       </motion.div>
 
       {/* 3. View Switcher Tabs */}
@@ -414,6 +419,7 @@ export const PNLBudgetSection: React.FC = () => {
             actualData={actualMonthlyData[selectedMonth]}
             allActualMonthlyData={actualMonthlyData}
             hotelRoomCount={hotelRoomCount}
+            isStartup={isStartup}
           />
         )}
 
@@ -423,6 +429,7 @@ export const PNLBudgetSection: React.FC = () => {
             budgetDoc={budgetDoc}
             actualMonthlyData={actualMonthlyData}
             hotelRoomCount={hotelRoomCount}
+            isStartup={isStartup}
           />
         )}
 
@@ -432,6 +439,7 @@ export const PNLBudgetSection: React.FC = () => {
             budgetDoc={budgetDoc}
             actualMonthlyData={actualMonthlyData}
             hotelRoomCount={hotelRoomCount}
+            isStartup={isStartup}
           />
         )}
 
@@ -441,6 +449,7 @@ export const PNLBudgetSection: React.FC = () => {
             budgetDoc={budgetDoc}
             actualMonthlyData={actualMonthlyData}
             hotelRoomCount={hotelRoomCount}
+            isStartup={isStartup}
           />
         )}
       </motion.div>

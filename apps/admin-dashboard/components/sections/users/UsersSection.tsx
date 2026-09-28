@@ -18,7 +18,7 @@ import { useUsers, ROLES } from "./useUsers";
 import { UserTable } from "./components/UserTable";
 import { RoleManagementTable, SystemRoleItem } from "./components/RoleManagementTable";
 import { RolePermissionDrawer } from "./components/RolePermissionDrawer";
-import { getStandardRolePermissions } from "./permissionConfig";
+import { getStandardRolePermissions, getRolesForPlan, sanitizePermissionsForPlan } from "./permissionConfig";
 import { hasPermission, isUserSuperadmin } from "@/lib/permissionCheck";
 import { AssignHotelDrawer } from "./components/AssignHotelDrawer";
 import { BlockedUsersTab } from "./components/BlockedUsersTab";
@@ -246,13 +246,15 @@ export const UsersSection: React.FC = () => {
 
     const openCreateDrawer = () => {
         setEditingUser(null);
+        const planRoles = getRolesForPlan(activeModules, ROLES).filter(r => r.toLowerCase() !== "administrator" && r.toLowerCase() !== "superadmin");
+        const defaultRole = planRoles[0] || (activeModules?.includes("pos") ? "Cashier (POS)" : "Staff");
         setFormData({ 
             email: "", 
             name: "", 
-            role: "General Manager", 
+            role: defaultRole, 
             password: "",
             allowedOutlets: activeHotelCode ? [activeHotelCode] : [],
-            permissions: getStandardRolePermissions("General Manager")
+            permissions: getStandardRolePermissions(defaultRole, activeModules)
         });
         setIsDrawerOpen(true);
     };
@@ -260,9 +262,10 @@ export const UsersSection: React.FC = () => {
     const openEditDrawer = (user: UserProfile) => {
         setEditingUser(user);
         const standardPerms = getStandardRolePermissions(user.role || "Staff", activeModules);
-        const existingPerms = user.permissions && Object.keys(user.permissions).length > 0 
+        const rawPerms = user.permissions && Object.keys(user.permissions).length > 0 
             ? { ...standardPerms, ...user.permissions }
             : standardPerms;
+        const sanitizedPerms = sanitizePermissionsForPlan(rawPerms, activeModules);
 
         setFormData({ 
             email: user.email, 
@@ -272,7 +275,7 @@ export const UsersSection: React.FC = () => {
             allowedOutlets: user.allowedOutlets && user.allowedOutlets.length > 0 
                 ? user.allowedOutlets 
                 : (activeHotelCode ? [activeHotelCode] : []),
-            permissions: existingPerms
+            permissions: sanitizedPerms
         });
         setIsDrawerOpen(true);
     };
@@ -690,6 +693,7 @@ export const UsersSection: React.FC = () => {
                                 setSelectedRoleForPermissions(role);
                                 setIsRoleDrawerOpen(true);
                             }}
+                            activeModules={activeModules}
                         />
                     </motion.section>
                 ) : activeTab === "blocked" ? (

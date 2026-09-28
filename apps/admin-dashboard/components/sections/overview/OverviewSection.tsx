@@ -1103,35 +1103,36 @@ export function OverviewSection() {
                             <button
                                 onClick={() => {
                                     if (isReadOnly) {
-                                        alert('Add transaction is not allowed in housekeeping view.');
+                                        toast.error('Add transaction is not allowed in housekeeping view.');
                                     } else {
                                         router.push(`/forecast/add?date=${startDate}&module=${currentModule}`);
                                     }
                                 }}
-                                className={styles.btnPrimary}
+                                className={styles.btnAddTransaction}
                                 title="Add Transaction"
-                                style={{ height: '38px', padding: '0 16px', borderRadius: '8px', gap: '8px' }}
                                 disabled={isReadOnly}
                             >
-                                <PlusCircle size={18} />
+                                <PlusCircle size={16} />
                                 <span>Add Transaction</span>
                             </button>
 
                             <button 
+                                type="button"
                                 onClick={handleExportExcel}
-                                className={styles.btnIcon}
-                                style={{ height: '36px', width: '36px', borderRadius: '8px' }}
+                                className={styles.btnExportExcel}
                                 title="Export to Excel"
+                                aria-label="Export to Excel"
                             >
-                                <Download size={16} />
+                                <Download size={15} />
                             </button>
                             <button 
+                                type="button"
                                 onClick={handleExportPDF}
-                                className={styles.btnIcon}
-                                style={{ height: '36px', width: '36px', borderRadius: '8px' }}
+                                className={styles.btnExportPdf}
                                 title="Export to PDF"
+                                aria-label="Export to PDF"
                             >
-                                <FileText size={16} />
+                                <FileText size={15} />
                             </button>
                         </div>
                     </div>

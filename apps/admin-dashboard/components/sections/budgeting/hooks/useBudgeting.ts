@@ -14,6 +14,7 @@ import {
   DSRReportResult,
 } from "@/lib/budget-types";
 import { computeDSRReport } from "@/lib/dsr-engine";
+import { isStartupPlan } from "@/lib/hotelPlanHelper";
 
 export const useBudgeting = () => {
   const { user, activeHotelCode, activeHotelName } = useAuth();
@@ -40,6 +41,7 @@ export const useBudgeting = () => {
 
   // Data states
   const [hotelRoomCount, setHotelRoomCount] = useState<number>(8);
+  const [isStartup, setIsStartup] = useState<boolean>(false);
   const [loadingBudget, setLoadingBudget] = useState(false);
   const [loadingActuals, setLoadingActuals] = useState(false);
   const [savingBudget, setSavingBudget] = useState(false);
@@ -77,6 +79,7 @@ export const useBudgeting = () => {
       const hSnap = await getDoc(hotelRef);
       if (hSnap.exists()) {
         const hd = hSnap.data() as any;
+        setIsStartup(isStartupPlan(hd));
         count =
           typeof hd.roomCount === "number"
             ? hd.roomCount
@@ -506,6 +509,7 @@ export const useBudgeting = () => {
     hotelCode,
     hotelName,
     hotelRoomCount,
+    isStartup,
     loadingBudget,
     loadingActuals,
     savingBudget,

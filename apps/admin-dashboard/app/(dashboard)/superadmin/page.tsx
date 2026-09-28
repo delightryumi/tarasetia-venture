@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { getStandardRolePermissions, sanitizePermissionsForPlan } from "@/components/sections/users/permissionConfig";
 
 // ── Modular Components ──
 import { HotelMasterDoc } from "./types";
@@ -78,6 +79,7 @@ export default function SuperadminPage() {
   const [billingStatus, setBillingStatus] = useState<any>("paid");
   const [nextDueDate, setNextDueDate] = useState("");
   const [showBillingAlert, setShowBillingAlert] = useState(false);
+  const [originalEmail, setOriginalEmail] = useState("");
   const [showExpirationAlert, setShowExpirationAlert] = useState(false);
   const [activeModules, setActiveModules] = useState<string[]>([]);
   const [mergeAccessHotel, setMergeAccessHotel] = useState<HotelMasterDoc | null>(null);
@@ -97,6 +99,7 @@ export default function SuperadminPage() {
   const [loadingGlobalBilling, setLoadingGlobalBilling] = useState(false);
   const [globalBillingRecords, setGlobalBillingRecords] = useState<any[]>([]);
   const [isSavingAlert, setIsSavingAlert] = useState(false);
+  const [isSavingHotel, setIsSavingHotel] = useState(false);
 
   // ── Add payment modal ──
   const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
@@ -323,6 +326,7 @@ export default function SuperadminPage() {
     setNextDueDate(hotel.billing?.nextDueDate ? hotel.billing.nextDueDate.split("T")[0] : "");
     setShowBillingAlert(!!hotel.billing?.showBillingAlert);
     setShowExpirationAlert(!!hotel.billing?.showExpirationAlert);
+    setOriginalEmail((hotel.email || "").trim().toLowerCase());
     setIsModalOpen(true);
   };
 
@@ -362,9 +366,16 @@ export default function SuperadminPage() {
     const code = hotelCode.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
     if (!code) { setError("Kode hotel tidak boleh kosong dan harus alphanumeric."); return; }
 
+    setIsSavingHotel(true);
     try {
       let defaultPasswordInfo = "";
-      if (email.trim()) {
+      // Hanya panggil register-admin jika:
+      // - Mode tambah baru (bukan edit), ATAU
+      // - Mode edit tapi email berubah dari email hotel yang lama
+      const emailTrimmed = email.trim().toLowerCase();
+      const isEmailChanged = emailTrimmed && (!isEditing || emailTrimmed !== originalEmail);
+
+      if (isEmailChanged) {
         const token = auth.currentUser ? await auth.currentUser.getIdToken() : "";
         const res = await fetch("/api/hotels/register-admin", {
           method: "POST",
@@ -372,7 +383,7 @@ export default function SuperadminPage() {
             "Content-Type": "application/json",
             ...(token ? { "Authorization": `Bearer ${token}` } : {})
           },
-          body: JSON.stringify({ email: email.trim(), hotelCode: isEditing ? currentHotelCode : code, hotelName: name.trim() }),
+          body: JSON.stringify({ email: emailTrimmed, hotelCode: isEditing ? currentHotelCode : code, hotelName: name.trim() }),
         });
         const data = await res.json();
         if (!res.ok) { setError(data.error || "Gagal mengautentikasi email admin."); return; }
@@ -381,23 +392,16 @@ export default function SuperadminPage() {
           defaultPasswordInfo = data.defaultPassword
             ? ` User Admin dibuat (Password: ${data.defaultPassword})${emailStatus}`
             : ` User Admin ditautkan (Email sudah terdaftar)${emailStatus}`;
-          const userDocId = email.trim().toLowerCase().replace(/[@.]/g, "_");
-          await setDoc(doc(db, "hotels", isEditing ? currentHotelCode : code, "users_master", userDocId), {
-            email: email.trim().toLowerCase(), name: `${name.trim()} Admin`, role: "admin",
+          const userDocId = emailTrimmed.replace(/[@.]/g, "_");
+          const adminInitialPerms = getStandardRolePermissions("admin", activeModules);
+          const targetCode = isEditing ? currentHotelCode : code;
+          await setDoc(doc(db, "hotels", targetCode, "users_master", userDocId), {
+            email: emailTrimmed, name: `${name.trim()} Admin`, role: "admin",
             isOwner: true,
+            hotelCode: targetCode,
+            allowedOutlets: [targetCode],
             createdAt: new Date().toISOString(),
-            permissions: {
-              module_pos: true, module_front_office: true, module_housekeeping: true,
-              module_food_beverage: true, module_purchasing: true, module_accounting: true, module_cpanel: true,
-              overview: true, forecast: true, invoice: true, pnl: true, logo: true, hero: true,
-              "room-type": true, about: true, gallery: true, footer: true, attractions: true,
-              promo: true, packages: true, seo: true, users: true, purchasing: true,
-              "store-requisition": true, "purchase-requisition": true, "daily-market-list": true,
-              "stock-opname": true, items: true, suppliers: true, "purchase-order": true,
-              "food-beverage-product": true,
-              pos_home: true, pos_lexupos: true, pos_cashier: true, pos_product: true,
-              pos_records: true, pos_settings: true, pos_self_order: true,
-            },
+            permissions: adminInitialPerms,
           }, { merge: true });
         }
       }
@@ -407,6 +411,7 @@ export default function SuperadminPage() {
         name: name.trim(), domain: domain.trim(),
         subdomain: subdomain.trim() || `${code}.crs.local`,
         address: address.trim(), phone: phone.trim(), email: email.trim(),
+        activeModules,
         billing: {
           plan, cycle,
           status: billingStatus,
@@ -422,13 +427,52 @@ export default function SuperadminPage() {
           : { active: true, createdAt: new Date().toISOString(), suspendedAt: null }),
       };
 
-      await setDoc(doc(db, "hotels", isEditing ? currentHotelCode : code), dataPayload, { merge: true });
+      const targetHotelCode = isEditing ? currentHotelCode : code;
+      await setDoc(doc(db, "hotels", targetHotelCode), dataPayload, { merge: true });
+
+      // Synchronize Admin/Owner permissions in users_master to strictly align with new activeModules plan
+      try {
+        const usersSnap = await getDocs(collection(db, "hotels", targetHotelCode, "users_master"));
+        if (!usersSnap.empty) {
+          const batch = writeBatch(db);
+          let syncCount = 0;
+          const updatedAdminPerms = getStandardRolePermissions("admin", activeModules);
+          usersSnap.forEach((uDoc) => {
+            const uData = uDoc.data();
+            const uRole = (uData.role || "").toLowerCase().trim();
+            if (uRole === "admin" || uRole === "administrator" || uRole === "owner" || uData.isOwner === true) {
+              batch.update(uDoc.ref, {
+                permissions: updatedAdminPerms,
+                hotelCode: targetHotelCode,
+                allowedOutlets: [targetHotelCode],
+                updatedAt: new Date().toISOString(),
+              });
+              syncCount++;
+            } else if (uData.permissions) {
+              const sanitized = sanitizePermissionsForPlan(uData.permissions, activeModules);
+              batch.update(uDoc.ref, {
+                permissions: sanitized,
+                updatedAt: new Date().toISOString(),
+              });
+              syncCount++;
+            }
+          });
+          if (syncCount > 0) {
+            await batch.commit();
+          }
+        }
+      } catch (syncErr) {
+        console.warn("Could not sync admin permissions with updated plan:", syncErr);
+      }
+
       setSuccessMsg(isEditing ? `Konfigurasi hotel "${name}" berhasil diubah.${defaultPasswordInfo}` : `Hotel baru "${name}" berhasil ditambahkan.${defaultPasswordInfo}`);
       setIsModalOpen(false);
       setTimeout(() => setSuccessMsg(""), defaultPasswordInfo.includes("Password") ? 15000 : 4000);
     } catch (err) {
       console.error(err);
       setError("Gagal menyimpan data hotel.");
+    } finally {
+      setIsSavingHotel(false);
     }
   };
 
@@ -688,6 +732,7 @@ export default function SuperadminPage() {
             onSubmit={handleSubmit}
             onSendLink={handleSendLink}
             isSendingLink={isSendingLink}
+            isSavingHotel={isSavingHotel}
             onClose={() => setIsModalOpen(false)}
           />
         )}

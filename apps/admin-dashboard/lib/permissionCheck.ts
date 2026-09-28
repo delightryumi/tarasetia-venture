@@ -245,7 +245,7 @@ export function isPathAllowedForUser(
     user: UserPermissionProfile | null | undefined,
     activeModules: string[] | null
 ): boolean {
-    if (isUserSuperadmin(user) || isUserAdmin(user)) return true;
+    if (isUserSuperadmin(user)) return true;
 
     // Public/system routes that are always allowed once authenticated
     if (pathname === "/select-module" || pathname === "/login" || pathname === "/profile") {
@@ -261,6 +261,13 @@ export function isPathAllowedForUser(
     if (activeModules !== null) {
         if (pathname.startsWith("/innalytics")) {
             if (!activeModules.includes("innalytics") && !activeModules.includes("inalytics")) {
+                return false;
+            }
+        }
+
+        // Channel Manager: requires superadmin OR active channel-manager in plan + explicit delegation
+        if (pathname.startsWith("/channel-manager")) {
+            if (!activeModules.includes("channel-manager")) {
                 return false;
             }
         }
@@ -289,6 +296,10 @@ export function isPathAllowedForUser(
             requiredBillingModule = "purchasing";
         } else if (pathname.startsWith("/food-beverage")) {
             requiredBillingModule = "food-beverage";
+        } else if (pathname.startsWith("/hrd")) {
+            requiredBillingModule = "hrd";
+        } else if (pathname.startsWith("/pos")) {
+            requiredBillingModule = "pos";
         } else if (
             pathname.startsWith("/accounting") ||
             pathname === "/pnl" ||
@@ -298,7 +309,15 @@ export function isPathAllowedForUser(
             pathname === "/budgeting"
         ) {
             requiredBillingModule = "accounting";
-        } else if (pathname === "/invoice" || pathname === "/revenue-breakdown") {
+        } else if (
+            pathname === "/invoice" ||
+            pathname === "/revenue-breakdown" ||
+            pathname === "/rate-inventory" ||
+            pathname.startsWith("/rate-inventory") ||
+            pathname.startsWith("/confirmation-letter") ||
+            pathname === "/digital-checkin" ||
+            pathname === "/inventory-control"
+        ) {
             requiredBillingModule = "front-office";
         } else if (pathname === "/overview" || pathname === "/forecast") {
             if (moduleParam) {
@@ -314,13 +333,19 @@ export function isPathAllowedForUser(
 
         const resolvedBilling = moduleParam || requiredBillingModule;
         if (resolvedBilling && resolvedBilling !== "cpanel") {
-            if (!activeModules.includes(resolvedBilling) && !hasModuleAccess(user, resolvedBilling)) {
+            if (!activeModules.includes(resolvedBilling)) {
+                return false;
+            }
+            if (!isUserAdmin(user) && !hasModuleAccess(user, resolvedBilling)) {
                 return false;
             }
         }
     }
 
-    // 2. User Granular Permissions Validation
+    // 2. Property Admins & Owners have full access to their hotel's active plan modules
+    if (isUserAdmin(user)) return true;
+
+    // 3. User Granular Permissions Validation (for staff/employees)
     if (!user) return false;
 
     // Users / Staff Management Route

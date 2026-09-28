@@ -431,10 +431,11 @@
     transition: all 0.15s ease;
 }
 
-.actionBtn:hover {
+.actionBtn:hover,
+.actionBtnActive {
     background: #f1f5f9;
     color: #0f172a;
-    border-color: #e2e8f0;
+    border-color: #cbd5e1;
 }
 
 .dropdownMenu {
@@ -446,12 +447,24 @@
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
-    z-index: 9999;
+    z-index: 99999;
     padding: 6px;
     display: flex;
     flex-direction: column;
     gap: 2px;
     text-align: left;
+    animation: menuFadeIn 0.12s ease-out;
+}
+
+@keyframes menuFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .dropdownItem {

@@ -78,17 +78,19 @@ export default function SelectModulePage() {
         // Map old cpanel key to cpanel-full or cpanel-only
         if (modules.includes('cpanel')) {
           modules = modules.filter((m: string) => m !== 'cpanel');
-          const plan = data.billing?.plan || 'premium';
-          if (plan === 'basic') {
+          const plan = data.billing?.plan || 'enterprise';
+          if (plan === 'basic' || plan === 'startup') {
             if (!modules.includes('cpanel-only')) modules.push('cpanel-only');
           } else {
             if (!modules.includes('cpanel-full')) modules.push('cpanel-full');
           }
         }
         if (modules.length === 0) {
-          const plan = data.billing?.plan || 'premium';
-          if (plan === 'basic') {
-            modules = ['pos', 'cpanel-only'];
+          const plan = data.billing?.plan || 'enterprise';
+          if (plan === 'basic' || plan === 'startup') {
+            modules = ['pos', 'hrd', 'cpanel-only'];
+          } else if (plan === 'bisnis') {
+            modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'hrd', 'innalytics', 'cpanel-only'];
           } else {
             modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'hrd', 'innalytics', 'cpanel-full'];
           }
@@ -171,10 +173,34 @@ export default function SelectModulePage() {
 
     if (!user) return false;
 
-    // 2. Property Admins & Owners have full access to their hotel's modules
-    const roleLower = (user.role || "").toLowerCase().trim();
-    if (roleLower === "admin" || roleLower === "administrator" || roleLower === "owner" || (user as any).isOwner === true) {
-      return true;
+    // 2. Strict Hotel Plan (activeModules) Validation:
+    // If the hotel did not subscribe to this module, NO user in this property (including Admin/Owner) can access it
+    if (activeModules !== null) {
+      let isPlanActive = false;
+      if (moduleKey === 'pos') {
+        isPlanActive = activeModules.includes('pos');
+      } else if (moduleKey === 'front-office') {
+        isPlanActive = activeModules.includes('front-office');
+      } else if (moduleKey === 'innalytics') {
+        isPlanActive = activeModules.includes('innalytics') || activeModules.includes('inalytics');
+      } else if (moduleKey === 'housekeeping') {
+        isPlanActive = activeModules.includes('housekeeping');
+      } else if (moduleKey === 'food-beverage') {
+        isPlanActive = activeModules.includes('food-beverage');
+      } else if (moduleKey === 'purchasing') {
+        isPlanActive = activeModules.includes('purchasing');
+      } else if (moduleKey === 'accounting') {
+        isPlanActive = activeModules.includes('accounting');
+      } else if (moduleKey === 'hrd') {
+        isPlanActive = activeModules.includes('hrd');
+      } else if (moduleKey === 'cpanel') {
+        isPlanActive = activeModules.includes('cpanel-full') || activeModules.includes('cpanel-only');
+      } else if (moduleKey === 'channel-manager') {
+        isPlanActive = activeModules.includes('channel-manager');
+      }
+      if (!isPlanActive) {
+        return false;
+      }
     }
 
     // Special check for channel-manager: superadmin or explicit second backup
@@ -185,7 +211,13 @@ export default function SelectModulePage() {
       );
     }
 
-    // Always unlock and show menu if user has at least 1 permission in this module!
+    // 3. Property Admins & Owners have full access to their hotel's active plan modules
+    const roleLower = (user.role || "").toLowerCase().trim();
+    if (roleLower === "admin" || roleLower === "administrator" || roleLower === "owner" || (user as any).isOwner === true) {
+      return true;
+    }
+
+    // 4. Staff/Employees: check granular permission
     return hasModuleAccess(user, moduleKey);
   };
 

@@ -35,10 +35,28 @@
   gap: 12px;
 }
 
+.headerLogoLink {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.headerLogoLink:hover {
+  opacity: 0.85;
+  transform: scale(1.03);
+}
+
+.headerLogoLink:active {
+  transform: scale(0.97);
+}
+
 .headerLogo {
   height: 28px;
   width: auto;
   object-fit: contain;
+  cursor: pointer;
 }
 
 .headerPropertyText {

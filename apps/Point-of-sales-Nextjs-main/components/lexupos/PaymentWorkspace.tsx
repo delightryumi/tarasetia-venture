@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { ArrowLeft, Coins, QrCode, CreditCard, CheckCircle2, Utensils } from 'lucide-react';
+import { ArrowLeft, Coins, QrCode, CreditCard, CheckCircle2, Utensils, Split } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CartItem, PaymentMethodType } from './types';
 import { useCurrency } from '@/hooks/useCurrency';
+import SplitBillModal from './SplitBillModal';
 
 interface PaymentWorkspaceProps {
   customerName: string;
@@ -22,6 +23,9 @@ interface PaymentWorkspaceProps {
   setCashAmount: (amount: string) => void;
   onBackToPOS: () => void;
   onConfirmPayment: () => void;
+  onConfirmSplitPayment?: (splitData: any) => void;
+  taxRatePercent?: number;
+  splitPaidCredit?: number;
   revenueType: 'alacarte' | 'banquet';
   setRevenueType: (type: 'alacarte' | 'banquet') => void;
 }
@@ -35,17 +39,21 @@ export default function PaymentWorkspace({
   tax,
   discount,
   payableAmount,
+  splitPaidCredit,
   paymentMethod,
   setPaymentMethod,
   cashAmount,
   setCashAmount,
   onBackToPOS,
   onConfirmPayment,
+  onConfirmSplitPayment,
+  taxRatePercent = 10,
   revenueType,
   setRevenueType
 }: PaymentWorkspaceProps) {
   const { formatCurrency, symbol } = useCurrency();
   const [staticQris, setStaticQris] = React.useState<string | null>(null);
+  const [isSplitModalOpen, setIsSplitModalOpen] = React.useState(false);
   
   const hasBanquetItem = cart.some(
     (item) => item.product.category?.toUpperCase() === 'BANQUET'
@@ -88,15 +96,30 @@ export default function PaymentWorkspace({
       
       {/* Visual Right Side (Review Transaksi) */}
       <div className="w-[360px] xl:w-[420px] flex flex-col min-w-0 p-5 shrink-0 overflow-y-auto thin-scrollbar border-l border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-950 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] z-10">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBackToPOS}
-          className="self-start text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white flex items-center gap-1.5 text-xs font-semibold px-2 py-1 mb-4 border border-neutral-200 dark:border-white/10 rounded-[6px]"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Kembali ke POS</span>
-        </Button>
+        <div className="flex items-center justify-between gap-2 mb-4 shrink-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBackToPOS}
+            className="text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 border border-neutral-200 dark:border-white/10 rounded-xl"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Kembali ke POS</span>
+          </Button>
+
+          {cart.length > 0 && onConfirmSplitPayment && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSplitModalOpen(true)}
+              className="flex items-center gap-1.5 text-xs font-bold text-neutral-800 dark:text-neutral-200 bg-neutral-50 dark:bg-zinc-900 hover:bg-neutral-100 dark:hover:bg-zinc-800 border-neutral-200 dark:border-white/10 rounded-xl px-3 py-1 shadow-xs active:scale-95 transition-all"
+            >
+              <Split className="w-3.5 h-3.5 text-neutral-600 dark:text-neutral-400" />
+              <span>Split Bill</span>
+            </Button>
+          )}
+        </div>
 
         <div className="flex flex-col gap-3 mb-5 shrink-0">
           <div>
@@ -132,39 +155,60 @@ export default function PaymentWorkspace({
         )}
 
         <div className="flex-1 overflow-y-auto bg-neutral-50 dark:bg-zinc-900/50 border border-neutral-200/80 dark:border-white/[0.05] rounded-[10px] p-5 flex flex-col gap-4 thin-scrollbar shadow-sm">
-          {cart.map((item) => (
-            <div 
-              key={item.product.id}
-              className="flex items-center justify-between pb-4 border-b border-neutral-100 dark:border-white/[0.05] last:border-0 last:pb-0"
-            >
-              <div className="flex items-center gap-4 min-w-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                {item.product.image ? (
-                  <img
-                    src={item.product.image}
-                    alt={item.product.name}
-                    className="w-12 h-12 rounded-xl object-cover bg-slate-100 dark:bg-neutral-800 shrink-0"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 text-neutral-400">
-                    <Utensils className="w-6 h-6" />
+          {cart.map((item, idx) => {
+            const addonsTotal = item.selectedAddons ? item.selectedAddons.reduce((sum, a) => sum + a.price, 0) : 0;
+            const itemPrice = (item.product.price || 0) + addonsTotal;
+            return (
+              <div 
+                key={item.cartItemId || `${item.product.id}-${idx}`}
+                className="flex items-center justify-between pb-4 border-b border-neutral-100 dark:border-white/[0.05] last:border-0 last:pb-0"
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {item.product.image ? (
+                    <img
+                      src={item.product.image}
+                      alt={item.product.name}
+                      className="w-12 h-12 rounded-xl object-cover bg-slate-100 dark:bg-neutral-800 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 text-neutral-400">
+                      <Utensils className="w-6 h-6" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 truncate">
+                      {item.product.name}
+                    </h4>
+                    {item.selectedAddons && item.selectedAddons.length > 0 && (
+                      <p className="text-[10px] text-neutral-500 mt-0.5 font-medium leading-tight">
+                        {item.selectedAddons.map(a => a.name).join(', ')}
+                      </p>
+                    )}
+                    {item.note && (
+                      <p className="text-[10px] text-orange-500 italic mt-0.5 leading-tight">
+                        &quot;{item.note}&quot;
+                      </p>
+                    )}
+                    <p className="text-xs text-neutral-500 font-semibold mt-1">
+                      {item.isCompliment ? (
+                        <>
+                          <span className="line-through text-neutral-400 mr-1.5">{formatCurrency(itemPrice)}</span>
+                          <span className="text-emerald-500 font-bold">Gratis (Compliment)</span>
+                        </>
+                      ) : (
+                        <>{formatCurrency(itemPrice)} x {item.quantity}</>
+                      )}
+                    </p>
                   </div>
-                )}
-                <div className="min-w-0">
-                  <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 truncate">
-                    {item.product.name}
-                  </h4>
-                  <p className="text-xs text-neutral-500 font-semibold mt-1">
-                    {formatCurrency(item.product.price)} x {item.quantity}
-                  </p>
                 </div>
+                
+                <span className="text-sm font-black text-neutral-800 dark:text-neutral-200 ml-4 shrink-0">
+                  {item.isCompliment ? formatCurrency(0) : formatCurrency(itemPrice * item.quantity)}
+                </span>
               </div>
-              
-              <span className="text-sm font-black text-neutral-800 dark:text-neutral-200 ml-4 shrink-0">
-                {formatCurrency(item.product.price * item.quantity)}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -280,9 +324,20 @@ export default function PaymentWorkspace({
             </div>
           </div>
 
+          {splitPaidCredit && splitPaidCredit > 0 ? (
+            <div className="flex justify-between items-center py-1 text-xs text-emerald-600 dark:text-emerald-400">
+              <span className="font-bold">Telah Dibayar (Split)</span>
+              <span className="font-bold">-{formatCurrency(splitPaidCredit)}</span>
+            </div>
+          ) : null}
+
           <div className="flex justify-between items-center py-2">
-            <span className="text-sm font-black text-neutral-500 uppercase tracking-widest">Total Tagihan</span>
-            <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{formatCurrency(payableAmount)}</span>
+            <span className="text-sm font-black text-neutral-500 uppercase tracking-widest">
+              {splitPaidCredit && splitPaidCredit > 0 ? 'Sisa Kurangan Tagihan' : 'Total Tagihan'}
+            </span>
+            <span className={`text-3xl font-black ${splitPaidCredit && splitPaidCredit > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+              {formatCurrency(payableAmount)}
+            </span>
           </div>
 
           {/* Dynamic input content */}
@@ -407,6 +462,22 @@ export default function PaymentWorkspace({
 
         </div>
       </div>
+
+      {/* Split Bill Modal */}
+      {onConfirmSplitPayment && isSplitModalOpen && (
+        <SplitBillModal
+          isOpen={isSplitModalOpen}
+          onClose={() => setIsSplitModalOpen(false)}
+          cart={cart}
+          tableNumber={tableNumber}
+          customerName={customerName}
+          taxRatePercent={taxRatePercent}
+          onConfirmSplitPayment={(splitData) => {
+            setIsSplitModalOpen(false);
+            onConfirmSplitPayment(splitData);
+          }}
+        />
+      )}
     </div>
   );
 }

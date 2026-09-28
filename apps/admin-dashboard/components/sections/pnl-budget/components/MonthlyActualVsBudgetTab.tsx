@@ -15,6 +15,7 @@ interface MonthlyActualVsBudgetTabProps {
   actualData: any;
   allActualMonthlyData?: Record<string, any>;
   hotelRoomCount: number;
+  isStartup?: boolean;
 }
 
 const MONTH_NAMES = [
@@ -39,6 +40,7 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
   actualData,
   allActualMonthlyData = {},
   hotelRoomCount,
+  isStartup = false,
 }) => {
   const [mode, setMode] = useState<"mtd" | "ytd">("mtd");
   const [detailModal, setDetailModal] = useState<{
@@ -466,78 +468,84 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
           </thead>
           <tbody>
             {/* ── 1. OPERATING STATISTICS ── */}
-            <tr className={styles.tierHeaderRow}>
-              <td className={styles.colCode}>STAT</td>
-              <td colSpan={5}>1. STATISTIK OPERASIONAL HOTEL (TAMU & KAMAR REAL)</td>
-            </tr>
-            <tr>
-              <td className={styles.colCode}>STAT-01</td>
-              <td className={styles.colDesc}>Rooms Available (Kamar Tersedia)</td>
-              <td className={styles.colAmount}>{roomsAvail}</td>
-              <td className={styles.colAmount}>{roomsAvail}</td>
-              <td className={styles.colVariance} style={{ color: "#78716c" }}>0</td>
-              <td className={styles.colPercent} style={{ color: "#78716c" }}>0.0%</td>
-            </tr>
-            <tr>
-              <td className={styles.colCode}>STAT-02</td>
-              <td className={styles.colDesc}>Rooms Sold (Kamar Terjual)</td>
-              <td className={styles.colAmount} style={{ fontWeight: 800, color: "#2563eb" }}>{actualRoomsSold}</td>
-              <td className={styles.colAmount}>{budgetRoomsSold}</td>
-              {renderVarCell(actualRoomsSold, budgetRoomsSold, false, false)}
-            </tr>
-            <tr>
-              <td className={styles.colCode}>STAT-03</td>
-              <td className={styles.colDesc}>Total Guest Pax (Jumlah Tamu Real)</td>
-              <td className={styles.colAmount} style={{ fontWeight: 800, color: "#059669" }}>{actualPax}</td>
-              <td className={styles.colAmount}>{budgetPax}</td>
-              {renderVarCell(actualPax, budgetPax, false, false)}
-            </tr>
-            <tr>
-              <td className={styles.colCode}>STAT-04</td>
-              <td className={styles.colDesc}>Occupancy Rate (%)</td>
-              <td className={styles.colAmount} style={{ fontWeight: 800, color: "#2563eb" }}>{actualOcc.toFixed(1)}%</td>
-              <td className={styles.colAmount}>{budgetOcc.toFixed(1)}%</td>
-              <td className={styles.colVariance} style={{ color: actualOcc >= budgetOcc ? "#16a34a" : "#dc2626" }}>
-                {(actualOcc - budgetOcc).toFixed(1)}% pts
-              </td>
-              <td className={styles.colPercent} style={{ color: actualOcc >= budgetOcc ? "#16a34a" : "#dc2626" }}>
-                {budgetOcc > 0 ? (((actualOcc - budgetOcc) / budgetOcc) * 100).toFixed(1) : "0.0"}%
-              </td>
-            </tr>
-            <tr>
-              <td className={styles.colCode}>STAT-05</td>
-              <td className={styles.colDesc}>Average Room Rate (ARR)</td>
-              <td className={styles.colAmount}>{formatIDR(actualArr)}</td>
-              <td className={styles.colAmount}>{formatIDR(budgetArr)}</td>
-              {renderVarCell(actualArr, budgetArr)}
-            </tr>
-            <tr>
-              <td className={styles.colCode}>STAT-06</td>
-              <td className={styles.colDesc}>RevPAR (Revenue Per Available Room)</td>
-              <td className={styles.colAmount}>{formatIDR(actualRevPar)}</td>
-              <td className={styles.colAmount}>{formatIDR(budgetRevPar)}</td>
-              {renderVarCell(actualRevPar, budgetRevPar)}
-            </tr>
+            {!isStartup && (
+              <>
+                <tr className={styles.tierHeaderRow}>
+                  <td className={styles.colCode}>STAT</td>
+                  <td colSpan={5}>1. STATISTIK OPERASIONAL HOTEL (TAMU & KAMAR REAL)</td>
+                </tr>
+                <tr>
+                  <td className={styles.colCode}>STAT-01</td>
+                  <td className={styles.colDesc}>Rooms Available (Kamar Tersedia)</td>
+                  <td className={styles.colAmount}>{roomsAvail}</td>
+                  <td className={styles.colAmount}>{roomsAvail}</td>
+                  <td className={styles.colVariance} style={{ color: "#78716c" }}>0</td>
+                  <td className={styles.colPercent} style={{ color: "#78716c" }}>0.0%</td>
+                </tr>
+                <tr>
+                  <td className={styles.colCode}>STAT-02</td>
+                  <td className={styles.colDesc}>Rooms Sold (Kamar Terjual)</td>
+                  <td className={styles.colAmount} style={{ fontWeight: 800, color: "#2563eb" }}>{actualRoomsSold}</td>
+                  <td className={styles.colAmount}>{budgetRoomsSold}</td>
+                  {renderVarCell(actualRoomsSold, budgetRoomsSold, false, false)}
+                </tr>
+                <tr>
+                  <td className={styles.colCode}>STAT-03</td>
+                  <td className={styles.colDesc}>Total Guest Pax (Jumlah Tamu Real)</td>
+                  <td className={styles.colAmount} style={{ fontWeight: 800, color: "#059669" }}>{actualPax}</td>
+                  <td className={styles.colAmount}>{budgetPax}</td>
+                  {renderVarCell(actualPax, budgetPax, false, false)}
+                </tr>
+                <tr>
+                  <td className={styles.colCode}>STAT-04</td>
+                  <td className={styles.colDesc}>Occupancy Rate (%)</td>
+                  <td className={styles.colAmount} style={{ fontWeight: 800, color: "#2563eb" }}>{actualOcc.toFixed(1)}%</td>
+                  <td className={styles.colAmount}>{budgetOcc.toFixed(1)}%</td>
+                  <td className={styles.colVariance} style={{ color: actualOcc >= budgetOcc ? "#16a34a" : "#dc2626" }}>
+                    {(actualOcc - budgetOcc).toFixed(1)}% pts
+                  </td>
+                  <td className={styles.colPercent} style={{ color: actualOcc >= budgetOcc ? "#16a34a" : "#dc2626" }}>
+                    {budgetOcc > 0 ? (((actualOcc - budgetOcc) / budgetOcc) * 100).toFixed(1) : "0.0"}%
+                  </td>
+                </tr>
+                <tr>
+                  <td className={styles.colCode}>STAT-05</td>
+                  <td className={styles.colDesc}>Average Room Rate (ARR)</td>
+                  <td className={styles.colAmount}>{formatIDR(actualArr)}</td>
+                  <td className={styles.colAmount}>{formatIDR(budgetArr)}</td>
+                  {renderVarCell(actualArr, budgetArr)}
+                </tr>
+                <tr>
+                  <td className={styles.colCode}>STAT-06</td>
+                  <td className={styles.colDesc}>RevPAR (Revenue Per Available Room)</td>
+                  <td className={styles.colAmount}>{formatIDR(actualRevPar)}</td>
+                  <td className={styles.colAmount}>{formatIDR(budgetRevPar)}</td>
+                  {renderVarCell(actualRevPar, budgetRevPar)}
+                </tr>
+              </>
+            )}
 
             {/* ── 2. OPERATING REVENUE ── */}
             <tr className={styles.tierHeaderRow}>
               <td className={styles.colCode}>3000</td>
               <td colSpan={5}>2. PENDAPATAN OPERASIONAL (OPERATING REVENUE)</td>
             </tr>
-            <tr
-              className={styles.clickableRow}
-              onClick={() => handleOpenDetail("3013", "Room Revenue (Kamar)", "roomRevenue", aRoomRev, bRoomRev, false)}
-              title="Klik untuk melihat rincian pendapatan kamar"
-            >
-              <td className={styles.colCode}>3013</td>
-              <td className={styles.colDesc}>
-                Room Revenue (Kamar)
-                <span className={styles.inspectHint}>🔍 Rincian</span>
-              </td>
-              <td className={styles.colAmount}>{formatIDR(aRoomRev)}</td>
-              <td className={styles.colAmount}>{formatIDR(bRoomRev)}</td>
-              {renderVarCell(aRoomRev, bRoomRev)}
-            </tr>
+            {!isStartup && (
+              <tr
+                className={styles.clickableRow}
+                onClick={() => handleOpenDetail("3013", "Room Revenue (Kamar)", "roomRevenue", aRoomRev, bRoomRev, false)}
+                title="Klik untuk melihat rincian pendapatan kamar"
+              >
+                <td className={styles.colCode}>3013</td>
+                <td className={styles.colDesc}>
+                  Room Revenue (Kamar)
+                  <span className={styles.inspectHint}>🔍 Rincian</span>
+                </td>
+                <td className={styles.colAmount}>{formatIDR(aRoomRev)}</td>
+                <td className={styles.colAmount}>{formatIDR(bRoomRev)}</td>
+                {renderVarCell(aRoomRev, bRoomRev)}
+              </tr>
+            )}
             <tr
               className={styles.clickableRow}
               onClick={() => handleOpenDetail("3023", "Food & Beverage Revenue", "fnbRevenue", aFnbRev, bFnbRev, false)}
@@ -600,20 +608,22 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
               <td className={styles.colCode}>4000</td>
               <td colSpan={5}>3. HARGA POKOK PENJUALAN (COST OF SALES)</td>
             </tr>
-            <tr
-              className={styles.clickableRow}
-              onClick={() => handleOpenDetail("4014", "Cost of Rooms (Guest Supplies, Linen)", "roomCogs", aRoomCogs, bRoomCogs, true)}
-              title="Klik untuk melihat rincian transaksi dokumen"
-            >
-              <td className={styles.colCode}>4014</td>
-              <td className={styles.colDesc}>
-                Cost of Rooms (Guest Supplies, Linen)
-                <span className={styles.inspectHint}>🔍 Rincian</span>
-              </td>
-              <td className={styles.colAmount}>{formatIDR(aRoomCogs)}</td>
-              <td className={styles.colAmount}>{formatIDR(bRoomCogs)}</td>
-              {renderVarCell(aRoomCogs, bRoomCogs, true)}
-            </tr>
+            {!isStartup && (
+              <tr
+                className={styles.clickableRow}
+                onClick={() => handleOpenDetail("4014", "Cost of Rooms (Guest Supplies, Linen)", "roomCogs", aRoomCogs, bRoomCogs, true)}
+                title="Klik untuk melihat rincian transaksi dokumen"
+              >
+                <td className={styles.colCode}>4014</td>
+                <td className={styles.colDesc}>
+                  Cost of Rooms (Guest Supplies, Linen)
+                  <span className={styles.inspectHint}>🔍 Rincian</span>
+                </td>
+                <td className={styles.colAmount}>{formatIDR(aRoomCogs)}</td>
+                <td className={styles.colAmount}>{formatIDR(bRoomCogs)}</td>
+                {renderVarCell(aRoomCogs, bRoomCogs, true)}
+              </tr>
+            )}
             <tr
               className={styles.clickableRow}
               onClick={() => handleOpenDetail("4024", "Cost of F&B (Food & Beverage Ingredients)", "fnbCogs", aFnbCogs, bFnbCogs, true)}
@@ -677,20 +687,22 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
               <td className={styles.colCode}>5000</td>
               <td colSpan={5}>4. BIAYA OPERASIONAL DEPARTEMEN (DEPARTMENTAL EXPENSES)</td>
             </tr>
-            <tr
-              className={styles.clickableRow}
-              onClick={() => handleOpenDetail("5015", "Room Department (FO & HK Payroll & Expenses)", "roomExp", aRoomExp, bRoomExp, true)}
-              title="Klik untuk melihat rincian biaya Room Dept"
-            >
-              <td className={styles.colCode}>5015</td>
-              <td className={styles.colDesc}>
-                Room Department (FO & HK Payroll & Expenses)
-                <span className={styles.inspectHint}>🔍 Rincian</span>
-              </td>
-              <td className={styles.colAmount}>{formatIDR(aRoomExp)}</td>
-              <td className={styles.colAmount}>{formatIDR(bRoomExp)}</td>
-              {renderVarCell(aRoomExp, bRoomExp, true)}
-            </tr>
+            {!isStartup && (
+              <tr
+                className={styles.clickableRow}
+                onClick={() => handleOpenDetail("5015", "Room Department (FO & HK Payroll & Expenses)", "roomExp", aRoomExp, bRoomExp, true)}
+                title="Klik untuk melihat rincian biaya Room Dept"
+              >
+                <td className={styles.colCode}>5015</td>
+                <td className={styles.colDesc}>
+                  Room Department (FO & HK Payroll & Expenses)
+                  <span className={styles.inspectHint}>🔍 Rincian</span>
+                </td>
+                <td className={styles.colAmount}>{formatIDR(aRoomExp)}</td>
+                <td className={styles.colAmount}>{formatIDR(bRoomExp)}</td>
+                {renderVarCell(aRoomExp, bRoomExp, true)}
+              </tr>
+            )}
             <tr
               className={styles.clickableRow}
               onClick={() => handleOpenDetail("5025", "Food & Beverage Department Expenses", "fnbExp", aFnbExp, bFnbExp, true)}

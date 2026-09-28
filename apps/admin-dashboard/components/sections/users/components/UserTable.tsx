@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { 
     MoreVertical, Edit3, Trash2, Lock, Building2, 
     ShieldCheck, Crown, ShieldAlert, FileText, Smartphone, Globe
@@ -31,24 +32,67 @@ export const UserTable: React.FC<UserTableProps> = ({
     hotelsList = []
 }) => {
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [menuPosition, setMenuPosition] = useState<{
+        top: number;
+        right: number;
+    } | null>(null);
+    const [mounted, setMounted] = useState(false);
     const [activeStatuses, setActiveStatuses] = useState<Record<string, boolean>>({});
-    const menuRef = useRef<HTMLDivElement>(null);
 
     const isRequesterSuperadmin = isUserSuperadmin(authUser);
     const isRequesterAdminOrOwner = isUserAdmin(authUser) || authUser?.isOwner === true;
     const canManageUsers = isRequesterSuperadmin || isRequesterAdminOrOwner || hasPermission(authUser, 'sec_user_manage', 'module_security');
     const canToggleStatus = canManageUsers;
 
-    // Close menu when clicking outside
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setOpenMenuId(null);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        setMounted(true);
     }, []);
+
+    // Close menu when window resizes or main document scrolls
+    useEffect(() => {
+        if (!openMenuId) return;
+
+        const handleClose = () => {
+            setOpenMenuId(null);
+            setMenuPosition(null);
+        };
+
+        window.addEventListener("resize", handleClose);
+        window.addEventListener("scroll", handleClose);
+
+        return () => {
+            window.removeEventListener("resize", handleClose);
+            window.removeEventListener("scroll", handleClose);
+        };
+    }, [openMenuId]);
+
+    const handleToggleMenu = (e: React.MouseEvent<HTMLButtonElement>, targetId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (openMenuId === targetId) {
+            setOpenMenuId(null);
+            setMenuPosition(null);
+            return;
+        }
+
+        const buttonEl = e.currentTarget;
+        const rect = buttonEl.getBoundingClientRect();
+        const dropdownHeight = 240;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const showAbove = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
+
+        const calculatedTop = showAbove 
+            ? Math.max(10, rect.top - dropdownHeight - 4) 
+            : Math.min(window.innerHeight - dropdownHeight - 10, rect.bottom + 4);
+        const calculatedRight = Math.max(10, window.innerWidth - rect.right);
+
+        setMenuPosition({
+            top: Math.round(calculatedTop),
+            right: Math.round(calculatedRight),
+        });
+        setOpenMenuId(targetId);
+    };
 
     const toggleUserStatus = (userId: string, isOwnerUser: boolean) => {
         if (isOwnerUser || !canToggleStatus) return; // Hanya superadmin/admin property boleh toggle
@@ -201,111 +245,15 @@ export const UserTable: React.FC<UserTableProps> = ({
 
                                         {/* Column 6: Action */}
                                         <td className={`${styles.td} ${styles.tdAction}`}>
-                                            <div 
-                                                ref={isMenuOpen ? menuRef : null}
-                                                className={styles.actionWrapper}
-                                            >
+                                            <div className={styles.actionWrapper}>
                                                 <button
                                                     type="button"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        setOpenMenuId(prev => (prev === user.id ? null : user.id));
-                                                    }}
-                                                    className={styles.actionBtn}
+                                                    onClick={(e) => handleToggleMenu(e, user.id)}
+                                                    className={`${styles.actionBtn} ${openMenuId === user.id ? styles.actionBtnActive : ""}`}
                                                     title="Actions"
                                                 >
                                                     <MoreVertical size={16} />
                                                 </button>
-
-                                                {/* Dropdown Menu */}
-                                                {isMenuOpen && (
-                                                    <div className={styles.dropdownMenu}>
-                                                        <button
-                                                            type="button"
-                                                            disabled={isLockedFromCurrentViewer}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setOpenMenuId(null);
-                                                                onEdit(user);
-                                                            }}
-                                                            className={`${styles.dropdownItem} ${isLockedFromCurrentViewer ? styles.dropdownItemDisabled : ""}`}
-                                                        >
-                                                            <Edit3 size={14} />
-                                                            <span>Edit User</span>
-                                                        </button>
-
-                                                        <button
-                                                            type="button"
-                                                            disabled={isOwnerUser || isLockedFromCurrentViewer}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setOpenMenuId(null);
-                                                                if (isOwnerUser) return;
-                                                                onDelete(user.id, user.name);
-                                                            }}
-                                                            className={`${styles.dropdownItem} ${styles.dropdownItemDanger} ${(isOwnerUser || isLockedFromCurrentViewer) ? styles.dropdownItemDisabled : ""}`}
-                                                            title={isOwnerUser ? "Owner akun pendaftaran tidak dapat dihapus" : undefined}
-                                                        >
-                                                            <Trash2 size={14} />
-                                                            <span>{isOwnerUser ? "Owner (Protected)" : "Delete User"}</span>
-                                                        </button>
-
-                                                        <div className={styles.dropdownDivider} />
-
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setOpenMenuId(null);
-                                                                if (onViewLogsClick) onViewLogsClick(user);
-                                                            }}
-                                                            className={styles.dropdownItem}
-                                                        >
-                                                            <FileText size={14} />
-                                                            <span>Detail Log</span>
-                                                        </button>
-
-                                                        <button
-                                                            type="button"
-                                                            disabled={isLockedFromCurrentViewer}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setOpenMenuId(null);
-                                                                onChangePasswordClick(user);
-                                                            }}
-                                                            className={`${styles.dropdownItem} ${isLockedFromCurrentViewer ? styles.dropdownItemDisabled : ""}`}
-                                                        >
-                                                            <Lock size={14} />
-                                                            <span>Change Password</span>
-                                                        </button>
-
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setOpenMenuId(null);
-                                                                onAssignHotelClick(user);
-                                                            }}
-                                                            className={styles.dropdownItem}
-                                                        >
-                                                            <Building2 size={14} />
-                                                            <span>Assign Hotel</span>
-                                                        </button>
-
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setOpenMenuId(null);
-                                                            }}
-                                                            className={styles.dropdownItem}
-                                                        >
-                                                            <ShieldCheck size={14} />
-                                                            <span>Multi-Factor Auth</span>
-                                                        </button>
-                                                    </div>
-                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -366,98 +314,15 @@ export const UserTable: React.FC<UserTableProps> = ({
                                     </div>
                                 </div>
 
-                                <div 
-                                    ref={isMenuOpen ? menuRef : null}
-                                    className={styles.actionWrapper}
-                                >
+                                <div className={styles.actionWrapper}>
                                     <button
                                         type="button"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            setOpenMenuId(prev => (prev === `mobile-${user.id}` ? null : `mobile-${user.id}`));
-                                        }}
-                                        className={styles.actionBtn}
+                                        onClick={(e) => handleToggleMenu(e, `mobile-${user.id}`)}
+                                        className={`${styles.actionBtn} ${openMenuId === `mobile-${user.id}` ? styles.actionBtnActive : ""}`}
                                         title="Actions"
                                     >
                                         <MoreVertical size={18} />
                                     </button>
-
-                                    {/* Mobile Dropdown */}
-                                    {isMenuOpen && (
-                                        <div className={styles.dropdownMenu} style={{ right: 0 }}>
-                                            <button
-                                                type="button"
-                                                disabled={isLockedFromCurrentViewer}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setOpenMenuId(null);
-                                                    onEdit(user);
-                                                }}
-                                                className={`${styles.dropdownItem} ${isLockedFromCurrentViewer ? styles.dropdownItemDisabled : ""}`}
-                                            >
-                                                <Edit3 size={14} />
-                                                <span>Edit User</span>
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                disabled={isOwnerUser || isLockedFromCurrentViewer}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setOpenMenuId(null);
-                                                    if (isOwnerUser) return;
-                                                    onDelete(user.id, user.name);
-                                                }}
-                                                className={`${styles.dropdownItem} ${styles.dropdownItemDanger} ${(isOwnerUser || isLockedFromCurrentViewer) ? styles.dropdownItemDisabled : ""}`}
-                                            >
-                                                <Trash2 size={14} />
-                                                <span>{isOwnerUser ? "Owner (Protected)" : "Delete User"}</span>
-                                            </button>
-
-                                            <div className={styles.dropdownDivider} />
-
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setOpenMenuId(null);
-                                                    if (onViewLogsClick) onViewLogsClick(user);
-                                                }}
-                                                className={styles.dropdownItem}
-                                            >
-                                                <FileText size={14} />
-                                                <span>Detail Log</span>
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                disabled={isLockedFromCurrentViewer}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setOpenMenuId(null);
-                                                    onChangePasswordClick(user);
-                                                }}
-                                                className={`${styles.dropdownItem} ${isLockedFromCurrentViewer ? styles.dropdownItemDisabled : ""}`}
-                                            >
-                                                <Lock size={14} />
-                                                <span>Change Password</span>
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setOpenMenuId(null);
-                                                    onAssignHotelClick(user);
-                                                }}
-                                                className={styles.dropdownItem}
-                                            >
-                                                <Building2 size={14} />
-                                                <span>Assign Hotel</span>
-                                            </button>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
 
@@ -541,6 +406,151 @@ export const UserTable: React.FC<UserTableProps> = ({
                     </p>
                 </div>
             )}
+
+            {/* Portaled Dropdown Menu with Backdrop */}
+            {(mounted || typeof document !== "undefined") && openMenuId && menuPosition && (() => {
+                const activeMenuUserId = openMenuId.startsWith("mobile-") 
+                    ? openMenuId.replace("mobile-", "") 
+                    : openMenuId;
+                const activeMenuUser = users.find(u => u.id === activeMenuUserId);
+                if (!activeMenuUser) return null;
+
+                const isMenuUserSuperadmin = activeMenuUser.role?.toLowerCase() === "superadmin";
+                const isMenuUserSystemAdmin = activeMenuUser.email === "nexura.management@gmail.com" || activeMenuUser.email === "superadmin@setara.co.id";
+                const userHotel = hotelsList.find(h => h.hotelCode === activeMenuUser.hotelCode);
+                const hotelOwnerEmail = (userHotel as any)?.email?.toLowerCase();
+                const isMenuUserOwner = Boolean(
+                    (activeMenuUser.isOwner === true || (hotelOwnerEmail && activeMenuUser.email?.toLowerCase() === hotelOwnerEmail)) && 
+                    !activeMenuUser.createdBy
+                );
+                const isMenuUserLockedFromCurrentViewer = ((isMenuUserSuperadmin || isMenuUserSystemAdmin) && !isRequesterSuperadmin) || !canManageUsers;
+
+                return createPortal(
+                    <>
+                        {/* Invisible Backdrop to close on outside click */}
+                        <div 
+                            style={{
+                                position: "fixed",
+                                inset: 0,
+                                zIndex: 99998,
+                                background: "transparent",
+                                cursor: "default"
+                            }}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setOpenMenuId(null);
+                                setMenuPosition(null);
+                            }}
+                        />
+
+                        {/* Dropdown Menu Floating Element */}
+                        <div 
+                            className={styles.dropdownMenu}
+                            style={{
+                                position: "fixed",
+                                top: `${menuPosition.top}px`,
+                                right: `${menuPosition.right}px`,
+                                bottom: "auto",
+                                left: "auto",
+                                zIndex: 99999,
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <button
+                                type="button"
+                                disabled={isMenuUserLockedFromCurrentViewer}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(null);
+                                    setMenuPosition(null);
+                                    onEdit(activeMenuUser);
+                                }}
+                                className={`${styles.dropdownItem} ${isMenuUserLockedFromCurrentViewer ? styles.dropdownItemDisabled : ""}`}
+                            >
+                                <Edit3 size={14} />
+                                <span>Edit User</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                disabled={isMenuUserOwner || isMenuUserLockedFromCurrentViewer}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(null);
+                                    setMenuPosition(null);
+                                    if (isMenuUserOwner) return;
+                                    onDelete(activeMenuUser.id, activeMenuUser.name);
+                                }}
+                                className={`${styles.dropdownItem} ${styles.dropdownItemDanger} ${(isMenuUserOwner || isMenuUserLockedFromCurrentViewer) ? styles.dropdownItemDisabled : ""}`}
+                                title={isMenuUserOwner ? "Owner akun pendaftaran tidak dapat dihapus" : undefined}
+                            >
+                                <Trash2 size={14} />
+                                <span>{isMenuUserOwner ? "Owner (Protected)" : "Delete User"}</span>
+                            </button>
+
+                            <div className={styles.dropdownDivider} />
+
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(null);
+                                    setMenuPosition(null);
+                                    if (onViewLogsClick) onViewLogsClick(activeMenuUser);
+                                }}
+                                className={styles.dropdownItem}
+                            >
+                                <FileText size={14} />
+                                <span>Detail Log</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                disabled={isMenuUserLockedFromCurrentViewer}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(null);
+                                    setMenuPosition(null);
+                                    onChangePasswordClick(activeMenuUser);
+                                }}
+                                className={`${styles.dropdownItem} ${isMenuUserLockedFromCurrentViewer ? styles.dropdownItemDisabled : ""}`}
+                            >
+                                <Lock size={14} />
+                                <span>Change Password</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(null);
+                                    setMenuPosition(null);
+                                    onAssignHotelClick(activeMenuUser);
+                                }}
+                                className={styles.dropdownItem}
+                            >
+                                <Building2 size={14} />
+                                <span>Assign Hotel</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(null);
+                                    setMenuPosition(null);
+                                }}
+                                className={styles.dropdownItem}
+                            >
+                                <ShieldCheck size={14} />
+                                <span>Multi-Factor Auth</span>
+                            </button>
+                        </div>
+                    </>,
+                    document.body
+                );
+            })()}
         </div>
     );
 };

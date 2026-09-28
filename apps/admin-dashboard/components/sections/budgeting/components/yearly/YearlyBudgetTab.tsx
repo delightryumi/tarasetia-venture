@@ -36,6 +36,7 @@ interface YearlyBudgetTabProps {
   budgetDoc: YearlyBudgetDocument;
   hotelRoomCount: number;
   onSelectMonth: (monthKey: string) => void;
+  isStartup?: boolean;
 }
 
 const MONTH_KEYS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
@@ -61,6 +62,7 @@ export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
   budgetDoc,
   hotelRoomCount = 8,
   onSelectMonth,
+  isStartup = false,
 }) => {
   const [activeTab, setActiveTab] = useState<DeptTabKey>("pnl");
 
@@ -69,6 +71,7 @@ export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
     budgetDoc,
     hotelName: budgetDoc?.hotelName || "Bumi Anyom Resort",
     hotelRoomCount,
+    isStartup,
   });
 
   // Helper to get 12 month array of data safely
@@ -435,45 +438,47 @@ export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
       </div>
 
       {/* ── Hotel Operational Statistics Summary ── */}
-      <div className={yearlyStyles.annualStatsGrid}>
-        <div className={yearlyStyles.statCard}>
-          <span className={yearlyStyles.statLabel}>Rooms Available</span>
-          <span className={yearlyStyles.statValue}>{totalRoomsAvail.toLocaleString("id-ID")}</span>
-          <span className={yearlyStyles.statSub}>{hotelRoomCount} Kamar Fisik</span>
-        </div>
+      {!isStartup && (
+        <div className={yearlyStyles.annualStatsGrid}>
+          <div className={yearlyStyles.statCard}>
+            <span className={yearlyStyles.statLabel}>Rooms Available</span>
+            <span className={yearlyStyles.statValue}>{totalRoomsAvail.toLocaleString("id-ID")}</span>
+            <span className={yearlyStyles.statSub}>{hotelRoomCount} Kamar Fisik</span>
+          </div>
 
-        <div className={yearlyStyles.statCard}>
-          <span className={yearlyStyles.statLabel}>Rooms Sold</span>
-          <span className={yearlyStyles.statValue}>{totalRoomsSold.toLocaleString("id-ID")}</span>
-          <span className={yearlyStyles.statSub}>Target Terjual</span>
-        </div>
+          <div className={yearlyStyles.statCard}>
+            <span className={yearlyStyles.statLabel}>Rooms Sold</span>
+            <span className={yearlyStyles.statValue}>{totalRoomsSold.toLocaleString("id-ID")}</span>
+            <span className={yearlyStyles.statSub}>Target Terjual</span>
+          </div>
 
-        <div className={yearlyStyles.statCard}>
-          <span className={yearlyStyles.statLabel}>Avg. Occupancy</span>
-          <span className={yearlyStyles.statValue} style={{ color: "#2563eb" }}>
-            {annualOccPct.toFixed(1)}%
-          </span>
-          <span className={yearlyStyles.statSub}>Rata-rata 12 Bulan</span>
-        </div>
+          <div className={yearlyStyles.statCard}>
+            <span className={yearlyStyles.statLabel}>Avg. Occupancy</span>
+            <span className={yearlyStyles.statValue} style={{ color: "#2563eb" }}>
+              {annualOccPct.toFixed(1)}%
+            </span>
+            <span className={yearlyStyles.statSub}>Rata-rata 12 Bulan</span>
+          </div>
 
-        <div className={yearlyStyles.statCard}>
-          <span className={yearlyStyles.statLabel}>Average Room Rate</span>
-          <span className={yearlyStyles.statValue}>{formatIDR(annualArr)}</span>
-          <span className={yearlyStyles.statSub}>ARR / ADR Target</span>
-        </div>
+          <div className={yearlyStyles.statCard}>
+            <span className={yearlyStyles.statLabel}>Average Room Rate</span>
+            <span className={yearlyStyles.statValue}>{formatIDR(annualArr)}</span>
+            <span className={yearlyStyles.statSub}>ARR / ADR Target</span>
+          </div>
 
-        <div className={yearlyStyles.statCard}>
-          <span className={yearlyStyles.statLabel}>RevPAR</span>
-          <span className={yearlyStyles.statValue}>{formatIDR(annualRevPar)}</span>
-          <span className={yearlyStyles.statSub}>Revenue / Avail Room</span>
-        </div>
+          <div className={yearlyStyles.statCard}>
+            <span className={yearlyStyles.statLabel}>RevPAR</span>
+            <span className={yearlyStyles.statValue}>{formatIDR(annualRevPar)}</span>
+            <span className={yearlyStyles.statSub}>Revenue / Avail Room</span>
+          </div>
 
-        <div className={yearlyStyles.statCard}>
-          <span className={yearlyStyles.statLabel}>Total Guest Pax</span>
-          <span className={yearlyStyles.statValue}>{totalGuestPax.toLocaleString("id-ID")}</span>
-          <span className={yearlyStyles.statSub}>Estimasi Tamu</span>
+          <div className={yearlyStyles.statCard}>
+            <span className={yearlyStyles.statLabel}>Total Guest Pax</span>
+            <span className={yearlyStyles.statValue}>{totalGuestPax.toLocaleString("id-ID")}</span>
+            <span className={yearlyStyles.statSub}>Estimasi Tamu</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Quarterly Performance Highlights ── */}
       <div className={yearlyStyles.quarterGrid}>
@@ -503,10 +508,12 @@ export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
                 {formatIDR(q.gop)}
               </span>
             </div>
-            <div className={yearlyStyles.quarterRow}>
-              <span className={yearlyStyles.quarterRowLabel}>Rooms Sold</span>
-              <span className={yearlyStyles.quarterRowValue}>{q.roomsSold.toLocaleString("id-ID")}</span>
-            </div>
+            {!isStartup && (
+              <div className={yearlyStyles.quarterRow}>
+                <span className={yearlyStyles.quarterRowLabel}>Rooms Sold</span>
+                <span className={yearlyStyles.quarterRowValue}>{q.roomsSold.toLocaleString("id-ID")}</span>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -521,13 +528,15 @@ export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
           <span>IS Summary (P&L)</span>
         </button>
 
-        <button
-          onClick={() => setActiveTab("room")}
-          className={`${styles.sectionNavBtn} ${activeTab === "room" ? styles.sectionNavBtnActive : ""}`}
-        >
-          <Bed size={16} />
-          <span>ROOM (FO & HK)</span>
-        </button>
+        {!isStartup && (
+          <button
+            onClick={() => setActiveTab("room")}
+            className={`${styles.sectionNavBtn} ${activeTab === "room" ? styles.sectionNavBtnActive : ""}`}
+          >
+            <Bed size={16} />
+            <span>ROOM (FO & HK)</span>
+          </button>
+        )}
 
         <button
           onClick={() => setActiveTab("fnb")}
@@ -624,7 +633,7 @@ export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
               <>
                 {/* 1. REVENUE */}
                 {renderSectionHeader("1. REVENUE (PENDAPATAN DEPARTEMEN)")}
-                {renderMatrixRow({
+                {!isStartup && renderMatrixRow({
                   code: "3013",
                   description: "Rooms Revenue",
                   values: monthsData.map((m) => m.data.summaryPnl?.roomRevenue || 0),
@@ -679,7 +688,7 @@ export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
 
                 {/* 2. COST OF SALES */}
                 {renderSectionHeader("2. COST OF SALES (COGS)")}
-                {renderMatrixRow({
+                {!isStartup && renderMatrixRow({
                   code: "4013",
                   description: "Rooms Cost of Sales",
                   values: monthsData.map((m) => m.data.summaryPnl?.roomCogs || 0),
@@ -717,7 +726,7 @@ export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
 
                 {/* 3. DEPARTMENTAL EXPENSES */}
                 {renderSectionHeader("3. DEPARTMENTAL OPERATING EXPENSES")}
-                {renderMatrixRow({
+                {!isStartup && renderMatrixRow({
                   code: "5013",
                   description: "Rooms Department Expenses (FO & HK)",
                   values: monthsData.map((m) => m.data.summaryPnl?.roomExpenses || 0),
@@ -820,7 +829,7 @@ export const YearlyBudgetTab: React.FC<YearlyBudgetTabProps> = ({
             )}
 
             {/* ══════════════ TAB 2: ROOM DEPT ══════════════ */}
-            {activeTab === "room" && (
+            {!isStartup && activeTab === "room" && (
               <>
                 {/* 1. ROOM STATISTIC */}
                 {renderSectionHeader("1. ROOM OPERATIONAL STATISTICS")}

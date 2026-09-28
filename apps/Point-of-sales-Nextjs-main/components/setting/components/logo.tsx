@@ -17,6 +17,7 @@ import { db } from '@/lib/firebase';
 export default function LogoCard() {
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [hotelCode, setHotelCode] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -35,21 +36,45 @@ export default function LogoCard() {
     }
     setHotelCode(code);
 
-    const savedLogo = localStorage.getItem('shopLogo');
-    if (savedLogo) {
-      setLogoBase64(savedLogo);
-    } else if (code) {
-      // Fallback load from Firestore
-      getDoc(doc(db, 'hotels', code)).then((snap) => {
-        if (snap.exists()) {
-          const d = snap.data();
-          const remoteLogo = d.logo || d.shopLogo;
-          if (remoteLogo) {
-            setLogoBase64(remoteLogo);
-            localStorage.setItem('shopLogo', remoteLogo);
-          }
+    if (code) {
+      // Load strictly POS receipt logo from Firestore (never fallback to hotel master logo)
+      Promise.all([
+        getDoc(doc(db, 'hotels', code, 'settings', 'pos')),
+        getDoc(doc(db, 'hotels', code))
+      ]).then(([posSnap, hotelSnap]) => {
+        const posData = posSnap.exists() ? posSnap.data() : null;
+        const hotelData = hotelSnap.exists() ? hotelSnap.data() : null;
+
+        // Valid receipt logo must strictly be shopLogo, and NOT the hotel master branding logo (d.logo)
+        const receiptLogo = posData?.shopLogo || hotelData?.shopLogo;
+        const hotelMasterLogo = hotelData?.logo;
+
+        if (receiptLogo && receiptLogo !== hotelMasterLogo && receiptLogo.trim() !== '') {
+          setLogoBase64(receiptLogo);
+          localStorage.setItem('shopLogo', receiptLogo);
+        } else {
+          // If no specific cashier receipt logo is set, default to empty and purge any poisoned local cache
+          setLogoBase64(null);
+          localStorage.removeItem('shopLogo');
+          window.dispatchEvent(new Event('logoChanged'));
         }
-      }).catch(console.error);
+      }).catch((err) => {
+        console.error('Error loading receipt logo:', err);
+        const savedLogo = localStorage.getItem('shopLogo');
+        if (savedLogo) {
+          setLogoBase64(savedLogo);
+        }
+      }).finally(() => {
+        setIsLoading(false);
+      });
+    } else {
+      const savedLogo = localStorage.getItem('shopLogo');
+      if (savedLogo) {
+        setLogoBase64(savedLogo);
+      } else {
+        setLogoBase64(null);
+      }
+      setIsLoading(false);
     }
   }, []);
 
@@ -68,20 +93,18 @@ export default function LogoCard() {
       setLogoBase64(base64String);
       localStorage.setItem('shopLogo', base64String);
 
-      // Sync to Firestore if hotelCode exists
+      // Sync strictly as shopLogo (do NOT overwrite hotel master 'logo')
       if (hotelCode) {
         try {
-          await setDoc(doc(db, 'hotels', hotelCode), { logo: base64String, shopLogo: base64String }, { merge: true });
+          await setDoc(doc(db, 'hotels', hotelCode), { shopLogo: base64String }, { merge: true });
           await setDoc(doc(db, 'hotels', hotelCode, 'settings', 'pos_self_order'), { shopLogo: base64String }, { merge: true });
-          await setDoc(doc(db, 'hotels', hotelCode, 'settings', 'pos'), { logo: base64String, shopLogo: base64String }, { merge: true });
+          await setDoc(doc(db, 'hotels', hotelCode, 'settings', 'pos'), { shopLogo: base64String }, { merge: true });
         } catch (err) {
-          console.error('Error syncing logo to Firestore:', err);
+          console.error('Error syncing receipt logo to Firestore:', err);
         }
       }
 
-      toast.success('Logo berhasil diunggah dan disimpan!');
-
-      // Dispatch an event so other components know the logo changed
+      toast.success('Logo nota kasir berhasil diunggah!');
       window.dispatchEvent(new Event('logoChanged'));
     };
     reader.readAsDataURL(file);
@@ -94,15 +117,15 @@ export default function LogoCard() {
 
     if (hotelCode) {
       try {
-        await setDoc(doc(db, 'hotels', hotelCode), { logo: '', shopLogo: '' }, { merge: true });
+        await setDoc(doc(db, 'hotels', hotelCode), { shopLogo: '' }, { merge: true });
         await setDoc(doc(db, 'hotels', hotelCode, 'settings', 'pos_self_order'), { shopLogo: '' }, { merge: true });
-        await setDoc(doc(db, 'hotels', hotelCode, 'settings', 'pos'), { logo: '', shopLogo: '' }, { merge: true });
+        await setDoc(doc(db, 'hotels', hotelCode, 'settings', 'pos'), { shopLogo: '' }, { merge: true });
       } catch (err) {
-        console.error('Error removing logo in Firestore:', err);
+        console.error('Error removing receipt logo in Firestore:', err);
       }
     }
 
-    toast.success('Logo berhasil dihapus!');
+    toast.success('Logo nota kasir berhasil dihapus!');
     window.dispatchEvent(new Event('logoChanged'));
   };
 

@@ -13,6 +13,7 @@ export const DSRSection: React.FC = () => {
     setSelectedDate,
     hotelName,
     hotelRoomCount,
+    isStartup,
     loadingActuals,
     loadingBudget,
     budgetDoc,
@@ -23,6 +24,7 @@ export const DSRSection: React.FC = () => {
   const { exportToExcel, exportToPDF, handlePrint } = useDSRExport({
     dsrReport,
     hotelName,
+    isStartup,
   });
 
   const changeDateByDays = (delta: number) => {
@@ -57,7 +59,9 @@ export const DSRSection: React.FC = () => {
             <div>
               <h1 className={styles.mainTitle}>Daily Sales Report (DSR)</h1>
               <p className={styles.subTitle}>
-                {hotelName} • {hotelRoomCount} Physical Rooms • Auto Generated Daily Revenue vs Target Budget
+                {isStartup 
+                  ? `${hotelName} • Outlet F&B & Resto UMKM • Auto Generated Daily Revenue vs Target Budget`
+                  : `${hotelName} • ${hotelRoomCount} Physical Rooms • Auto Generated Daily Revenue vs Target Budget`}
               </p>
             </div>
           </div>
@@ -134,7 +138,7 @@ export const DSRSection: React.FC = () => {
 
       {/* Main Report View */}
       <div className={styles.tabContentArea}>
-        <DSRReportTab dsrReport={dsrReport} hotelName={hotelName} />
+        <DSRReportTab dsrReport={dsrReport} hotelName={hotelName} isStartup={isStartup} />
       </div>
     </div>
   );

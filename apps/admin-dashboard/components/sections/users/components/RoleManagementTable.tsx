@@ -27,14 +27,18 @@ export const HOTEL_SYSTEM_ROLES: SystemRoleItem[] = [
     { id: "human_resource", name: "Human Resource", parentRole: "General Manager", description: "Pengelolaan staf karyawan, presensi biometrik GPS, permohonan cuti, & administrasi HRD", isSystemDefault: true }
 ];
 
+import { ROLE_DEPARTMENT_MODULES } from "../permissionConfig";
+
 interface RoleManagementTableProps {
     searchQuery: string;
     onEditRolePermissions: (role: SystemRoleItem) => void;
+    activeModules?: string[] | null;
 }
 
 export const RoleManagementTable: React.FC<RoleManagementTableProps> = ({
     searchQuery,
-    onEditRolePermissions
+    onEditRolePermissions,
+    activeModules = []
 }) => {
     const [rolesStatus, setRolesStatus] = useState<Record<string, boolean>>({});
 
@@ -49,7 +53,15 @@ export const RoleManagementTable: React.FC<RoleManagementTableProps> = ({
         }));
     };
 
-    const filteredRoles = HOTEL_SYSTEM_ROLES.filter(r => 
+    const planRoles = (activeModules && activeModules.length > 0)
+        ? HOTEL_SYSTEM_ROLES.filter(r => {
+            const req = ROLE_DEPARTMENT_MODULES[r.name] || ROLE_DEPARTMENT_MODULES[r.id];
+            if (!req || req.length === 0) return true;
+            return req.some(mod => activeModules.includes(mod));
+        })
+        : HOTEL_SYSTEM_ROLES;
+
+    const filteredRoles = planRoles.filter(r => 
         r.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
         r.parentRole.toLowerCase().includes(searchQuery.toLowerCase()) ||
         r.description.toLowerCase().includes(searchQuery.toLowerCase())

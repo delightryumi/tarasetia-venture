@@ -133,17 +133,21 @@ export default function SelfOrderCard() {
           setGlobalUrl(`${origin}/self-order/${code}`);
         }
 
-        // 1. Check hotel plan
+        // 1. Check hotel plan & Add-on modules
         const hotelDocRef = doc(db, 'hotels', code);
         const hotelSnap = await getDoc(hotelDocRef);
         let plan = 'basic';
+        let activeModules: string[] = [];
         if (hotelSnap.exists()) {
           const data = hotelSnap.data();
-          plan = data.billing?.plan || 'basic';
+          plan = data.billing?.plan || data.plan || 'basic';
+          activeModules = data.billing?.activeModules || data.activeModules || [];
           setActivePlan(plan);
         }
         
-        setIsEnterprise(isSuper || plan.toLowerCase() === 'enterprise');
+        const hasSelfOrderAddon = activeModules.includes('pos-self-order') || activeModules.includes('pos_self_order');
+        const isUnlocked = isSuper || plan.toLowerCase() === 'enterprise' || hasSelfOrderAddon;
+        setIsEnterprise(isUnlocked);
 
         // 2. Fetch tables config from pos settings
         const posDocRef = doc(db, 'hotels', code, 'settings', 'pos');
@@ -309,9 +313,9 @@ export default function SelfOrderCard() {
         <div className="absolute inset-0 bg-stone-900/5 dark:bg-stone-950/20 backdrop-blur-[1.5px] z-10 flex flex-col items-center justify-center p-6 text-center select-none">
           <div className="bg-white dark:bg-[#18181a] p-8 rounded-2xl shadow-xl max-w-md border border-amber-200 dark:border-amber-900/30">
             <QrCode className="h-12 w-12 text-amber-500 mx-auto mb-4 animate-bounce" />
-            <h3 className="text-base font-bold text-neutral-800 dark:text-neutral-100 uppercase tracking-wider mb-2">Upgrade to Enterprise</h3>
+            <h3 className="text-base font-bold text-neutral-800 dark:text-neutral-100 uppercase tracking-wider mb-2">Aktivasi Add-on / Paket Enterprise</h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4 leading-relaxed">
-              Fitur <span className="font-bold">Self-Ordering Menu Tamu</span> eksklusif untuk Partner paket Enterprise. Akun Anda saat ini menggunakan paket <span className="font-bold">{activePlan.toUpperCase()}</span>.
+              Fitur <span className="font-bold">Self-Ordering Menu Tamu</span> memerlukan aktivasi Add-on Self-Ordering atau paket Enterprise. Akun Anda saat ini menggunakan paket <span className="font-bold">{activePlan.toUpperCase()}</span>.
             </p>
             <a href="mailto:admin@setaraventure.com" className="inline-flex h-9 items-center justify-center rounded-[8px] bg-stone-900 text-white hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 px-4 text-xs font-semibold transition-colors">
               Hubungi Sales Setup

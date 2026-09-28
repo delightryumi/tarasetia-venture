@@ -31,6 +31,78 @@ function getAllPermissionKeys(): string[] {
     return Array.from(keys);
 }
 
+// Server-side guard: enforce that non-superadmin cannot assign permissions outside active hotel modules
+async function enforcePlanPermissions(perms: Record<string, boolean>, hotelCode: string) {
+    try {
+        const hotelSnap = await adminDb.doc(`hotels/${hotelCode}`).get();
+        if (hotelSnap.exists) {
+            const hData = hotelSnap.data();
+            const activeModules = hData?.billing?.activeModules;
+            if (Array.isArray(activeModules)) {
+                COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
+                    let isGroupAllowed = false;
+                    if (g.isSuperadminOnly) {
+                        isGroupAllowed = false;
+                    } else {
+                        switch (g.moduleKey) {
+                            case "front-office":
+                            case "night-audit":
+                                isGroupAllowed = activeModules.includes("front-office");
+                                break;
+                            case "pos":
+                                isGroupAllowed = activeModules.includes("pos");
+                                break;
+                            case "food-beverage":
+                                isGroupAllowed = activeModules.includes("food-beverage");
+                                break;
+                            case "housekeeping":
+                                isGroupAllowed = activeModules.includes("housekeeping");
+                                break;
+                            case "purchasing":
+                                isGroupAllowed = activeModules.includes("purchasing");
+                                break;
+                            case "accounting":
+                                isGroupAllowed = activeModules.includes("accounting");
+                                break;
+                            case "innalytics":
+                                isGroupAllowed = activeModules.includes("innalytics") || activeModules.includes("inalytics");
+                                break;
+                            case "hrd":
+                                isGroupAllowed = activeModules.includes("hrd");
+                                break;
+                            case "cpanel":
+                                isGroupAllowed = activeModules.includes("cpanel-full") || activeModules.includes("cpanel-only");
+                                break;
+                            case "security":
+                                isGroupAllowed = true;
+                                break;
+                            default:
+                                isGroupAllowed = false;
+                        }
+                    }
+                    if (!isGroupAllowed) {
+                        perms[g.id] = false;
+                        g.permissions.forEach(p => {
+                            perms[p.id] = false;
+                        });
+                    }
+                });
+                if (!activeModules.includes("cpanel-full")) {
+                    const landingPagePerms = ["hero", "room-type", "about", "gallery", "footer", "attractions", "promo", "packages", "seo"];
+                    landingPagePerms.forEach(k => {
+                        perms[k] = false;
+                    });
+                }
+            }
+        }
+        // Channel manager is strictly superadmin-only
+        perms["channel-manager"] = false;
+        perms["module_channel_manager"] = false;
+    } catch (err) {
+        console.warn("enforcePlanPermissions error:", err);
+    }
+}
+
 // Helper to log user activity
 async function logActivity(data: {
     hotelCode: string;
@@ -184,6 +256,13 @@ export async function POST(request: Request) {
       Object.entries(permissions).forEach(([k, v]) => {
         finalPermissions[k] = v === true;
       });
+    }
+
+    // Hanya superadmin yang boleh mengaktifkan channel-manager (CM Backup)
+    if (!isRequesterSuper) {
+      finalPermissions["channel-manager"] = false;
+      finalPermissions["module_channel_manager"] = false;
+      await enforcePlanPermissions(finalPermissions, hotelCode);
     }
 
     let uid = "";
@@ -426,6 +505,26 @@ export async function PUT(request: Request) {
         }, { status: 403 });
     }
 
+    // Protection 4: Non-superadmin cannot edit role/permissions of any admin or owner account
+    const isTargetAdminOrOwner = 
+        isOwnerAccount ||
+        currentRoleLower === "admin" ||
+        currentRoleLower === "administrator";
+
+    if (isTargetAdminOrOwner && !isRequesterSuper) {
+        return NextResponse.json({
+            error: "Akses Ditolak: Role dan permission akun Admin / Owner hanya dapat diubah oleh Superadmin."
+        }, { status: 403 });
+    }
+
+    // Protection 5: Admin/Owner cannot change their own role or permissions
+    const callerEmailNorm = (callerEmail || "").toLowerCase();
+    if (!isRequesterSuper && callerEmailNorm && callerEmailNorm === cleanEmail) {
+        return NextResponse.json({
+            error: "Akses Ditolak: Anda tidak dapat mengubah role atau permission akun Anda sendiri."
+        }, { status: 403 });
+    }
+
     // Multi-Hotel assignment restriction
     let allowedOutlets: string[];
     if (isRequesterSuper) {
@@ -437,6 +536,7 @@ export async function PUT(request: Request) {
     } else {
         allowedOutlets = existingDoc?.allowedOutlets || [hotelCode];
     }
+
 
     let uid = existingDoc?.uid;
     let authUserRecord: any = null;
@@ -513,6 +613,12 @@ export async function PUT(request: Request) {
       Object.entries(permissions).forEach(([k, v]) => {
         finalPermissions[k] = v === true;
       });
+      // Hanya superadmin yang boleh mengaktifkan channel-manager (CM Backup)
+      if (!isRequesterSuper) {
+        finalPermissions["channel-manager"] = false;
+        finalPermissions["module_channel_manager"] = false;
+        await enforcePlanPermissions(finalPermissions, hotelCode);
+      }
       updateData.permissions = finalPermissions;
     }
     updateData.allowedOutlets = allowedOutlets;

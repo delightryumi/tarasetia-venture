@@ -62,6 +62,7 @@ interface BudgetInputTabProps {
   saving: boolean;
   saveSuccess: boolean;
   onDirtyChange?: (isDirty: boolean) => void;
+  isStartup?: boolean;
 }
 
 const MONTH_NAMES = [
@@ -91,10 +92,17 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
   saving,
   saveSuccess,
   onDirtyChange,
+  isStartup = false,
 }) => {
   const [viewMode, setViewMode] = useState<"monthly" | "yearly">("monthly");
   const [activeMonthKey, setActiveMonthKey] = useState<string>("01");
   const [activeTab, setActiveTab] = useState<DeptTabKey>("pnl");
+
+  useEffect(() => {
+    if (isStartup && activeTab === "room") {
+      setActiveTab("fnb");
+    }
+  }, [isStartup, activeTab]);
 
   // Track Unsaved Edits
   const [isDirty, setIsDirty] = useState<boolean>(false);
@@ -251,6 +259,7 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
     budgetDoc: localDoc,
     hotelName: localDoc?.hotelName || "Bumi Anyom Resort",
     hotelRoomCount,
+    isStartup,
   });
 
   if (!localDoc) {
@@ -578,6 +587,7 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
           budgetDoc={localDoc}
           hotelRoomCount={hotelRoomCount}
           onSelectMonth={(mKey) => handleSelectMonth(mKey)}
+          isStartup={isStartup}
         />
       ) : (
         <>
@@ -614,17 +624,29 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
               </span>
             </div>
 
-            <div className={styles.monthKpiCard}>
-              <div className={styles.monthKpiHeader}>
-                <span className={styles.monthKpiLabel}>Target Occupancy & ADR</span>
-                <span className={styles.monthKpiSub}>
-                  {currentMonthData.statistic?.occupiedRoomsPaid || 0} / {autoRoomsAvailable} RN
+            {isStartup ? (
+              <div className={styles.monthKpiCard}>
+                <div className={styles.monthKpiHeader}>
+                  <span className={styles.monthKpiLabel}>Target F&B Revenue</span>
+                  <span className={styles.monthKpiSub}>{currentMonthName} {year}</span>
+                </div>
+                <span className={styles.monthKpiValue} style={{ color: "#2563eb" }}>
+                  {formatIDR(pnl.fnbRevenue || 0)}
                 </span>
               </div>
-              <span className={styles.monthKpiValue} style={{ color: "#2563eb" }}>
-                {(currentMonthData.statistic?.occupancyPercent || 0).toFixed(1)}% • {formatIDR(currentMonthData.statistic?.arrIdr || 0)}
-              </span>
-            </div>
+            ) : (
+              <div className={styles.monthKpiCard}>
+                <div className={styles.monthKpiHeader}>
+                  <span className={styles.monthKpiLabel}>Target Occupancy & ADR</span>
+                  <span className={styles.monthKpiSub}>
+                    {currentMonthData.statistic?.occupiedRoomsPaid || 0} / {autoRoomsAvailable} RN
+                  </span>
+                </div>
+                <span className={styles.monthKpiValue} style={{ color: "#2563eb" }}>
+                  {(currentMonthData.statistic?.occupancyPercent || 0).toFixed(1)}% • {formatIDR(currentMonthData.statistic?.arrIdr || 0)}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Departmental USALI Tabs Header */}
@@ -636,13 +658,15 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
               <PieChart size={14} />
               <span>Summary P&L (Consolidated)</span>
             </button>
-            <button
-              className={`${styles.deptTabBtn} ${activeTab === "room" ? styles.deptTabBtnActive : ""}`}
-              onClick={() => setActiveTab("room")}
-            >
-              <Bed size={14} />
-              <span>Rooms Dept (FO & HK)</span>
-            </button>
+            {!isStartup && (
+              <button
+                className={`${styles.deptTabBtn} ${activeTab === "room" ? styles.deptTabBtnActive : ""}`}
+                onClick={() => setActiveTab("room")}
+              >
+                <Bed size={14} />
+                <span>Rooms Dept (FO & HK)</span>
+              </button>
+            )}
             <button
               className={`${styles.deptTabBtn} ${activeTab === "fnb" ? styles.deptTabBtnActive : ""}`}
               onClick={() => setActiveTab("fnb")}
@@ -707,6 +731,7 @@ export const BudgetInputTab: React.FC<BudgetInputTabProps> = ({
               <SummaryPnlTab
                 monthData={currentMonthData}
                 onChange={updateMonthField}
+                isStartup={isStartup}
               />
             )}
             {activeTab === "room" && (

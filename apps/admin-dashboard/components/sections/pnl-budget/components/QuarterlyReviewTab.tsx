@@ -10,6 +10,7 @@ interface QuarterlyReviewTabProps {
   budgetDoc: YearlyBudgetDocument | null;
   actualMonthlyData: Record<string, any>;
   hotelRoomCount: number;
+  isStartup?: boolean;
 }
 
 const QUARTERS = [
@@ -24,6 +25,7 @@ export const QuarterlyReviewTab: React.FC<QuarterlyReviewTabProps> = ({
   budgetDoc,
   actualMonthlyData,
   hotelRoomCount,
+  isStartup = false,
 }) => {
   // Aggregate Q1 - Q4 data for Budget and Actual
   const qData = QUARTERS.map((q) => {
@@ -156,67 +158,73 @@ export const QuarterlyReviewTab: React.FC<QuarterlyReviewTabProps> = ({
             </tr>
           </thead>
           <tbody>
-            <tr className={styles.tierHeaderRow}>
-              <td colSpan={9}>1. STATISTIK OPERASIONAL</td>
-            </tr>
-            <tr>
-              <td className={styles.colDesc}>Room Available</td>
-              {qData.map((q) => (
-                <React.Fragment key={q.qId}>
-                  <td className={styles.colAmount}>{q.bRoomsAvail}</td>
-                  <td className={styles.colAmount}>{q.bRoomsAvail}</td>
-                </React.Fragment>
-              ))}
-            </tr>
-            <tr>
-              <td className={styles.colDesc}>Room Sold</td>
-              {qData.map((q) => (
-                <React.Fragment key={q.qId}>
-                  <td className={styles.colAmount} style={{ color: "#2563eb", fontWeight: 800 }}>{q.aRoomsSold}</td>
-                  <td className={styles.colAmount}>{q.bRoomsSold}</td>
-                </React.Fragment>
-              ))}
-            </tr>
-            <tr>
-              <td className={styles.colDesc}>Occupancy %</td>
-              {qData.map((q) => (
-                <React.Fragment key={q.qId}>
-                  <td className={styles.colAmount} style={{ color: "#2563eb", fontWeight: 800 }}>{q.aOcc.toFixed(1)}%</td>
-                  <td className={styles.colAmount}>{q.bOcc.toFixed(1)}%</td>
-                </React.Fragment>
-              ))}
-            </tr>
-            <tr>
-              <td className={styles.colDesc}>ARR (IDR)</td>
-              {qData.map((q) => (
-                <React.Fragment key={q.qId}>
-                  <td className={styles.colAmount}>{formatIDR(q.aArr)}</td>
-                  <td className={styles.colAmount}>{formatIDR(q.bArr)}</td>
-                </React.Fragment>
-              ))}
-            </tr>
-            <tr>
-              <td className={styles.colDesc}>RevPAR (IDR)</td>
-              {qData.map((q) => (
-                <React.Fragment key={q.qId}>
-                  <td className={styles.colAmount}>{formatIDR(q.aRevPar)}</td>
-                  <td className={styles.colAmount}>{formatIDR(q.bRevPar)}</td>
-                </React.Fragment>
-              ))}
-            </tr>
+            {!isStartup && (
+              <>
+                <tr className={styles.tierHeaderRow}>
+                  <td colSpan={9}>1. STATISTIK OPERASIONAL</td>
+                </tr>
+                <tr>
+                  <td className={styles.colDesc}>Room Available</td>
+                  {qData.map((q) => (
+                    <React.Fragment key={q.qId}>
+                      <td className={styles.colAmount}>{q.bRoomsAvail}</td>
+                      <td className={styles.colAmount}>{q.bRoomsAvail}</td>
+                    </React.Fragment>
+                  ))}
+                </tr>
+                <tr>
+                  <td className={styles.colDesc}>Room Sold</td>
+                  {qData.map((q) => (
+                    <React.Fragment key={q.qId}>
+                      <td className={styles.colAmount} style={{ color: "#2563eb", fontWeight: 800 }}>{q.aRoomsSold}</td>
+                      <td className={styles.colAmount}>{q.bRoomsSold}</td>
+                    </React.Fragment>
+                  ))}
+                </tr>
+                <tr>
+                  <td className={styles.colDesc}>Occupancy %</td>
+                  {qData.map((q) => (
+                    <React.Fragment key={q.qId}>
+                      <td className={styles.colAmount} style={{ color: "#2563eb", fontWeight: 800 }}>{q.aOcc.toFixed(1)}%</td>
+                      <td className={styles.colAmount}>{q.bOcc.toFixed(1)}%</td>
+                    </React.Fragment>
+                  ))}
+                </tr>
+                <tr>
+                  <td className={styles.colDesc}>ARR (IDR)</td>
+                  {qData.map((q) => (
+                    <React.Fragment key={q.qId}>
+                      <td className={styles.colAmount}>{formatIDR(q.aArr)}</td>
+                      <td className={styles.colAmount}>{formatIDR(q.bArr)}</td>
+                    </React.Fragment>
+                  ))}
+                </tr>
+                <tr>
+                  <td className={styles.colDesc}>RevPAR (IDR)</td>
+                  {qData.map((q) => (
+                    <React.Fragment key={q.qId}>
+                      <td className={styles.colAmount}>{formatIDR(q.aRevPar)}</td>
+                      <td className={styles.colAmount}>{formatIDR(q.bRevPar)}</td>
+                    </React.Fragment>
+                  ))}
+                </tr>
+              </>
+            )}
 
             <tr className={styles.tierHeaderRow}>
               <td colSpan={9}>2. REVENUE & PROFIT</td>
             </tr>
-            <tr>
-              <td className={styles.colDesc}>Room Revenue</td>
-              {qData.map((q) => (
-                <React.Fragment key={q.qId}>
-                  <td className={styles.colAmount}>{formatIDR(q.aRoomRev)}</td>
-                  <td className={styles.colAmount}>{formatIDR(q.bRoomRev)}</td>
-                </React.Fragment>
-              ))}
-            </tr>
+            {!isStartup && (
+              <tr>
+                <td className={styles.colDesc}>Room Revenue</td>
+                {qData.map((q) => (
+                  <React.Fragment key={q.qId}>
+                    <td className={styles.colAmount}>{formatIDR(q.aRoomRev)}</td>
+                    <td className={styles.colAmount}>{formatIDR(q.bRoomRev)}</td>
+                  </React.Fragment>
+                ))}
+              </tr>
+            )}
             <tr>
               <td className={styles.colDesc}>F&B Revenue</td>
               {qData.map((q) => (

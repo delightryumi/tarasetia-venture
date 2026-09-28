@@ -8,9 +8,10 @@ import styles from "../budgeting.module.css";
 interface DSRReportTabProps {
   dsrReport: DSRReportResult;
   hotelName: string;
+  isStartup?: boolean;
 }
 
-export const DSRReportTab: React.FC<DSRReportTabProps> = ({ dsrReport, hotelName }) => {
+export const DSRReportTab: React.FC<DSRReportTabProps> = ({ dsrReport, hotelName, isStartup = false }) => {
   const [y, m, d] = dsrReport.date.split("-");
   const formattedDate = `${d}/${m}/${y}`;
 
@@ -89,6 +90,30 @@ export const DSRReportTab: React.FC<DSRReportTabProps> = ({ dsrReport, hotelName
 
   const p = dsrReport.payments;
 
+  const paymentItems = isStartup
+    ? [
+        { ...p.cashOutlet, label: "Cash Kasir (F&B / Resto)" },
+        p.totalCash,
+        p.edcBca,
+        p.edcMandiri,
+        p.qris,
+        p.transfer,
+        p.cityLedger,
+        p.totalSettlement,
+      ]
+    : [
+        p.cashFo,
+        p.cashOutlet,
+        p.cashRefundFo,
+        p.totalCash,
+        p.edcBca,
+        p.edcMandiri,
+        p.qris,
+        p.transfer,
+        p.cityLedger,
+        p.totalSettlement,
+      ];
+
   return (
     <div className={styles.reportCard}>
       {/* Hotel Document Header */}
@@ -135,22 +160,30 @@ export const DSRReportTab: React.FC<DSRReportTabProps> = ({ dsrReport, hotelName
           </thead>
 
           <tbody>
-            {/* STATISTIC */}
-            <tr className={styles.sectionRow}>
-              <td colSpan={11}>STATISTIC</td>
-            </tr>
-            {renderRows(dsrReport.statistics)}
+            {/* STATISTIC: Only rendered for Hotel scale, hidden for Startup/Resto/Cafe */}
+            {!isStartup && (
+              <>
+                <tr className={styles.sectionRow}>
+                  <td colSpan={11}>STATISTIC</td>
+                </tr>
+                {renderRows(dsrReport.statistics)}
+              </>
+            )}
 
             {/* DEBIT / REVENUE BANNER */}
             <tr className={styles.sectionDebitBanner}>
               <td colSpan={11}>Debit (Revenue Breakdown)</td>
             </tr>
 
-            {/* ROOM REVENUE */}
-            <tr className={styles.subSectionRow}>
-              <td colSpan={11}>ROOM REVENUE</td>
-            </tr>
-            {renderRows(dsrReport.roomRevenue)}
+            {/* ROOM REVENUE: Only rendered for Hotel scale, hidden for Startup/Resto/Cafe */}
+            {!isStartup && (
+              <>
+                <tr className={styles.subSectionRow}>
+                  <td colSpan={11}>ROOM REVENUE</td>
+                </tr>
+                {renderRows(dsrReport.roomRevenue)}
+              </>
+            )}
 
             {/* FOOD & BEVERAGE */}
             <tr className={styles.subSectionRow}>
@@ -162,15 +195,19 @@ export const DSRReportTab: React.FC<DSRReportTabProps> = ({ dsrReport, hotelName
 
             {/* MINOR OPERATING */}
             <tr className={styles.subSectionRow}>
-              <td colSpan={11}>MINOR OPERATING</td>
+              <td colSpan={11}>MINOR OPERATING / RETAIL</td>
             </tr>
             {renderRows(dsrReport.minorOperatingRevenue)}
 
             {/* AMENITIES */}
-            <tr className={styles.subSectionRow}>
-              <td colSpan={11}>AMENITIES</td>
-            </tr>
-            {renderRows(dsrReport.amenitiesRevenue)}
+            {!isStartup && dsrReport.amenitiesRevenue.length > 0 && (
+              <>
+                <tr className={styles.subSectionRow}>
+                  <td colSpan={11}>AMENITIES</td>
+                </tr>
+                {renderRows(dsrReport.amenitiesRevenue)}
+              </>
+            )}
 
             {/* SUMMARY TOTALS */}
             {renderRows(dsrReport.summaryTotals)}
@@ -179,18 +216,7 @@ export const DSRReportTab: React.FC<DSRReportTabProps> = ({ dsrReport, hotelName
             <tr className={styles.sectionCreditBanner}>
               <td colSpan={11}>Credit (Settlement / Payments)</td>
             </tr>
-            {[
-              p.cashFo,
-              p.cashOutlet,
-              p.cashRefundFo,
-              p.totalCash,
-              p.edcBca,
-              p.edcMandiri,
-              p.qris,
-              p.transfer,
-              p.cityLedger,
-              p.totalSettlement,
-            ].map((item) => {
+            {paymentItems.map((item) => {
               const isTotal = item.id.includes("total");
               const rowClass = isTotal ? `${styles.dataRow} ${styles.totalRow}` : styles.dataRow;
               return (
@@ -226,17 +252,23 @@ export const DSRReportTab: React.FC<DSRReportTabProps> = ({ dsrReport, hotelName
         <div className={styles.signatureBox}>
           <p className={styles.sigTitle}>Prepared by</p>
           <div className={styles.sigLine} />
-          <p className={styles.sigRole}>Night Auditor / Income Audit</p>
+          <p className={styles.sigRole}>
+            {isStartup ? "Kasir / Supervisor Outlet" : "Night Auditor / Income Audit"}
+          </p>
         </div>
         <div className={styles.signatureBox}>
           <p className={styles.sigTitle}>Verified by</p>
           <div className={styles.sigLine} />
-          <p className={styles.sigRole}>Chief Accountant / Finance</p>
+          <p className={styles.sigRole}>
+            {isStartup ? "Finance / Accounting" : "Chief Accountant / Finance"}
+          </p>
         </div>
         <div className={styles.signatureBox}>
           <p className={styles.sigTitle}>Approved by</p>
           <div className={styles.sigLine} />
-          <p className={styles.sigRole}>General Manager</p>
+          <p className={styles.sigRole}>
+            {isStartup ? "Outlet Manager / Owner" : "General Manager"}
+          </p>
         </div>
       </div>
     </div>

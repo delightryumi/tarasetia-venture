@@ -108,11 +108,15 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
       setActiveCode(hotelCode);
     } else if (activeHotelCode) {
       setActiveCode(activeHotelCode);
+    } else if (user?.hotelCode) {
+      setActiveCode(user.hotelCode);
+    } else if (user?.allowedOutlets && user.allowedOutlets.length > 0) {
+      setActiveCode(user.allowedOutlets[0]);
     } else if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
       setActiveCode(stored);
     }
-  }, [hotelCode, activeHotelCode]);
+  }, [hotelCode, activeHotelCode, user]);
 
   // Listen to Firestore for Tables, Held Orders, and Pos sound
   useEffect(() => {
@@ -309,18 +313,18 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
     if (isSuperadmin) return true;
     if (!hotelDocData) return false;
 
-    let modules = hotelDocData.billing?.activeModules || [];
+    let modules = hotelDocData.billing?.activeModules || hotelDocData.activeModules || [];
     if (modules.includes('cpanel')) {
       modules = modules.filter((m: string) => m !== 'cpanel');
-      const plan = hotelDocData.billing?.plan || 'premium';
-      if (plan === 'basic') {
+      const plan = hotelDocData.billing?.plan || hotelDocData.plan || 'premium';
+      if (plan === 'basic' || plan === 'startup') {
         if (!modules.includes('cpanel-only')) modules.push('cpanel-only');
       } else {
         if (!modules.includes('cpanel-full')) modules.push('cpanel-full');
       }
     }
     if (modules.length === 0) {
-      const plan = hotelDocData.billing?.plan || 'enterprise';
+      const plan = hotelDocData.billing?.plan || hotelDocData.plan || 'enterprise';
       if (plan === 'startup' || plan === 'basic') {
         modules = ['pos', 'hrd', 'cpanel-only'];
       } else if (plan === 'bisnis') {
@@ -330,11 +334,24 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
       }
     }
 
-    return (
+    const hasInBilling =
       modules.includes('food-beverage-realtime') ||
-      modules.includes('pos-realtime')
-    );
-  }, [isSuperadmin, hotelDocData]);
+      modules.includes('food_beverage_realtime') ||
+      modules.includes('pos-realtime') ||
+      modules.includes('pos_realtime');
+
+    const hasUserPerm =
+      user?.permissions?.['food-beverage-realtime'] === true ||
+      user?.permissions?.['food_beverage_realtime'] === true;
+
+    const isOwnerOrAdmin =
+      user?.role === 'admin' ||
+      user?.role === 'administrator' ||
+      user?.role === 'owner' ||
+      user?.isOwner === true;
+
+    return hasInBilling || (isOwnerOrAdmin && hasUserPerm);
+  }, [isSuperadmin, hotelDocData, user]);
 
   // Active non-bumped orders
   const visibleHeldOrders = useMemo(() => {

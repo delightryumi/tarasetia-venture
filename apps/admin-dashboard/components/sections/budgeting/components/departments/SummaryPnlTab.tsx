@@ -8,9 +8,10 @@ import styles from "../../budgeting.module.css";
 interface SummaryPnlTabProps {
   monthData: BudgetMonthData;
   onChange: (updater: (draft: BudgetMonthData) => void) => void;
+  isStartup?: boolean;
 }
 
-export const SummaryPnlTab: React.FC<SummaryPnlTabProps> = ({ monthData, onChange }) => {
+export const SummaryPnlTab: React.FC<SummaryPnlTabProps> = ({ monthData, onChange, isStartup = false }) => {
   const pnl = monthData?.summaryPnl || {
     roomRevenue: 0,
     fnbRevenue: 0,
@@ -93,14 +94,16 @@ export const SummaryPnlTab: React.FC<SummaryPnlTabProps> = ({ monthData, onChang
                   1. REVENUE (PENDAPATAN DEPARTEMEN)
                 </td>
               </tr>
-              <tr className={styles.excelRow}>
-                <td className={styles.excelCodeCell}>3013</td>
-                <td className={styles.excelDescCell}>Rooms Revenue</td>
-                <td className={`${styles.excelInputCell} ${styles.excelNumValue}`}>{formatIDR(pnl.roomRevenue || 0)}</td>
-                <td className={`${styles.excelInputCell} ${styles.excelNumValue}`}>
-                  {pnl.totalNetRevenue > 0 ? `${((pnl.roomRevenue / pnl.totalNetRevenue) * 100).toFixed(1)}%` : "0%"}
-                </td>
-              </tr>
+              {!isStartup && (
+                <tr className={styles.excelRow}>
+                  <td className={styles.excelCodeCell}>3013</td>
+                  <td className={styles.excelDescCell}>Rooms Revenue</td>
+                  <td className={`${styles.excelInputCell} ${styles.excelNumValue}`}>{formatIDR(pnl.roomRevenue || 0)}</td>
+                  <td className={`${styles.excelInputCell} ${styles.excelNumValue}`}>
+                    {pnl.totalNetRevenue > 0 ? `${((pnl.roomRevenue / pnl.totalNetRevenue) * 100).toFixed(1)}%` : "0%"}
+                  </td>
+                </tr>
+              )}
               <tr className={styles.excelRow}>
                 <td className={styles.excelCodeCell}>3023</td>
                 <td className={styles.excelDescCell}>Food & Beverage Revenue</td>
@@ -152,14 +155,16 @@ export const SummaryPnlTab: React.FC<SummaryPnlTabProps> = ({ monthData, onChang
                   2. COST OF SALES (COGS / HPP)
                 </td>
               </tr>
-              <tr className={styles.excelRow}>
-                <td className={styles.excelCodeCell}>4013</td>
-                <td className={styles.excelDescCell}>Rooms Cost of Sales</td>
-                <td className={`${styles.excelInputCell} ${styles.excelNumValue}`}>{formatIDR(pnl.roomCogs || 0)}</td>
-                <td className={`${styles.excelInputCell} ${styles.excelNumValue}`}>
-                  {pnl.totalNetRevenue > 0 ? `${((pnl.roomCogs / pnl.totalNetRevenue) * 100).toFixed(1)}%` : "0%"}
-                </td>
-              </tr>
+              {!isStartup && (
+                <tr className={styles.excelRow}>
+                  <td className={styles.excelCodeCell}>4013</td>
+                  <td className={styles.excelDescCell}>Rooms Cost of Sales</td>
+                  <td className={`${styles.excelInputCell} ${styles.excelNumValue}`}>{formatIDR(pnl.roomCogs || 0)}</td>
+                  <td className={`${styles.excelInputCell} ${styles.excelNumValue}`}>
+                    {pnl.totalNetRevenue > 0 ? `${((pnl.roomCogs / pnl.totalNetRevenue) * 100).toFixed(1)}%` : "0%"}
+                  </td>
+                </tr>
+              )}
               <tr className={styles.excelRow}>
                 <td className={styles.excelCodeCell}>4014</td>
                 <td className={styles.excelDescCell}>Food & Beverage Cost of Sales</td>
@@ -203,14 +208,16 @@ export const SummaryPnlTab: React.FC<SummaryPnlTabProps> = ({ monthData, onChang
                   3. DEPARTMENTAL EXPENSES (BEBAN OPERASIONAL DEPARTEMEN)
                 </td>
               </tr>
-              <tr className={styles.excelRow}>
-                <td className={styles.excelCodeCell}>5015</td>
-                <td className={styles.excelDescCell}>Rooms Department Expenses (FO & HK)</td>
-                <td className={`${styles.excelInputCell} ${styles.excelNumValue}`}>{formatIDR(pnl.roomExpenses || 0)}</td>
-                <td className={`${styles.excelInputCell} ${styles.excelNumValue}`}>
-                  {pnl.totalNetRevenue > 0 ? `${((pnl.roomExpenses / pnl.totalNetRevenue) * 100).toFixed(1)}%` : "0%"}
-                </td>
-              </tr>
+              {!isStartup && (
+                <tr className={styles.excelRow}>
+                  <td className={styles.excelCodeCell}>5015</td>
+                  <td className={styles.excelDescCell}>Rooms Department Expenses (FO & HK)</td>
+                  <td className={`${styles.excelInputCell} ${styles.excelNumValue}`}>{formatIDR(pnl.roomExpenses || 0)}</td>
+                  <td className={`${styles.excelInputCell} ${styles.excelNumValue}`}>
+                    {pnl.totalNetRevenue > 0 ? `${((pnl.roomExpenses / pnl.totalNetRevenue) * 100).toFixed(1)}%` : "0%"}
+                  </td>
+                </tr>
+              )}
               <tr className={styles.excelRow}>
                 <td className={styles.excelCodeCell}>5075</td>
                 <td className={styles.excelDescCell}>Food & Beverage Department Expenses (All Outlets)</td>

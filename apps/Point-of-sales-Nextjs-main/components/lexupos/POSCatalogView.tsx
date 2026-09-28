@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import styles from './LexuPos.module.css';
 
 interface POSCatalogViewProps {
   searchQuery: string;
@@ -90,156 +91,135 @@ export default function POSCatalogView({
   // Only show subcategory bar if there are actual subcategories (more than just 'All')
   const hasSubcategories = subcategories.length > 1;
 
+  const [currentShift, setCurrentShift] = useState<any>(null);
+
+  React.useEffect(() => {
+    const readShift = () => {
+      if (typeof window === 'undefined') return;
+      try {
+        const raw = localStorage.getItem('active_shift');
+        if (raw) setCurrentShift(JSON.parse(raw));
+        else setCurrentShift(null);
+      } catch {
+        setCurrentShift(null);
+      }
+    };
+    readShift();
+    window.addEventListener('storage', readShift);
+    return () => window.removeEventListener('storage', readShift);
+  }, []);
+
   return (
-    <div className="flex-1 flex flex-col h-full min-w-0 p-4 overflow-hidden">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, overflow: 'hidden' }}>
       {/* Header & Search */}
-      <div className="flex items-center justify-start gap-3 mb-4 shrink-0">
-        <div className="relative max-w-xs w-full sm:w-64">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
-          <Input
+      <div className={styles.catalogHeader}>
+        <div className={styles.searchWrapper}>
+          <Search className={styles.searchIcon} size={15} />
+          <input
             type="text"
-            placeholder="Cari produk / subkategori..."
+            placeholder="Cari produk / barcode / kategori..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-11 pr-4 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-[6px] text-neutral-600 dark:text-neutral-200 text-xs h-11"
+            className={styles.searchInput}
           />
+        </div>
+
+        {/* NextLevel Live Shift Status Indicator */}
+        <div>
+          {currentShift ? (
+            <a
+              href="/cashier"
+              className={styles.shiftBadgeLink}
+              title="Klik untuk kelola kasir dan cash flow"
+            >
+              <span className={styles.shiftPulseDot} />
+              <span>Shift: {currentShift.cashierName || 'Kasir'}</span>
+              <span style={{ color: '#71717a', fontSize: '11px', fontWeight: 600 }}>
+                ({formatCurrency(Number(currentShift.houseBank || 0))})
+              </span>
+            </a>
+          ) : (
+            <a
+              href="/cashier"
+              className={styles.shiftBadgeLink}
+              style={{ color: '#d97706' }}
+            >
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f59e0b' }} />
+              <span>Kasir Belum Dibuka — Buka Shift</span>
+            </a>
+          )}
         </div>
       </div>
 
       {/* ── Category Tab Bar ─────────────────────────────────────────────────── */}
-      <div className="relative w-full min-w-0 border-b border-neutral-200 dark:border-white/[0.1] mb-2 shrink-0">
-        {/* Mobile Dropdown */}
-        <div className="flex md:hidden w-full pb-1">
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full h-9 px-3 rounded-[6px] bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.1] text-xs font-bold text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+      <div className={styles.categoryBar} ref={catScrollRef}>
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className={`${styles.categoryTab} ${selectedCategory === cat ? styles.categoryTabActive : ''}`}
           >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                Kategori: {cat}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Desktop Tabs */}
-        <div
-          ref={catScrollRef}
-          onPointerDown={handleCatPointerDown}
-          onPointerLeave={handleCatPointerLeave}
-          onPointerUp={handleCatPointerUp}
-          onPointerMove={handleCatPointerMove}
-          style={{ touchAction: 'pan-x' }}
-          className="hidden md:flex flex-nowrap items-center gap-2 overflow-x-auto py-1.5 no-scrollbar w-full max-w-full min-w-0 cursor-grab active:cursor-grabbing select-none"
-        >
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-[6px] text-[11px] font-bold whitespace-nowrap transition-all duration-200 text-center flex items-center justify-center cursor-pointer ${
-                selectedCategory === cat
-                  ? 'bg-neutral-800 text-white border border-neutral-800 dark:bg-white dark:text-black dark:border-white shadow-sm'
-                  : 'bg-white dark:bg-zinc-900 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/[0.1] hover:bg-neutral-50 dark:hover:bg-neutral-800'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+            {cat}
+          </button>
+        ))}
       </div>
 
       {/* ── Subcategory Tab Bar (only shown when subcategories exist) ─────────── */}
       {hasSubcategories && (
-        <div className="relative w-full min-w-0 mb-3 shrink-0">
-          {/* Mobile Subcategory Dropdown */}
-          <div className="flex md:hidden w-full pb-1">
-            <select
-              value={selectedSubcategory}
-              onChange={(e) => setSelectedSubcategory(e.target.value)}
-              className="w-full h-8 px-3 rounded-[6px] bg-neutral-100 dark:bg-zinc-800 border border-neutral-200 dark:border-white/[0.08] text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+        <div className={styles.subcategoryBar} ref={subScrollRef}>
+          <Layers className="w-3 h-3 text-neutral-400 shrink-0 ml-0.5" />
+          {subcategories.map((sub) => (
+            <button
+              key={sub}
+              onClick={() => setSelectedSubcategory(sub)}
+              className={`${styles.subcategoryTab} ${selectedSubcategory === sub ? styles.subcategoryTabActive : ''}`}
             >
-              {subcategories.map((sub) => (
-                <option key={sub} value={sub}>
-                  Subkategori: {sub}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Desktop Subcategory Tabs */}
-          <div
-            ref={subScrollRef}
-            onPointerDown={handleSubPointerDown}
-            onPointerLeave={handleSubPointerLeave}
-            onPointerUp={handleSubPointerUp}
-            onPointerMove={handleSubPointerMove}
-            style={{ touchAction: 'pan-x' }}
-            className="hidden md:flex flex-nowrap items-center gap-1.5 overflow-x-auto py-1.5 no-scrollbar w-full max-w-full min-w-0 cursor-grab active:cursor-grabbing select-none"
-          >
-            <Layers className="w-3 h-3 text-neutral-400 shrink-0 ml-0.5" />
-            {subcategories.map((sub) => (
-              <button
-                key={sub}
-                onClick={() => setSelectedSubcategory(sub)}
-                className={`px-3 py-1 rounded-[6px] text-[10px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                  selectedSubcategory === sub
-                    ? 'bg-neutral-900 dark:bg-white text-white dark:text-black shadow-sm'
-                    : 'bg-neutral-100 dark:bg-zinc-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-white/[0.08] hover:bg-neutral-200 dark:hover:bg-zinc-700'
-                }`}
-              >
-                {sub}
-              </button>
-            ))}
-          </div>
+              {sub}
+            </button>
+          ))}
         </div>
       )}
 
       {/* ── Product Grid ─────────────────────────────────────────────────────── */}
-      <div className={`grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 xl:grid-cols-5 gap-3 content-start overflow-y-auto thin-scrollbar flex-1 pr-1 ${!hasSubcategories ? 'mt-3' : ''}`}>
+      <div className={styles.productGrid}>
         {filteredProducts.map((product) => (
           <div
             key={product.id}
             onClick={() => onAddToCart(product)}
-            className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.1] rounded-[10px] p-2 md:p-2.5 flex flex-col justify-between cursor-pointer hover:shadow-xl hover:bg-neutral-50 dark:hover:bg-neutral-800/40 hover:-translate-y-1 transition-all duration-305 group"
+            className={styles.productCard}
           >
-            <div className="relative h-20 xs:h-24 md:h-auto md:aspect-square w-full rounded-xl overflow-hidden bg-slate-200/50 dark:bg-neutral-950 mb-1.5 md:mb-2.5 shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+            <div className={styles.productImgBox}>
               {product.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
+                  className={styles.productImg}
                 />
               ) : (
-                <div className="w-full h-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-400">
-                  <Utensils className="w-8 h-8 opacity-60" />
+                <Utensils className="w-8 h-8 opacity-40 text-neutral-400" />
+              )}
+              {product.subcategory ? (
+                <div className={styles.productSubcategoryTag}>
+                  {product.subcategory}
+                </div>
+              ) : (
+                <div className={styles.productSubcategoryTag}>
+                  {product.category}
                 </div>
               )}
-              {/* Only show subcategory badge — keeps card clean */}
-              <div className="absolute top-1.5 right-1.5">
-                {product.subcategory ? (
-                  <div className="bg-black/60 backdrop-blur-md text-white text-[8px] md:text-[9px] px-2 py-0.5 rounded-full font-medium">
-                    {product.subcategory}
-                  </div>
-                ) : (
-                  <div className="bg-black/60 backdrop-blur-md text-white text-[8px] md:text-[9px] px-2 py-0.5 rounded-full font-medium">
-                    {product.category}
-                  </div>
-                )}
-              </div>
             </div>
 
-            <div className="flex-1 flex flex-col justify-between">
-              <h3 className="font-semibold text-neutral-700 dark:text-neutral-200 text-[11px] md:text-xs line-clamp-2 min-h-[24px] md:min-h-[28px] group-hover:text-blue-500 transition-colors">
+            <div className={styles.productInfo}>
+              <h3 className={styles.productName}>
                 {product.name}
               </h3>
-              <div className="flex items-center justify-between mt-1.5">
-                <span className="text-[11px] md:text-xs font-bold text-neutral-800 dark:text-white truncate max-w-[70%]">
+              <div className={styles.productPriceRow}>
+                <span className={styles.productPrice}>
                   {formatCurrency(product.price)}
                 </span>
-                <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-white/[0.1] group-hover:bg-neutral-900 dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black flex items-center justify-center text-neutral-500 dark:text-neutral-400 transition-colors shrink-0">
-                  <Plus className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                <div className={styles.productAddBtn}>
+                  <Plus className="w-3 h-3" />
                 </div>
               </div>
             </div>
@@ -247,9 +227,9 @@ export default function POSCatalogView({
         ))}
 
         {filteredProducts.length === 0 && (
-          <div className="col-span-full py-12 text-center text-neutral-400">
-            <Info className="w-10 h-10 mx-auto mb-3 opacity-45" />
-            <p className="text-xs">Tidak ada produk ditemukan.</p>
+          <div style={{ gridColumn: '1 / -1', padding: '60px 20px', textAlign: 'center', color: '#71717a' }}>
+            <Info className="w-8 h-8 mx-auto mb-2 opacity-40" />
+            <p style={{ fontSize: 12, fontWeight: 600 }}>Tidak ada produk ditemukan.</p>
           </div>
         )}
       </div>

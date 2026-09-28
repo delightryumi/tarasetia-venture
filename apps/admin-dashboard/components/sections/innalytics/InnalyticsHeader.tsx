@@ -33,11 +33,13 @@ export const InnalyticsHeader: React.FC<InnalyticsHeaderProps> = ({
     <header className={`${styles.topHeader} no-print`}>
       {/* Left: Brand Logo, Hotel Name & Property ID */}
       <div className={styles.headerLeft}>
-        <img
-          src="/channels/5.png"
-          alt="My Tara"
-          className={styles.headerLogo}
-        />
+        <Link href="/select-module" title="Kembali ke Menu Modul" className={styles.headerLogoLink}>
+          <img
+            src="/channels/5.png"
+            alt="My Tara"
+            className={styles.headerLogo}
+          />
+        </Link>
         <div className={styles.headerPropertyText}>
           <div className={styles.propertyName}>{activeHotelName || 'Titik Damai Nexura Collection'}</div>
           <div className={styles.propertyId}>{activeHotelCode || '61872'}</div>

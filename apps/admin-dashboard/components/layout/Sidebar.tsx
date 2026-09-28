@@ -129,17 +129,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     // Map old cpanel key to cpanel-full or cpanel-only
                     if (modules.includes("cpanel")) {
                         modules = modules.filter((m: string) => m !== "cpanel");
-                        const plan = data.billing?.plan || "premium";
-                        if (plan === "basic") {
+                        const plan = data.billing?.plan || "enterprise";
+                        if (plan === "basic" || plan === "startup") {
                             if (!modules.includes("cpanel-only")) modules.push("cpanel-only");
                         } else {
                             if (!modules.includes("cpanel-full")) modules.push("cpanel-full");
                         }
                     }
                     if (modules.length === 0) {
-                        const plan = data.billing?.plan || "premium";
-                        if (plan === "basic") {
-                            modules = ["pos", "cpanel-only"];
+                        const plan = data.billing?.plan || "enterprise";
+                        if (plan === "basic" || plan === "startup") {
+                            modules = ["pos", "hrd", "cpanel-only"];
+                        } else if (plan === "bisnis") {
+                            modules = [
+                                "pos",
+                                "front-office",
+                                "housekeeping",
+                                "food-beverage",
+                                "purchasing",
+                                "accounting",
+                                "hrd",
+                                "innalytics",
+                                "cpanel-only",
+                            ];
                         } else {
                             modules = [
                                 "pos",
@@ -149,6 +161,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 "purchasing",
                                 "accounting",
                                 "hrd",
+                                "innalytics",
                                 "cpanel-full",
                             ];
                         }
@@ -311,7 +324,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 );
             } else {
                 if (!isSuperadmin && activeModules !== null && !activeModules.includes("cpanel-full")) {
-                    items = allNavItems.filter((item) => ["logo"].includes(item.id));
+                    items = allNavItems.filter((item) => ["logo", "users"].includes(item.id));
                 } else {
                     const cpanelAllowedIds = [
                         "logo",

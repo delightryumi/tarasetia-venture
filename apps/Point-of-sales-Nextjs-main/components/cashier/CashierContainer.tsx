@@ -818,12 +818,18 @@ export default function CashierContainer() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
                       <div className="flex flex-col gap-4">
                         <div className="flex flex-col gap-2">
-                          <Label htmlFor="countedCash" className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 flex justify-between">
-                            <span>Uang Fisik Dihitung (Di Laci)</span>
-                            <span className="text-emerald-600 dark:text-emerald-400">
-                              Estimasi: {formatMoney(calculateExpectedCash())}
-                            </span>
-                          </Label>
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="countedCash" className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+                              Uang Fisik Dihitung (Di Laci Kas)
+                            </Label>
+                            <button
+                              type="button"
+                              onClick={() => setCountedCashInput(String(calculateExpectedCash()))}
+                              className="text-[10.5px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                            >
+                              Isi Uang Pas ({formatMoney(calculateExpectedCash())})
+                            </button>
+                          </div>
                           <div className="relative">
                             <span className="absolute left-3.5 top-3 text-sm text-neutral-400 font-bold">{symbol}</span>
                             <Input
@@ -833,33 +839,71 @@ export default function CashierContainer() {
                               placeholder="0.00"
                               value={countedCashInput}
                               onChange={(e) => setCountedCashInput(e.target.value)}
-                              className="pl-12 h-10 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-xl text-sm font-semibold shadow-sm focus:border-emerald-500 focus:ring-emerald-500/20"
+                              className="pl-12 h-11 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.08] rounded-xl text-sm font-bold text-neutral-900 dark:text-white shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                             />
                           </div>
+
+                          {/* Real-time cash difference indicator */}
+                          {countedCashInput !== '' && (() => {
+                            const counted = parseFloat(countedCashInput) || 0;
+                            const expected = calculateExpectedCash();
+                            const diff = counted - expected;
+                            if (diff === 0) {
+                              return (
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
+                                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                                  <span>Uang fisik seimbang (Sesuai catatan sistem)</span>
+                                </div>
+                              );
+                            } else if (diff > 0) {
+                              return (
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-semibold">
+                                  <span>⚠️ Selisih Lebih (Over Cash): +{formatMoney(diff)}</span>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs font-semibold">
+                                  <span>⚠️ Selisih Kurang (Short Cash): -{formatMoney(Math.abs(diff))}</span>
+                                </div>
+                              );
+                            }
+                          })()}
                         </div>
 
                         <div className="flex flex-col gap-2">
-                          <Label htmlFor="closingNotes" className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-                            Catatan Closing (Opsional)
+                          <Label htmlFor="closingNotes" className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+                            Catatan Closing (Wajib jika ada selisih uang)
                           </Label>
                           <Input
                             id="closingNotes"
                             type="text"
-                            placeholder="Tulis alasan jika ada selisih uang..."
+                            placeholder="Tulis alasan jika ada selisih uang atau catatan serah terima..."
                             value={closingNotes}
                             onChange={(e) => setClosingNotes(e.target.value)}
-                            className="h-10 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-xl text-sm shadow-sm"
+                            className="h-11 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.08] rounded-xl text-sm shadow-xs"
                           />
                         </div>
                       </div>
 
-                      <div className="flex items-end">
+                      <div className="flex flex-col justify-end gap-3">
+                        <div className="p-4 rounded-xl bg-neutral-50 dark:bg-zinc-900 border border-neutral-200/80 dark:border-white/[0.06] text-xs space-y-1.5">
+                          <div className="flex justify-between text-neutral-500 dark:text-neutral-400">
+                            <span>Target Kas Sistem:</span>
+                            <span className="font-bold text-neutral-800 dark:text-neutral-200">{formatMoney(calculateExpectedCash())}</span>
+                          </div>
+                          <div className="flex justify-between text-neutral-500 dark:text-neutral-400">
+                            <span>Fisik Dilaporkan:</span>
+                            <span className="font-bold text-neutral-800 dark:text-neutral-200">{formatMoney(parseFloat(countedCashInput) || 0)}</span>
+                          </div>
+                        </div>
+
                         <Button
                           onClick={handleCloseShift}
-                          className="w-full h-12 bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-black rounded-xl text-sm font-bold shadow-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+                          className="w-full h-12 bg-gradient-to-b from-neutral-900 to-neutral-950 hover:from-neutral-800 hover:to-neutral-900 text-white dark:from-white dark:to-neutral-100 dark:text-neutral-950 rounded-xl text-sm font-bold shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                         >
                           <CheckCircle2 className="w-5 h-5" />
-                          Akhiri & Tutup Shift
+                          Akhiri & Tutup Shift (Cetak Z-Report)
                         </Button>
                       </div>
                     </div>

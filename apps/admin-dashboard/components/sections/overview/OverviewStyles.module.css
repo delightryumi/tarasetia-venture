@@ -163,37 +163,143 @@
   letter-spacing: 0.05em;
 }
 
-/* ── Toggle buttons ── */
+/* ── Toggle buttons (NextLevel Segmented Control) ── */
 .toggleWrapper {
   display: flex;
-  padding: 4px;
-  background-color: var(--f-surface-soft);
-  border-radius: var(--f-radius-md);
-  border: 1px solid var(--f-hairline);
+  align-items: center;
+  padding: 3px;
+  background-color: var(--f-surface-soft, #f4f4f5);
+  border-radius: 10px;
+  border: 1px solid var(--f-hairline, rgba(0, 0, 0, 0.08));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+  max-width: 100%;
 }
 
 .toggleBtn {
-  padding: 0 20px;
-  height: 36px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: var(--f-radius-sm);
+  padding: 0 16px;
+  height: 32px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 7px;
   border: none;
   cursor: pointer;
   background-color: transparent;
-  color: var(--f-muted);
-  transition: all var(--f-duration-fast);
+  color: var(--f-muted, #71717a);
+  transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  font-family: var(--f-font);
+  user-select: none;
+}
+
+.toggleBtn:hover:not(.toggleBtnActive) {
+  color: var(--f-ink, #09090b);
+  background-color: rgba(0, 0, 0, 0.04);
 }
 
 .toggleBtnActive {
-  background-color: #181d26 !important;
+  background-color: #0f172a !important;
   color: #ffffff !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* ── Buttons ── */
+/* ── NextLevel UI: Dedicated Action Buttons ── */
+.btnAddTransaction {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #0f172a !important;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 2px 5px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.btnAddTransaction:hover:not(:disabled) {
+  background: linear-gradient(180deg, #0f172a 0%, #020617 100%) !important;
+  border-color: #020617 !important;
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 10px rgba(0, 0, 0, 0.22);
+}
+
+.btnAddTransaction:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.btnAddTransaction:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btnExportExcel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--f-hairline, rgba(0, 0, 0, 0.1));
+  background-color: var(--f-canvas, #ffffff);
+  color: #334155;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.btnExportExcel:hover {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border-color: #86efac;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(22, 163, 74, 0.15);
+}
+
+.btnExportExcel:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.btnExportPdf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--f-hairline, rgba(0, 0, 0, 0.1));
+  background-color: var(--f-canvas, #ffffff);
+  color: #334155;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.btnExportPdf:hover {
+  background-color: #fff1f2;
+  color: #e11d48;
+  border-color: #fecdd3;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(225, 29, 72, 0.15);
+}
+
+.btnExportPdf:active {
+  transform: translateY(0) scale(0.96);
+}
+
+/* ── Standard Buttons ── */
 .btnPrimary {
   background-color: #181d26 !important;
   color: #ffffff !important;
@@ -740,13 +846,24 @@
   box-shadow: 4px 0 12px -4px rgba(0, 0, 0, 0.05);
 }
 
-/* ── Custom Range Date Picker ── */
+/* ── Custom Range Date Picker (NextLevel Integrated Input) ── */
 .datePickerWrapper {
   display: flex;
   align-items: center;
   gap: 8px;
   box-sizing: border-box;
-  height: 46px;
+  height: 38px;
+  padding: 3px 10px;
+  background-color: var(--f-canvas, #ffffff);
+  border: 1px solid var(--f-hairline, rgba(0, 0, 0, 0.1));
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.datePickerWrapper:focus-within {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
 }
 
 .datePickerInputGroup {
@@ -756,22 +873,22 @@
 }
 
 .datePickerLabel {
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--f-light-muted);
+  letter-spacing: 0.08em;
+  color: #64748b;
+  user-select: none;
 }
 
 .dateInput {
-  background-color: var(--f-canvas) !important;
-  border: 1px solid var(--f-hairline) !important;
-  border-radius: 6px !important;
-  padding: 4px 8px !important;
-  font-size: 11px;
-  font-weight: 700;
-  font-family: var(--f-font-mono);
-  color: var(--f-body);
+  background-color: transparent !important;
+  border: none !important;
+  padding: 2px 4px !important;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: var(--f-font-mono, monospace);
+  color: #0f172a;
   outline: none;
   cursor: pointer;
   height: 28px;
@@ -780,7 +897,7 @@
 
 .datePickerDivider {
   font-size: 11px;
-  color: var(--f-light-muted);
+  color: #94a3b8;
   font-weight: 700;
 }
 
@@ -818,18 +935,18 @@
 }
 
 /* ── Mobile and Tablet Responsiveness ── */
-@media (max-width: 1200px) {
+@media (max-width: 1280px) {
   .headerInner {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    gap: 14px;
     padding: 0 16px;
   }
   
   .headerRight {
     width: 100%;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
     justify-content: flex-start;
   }
   
@@ -840,7 +957,7 @@
 
 @media (max-width: 768px) {
   .mainContainer {
-    padding: 16px;
+    padding: 14px;
     gap: 16px;
   }
   
@@ -907,14 +1024,17 @@
   .datePickerWrapper {
     width: 100%;
     justify-content: space-between;
+    height: 40px;
   }
   
   .datePickerInputGroup {
     flex: 1;
+    min-width: 0;
   }
   
   .dateInput {
     width: 100%;
+    min-width: 0;
   }
   
   .toggleWrapper {
@@ -924,16 +1044,30 @@
   .toggleBtn {
     flex: 1;
     text-align: center;
-    padding: 0 8px;
+    padding: 0 4px;
+    font-size: 11px;
+    height: 32px;
   }
   
   .actionGroup {
     width: 100%;
-    justify-content: space-between;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   
-  .actionGroup button {
+  .btnAddTransaction {
     flex: 1;
+    height: 42px;
+    padding: 0 14px;
+    font-size: 12px;
+  }
+
+  .btnExportExcel,
+  .btnExportPdf {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
   }
   
   .calendarNav {

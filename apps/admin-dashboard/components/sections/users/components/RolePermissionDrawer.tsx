@@ -13,7 +13,9 @@ import {
     getStandardRolePermissions,
     PermissionGroup,
     isPermissionAddon,
-    isAddonActiveForHotel
+    isAddonActiveForHotel,
+    getPermissionGroupsForPlan,
+    sanitizePermissionsForPlan
 } from "../permissionConfig";
 import { SystemRoleItem } from "./RoleManagementTable";
 import { UserProfile } from "../types";
@@ -41,6 +43,14 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
     onSaveRolePermissions,
     activeModules = []
 }) => {
+    const planAllowedGroups = useMemo(() => {
+        return getPermissionGroupsForPlan(activeModules);
+    }, [JSON.stringify(activeModules)]);
+
+    const planTotalPermissionsCount = useMemo(() => {
+        return planAllowedGroups.reduce((acc, g) => acc + g.permissions.length, 0);
+    }, [planAllowedGroups]);
+
     const [permissions, setPermissions] = useState<Record<string, boolean>>(() => {
         return role ? getStandardRolePermissions(role.name, activeModules) : {};
     });
@@ -48,7 +58,7 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
     const [selectedTag, setSelectedTag] = useState<string>("all");
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
         const initial: Record<string, boolean> = {};
-        COMPREHENSIVE_PERMISSION_GROUPS.filter(g => !g.isSuperadminOnly).forEach(g => {
+        getPermissionGroupsForPlan(activeModules).forEach(g => {
             initial[g.id] = true;
         });
         return initial;
@@ -72,7 +82,7 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
     useEffect(() => {
         if (!role) return;
 
-        // 1. Immediately apply full standard preset for this role
+        // 1. Immediately apply full standard preset for this role strictly clamped to active modules
         const standard = getStandardRolePermissions(role.name, activeModules);
         setPermissions(standard);
         setSelectedTag("all");
@@ -80,7 +90,7 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
 
         // 2. Expand all groups immediately
         const initialExpanded: Record<string, boolean> = {};
-        COMPREHENSIVE_PERMISSION_GROUPS.filter(g => !g.isSuperadminOnly).forEach(g => {
+        planAllowedGroups.forEach(g => {
             initialExpanded[g.id] = true;
         });
         setExpandedGroups(initialExpanded);
@@ -92,32 +102,23 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
                 .then(snap => {
                     if (snap.exists() && snap.data().permissions) {
                         const fetched = snap.data().permissions;
-                        // Enforce add-on rules on fetched permissions
-                        if (!isAddonActiveForHotel("food-beverage-realtime", activeModules)) {
-                            fetched["food-beverage-realtime"] = false;
-                        }
-                        if (!isAddonActiveForHotel("pos_self_order", activeModules)) {
-                            fetched["pos_self_order"] = false;
-                        }
-                        setPermissions(prev => ({
-                            ...standard,
-                            ...fetched
-                        }));
+                        const merged = sanitizePermissionsForPlan({ ...standard, ...fetched }, activeModules);
+                        setPermissions(merged);
                     }
                 })
                 .catch(err => {
                     console.warn("Background role fetch note:", err);
                 });
         }
-    }, [role?.id, role?.name, activeHotelCode, JSON.stringify(activeModules)]);
+    }, [role?.id, role?.name, activeHotelCode, JSON.stringify(activeModules), planAllowedGroups]);
 
     if (!isOpen || !role) return null;
 
     // Toggle single permission
     const togglePermission = (permId: string) => {
-        const parentGroup = COMPREHENSIVE_PERMISSION_GROUPS.find(g => g.permissions.some(p => p.id === permId));
+        const parentGroup = planAllowedGroups.find(g => g.permissions.some(p => p.id === permId));
         const targetPerm = parentGroup?.permissions.find(p => p.id === permId);
-        if (targetPerm?.isComingSoon) return;
+        if (!targetPerm || targetPerm.isComingSoon) return;
 
         const addon = isPermissionAddon(permId);
         if (addon.isAddon && !isAddonActiveForHotel(permId, activeModules)) return;
@@ -167,7 +168,7 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
     // Quick Actions
     const handleGrantAll = () => {
         const next: Record<string, boolean> = {};
-        COMPREHENSIVE_PERMISSION_GROUPS.filter(g => !g.isSuperadminOnly).forEach(g => {
+        planAllowedGroups.forEach(g => {
             next[g.id] = true;
             g.permissions.forEach(p => {
                 const addon = isPermissionAddon(p.id);
@@ -178,12 +179,12 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
             });
         });
         setPermissions(next);
-        toast.success("Seluruh izin aktif di semua modul hotel telah diaktifkan.");
+        toast.success("Seluruh izin aktif modul paket hotel telah diaktifkan.");
     };
 
     const handleRevokeAll = () => {
         const next: Record<string, boolean> = {};
-        COMPREHENSIVE_PERMISSION_GROUPS.filter(g => !g.isSuperadminOnly).forEach(g => {
+        planAllowedGroups.forEach(g => {
             next[g.id] = false;
             g.permissions.forEach(p => {
                 next[p.id] = false;
@@ -201,7 +202,7 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
 
     const handleExpandAll = () => {
         const next: Record<string, boolean> = {};
-        COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
+        planAllowedGroups.forEach(g => {
             next[g.id] = true;
         });
         setExpandedGroups(next);
@@ -209,7 +210,7 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
 
     const handleCollapseAll = () => {
         const next: Record<string, boolean> = {};
-        COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
+        planAllowedGroups.forEach(g => {
             next[g.id] = false;
         });
         setExpandedGroups(next);
@@ -227,11 +228,10 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
         val === true && !key.startsWith("module_")
     ).length;
     
-    const percentage = Math.round((activePermsCount / TOTAL_PERMISSIONS_COUNT) * 100);
+    const percentage = Math.round((activePermsCount / (planTotalPermissionsCount || 1)) * 100);
 
     // Filter Groups by Selected Tag & Search Query
-    const filteredGroups = COMPREHENSIVE_PERMISSION_GROUPS.filter(group => {
-        if (group.isSuperadminOnly) return false;
+    const filteredGroups = planAllowedGroups.filter(group => {
         if (selectedTag !== "all" && group.id !== selectedTag) return false;
         return true;
     }).map(group => {
@@ -281,7 +281,8 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await onSaveRolePermissions(role.name, permissions, syncToUsers);
+            const sanitized = sanitizePermissionsForPlan(permissions, activeModules);
+            await onSaveRolePermissions(role.name, sanitized, syncToUsers);
             toast.success(`Hak akses untuk role ${role.name} berhasil disimpan.`, {
                 description: syncToUsers && assignedUsersCount > 0 
                     ? `Perubahan telah otomatis diterapkan ke ${assignedUsersCount} personil aktif.`
@@ -346,7 +347,7 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
                         <div className={styles.statsLeft}>
                             <div className={styles.statsLabelRow}>
                                 <span>Total Hak Akses Aktif</span>
-                                <span>{activePermsCount} / {TOTAL_PERMISSIONS_COUNT} Privileges ({percentage}%)</span>
+                                <span>{activePermsCount} / {planTotalPermissionsCount} Privileges ({percentage}%)</span>
                             </div>
                             <div className={styles.progressBarContainer}>
                                 <div 
@@ -405,10 +406,10 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
                         >
                             Semua Modul
                             <span className={`${styles.tagCountBadge} ${activePermsCount > 0 ? styles.tagCountBadgeActive : ""}`}>
-                                {activePermsCount}/{TOTAL_PERMISSIONS_COUNT}
+                                {activePermsCount}/{planTotalPermissionsCount}
                             </span>
                         </button>
-                        {COMPREHENSIVE_PERMISSION_GROUPS.filter(g => !g.isSuperadminOnly).map(g => {
+                        {planAllowedGroups.map(g => {
                             const activeCount = g.permissions.filter(p => permissions[p.id] === true).length;
                             const isSelected = selectedTag === g.id;
                             return (
@@ -435,7 +436,7 @@ export const RolePermissionDrawer: React.FC<RolePermissionDrawerProps> = ({
                         <div className={styles.batchControlBar}>
                             <div className={styles.batchControlTitle}>
                                 <CheckCircle2 size={16} className={styles.batchIcon} />
-                                <span>Tinjauan <b>Semua Modul Hotel</b> ({COMPREHENSIVE_PERMISSION_GROUPS.length} Modul Terintegrasi)</span>
+                                <span>Tinjauan <b>Semua Modul Paket</b> ({planAllowedGroups.length} Modul Aktif)</span>
                             </div>
                             <div className={styles.batchButtonsGroup}>
                                 <button

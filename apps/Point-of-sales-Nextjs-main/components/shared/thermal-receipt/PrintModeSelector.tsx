@@ -8,6 +8,7 @@ interface PrintModeSelectorProps {
 
 const TABS: { key: PrintMode; label: string }[] = [
   { key: 'all', label: 'Kasir (Full)' },
+  { key: 'checker', label: 'Checker' },
   { key: 'kitchen', label: 'Dapur (KOT)' },
   { key: 'bar', label: 'Bar (Drink)' },
 ];

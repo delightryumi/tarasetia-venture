@@ -64,6 +64,7 @@ interface HotelFormModalProps {
   onSubmit: (e: React.FormEvent) => void;
   onSendLink?: (e: React.FormEvent) => void;
   isSendingLink?: boolean;
+  isSavingHotel?: boolean;
   onClose: () => void;
 }
 
@@ -80,7 +81,7 @@ export const HotelFormModal: React.FC<HotelFormModalProps> = ({
   billingStatus, setBillingStatus,
   nextDueDate, setNextDueDate,
   activeModules, setActiveModules,
-  onSubmit, onSendLink, isSendingLink, onClose,
+  onSubmit, onSendLink, isSendingLink, isSavingHotel, onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<"link" | "manual">(isEditing ? "manual" : "link");
 
@@ -263,9 +264,10 @@ export const HotelFormModal: React.FC<HotelFormModalProps> = ({
             </div>
 
             <footer className={styles.modalFooter}>
-              <button type="button" onClick={onClose} className={styles.btnSecondary}>Batal</button>
-              <button type="submit" className={styles.btnPrimary}>
-                {isEditing ? "Simpan Perubahan" : "Simpan Registrasi"}
+              <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSavingHotel}>Batal</button>
+              <button type="submit" disabled={isSavingHotel} className={styles.btnPrimary} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {isSavingHotel ? <Loader2 size={16} className="animate-spin" /> : null}
+                {isSavingHotel ? "Menyimpan..." : (isEditing ? "Simpan Perubahan" : "Simpan Registrasi")}
               </button>
             </footer>
           </form>

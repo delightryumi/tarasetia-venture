@@ -7,9 +7,10 @@ import { formatIDR } from "@/lib/pnl-utils";
 interface UseDSRExportProps {
   dsrReport: DSRReportResult;
   hotelName: string;
+  isStartup?: boolean;
 }
 
-export const useDSRExport = ({ dsrReport, hotelName }: UseDSRExportProps) => {
+export const useDSRExport = ({ dsrReport, hotelName, isStartup = false }: UseDSRExportProps) => {
   const exportToExcel = () => {
     const wb = XLSX.utils.book_new();
 
@@ -56,13 +57,17 @@ export const useDSRExport = ({ dsrReport, hotelName }: UseDSRExportProps) => {
       });
     };
 
-    appendGroup("Statistic", dsrReport.statistics);
-    appendGroup("Room Revenue", dsrReport.roomRevenue);
+    if (!isStartup) {
+      appendGroup("Statistic", dsrReport.statistics);
+      appendGroup("Room Revenue", dsrReport.roomRevenue);
+    }
     appendGroup("Food Revenue", dsrReport.foodRevenue);
     appendGroup("Beverage Revenue", dsrReport.beverageRevenue);
     appendGroup("Other F&B Revenue", dsrReport.otherFnbRevenue);
     appendGroup("Minor Operating Revenue", dsrReport.minorOperatingRevenue);
-    appendGroup("Amenities Revenue", dsrReport.amenitiesRevenue);
+    if (!isStartup && dsrReport.amenitiesRevenue.length > 0) {
+      appendGroup("Amenities Revenue", dsrReport.amenitiesRevenue);
+    }
     appendGroup("Summary Totals", dsrReport.summaryTotals);
 
     // Payments
@@ -70,18 +75,30 @@ export const useDSRExport = ({ dsrReport, hotelName }: UseDSRExportProps) => {
     rows.push(["--- CREDIT / SETTLEMENTS ---"]);
     rows.push(["Payment Method", "TODAY", "", "MTD", "", "", "", "YTD", "", "", ""]);
     const p = dsrReport.payments;
-    [
-      p.cashFo,
-      p.cashOutlet,
-      p.cashRefundFo,
-      p.totalCash,
-      p.edcBca,
-      p.edcMandiri,
-      p.qris,
-      p.transfer,
-      p.cityLedger,
-      p.totalSettlement,
-    ].forEach((item) => {
+    const excelPaymentItems = isStartup
+      ? [
+          { ...p.cashOutlet, label: "Cash Kasir (F&B / Resto)" },
+          p.totalCash,
+          p.edcBca,
+          p.edcMandiri,
+          p.qris,
+          p.transfer,
+          p.cityLedger,
+          p.totalSettlement,
+        ]
+      : [
+          p.cashFo,
+          p.cashOutlet,
+          p.cashRefundFo,
+          p.totalCash,
+          p.edcBca,
+          p.edcMandiri,
+          p.qris,
+          p.transfer,
+          p.cityLedger,
+          p.totalSettlement,
+        ];
+    excelPaymentItems.forEach((item) => {
       rows.push([item.label, item.today, "", item.mtd, "", "", "", item.ytd]);
     });
 
@@ -184,41 +201,59 @@ export const useDSRExport = ({ dsrReport, hotelName }: UseDSRExportProps) => {
       });
     };
 
-    addSectionHeader("STATISTIC", [241, 245, 249], [15, 23, 42]);
-    addGroupRows(dsrReport.statistics);
+    if (!isStartup) {
+      addSectionHeader("STATISTIC", [241, 245, 249], [15, 23, 42]);
+      addGroupRows(dsrReport.statistics);
+    }
 
     addSectionHeader("DEBIT (REVENUE BREAKDOWN)", [15, 23, 42], [253, 224, 71]);
-    addSectionHeader("ROOM REVENUE", [248, 250, 252], [51, 65, 85]);
-    addGroupRows(dsrReport.roomRevenue);
+    if (!isStartup) {
+      addSectionHeader("ROOM REVENUE", [248, 250, 252], [51, 65, 85]);
+      addGroupRows(dsrReport.roomRevenue);
+    }
 
     addSectionHeader("FOOD & BEVERAGE", [248, 250, 252], [51, 65, 85]);
     addGroupRows(dsrReport.foodRevenue);
     addGroupRows(dsrReport.beverageRevenue);
     addGroupRows(dsrReport.otherFnbRevenue);
 
-    addSectionHeader("MINOR OPERATING", [248, 250, 252], [51, 65, 85]);
+    addSectionHeader("MINOR OPERATING / RETAIL", [248, 250, 252], [51, 65, 85]);
     addGroupRows(dsrReport.minorOperatingRevenue);
 
-    addSectionHeader("AMENITIES", [248, 250, 252], [51, 65, 85]);
-    addGroupRows(dsrReport.amenitiesRevenue);
+    if (!isStartup && dsrReport.amenitiesRevenue.length > 0) {
+      addSectionHeader("AMENITIES", [248, 250, 252], [51, 65, 85]);
+      addGroupRows(dsrReport.amenitiesRevenue);
+    }
 
     addSectionHeader("SUMMARY TOTALS", [226, 232, 240], [15, 23, 42]);
     addGroupRows(dsrReport.summaryTotals);
 
     addSectionHeader("CREDIT (SETTLEMENT / PAYMENTS)", [15, 23, 42], [125, 211, 252]);
     const p = dsrReport.payments;
-    [
-      p.cashFo,
-      p.cashOutlet,
-      p.cashRefundFo,
-      p.totalCash,
-      p.edcBca,
-      p.edcMandiri,
-      p.qris,
-      p.transfer,
-      p.cityLedger,
-      p.totalSettlement,
-    ].forEach((item) => {
+    const pdfPaymentItems = isStartup
+      ? [
+          { ...p.cashOutlet, label: "Cash Kasir (F&B / Resto)" },
+          p.totalCash,
+          p.edcBca,
+          p.edcMandiri,
+          p.qris,
+          p.transfer,
+          p.cityLedger,
+          p.totalSettlement,
+        ]
+      : [
+          p.cashFo,
+          p.cashOutlet,
+          p.cashRefundFo,
+          p.totalCash,
+          p.edcBca,
+          p.edcMandiri,
+          p.qris,
+          p.transfer,
+          p.cityLedger,
+          p.totalSettlement,
+        ];
+    pdfPaymentItems.forEach((item) => {
       const isTotal = item.id.includes("total");
       const bg: [number, number, number] | undefined = isTotal ? [241, 245, 249] : undefined;
       tableBody.push([

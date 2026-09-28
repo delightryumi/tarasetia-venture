@@ -11,8 +11,9 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, onSnapshot, collection, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { localDb } from '@/lib/dexie';
 import { toast } from 'react-toastify';
-import { Coffee, Users, Plus, Trash2, X, ClipboardList, CheckCircle, Printer, CreditCard } from 'lucide-react';
+import { Coffee, Users, Plus, Trash2, X, ClipboardList, CheckCircle, Printer, CreditCard, Settings } from 'lucide-react';
 import ReceiptDialog from '../lexupos/ReceiptDialog';
+import TableSelectorModal from '../lexupos/TableSelectorModal';
 
 // Live Tables Component
 function LiveTableGrid() {
@@ -49,6 +50,7 @@ function LiveTableGrid() {
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isTableSetupOpen, setIsTableSetupOpen] = useState<boolean>(false);
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState<boolean>(false);
   const [isConfirmClearOpen, setIsConfirmClearOpen] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
@@ -98,31 +100,37 @@ function LiveTableGrid() {
 
     setIsLoading(true);
     setHeldOrders([]);
-    let unsub: any;
+    let unsubPos: any;
+    let unsubOrders: any;
     const fetchConfigAndListen = async () => {
       try {
-        // 1. Fetch registered tables from Firestore pos settings
+        // 1. Listen to pos settings in real-time
         const posRef = doc(db, 'hotels', hotelCode, 'settings', 'pos');
-        const posSnap = await getDoc(posRef);
-        let rawTables = '10';
-        if (posSnap.exists()) {
-          rawTables = posSnap.data().tables || '10';
-        }
-
-        let parsedTables: string[] = [];
-        if (/^\d+$/.test(rawTables.trim())) {
-          const count = parseInt(rawTables.trim());
-          for (let i = 1; i <= count; i++) {
-            parsedTables.push(`Meja ${i}`);
+        unsubPos = onSnapshot(posRef, (posSnap) => {
+          let parsedTables: string[] = [];
+          if (posSnap.exists()) {
+            const data = posSnap.data();
+            if (data.tablesDetailed && Array.isArray(data.tablesDetailed) && data.tablesDetailed.length > 0) {
+              parsedTables = data.tablesDetailed.map((t: any) => t.name);
+            } else if (data.tables) {
+              const raw = String(data.tables).trim();
+              if (/^\d+$/.test(raw)) {
+                const count = parseInt(raw);
+                for (let i = 1; i <= count; i++) parsedTables.push(`Meja ${i}`);
+              } else {
+                parsedTables = Array.from(new Set(raw.split(',').map(t => t.trim()).filter(Boolean)));
+              }
+            }
           }
-        } else {
-          parsedTables = Array.from(new Set(rawTables.split(',').map(t => t.trim()).filter(Boolean)));
-        }
-        setTablesList(parsedTables);
+          if (parsedTables.length === 0) {
+            for (let i = 1; i <= 10; i++) parsedTables.push(`Meja ${i}`);
+          }
+          setTablesList(parsedTables);
+        });
 
         // 2. Listen in real-time to held orders
         const q = collection(db, 'hotels', hotelCode, 'pos_held_orders');
-        unsub = onSnapshot(q, (snap) => {
+        unsubOrders = onSnapshot(q, (snap) => {
           const orders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           setHeldOrders(orders);
           setIsLoading(false);
@@ -140,7 +148,8 @@ function LiveTableGrid() {
     fetchConfigAndListen();
 
     return () => {
-      if (unsub) unsub();
+      if (unsubPos) unsubPos();
+      if (unsubOrders) unsubOrders();
     };
   }, [hotelCode]);
 
@@ -334,14 +343,14 @@ function LiveTableGrid() {
   const handleConfirmClearTable = async () => {
     if (!selectedOrder) return;
 
-    // Validate PIN and Reason for unpaid tables
+    // Validate Password/PIN and Reason for unpaid tables
     if (!selectedOrder.isPaidDirectly) {
       if (!adminPin) {
-        setPinError('PIN Admin wajib diisi.');
+        setPinError('Password Admin wajib diisi.');
         return;
       }
-      if (adminPin !== '1234' && adminPin !== hotelCode) {
-        setPinError('PIN Admin tidak valid.');
+      if (adminPin.trim() !== 'admin123') {
+        setPinError('Password Admin tidak valid.');
         return;
       }
       if (!cancelReason.trim()) {
@@ -420,6 +429,14 @@ function LiveTableGrid() {
               <span className="text-neutral-600 dark:text-neutral-400">Kosong ({Math.max(0, tablesList.length - heldOrders.filter(o => tablesList.some(t => normalizeTable(t) === normalizeTable(o.tableNumber))).length)})</span>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setIsTableSetupOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-neutral-900 transition-all shadow-xs shrink-0 cursor-pointer"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span>Setup Meja</span>
+          </button>
         </div>
       </div>
 
@@ -430,7 +447,13 @@ function LiveTableGrid() {
       ) : tablesList.length === 0 ? (
         <div className="py-12 border border-dashed border-neutral-200 dark:border-zinc-800 rounded-xl flex flex-col justify-center items-center text-xs font-medium text-neutral-500 dark:text-neutral-400 gap-2">
           <span>Belum ada meja yang didaftarkan.</span>
-          <a href="/settings" className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold">Atur di Pengaturan Toko &rarr;</a>
+          <button
+            type="button"
+            onClick={() => setIsTableSetupOpen(true)}
+            className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold cursor-pointer"
+          >
+            Atur & Tambah Meja Sekarang &rarr;
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5">
@@ -468,36 +491,57 @@ function LiveTableGrid() {
                 className={cn(
                   "p-4 rounded-xl border flex flex-col justify-between items-start text-left transition-all relative overflow-hidden select-none cursor-pointer h-[115px] focus:outline-none",
                   isOccupied
-                    ? "bg-emerald-100/80 dark:bg-emerald-950/40 border-emerald-400/60 dark:border-emerald-800 hover:border-emerald-500 hover:shadow-md"
-                    : "bg-red-100/80 dark:bg-red-950/40 border-red-400/60 dark:border-red-800 hover:border-red-500 hover:shadow-md"
+                    ? (activeOrder?.isSplitActive 
+                        ? "bg-purple-50/90 dark:bg-purple-950/40 border-purple-300 dark:border-purple-800 hover:border-purple-500 hover:shadow-md"
+                        : "bg-rose-50/90 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 hover:border-rose-500 hover:shadow-md")
+                    : "bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 hover:border-emerald-500 hover:shadow-md"
                 )}
               >
                 <div className="w-full flex justify-between items-start gap-1">
                   <span className={cn(
                     "text-xs font-black tracking-tight truncate pr-2 flex items-center gap-1",
-                    isOccupied ? "text-emerald-950 dark:text-emerald-100" : "text-red-950 dark:text-red-100"
+                    isOccupied 
+                      ? (activeOrder?.isSplitActive ? "text-purple-950 dark:text-purple-100" : "text-rose-950 dark:text-rose-100")
+                      : "text-emerald-950 dark:text-emerald-100"
                   )}>
                     {tableName}
                   </span>
                   {isOccupied ? (
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse shrink-0 mt-1" />
+                    <span className={cn(
+                      "w-1.5 h-1.5 rounded-full shrink-0 mt-1",
+                      activeOrder?.isSplitActive ? "bg-purple-600 animate-pulse" : "bg-rose-600 animate-pulse"
+                    )} />
                   ) : (
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0 mt-1" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0 mt-1" />
                   )}
                 </div>
 
                 {isOccupied ? (
                   <div className="w-full flex flex-col gap-0.5 mt-2">
-                    <span className="text-[10px] font-bold text-emerald-900 dark:text-[#a1a1aa] truncate flex items-center gap-1">
+                    <span className={cn(
+                      "text-[10px] font-bold truncate flex items-center gap-1",
+                      activeOrder?.isSplitActive 
+                        ? "text-purple-900 dark:text-purple-200" 
+                        : "text-neutral-800 dark:text-neutral-200"
+                    )}>
                       <Users size={10} className="shrink-0" />
                       {activeOrder.customerName || 'Guest'}
                     </span>
                     <div className="flex items-center justify-between w-full mt-1">
-                      <span className="text-[11px] font-black text-emerald-750 dark:text-emerald-400">
+                      <span className={cn(
+                        "text-[11px] font-black",
+                        activeOrder?.isSplitActive 
+                          ? "text-purple-700 dark:text-purple-400" 
+                          : "text-rose-700 dark:text-rose-400"
+                      )}>
                         {formatCurrency(getOrderTotal(activeOrder))}
                       </span>
                       <div className="flex items-center gap-1">
-                        {activeOrder.payableAmount === 0 || activeOrder.paymentMethod === 'compliment' || activeOrder.discountPercent === 100 ? (
+                        {activeOrder.isSplitActive ? (
+                          <span className="text-[8px] bg-purple-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none animate-pulse shadow-[0_0_8px_rgba(147,51,234,0.8)] border border-purple-400">
+                            SPLIT SISA
+                          </span>
+                        ) : activeOrder.payableAmount === 0 || activeOrder.paymentMethod === 'compliment' || activeOrder.discountPercent === 100 ? (
                           <span className="text-[8px] bg-purple-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none">
                             COMPLIMENT
                           </span>
@@ -506,21 +550,23 @@ function LiveTableGrid() {
                             DISKON
                           </span>
                         ) : null}
-                        {activeOrder.isPaidDirectly ? (
-                          <span className="text-[8px] bg-emerald-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none">
-                            PAID
-                          </span>
-                        ) : (
-                          <span className="text-[8px] bg-amber-500 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)] border border-amber-400">
-                            UNPAID
-                          </span>
+                        {!activeOrder.isSplitActive && (
+                          activeOrder.isPaidDirectly ? (
+                            <span className="text-[8px] bg-emerald-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none">
+                              PAID
+                            </span>
+                          ) : (
+                            <span className="text-[8px] bg-amber-500 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)] border border-amber-400">
+                              UNPAID
+                            </span>
+                          )
                         )}
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="w-full flex flex-col gap-0.5 mt-2">
-                    <span className="text-[10px] font-black text-red-700 dark:text-red-400 mt-auto">
+                    <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 mt-auto">
                       Kosong
                     </span>
                   </div>
@@ -594,18 +640,47 @@ function LiveTableGrid() {
               {selectedOrder ? (
                 <div className="flex-grow flex flex-col min-h-0">
                   {/* Guest Info */}
-                  <div className="flex flex-col gap-2 bg-neutral-50 dark:bg-white/[0.02] border border-neutral-150 dark:border-white/[0.05] rounded-[10px] p-3 mb-4 shrink-0">
+                  <div className="flex flex-col gap-2 bg-neutral-50 dark:bg-white/[0.02] border border-neutral-150 dark:border-white/[0.05] rounded-[10px] p-3 mb-3 shrink-0">
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-neutral-500 dark:text-[#a1a1aa] font-medium">Nama Tamu</span>
                       <span className="text-neutral-800 dark:text-[#f4f4f5] font-black">{selectedOrder.customerName || 'Guest'}</span>
                     </div>
-                    {selectedOrder.notes && (
-                      <div className="flex flex-col gap-0.5 text-xs pt-1 border-t border-neutral-200/50 dark:border-zinc-800/50">
-                        <span className="text-neutral-500 dark:text-[#a1a1aa] font-medium">Catatan Meja</span>
-                        <span className="text-neutral-700 dark:text-neutral-300 italic">{selectedOrder.notes}</span>
-                      </div>
-                    )}
+                    {(() => {
+                      const cleanNote = selectedOrder.cleanCustomerNotes || 
+                        (selectedOrder.notes 
+                          ? selectedOrder.notes
+                              .replace(/\|?\s*Sisa tagihan\s*\([^)]*\)\s*\|?/gi, '')
+                              .replace(/\|?\s*\[Split[^\]]*\]\s*\|?/gi, '')
+                              .replace(/^\|\s*|\s*\|\s*$/g, '')
+                              .trim() 
+                          : '');
+                      if (!cleanNote) return null;
+                      return (
+                        <div className="flex flex-col gap-0.5 text-xs pt-1 border-t border-neutral-200/50 dark:border-zinc-800/50">
+                          <span className="text-neutral-500 dark:text-[#a1a1aa] font-medium">Catatan Meja</span>
+                          <span className="text-neutral-700 dark:text-neutral-300 italic">{cleanNote}</span>
+                        </div>
+                      );
+                    })()}
                   </div>
+
+                  {/* Split Bill Active Status Banner */}
+                  {(selectedOrder.isSplitActive || (Number(selectedOrder.totalPaid || 0) > 0)) && (
+                    <div className="flex items-center justify-between bg-neutral-100 dark:bg-zinc-800/60 border border-neutral-200 dark:border-zinc-700/80 rounded-[10px] p-2.5 mb-3 text-xs shrink-0">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-neutral-900 dark:bg-neutral-100 animate-pulse shrink-0" />
+                        <div className="flex flex-col">
+                          <span className="font-bold text-neutral-900 dark:text-white text-[11px]">Sesi Split Bill Aktif</span>
+                          <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                            {selectedOrder.splitPaidBreakdown || `Sudah terbayar: ${formatCurrency(selectedOrder.totalPaid || 0)}`}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-stone-900 text-white dark:bg-white dark:text-stone-900 uppercase">
+                        Sisa Kurangan
+                      </span>
+                    </div>
+                  )}
 
                   {/* Items List (Internal scroll if item list is massive) */}
                   <span className="text-[10px] text-neutral-400 dark:text-zinc-500 font-bold uppercase tracking-wider mb-2 shrink-0">Item Pesanan</span>
@@ -665,20 +740,47 @@ function LiveTableGrid() {
                         <span>-{formatCurrency(selectedOrder.discount ?? 0)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between items-center text-sm pt-2 border-t border-neutral-100 dark:border-zinc-800/80 mt-1">
-                      <span className="text-neutral-800 dark:text-neutral-200 font-black">Total Tagihan</span>
-                      <span className="text-stone-900 dark:text-white font-black text-base">
-                        {formatCurrency(getOrderTotal(selectedOrder))}
-                      </span>
-                    </div>
+
+                    {/* Split payments breakdown if split active */}
+                    {(selectedOrder.isSplitActive || Number(selectedOrder.totalPaid || 0) > 0) ? (
+                      <>
+                        <div className="flex justify-between items-center text-xs text-emerald-600 dark:text-emerald-400 font-semibold pt-1 border-t border-dashed border-neutral-200 dark:border-zinc-800">
+                          <span>Telah Dibayar (Split)</span>
+                          <span>-{formatCurrency(Number(selectedOrder.totalPaid || 0))}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm pt-2 border-t-2 border-neutral-900 dark:border-neutral-100 mt-1 bg-neutral-50 dark:bg-zinc-800/40 p-2.5 rounded-lg">
+                          <div className="flex flex-col">
+                            <span className="text-neutral-900 dark:text-neutral-100 font-black text-xs uppercase tracking-wide">Sisa Kurangan Meja</span>
+                            <span className="text-[10px] text-neutral-500 dark:text-neutral-400">Harus dilunasi kasir</span>
+                          </div>
+                          <span className="text-red-600 dark:text-red-400 font-black text-base">
+                            {formatCurrency(getOrderTotal(selectedOrder))}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between items-center text-sm pt-2 border-t border-neutral-100 dark:border-zinc-800/80 mt-1">
+                        <span className="text-neutral-800 dark:text-neutral-200 font-black">Total Tagihan</span>
+                        <span className="text-stone-900 dark:text-white font-black text-base">
+                          {formatCurrency(getOrderTotal(selectedOrder))}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Status Banner */}
                     <div className={cn(
                       "mt-2 p-2 rounded-[10px] text-center text-[10px] font-black uppercase tracking-wider leading-none shrink-0",
                       selectedOrder.isPaidDirectly 
                         ? "bg-emerald-500/10 text-emerald-650 dark:bg-emerald-500/20 dark:text-emerald-400"
+                        : (selectedOrder.isSplitActive || Number(selectedOrder.totalPaid || 0) > 0)
+                        ? "bg-stone-900 text-white dark:bg-white dark:text-stone-900"
                         : "bg-amber-500/10 text-amber-650 dark:bg-amber-500/20 dark:text-amber-400"
                     )}>
-                      {selectedOrder.isPaidDirectly ? "Pembayaran: PAID (Lunas)" : "Pembayaran: UNPAID (Belum Bayar)"}
+                      {selectedOrder.isPaidDirectly 
+                        ? "Pembayaran: PAID (Lunas)" 
+                        : (selectedOrder.isSplitActive || Number(selectedOrder.totalPaid || 0) > 0)
+                        ? `Split Bill: Kurangan ${formatCurrency(getOrderTotal(selectedOrder))}`
+                        : "Pembayaran: UNPAID (Belum Bayar)"}
                     </div>
                   </div>
 
@@ -688,10 +790,12 @@ function LiveTableGrid() {
                       <>
                         <button
                           onClick={handlePayAtCashier}
-                          className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs cursor-pointer border-none flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
+                          className="w-full py-3 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 text-white font-black text-xs cursor-pointer border-none flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
                         >
                           <CreditCard size={15} />
-                          Bayar di Kasir (Proses Pembayaran)
+                          {(selectedOrder.isSplitActive || Number(selectedOrder.totalPaid || 0) > 0)
+                            ? `Lanjutkan Bayar Sisa Split (${formatCurrency(getOrderTotal(selectedOrder))})`
+                            : "Bayar di Kasir (Proses Pembayaran)"}
                         </button>
                         
                         <div className="flex gap-2">
@@ -789,7 +893,7 @@ function LiveTableGrid() {
                   Meja <strong className="text-neutral-800 dark:text-[#f4f4f5]">{selectedTable}</strong> belum lunas. Memerlukan PIN Otorisasi Admin & alasan untuk membatalkan pesanan.
                 </p>
                 <div className="flex flex-col gap-1 text-left mt-2">
-                  <label className="text-[10px] font-black uppercase text-neutral-500 dark:text-zinc-400">PIN Admin (2FA)</label>
+                  <label className="text-[10px] font-black uppercase text-neutral-500 dark:text-zinc-400">Password / PIN Admin (2FA)</label>
                   <input
                     type="password"
                     value={adminPin}
@@ -798,7 +902,7 @@ function LiveTableGrid() {
                       setPinError('');
                     }}
                     className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-transparent dark:text-white focus:outline-none focus:border-red-500 font-sans"
-                    placeholder="Masukkan PIN Admin (e.g. 1234)"
+                    placeholder="Masukkan Password Admin (admin123)"
                   />
                 </div>
                 <div className="flex flex-col gap-1 text-left">
@@ -841,6 +945,19 @@ function LiveTableGrid() {
             </div>
           </div>
         </div>
+      )}
+
+      {isTableSetupOpen && (
+        <TableSelectorModal
+          isOpen={isTableSetupOpen}
+          initialSetupMode={true}
+          onClose={() => setIsTableSetupOpen(false)}
+          selectedTable={selectedTable || ''}
+          onSelectTable={(tableName) => {
+            setIsTableSetupOpen(false);
+            handleTableClick(tableName);
+          }}
+        />
       )}
     </div>
   );

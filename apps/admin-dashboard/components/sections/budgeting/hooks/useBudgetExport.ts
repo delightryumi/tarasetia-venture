@@ -10,6 +10,7 @@ interface UseBudgetExportProps {
   budgetDoc: YearlyBudgetDocument | null;
   hotelName: string;
   hotelRoomCount: number;
+  isStartup?: boolean;
 }
 
 const MONTH_KEYS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
@@ -102,6 +103,7 @@ export const useBudgetExport = ({
   budgetDoc,
   hotelName,
   hotelRoomCount,
+  isStartup = false,
 }: UseBudgetExportProps) => {
 
   const getMonthsArray = (): BudgetMonthData[] => {
@@ -171,7 +173,8 @@ export const useBudgetExport = ({
     r2.getCell(1).alignment = { vertical: "middle", horizontal: "left", indent: 1 };
 
     // Row 3: Meta Info
-    const r3 = ws.addRow([`Fiscal Year: ${year} | Capacity: ${hotelRoomCount} Physical Rooms | Standard: USALI 11th Edition`]);
+    const capacityText = isStartup ? "Outlet F&B & Resto UMKM" : `Capacity: ${hotelRoomCount} Physical Rooms`;
+    const r3 = ws.addRow([`Fiscal Year: ${year} | ${capacityText} | Standard: USALI 11th Edition`]);
     ws.mergeCells("A3:S3");
     r3.height = 18;
     r3.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
@@ -482,10 +485,14 @@ export const useBudgetExport = ({
 
     // 1. Operating Revenue
     addSectionRow(wsPnl, "=== 1. OPERATING REVENUE ===");
-    const rRoomRev = addDataRow(wsPnl, "3013 • Rooms Revenue", (m) => m.summaryPnl?.roomRevenue || 0, months, 11);
+    let rRoomRev = 0;
+    if (!isStartup) {
+      rRoomRev = addDataRow(wsPnl, "3013 • Rooms Revenue", (m) => m.summaryPnl?.roomRevenue || 0, months, 11);
+    }
     const rFnbRev = addDataRow(wsPnl, "3023 • Food & Beverage Revenue", (m) => m.summaryPnl?.fnbRevenue || 0, months, 11);
+    const rFirstRev = isStartup ? rFnbRev : rRoomRev;
     const rModRev = addDataRow(wsPnl, "3323 • Minor Operating Departments (MOD)", (m) => m.summaryPnl?.modRevenue || 0, months, 11);
-    const rNetRev = addSumRow(wsPnl, "TOTAL HOTEL NET REVENUE", rRoomRev, rModRev, 11);
+    const rNetRev = addSumRow(wsPnl, isStartup ? "TOTAL OUTLET NET REVENUE" : "TOTAL HOTEL NET REVENUE", rFirstRev, rModRev, 11);
     const rSc = addDataRow(wsPnl, "Service Charge (10%)", (m) => m.summaryPnl?.serviceCharge || 0, months, rNetRev);
     const rTax = addDataRow(wsPnl, "Government Tax (10%)", (m) => m.summaryPnl?.governmentTax || 0, months, rNetRev);
     addCalcRow(wsPnl, "TOTAL GROSS REVENUE (INC. TAX & SC)", (col) => `${col}${rNetRev}+${col}${rSc}+${col}${rTax}`, rNetRev, false);
@@ -493,19 +500,27 @@ export const useBudgetExport = ({
 
     // 2. Cost of Goods Sold (COGS)
     addSectionRow(wsPnl, "=== 2. COST OF GOODS SOLD (COGS) ===");
-    const rRoomCogs = addDataRow(wsPnl, "Cost of Sales - Rooms (Linen & Supplies)", (m) => m.summaryPnl?.roomCogs || 0, months, rNetRev);
+    let rRoomCogs = 0;
+    if (!isStartup) {
+      rRoomCogs = addDataRow(wsPnl, "Cost of Sales - Rooms (Linen & Supplies)", (m) => m.summaryPnl?.roomCogs || 0, months, rNetRev);
+    }
     const rFnbCogs = addDataRow(wsPnl, "Cost of Sales - Food & Beverage", (m) => m.summaryPnl?.fnbCogs || 0, months, rNetRev);
+    const rFirstCogs = isStartup ? rFnbCogs : rRoomCogs;
     const rModCogs = addDataRow(wsPnl, "Cost of Sales - Minor Operating Dept", (m) => m.summaryPnl?.modCogs || 0, months, rNetRev);
-    const rTotalCogs = addSumRow(wsPnl, "TOTAL COST OF GOODS SOLD (COGS)", rRoomCogs, rModCogs, rNetRev);
+    const rTotalCogs = addSumRow(wsPnl, "TOTAL COST OF GOODS SOLD (COGS)", rFirstCogs, rModCogs, rNetRev);
     const rGrossProfit = addCalcRow(wsPnl, "TOTAL GROSS PROFIT (GROSS MARGIN)", (col) => `${col}${rNetRev}-${col}${rTotalCogs}`, rNetRev, true);
     wsPnl.addRow([]);
 
     // 3. Departmental Operational Expenses
     addSectionRow(wsPnl, "=== 3. DEPARTMENTAL OPERATIONAL EXPENSES ===");
-    const rRoomExp = addDataRow(wsPnl, "Rooms Department Operational Expenses", (m) => m.summaryPnl?.roomExpenses || 0, months, rNetRev);
+    let rRoomExp = 0;
+    if (!isStartup) {
+      rRoomExp = addDataRow(wsPnl, "Rooms Department Operational Expenses", (m) => m.summaryPnl?.roomExpenses || 0, months, rNetRev);
+    }
     const rFnbExp = addDataRow(wsPnl, "Food & Beverage Operational Expenses", (m) => m.summaryPnl?.fnbExpenses || 0, months, rNetRev);
+    const rFirstDeptExp = isStartup ? rFnbExp : rRoomExp;
     const rModExp = addDataRow(wsPnl, "Minor Operating Department Expenses", (m) => m.summaryPnl?.modExpenses || 0, months, rNetRev);
-    const rTotalDeptExp = addSumRow(wsPnl, "TOTAL DEPARTMENTAL EXPENSES", rRoomExp, rModExp, rNetRev);
+    const rTotalDeptExp = addSumRow(wsPnl, "TOTAL DEPARTMENTAL EXPENSES", rFirstDeptExp, rModExp, rNetRev);
     const rTdp = addCalcRow(wsPnl, "TOTAL DEPARTMENTAL PROFIT (TDP)", (col) => `${col}${rGrossProfit}-${col}${rTotalDeptExp}`, rNetRev, true);
     wsPnl.addRow([]);
 
@@ -524,54 +539,56 @@ export const useBudgetExport = ({
     const rNonOp = addDataRow(wsPnl, "Non-Operating Expenses (Fees, Insurance, PBB)", (m) => m.summaryPnl?.nonOperatingExpenses || 0, months, rNetRev);
     addCalcRow(wsPnl, "NET OPERATING INCOME (NOI / EBITDA)", (col) => `${col}${rGop}-${col}${rNonOp}`, rNetRev, true);
 
-    // ─────────────────────────────────────────────────────────────
-    // SHEET 2: ROOM DEPARTMENT (ROOM-FO & ROOM-HK)
-    // ─────────────────────────────────────────────────────────────
-    const wsRoom = setupMatrixWorksheet(wb, "Room Dept", "Room Department Detailed Budget (FO & HK)");
-    addSectionRow(wsRoom, "=== 1. ROOM STATISTICS ===");
-    addDataRow(wsRoom, "Total Rooms Available", (m) => m.statistic?.roomsAvailable || 0, months, undefined, true);
-    addDataRow(wsRoom, "Occupied Rooms (Paid)", (m) => m.statistic?.occupiedRoomsPaid || 0, months, undefined, true);
-    addDataRow(wsRoom, "Complimentary & House Use Rooms", (m) => (m.statistic?.roomsCompliment || 0) + (m.statistic?.houseUse || 0), months, undefined, true);
-    addDataRow(wsRoom, "Total Guest Pax", (m) => m.statistic?.totalPax || 0, months, undefined, true);
-    addDataRow(wsRoom, "Occupancy Rate (%)", (m) => m.statistic?.occupancyPercent || 0, months, undefined, true);
-    addDataRow(wsRoom, "Average Room Rate (ARR / ADR)", (m) => m.statistic?.arrIdr || 0, months, undefined, true);
-    wsRoom.addRow([]);
+    if (!isStartup) {
+      // ─────────────────────────────────────────────────────────────
+      // SHEET 2: ROOM DEPARTMENT (ROOM-FO & ROOM-HK)
+      // ─────────────────────────────────────────────────────────────
+      const wsRoom = setupMatrixWorksheet(wb, "Room Dept", "Room Department Detailed Budget (FO & HK)");
+      addSectionRow(wsRoom, "=== 1. ROOM STATISTICS ===");
+      addDataRow(wsRoom, "Total Rooms Available", (m) => m.statistic?.roomsAvailable || 0, months, undefined, true);
+      addDataRow(wsRoom, "Occupied Rooms (Paid)", (m) => m.statistic?.occupiedRoomsPaid || 0, months, undefined, true);
+      addDataRow(wsRoom, "Complimentary & House Use Rooms", (m) => (m.statistic?.roomsCompliment || 0) + (m.statistic?.houseUse || 0), months, undefined, true);
+      addDataRow(wsRoom, "Total Guest Pax", (m) => m.statistic?.totalPax || 0, months, undefined, true);
+      addDataRow(wsRoom, "Occupancy Rate (%)", (m) => m.statistic?.occupancyPercent || 0, months, undefined, true);
+      addDataRow(wsRoom, "Average Room Rate (ARR / ADR)", (m) => m.statistic?.arrIdr || 0, months, undefined, true);
+      wsRoom.addRow([]);
 
-    addSectionRow(wsRoom, "=== 2. ROOM REVENUE & COGS ===");
-    const rLodging = addDataRow(wsRoom, "3013-01 • Lodging Revenue", (m) => m.roomRevenue?.lodging || 0, months);
-    const rExtraBed = addDataRow(wsRoom, "3013-02 • Extra Bed Revenue", (m) => m.roomRevenue?.extraBed || 0, months);
-    const rOtherRoom = addDataRow(wsRoom, "3013-03 • Other Room Revenue", (m) => m.roomRevenue?.otherRoomRevenue || 0, months);
-    const rTotRoomRev = addSumRow(wsRoom, "TOTAL ROOM REVENUE", rLodging, rOtherRoom);
-    const rSupplies = addDataRow(wsRoom, "COGS - Guest Supplies & Amenities", (m) => m.deptRoom?.cogs?.roomSupplies || 0, months, rTotRoomRev);
-    const rLinen = addDataRow(wsRoom, "COGS - Linen Replacement", (m) => m.deptRoom?.cogs?.linenReplacement || 0, months, rTotRoomRev);
-    const rTotRoomCogs = addSumRow(wsRoom, "TOTAL ROOM COGS", rSupplies, rLinen, rTotRoomRev);
-    wsRoom.addRow([]);
+      addSectionRow(wsRoom, "=== 2. ROOM REVENUE & COGS ===");
+      const rLodging = addDataRow(wsRoom, "3013-01 • Lodging Revenue", (m) => m.roomRevenue?.lodging || 0, months);
+      const rExtraBed = addDataRow(wsRoom, "3013-02 • Extra Bed Revenue", (m) => m.roomRevenue?.extraBed || 0, months);
+      const rOtherRoom = addDataRow(wsRoom, "3013-03 • Other Room Revenue", (m) => m.roomRevenue?.otherRoomRevenue || 0, months);
+      const rTotRoomRev = addSumRow(wsRoom, "TOTAL ROOM REVENUE", rLodging, rOtherRoom);
+      const rSupplies = addDataRow(wsRoom, "COGS - Guest Supplies & Amenities", (m) => m.deptRoom?.cogs?.roomSupplies || 0, months, rTotRoomRev);
+      const rLinen = addDataRow(wsRoom, "COGS - Linen Replacement", (m) => m.deptRoom?.cogs?.linenReplacement || 0, months, rTotRoomRev);
+      const rTotRoomCogs = addSumRow(wsRoom, "TOTAL ROOM COGS", rSupplies, rLinen, rTotRoomRev);
+      wsRoom.addRow([]);
 
-    addSectionRow(wsRoom, "=== 3. FRONT OFFICE EXPENSES ===");
-    const rFoPayroll = addDataRow(wsRoom, "FO Payroll & Employee Benefits", (m) => m.deptRoom?.frontOffice?.salary?.total || 0, months, rTotRoomRev);
-    const rFoUniform = addDataRow(wsRoom, "FO Uniform & Laundry", (m) => m.deptRoom?.frontOffice?.expenses?.uniform || 0, months, rTotRoomRev);
-    const rFoPrint = addDataRow(wsRoom, "FO Printing & Stationery", (m) => m.deptRoom?.frontOffice?.expenses?.printingStationery || 0, months, rTotRoomRev);
-    const rFoNet = addDataRow(wsRoom, "FO Internet & TV Cable", (m) => (m.deptRoom?.frontOffice?.expenses?.internetProvider || 0) + (m.deptRoom?.frontOffice?.expenses?.tvCable || 0), months, rTotRoomRev);
-    const rFoWelcome = addDataRow(wsRoom, "FO Welcome Drink & Supplies", (m) => (m.deptRoom?.frontOffice?.expenses?.welcomeDrink || 0) + (m.deptRoom?.frontOffice?.expenses?.guestSupplies || 0), months, rTotRoomRev);
-    const rFoOta = addDataRow(wsRoom, "FO Reservation & OTA Commission", (m) => (m.deptRoom?.frontOffice?.expenses?.reservationExpenses || 0) + (m.deptRoom?.frontOffice?.expenses?.commission || 0), months, rTotRoomRev);
-    const rFoMisc = addDataRow(wsRoom, "FO Miscellaneous & Other", (m) => m.deptRoom?.frontOffice?.expenses?.miscellaneous || 0, months, rTotRoomRev);
-    const rTotFoExp = addSumRow(wsRoom, "TOTAL FRONT OFFICE EXPENSES", rFoPayroll, rFoMisc, rTotRoomRev);
-    wsRoom.addRow([]);
+      addSectionRow(wsRoom, "=== 3. FRONT OFFICE EXPENSES ===");
+      const rFoPayroll = addDataRow(wsRoom, "FO Payroll & Employee Benefits", (m) => m.deptRoom?.frontOffice?.salary?.total || 0, months, rTotRoomRev);
+      const rFoUniform = addDataRow(wsRoom, "FO Uniform & Laundry", (m) => m.deptRoom?.frontOffice?.expenses?.uniform || 0, months, rTotRoomRev);
+      const rFoPrint = addDataRow(wsRoom, "FO Printing & Stationery", (m) => m.deptRoom?.frontOffice?.expenses?.printingStationery || 0, months, rTotRoomRev);
+      const rFoNet = addDataRow(wsRoom, "FO Internet & TV Cable", (m) => (m.deptRoom?.frontOffice?.expenses?.internetProvider || 0) + (m.deptRoom?.frontOffice?.expenses?.tvCable || 0), months, rTotRoomRev);
+      const rFoWelcome = addDataRow(wsRoom, "FO Welcome Drink & Supplies", (m) => (m.deptRoom?.frontOffice?.expenses?.welcomeDrink || 0) + (m.deptRoom?.frontOffice?.expenses?.guestSupplies || 0), months, rTotRoomRev);
+      const rFoOta = addDataRow(wsRoom, "FO Reservation & OTA Commission", (m) => (m.deptRoom?.frontOffice?.expenses?.reservationExpenses || 0) + (m.deptRoom?.frontOffice?.expenses?.commission || 0), months, rTotRoomRev);
+      const rFoMisc = addDataRow(wsRoom, "FO Miscellaneous & Other", (m) => m.deptRoom?.frontOffice?.expenses?.miscellaneous || 0, months, rTotRoomRev);
+      const rTotFoExp = addSumRow(wsRoom, "TOTAL FRONT OFFICE EXPENSES", rFoPayroll, rFoMisc, rTotRoomRev);
+      wsRoom.addRow([]);
 
-    addSectionRow(wsRoom, "=== 4. HOUSEKEEPING EXPENSES ===");
-    const rHkPayroll = addDataRow(wsRoom, "HK Payroll & Employee Benefits", (m) => m.deptRoom?.housekeeping?.salary?.total || 0, months, rTotRoomRev);
-    const rHkSupplies = addDataRow(wsRoom, "HK Guest Supplies & Amenities", (m) => m.deptRoom?.housekeeping?.expenses?.guestSupplies || 0, months, rTotRoomRev);
-    const rHkChemical = addDataRow(wsRoom, "HK Cleaning Supplies & Chemicals", (m) => m.deptRoom?.housekeeping?.expenses?.cleaningSupplies || 0, months, rTotRoomRev);
-    const rHkLaundry = addDataRow(wsRoom, "HK Laundry Linen Washing", (m) => m.deptRoom?.housekeeping?.expenses?.laundryLinen || 0, months, rTotRoomRev);
-    const rHkGarden = addDataRow(wsRoom, "HK Landscape & Gardening", (m) => m.deptRoom?.housekeeping?.expenses?.landscapeGround || 0, months, rTotRoomRev);
-    const rHkPest = addDataRow(wsRoom, "HK Pest Control & Deodorant", (m) => (m.deptRoom?.housekeeping?.expenses?.pestControl || 0) + (m.deptRoom?.housekeeping?.expenses?.roomDeodorant || 0), months, rTotRoomRev);
-    const rHkMisc = addDataRow(wsRoom, "HK Miscellaneous & Other", (m) => m.deptRoom?.housekeeping?.expenses?.miscellaneous || 0, months, rTotRoomRev);
-    const rTotHkExp = addSumRow(wsRoom, "TOTAL HOUSEKEEPING EXPENSES", rHkPayroll, rHkMisc, rTotRoomRev);
-    wsRoom.addRow([]);
+      addSectionRow(wsRoom, "=== 4. HOUSEKEEPING EXPENSES ===");
+      const rHkPayroll = addDataRow(wsRoom, "HK Payroll & Employee Benefits", (m) => m.deptRoom?.housekeeping?.salary?.total || 0, months, rTotRoomRev);
+      const rHkSupplies = addDataRow(wsRoom, "HK Guest Supplies & Amenities", (m) => m.deptRoom?.housekeeping?.expenses?.guestSupplies || 0, months, rTotRoomRev);
+      const rHkChemical = addDataRow(wsRoom, "HK Cleaning Supplies & Chemicals", (m) => m.deptRoom?.housekeeping?.expenses?.cleaningSupplies || 0, months, rTotRoomRev);
+      const rHkLaundry = addDataRow(wsRoom, "HK Laundry Linen Washing", (m) => m.deptRoom?.housekeeping?.expenses?.laundryLinen || 0, months, rTotRoomRev);
+      const rHkGarden = addDataRow(wsRoom, "HK Landscape & Gardening", (m) => m.deptRoom?.housekeeping?.expenses?.landscapeGround || 0, months, rTotRoomRev);
+      const rHkPest = addDataRow(wsRoom, "HK Pest Control & Deodorant", (m) => (m.deptRoom?.housekeeping?.expenses?.pestControl || 0) + (m.deptRoom?.housekeeping?.expenses?.roomDeodorant || 0), months, rTotRoomRev);
+      const rHkMisc = addDataRow(wsRoom, "HK Miscellaneous & Other", (m) => m.deptRoom?.housekeeping?.expenses?.miscellaneous || 0, months, rTotRoomRev);
+      const rTotHkExp = addSumRow(wsRoom, "TOTAL HOUSEKEEPING EXPENSES", rHkPayroll, rHkMisc, rTotRoomRev);
+      wsRoom.addRow([]);
 
-    addSectionRow(wsRoom, "=== 5. ROOM DEPARTMENT PROFIT ===");
-    const rTotRoomExp = addCalcRow(wsRoom, "TOTAL ROOM OPERATIONAL EXPENSES", (col) => `${col}${rTotFoExp}+${col}${rTotHkExp}`, rTotRoomRev, false);
-    addCalcRow(wsRoom, "ROOM DEPARTMENT PROFIT (GOP)", (col) => `${col}${rTotRoomRev}-${col}${rTotRoomCogs}-${col}${rTotRoomExp}`, rTotRoomRev, true);
+      addSectionRow(wsRoom, "=== 5. ROOM DEPARTMENT PROFIT ===");
+      const rTotRoomExp = addCalcRow(wsRoom, "TOTAL ROOM OPERATIONAL EXPENSES", (col) => `${col}${rTotFoExp}+${col}${rTotHkExp}`, rTotRoomRev, false);
+      addCalcRow(wsRoom, "ROOM DEPARTMENT PROFIT (GOP)", (col) => `${col}${rTotRoomRev}-${col}${rTotRoomCogs}-${col}${rTotRoomExp}`, rTotRoomRev, true);
+    }
 
     // ─────────────────────────────────────────────────────────────
     // SHEET 3: FOOD & BEVERAGE DEPARTMENT
@@ -1013,10 +1030,14 @@ export const useBudgetExport = ({
 
     // Revenue Section
     addMonthSection("=== I. OPERATING REVENUE ===");
-    const rM_room = addMonthItem("3013", "Rooms Revenue (Lodging & Extra Bed)", "ROOM", pnl?.roomRevenue || 0, 11);
+    let rM_room = 0;
+    if (!isStartup) {
+      rM_room = addMonthItem("3013", "Rooms Revenue (Lodging & Extra Bed)", "ROOM", pnl?.roomRevenue || 0, 11);
+    }
     const rM_fnb = addMonthItem("3023", "Food & Beverage Revenue", "F&B", pnl?.fnbRevenue || 0, 11);
+    const rM_first = isStartup ? rM_fnb : rM_room;
     const rM_mod = addMonthItem("3323", "Minor Operating Departments (MOD)", "MOD", pnl?.modRevenue || 0, 11);
-    const rM_netRev = addMonthCalc("---", "TOTAL NET REVENUE", "TOTAL", `SUM(D${rM_room}:D${rM_mod})`, false, 11);
+    const rM_netRev = addMonthCalc("---", isStartup ? "TOTAL OUTLET NET REVENUE" : "TOTAL NET REVENUE", "TOTAL", `SUM(D${rM_first}:D${rM_mod})`, false, 11);
     const rM_sc = addMonthItem("2110", "Service Charge (10%)", "SC", pnl?.serviceCharge || 0, rM_netRev);
     const rM_tax = addMonthItem("2120", "Government Tax (10%)", "TAX", pnl?.governmentTax || 0, rM_netRev);
     addMonthCalc("---", "TOTAL GROSS REVENUE", "GROSS", `D${rM_netRev}+D${rM_sc}+D${rM_tax}`, false, rM_netRev);
@@ -1024,19 +1045,27 @@ export const useBudgetExport = ({
 
     // COGS Section
     addMonthSection("=== II. COST OF GOODS SOLD (COGS) ===");
-    const rM_cogsRoom = addMonthItem("4010", "Room COGS (Supplies & Linen Replacement)", "ROOM", pnl?.roomCogs || 0, rM_netRev);
+    let rM_cogsRoom = 0;
+    if (!isStartup) {
+      rM_cogsRoom = addMonthItem("4010", "Room COGS (Supplies & Linen Replacement)", "ROOM", pnl?.roomCogs || 0, rM_netRev);
+    }
     const rM_cogsFnb = addMonthItem("4020", "Food & Beverage COGS", "F&B", pnl?.fnbCogs || 0, rM_netRev);
+    const rM_firstCogs = isStartup ? rM_cogsFnb : rM_cogsRoom;
     const rM_cogsMod = addMonthItem("4030", "Minor Operating COGS", "MOD", pnl?.modCogs || 0, rM_netRev);
-    const rM_totCogs = addMonthCalc("---", "TOTAL COST OF GOODS SOLD (COGS)", "COGS", `SUM(D${rM_cogsRoom}:D${rM_cogsMod})`, false, rM_netRev);
+    const rM_totCogs = addMonthCalc("---", "TOTAL COST OF GOODS SOLD (COGS)", "COGS", `SUM(D${rM_firstCogs}:D${rM_cogsMod})`, false, rM_netRev);
     const rM_grossProfit = addMonthCalc("---", "GROSS OPERATING PROFIT (GROSS MARGIN)", "PROFIT", `D${rM_netRev}-D${rM_totCogs}`, true, rM_netRev);
     ws.addRow([]);
 
     // Departmental Expenses Section
     addMonthSection("=== III. DEPARTMENTAL OPERATIONAL EXPENSES ===");
-    const rM_expRoom = addMonthItem("5010", "Rooms Department Expenses (FO + HK)", "ROOM", pnl?.roomExpenses || 0, rM_netRev);
+    let rM_expRoom = 0;
+    if (!isStartup) {
+      rM_expRoom = addMonthItem("5010", "Rooms Department Expenses (FO + HK)", "ROOM", pnl?.roomExpenses || 0, rM_netRev);
+    }
     const rM_expFnb = addMonthItem("5020", "Food & Beverage Department Expenses", "F&B", pnl?.fnbExpenses || 0, rM_netRev);
+    const rM_firstExp = isStartup ? rM_expFnb : rM_expRoom;
     const rM_expMod = addMonthItem("5030", "Minor Operating Department Expenses", "MOD", pnl?.modExpenses || 0, rM_netRev);
-    const rM_totDeptExp = addMonthCalc("---", "TOTAL DEPARTMENTAL EXPENSES", "EXPENSES", `SUM(D${rM_expRoom}:D${rM_expMod})`, false, rM_netRev);
+    const rM_totDeptExp = addMonthCalc("---", "TOTAL DEPARTMENTAL EXPENSES", "EXPENSES", `SUM(D${rM_firstExp}:D${rM_expMod})`, false, rM_netRev);
     const rM_tdp = addMonthCalc("---", "TOTAL DEPARTMENTAL PROFIT (TDP)", "PROFIT", `D${rM_grossProfit}-D${rM_totDeptExp}`, true, rM_netRev);
     ws.addRow([]);
 

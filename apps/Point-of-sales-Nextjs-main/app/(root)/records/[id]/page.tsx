@@ -24,7 +24,7 @@ import ReceiptDialog from '@/components/lexupos/ReceiptDialog';
 
 export default function DetailPage() {
   const { formatCurrency } = useCurrency();
-  const [printMode, setPrintMode] = useState<'all' | 'kitchen' | 'bar'>('all');
+  const [printMode, setPrintMode] = useState<'all' | 'kitchen' | 'bar' | 'checker'>('all');
   const [isReceiptOpen, setIsReceiptOpen] = useState<boolean>(false);
 
   const [taxRate, setTaxRate]         = useState<number>(0);

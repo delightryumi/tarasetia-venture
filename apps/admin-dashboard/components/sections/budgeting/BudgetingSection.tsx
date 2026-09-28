@@ -47,6 +47,7 @@ export const BudgetingSection: React.FC = () => {
     selectedDate,
     hotelName,
     hotelRoomCount,
+    isStartup,
     loadingBudget,
     savingBudget,
     saveSuccess,
@@ -195,10 +196,12 @@ export const BudgetingSection: React.FC = () => {
             <span>Accounting & Planning</span>
           </div>
           <h1 className={styles.title}>
-            All-In <span className={styles.titleAccent}>Hotel Budgeting</span>
+            All-In <span className={styles.titleAccent}>{isStartup ? "F&B & Business Budgeting" : "Hotel Budgeting"}</span>
           </h1>
           <p className={styles.subTitle} style={{ marginTop: "4px" }}>
-            {hotelName} • {hotelRoomCount} Kamar Fisik (CPanel) • Target Revenue, COGS, Expenses & GOP
+            {isStartup
+              ? `${hotelName} • Outlet F&B & Resto UMKM • Target Revenue, COGS, Expenses & GOP`
+              : `${hotelName} • ${hotelRoomCount} Kamar Fisik (CPanel) • Target Revenue, COGS, Expenses & GOP`}
           </p>
 
           <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginTop: "10px" }}>
@@ -401,6 +404,7 @@ export const BudgetingSection: React.FC = () => {
           saving={savingBudget}
           saveSuccess={saveSuccess}
           onDirtyChange={setIsDirty}
+          isStartup={isStartup}
         />
       </div>
 

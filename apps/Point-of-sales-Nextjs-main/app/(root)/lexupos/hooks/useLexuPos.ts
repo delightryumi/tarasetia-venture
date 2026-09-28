@@ -8,6 +8,14 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, setDoc, deleteDoc, getDoc, updateDoc, arrayUnion, query, where, onSnapshot } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 
+const formatCurrency = (val: number): string => {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0
+  }).format(val || 0);
+};
+
 const getOrGenerateTableNumber = async (hotelCode: string, inputTable: string): Promise<string> => {
   if (inputTable && inputTable.trim() !== '') {
     return inputTable.trim();
@@ -16,19 +24,27 @@ const getOrGenerateTableNumber = async (hotelCode: string, inputTable: string): 
   try {
     const posRef = doc(db, 'hotels', hotelCode, 'settings', 'pos');
     const posSnap = await getDoc(posRef);
-    let rawTables = '10';
-    if (posSnap.exists()) {
-      rawTables = posSnap.data().tables || '10';
-    }
-
     let parsedTables: string[] = [];
-    if (/^\d+$/.test(rawTables.trim())) {
-      const count = parseInt(rawTables.trim());
-      for (let i = 1; i <= count; i++) {
-        parsedTables.push(`Meja ${i}`);
+
+    if (posSnap.exists()) {
+      const data = posSnap.data();
+      if (data.tablesDetailed && Array.isArray(data.tablesDetailed) && data.tablesDetailed.length > 0) {
+        parsedTables = data.tablesDetailed.map((t: any) => t.name);
+      } else {
+        const rawTables = data.tables || '10';
+        if (/^\d+$/.test(rawTables.trim())) {
+          const count = parseInt(rawTables.trim());
+          for (let i = 1; i <= count; i++) {
+            parsedTables.push(`Meja ${i}`);
+          }
+        } else {
+          parsedTables = rawTables.split(',').map((t: string) => t.trim()).filter(Boolean);
+        }
       }
     } else {
-      parsedTables = rawTables.split(',').map(t => t.trim()).filter(Boolean);
+      for (let i = 1; i <= 10; i++) {
+        parsedTables.push(`Meja ${i}`);
+      }
     }
 
     const q = collection(db, 'hotels', hotelCode, 'pos_held_orders');
@@ -78,6 +94,7 @@ export function useLexuPos() {
   const [tableNumber, setTableNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [restoredOrderId, setRestoredOrderId] = useState<string | null>(null);
+  const [splitPaidCredit, setSplitPaidCredit] = useState<number>(0);
 
   // Revenue Type state
   const [revenueType, setRevenueType] = useState<'alacarte' | 'banquet'>('alacarte');
@@ -95,6 +112,22 @@ export function useLexuPos() {
   const [transactionId, setTransactionId] = useState<string>('');
   const [receiptStatus, setReceiptStatus] = useState<'PAID' | 'UNPAID'>('PAID');
   const [heldOrderToPrint, setHeldOrderToPrint] = useState<any>(null);
+  const [activeSplitData, setActiveSplitData] = useState<{
+    paidItems: CartItem[];
+    remainingItems: CartItem[];
+    paymentMethod: PaymentMethodType;
+    payableAmount: number;
+    subtotal: number;
+    tax: number;
+    service: number;
+    splitLabel: string;
+    customerName?: string;
+    splitMode?: 'by_item' | 'even';
+    splitCount?: number;
+    splitIndex?: number;
+    totalCartPayable?: number;
+    remainingBalance?: number;
+  } | null>(null);
 
   const localProducts = useLiveQuery(() => localDb.products.toArray(), []) || [];
   
@@ -280,10 +313,25 @@ export function useLexuPos() {
               setCart(restoredCart);
               setCustomerName(restoredOrder.customerName || '');
               setTableNumber(restoredOrder.tableNumber || '');
-              setNotes(restoredOrder.notes || '');
+              
+              // Clean customer notes: Remove previous split tags so text doesn't loop
+              const cleanCustomerNotes = (restoredOrder.notes || '')
+                .replace(/\|?\s*Sisa tagihan\s*\([^)]*\)\s*\|?/gi, '')
+                .replace(/\|?\s*\[Split[^\]]*\]\s*\|?/gi, '')
+                .trim();
+              setNotes(cleanCustomerNotes);
+
               setDiscountPercent(restoredOrder.discountPercent || 0);
               setRestoredOrderId(restoredOrder.id || restoredOrder.orderNumber || null);
-              toast.success(`Mengembalikan pesanan meja ${restoredOrder.tableNumber || ''} (${restoredOrder.customerName || 'Guest'}) ke kasir.`);
+              
+              // If order was a split bill, set already paid credit:
+              if (restoredOrder.isSplitActive && restoredOrder.totalPaid) {
+                setSplitPaidCredit(Number(restoredOrder.totalPaid) || 0);
+                toast.info(`Memuat sisa tagihan Meja ${restoredOrder.tableNumber || ''} (Sudah terbayar split: ${formatCurrency(restoredOrder.totalPaid)}).`);
+              } else {
+                setSplitPaidCredit(0);
+                toast.success(`Mengembalikan pesanan meja ${restoredOrder.tableNumber || ''} (${restoredOrder.customerName || 'Guest'}) ke kasir.`);
+              }
             }
           } catch (err) {
             console.error('Failed to parse restored held order:', err);
@@ -377,6 +425,7 @@ export function useLexuPos() {
     if (!checkActiveShift()) return;
     if (cart.length === 0) return;
     setCart([]);
+    setSplitPaidCredit(0);
     toast.info('Keranjang dibersihkan.');
   };
 
@@ -387,7 +436,8 @@ export function useLexuPos() {
   }, 0);
   const discount = subtotal * (discountPercent / 100);
   const tax = (subtotal - discount) * (taxRatePercent / 100); 
-  const payableAmount = subtotal - discount + tax;
+  const rawPayable = subtotal - discount + tax;
+  const payableAmount = Math.max(0, rawPayable - splitPaidCredit);
 
   const handleToggleCompliment = (cartItemId: string) => {
     setCart(prev => prev.map(item => {
@@ -509,6 +559,203 @@ export function useLexuPos() {
     setIsReceiptOpen(true);
   };
 
+  const resolveHotelCode = (): string => {
+    if (activeHotelCode && activeHotelCode !== '0') return activeHotelCode;
+    if (typeof window !== 'undefined') {
+      const getCookie = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift();
+      };
+      let code = getCookie('hotelCode');
+      if (!code) {
+        const userJson = localStorage.getItem('user');
+        if (userJson) {
+          try {
+            const u = JSON.parse(userJson);
+            if (u.hotelCode) code = u.hotelCode;
+          } catch (e) {}
+        }
+      }
+      if (!code) {
+        code = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
+      }
+      return code || '';
+    }
+    return '';
+  };
+
+  const handleConfirmSplitPayment = async (splitData: {
+    paidItems: CartItem[];
+    remainingItems: CartItem[];
+    paymentMethod: PaymentMethodType;
+    payableAmount: number;
+    subtotal: number;
+    tax: number;
+    service: number;
+    splitLabel: string;
+    customerName?: string;
+    splitMode?: 'by_item' | 'even';
+    splitCount?: number;
+    splitIndex?: number;
+    totalCartPayable?: number;
+    remainingBalance?: number;
+  }) => {
+    const splitTxId = `SPLIT-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    setTransactionId(splitTxId);
+    setPaymentMethod(splitData.paymentMethod);
+    setActiveSplitData(splitData);
+
+    const hotelCode = resolveHotelCode();
+    const userJson = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    let restoId = '';
+    if (userJson) {
+      try {
+        const u = JSON.parse(userJson);
+        if (u.restoId) restoId = u.restoId;
+      } catch (e) {}
+    }
+
+    const finalTable = await getOrGenerateTableNumber(hotelCode, tableNumber);
+    setTableNumber(finalTable);
+    const finalCustomerName = customerName.trim() || 'Guest';
+
+    // Find existing held order if any
+    let existingOrder: any = null;
+    if (restoredOrderId) {
+      existingOrder = await localDb.heldOrders.get(restoredOrderId);
+    }
+    if (!existingOrder && finalTable) {
+      const allHeld = await localDb.heldOrders.toArray();
+      existingOrder = allHeld.find(o => o.tableNumber && o.tableNumber.toLowerCase().trim() === finalTable.toLowerCase().trim());
+    }
+
+    const isSplitEven = splitData.splitMode === 'even';
+    const originalTotal = Number(existingOrder?.originalTotal || splitData.totalCartPayable || (subtotal + tax));
+    const prevPaid = Number(existingOrder?.totalPaid || splitPaidCredit || 0);
+    const newTotalPaid = prevPaid + splitData.payableAmount;
+
+    let remainingPayable = 0;
+    let remainingSubtotal = 0;
+    let remainingTax = 0;
+    let remainingItemsToKeep: CartItem[] = [];
+
+    if (isSplitEven) {
+      remainingPayable = Math.max(0, originalTotal - newTotalPaid);
+      if ((splitData.splitIndex && splitData.splitCount && splitData.splitIndex >= splitData.splitCount) || remainingPayable <= 50) {
+        remainingPayable = 0;
+        remainingItemsToKeep = [];
+      } else {
+        remainingSubtotal = Math.round(remainingPayable / (1 + (taxRatePercent / 100)));
+        remainingTax = remainingPayable - remainingSubtotal;
+        remainingItemsToKeep = cart; // Keep original cart items for reference
+      }
+    } else {
+      // Split by item:
+      remainingItemsToKeep = splitData.remainingItems;
+      if (remainingItemsToKeep.length > 0) {
+        remainingSubtotal = remainingItemsToKeep.reduce((acc, item) => {
+          const addonsTotal = (item.selectedAddons || []).reduce((sum, a) => sum + (Number(a.price) || 0), 0);
+          return acc + (item.product.price + addonsTotal) * item.quantity;
+        }, 0);
+        remainingTax = Math.round(remainingSubtotal * (taxRatePercent / 100));
+        remainingPayable = remainingSubtotal + remainingTax;
+      } else {
+        remainingPayable = 0;
+      }
+    }
+
+    const isFullyPaid = remainingPayable <= 0 && remainingItemsToKeep.length === 0;
+
+    // Clean customer notes: Remove stacked split tags
+    const cleanCustomerNotes = (notes || '')
+      .replace(/\|?\s*Sisa tagihan\s*\([^)]*\)\s*\|?/gi, '')
+      .replace(/\|?\s*\[Split[^\]]*\]\s*\|?/gi, '')
+      .trim();
+
+    const splitBadgeText = isSplitEven
+      ? `[Split Rata: ${(existingOrder?.paidSplitsCount || 0) + 1}/${splitData.splitCount || 2} Terbayar - Sisa: ${formatCurrency(remainingPayable)}]`
+      : `[Split Menu: ${splitData.paidItems.length} menu terbayar - Sisa: ${formatCurrency(remainingPayable)}]`;
+
+    const displayNotes = cleanCustomerNotes ? `${cleanCustomerNotes} | ${splitBadgeText}` : splitBadgeText;
+
+    if (!isFullyPaid) {
+      const splitHeldId = existingOrder?.id || restoredOrderId || `SPLIT-HOLD-${finalTable.replace(/\s+/g, '-').toUpperCase()}-${Date.now().toString(36).substring(4).toUpperCase()}`;
+      const splitHeldData = {
+        id: splitHeldId,
+        customerName: finalCustomerName,
+        tableNumber: finalTable,
+        cleanCustomerNotes,
+        notes: displayNotes,
+        cart: remainingItemsToKeep,
+        items: remainingItemsToKeep.map(item => ({
+          id: item.product.id,
+          name: item.product.name,
+          price: item.product.price,
+          qty: item.quantity,
+          addons: item.selectedAddons || [],
+          note: item.note || ''
+        })),
+        originalTotal,
+        totalPaid: newTotalPaid,
+        remainingPayable,
+        payableAmount: remainingPayable,
+        total: remainingPayable,
+        subtotal: remainingSubtotal,
+        tax: remainingTax,
+        discount: 0,
+        discountPercent: 0,
+        createdAt: existingOrder?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        restoId: restoId || 'default-resto',
+        cashierName: cashierName || 'Kasir',
+        isSplitActive: true,
+        splitStatus: 'PARTIALLY_PAID',
+        splitMode: isSplitEven ? 'even' : 'by_item',
+        splitCount: splitData.splitCount || (existingOrder?.splitCount || 2),
+        paidSplitsCount: (existingOrder?.paidSplitsCount || 0) + 1,
+        splitHistory: [
+          ...(existingOrder?.splitHistory || []),
+          {
+            txId: splitTxId,
+            label: splitData.splitLabel,
+            amount: splitData.payableAmount,
+            method: splitData.paymentMethod,
+            paidAt: new Date().toISOString()
+          }
+        ],
+        remainingCount: remainingItemsToKeep.length,
+        lastSplitTxId: splitTxId
+      };
+
+      try {
+        await localDb.heldOrders.put(splitHeldData);
+        if (hotelCode && hotelCode !== '0') {
+          await setDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', splitHeldId), splitHeldData);
+        }
+        setRestoredOrderId(splitHeldId);
+        setSplitPaidCredit(newTotalPaid);
+      } catch (err) {
+        console.error('Error saving split held order:', err);
+      }
+    } else {
+      const targetHeldId = existingOrder?.id || restoredOrderId;
+      if (targetHeldId) {
+        try {
+          await localDb.heldOrders.delete(targetHeldId);
+          if (hotelCode && hotelCode !== '0') {
+            await deleteDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', targetHeldId));
+          }
+          setRestoredOrderId(null);
+          setSplitPaidCredit(0);
+        } catch (e) {}
+      }
+    }
+
+    setIsReceiptOpen(true);
+    toast.success(`Pembayaran ${splitData.splitLabel} berhasil dicatat.`);
+  };
+
   const handleCloseReceipt = async () => {
     setIsReceiptOpen(false);
     
@@ -517,11 +764,15 @@ export function useLexuPos() {
       setReceiptStatus('PAID');
       return;
     }
-    
+
+    const currentSplit = activeSplitData;
+    const itemsToRecord = currentSplit ? currentSplit.paidItems : cart;
+    const finalAmountToRecord = currentSplit ? currentSplit.payableAmount : payableAmount;
+    const finalPaymentMethod = currentSplit ? currentSplit.paymentMethod : paymentMethod;
+    const finalNotes = currentSplit ? `${notes} (${currentSplit.splitLabel})` : notes;
+
     if (typeof window !== 'undefined') {
       const activeShiftJson = localStorage.getItem('active_shift');
-      // Use pre-generated transactionId from executePayment
-
       const userJson = localStorage.getItem('user');
       let restoId = '';
       let hotelCode = '';
@@ -543,8 +794,8 @@ export function useLexuPos() {
           const activeShift = JSON.parse(activeShiftJson);
           const newTransaction = {
             id: transactionId,
-            amount: payableAmount,
-            method: paymentMethod,
+            amount: finalAmountToRecord,
+            method: finalPaymentMethod,
             timestamp: new Date().toISOString(),
             revenueType: revenueType
           };
@@ -562,19 +813,17 @@ export function useLexuPos() {
         }
       }
 
-
-
       const localTx = {
         id: transactionId,
         restoId: restoId || 'default-resto',
-        totalPrice: payableAmount,
+        totalPrice: finalAmountToRecord,
         createdAt: new Date().toISOString(),
         isSynced: 0,
         revenueType: revenueType,
-        paymentMethod: paymentMethod
+        paymentMethod: finalPaymentMethod
       };
 
-      const localItems = cart.map(item => ({
+      const localItems = itemsToRecord.map(item => ({
         transactionId: transactionId,
         productId: item.product.id,
         name: item.product.name,
@@ -584,14 +833,17 @@ export function useLexuPos() {
 
       const addTxPromise = localDb.transactions.put(localTx);
       const itemsPromise = localDb.transactionItems.bulkPut(localItems);
-      const stockPromises = cart.map(async (item) => {
+      // Inventory Stock Deduction
+      // If even split, only deduct physical inventory on portion 1 so it's not deducted multiple times
+      const shouldDeductStock = !currentSplit || currentSplit.splitMode !== 'even' || (currentSplit.splitIndex === 1);
+      const stockPromises = shouldDeductStock ? itemsToRecord.map(async (item) => {
         const dbProd = await localDb.products.get(item.product.id);
         if (dbProd) {
           await localDb.products.update(item.product.id, {
             stock: Math.max(0, dbProd.stock - item.quantity)
           });
         }
-      });
+      }) : [];
 
       Promise.all([addTxPromise, itemsPromise, ...stockPromises]).catch((err) => {
         console.error('Error saving transaction to localDb:', err);
@@ -602,55 +854,63 @@ export function useLexuPos() {
 
         let currentShiftId = null;
         let shiftCashierName = cashierName || 'Kasir';
-        if (typeof window !== 'undefined') {
-          const shiftJson = localStorage.getItem('active_shift');
-          if (shiftJson) {
-            try {
-              const parsedShift = JSON.parse(shiftJson);
-              currentShiftId = parsedShift.id;
-              // Use shift's cashierName (who opened shift), fallback to logged-in user
-              if (parsedShift.cashierName) shiftCashierName = parsedShift.cashierName;
-            } catch (e) {}
-          }
+        const shiftJson = localStorage.getItem('active_shift');
+        if (shiftJson) {
+          try {
+            const parsedShift = JSON.parse(shiftJson);
+            currentShiftId = parsedShift.id;
+            if (parsedShift.cashierName) shiftCashierName = parsedShift.cashierName;
+          } catch (e) {}
         }
 
+        // For even split, proportionally allocate item price/subtotal so DSR/accounting doesn't multiply revenue
+        const splitRatio = (currentSplit && currentSplit.splitMode === 'even' && currentSplit.splitCount) 
+          ? (1 / currentSplit.splitCount) 
+          : 1;
+
         const orderData = {
-          items: cart.map(item => ({
-            id: item.product.id,
-            name: item.product.name,
-            price: item.isCompliment ? 0 : item.product.price,
-            quantity: item.quantity,
-            category: item.product.category,
-            pnlTarget: item.product.pnlTarget || '',
-            image: item.product.image,
-            isCompliment: item.isCompliment || false,
-            complimentReason: item.complimentReason || null,
-            originalPrice: item.product.price,
-            selectedAddons: item.selectedAddons || [],
-            note: item.note || ''
-          })),
-          subtotal,
-          tax,
-          discount,
-          total: payableAmount,
-          paymentMethod,
-          cashAmount: paymentMethod === 'cash' ? (parseFloat(cashAmount) || payableAmount) : 0,
-          changeAmount: paymentMethod === 'cash' ? Math.max(0, (parseFloat(cashAmount) || payableAmount) - payableAmount) : 0,
-          customerName: customerName.trim() || 'Guest',
+          items: itemsToRecord.map(item => {
+            const basePrice = item.isCompliment ? 0 : item.product.price;
+            const proratedPrice = Math.round(basePrice * splitRatio);
+            return {
+              id: item.product.id,
+              name: item.product.name,
+              price: proratedPrice,
+              quantity: item.quantity,
+              subtotal: Math.round(proratedPrice * item.quantity),
+              category: item.product.category,
+              pnlTarget: item.product.pnlTarget || '',
+              image: item.product.image,
+              isCompliment: item.isCompliment || false,
+              complimentReason: item.complimentReason || null,
+              originalPrice: item.product.price,
+              selectedAddons: item.selectedAddons || [],
+              note: item.note || ''
+            };
+          }),
+          subtotal: currentSplit ? currentSplit.subtotal : subtotal,
+          tax: currentSplit ? currentSplit.tax : tax,
+          discount: currentSplit ? 0 : discount,
+          total: finalAmountToRecord,
+          paymentMethod: finalPaymentMethod,
+          cashAmount: finalPaymentMethod === 'cash' ? (parseFloat(cashAmount) || finalAmountToRecord) : 0,
+          changeAmount: finalPaymentMethod === 'cash' ? Math.max(0, (parseFloat(cashAmount) || finalAmountToRecord) - finalAmountToRecord) : 0,
+          customerName: (currentSplit?.customerName || customerName).trim() || 'Guest',
           cashierName: shiftCashierName,
           tableNumber: finalTableNumber,
-          notes: notes.trim() || '',
+          notes: finalNotes.trim() || '',
           timestamp: new Date(),
           revenueType: revenueType,
           transactionId: transactionId,
           shiftId: currentShiftId,
-          isCompliment: payableAmount === 0 && cart.length > 0 && cart.every(i => i.isCompliment),
-          complimentValue: cart.reduce((sum, item) => sum + (item.isCompliment ? item.product.price * item.quantity : 0), 0)
+          isCompliment: finalAmountToRecord === 0 && itemsToRecord.length > 0 && itemsToRecord.every(i => i.isCompliment),
+          complimentValue: itemsToRecord.reduce((sum, item) => sum + (item.isCompliment ? item.product.price * item.quantity : 0), 0),
+          isSplitPortion: !!currentSplit
         };
         
-        await setDoc(doc(getHotelCollection(db, "pos_orders"), transactionId), orderData);
+        await setDoc(doc(db, 'hotels', hotelCode, 'pos_orders', transactionId), orderData);
 
-        await setDoc(doc(getHotelCollection(db, "revenue_transactions"), transactionId), {
+        await setDoc(doc(db, 'hotels', hotelCode, 'revenue_transactions', transactionId), {
           date: new Intl.DateTimeFormat('en-CA', {
             timeZone: 'Asia/Jakarta',
             year: 'numeric',
@@ -658,70 +918,45 @@ export function useLexuPos() {
             day: '2-digit',
           }).format(new Date()),
           category: revenueType === 'banquet' ? 'Banquet Revenue' : 'Ala Carte Revenue',
-          description: `POS Order #${transactionId.slice(-6)} - ${customerName.trim() || 'Guest'}` + (orderData.isCompliment ? ' (COMPLIMENT)' : ''),
-          amount: payableAmount,
-          type: paymentMethod === 'compliment' ? 'Compliment' : 'Nexura Collect',
-          revenueType: paymentMethod === 'compliment' ? 'compliment' : 'pos',
+          description: `POS Order #${transactionId.slice(-6)} - ${(currentSplit?.customerName || customerName).trim() || 'Guest'}` + (orderData.isCompliment ? ' (COMPLIMENT)' : '') + (currentSplit ? ` [${currentSplit.splitLabel}]` : ''),
+          amount: finalAmountToRecord,
+          type: finalPaymentMethod === 'compliment' ? 'Compliment' : 'Nexura Collect',
+          revenueType: finalPaymentMethod === 'compliment' ? 'compliment' : 'pos',
           complimentValue: orderData.complimentValue,
           timestamp: new Date(),
           transactionId: transactionId
         });
 
-        // Mark local db transaction as synced
         await localDb.transactions.update(transactionId, { isSynced: 1 });
 
-        if (restoredOrderId) {
-          await deleteDoc(doc(getHotelCollection(db, 'pos_held_orders'), restoredOrderId));
+        // If not a partial split bill, clear restoredOrderId from pos_held_orders
+        if (!currentSplit && restoredOrderId) {
+          if (hotelCode && hotelCode !== '0') {
+            await deleteDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', restoredOrderId));
+          }
           await localDb.heldOrders.delete(restoredOrderId);
         }
-
-        // Register table with PAID status so BentoGrid shows table as occupied (PAID) until cleared
-        const shadowHeldId = `HLD-${transactionId.replace('TRS-', '')}`;
-        const shadowHeldData = {
-          id: shadowHeldId,
-          customerName: customerName.trim() || 'Guest',
-          tableNumber: finalTableNumber,
-          notes: notes.trim() || '',
-          cart: cart.map(item => ({
-            product: {
-              id: item.product.id,
-              name: item.product.name,
-              price: item.product.price,
-              category: item.product.category || '',
-              subcategory: item.product.subcategory || '',
-              image: item.product.image || ''
-            },
-            quantity: item.quantity,
-            selectedAddons: item.selectedAddons || [],
-            note: item.note || ''
-          })),
-          items: cart.map(item => ({
-            id: item.product.id,
-            name: item.product.name,
-            price: item.product.price,
-            qty: item.quantity,
-            addons: item.selectedAddons || [],
-            note: item.note || ''
-          })),
-          subtotal,
-          discount,
-          discountPercent,
-          tax,
-          payableAmount,
-          total: payableAmount,
-          createdAt: new Date().toISOString(),
-          restoId: restoId || 'default-resto',
-          cashierName: shiftCashierName || cashierName || 'Kasir',
-          isPaidDirectly: true
-        };
-        await setDoc(doc(getHotelCollection(db, "pos_held_orders"), shadowHeldId), shadowHeldData);
-        await localDb.heldOrders.put(shadowHeldData);
 
       } catch (firebaseErr) {
         console.error("Firebase store order failed:", firebaseErr);
       }
     }
 
+    if (currentSplit) {
+      // Split bill portion completed. Check if there are still unpaid balances in the held order
+      const existingHeld = restoredOrderId ? ((await localDb.heldOrders.get(restoredOrderId)) as any) : null;
+      if (existingHeld && existingHeld.isSplitActive && ((existingHeld.remainingPayable || existingHeld.payableAmount || 0) > 0)) {
+        setCart(existingHeld.cart);
+        setNotes(existingHeld.notes);
+        setSplitPaidCredit(existingHeld.totalPaid || 0);
+        setStep('pos');
+        setActiveSplitData(null);
+        toast.info(`Sisa kurangan Meja ${existingHeld.tableNumber}: ${formatCurrency(existingHeld.remainingPayable || existingHeld.payableAmount)}`);
+        return;
+      }
+    }
+
+    // Full order completed
     setCart([]);
     setCustomerName('');
     setTableNumber('');
@@ -731,8 +966,10 @@ export function useLexuPos() {
     setRevenueType('alacarte');
     setStep('pos');
     setRestoredOrderId(null);
+    setSplitPaidCredit(0);
     setTransactionId('');
-    toast.success('Transaksi selesai!');
+    setActiveSplitData(null);
+    toast.success('Seluruh transaksi meja telah selesai!');
   };
 
   return {
@@ -758,6 +995,7 @@ export function useLexuPos() {
     setTableNumber,
     notes,
     setNotes,
+    splitPaidCredit,
     revenueType,
     setRevenueType,
     paymentMethod,
@@ -788,12 +1026,14 @@ export function useLexuPos() {
     handleHoldConfirm,
     handleProceed,
     executePayment,
+    handleConfirmSplitPayment,
     handleCloseReceipt,
     checkActiveShift,
     transactionId,
     receiptStatus,
     setReceiptStatus,
     heldOrderToPrint,
-    setHeldOrderToPrint
+    setHeldOrderToPrint,
+    activeSplitData
   };
 }

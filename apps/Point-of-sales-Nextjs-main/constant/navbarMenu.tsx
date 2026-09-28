@@ -7,6 +7,7 @@ import {
   DeviceTablet,
   ClockCounterClockwise,
   ChartBar,
+  CookingPot
 } from '@phosphor-icons/react';
 import { NavItem } from '@/types/Navbar';
 
@@ -21,6 +22,12 @@ export const NAVBAR_ITEMS: NavItem[] = [
     title: 'Terminal POS',
     path: '/lexupos',
     icon: <DeviceTablet size={18} weight="bold" />,
+    permissionKey: 'pos_lexupos',
+  },
+  {
+    title: 'Layar Dapur (KDS)',
+    path: '/orders',
+    icon: <CookingPot size={18} weight="bold" />,
     permissionKey: 'pos_lexupos',
   },
   {

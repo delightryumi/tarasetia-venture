@@ -72,11 +72,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Load activeHotelCode from localStorage or user details
     useEffect(() => {
+        const isSuper = user?.role === "superadmin" || user?.email === "superadmin@setara.co.id" || user?.email === "nexura.management@gmail.com";
         const storedCode = localStorage.getItem("active_hotel_code");
+        
+        // If regular partner user has a specific assigned hotel, ensure activeHotelCode aligns with their hotel
+        if (!isSuper && user) {
+            const userAssignedHotel = user.hotelCode || (user.allowedOutlets && user.allowedOutlets.length > 0 ? user.allowedOutlets[0] : "");
+            if (userAssignedHotel && userAssignedHotel !== "0") {
+                if (storedCode !== userAssignedHotel) {
+                    setActiveHotelCode(userAssignedHotel);
+                    return;
+                }
+            }
+        }
+
         if (storedCode) {
             setActiveHotelCodeState(storedCode);
         } else if (user?.hotelCode) {
-            setActiveHotelCodeState(user.hotelCode);
+            setActiveHotelCode(user.hotelCode);
+        } else if (user?.allowedOutlets && user.allowedOutlets.length > 0) {
+            setActiveHotelCode(user.allowedOutlets[0]);
         }
     }, [user]);
 

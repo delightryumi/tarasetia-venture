@@ -46,8 +46,9 @@ export interface ThermalReceiptProps {
   };
   className?: string;
   style?: React.CSSProperties;
-  printMode?: 'all' | 'kitchen' | 'bar';
-  onPrintModeChange?: (mode: 'all' | 'kitchen' | 'bar') => void;
+  printMode?: 'all' | 'kitchen' | 'bar' | 'checker';
+  onPrintModeChange?: (mode: 'all' | 'kitchen' | 'bar' | 'checker') => void;
+  paperSize?: '80mm' | '58mm';
 }
 
 export function formatPaymentMethod(method?: string): string {
@@ -86,11 +87,12 @@ export default function ThermalReceipt({
   className = '',
   style,
   printMode: controlledPrintMode,
-  onPrintModeChange
+  onPrintModeChange,
+  paperSize = '80mm'
 }: ThermalReceiptProps) {
   const { formatCurrency } = useCurrency();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [localPrintMode, setLocalPrintMode] = useState<'all' | 'kitchen' | 'bar'>('all');
+  const [localPrintMode, setLocalPrintMode] = useState<'all' | 'kitchen' | 'bar' | 'checker'>('all');
   
   const printMode = controlledPrintMode ?? localPrintMode;
   const setPrintMode = onPrintModeChange ?? setLocalPrintMode;
@@ -108,10 +110,17 @@ export default function ThermalReceipt({
   useEffect(() => {
     // Check if running in browser
     if (typeof window !== 'undefined') {
-      const savedLogo = localStorage.getItem('shopLogo');
-      if (savedLogo) {
-        setLogoUrl(savedLogo);
-      }
+      const updateLogo = () => {
+        const savedLogo = localStorage.getItem('shopLogo');
+        setLogoUrl(savedLogo || null);
+      };
+      updateLogo();
+      window.addEventListener('logoChanged', updateLogo);
+      window.addEventListener('storage', updateLogo);
+      return () => {
+        window.removeEventListener('logoChanged', updateLogo);
+        window.removeEventListener('storage', updateLogo);
+      };
     }
   }, []);
 
@@ -190,17 +199,19 @@ export default function ThermalReceipt({
   const displayCustomer = isGeneralGuest ? 'Tamu Umum' : transactionInfo.customerName;
 
   const displayCashier = transactionInfo.cashierName || 'Master Superadmin';
+  const isKot = printMode === 'kitchen' || printMode === 'bar';
+  const is58mm = paperSize === '58mm';
 
   return (
     <div 
-      className={`receipt-print-wrapper w-full max-w-[80mm] bg-white text-black p-[6mm] text-left mx-auto print:mx-0 print:px-[6mm] print:py-2 print:w-full print:max-w-full font-normal ${className}`}
+      className={`receipt-print-wrapper w-full ${is58mm ? 'max-w-[58mm] p-[3mm]' : 'max-w-[80mm] p-[6mm]'} bg-white text-black text-left mx-auto print:mx-0 ${is58mm ? 'print:px-[2mm]' : 'print:px-[6mm]'} print:py-2 print:w-full print:max-w-full font-normal ${className}`}
       style={{ fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif', ...style }}
     >
       <style>{`
         @media print {
           @page {
             margin: 0 !important;
-            size: auto !important;
+            size: ${is58mm ? '58mm auto' : '80mm auto'} !important;
           }
           body {
             margin: 0 !important;
@@ -216,7 +227,7 @@ export default function ThermalReceipt({
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 !important;
-            padding: 4mm !important;
+            padding: ${is58mm ? '2mm' : '4mm'} !important;
             -webkit-font-smoothing: none !important;
             -moz-osx-font-smoothing: none !important;
             text-rendering: optimizeSpeed !important;
@@ -225,6 +236,7 @@ export default function ThermalReceipt({
             box-shadow: none !important;
             border: none !important;
             visibility: visible !important;
+            ${is58mm ? 'font-size: 11px !important;' : ''}
           }
           /* Force all children: black text, white background, no shadows */
           .receipt-print-wrapper * {
@@ -260,7 +272,7 @@ export default function ThermalReceipt({
       `}</style>
 
       {/* ── KOT Header (Dapur / Bar) ── */}
-      {printMode !== 'all' ? (
+      {isKot ? (
         <div className="w-full mb-0">
           {/* Station Banner */}
           <div
@@ -299,18 +311,18 @@ export default function ThermalReceipt({
             <div className="text-right">
               <div className="font-mono font-bold text-[9px] text-black">{displayDate}</div>
               {transactionInfo.tableName && (
-                <div className="font-mono text-[8px] text-black mt-[1px]">
+                <div className="font-mono text-[9px] text-black mt-[1px]">
                   Meja: <span className="font-bold">{transactionInfo.tableName}</span>
                 </div>
               )}
               {transactionInfo.customerName && (
-                <div className="font-mono text-[8px] text-black mt-[1px]">
-                  Tamu: <span className="font-bold">{transactionInfo.customerName}</span>
+                <div className="font-mono text-[9px] text-black mt-[1px]">
+                  Tamu: <span className="font-extrabold text-[9.5px] uppercase tracking-wide">{transactionInfo.customerName}</span>
                 </div>
               )}
               {transactionInfo.cashierName && (
-                <div className="font-mono text-[8px] text-black">
-                  Kasir: <span className="font-bold">{transactionInfo.cashierName}</span>
+                <div className="font-mono text-[8.5px] text-neutral-800 mt-[1px]">
+                  Kasir: <span className="font-semibold">{transactionInfo.cashierName}</span>
                 </div>
               )}
             </div>
@@ -333,7 +345,7 @@ export default function ThermalReceipt({
           <div style={{ borderTop: '2px solid #000', marginTop: '4px', marginBottom: '6px' }} />
         </div>
       ) : (
-        /* ── Kasir Full Header (Exact Match to LexuPOS) ── */
+        /* ── Kasir & Checker Full Header (Exact Match to LexuPOS) ── */
         <div className="text-center mb-2 flex flex-col items-center">
           {logoUrl && (
             <img src={logoUrl} alt="Store Logo" className="w-[36mm] h-auto object-contain mb-3" style={{ filter: 'grayscale(100%) brightness(0)' }} />
@@ -351,11 +363,16 @@ export default function ThermalReceipt({
               Tlp: {shopInfo.phone}
             </p>
           )}
+          {printMode === 'checker' && (
+            <div className="w-full text-center font-bold text-[12px] border-2 border-black py-1 my-2 uppercase font-mono tracking-widest text-black bg-neutral-100 print:bg-transparent">
+              *** STRUK CHECKER ***
+            </div>
+          )}
         </div>
       )}
 
-      {/* Kasir mode: dashed separator + transaction info */}
-      {printMode === 'all' && (
+      {/* Kasir & Checker mode: dashed separator + transaction info */}
+      {(printMode === 'all' || printMode === 'checker') && (
         <>
           <div className="border-t border-dashed border-black my-1.5" />
           {isCancelled && (
@@ -387,6 +404,12 @@ export default function ThermalReceipt({
               <span className="text-neutral-700">Kasir:</span>
               <span className="font-bold">{displayCashier}</span>
             </div>
+            {printMode === 'checker' && (
+              <div className="flex justify-between">
+                <span className="text-neutral-700">Tipe Dokumen:</span>
+                <span className="font-bold uppercase text-black">CHECKER PESANAN</span>
+              </div>
+            )}
             {transactionInfo.status === 'UNPAID' && (
               <div className="w-full text-center font-extrabold text-[11px] border border-black text-black py-1 my-1.5 uppercase font-mono tracking-wider">
                 *** BELUM LUNAS / UNPAID ***
@@ -450,7 +473,7 @@ export default function ThermalReceipt({
         </div>
       ))}
 
-      {printMode === 'all' && (
+      {(printMode === 'all' || printMode === 'checker') && (
         <>
           <div className="border-t border-dashed border-black my-1.5" />
 
@@ -529,11 +552,24 @@ export default function ThermalReceipt({
             )}
           </div>
 
-          {/* Footer (Exact Match: Terima kasih atas kunjungan Anda) */}
-          <div className="text-center text-[9px] leading-relaxed text-neutral-600 mt-5 mb-2">
-            <p className="m-0 font-medium">Terima kasih atas kunjungan Anda</p>
-            <p className="m-0 text-neutral-500 text-[8px] mt-0.5">Struk ini adalah bukti pembayaran yang sah</p>
-          </div>
+          {/* Footer */}
+          {printMode === 'checker' ? (
+            <div className="text-center text-[9px] leading-relaxed mt-4 mb-2 font-mono">
+              <div className="border-t border-dashed border-black my-2" />
+              <p className="m-0 font-bold uppercase tracking-wider text-[9.5px] text-black">
+                *** NOTED: BUKAN NOTA / STRUK PEMBAYARAN SAH ***
+              </p>
+              <p className="m-0 text-neutral-600 text-[8px] mt-1 leading-snug">
+                Struk ini adalah lembar checker untuk pengecekan pesanan internal dan bukan tanda terima / bukti pembayaran yang sah.
+              </p>
+              <div className="border-b border-dashed border-black my-2" />
+            </div>
+          ) : (
+            <div className="text-center text-[9px] leading-relaxed text-neutral-600 mt-5 mb-2">
+              <p className="m-0 font-medium">Terima kasih atas kunjungan Anda</p>
+              <p className="m-0 text-neutral-500 text-[8px] mt-0.5">Struk ini adalah bukti pembayaran yang sah</p>
+            </div>
+          )}
 
           {/* Powered By Footer */}
           <div className="flex flex-col items-center justify-center mt-3 pt-2 border-t border-dotted border-neutral-300">

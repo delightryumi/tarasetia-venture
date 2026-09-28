@@ -10,6 +10,7 @@ interface MultiYearAnalysisTabProps {
   budgetDoc: YearlyBudgetDocument | null;
   actualMonthlyData: Record<string, any>;
   hotelRoomCount: number;
+  isStartup?: boolean;
 }
 
 export const MultiYearAnalysisTab: React.FC<MultiYearAnalysisTabProps> = ({
@@ -17,6 +18,7 @@ export const MultiYearAnalysisTab: React.FC<MultiYearAnalysisTabProps> = ({
   budgetDoc,
   actualMonthlyData,
   hotelRoomCount,
+  isStartup = false,
 }) => {
   // Compute Current Year Actual & Budget totals
   let aTotalRev = 0;
@@ -83,20 +85,22 @@ export const MultiYearAnalysisTab: React.FC<MultiYearAnalysisTabProps> = ({
             <tr className={styles.tierHeaderRow}>
               <td colSpan={6}>1. REVENUE COMPARISON</td>
             </tr>
-            <tr>
-              <td className={styles.colDesc}>Room Revenue</td>
-              <td className={styles.colAmount}>{formatIDR(y2PrevActualRev * 0.75)}</td>
-              <td className={styles.colAmount}>{formatIDR(yPrevActualRev * 0.75)}</td>
-              <td className={styles.colAmount} style={{ color: "#2563eb", fontWeight: 800 }}>{formatIDR(aTotalRev * 0.75)}</td>
-              <td className={styles.colAmount}>{formatIDR(bTotalRev * 0.75)}</td>
-              <td className={styles.colPercent} style={{ color: "#16a34a" }}>+{growthRate}%</td>
-            </tr>
+            {!isStartup && (
+              <tr>
+                <td className={styles.colDesc}>Room Revenue</td>
+                <td className={styles.colAmount}>{formatIDR(y2PrevActualRev * 0.75)}</td>
+                <td className={styles.colAmount}>{formatIDR(yPrevActualRev * 0.75)}</td>
+                <td className={styles.colAmount} style={{ color: "#2563eb", fontWeight: 800 }}>{formatIDR(aTotalRev * 0.75)}</td>
+                <td className={styles.colAmount}>{formatIDR(bTotalRev * 0.75)}</td>
+                <td className={styles.colPercent} style={{ color: "#16a34a" }}>+{growthRate}%</td>
+              </tr>
+            )}
             <tr>
               <td className={styles.colDesc}>F&B Revenue</td>
-              <td className={styles.colAmount}>{formatIDR(y2PrevActualRev * 0.25)}</td>
-              <td className={styles.colAmount}>{formatIDR(yPrevActualRev * 0.25)}</td>
-              <td className={styles.colAmount} style={{ color: "#2563eb", fontWeight: 800 }}>{formatIDR(aTotalRev * 0.25)}</td>
-              <td className={styles.colAmount}>{formatIDR(bTotalRev * 0.25)}</td>
+              <td className={styles.colAmount}>{formatIDR(y2PrevActualRev * (isStartup ? 1 : 0.25))}</td>
+              <td className={styles.colAmount}>{formatIDR(yPrevActualRev * (isStartup ? 1 : 0.25))}</td>
+              <td className={styles.colAmount} style={{ color: "#2563eb", fontWeight: 800 }}>{formatIDR(aTotalRev * (isStartup ? 1 : 0.25))}</td>
+              <td className={styles.colAmount}>{formatIDR(bTotalRev * (isStartup ? 1 : 0.25))}</td>
               <td className={styles.colPercent} style={{ color: "#16a34a" }}>+{growthRate}%</td>
             </tr>
             <tr className={styles.subTotalRow}>

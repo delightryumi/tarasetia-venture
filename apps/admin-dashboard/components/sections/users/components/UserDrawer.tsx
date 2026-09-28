@@ -10,7 +10,11 @@ import {
     getStandardRolePermissions, 
     TOTAL_PERMISSIONS_COUNT,
     isPermissionAddon,
-    isAddonActiveForHotel
+    isAddonActiveForHotel,
+    getPermissionGroupsForPlan,
+    getRolesForPlan,
+    getRoleLevelBadge,
+    sanitizePermissionsForPlan
 } from "../permissionConfig";
 import { isUserAdmin, isUserSuperadmin } from "@/lib/permissionCheck";
 import drawerStyles from "./UserDrawer.module.css";
@@ -48,24 +52,47 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
     // Check if the role selection should be locked
     const isSuperadminLoggedIn = isUserSuperadmin(authUser);
     const isCallerAdminOrOwner = isUserAdmin(authUser) || authUser?.isOwner === true || (hotelOwnerEmail && authUser?.email?.toLowerCase() === hotelOwnerEmail);
-    
+
+    // Detect if admin/owner is editing their OWN account → lock fully (only superadmin can edit admin/owner)
+    const isSelfEdit = Boolean(
+        !isSuperadminLoggedIn &&
+        editingUser &&
+        authUser?.email &&
+        editingUser.email?.toLowerCase() === authUser.email.toLowerCase()
+    );
+    // Also detect if a non-superadmin is editing another admin/owner account
+    const isEditingAdminOrOwner = Boolean(
+        !isSuperadminLoggedIn &&
+        editingUser &&
+        (
+            editingUser.isOwner === true ||
+            (hotelOwnerEmail && editingUser.email?.toLowerCase() === hotelOwnerEmail) ||
+            ["admin", "administrator"].includes((editingUser.role || "").toLowerCase())
+        )
+    );
+
     const isEditingSuperadmin = editingUser?.role?.toLowerCase() === "superadmin" || formData.role?.toLowerCase() === "superadmin";
     // Non-superadmin cannot edit a Superadmin account or promote to Superadmin
     const isAccountLocked = isEditingSuperadmin && !isSuperadminLoggedIn;
 
-    // Permission matrix: Superadmin can edit all users across all hotels; Admin/Owner can edit all users in their hotel
-    const canEditPermissions = isSuperadminLoggedIn || isCallerAdminOrOwner;
-    const isPermLocked = !canEditPermissions || isAccountLocked;
+    // Full lock: self-edit or editing another admin/owner as non-superadmin
+    const isFullyLocked = isAccountLocked || isSelfEdit || isEditingAdminOrOwner;
+
+    // Permission matrix: Superadmin can edit all users across all hotels; Admin/Owner can edit non-admin karyawan in their hotel
+    const canEditPermissions = isSuperadminLoggedIn || (isCallerAdminOrOwner && !isFullyLocked);
+    const isPermLocked = !canEditPermissions || isFullyLocked;
     
     // Role selection is locked for:
     // 1. Initial Admin Owner (isOwnerUser) - protected from non-superadmin
     // 2. Editing Superadmin by non-superadmin
-    const isRoleLocked = (!isSuperadminLoggedIn && isOwnerUser) || isAccountLocked;
+    // 3. Self-edit or editing another admin/owner as non-superadmin
+    const isRoleLocked = (!isSuperadminLoggedIn && isOwnerUser) || isAccountLocked || isFullyLocked;
 
-    // Filter available roles: only superadmin can assign 'superadmin' role
+    // Filter available roles: only roles matching hotel's activeModules (USALI departments)
+    const planRoles = getRolesForPlan(activeModules, roles);
     const availableRoles = isSuperadminLoggedIn 
-        ? [...roles, "superadmin"] 
-        : roles.filter(r => r.toLowerCase() !== "superadmin");
+        ? (activeHotelCode ? planRoles : [...roles, "superadmin"]) 
+        : planRoles.filter(r => r.toLowerCase() !== "superadmin");
 
     // Hotels available for assignment
     // If superadmin: all hotels. If admin per property: only their allowedOutlets
@@ -111,16 +138,8 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
 
     const currentPermissions: Record<string, boolean> = React.useMemo(() => {
         const source = formData.permissions || getStandardRolePermissions(formData.role || "General Manager", activeModules);
-        const sanitized: Record<string, boolean> = { ...source };
-        COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
-            g.permissions.forEach(p => {
-                if (p.isComingSoon) {
-                    sanitized[p.id] = false;
-                }
-            });
-        });
-        return sanitized;
-    }, [formData.permissions, formData.role, activeModules]);
+        return sanitizePermissionsForPlan(source, activeModules);
+    }, [formData.permissions, formData.role, JSON.stringify(activeModules)]);
 
     const isPermissionActive = (p: any): boolean => {
         if (p.isComingSoon) return false;
@@ -187,13 +206,19 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
         });
     };
 
-    const activePermsCount = COMPREHENSIVE_PERMISSION_GROUPS
-        .filter(g => !g.isSuperadminOnly)
+    const planAllowedGroups = (isSuperadminLoggedIn && !activeHotelCode)
+        ? COMPREHENSIVE_PERMISSION_GROUPS.filter(g => !g.isSuperadminOnly)
+        : getPermissionGroupsForPlan(activeModules);
+
+    const activePermsCount = planAllowedGroups
         .flatMap(g => g.permissions)
         .filter(p => isPermissionActive(p)).length;
 
-    const filteredGroups = COMPREHENSIVE_PERMISSION_GROUPS.filter(group => {
-        if (group.isSuperadminOnly) return false;
+    const totalPlanPermsCount = planAllowedGroups
+        .flatMap(g => g.permissions)
+        .filter(p => !p.isComingSoon).length;
+
+    const filteredGroups = planAllowedGroups.filter(group => {
         if (permTag !== "all" && group.id !== permTag) return false;
         return true;
     }).map(group => {
@@ -256,6 +281,15 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                             <Shield size={16} />
                             <span className={drawerStyles.lockedAlertText}>
                                 <b>Akun Dilindungi:</b> Akun berstatus Superadmin hanya dapat dimodifikasi oleh Superadmin.
+                            </span>
+                        </div>
+                    )}
+
+                    {(isSelfEdit || isEditingAdminOrOwner) && !isSuperadminLoggedIn && !isAccountLocked && (
+                        <div className={drawerStyles.lockedAlert}>
+                            <Lock size={16} />
+                            <span className={drawerStyles.lockedAlertText}>
+                                <b>Akun Admin / Owner:</b> {isSelfEdit ? "Anda tidak dapat mengubah role atau permission akun Anda sendiri." : "Role dan permission akun Admin/Owner hanya dapat diubah oleh Superadmin."} Hubungi Superadmin untuk perubahan.
                             </span>
                         </div>
                     )}
@@ -414,7 +448,7 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                             <div className={styles.roleSelectHeader}>
                                 <label className={styles.drawerFormLabel}>Organizational Role</label>
                                 <span className={styles.levelBadge}>
-                                    {formData.role?.toLowerCase() === "superadmin" ? 'Level 5 (Superadmin)' : (formData.role?.toLowerCase() === "admin" ? 'Level 3 (Admin Hotel)' : 'Level 1 (Staff)')}
+                                    {getRoleLevelBadge(formData.role).label}
                                 </span>
                             </div>
 
@@ -475,7 +509,7 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                             <div className={drawerStyles.viewerRoleValueRow}>
                                 <span className={drawerStyles.viewerRoleValue}>{formData.role || "—"}</span>
                                 <span className={styles.levelBadge}>
-                                    {formData.role?.toLowerCase() === "superadmin" ? 'Level 5 (Superadmin)' : (formData.role?.toLowerCase() === "admin" ? 'Level 3 (Admin Hotel)' : 'Level 1 (Staff)')}
+                                    {getRoleLevelBadge(formData.role).label}
                                 </span>
                             </div>
                             <p className={drawerStyles.viewerRoleHint}>Role ditetapkan oleh Superadmin / Admin Property. Hubungi admin jika perlu perubahan jabatan.</p>
@@ -654,7 +688,7 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                                         Hak Akses & Privileges Role
                                     </span>
                                     <p className={drawerStyles.permSubtitle}>
-                                        {activePermsCount} dari {TOTAL_PERMISSIONS_COUNT} izin aktif untuk role <b>{formData.role}</b>
+                                        {activePermsCount} dari {totalPlanPermsCount} izin aktif untuk role <b>{formData.role}</b>
                                     </p>
                                 </div>
                                 <button
@@ -686,7 +720,7 @@ export const UserDrawer: React.FC<UserDrawerProps> = ({
                                         {activePermsCount}
                                     </span>
                                 </button>
-                                {COMPREHENSIVE_PERMISSION_GROUPS.filter(g => !g.isSuperadminOnly).map(g => {
+                                {planAllowedGroups.map(g => {
                                     const activeCount = g.permissions.filter(p => isPermissionActive(p)).length;
                                     const isSelected = permTag === g.id;
                                     return (

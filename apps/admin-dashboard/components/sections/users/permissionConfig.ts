@@ -17,10 +17,10 @@ export interface PermissionItem {
 }
 
 export function isPermissionAddon(permId: string): { isAddon: boolean; addonKey: string; addonName: string } {
-    if (permId === "food-beverage-realtime") {
+    if (permId === "food-beverage-realtime" || permId === "food_beverage_realtime" || permId === "pos-realtime") {
         return { isAddon: true, addonKey: "food-beverage-realtime", addonName: "Kitchen View / KDS" };
     }
-    if (permId === "pos_self_order") {
+    if (permId === "pos_self_order" || permId === "pos-self-order") {
         return { isAddon: true, addonKey: "pos-self-order", addonName: "Self-Ordering" };
     }
     return { isAddon: false, addonKey: "", addonName: "" };
@@ -28,11 +28,11 @@ export function isPermissionAddon(permId: string): { isAddon: boolean; addonKey:
 
 export function isAddonActiveForHotel(permId: string, activeModules: string[] | null | undefined): boolean {
     if (!activeModules || activeModules.length === 0) return false;
-    if (permId === "food-beverage-realtime") {
-        return activeModules.includes("food-beverage-realtime") || activeModules.includes("pos-realtime");
+    if (permId === "food-beverage-realtime" || permId === "food_beverage_realtime" || permId === "pos-realtime") {
+        return activeModules.includes("food-beverage-realtime") || activeModules.includes("pos-realtime") || activeModules.includes("food_beverage_realtime");
     }
-    if (permId === "pos_self_order") {
-        return activeModules.includes("pos-self-order");
+    if (permId === "pos_self_order" || permId === "pos-self-order") {
+        return activeModules.includes("pos-self-order") || activeModules.includes("pos_self_order");
     }
     return true;
 }
@@ -291,28 +291,272 @@ export const TOTAL_PERMISSIONS_COUNT = COMPREHENSIVE_PERMISSION_GROUPS.reduce(
     0
 );
 
+/**
+ * Kembalikan daftar moduleKey yang aktif berdasarkan activeModules dari Firestore hotel.
+ * Digunakan oleh Admin/Owner untuk membatasi modul yang bisa di-assign ke karyawan,
+ * sesuai dengan paket yang sudah di-set superadmin (enterprise, bisnis, startup, dll).
+ */
+export function getPermissionGroupsForPlan(activeModules: string[] | null | undefined): PermissionGroup[] {
+    if (!activeModules || activeModules.length === 0) {
+        // Fallback minimal: hanya front-office (hotel dasar)
+        return COMPREHENSIVE_PERMISSION_GROUPS.filter(g => g.moduleKey === "front-office");
+    }
+
+    return COMPREHENSIVE_PERMISSION_GROUPS.filter(g => {
+        // Superadmin-only modules (channel manager) tidak pernah tampil di sini
+        if (g.isSuperadminOnly) return false;
+
+        switch (g.moduleKey) {
+            case "front-office":
+                return activeModules.includes("front-office");
+            case "night-audit":
+                return activeModules.includes("front-office"); // night audit bundled with FO
+            case "pos":
+                return activeModules.includes("pos");
+            case "food-beverage":
+                return activeModules.includes("food-beverage");
+            case "housekeeping":
+                return activeModules.includes("housekeeping");
+            case "purchasing":
+                return activeModules.includes("purchasing");
+            case "accounting":
+                return activeModules.includes("accounting");
+            case "innalytics":
+                return activeModules.includes("innalytics") || activeModules.includes("inalytics");
+            case "hrd":
+                return activeModules.includes("hrd");
+            case "cpanel":
+                return activeModules.includes("cpanel-full") || activeModules.includes("cpanel-only");
+            case "security":
+                // Security/user management selalu tersedia untuk admin/owner
+                return true;
+            default:
+                return false;
+        }
+    });
+}
+
+/**
+ * USALI Department to Role Mapping.
+ * Roles will only appear in the role selector and role management if their required department module is active in the hotel plan.
+ */
+export const ROLE_DEPARTMENT_MODULES: Record<string, string[]> = {
+    // Executive / Administration (available in all packages)
+    "Administrator": [],
+    "administrator": [],
+    "General Manager": [],
+    "general manager": [],
+    "gm": [],
+
+    // Front Office (USALI Rooms Department - FO)
+    "Front Office Manager": ["front-office"],
+    "front office manager": ["front-office"],
+    "fom": ["front-office"],
+    "Front Office Associate": ["front-office"],
+    "front office associate": ["front-office"],
+    "receptionist": ["front-office"],
+    "Reservation Associate": ["front-office"],
+    "reservation associate": ["front-office"],
+    "Revenue Manager": ["front-office", "innalytics"],
+    "revenue manager": ["front-office", "innalytics"],
+
+    // Night Audit (USALI Rooms / Finance)
+    "Night Auditor": ["front-office"],
+    "night auditor": ["front-office"],
+
+    // Housekeeping (USALI Rooms Department - HK)
+    "Housekeeping Manager": ["housekeeping"],
+    "housekeeping manager": ["housekeeping"],
+    "House Keeping": ["housekeeping"],
+    "house keeping": ["housekeeping"],
+    "housekeeping": ["housekeeping"],
+
+    // Food & Beverage (USALI F&B Department)
+    "Food & Beverage Manager": ["food-beverage"],
+    "food & beverage manager": ["food-beverage"],
+    "f&b manager": ["food-beverage"],
+    "Kitchen": ["food-beverage"],
+    "kitchen": ["food-beverage"],
+
+    // POS (USALI Outlets & Retail)
+    "Cashier (POS)": ["pos"],
+    "cashier (pos)": ["pos"],
+    "cashier": ["pos"],
+    "Kasir": ["pos"],
+    "kasir": ["pos"],
+
+    // Purchasing & Material Management
+    "Purchasing Officer": ["purchasing"],
+    "purchasing officer": ["purchasing"],
+    "Purchasing": ["purchasing"],
+    "purchasing": ["purchasing"],
+
+    // Finance & Accounting
+    "Finance & Accounting": ["accounting"],
+    "finance & accounting": ["accounting"],
+    "Finance": ["accounting"],
+    "finance": ["accounting"],
+
+    // Human Resources (HRD)
+    "Human Resource": ["hrd"],
+    "human resource": ["hrd"],
+    "HR": ["hrd"],
+    "hr": ["hrd"],
+    "HRD": ["hrd"],
+    "hrd": ["hrd"],
+};
+
+/**
+ * Filter list of roles based on active hotel modules according to USALI department structure.
+ */
+export function getRolesForPlan(activeModules?: string[] | null, baseRoles: string[] = []): string[] {
+    if (!activeModules || activeModules.length === 0) {
+        return baseRoles;
+    }
+
+    return baseRoles.filter((role) => {
+        const rLower = role.toLowerCase().trim();
+        // Superadmin role is handled separately by superadmin check
+        if (rLower === "superadmin" || rLower === "super_admin") return true;
+
+        const requiredModules = ROLE_DEPARTMENT_MODULES[role] || ROLE_DEPARTMENT_MODULES[rLower];
+        if (!requiredModules || requiredModules.length === 0) {
+            // Executive roles (Administrator, General Manager) are available across all plans
+            return true;
+        }
+
+        return requiredModules.some(mod => activeModules.includes(mod));
+    });
+}
+
+/**
+ * USALI Management Hierarchy Level Badge
+ */
+export function getRoleLevelBadge(role?: string): { level: number; label: string } {
+    const r = (role || "").toLowerCase().trim();
+    if (r === "superadmin" || r === "super_admin") {
+        return { level: 5, label: "Level 5 (Superadmin)" };
+    }
+    if (r === "admin" || r === "administrator" || r === "owner" || r === "hotel owner") {
+        return { level: 4, label: "Level 4 (Property Owner)" };
+    }
+    if (r === "general manager" || r === "gm") {
+        return { level: 4, label: "Level 4 (General Manager)" };
+    }
+    if (
+        r.includes("manager") || 
+        r === "finance & accounting" || 
+        r === "fom" || 
+        r === "head"
+    ) {
+        return { level: 3, label: "Level 3 (Department Head)" };
+    }
+    if (
+        r.includes("auditor") || 
+        r.includes("supervisor") || 
+        r.includes("revenue")
+    ) {
+        return { level: 2, label: "Level 2 (Supervisor & Audit)" };
+    }
+    return { level: 1, label: "Level 1 (Staff)" };
+}
+
+/**
+ * Strictly sanitize permissions against hotel activeModules.
+ * All non-subscribed modules and unauthorized add-ons are set to false.
+ */
+export function sanitizePermissionsForPlan(
+    perms: Record<string, boolean>,
+    activeModules?: string[] | null
+): Record<string, boolean> {
+    const sanitized: Record<string, boolean> = { ...perms };
+
+    COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
+        g.permissions.forEach(p => {
+            if (p.isComingSoon) {
+                sanitized[p.id] = false;
+            }
+        });
+    });
+
+    if (activeModules && activeModules.length > 0) {
+        COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
+            let isGroupAllowed = false;
+            if (g.isSuperadminOnly) {
+                isGroupAllowed = false;
+            } else {
+                switch (g.moduleKey) {
+                    case "front-office":
+                    case "night-audit":
+                        isGroupAllowed = activeModules.includes("front-office");
+                        break;
+                    case "pos":
+                        isGroupAllowed = activeModules.includes("pos");
+                        break;
+                    case "food-beverage":
+                        isGroupAllowed = activeModules.includes("food-beverage");
+                        break;
+                    case "housekeeping":
+                        isGroupAllowed = activeModules.includes("housekeeping");
+                        break;
+                    case "purchasing":
+                        isGroupAllowed = activeModules.includes("purchasing");
+                        break;
+                    case "accounting":
+                        isGroupAllowed = activeModules.includes("accounting");
+                        break;
+                    case "innalytics":
+                        isGroupAllowed = activeModules.includes("innalytics") || activeModules.includes("inalytics");
+                        break;
+                    case "hrd":
+                        isGroupAllowed = activeModules.includes("hrd");
+                        break;
+                    case "cpanel":
+                        isGroupAllowed = activeModules.includes("cpanel-full") || activeModules.includes("cpanel-only");
+                        break;
+                    case "security":
+                        isGroupAllowed = true;
+                        break;
+                    default:
+                        isGroupAllowed = false;
+                }
+            }
+            if (!isGroupAllowed) {
+                sanitized[g.id] = false;
+                g.permissions.forEach(p => {
+                    sanitized[p.id] = false;
+                });
+            }
+        });
+
+        // Block landing page items for cpanel-only
+        if (!activeModules.includes("cpanel-full")) {
+            const landingPagePerms = ["hero", "room-type", "about", "gallery", "footer", "attractions", "promo", "packages", "seo"];
+            landingPagePerms.forEach(k => {
+                sanitized[k] = false;
+            });
+        }
+
+        if (!isAddonActiveForHotel("food-beverage-realtime", activeModules)) {
+            sanitized["food-beverage-realtime"] = false;
+        }
+        if (!isAddonActiveForHotel("pos_self_order", activeModules)) {
+            sanitized["pos_self_order"] = false;
+        }
+    }
+
+    sanitized["channel-manager"] = false;
+    sanitized["module_channel_manager"] = false;
+    return sanitized;
+}
+
 // Preset defaults for standard Hotel PMS roles
 export const getStandardRolePermissions = (roleName: string, activeModules?: string[] | null): Record<string, boolean> => {
     const roleLower = roleName.toLowerCase().trim();
     const result: Record<string, boolean> = {};
 
     const sanitizeResult = (perms: Record<string, boolean>) => {
-        COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
-            g.permissions.forEach(p => {
-                if (p.isComingSoon) {
-                    perms[p.id] = false;
-                }
-            });
-        });
-        if (activeModules) {
-            if (!isAddonActiveForHotel("food-beverage-realtime", activeModules)) {
-                perms["food-beverage-realtime"] = false;
-            }
-            if (!isAddonActiveForHotel("pos_self_order", activeModules)) {
-                perms["pos_self_order"] = false;
-            }
-        }
-        return perms;
+        return sanitizePermissionsForPlan(perms, activeModules);
     };
 
     // Default: semua module dan seluruh izin sub-menu terkunci (false). Hanya izin yang eksplisit diizinkan untuk role yang bernilai true.
@@ -323,13 +567,19 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
         });
     });
 
-    // 1. Administrator & Superadmin gets 100% of all privileges
-    if (
-        roleLower === "administrator" || 
-        roleLower === "superadmin" || 
-        roleLower === "super_admin" || 
-        roleLower === "admin"
-    ) {
+    // 1. Superadmin gets 100% of all privileges
+    if (roleLower === "superadmin" || roleLower === "super_admin") {
+        COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
+            result[g.id] = true;
+            g.permissions.forEach(p => {
+                result[p.id] = true;
+            });
+        });
+        return sanitizeResult(result);
+    }
+
+    // 2. Administrator & Property Admin: gets all privileges for ACTIVE modules in their hotel plan
+    if (roleLower === "administrator" || roleLower === "admin" || roleLower === "owner") {
         COMPREHENSIVE_PERMISSION_GROUPS.forEach(g => {
             result[g.id] = true;
             g.permissions.forEach(p => {
@@ -351,6 +601,9 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
         result["logo"] = false;
         result["seo"] = false;
         result["sec_policies"] = false;
+        // CM Backup hanya bisa diaktifkan superadmin secara manual
+        result["channel-manager"] = false;
+        result["module_channel_manager"] = false;
         return sanitizeResult(result);
     }
 

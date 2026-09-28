@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Trash2, Plus, Minus, Pause, ArrowRight, ShoppingBag, ArrowLeft, Utensils } from 'lucide-react';
+import { Trash2, Plus, Minus, Pause, ArrowRight, ShoppingBag, ArrowLeft, Utensils, Settings, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { CartItem } from './types';
 import { useCurrency } from '@/hooks/useCurrency';
+import TableSelectorModal from './TableSelectorModal';
+import styles from './LexuPos.module.css';
 
 interface POSCartSidebarProps {
   customerName: string;
@@ -23,6 +24,7 @@ interface POSCartSidebarProps {
   discountPercent: number;
   setDiscountPercent: (percent: number) => void;
   payableAmount: number;
+  splitPaidCredit?: number;
   onHoldOrder: () => void;
   onProceed: () => void;
   onBackToCatalog?: () => void;
@@ -44,6 +46,7 @@ export default function POSCartSidebar({
   discountPercent,
   setDiscountPercent,
   payableAmount,
+  splitPaidCredit,
   onHoldOrder,
   onProceed,
   onBackToCatalog,
@@ -54,10 +57,12 @@ export default function POSCartSidebar({
   onSetComplimentReason?: (cartItemId: string, reason: string) => void;
 }) {
   const { formatCurrency } = useCurrency();
+  const [isTableModalOpen, setIsTableModalOpen] = React.useState(false);
+
   return (
-    <div className="w-full lg:w-[340px] xl:w-[385px] shrink-0 flex flex-col h-full border-l border-neutral-200 dark:border-white/[0.1] bg-white/40 dark:bg-zinc-950/20">
+    <div className={styles.cartSidebarColumn}>
       {onBackToCatalog && (
-        <div className="p-3 bg-neutral-100 dark:bg-zinc-900 border-b border-neutral-200 dark:border-white/[0.05] lg:hidden flex items-center shrink-0">
+        <div className={styles.cartBackHeader}>
           <Button
             variant="ghost"
             size="sm"
@@ -71,79 +76,107 @@ export default function POSCartSidebar({
       )}
       
       {/* Customer & Table Inputs Header */}
-      <div className="p-4 border-b border-neutral-200 dark:border-white/[0.1] flex flex-col gap-2 shrink-0 bg-white/60 dark:bg-zinc-950/40">
-        <div className="grid grid-cols-2 gap-2.5">
-          <div className="flex flex-col gap-1">
-            <label className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-sans">
+      <div className={styles.cartHeaderSection}>
+        <div className={styles.cartInputsGrid}>
+          <div className={styles.inputFieldGroup}>
+            <label className={styles.inputLabel}>
               Nama Pelanggan
             </label>
-            <Input
+            <input
               type="text"
               placeholder="E.g. Budi"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
-              className="h-11 px-4 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-[6px] text-[11px] text-neutral-700 dark:text-neutral-200 focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+              className={styles.cartInput}
             />
           </div>
           
-          <div className="flex flex-col gap-1">
-            <label className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-sans">
-              Nomor Meja
-            </label>
-            <Input
-              type="text"
-              placeholder="E.g. Meja 05"
-              value={tableNumber}
-              onChange={(e) => setTableNumber(e.target.value)}
-              className="h-11 px-4 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-[6px] text-[11px] text-neutral-700 dark:text-neutral-200 focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
-            />
+          <div className={styles.inputFieldGroup}>
+            <div className={styles.inputLabel}>
+              <span>Meja (Table Layout)</span>
+              {tableNumber && (
+                <button
+                  type="button"
+                  onClick={() => setTableNumber('')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#ef4444',
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                  title="Kosongkan meja"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsTableModalOpen(true)}
+              className={tableNumber ? styles.tableSelectorBtnActive : styles.tableSelectorBtn}
+              title="Buka Table Layout"
+            >
+              <div className={styles.tableSelectorContent}>
+                <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
+                <span className={styles.tableSelectorText}>
+                  {tableNumber ? tableNumber : 'Pilih Meja'}
+                </span>
+              </div>
+              <span style={{ fontSize: '10px', fontWeight: 700, opacity: 0.8 }}>
+                {tableNumber ? 'Ganti ▾' : '+'}
+              </span>
+            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5 mt-0.5">
-          <div className="flex flex-col gap-1">
-            <label className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-sans">
+        <div className={styles.cartInputsGrid}>
+          <div className={styles.inputFieldGroup}>
+            <label className={styles.inputLabel}>
               Catatan / Notes
             </label>
-            <Input
+            <input
               type="text"
               placeholder="E.g. Less sugar, extra ice..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="h-11 px-4 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-[6px] text-[11px] text-neutral-700 dark:text-neutral-200 focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+              className={styles.cartInput}
             />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-sans">
+          <div className={styles.inputFieldGroup}>
+            <label className={styles.inputLabel}>
               Diskon (%)
             </label>
-            <div className="relative w-full">
-              <Input
+            <div style={{ position: 'relative', width: '100%' }}>
+              <input
                 type="number"
                 min="0"
                 max="100"
                 placeholder="0"
                 value={discountPercent || ''}
                 onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)}
-                className="h-11 pl-4 pr-8 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] rounded-[6px] text-[11px] text-neutral-700 dark:text-neutral-200 focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+                className={styles.cartInput}
+                style={{ paddingRight: '26px' }}
               />
-              <span className="absolute right-2.5 top-2.5 text-[10px] text-neutral-500 font-bold">%</span>
+              <span style={{ position: 'absolute', right: '10px', top: '9px', fontSize: '11px', fontWeight: 700, color: '#71717a' }}>%</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Cart Item List */}
-      <div className="flex-1 min-h-0 overflow-y-auto thin-scrollbar p-4 flex flex-col gap-2.5">
-        <div className="flex items-center justify-between mb-0.5 shrink-0">
-          <h3 className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-sans">
+      <div className={styles.cartList}>
+        <div className={styles.cartListHeader}>
+          <h3 className={styles.cartListTitle}>
             Daftar Belanja ({cart.reduce((sum, item) => sum + item.quantity, 0)})
           </h3>
           {cart.length > 0 && (
             <button
               onClick={onClearCart}
-              className="text-neutral-400 hover:text-red-500 transition-colors text-[10px] flex items-center gap-1 font-semibold"
+              className={styles.cartClearBtn}
               title="Bersihkan Keranjang"
             >
               <Trash2 className="w-3 h-3" />
@@ -152,174 +185,195 @@ export default function POSCartSidebar({
           )}
         </div>
 
-        <div className="flex flex-col gap-2.5">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {cart.map((item) => {
             const addonsTotal = item.selectedAddons ? item.selectedAddons.reduce((sum, a) => sum + a.price, 0) : 0;
             const itemPrice = item.product.price + addonsTotal;
             return (
-            <div 
-              key={item.cartItemId}
-              className="flex flex-col p-2.5 rounded-[10px] bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-white/[0.1] hover:shadow-md transition-shadow gap-2"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {item.product.image ? (
-                    <img
-                      src={item.product.image}
-                      alt={item.product.name}
-                      className="w-8 h-8 rounded-lg object-cover bg-slate-100 dark:bg-neutral-800 shrink-0"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 text-neutral-400">
-                      <Utensils className="w-4 h-4" />
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-semibold text-neutral-700 dark:text-neutral-200 line-clamp-2 font-sans">
-                      {item.product.name}
-                    </h4>
-                    {item.selectedAddons && item.selectedAddons.length > 0 && (
-                      <p className="text-[10px] text-neutral-500 mt-0.5 font-medium leading-tight">
-                        {item.selectedAddons.map(a => a.name).join(', ')}
-                      </p>
+              <div 
+                key={item.cartItemId}
+                className={styles.cartItemCard}
+              >
+                <div className={styles.cartItemTop}>
+                  <div className={styles.cartItemDetails}>
+                    {item.product.image ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={item.product.image}
+                        alt={item.product.name}
+                        className={styles.cartItemImg}
+                      />
+                    ) : (
+                      <div className={styles.cartItemImg} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a1a1aa' }}>
+                        <Utensils className="w-4 h-4" />
+                      </div>
                     )}
-                    {item.note && (
-                      <p className="text-[10px] text-orange-500 italic mt-0.5 leading-tight">
-                        &quot;{item.note}&quot;
-                      </p>
-                    )}
-                    <p className="text-[9px] text-neutral-500 font-medium mt-0.5 font-sans flex items-center gap-1">
-                      {item.isCompliment ? (
-                        <>
-                          <span className="line-through text-neutral-400">{formatCurrency(itemPrice)}</span>
-                          <span className="text-emerald-500 font-bold bg-emerald-550/15 dark:bg-emerald-550/20 px-1 py-0.2 rounded-xl">Gratis</span>
-                        </>
-                      ) : (
-                        formatCurrency(itemPrice)
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <h4 className={styles.cartItemName}>
+                        {item.product.name}
+                      </h4>
+                      {item.selectedAddons && item.selectedAddons.length > 0 && (
+                        <p className={styles.cartItemAddons}>
+                          {item.selectedAddons.map(a => a.name).join(', ')}
+                        </p>
                       )}
-                    </p>
+                      {item.note && (
+                        <p className={styles.cartItemNote}>
+                          &quot;{item.note}&quot;
+                        </p>
+                      )}
+                      <p className={styles.cartItemPrice}>
+                        {item.isCompliment ? (
+                          <>
+                            <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>{formatCurrency(itemPrice)}</span>
+                            <span className={styles.complimentBadge}>Gratis</span>
+                          </>
+                        ) : (
+                          formatCurrency(itemPrice)
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '8px' }}>
+                    <div className={styles.cartQtyControl}>
+                      <button
+                        type="button"
+                        onClick={() => onUpdateQuantity(item.cartItemId, -1)}
+                        className={styles.qtyBtn}
+                        aria-label="Kurangi kuantitas"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className={styles.qtyNum}>
+                        {item.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => onUpdateQuantity(item.cartItemId, 1)}
+                        className={styles.qtyBtn}
+                        aria-label="Tambah kuantitas"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    <span className={styles.cartItemTotal}>
+                      {item.isCompliment ? formatCurrency(0) : formatCurrency(itemPrice * item.quantity)}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 ml-3">
-                  <div className="flex items-center gap-1 bg-gray-100/[0.8] dark:bg-black border border-neutral-200 dark:border-white/[0.1] rounded-[6px] p-0.5">
-                    <button
-                       onClick={() => onUpdateQuantity(item.cartItemId, -1)}
-                       className="w-5 h-5 rounded-[6px] hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-neutral-500"
-                     >
-                       <Minus className="w-3 h-3" />
-                     </button>
-                     <span className="text-[10px] font-bold px-0.5 text-neutral-600 dark:text-neutral-200 min-w-[12px] text-center">
-                       {item.quantity}
-                     </span>
-                     <button
-                       onClick={() => onUpdateQuantity(item.cartItemId, 1)}
-                       className="w-5 h-5 rounded-[6px] hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-neutral-500"
-                     >
-                      <Plus className="w-3 h-3" />
-                    </button>
-                  </div>
-
-                  <span className="text-xs font-bold text-neutral-600 dark:text-neutral-200 w-14 text-right shrink-0">
-                    {item.isCompliment ? formatCurrency(0) : formatCurrency(itemPrice * item.quantity)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Compliment Section */}
-              <div className="flex items-center justify-between pt-1 border-t border-dashed border-neutral-150 dark:border-white/[0.05] gap-2">
-                <button
-                  onClick={() => onToggleCompliment && onToggleCompliment(item.cartItemId)}
-                  className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-[6px] transition-colors ${
-                    item.isCompliment
-                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-200/50'
-                      : 'bg-neutral-100 dark:bg-zinc-800 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200 border border-transparent'
-                  }`}
-                >
-                  {item.isCompliment ? '✓ Compliment' : 'Compliment?'}
-                </button>
-
-                {item.isCompliment && (
-                  <select
-                    value={item.complimentReason || 'Service Recovery'}
-                    onChange={(e) => onSetComplimentReason && onSetComplimentReason(item.cartItemId, e.target.value)}
-                    className="h-6 px-1.5 rounded-[6px] bg-neutral-100 dark:bg-zinc-800 border border-neutral-200 dark:border-white/[0.08] text-[9px] font-semibold text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer max-w-[150px]"
+                {/* Compliment Section */}
+                <div className={styles.complimentRow}>
+                  <button
+                    type="button"
+                    onClick={() => onToggleCompliment && onToggleCompliment(item.cartItemId)}
+                    className={`${styles.complimentToggleBtn} ${item.isCompliment ? styles.complimentToggleBtnActive : ''}`}
                   >
-                    <option value="Service Recovery">Service Recovery</option>
-                    <option value="VIP Guest">VIP Guest</option>
-                    <option value="Owner Benefit">Owner Benefit</option>
-                    <option value="Event Promo">Event Promo</option>
-                    <option value="Staff Meal">Staff Meal</option>
-                  </select>
-                )}
+                    {item.isCompliment ? '✓ Compliment' : 'Compliment?'}
+                  </button>
+
+                  {item.isCompliment && (
+                    <select
+                      value={item.complimentReason || 'Service Recovery'}
+                      onChange={(e) => onSetComplimentReason && onSetComplimentReason(item.cartItemId, e.target.value)}
+                      className={styles.complimentSelect}
+                    >
+                      <option value="Service Recovery">Service Recovery</option>
+                      <option value="VIP Guest">VIP Guest</option>
+                      <option value="Owner Benefit">Owner Benefit</option>
+                      <option value="Event Promo">Event Promo</option>
+                      <option value="Staff Meal">Staff Meal</option>
+                    </select>
+                  )}
+                </div>
               </div>
-            </div>
             );
           })}
         </div>
 
         {cart.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center text-neutral-400">
+          <div className={styles.cartEmptyBox}>
             <ShoppingBag className="w-10 h-10 stroke-[1.5] mb-2 opacity-30" />
-            <p className="text-[11px] font-medium font-sans">Belum ada item ditambahkan.</p>
+            <p style={{ fontSize: '11.5px', fontWeight: 600 }}>Belum ada item ditambahkan.</p>
           </div>
         )}
       </div>
 
       {/* Pricing Summary Actions */}
-      <div className="p-4 bg-white/60 dark:bg-zinc-950/40 border-t border-neutral-200 dark:border-white/[0.1] flex flex-col gap-3 shrink-0">
-        <div className="flex flex-col gap-1.5 text-[11px] text-neutral-500 dark:text-neutral-400">
-          <div className="flex justify-between">
+      <div className={styles.cartFooter}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div className={styles.summaryRow}>
             <span>Subtotal</span>
-            <span className="font-semibold text-neutral-700 dark:text-neutral-200">{formatCurrency(subtotal)}</span>
+            <span className={styles.summaryVal}>{formatCurrency(subtotal)}</span>
           </div>
           {discount > 0 && (
             <>
-              <div className="flex justify-between">
+              <div className={styles.summaryRow}>
                 <span>Diskon</span>
-                <span className="font-semibold text-red-500">-{formatCurrency(discount)}</span>
+                <span className={styles.summaryVal} style={{ color: '#ef4444' }}>-{formatCurrency(discount)}</span>
               </div>
-              <div className="flex justify-between">
+              <div className={styles.summaryRow}>
                 <span>Total Setelah Diskon</span>
-                <span className="font-semibold text-neutral-700 dark:text-neutral-200">{formatCurrency(subtotal - discount)}</span>
+                <span className={styles.summaryVal}>{formatCurrency(subtotal - discount)}</span>
               </div>
             </>
           )}
-          <div className="flex justify-between">
+          <div className={styles.summaryRow}>
             <span>Pajak ({subtotal - discount > 0 ? Math.round((tax / (subtotal - discount)) * 100) : 10}% Service TAX)</span>
-            <span className="font-semibold text-neutral-700 dark:text-neutral-200">{formatCurrency(tax)}</span>
+            <span className={styles.summaryVal}>{formatCurrency(tax)}</span>
           </div>
-          
-          <div className="h-[1px] bg-neutral-200 dark:bg-white/[0.1] my-1" />
 
-          <div className="flex justify-between items-baseline text-xs">
-            <span className="font-bold text-neutral-700 dark:text-white font-sans">Payable Amount</span>
-            <span className="text-base font-black text-neutral-800 dark:text-white">{formatCurrency(payableAmount)}</span>
+          {splitPaidCredit && splitPaidCredit > 0 ? (
+            <div className={styles.summaryRow}>
+              <span style={{ color: '#10b981', fontWeight: 600 }}>Telah Dibayar (Split)</span>
+              <span className={styles.summaryVal} style={{ color: '#10b981' }}>-{formatCurrency(splitPaidCredit)}</span>
+            </div>
+          ) : null}
+          
+          <div className={styles.divider} />
+
+          <div className={styles.totalRow}>
+            <span className={styles.totalLabel}>
+              {splitPaidCredit && splitPaidCredit > 0 ? 'Sisa Kurangan' : 'Payable Amount'}
+            </span>
+            <span className={styles.totalVal} style={splitPaidCredit && splitPaidCredit > 0 ? { color: '#ef4444' } : {}}>
+              {formatCurrency(payableAmount)}
+            </span>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            variant="outline"
+        <div className={styles.actionButtonsGrid}>
+          <button
+            type="button"
             onClick={onHoldOrder}
-            className="w-full h-9 rounded-[6px] border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 text-neutral-600 dark:text-neutral-400 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            className={styles.holdBtn}
           >
-            <Pause className="w-3.5 h-3.5 text-neutral-500" />
+            <Pause className="w-3.5 h-3.5" />
             <span>Hold Order</span>
-          </Button>
+          </button>
 
-          <Button
+          <button
+            type="button"
             onClick={onProceed}
-            className="w-full h-9 rounded-[6px] bg-[#181d26] hover:bg-[#0d1218] text-white dark:bg-white dark:text-[#181d26] dark:hover:bg-neutral-100 text-xs font-semibold flex items-center justify-center gap-2 border-none shadow-sm transition-all"
+            className={styles.proceedBtn}
           >
-            <ArrowRight className="w-3.5 h-3.5" />
             <span>Proceed</span>
-          </Button>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
+      {isTableModalOpen && (
+        <TableSelectorModal
+          isOpen={isTableModalOpen}
+          onClose={() => setIsTableModalOpen(false)}
+          selectedTable={tableNumber}
+          onSelectTable={(name) => setTableNumber(name)}
+        />
+      )}
     </div>
   );
 }

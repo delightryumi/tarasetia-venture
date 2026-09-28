@@ -11,6 +11,7 @@ interface AnnualSummaryTabProps {
   budgetDoc: YearlyBudgetDocument | null;
   actualMonthlyData: Record<string, any>;
   hotelRoomCount: number;
+  isStartup?: boolean;
 }
 
 export const AnnualSummaryTab: React.FC<AnnualSummaryTabProps> = ({
@@ -18,6 +19,7 @@ export const AnnualSummaryTab: React.FC<AnnualSummaryTabProps> = ({
   budgetDoc,
   actualMonthlyData,
   hotelRoomCount,
+  isStartup = false,
 }) => {
   // Aggregate Annual Totals (12 Months)
   let bRoomsAvail = 0;
@@ -220,71 +222,77 @@ export const AnnualSummaryTab: React.FC<AnnualSummaryTabProps> = ({
           </thead>
           <tbody>
             {/* ── 1. OPERATING STATISTICS ── */}
-            <tr className={styles.tierHeaderRow}>
-              <td className={styles.colCode}>STAT</td>
-              <td colSpan={5}>1. STATISTIK OPERASIONAL HOTEL TAHUNAN (TAMU & KAMAR REAL)</td>
-            </tr>
-            <tr>
-              <td className={styles.colCode}>STAT-01</td>
-              <td className={styles.colDesc}>Rooms Available (Kamar Tersedia Tahunan)</td>
-              <td className={styles.colAmount}>{bRoomsAvail}</td>
-              <td className={styles.colAmount}>{bRoomsAvail}</td>
-              <td className={styles.colVariance} style={{ color: "#78716c" }}>0</td>
-              <td className={styles.colPercent} style={{ color: "#78716c" }}>0.0%</td>
-            </tr>
-            <tr>
-              <td className={styles.colCode}>STAT-02</td>
-              <td className={styles.colDesc}>Rooms Sold (Kamar Terjual Tahunan)</td>
-              <td className={styles.colAmount} style={{ fontWeight: 800, color: "#2563eb" }}>{aRoomsSold}</td>
-              <td className={styles.colAmount}>{bRoomsSold}</td>
-              {renderVarCell(aRoomsSold, bRoomsSold, false, false)}
-            </tr>
-            <tr>
-              <td className={styles.colCode}>STAT-03</td>
-              <td className={styles.colDesc}>Total Guest Pax (Jumlah Tamu Real Tahunan)</td>
-              <td className={styles.colAmount} style={{ fontWeight: 800, color: "#059669" }}>{aPax}</td>
-              <td className={styles.colAmount}>{bPax}</td>
-              {renderVarCell(aPax, bPax, false, false)}
-            </tr>
-            <tr>
-              <td className={styles.colCode}>STAT-04</td>
-              <td className={styles.colDesc}>Occupancy Rate (%)</td>
-              <td className={styles.colAmount} style={{ fontWeight: 800, color: "#2563eb" }}>{aOcc.toFixed(1)}%</td>
-              <td className={styles.colAmount}>{bOcc.toFixed(1)}%</td>
-              <td className={styles.colVariance} style={{ color: aOcc >= bOcc ? "#16a34a" : "#dc2626" }}>
-                {(aOcc - bOcc).toFixed(1)}% pts
-              </td>
-              <td className={styles.colPercent} style={{ color: aOcc >= bOcc ? "#16a34a" : "#dc2626" }}>
-                {bOcc > 0 ? (((aOcc - bOcc) / bOcc) * 100).toFixed(1) : "0.0"}%
-              </td>
-            </tr>
-            <tr>
-              <td className={styles.colCode}>STAT-05</td>
-              <td className={styles.colDesc}>Average Room Rate (ARR)</td>
-              <td className={styles.colAmount}>{formatIDR(aArr)}</td>
-              <td className={styles.colAmount}>{formatIDR(bArr)}</td>
-              {renderVarCell(aArr, bArr)}
-            </tr>
-            <tr>
-              <td className={styles.colCode}>STAT-06</td>
-              <td className={styles.colDesc}>RevPAR (Revenue Per Available Room)</td>
-              <td className={styles.colAmount}>{formatIDR(aRevPar)}</td>
-              <td className={styles.colAmount}>{formatIDR(bRevPar)}</td>
-              {renderVarCell(aRevPar, bRevPar)}
-            </tr>
+            {!isStartup && (
+              <>
+                <tr className={styles.tierHeaderRow}>
+                  <td className={styles.colCode}>STAT</td>
+                  <td colSpan={5}>1. STATISTIK OPERASIONAL HOTEL TAHUNAN (TAMU & KAMAR REAL)</td>
+                </tr>
+                <tr>
+                  <td className={styles.colCode}>STAT-01</td>
+                  <td className={styles.colDesc}>Rooms Available (Kamar Tersedia Tahunan)</td>
+                  <td className={styles.colAmount}>{bRoomsAvail}</td>
+                  <td className={styles.colAmount}>{bRoomsAvail}</td>
+                  <td className={styles.colVariance} style={{ color: "#78716c" }}>0</td>
+                  <td className={styles.colPercent} style={{ color: "#78716c" }}>0.0%</td>
+                </tr>
+                <tr>
+                  <td className={styles.colCode}>STAT-02</td>
+                  <td className={styles.colDesc}>Rooms Sold (Kamar Terjual Tahunan)</td>
+                  <td className={styles.colAmount} style={{ fontWeight: 800, color: "#2563eb" }}>{aRoomsSold}</td>
+                  <td className={styles.colAmount}>{bRoomsSold}</td>
+                  {renderVarCell(aRoomsSold, bRoomsSold, false, false)}
+                </tr>
+                <tr>
+                  <td className={styles.colCode}>STAT-03</td>
+                  <td className={styles.colDesc}>Total Guest Pax (Jumlah Tamu Real Tahunan)</td>
+                  <td className={styles.colAmount} style={{ fontWeight: 800, color: "#059669" }}>{aPax}</td>
+                  <td className={styles.colAmount}>{bPax}</td>
+                  {renderVarCell(aPax, bPax, false, false)}
+                </tr>
+                <tr>
+                  <td className={styles.colCode}>STAT-04</td>
+                  <td className={styles.colDesc}>Occupancy Rate (%)</td>
+                  <td className={styles.colAmount} style={{ fontWeight: 800, color: "#2563eb" }}>{aOcc.toFixed(1)}%</td>
+                  <td className={styles.colAmount}>{bOcc.toFixed(1)}%</td>
+                  <td className={styles.colVariance} style={{ color: aOcc >= bOcc ? "#16a34a" : "#dc2626" }}>
+                    {(aOcc - bOcc).toFixed(1)}% pts
+                  </td>
+                  <td className={styles.colPercent} style={{ color: aOcc >= bOcc ? "#16a34a" : "#dc2626" }}>
+                    {bOcc > 0 ? (((aOcc - bOcc) / bOcc) * 100).toFixed(1) : "0.0"}%
+                  </td>
+                </tr>
+                <tr>
+                  <td className={styles.colCode}>STAT-05</td>
+                  <td className={styles.colDesc}>Average Room Rate (ARR)</td>
+                  <td className={styles.colAmount}>{formatIDR(aArr)}</td>
+                  <td className={styles.colAmount}>{formatIDR(bArr)}</td>
+                  {renderVarCell(aArr, bArr)}
+                </tr>
+                <tr>
+                  <td className={styles.colCode}>STAT-06</td>
+                  <td className={styles.colDesc}>RevPAR (Revenue Per Available Room)</td>
+                  <td className={styles.colAmount}>{formatIDR(aRevPar)}</td>
+                  <td className={styles.colAmount}>{formatIDR(bRevPar)}</td>
+                  {renderVarCell(aRevPar, bRevPar)}
+                </tr>
+              </>
+            )}
 
             {/* ── 2. OPERATING REVENUE ── */}
             <tr className={styles.tierHeaderRow}>
               <td className={styles.colCode}>3000</td>
               <td colSpan={5}>2. PENDAPATAN OPERASIONAL (TOTAL REVENUE)</td>
             </tr>
-            <tr>
-              <td className={styles.colCode}>3013</td>
-              <td className={styles.colDesc}>Room Revenue</td>
-              <td className={styles.colAmount}>{formatIDR(aRoomRev)}</td>
-              <td className={styles.colAmount}>{formatIDR(bRoomRev)}</td>
-              {renderVarCell(aRoomRev, bRoomRev)}
-            </tr>
+            {!isStartup && (
+              <tr>
+                <td className={styles.colCode}>3013</td>
+                <td className={styles.colDesc}>Room Revenue</td>
+                <td className={styles.colAmount}>{formatIDR(aRoomRev)}</td>
+                <td className={styles.colAmount}>{formatIDR(bRoomRev)}</td>
+                {renderVarCell(aRoomRev, bRoomRev)}
+              </tr>
+            )}
             <tr>
               <td className={styles.colCode}>3023</td>
               <td className={styles.colDesc}>F&B Revenue</td>
@@ -319,13 +327,15 @@ export const AnnualSummaryTab: React.FC<AnnualSummaryTabProps> = ({
               <td className={styles.colCode}>4000</td>
               <td colSpan={5}>3. HARGA POKOK PENJUALAN (COST OF SALES)</td>
             </tr>
-            <tr>
-              <td className={styles.colCode}>4014</td>
-              <td className={styles.colDesc}>Cost of Rooms</td>
-              <td className={styles.colAmount}>{formatIDR(aRoomCogs)}</td>
-              <td className={styles.colAmount}>{formatIDR(bRoomCogs)}</td>
-              {renderVarCell(aRoomCogs, bRoomCogs, true)}
-            </tr>
+            {!isStartup && (
+              <tr>
+                <td className={styles.colCode}>4014</td>
+                <td className={styles.colDesc}>Cost of Rooms</td>
+                <td className={styles.colAmount}>{formatIDR(aRoomCogs)}</td>
+                <td className={styles.colAmount}>{formatIDR(bRoomCogs)}</td>
+                {renderVarCell(aRoomCogs, bRoomCogs, true)}
+              </tr>
+            )}
             <tr>
               <td className={styles.colCode}>4024</td>
               <td className={styles.colDesc}>Cost of F&B</td>
@@ -360,13 +370,15 @@ export const AnnualSummaryTab: React.FC<AnnualSummaryTabProps> = ({
               <td className={styles.colCode}>5000</td>
               <td colSpan={5}>4. BIAYA OPERASIONAL DEPARTEMEN</td>
             </tr>
-            <tr>
-              <td className={styles.colCode}>5015</td>
-              <td className={styles.colDesc}>Room Department</td>
-              <td className={styles.colAmount}>{formatIDR(aRoomExp)}</td>
-              <td className={styles.colAmount}>{formatIDR(bRoomExp)}</td>
-              {renderVarCell(aRoomExp, bRoomExp, true)}
-            </tr>
+            {!isStartup && (
+              <tr>
+                <td className={styles.colCode}>5015</td>
+                <td className={styles.colDesc}>Room Department</td>
+                <td className={styles.colAmount}>{formatIDR(aRoomExp)}</td>
+                <td className={styles.colAmount}>{formatIDR(bRoomExp)}</td>
+                {renderVarCell(aRoomExp, bRoomExp, true)}
+              </tr>
+            )}
             <tr>
               <td className={styles.colCode}>5025</td>
               <td className={styles.colDesc}>Food & Beverage Department</td>
