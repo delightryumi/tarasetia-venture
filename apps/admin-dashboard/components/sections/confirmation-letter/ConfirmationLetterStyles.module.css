@@ -1,4 +1,4 @@
-/* ConfirmationLetterStyles.module.css — My Tara High-Contrast Enterprise Theme */
+﻿/* ConfirmationLetterStyles.module.css â€” My Tara High-Contrast Enterprise Theme */
 
 .container {
     width: 100%;
@@ -18,7 +18,7 @@
     color: #f8fafc;
 }
 
-/* ── Top Enterprise Header Bar (Matches Channel Manager TopBar) ── */
+/* â”€â”€ Top Enterprise Header Bar (Matches Channel Manager TopBar) â”€â”€ */
 .header {
     display: flex;
     align-items: center;
@@ -121,7 +121,7 @@
     flex-wrap: wrap;
 }
 
-/* ── Buttons (High-Contrast My Tara Palette) ── */
+/* â”€â”€ Buttons (High-Contrast My Tara Palette) â”€â”€ */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -217,7 +217,7 @@
     border: none;
 }
 
-/* ── Minimalist Segmented Category Navigation (Matches Channel Manager .categoryNav) ── */
+/* â”€â”€ Minimalist Segmented Category Navigation (Matches Channel Manager .categoryNav) â”€â”€ */
 .tabsRow {
     display: flex;
     align-items: center;
@@ -278,7 +278,7 @@
     font-weight: 700;
 }
 
-/* ── Card & Table (List View) ── */
+/* â”€â”€ Card & Table (List View) â”€â”€ */
 .card {
     background: #ffffff;
     border: 1px solid #cbd5e1;
@@ -419,7 +419,7 @@
     background: rgba(255, 255, 255, 0.02);
 }
 
-/* ── Status Badges (High Contrast) ── */
+/* â”€â”€ Status Badges (High Contrast) â”€â”€ */
 .badge {
     display: inline-flex;
     align-items: center;
@@ -456,7 +456,7 @@
     border: 1px solid #fca5a5;
 }
 
-/* ── Empty State ── */
+/* â”€â”€ Empty State â”€â”€ */
 .emptyState {
     text-align: center;
     padding: 60px 20px;
@@ -487,7 +487,7 @@
     line-height: 1.5;
 }
 
-/* ── Split Layout for Editor & Live Preview ── */
+/* â”€â”€ Split Layout for Editor & Live Preview â”€â”€ */
 .splitLayout {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -605,7 +605,7 @@
     line-height: 1.45;
 }
 
-/* ── Live Preview Wrapper (High Contrast Screen Mode) ── */
+/* â”€â”€ Live Preview Wrapper (High Contrast Screen Mode) â”€â”€ */
 .previewStickyWrapper {
     position: sticky;
     top: 20px;
@@ -643,9 +643,9 @@
     border-color: rgba(255, 255, 255, 0.12);
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    5-STAR LUXURY HOTEL CONFIRMATION LETTER (PRINTABLE SHEET)
-   ═══════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .paperContainer {
     padding: 16px;
     background: #475569;
@@ -663,7 +663,7 @@
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
     font-family: var(--font-geist-sans, 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
     line-height: 1.35;
-    font-size: 7.5pt;
+    font-size: 8pt;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -707,13 +707,13 @@
 
 .hotelStars {
     color: #b49b67;
-    font-size: 8.5pt;
+    font-size: 9pt;
     letter-spacing: 1.5px;
     margin-bottom: 1px;
 }
 
 .hotelName {
-    font-size: 13pt;
+    font-size: 13\.5pt;
     font-weight: 800;
     color: #0f172a;
     margin: 0 0 2px 0;
@@ -721,7 +721,7 @@
 }
 
 .hotelMeta {
-    font-size: 7pt;
+    font-size: 7\.5pt;
     color: #64748b;
     line-height: 1.35;
 }
@@ -732,7 +732,7 @@
 }
 
 .docTitle {
-    font-size: 12.5pt;
+    font-size: 13pt;
     font-weight: 800;
     color: #0f172a;
     letter-spacing: 0.08em;
@@ -741,7 +741,7 @@
 }
 
 .docSubtitle {
-    font-size: 7pt;
+    font-size: 7\.5pt;
     font-weight: 600;
     color: #8d7a52;
     letter-spacing: 0.05em;
@@ -750,21 +750,21 @@
 }
 
 .docRefNo {
-    font-size: 7.8pt;
+    font-size: 8pt;
     font-weight: 700;
     color: #0f172a;
     font-variant-numeric: tabular-nums;
 }
 
 .docDate {
-    font-size: 7pt;
+    font-size: 7\.5pt;
     color: #64748b;
     margin-top: 1px;
 }
 
 .docStatusTag {
     display: inline-block;
-    font-size: 6.5pt;
+    font-size: 7pt;
     font-weight: 700;
     color: #1e293b;
     background: #f1f5f9;
@@ -778,13 +778,13 @@
 
 /* Formal Hospitality Salutation */
 .formalGreeting {
-    font-size: 7.2pt;
+    font-size: 7\.5pt;
     color: #475569;
     margin-bottom: 8px;
     line-height: 1.35;
 }
 
-/* ── Modern 2-Column Information Grid (Clean & Borderless) ── */
+/* â”€â”€ Modern 2-Column Information Grid (Clean & Borderless) â”€â”€ */
 .modernInfoGrid {
     display: grid;
     grid-template-columns: 1.15fr 1fr;
@@ -802,7 +802,7 @@
 }
 
 .infoSectionTag {
-    font-size: 6.5pt;
+    font-size: 7pt;
     font-weight: 700;
     color: #8d7a52;
     text-transform: uppercase;
@@ -811,7 +811,7 @@
 }
 
 .infoPrimaryName {
-    font-size: 9pt;
+    font-size: 9\.5pt;
     font-weight: 800;
     color: #0f172a;
     line-height: 1.25;
@@ -820,7 +820,7 @@
 
 .infoRow {
     display: flex;
-    font-size: 7pt;
+    font-size: 7\.5pt;
     line-height: 1.3;
 }
 
@@ -853,32 +853,32 @@
 }
 
 .stayDateLabel {
-    font-size: 5.8pt;
+    font-size: 6\.5pt;
     font-weight: 700;
     color: #64748b;
     letter-spacing: 0.04em;
 }
 
 .stayDateVal {
-    font-size: 7.8pt;
+    font-size: 8\.5pt;
     font-weight: 800;
     color: #0f172a;
 }
 
 .stayTimeVal {
-    font-size: 6pt;
+    font-size: 6\.5pt;
     color: #64748b;
 }
 
 .stayArrow {
     color: #94a3b8;
-    font-size: 9pt;
+    font-size: 9\.5pt;
     font-weight: 300;
 }
 
 /* Section Divider */
 .paperSectionTitle {
-    font-size: 7.2pt;
+    font-size: 7\.5pt;
     font-weight: 800;
     color: #0f172a;
     text-transform: uppercase;
@@ -901,7 +901,7 @@
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 4px;
-    font-size: 7pt;
+    font-size: 7\.5pt;
 }
 
 .hotelTable th {
@@ -911,7 +911,7 @@
     font-weight: 700;
     text-align: left;
     text-transform: uppercase;
-    font-size: 6.5pt;
+    font-size: 7pt;
     letter-spacing: 0.04em;
     border-top: 1px solid #e2e8f0;
     border-bottom: 1.5px solid #0f172a;
@@ -946,7 +946,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 2px 0;
-    font-size: 7pt;
+    font-size: 7\.5pt;
     color: #64748b;
 }
 
@@ -958,7 +958,7 @@
     margin-top: 2px;
     border-top: 1.5px solid #0f172a;
     border-bottom: 1.5px solid #0f172a;
-    font-size: 8.5pt;
+    font-size: 9pt;
     font-weight: 800;
     color: #0f172a;
 }
@@ -976,7 +976,7 @@
 .billingDossierBox {
     background: transparent;
     padding: 0;
-    font-size: 6.8pt;
+    font-size: 7\.5pt;
     line-height: 1.35;
 }
 
@@ -984,7 +984,7 @@
     font-weight: 800;
     text-transform: uppercase;
     color: #0f172a;
-    font-size: 6.8pt;
+    font-size: 7\.5pt;
     letter-spacing: 0.04em;
     margin-bottom: 3px;
 }
@@ -1000,14 +1000,14 @@
     border-radius: 5px;
     padding: 4px 8px;
     margin-top: 3px;
-    font-size: 6.8pt;
+    font-size: 7\.5pt;
 }
 
 /* Terms & Regulations */
 .regulationsBox {
     background: transparent;
     padding: 0;
-    font-size: 6.8pt;
+    font-size: 7\.5pt;
     line-height: 1.35;
     color: #334155;
 }
@@ -1016,7 +1016,7 @@
     font-weight: 800;
     text-transform: uppercase;
     color: #0f172a;
-    font-size: 6.8pt;
+    font-size: 7\.5pt;
     letter-spacing: 0.04em;
     margin-bottom: 3px;
 }
@@ -1042,7 +1042,7 @@
 
 .sigBlock {
     text-align: center;
-    font-size: 7pt;
+    font-size: 7\.5pt;
     color: #334155;
 }
 
@@ -1051,11 +1051,11 @@
     text-transform: uppercase;
     color: #0f172a;
     letter-spacing: 0.03em;
-    font-size: 6.8pt;
+    font-size: 7\.5pt;
 }
 
 .sigCompany {
-    font-size: 6.8pt;
+    font-size: 7\.5pt;
     color: #64748b;
     margin-bottom: 24px;
 }
@@ -1067,16 +1067,16 @@
     padding-top: 3px;
     font-weight: 800;
     color: #0f172a;
-    font-size: 7.5pt;
+    font-size: 8pt;
 }
 
 .sigTitle {
-    font-size: 6.5pt;
+    font-size: 7pt;
     color: #64748b;
     margin-top: 1px;
 }
 
-/* ── Print Media Query (Zero Bleed, Perfect A4) ── */
+/* â”€â”€ Print Media Query (Zero Bleed, Perfect A4) â”€â”€ */
 @media print {
     @page {
         margin: 5mm 8mm;
@@ -1143,3 +1143,5 @@
         page-break-inside: avoid !important;
     }
 }
+
+

@@ -229,7 +229,7 @@ export default function ThermalReceipt({
             background: #fff !important;
             color: #000 !important;
             height: auto !important;
-            min-height: 100% !important;
+            min-height: 0 !important;
             overflow: visible !important;
             box-sizing: border-box !important;
           }
@@ -286,6 +286,8 @@ export default function ThermalReceipt({
             width: ${is58mm ? '58mm' : '80mm'} !important;
             min-width: ${is58mm ? '58mm' : '80mm'} !important;
             max-width: ${is58mm ? '58mm' : '80mm'} !important;
+            height: auto !important;
+            min-height: 0 !important;
             margin: 0 !important;
             padding: ${is58mm ? '2mm 2.5mm 4mm 2.5mm' : '4mm 3.5mm 6mm 3.5mm'} !important;
             box-sizing: border-box !important;
@@ -298,6 +300,9 @@ export default function ThermalReceipt({
             border: none !important;
             display: block !important;
             visibility: visible !important;
+            overflow: visible !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
             ${is58mm ? 'font-size: 10px !important; line-height: 1.25 !important;' : 'font-size: 12px !important; line-height: 1.35 !important;'}
           }
 

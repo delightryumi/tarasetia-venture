@@ -11,7 +11,7 @@ import {
     GuaranteeStatus,
     MealPlanCode
 } from "./ConfirmationLetterTypes";
-import styles from "./ConfirmationLetterLandscape.module.css";
+import styles from "./ConfirmationLetterV2.module.css";
 import {
     FileText,
     Plus,
@@ -71,6 +71,8 @@ export default function ConfirmationLetterSection() {
     const [statusFilter, setStatusFilter] = useState<string>("ALL");
     const [typeFilter, setTypeFilter] = useState<string>("ALL");
     const [showPreviewSheet, setShowPreviewSheet] = useState(true);
+    // Track which room rows are in "custom bed type" input mode: key = room.id or idx
+    const [customBedMode, setCustomBedMode] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         setMounted(true);
@@ -859,13 +861,61 @@ export default function ConfirmationLetterSection() {
                                                     </td>
                                                     <td>
                                                         {(() => {
+                                                            const rowKey = String(room.id ?? idx);
                                                             const matchedRt = availableRoomTypes?.find(rt => rt.id === room.roomTypeId || rt.name === room.roomTypeName);
                                                             const rtBed = matchedRt?.bedType;
+                                                            const isCustom = customBedMode[rowKey];
+                                                            const PRESET_BEDS = [
+                                                                "King Bed (180 x 200)",
+                                                                "Twin Bed (2x 100 x 200)",
+                                                                "Queen Bed (160 x 200)",
+                                                                "Double Bed (140 x 200)",
+                                                                "Single Bed (90 x 200)",
+                                                                "Hollywood Twin",
+                                                                "Extra Bed / Rollaway",
+                                                            ];
+                                                            const isKnownPreset = PRESET_BEDS.includes(room.bedType || "") || room.bedType === rtBed;
+
+                                                            if (isCustom) {
+                                                                return (
+                                                                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                                                        <input
+                                                                            type="text"
+                                                                            autoFocus
+                                                                            className={styles.vhpTableInput}
+                                                                            style={{ flex: 1, minWidth: 0 }}
+                                                                            value={room.bedType || ""}
+                                                                            onChange={(e) => updateRoomItem(room.id || idx, "bedType", e.target.value)}
+                                                                            placeholder="Contoh: Sofa Bed, Daybed, Futon..."
+                                                                        />
+                                                                        <button
+                                                                            type="button"
+                                                                            title="Kembali ke pilihan preset"
+                                                                            onClick={() => setCustomBedMode(prev => ({ ...prev, [rowKey]: false }))}
+                                                                            style={{
+                                                                                background: "none", border: "none", cursor: "pointer",
+                                                                                color: "#8d7a52", fontSize: "11px", padding: "2px 4px",
+                                                                                whiteSpace: "nowrap", flexShrink: 0
+                                                                            }}
+                                                                        >
+                                                                            ✕
+                                                                        </button>
+                                                                    </div>
+                                                                );
+                                                            }
+
                                                             return (
                                                                 <select
                                                                     className={styles.vhpTableInput}
                                                                     value={room.bedType || rtBed || "King Bed (180 x 200)"}
-                                                                    onChange={(e) => updateRoomItem(room.id || idx, "bedType", e.target.value)}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.value === "__custom__") {
+                                                                            setCustomBedMode(prev => ({ ...prev, [rowKey]: true }));
+                                                                            updateRoomItem(room.id || idx, "bedType", "");
+                                                                        } else {
+                                                                            updateRoomItem(room.id || idx, "bedType", e.target.value);
+                                                                        }
+                                                                    }}
                                                                 >
                                                                     {rtBed && (
                                                                         <option value={rtBed}>
@@ -879,12 +929,11 @@ export default function ConfirmationLetterSection() {
                                                                     <option value="Single Bed (90 x 200)">Single Bed (90 x 200)</option>
                                                                     <option value="Hollywood Twin">Hollywood Twin</option>
                                                                     <option value="Extra Bed / Rollaway">Extra Bed / Rollaway</option>
-                                                                    {room.bedType && room.bedType !== rtBed && ![
-                                                                        "King Bed (180 x 200)", "Twin Bed (2x 100 x 200)", "Queen Bed (160 x 200)",
-                                                                        "Double Bed (140 x 200)", "Single Bed (90 x 200)", "Hollywood Twin", "Extra Bed / Rollaway"
-                                                                    ].includes(room.bedType) && (
+                                                                    {/* Custom preset saved from previous input */}
+                                                                    {room.bedType && !isKnownPreset && room.bedType !== rtBed && (
                                                                         <option value={room.bedType}>{room.bedType}</option>
                                                                     )}
+                                                                    <option value="__custom__">+ Tambah ukuran lain...</option>
                                                                 </select>
                                                             );
                                                         })()}
