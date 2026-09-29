@@ -133,6 +133,7 @@ export function printThermalReceipt(
   // Clone receipt element and strip internal <style>, buttons, and hidden controls
   const clone = targetEl.cloneNode(true) as HTMLElement;
   clone.querySelectorAll('style, script, .print\\:hidden, button').forEach(el => el.remove());
+  clone.classList.remove('border', 'border-neutral-200', 'dark:border-zinc-800', 'shadow-md', 'shadow-sm', 'rounded-xl', 'rounded-2xl', 'rounded-lg');
 
   iframeDoc.open();
   iframeDoc.write(`<!DOCTYPE html>
@@ -172,9 +173,13 @@ export function printThermalReceipt(
       background: #ffffff !important;
       color: #000000 !important;
       box-sizing: border-box !important;
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
     }
     /* Neutralize wrapper */
-    .receipt-print-wrapper {
+    .receipt-print-wrapper,
+    #thermal-receipt-printable {
       width: 100% !important;
       max-width: 100% !important;
       padding: 0 !important;
@@ -183,6 +188,7 @@ export function printThermalReceipt(
       color: #000000 !important;
       box-shadow: none !important;
       border: none !important;
+      outline: none !important;
     }
     .receipt-print-wrapper * {
       color: #000000 !important;
@@ -227,8 +233,6 @@ export function printThermalReceipt(
     .leading-snug { line-height: 1.375 !important; }
     .leading-relaxed { line-height: 1.5 !important; }
     /* Borders */
-    .border { border: 1px solid #000000 !important; }
-    .border-2 { border: 2px solid #000000 !important; }
     .border-t { border-top: 1px solid #000000 !important; }
     .border-b { border-bottom: 1px solid #000000 !important; }
     .border-dashed { border-style: dashed !important; }
@@ -277,6 +281,14 @@ export function printThermalReceipt(
       margin: 0 auto !important;
     }
     .print\\:hidden { display: none !important; }
+    /* Ensure no outer frame borders exist on print */
+    #receipt-container,
+    .receipt-print-wrapper,
+    #thermal-receipt-printable {
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+    }
   </style>
 </head>
 <body>
