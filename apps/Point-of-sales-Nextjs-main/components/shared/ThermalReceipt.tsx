@@ -124,226 +124,167 @@ export function printThermalReceipt(
     return;
   }
 
-  const width = paperSize === '58mm' ? '58mm' : '80mm';
-  const fontSize = paperSize === '58mm' ? '10px' : '11.5px';
-  const padding = paperSize === '58mm' ? '2mm 2.5mm 5mm 2.5mm' : '4mm 3.5mm 8mm 3.5mm';
+  const origin = window.location.origin;
+  const is58 = paperSize === '58mm';
+  const width = is58 ? '58mm' : '80mm';
+  const printableWidth = is58 ? '52mm' : '74mm';
+  const baseFontSize = is58 ? '10.5px' : '12px';
 
-  // Clone receipt element
+  // Clone receipt element and strip internal <style>, buttons, and hidden controls
   const clone = targetEl.cloneNode(true) as HTMLElement;
-  const hiddenElements = clone.querySelectorAll('.print\\:hidden, button');
-  hiddenElements.forEach(el => el.remove());
+  clone.querySelectorAll('style, script, .print\\:hidden, button').forEach(el => el.remove());
 
   iframeDoc.open();
-  iframeDoc.write(`
-    <!DOCTYPE html>
-    <html lang="id">
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Struk Pembayaran</title>
-        <style>
-          @page {
-            size: auto;
-            margin: 0mm;
-          }
-          *, *::before, *::after {
-            box-sizing: border-box !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: ${width} !important;
-            min-width: ${width} !important;
-            max-width: ${width} !important;
-            background: #ffffff !important;
-            color: #000000 !important;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
-            font-size: ${fontSize} !important;
-            line-height: 1.35 !important;
-            overflow: visible !important;
-            height: auto !important;
-            min-height: 0 !important;
-          }
-          .receipt-print-wrapper {
-            display: block !important;
-            position: relative !important;
-            width: ${width} !important;
-            min-width: ${width} !important;
-            max-width: ${width} !important;
-            margin: 0 auto !important;
-            padding: ${padding} !important;
-            background: #ffffff !important;
-            color: #000000 !important;
-            box-shadow: none !important;
-            border: none !important;
-            overflow: visible !important;
-            height: auto !important;
-            min-height: 0 !important;
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
-          .receipt-print-wrapper * {
-            color: #000000 !important;
-            background-color: transparent !important;
-            text-shadow: none !important;
-            box-shadow: none !important;
-          }
-          .receipt-print-wrapper [style*="border"],
-          .receipt-print-wrapper hr {
-            border-color: #000000 !important;
-          }
-          .receipt-print-wrapper img {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-          }
-          .print\\:hidden {
-            display: none !important;
-          }
-          .flex {
-            display: flex !important;
-          }
-          .flex-col {
-            flex-direction: column !important;
-          }
-          .justify-between {
-            justify-content: space-between !important;
-          }
-          .items-center {
-            align-items: center !important;
-          }
-          .items-start {
-            align-items: flex-start !important;
-          }
-          .text-center {
-            text-align: center !important;
-          }
-          .text-right {
-            text-align: right !important;
-          }
-          .font-bold {
-            font-weight: 700 !important;
-          }
-          .font-semibold {
-            font-weight: 600 !important;
-          }
-          .font-medium {
-            font-weight: 500 !important;
-          }
-          .font-mono {
-            font-family: monospace, "Courier New", Courier !important;
-          }
-          .uppercase {
-            text-transform: uppercase !important;
-          }
-          .lowercase {
-            text-transform: lowercase !important;
-          }
-          .italic {
-            font-style: italic !important;
-          }
-          .leading-tight {
-            line-height: 1.25 !important;
-          }
-          .leading-none {
-            line-height: 1 !important;
-          }
-          .border-t {
-            border-top-width: 1px !important;
-          }
-          .border-b {
-            border-bottom-width: 1px !important;
-          }
-          .border-dashed {
-            border-style: dashed !important;
-          }
-          .border-dotted {
-            border-style: dotted !important;
-          }
-          .border-black {
-            border-color: #000000 !important;
-          }
-          .whitespace-nowrap {
-            white-space: nowrap !important;
-          }
-          .shrink-0 {
-            flex-shrink: 0 !important;
-          }
-          .flex-1 {
-            flex: 1 1 0% !important;
-          }
-          .break-words {
-            overflow-wrap: break-word !important;
-          }
-          .gap-1 {
-            gap: 0.25rem !important;
-          }
-          .gap-1\\.5 {
-            gap: 0.375rem !important;
-          }
-          .gap-\\[2px\\] {
-            gap: 2px !important;
-          }
-          .my-1 {
-            margin-top: 0.25rem !important;
-            margin-bottom: 0.25rem !important;
-          }
-          .my-1\\.5 {
-            margin-top: 0.375rem !important;
-            margin-bottom: 0.375rem !important;
-          }
-          .my-2 {
-            margin-top: 0.5rem !important;
-            margin-bottom: 0.5rem !important;
-          }
-          .mt-3 {
-            margin-top: 0.75rem !important;
-          }
-          .mt-4 {
-            margin-top: 1rem !important;
-          }
-          .mt-5 {
-            margin-top: 1.25rem !important;
-          }
-          .mb-1 {
-            margin-bottom: 0.25rem !important;
-          }
-          .mb-1\\.5 {
-            margin-bottom: 0.375rem !important;
-          }
-          .mb-2 {
-            margin-bottom: 0.5rem !important;
-          }
-          .mb-2\\.5 {
-            margin-bottom: 0.625rem !important;
-          }
-          .pt-2 {
-            padding-top: 0.5rem !important;
-          }
-          .pb-0\\.5 {
-            padding-bottom: 0.125rem !important;
-          }
-          .py-0\\.5 {
-            padding-top: 0.125rem !important;
-            padding-bottom: 0.125rem !important;
-          }
-          .py-1 {
-            padding-top: 0.25rem !important;
-            padding-bottom: 0.25rem !important;
-          }
-          .py-1\\.5 {
-            padding-top: 0.375rem !important;
-            padding-bottom: 0.375rem !important;
-          }
-        </style>
-      </head>
-      <body>
-        ${clone.outerHTML}
-      </body>
-    </html>
-  `);
+  iframeDoc.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <base href="${origin}/">
+  <title>Struk Pembayaran</title>
+  <style>
+    @page {
+      margin: 0 !important;
+      size: auto !important;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      background: #ffffff !important;
+      color: #000000 !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
+      font-size: ${baseFontSize} !important;
+      line-height: 1.35 !important;
+      -webkit-font-smoothing: none !important;
+      -moz-osx-font-smoothing: none !important;
+      text-rendering: optimizeSpeed !important;
+    }
+    #receipt-container {
+      width: 100% !important;
+      max-width: ${printableWidth} !important;
+      margin: 0 auto !important;
+      padding: ${is58 ? '2mm 2.5mm 6mm 2.5mm' : '4mm 3.5mm 8mm 3.5mm'} !important;
+      background: #ffffff !important;
+      color: #000000 !important;
+      box-sizing: border-box !important;
+    }
+    /* Neutralize wrapper */
+    .receipt-print-wrapper {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      background: transparent !important;
+      color: #000000 !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+    .receipt-print-wrapper * {
+      color: #000000 !important;
+      background-color: transparent !important;
+      text-shadow: none !important;
+      box-shadow: none !important;
+    }
+    /* Layout utilities */
+    .flex { display: flex !important; }
+    .flex-col { flex-direction: column !important; }
+    .flex-row { flex-direction: row !important; }
+    .flex-1 { flex: 1 1 0% !important; }
+    .shrink-0 { flex-shrink: 0 !important; }
+    .justify-between { justify-content: space-between !important; }
+    .justify-center { justify-content: center !important; }
+    .items-center { align-items: center !important; }
+    .items-start { align-items: flex-start !important; }
+    .text-center { text-align: center !important; }
+    .text-left { text-align: left !important; }
+    .text-right { text-align: right !important; }
+    .whitespace-nowrap { white-space: nowrap !important; }
+    .break-words { overflow-wrap: break-word !important; }
+    .w-full { width: 100% !important; }
+    .h-auto { height: auto !important; }
+    .block { display: block !important; }
+    .inline-block { display: inline-block !important; }
+    /* Typography */
+    .font-bold { font-weight: 700 !important; }
+    .font-semibold { font-weight: 600 !important; }
+    .font-medium { font-weight: 500 !important; }
+    .font-normal { font-weight: 400 !important; }
+    .font-light { font-weight: 300 !important; }
+    .font-black { font-weight: 900 !important; }
+    .font-extrabold { font-weight: 800 !important; }
+    .font-mono { font-family: monospace, "Courier New", Courier !important; }
+    .font-serif { font-family: serif, "Times New Roman", Times !important; }
+    .uppercase { text-transform: uppercase !important; }
+    .lowercase { text-transform: lowercase !important; }
+    .italic { font-style: italic !important; }
+    .leading-tight { line-height: 1.25 !important; }
+    .leading-none { line-height: 1 !important; }
+    .leading-snug { line-height: 1.375 !important; }
+    .leading-relaxed { line-height: 1.5 !important; }
+    /* Borders */
+    .border { border: 1px solid #000000 !important; }
+    .border-2 { border: 2px solid #000000 !important; }
+    .border-t { border-top: 1px solid #000000 !important; }
+    .border-b { border-bottom: 1px solid #000000 !important; }
+    .border-dashed { border-style: dashed !important; }
+    .border-dotted { border-style: dotted !important; }
+    .border-black { border-color: #000000 !important; }
+    .border-neutral-300 { border-color: #d4d4d4 !important; }
+    /* Spacing */
+    .m-0 { margin: 0 !important; }
+    .my-1 { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; }
+    .my-1\\.5 { margin-top: 0.375rem !important; margin-bottom: 0.375rem !important; }
+    .my-2 { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
+    .mt-0\\.5 { margin-top: 0.125rem !important; }
+    .mt-1 { margin-top: 0.25rem !important; }
+    .mt-1\\.5 { margin-top: 0.375rem !important; }
+    .mt-3 { margin-top: 0.75rem !important; }
+    .mt-4 { margin-top: 1rem !important; }
+    .mt-5 { margin-top: 1.25rem !important; }
+    .mb-0 { margin-bottom: 0 !important; }
+    .mb-1 { margin-bottom: 0.25rem !important; }
+    .mb-1\\.5 { margin-bottom: 0.375rem !important; }
+    .mb-2 { margin-bottom: 0.5rem !important; }
+    .mb-2\\.5 { margin-bottom: 0.625rem !important; }
+    .p-0 { padding: 0 !important; }
+    .py-0\\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
+    .py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
+    .py-1\\.5 { padding-top: 0.375rem !important; padding-bottom: 0.375rem !important; }
+    .py-2 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+    .px-1 { padding-left: 0.25rem !important; padding-right: 0.25rem !important; }
+    .pt-0\\.5 { padding-top: 0.125rem !important; }
+    .pt-1 { padding-top: 0.25rem !important; }
+    .pt-2 { padding-top: 0.5rem !important; }
+    .pb-0\\.5 { padding-bottom: 0.125rem !important; }
+    .gap-1 { gap: 0.25rem !important; }
+    .gap-1\\.5 { gap: 0.375rem !important; }
+    .gap-\\[2px\\] { gap: 2px !important; }
+    /* Images */
+    img {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      max-width: 100% !important;
+    }
+    .powered-by-logo {
+      height: ${is58 ? '18px' : '22px'} !important;
+      width: auto !important;
+      margin: 0 auto !important;
+    }
+    .print\\:hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="receipt-container">
+    ${clone.outerHTML}
+  </div>
+</body>
+</html>`);
   iframeDoc.close();
 
   const images = iframeDoc.getElementsByTagName('img');
@@ -539,11 +480,6 @@ export default function ThermalReceipt({
             min-height: 0 !important;
             overflow: visible !important;
             box-sizing: border-box !important;
-          }
-
-          /* Hide all main application pages outside portal */
-          body > *:not([data-radix-portal]) {
-            display: none !important;
           }
 
           /* Unfix Radix portal and modal dialog so it flows straight onto paper without offset */

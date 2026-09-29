@@ -35,10 +35,6 @@ export default function PrintStyles({ paperSize = '80mm' }: { paperSize?: '80mm'
           box-sizing: border-box !important;
         }
 
-        body > *:not([data-radix-portal]) {
-          display: none !important;
-        }
-
         [data-radix-portal] {
           position: static !important;
           display: block !important;
