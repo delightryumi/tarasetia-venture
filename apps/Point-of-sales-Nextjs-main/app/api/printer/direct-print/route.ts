@@ -168,15 +168,20 @@ export async function POST(req: NextRequest) {
     buffer += '\n';
     buffer += CMD.ALIGN_CENTER;
     if (printMode === 'checker') {
-      buffer += 'Mohon serahkan struk ini ke kasir saat pembayaran.\n';
-      buffer += 'Terima kasih atas kunjungannya!\n';
+      buffer += '*** NOTED: BUKAN STRUK PEMBAYARAN SAH ***\n';
+      buffer += 'Struk ini adalah lembar checker internal.\n';
     } else if (printMode === 'kitchen' || printMode === 'bar') {
       buffer += '--- SEGERA PROSES PESANAN DI ATAS ---\n';
     } else {
-      buffer += 'Terima kasih atas kunjungan Anda!\n';
-      buffer += 'Password WiFi: setara2026\n';
-      buffer += 'Harga sudah termasuk PB1 & Service Charge\n';
+      buffer += 'Terima kasih atas kunjungan Anda\n';
+      buffer += 'Struk ini adalah bukti pembayaran yang sah\n';
     }
+
+    buffer += '\n';
+    buffer += CMD.BOLD_ON;
+    buffer += 'powered by\n';
+    buffer += 'MY TARA\n';
+    buffer += CMD.BOLD_OFF;
 
     buffer += '\n\n\n';
     buffer += CMD.FEED_AND_CUT;

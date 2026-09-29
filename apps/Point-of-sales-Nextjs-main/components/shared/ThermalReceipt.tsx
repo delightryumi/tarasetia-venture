@@ -126,8 +126,13 @@ export function printThermalReceipt(
 
   const origin = window.location.origin;
   const is58 = paperSize === '58mm';
+  const widthStr = is58 ? '58mm' : '80mm';
   const printableWidth = is58 ? '48mm' : '72mm';
   const baseFontSize = is58 ? '9.5px' : '11px';
+
+  // Initial estimate of receipt height in mm
+  const initialHeightPx = targetEl.scrollHeight || targetEl.offsetHeight || 600;
+  const initialHeightMm = Math.max(120, Math.ceil(initialHeightPx * 0.264583) + 15);
 
   // Clone receipt element and strip internal <style>, buttons, and hidden controls
   const clone = targetEl.cloneNode(true) as HTMLElement;
@@ -141,10 +146,13 @@ export function printThermalReceipt(
   <meta charset="utf-8" />
   <base href="${origin}/">
   <title>Struk Pembayaran</title>
-  <style>
+  <style id="dynamic-page-style">
     @page {
-      margin: 0;
+      size: ${widthStr} ${initialHeightMm}mm;
+      margin: 0mm;
     }
+  </style>
+  <style>
     *, *::before, *::after {
       box-sizing: border-box !important;
       -webkit-print-color-adjust: exact !important;
@@ -158,7 +166,7 @@ export function printThermalReceipt(
       color: #000000 !important;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
       font-size: ${baseFontSize} !important;
-      line-height: 1.3 !important;
+      line-height: 1.25 !important;
       -webkit-font-smoothing: none !important;
       -moz-osx-font-smoothing: none !important;
       text-rendering: optimizeSpeed !important;
@@ -167,7 +175,7 @@ export function printThermalReceipt(
       width: 100% !important;
       max-width: ${printableWidth} !important;
       margin: 0 auto !important;
-      padding: ${is58 ? '1.5mm 2mm 5mm 2mm' : '2.5mm 3mm 6mm 3mm'} !important;
+      padding: ${is58 ? '1mm 1.5mm 3mm 1.5mm' : '2mm 2.5mm 4mm 2.5mm'} !important;
       background: #ffffff !important;
       color: #000000 !important;
       box-sizing: border-box !important;
@@ -226,10 +234,10 @@ export function printThermalReceipt(
     .uppercase { text-transform: uppercase !important; }
     .lowercase { text-transform: lowercase !important; }
     .italic { font-style: italic !important; }
-    .leading-tight { line-height: 1.25 !important; }
+    .leading-tight { line-height: 1.2 !important; }
     .leading-none { line-height: 1 !important; }
-    .leading-snug { line-height: 1.375 !important; }
-    .leading-relaxed { line-height: 1.5 !important; }
+    .leading-snug { line-height: 1.3 !important; }
+    .leading-relaxed { line-height: 1.4 !important; }
     /* Borders */
     .border-t {
       border-top: 1px solid #000000 !important;
@@ -260,6 +268,7 @@ export function printThermalReceipt(
       border-top: 1px dashed #222222 !important;
       height: 0 !important;
       min-height: 0 !important;
+      margin: 4px 0 !important;
     }
     .border-t.border-dotted {
       border: none !important;
@@ -276,8 +285,8 @@ export function printThermalReceipt(
       border: none !important;
     }
     .powered-by-container {
-      margin-top: 8px !important;
-      padding-top: 6px !important;
+      margin-top: 6px !important;
+      padding-top: 4px !important;
       padding-bottom: 2px !important;
       border-top: 1px dotted #aaaaaa !important;
       border-left: none !important;
@@ -288,20 +297,20 @@ export function printThermalReceipt(
     }
     /* Spacing */
     .m-0 { margin: 0 !important; }
-    .my-1 { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; }
-    .my-1\\.5 { margin-top: 0.375rem !important; margin-bottom: 0.375rem !important; }
-    .my-2 { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
-    .mt-0\\.5 { margin-top: 0.125rem !important; }
-    .mt-1 { margin-top: 0.25rem !important; }
-    .mt-1\\.5 { margin-top: 0.375rem !important; }
-    .mt-3 { margin-top: 0.75rem !important; }
-    .mt-4 { margin-top: 1rem !important; }
-    .mt-5 { margin-top: 1.25rem !important; }
+    .my-1 { margin-top: 0.15rem !important; margin-bottom: 0.15rem !important; }
+    .my-1\\.5 { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; }
+    .my-2 { margin-top: 0.35rem !important; margin-bottom: 0.35rem !important; }
+    .mt-0\\.5 { margin-top: 0.08rem !important; }
+    .mt-1 { margin-top: 0.15rem !important; }
+    .mt-1\\.5 { margin-top: 0.25rem !important; }
+    .mt-3 { margin-top: 0.5rem !important; }
+    .mt-4 { margin-top: 0.75rem !important; }
+    .mt-5 { margin-top: 1rem !important; }
     .mb-0 { margin-bottom: 0 !important; }
-    .mb-1 { margin-bottom: 0.25rem !important; }
-    .mb-1\\.5 { margin-bottom: 0.375rem !important; }
-    .mb-2 { margin-bottom: 0.5rem !important; }
-    .mb-2\\.5 { margin-bottom: 0.625rem !important; }
+    .mb-1 { margin-bottom: 0.15rem !important; }
+    .mb-1\\.5 { margin-bottom: 0.25rem !important; }
+    .mb-2 { margin-bottom: 0.35rem !important; }
+    .mb-2\\.5 { margin-bottom: 0.45rem !important; }
     .p-0 { padding: 0 !important; }
     .py-0\\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
     .py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
@@ -315,17 +324,29 @@ export function printThermalReceipt(
     .gap-1 { gap: 0.25rem !important; }
     .gap-1\\.5 { gap: 0.375rem !important; }
     .gap-\\[2px\\] { gap: 2px !important; }
-    /* Images */
+    /* Images & Logo Standardization */
     img {
       display: block !important;
       visibility: visible !important;
       opacity: 1 !important;
-      max-width: 100% !important;
+    }
+    .store-logo {
+      max-width: ${is58 ? '26mm' : '32mm'} !important;
+      max-height: ${is58 ? '14mm' : '18mm'} !important;
+      width: auto !important;
+      height: auto !important;
+      object-fit: contain !important;
+      margin: 0 auto 4px auto !important;
+      display: block !important;
+      filter: grayscale(100%) brightness(0) !important;
     }
     .powered-by-logo {
-      height: ${is58 ? '18px' : '22px'} !important;
+      height: ${is58 ? '16px' : '20px'} !important;
+      max-height: ${is58 ? '16px' : '20px'} !important;
       width: auto !important;
+      object-fit: contain !important;
       margin: 0 auto !important;
+      display: block !important;
     }
     .print\\:hidden { display: none !important; }
     /* Ensure no outer frame borders exist on print */
@@ -352,6 +373,26 @@ export function printThermalReceipt(
 
   const triggerPrint = () => {
     try {
+      // Re-measure exact rendered height in iframe after images & fonts load
+      const receiptEl = iframeDoc.getElementById('receipt-container') || iframeDoc.body;
+      const rectHeight = receiptEl.getBoundingClientRect ? receiptEl.getBoundingClientRect().height : 0;
+      const actualHeightPx = Math.max(
+        rectHeight,
+        receiptEl.scrollHeight || 0,
+        receiptEl.offsetHeight || 0,
+        iframeDoc.body.scrollHeight || 0,
+        iframeDoc.documentElement.scrollHeight || 0
+      );
+
+      if (actualHeightPx && actualHeightPx > 50) {
+        // 1px = 0.2645833mm at 96 DPI. Add 8mm safety buffer so it never spills 1px to page 2.
+        const exactHeightMm = Math.ceil(actualHeightPx * 0.2645833) + 8;
+        const pageStyleEl = iframeDoc.getElementById('dynamic-page-style');
+        if (pageStyleEl) {
+          pageStyleEl.innerHTML = `@page { size: ${widthStr} ${exactHeightMm}mm; margin: 0mm; }`;
+        }
+      }
+
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
     } catch (e) {
@@ -361,7 +402,7 @@ export function printThermalReceipt(
       if (onFinish) onFinish();
       setTimeout(() => {
         iframe.remove();
-      }, 2000);
+      }, 3000);
     }
   };
 
@@ -729,12 +770,23 @@ export default function ThermalReceipt({
         /* ── Kasir & Checker Full Header (Exact Match to LexuPOS) ── */
         <div className="text-center mb-2 flex flex-col items-center">
           {logoUrl && (
-            <img 
-              src={logoUrl} 
-              alt="Store Logo" 
-              className={`${is58mm ? 'w-[24mm]' : 'w-[36mm]'} h-auto object-contain mb-2`} 
-              style={{ filter: 'grayscale(100%) brightness(0)' }} 
-            />
+            <div className="flex justify-center items-center w-full mb-1">
+              <img 
+                src={logoUrl} 
+                alt="Store Logo" 
+                className="store-logo" 
+                style={{ 
+                  maxWidth: is58mm ? '26mm' : '32mm', 
+                  maxHeight: is58mm ? '14mm' : '18mm', 
+                  width: 'auto', 
+                  height: 'auto', 
+                  objectFit: 'contain',
+                  display: 'block',
+                  margin: '0 auto 4px auto',
+                  filter: 'grayscale(100%) brightness(0)' 
+                }} 
+              />
+            </div>
           )}
           <h2 
             className={`${is58mm ? 'text-[13.5px]' : 'text-[17px]'} font-serif font-light uppercase tracking-[0.12em] m-0 mt-0.5 mb-1 leading-tight text-center`} 
@@ -772,7 +824,7 @@ export default function ThermalReceipt({
               )}
             </div>
           )}
-          <div className={`${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} flex flex-col gap-[2px] mb-1.5`}>
+          <div className={`${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} flex flex-col gap-[1.5px] mb-1`}>
             <div className="flex justify-between">
               <span className="text-neutral-700">No. Transaksi:</span>
               <span className="font-bold">{transactionInfo.id}</span>
@@ -800,24 +852,24 @@ export default function ThermalReceipt({
               </div>
             )}
             {transactionInfo.status === 'UNPAID' && (
-              <div className="w-full text-center font-extrabold text-[10.5px] border border-black text-black py-1 my-1.5 uppercase font-mono tracking-wider">
+              <div className="w-full text-center font-extrabold text-[10px] border border-black text-black py-0.5 my-1 uppercase font-mono tracking-wider">
                 *** BELUM LUNAS / UNPAID ***
               </div>
             )}
           </div>
-          <div className="border-t border-dashed border-black my-1.5" />
+          <div className="border-t border-dashed border-black my-1" />
         </>
       )}
 
       {/* Items List (Exact Match: Bold Category, Name, Price, and 1 x Rp line) */}
       {sortedCats.map((cat) => (
-        <div key={cat} className="mb-2.5">
+        <div key={cat} className="mb-1.5">
           {/* Category header */}
           <div className={`${is58mm ? 'text-[9px]' : 'text-[10px]'} font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1 text-black`}>
             {cat}
           </div>
           
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1">
             {Object.keys(grouped[cat]).sort().map(sub => (
               <React.Fragment key={sub}>
                 {grouped[cat][sub].map((item, i) => {
@@ -825,34 +877,36 @@ export default function ThermalReceipt({
                   const itemPrice = item.price + addonsTotal;
 
                   return (
-                    <div key={i} className={`flex flex-col ${is58mm ? 'text-[9px]' : 'text-[10px]'} w-full ${isCancelled ? 'line-through text-neutral-500 opacity-70' : ''}`}>
+                    <div key={i} className={`flex flex-col ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} w-full ${isCancelled ? 'line-through text-neutral-500 opacity-70' : ''}`}>
                       <div className="flex justify-between items-start gap-1">
-                        <span className={`font-bold ${is58mm ? 'text-[9px]' : 'text-[10px]'} uppercase text-black leading-tight flex-1 pr-1 break-words`}>
-                          {item.name}
+                        <span className={`font-bold ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} uppercase text-black leading-tight flex-1 pr-1 break-words`}>
+                          {item.quantity > 1 ? `${item.quantity}x ` : ''}{item.name}
                           {item.isCompliment && (
                             <span className="text-[7px] ml-1 border border-black text-black px-1 rounded-sm font-semibold inline-block">
                               COMPLIMENT
                             </span>
                           )}
                         </span>
-                        <span className={`font-bold ${is58mm ? 'text-[9px]' : 'text-[10px]'} whitespace-nowrap text-right text-black shrink-0`}>
+                        <span className={`font-bold ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} whitespace-nowrap text-right text-black shrink-0`}>
                           {item.isCompliment ? formatCurrency(0) : formatCurrency(itemPrice * item.quantity)}
                         </span>
                       </div>
                       {item.selectedAddons && item.selectedAddons.length > 0 && (
-                        <div className={`${is58mm ? 'text-[7.5px]' : 'text-[8.5px]'} text-neutral-600 mt-[1px]`}>
+                        <div className={`${is58mm ? 'text-[7px]' : 'text-[8px]'} text-neutral-600 mt-[0.5px]`}>
                           + {item.selectedAddons.map(a => a.name).join(', ')}
                         </div>
                       )}
                       {item.note && (
-                        <div className={`${is58mm ? 'text-[7.5px]' : 'text-[8.5px]'} italic text-neutral-600 mt-[1px]`}>
+                        <div className={`${is58mm ? 'text-[7px]' : 'text-[8px]'} italic text-neutral-600 mt-[0.5px]`}>
                           Catatan: {item.note}
                         </div>
                       )}
-                      <div className={`${is58mm ? 'text-[8px]' : 'text-[8.5px]'} text-neutral-600 mt-[0.5px]`}>
-                        {item.quantity} x {formatCurrency(itemPrice)}
-                        {item.isCompliment && item.complimentReason && ` (${item.complimentReason})`}
-                      </div>
+                      {(item.quantity > 1 || (item.isCompliment && item.complimentReason)) && (
+                        <div className={`${is58mm ? 'text-[7.5px]' : 'text-[8px]'} text-neutral-600 mt-[0.5px]`}>
+                          {item.quantity > 1 && `@ ${formatCurrency(itemPrice)}`}
+                          {item.isCompliment && item.complimentReason && ` (${item.complimentReason})`}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -864,10 +918,10 @@ export default function ThermalReceipt({
 
       {(printMode === 'all' || printMode === 'checker') && (
         <>
-          <div className="border-t border-dashed border-black my-1.5" />
+          <div className="border-t border-dashed border-black my-1" />
 
           {/* Totals (Exact Match to LexuPOS) */}
-          <div className={`flex flex-col gap-[2px] ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'}`}>
+          <div className={`flex flex-col gap-[1.5px] ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'}`}>
             <div className="flex justify-between">
               <span className="text-neutral-700">Subtotal:</span>
               <span className="font-bold">{formatCurrency(totals.subtotal)}</span>
@@ -898,16 +952,16 @@ export default function ThermalReceipt({
             )}
           </div>
 
-          <div className="border-t border-dashed border-black my-1.5" />
+          <div className="border-t border-dashed border-black my-1" />
 
           <div className={`flex justify-between font-bold ${is58mm ? 'text-[10.5px]' : 'text-[12px]'} py-0.5`}>
             <span>TOTAL TAGIHAN:</span>
             <span>{formatCurrency(totals.payableAmount)}</span>
           </div>
 
-          <div className="border-t border-dashed border-black my-1.5" />
+          <div className="border-t border-dashed border-black my-1" />
 
-          <div className={`flex flex-col gap-[2px] ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'}`}>
+          <div className={`flex flex-col gap-[1.5px] ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'}`}>
             <div className="flex justify-between">
               <span className="text-neutral-700">Metode Pembayaran:</span>
               <span className="font-bold uppercase text-black">
@@ -954,14 +1008,17 @@ export default function ThermalReceipt({
               <div className="border-b border-dashed border-black my-2" />
             </div>
           ) : (
-            <div className="text-center text-[9px] leading-relaxed text-neutral-600 mt-5 mb-2">
-              <p className="m-0 font-medium">Terima kasih atas kunjungan Anda</p>
-              <p className="m-0 text-neutral-500 text-[8px] mt-0.5">Struk ini adalah bukti pembayaran yang sah</p>
-            </div>
+            <>
+              <div className="border-t border-dashed border-black my-2" />
+              <div className="text-center text-[9px] leading-snug text-neutral-700 my-2">
+                <p className="m-0 font-semibold text-black">Terima kasih atas kunjungan Anda</p>
+                <p className="m-0 text-neutral-600 text-[8px] mt-0.5">Struk ini adalah bukti pembayaran yang sah</p>
+              </div>
+            </>
           )}
 
           {/* Powered By Footer */}
-          <div className="powered-by-container flex flex-col items-center justify-center mt-3 pt-2 border-t border-dotted border-neutral-300 border-x-0 border-b-0 pb-1">
+          <div className="powered-by-container flex flex-col items-center justify-center mt-2.5 pt-2 border-t border-dotted border-neutral-300 border-x-0 border-b-0 pb-1">
             <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center no-underline text-inherit cursor-pointer">
               <span className="text-[7.5px] text-neutral-500 lowercase tracking-widest font-black mb-1">powered by</span>
               <img src="/channels/1.png" alt="My Tara" className="powered-by-logo h-6 w-auto object-contain" />

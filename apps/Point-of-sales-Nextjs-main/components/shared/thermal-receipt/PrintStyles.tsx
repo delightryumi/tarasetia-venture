@@ -119,6 +119,26 @@ export default function PrintStyles({ paperSize = '80mm' }: { paperSize?: '80mm'
           display: block !important;
         }
 
+        .store-logo {
+          max-width: ${is58mm ? '26mm' : '32mm'} !important;
+          max-height: ${is58mm ? '14mm' : '18mm'} !important;
+          width: auto !important;
+          height: auto !important;
+          object-fit: contain !important;
+          margin: 0 auto 4px auto !important;
+          display: block !important;
+          filter: grayscale(100%) brightness(0) !important;
+        }
+
+        .powered-by-logo {
+          height: ${is58mm ? '16px' : '20px'} !important;
+          max-height: ${is58mm ? '16px' : '20px'} !important;
+          width: auto !important;
+          object-fit: contain !important;
+          margin: 0 auto !important;
+          display: block !important;
+        }
+
         .print\\:hidden,
         [data-radix-portal] .print\\:hidden {
           display: none !important;
