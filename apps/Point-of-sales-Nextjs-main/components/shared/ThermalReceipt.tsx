@@ -126,9 +126,8 @@ export function printThermalReceipt(
 
   const origin = window.location.origin;
   const is58 = paperSize === '58mm';
-  const width = is58 ? '58mm' : '80mm';
-  const printableWidth = is58 ? '52mm' : '74mm';
-  const baseFontSize = is58 ? '10.5px' : '12px';
+  const printableWidth = is58 ? '48mm' : '72mm';
+  const baseFontSize = is58 ? '9.5px' : '11px';
 
   // Clone receipt element and strip internal <style>, buttons, and hidden controls
   const clone = targetEl.cloneNode(true) as HTMLElement;
@@ -144,8 +143,7 @@ export function printThermalReceipt(
   <title>Struk Pembayaran</title>
   <style>
     @page {
-      margin: 0 !important;
-      size: ${is58 ? '58mm' : '80mm'} 2000mm !important;
+      margin: 0;
     }
     *, *::before, *::after {
       box-sizing: border-box !important;
@@ -160,7 +158,7 @@ export function printThermalReceipt(
       color: #000000 !important;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
       font-size: ${baseFontSize} !important;
-      line-height: 1.35 !important;
+      line-height: 1.3 !important;
       -webkit-font-smoothing: none !important;
       -moz-osx-font-smoothing: none !important;
       text-rendering: optimizeSpeed !important;
@@ -169,7 +167,7 @@ export function printThermalReceipt(
       width: 100% !important;
       max-width: ${printableWidth} !important;
       margin: 0 auto !important;
-      padding: ${is58 ? '2mm 2.5mm 6mm 2.5mm' : '4mm 3.5mm 8mm 3.5mm'} !important;
+      padding: ${is58 ? '1.5mm 2mm 5mm 2mm' : '2.5mm 3mm 6mm 3mm'} !important;
       background: #ffffff !important;
       color: #000000 !important;
       box-sizing: border-box !important;
@@ -276,6 +274,17 @@ export function printThermalReceipt(
     }
     .border-none {
       border: none !important;
+    }
+    .powered-by-container {
+      margin-top: 8px !important;
+      padding-top: 6px !important;
+      padding-bottom: 2px !important;
+      border-top: 1px dotted #aaaaaa !important;
+      border-left: none !important;
+      border-right: none !important;
+      border-bottom: none !important;
+      page-break-after: avoid !important;
+      break-after: avoid !important;
     }
     /* Spacing */
     .m-0 { margin: 0 !important; }
@@ -510,7 +519,7 @@ export default function ThermalReceipt({
         @media print {
           @page {
             margin: 0 !important;
-            size: ${is58mm ? '58mm' : '80mm'} 2000mm !important;
+            size: auto !important;
           }
 
           *, *::before, *::after {
@@ -952,7 +961,7 @@ export default function ThermalReceipt({
           )}
 
           {/* Powered By Footer */}
-          <div className="flex flex-col items-center justify-center mt-3 pt-2 border-t border-dotted border-neutral-300 border-x-0 border-b-0">
+          <div className="powered-by-container flex flex-col items-center justify-center mt-3 pt-2 border-t border-dotted border-neutral-300 border-x-0 border-b-0 pb-1">
             <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center no-underline text-inherit cursor-pointer">
               <span className="text-[7.5px] text-neutral-500 lowercase tracking-widest font-black mb-1">powered by</span>
               <img src="/channels/1.png" alt="My Tara" className="powered-by-logo h-6 w-auto object-contain" />
