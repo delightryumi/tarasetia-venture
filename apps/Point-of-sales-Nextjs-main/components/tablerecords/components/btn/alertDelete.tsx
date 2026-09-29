@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'react-toastify';
 import { localDb } from '@/lib/dexie';
 import { useRBAC } from '@/hooks/useRBAC';
+import { Eye, EyeOff } from 'lucide-react';
 
 type Data = {
   id: string;
@@ -38,11 +39,13 @@ export function DeleteAlertDialog({
   const [loading, setLoading] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [voidReason, setVoidReason] = useState('');
+  const [showPin, setShowPin] = useState(false);
   const router = useRouter();
 
   const handleCancel = () => {
     setPinInput('');
     setVoidReason('');
+    setShowPin(false);
     onClose();
   };
 
@@ -73,29 +76,23 @@ export function DeleteAlertDialog({
 
     setLoading(true);
     try {
-      // 1. Soft-void update in IndexedDB
+      // 1. Hard delete in local IndexedDB
       if (data.id) {
         try {
-          await localDb.transactions.update(data.id, {
-            status: 'VOID',
-            cancelReason: `[VOID SUPERVISOR]: ${voidReason.trim()}`
-          } as any);
+          await localDb.transactions.delete(data.id);
         } catch (e) {
-          console.warn('Local indexedDb update skipped:', e);
+          console.warn('Local indexedDb delete skipped:', e);
         }
       }
 
-      // 2. Soft-void in Server via PATCH to preserve audit ledger
-      await axios.patch(`/api/transactions/${data.id}`, {
-        reason: `[VOID SUPERVISOR]: ${voidReason.trim()}`,
-        status: 'VOID'
-      });
+      // 2. Hard delete on Server via DELETE (removes from pos_orders, revenue_transactions, daily_revenue & shifts)
+      await axios.delete(`/api/transactions/${data.id}`);
 
       setPinInput('');
       setVoidReason('');
       onClose();
       router.refresh();
-      toast.success('Transaksi berhasil di-Void dengan otorisasi supervisor.');
+      toast.success('Transaksi berhasil di-Void (dihapus permanen dari riwayat).');
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         console.error('Server Error:', error.response?.data);
@@ -122,7 +119,7 @@ export function DeleteAlertDialog({
           </AlertDialogTitle>
           <div className="text-xs text-neutral-600 dark:text-neutral-400 space-y-4 pt-2">
             <p className="leading-relaxed">
-              Transaksi dengan ID <span className="font-mono font-bold text-neutral-900 dark:text-neutral-100">{data.id}</span> akan dibatalkan resmi (status VOID) dan dicatat ke dalam audit trail pengawas.
+              Transaksi dengan ID <span className="font-mono font-bold text-neutral-900 dark:text-neutral-100">{data.id}</span> akan <strong>dihapus permanen</strong> dari sistem (Void) dan tidak akan muncul lagi di riwayat transaksi.
             </p>
 
             <div className="flex flex-col gap-2 pt-2 border-t border-neutral-100 dark:border-white/[0.06]">
@@ -132,7 +129,7 @@ export function DeleteAlertDialog({
               <Input
                 id="voidReason"
                 type="text"
-                placeholder="Contoh: Salah input pesanan / Tamu batal..."
+                placeholder=""
                 value={voidReason}
                 onChange={(e) => setVoidReason(e.target.value)}
                 className="h-10 text-xs bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.08] rounded-xl"
@@ -143,14 +140,24 @@ export function DeleteAlertDialog({
               <Label htmlFor="supervisorPin" className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
                 PIN / Sandi Supervisor <span className="text-rose-500">*</span>
               </Label>
-              <Input
-                id="supervisorPin"
-                type="password"
-                placeholder="Masukkan PIN supervisor (misal: 1234 atau sandi admin)..."
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                className="h-10 text-xs font-mono bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.08] rounded-xl"
-              />
+              <div className="relative flex items-center">
+                <Input
+                  id="supervisorPin"
+                  type={showPin ? 'text' : 'password'}
+                  placeholder=""
+                  value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value)}
+                  className="h-10 text-xs font-mono bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.08] rounded-xl pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPin(!showPin)}
+                  className="absolute right-3 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors cursor-pointer bg-transparent border-none p-0 flex items-center justify-center focus:outline-none"
+                  tabIndex={-1}
+                >
+                  {showPin ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
           </div>
         </AlertDialogHeader>

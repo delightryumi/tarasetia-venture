@@ -3,14 +3,14 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '@/lib/firebase';
-import { onSnapshot, doc, getDoc, query, orderBy, limit } from 'firebase/firestore';
+import { onSnapshot, doc, getDoc, query, orderBy, limit, updateDoc } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 import { 
   Clock, Maximize2, Minimize2, Volume2, VolumeX, 
   ArrowLeft, RefreshCw, AlertTriangle,
   UtensilsCrossed, Wine, LayoutGrid, Users, ChefHat,
   X, Check, History, RotateCcw, ShieldCheck,
-  Lock, Sparkles, Tv, Zap
+  Lock, Sparkles, Tv, Zap, ListOrdered, Search
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -22,7 +22,7 @@ interface FoodBeverageRealtimeTabProps {
   hotelCode?: string;
 }
 
-type StationFilter = 'all' | 'food' | 'bar' | 'tables';
+type StationFilter = 'all' | 'food' | 'bar' | 'tables' | 'summary';
 
 export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealtimeTabProps) {
   const router = useRouter();
@@ -36,6 +36,9 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
   const [hotelDocData, setHotelDocData] = useState<any>(null);
   const [isAddonCheckDone, setIsAddonCheckDone] = useState<boolean>(false);
   const [stationFilter, setStationFilter] = useState<StationFilter>('all');
+  const [isSummaryDrawerOpen, setIsSummaryDrawerOpen] = useState<boolean>(false);
+  const [summaryStationFilter, setSummaryStationFilter] = useState<'all' | 'food' | 'bar'>('all');
+  const [summarySearchQuery, setSummarySearchQuery] = useState<string>('');
   
   useEffect(() => {
     setIsMounted(true);
@@ -60,9 +63,10 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
   // Modal for detail inspection
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
-  const prevHeldOrdersIdsRef = useRef<string[]>([]);
-  const isInitialLoadRef = useRef(true);
+  const isAudioUnlockedRef = useRef<boolean>(false);
+  const [isAudioBlocked, setIsAudioBlocked] = useState<boolean>(false);
   const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
+  const alarmTimeoutRef = useRef<any>(null);
   const posSoundUrlRef = useRef<string>('/sounds/notification.mp3');
 
   // Master ticking clock
@@ -96,31 +100,157 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
 
   const getAudioInstance = useCallback(() => {
     if (!alarmAudioRef.current && typeof window !== 'undefined') {
-      alarmAudioRef.current = new Audio(posSoundUrlRef.current || '/sounds/notification.mp3');
+      const soundUrl = (typeof window !== 'undefined' ? localStorage.getItem('pos_sound_url') : null) || posSoundUrlRef.current || '/sounds/notification.mp3';
+      alarmAudioRef.current = new Audio(soundUrl);
       alarmAudioRef.current.volume = 1.0;
+      alarmAudioRef.current.loop = true;
     }
     return alarmAudioRef.current;
   }, []);
 
+  const unlockAudioContext = useCallback(() => {
+    try {
+      const audio = getAudioInstance();
+      if (audio) {
+        audio.play().then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          isAudioUnlockedRef.current = true;
+          setIsAudioBlocked(false);
+        }).catch((e) => {
+          console.warn('Audio unlock pending user interaction:', e);
+        });
+      }
+    } catch (e) {
+      console.warn('Audio context unlock error:', e);
+    }
+  }, [getAudioInstance]);
+
+  // Unlock audio context on any user click / touch / keyboard interaction
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      unlockAudioContext();
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
+    window.addEventListener('click', handleFirstInteraction);
+    window.addEventListener('keydown', handleFirstInteraction);
+    window.addEventListener('touchstart', handleFirstInteraction);
+    return () => {
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
+  }, [unlockAudioContext]);
+
+  // Listen to custom soundChanged event from settings
+  useEffect(() => {
+    const handleSoundChanged = () => {
+      const updated = localStorage.getItem('pos_sound_url') || '/sounds/notification.mp3';
+      posSoundUrlRef.current = updated;
+      if (alarmAudioRef.current) {
+        alarmAudioRef.current.pause();
+        alarmAudioRef.current = null;
+      }
+    };
+    window.addEventListener('soundChanged', handleSoundChanged);
+    return () => window.removeEventListener('soundChanged', handleSoundChanged);
+  }, []);
+
+  const stopAlarm = useCallback(() => {
+    if (alarmTimeoutRef.current) {
+      clearTimeout(alarmTimeoutRef.current);
+      alarmTimeoutRef.current = null;
+    }
+    if (alarmAudioRef.current) {
+      try {
+        alarmAudioRef.current.pause();
+        alarmAudioRef.current.currentTime = 0;
+      } catch (e) {}
+    }
+  }, []);
+
+  const playOrderAlarm = useCallback((label: string, orderData: any) => {
+    if (isAudioMuted) return;
+
+    try {
+      const soundUrl = (typeof window !== 'undefined' ? localStorage.getItem('pos_sound_url') : null) || posSoundUrlRef.current || '/sounds/notification.mp3';
+      const audio = getAudioInstance();
+      if (audio) {
+        if (audio.src !== soundUrl && !audio.src.endsWith(soundUrl)) {
+          audio.src = soundUrl;
+        }
+        audio.currentTime = 0;
+        audio.loop = true;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              isAudioUnlockedRef.current = true;
+              setIsAudioBlocked(false);
+            })
+            .catch(err => {
+              console.warn('Audio playback blocked by browser in KDS:', err);
+              setIsAudioBlocked(true);
+            });
+        }
+
+        // Auto stop after 12 seconds so kitchen is not blasted continuously if unattended
+        if (alarmTimeoutRef.current) {
+          clearTimeout(alarmTimeoutRef.current);
+        }
+        alarmTimeoutRef.current = setTimeout(() => {
+          stopAlarm();
+        }, 12000);
+      }
+
+      const table = orderData.tableNumber || orderData.table || 'Meja';
+      const guest = orderData.customerName || orderData.guestName || 'Tamu';
+      const items = orderData.cart || orderData.items || orderData.products || [];
+
+      toast.info(
+        <div className="flex flex-col gap-1 cursor-pointer" onClick={stopAlarm}>
+          <div className="font-semibold text-sm">🔔 {label}</div>
+          <div className="text-xs text-stone-700">{table} · {guest} {items.length > 0 ? `(${items.length} Menu)` : ''}</div>
+          <div className="text-[10px] text-stone-500 mt-0.5">Klik notifikasi ini untuk menghentikan bunyi</div>
+        </div>,
+        {
+          duration: 12000,
+          position: 'top-center',
+          onDismiss: stopAlarm,
+          onAutoClose: stopAlarm,
+        }
+      );
+    } catch (err) {
+      console.error('playOrderAlarm error:', err);
+    }
+  }, [isAudioMuted, getAudioInstance, stopAlarm]);
+
+  const playOrderAlarmRef = useRef(playOrderAlarm);
+  useEffect(() => {
+    playOrderAlarmRef.current = playOrderAlarm;
+  }, [playOrderAlarm]);
+
   // Set active hotel code
   useEffect(() => {
-    if (hotelCode) {
-      setActiveCode(hotelCode);
-    } else if (activeHotelCode) {
-      setActiveCode(activeHotelCode);
-    } else if (user?.hotelCode) {
-      setActiveCode(user.hotelCode);
-    } else if (user?.allowedOutlets && user.allowedOutlets.length > 0) {
-      setActiveCode(user.allowedOutlets[0]);
-    } else if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
-      setActiveCode(stored);
+    const getCookie = (name: string) => {
+      if (typeof document === 'undefined') return undefined;
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+    };
+    const cookieHotelCode = getCookie('hotelCode');
+    const localActive = typeof window !== 'undefined' ? (localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode')) : '';
+    const resolved = hotelCode || activeHotelCode || user?.hotelCode || (user?.allowedOutlets && user.allowedOutlets[0]) || cookieHotelCode || localActive || '';
+    if (resolved && resolved !== '0') {
+      setActiveCode(resolved);
     }
   }, [hotelCode, activeHotelCode, user]);
 
-  // Listen to Firestore for Tables, Held Orders, and Pos sound
+  // Listen to Firestore for Tables, Held Orders, Completed Orders, and Pos sound
   useEffect(() => {
-    if (!activeCode) return;
+    if (!activeCode || activeCode === '0') return;
 
     let unsubHeld: any;
     let unsubCompleted: any;
@@ -129,27 +259,30 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
     const fetchConfigAndListen = async () => {
       setIsLoading(true);
       try {
-        // 1. Fetch tables list from pos settings
+        // 1. Fetch tables list from pos settings (async without blocking listeners)
         const posRef = doc(db, 'hotels', activeCode, 'settings', 'pos');
-        const posSnap = await getDoc(posRef);
-        let rawTables = '12';
-        if (posSnap.exists()) {
-          rawTables = posSnap.data().tables || '12';
-        }
-
-        let parsedTables: string[] = [];
-        if (/^\d+$/.test(rawTables.trim())) {
-          const count = parseInt(rawTables.trim());
-          for (let i = 1; i <= count; i++) {
-            parsedTables.push(`Meja ${i}`);
+        getDoc(posRef).then(posSnap => {
+          let rawTables = '12';
+          if (posSnap.exists()) {
+            rawTables = posSnap.data().tables || '12';
           }
-        } else {
-          parsedTables = rawTables.split(',').map(t => t.trim()).filter(Boolean);
-        }
-        setTablesList(parsedTables);
+          let parsedTables: string[] = [];
+          if (/^\d+$/.test(rawTables.trim())) {
+            const count = parseInt(rawTables.trim());
+            for (let i = 1; i <= count; i++) {
+              parsedTables.push(`Meja ${i}`);
+            }
+          } else {
+            parsedTables = rawTables.split(',').map(t => t.trim()).filter(Boolean);
+          }
+          setTablesList(parsedTables);
+        }).catch(err => {
+          console.warn('Error fetching pos tables config:', err);
+        });
 
-        // 2. Listen to active held orders
+        // 2. Listen to active held orders in REALTIME with instant docChanges
         const heldCollection = getHotelCollection(db, 'pos_held_orders', activeCode);
+        let isInitialHeld = true;
         unsubHeld = onSnapshot(heldCollection, (snap) => {
           const orders = snap.docs.map(doc => {
             const data = doc.data();
@@ -163,7 +296,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                 ? data.createdAt.toDate().toISOString()
                 : new Date(data.createdAt).toISOString();
             }
-            return { id: doc.id, ...data, createdAt };
+            return { id: doc.id, ...data, createdAt, _collectionName: 'pos_held_orders' };
           });
           
           // FIFO order flow
@@ -171,14 +304,41 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
           
           setHeldOrders(orders);
           setIsLoading(false);
+
+          if (isInitialHeld) {
+            isInitialHeld = false;
+            return;
+          }
+
+          snap.docChanges().forEach((change) => {
+            if (change.type === 'added') {
+              const data = change.doc.data();
+              if (data.status === 'CANCELLED' || data.status === 'VOID') return;
+              let isFresh = true;
+              if (data.createdAt) {
+                const createdTime = new Date(data.createdAt).getTime();
+                if (!isNaN(createdTime) && (Date.now() - createdTime > 10 * 60 * 1000)) {
+                  isFresh = false;
+                }
+              }
+              if (isFresh) {
+                const isSelfOrder = data.source === 'Self-Order Tamu' || data.orderType === 'Self-Order Tamu';
+                const label = isSelfOrder ? '🛎️ Self-Order Tamu Baru' : '🔔 Pesanan Meja Baru';
+                if (playOrderAlarmRef.current) {
+                  playOrderAlarmRef.current(label, data);
+                }
+              }
+            }
+          });
         }, (err) => {
           console.error('Firestore held orders listener error:', err);
           setIsLoading(false);
         });
 
-        // 3. Listen to completed orders
+        // 3. Listen to cashier paid orders in REALTIME with instant docChanges
         const completedCollection = getHotelCollection(db, 'pos_orders', activeCode);
-        const completedQuery = query(completedCollection, orderBy('timestamp', 'desc'), limit(30));
+        const completedQuery = query(completedCollection, orderBy('timestamp', 'desc'), limit(50));
+        let isInitialCompleted = true;
         unsubCompleted = onSnapshot(completedQuery, (snap) => {
           const orders = snap.docs.map(doc => {
             const data = doc.data();
@@ -192,9 +352,38 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                 ? data.createdAt.toDate().toISOString()
                 : new Date(data.createdAt).toISOString();
             }
-            return { id: doc.id, ...data, createdAt };
+            return { id: doc.id, ...data, createdAt, _collectionName: 'pos_orders' };
           });
           setCompletedOrders(orders);
+
+          if (isInitialCompleted) {
+            isInitialCompleted = false;
+            return;
+          }
+
+          snap.docChanges().forEach((change) => {
+            if (change.type === 'added') {
+              const data = change.doc.data();
+              if (data.status === 'CANCELLED' || data.status === 'VOID') return;
+
+              let isFresh = true;
+              let orderTime = 0;
+              if (data.timestamp) {
+                orderTime = typeof data.timestamp.toDate === 'function' ? data.timestamp.toDate().getTime() : new Date(data.timestamp).getTime();
+              } else if (data.createdAt) {
+                orderTime = typeof data.createdAt.toDate === 'function' ? data.createdAt.toDate().getTime() : new Date(data.createdAt).getTime();
+              }
+              if (orderTime && (Date.now() - orderTime > 5 * 60 * 1000)) {
+                isFresh = false;
+              }
+
+              if (isFresh) {
+                if (playOrderAlarmRef.current) {
+                  playOrderAlarmRef.current('💰 Transaksi Kasir Selesai', data);
+                }
+              }
+            }
+          });
         }, (err) => {
           console.error('Firestore completed orders listener error:', err);
         });
@@ -210,6 +399,9 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
               if (alarmAudioRef.current) {
                 alarmAudioRef.current.pause();
                 alarmAudioRef.current = null;
+              }
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('pos_sound_url', data.posSoundUrl);
               }
             }
           }
@@ -231,39 +423,9 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
       if (unsubHeld) unsubHeld();
       if (unsubCompleted) unsubCompleted();
       if (unsubHotelConfig) unsubHotelConfig();
+      stopAlarm();
     };
-  }, [activeCode]);
-
-  // Incoming order chime trigger
-  useEffect(() => {
-    if (isLoading) return;
-
-    if (isInitialLoadRef.current) {
-      prevHeldOrdersIdsRef.current = heldOrders.map(o => o.id);
-      isInitialLoadRef.current = false;
-      return;
-    }
-
-    const newOrders = heldOrders.filter(o => o.id && !prevHeldOrdersIdsRef.current.includes(o.id));
-    prevHeldOrdersIdsRef.current = heldOrders.map(o => o.id);
-
-    if (newOrders.length > 0) {
-      if (!isAudioMuted) {
-        const audio = getAudioInstance();
-        if (audio) {
-          audio.currentTime = 0;
-          audio.play().catch(e => console.log('Audio playback block:', e));
-        }
-      }
-
-      newOrders.forEach(o => {
-        toast.info(`🔔 Pesanan Baru: ${o.tableNumber || 'Meja'} · ${o.customerName || 'Tamu'}`, {
-          duration: 5000,
-          position: 'top-center'
-        });
-      });
-    }
-  }, [heldOrders, isLoading, isAudioMuted, getAudioInstance]);
+  }, [activeCode, stopAlarm]);
 
   // Helper to format currency
   const formatIDR = (val: number) => {
@@ -283,7 +445,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
 
   // Check if item is food or bar
   const isItemMatchStation = (item: any, station: StationFilter) => {
-    if (station === 'all' || station === 'tables') return true;
+    if (station === 'all' || station === 'tables' || station === 'summary') return true;
     const cat = (item.product?.category || item.category || '').toLowerCase();
     const pnl = (item.product?.pnlTarget || item.pnlTarget || '').toLowerCase();
 
@@ -353,11 +515,50 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
     return hasInBilling || (isOwnerOrAdmin && hasUserPerm);
   }, [isSuperadmin, hotelDocData, user]);
 
-  // Active non-bumped orders
+  // Active non-bumped orders (Combines both pos_held_orders and pos_orders inline so zero tickets are missed!)
   const visibleHeldOrders = useMemo(() => {
     const bumpedIds = new Set(bumpedOrders.map(b => b.id));
-    const active = heldOrders.filter(o => !bumpedIds.has(o.id));
-    if (active.length === 0 && !isAddonActive && isAddonCheckDone) {
+
+    // 1. Active held / table / self-orders
+    const activeHeld = heldOrders.filter(o => {
+      if (bumpedIds.has(o.id)) return false;
+      if (o.status === 'CANCELLED' || o.status === 'VOID') return false;
+      if (o.kitchenStatus === 'served') return false;
+      return true;
+    });
+
+    // 2. Active cashier paid orders (pos_orders)
+    const activePaid = completedOrders.filter(o => {
+      if (bumpedIds.has(o.id)) return false;
+      if (o.status === 'CANCELLED' || o.status === 'VOID') return false;
+      if (o.kitchenStatus === 'served') return false;
+      // Filter out stale orders unless explicit kitchenStatus
+      const ageMs = Date.now() - new Date(o.createdAt).getTime();
+      const isRecent = ageMs < 24 * 60 * 60 * 1000;
+      const isExplicitCooking = o.kitchenStatus === 'queue' || o.kitchenStatus === 'cooking' || o.kitchenStatus === 'ready';
+      return isRecent || isExplicitCooking;
+    });
+
+    // Deduplicate: If an order in activePaid originated from an order in activeHeld, prefer activePaid
+    const combined: any[] = [];
+    const seenIds = new Set<string>();
+
+    activePaid.forEach(o => {
+      seenIds.add(o.id);
+      if (o.heldOrderId) seenIds.add(o.heldOrderId);
+      combined.push(o);
+    });
+
+    activeHeld.forEach(o => {
+      if (!seenIds.has(o.id)) {
+        combined.push(o);
+      }
+    });
+
+    // FIFO: oldest order first
+    combined.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+    if (combined.length === 0 && !isAddonActive && isAddonCheckDone) {
       return [
         {
           id: 'preview_kot_1',
@@ -394,8 +595,8 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
         }
       ];
     }
-    return active;
-  }, [heldOrders, bumpedOrders, isAddonActive, isAddonCheckDone]);
+    return combined;
+  }, [heldOrders, completedOrders, bumpedOrders, isAddonActive, isAddonCheckDone]);
 
   // Metrics Calculation
   const metrics = useMemo(() => {
@@ -424,6 +625,107 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
     };
   }, [visibleHeldOrders]);
 
+  interface AggregatedWaitingItem {
+    id: string;
+    name: string;
+    totalQty: number;
+    isBar: boolean;
+    category: string;
+    orders: {
+      orderId: string;
+      tableNumber: string;
+      customerName: string;
+      qty: number;
+      notes: string;
+      addons: string[];
+      variants: string[];
+      createdAt: string;
+      rawOrder: any;
+    }[];
+  }
+
+  // Aggregated Summary of Waiting List Orders across all tables/tickets
+  const summaryWaitingList = useMemo(() => {
+    const map = new Map<string, AggregatedWaitingItem>();
+
+    visibleHeldOrders.forEach(order => {
+      const items = order.cart || order.items || order.products || [];
+      items.forEach((item: any) => {
+        const name = (item.product?.productstock?.name || item.product?.name || item.name || 'Menu Item').trim();
+        const qty = Number(item.quantity ?? item.qty ?? item.count ?? 1);
+        if (qty <= 0) return;
+
+        const isBar = isItemMatchStation(item, 'bar');
+        const category = item.product?.category || item.category || (isBar ? 'Beverage' : 'Food');
+        const note = (item.note || item.notes || item.cookingNote || item.customization || item.instruction || item.remarks || '').trim();
+        
+        const rawAddons: any[] = Array.isArray(item.selectedAddons) ? item.selectedAddons : (Array.isArray(item.addons) ? item.addons : (Array.isArray(item.toppings) ? item.toppings : []));
+        const addons: string[] = rawAddons.map((a: any) => (typeof a === 'string' ? a : (a.name || a.addonName || a.title || '')).trim()).filter(Boolean);
+        
+        const variants: string[] = [
+          item.variant || item.variantName,
+          item.size ? `Size: ${item.size}` : null,
+          item.sugarLevel ? `Gula: ${item.sugarLevel}` : null,
+          item.iceLevel ? `Es: ${item.iceLevel}` : null,
+          item.spiceLevel ? `Pedas: ${item.spiceLevel}` : (item.level ? `Level: ${item.level}` : null),
+          item.doneness ? `Kematangan: ${item.doneness}` : null,
+          item.temperature ? `Suhu: ${item.temperature}` : null,
+        ].filter(Boolean) as string[];
+
+        const cleanKey = name.toLowerCase();
+
+        if (!map.has(cleanKey)) {
+          map.set(cleanKey, {
+            id: cleanKey,
+            name,
+            totalQty: 0,
+            isBar,
+            category,
+            orders: []
+          });
+        }
+
+        const entry = map.get(cleanKey)!;
+        entry.totalQty += qty;
+        entry.orders.push({
+          orderId: order.id,
+          tableNumber: order.tableNumber || 'Meja',
+          customerName: order.customerName || 'Tamu',
+          qty,
+          notes: note,
+          addons,
+          variants,
+          createdAt: item.createdAt || order.createdAt,
+          rawOrder: order
+        });
+      });
+    });
+
+    const list = Array.from(map.values());
+    list.sort((a, b) => b.totalQty - a.totalQty);
+    return list;
+  }, [visibleHeldOrders]);
+
+  const filteredSummaryList = useMemo(() => {
+    return summaryWaitingList.filter(item => {
+      if (summaryStationFilter === 'food' && item.isBar) return false;
+      if (summaryStationFilter === 'bar' && !item.isBar) return false;
+
+      if (summarySearchQuery.trim()) {
+        const q = summarySearchQuery.toLowerCase().trim();
+        const matchName = item.name.toLowerCase().includes(q);
+        const matchTable = item.orders.some(o => 
+          o.tableNumber.toLowerCase().includes(q) || 
+          o.customerName.toLowerCase().includes(q) || 
+          o.notes.toLowerCase().includes(q)
+        );
+        if (!matchName && !matchTable) return false;
+      }
+
+      return true;
+    });
+  }, [summaryWaitingList, summaryStationFilter, summarySearchQuery]);
+
   // Toggle item prepared status
   const toggleItemDone = (orderId: string, itemIdx: number) => {
     const key = `${orderId}_${itemIdx}`;
@@ -434,11 +736,26 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
   };
 
   // Bump / Dispatch KOT Ticket
-  const bumpTicket = (order: any) => {
+  const bumpTicket = async (order: any) => {
     setBumpedOrders(prev => [
       { ...order, bumpedAt: new Date().toISOString() },
       ...prev.filter(p => p.id !== order.id)
     ]);
+
+    // Persist status update to Firestore so POS / Admin stay inline in realtime
+    if (activeCode && order.id && !order.id.startsWith('preview_')) {
+      try {
+        const col = order._collectionName || (order.cart && !order.transactionId ? 'pos_held_orders' : 'pos_orders');
+        const ticketRef = doc(getHotelCollection(db, col, activeCode), order.id);
+        await updateDoc(ticketRef, {
+          kitchenStatus: 'served',
+          kitchenServedAt: new Date().toISOString()
+        });
+      } catch (err) {
+        console.warn('Could not update firestore kitchenStatus:', err);
+      }
+    }
+
     toast.success(`KOT ${order.tableNumber || 'Meja'} Selesai Disajikan`, {
       duration: 3000,
       position: 'bottom-right'
@@ -446,8 +763,23 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
   };
 
   // Restore bumped ticket back to board
-  const restoreTicket = (orderId: string) => {
+  const restoreTicket = async (orderId: string) => {
+    const orderToRestore = bumpedOrders.find(p => p.id === orderId);
     setBumpedOrders(prev => prev.filter(p => p.id !== orderId));
+
+    if (activeCode && orderId && !orderId.startsWith('preview_')) {
+      try {
+        const col = orderToRestore?._collectionName || 'pos_orders';
+        const ticketRef = doc(getHotelCollection(db, col, activeCode), orderId);
+        await updateDoc(ticketRef, {
+          kitchenStatus: 'cooking',
+          kitchenRestoredAt: new Date().toISOString()
+        });
+      } catch (err) {
+        console.warn('Could not restore firestore kitchenStatus:', err);
+      }
+    }
+
     toast.info(`KOT dikembalikan ke antrean`, {
       duration: 3000,
       position: 'bottom-right'
@@ -515,6 +847,25 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
   return (
     <div className={ds.kdsWrapper}>
       <div className={`${ds.kdsContainer} ${!isAddonActive && isAddonCheckDone ? ds.kdsBlurredBackground : ''}`}>
+        {/* Banner if browser blocked autoplay */}
+        {isAudioBlocked && (
+          <div 
+            onClick={() => {
+              unlockAudioContext();
+              const audio = getAudioInstance();
+              if (audio) {
+                audio.play().then(() => {
+                  setIsAudioBlocked(false);
+                }).catch(() => {});
+              }
+            }}
+            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs py-2 px-4 flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-md z-50 select-none animate-pulse"
+          >
+            <AlertTriangle size={15} />
+            <span>Audio Notifikasi Belum Diizinkan Browser — <u>Klik di sini untuk mengaktifkan bel suara dapur realtime</u></span>
+          </div>
+        )}
+
         {/* ── Top Hotel Operations Control Bar ── */}
         <header className={ds.kdsHeader}>
         {/* Left: Official My Tara Logo & Hotel Identity */}
@@ -607,10 +958,29 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
             <span>Floor Matrix (Meja)</span>
             <span className={ds.kdsStationBadge}>{mappedTables.filter(t => t.isOccupied).length}/{mappedTables.length}</span>
           </button>
+
+          <button
+            onClick={() => setStationFilter('summary')}
+            className={`${ds.kdsStationTab} ${stationFilter === 'summary' ? ds.kdsStationTabActive : ''}`}
+            title="Ringkasan total antrean per menu (Waiting List)"
+          >
+            <ListOrdered size={13} />
+            <span>Summary Waiting List</span>
+            <span className={ds.kdsStationBadge}>{summaryWaitingList.length}</span>
+          </button>
         </div>
 
         {/* Right: Operational Controls & Recall Drawer */}
         <div className={ds.kdsControlGroup}>
+          <button
+            onClick={() => setIsSummaryDrawerOpen(true)}
+            className={`${ds.kdsControlBtn} ${isSummaryDrawerOpen || stationFilter === 'summary' ? ds.kdsControlBtnActive : ds.kdsControlBtnMuted}`}
+            title="Buka panel ringkasan antrean menu (Waiting List)"
+          >
+            <ListOrdered size={14} />
+            <span>Summary ({summaryWaitingList.length})</span>
+          </button>
+
           <button
             onClick={() => setIsRecallOpen(true)}
             className={`${ds.kdsControlBtn} ${ds.kdsControlBtnMuted}`}
@@ -621,7 +991,15 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
           </button>
 
           <button
-            onClick={() => setIsAudioMuted(!isAudioMuted)}
+            onClick={() => {
+              if (isAudioMuted) {
+                setIsAudioMuted(false);
+                unlockAudioContext();
+              } else {
+                setIsAudioMuted(true);
+                stopAlarm();
+              }
+            }}
             className={`${ds.kdsControlBtn} ${isAudioMuted ? ds.kdsControlBtnMuted : ds.kdsControlBtnActive}`}
             title={isAudioMuted ? 'Suara Bel Mati (Klik untuk Mengaktifkan)' : 'Suara Bel Aktif'}
           >
@@ -667,6 +1045,17 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
           <span className={ds.kdsMetricTitle}>Total Antrean:</span>
           <span className={`${ds.kdsMetricNum} ${ds.kdsMetricNumEmerald}`}>
             {metrics.totalItems} Porsi
+          </span>
+        </div>
+
+        <div 
+          onClick={() => setStationFilter('summary')}
+          className={`${ds.kdsMetricCard} cursor-pointer hover:border-amber-400 transition-colors`}
+          title="Klik untuk melihat ringkasan antrean menu (Summary Waiting List)"
+        >
+          <span className={ds.kdsMetricTitle}>Jenis Menu Antre:</span>
+          <span className={`${ds.kdsMetricNum} text-amber-600`}>
+            {summaryWaitingList.length} Jenis
           </span>
         </div>
       </div>
@@ -720,6 +1109,145 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                 )}
               </div>
             ))}
+          </div>
+        ) : stationFilter === 'summary' ? (
+          /* ── Summary Waiting List View Mode ── */
+          <div className={ds.kdsSummaryWrapper}>
+            {/* Filter Bar */}
+            <div className={ds.kdsSummaryFilterBar}>
+              <div className={ds.kdsSummaryTabs}>
+                <button
+                  onClick={() => setSummaryStationFilter('all')}
+                  className={`${ds.kdsSummaryTabBtn} ${summaryStationFilter === 'all' ? ds.kdsSummaryTabBtnActive : ''}`}
+                >
+                  <LayoutGrid size={13} />
+                  <span>Semua Menu</span>
+                  <span className={ds.kdsSummaryTabBadge}>
+                    {summaryWaitingList.reduce((acc, it) => acc + it.totalQty, 0)} Porsi
+                  </span>
+                </button>
+                <button
+                  onClick={() => setSummaryStationFilter('food')}
+                  className={`${ds.kdsSummaryTabBtn} ${summaryStationFilter === 'food' ? ds.kdsSummaryTabBtnActive : ''}`}
+                >
+                  <ChefHat size={13} />
+                  <span>Dapur / Kitchen (Food)</span>
+                  <span className={ds.kdsSummaryTabBadge}>
+                    {summaryWaitingList.filter(it => !it.isBar).reduce((acc, it) => acc + it.totalQty, 0)} Porsi
+                  </span>
+                </button>
+                <button
+                  onClick={() => setSummaryStationFilter('bar')}
+                  className={`${ds.kdsSummaryTabBtn} ${summaryStationFilter === 'bar' ? ds.kdsSummaryTabBtnActive : ''}`}
+                >
+                  <Wine size={13} />
+                  <span>Bar / Minuman (Beverage)</span>
+                  <span className={ds.kdsSummaryTabBadge}>
+                    {summaryWaitingList.filter(it => it.isBar).reduce((acc, it) => acc + it.totalQty, 0)} Minuman
+                  </span>
+                </button>
+              </div>
+
+              {/* Search Box */}
+              <div className={ds.kdsSummarySearchBox}>
+                <Search size={14} className="text-stone-400 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Cari nama menu, nomor meja, tamu..."
+                  value={summarySearchQuery}
+                  onChange={(e) => setSummarySearchQuery(e.target.value)}
+                  className={ds.kdsSummarySearchInput}
+                />
+                {summarySearchQuery && (
+                  <button 
+                    onClick={() => setSummarySearchQuery('')}
+                    className="text-stone-400 hover:text-stone-700 text-xs px-1"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Grid of Aggregated Items */}
+            {filteredSummaryList.length === 0 ? (
+              <div className={ds.kdsEmptyBox}>
+                <ShieldCheck size={40} className="text-emerald-600" />
+                <h3 className={ds.kdsEmptyTitle}>Tidak Ada Antrean Menu</h3>
+                <p className={ds.kdsEmptyDesc}>
+                  {summarySearchQuery ? 'Tidak ada menu yang sesuai dengan kata kunci pencarian.' : 'Seluruh pesanan dapur dan bar telah selesai diproses.'}
+                </p>
+              </div>
+            ) : (
+              <div className={ds.kdsSummaryGrid}>
+                {filteredSummaryList.map((item) => (
+                  <div key={item.id} className={ds.kdsSummaryCard}>
+                    <div className={ds.kdsSummaryCardHead}>
+                      <div className={ds.kdsSummaryCardInfo}>
+                        <div className="flex items-center gap-2">
+                          <span className={item.isBar ? ds.kdsTagBar : ds.kdsTagFood}>
+                            {item.isBar ? 'BAR' : 'KITCHEN'}
+                          </span>
+                          <span className={ds.kdsSummaryCardMeta}>{item.orders.length} Meja Memesan</span>
+                        </div>
+                        <h4 className={ds.kdsSummaryCardTitle}>{item.name}</h4>
+                      </div>
+                      <div className={ds.kdsSummaryCardTotal}>
+                        <span className={`${ds.kdsSummaryTotalNum} ${item.isBar ? ds.kdsSummaryTotalNumBar : ''}`}>
+                          {item.totalQty}
+                        </span>
+                        <span className={ds.kdsSummaryTotalLabel}>
+                          {item.isBar ? 'Total Minuman' : 'Total Porsi'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Breakdown per Table */}
+                    <div className={ds.kdsSummaryOrdersList}>
+                      {item.orders.map((ord, oIdx) => (
+                        <div key={oIdx} className={ds.kdsSummaryOrderRow}>
+                          <div className={ds.kdsSummaryOrderHead}>
+                            <div className="flex items-center gap-2">
+                              <span 
+                                onClick={() => setSelectedOrder(ord.rawOrder)}
+                                className={ds.kdsSummaryTableBadge}
+                                title="Klik untuk melihat tiket meja ini"
+                              >
+                                {ord.tableNumber}
+                              </span>
+                              <span className={ds.kdsSummaryGuest}>{ord.customerName}</span>
+                            </div>
+                            <span className={ds.kdsSummaryRowQty}>
+                              {ord.qty}x
+                            </span>
+                          </div>
+
+                          {/* Notes if any */}
+                          {ord.notes && (
+                            <div className={ds.kdsSummaryNoteBox}>
+                              <span className="shrink-0 font-bold">📝</span>
+                              <span>{ord.notes}</span>
+                            </div>
+                          )}
+
+                          {/* Addons / Variants if any */}
+                          {(ord.addons.length > 0 || ord.variants.length > 0) && (
+                            <div className={ds.kdsSummaryAddonsList}>
+                              {ord.variants.map((v, vIdx) => (
+                                <span key={vIdx} className={ds.kdsSummaryAddonTag}>{v}</span>
+                              ))}
+                              {ord.addons.map((a, aIdx) => (
+                                <span key={aIdx} className={ds.kdsSummaryAddonTag}>+{a}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : visibleHeldOrders.length === 0 ? (
           /* ── Empty Queue State ── */
@@ -968,6 +1496,153 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
                       </div>
                       <div className={ds.kdsRecallMeta}>
                         {(bo.cart || []).length} Menu · Selesai jam {new Date(bo.bumpedAt).toLocaleTimeString('id-ID')}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Summary Waiting List Quick Drawer ── */}
+      <AnimatePresence>
+        {isSummaryDrawerOpen && (
+          <div className={ds.kdsDrawerOverlay} onClick={() => setIsSummaryDrawerOpen(false)}>
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'tween', duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className={ds.kdsSummaryDrawer}
+            >
+              <div className={ds.kdsDrawerHead}>
+                <div className={ds.kdsDrawerTitle}>
+                  <ListOrdered size={16} className="text-amber-600" />
+                  <span>Summary Waiting List ({filteredSummaryList.length} Menu)</span>
+                </div>
+                <button
+                  onClick={() => setIsSummaryDrawerOpen(false)}
+                  className={ds.kdsDrawerClose}
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Station Filter Pills in Drawer */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  onClick={() => setSummaryStationFilter('all')}
+                  className={`text-xs px-2.5 py-1 rounded-md font-semibold border transition-colors ${summaryStationFilter === 'all' ? 'bg-stone-900 text-white border-stone-900' : 'bg-stone-100 text-stone-600 border-stone-200'}`}
+                >
+                  Semua ({summaryWaitingList.reduce((acc, it) => acc + it.totalQty, 0)})
+                </button>
+                <button
+                  onClick={() => setSummaryStationFilter('food')}
+                  className={`text-xs px-2.5 py-1 rounded-md font-semibold border transition-colors ${summaryStationFilter === 'food' ? 'bg-stone-900 text-white border-stone-900' : 'bg-stone-100 text-stone-600 border-stone-200'}`}
+                >
+                  Kitchen ({summaryWaitingList.filter(it => !it.isBar).reduce((acc, it) => acc + it.totalQty, 0)})
+                </button>
+                <button
+                  onClick={() => setSummaryStationFilter('bar')}
+                  className={`text-xs px-2.5 py-1 rounded-md font-semibold border transition-colors ${summaryStationFilter === 'bar' ? 'bg-stone-900 text-white border-stone-900' : 'bg-stone-100 text-stone-600 border-stone-200'}`}
+                >
+                  Bar ({summaryWaitingList.filter(it => it.isBar).reduce((acc, it) => acc + it.totalQty, 0)})
+                </button>
+              </div>
+
+              {/* Drawer Search */}
+              <div className={ds.kdsSummarySearchBox} style={{ maxWidth: '100%' }}>
+                <Search size={14} className="text-stone-400 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Cari nama menu / nomor meja..."
+                  value={summarySearchQuery}
+                  onChange={(e) => setSummarySearchQuery(e.target.value)}
+                  className={ds.kdsSummarySearchInput}
+                />
+                {summarySearchQuery && (
+                  <button 
+                    onClick={() => setSummarySearchQuery('')}
+                    className="text-stone-400 hover:text-stone-700 text-xs px-1"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* Drawer Items Body */}
+              <div className={ds.kdsDrawerBody}>
+                {filteredSummaryList.length === 0 ? (
+                  <div className="text-center py-12 text-stone-400 text-xs">
+                    Tidak ada menu dalam antrean
+                  </div>
+                ) : (
+                  filteredSummaryList.map((item) => (
+                    <div key={item.id} className={ds.kdsSummaryCard} style={{ padding: '12px' }}>
+                      <div className={ds.kdsSummaryCardHead} style={{ paddingBottom: '6px' }}>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className={item.isBar ? ds.kdsTagBar : ds.kdsTagFood}>
+                              {item.isBar ? 'BAR' : 'KITCHEN'}
+                            </span>
+                            <span className="text-[11px] text-stone-500 font-medium">
+                              {item.orders.length} Meja
+                            </span>
+                          </div>
+                          <h4 className="font-bold text-sm text-stone-900 mt-1">{item.name}</h4>
+                        </div>
+                        <div className={ds.kdsSummaryCardTotal}>
+                          <span className={`${ds.kdsSummaryTotalNum} ${item.isBar ? ds.kdsSummaryTotalNumBar : ''}`} style={{ fontSize: '20px' }}>
+                            {item.totalQty}
+                          </span>
+                          <span className={ds.kdsSummaryTotalLabel}>
+                            {item.isBar ? 'Minuman' : 'Porsi'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className={ds.kdsSummaryOrdersList}>
+                        {item.orders.map((ord, oIdx) => (
+                          <div key={oIdx} className={ds.kdsSummaryOrderRow}>
+                            <div className={ds.kdsSummaryOrderHead}>
+                              <div className="flex items-center gap-1.5">
+                                <span 
+                                  onClick={() => {
+                                    setIsSummaryDrawerOpen(false);
+                                    setSelectedOrder(ord.rawOrder);
+                                  }}
+                                  className={ds.kdsSummaryTableBadge}
+                                  title="Lihat detail pesanan meja ini"
+                                >
+                                  {ord.tableNumber}
+                                </span>
+                                <span className={ds.kdsSummaryGuest}>{ord.customerName}</span>
+                              </div>
+                              <span className={ds.kdsSummaryRowQty}>{ord.qty}x</span>
+                            </div>
+
+                            {ord.notes && (
+                              <div className={ds.kdsSummaryNoteBox}>
+                                <span>📝</span>
+                                <span>{ord.notes}</span>
+                              </div>
+                            )}
+
+                            {(ord.addons.length > 0 || ord.variants.length > 0) && (
+                              <div className={ds.kdsSummaryAddonsList}>
+                                {ord.variants.map((v, vIdx) => (
+                                  <span key={vIdx} className={ds.kdsSummaryAddonTag}>{v}</span>
+                                ))}
+                                {ord.addons.map((a, aIdx) => (
+                                  <span key={aIdx} className={ds.kdsSummaryAddonTag}>+{a}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))

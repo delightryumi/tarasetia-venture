@@ -111,12 +111,24 @@ export default function ReceiptDialog({
     return '80mm';
   });
 
-  // Direct IP Thermal Printer States
-  const [printerIp, setPrinterIp] = useState<string>(() => {
+  // Direct IP Thermal Printer States (Kasir, Kitchen, Bar)
+  const [cashierPrinterIp, setCashierPrinterIp] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('pos_printer_ip') || '192.168.1.200';
+      return localStorage.getItem('pos_printer_ip_cashier') || localStorage.getItem('pos_printer_ip') || '192.168.1.200';
     }
     return '192.168.1.200';
+  });
+  const [kitchenPrinterIp, setKitchenPrinterIp] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('pos_printer_ip_kitchen') || '';
+    }
+    return '';
+  });
+  const [barPrinterIp, setBarPrinterIp] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('pos_printer_ip_bar') || '';
+    }
+    return '';
   });
   const [printerPort, setPrinterPort] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -128,6 +140,20 @@ export default function ReceiptDialog({
   const [isDirectPrinting, setIsDirectPrinting] = useState<boolean>(false);
   const [isTestingPrinter, setIsTestingPrinter] = useState<boolean>(false);
 
+  // Active printer IP dynamically resolved based on current printMode
+  const activePrinterIp = (() => {
+    if (printMode === 'kitchen' && kitchenPrinterIp.trim()) return kitchenPrinterIp.trim();
+    if (printMode === 'bar' && barPrinterIp.trim()) return barPrinterIp.trim();
+    return cashierPrinterIp.trim();
+  })();
+
+  const activeDepartmentLabel = (() => {
+    if (printMode === 'kitchen') return 'Dapur (Kitchen)';
+    if (printMode === 'bar') return 'Bar';
+    if (printMode === 'checker') return 'Checker';
+    return 'Kasir';
+  })();
+
   const handlePaperSizeChange = (size: '80mm' | '58mm') => {
     setPaperSize(size);
     if (typeof window !== 'undefined') {
@@ -135,17 +161,40 @@ export default function ReceiptDialog({
     }
   };
 
-  const handleSavePrinterIp = (ip: string, port: string) => {
-    setPrinterIp(ip);
-    setPrinterPort(port);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('pos_printer_ip', ip);
-      localStorage.setItem('pos_printer_port', port);
+  const handleSavePrinterSettings = (field: 'cashier' | 'kitchen' | 'bar' | 'port', val: string) => {
+    if (typeof window === 'undefined') return;
+    if (field === 'cashier') {
+      setCashierPrinterIp(val);
+      localStorage.setItem('pos_printer_ip_cashier', val);
+      localStorage.setItem('pos_printer_ip', val);
+    } else if (field === 'kitchen') {
+      setKitchenPrinterIp(val);
+      localStorage.setItem('pos_printer_ip_kitchen', val);
+    } else if (field === 'bar') {
+      setBarPrinterIp(val);
+      localStorage.setItem('pos_printer_ip_bar', val);
+    } else if (field === 'port') {
+      setPrinterPort(val);
+      localStorage.setItem('pos_printer_port', val);
+    }
+  };
+
+  const playNotificationSound = () => {
+    try {
+      const soundUrl = (typeof window !== 'undefined' && localStorage.getItem('pos_sound_url')) || '/sounds/notification.mp3';
+      const audio = new Audio(soundUrl);
+      audio.volume = 1.0;
+      audio.play().catch(e => console.log('Audio autoplay blocked:', e));
+    } catch (err) {
+      console.warn('Audio playback error:', err);
     }
   };
 
   useEffect(() => {
     if (!isOpen) return;
+
+    // Play notification chime immediately upon completing order
+    playNotificationSound();
 
     // Fetch shop data
     axios.get('/api/shopdata')
@@ -199,8 +248,8 @@ export default function ReceiptDialog({
 
   // Direct IP Thermal Print Execution (No Windows print dialog!)
   const handleDirectIpPrint = async () => {
-    if (!printerIp.trim()) {
-      toast.warning('Silakan atur IP Printer LAN terlebih dahulu.');
+    if (!activePrinterIp) {
+      toast.warning(`Silakan atur IP Printer LAN untuk ${activeDepartmentLabel} terlebih dahulu.`);
       setShowIpConfig(true);
       return;
     }
@@ -208,7 +257,7 @@ export default function ReceiptDialog({
     setIsDirectPrinting(true);
     try {
       const res = await axios.post('/api/printer/direct-print', {
-        printerIp: printerIp.trim(),
+        printerIp: activePrinterIp,
         printerPort: Number(printerPort) || 9100,
         paperSize,
         printMode,
@@ -238,7 +287,8 @@ export default function ReceiptDialog({
       });
 
       if (res.data?.success) {
-        toast.success(`Struk berhasil dicetak langsung ke Printer IP ${printerIp}:${printerPort}!`);
+        playNotificationSound();
+        toast.success(`Struk berhasil dicetak ke Printer ${activeDepartmentLabel} (${activePrinterIp}:${printerPort})!`);
       } else {
         toast.error(res.data?.error || 'Gagal mengirim sinyal ke printer.');
       }
@@ -250,9 +300,10 @@ export default function ReceiptDialog({
     }
   };
 
-  // Test Printer LAN connection
-  const handleTestPrinter = async () => {
-    if (!printerIp.trim()) {
+  // Test Printer LAN connection for current active printer
+  const handleTestPrinter = async (ipToTest?: string) => {
+    const targetIp = (ipToTest || activePrinterIp).trim();
+    if (!targetIp) {
       toast.warning('Masukkan IP Printer terlebih dahulu.');
       return;
     }
@@ -260,17 +311,17 @@ export default function ReceiptDialog({
     setIsTestingPrinter(true);
     try {
       const res = await axios.post('/api/printer/test', {
-        printerIp: printerIp.trim(),
+        printerIp: targetIp,
         printerPort: Number(printerPort) || 9100
       });
 
       if (res.data?.success) {
-        toast.success(res.data.message);
+        toast.success(`Printer ${targetIp}: ${res.data.message}`);
       } else {
-        toast.error(res.data.message || 'Printer tidak merespons.');
+        toast.error(res.data.message || `Printer ${targetIp} tidak merespons.`);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Gagal menghubungi printer.');
+      toast.error(err.response?.data?.message || `Gagal menghubungi printer ${targetIp}.`);
     } finally {
       setIsTestingPrinter(false);
     }
@@ -278,7 +329,7 @@ export default function ReceiptDialog({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-2xl w-full max-h-[92vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border border-neutral-200/80 dark:border-white/[0.08] shadow-2xl rounded-2xl print:m-0 print:p-0 print:border-none print:shadow-none print:w-full print:max-w-full">
+      <AlertDialogContent className="max-w-2xl w-full max-h-[92vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-zinc-950 border border-neutral-200/80 dark:border-white/[0.08] shadow-2xl rounded-2xl print:static print:transform-none print:left-0 print:top-0 print:m-0 print:p-0 print:border-none print:shadow-none print:w-full print:max-w-full print:max-h-none print:h-auto print:overflow-visible print:bg-white">
         
         {/* ── Dialog Header ── */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-neutral-100 dark:border-white/[0.06] bg-neutral-50/50 dark:bg-zinc-900/50 print:hidden">
@@ -301,61 +352,91 @@ export default function ReceiptDialog({
             <button
               type="button"
               onClick={() => setShowIpConfig(!showIpConfig)}
-              className={`p-1.5 rounded-lg border text-xs flex items-center gap-1 transition-all ${
+              className={`p-1.5 rounded-lg border text-xs flex items-center gap-1.5 transition-all ${
                 showIpConfig 
                   ? 'bg-blue-600 text-white border-transparent' 
                   : 'bg-white dark:bg-zinc-900 border-neutral-200 dark:border-white/[0.1] text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100'
               }`}
-              title="Pengaturan IP Printer"
+              title="Pengaturan IP Printer Departemen"
             >
               <Network className="w-3.5 h-3.5" />
-              <span className="text-[10px] font-mono hidden sm:inline">{printerIp}</span>
+              <span className="text-[10px] font-mono hidden sm:inline">{activePrinterIp} ({activeDepartmentLabel})</span>
             </button>
           </div>
         </div>
 
-        {/* ── IP Printer Configuration Collapsible Bar ── */}
+        {/* ── IP Printer Configuration Collapsible Bar (Multi-Department) ── */}
         {showIpConfig && (
-          <div className="p-3 bg-blue-50/80 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-900/40 text-xs flex flex-col gap-2 animate-in fade-in duration-150 print:hidden">
+          <div className="p-3.5 bg-blue-50/90 dark:bg-blue-950/40 border-b border-blue-100 dark:border-blue-900/40 text-xs flex flex-col gap-2.5 animate-in fade-in duration-150 print:hidden">
             <div className="flex items-center justify-between">
               <span className="font-bold text-blue-950 dark:text-blue-200 flex items-center gap-1">
-                <Network className="w-3.5 h-3.5" />
-                Pengaturan Direct IP LAN Printer
+                <Network className="w-3.5 h-3.5 text-blue-600" />
+                Pengaturan Direct IP LAN Printer Per Departemen
               </span>
-              <span className="text-[10px] text-blue-600 dark:text-blue-400">
-                Port default: 9100
+              <span className="text-[10px] text-blue-600 dark:text-blue-400 font-mono">
+                Port default: 9100 (RAW Socket)
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="IP Printer, misal: 192.168.1.200"
-                value={printerIp}
-                onChange={(e) => handleSavePrinterIp(e.target.value, printerPort)}
-                className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 font-mono focus:outline-none"
-              />
-              <input
-                type="text"
-                placeholder="Port"
-                value={printerPort}
-                onChange={(e) => handleSavePrinterIp(printerIp, e.target.value)}
-                className="w-16 text-xs px-2 py-1.5 rounded-lg border border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 font-mono text-center focus:outline-none"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {/* IP Kasir */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-neutral-700 dark:text-neutral-300">
+                  IP Printer Kasir {printMode === 'all' || printMode === 'checker' ? '(Aktif)' : ''}:
+                </label>
+                <input
+                  type="text"
+                  placeholder="192.168.1.200"
+                  value={cashierPrinterIp}
+                  onChange={(e) => handleSavePrinterSettings('cashier', e.target.value)}
+                  className="text-xs px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 font-mono focus:outline-none"
+                />
+              </div>
+
+              {/* IP Kitchen */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-neutral-700 dark:text-neutral-300">
+                  IP Printer Kitchen {printMode === 'kitchen' ? '(Aktif)' : ''}:
+                </label>
+                <input
+                  type="text"
+                  placeholder="Opsional (ikuti Kasir)"
+                  value={kitchenPrinterIp}
+                  onChange={(e) => handleSavePrinterSettings('kitchen', e.target.value)}
+                  className="text-xs px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 font-mono focus:outline-none"
+                />
+              </div>
+
+              {/* IP Bar */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-neutral-700 dark:text-neutral-300">
+                  IP Printer Bar {printMode === 'bar' ? '(Aktif)' : ''}:
+                </label>
+                <input
+                  type="text"
+                  placeholder="Opsional (ikuti Kasir)"
+                  value={barPrinterIp}
+                  onChange={(e) => handleSavePrinterSettings('bar', e.target.value)}
+                  className="text-xs px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 font-mono focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1 border-t border-blue-200/50 dark:border-blue-900/30">
+              <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                Departemen aktif: <strong className="text-blue-700 dark:text-blue-300">{activeDepartmentLabel}</strong> &rarr; IP target: <strong className="font-mono text-neutral-800 dark:text-white">{activePrinterIp}</strong>
+              </span>
               <Button
                 type="button"
                 size="sm"
-                onClick={handleTestPrinter}
+                onClick={() => handleTestPrinter(activePrinterIp)}
                 disabled={isTestingPrinter}
-                className="h-8 rounded-lg text-[11px] bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-1 px-3"
+                className="h-7 rounded-lg text-[10.5px] bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-1 px-3 shrink-0"
               >
                 {isTestingPrinter ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wifi className="w-3 h-3" />}
-                <span>Test IP</span>
+                <span>Test IP {activeDepartmentLabel}</span>
               </Button>
             </div>
-            <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
-              Direct IP mencetak langsung ke printer thermal LAN tanpa memunculkan dialog Windows.
-            </p>
           </div>
         )}
 
@@ -420,8 +501,8 @@ export default function ReceiptDialog({
         </div>
 
         {/* ── Scrollable receipt body (clean, single-layer scroll, no nested looping) ── */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-neutral-100/70 dark:bg-zinc-900/60 flex justify-center items-start print:p-0 print:block print:overflow-visible print:w-full print:max-w-full">
-          <div className="w-full flex justify-center print:block print:w-full">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-neutral-100/70 dark:bg-zinc-900/60 flex justify-center items-start print:p-0 print:m-0 print:block print:overflow-visible print:w-full print:max-w-full print:h-auto print:max-h-none">
+          <div className="w-full flex justify-center print:block print:w-full print:m-0 print:p-0">
             <ThermalReceipt
               shopInfo={{ name: storeName, address, phone }}
               transactionInfo={{ 
@@ -462,30 +543,41 @@ export default function ReceiptDialog({
               onClick={handleDirectIpPrint}
               disabled={isDirectPrinting}
               className="rounded-xl flex-1 max-w-[270px] min-w-[190px] flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold h-9 shadow-sm"
+              title={`Cetak langsung via LAN Socket ke IP ${activePrinterIp}:${printerPort} (${activeDepartmentLabel})`}
             >
               {isDirectPrinting ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
               ) : (
                 <Network className="w-3.5 h-3.5 shrink-0" />
               )}
-              <span className="truncate">Direct IP ({printerIp})</span>
+              <span className="truncate">Direct IP ({activePrinterIp})</span>
             </Button>
 
             {/* Windows Print Dialog (Fallback) */}
             <Button
               variant="outline"
               type="button"
-              onClick={() => window.print()}
+              onClick={() => {
+                playNotificationSound();
+                window.print();
+              }}
               className="rounded-xl flex items-center justify-center gap-1.5 border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 text-xs font-semibold h-9 px-3.5 shrink-0 hover:bg-neutral-100"
-              title="Buka dialog printer Windows"
+              title={`Cetak struk ukuran ${paperSize} via Windows Print`}
             >
               <Printer className="w-3.5 h-3.5 text-neutral-600 dark:text-neutral-300 shrink-0" />
-              <span>Windows Print</span>
+              <span>Windows Print ({paperSize})</span>
             </Button>
           </div>
 
           <AlertDialogAction
-            onClick={onClose}
+            onClick={() => {
+              playNotificationSound();
+              if (onClose) {
+                onClose();
+              } else if (onOpenChange) {
+                onOpenChange(false);
+              }
+            }}
             className="rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 border-none text-xs font-bold h-9 px-5 shrink-0 shadow-sm"
           >
             Selesai

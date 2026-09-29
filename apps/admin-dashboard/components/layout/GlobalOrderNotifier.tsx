@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useCallback } from 'react';
-import { collection, doc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, orderBy, limit, QuerySnapshot, DocumentData, DocumentChange } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 
@@ -82,97 +82,135 @@ export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNot
     };
   }, [getAudio]);
 
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+
   useEffect(() => {
+    // Let FoodBeverageRealtimeTab manage audio on the realtime KDS page
+    if (pathname.includes('/food-beverage/realtime')) return;
     if (!hotelCode || hotelCode === '0') return;
 
-    const colRef = collection(db, 'hotels', hotelCode, 'pos_held_orders');
+    const colHeldRef = collection(db, 'hotels', hotelCode, 'pos_held_orders');
+    let isInitialHeld = true;
 
-    const unsub = onSnapshot(colRef, (snap) => {
-      const currentIds = new Set<string>(snap.docs.map(d => d.id));
-
-      // Skip first snapshot (initial load)
-      if (isInitialRef.current) {
-        prevIdsRef.current = currentIds;
-        isInitialRef.current = false;
+    const unsubHeld = onSnapshot(colHeldRef, (snap: QuerySnapshot<DocumentData>) => {
+      if (isInitialHeld) {
+        isInitialHeld = false;
         return;
       }
 
-      // Find genuinely new docs
-      const newDocs = snap.docs.filter(d => !prevIdsRef.current.has(d.id));
-      prevIdsRef.current = currentIds;
+      snap.docChanges().forEach((change: DocumentChange<DocumentData>) => {
+        if (change.type === 'added') {
+          const data = change.doc.data();
+          if (data.status === 'CANCELLED' || data.status === 'VOID') return;
 
-      newDocs.forEach(d => {
-        const data = d.data();
+          let isFresh = true;
+          if (data.createdAt) {
+            const t = typeof data.createdAt.toDate === 'function'
+              ? data.createdAt.toDate().getTime()
+              : new Date(data.createdAt).getTime();
+            if (!isNaN(t) && Date.now() - t > 60_000) isFresh = false;
+          }
 
-        // Freshness check: only alert if created within the last 30s
-        if (data.createdAt) {
-          const t = typeof data.createdAt.toDate === 'function'
-            ? data.createdAt.toDate().getTime()
-            : new Date(data.createdAt).getTime();
-          if (Date.now() - t > 30_000) return;
-        }
+          if (isFresh) {
+            badgeCountRef.current += 1;
+            onBadgeChange(badgeCountRef.current);
 
-        // Increment badge
-        badgeCountRef.current += 1;
-        onBadgeChange(badgeCountRef.current);
+            const audio = getAudio();
+            if (audio) {
+              audio.currentTime = 0;
+              audio.play().catch(() => {});
+            }
 
-        // Play sound
-        const audio = getAudio();
-        if (audio) {
-          audio.currentTime = 0;
-          const playPromise = audio.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(() => {
-              toast.warning('Klik layar untuk mengizinkan suara notifikasi!', {
-                duration: 8000,
-                position: 'top-center',
-              });
+            const label = data.source === 'Self-Order Tamu' ? '🛎️ Self-Order Tamu' : '🔔 Pesanan Held Baru';
+            const detail = `${data.customerName || 'Tamu'} · Meja ${data.tableNumber || '-'}`;
+
+            toast.info(`${label}: ${detail}`, {
+              duration: 8000,
+              position: 'top-right',
+              action: {
+                label: 'Matikan',
+                onClick: () => {
+                  if (audioRef.current) {
+                    audioRef.current.pause();
+                    audioRef.current.currentTime = 0;
+                  }
+                  badgeCountRef.current = Math.max(0, badgeCountRef.current - 1);
+                  onBadgeChange(badgeCountRef.current);
+                },
+              },
             });
           }
         }
-
-        // Toast with dismiss = stop sound
-        const label = data.source === 'Self-Order Tamu'
-          ? `🛎️ Self-Order Tamu`
-          : `🔔 Pesanan Held Baru`;
-        const detail = `${data.customerName || 'Tamu'} · Meja ${data.tableNumber || '-'}`;
-
-        toast.success(`${label}: ${detail}`, {
-          duration: Infinity,
-          position: 'top-right',
-          action: {
-            label: 'Matikan',
-            onClick: () => {
-              if (audioRef.current) {
-                audioRef.current.pause();
-                audioRef.current.currentTime = 0;
-              }
-              badgeCountRef.current = Math.max(0, badgeCountRef.current - 1);
-              onBadgeChange(badgeCountRef.current);
-            },
-          },
-          onDismiss: () => {
-            if (audioRef.current) {
-              audioRef.current.pause();
-              audioRef.current.currentTime = 0;
-            }
-            badgeCountRef.current = Math.max(0, badgeCountRef.current - 1);
-            onBadgeChange(badgeCountRef.current);
-          },
-        });
       });
-    }, (err) => {
-      console.error('[GlobalOrderNotifier] Firestore error:', err);
+    }, (err: any) => {
+      console.error('[GlobalOrderNotifier] Firestore held error:', err);
+    });
+
+    const colPaidRef = query(collection(db, 'hotels', hotelCode, 'pos_orders'), orderBy('timestamp', 'desc'), limit(10));
+    let isInitialPaid = true;
+
+    const unsubPaid = onSnapshot(colPaidRef, (snap: QuerySnapshot<DocumentData>) => {
+      if (isInitialPaid) {
+        isInitialPaid = false;
+        return;
+      }
+
+      snap.docChanges().forEach((change: DocumentChange<DocumentData>) => {
+        if (change.type === 'added') {
+          const data = change.doc.data();
+          if (data.status === 'CANCELLED' || data.status === 'VOID') return;
+
+          let isFresh = true;
+          let orderTime = 0;
+          if (data.timestamp) {
+            orderTime = typeof data.timestamp.toDate === 'function' ? data.timestamp.toDate().getTime() : new Date(data.timestamp).getTime();
+          } else if (data.createdAt) {
+            orderTime = typeof data.createdAt.toDate === 'function' ? data.createdAt.toDate().getTime() : new Date(data.createdAt).getTime();
+          }
+          if (orderTime && Date.now() - orderTime > 60_000) isFresh = false;
+
+          if (isFresh) {
+            badgeCountRef.current += 1;
+            onBadgeChange(badgeCountRef.current);
+
+            const audio = getAudio();
+            if (audio) {
+              audio.currentTime = 0;
+              audio.play().catch(() => {});
+            }
+
+            const detail = `${data.customerName || 'Tamu'} · Meja ${data.tableNumber || '-'}`;
+            toast.info(`💰 Transaksi Kasir Selesai: ${detail}`, {
+              duration: 8000,
+              position: 'top-right',
+              action: {
+                label: 'Matikan',
+                onClick: () => {
+                  if (audioRef.current) {
+                    audioRef.current.pause();
+                    audioRef.current.currentTime = 0;
+                  }
+                  badgeCountRef.current = Math.max(0, badgeCountRef.current - 1);
+                  onBadgeChange(badgeCountRef.current);
+                },
+              },
+            });
+          }
+        }
+      });
+    }, (err: any) => {
+      console.error('[GlobalOrderNotifier] Firestore paid error:', err);
     });
 
     return () => {
-      unsub();
+      unsubHeld();
+      unsubPaid();
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
     };
-  }, [hotelCode, getAudio, onBadgeChange]);
+  }, [hotelCode, getAudio, onBadgeChange, pathname]);
 
   // No UI — purely a side-effect component
   return null;

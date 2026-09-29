@@ -25,12 +25,6 @@ export const NAVBAR_ITEMS: NavItem[] = [
     permissionKey: 'pos_lexupos',
   },
   {
-    title: 'Layar Dapur (KDS)',
-    path: '/orders',
-    icon: <CookingPot size={18} weight="bold" />,
-    permissionKey: 'pos_lexupos',
-  },
-  {
     title: 'Kasir',
     path: '/cashier',
     icon: <CashRegister size={18} weight="bold" />,

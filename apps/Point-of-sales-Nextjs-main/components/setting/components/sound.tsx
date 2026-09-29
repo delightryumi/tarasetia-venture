@@ -37,10 +37,13 @@ export default function SoundSettingCard() {
           const user = JSON.parse(userJson);
           if (user?.hotelCode) {
             currentHotelCode = user.hotelCode;
-            setHotelCode(currentHotelCode);
           }
         } catch (e) {}
       }
+      if (!currentHotelCode) {
+        currentHotelCode = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
+      }
+      setHotelCode(currentHotelCode);
     }
 
     if (!currentHotelCode || currentHotelCode === "0") return;
@@ -68,7 +71,7 @@ export default function SoundSettingCard() {
   const handlePlaySound = (soundPathOrBase64: string) => {
     try {
       const audio = new Audio(soundPathOrBase64);
-      audio.volume = 0.8;
+      audio.volume = 1.0;
       audio.play().catch(err => {
         console.error('Play blocked:', err);
         toast.error('Autoplay diblokir browser. Klik layar terlebih dahulu.');
@@ -80,14 +83,24 @@ export default function SoundSettingCard() {
 
   const handleSelectPreset = async (path: string) => {
     try {
-      const hotelRef = doc(db, `hotels/${hotelCode}`);
-      await updateDoc(hotelRef, {
-        posSoundUrl: path,
-        posSoundName: null
-      });
-      toast.success('Nada preset berhasil diterapkan ke semua perangkat!');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pos_sound_url', path);
+        window.dispatchEvent(new Event('soundChanged'));
+      }
+      setSelectedSound(path);
+      setCustomSoundName(null);
+      const effectiveCode = hotelCode || (typeof window !== 'undefined' ? (localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '') : '');
+      if (effectiveCode && effectiveCode !== '0') {
+        const hotelRef = doc(db, `hotels/${effectiveCode}`);
+        await updateDoc(hotelRef, {
+          posSoundUrl: path,
+          posSoundName: null
+        });
+      }
+      toast.success('Nada preset aktif dan berhasil disimpan ke cloud!');
       handlePlaySound(path);
     } catch (e) {
+      console.error('Save preset error:', e);
       toast.error('Gagal menyimpan pengaturan nada.');
     }
   };
@@ -96,27 +109,37 @@ export default function SoundSettingCard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 800 * 1024) {
-      toast.error('File terlalu besar! Maksimal 800KB untuk efisiensi penyimpanan.');
+    if (file.size > 1024 * 1024) {
+      toast.error('File terlalu besar! Maksimal 1MB.');
       return;
     }
+
+    const effectiveCode = hotelCode || (typeof window !== 'undefined' ? (localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '') : '');
 
     setIsUploading(true);
     try {
       const ext = file.name.split('.').pop() || 'mp3';
-      // Use /attachments path to match user's open storage rules
-      const storageRef = ref(storage, `attachments/settings_${hotelCode}/pos_sound_${Date.now()}.${ext}`);
+      const storageRef = ref(storage, `attachments/settings_${effectiveCode}/pos_sound_${Date.now()}.${ext}`);
       
       await uploadBytes(storageRef, file);
       const downloadUrl = await getDownloadURL(storageRef);
 
-      const hotelRef = doc(db, `hotels/${hotelCode}`);
-      await updateDoc(hotelRef, {
-        posSoundUrl: downloadUrl,
-        posSoundName: file.name
-      });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pos_sound_url', downloadUrl);
+        window.dispatchEvent(new Event('soundChanged'));
+      }
+      setSelectedSound(downloadUrl);
+      setCustomSoundName(file.name);
 
-      toast.success('Nada kustom berhasil diunggah ke semua perangkat!');
+      if (effectiveCode && effectiveCode !== '0') {
+        const hotelRef = doc(db, `hotels/${effectiveCode}`);
+        await updateDoc(hotelRef, {
+          posSoundUrl: downloadUrl,
+          posSoundName: file.name
+        });
+      }
+
+      toast.success('Nada kustom aktif dan tersinkronisasi ke semua terminal!');
       handlePlaySound(downloadUrl);
     } catch (error) {
       console.error('Error uploading sound:', error);
@@ -132,14 +155,24 @@ export default function SoundSettingCard() {
   const handleResetToDefault = async () => {
     const defaultPath = '/sounds/notification.mp3';
     try {
-      const hotelRef = doc(db, `hotels/${hotelCode}`);
-      await updateDoc(hotelRef, {
-        posSoundUrl: defaultPath,
-        posSoundName: null
-      });
-      toast.info('Kembali menggunakan nada default di semua perangkat.');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pos_sound_url', defaultPath);
+        window.dispatchEvent(new Event('soundChanged'));
+      }
+      setSelectedSound(defaultPath);
+      setCustomSoundName(null);
+      const effectiveCode = hotelCode || (typeof window !== 'undefined' ? (localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '') : '');
+      if (effectiveCode && effectiveCode !== '0') {
+        const hotelRef = doc(db, `hotels/${effectiveCode}`);
+        await updateDoc(hotelRef, {
+          posSoundUrl: defaultPath,
+          posSoundName: null
+        });
+      }
+      toast.info('Kembali menggunakan nada default.');
       handlePlaySound(defaultPath);
     } catch (e) {
+      console.error('Reset error:', e);
       toast.error('Gagal mereset nada.');
     }
   };
@@ -166,21 +199,37 @@ export default function SoundSettingCard() {
                 <div
                   key={preset.id}
                   onClick={() => handleSelectPreset(preset.path)}
-                  className={`p-3 border rounded-xl cursor-pointer select-none flex items-center justify-between transition-all ${
-                    isActive ? 'border-stone-900 bg-stone-50' : 'bg-white hover:bg-neutral-50'
+                  className={`p-3 border rounded-xl cursor-pointer select-none flex items-center justify-between transition-all relative ${
+                    isActive 
+                      ? 'border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/30 ring-2 ring-emerald-500/20 shadow-sm' 
+                      : 'bg-white hover:bg-neutral-50 dark:bg-zinc-900 border-neutral-200 dark:border-zinc-800'
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <Music className="h-4 w-4 text-stone-700" />
-                    <span className="text-xs font-semibold">{preset.name}</span>
+                    <Music className={`h-4 w-4 ${isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-stone-700 dark:text-stone-300'}`} />
+                    <div className="flex flex-col">
+                      <span className={`text-xs font-bold ${isActive ? 'text-emerald-950 dark:text-emerald-100' : 'text-neutral-800 dark:text-neutral-200'}`}>
+                        {preset.name}
+                      </span>
+                      {isActive && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                          Aktif (ON)
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handlePlaySound(preset.path);
                     }}
-                    className="p-1 rounded-lg hover:bg-neutral-200 text-stone-700 bg-transparent border-none cursor-pointer flex items-center justify-center"
-                    title="Test Putar"
+                    className={`p-1.5 rounded-lg border-none cursor-pointer flex items-center justify-center transition-colors ${
+                      isActive 
+                        ? 'bg-emerald-200/60 hover:bg-emerald-300/60 text-emerald-900' 
+                        : 'hover:bg-neutral-200 text-stone-700 bg-transparent'
+                    }`}
+                    title="Test Putar Nada"
                   >
                     <Play size={12} fill="currentColor" />
                   </button>

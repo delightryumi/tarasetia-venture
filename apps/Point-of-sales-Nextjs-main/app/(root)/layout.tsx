@@ -27,7 +27,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { registerNetworkSync, syncProductsFromServer, syncUnsyncedTransactions } from '@/lib/dexie-sync';
 import { db } from '@/lib/firebase';
 import { localDb } from '@/lib/dexie';
-import { collection, onSnapshot, query, where, deleteDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, deleteDoc, doc, orderBy, limit } from 'firebase/firestore';
 import { useCurrency } from '@/hooks/useCurrency';
 import {
   Dialog,
@@ -194,6 +194,10 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const alarmAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const getNotificationSound = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('pos_sound_url');
+      if (cached) return cached;
+    }
     return posSoundUrlRef.current || '/sounds/notification.mp3';
   }, []);
 
@@ -212,14 +216,11 @@ const RootLayout = ({ children }: RootLayoutProps) => {
           audio.currentTime = 0;
           setIsAudioUnlocked(true);
         }).catch((e) => {
-          console.error("Audio unlock failed:", e);
-          setIsAudioUnlocked(true);
+          console.warn("Audio unlock pending user interaction:", e);
         });
-      } else {
-        setIsAudioUnlocked(true);
       }
     } catch (e) {
-      setIsAudioUnlocked(true);
+      console.warn("Audio context unlock error:", e);
     }
   }, [getNotificationSound]);
 
@@ -228,137 +229,185 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       unlockAudioContext();
       window.removeEventListener('click', handleFirstInteraction);
       window.removeEventListener('keydown', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
     };
     window.addEventListener('click', handleFirstInteraction);
     window.addEventListener('keydown', handleFirstInteraction);
+    window.addEventListener('touchstart', handleFirstInteraction);
     return () => {
       window.removeEventListener('click', handleFirstInteraction);
       window.removeEventListener('keydown', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
     };
   }, [unlockAudioContext]);
 
   useEffect(() => {
     const handleSoundChange = () => {
+      const updatedSound = localStorage.getItem('pos_sound_url') || '/sounds/notification.mp3';
+      posSoundUrlRef.current = updatedSound;
       if (alarmAudioRef.current) {
         alarmAudioRef.current.pause();
         alarmAudioRef.current = null;
       }
+      alarmAudioRef.current = new Audio(updatedSound);
+      alarmAudioRef.current.volume = 1.0;
+      alarmAudioRef.current.loop = true;
     };
     window.addEventListener('soundChanged', handleSoundChange);
     return () => window.removeEventListener('soundChanged', handleSoundChange);
   }, []);
 
   useEffect(() => {
-    const userJson = localStorage.getItem('user');
-    let restoId = 'default-resto';
-    let hotelCode = '';
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson);
-        restoId = user.restoId || '';
-        hotelCode = user.hotelCode || '';
-      } catch (e) {}
+    let hotelCode = user?.hotelCode || '';
+    if (!hotelCode && typeof window !== 'undefined') {
+      const userJson = localStorage.getItem('user');
+      if (userJson) {
+        try {
+          const u = JSON.parse(userJson);
+          hotelCode = u.hotelCode || '';
+        } catch (e) {}
+      }
     }
-    if (!hotelCode) {
+    if (!hotelCode && typeof window !== 'undefined') {
       const getCookie = (name: string) => {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
         if (parts.length === 2) return parts.pop()?.split(';').shift();
       };
-      hotelCode = getCookie('hotelCode') || localStorage.getItem('hotelCode') || '';
+      hotelCode = getCookie('hotelCode') || localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
     }
 
     if (!hotelCode || hotelCode === '0') return;
 
-    const q = collection(db, 'hotels', hotelCode, 'pos_held_orders');
+    const triggerAlarm = (label: string, data: any) => {
+      try {
+        const audioPath = getNotificationSound();
+        if (!alarmAudioRef.current) {
+          alarmAudioRef.current = new Audio(audioPath);
+          alarmAudioRef.current.volume = 1.0;
+          alarmAudioRef.current.loop = true;
+        }
 
-    let isInitial = true;
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const audio = alarmAudioRef.current;
+        if (audio) {
+          audio.currentTime = 0;
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(err => {
+              console.log('Audio autoplay blocked by browser:', err);
+              setIsAudioUnlocked(false);
+              toast.warning(
+                <div className="cursor-pointer">
+                  <strong>🛎️ Pesanan Baru Masuk!</strong><br/>
+                  <span className="text-xs">Klik di sini untuk mengaktifkan bunyi alarm notifikasi!</span>
+                </div>,
+                {
+                  position: 'top-center',
+                  autoClose: 10000,
+                  onClick: () => {
+                    audio.play().catch(e => console.error('Play still failed:', e));
+                  }
+                }
+              );
+            });
+          }
+
+          toast.info(
+            <div>
+              <strong>{label}</strong><br/>
+              {data.customerName || 'Tamu'} (Meja: {data.tableNumber || '-'})<br/>
+              {data.total ? <span style={{fontSize: '0.8em', opacity: 0.9}}>Total: {formatCurrency(data.total)}<br/></span> : null}
+              <span style={{fontSize: '0.8em', opacity: 0.8}}>Klik tanda silang (X) untuk mematikan alarm</span>
+            </div>,
+            {
+              position: 'top-right',
+              autoClose: false,
+              closeOnClick: false,
+              draggable: false,
+              onClose: () => {
+                audio.pause();
+                audio.currentTime = 0;
+              }
+            }
+          );
+        }
+      } catch (e) {
+        console.error('Audio play error in layout:', e);
+      }
+    };
+
+    // 1. Listen to held orders (unpaid / dine-in / self-orders)
+    const qHeld = collection(db, 'hotels', hotelCode, 'pos_held_orders');
+    let isInitialHeld = true;
+    const unsubHeld = onSnapshot(qHeld, (snapshot) => {
       const orders = snapshot.docs.map(doc => ({
         ...doc.data(),
         id: doc.id
       }));
       setHeldOrders(orders);
 
-      if (isInitial) {
-        isInitial = false;
+      if (isInitialHeld) {
+        isInitialHeld = false;
         return;
       }
 
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const data = change.doc.data();
-          
           let isFresh = true;
           if (data.createdAt) {
-             const createdTime = new Date(data.createdAt).getTime();
-             // Only alert if the order was created within the last 30 seconds
-             if (Date.now() - createdTime > 30000) {
-                 isFresh = false;
-             }
+            const createdTime = new Date(data.createdAt).getTime();
+            if (!isNaN(createdTime) && (Date.now() - createdTime > 10 * 60 * 1000)) {
+              isFresh = false;
+            }
           }
 
-          // Fire for ALL fresh new held orders (Self-Order Tamu OR outlet/cashier held)
           if (isFresh) {
-            try {
-              if (!alarmAudioRef.current) {
-                const audioPath = getNotificationSound();
-                alarmAudioRef.current = new Audio(audioPath);
-                alarmAudioRef.current.volume = 1.0;
-                alarmAudioRef.current.loop = true;
-              } else {
-                alarmAudioRef.current.loop = true;
-              }
-
-              const audio = alarmAudioRef.current;
-              if (audio) {
-                const playPromise = audio.play();
-                if (playPromise !== undefined) {
-                  playPromise.catch(err => {
-                    console.log('Audio autoplay blocked or failed:', err);
-                    setIsAudioUnlocked(false);
-                    toast.warning(`Gagal memutar suara (${err.name || 'Error'}). Klik layar ini untuk mengizinkan browser memutar suara!`, {
-                      position: 'top-center',
-                      autoClose: false,
-                      onClick: () => {
-                        audio.play().catch(e => console.error('Still failed:', e));
-                      }
-                    });
-                  });
-                }
-
-                const isSelfOrder = data.source === 'Self-Order Tamu';
-                const label = isSelfOrder ? '🛎️ Self-Order Tamu Baru' : '🔔 Pesanan Held Baru';
-
-                // Persistent toast — dismiss stops alarm
-                toast.info(
-                  <div>
-                    <strong>{label}</strong><br/>
-                    {data.customerName || 'Tamu'} (Meja: {data.tableNumber || '-'})<br/>
-                    <span style={{fontSize: '0.8em', opacity: 0.8}}>Klik tombol X untuk mematikan alarm</span>
-                  </div>,
-                  {
-                    position: 'top-right',
-                    autoClose: false,
-                    closeOnClick: false,
-                    draggable: false,
-                    onClose: () => {
-                      audio.pause();
-                      audio.currentTime = 0;
-                    }
-                  }
-                );
-              }
-            } catch (e) {
-              console.error('Audio play error:', e);
-            }
+            const isSelfOrder = data.source === 'Self-Order Tamu' || data.orderType === 'Self-Order Tamu';
+            const label = isSelfOrder ? '🛎️ Self-Order Tamu Baru' : '🔔 Pesanan Meja Baru';
+            triggerAlarm(label, data);
           }
         }
       });
     });
 
-    return () => unsubscribe();
-  }, []);
+    // 2. Listen to completed/paid orders (pos_orders) so pay-as-you-go or counter payments also sound alarm
+    const qPaid = query(collection(db, 'hotels', hotelCode, 'pos_orders'), orderBy('timestamp', 'desc'), limit(15));
+    let isInitialPaid = true;
+    const unsubPaid = onSnapshot(qPaid, (snapshot) => {
+      if (isInitialPaid) {
+        isInitialPaid = false;
+        return;
+      }
+
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const data = change.doc.data();
+          if (data.status === 'CANCELLED' || data.status === 'VOID') return;
+
+          let isFresh = true;
+          let orderTime = 0;
+          if (data.timestamp) {
+            orderTime = typeof data.timestamp.toDate === 'function' ? data.timestamp.toDate().getTime() : new Date(data.timestamp).getTime();
+          } else if (data.createdAt) {
+            orderTime = typeof data.createdAt.toDate === 'function' ? data.createdAt.toDate().getTime() : new Date(data.createdAt).getTime();
+          }
+          if (orderTime && (Date.now() - orderTime > 5 * 60 * 1000)) {
+            isFresh = false;
+          }
+
+          if (isFresh) {
+            triggerAlarm('💰 Transaksi Kasir Selesai', data);
+          }
+        }
+      });
+    });
+
+    return () => {
+      unsubHeld();
+      unsubPaid();
+    };
+  }, [user?.hotelCode, getNotificationSound, formatCurrency]);
 
 
   const handleRestore = async (order: any) => {

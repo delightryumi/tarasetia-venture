@@ -1,17 +1,17 @@
 /* eslint-disable react/no-unescaped-entities */
 'use client';
 import { cn } from '@/lib/utils';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BentoGrid, BentoGridItem } from '../ui/bento-grid';
 import { IconClock, IconTableColumn } from '@tabler/icons-react';
 import DigitalClock from '../clock/clock';
 import ActiveShiftSummary from '../card/shiftsummary';
 import ChartOne from '../charts/chartone';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, onSnapshot, collection, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, collection, deleteDoc, updateDoc, setDoc, query, orderBy, limit } from 'firebase/firestore';
 import { localDb } from '@/lib/dexie';
 import { toast } from 'react-toastify';
-import { Coffee, Users, Plus, Trash2, X, ClipboardList, CheckCircle, Printer, CreditCard, Settings } from 'lucide-react';
+import { Coffee, Users, Plus, Trash2, X, ClipboardList, CheckCircle, Printer, CreditCard, Settings, Eye, EyeOff, ArrowRightLeft, Move } from 'lucide-react';
 import ReceiptDialog from '../lexupos/ReceiptDialog';
 import TableSelectorModal from '../lexupos/TableSelectorModal';
 
@@ -44,6 +44,7 @@ function LiveTableGrid() {
   });
   const [tablesList, setTablesList] = useState<string[]>([]);
   const [heldOrders, setHeldOrders] = useState<any[]>([]);
+  const [paidOrders, setPaidOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Modal detailed states
@@ -60,8 +61,16 @@ function LiveTableGrid() {
 
   // Void/2FA states
   const [adminPin, setAdminPin] = useState<string>('');
+  const [showAdminPin, setShowAdminPin] = useState<boolean>(false);
   const [cancelReason, setCancelReason] = useState<string>('');
   const [pinError, setPinError] = useState<string>('');
+
+  // Drag and Drop Table Move States
+  const [draggedTable, setDraggedTable] = useState<{ tableName: string; order: any } | null>(null);
+  const [dragOverTable, setDragOverTable] = useState<string | null>(null);
+  const [isTransferring, setIsTransferring] = useState<boolean>(false);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState<boolean>(false);
+  const [targetMoveTable, setTargetMoveTable] = useState<string>('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -94,14 +103,17 @@ function LiveTableGrid() {
     if (!hotelCode || hotelCode === '0') {
       setTablesList([]);
       setHeldOrders([]);
+      setPaidOrders([]);
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     setHeldOrders([]);
+    setPaidOrders([]);
     let unsubPos: any;
-    let unsubOrders: any;
+    let unsubHeld: any;
+    let unsubPaid: any;
     const fetchConfigAndListen = async () => {
       try {
         // 1. Listen to pos settings in real-time
@@ -128,15 +140,29 @@ function LiveTableGrid() {
           setTablesList(parsedTables);
         });
 
-        // 2. Listen in real-time to held orders
-        const q = collection(db, 'hotels', hotelCode, 'pos_held_orders');
-        unsubOrders = onSnapshot(q, (snap) => {
+        // 2. Listen in real-time to held orders (unpaid / dine-in / QR self-order)
+        const qHeld = collection(db, 'hotels', hotelCode, 'pos_held_orders');
+        unsubHeld = onSnapshot(qHeld, (snap) => {
           const orders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           setHeldOrders(orders);
           setIsLoading(false);
         }, (err) => {
-          console.error('Firestore live tables listener error:', err);
+          console.error('Firestore live held tables listener error:', err);
           setIsLoading(false);
+        });
+
+        // 3. Listen in real-time to completed/paid orders (pay-as-you-go or cashier paid)
+        const qPaid = query(collection(db, 'hotels', hotelCode, 'pos_orders'), orderBy('timestamp', 'desc'), limit(100));
+        unsubPaid = onSnapshot(qPaid, (snap) => {
+          const orders = snap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            isPaidDirectly: true,
+            _collectionName: 'pos_orders'
+          }));
+          setPaidOrders(orders);
+        }, (err) => {
+          console.error('Firestore live paid tables listener error:', err);
         });
 
       } catch (err) {
@@ -149,7 +175,8 @@ function LiveTableGrid() {
 
     return () => {
       if (unsubPos) unsubPos();
-      if (unsubOrders) unsubOrders();
+      if (unsubHeld) unsubHeld();
+      if (unsubPaid) unsubPaid();
     };
   }, [hotelCode]);
 
@@ -305,8 +332,85 @@ function LiveTableGrid() {
     }
   };
 
+  // Active table orders: combines held orders (unpaid) and recent paid orders (pay-as-you-go / lunas)
+  const allActiveOrders = useMemo(() => {
+    // 1. Valid active held orders
+    const activeHeld = heldOrders.filter(o => {
+      if (o.status === 'CANCELLED' || o.status === 'VOID') return false;
+      return true;
+    });
+
+    // 2. Valid active paid orders (not cleared, recent within 18 hours, has tableNumber)
+    const activePaid = paidOrders.filter(o => {
+      if (o.tableCleared === true) return false;
+      if (o.status === 'CANCELLED' || o.status === 'VOID') return false;
+      const t = o.tableNumber && String(o.tableNumber).trim();
+      if (!t || t === '-' || t === '—') return false;
+
+      let orderTime = 0;
+      if (o.timestamp) {
+        orderTime = typeof o.timestamp.toDate === 'function' ? o.timestamp.toDate().getTime() : new Date(o.timestamp).getTime();
+      } else if (o.createdAt) {
+        orderTime = typeof o.createdAt.toDate === 'function' ? o.createdAt.toDate().getTime() : new Date(o.createdAt).getTime();
+      }
+      if (orderTime && (Date.now() - orderTime > 18 * 60 * 60 * 1000)) {
+        return false;
+      }
+      return true;
+    });
+
+    // Track order IDs that are already paid so shadow/ghost held orders don't duplicate
+    const seenOrderIds = new Set<string>();
+    activePaid.forEach(o => {
+      seenOrderIds.add(o.id);
+      if (o.transactionId) seenOrderIds.add(o.transactionId);
+      if (o.heldOrderId) seenOrderIds.add(o.heldOrderId);
+    });
+
+    // Filter out held orders that are already represented in activePaid
+    const filteredHeld = activeHeld.filter(o => !seenOrderIds.has(o.id));
+
+    const tableMap = new Map<string, any>();
+
+    // Add paid orders: sort descending (newest first) and take latest order per table
+    const sortedPaid = [...activePaid].sort((a, b) => {
+      const timeA = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp || a.createdAt || 0).getTime();
+      const timeB = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
+    sortedPaid.forEach(o => {
+      const key = normalizeTable(o.tableNumber);
+      if (!key) return;
+      if (!tableMap.has(key)) {
+        tableMap.set(key, o);
+      }
+    });
+
+    // Held orders override or add if newer or present
+    filteredHeld.forEach(o => {
+      const key = normalizeTable(o.tableNumber);
+      if (!key) {
+        tableMap.set(`held-${o.id}`, o);
+        return;
+      }
+      const existing = tableMap.get(key);
+      if (!existing) {
+        tableMap.set(key, o);
+      } else {
+        const heldTime = o.createdAt ? new Date(o.createdAt).getTime() : Date.now();
+        const existingTime = existing.timestamp?.toDate ? existing.timestamp.toDate().getTime() : new Date(existing.timestamp || existing.createdAt || 0).getTime();
+        if (heldTime >= existingTime) {
+          tableMap.set(key, o);
+        }
+      }
+    });
+
+    return Array.from(tableMap.values());
+  }, [heldOrders, paidOrders]);
+
   const handleTableClick = (tableName: string) => {
-    const activeOrder = heldOrders.find(
+    const activeOrder = allActiveOrders.find(
       order => normalizeTable(order.tableNumber) === normalizeTable(tableName)
     );
 
@@ -335,6 +439,7 @@ function LiveTableGrid() {
   const handleClearTable = () => {
     if (!selectedOrder) return;
     setAdminPin('');
+    setShowAdminPin(false);
     setCancelReason('');
     setPinError('');
     setIsConfirmClearOpen(true);
@@ -343,8 +448,10 @@ function LiveTableGrid() {
   const handleConfirmClearTable = async () => {
     if (!selectedOrder) return;
 
-    // Validate Password/PIN and Reason for unpaid tables
-    if (!selectedOrder.isPaidDirectly) {
+    const isPaid = selectedOrder.isPaidDirectly || selectedOrder._collectionName === 'pos_orders';
+
+    // Validate Password/PIN and Reason ONLY for unpaid tables (void/cancel)
+    if (!isPaid) {
       if (!adminPin) {
         setPinError('Password Admin wajib diisi.');
         return;
@@ -361,8 +468,8 @@ function LiveTableGrid() {
 
     setIsDeleting(true);
     try {
-      // Save void transaction if unpaid
-      if (!selectedOrder.isPaidDirectly) {
+      if (!isPaid) {
+        // Save void transaction if unpaid
         const orderId = selectedOrder.id || `void-${Date.now()}`;
         const orderData = {
           transactionId: orderId,
@@ -382,14 +489,27 @@ function LiveTableGrid() {
           timestamp: new Date(),
         };
         await setDoc(doc(db, 'hotels', hotelCode, 'pos_orders', orderId), orderData);
+
+        // Delete from Firestore pos_held_orders
+        await deleteDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', selectedOrder.id));
+        // Delete from IndexedDB heldOrders
+        await localDb.heldOrders.delete(selectedOrder.id);
+      } else {
+        // For already paid orders: mark table cleared in pos_orders so table becomes free,
+        // without deleting the financial/accounting transaction.
+        await updateDoc(doc(db, 'hotels', hotelCode, 'pos_orders', selectedOrder.id), {
+          tableCleared: true,
+          tableClearedAt: new Date().toISOString()
+        });
+
+        // Also clean up any lingering held order with same ID if present
+        try {
+          await deleteDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', selectedOrder.id));
+          await localDb.heldOrders.delete(selectedOrder.id);
+        } catch (e) {}
       }
 
-      // Delete from Firestore pos_held_orders
-      await deleteDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', selectedOrder.id));
-      // Delete from IndexedDB heldOrders
-      await localDb.heldOrders.delete(selectedOrder.id);
-
-      toast.success(selectedOrder.isPaidDirectly 
+      toast.success(isPaid 
         ? `Meja ${selectedTable} berhasil dikosongkan.`
         : `Meja ${selectedTable} berhasil dibatalkan & dikosongkan.`
       );
@@ -402,6 +522,145 @@ function LiveTableGrid() {
       setIsDeleting(false);
     }
   };
+
+  const moveOrderToTable = async (sourceOrder: any, fromTable: string, toTable: string) => {
+    if (!sourceOrder || !toTable) return;
+    const cleanToTable = toTable.trim();
+    const cleanFromTable = fromTable.trim();
+    if (!cleanToTable || normalizeTable(cleanFromTable) === normalizeTable(cleanToTable)) return;
+
+    setIsTransferring(true);
+    try {
+      const isPaid = sourceOrder.isPaidDirectly || sourceOrder._collectionName === 'pos_orders';
+      const orderId = sourceOrder.id;
+      const nowIso = new Date().toISOString();
+
+      // 1. Update in pos_orders (if this order or transaction exists there)
+      try {
+        const orderRef = doc(db, 'hotels', hotelCode, 'pos_orders', orderId);
+        const snap = await getDoc(orderRef);
+        if (snap.exists()) {
+          await updateDoc(orderRef, {
+            tableNumber: cleanToTable,
+            tableTransferHistory: [
+              ...(snap.data().tableTransferHistory || []),
+              { from: cleanFromTable, to: cleanToTable, at: nowIso }
+            ],
+            updatedAt: nowIso
+          });
+        }
+      } catch (e) {
+        console.warn('pos_orders direct update error:', e);
+      }
+
+      // Also update any matching transaction in paidOrders matching this orderId or same session
+      try {
+        const matchingPaid = paidOrders.filter(
+          p => (p.id === orderId || p.transactionId === orderId || (p.tableNumber && normalizeTable(p.tableNumber) === normalizeTable(cleanFromTable) && p.customerName === sourceOrder.customerName))
+        );
+        for (const p of matchingPaid) {
+          if (p.id !== orderId) {
+            await updateDoc(doc(db, 'hotels', hotelCode, 'pos_orders', p.id), {
+              tableNumber: cleanToTable,
+              updatedAt: nowIso
+            });
+          }
+        }
+      } catch (e) {}
+
+      // 2. Update or clean up in pos_held_orders
+      try {
+        const heldRef = doc(db, 'hotels', hotelCode, 'pos_held_orders', orderId);
+        const heldSnap = await getDoc(heldRef);
+        if (heldSnap.exists()) {
+          if (isPaid) {
+            // If already paid, held order shouldn't exist, delete it to prevent double order
+            await deleteDoc(heldRef);
+            await localDb.heldOrders.delete(orderId);
+          } else {
+            await updateDoc(heldRef, {
+              tableNumber: cleanToTable,
+              tableTransferHistory: [
+                ...(heldSnap.data().tableTransferHistory || []),
+                { from: cleanFromTable, to: cleanToTable, at: nowIso }
+              ],
+              updatedAt: nowIso
+            });
+            await localDb.heldOrders.update(orderId, { tableNumber: cleanToTable });
+          }
+        }
+      } catch (e) {
+        console.warn('pos_held_orders update error:', e);
+      }
+
+      // Also clean up any other document in heldOrders matching fromTable for this order/guest
+      try {
+        const matchingHeld = heldOrders.filter(
+          h => h.id === orderId || (h.tableNumber && normalizeTable(h.tableNumber) === normalizeTable(cleanFromTable) && (h.customerName === sourceOrder.customerName || h.id === sourceOrder.id))
+        );
+        for (const h of matchingHeld) {
+          if (h.id !== orderId) {
+            if (isPaid) {
+              await deleteDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', h.id));
+              await localDb.heldOrders.delete(h.id);
+            } else {
+              await updateDoc(doc(db, 'hotels', hotelCode, 'pos_held_orders', h.id), {
+                tableNumber: cleanToTable,
+                updatedAt: nowIso
+              });
+              await localDb.heldOrders.update(h.id, { tableNumber: cleanToTable });
+            }
+          }
+        }
+      } catch (e) {}
+
+      // 3. Clear any lingering older orders on fromTable so it doesn't resurrect phantom previous orders
+      try {
+        const lingeringOrders = paidOrders.filter(
+          p => p.id !== orderId && p.tableCleared !== true && p.tableNumber && normalizeTable(p.tableNumber) === normalizeTable(cleanFromTable)
+        );
+        for (const lo of lingeringOrders) {
+          await updateDoc(doc(db, 'hotels', hotelCode, 'pos_orders', lo.id), {
+            tableCleared: true,
+            tableClearedAt: nowIso
+          });
+        }
+      } catch (e) {}
+
+      toast.success(`Pesanan ${sourceOrder.customerName || 'Tamu'} berhasil dipindahkan dari ${cleanFromTable} ke ${cleanToTable}!`);
+      setIsMoveModalOpen(false);
+      setIsModalOpen(false);
+      setSelectedOrder(null);
+      setSelectedTable(null);
+    } catch (err) {
+      console.error('Failed to move table:', err);
+      toast.error('Gagal memindahkan meja. Silakan coba lagi.');
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
+  const handleDropOnTable = async (targetTableName: string, targetActiveOrder: any) => {
+    if (!draggedTable) return;
+    const { tableName: sourceTableName, order: sourceOrder } = draggedTable;
+    setDraggedTable(null);
+    setDragOverTable(null);
+
+    if (normalizeTable(sourceTableName) === normalizeTable(targetTableName)) {
+      return;
+    }
+
+    if (targetActiveOrder) {
+      toast.warning(`Meja "${targetTableName}" sudah terisi tamu! Pindahkan ke meja yang masih kosong.`);
+      return;
+    }
+
+    await moveOrderToTable(sourceOrder, sourceTableName, targetTableName);
+  };
+
+  const availableEmptyTables = tablesList.filter(tableName => 
+    !allActiveOrders.some(order => normalizeTable(order.tableNumber) === normalizeTable(tableName))
+  );
 
   const handleOpenNewTable = () => {
     localStorage.setItem('prefilled_table_number', selectedTable || '');
@@ -416,17 +675,20 @@ function LiveTableGrid() {
           <h3 className="text-sm font-bold text-neutral-800 dark:text-[#f4f4f5] flex items-center gap-2">
             <IconTableColumn className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
             Status Denah Meja Aktif
+            <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded-md">
+              <Move size={10} /> Geser kartu meja untuk pindah meja
+            </span>
           </h3>
         </div>
         <div className="flex items-center gap-3.5">
           <div className="flex items-center gap-4 text-xs font-semibold">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/20 border border-emerald-500" />
-              <span className="text-neutral-600 dark:text-neutral-400">Terisi ({heldOrders.length})</span>
+              <span className="text-neutral-600 dark:text-neutral-400">Terisi ({allActiveOrders.length})</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500" />
-              <span className="text-neutral-600 dark:text-neutral-400">Kosong ({Math.max(0, tablesList.length - heldOrders.filter(o => tablesList.some(t => normalizeTable(t) === normalizeTable(o.tableNumber))).length)})</span>
+              <span className="text-neutral-600 dark:text-neutral-400">Kosong ({Math.max(0, tablesList.length - allActiveOrders.filter(o => tablesList.some(t => normalizeTable(t) === normalizeTable(o.tableNumber))).length)})</span>
             </div>
           </div>
           <button
@@ -459,7 +721,7 @@ function LiveTableGrid() {
         <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5">
           {(() => {
             const registeredMatches = tablesList.map((tableName) => {
-              const activeOrder = heldOrders.find(
+              const activeOrder = allActiveOrders.find(
                 order => normalizeTable(order.tableNumber) === normalizeTable(tableName)
               );
               return {
@@ -470,13 +732,16 @@ function LiveTableGrid() {
               };
             });
 
-            const extraTables = heldOrders
+            const extraTables = allActiveOrders
               .filter(order => {
                 const orderNorm = normalizeTable(order.tableNumber);
-                return orderNorm && !tablesList.some(t => normalizeTable(t) === orderNorm);
+                if (!orderNorm) return true;
+                return !tablesList.some(t => normalizeTable(t) === orderNorm);
               })
               .map(order => ({
-                tableName: order.tableNumber || 'Meja Ekstra',
+                tableName: (order.tableNumber && String(order.tableNumber).trim() !== '' && order.tableNumber !== '-' && order.tableNumber !== '—')
+                  ? order.tableNumber
+                  : (order.orderNumber ? `Pesanan #${order.orderNumber}` : (order.customerName ? `Tamu: ${order.customerName}` : 'Antrian Baru')),
                 activeOrder: order,
                 isOccupied: true,
                 isExtra: true,
@@ -484,95 +749,148 @@ function LiveTableGrid() {
 
             const allTables = [...registeredMatches, ...extraTables];
 
-            return allTables.map(({ tableName, activeOrder, isOccupied, isExtra }, idx) => (
-              <button
-                key={isOccupied && activeOrder?.id ? `${tableName}-${activeOrder.id}-${idx}` : `table-${tableName}-${idx}`}
-                onClick={() => handleTableClick(tableName)}
-                className={cn(
-                  "p-4 rounded-xl border flex flex-col justify-between items-start text-left transition-all relative overflow-hidden select-none cursor-pointer h-[115px] focus:outline-none",
-                  isOccupied
-                    ? (activeOrder?.isSplitActive 
-                        ? "bg-purple-50/90 dark:bg-purple-950/40 border-purple-300 dark:border-purple-800 hover:border-purple-500 hover:shadow-md"
-                        : "bg-rose-50/90 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 hover:border-rose-500 hover:shadow-md")
-                    : "bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 hover:border-emerald-500 hover:shadow-md"
-                )}
-              >
-                <div className="w-full flex justify-between items-start gap-1">
-                  <span className={cn(
-                    "text-xs font-black tracking-tight truncate pr-2 flex items-center gap-1",
-                    isOccupied 
-                      ? (activeOrder?.isSplitActive ? "text-purple-950 dark:text-purple-100" : "text-rose-950 dark:text-rose-100")
-                      : "text-emerald-950 dark:text-emerald-100"
-                  )}>
-                    {tableName}
-                  </span>
-                  {isOccupied ? (
-                    <span className={cn(
-                      "w-1.5 h-1.5 rounded-full shrink-0 mt-1",
-                      activeOrder?.isSplitActive ? "bg-purple-600 animate-pulse" : "bg-rose-600 animate-pulse"
-                    )} />
-                  ) : (
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0 mt-1" />
-                  )}
-                </div>
+            return allTables.map(({ tableName, activeOrder, isOccupied, isExtra }, idx) => {
+              const isBeingDragged = draggedTable?.tableName === tableName;
+              const isTargeted = dragOverTable === tableName;
 
-                {isOccupied ? (
-                  <div className="w-full flex flex-col gap-0.5 mt-2">
+              return (
+                <button
+                  key={isOccupied && activeOrder?.id ? `${tableName}-${activeOrder.id}-${idx}` : `table-${tableName}-${idx}`}
+                  onClick={() => handleTableClick(tableName)}
+                  draggable={isOccupied && !isTransferring}
+                  onDragStart={(e) => {
+                    if (!isOccupied || !activeOrder) return;
+                    e.dataTransfer.setData('text/plain', tableName);
+                    e.dataTransfer.effectAllowed = 'move';
+                    setDraggedTable({ tableName, order: activeOrder });
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (draggedTable && draggedTable.tableName !== tableName) {
+                      e.dataTransfer.dropEffect = 'move';
+                      if (dragOverTable !== tableName) {
+                        setDragOverTable(tableName);
+                      }
+                    }
+                  }}
+                  onDragLeave={() => {
+                    if (dragOverTable === tableName) {
+                      setDragOverTable(null);
+                    }
+                  }}
+                  onDragEnd={() => {
+                    setDraggedTable(null);
+                    setDragOverTable(null);
+                  }}
+                  onDrop={async (e) => {
+                    e.preventDefault();
+                    if (draggedTable) {
+                      await handleDropOnTable(tableName, activeOrder);
+                    }
+                  }}
+                  title={isOccupied ? "Tahan & geser untuk memindahkan meja ini" : undefined}
+                  className={cn(
+                    "p-4 rounded-xl border flex flex-col justify-between items-start text-left transition-all relative overflow-hidden select-none cursor-pointer h-[115px] focus:outline-none",
+                    isOccupied
+                      ? (activeOrder?.isSplitActive 
+                          ? "bg-purple-50/90 dark:bg-purple-950/40 border-purple-300 dark:border-purple-800 hover:border-purple-500 hover:shadow-md"
+                          : "bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 hover:border-emerald-500 hover:shadow-md")
+                      : "bg-white dark:bg-[#18181b] border-slate-200 dark:border-zinc-800 hover:border-slate-300 hover:shadow-sm",
+                    isBeingDragged && "opacity-35 scale-95 border-dashed border-neutral-400 dark:border-neutral-600 shadow-inner",
+                    isTargeted && !isOccupied && "ring-2 ring-emerald-500 scale-[1.03] bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 shadow-xl z-20",
+                    isTargeted && isOccupied && "ring-2 ring-rose-500 scale-[1.02] bg-rose-50 dark:bg-rose-950/40 border-rose-400 shadow-md"
+                  )}
+                >
+                  {/* Drop overlay target indicator */}
+                  {isTargeted && !isOccupied && (
+                    <div className="absolute inset-0 bg-emerald-600/90 flex flex-col items-center justify-center text-white p-2 text-center z-30 backdrop-blur-xs rounded-xl pointer-events-none">
+                      <ArrowRightLeft className="w-5 h-5 mb-1 animate-bounce" />
+                      <span className="text-[10px] font-black uppercase tracking-wider">Lepas di Sini</span>
+                      <span className="text-[9px] opacity-90">Pindah ke {tableName}</span>
+                    </div>
+                  )}
+                  {isTargeted && isOccupied && (
+                    <div className="absolute inset-0 bg-rose-600/90 flex flex-col items-center justify-center text-white p-2 text-center z-30 backdrop-blur-xs rounded-xl pointer-events-none">
+                      <X className="w-5 h-5 mb-1" />
+                      <span className="text-[10px] font-black uppercase tracking-wider">Meja Terisi</span>
+                      <span className="text-[9px] opacity-90">Pilih meja kosong</span>
+                    </div>
+                  )}
+
+                  <div className="w-full flex justify-between items-start gap-1">
                     <span className={cn(
-                      "text-[10px] font-bold truncate flex items-center gap-1",
-                      activeOrder?.isSplitActive 
-                        ? "text-purple-900 dark:text-purple-200" 
-                        : "text-neutral-800 dark:text-neutral-200"
+                      "text-xs font-black tracking-tight truncate pr-2 flex items-center gap-1",
+                      isOccupied 
+                        ? (activeOrder?.isSplitActive ? "text-purple-950 dark:text-purple-100" : "text-emerald-950 dark:text-emerald-100")
+                        : "text-neutral-700 dark:text-neutral-300 font-bold"
                     )}>
-                      <Users size={10} className="shrink-0" />
-                      {activeOrder.customerName || 'Guest'}
+                      {isOccupied && <Move size={10} className="text-neutral-400 dark:text-neutral-500 shrink-0 opacity-70" />}
+                      {tableName}
                     </span>
-                    <div className="flex items-center justify-between w-full mt-1">
+                    {isOccupied ? (
                       <span className={cn(
-                        "text-[11px] font-black",
+                        "w-1.5 h-1.5 rounded-full shrink-0 mt-1",
+                        activeOrder?.isSplitActive ? "bg-purple-600 animate-pulse" : "bg-emerald-600 animate-pulse"
+                      )} />
+                    ) : (
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-1" />
+                    )}
+                  </div>
+
+                  {isOccupied ? (
+                    <div className="w-full flex flex-col gap-0.5 mt-2">
+                      <span className={cn(
+                        "text-[10px] font-bold truncate flex items-center gap-1",
                         activeOrder?.isSplitActive 
-                          ? "text-purple-700 dark:text-purple-400" 
-                          : "text-rose-700 dark:text-rose-400"
+                          ? "text-purple-900 dark:text-purple-200" 
+                          : "text-neutral-800 dark:text-neutral-200"
                       )}>
-                        {formatCurrency(getOrderTotal(activeOrder))}
+                        <Users size={10} className="shrink-0" />
+                        {activeOrder.customerName || 'Guest'}
                       </span>
-                      <div className="flex items-center gap-1">
-                        {activeOrder.isSplitActive ? (
-                          <span className="text-[8px] bg-purple-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none animate-pulse shadow-[0_0_8px_rgba(147,51,234,0.8)] border border-purple-400">
-                            SPLIT SISA
-                          </span>
-                        ) : activeOrder.payableAmount === 0 || activeOrder.paymentMethod === 'compliment' || activeOrder.discountPercent === 100 ? (
-                          <span className="text-[8px] bg-purple-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none">
-                            COMPLIMENT
-                          </span>
-                        ) : (activeOrder.discount > 0 || activeOrder.discountPercent > 0) ? (
-                          <span className="text-[8px] bg-red-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none">
-                            DISKON
-                          </span>
-                        ) : null}
-                        {!activeOrder.isSplitActive && (
-                          activeOrder.isPaidDirectly ? (
-                            <span className="text-[8px] bg-emerald-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none">
-                              PAID
+                      <div className="flex items-center justify-between w-full mt-1">
+                        <span className={cn(
+                          "text-[11px] font-black",
+                          activeOrder?.isSplitActive ? "text-purple-700 dark:text-purple-400" : "text-emerald-700 dark:text-emerald-400"
+                        )}>
+                          {formatCurrency(getOrderTotal(activeOrder))}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {activeOrder.isSplitActive ? (
+                            <span className="text-[8px] bg-purple-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none animate-pulse shadow-[0_0_8px_rgba(147,51,234,0.8)] border border-purple-400">
+                              SPLIT SISA
                             </span>
-                          ) : (
-                            <span className="text-[8px] bg-amber-500 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)] border border-amber-400">
-                              UNPAID
+                          ) : activeOrder.payableAmount === 0 || activeOrder.paymentMethod === 'compliment' || activeOrder.discountPercent === 100 ? (
+                            <span className="text-[8px] bg-purple-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none">
+                              COMPLIMENT
                             </span>
-                          )
-                        )}
+                          ) : (activeOrder.discount > 0 || activeOrder.discountPercent > 0) ? (
+                            <span className="text-[8px] bg-red-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none">
+                              DISKON
+                            </span>
+                          ) : null}
+                          {!activeOrder.isSplitActive && (
+                            activeOrder.isPaidDirectly ? (
+                              <span className="text-[8px] bg-emerald-600 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none">
+                                PAID
+                              </span>
+                            ) : (
+                              <span className="text-[8px] bg-amber-500 text-white font-extrabold px-1.5 py-0.5 rounded-[6px] tracking-wide leading-none animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)] border border-amber-400">
+                                UNPAID
+                              </span>
+                            )
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="w-full flex flex-col gap-0.5 mt-2">
-                    <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 mt-auto">
-                      Kosong
-                    </span>
-                  </div>
-                )}
-              </button>
-            ));
+                  ) : (
+                    <div className="w-full flex justify-between items-center text-[11px] font-bold text-neutral-400 dark:text-zinc-500 mt-auto">
+                      <span>Kosong</span>
+                    </div>
+                  )}
+                </button>
+              );
+            });
           })()}
         </div>
       )}
@@ -828,6 +1146,17 @@ function LiveTableGrid() {
                   </div>
 
                   <button
+                    onClick={() => {
+                      setTargetMoveTable('');
+                      setIsMoveModalOpen(true);
+                    }}
+                    className="w-full py-2.5 px-4 rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-neutral-800 dark:text-neutral-200 font-bold text-xs cursor-pointer border border-neutral-200 dark:border-white/[0.08] flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-[0.98] mt-2 shrink-0"
+                  >
+                    <ArrowRightLeft size={14} className="text-emerald-600 dark:text-emerald-400" />
+                    Pindah Meja (Transfer Meja)
+                  </button>
+
+                  <button
                     onClick={() => setIsPrintDialogOpen(true)}
                     className="w-full py-2.5 px-4 rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-neutral-800 dark:text-neutral-200 font-bold text-xs cursor-pointer border border-neutral-200 dark:border-white/[0.08] flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-[0.98] mt-2 shrink-0 mb-2"
                   >
@@ -877,6 +1206,98 @@ function LiveTableGrid() {
         />
       )}
 
+      {/* Modal Pindah Meja (Transfer Order) */}
+      {isMoveModalOpen && selectedOrder && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMoveModalOpen(false)} />
+          <div className="bg-white dark:bg-[#161618] border border-slate-200 dark:border-white/[0.08] w-full max-w-sm rounded-xl shadow-2xl p-6 z-10 flex flex-col relative overflow-hidden font-sans">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-black text-neutral-800 dark:text-[#f4f4f5] flex items-center gap-2 m-0">
+                <ArrowRightLeft size={16} className="text-emerald-600 dark:text-emerald-400" />
+                Pindah Meja (Transfer)
+              </h4>
+              <button
+                onClick={() => setIsMoveModalOpen(false)}
+                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 p-1 rounded-lg border-none bg-transparent cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="bg-neutral-50 dark:bg-zinc-900/50 p-3 rounded-xl border border-neutral-150 dark:border-white/[0.06] mb-4 text-xs flex flex-col gap-1.5">
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Meja Asal:</span>
+                <span className="font-bold text-neutral-900 dark:text-neutral-100">{selectedTable}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Nama Tamu:</span>
+                <span className="font-bold text-neutral-900 dark:text-neutral-100">{selectedOrder.customerName || 'Guest'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Status Pembayaran:</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">{selectedOrder.isPaidDirectly ? 'PAID (Lunas)' : 'UNPAID (Belum Bayar)'}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 mb-5">
+              <label className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
+                Pilih Meja Tujuan yang Kosong:
+              </label>
+              {availableEmptyTables.length > 0 ? (
+                <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1 thin-scrollbar">
+                  {availableEmptyTables.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTargetMoveTable(t)}
+                      className={cn(
+                        "py-2 px-2.5 rounded-lg text-xs font-bold text-center border transition-all cursor-pointer",
+                        targetMoveTable === t
+                          ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                          : "bg-white dark:bg-zinc-900 border-neutral-200 dark:border-zinc-800 text-neutral-800 dark:text-neutral-200 hover:border-emerald-400"
+                      )}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs text-neutral-500 italic py-2 text-center border border-dashed rounded-lg">
+                  Tidak ada meja kosong yang terdaftar. Ketik nama meja tujuan di bawah:
+                </div>
+              )}
+
+              <div className="mt-2 flex flex-col gap-1">
+                <span className="text-[10px] text-neutral-500">Atau ketik nama meja tujuan lain:</span>
+                <input
+                  type="text"
+                  value={targetMoveTable}
+                  onChange={(e) => setTargetMoveTable(e.target.value)}
+                  placeholder="Contoh: Meja 5"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-zinc-800 bg-transparent dark:text-white focus:outline-none focus:border-emerald-500 font-sans"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsMoveModalOpen(false)}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-white dark:bg-zinc-800 hover:bg-neutral-100 dark:hover:bg-zinc-700 text-neutral-800 dark:text-neutral-200 border border-slate-200 dark:border-white/[0.08] font-bold text-xs cursor-pointer transition-all active:scale-[0.98]"
+              >
+                Batal
+              </button>
+              <button
+                disabled={isTransferring || !targetMoveTable.trim()}
+                onClick={() => moveOrderToTable(selectedOrder, selectedTable || '', targetMoveTable)}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs cursor-pointer border-none transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                {isTransferring ? 'Memindahkan...' : 'Pindahkan Meja'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Custom CSS Confirmation Modal for Clearing Table */}
       {isConfirmClearOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -894,16 +1315,26 @@ function LiveTableGrid() {
                 </p>
                 <div className="flex flex-col gap-1 text-left mt-2">
                   <label className="text-[10px] font-black uppercase text-neutral-500 dark:text-zinc-400">Password / PIN Admin (2FA)</label>
-                  <input
-                    type="password"
-                    value={adminPin}
-                    onChange={(e) => {
-                      setAdminPin(e.target.value);
-                      setPinError('');
-                    }}
-                    className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-transparent dark:text-white focus:outline-none focus:border-red-500 font-sans"
-                    placeholder="Masukkan Password Admin (admin123)"
-                  />
+                  <div className="relative flex items-center">
+                    <input
+                      type={showAdminPin ? 'text' : 'password'}
+                      value={adminPin}
+                      onChange={(e) => {
+                        setAdminPin(e.target.value);
+                        setPinError('');
+                      }}
+                      className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-transparent dark:text-white focus:outline-none focus:border-red-500 font-sans pr-10"
+                      placeholder=""
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAdminPin(!showAdminPin)}
+                      className="absolute right-3 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors cursor-pointer bg-transparent border-none p-0 flex items-center justify-center focus:outline-none"
+                      tabIndex={-1}
+                    >
+                      {showAdminPin ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-1 text-left">
                   <label className="text-[10px] font-black uppercase text-neutral-500 dark:text-zinc-400">Alasan Void</label>
@@ -915,7 +1346,7 @@ function LiveTableGrid() {
                     }}
                     rows={2}
                     className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-transparent dark:text-white focus:outline-none focus:border-red-500 font-sans resize-none"
-                    placeholder="Contoh: Salah input pesanan"
+                    placeholder=""
                   />
                 </div>
                 {pinError && (
@@ -924,7 +1355,7 @@ function LiveTableGrid() {
               </div>
             ) : (
               <p className="text-xs text-neutral-600 dark:text-[#a1a1aa] leading-relaxed mb-6">
-                Apakah Anda yakin ingin membersihkan meja <strong className="text-neutral-800 dark:text-[#f4f4f5]">{selectedTable}</strong>? Pesanan aktif ini akan dihapus/dibatalkan secara permanen.
+                Apakah Anda yakin ingin mengosongkan meja <strong className="text-neutral-800 dark:text-[#f4f4f5]">{selectedTable}</strong>? Tamu sudah selesai bertransaksi dan meja siap dibersihkan untuk tamu berikutnya.
               </p>
             )}
 
@@ -940,7 +1371,7 @@ function LiveTableGrid() {
                 onClick={handleConfirmClearTable}
                 className="flex-1 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs cursor-pointer border-none transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isDeleting ? 'Mengosongkan...' : 'Ya, Kosongkan'}
+                {isDeleting ? 'Mengosongkan...' : (selectedOrder?.isPaidDirectly ? 'Ya, Kosongkan Meja' : 'Ya, Batalkan & Kosongkan')}
               </button>
             </div>
           </div>

@@ -1,15 +1,13 @@
-import React from 'react';
-import KitchenDisplaySystem from '@/components/order/KitchenDisplaySystem';
-import ErrorBoundary from '@/components/toaster/toaster';
+'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-const page = () => {
-  return (
-    <div className="w-full h-full">
-      <ErrorBoundary>
-        <KitchenDisplaySystem />
-      </ErrorBoundary>
-    </div>
-  );
-};
+export default function OrdersRedirectPage() {
+  const router = useRouter();
 
-export default page;
+  useEffect(() => {
+    router.replace('/home');
+  }, [router]);
+
+  return null;
+}

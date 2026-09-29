@@ -15,11 +15,14 @@ export function getHotelCollection(
   if (!code) {
     if (typeof window !== "undefined") {
       try {
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          const parsed = JSON.parse(storedUser);
-          if (parsed && parsed.hotelCode) {
-            code = parsed.hotelCode;
+        code = localStorage.getItem("active_hotel_code") || localStorage.getItem("hotelCode") || "";
+        if (!code) {
+          const storedUser = localStorage.getItem("user");
+          if (storedUser) {
+            const parsed = JSON.parse(storedUser);
+            if (parsed && parsed.hotelCode) {
+              code = parsed.hotelCode;
+            }
           }
         }
       } catch (e) {
