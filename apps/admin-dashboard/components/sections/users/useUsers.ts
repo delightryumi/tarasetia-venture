@@ -239,7 +239,7 @@ export const useUsers = (menuItems: any[]) => {
                     if (modules.length === 0) {
                         const plan = data.billing?.plan || 'enterprise';
                         if (plan === 'startup') {
-                            modules = ["pos", "hrd", "cpanel-only"];
+                            modules = ["pos", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"];
                         } else if (plan === 'bisnis') {
                             modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "innalytics", "hrd", "cpanel-only"];
                         } else {
@@ -248,7 +248,7 @@ export const useUsers = (menuItems: any[]) => {
                     }
                     setActiveModules(modules);
                 } else {
-                    setActiveModules(["pos", "hrd", "cpanel-only"]); // Fallback
+                    setActiveModules(["pos", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"]); // Fallback
                 }
             });
         }

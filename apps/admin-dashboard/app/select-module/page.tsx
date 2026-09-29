@@ -88,7 +88,7 @@ export default function SelectModulePage() {
         if (modules.length === 0) {
           const plan = data.billing?.plan || 'enterprise';
           if (plan === 'basic' || plan === 'startup') {
-            modules = ['pos', 'hrd', 'cpanel-only'];
+            modules = ['pos', 'food-beverage', 'purchasing', 'accounting', 'hrd', 'cpanel-only'];
           } else if (plan === 'bisnis') {
             modules = ['pos', 'front-office', 'housekeeping', 'food-beverage', 'purchasing', 'accounting', 'hrd', 'innalytics', 'cpanel-only'];
           } else {

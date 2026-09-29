@@ -289,7 +289,7 @@ export default function SuperadminPage() {
     const randomId = Math.floor(10000 + Math.random() * 90000).toString();
     setHotelCode(randomId); setName(""); setDomain(""); setSubdomain("");
     setAddress(""); setPhone(""); setEmail(""); setPlan("startup");
-    setActiveModules(["pos", "hrd", "cpanel-only"]); setCycle("monthly");
+    setActiveModules(["pos", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"]); setCycle("monthly");
     setBillingStatus("paid");
     setNextDueDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
     setShowBillingAlert(false); setShowExpirationAlert(false);
@@ -313,7 +313,7 @@ export default function SuperadminPage() {
     
     if (modules.length === 0) {
       if (hotel.billing?.plan === "basic" || hotel.billing?.plan === "startup") {
-        modules = ["pos", "hrd", "cpanel-only"];
+        modules = ["pos", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"];
       } else if (hotel.billing?.plan === "bisnis") {
         modules = ["pos", "front-office", "innalytics", "housekeeping", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"];
       } else {
