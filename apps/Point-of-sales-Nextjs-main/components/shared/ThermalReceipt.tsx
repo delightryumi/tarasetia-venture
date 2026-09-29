@@ -233,12 +233,50 @@ export function printThermalReceipt(
     .leading-snug { line-height: 1.375 !important; }
     .leading-relaxed { line-height: 1.5 !important; }
     /* Borders */
-    .border-t { border-top: 1px solid #000000 !important; }
-    .border-b { border-bottom: 1px solid #000000 !important; }
-    .border-dashed { border-style: dashed !important; }
-    .border-dotted { border-style: dotted !important; }
-    .border-black { border-color: #000000 !important; }
-    .border-neutral-300 { border-color: #d4d4d4 !important; }
+    .border-t {
+      border-top: 1px solid #000000 !important;
+      border-bottom: none !important;
+      border-left: none !important;
+      border-right: none !important;
+    }
+    .border-b {
+      border-bottom: 1px solid #000000 !important;
+      border-top: none !important;
+      border-left: none !important;
+      border-right: none !important;
+    }
+    .border-dashed {
+      border-style: dashed !important;
+    }
+    .border-dotted {
+      border-style: dotted !important;
+    }
+    .border-black {
+      border-color: #000000 !important;
+    }
+    .border-neutral-300 {
+      border-color: #cccccc !important;
+    }
+    .border-t.border-dashed {
+      border: none !important;
+      border-top: 1px dashed #222222 !important;
+      height: 0 !important;
+      min-height: 0 !important;
+    }
+    .border-t.border-dotted {
+      border: none !important;
+      border-top: 1px dotted #aaaaaa !important;
+    }
+    .border-x-0 {
+      border-left: none !important;
+      border-right: none !important;
+    }
+    .border-b-0 {
+      border-bottom: none !important;
+    }
+    .border-none {
+      border: none !important;
+    }
     /* Spacing */
     .m-0 { margin: 0 !important; }
     .my-1 { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; }
@@ -914,7 +952,7 @@ export default function ThermalReceipt({
           )}
 
           {/* Powered By Footer */}
-          <div className="flex flex-col items-center justify-center mt-3 pt-2 border-t border-dotted border-neutral-300">
+          <div className="flex flex-col items-center justify-center mt-3 pt-2 border-t border-dotted border-neutral-300 border-x-0 border-b-0">
             <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center no-underline text-inherit cursor-pointer">
               <span className="text-[7.5px] text-neutral-500 lowercase tracking-widest font-black mb-1">powered by</span>
               <img src="/channels/1.png" alt="My Tara" className="powered-by-logo h-6 w-auto object-contain" />
