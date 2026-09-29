@@ -79,6 +79,313 @@ export function formatReceiptDate(dateVal?: string | Date) {
   return `${day} ${month} ${year} pukul ${hours}.${minutes}`;
 }
 
+/**
+ * Print a thermal receipt element via an isolated hidden iframe.
+ * This completely isolates the receipt HTML & CSS from the main window DOM,
+ * Next.js layout, and Radix UI modal constraints, preventing artificial page breaks
+ * and continuous roll truncation.
+ */
+export function printThermalReceipt(
+  element: HTMLElement | string,
+  paperSize: '80mm' | '58mm' = '80mm',
+  onFinish?: () => void
+) {
+  if (typeof window === 'undefined') return;
+
+  const targetEl = typeof element === 'string' ? document.getElementById(element) : element;
+  if (!targetEl) {
+    window.print();
+    return;
+  }
+
+  // Remove existing print iframes if any
+  const oldIframe = document.getElementById('thermal-print-iframe');
+  if (oldIframe) {
+    oldIframe.remove();
+  }
+
+  const iframe = document.createElement('iframe');
+  iframe.id = 'thermal-print-iframe';
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.style.opacity = '0';
+  iframe.style.pointerEvents = 'none';
+  iframe.style.zIndex = '-9999';
+
+  document.body.appendChild(iframe);
+
+  const iframeDoc = iframe.contentWindow?.document;
+  if (!iframeDoc) {
+    window.print();
+    return;
+  }
+
+  const width = paperSize === '58mm' ? '58mm' : '80mm';
+  const fontSize = paperSize === '58mm' ? '10px' : '11.5px';
+  const padding = paperSize === '58mm' ? '2mm 2.5mm 5mm 2.5mm' : '4mm 3.5mm 8mm 3.5mm';
+
+  // Clone receipt element
+  const clone = targetEl.cloneNode(true) as HTMLElement;
+  const hiddenElements = clone.querySelectorAll('.print\\:hidden, button');
+  hiddenElements.forEach(el => el.remove());
+
+  iframeDoc.open();
+  iframeDoc.write(`
+    <!DOCTYPE html>
+    <html lang="id">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Struk Pembayaran</title>
+        <style>
+          @page {
+            size: auto;
+            margin: 0mm;
+          }
+          *, *::before, *::after {
+            box-sizing: border-box !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: ${width} !important;
+            min-width: ${width} !important;
+            max-width: ${width} !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
+            font-size: ${fontSize} !important;
+            line-height: 1.35 !important;
+            overflow: visible !important;
+            height: auto !important;
+            min-height: 0 !important;
+          }
+          .receipt-print-wrapper {
+            display: block !important;
+            position: relative !important;
+            width: ${width} !important;
+            min-width: ${width} !important;
+            max-width: ${width} !important;
+            margin: 0 auto !important;
+            padding: ${padding} !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            box-shadow: none !important;
+            border: none !important;
+            overflow: visible !important;
+            height: auto !important;
+            min-height: 0 !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .receipt-print-wrapper * {
+            color: #000000 !important;
+            background-color: transparent !important;
+            text-shadow: none !important;
+            box-shadow: none !important;
+          }
+          .receipt-print-wrapper [style*="border"],
+          .receipt-print-wrapper hr {
+            border-color: #000000 !important;
+          }
+          .receipt-print-wrapper img {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+          .print\\:hidden {
+            display: none !important;
+          }
+          .flex {
+            display: flex !important;
+          }
+          .flex-col {
+            flex-direction: column !important;
+          }
+          .justify-between {
+            justify-content: space-between !important;
+          }
+          .items-center {
+            align-items: center !important;
+          }
+          .items-start {
+            align-items: flex-start !important;
+          }
+          .text-center {
+            text-align: center !important;
+          }
+          .text-right {
+            text-align: right !important;
+          }
+          .font-bold {
+            font-weight: 700 !important;
+          }
+          .font-semibold {
+            font-weight: 600 !important;
+          }
+          .font-medium {
+            font-weight: 500 !important;
+          }
+          .font-mono {
+            font-family: monospace, "Courier New", Courier !important;
+          }
+          .uppercase {
+            text-transform: uppercase !important;
+          }
+          .lowercase {
+            text-transform: lowercase !important;
+          }
+          .italic {
+            font-style: italic !important;
+          }
+          .leading-tight {
+            line-height: 1.25 !important;
+          }
+          .leading-none {
+            line-height: 1 !important;
+          }
+          .border-t {
+            border-top-width: 1px !important;
+          }
+          .border-b {
+            border-bottom-width: 1px !important;
+          }
+          .border-dashed {
+            border-style: dashed !important;
+          }
+          .border-dotted {
+            border-style: dotted !important;
+          }
+          .border-black {
+            border-color: #000000 !important;
+          }
+          .whitespace-nowrap {
+            white-space: nowrap !important;
+          }
+          .shrink-0 {
+            flex-shrink: 0 !important;
+          }
+          .flex-1 {
+            flex: 1 1 0% !important;
+          }
+          .break-words {
+            overflow-wrap: break-word !important;
+          }
+          .gap-1 {
+            gap: 0.25rem !important;
+          }
+          .gap-1\\.5 {
+            gap: 0.375rem !important;
+          }
+          .gap-\\[2px\\] {
+            gap: 2px !important;
+          }
+          .my-1 {
+            margin-top: 0.25rem !important;
+            margin-bottom: 0.25rem !important;
+          }
+          .my-1\\.5 {
+            margin-top: 0.375rem !important;
+            margin-bottom: 0.375rem !important;
+          }
+          .my-2 {
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          .mt-3 {
+            margin-top: 0.75rem !important;
+          }
+          .mt-4 {
+            margin-top: 1rem !important;
+          }
+          .mt-5 {
+            margin-top: 1.25rem !important;
+          }
+          .mb-1 {
+            margin-bottom: 0.25rem !important;
+          }
+          .mb-1\\.5 {
+            margin-bottom: 0.375rem !important;
+          }
+          .mb-2 {
+            margin-bottom: 0.5rem !important;
+          }
+          .mb-2\\.5 {
+            margin-bottom: 0.625rem !important;
+          }
+          .pt-2 {
+            padding-top: 0.5rem !important;
+          }
+          .pb-0\\.5 {
+            padding-bottom: 0.125rem !important;
+          }
+          .py-0\\.5 {
+            padding-top: 0.125rem !important;
+            padding-bottom: 0.125rem !important;
+          }
+          .py-1 {
+            padding-top: 0.25rem !important;
+            padding-bottom: 0.25rem !important;
+          }
+          .py-1\\.5 {
+            padding-top: 0.375rem !important;
+            padding-bottom: 0.375rem !important;
+          }
+        </style>
+      </head>
+      <body>
+        ${clone.outerHTML}
+      </body>
+    </html>
+  `);
+  iframeDoc.close();
+
+  const images = iframeDoc.getElementsByTagName('img');
+  let loaded = 0;
+  const total = images.length;
+
+  const triggerPrint = () => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch (e) {
+      console.error('Error triggering iframe print:', e);
+      window.print();
+    } finally {
+      if (onFinish) onFinish();
+      setTimeout(() => {
+        iframe.remove();
+      }, 2000);
+    }
+  };
+
+  if (total === 0) {
+    setTimeout(triggerPrint, 150);
+  } else {
+    for (let i = 0; i < total; i++) {
+      if (images[i].complete) {
+        loaded++;
+        if (loaded === total) setTimeout(triggerPrint, 150);
+      } else {
+        images[i].onload = () => {
+          loaded++;
+          if (loaded === total) setTimeout(triggerPrint, 150);
+        };
+        images[i].onerror = () => {
+          loaded++;
+          if (loaded === total) setTimeout(triggerPrint, 150);
+        };
+      }
+    }
+  }
+}
+
 export default function ThermalReceipt({
   shopInfo,
   transactionInfo,
@@ -204,6 +511,7 @@ export default function ThermalReceipt({
 
   return (
     <div 
+      id="thermal-receipt-printable"
       className={`receipt-print-wrapper w-full ${is58mm ? 'max-w-[58mm] p-[3mm] text-[10.5px]' : 'max-w-[80mm] p-[6mm] text-xs'} bg-white text-black text-left mx-auto font-normal ${className}`}
       style={{ fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif', ...style }}
     >
@@ -211,8 +519,7 @@ export default function ThermalReceipt({
         @media print {
           @page {
             margin: 0 !important;
-            size: ${is58mm ? '58mm' : '80mm'};
-            size: ${is58mm ? '58mm auto' : '80mm auto'} !important;
+            size: auto !important;
           }
 
           *, *::before, *::after {

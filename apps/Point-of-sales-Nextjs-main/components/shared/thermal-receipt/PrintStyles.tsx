@@ -14,8 +14,7 @@ export default function PrintStyles({ paperSize = '80mm' }: { paperSize?: '80mm'
       @media print {
         @page {
           margin: 0 !important;
-          size: ${widthStr};
-          size: ${widthStr} auto !important;
+          size: auto !important;
         }
 
         *, *::before, *::after {

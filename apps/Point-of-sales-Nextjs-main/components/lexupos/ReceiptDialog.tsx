@@ -18,7 +18,7 @@ import { CartItem } from './types';
 import { toast } from 'react-toastify';
 import { useCurrency } from '@/hooks/useCurrency';
 import axios from 'axios';
-import ThermalReceipt, { ReceiptItemData } from '@/components/shared/ThermalReceipt';
+import ThermalReceipt, { ReceiptItemData, printThermalReceipt } from '@/components/shared/ThermalReceipt';
 
 type PrintMode = 'all' | 'kitchen' | 'bar' | 'checker';
 
@@ -559,7 +559,7 @@ export default function ReceiptDialog({
               type="button"
               onClick={() => {
                 playNotificationSound();
-                window.print();
+                printThermalReceipt('thermal-receipt-printable', paperSize);
               }}
               className="rounded-xl flex items-center justify-center gap-1.5 border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-zinc-900 text-xs font-semibold h-9 px-3.5 shrink-0 hover:bg-neutral-100"
               title={`Cetak struk ukuran ${paperSize} via Windows Print`}
