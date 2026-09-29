@@ -145,7 +145,7 @@ export function printThermalReceipt(
   <style>
     @page {
       margin: 0 !important;
-      size: auto !important;
+      size: ${is58 ? '58mm' : '80mm'} 2000mm !important;
     }
     *, *::before, *::after {
       box-sizing: border-box !important;
@@ -510,7 +510,7 @@ export default function ThermalReceipt({
         @media print {
           @page {
             margin: 0 !important;
-            size: auto !important;
+            size: ${is58mm ? '58mm' : '80mm'} 2000mm !important;
           }
 
           *, *::before, *::after {
