@@ -267,7 +267,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         const moduleKey = moduleMap[activeModule];
 
         let items = allNavItems;
-        const hasInnalytics = isSuperadmin || activeModules === null || activeModules.includes("innalytics") || activeModules.includes("inalytics");
+        const hasInnalytics = activeModules === null || activeModules.includes("innalytics") || activeModules.includes("inalytics");
         if (activeModule === "front-office") {
             items = allNavItems.filter((item) => {
                 if (item.id === "innalytics" && !hasInnalytics) return false;
@@ -286,7 +286,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ["pnl", "pnl-budget", "dsr", "budgeting", "statements", "purchase-order"].includes(item.id)
             );
         } else if (activeModule === "food-beverage") {
-            const hasRealtime = isSuperadmin || activeModules === null || activeModules.includes("food-beverage-realtime") || activeModules.includes("pos-realtime");
+            const hasRealtime = activeModules === null || activeModules.includes("food-beverage-realtime") || activeModules.includes("pos-realtime");
             items = allNavItems.filter((item) => {
                 if (item.id === "food-beverage-realtime" && !hasRealtime) return false;
                 return ["food-beverage-ledger", "food-beverage-performance", "food-beverage-product", "food-beverage-realtime", "purchase-order"].includes(item.id);
@@ -323,8 +323,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     item.id === "users" || (item.id === "superadmin" && isSuperadmin)
                 );
             } else {
-                if (!isSuperadmin && activeModules !== null && !activeModules.includes("cpanel-full")) {
-                    items = allNavItems.filter((item) => ["logo", "users"].includes(item.id));
+                if (activeModules !== null && !activeModules.includes("cpanel-full")) {
+                    const cpanelAllowedIds = ["logo", "users"];
+                    if (isSuperadmin || (user?.permissions?.["channel-manager"] === true && hasPermission(user, "channel-manager", "module_channel_manager"))) {
+                        cpanelAllowedIds.push("channel-manager");
+                    }
+                    if (isSuperadmin) {
+                        cpanelAllowedIds.push("superadmin");
+                    }
+                    items = allNavItems.filter((item) => cpanelAllowedIds.includes(item.id));
                 } else {
                     const cpanelAllowedIds = [
                         "logo",

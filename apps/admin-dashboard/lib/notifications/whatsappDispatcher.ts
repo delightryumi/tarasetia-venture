@@ -1,12 +1,11 @@
 import { adminDb } from "@/lib/firebaseAdmin";
-import { sendWhatsAppNotificationToOwner as sendFonnteNotification, WhatsAppNotificationPayload } from "@/lib/notifications/whatsappFonnteService";
-import { sendWhatsAppNotificationToOwner as sendMetaNotification } from "@/lib/notifications/whatsappMetaService";
+import { sendWhatsAppNotificationToOwner as sendMetaNotification, WhatsAppNotificationPayload } from "@/lib/notifications/whatsappMetaService";
 
 export type { WhatsAppNotificationPayload };
 
 /**
- * Unified Multi-Tenant WhatsApp Dispatcher
- * Automatically routes notifications to the gateway configured for the hotel ("meta" or "fonnte").
+ * Unified WhatsApp Dispatcher for My Tara CRS
+ * 100% Official Meta WhatsApp Cloud API Integration
  */
 export async function dispatchWhatsAppNotification(
     hotelCode: string,
@@ -20,22 +19,11 @@ export async function dispatchWhatsAppNotification(
             return { success: false, reason: `Hotel [${hotelCode}] tidak ditemukan.` };
         }
 
-        const hotelData = hotelDoc.data() || {};
-        const waConfig = hotelData.whatsappNotification || {};
-
-        // Default to config.gateway or fallback to fonnte
-        const gateway = waConfig.gateway || "fonnte";
-
-        let result;
-        if (gateway === "meta") {
-            result = await sendMetaNotification(hotelCode, payload);
-        } else {
-            result = await sendFonnteNotification(hotelCode, payload);
-        }
+        const result = await sendMetaNotification(hotelCode, payload);
 
         return {
             ...result,
-            gateway
+            gateway: "meta"
         };
     } catch (err: any) {
         console.error(`[WhatsApp Dispatcher Error for Hotel ${hotelCode}]:`, err);

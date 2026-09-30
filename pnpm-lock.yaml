@@ -84,6 +84,9 @@ importers:
       '@tabler/icons-react':
         specifier: ^3.3.0
         version: 3.44.0(react@19.2.3)
+      '@types/qrcode':
+        specifier: ^1.5.6
+        version: 1.5.6
       apexcharts:
         specifier: ^3.49.1
         version: 3.54.1
@@ -138,6 +141,9 @@ importers:
       nextjs-toploader:
         specifier: ^1.6.12
         version: 1.6.12(next@15.5.12(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      qrcode:
+        specifier: ^1.5.4
+        version: 1.5.4
       react:
         specifier: 19.2.3
         version: 19.2.3

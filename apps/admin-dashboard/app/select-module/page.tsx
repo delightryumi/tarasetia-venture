@@ -168,13 +168,20 @@ export default function SelectModulePage() {
   };
 
   const hasAccess = (moduleKey: string) => {
-    // 1. Superadmin has full unrestricted access to all modules in the platform
-    if (isSuperadmin) return true;
-
-    if (!user) return false;
+    // 1. Exceptions that are ALWAYS active & visible for Superadmin
+    if (moduleKey === 'superadmin') {
+      return isSuperadmin;
+    }
+    if (moduleKey === 'channel-manager') {
+      if (isSuperadmin) return true;
+      return (
+        user?.permissions?.['channel-manager'] === true &&
+        hasPermission(user, 'channel-manager', 'module_channel_manager')
+      );
+    }
 
     // 2. Strict Hotel Plan (activeModules) Validation:
-    // If the hotel did not subscribe to this module, NO user in this property (including Admin/Owner) can access it
+    // When viewing an active hotel, visible/active modules MUST strictly match the property's subscribed package
     if (activeModules !== null) {
       let isPlanActive = false;
       if (moduleKey === 'pos') {
@@ -195,29 +202,24 @@ export default function SelectModulePage() {
         isPlanActive = activeModules.includes('hrd');
       } else if (moduleKey === 'cpanel') {
         isPlanActive = activeModules.includes('cpanel-full') || activeModules.includes('cpanel-only');
-      } else if (moduleKey === 'channel-manager') {
-        isPlanActive = activeModules.includes('channel-manager');
       }
       if (!isPlanActive) {
         return false;
       }
     }
 
-    // Special check for channel-manager: superadmin or explicit second backup
-    if (moduleKey === 'channel-manager') {
-      return (
-        user?.permissions?.['channel-manager'] === true &&
-        hasPermission(user, 'channel-manager', 'module_channel_manager')
-      );
-    }
+    // 3. Superadmin can access any subscribed module in the active property
+    if (isSuperadmin) return true;
 
-    // 3. Property Admins & Owners have full access to their hotel's active plan modules
+    if (!user) return false;
+
+    // 4. Property Admins & Owners have full access to their hotel's active plan modules
     const roleLower = (user.role || "").toLowerCase().trim();
     if (roleLower === "admin" || roleLower === "administrator" || roleLower === "owner" || (user as any).isOwner === true) {
       return true;
     }
 
-    // 4. Staff/Employees: check granular permission
+    // 5. Staff/Employees: check granular permission
     return hasModuleAccess(user, moduleKey);
   };
 

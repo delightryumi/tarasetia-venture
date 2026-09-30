@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, doc, getDoc, addDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
 import { AnimatePresence } from 'framer-motion';
 import { Utensils } from 'lucide-react';
 
@@ -91,6 +91,36 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
       searchParams.get('kamar') ||
       searchParams.get('room');
     if (table) setTableNumber(table);
+
+    const menuParam = searchParams.get('menu');
+    if (menuParam) setActiveCategory(menuParam);
+
+    const qrToken = searchParams.get('qr');
+    if (qrToken && hotelCode) {
+      try {
+        const selfOrderRef = doc(db, 'hotels', hotelCode, 'settings', 'pos_self_order');
+        getDoc(selfOrderRef).then(snap => {
+          if (snap.exists()) {
+            const data = snap.data();
+            if (Array.isArray(data.qrLinks)) {
+              const updated = data.qrLinks.map((l: any) => {
+                if (l.token === qrToken || (table && l.tableName === table)) {
+                  return {
+                    ...l,
+                    scanCount: (Number(l.scanCount) || 0) + 1,
+                    lastScannedAt: new Date().toISOString()
+                  };
+                }
+                return l;
+              });
+              setDoc(selfOrderRef, { qrLinks: updated }, { merge: true });
+            }
+          }
+        });
+      } catch (err) {
+        console.warn('Scan count update error:', err);
+      }
+    }
 
     // 3. POS Settings
     const configRef = doc(db, 'hotels', hotelCode, 'settings', 'pos_self_order');

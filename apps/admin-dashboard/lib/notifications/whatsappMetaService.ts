@@ -12,6 +12,7 @@ export interface WhatsAppNotificationPayload {
     paymentStatus?: string;
     nights?: number;
     customNote?: string;
+    customRecipient?: string | string[];
 }
 
 const META_API_VERSION = "v20.0";
@@ -148,13 +149,26 @@ export async function sendMetaWhatsAppMessage({
 }
 
 /**
- * High-level function: Reads hotel-specific owner phone number from Firestore and dispatches notification.
- * Multi-tenant safe: Hotel A's bookings only go to Hotel A's owner phone number.
+ * Helper to parse a raw string or array of phone numbers into an array of clean normalized E.164 strings.
+ * e.g. "08813794763, 081234567890; 085645365440" -> ["628813794763", "6281234567890", "6285645365440"]
+ */
+export function parsePhoneNumbers(rawPhone: string | string[]): string[] {
+    if (!rawPhone) return [];
+    const list = Array.isArray(rawPhone) ? rawPhone : String(rawPhone).split(/[,;\n\r]+/);
+    const normalized = list
+        .map(p => normalizePhoneNumber(p.trim()))
+        .filter(p => p.length >= 8);
+    return Array.from(new Set(normalized));
+}
+
+/**
+ * High-level function: Reads hotel-specific owner phone number(s) from Firestore and dispatches notification.
+ * Multi-tenant safe & Multi-recipient capable: Sends to all configured owner/GM phone numbers.
  */
 export async function sendWhatsAppNotificationToOwner(
     hotelCode: string,
     payload: WhatsAppNotificationPayload
-): Promise<{ success: boolean; reason?: string; error?: string; messageId?: string }> {
+): Promise<{ success: boolean; reason?: string; error?: string; messageId?: string; deliveredCount?: number; totalRecipients?: number; details?: any[] }> {
     if (!hotelCode) return { success: false, reason: "hotelCode is required" };
 
     try {
@@ -168,13 +182,14 @@ export async function sendWhatsAppNotificationToOwner(
 
         // Check if WhatsApp notification is enabled for this hotel
         const isEnabled = waConfig.enabled !== false; // Default true if configured
-        const targetPhone = waConfig.ownerPhone || hotelData.phone || "";
+        const rawTarget = payload.customRecipient || waConfig.ownerPhone || hotelData.phone || "";
+        const targetPhones = parsePhoneNumbers(rawTarget);
 
         if (!isEnabled) {
             return { success: false, reason: `Notifikasi WhatsApp dinonaktifkan untuk hotel ${hotelCode}.` };
         }
 
-        if (!targetPhone) {
+        if (targetPhones.length === 0) {
             return { success: false, reason: `Nomor WhatsApp Owner belum diatur untuk hotel ${hotelCode}.` };
         }
 
@@ -184,6 +199,9 @@ export async function sendWhatsAppNotificationToOwner(
         }
         if (payload.event === "booking_new" && waConfig.notifyOnNewBooking === false) {
             return { success: false, reason: "Notifikasi booking baru dimatikan oleh owner." };
+        }
+        if (payload.event === "booking_modification" && waConfig.notifyOnModification === false) {
+            return { success: false, reason: "Notifikasi perubahan reservasi dimatikan oleh owner." };
         }
 
         const hotelName = hotelData.name || hotelData.propertyName || `Hotel #${hotelCode}`;
@@ -221,28 +239,72 @@ export async function sendWhatsAppNotificationToOwner(
         const accessToken = waConfig.accessToken || DEFAULT_ACCESS_TOKEN;
         const phoneNumberId = waConfig.phoneNumberId || DEFAULT_PHONE_NUMBER_ID;
 
-        // Dispatch message
-        const sendResult = await sendMetaWhatsAppMessage({
-            to: targetPhone,
-            message: messageText,
-            accessToken,
-            phoneNumberId
+        // Dispatch message via Meta Official Template
+        const templateComponents = [
+            {
+                type: "body",
+                parameters: [
+                    { type: "text", text: String(hotelName || "Hotel").slice(0, 60) },
+                    { type: "text", text: String(payload.channelName || "OTA Channel").slice(0, 40) },
+                    { type: "text", text: String(payload.bookingRef || "-").slice(0, 40) },
+                    { type: "text", text: String(payload.guestName || "-").slice(0, 60) },
+                    { type: "text", text: String(payload.roomName || "-").slice(0, 60) },
+                    { type: "text", text: String(payload.arrivalDate || "-").slice(0, 30) },
+                    { type: "text", text: String(`${payload.departureDate || "-"} ${payload.nights ? `(${payload.nights} Malam)` : ""}`).slice(0, 30) },
+                    { type: "text", text: String(formattedPrice || "0").slice(0, 30) }
+                ]
+            }
+        ];
+
+        // Send to all target phone numbers in parallel
+        const sendPromises = targetPhones.map(async (phone) => {
+            let res = await sendMetaWhatsAppMessage({
+                to: phone,
+                templateName: "crs_booking_notification",
+                templateLanguage: "id",
+                templateComponents,
+                message: messageText,
+                accessToken,
+                phoneNumberId
+            });
+
+            // If template is still pending or not found, fallback to direct text message
+            if (!res.success && res.raw?.error?.code === 132001) {
+                res = await sendMetaWhatsAppMessage({
+                    to: phone,
+                    message: messageText,
+                    accessToken,
+                    phoneNumberId
+                });
+            }
+
+            // Audit logging in Firestore per recipient
+            await adminDb.collection("hotels").doc(hotelCode).collection("whatsapp_logs").add({
+                timestamp: new Date().toISOString(),
+                event: payload.event,
+                recipient: phone,
+                bookingRef: payload.bookingRef,
+                guestName: payload.guestName,
+                channelName: payload.channelName,
+                status: res.success ? "DELIVERED" : "FAILED",
+                messageId: res.messageId || null,
+                error: res.error || null
+            }).catch(() => {});
+
+            return { phone, ...res };
         });
 
-        // Audit logging in Firestore
-        await adminDb.collection("hotels").doc(hotelCode).collection("whatsapp_logs").add({
-            timestamp: new Date().toISOString(),
-            event: payload.event,
-            recipient: targetPhone,
-            bookingRef: payload.bookingRef,
-            guestName: payload.guestName,
-            channelName: payload.channelName,
-            status: sendResult.success ? "DELIVERED" : "FAILED",
-            messageId: sendResult.messageId || null,
-            error: sendResult.error || null
-        }).catch(() => {});
+        const results = await Promise.all(sendPromises);
+        const successCount = results.filter(r => r.success).length;
 
-        return sendResult;
+        return {
+            success: successCount > 0,
+            deliveredCount: successCount,
+            totalRecipients: targetPhones.length,
+            messageId: results.find(r => r.messageId)?.messageId,
+            details: results,
+            error: successCount === 0 ? results[0]?.error || "Gagal mengirim ke semua nomor." : undefined
+        };
     } catch (err: any) {
         console.error(`[WhatsApp Notification Error for Hotel ${hotelCode}]:`, err);
         return { success: false, reason: err.message };

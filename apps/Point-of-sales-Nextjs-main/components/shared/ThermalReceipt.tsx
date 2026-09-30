@@ -1,6 +1,10 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useCurrency } from '@/hooks/useCurrency';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { encodeReceiptData } from '@/lib/receiptPayload';
+import QRCode from 'qrcode';
 
 // Define the shape of data required to print the receipt
 export interface ReceiptItemData {
@@ -49,6 +53,7 @@ export interface ThermalReceiptProps {
   printMode?: 'all' | 'kitchen' | 'bar' | 'checker';
   onPrintModeChange?: (mode: 'all' | 'kitchen' | 'bar' | 'checker') => void;
   paperSize?: '80mm' | '58mm';
+  customConfig?: any;
 }
 
 export function formatPaymentMethod(method?: string): string {
@@ -86,13 +91,23 @@ export function formatReceiptDate(dateVal?: string | Date) {
  * and continuous roll truncation.
  */
 export function printThermalReceipt(
-  element: HTMLElement | string,
+  element?: HTMLElement | string | null,
   paperSize: '80mm' | '58mm' = '80mm',
   onFinish?: () => void
 ) {
   if (typeof window === 'undefined') return;
 
-  const targetEl = typeof element === 'string' ? document.getElementById(element) : element;
+  let targetEl: HTMLElement | null = null;
+  if (typeof element === 'string') {
+    targetEl = document.getElementById(element);
+  } else if (element && typeof (element as any).cloneNode === 'function') {
+    targetEl = element as HTMLElement;
+  }
+
+  if (!targetEl) {
+    targetEl = document.getElementById('thermal-receipt-printable');
+  }
+
   if (!targetEl) {
     window.print();
     return;
@@ -127,17 +142,32 @@ export function printThermalReceipt(
   const origin = window.location.origin;
   const is58 = paperSize === '58mm';
   const widthStr = is58 ? '58mm' : '80mm';
-  const printableWidth = is58 ? '48mm' : '72mm';
-  const baseFontSize = is58 ? '9.5px' : '11px';
-
-  // Initial estimate of receipt height in mm
-  const initialHeightPx = targetEl.scrollHeight || targetEl.offsetHeight || 600;
-  const initialHeightMm = Math.max(120, Math.ceil(initialHeightPx * 0.264583) + 15);
+  const printableWidth = is58 ? '54mm' : '76mm';
+  const baseFontSize = is58 ? '9.5px' : '10.5px';
+  const sidePad = is58 ? '2mm' : '2mm';
 
   // Clone receipt element and strip internal <style>, buttons, and hidden controls
   const clone = targetEl.cloneNode(true) as HTMLElement;
   clone.querySelectorAll('style, script, .print\\:hidden, button').forEach(el => el.remove());
-  clone.classList.remove('border', 'border-neutral-200', 'dark:border-zinc-800', 'shadow-md', 'shadow-sm', 'rounded-xl', 'rounded-2xl', 'rounded-lg');
+  // Strip all dark-mode and decorative Tailwind classes that leak into print
+  clone.classList.remove(
+    'border', 'border-neutral-200', 'dark:border-zinc-800',
+    'shadow-md', 'shadow-sm', 'rounded-xl', 'rounded-2xl', 'rounded-lg'
+  );
+  // Strip dark: variant classes from entire clone tree
+  clone.querySelectorAll('*').forEach(el => {
+    const classes = Array.from(el.classList);
+    classes.forEach(c => {
+      if (c.startsWith('dark:') || c.startsWith('hover:') || c.startsWith('focus:')) {
+        el.classList.remove(c);
+      }
+    });
+  });
+
+  // Collect parent stylesheets for Tailwind utility class resolution
+  const parentStyles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+    .map(el => el.outerHTML)
+    .join('\n');
 
   iframeDoc.open();
   iframeDoc.write(`<!DOCTYPE html>
@@ -146,13 +176,12 @@ export function printThermalReceipt(
   <meta charset="utf-8" />
   <base href="${origin}/">
   <title>Struk Pembayaran</title>
-  <style id="dynamic-page-style">
+  ${parentStyles}
+  <style>
     @page {
-      size: ${widthStr} ${initialHeightMm}mm;
+      size: ${widthStr} auto;
       margin: 0mm;
     }
-  </style>
-  <style>
     *, *::before, *::after {
       box-sizing: border-box !important;
       -webkit-print-color-adjust: exact !important;
@@ -161,21 +190,20 @@ export function printThermalReceipt(
     html, body {
       margin: 0 !important;
       padding: 0 !important;
-      width: 100% !important;
+      width: ${widthStr} !important;
+      max-width: ${widthStr} !important;
       background: #ffffff !important;
       color: #000000 !important;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
       font-size: ${baseFontSize} !important;
-      line-height: 1.25 !important;
-      -webkit-font-smoothing: none !important;
-      -moz-osx-font-smoothing: none !important;
-      text-rendering: optimizeSpeed !important;
+      line-height: 1.3 !important;
+      -webkit-font-smoothing: antialiased !important;
     }
     #receipt-container {
-      width: 100% !important;
-      max-width: ${printableWidth} !important;
-      margin: 0 auto !important;
-      padding: ${is58 ? '1mm 1.5mm 3mm 1.5mm' : '2mm 2.5mm 4mm 2.5mm'} !important;
+      width: ${widthStr} !important;
+      max-width: ${widthStr} !important;
+      margin: 0 !important;
+      padding: 0 !important;
       background: #ffffff !important;
       color: #000000 !important;
       box-sizing: border-box !important;
@@ -183,180 +211,174 @@ export function printThermalReceipt(
       outline: none !important;
       box-shadow: none !important;
     }
-    /* Neutralize wrapper */
     .receipt-print-wrapper,
     #thermal-receipt-printable {
-      width: 100% !important;
-      max-width: 100% !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      background: transparent !important;
-      color: #000000 !important;
+      width: ${printableWidth} !important;
+      max-width: ${printableWidth} !important;
+      padding: ${is58 ? '2mm 2mm 3mm 2mm' : '3mm 2mm 4mm 2mm'} !important;
+      margin: 0 auto !important;
+      background: #ffffff !important;
       box-shadow: none !important;
       border: none !important;
       outline: none !important;
+      box-sizing: border-box !important;
+      font-size: ${baseFontSize} !important;
+      line-height: 1.3 !important;
     }
-    .receipt-print-wrapper * {
+    /* Force ALL text elements to black — overrides Tailwind color utilities */
+    .receipt-print-wrapper *,
+    #thermal-receipt-printable * {
       color: #000000 !important;
       background-color: transparent !important;
+      background: transparent !important;
       text-shadow: none !important;
       box-shadow: none !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      animation: none !important;
+      transition: none !important;
     }
-    /* Layout utilities */
-    .flex { display: flex !important; }
-    .flex-col { flex-direction: column !important; }
-    .flex-row { flex-direction: row !important; }
-    .flex-1 { flex: 1 1 0% !important; }
-    .shrink-0 { flex-shrink: 0 !important; }
-    .justify-between { justify-content: space-between !important; }
-    .justify-center { justify-content: center !important; }
-    .items-center { align-items: center !important; }
-    .items-start { align-items: flex-start !important; }
-    .text-center { text-align: center !important; }
-    .text-left { text-align: left !important; }
-    .text-right { text-align: right !important; }
-    .whitespace-nowrap { white-space: nowrap !important; }
-    .break-words { overflow-wrap: break-word !important; }
-    .w-full { width: 100% !important; }
-    .h-auto { height: auto !important; }
-    .block { display: block !important; }
-    .inline-block { display: inline-block !important; }
-    /* Typography */
-    .font-bold { font-weight: 700 !important; }
-    .font-semibold { font-weight: 600 !important; }
-    .font-medium { font-weight: 500 !important; }
-    .font-normal { font-weight: 400 !important; }
-    .font-light { font-weight: 300 !important; }
-    .font-black { font-weight: 900 !important; }
-    .font-extrabold { font-weight: 800 !important; }
-    .font-mono { font-family: monospace, "Courier New", Courier !important; }
-    .font-serif { font-family: serif, "Times New Roman", Times !important; }
-    .uppercase { text-transform: uppercase !important; }
-    .lowercase { text-transform: lowercase !important; }
-    .italic { font-style: italic !important; }
-    .leading-tight { line-height: 1.2 !important; }
-    .leading-none { line-height: 1 !important; }
-    .leading-snug { line-height: 1.3 !important; }
-    .leading-relaxed { line-height: 1.4 !important; }
-    /* Borders */
-    .border-t {
-      border-top: 1px solid #000000 !important;
-      border-bottom: none !important;
-      border-left: none !important;
-      border-right: none !important;
-    }
-    .border-b {
-      border-bottom: 1px solid #000000 !important;
-      border-top: none !important;
-      border-left: none !important;
-      border-right: none !important;
-    }
-    .border-dashed {
-      border-style: dashed !important;
-    }
-    .border-dotted {
-      border-style: dotted !important;
-    }
-    .border-black {
-      border-color: #000000 !important;
-    }
-    .border-neutral-300 {
+    /* Restore border visibility */
+    .receipt-print-wrapper [class*="border"],
+    .receipt-print-wrapper hr,
+    #thermal-receipt-printable [class*="border"],
+    #thermal-receipt-printable hr {
       border-color: #cccccc !important;
     }
-    .border-t.border-dashed {
-      border: none !important;
-      border-top: 1px dashed #222222 !important;
-      height: 0 !important;
-      min-height: 0 !important;
-      margin: 4px 0 !important;
+    .receipt-print-wrapper [style*="border: 2px solid"],
+    #thermal-receipt-printable [style*="border: 2px solid"] {
+      border-color: #000000 !important;
     }
-    .border-t.border-dotted {
-      border: none !important;
-      border-top: 1px dotted #aaaaaa !important;
-    }
-    .border-x-0 {
-      border-left: none !important;
-      border-right: none !important;
-    }
-    .border-b-0 {
-      border-bottom: none !important;
-    }
-    .border-none {
-      border: none !important;
-    }
-    .powered-by-container {
-      margin-top: 6px !important;
-      padding-top: 4px !important;
-      padding-bottom: 2px !important;
-      border-top: 1px dotted #aaaaaa !important;
-      border-left: none !important;
-      border-right: none !important;
-      border-bottom: none !important;
-      page-break-after: avoid !important;
-      break-after: avoid !important;
-    }
-    /* Spacing */
-    .m-0 { margin: 0 !important; }
-    .my-1 { margin-top: 0.15rem !important; margin-bottom: 0.15rem !important; }
-    .my-1\\.5 { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; }
-    .my-2 { margin-top: 0.35rem !important; margin-bottom: 0.35rem !important; }
-    .mt-0\\.5 { margin-top: 0.08rem !important; }
-    .mt-1 { margin-top: 0.15rem !important; }
-    .mt-1\\.5 { margin-top: 0.25rem !important; }
-    .mt-3 { margin-top: 0.5rem !important; }
-    .mt-4 { margin-top: 0.75rem !important; }
-    .mt-5 { margin-top: 1rem !important; }
-    .mb-0 { margin-bottom: 0 !important; }
-    .mb-1 { margin-bottom: 0.15rem !important; }
-    .mb-1\\.5 { margin-bottom: 0.25rem !important; }
-    .mb-2 { margin-bottom: 0.35rem !important; }
-    .mb-2\\.5 { margin-bottom: 0.45rem !important; }
-    .p-0 { padding: 0 !important; }
-    .py-0\\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
-    .py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
-    .py-1\\.5 { padding-top: 0.375rem !important; padding-bottom: 0.375rem !important; }
-    .py-2 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
-    .px-1 { padding-left: 0.25rem !important; padding-right: 0.25rem !important; }
-    .pt-0\\.5 { padding-top: 0.125rem !important; }
-    .pt-1 { padding-top: 0.25rem !important; }
-    .pt-2 { padding-top: 0.5rem !important; }
-    .pb-0\\.5 { padding-bottom: 0.125rem !important; }
-    .gap-1 { gap: 0.25rem !important; }
-    .gap-1\\.5 { gap: 0.375rem !important; }
-    .gap-\\[2px\\] { gap: 2px !important; }
-    /* Images & Logo Standardization */
-    img {
-      display: block !important;
-      visibility: visible !important;
+    /* Images */
+    .receipt-print-wrapper img,
+    #thermal-receipt-printable img {
       opacity: 1 !important;
+      background: transparent !important;
+      visibility: visible !important;
+      display: block !important;
     }
     .store-logo {
-      max-width: ${is58 ? '26mm' : '32mm'} !important;
-      max-height: ${is58 ? '14mm' : '18mm'} !important;
+      max-width: ${is58 ? '36mm' : '44mm'} !important;
+      max-height: ${is58 ? '16mm' : '20mm'} !important;
       width: auto !important;
       height: auto !important;
       object-fit: contain !important;
-      margin: 0 auto 4px auto !important;
+      margin: 0 auto 3px auto !important;
       display: block !important;
       filter: grayscale(100%) brightness(0) !important;
+      image-rendering: crisp-edges !important;
+    }
+    .receipt-qr-code {
+      width: ${is58 ? '54px' : '64px'} !important;
+      height: ${is58 ? '54px' : '64px'} !important;
+      max-width: ${is58 ? '54px' : '64px'} !important;
+      max-height: ${is58 ? '54px' : '64px'} !important;
+      object-fit: contain !important;
+      margin: 4px auto 2px auto !important;
+      display: block !important;
+    }
+    .powered-by-container {
+      margin-top: 12px !important;
+      padding-top: 0 !important;
+      padding-bottom: 4px !important;
+      border: none !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      text-align: center !important;
+      width: 100% !important;
+    }
+    .powered-by-text {
+      font-size: 7px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.12em !important;
+      text-transform: lowercase !important;
+      color: #888888 !important;
+      margin-bottom: 2px !important;
+      display: block !important;
+      line-height: 1 !important;
     }
     .powered-by-logo {
-      height: ${is58 ? '16px' : '20px'} !important;
-      max-height: ${is58 ? '16px' : '20px'} !important;
+      height: ${is58 ? '14px' : '16px'} !important;
+      max-height: ${is58 ? '14px' : '16px'} !important;
       width: auto !important;
       object-fit: contain !important;
       margin: 0 auto !important;
       display: block !important;
     }
-    .print\\:hidden { display: none !important; }
-    /* Ensure no outer frame borders exist on print */
-    #receipt-container,
-    .receipt-print-wrapper,
-    #thermal-receipt-printable {
-      border: none !important;
-      outline: none !important;
-      box-shadow: none !important;
-    }
+    /* Text size scale — match preview exactly */
+    .text-\\[7px\\]  { font-size: 7px  !important; }
+    .text-\\[7\.5px\\] { font-size: 7.5px !important; }
+    .text-\\[8px\\]  { font-size: 8px  !important; }
+    .text-\\[8\.5px\\] { font-size: 8.5px !important; }
+    .text-\\[9px\\]  { font-size: 9px  !important; }
+    .text-\\[9\.5px\\] { font-size: 9.5px !important; }
+    .text-\\[10px\\] { font-size: 10px !important; }
+    .text-\\[10\.5px\\] { font-size: 10.5px !important; }
+    .text-\\[11px\\] { font-size: 11px !important; }
+    .text-\\[12px\\] { font-size: 12px !important; }
+    .text-\\[12\.5px\\] { font-size: 12.5px !important; }
+    .text-\\[13px\\] { font-size: 13px !important; }
+    .text-\\[15px\\] { font-size: 15px !important; }
+    .text-xs   { font-size: 10px !important; }
+    .font-bold { font-weight: 700 !important; }
+    .font-black { font-weight: 900 !important; }
+    .font-semibold { font-weight: 600 !important; }
+    .font-medium { font-weight: 500 !important; }
+    .font-normal { font-weight: 400 !important; }
+    .uppercase { text-transform: uppercase !important; }
+    .tracking-wide { letter-spacing: 0.025em !important; }
+    .tracking-wider { letter-spacing: 0.05em !important; }
+    .tracking-widest { letter-spacing: 0.1em !important; }
+    .leading-tight { line-height: 1.2 !important; }
+    .leading-snug  { line-height: 1.3 !important; }
+    .leading-relaxed { line-height: 1.5 !important; }
+    .text-center { text-align: center !important; }
+    .text-left   { text-align: left   !important; }
+    .text-right  { text-align: right  !important; }
+    .flex { display: flex !important; }
+    .flex-col { flex-direction: column !important; }
+    .items-center { align-items: center !important; }
+    .items-start  { align-items: flex-start !important; }
+    .justify-between { justify-content: space-between !important; }
+    .justify-center  { justify-content: center !important; }
+    .w-full { width: 100% !important; }
+    .flex-1 { flex: 1 !important; }
+    .shrink-0 { flex-shrink: 0 !important; }
+    .whitespace-nowrap { white-space: nowrap !important; }
+    .break-words { word-break: break-word !important; }
+    .line-through { text-decoration: line-through !important; }
+    .italic { font-style: italic !important; }
+    .mb-1 { margin-bottom: 2px !important; }
+    .mb-2 { margin-bottom: 4px !important; }
+    .mt-1 { margin-top: 2px !important; }
+    .mt-2 { margin-top: 4px !important; }
+    .mt-3 { margin-top: 6px !important; }
+    .mt-4 { margin-top: 8px !important; }
+    .my-1 { margin-top: 2px !important; margin-bottom: 2px !important; }
+    .my-2 { margin-top: 4px !important; margin-bottom: 4px !important; }
+    .py-1 { padding-top: 2px !important; padding-bottom: 2px !important; }
+    .py-1\.5 { padding-top: 3px !important; padding-bottom: 3px !important; }
+    .py-2 { padding-top: 4px !important; padding-bottom: 4px !important; }
+    .pt-2 { padding-top: 4px !important; }
+    .pt-2\.5 { padding-top: 5px !important; }
+    .pb-1 { padding-bottom: 2px !important; }
+    .pl-2 { padding-left: 4px !important; }
+    .pr-1 { padding-right: 2px !important; }
+    .gap-1 { gap: 2px !important; }
+    .gap-1\.5 { gap: 3px !important; }
+    .border-t { border-top-width: 1px !important; border-top-style: solid !important; }
+    .border-b { border-bottom-width: 1px !important; border-bottom-style: solid !important; }
+    .border-2 { border-width: 2px !important; border-style: solid !important; }
+    .border-dashed { border-style: dashed !important; }
+    .border-dotted { border-style: dotted !important; }
+    .border-neutral-200, .border-neutral-300 { border-color: #cccccc !important; }
+    .rounded-sm { border-radius: 2px !important; }
+    .px-1 { padding-left: 2px !important; padding-right: 2px !important; }
+    .print\\:hidden, [class*="print:hidden"] { display: none !important; }
+    /* Powered-by link: no underline */
+    a { text-decoration: none !important; color: #000 !important; }
   </style>
 </head>
 <body>
@@ -373,26 +395,6 @@ export function printThermalReceipt(
 
   const triggerPrint = () => {
     try {
-      // Re-measure exact rendered height in iframe after images & fonts load
-      const receiptEl = iframeDoc.getElementById('receipt-container') || iframeDoc.body;
-      const rectHeight = receiptEl.getBoundingClientRect ? receiptEl.getBoundingClientRect().height : 0;
-      const actualHeightPx = Math.max(
-        rectHeight,
-        receiptEl.scrollHeight || 0,
-        receiptEl.offsetHeight || 0,
-        iframeDoc.body.scrollHeight || 0,
-        iframeDoc.documentElement.scrollHeight || 0
-      );
-
-      if (actualHeightPx && actualHeightPx > 50) {
-        // 1px = 0.2645833mm at 96 DPI. Add 8mm safety buffer so it never spills 1px to page 2.
-        const exactHeightMm = Math.ceil(actualHeightPx * 0.2645833) + 8;
-        const pageStyleEl = iframeDoc.getElementById('dynamic-page-style');
-        if (pageStyleEl) {
-          pageStyleEl.innerHTML = `@page { size: ${widthStr} ${exactHeightMm}mm; margin: 0mm; }`;
-        }
-      }
-
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
     } catch (e) {
@@ -427,6 +429,57 @@ export function printThermalReceipt(
   }
 }
 
+function ThermalReceiptQr({ data, label, size }: { data: string; label: string; size: number }) {
+  const [dataUrl, setDataUrl] = useState<string>('');
+
+  useEffect(() => {
+    if (!data) return;
+    let isMounted = true;
+    QRCode.toDataURL(data, {
+      width: 320,
+      margin: 1,
+      color: { dark: '#000000', light: '#ffffff' },
+      errorCorrectionLevel: 'M'
+    })
+      .then(url => {
+        if (isMounted) setDataUrl(url);
+      })
+      .catch(err => {
+        console.error('QR code generation error:', err);
+      });
+    return () => { isMounted = false; };
+  }, [data]);
+
+  const displaySize = size < 74 ? 76 : size;
+
+  return (
+    <div style={{ paddingTop: '6px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      {dataUrl ? (
+        <img 
+          src={dataUrl}
+          alt="Receipt QR" 
+          className="receipt-qr-code"
+          style={{ 
+            width: `${displaySize}px`, 
+            height: `${displaySize}px`, 
+            objectFit: 'contain', 
+            display: 'block', 
+            margin: '0 auto',
+            imageRendering: 'pixelated'
+          }}
+        />
+      ) : (
+        <div style={{ width: `${displaySize}px`, height: `${displaySize}px`, backgroundColor: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', color: '#999' }}>
+          QR Code
+        </div>
+      )}
+      <span style={{ fontSize: '7.5px', color: '#555555', marginTop: '3px', display: 'block', textAlign: 'center' }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
 export default function ThermalReceipt({
   shopInfo,
   transactionInfo,
@@ -436,7 +489,8 @@ export default function ThermalReceipt({
   style,
   printMode: controlledPrintMode,
   onPrintModeChange,
-  paperSize = '80mm'
+  paperSize = '80mm',
+  customConfig: controlledCustomConfig
 }: ThermalReceiptProps) {
   const { formatCurrency } = useCurrency();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -455,22 +509,76 @@ export default function ThermalReceipt({
     return m === 'compliment' || (items.length > 0 && items.every(i => i.isCompliment));
   })();
 
+  const [customConfig, setCustomConfig] = useState<any>(null);
+  const [activeHotelCode, setActiveHotelCode] = useState<string>('1');
+
   useEffect(() => {
     // Check if running in browser
     if (typeof window !== 'undefined') {
+      const getCookie = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+        return '';
+      };
+
+      let code =
+        localStorage.getItem('active_hotel_code') ||
+        localStorage.getItem('hotelCode') ||
+        getCookie('hotelCode') ||
+        '';
+
+      if (!code) {
+        const userJson = localStorage.getItem('user');
+        if (userJson) {
+          try {
+            const parsed = JSON.parse(userJson);
+            code = parsed.hotelCode || '';
+          } catch (e) {}
+        }
+      }
+      if (!code) code = '1';
+      setActiveHotelCode(code);
+
+      // Realtime listener from Firestore so all cashier workstations get synced
+      const receiptRef = doc(db, 'hotels', code, 'settings', 'pos_receipt');
+      const unsubFirestore = onSnapshot(receiptRef, (snap) => {
+        if (snap.exists()) {
+          const cloudConfig = snap.data();
+          setCustomConfig(cloudConfig);
+          if (cloudConfig.logoUrl) {
+            setLogoUrl(cloudConfig.logoUrl);
+          }
+        }
+      }, (err) => {
+        console.warn('ThermalReceipt Firestore sync note:', err);
+      });
+
       const updateLogo = () => {
         const savedLogo = localStorage.getItem('shopLogo');
-        setLogoUrl(savedLogo || null);
+        if (savedLogo) setLogoUrl(savedLogo);
+        try {
+          const cfg = localStorage.getItem('posReceiptConfig');
+          if (cfg) setCustomConfig((prev: any) => ({ ...prev, ...JSON.parse(cfg) }));
+        } catch (e) {}
       };
       updateLogo();
       window.addEventListener('logoChanged', updateLogo);
+      window.addEventListener('receiptConfigChanged', updateLogo);
       window.addEventListener('storage', updateLogo);
       return () => {
+        unsubFirestore();
         window.removeEventListener('logoChanged', updateLogo);
+        window.removeEventListener('receiptConfigChanged', updateLogo);
         window.removeEventListener('storage', updateLogo);
       };
     }
   }, []);
+
+  const activeConfig = controlledCustomConfig !== undefined ? controlledCustomConfig : customConfig;
+  const effectiveLogoUrl = controlledCustomConfig !== undefined 
+    ? (controlledCustomConfig.showLogo ? (controlledCustomConfig.logoUrl || logoUrl) : null)
+    : (activeConfig?.showLogo === false ? null : (logoUrl || activeConfig?.logoUrl));
 
   // Helper to determine if an item is a beverage
   const isBeverage = (cat: string, sub: string) => {
@@ -553,8 +661,8 @@ export default function ThermalReceipt({
   return (
     <div 
       id="thermal-receipt-printable"
-      className={`receipt-print-wrapper w-full ${is58mm ? 'max-w-[58mm] p-[3mm] text-[10.5px]' : 'max-w-[80mm] p-[6mm] text-xs'} bg-white text-black text-left mx-auto font-normal ${className}`}
-      style={{ fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif', ...style }}
+      className={`receipt-print-wrapper w-full ${is58mm ? 'max-w-[58mm] p-[2mm] text-[9.5px]' : 'max-w-[80mm] p-[2mm] text-[10.5px]'} bg-white text-black text-left mx-auto font-normal ${className}`}
+      style={{ fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif', lineHeight: '1.3', ...style }}
     >
       <style>{`
         @media print {
@@ -769,39 +877,48 @@ export default function ThermalReceipt({
       ) : (
         /* ── Kasir & Checker Full Header (Exact Match to LexuPOS) ── */
         <div className="text-center mb-2 flex flex-col items-center">
-          {logoUrl && (
+          {effectiveLogoUrl && (
             <div className="flex justify-center items-center w-full mb-1">
               <img 
-                src={logoUrl} 
+                src={effectiveLogoUrl} 
                 alt="Store Logo" 
                 className="store-logo" 
                 style={{ 
-                  maxWidth: is58mm ? '26mm' : '32mm', 
-                  maxHeight: is58mm ? '14mm' : '18mm', 
+                  maxWidth: is58mm ? '36mm' : '44mm', 
+                  maxHeight: is58mm ? '16mm' : '20mm', 
                   width: 'auto', 
                   height: 'auto', 
                   objectFit: 'contain',
                   display: 'block',
                   margin: '0 auto 4px auto',
-                  filter: 'grayscale(100%) brightness(0)' 
+                  filter: 'grayscale(100%) brightness(0)',
+                  imageRendering: 'crisp-edges'
                 }} 
               />
             </div>
           )}
           <h2 
-            className={`${is58mm ? 'text-[13.5px]' : 'text-[17px]'} font-serif font-light uppercase tracking-[0.12em] m-0 mt-0.5 mb-1 leading-tight text-center`} 
-            style={{ transform: is58mm ? 'scaleY(1.15) scaleX(0.95)' : 'scaleY(1.3) scaleX(0.9)', transformOrigin: 'center' }}
+            className={`store-title ${is58mm ? 'text-[13px]' : 'text-[15px]'} font-sans font-bold uppercase tracking-wide m-0 mt-0.5 mb-1 leading-tight text-center`} 
           >
             {shopInfo.name}
           </h2>
-          {shopInfo.address && (
-            <p className={`${is58mm ? 'text-[8px]' : 'text-[9px]'} mt-[1px] mb-0 leading-tight text-neutral-600 font-medium max-w-[95%] text-center`}>
-              {shopInfo.address}
+          {Boolean((activeConfig?.npwp || activeConfig?.headerNote || '').trim()) && (
+            <p className={`${is58mm ? 'text-[7.5px]' : 'text-[8.5px]'} mt-[0.5px] mb-0 leading-tight text-neutral-600 font-medium max-w-[95%] text-center font-mono`}>
+              {(() => {
+                const val = (activeConfig?.npwp || activeConfig?.headerNote || '').trim();
+                if (!val) return null;
+                return /^npwp/i.test(val) ? val : `NPWP: ${val}`;
+              })()}
             </p>
           )}
-          {shopInfo.phone && (
+          {Boolean(shopInfo.address?.trim()) && (
+            <p className={`${is58mm ? 'text-[8px]' : 'text-[9px]'} mt-[1px] mb-0 leading-tight text-neutral-600 font-medium max-w-[95%] text-center`}>
+              {shopInfo.address.trim()}
+            </p>
+          )}
+          {Boolean(shopInfo.phone?.trim()) && (
             <p className={`${is58mm ? 'text-[8.5px]' : 'text-[9px]'} mt-[1px] mb-0 leading-tight font-semibold text-neutral-800 text-center`}>
-              Tlp: {shopInfo.phone}
+              Tlp: {shopInfo.phone.trim()}
             </p>
           )}
           {printMode === 'checker' && (
@@ -815,61 +932,74 @@ export default function ThermalReceipt({
       {/* Kasir & Checker mode: dashed separator + transaction info */}
       {(printMode === 'all' || printMode === 'checker') && (
         <>
-          <div className="border-t border-dashed border-black my-1.5" />
+          <div style={{ borderTop: '1px dashed #cccccc', margin: '5px 0' }} />
           {isCancelled && (
-            <div className="w-full text-center font-bold text-[12px] border-2 border-black py-2 my-2 uppercase font-mono tracking-widest text-black">
+            <div className="w-full text-center font-bold text-[12px] border-2 border-black py-2 my-2 uppercase font-mono tracking-widest">
               *** VOID / BATAL ***
               {transactionInfo.cancelReason && (
                 <div className="text-[8.5px] mt-1 font-normal italic lowercase leading-tight">Alasan: {transactionInfo.cancelReason}</div>
               )}
             </div>
           )}
-          <div className={`${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} flex flex-col gap-[1.5px] mb-1`}>
-            <div className="flex justify-between">
-              <span className="text-neutral-700">No. Transaksi:</span>
-              <span className="font-bold">{transactionInfo.id}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-neutral-700">Tanggal:</span>
+          <div className={`${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} flex flex-col gap-[2px] mb-1`}>
+            {activeConfig?.showOrderNumber !== false && (
+              <div className="flex justify-between items-center">
+                <span className="text-neutral-500 font-normal">No. Transaksi:</span>
+                <span className="font-bold">{transactionInfo.id}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center">
+              <span className="text-neutral-500 font-normal">Tanggal:</span>
               <span className="font-bold">{displayDate}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-neutral-700">Meja:</span>
-              <span className="font-bold">{displayTable}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-neutral-700">Pelanggan:</span>
-              <span className="font-bold">{displayCustomer}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-neutral-700">Kasir:</span>
-              <span className="font-bold">{displayCashier}</span>
-            </div>
+            {activeConfig?.showTable !== false && (
+              <div className="flex justify-between items-center">
+                <span className="text-neutral-500 font-normal">Meja:</span>
+                <span className="font-bold">{displayTable}</span>
+              </div>
+            )}
+            {activeConfig?.showCustomer !== false && (
+              <div className="flex justify-between items-center">
+                <span className="text-neutral-500 font-normal">Pelanggan:</span>
+                <span className="font-bold">{displayCustomer}</span>
+              </div>
+            )}
+            {activeConfig?.showCashier !== false && (
+              <div className="flex justify-between items-center">
+                <span className="text-neutral-500 font-normal">Kasir:</span>
+                <span className="font-bold">{displayCashier}</span>
+              </div>
+            )}
             {printMode === 'checker' && (
-              <div className="flex justify-between">
-                <span className="text-neutral-700">Tipe Dokumen:</span>
-                <span className="font-bold uppercase text-black">CHECKER PESANAN</span>
+              <div className="flex justify-between items-center">
+                <span className="text-neutral-500 font-normal">Tipe Dokumen:</span>
+                <span className="font-bold uppercase">CHECKER PESANAN</span>
               </div>
             )}
             {transactionInfo.status === 'UNPAID' && (
-              <div className="w-full text-center font-extrabold text-[10px] border border-black text-black py-0.5 my-1 uppercase font-mono tracking-wider">
+              <div className="w-full text-center font-extrabold text-[10px] border border-black py-0.5 my-1 uppercase font-mono tracking-wider">
                 *** BELUM LUNAS / UNPAID ***
               </div>
             )}
           </div>
-          <div className="border-t border-dashed border-black my-1" />
+          <div style={{ borderTop: '1px dashed #cccccc', margin: '5px 0' }} />
         </>
       )}
 
       {/* Items List (Exact Match: Bold Category, Name, Price, and 1 x Rp line) */}
       {sortedCats.map((cat) => (
-        <div key={cat} className="mb-1.5">
+        <div key={cat} className="mb-2">
           {/* Category header */}
-          <div className={`${is58mm ? 'text-[9px]' : 'text-[10px]'} font-bold uppercase tracking-wider border-b border-black pb-0.5 mb-1 text-black`}>
-            {cat}
-          </div>
+          {activeConfig?.groupByCategory !== false && (
+            <div
+              className={`${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} font-bold uppercase tracking-wider pb-[2px] mb-[5px]`}
+              style={{ borderBottom: '1px solid #dddddd' }}
+            >
+              {cat}
+            </div>
+          )}
           
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1.5">
             {Object.keys(grouped[cat]).sort().map(sub => (
               <React.Fragment key={sub}>
                 {grouped[cat][sub].map((item, i) => {
@@ -877,32 +1007,32 @@ export default function ThermalReceipt({
                   const itemPrice = item.price + addonsTotal;
 
                   return (
-                    <div key={i} className={`flex flex-col ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} w-full ${isCancelled ? 'line-through text-neutral-500 opacity-70' : ''}`}>
+                    <div key={i} className={`flex flex-col ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} w-full ${isCancelled ? 'line-through text-neutral-400 opacity-70' : ''}`}>
                       <div className="flex justify-between items-start gap-1">
-                        <span className={`font-bold ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} uppercase text-black leading-tight flex-1 pr-1 break-words`}>
+                        <span className={`font-bold ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} uppercase text-neutral-900 leading-tight flex-1 pr-1 break-words`}>
                           {item.quantity > 1 ? `${item.quantity}x ` : ''}{item.name}
                           {item.isCompliment && (
-                            <span className="text-[7px] ml-1 border border-black text-black px-1 rounded-sm font-semibold inline-block">
+                            <span className="text-[7px] ml-1 border border-neutral-800 text-neutral-900 px-1 rounded-sm font-semibold inline-block">
                               COMPLIMENT
                             </span>
                           )}
                         </span>
-                        <span className={`font-bold ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} whitespace-nowrap text-right text-black shrink-0`}>
+                        <span className={`font-bold ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'} whitespace-nowrap text-right text-neutral-900 shrink-0`}>
                           {item.isCompliment ? formatCurrency(0) : formatCurrency(itemPrice * item.quantity)}
                         </span>
                       </div>
-                      {item.selectedAddons && item.selectedAddons.length > 0 && (
-                        <div className={`${is58mm ? 'text-[7px]' : 'text-[8px]'} text-neutral-600 mt-[0.5px]`}>
+                      {activeConfig?.showNotes !== false && item.selectedAddons && item.selectedAddons.length > 0 && (
+                        <div className={`${is58mm ? 'text-[7px]' : 'text-[8px]'} text-neutral-500 pl-2 mt-[0.5px]`}>
                           + {item.selectedAddons.map(a => a.name).join(', ')}
                         </div>
                       )}
-                      {item.note && (
-                        <div className={`${is58mm ? 'text-[7px]' : 'text-[8px]'} italic text-neutral-600 mt-[0.5px]`}>
+                      {activeConfig?.showNotes !== false && item.note && (
+                        <div className={`${is58mm ? 'text-[7px]' : 'text-[8px]'} italic text-neutral-500 pl-2 mt-[0.5px]`}>
                           Catatan: {item.note}
                         </div>
                       )}
                       {(item.quantity > 1 || (item.isCompliment && item.complimentReason)) && (
-                        <div className={`${is58mm ? 'text-[7.5px]' : 'text-[8px]'} text-neutral-600 mt-[0.5px]`}>
+                        <div className={`${is58mm ? 'text-[7.5px]' : 'text-[8px]'} text-neutral-400 pl-2 mt-[0.5px]`}>
                           {item.quantity > 1 && `@ ${formatCurrency(itemPrice)}`}
                           {item.isCompliment && item.complimentReason && ` (${item.complimentReason})`}
                         </div>
@@ -918,76 +1048,76 @@ export default function ThermalReceipt({
 
       {(printMode === 'all' || printMode === 'checker') && (
         <>
-          <div className="border-t border-dashed border-black my-1" />
+          <div style={{ borderTop: '1px dashed #cccccc', margin: '5px 0' }} />
 
-          {/* Totals (Exact Match to LexuPOS) */}
-          <div className={`flex flex-col gap-[1.5px] ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'}`}>
-            <div className="flex justify-between">
-              <span className="text-neutral-700">Subtotal:</span>
+          {/* Totals */}
+          <div className={`flex flex-col gap-[2px] ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'}`}>
+            <div className="flex justify-between items-center">
+              <span className="text-neutral-500 font-normal">Subtotal:</span>
               <span className="font-bold">{formatCurrency(totals.subtotal)}</span>
             </div>
             {totals.discount > 0 && (
               <>
-                <div className="flex justify-between text-neutral-700">
-                  <span>Diskon:</span>
+                <div className="flex justify-between items-center">
+                  <span className="font-normal">Diskon:</span>
                   <span className="font-bold">-{formatCurrency(totals.discount)}</span>
                 </div>
-                <div className="flex justify-between font-bold">
+                <div className="flex justify-between items-center font-bold">
                   <span>Setelah Diskon:</span>
                   <span>{formatCurrency(totals.subtotal - totals.discount)}</span>
                 </div>
               </>
             )}
-            {totals.serviceAmount !== undefined && totals.serviceAmount > 0 && (
-              <div className="flex justify-between">
-                <span className="text-neutral-700">Service Charge ({totals.serviceRate || 5}%):</span>
+            {activeConfig?.showTaxService !== false && totals.serviceAmount !== undefined && totals.serviceAmount > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-neutral-500 font-normal">Service Charge ({totals.serviceRate || 5}%):</span>
                 <span className="font-bold">+{formatCurrency(totals.serviceAmount)}</span>
               </div>
             )}
-            {totals.taxAmount > 0 && (
-              <div className="flex justify-between">
-                <span className="text-neutral-700">Pajak Resto (PB1) ({totals.taxRate || 10}%):</span>
+            {activeConfig?.showTaxService !== false && totals.taxAmount > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-neutral-500 font-normal">Pajak Resto (PB1) ({totals.taxRate || 10}%):</span>
                 <span className="font-bold">+{formatCurrency(totals.taxAmount)}</span>
               </div>
             )}
           </div>
 
-          <div className="border-t border-dashed border-black my-1" />
+          <div style={{ borderTop: '1px dashed #cccccc', margin: '5px 0' }} />
 
-          <div className={`flex justify-between font-bold ${is58mm ? 'text-[10.5px]' : 'text-[12px]'} py-0.5`}>
+          <div className={`flex justify-between items-center font-black ${is58mm ? 'text-[11px]' : 'text-[12.5px]'} py-1`}>
             <span>TOTAL TAGIHAN:</span>
             <span>{formatCurrency(totals.payableAmount)}</span>
           </div>
 
-          <div className="border-t border-dashed border-black my-1" />
+          <div style={{ borderTop: '1px dashed #cccccc', margin: '5px 0' }} />
 
-          <div className={`flex flex-col gap-[1.5px] ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'}`}>
-            <div className="flex justify-between">
-              <span className="text-neutral-700">Metode Pembayaran:</span>
-              <span className="font-bold uppercase text-black">
-                {transactionInfo.status === 'UNPAID' ? 'BELUM BAYAR' : formatPaymentMethod(transactionInfo.paymentMethod)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-neutral-700">Status:</span>
-              <span className="font-bold uppercase text-black">
-                {transactionInfo.status === 'UNPAID' ? (
-                  <span className="text-red-600">BELUM BAYAR (UNPAID)</span>
-                ) : isCancelled ? (
-                  <span className="text-red-600">VOID / BATAL</span>
-                ) : (
-                  'LUNAS (PAID)'
-                )}
+          <div className={`flex flex-col gap-[2px] ${is58mm ? 'text-[8.5px]' : 'text-[9.5px]'}`}>
+            {activeConfig?.showPaymentMethod !== false && (
+              <div className="flex justify-between items-center">
+                <span className="text-neutral-500 font-normal">Metode Pembayaran:</span>
+                <span className="font-bold uppercase">
+                  {transactionInfo.status === 'UNPAID' ? 'BELUM BAYAR' : formatPaymentMethod(transactionInfo.paymentMethod)}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between items-center">
+              <span className="text-neutral-500 font-normal">Status:</span>
+              <span className="font-bold uppercase">
+                {transactionInfo.status === 'UNPAID'
+                  ? 'BELUM BAYAR (UNPAID)'
+                  : isCancelled
+                  ? 'VOID / BATAL'
+                  : 'LUNAS (PAID)'}
               </span>
             </div>
 
             {isCash && totals.cashAmount !== undefined && totals.cashAmount > 0 && (
               <>
-                <div className="flex justify-between pt-0.5">
-                  <span className="text-neutral-700">Tunai Diterima:</span>
+                <div className="flex justify-between items-center pt-0.5">
+                  <span className="text-neutral-500 font-normal">Tunai Diterima:</span>
                   <span className="font-bold">{formatCurrency(totals.cashAmount)}</span>
                 </div>
-                <div className="flex justify-between font-bold">
+                <div className="flex justify-between items-center font-bold">
                   <span>Kembalian:</span>
                   <span>{formatCurrency(totals.changeAmount || 0)}</span>
                 </div>
@@ -998,30 +1128,105 @@ export default function ThermalReceipt({
           {/* Footer */}
           {printMode === 'checker' ? (
             <div className="text-center text-[9px] leading-relaxed mt-4 mb-2 font-mono">
-              <div className="border-t border-dashed border-black my-2" />
-              <p className="m-0 font-bold uppercase tracking-wider text-[9.5px] text-black">
+              <div style={{ borderTop: '1px dashed #cccccc', margin: '6px 0' }} />
+              <p className="m-0 font-bold uppercase tracking-wider text-[9.5px]">
                 *** NOTED: BUKAN NOTA / STRUK PEMBAYARAN SAH ***
               </p>
-              <p className="m-0 text-neutral-600 text-[8px] mt-1 leading-snug">
+              <p className="m-0 text-neutral-500 text-[8px] mt-1 leading-snug">
                 Struk ini adalah lembar checker untuk pengecekan pesanan internal dan bukan tanda terima / bukti pembayaran yang sah.
               </p>
-              <div className="border-b border-dashed border-black my-2" />
+              <div style={{ borderBottom: '1px dashed #cccccc', margin: '6px 0' }} />
             </div>
           ) : (
             <>
-              <div className="border-t border-dashed border-black my-2" />
-              <div className="text-center text-[9px] leading-snug text-neutral-700 my-2">
-                <p className="m-0 font-semibold text-black">Terima kasih atas kunjungan Anda</p>
-                <p className="m-0 text-neutral-600 text-[8px] mt-0.5">Struk ini adalah bukti pembayaran yang sah</p>
+              <div style={{ borderTop: '1px dashed #cccccc', margin: '6px 0' }} />
+              <div style={{ textAlign: 'center', fontSize: '8.5px', lineHeight: '1.4', margin: '6px 0' }}>
+                {Boolean(activeConfig?.footerMessage?.trim()) && (
+                  <p style={{ margin: 0, fontWeight: 500, fontSize: '8.5px', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                    {activeConfig.footerMessage.trim()}
+                  </p>
+                )}
+                {(() => {
+                  const parts = [
+                    activeConfig?.instagram?.trim() && `IG: ${activeConfig.instagram.trim()}`,
+                    activeConfig?.facebook?.trim()  && `FB: ${activeConfig.facebook.trim()}`,
+                    activeConfig?.tiktok?.trim()    && `Tiktok: ${activeConfig.tiktok.trim()}`,
+                  ].filter(Boolean);
+                  const socialLine = parts.join(' · ');
+                  if (!socialLine) return null;
+                  return (
+                    <p style={{ margin: '3px 0 0 0', fontSize: '8px', letterSpacing: '0.01em' }}>
+                      {socialLine}
+                    </p>
+                  );
+                })()}
+                {activeConfig?.qrType === 'wifi' && (
+                  activeConfig?.wifiInfo?.trim() ? (
+                    <p style={{ margin: '2px 0 0 0', fontSize: '8px', color: '#555555' }}>{activeConfig.wifiInfo.trim()}</p>
+                  ) : (activeConfig?.wifiSsid?.trim() ? (
+                    <p style={{ margin: '2px 0 0 0', fontSize: '8px', color: '#555555' }}>
+                      SSID: {activeConfig.wifiSsid.trim()} {activeConfig?.wifiPassword?.trim() ? `(Pass: ${activeConfig.wifiPassword.trim()})` : ''}
+                    </p>
+                  ) : null)
+                )}
+                {(() => {
+                  const qrType = activeConfig?.qrType || (activeConfig?.showQrFooter === false ? 'none' : 'estruk');
+                  if (qrType === 'none') return null;
+
+                  let qrData = '';
+                  let qrLabel = '';
+
+                  if (qrType === 'wifi') {
+                    const ssid = activeConfig?.wifiSsid || '';
+                    const pass = activeConfig?.wifiPassword || '';
+                    const sec = activeConfig?.wifiSecurity || (pass ? 'WPA' : 'nopass');
+                    if (!ssid) return null;
+                    qrData = `WIFI:S:${ssid};T:${sec};P:${pass};;`;
+                    qrLabel = activeConfig?.qrCustomLabel || `Scan untuk WiFi: ${ssid}`;
+                  } else if (qrType === 'website') {
+                    qrData = activeConfig?.websiteUrl || activeConfig?.qrFooterUrl || 'https://mytara.id';
+                    qrLabel = activeConfig?.qrCustomLabel || 'Scan untuk Buka Website / Menu';
+                  } else {
+                    // 'estruk' (Real public web address so guests can scan from anywhere, including at home)
+                    const baseDomain = activeConfig?.receiptDomain?.trim() || 'https://point.mytara.id';
+                    const origin = baseDomain.replace(/\/+$/, '');
+
+                    const txId = transactionInfo.id || 'ORD-9821';
+                    const hotelCode = activeConfig?.hotelCode || activeHotelCode || '1';
+                    qrData = `${origin}/receipt?id=${encodeURIComponent(txId)}&h=${encodeURIComponent(hotelCode)}`;
+                    qrLabel = activeConfig?.qrCustomLabel || 'Scan untuk e-Struk Digital';
+                  }
+
+                  return (
+                    <ThermalReceiptQr 
+                      data={qrData} 
+                      label={qrLabel} 
+                      size={is58mm ? 84 : 96} 
+                    />
+                  );
+                })()}
               </div>
             </>
           )}
 
           {/* Powered By Footer */}
-          <div className="powered-by-container flex flex-col items-center justify-center mt-2.5 pt-2 border-t border-dotted border-neutral-300 border-x-0 border-b-0 pb-1">
-            <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center no-underline text-inherit cursor-pointer">
-              <span className="text-[7.5px] text-neutral-500 lowercase tracking-widest font-black mb-1">powered by</span>
-              <img src="/channels/1.png" alt="My Tara" className="powered-by-logo h-6 w-auto object-contain" />
+          <div
+            className="powered-by-container"
+            style={{
+              marginTop: '12px',
+              paddingTop: '0',
+              paddingBottom: '4px',
+              borderTop: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+            }}
+          >
+            <a href="https://mytara.id" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
+              <span style={{ fontSize: '7px', color: '#bbbbbb', letterSpacing: '0.12em', textTransform: 'lowercase', fontWeight: 600, marginBottom: '3px', display: 'block', lineHeight: 1 }}>powered by</span>
+              <img src="/channels/1.png" alt="My Tara" className="powered-by-logo" style={{ height: '14px', width: 'auto', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
             </a>
           </div>
         </>

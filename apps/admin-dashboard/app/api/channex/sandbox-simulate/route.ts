@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
             guestEmail = "budi.sandbox@test.com",
             guestPhone = "+6281234567890",
             roomTypeId,
+            ratePlanId,
             arrivalDate,
             departureDate,
             newArrivalDate,
@@ -151,6 +152,7 @@ export async function POST(req: NextRequest) {
                     rooms: [
                         {
                             room_type_id: roomTypeId || "standard",
+                            rate_plan_id: ratePlanId || undefined,
                             amount: Number(totalPrice) || 1200000,
                             guest_name: guestName,
                             adults: 2,

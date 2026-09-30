@@ -407,6 +407,7 @@ export function ChannelManagerSection() {
     const [simGuestName, setSimGuestName] = useState<string>("Simulation Guest (Test Booking)");
     const [simGuestEmail, setSimGuestEmail] = useState<string>("guest.test@crs-hotel.local");
     const [simRoomTypeId, setSimRoomTypeId] = useState<string>("");
+    const [simRatePlanId, setSimRatePlanId] = useState<string>("");
     const [simPrice, setSimPrice] = useState<number>(700000);
     const [simCommissionPercent, setSimCommissionPercent] = useState<number>(18);
     const [simPromoPercent, setSimPromoPercent] = useState<number>(10);
@@ -537,6 +538,42 @@ export function ChannelManagerSection() {
             setSimRoomTypeId(roomTypes[0].id);
         }
     }, [roomTypes, simRoomTypeId]);
+
+    // Available rate plans for the selected room type
+    const simAvailableRatePlans = useMemo(() => {
+        if (!simRoomTypeId) return ratePlans;
+        const matching = ratePlans.filter(rp => 
+            rp.roomTypeId === simRoomTypeId ||
+            (Array.isArray(rp.roomTypeIds) && rp.roomTypeIds.includes(simRoomTypeId)) ||
+            (rp.roomTypeName && roomTypes.find(r => r.id === simRoomTypeId)?.name?.toLowerCase() === rp.roomTypeName?.toLowerCase())
+        );
+        return matching.length > 0 ? matching : ratePlans;
+    }, [simRoomTypeId, ratePlans, roomTypes]);
+
+    useEffect(() => {
+        if (simAvailableRatePlans.length > 0 && (!simRatePlanId || !simAvailableRatePlans.some(rp => rp.id === simRatePlanId))) {
+            setSimRatePlanId(simAvailableRatePlans[0].id);
+        }
+    }, [simAvailableRatePlans, simRatePlanId]);
+
+    // Automatically calculate default total price based on selected rate plan / room price & nights
+    useEffect(() => {
+        if (!simRoomTypeId) return;
+        const selectedRt = roomTypes.find(r => r.id === simRoomTypeId);
+        const selectedRp = ratePlans.find(r => r.id === simRatePlanId);
+        const base = Number(
+            selectedRp?.roomRates?.[simRoomTypeId] ??
+            selectedRp?.baseRate ??
+            selectedRt?.price ??
+            selectedRt?.basePrice ??
+            700000
+        );
+
+        const start = new Date(simCheckin);
+        const end = new Date(simCheckout);
+        const nights = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+        setSimPrice(base * nights);
+    }, [simRoomTypeId, simRatePlanId, simCheckin, simCheckout, roomTypes, ratePlans]);
 
     // Active Connected Channels List
     const activeChannelsList = useMemo(() => {
@@ -1263,6 +1300,7 @@ export function ChannelManagerSection() {
                     guestName: simGuestName,
                     guestEmail: simGuestEmail,
                     roomTypeId: simRoomTypeId,
+                    ratePlanId: simRatePlanId || undefined,
                     arrivalDate: simCheckin,
                     departureDate: simCheckout,
                     totalPrice: simPrice,
@@ -3161,7 +3199,7 @@ export function ChannelManagerSection() {
                                     <select
                                         value={simChannel}
                                         onChange={e => handleSimChannelChange(e.target.value)}
-                                        className={`${styles.cellSelect} ${styles.simInput}`}
+                                        className={styles.simSelect}
                                     >
                                         <option value="Traveloka">Traveloka</option>
                                         <option value="Booking.com">Booking.com</option>
@@ -3179,7 +3217,7 @@ export function ChannelManagerSection() {
                                         type="text"
                                         value={simGuestName}
                                         onChange={e => setSimGuestName(e.target.value)}
-                                        className={`${styles.cellInput} ${styles.simInput}`}
+                                        className={styles.simInput}
                                     />
                                 </div>
 
@@ -3189,7 +3227,7 @@ export function ChannelManagerSection() {
                                         type="email"
                                         value={simGuestEmail}
                                         onChange={e => setSimGuestEmail(e.target.value)}
-                                        className={`${styles.cellInput} ${styles.simInput}`}
+                                        className={styles.simInput}
                                     />
                                 </div>
 
@@ -3198,14 +3236,35 @@ export function ChannelManagerSection() {
                                     <select
                                         value={simRoomTypeId}
                                         onChange={e => setSimRoomTypeId(e.target.value)}
-                                        className={`${styles.cellSelect} ${styles.simInput}`}
+                                        className={styles.simSelect}
                                     >
                                         <option value="">-- Select Room Type --</option>
-                                        {roomTypes.map(rt => (
-                                            <option key={rt.id} value={rt.id}>
-                                                {rt.name} (Available: {(rt as any).totalRooms || 0})
-                                            </option>
-                                        ))}
+                                        {roomTypes.map(rt => {
+                                            const allotment = rt.roomCount ?? (rt as any).totalRooms ?? (rt as any).roomsCount ?? rt.physicalRooms?.length ?? 1;
+                                            return (
+                                                <option key={rt.id} value={rt.id}>
+                                                    {rt.name} (Allotment: {allotment} Rooms)
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                </div>
+
+                                <div className={styles.simFieldGroup}>
+                                    <label className={styles.simLabel}>Rate Plan &amp; Package:</label>
+                                    <select
+                                        value={simRatePlanId}
+                                        onChange={e => setSimRatePlanId(e.target.value)}
+                                        className={styles.simSelect}
+                                    >
+                                        {simAvailableRatePlans.map(rp => {
+                                            const planRate = Number(rp.roomRates?.[simRoomTypeId] ?? rp.baseRate ?? 0);
+                                            return (
+                                                <option key={rp.id} value={rp.id}>
+                                                    {rp.name} ({rp.mealsIncluded ? "With Breakfast" : "Room Only"} • Rp {formatIDR(planRate)}/night)
+                                                </option>
+                                            );
+                                        })}
                                     </select>
                                 </div>
 
@@ -3216,7 +3275,7 @@ export function ChannelManagerSection() {
                                             type="date"
                                             value={simCheckin}
                                             onChange={e => setSimCheckin(e.target.value)}
-                                            className={`${styles.cellInput} ${styles.simInput}`}
+                                            className={styles.simInput}
                                         />
                                     </div>
                                     <div className={styles.simFieldGroup}>
@@ -3225,7 +3284,7 @@ export function ChannelManagerSection() {
                                             type="date"
                                             value={simCheckout}
                                             onChange={e => setSimCheckout(e.target.value)}
-                                            className={`${styles.cellInput} ${styles.simInput}`}
+                                            className={styles.simInput}
                                         />
                                     </div>
                                 </div>
@@ -3237,7 +3296,7 @@ export function ChannelManagerSection() {
                                             type="number"
                                             value={simPrice}
                                             onChange={e => setSimPrice(Number(e.target.value))}
-                                            className={`${styles.cellInput} ${styles.simInput}`}
+                                            className={styles.simInput}
                                         />
                                     </div>
                                     <div className={styles.simFieldGroup}>
@@ -3245,7 +3304,7 @@ export function ChannelManagerSection() {
                                         <select
                                             value={simPaymentCollect}
                                             onChange={e => setSimPaymentCollect(e.target.value as any)}
-                                            className={`${styles.cellSelect} ${styles.simInput}`}
+                                            className={styles.simSelect}
                                         >
                                             <option value="channel">Channel Collect (OTA Virtual Credit Card)</option>
                                             <option value="property">Property Collect (Pay at Hotel Front Desk)</option>

@@ -177,6 +177,7 @@ export default function ReceiptDialog({
       setPrinterPort(val);
       localStorage.setItem('pos_printer_port', val);
     }
+    window.dispatchEvent(new Event('receiptConfigChanged'));
   };
 
   const playNotificationSound = () => {
@@ -195,6 +196,14 @@ export default function ReceiptDialog({
 
     // Play notification chime immediately upon completing order
     playNotificationSound();
+
+    // Sync direct IP printer settings from localStorage/settings
+    if (typeof window !== 'undefined') {
+      setCashierPrinterIp(localStorage.getItem('pos_printer_ip_cashier') || localStorage.getItem('pos_printer_ip') || '192.168.1.200');
+      setKitchenPrinterIp(localStorage.getItem('pos_printer_ip_kitchen') || '');
+      setBarPrinterIp(localStorage.getItem('pos_printer_ip_bar') || '');
+      setPrinterPort(localStorage.getItem('pos_printer_port') || '9100');
+    }
 
     // Fetch shop data
     axios.get('/api/shopdata')

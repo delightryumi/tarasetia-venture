@@ -10,14 +10,16 @@ export async function GET(req: NextRequest) {
 
     if (!hotelCode || hotelCode === "0") {
       return NextResponse.json({
-        id: 'pos',
-        name: 'POS System',
-        tax: 10,
-        service: 0,
-        lostBreakage: 0,
-        address: '',
-        phone: '',
-        tables: '10',
+        data: {
+          id: 'pos',
+          name: 'POS System',
+          tax: 10,
+          service: 0,
+          lostBreakage: 0,
+          address: '',
+          phone: '',
+          tables: '10',
+        }
       }, { status: 200 });
     }
 

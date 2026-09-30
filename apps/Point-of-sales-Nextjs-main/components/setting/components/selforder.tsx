@@ -12,9 +12,10 @@ import {
 import { toast } from 'react-toastify';
 import { Input } from '@/components/ui/input';
 import { ReloadIcon } from '@radix-ui/react-icons';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Plus, Trash, QrCode, UploadCloud, Printer, Download } from 'lucide-react';
+import { Plus, Trash, QrCode, UploadCloud, Printer, Download, Lock, ExternalLink, MessageSquare, Sparkles } from 'lucide-react';
+import { QrTableManager } from './qr/QrTableManager';
 
 interface PromoBanner {
   id: string;
@@ -29,7 +30,9 @@ export default function SelfOrderCard() {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [hotelCode, setHotelCode] = useState('');
   const [isEnterprise, setIsEnterprise] = useState(false);
-  const [activePlan, setActivePlan] = useState('');
+  const [activePlan, setActivePlan] = useState('basic');
+  const [storeName, setStoreName] = useState('Resto Setara');
+  const [storeLogo, setStoreLogo] = useState('');
   
   // Self Order states
   const [enabled, setEnabled] = useState(false);
@@ -110,92 +113,127 @@ export default function SelfOrderCard() {
   const [tablesList, setTablesList] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchHotelConfig = async () => {
-      setIsPageLoading(true);
-      try {
-        let code = '';
-        let isSuper = false;
-        const userJson = localStorage.getItem('user');
-        if (userJson) {
-          const parsed = JSON.parse(userJson);
-          code = parsed.hotelCode || '';
-          isSuper =
-            parsed?.role?.toLowerCase() === 'superadmin' ||
-            parsed?.role?.toLowerCase() === 'super admin' ||
-            parsed?.email?.toLowerCase() === 'nexura.management@gmail.com' ||
-            parsed?.email?.toLowerCase() === 'superadmin@setara.co.id';
-        }
-        setHotelCode(code);
-        
-        // Set Global URL for QR
-        if (typeof window !== 'undefined') {
-          const origin = window.location.origin;
-          setGlobalUrl(`${origin}/self-order/${code}`);
-        }
-
-        // 1. Check hotel plan & Add-on modules
-        const hotelDocRef = doc(db, 'hotels', code);
-        const hotelSnap = await getDoc(hotelDocRef);
-        let plan = 'basic';
-        let activeModules: string[] = [];
-        if (hotelSnap.exists()) {
-          const data = hotelSnap.data();
-          plan = data.billing?.plan || data.plan || 'basic';
-          activeModules = data.billing?.activeModules || data.activeModules || [];
-          setActivePlan(plan);
-        }
-        
-        const hasSelfOrderAddon = activeModules.includes('pos-self-order') || activeModules.includes('pos_self_order');
-        const isUnlocked = isSuper || plan.toLowerCase() === 'enterprise' || hasSelfOrderAddon;
-        setIsEnterprise(isUnlocked);
-
-        // 2. Fetch tables config from pos settings
-        const posDocRef = doc(db, 'hotels', code, 'settings', 'pos');
-        const posSnap = await getDoc(posDocRef);
-        let parsedTables: string[] = [];
-        if (posSnap.exists()) {
-          const posData = posSnap.data();
-          const rawTables = posData.tables || '10';
-          if (/^\d+$/.test(rawTables.trim())) {
-            const count = parseInt(rawTables.trim()) || 10;
-            for (let i = 1; i <= count; i++) {
-              parsedTables.push(`Meja ${i}`);
-            }
-          } else {
-            parsedTables = rawTables.split(',').map((t: string) => t.trim()).filter(Boolean);
-          }
-        } else {
-          for (let i = 1; i <= 10; i++) {
-            parsedTables.push(`Meja ${i}`);
-          }
-        }
-        setTablesList(parsedTables);
-        if (parsedTables.length > 0) {
-          setSelectedTable(parsedTables[0]);
-        }
-
-        // 3. Fetch self order settings
-        const selfOrderRef = doc(db, 'hotels', code, 'settings', 'pos_self_order');
-        const selfOrderSnap = await getDoc(selfOrderRef);
-        if (selfOrderSnap.exists()) {
-          const data = selfOrderSnap.data();
-          setEnabled(!!data.enabled);
-          setPaymentsAllowed(data.paymentsAllowed || ['cashier']);
-          setPromoBanners(data.promoBanners || []);
-        }
-      } catch (err) {
-        console.error('Error loading self-ordering config:', err);
-      } finally {
-        setIsPageLoading(false);
-      }
+    const getCookie = (name: string) => {
+      if (typeof document === 'undefined') return '';
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+      return '';
     };
 
-    fetchHotelConfig();
+    let code =
+      localStorage.getItem('active_hotel_code') ||
+      localStorage.getItem('hotelCode') ||
+      getCookie('hotelCode') ||
+      '';
+
+    if (!code) {
+      const userJson = localStorage.getItem('user');
+      if (userJson) {
+        try {
+          const parsed = JSON.parse(userJson);
+          code = parsed.hotelCode || '';
+        } catch (e) {}
+      }
+    }
+
+    if (!code) {
+      code = '1';
+    }
+
+    setHotelCode(code);
+    
+    // Set Global URL for QR
+    if (typeof window !== 'undefined') {
+      const origin = window.location.origin;
+      setGlobalUrl(`${origin}/self-order/${code}`);
+    }
+
+    setIsPageLoading(true);
+
+    // 1. Real-time Subscription to Hotel Document (Billing & Active Modules)
+    const hotelDocRef = doc(db, 'hotels', code);
+    const unsubHotel = onSnapshot(hotelDocRef, (hotelSnap) => {
+      let plan = 'basic';
+      let activeModules: string[] = [];
+      if (hotelSnap.exists()) {
+        const data = hotelSnap.data();
+        plan = data.billing?.plan || data.plan || 'basic';
+        activeModules = data.billing?.activeModules || data.activeModules || [];
+        setActivePlan(plan);
+        if (data.name) setStoreName(data.name);
+        if (data.logo || data.shopLogo) setStoreLogo(data.logo || data.shopLogo);
+      }
+      
+      const hasSelfOrderAddon = 
+        activeModules.includes('pos-self-order') || 
+        activeModules.includes('pos_self_order') ||
+        activeModules.includes('self-order') ||
+        activeModules.includes('self_order');
+      
+      // Strict: activeModules configured in Superadmin is the definitive source of truth
+      let isUnlocked = false;
+      if (Array.isArray(activeModules) && activeModules.length > 0) {
+        isUnlocked = hasSelfOrderAddon;
+      } else {
+        isUnlocked = plan.toLowerCase() === 'enterprise';
+      }
+      setIsEnterprise(isUnlocked);
+      setIsPageLoading(false);
+    }, (err) => {
+      console.error('Error listening to hotel config:', err);
+      setIsPageLoading(false);
+    });
+
+    // 2. Real-time Subscription to POS Tables Settings
+    const posDocRef = doc(db, 'hotels', code, 'settings', 'pos');
+    const unsubPos = onSnapshot(posDocRef, (posSnap) => {
+      let parsedTables: string[] = [];
+      if (posSnap.exists()) {
+        const posData = posSnap.data();
+        if (posData.name) setStoreName(posData.name);
+        if (posData.shopLogo || posData.logo) setStoreLogo(posData.shopLogo || posData.logo);
+        const rawTables = posData.tables || '10';
+        if (/^\d+$/.test(rawTables.trim())) {
+          const count = parseInt(rawTables.trim()) || 10;
+          for (let i = 1; i <= count; i++) {
+            parsedTables.push(`Meja ${i}`);
+          }
+        } else {
+          parsedTables = rawTables.split(',').map((t: string) => t.trim()).filter(Boolean);
+        }
+      } else {
+        for (let i = 1; i <= 10; i++) {
+          parsedTables.push(`Meja ${i}`);
+        }
+      }
+      setTablesList(parsedTables);
+      if (parsedTables.length > 0) {
+        setSelectedTable(parsedTables[0]);
+      }
+    });
+
+    // 3. Real-time Subscription to Self Order Settings
+    const selfOrderRef = doc(db, 'hotels', code, 'settings', 'pos_self_order');
+    const unsubSelfOrder = onSnapshot(selfOrderRef, (selfOrderSnap) => {
+      if (selfOrderSnap.exists()) {
+        const data = selfOrderSnap.data();
+        setEnabled(!!data.enabled);
+        setPaymentsAllowed(data.paymentsAllowed || ['cashier']);
+        setPromoBanners(data.promoBanners || []);
+      }
+    });
+
+    return () => {
+      unsubHotel();
+      unsubPos();
+      unsubSelfOrder();
+    };
   }, []);
 
   const handleSave = async () => {
     if (!isEnterprise) {
-      toast.error('Gagal menyimpan: Fitur memerlukan paket Enterprise.');
+      toast.error('Gagal menyimpan: Fitur memerlukan paket Enterprise atau Add-on Self-Ordering.');
       return;
     }
     setIsLoading(true);
@@ -207,10 +245,10 @@ export default function SelfOrderCard() {
         promoBanners
       }, { merge: true });
 
-      toast.success('Self-ordering configurations updated successfully.');
+      toast.success('Pengaturan Self-Ordering berhasil diperbarui.');
     } catch (err) {
       console.error(err);
-      toast.error('Failed to save configurations.');
+      toast.error('Gagal menyimpan konfigurasi.');
     } finally {
       setIsLoading(false);
     }
@@ -254,12 +292,6 @@ export default function SelfOrderCard() {
     } catch (err) {
       console.error(err);
     }
-  };
-
-  const handleGenerateQR = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_POS_URL || 'http://localhost:3001');
-    const orderUrl = `${origin}/self-order/${hotelCode}?table=${selectedTable}`;
-    setGeneratedUrl(orderUrl);
   };
 
   const togglePayment = async (method: string) => {
@@ -306,30 +338,64 @@ export default function SelfOrderCard() {
 
   return (
     <div className="w-full">
-      {/* Main UI */}
+      {/* Main Container */}
       <Card className="my-5 relative overflow-hidden">
-      {/* Visual Overlay for Non-Enterprise */}
-      {!isEnterprise && (
-        <div className="absolute inset-0 bg-stone-900/5 dark:bg-stone-950/20 backdrop-blur-[1.5px] z-10 flex flex-col items-center justify-center p-6 text-center select-none">
-          <div className="bg-white dark:bg-[#18181a] p-8 rounded-2xl shadow-xl max-w-md border border-amber-200 dark:border-amber-900/30">
-            <QrCode className="h-12 w-12 text-amber-500 mx-auto mb-4 animate-bounce" />
-            <h3 className="text-base font-bold text-neutral-800 dark:text-neutral-100 uppercase tracking-wider mb-2">Aktivasi Add-on / Paket Enterprise</h3>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4 leading-relaxed">
-              Fitur <span className="font-bold">Self-Ordering Menu Tamu</span> memerlukan aktivasi Add-on Self-Ordering atau paket Enterprise. Akun Anda saat ini menggunakan paket <span className="font-bold">{activePlan.toUpperCase()}</span>.
-            </p>
-            <a href="mailto:admin@setaraventure.com" className="inline-flex h-9 items-center justify-center rounded-[8px] bg-stone-900 text-white hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 px-4 text-xs font-semibold transition-colors">
-              Hubungi Sales Setup
-            </a>
-          </div>
-        </div>
-      )}
+        {/* Glassmorphism Add-on Locked Overlay for Non-Enterprise / Non-Subscribed */}
+        {!isEnterprise && (
+          <div className="absolute inset-0 bg-neutral-900/25 dark:bg-black/45 backdrop-blur-[3.5px] z-30 flex items-center justify-center p-4 sm:p-6 select-none">
+            <div className="bg-white/95 dark:bg-[#18181b]/95 backdrop-blur-xl border border-neutral-200/90 dark:border-neutral-800 p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-3.5 shadow-xs">
+                <Lock size={22} className="stroke-[2.2]" />
+              </div>
+              
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 mb-2 border border-amber-200 dark:border-amber-900/50">
+                <Sparkles size={11} /> Modul Add-on POS
+              </span>
 
-      <CardHeader>
-        <CardTitle>Self-Ordering Menu</CardTitle>
-        <CardDescription>Aktifkan menu digital pemesanan mandiri oleh tamu, pasang slider banner promosi, serta cetak QR Code meja.</CardDescription>
-      </CardHeader>
-      
-      <CardContent className="space-y-6">
+              <h3 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-neutral-100 tracking-tight mb-1.5">
+                Self-Ordering &amp; QR Meja Resto
+              </h3>
+
+              <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed mb-3.5">
+                Fitur pemesanan mandiri via QR meja (Self-Ordering) merupakan <strong>modul Add-on</strong> resmi di sistem CRS/POS (tersedia pada paket <strong>Enterprise</strong> atau aktivasi Add-on terpisah). Akun outlet Anda saat ini menggunakan paket <span className="font-bold text-neutral-900 dark:text-white uppercase font-mono">[{activePlan}]</span>.
+              </p>
+
+              <div className="p-3 bg-neutral-50 dark:bg-neutral-900/60 rounded-xl border border-neutral-200/70 dark:border-neutral-800/80 mb-5 text-[11px] text-neutral-500 dark:text-neutral-400 text-left w-full">
+                💡 <span>Untuk mengaktifkan modul ini, silakan hubungi sales terkait atau kunjungi portal resmi di <strong className="text-neutral-800 dark:text-neutral-200 font-semibold">mytara.id</strong>.</span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full">
+                <a
+                  href="https://mytara.id"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full sm:flex-1 h-9 px-4 bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 text-xs font-bold rounded-xl inline-flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                >
+                  <ExternalLink size={13} />
+                  <span>Kunjungi mytara.id</span>
+                </a>
+                <a
+                  href="https://wa.me/6281119787799?text=Halo%20Tim%20Tara%2C%20saya%20tertarik%20mengaktifkan%20Add-on%20Self-Order%20POS%20untuk%20outlet%20saya"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full sm:flex-1 h-9 px-4 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 text-xs font-bold rounded-xl inline-flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <MessageSquare size={13} />
+                  <span>Hubungi Sales</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Content Wrapper (Visibly Blurred when Locked) */}
+        <div className={!isEnterprise ? "filter blur-[3.5px] pointer-events-none select-none opacity-50 transition-all duration-300" : ""}>
+          <CardHeader>
+            <CardTitle>Self-Ordering Menu</CardTitle>
+            <CardDescription>Aktifkan menu digital pemesanan mandiri oleh tamu, pasang slider banner promosi, serta cetak QR Code meja.</CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-6">
         {/* Toggle Switch */}
         <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border">
           <div>
@@ -498,64 +564,19 @@ export default function SelfOrderCard() {
           </div>
         </div>
 
-        {/* QR Code Generator */}
+        {/* POSONE-Style QR & Link Management */}
         {enabled && (
-          <div className="space-y-4 pt-4 border-t">
-            <div>
-              <label className="text-xs font-bold text-neutral-600 dark:text-neutral-300 uppercase tracking-wider">QR Code Meja Resto</label>
-              <p className="text-[11px] text-neutral-500">Pilih nomor meja untuk membuat tautan web order tamu dan unduh QR Code.</p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold shrink-0">Meja:</span>
-                <select 
-                  value={selectedTable} 
-                  onChange={e => { setSelectedTable(e.target.value); setGeneratedUrl(''); }} 
-                  className="h-9 px-3 border rounded-lg text-xs font-bold bg-white dark:bg-stone-900 focus:outline-none"
-                >
-                  {tablesList.map((tableName, i) => (
-                    <option key={i} value={tableName}>{tableName}</option>
-                  ))}
-                </select>
-              </div>
-              <Button size="sm" onClick={handleGenerateQR} className="bg-stone-900 hover:bg-stone-800 text-white dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200 flex items-center gap-1.5 h-9 text-xs font-bold transition-colors">
-                <QrCode size={14} /> Generate QR Link
-              </Button>
-            </div>
-
-            {generatedUrl && (
-              <div className="p-4 bg-muted/20 border rounded-lg flex flex-col sm:flex-row gap-6 items-center">
-                <div className="flex flex-col items-center gap-2 shrink-0">
-                  <div className="w-32 h-32 bg-white p-2 rounded-lg border shadow-sm flex items-center justify-center">
-                    <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(generatedUrl)}`} 
-                      alt={`Meja ${selectedTable} QR Code`} 
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <a 
-                    href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(generatedUrl)}`}
-                    target="_blank"
-                    download={`QR-Meja-${selectedTable}-Setara.png`}
-                    className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 hover:text-stone-900 dark:hover:text-white transition-colors flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-md"
-                  >
-                    <Download size={12} /> Unduh QR
-                  </a>
-                </div>
-                <div className="space-y-2 min-w-0 w-full">
-                  <span className="text-xs font-bold text-emerald-600 block">Link Meja {selectedTable} Berhasil Dibuat!</span>
-                  <span className="text-[10px] font-mono select-all break-all block p-2 bg-neutral-100 dark:bg-white/[0.03] border rounded">{generatedUrl}</span>
-                  <p className="text-[10px] text-muted-foreground leading-normal mb-2">
-                    Unduh gambar QR di samping dan cetak untuk ditempelkan di atas meja {selectedTable}. Tamu bisa langsung memesan setelah melakukan scan.
-                  </p>
-                </div>
-              </div>
-            )}
+          <div className="pt-6 border-t border-neutral-200 dark:border-neutral-800">
+            <QrTableManager
+              hotelCode={hotelCode}
+              storeName={storeName}
+              storeLogo={storeLogo}
+            />
           </div>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+        </div>
+      </Card>
     </div>
   );
 }
