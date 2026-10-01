@@ -60,8 +60,8 @@ const getStayNightDetails = (checkInStr: string, totalNights: number) => {
         const dateStr = `${y}-${m}-${day}`;
         const dayLabel = dayNames[d.getDay()];
         const monthLabel = monthNames[d.getMonth()];
-        const formattedDate = `${dayLabel}, ${day} ${monthLabel}`;
-        const shortDate = `${day}/${m}`;
+        const formattedDate = `${dayLabel}, ${day} ${monthLabel} ${y}`;
+        const shortDate = `${day}/${m}/${y}`;
         return { index: i, nightNum: i + 1, dateStr, formattedDate, shortDate };
     });
 };
@@ -425,7 +425,7 @@ export function TransactionEntryForm({
                         <table className={pmsStyles.pmsTable}>
                             <thead>
                                 <tr>
-                                    {nights > 1 && <th style={{ width: '135px', minWidth: '125px' }}>Stay Date / Night</th>}
+                                    {nights > 1 && <th style={{ width: '150px', minWidth: '140px' }}>Stay Date</th>}
                                     <th style={{ minWidth: '150px' }}>Room Type</th>
                                     <th style={{ width: '85px', minWidth: '82px' }}>Room No.</th>
                                     <th style={{ minWidth: '190px' }}>Rate Type</th>
@@ -445,7 +445,7 @@ export function TransactionEntryForm({
                                             {form.rooms.length > 1 && (
                                                 <tr className={pmsStyles.roomHeaderRow}>
                                                     <td colSpan={nights > 1 ? 8 : 7} className={pmsStyles.roomHeaderCell}>
-                                                        Kamar {roomIdx + 1} {rm.roomNumber ? `(No. ${rm.roomNumber})` : ''} {nights > 1 ? `• ${nights} Malam` : ''}
+                                                        Room {roomIdx + 1} {rm.roomNumber ? `(No. ${rm.roomNumber})` : ''} {nights > 1 ? `• ${nights} Nights` : ''}
                                                     </td>
                                                 </tr>
                                             )}
@@ -484,14 +484,9 @@ export function TransactionEntryForm({
                                                     <tr key={`room-${roomIdx}-night-${nightIdx}`}>
                                                         {nights > 1 && (
                                                             <td>
-                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                                    <span className={`${pmsStyles.nightTag} ${nightIdx === 0 ? pmsStyles.nightTagPrimary : ''}`}>
-                                                                        {form.rooms.length > 1 ? `K${roomIdx + 1} • M${nightIdx + 1}` : `Mlm ${nightIdx + 1}`}
-                                                                    </span>
-                                                                    <span className={pmsStyles.nightDate}>
-                                                                        {nightDetail.formattedDate}
-                                                                    </span>
-                                                                </div>
+                                                                <span className={pmsStyles.nightDate}>
+                                                                    {nightDetail.formattedDate}
+                                                                </span>
                                                             </td>
                                                         )}
                                                         <td>

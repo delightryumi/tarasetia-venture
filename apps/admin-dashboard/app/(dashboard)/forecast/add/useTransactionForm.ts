@@ -737,7 +737,7 @@ export const useTransactionForm = () => {
                 nightRates: roomIdx === 0 ? newNightRates : (prev.nightRates || [])
             };
         });
-        toast.success(`Data Malam 1 disalin ke semua ${nights} malam.`);
+        toast.success(`Pengaturan tanggal pertama berhasil disalin ke seluruh periode menginap.`);
     };
 
     const updateRoomNightRate = (roomIdx: number, nightIdx: number, val: string | number) => {
