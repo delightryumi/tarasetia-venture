@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, doc, getDocs, query, where } from "firebase/firestore";
+import { onSnapshot, getDocs, query, where } from "firebase/firestore";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface ForecastStats {
@@ -66,7 +66,7 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
             const totalPhysicalRooms = await fetchRooms();
             const [year, month, day] = selectedDate.split("-");
             
-            let startStr, endStr, totalDaysForOcc;
+            let startStr: string, endStr: string, totalDaysForOcc: number;
             let trendLabels: string[] = [];
             let trendMode: 'days' | 'months' | 'years' = 'days';
 
@@ -91,36 +91,39 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                 trendLabels = ['2024','2025','2026','2027','2028','2029','2030'];
             }
 
-            const q = query(getHotelCollection(db, "daily_revenue"), where("date", ">=", startStr), where("date", "<=", endStr));
+            // Expand query window by 35 days before startStr to catch multi-night stays originating in prior month
+            const [sY, sM, sD] = startStr.split('-').map(Number);
+            const queryStartDate = new Date(sY, (sM || 1) - 1, sD || 1);
+            queryStartDate.setDate(queryStartDate.getDate() - 35);
+            const queryStartStr = `${queryStartDate.getFullYear()}-${String(queryStartDate.getMonth() + 1).padStart(2, '0')}-${String(queryStartDate.getDate()).padStart(2, '0')}`;
+
+            const q = query(
+                getHotelCollection(db, "daily_revenue", hotelId), 
+                where("date", ">=", queryStartStr), 
+                where("date", "<=", endStr)
+            );
+
             const unsubscribe = onSnapshot(q, (snap) => {
                 let gross = 0, walkin = 0, ota = 0, other = 0, transferAmt = 0, hotel = 0, roomsSold = 0, roomRevenue = 0;
-                let currentEntries: any[] = [];
                 
-                const buckets: Record<string, any> = {};
+                const buckets: Record<string, { gross: number; roomRev: number; sold: number }> = {};
                 trendLabels.forEach(l => buckets[l] = { gross: 0, roomRev: 0, sold: 0 });
+
+                const rawAccommodationGroups: Record<string, any[]> = {};
+                const nonAccEntries: any[] = [];
 
                 snap.forEach(d => {
                     const data = d.data();
-                    const date = data.date || ""; 
-                    const [dY, dM, dD] = date.split('-');
-                    
-                    let label = "";
-                    if (trendMode === 'days') label = String(parseInt(dD));
-                    else if (trendMode === 'months') label = trendLabels[parseInt(dM)-1];
-                    else label = dY;
-
-                    const isCurrent = (viewMode === "daily" && date === selectedDate) ||
-                                      (viewMode === "monthly" && dY === year && dM === month) ||
-                                      (viewMode === "yearly" && dY === year);
-
-                    // 1. Group & Deduplicate entries for this specific day document
-                    const dayAccommodationGroups: Record<string, any[]> = {};
-                    const dayNonAccEntries: any[] = [];
+                    const docDate = data.date || d.id.replace(`${hotelId}_`, "") || d.id;
 
                     (data.entries || []).forEach((e: any) => {
-                        const isPOS = e.guestName?.startsWith('POS Order #') || Array.isArray(e.posItems);
+                        const isPOS = e.guestName?.startsWith('POS Order #') || Array.isArray(e.posItems) || !!e.revenueType;
                         if (isPOS) return;
-                        if (e.status === "VOID" || e.status === "VOIDED") return;
+                        
+                        const st = String(e.status || "").toUpperCase();
+                        const pst = String(e.paymentStatus || "").toUpperCase();
+                        const gst = String(e.guestStatus || "").toLowerCase();
+                        if (st === "VOID" || st === "VOIDED" || pst === "VOID" || pst === "VOIDED" || gst === "void" || e.isDeleted === true || e.isVoid === true) return;
 
                         const isPelunasan = e.isHidden || e.isPelunasan || e.type === "pelunasan_ar" || e.type === "pelunasan_reversal" || e.guestName?.startsWith("Koreksi Tanggal Pelunasan") || e.guestName?.startsWith("Pelunasan Piutang");
                         if (isPelunasan) return;
@@ -129,86 +132,209 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                         if (isAcc) {
                             const normGuestName = (e.guestName || "").trim().toLowerCase();
                             const roomIdent = String(e.roomNumber || e.roomTypeId || e.roomType || '').trim();
-                            const cIn = e.checkInDate || e.checkIn || '';
+                            const cIn = e.checkInDate || e.checkIn || docDate || '';
                             const cOut = e.checkOutDate || e.checkOut || '';
                             const key = (normGuestName && cIn) 
                                 ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}` 
                                 : (e.bookingId ? `b_${e.bookingId}` : `t_${e.timestamp}`);
-                            if (!dayAccommodationGroups[key]) {
-                                dayAccommodationGroups[key] = [];
+                            if (!rawAccommodationGroups[key]) {
+                                rawAccommodationGroups[key] = [];
                             }
-                            dayAccommodationGroups[key].push(e);
+                            rawAccommodationGroups[key].push({ ...e, _docDate: docDate });
                         } else {
-                            dayNonAccEntries.push(e);
+                            nonAccEntries.push({ ...e, _docDate: docDate });
                         }
                     });
+                });
 
-                    const dayEntries: any[] = [];
-                    Object.values(dayAccommodationGroups).forEach(group => {
-                        const isCancelled = group.some(e => e.status === "CANCELLED" || e.status === "CANCEL" || e.paymentStatus === "CANCELLED" || e.paymentStatus === "CANCEL");
-                        // Sort so that newest timestamp is last
-                        group.sort((a, b) => {
-                            const tA = new Date(a.timestamp || 0).getTime();
-                            const tB = new Date(b.timestamp || 0).getTime();
-                            return tA - tB;
-                        });
-                        const rep = { ...group[group.length - 1] };
-                        if (isCancelled) {
-                            rep.status = "CANCELLED";
-                            rep.paymentStatus = "CANCELLED";
-                        }
-                        dayEntries.push(rep);
+                const currentAccommodationEntries: any[] = [];
+
+                // 1. Process Accommodation Bookings and distribute revenue per night
+                Object.values(rawAccommodationGroups).forEach(group => {
+                    const isCancelled = group.some(e => {
+                        const st = String(e.status || "").toUpperCase();
+                        const pst = String(e.paymentStatus || "").toUpperCase();
+                        const gst = String(e.guestStatus || "").toLowerCase();
+                        return st === "CANCELLED" || st === "CANCEL" || pst === "CANCELLED" || pst === "CANCEL" || gst === "cancelled" || gst === "cancel";
                     });
-                    dayEntries.push(...dayNonAccEntries);
 
-                    // 2. Process clean dayEntries for statistics and buckets
-                    dayEntries.forEach((e: any) => {
-                        const isCancelled = e.status === "CANCELLED" || e.status === "CANCEL" || e.paymentStatus === "CANCELLED" || e.paymentStatus === "CANCEL";
+                    // Sort to pick latest metadata
+                    group.sort((a, b) => {
+                        const tA = new Date(a.timestamp || 0).getTime();
+                        const tB = new Date(b.timestamp || 0).getTime();
+                        return tA - tB;
+                    });
+                    const rep = { ...group[group.length - 1] };
+                    if (isCancelled) {
+                        rep.status = "CANCELLED";
+                        rep.paymentStatus = "CANCELLED";
+                    }
 
-                        if (!isCancelled) {
-                            const amount = Number(e.amount) || 0;
-                            const isAcc = e.type === "accommodation" || (!e.type && e.guestName);
+                    const checkInDate = rep.checkInDate || rep.checkIn || group[0]._docDate;
+                    const checkOutDate = rep.checkOutDate || rep.checkOut || "";
 
-                            if (buckets[label]) {
-                                buckets[label].gross += amount;
-                                if (isAcc) {
-                                    buckets[label].roomRev += amount;
-                                    buckets[label].sold += 1;
-                                }
+                    let totalStayNights = 1;
+                    if (checkInDate && checkOutDate) {
+                        const [ciY, ciM, ciD] = checkInDate.split('-').map(Number);
+                        const [coY, coM, coD] = checkOutDate.split('-').map(Number);
+                        const dIn = new Date(ciY, (ciM || 1) - 1, ciD || 1);
+                        const dOut = new Date(coY, (coM || 1) - 1, coD || 1);
+                        const diff = Math.round((dOut.getTime() - dIn.getTime()) / (1000 * 60 * 60 * 24));
+                        totalStayNights = Math.max(1, isNaN(diff) ? 1 : diff);
+                    } else if (rep.nights) {
+                        totalStayNights = Math.max(1, Number(rep.nights) || 1);
+                    }
+
+                    // Build all stay dates for this booking
+                    const stayNightDates: string[] = [];
+                    if (checkInDate && totalStayNights > 0) {
+                        const [ciY, ciM, ciD] = checkInDate.split('-').map(Number);
+                        let curr = new Date(ciY, (ciM || 1) - 1, ciD || 1);
+                        for (let i = 0; i < totalStayNights; i++) {
+                            const y = curr.getFullYear();
+                            const m = String(curr.getMonth() + 1).padStart(2, '0');
+                            const d = String(curr.getDate()).padStart(2, '0');
+                            stayNightDates.push(`${y}-${m}-${d}`);
+                            curr.setDate(curr.getDate() + 1);
+                        }
+                    }
+
+                    // Calculate true total stay revenue
+                    const dateMap: Record<string, any> = {};
+                    group.forEach(item => {
+                        const dKey = item._docDate || item.effectiveDate || item.checkInDate || 'default';
+                        dateMap[dKey] = item;
+                    });
+                    const distinctEntries = Object.values(dateMap);
+
+                    let trueTotalAmount = Number(rep.totalAmount) || 0;
+                    if (trueTotalAmount <= 0) {
+                        if (distinctEntries.length === totalStayNights) {
+                            trueTotalAmount = distinctEntries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                        } else {
+                            trueTotalAmount = Math.max(...distinctEntries.map(item => Number(item.amount) || 0), 0);
+                        }
+                    }
+                    if (trueTotalAmount <= 0) {
+                        trueTotalAmount = distinctEntries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                    }
+
+                    const nightlyRate = totalStayNights > 0 ? Math.round(trueTotalAmount / totalStayNights) : trueTotalAmount;
+
+                    const stayPaidCash = distinctEntries.reduce((sum, item) => sum + (Number(item.paidCash) || 0), 0);
+                    const stayPaidEdc = distinctEntries.reduce((sum, item) => sum + (Number(item.paidEdc) || 0), 0);
+                    const stayPaidQris = distinctEntries.reduce((sum, item) => sum + (Number(item.paidQris) || 0), 0);
+                    const stayPaidTransfer = distinctEntries.reduce((sum, item) => sum + (Number(item.paidTransfer) || 0), 0);
+                    const stayPaidOta = distinctEntries.reduce((sum, item) => sum + (Number(item.paidOta) || 0), 0);
+
+                    const hasGranularStay = (stayPaidCash > 0 || stayPaidEdc > 0 || stayPaidQris > 0 || stayPaidTransfer > 0 || stayPaidOta > 0);
+                    const stayPayHotel = hasGranularStay 
+                        ? (stayPaidCash + stayPaidEdc + stayPaidQris + stayPaidTransfer) 
+                        : distinctEntries.reduce((sum, item) => sum + (Number(item.payHotel ?? item.paidCash ?? item.paidAmount1 ?? 0)), 0);
+                    const stayPayTransfer = hasGranularStay 
+                        ? (stayPaidOta + stayPaidTransfer) 
+                        : distinctEntries.reduce((sum, item) => sum + (Number(item.payTransfer ?? item.payNexura ?? item.paidTransfer ?? item.paidAmount2 ?? 0)), 0);
+
+                    const nightlyPayHotel = totalStayNights > 0 ? Math.round(stayPayHotel / totalStayNights) : stayPayHotel;
+                    const nightlyPayTransfer = totalStayNights > 0 ? Math.round(stayPayTransfer / totalStayNights) : stayPayTransfer;
+
+                    // Distribute across each stay night date
+                    stayNightDates.forEach((nightDate) => {
+                        const [nY, nM, nD] = nightDate.split('-');
+
+                        // 1. Fill Trend Buckets
+                        if (nightDate >= startStr && nightDate <= endStr) {
+                            let bLabel = "";
+                            if (trendMode === 'days') bLabel = String(parseInt(nD));
+                            else if (trendMode === 'months') bLabel = trendLabels[parseInt(nM)-1];
+                            else bLabel = nY;
+
+                            if (buckets[bLabel] && !isCancelled) {
+                                buckets[bLabel].gross += nightlyRate;
+                                buckets[bLabel].roomRev += nightlyRate;
+                                buckets[bLabel].sold += 1;
                             }
+                        }
 
-                            if (isCurrent) {
-                                gross += amount;
-                                if (e.type === "other_income") other += amount;
-                                else {
-                                    if (e.source === "Walk-in" || e.channel === "Walk-in") walkin += amount;
-                                    else if (e.source === "OTA" || (e.channel && e.channel !== "Walk-in" && e.channel !== "Direct")) ota += amount;
-                                    else other += amount;
-                                }
+                        // 2. Check if this night belongs to currently selected view
+                        const isCurrentNight = (viewMode === "daily" && nightDate === selectedDate) ||
+                                              (viewMode === "monthly" && nY === year && nM === month) ||
+                                              (viewMode === "yearly" && nY === year);
 
-                                const cashAmt = Number(e.payHotel || e.paidCash || e.paidAmount1 || 0);
-                                const digitalAmt = Number(e.payTransfer || e.payNexura || e.paidTransfer || e.paidAmount2 || 0);
-                                
-                                if (cashAmt > 0 || digitalAmt > 0) {
-                                    hotel += cashAmt;
-                                    transferAmt += digitalAmt;
+                        if (isCurrentNight) {
+                            if (!isCancelled) {
+                                gross += nightlyRate;
+                                roomRevenue += nightlyRate;
+                                roomsSold += 1;
+                                hotel += nightlyPayHotel;
+                                transferAmt += nightlyPayTransfer;
+
+                                if (rep.source === "Walk-in" || rep.channel === "Walk-in" || rep.channel === "WALKIN") {
+                                    walkin += nightlyRate;
+                                } else if (rep.source === "OTA" || (rep.channel && rep.channel !== "Walk-in" && rep.channel !== "WALKIN" && rep.channel !== "Direct")) {
+                                    ota += nightlyRate;
                                 } else {
-                                    if (e.paymentStatus === "Pay at Nexura" || e.paymentStatus === "Virtual Payment / OTA" || e.paymentStatus === "Virtual / OTA") transferAmt += amount;
-                                    if (e.paymentStatus === "Pay at Hotel") hotel += amount;
+                                    other += nightlyRate;
                                 }
+                            }
 
-                                if (isAcc) {
-                                    roomsSold += 1;
-                                    roomRevenue += amount;
-                                }
-                                currentEntries.push({ ...e, _docId: d.id });
-                            }
-                        } else {
-                            if (isCurrent) {
-                                currentEntries.push({ ...e, _docId: d.id });
-                            }
+                            currentAccommodationEntries.push({
+                                ...rep,
+                                effectiveDate: nightDate,
+                                date: nightDate,
+                                amount: nightlyRate,
+                                totalAmount: trueTotalAmount,
+                                nightlyRate: nightlyRate,
+                                payHotel: nightlyPayHotel,
+                                payTransfer: nightlyPayTransfer,
+                                totalStayNights: totalStayNights
+                            });
                         }
                     });
+                });
+
+                // 2. Process Non-Accommodation entries (Other Income)
+                const currentNonAccEntries: any[] = [];
+                nonAccEntries.forEach((e: any) => {
+                    const st = String(e.status || "").toUpperCase();
+                    const isCancelled = st === "CANCELLED" || st === "CANCEL" || e.paymentStatus === "CANCELLED" || e.paymentStatus === "CANCEL";
+                    const entryDate = e.effectiveDate || e.date || e.checkInDate || e._docDate || "";
+                    const [eY, eM, eD] = entryDate.split('-');
+
+                    const amount = Number(e.amount) || 0;
+
+                    // Fill trend bucket
+                    if (entryDate >= startStr && entryDate <= endStr) {
+                        let bLabel = "";
+                        if (trendMode === 'days') bLabel = String(parseInt(eD));
+                        else if (trendMode === 'months') bLabel = trendLabels[parseInt(eM)-1];
+                        else bLabel = eY;
+
+                        if (buckets[bLabel] && !isCancelled) {
+                            buckets[bLabel].gross += amount;
+                        }
+                    }
+
+                    const isCurrent = (viewMode === "daily" && entryDate === selectedDate) ||
+                                      (viewMode === "monthly" && eY === year && eM === month) ||
+                                      (viewMode === "yearly" && eY === year);
+
+                    if (isCurrent) {
+                        if (!isCancelled) {
+                            gross += amount;
+                            other += amount;
+                            const cashAmt = Number(e.payHotel || e.paidCash || e.paidAmount1 || 0);
+                            const digitalAmt = Number(e.payTransfer || e.payNexura || e.paidTransfer || e.paidAmount2 || 0);
+                            if (cashAmt > 0 || digitalAmt > 0) {
+                                hotel += cashAmt;
+                                transferAmt += digitalAmt;
+                            } else {
+                                if (e.paymentStatus === "Pay at Hotel") hotel += amount;
+                                else transferAmt += amount;
+                            }
+                        }
+                        currentNonAccEntries.push(e);
+                    }
                 });
 
                 const trendData = trendLabels.map(label => {
@@ -225,64 +351,40 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                 });
 
                 const totalPossibleRoomNights = totalPhysicalRooms * totalDaysForOcc;
-                
-                const forecastAccommodationGroups: Record<string, any[]> = {};
-                const resolvedEntries: any[] = [];
 
-                currentEntries.forEach((e) => {
-                    const isAcc = e.type === "accommodation" || (!e.type && e.guestName);
-                    if (isAcc) {
-                        const normName = (e.guestName || "").trim().toLowerCase();
-                        const roomIdent = String(e.roomNumber || e.roomTypeId || e.roomType || '').trim();
-                        const cIn = e.checkInDate || e.checkIn || '';
-                        const cOut = e.checkOutDate || e.checkOut || '';
-                        const key = (normName && cIn) 
-                            ? `${normName}_${roomIdent}_${cIn}_${cOut}` 
-                            : (e.bookingId ? `b_${e.bookingId}` : `t_${e.timestamp}`);
-                        
-                        if (!forecastAccommodationGroups[key]) {
-                            forecastAccommodationGroups[key] = [];
+                // Group entries for drawer/ledger list
+                let resolvedEntries: any[] = [];
+                if (viewMode === 'daily') {
+                    // In daily view, every occupied room on this day appears as 1 clear ledger line
+                    resolvedEntries = [...currentAccommodationEntries, ...currentNonAccEntries];
+                } else {
+                    // In monthly / yearly view, aggregate multiple nights of same booking into 1 clean summary line
+                    const bookingMap: Record<string, any> = {};
+                    currentAccommodationEntries.forEach((item) => {
+                        const key = item.bookingId || `${item.guestName}_${item.checkInDate}`;
+                        if (!bookingMap[key]) {
+                            bookingMap[key] = {
+                                ...item,
+                                amount: 0,
+                                payHotel: 0,
+                                payTransfer: 0,
+                                nightsInPeriod: 0
+                            };
                         }
-                        forecastAccommodationGroups[key].push(e);
-                    } else {
-                        resolvedEntries.push(e);
-                    }
-                });
-
-                Object.values(forecastAccommodationGroups).forEach((group) => {
-                    group.sort((a, b) => {
-                        const tA = new Date(a.timestamp || a.effectiveDate || 0).getTime();
-                        const tB = new Date(b.timestamp || b.effectiveDate || 0).getTime();
-                        return tA - tB;
+                        bookingMap[key].amount += Number(item.amount) || 0;
+                        bookingMap[key].payHotel += Number(item.payHotel) || 0;
+                        bookingMap[key].payTransfer += Number(item.payTransfer) || 0;
+                        bookingMap[key].nightsInPeriod += 1;
                     });
-                    const rep = { ...group[group.length - 1] };
-                    
-                    // Deduplicate per distinct effectiveDate
-                    const dateMap: Record<string, any> = {};
-                    group.forEach(item => {
-                        const effDate = item.effectiveDate || item.checkInDate || 'default';
-                        dateMap[effDate] = item;
-                    });
-                    const distinctNightEntries = Object.values(dateMap);
-                    
-                    const summedAmount = distinctNightEntries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-                    const summedPayHotel = distinctNightEntries.reduce((sum, item) => sum + (Number(item.payHotel ?? item.paidCash ?? item.paidAmount1 ?? 0)), 0);
-                    const summedPayTransfer = distinctNightEntries.reduce((sum, item) => sum + (Number(item.payTransfer ?? item.payNexura ?? item.paidTransfer ?? item.paidAmount2 ?? 0)), 0);
-                    
-                    rep.amount = summedAmount;
-                    rep.totalAmount = rep.totalAmount || summedAmount;
-                    rep.payHotel = summedPayHotel;
-                    rep.payTransfer = summedPayTransfer;
-                    resolvedEntries.push(rep);
-                });
+                    resolvedEntries = [...Object.values(bookingMap), ...currentNonAccEntries];
+                }
 
                 // If in daily view, roomsSold is exact count of occupied accommodation rooms
                 let finalRoomsSold = roomsSold;
                 if (viewMode === 'daily') {
-                    finalRoomsSold = resolvedEntries.filter(e => {
-                        const isAcc = e.type === "accommodation" || (!e.type && e.guestName);
+                    finalRoomsSold = currentAccommodationEntries.filter(e => {
                         const isCancelled = e.status === "CANCELLED" || e.status === "CANCEL" || e.paymentStatus === "CANCELLED" || e.paymentStatus === "CANCEL";
-                        return isAcc && !isCancelled;
+                        return !isCancelled;
                     }).length;
                 }
 

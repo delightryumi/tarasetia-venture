@@ -199,6 +199,8 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                             const dOut = new Date(coY, (coM || 1) - 1, coD || 1);
                             const diff = Math.round((dOut.getTime() - dIn.getTime()) / (1000 * 60 * 60 * 24));
                             totalStayNights = Math.max(1, isNaN(diff) ? 1 : diff);
+                        } else if (rep.nights) {
+                            totalStayNights = Math.max(1, Number(rep.nights) || 1);
                         }
 
                         // Generate all stay night dates
@@ -215,7 +217,7 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                             }
                         }
 
-                        // Deduplicate entries per distinct docDate to avoid summing duplicate records from same night
+                        // Deduplicate entries per distinct docDate
                         const dateMap: Record<string, any> = {};
                         group.forEach(item => {
                             const dKey = item._docDate || item.effectiveDate || item.checkInDate || 'default';
@@ -223,7 +225,20 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         });
                         const distinctEntries = Object.values(dateMap);
 
-                        const stayTotalAmount = distinctEntries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                        let trueTotalAmount = Number(rep.totalAmount) || 0;
+                        if (trueTotalAmount <= 0) {
+                            if (distinctEntries.length === totalStayNights) {
+                                trueTotalAmount = distinctEntries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                            } else {
+                                trueTotalAmount = Math.max(...distinctEntries.map(item => Number(item.amount) || 0), 0);
+                            }
+                        }
+                        if (trueTotalAmount <= 0) {
+                            trueTotalAmount = distinctEntries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                        }
+
+                        const ratePerNight = totalStayNights > 0 ? Math.round(trueTotalAmount / totalStayNights) : trueTotalAmount;
+
                         const stayPaidCash = distinctEntries.reduce((sum, item) => sum + (Number(item.paidCash) || 0), 0);
                         const stayPaidEdc = distinctEntries.reduce((sum, item) => sum + (Number(item.paidEdc) || 0), 0);
                         const stayPaidQris = distinctEntries.reduce((sum, item) => sum + (Number(item.paidQris) || 0), 0);
@@ -242,31 +257,14 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         const matchingNights = stayNightDates.filter(d => d >= startDateStr && d <= endDateStr);
                         const nightsInPeriod = matchingNights.length;
 
-                        // Check if group has explicit daily entries for the selected dates
-                        const periodEntries = group.filter(e => e._docDate && e._docDate >= startDateStr && e._docDate <= endDateStr);
-                        
-                        let periodAmount = 0;
-                        let periodPayHotel = 0;
-                        let periodPayTransfer = 0;
+                        const periodAmount = ratePerNight * nightsInPeriod;
+                        const periodPayHotel = totalStayNights > 0 ? Math.round((stayPayHotel / totalStayNights) * nightsInPeriod) : stayPayHotel;
+                        const periodPayTransfer = totalStayNights > 0 ? Math.round((stayPayTransfer / totalStayNights) * nightsInPeriod) : stayPayTransfer;
 
-                        if (periodEntries.length > 0 && periodEntries.length === nightsInPeriod) {
-                            periodAmount = periodEntries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-                            periodPayHotel = periodEntries.reduce((sum, item) => sum + (Number(item.payHotel || item.paidCash || item.paidAmount1) || 0), 0);
-                            periodPayTransfer = periodEntries.reduce((sum, item) => sum + (Number(item.payTransfer || item.payNexura || item.paidTransfer || item.paidAmount2) || 0), 0);
-                        } else if (nightsInPeriod > 0) {
-                            periodAmount = Math.round((stayTotalAmount / totalStayNights) * nightsInPeriod);
-                            periodPayHotel = Math.round((stayPayHotel / totalStayNights) * nightsInPeriod);
-                            periodPayTransfer = Math.round((stayPayTransfer / totalStayNights) * nightsInPeriod);
-                        } else {
-                            periodAmount = Math.round(stayTotalAmount / totalStayNights);
-                            periodPayHotel = Math.round(stayPayHotel / totalStayNights);
-                            periodPayTransfer = Math.round(stayPayTransfer / totalStayNights);
-                        }
-
-                        rep.totalAmount = stayTotalAmount;
-                        rep.ratePerNight = Math.round(stayTotalAmount / totalStayNights);
+                        rep.totalAmount = trueTotalAmount;
+                        rep.ratePerNight = ratePerNight;
                         rep.totalStayNights = totalStayNights;
-                        rep.nightsInPeriod = nightsInPeriod || 1;
+                        rep.nightsInPeriod = nightsInPeriod;
                         rep.amount = periodAmount;
                         rep.paidCash = stayPaidCash;
                         rep.paidEdc = stayPaidEdc;
