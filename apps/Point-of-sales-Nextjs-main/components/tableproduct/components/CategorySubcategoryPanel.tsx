@@ -25,12 +25,13 @@ import {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 // Protected categories that cannot be renamed or deleted (but can have subcategories added)
-const PROTECTED_CATEGORIES = ['BANQUET', 'FOOD', 'BEVERAGE'];
+const PROTECTED_CATEGORIES = ['BANQUET', 'FOOD', 'BEVERAGE', 'ADD BREAKFAST', 'BREAKFAST'];
 const VALID_PASSWORDS = ['admin123', 'owner123'];
 
 const PNL_TARGET_OPTIONS = [
   { value: 'FOOD', label: 'F&B Food (Makanan)' },
   { value: 'BEVERAGE', label: 'F&B Beverage (Minuman)' },
+  { value: 'BREAKFAST', label: 'F&B Breakfast (Sarapan / Add Breakfast)' },
   { value: 'BANQUET', label: 'F&B Banquet (Event)' },
   { value: 'OTHER', label: 'Other Income & Expense' }
 ];
@@ -39,7 +40,7 @@ interface Category {
   id: string;
   name: string;
   subcategories: string[];
-  pnlTarget?: 'FOOD' | 'BEVERAGE' | 'BANQUET' | 'OTHER';
+  pnlTarget?: 'FOOD' | 'BEVERAGE' | 'BREAKFAST' | 'BANQUET' | 'OTHER';
 }
 
 // ─── Admin Password Dialog ────────────────────────────────────────────────────
@@ -128,10 +129,10 @@ export default function CategorySubcategoryPanel() {
 
   // Category state
   const [newCat, setNewCat] = useState('');
-  const [newCatPnlTarget, setNewCatPnlTarget] = useState<'FOOD' | 'BEVERAGE' | 'BANQUET' | 'OTHER'>('FOOD');
+  const [newCatPnlTarget, setNewCatPnlTarget] = useState<'FOOD' | 'BEVERAGE' | 'BANQUET' | 'OTHER' | 'BREAKFAST'>('FOOD');
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editingCatName, setEditingCatName] = useState('');
-  const [editingCatPnlTarget, setEditingCatPnlTarget] = useState<'FOOD' | 'BEVERAGE' | 'BANQUET' | 'OTHER'>('FOOD');
+  const [editingCatPnlTarget, setEditingCatPnlTarget] = useState<'FOOD' | 'BEVERAGE' | 'BANQUET' | 'OTHER' | 'BREAKFAST'>('FOOD');
   const [selectedCat, setSelectedCat] = useState<Category | null>(null);
 
   // Subcategory state
@@ -191,18 +192,23 @@ export default function CategorySubcategoryPanel() {
         isSeeding.current = true;
         const existingNames = fetched.map(f => f.name.toUpperCase());
         for (const pcat of PROTECTED_CATEGORIES) {
+          if (pcat === 'BREAKFAST' && existingNames.includes('ADD BREAKFAST')) continue;
           if (!existingNames.includes(pcat)) {
+            const pnlTarget = pcat === 'ADD BREAKFAST' || pcat === 'BREAKFAST' ? 'BREAKFAST' : pcat;
+            const subcategories = pcat === 'ADD BREAKFAST' ? ['Buffet Breakfast', 'Ala Carte Breakfast', 'Extra Breakfast'] : [];
             const newDocRef = await addDoc(getHotelCollection(db, 'pos_categories'), {
               name: pcat,
-              subcategories: [],
-              pnlTarget: pcat,
+              subcategories,
+              pnlTarget,
+              isLocked: true,
+              isSystem: true,
               createdAt: new Date(),
             });
             fetched.push({
               id: newDocRef.id,
               name: pcat,
-              subcategories: [],
-              pnlTarget: pcat as any
+              subcategories,
+              pnlTarget: pnlTarget as any
             });
           }
         }

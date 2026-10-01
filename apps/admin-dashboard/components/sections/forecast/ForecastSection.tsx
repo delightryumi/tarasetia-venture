@@ -158,7 +158,7 @@ export const ForecastSection: React.FC = () => {
                 summary = {
                     label: "ADR Calculation",
                     formula: "Room Revenue / Rooms Sold",
-                    values: `IDR ${stats.totalGrossRevenue.toLocaleString()} / ${stats.roomsSold}`,
+                    values: `IDR ${(stats.totalRoomRevenue || Math.round(stats.arr * stats.roomsSold)).toLocaleString()} / ${stats.roomsSold}`,
                     result: `IDR ${stats.arr.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                 };
                 break;
@@ -172,7 +172,7 @@ export const ForecastSection: React.FC = () => {
                 summary = {
                     label: "RevPAR Calculation",
                     formula: "Total Room Revenue / Total Available Rooms",
-                    values: `IDR ${stats.totalGrossRevenue.toLocaleString()} / ${stats.totalPossibleRoomNights}`,
+                    values: `IDR ${(stats.totalRoomRevenue || Math.round(stats.revPar * stats.totalPossibleRoomNights)).toLocaleString()} / ${stats.totalPossibleRoomNights}`,
                     result: `IDR ${stats.revPar.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                 };
         }

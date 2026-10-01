@@ -149,8 +149,10 @@ export async function POST(req: NextRequest) {
           const productSnap = await getDoc(productRef);
           if (productSnap.exists()) {
             const currentStock = Number(productSnap.data().stock || 0);
+            const newStock = Math.max(0, currentStock - item.quantity);
             await updateDoc(productRef, {
-              stock: Math.max(0, currentStock - item.quantity)
+              stock: newStock,
+              isAvailable: newStock > 0,
             });
           }
         } catch (err) {

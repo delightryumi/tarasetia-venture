@@ -74,7 +74,7 @@ export default function ProductGrid({
             key={product.id}
             onClick={() => product.isAvailable && onProductClick(product)}
             className={`so-card rounded-2xl overflow-hidden flex flex-col relative group ${
-              product.isAvailable ? 'cursor-pointer' : 'opacity-65 grayscale-[35%]'
+              product.isAvailable ? 'cursor-pointer' : 'opacity-65 grayscale-[35%] cursor-not-allowed'
             }`}
           >
             {/* Dish Photography Frame - Proportional 1:1 Aspect Ratio */}
@@ -100,10 +100,19 @@ export default function ProductGrid({
                 </div>
               )}
 
+              {/* Sold Out Dark Overlay */}
+              {!product.isAvailable && (
+                <div className="absolute inset-0 bg-black/55 backdrop-blur-[1.5px] z-20 flex items-center justify-center">
+                  <span className="bg-red-600 text-white text-[11px] sm:text-[12px] font-black uppercase tracking-widest px-3 py-1 rounded-lg shadow-lg border border-red-500/50">
+                    Sold Out
+                  </span>
+                </div>
+              )}
+
               {/* Top Status & Dietary Badges */}
               <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10">
                 {!product.isAvailable ? (
-                  <span className="bg-[#121615]/85 backdrop-blur-md text-white text-[9px] font-bold px-2 py-0.5 rounded-lg uppercase tracking-wider shadow-sm">
+                  <span className="bg-red-600 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-lg uppercase tracking-wider shadow-sm">
                     Habis
                   </span>
                 ) : (
@@ -118,7 +127,7 @@ export default function ProductGrid({
               </div>
 
               {/* Quantity in Cart Glow Pill */}
-              {totalQty > 0 && (
+              {totalQty > 0 && product.isAvailable && (
                 <div className="absolute top-2.5 right-2.5 bg-[#0b3d2e] text-white text-[11px] font-black w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-white animate-in zoom-in-50 duration-200">
                   {totalQty}
                 </div>
@@ -145,7 +154,11 @@ export default function ProductGrid({
                   </span>
                 </div>
 
-                {product.isAvailable && (
+                {!product.isAvailable ? (
+                  <span className="text-[10.5px] sm:text-[11.5px] font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-xl border border-red-200 uppercase tracking-wider">
+                    Sold Out
+                  </span>
+                ) : (
                   <div onClick={(e) => e.stopPropagation()}>
                     {/* Stepper if in cart without addons */}
                     {!hasAddons && totalQty > 0 ? (

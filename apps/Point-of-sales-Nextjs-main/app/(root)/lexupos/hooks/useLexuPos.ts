@@ -131,17 +131,24 @@ export function useLexuPos() {
 
   const localProducts = useLiveQuery(() => localDb.products.toArray(), []) || [];
   
-  const dynamicProducts: Product[] = localProducts.map(lp => ({
-    id: lp.id,
-    name: lp.name,
-    price: lp.price,
-    category: lp.cat,
-    subcategory: lp.subcategory || '',
-    pnlTarget: lp.pnlTarget || '',
-    image: lp.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60',
-    description: lp.description || '',
-    addons: lp.addons || []
-  }));
+  const dynamicProducts: Product[] = localProducts.map(lp => {
+    const pStock = lp.stock !== undefined ? Number(lp.stock) : 0;
+    const catUpper = (lp.cat || '').toUpperCase().trim();
+    const isBkf = catUpper === 'ADD BREAKFAST' || catUpper === 'BREAKFAST';
+    return {
+      id: lp.id,
+      name: lp.name,
+      price: lp.price,
+      stock: pStock,
+      isAvailable: pStock > 0,
+      category: lp.cat,
+      subcategory: lp.subcategory || '',
+      pnlTarget: lp.pnlTarget || (isBkf ? 'BREAKFAST' : ''),
+      image: lp.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60',
+      description: lp.description || '',
+      addons: lp.addons || []
+    };
+  });
 
   const allRawCats = [...customCategories.map(c => c.name)];
   const uniqueCatsMap = new Map<string, string>();
@@ -390,11 +397,19 @@ export function useLexuPos() {
 
   const handleProductClick = (product: Product) => {
     if (!checkActiveShift()) return;
+    if (product.stock !== undefined && product.stock <= 0) {
+      toast.warning(`Maaf, ${product.name} sedang habis (Sold Out)!`);
+      return;
+    }
     setSelectedProduct(product);
     setIsModalOpen(true);
   };
 
   const handleAddToCart = (product: Product, qty: number, selectedAddons: any[], note: string) => {
+    if (product.stock !== undefined && product.stock <= 0) {
+      toast.warning(`Maaf, ${product.name} sedang habis (Sold Out)!`);
+      return;
+    }
     setCart(prevCart => {
       const newItem: CartItem = {
         cartItemId: Math.random().toString(36).substring(7),
@@ -837,16 +852,37 @@ export function useLexuPos() {
       // If even split, only deduct physical inventory on portion 1 so it's not deducted multiple times
       const shouldDeductStock = !currentSplit || currentSplit.splitMode !== 'even' || (currentSplit.splitIndex === 1);
       const stockPromises = shouldDeductStock ? itemsToRecord.map(async (item) => {
+        // 1. Update local IndexedDB
+        let newStock = 0;
         const dbProd = await localDb.products.get(item.product.id);
         if (dbProd) {
+          newStock = Math.max(0, (Number(dbProd.stock) || 0) - item.quantity);
           await localDb.products.update(item.product.id, {
-            stock: Math.max(0, dbProd.stock - item.quantity)
+            stock: newStock
           });
+        }
+
+        // 2. Update Firestore pos_products so /product and all devices immediately reflect decremented stock
+        if (hotelCode && hotelCode !== '0') {
+          try {
+            const prodRef = doc(db, 'hotels', hotelCode, 'pos_products', item.product.id);
+            const pSnap = await getDoc(prodRef);
+            if (pSnap.exists()) {
+              const curFsStock = Number(pSnap.data().stock) || 0;
+              const updatedFsStock = Math.max(0, curFsStock - item.quantity);
+              await updateDoc(prodRef, {
+                stock: updatedFsStock,
+                isAvailable: updatedFsStock > 0
+              });
+            }
+          } catch (fsErr) {
+            console.error('Error updating Firestore stock for product:', item.product.id, fsErr);
+          }
         }
       }) : [];
 
       Promise.all([addTxPromise, itemsPromise, ...stockPromises]).catch((err) => {
-        console.error('Error saving transaction to localDb:', err);
+        console.error('Error saving transaction to localDb & Firestore:', err);
       });
 
       try {
@@ -879,7 +915,7 @@ export function useLexuPos() {
               quantity: item.quantity,
               subtotal: Math.round(proratedPrice * item.quantity),
               category: item.product.category,
-              pnlTarget: item.product.pnlTarget || '',
+              pnlTarget: item.product.pnlTarget || (String(item.product.category || '').toUpperCase().includes('BREAKFAST') ? 'BREAKFAST' : ''),
               image: item.product.image,
               isCompliment: item.isCompliment || false,
               complimentReason: item.complimentReason || null,

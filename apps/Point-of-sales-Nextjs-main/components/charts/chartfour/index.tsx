@@ -1,7 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useIncomeAnalytics } from './hooks/useIncomeAnalytics';
+import { useIncomeExport } from './hooks/useIncomeExport';
+import { useCurrency } from '@/hooks/useCurrency';
 import { FilterBar } from './components/FilterBar';
 import { OverviewMetrics } from './components/OverviewMetrics';
 import { RevenueCharts } from './components/RevenueCharts';
@@ -9,6 +11,20 @@ import { CategoryBreakdownTable } from './components/CategoryBreakdownTable';
 import { CostSections } from './components/CostSections';
 
 const ChartFour: React.FC = () => {
+  const { formatCurrency } = useCurrency();
+  const [hotelName, setHotelName] = useState<string>('SETARA POS & RESTORAN');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedName =
+        localStorage.getItem('restoName') ||
+        localStorage.getItem('active_hotel_name') ||
+        localStorage.getItem('hotelName') ||
+        'SETARA POS & RESTORAN';
+      setHotelName(storedName);
+    }
+  }, []);
+
   const {
     filterType,
     startDate,
@@ -24,6 +40,7 @@ const ChartFour: React.FC = () => {
     alacarteRevenue,
     foodRevenue,
     beverageRevenue,
+    otherRevenue,
     serviceRate,
     serviceCharge,
     taxRateIndividual,
@@ -39,10 +56,34 @@ const ChartFour: React.FC = () => {
     categoryBreakdown,
   } = useIncomeAnalytics();
 
+  const { exportToExcel, exportToPDF } = useIncomeExport({
+    startDate,
+    endDate,
+    filterType,
+    totalGrossIncome,
+    nettRevenue,
+    totalTaxIncome,
+    banquetRevenue,
+    alacarteRevenue,
+    foodRevenue,
+    beverageRevenue,
+    otherRevenue,
+    serviceRate,
+    serviceCharge,
+    taxRateIndividual,
+    taxAmount,
+    lostBreakageRate,
+    lostBreakageAmount,
+    taxRate,
+    categoryBreakdown,
+    hotelName,
+    formatCurrency,
+  });
+
   return (
     <div className="col-span-12 rounded-xl flex flex-col gap-6">
       
-      {/* ── Filter Bar ── */}
+      {/* ── Filter Bar & Export Actions ── */}
       <FilterBar
         filterType={filterType}
         startDate={startDate}
@@ -50,6 +91,9 @@ const ChartFour: React.FC = () => {
         setStartDate={setStartDate}
         setEndDate={setEndDate}
         handleFilterTypeChange={handleFilterTypeChange}
+        onExportExcel={exportToExcel}
+        onExportPDF={exportToPDF}
+        loading={loading}
       />
 
       {loading ? (

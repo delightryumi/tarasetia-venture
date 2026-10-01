@@ -562,16 +562,18 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
           const cat = (item.category || (item as any).pnlTarget || "").toLowerCase().trim();
           const pnlTarget = ((item as any).pnlTarget || "").toUpperCase().trim();
           const itemName = (item.name || "").toLowerCase().trim();
-          const outlet = (item.outlet || (order as any).revenueType || "restaurant").toLowerCase().trim();
+          const isBreakfastItem = pnlTarget === "BREAKFAST" || cat.includes("breakfast") || cat.includes("sarapan") || itemName.includes("breakfast") || itemName.includes("sarapan");
+          const rawOutlet = (item.outlet || (order as any).revenueType || "").toLowerCase().trim();
+          const outlet = isBreakfastItem ? "breakfast" : (rawOutlet || "restaurant");
           
           let matchesCat = false;
           if (type === "food") {
-            matchesCat = pnlTarget === "FOOD" || isFoodItem(pnlTarget, cat, itemName);
+            matchesCat = pnlTarget === "FOOD" || pnlTarget === "BREAKFAST" || isBreakfastItem || isFoodItem(pnlTarget, cat, itemName);
           } else if (type === "beverage") {
-            matchesCat = pnlTarget === "BEVERAGE" || isBeverageItem(pnlTarget, cat, itemName);
+            matchesCat = !isBreakfastItem && (pnlTarget === "BEVERAGE" || isBeverageItem(pnlTarget, cat, itemName));
           } else {
             // Other: not food and not beverage (and not spa/laundry)
-            const isFoodOrBev = isFoodItem(pnlTarget, cat, itemName) || isBeverageItem(pnlTarget, cat, itemName);
+            const isFoodOrBev = isBreakfastItem || isFoodItem(pnlTarget, cat, itemName) || isBeverageItem(pnlTarget, cat, itemName);
             const isMinor = cat.includes("spa") || cat.includes("laundry");
             matchesCat = cat === "other" || (!isFoodOrBev && !isMinor);
           }
@@ -590,12 +592,13 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
       if (ordAmt > 0) {
         const ordCat = ((order as any).orderType || (order as any).category || (order as any).revenueType || "").toLowerCase().trim();
         const ordName = ((order as any).name || "").toLowerCase().trim();
-        const outlet = ((order as any).revenueType || "restaurant").toLowerCase().trim();
+        const isBkfOrd = ordCat.includes("breakfast") || ordCat.includes("sarapan") || ordName.includes("breakfast") || ordName.includes("sarapan");
+        const outlet = isBkfOrd ? "breakfast" : ((order as any).revenueType || "restaurant").toLowerCase().trim();
         let matchesCat = false;
         if (type === "food") {
-          matchesCat = isFoodItem("", ordCat, ordName);
+          matchesCat = isBkfOrd || isFoodItem("", ordCat, ordName);
         } else if (type === "beverage") {
-          matchesCat = isBeverageItem("", ordCat, ordName);
+          matchesCat = !isBkfOrd && isBeverageItem("", ordCat, ordName);
         } else {
           matchesCat = type === "other";
         }
@@ -615,11 +618,11 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
   ) => {
     const outletMatcher = (outlet: string) => {
       const o = (outlet || "").toLowerCase();
-      if (subCat === "breakfast") return o.includes("breakfast") || o.includes("pagi");
-      if (subCat === "restaurant") return o.includes("restaurant") || o.includes("resto") || o.includes("outlet") || o.includes("alacarte") || o === "restaurant" || !o;
-      if (subCat === "roomService") return o.includes("room") || o.includes("service") || o.includes("rs");
-      if (subCat === "banquet") return o.includes("banquet") || o.includes("bq") || o.includes("meeting");
-      if (subCat === "minibar") return o.includes("minibar") || o.includes("mini");
+      if (subCat === "breakfast") return o.includes("breakfast") || o.includes("pagi") || o.includes("sarapan");
+      if (subCat === "restaurant") return (o.includes("restaurant") || o.includes("resto") || o.includes("outlet") || o.includes("alacarte") || o === "restaurant" || !o) && !o.includes("breakfast") && !o.includes("sarapan");
+      if (subCat === "roomService") return (o.includes("room") || o.includes("service") || o.includes("rs")) && !o.includes("breakfast") && !o.includes("sarapan");
+      if (subCat === "banquet") return (o.includes("banquet") || o.includes("bq") || o.includes("meeting")) && !o.includes("breakfast") && !o.includes("sarapan");
+      if (subCat === "minibar") return (o.includes("minibar") || o.includes("mini")) && !o.includes("breakfast") && !o.includes("sarapan");
       return true;
     };
 
@@ -642,7 +645,7 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
       if (type === "food" && (cat.includes("food") || subCatName.includes("breakfast") || desc.includes("breakfast") || desc.includes("sarapan") || desc.includes("makanan") || !cat.includes("bev"))) {
         return outletMatcher(combined);
       }
-      if (type === "beverage" && (cat.includes("bev") || desc.includes("minuman") || cat.includes("drink"))) {
+      if (type === "beverage" && !combined.includes("breakfast") && !combined.includes("sarapan") && (cat.includes("bev") || desc.includes("minuman") || cat.includes("drink"))) {
         return outletMatcher(combined);
       }
       return outletMatcher(combined);
@@ -923,28 +926,45 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
   const totalAmenitiesBudMtd = getAmenitiesBud(currentMonthBudget);
   const totalAmenitiesBudYtd = getYtdBudget(getAmenitiesBud);
 
-  // Total Net Revenue
-  const netRevenueToday =
+  const serviceRate = (currentMonthBudget.serviceChargeRate !== undefined ? currentMonthBudget.serviceChargeRate : 10) / 100;
+  const taxRate = (currentMonthBudget.taxRate !== undefined ? currentMonthBudget.taxRate : 10) / 100;
+  const taxAndServiceDivider = 1 + serviceRate + taxRate;
+
+  // Actual transactions entered are Gross (all-in / ++ inclusive of Tax & Service)
+  const grossRevenueToday =
     totalRoomToday +
     totalFoodToday +
     totalBevToday +
     totalOtherToday +
     totalMinorToday +
     totalAmenitiesToday;
-  const netRevenueMtd =
+  const grossRevenueMtd =
     totalRoomMtd +
     totalFoodMtd +
     totalBevMtd +
     totalOtherMtd +
     totalMinorMtd +
     totalAmenitiesMtd;
-  const netRevenueYtd =
+  const grossRevenueYtd =
     totalRoomYtd +
     totalFoodYtd +
     totalBevYtd +
     totalOtherYtd +
     totalMinorYtd +
     totalAmenitiesYtd;
+
+  // Extract Net Revenue backwards from Gross Revenue
+  const netRevenueToday = taxAndServiceDivider > 0 ? grossRevenueToday / taxAndServiceDivider : grossRevenueToday;
+  const netRevenueMtd = taxAndServiceDivider > 0 ? grossRevenueMtd / taxAndServiceDivider : grossRevenueMtd;
+  const netRevenueYtd = taxAndServiceDivider > 0 ? grossRevenueYtd / taxAndServiceDivider : grossRevenueYtd;
+
+  const serviceToday = netRevenueToday * serviceRate;
+  const serviceMtd = netRevenueMtd * serviceRate;
+  const serviceYtd = netRevenueYtd * serviceRate;
+
+  const taxToday = netRevenueToday * taxRate;
+  const taxMtd = netRevenueMtd * taxRate;
+  const taxYtd = netRevenueYtd * taxRate;
 
   const getNetRevBud = (b: BudgetMonthData) =>
     b.netRevenue ||
@@ -955,38 +975,23 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
   const netRevenueBudMtd = getNetRevBud(currentMonthBudget);
   const netRevenueBudYtd = getYtdBudget(getNetRevBud);
 
-  const serviceRate = (currentMonthBudget.serviceChargeRate || 10) / 100;
-  const taxRate = (currentMonthBudget.taxRate || 10) / 100;
-
-  const serviceToday = netRevenueToday * serviceRate;
-  const serviceMtd = netRevenueMtd * serviceRate;
-  const serviceYtd = netRevenueYtd * serviceRate;
-
   const getSvcBud = (b: BudgetMonthData) =>
     b.serviceChargeAmount ||
     b.summaryPnl?.serviceCharge ||
-    (getNetRevBud(b) * ((b.serviceChargeRate || 10) / 100));
+    (getNetRevBud(b) * ((b.serviceChargeRate !== undefined ? b.serviceChargeRate : 10) / 100));
 
   const serviceBudToday = getProRatedTodayBudget(getSvcBud(currentMonthBudget));
   const serviceBudMtd = getSvcBud(currentMonthBudget);
   const serviceBudYtd = getYtdBudget(getSvcBud);
 
-  const taxToday = netRevenueToday * taxRate;
-  const taxMtd = netRevenueMtd * taxRate;
-  const taxYtd = netRevenueYtd * taxRate;
-
   const getTaxBud = (b: BudgetMonthData) =>
     b.taxAmount ||
     b.summaryPnl?.governmentTax ||
-    (getNetRevBud(b) * ((b.taxRate || 10) / 100));
+    (getNetRevBud(b) * ((b.taxRate !== undefined ? b.taxRate : 10) / 100));
 
   const taxBudToday = getProRatedTodayBudget(getTaxBud(currentMonthBudget));
   const taxBudMtd = getTaxBud(currentMonthBudget);
   const taxBudYtd = getYtdBudget(getTaxBud);
-
-  const grossRevenueToday = netRevenueToday + serviceToday + taxToday;
-  const grossRevenueMtd = netRevenueMtd + serviceMtd + taxMtd;
-  const grossRevenueYtd = netRevenueYtd + serviceYtd + taxYtd;
 
   const getGrossRevBud = (b: BudgetMonthData) =>
     b.grossRevenue ||
@@ -1382,31 +1387,31 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
 
   const summaryTotalsRows: DSRDataRow[] = [
     {
-      id: "summary_net",
-      label: "Total Net Revenue",
+      id: "summary_gross",
+      label: "Total Gross Revenue",
       isHighlight: true,
       isCurrency: true,
-      cells: calculateCell(netRevenueToday, netRevenueMtd, netRevenueBudMtd, netRevenueYtd, netRevenueBudYtd, false, netRevenueBudToday),
+      cells: calculateCell(grossRevenueToday, grossRevenueMtd, grossRevenueBudMtd, grossRevenueYtd, grossRevenueBudYtd, false, grossRevenueBudToday),
     },
     {
       id: "summary_service",
-      label: `Service Charge (${currentMonthBudget.serviceChargeRate || 10}%)`,
+      label: `Service Charge (${currentMonthBudget.serviceChargeRate !== undefined ? currentMonthBudget.serviceChargeRate : 10}%)`,
       isCurrency: true,
       cells: calculateCell(serviceToday, serviceMtd, serviceBudMtd, serviceYtd, serviceBudYtd, false, serviceBudToday),
     },
     {
       id: "summary_tax",
-      label: `Government Tax (${currentMonthBudget.taxRate || 10}%)`,
+      label: `Government Tax (${currentMonthBudget.taxRate !== undefined ? currentMonthBudget.taxRate : 10}%)`,
       isCurrency: true,
       cells: calculateCell(taxToday, taxMtd, taxBudMtd, taxYtd, taxBudYtd, false, taxBudToday),
     },
     {
-      id: "summary_gross",
-      label: "Total Gross Revenue",
+      id: "summary_net",
+      label: "Total Net Revenue",
       isTotal: true,
       isHighlight: true,
       isCurrency: true,
-      cells: calculateCell(grossRevenueToday, grossRevenueMtd, grossRevenueBudMtd, grossRevenueYtd, grossRevenueBudYtd, false, grossRevenueBudToday),
+      cells: calculateCell(netRevenueToday, netRevenueMtd, netRevenueBudMtd, netRevenueYtd, netRevenueBudYtd, false, netRevenueBudToday),
     },
   ];
 

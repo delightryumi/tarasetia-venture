@@ -228,51 +228,73 @@ export default function POSCatalogView({
       {/* ── VIEW MODE 1: GRID VIEW ────────────────────────────────────────────── */}
       {viewMode === 'grid' && (
         <div className={styles.productGrid}>
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              onClick={() => onAddToCart(product)}
-              className={styles.productCard}
-              title={`Klik untuk menambahkan ${product.name}`}
-            >
-              <div className={styles.productImgBox}>
-                {product.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className={styles.productImg}
-                    loading="lazy"
-                  />
-                ) : (
-                  <Utensils className="w-8 h-8 opacity-40 text-neutral-400" />
-                )}
-                {product.subcategory ? (
-                  <div className={styles.productSubcategoryTag}>
-                    {product.subcategory}
-                  </div>
-                ) : product.category ? (
-                  <div className={styles.productSubcategoryTag}>
-                    {product.category}
-                  </div>
-                ) : null}
-              </div>
+          {filteredProducts.map((product) => {
+            const isSoldOut = (product.stock !== undefined && product.stock <= 0) || product.isAvailable === false;
+            return (
+              <div
+                key={product.id}
+                onClick={() => {
+                  if (!isSoldOut) onAddToCart(product);
+                }}
+                className={`${styles.productCard} ${isSoldOut ? styles.productCardSoldOut : ''}`}
+                title={isSoldOut ? `${product.name} (Stok Habis / Sold Out)` : `Klik untuk menambahkan ${product.name}`}
+              >
+                <div className={styles.productImgBox}>
+                  {product.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className={styles.productImg}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <Utensils className="w-8 h-8 opacity-40 text-neutral-400" />
+                  )}
+                  {isSoldOut ? (
+                    <div className={styles.soldOutOverlay}>
+                      <span className={styles.soldOutOverlayBadge}>Sold Out</span>
+                    </div>
+                  ) : product.subcategory ? (
+                    <div className={styles.productSubcategoryTag}>
+                      {product.subcategory}
+                    </div>
+                  ) : product.category ? (
+                    <div className={styles.productSubcategoryTag}>
+                      {product.category}
+                    </div>
+                  ) : null}
+                </div>
 
-              <div className={styles.productInfo}>
-                <h3 className={styles.productName} title={product.name}>
-                  {product.name}
-                </h3>
-                <div className={styles.productPriceRow}>
-                  <span className={styles.productPrice}>
-                    {formatCurrency(product.price)}
-                  </span>
-                  <div className={styles.productAddBtn}>
-                    <Plus className="w-3.5 h-3.5" />
+                <div className={styles.productInfo}>
+                  <h3 className={styles.productName} title={product.name}>
+                    {product.name}
+                  </h3>
+                  <div className={styles.productPriceRow}>
+                    <div className="flex flex-col">
+                      <span className={styles.productPrice}>
+                        {formatCurrency(product.price)}
+                      </span>
+                      {product.stock !== undefined && (
+                        <span className={`text-[10px] font-semibold ${isSoldOut ? 'text-red-600' : 'text-neutral-500 dark:text-neutral-400'}`}>
+                          {isSoldOut ? 'Stok Habis' : `Stok: ${product.stock}`}
+                        </span>
+                      )}
+                    </div>
+                    {isSoldOut ? (
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 bg-red-100 dark:bg-red-950/60 dark:text-red-400 px-2 py-1 rounded-md border border-red-200 dark:border-red-900">
+                        Habis
+                      </span>
+                    ) : (
+                      <div className={styles.productAddBtn}>
+                        <Plus className="w-3.5 h-3.5" />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {filteredProducts.length === 0 && (
             <div className={styles.emptyState}>
@@ -292,70 +314,101 @@ export default function POSCatalogView({
                 <th className={styles.thCell} style={{ width: '56px', textAlign: 'center' }}>Foto</th>
                 <th className={styles.thCell}>Nama Produk</th>
                 <th className={styles.thCell}>Kategori</th>
+                <th className={styles.thCell} style={{ textAlign: 'center' }}>Stok</th>
                 <th className={styles.thCell} style={{ textAlign: 'right' }}>Harga</th>
                 <th className={styles.thCell} style={{ width: '90px', textAlign: 'center' }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {filteredProducts.map((product) => (
-                <tr
-                  key={product.id}
-                  onClick={() => onAddToCart(product)}
-                  className={styles.tableRow}
-                  title={`Klik untuk menambahkan ${product.name}`}
-                >
-                  <td className={styles.tdCell} style={{ textAlign: 'center' }}>
-                    <div className={styles.tableThumbBox}>
-                      {product.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className={styles.tableThumbImg}
-                          loading="lazy"
-                        />
-                      ) : (
-                        <Utensils className="w-4 h-4 opacity-40 text-neutral-400" />
+              {filteredProducts.map((product) => {
+                const isSoldOut = (product.stock !== undefined && product.stock <= 0) || product.isAvailable === false;
+                return (
+                  <tr
+                    key={product.id}
+                    onClick={() => {
+                      if (!isSoldOut) onAddToCart(product);
+                    }}
+                    className={`${styles.tableRow} ${isSoldOut ? styles.productCardSoldOut : ''}`}
+                    title={isSoldOut ? `${product.name} (Sold Out)` : `Klik untuk menambahkan ${product.name}`}
+                  >
+                    <td className={styles.tdCell} style={{ textAlign: 'center' }}>
+                      <div className={styles.tableThumbBox}>
+                        {product.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className={styles.tableThumbImg}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <Utensils className="w-4 h-4 opacity-40 text-neutral-400" />
+                        )}
+                      </div>
+                    </td>
+                    <td className={styles.tdCell}>
+                      <div className="flex items-center gap-2">
+                        <div className={styles.tableProductName}>{product.name}</div>
+                        {isSoldOut && (
+                          <span className="text-[9px] font-extrabold uppercase tracking-wider bg-red-600 text-white px-1.5 py-0.5 rounded">
+                            Sold Out
+                          </span>
+                        )}
+                      </div>
+                      {product.subcategory && (
+                        <span style={{ fontSize: '10px', color: '#71717a' }}>
+                          {product.subcategory}
+                        </span>
                       )}
-                    </div>
-                  </td>
-                  <td className={styles.tdCell}>
-                    <div className={styles.tableProductName}>{product.name}</div>
-                    {product.subcategory && (
-                      <span style={{ fontSize: '10px', color: '#71717a' }}>
-                        {product.subcategory}
+                    </td>
+                    <td className={styles.tdCell}>
+                      <span className={styles.tableCategoryBadge}>
+                        {product.category || 'General'}
                       </span>
-                    )}
-                  </td>
-                  <td className={styles.tdCell}>
-                    <span className={styles.tableCategoryBadge}>
-                      {product.category || 'General'}
-                    </span>
-                  </td>
-                  <td className={styles.tdCell} style={{ textAlign: 'right' }}>
-                    <span className={styles.tablePrice}>
-                      {formatCurrency(product.price)}
-                    </span>
-                  </td>
-                  <td className={styles.tdCell} style={{ textAlign: 'center' }}>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onAddToCart(product);
-                      }}
-                      className={styles.tableAddButton}
-                    >
-                      <Plus size={13} />
-                      <span>Tambah</span>
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className={styles.tdCell} style={{ textAlign: 'center' }}>
+                      {product.stock !== undefined ? (
+                        isSoldOut ? (
+                          <span className="text-xs font-bold text-red-600">0 (Habis)</span>
+                        ) : (
+                          <span className="text-xs font-semibold">{product.stock}</span>
+                        )
+                      ) : (
+                        <span className="text-xs text-neutral-400">—</span>
+                      )}
+                    </td>
+                    <td className={styles.tdCell} style={{ textAlign: 'right' }}>
+                      <span className={styles.tablePrice}>
+                        {formatCurrency(product.price)}
+                      </span>
+                    </td>
+                    <td className={styles.tdCell} style={{ textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        disabled={isSoldOut}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isSoldOut) onAddToCart(product);
+                        }}
+                        className={`${styles.tableAddButton} ${isSoldOut ? styles.tableAddButtonDisabled : ''}`}
+                      >
+                        {isSoldOut ? (
+                          <span>Habis</span>
+                        ) : (
+                          <>
+                            <Plus size={13} />
+                            <span>Tambah</span>
+                          </>
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
 
               {filteredProducts.length === 0 && (
                 <tr>
-                  <td colSpan={5} className={styles.emptyState}>
+                  <td colSpan={6} className={styles.emptyState}>
                     <Info className="w-8 h-8 mx-auto mb-2 opacity-40" />
                     <p className={styles.emptyStateTitle}>Tidak ada produk ditemukan.</p>
                   </td>

@@ -23,9 +23,12 @@ import { db } from '@/lib/firebase';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 import { ChevronDown, ChevronRight, X, Pencil, Check } from 'lucide-react';
 
+const PROTECTED_CATEGORIES = ['BANQUET', 'FOOD', 'BEVERAGE', 'ADD BREAKFAST', 'BREAKFAST'];
+
 const PNL_TARGET_OPTIONS = [
   { value: 'FOOD', label: 'F&B Food (Makanan)' },
   { value: 'BEVERAGE', label: 'F&B Beverage (Minuman)' },
+  { value: 'BREAKFAST', label: 'F&B Breakfast (Sarapan / Add Breakfast)' },
   { value: 'BANQUET', label: 'F&B Banquet (Event)' },
   { value: 'OTHER', label: 'Other Income & Expense' }
 ];
@@ -34,8 +37,8 @@ export default function ManageCategoryComponent() {
   const [open, setOpen] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string; subcategories: string[]; pnlTarget?: string }[]>([]);
   const [newCat, setNewCat] = useState('');
-  const [newCatPnlTarget, setNewCatPnlTarget] = useState<'FOOD' | 'BEVERAGE' | 'BANQUET' | 'OTHER'>('FOOD');
-  const [editingCatPnlTarget, setEditingCatPnlTarget] = useState<'FOOD' | 'BEVERAGE' | 'BANQUET' | 'OTHER'>('FOOD');
+  const [newCatPnlTarget, setNewCatPnlTarget] = useState<'FOOD' | 'BEVERAGE' | 'BREAKFAST' | 'BANQUET' | 'OTHER'>('FOOD');
+  const [editingCatPnlTarget, setEditingCatPnlTarget] = useState<'FOOD' | 'BEVERAGE' | 'BREAKFAST' | 'BANQUET' | 'OTHER'>('FOOD');
   const [loadingCategory, setLoadingCategory] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
@@ -57,8 +60,32 @@ export default function ManageCategoryComponent() {
         id: doc.id,
         name: doc.data().name,
         subcategories: doc.data().subcategories || [],
-        pnlTarget: doc.data().pnlTarget || (doc.data().name === 'FOOD' ? 'FOOD' : doc.data().name === 'BEVERAGE' ? 'BEVERAGE' : doc.data().name === 'BANQUET' ? 'BANQUET' : 'FOOD')
+        pnlTarget: doc.data().pnlTarget || (doc.data().name === 'FOOD' ? 'FOOD' : doc.data().name === 'BEVERAGE' ? 'BEVERAGE' : doc.data().name === 'ADD BREAKFAST' || doc.data().name === 'BREAKFAST' ? 'BREAKFAST' : doc.data().name === 'BANQUET' ? 'BANQUET' : 'FOOD')
       }));
+
+      // Auto-seed ADD BREAKFAST if missing
+      const existingNames = fetchedCats.map(f => f.name.toUpperCase());
+      if (!existingNames.includes('ADD BREAKFAST') && !existingNames.includes('BREAKFAST')) {
+        try {
+          const docRef = await addDoc(getHotelCollection(db, 'pos_categories'), {
+            name: 'ADD BREAKFAST',
+            subcategories: ['Buffet Breakfast', 'Ala Carte Breakfast', 'Extra Breakfast'],
+            pnlTarget: 'BREAKFAST',
+            isLocked: true,
+            isSystem: true,
+            createdAt: new Date()
+          });
+          fetchedCats.push({
+            id: docRef.id,
+            name: 'ADD BREAKFAST',
+            subcategories: ['Buffet Breakfast', 'Ala Carte Breakfast', 'Extra Breakfast'],
+            pnlTarget: 'BREAKFAST'
+          });
+        } catch (seedErr) {
+          console.error("Failed auto-seeding ADD BREAKFAST:", seedErr);
+        }
+      }
+
       setCategories(fetchedCats.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (error) {
       console.error('Failed to load categories', error);
@@ -78,7 +105,7 @@ export default function ManageCategoryComponent() {
       return;
     }
 
-    const resolvedPnlTarget = trimmed === 'FOOD' ? 'FOOD' : trimmed === 'BEVERAGE' ? 'BEVERAGE' : trimmed === 'BANQUET' ? 'BANQUET' : newCatPnlTarget;
+    const resolvedPnlTarget = trimmed === 'FOOD' ? 'FOOD' : trimmed === 'BEVERAGE' ? 'BEVERAGE' : trimmed === 'ADD BREAKFAST' || trimmed === 'BREAKFAST' ? 'BREAKFAST' : trimmed === 'BANQUET' ? 'BANQUET' : newCatPnlTarget;
 
     try {
       const docRef = await addDoc(getHotelCollection(db, 'pos_categories'), {
@@ -97,6 +124,11 @@ export default function ManageCategoryComponent() {
   };
 
   const handleDelete = async (catId: string, catName: string) => {
+    if (PROTECTED_CATEGORIES.includes(catName.toUpperCase())) {
+      toast.error(`Kategori "${catName}" adalah kategori sistem terlindungi dan tidak dapat dihapus.`);
+      return;
+    }
+
     setLoadingCategory(catId);
     try {
       // Fetch products to see if this category is in use
@@ -122,6 +154,12 @@ export default function ManageCategoryComponent() {
     const trimmed = editingCatName.trim().toUpperCase();
     const hasNameChanged = trimmed && trimmed !== oldName;
     const hasPnlTargetChanged = editingCatPnlTarget !== currentPnlTarget;
+
+    if (hasNameChanged && PROTECTED_CATEGORIES.includes(oldName.toUpperCase())) {
+      toast.error(`Kategori sistem "${oldName}" tidak dapat diubah namanya.`);
+      setEditingCatId(null);
+      return;
+    }
 
     if (!hasNameChanged && !hasPnlTargetChanged) {
       setEditingCatId(null);

@@ -41,7 +41,8 @@ export const POST = async (request: NextRequest) => {
       image: body.imageProduct || '',
       description: body.description || '',
       addons: body.addons || [],
-      isSignature: Boolean(body.isSignature)
+      isSignature: Boolean(body.isSignature),
+      isAvailable: Number(body.stockProduct) > 0
     };
 
     // Sync the new product to Firebase Firestore under the hotel-specific subcollection

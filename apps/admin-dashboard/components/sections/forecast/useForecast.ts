@@ -5,6 +5,7 @@ import { getHotelCollection } from "@/lib/firestoreHelper";
 
 export interface ForecastStats {
     totalGrossRevenue: number;
+    totalRoomRevenue: number;
     salesPayAtTransfer: number;
     salesPayAtHotel: number;
     walkInRevenue: number;
@@ -26,6 +27,7 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [stats, setStats] = useState<ForecastStats>({
         totalGrossRevenue: 0,
+        totalRoomRevenue: 0,
         salesPayAtTransfer: 0,
         salesPayAtHotel: 0,
         walkInRevenue: 0,
@@ -284,23 +286,25 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                     }).length;
                 }
 
-                // Compute ARR and RevPar based on view mode
+                // Compute ARR and RevPar strictly based on Room Revenue (Accommodation)
                 let finalArr = 0;
                 let finalRevPar = 0;
+                let finalTotalRoomRevenue = 0;
+
                 if (viewMode === 'monthly') {
                     const monthIdx = Number(month) - 1;
                     const monthLabel = trendLabels[monthIdx];
                     const monthBucket = buckets[monthLabel] || { roomRev: 0, sold: 0 };
+                    finalTotalRoomRevenue = monthBucket.roomRev || 0;
                     finalArr = monthBucket.sold > 0 ? monthBucket.roomRev / monthBucket.sold : 0;
                     const daysInMonth = totalDaysForOcc;
                     finalRevPar = (totalPhysicalRooms * daysInMonth) > 0 ? monthBucket.roomRev / (totalPhysicalRooms * daysInMonth) : 0;
                 } else if (viewMode === 'daily') {
-                    const day = selectedDate.split('-')[2];
-                    const dayLabel = String(parseInt(day, 10));
-                    const dayBucket = buckets[dayLabel] || { roomRev: 0, sold: 0 };
-                    finalArr = finalRoomsSold > 0 ? gross / finalRoomsSold : 0;
-                    finalRevPar = (totalPhysicalRooms) > 0 ? gross / totalPhysicalRooms : 0;
+                    finalTotalRoomRevenue = roomRevenue;
+                    finalArr = finalRoomsSold > 0 ? roomRevenue / finalRoomsSold : 0;
+                    finalRevPar = (totalPhysicalRooms) > 0 ? roomRevenue / totalPhysicalRooms : 0;
                 } else {
+                    finalTotalRoomRevenue = roomRevenue;
                     finalArr = roomsSold > 0 ? roomRevenue / roomsSold : 0;
                     finalRevPar = totalPossibleRoomNights > 0 ? roomRevenue / totalPossibleRoomNights : 0;
                 }
@@ -309,6 +313,7 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
 
                 setStats({
                     totalGrossRevenue: gross,
+                    totalRoomRevenue: finalTotalRoomRevenue,
                     salesPayAtTransfer: transferAmt,
                     salesPayAtHotel: hotel,
                     walkInRevenue: walkin,

@@ -25,8 +25,10 @@ export const POST = async (request: NextRequest) => {
     }
 
     const currentStock = Number(docSnap.data().stock || 0);
+    const newStock = currentStock + body.stock;
     await updateDoc(docRef, {
-      stock: currentStock + body.stock,
+      stock: newStock,
+      isAvailable: newStock > 0,
     });
 
     return NextResponse.json(

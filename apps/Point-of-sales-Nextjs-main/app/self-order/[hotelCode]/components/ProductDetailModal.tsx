@@ -265,11 +265,20 @@ export default function ProductDetailModal({
 
               {/* Add to Order CTA */}
               <button
+                disabled={!product.isAvailable}
                 onClick={handleConfirm}
-                className="flex-1 bg-gradient-to-r from-[#0b3d2e] to-[#124d3b] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-between active:scale-95 transition-all shadow-md shadow-[#0b3d2e]/25"
+                className={`flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-between transition-all shadow-md ${
+                  product.isAvailable
+                    ? 'bg-gradient-to-r from-[#0b3d2e] to-[#124d3b] text-white active:scale-95 shadow-[#0b3d2e]/25 cursor-pointer'
+                    : 'bg-neutral-300 text-neutral-500 cursor-not-allowed shadow-none'
+                }`}
               >
-                <span className="text-[12.5px] sm:text-[13px]">Tambahkan ke Pesanan</span>
-                <span className="text-[14px] sm:text-[15px] text-[#e5c378] font-black">{formatRupiah(itemTotal)}</span>
+                <span className="text-[12.5px] sm:text-[13px]">
+                  {product.isAvailable ? 'Tambahkan ke Pesanan' : 'Stok Habis (Sold Out)'}
+                </span>
+                <span className={`text-[14px] sm:text-[15px] font-black ${product.isAvailable ? 'text-[#e5c378]' : 'text-neutral-500'}`}>
+                  {formatRupiah(itemTotal)}
+                </span>
               </button>
             </div>
           </motion.div>

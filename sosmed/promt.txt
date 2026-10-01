@@ -1,0 +1,328 @@
+{
+  "creative_mode": "Typography Ads",
+  "campaign_style": "Viral Social Hook Campaign",
+  "aspect_ratio": "9:16 (Story)",
+  "aspect_ratio_value": "9:16",
+  "camera_system": {
+    "lens": "24mm commercial wide lens",
+    "perspective": "dynamic foreground distortion",
+    "depth": "cinematic layered depth",
+    "camera_behavior": "immersive social ads perspective"
+  },
+  "visual_dna": {
+    "style": "Apple Minimal",
+    "energy": "Viral",
+    "layout": "Cinematic Layout",
+    "background": "Solid Premium"
+  },
+  "character_system": {
+    "type": "Auto Character",
+    "expression": "Energetic and expressive",
+    "pose": "natural expressive pose that fits the layout — vary it, do NOT always point",
+    "camera_angle": "Wide lens perspective"
+  },
+  "subject_behavior": {
+    "interaction": "actively reacting to typography and UI",
+    "motion": "mid-action cinematic movement",
+    "expression_style": "authentic commercial excitement"
+  },
+  "typography_system": {
+    "headline": "OPEN RECRUITMEN",
+    "subheadline": "Dibutuhkan segera sales untuk sistem kasir pos cafe, resto dan umkm",
+    "cta": "Daftar Sekarang",
+    "hierarchy": "Modern Sans",
+    "composition": "Oversized headline ~70% canvas; aggressive hierarchy; partial crop allowed; mobile-readable",
+    "integration": "Typography integrated with scene lighting/shadows and interacts with subject/product"
+  },
+  "headline_structure": {
+    "primary_focus_words": [
+      "OPEN"
+    ],
+    "secondary_words": [
+      "RECRUITMEN"
+    ],
+    "scale_contrast": "dramatic",
+    "reading_flow": "staggered cinematic hierarchy"
+  },
+  "typography_tension": {
+    "cropping": "intentional",
+    "overlap": "controlled",
+    "alignment": "optically balanced, not perfectly symmetrical"
+  },
+  "visual_direction": {
+    "lighting": "High-key commercial lighting",
+    "depth": "Strong foreground/background separation",
+    "effects": [
+      "Clean UI panels",
+      "Soft shadows",
+      "Glossy minimal reflections",
+      "Subtle depth gradient",
+      "Subtle particles"
+    ],
+    "environment": "bright commercial environment (premium SaaS bright aesthetic): clean white/soft gradient background, high-key lighting, soft shadows, glossy minimal reflections"
+  },
+  "lighting_system": {
+    "style": "high-end bright commercial lighting",
+    "rim_light": true,
+    "environment_glow": "none",
+    "contrast": "high-key lighting with soft shadows"
+  },
+  "composition_energy": {
+    "layout_motion": "dynamic",
+    "visual_flow": "eye guided through typography -> character -> CTA",
+    "depth_layers": "foreground midground background separation"
+  },
+  "environment_system": {
+    "scene_type": "realistic bright commercial environment",
+    "background_behavior": "supports typography without distraction",
+    "anchor": "bright commercial environment (premium SaaS bright aesthetic): clean white/soft gradient background, high-key lighting, soft shadows, glossy minimal reflections"
+  },
+  "background_system": {
+    "base_tone": "auto-detect from selected background color",
+    "brightness_behavior": "adaptive",
+    "environment_style": "bright commercial environment (Apple/Stripe/Linear-like) with clean gradients",
+    "lighting_behavior": "high-key commercial lighting + soft shadows",
+    "contrast_strategy": "dark clean typography on bright background",
+    "avoid_background_conflict": true
+  },
+  "environment_rules": {
+    "prefer_light_environment_when_bg_is_bright": true,
+    "prefer_dark_environment_when_bg_is_dark": true,
+    "avoid_conflicting_lighting": true,
+    "match_ui_panels_to_theme": true
+  },
+  "product_system": {
+    "type": "floating product/UI card",
+    "integration": "interacts naturally with typography and character",
+    "priority": "secondary focal point",
+    "expected_count": 1,
+    "placement_position": "center",
+    "multi_image_rule": "Single hero subject — typography wraps around it"
+  },
+  "color_palette": {
+    "primary": "#1a7157",
+    "secondary": "#ffffff"
+  },
+  "campaign_feel": [
+    "premium startup campaign",
+    "viral meta ads",
+    "modern SaaS advertising",
+    "high CTR social creative",
+    "commercial ad photography"
+  ],
+  "quality_target": [
+    "premium startup campaign creative",
+    "viral Meta/TikTok ads",
+    "modern SaaS/gaming ecommerce ads",
+    "agency-level social campaign poster"
+  ],
+  "negative_rules": [
+    "Flat poster look",
+    "Generic AI poster",
+    "Unreadable typography",
+    "Weak focal hierarchy",
+    "Clutter"
+  ],
+  "avoid": [
+    "flat poster look",
+    "template canva feel",
+    "equal text sizing",
+    "floating disconnected typography",
+    "generic influencer pose",
+    "random glow clutter",
+    "centered boring composition",
+    "empty dead background",
+    "weak focal hierarchy",
+    "black cinematic background",
+    "dark matte background",
+    "neon tunnel look",
+    "heavy volumetric darkness",
+    "cyberpunk night environment"
+  ]
+}
+
+
+CAMPAIGN — TARA × OPEN RECRUITMENT
+
+Saya sudah menganalisis dua gambar referensi.
+
+Analisis visual produk/brand
+
+Brand: tara
+Produk: platform/software POS dan operasional bisnis.
+Visual produk: UI card/dashboard dengan kategori POS, Food & Beverage, Purchasing, Accounting, HRD & Absensi.
+Karakter: premium, dark-tech, clean, modern SaaS.
+Logo: wordmark tara dengan simbol geometris khas.
+Warna utama: #1A7157 + putih, dengan aksen charcoal/black dari UI produk.
+Potensi lighting: high-key commercial lighting, rim light, glossy reflection, soft shadow.
+Positioning campaign: recruitment untuk sales yang menawarkan sistem kasir/POS kepada cafe, resto, dan UMKM.
+Target visual: kandidat sales/B2B software yang aktif, komunikatif, profesional.
+Format campaign: 9 feed, masing-masing 1080×1350 (4:5) agar konsisten sebagai Instagram Feed. Brief 9:16 saya adaptasikan ke komposisi 4:5 tanpa kehilangan karakter cinematic social-ad.
+VISUAL DNA KONSISTEN
+
+Apple Minimal × Viral Social Hook × Premium SaaS
+Background putih/soft gradient, typography hitam besar, aksen hijau #1A7157, UI card produk sebagai secondary focal point, karakter manusia realistis, wide-angle 24mm, cinematic depth, high-key lighting, soft shadow, subtle reflection, clean UI panels.
+
+F1 — HERO / OPEN RECRUITMENT
+
+FORMAT: 1080×1350, 4:5 Instagram Feed
+STYLE: Viral typography recruitment ad, premium SaaS, Apple Minimal
+LAYOUT: Headline oversized memenuhi sekitar 60–70% area, sebagian headline boleh crop. Karakter sales berada di foreground kanan/bawah, UI POS card melayang di belakang karakter.
+BACKGROUND: Clean white-to-soft-gray gradient dengan bidang hijau #1A7157 geometris tipis.
+MAIN TEXT: OPEN RECRUITMENT
+SUB TEXT: Dibutuhkan segera Sales untuk sistem kasir POS cafe, resto & UMKM
+CTA: DAFTAR SEKARANG
+PRODUCT PRESENTATION: Satu floating UI card dari referensi tara, menampilkan nuansa POS/dashboard, jangan mengubah identitas UI secara berlebihan.
+LIGHTING: High-key commercial, bright rim light, soft natural shadows.
+TYPOGRAPHY: Modern bold sans-serif, extremely large, black, tight tracking, staggered hierarchy.
+COLOR PALETTE: #1A7157, white, charcoal, soft gray.
+VISUAL DETAILS: Typography seolah berada di ruang 3D dan berinteraksi dengan karakter/UI; subtle glossy reflection, depth gradient, minimal particles.
+EXTRA ELEMENTS: Small “TARA” logo, tiny UI indicators, directional arrows.
+QUALITY: Photorealistic commercial advertising, premium agency-level social creative, crisp typography, realistic human anatomy, no Canva/template appearance.
+
+F2 — EMOTIONAL / LIFESTYLE
+
+FORMAT: 1080×1350, 4:5
+STYLE: Cinematic recruitment lifestyle ad
+LAYOUT: Karakter sales sedang melakukan presentasi/demo software secara natural; typography besar masuk dari sisi kiri dan overlap dengan scene.
+BACKGROUND: Bright modern cafe/business environment dengan soft white-green ambience.
+MAIN TEXT: SIAP NAIK LEVEL?
+SUB TEXT: Bangun relasi. Tawarkan solusi. Tumbuh bersama bisnis.
+CTA: Kenali Kesempatannya
+PRODUCT PRESENTATION: Tablet/laptop menampilkan nuansa dashboard POS tara.
+LIGHTING: High-key daylight, soft rim light.
+TYPOGRAPHY: Oversized black modern sans, beberapa bagian crop.
+COLOR PALETTE: White, #1A7157, charcoal, muted gray.
+VISUAL DETAILS: Natural gesture, confident but authentic expression, cinematic foreground separation.
+EXTRA ELEMENTS: Minimal UI card dan garis navigasi.
+QUALITY: Premium commercial photography, photorealistic.
+
+F3 — FITUR / SOLUTION
+
+FORMAT: 1080×1350, 4:5
+STYLE: Product-focused SaaS recruitment creative
+LAYOUT: Floating UI cards tersusun dinamis mengitari karakter; headline besar berada di belakang dan sebagian tertutup elemen foreground.
+BACKGROUND: White premium gradient.
+MAIN TEXT: JUAL SOLUSI, BUKAN SEKADAR PRODUK
+SUB TEXT: POS • F&B • Purchasing • Accounting • HRD & Absensi
+CTA: Explore Opportunity
+PRODUCT PRESENTATION: Gunakan kategori UI yang terlihat pada referensi sebagai visual system.
+LIGHTING: Bright studio lighting + subtle screen glow.
+TYPOGRAPHY: Bold modern sans, black dengan aksen hijau.
+COLOR PALETTE: White, #1A7157, black, gray.
+VISUAL DETAILS: UI cards realistic, glass-like but restrained, soft shadows.
+EXTRA ELEMENTS: Tiny interface labels dan arrows.
+QUALITY: Photorealistic SaaS commercial.
+
+F4 — BENEFIT / KEUNGGULAN
+
+FORMAT: 1080×1350, 4:5
+STYLE: Clean energetic recruitment poster
+LAYOUT: Karakter berjalan dinamis melewati oversized typography; tiga benefit muncul sebagai compact UI chips.
+BACKGROUND: Bright white environment dengan green gradient accent.
+MAIN TEXT: KERJA DENGAN SOLUSI NYATA
+SUB TEXT: Bertemu bisnis • Bangun relasi • Tawarkan solusi
+CTA: Jadi Bagian dari Tim
+PRODUCT PRESENTATION: Floating POS interface kecil sebagai secondary focal point.
+LIGHTING: High-key commercial, soft floor shadow.
+TYPOGRAPHY: Extra-bold sans, dramatic scale contrast.
+COLOR PALETTE: #1A7157, white, charcoal.
+VISUAL DETAILS: Dynamic perspective, slight foreground distortion dari 24mm lens.
+EXTRA ELEMENTS: Minimal rounded UI chips.
+QUALITY: High-end advertising photography.
+
+F5 — USE CASE / MOMEN
+
+FORMAT: 1080×1350, 4:5
+STYLE: Cinematic sales-in-action
+LAYOUT: Karakter berada dekat foreground sambil melakukan demo kepada pemilik bisnis; typography mengikuti diagonal perspective.
+BACKGROUND: Premium bright cafe/restaurant environment.
+MAIN TEXT: TEMUI BISNISNYA
+SUB TEXT: Bawa solusi POS lebih dekat ke cafe, resto & UMKM.
+CTA: Mulai Perjalananmu
+PRODUCT PRESENTATION: Tablet dengan interface POS tara terlihat natural dalam interaksi.
+LIGHTING: Bright daylight + soft rim light.
+TYPOGRAPHY: Oversized condensed/modern sans.
+COLOR PALETTE: White, green, charcoal, warm neutral skin tones.
+VISUAL DETAILS: Authentic interaction, natural body language, realistic commercial environment.
+EXTRA ELEMENTS: Minimal floating UI annotation.
+QUALITY: Photorealistic, cinematic commercial campaign.
+
+F6 — OFFER / OPPORTUNITY
+
+FORMAT: 1080×1350, 4:5
+STYLE: High-CTR social recruitment ad
+LAYOUT: Headline sangat dominan di bagian atas/kiri, karakter energetic foreground, CTA berbentuk premium pill/button.
+BACKGROUND: White dengan bold green geometric field.
+MAIN TEXT: KESEMPATAN ADA DI SINI
+SUB TEXT: Posisi Sales untuk solusi kasir POS tara.
+CTA: DAFTAR SEKARANG
+PRODUCT PRESENTATION: Satu UI POS card floating di samping karakter.
+LIGHTING: High-key, glossy controlled highlights.
+TYPOGRAPHY: Dramatic oversized black typography.
+COLOR PALETTE: #1A7157, white, black.
+VISUAL DETAILS: Strong hierarchy, dynamic perspective, clean negative space.
+EXTRA ELEMENTS: Small “SALES” label, arrow, subtle UI grid.
+QUALITY: Premium Meta/TikTok-style commercial creative.
+
+F7 — TESTIMONI / SOCIAL PROOF
+
+FORMAT: 1080×1350, 4:5
+STYLE: Human-centered premium recruitment creative
+LAYOUT: Karakter sales dalam close-medium shot, testimonial-style quote card berada di foreground.
+BACKGROUND: Bright modern office/cafe hybrid environment.
+MAIN TEXT: CERITA DIMULAI DARI SINI
+SUB TEXT: Visual testimonial-style; jangan menciptakan nama, jabatan, angka, atau kutipan seolah merupakan testimoni nyata.
+CTA: Kenali Kesempatannya
+PRODUCT PRESENTATION: UI tara terlihat subtle pada device.
+LIGHTING: Soft high-key portrait lighting + rim light.
+TYPOGRAPHY: Large sans-serif, clean and readable.
+COLOR PALETTE: White, green, charcoal.
+VISUAL DETAILS: Expression authentic, approachable, confident.
+EXTRA ELEMENTS: Empty quote-card treatment tanpa atribusi palsu.
+QUALITY: Realistic commercial portrait photography.
+
+F8 — BRAND IDENTITY
+
+FORMAT: 1080×1350, 4:5
+STYLE: Minimal brand manifesto
+LAYOUT: Logo tara menjadi anchor visual, karakter kecil di foreground, oversized typography membentuk architectural composition.
+BACKGROUND: Premium white/soft-gray gradient dengan green geometric accent.
+MAIN TEXT: GROW WITH TARA
+SUB TEXT: Solusi digital untuk bisnis yang terus bergerak.
+CTA: Explore the Opportunity
+PRODUCT PRESENTATION: Floating UI ecosystem yang mengambil inspirasi langsung dari referensi.
+LIGHTING: Bright studio, subtle reflections.
+TYPOGRAPHY: Minimal modern sans, precise spacing.
+COLOR PALETTE: #1A7157, white, charcoal.
+VISUAL DETAILS: Logo tidak terdistorsi, clean brand architecture, restrained visual effects.
+EXTRA ELEMENTS: POS / F&B / Purchasing / Accounting / HRD & Absensi sebagai micro labels.
+QUALITY: Luxury SaaS brand campaign, photorealistic.
+
+F9 — CTA / ORDER
+
+FORMAT: 1080×1350, 4:5
+STYLE: Final high-impact recruitment CTA
+LAYOUT: Karakter bergerak menuju foreground, typography raksasa berada di belakang dan sedikit overlap dengan tubuh, CTA hijau sangat jelas di lower third.
+BACKGROUND: Bright white environment dengan large #1A7157 gradient shape.
+MAIN TEXT: SIAP JADI SALES TARA?
+SUB TEXT: Bergabung untuk membawa solusi POS ke lebih banyak bisnis.
+CTA: DAFTAR SEKARANG
+PRODUCT PRESENTATION: Single floating tara POS UI card sebagai final visual anchor.
+LIGHTING: High-key commercial + clean rim light.
+TYPOGRAPHY: Oversized bold sans, strong contrast, mobile-readable.
+COLOR PALETTE: #1A7157, white, black, soft gray.
+VISUAL DETAILS: Dynamic 24mm perspective, foreground distortion ringan, cinematic depth, subtle particles, polished reflections.
+EXTRA ELEMENTS: Logo tara, minimal arrow menuju CTA, clean UI fragments.
+QUALITY: Agency-level recruitment advertisement, photorealistic, crisp, premium, no clutter.
+
+KUNCI KONSISTENSI SEMUA FEED
+
+Logo tara, UI/product language dari gambar referensi, palette #1A7157 + white + charcoal, high-key environment, modern sans-serif, 24mm commercial perspective, realistic human character, premium SaaS aesthetic, dan soft cinematic depth harus tetap konsisten. Yang berubah hanya scene, pose, headline, CTA, angle, dan komposisi.
+
+
+Logo tara ambil dari apps/admin-dashboard/public/channels/1.png
+
+beberapa gambar ambil dari artikel ini, seperti menu menu modulnya apps/admin-dashboard/public/images/modules 
+
+

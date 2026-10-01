@@ -2,6 +2,8 @@ export interface Product {
   id: string;
   name: string;
   price: number;
+  stock?: number;
+  isAvailable?: boolean;
   category: string;
   subcategory?: string;
   pnlTarget?: string;

@@ -66,7 +66,14 @@ const TableBodyProduct: React.FC<TableBodyProductProps> = ({ data }) => {
               </TableCell>
               {/* Render product name */}
               <TableCell className="font-medium pl-4">
-                {item.productstock.name}
+                <div className="flex items-center gap-2">
+                  <span>{item.productstock.name}</span>
+                  {item.productstock.stock <= 0 && (
+                    <Badge variant="destructive" className="text-[10px] font-bold uppercase tracking-wider py-0 px-1.5 bg-red-600 text-white">
+                      Sold Out
+                    </Badge>
+                  )}
+                </div>
               </TableCell>
               {/* Render product category */}
               <TableCell className="pl-4">
@@ -90,7 +97,19 @@ const TableBodyProduct: React.FC<TableBodyProductProps> = ({ data }) => {
               <TableCell className="pl-5">{formatCurrency(item.sellprice)}</TableCell>
               {/* Render product stock */}
               <TableCell className="hidden md:table-cell pl-6">
-                {item.productstock.stock}
+                {item.productstock.stock <= 0 ? (
+                  <Badge variant="destructive" className="font-bold bg-red-600 text-white">
+                    Sold Out (0)
+                  </Badge>
+                ) : item.productstock.stock <= 5 ? (
+                  <Badge variant="secondary" className="text-amber-600 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800 font-semibold">
+                    {item.productstock.stock} (Tersisa Sedikit)
+                  </Badge>
+                ) : (
+                  <span className="font-semibold text-neutral-700 dark:text-neutral-300">
+                    {item.productstock.stock}
+                  </span>
+                )}
               </TableCell>
               {/* Render dropdown for product actions */}
               <TableCell>

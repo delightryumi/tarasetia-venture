@@ -25,7 +25,8 @@ export const PATCH = async (
       image: body.imageProduct || '',
       description: body.description || '',
       addons: body.addons || [],
-      isSignature: Boolean(body.isSignature)
+      isSignature: Boolean(body.isSignature),
+      isAvailable: Number(body.stockProduct) > 0
     }, { merge: true });
 
     // Return the updated product structure matching the frontend's expectations

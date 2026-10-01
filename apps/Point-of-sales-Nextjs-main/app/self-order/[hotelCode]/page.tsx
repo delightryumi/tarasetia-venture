@@ -146,26 +146,41 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
     const catRef = collection(db, 'hotels', hotelCode, 'pos_categories');
 
     const unsubCat = onSnapshot(catRef, (snap) => {
-      const cats = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const cats = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((c: any) => {
+          const catName = String(c.name || '').toUpperCase().trim();
+          return catName !== 'ADD BREAKFAST' && !catName.includes('BREAKFAST');
+        });
       setCategories(cats);
     });
 
     const unsubMenu = onSnapshot(menuRef, (snap) => {
-      const prods: Product[] = snap.docs.map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          name: data.name || '',
-          price: Number(data.price) || 0,
-          description: data.description || '',
-          categoryId: data.category || '',
-          imageUrl: data.image || data.imageUrl || '',
-          stock: data.stock !== undefined ? data.stock : 999,
-          isAvailable: data.stock === undefined || data.stock > 0,
-          addons: data.addons || [],
-          isSignature: data.isSignature || false
-        };
-      });
+      const prods: Product[] = snap.docs
+        .map((d) => {
+          const data = d.data();
+          const stockNum = data.stock !== undefined ? Number(data.stock) : 999;
+          const available = data.isAvailable !== undefined 
+            ? Boolean(data.isAvailable) && stockNum > 0 
+            : stockNum > 0;
+          return {
+            id: d.id,
+            name: data.name || '',
+            price: Number(data.price) || 0,
+            description: data.description || '',
+            categoryId: data.category || '',
+            imageUrl: data.image || data.imageUrl || '',
+            stock: stockNum,
+            isAvailable: available,
+            addons: data.addons || [],
+            isSignature: data.isSignature || false
+          };
+        })
+        .filter((p) => {
+          const catName = String(p.categoryId || '').toUpperCase().trim();
+          const prodName = String(p.name || '').toUpperCase().trim();
+          return catName !== 'ADD BREAKFAST' && !catName.includes('BREAKFAST') && !prodName.includes('ADD BREAKFAST');
+        });
       setProducts(prods);
     });
 
@@ -179,11 +194,14 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
 
   // Handlers
   const handleProductClick = (product: Product) => {
+    if (!product.isAvailable) return;
     setSelectedProduct(product);
     setIsModalOpen(true);
   };
 
   const handleAddToCart = (productId: string, qty: number, selectedAddons: any[], note: string) => {
+    const prod = products.find(p => p.id === productId);
+    if (prod && !prod.isAvailable) return;
     const newItem: CartItem = {
       cartItemId: Math.random().toString(36).substring(7),
       productId,
@@ -195,6 +213,7 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
   };
 
   const handleQuickAdd = (product: Product) => {
+    if (!product.isAvailable) return;
     if (product.addons && product.addons.length > 0) {
       handleProductClick(product);
       return;
