@@ -544,71 +544,208 @@ export const useTransactionForm = () => {
     }, [isEditMode, editBookingId, editTimestamp, selectedDate, activeHotelCode, user]);
 
 
-    // Sync nightRates with nights for each room
+    // Sync nightsData and nightRates with nights for each room
     useEffect(() => {
         if (revenueType === "room") {
             setForm(prev => {
                 let hasChange = false;
                 const updatedRooms = (prev.rooms || []).map((rm: any) => {
-                    const currentRoomNightRates = Array.isArray(rm.nightRates) ? rm.nightRates : [];
-                    if (currentRoomNightRates.length === nights) return rm;
+                    const currentNightsData: any[] = Array.isArray(rm.nightsData) ? rm.nightsData : [];
+                    if (currentNightsData.length === nights) return rm;
                     hasChange = true;
-                    const defaultP = rm.price !== undefined && rm.price !== "" ? rm.price : (prev.rooms[0]?.price || "");
-                    const newR = Array(nights).fill("").map((_, i) => {
-                        if (currentRoomNightRates[i] !== undefined && currentRoomNightRates[i] !== "") {
-                            return currentRoomNightRates[i];
-                        }
-                        return defaultP;
+
+                    const defaultType = rm.roomTypeId || prev.rooms[0]?.roomTypeId || "";
+                    const defaultNumber = rm.roomNumber || "";
+                    const defaultPlanId = rm.ratePlanId || "";
+                    const defaultCode = rm.rateCode || "-";
+                    const defaultPlanName = rm.ratePlanName || "";
+                    const defaultAdults = rm.adults || 1;
+                    const defaultChildren = rm.children || 0;
+                    const defaultPrice = rm.price !== undefined && rm.price !== "" ? rm.price : (prev.rooms[0]?.price || "");
+                    const currentRoomNightRates = Array.isArray(rm.nightRates) ? rm.nightRates : [];
+
+                    const newNightsData = Array(nights).fill(null).map((_, i) => {
+                        if (currentNightsData[i]) return currentNightsData[i];
+                        return {
+                            nightIndex: i,
+                            roomTypeId: defaultType,
+                            roomNumber: defaultNumber,
+                            ratePlanId: defaultPlanId,
+                            rateCode: defaultCode,
+                            ratePlanName: defaultPlanName,
+                            adults: defaultAdults,
+                            children: defaultChildren,
+                            price: (currentRoomNightRates[i] !== undefined && currentRoomNightRates[i] !== "") ? currentRoomNightRates[i] : defaultPrice
+                        };
                     });
-                    return { ...rm, nightRates: newR };
+
+                    const newRates = newNightsData.map(nd => nd.price);
+                    return { ...rm, nightsData: newNightsData, nightRates: newRates };
                 });
 
-                const currentRates = prev.nightRates || [];
-                if (!hasChange && currentRates.length === nights) return prev;
+                if (!hasChange) return prev;
 
-                const defaultPrice = prev.rooms[0]?.price || "";
-                const newRates = Array(nights).fill("").map((_, i) => {
-                    if (updatedRooms[0]?.nightRates?.[i] !== undefined) {
-                        return updatedRooms[0].nightRates[i];
-                    }
-                    if (currentRates[i] !== undefined && currentRates[i] !== "") {
-                        return currentRates[i];
-                    }
-                    return defaultPrice;
-                });
-
-                return { ...prev, rooms: updatedRooms, nightRates: newRates };
+                return {
+                    ...prev,
+                    rooms: updatedRooms,
+                    nightRates: updatedRooms[0]?.nightRates || []
+                };
             });
         }
     }, [nights, revenueType]);
 
-    const updateRoomNightRate = (roomIdx: number, nightIdx: number, val: string | number) => {
-        let finalVal = val;
-        const num = Number(val);
-        if (!isNaN(num) && num < 0) {
-            finalVal = 0;
-        }
+    const updateRoomNightField = (roomIdx: number, nightIdx: number, field: string, value: any) => {
         setForm(prev => {
             const newRooms = [...prev.rooms];
             if (!newRooms[roomIdx]) return prev;
-            const currentNR = Array.isArray(newRooms[roomIdx].nightRates) && newRooms[roomIdx].nightRates.length === nights
-                ? [...newRooms[roomIdx].nightRates]
-                : Array(nights).fill(newRooms[roomIdx].price || "");
-            currentNR[nightIdx] = finalVal;
-            newRooms[roomIdx] = { ...newRooms[roomIdx], nightRates: currentNR };
 
-            const newGlobalNightRates = roomIdx === 0 ? currentNR : (prev.nightRates || []);
+            const currentRoom = { ...newRooms[roomIdx] };
+            let currentNightsData: any[] = Array.isArray(currentRoom.nightsData) && currentRoom.nightsData.length === nights
+                ? currentRoom.nightsData.map(nd => ({ ...nd }))
+                : Array(nights).fill(null).map((_, i) => ({
+                    nightIndex: i,
+                    roomTypeId: currentRoom.roomTypeId || "",
+                    roomNumber: currentRoom.roomNumber || "",
+                    ratePlanId: currentRoom.ratePlanId || "",
+                    rateCode: currentRoom.rateCode || "-",
+                    ratePlanName: currentRoom.ratePlanName || "",
+                    adults: currentRoom.adults || 1,
+                    children: currentRoom.children || 0,
+                    price: (currentRoom.nightRates?.[i] !== undefined && currentRoom.nightRates[i] !== "") ? currentRoom.nightRates[i] : (currentRoom.price || "")
+                }));
+
+            if (!currentNightsData[nightIdx]) {
+                currentNightsData[nightIdx] = {
+                    nightIndex: nightIdx,
+                    roomTypeId: currentRoom.roomTypeId || "",
+                    roomNumber: currentRoom.roomNumber || "",
+                    ratePlanId: currentRoom.ratePlanId || "",
+                    rateCode: currentRoom.rateCode || "-",
+                    ratePlanName: currentRoom.ratePlanName || "",
+                    adults: currentRoom.adults || 1,
+                    children: currentRoom.children || 0,
+                    price: currentRoom.price || ""
+                };
+            }
+
+            currentNightsData[nightIdx] = {
+                ...currentNightsData[nightIdx],
+                [field]: value
+            };
+
+            if (field === "roomTypeId") {
+                const rt = roomTypes.find(r => r.id === value);
+                if (rt && (!currentNightsData[nightIdx].price || currentNightsData[nightIdx].price === "0" || currentNightsData[nightIdx].price === "")) {
+                    currentNightsData[nightIdx].price = (rt.basePrice || rt.price || "").toString();
+                }
+                currentNightsData[nightIdx].roomNumber = "";
+                if (nightIdx === 0) {
+                    currentRoom.roomTypeId = value;
+                    currentRoom.roomNumber = "";
+                    for (let n = 1; n < nights; n++) {
+                        if (!currentNightsData[n].roomTypeId || currentNightsData[n].roomTypeId === currentRoom.roomTypeId) {
+                            currentNightsData[n].roomTypeId = value;
+                            currentNightsData[n].roomNumber = "";
+                            if (rt) currentNightsData[n].price = (rt.basePrice || rt.price || "").toString();
+                        }
+                    }
+                }
+            } else if (field === "ratePlanId") {
+                const matched = ratePlans.find((p: any) => p.id === value || p.code === value);
+                if (matched) {
+                    currentNightsData[nightIdx].ratePlanId = value;
+                    currentNightsData[nightIdx].rateCode = matched.code || matched.name || "-";
+                    currentNightsData[nightIdx].ratePlanName = matched.name || "";
+                    const targetRoomTypeId = currentNightsData[nightIdx].roomTypeId || currentRoom.roomTypeId;
+                    const applicableRate = (matched.roomRates && matched.roomRates[targetRoomTypeId])
+                        ? Number(matched.roomRates[targetRoomTypeId])
+                        : Number(matched.baseRate || 0);
+                    if (applicableRate) {
+                        currentNightsData[nightIdx].price = applicableRate.toString();
+                    }
+                    if (matched.breakfastRate !== undefined) {
+                        currentNightsData[nightIdx].breakfastRate = matched.breakfastRate;
+                    }
+                    if (matched.mealsIncluded !== undefined) {
+                        currentNightsData[nightIdx].mealsIncluded = matched.mealsIncluded;
+                    }
+
+                    if (nightIdx === 0) {
+                        currentRoom.ratePlanId = value;
+                        currentRoom.rateCode = matched.code || matched.name || "-";
+                        currentRoom.ratePlanName = matched.name || "";
+                        if (applicableRate) currentRoom.price = applicableRate.toString();
+                        if (matched.breakfastRate !== undefined) currentRoom.breakfastRate = matched.breakfastRate;
+                        if (matched.mealsIncluded !== undefined) currentRoom.mealsIncluded = matched.mealsIncluded;
+                    }
+                }
+            }
+
+            const newNightRates = currentNightsData.map(nd => nd.price ?? "");
+            currentRoom.nightRates = newNightRates;
+            currentRoom.nightsData = currentNightsData;
+
+            if (nightIdx === 0) {
+                currentRoom[field] = value;
+                if (field === "price") currentRoom.price = value;
+            }
+
+            newRooms[roomIdx] = currentRoom;
 
             return {
                 ...prev,
                 rooms: newRooms,
-                nightRates: newGlobalNightRates
+                nightRates: roomIdx === 0 ? newNightRates : (prev.nightRates || [])
             };
         });
     };
 
+    const copyNightToAll = (roomIdx: number, fromNightIdx: number = 0) => {
+        setForm(prev => {
+            const newRooms = [...prev.rooms];
+            if (!newRooms[roomIdx]) return prev;
+            const currentRoom = { ...newRooms[roomIdx] };
+            const source = currentRoom.nightsData?.[fromNightIdx] || currentRoom;
+
+            const newNightsData = Array(nights).fill(null).map((_, i) => ({
+                nightIndex: i,
+                roomTypeId: source.roomTypeId || "",
+                roomNumber: source.roomNumber || "",
+                ratePlanId: source.ratePlanId || "",
+                rateCode: source.rateCode || "-",
+                ratePlanName: source.ratePlanName || "",
+                adults: source.adults || 1,
+                children: source.children || 0,
+                price: source.price || "",
+                breakfastRate: source.breakfastRate,
+                mealsIncluded: source.mealsIncluded
+            }));
+
+            const newNightRates = newNightsData.map(nd => nd.price);
+            currentRoom.nightsData = newNightsData;
+            currentRoom.nightRates = newNightRates;
+            currentRoom.price = source.price;
+            currentRoom.roomTypeId = source.roomTypeId;
+            currentRoom.roomNumber = source.roomNumber;
+            currentRoom.ratePlanId = source.ratePlanId;
+            currentRoom.rateCode = source.rateCode;
+
+            newRooms[roomIdx] = currentRoom;
+            return {
+                ...prev,
+                rooms: newRooms,
+                nightRates: roomIdx === 0 ? newNightRates : (prev.nightRates || [])
+            };
+        });
+        toast.success(`Data Malam 1 disalin ke semua ${nights} malam.`);
+    };
+
+    const updateRoomNightRate = (roomIdx: number, nightIdx: number, val: string | number) => {
+        updateRoomNightField(roomIdx, nightIdx, "price", val);
+    };
+
     const updateNightRate = (idx: number, val: string | number) => {
-        updateRoomNightRate(0, idx, val);
+        updateRoomNightField(0, idx, "price", val);
     };
 
     const checkStopSell = useCallback((roomTypeId: string, ratePlanId: string, dateStr: string) => {
@@ -862,8 +999,6 @@ export const useTransactionForm = () => {
             const roomList: any[] = form.rooms && form.rooms.length > 0 ? form.rooms : [{ roomTypeId: "", roomNumber: "", price: "" }];
 
             roomList.forEach((rm: any, rIdx: number) => {
-                const roomTypeObj = roomTypes.find(rt => rt.id === rm.roomTypeId);
-                const roomTypeName = roomTypeObj?.name || rm.roomTypeName || "Standard Room";
                 const baseNightlyRate = Number(rm.price) || 0;
                 const roomNightRates = Array.isArray(rm.nightRates) && rm.nightRates.length === nights
                     ? rm.nightRates
@@ -876,7 +1011,16 @@ export const useTransactionForm = () => {
                     currentDate.setDate(currentDate.getDate() + i);
                     const dateStr = currentDate.toISOString().split('T')[0];
                     
-                    const rawNightVal = roomNightRates[i];
+                    const nightData = rm.nightsData?.[i] || {};
+                    const effectiveRoomTypeId = nightData.roomTypeId || rm.roomTypeId;
+                    const roomTypeObj = roomTypes.find(rt => rt.id === effectiveRoomTypeId);
+                    const roomTypeName = roomTypeObj?.name || rm.roomTypeName || "Standard Room";
+                    const effectiveRoomNumber = nightData.roomNumber || rm.roomNumber || `Room ${rIdx + 1}`;
+                    const effectiveRatePlanId = nightData.ratePlanId || rm.ratePlanId || selectedRatePlanId;
+                    const effectiveAdults = Number(nightData.adults ?? rm.adults ?? form.pax ?? 1);
+                    const effectiveChildren = Number(nightData.children ?? rm.children ?? 0);
+
+                    const rawNightVal = nightData.price !== undefined && nightData.price !== "" ? nightData.price : roomNightRates[i];
                     const nightlyRate = (rawNightVal !== undefined && rawNightVal !== "") 
                         ? (Number(rawNightVal) || 0) 
                         : baseNightlyRate;
@@ -938,31 +1082,36 @@ export const useTransactionForm = () => {
 
                     // USALI Standard 1: Package Revenue Allocation (Room + Breakfast split)
                     const matchedRatePlan = ratePlans.find((p: any) => 
-                        p.id === (rm.ratePlanId || selectedRatePlanId) || 
-                        p.code === (rm.ratePlanId || selectedRatePlanId) ||
+                        p.id === effectiveRatePlanId || 
+                        p.code === effectiveRatePlanId ||
+                        p.id === nightData.rateCode ||
+                        p.code === nightData.rateCode ||
                         p.id === rm.rateCode ||
                         p.code === rm.rateCode
                     );
 
                     const hasBreakfast = !form.isCompliment && !!(
+                        nightData.mealsIncluded ||
                         rm.mealsIncluded ||
                         matchedRatePlan?.mealsIncluded ||
                         matchedRatePlan?.meals?.breakfast ||
                         matchedRatePlan?.name?.toLowerCase().includes("breakfast") ||
                         matchedRatePlan?.code?.toLowerCase().includes("bb") ||
+                        (nightData.rateCode && nightData.rateCode.toLowerCase().includes("bb")) ||
                         (rm.rateCode && rm.rateCode.toLowerCase().includes("bb")) ||
+                        (nightData.ratePlanName && nightData.ratePlanName.toLowerCase().includes("breakfast")) ||
                         (rm.ratePlanName && rm.ratePlanName.toLowerCase().includes("breakfast")) ||
                         (form.rateCode && form.rateCode.toLowerCase().includes("bb"))
                     );
 
-                    const dynamicBreakfastRate = Number(rm.breakfastRate || matchedRatePlan?.breakfastRate) || 75000;
-                    const adultsCount = Number(rm.adults || form.pax || 1);
+                    const dynamicBreakfastRate = Number(nightData.breakfastRate || rm.breakfastRate || matchedRatePlan?.breakfastRate) || 75000;
+                    const adultsCount = effectiveAdults;
                     const rawBreakfastAmt = hasBreakfast ? dynamicBreakfastRate * adultsCount : 0;
                     // Cap breakfast so it never exceeds 45% of total room charge (safety against extreme discounts)
                     const breakfastAmount = Math.min(rawBreakfastAmt, Math.round(finalAmount * 0.45));
 
-                    const resolvedRatePlanName = matchedRatePlan?.name || rm.ratePlanName || (hasBreakfast ? "With Breakfast (BB)" : "Room Only (RO)");
-                    const resolvedRateCode = matchedRatePlan?.code || rm.rateCode || form.rateCode || (hasBreakfast ? "BB" : "-");
+                    const resolvedRatePlanName = matchedRatePlan?.name || nightData.ratePlanName || rm.ratePlanName || (hasBreakfast ? "With Breakfast (BB)" : "Room Only (RO)");
+                    const resolvedRateCode = matchedRatePlan?.code || nightData.rateCode || rm.rateCode || form.rateCode || (hasBreakfast ? "BB" : "-");
 
                     transactionEntries.push({
                         type: "accommodation",
@@ -983,14 +1132,14 @@ export const useTransactionForm = () => {
                         bookingType: form.bookingType || "Confirmed",
                         businessSource: form.businessSource || "Direct / Walk-in",
                         rateCode: resolvedRateCode,
-                        ratePlanId: rm.ratePlanId || matchedRatePlan?.id || "",
+                        ratePlanId: effectiveRatePlanId || matchedRatePlan?.id || "",
                         ratePlanName: resolvedRatePlanName,
                         hasBreakfast: hasBreakfast,
                         breakfastRate: dynamicBreakfastRate,
                         breakfastAmount: breakfastAmount,
                         pax: adultsCount,
                         adults: adultsCount,
-                        children: Number(rm.children || 0),
+                        children: effectiveChildren,
                         upgradeFrom: form.upgradeFrom || "",
                         upgradeTo: form.upgradeTo || "",
                         checkInDate: form.checkIn,
@@ -1000,8 +1149,8 @@ export const useTransactionForm = () => {
                         effectiveDate: dateStr,
                         date: dateStr,
                         roomType: roomTypeName,
-                        roomTypeId: rm.roomTypeId || "",
-                        roomNumber: rm.roomNumber || `Room ${rIdx + 1}`,
+                        roomTypeId: effectiveRoomTypeId || "",
+                        roomNumber: effectiveRoomNumber,
                         roomCount: 1,
                         roomIndex: rIdx,
                         totalRoomsInBooking: roomList.length,
@@ -1625,6 +1774,8 @@ export const useTransactionForm = () => {
         updateForm,
         updateNightRate,
         updateRoomNightRate,
+        updateRoomNightField,
+        copyNightToAll,
         addRoom,
         removeRoom,
         updateRoom,

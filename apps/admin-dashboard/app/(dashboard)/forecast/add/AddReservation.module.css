@@ -439,6 +439,97 @@
   padding: 0 6px !important;
 }
 
+.nightTag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #e2e8f0;
+  color: #334155;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+:global(.dark) .nightTag {
+  background: #334155;
+  color: #f1f5f9;
+}
+
+.nightTagPrimary {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+:global(.dark) .nightTagPrimary {
+  background: #1e3a8a;
+  color: #93c5fd;
+  border-color: #1d4ed8;
+}
+
+.nightDate {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--pms-text-secondary);
+  white-space: nowrap;
+}
+
+.roomHeaderRow {
+  background: #f8fafc;
+  border-top: 1px solid var(--pms-border-light);
+  border-bottom: 1px solid var(--pms-border-light);
+}
+
+:global(.dark) .roomHeaderRow {
+  background: #0f172a;
+  border-top-color: #334155;
+  border-bottom-color: #334155;
+}
+
+.roomHeaderCell {
+  padding: 6px 10px !important;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--pms-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.btnCopyNight {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btnCopyNight:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+:global(.dark) .btnCopyNight {
+  border-color: #475569;
+  color: #cbd5e1;
+}
+
+:global(.dark) .btnCopyNight:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
 .btnDeleteRow {
   background: transparent;
   border: none;

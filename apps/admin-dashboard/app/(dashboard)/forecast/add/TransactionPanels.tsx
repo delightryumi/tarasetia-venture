@@ -157,6 +157,8 @@ interface TransactionEntryFormProps {
     removeRoom?: (idx: number) => void;
     updateNightRate: (idx: number, rate: any) => void;
     updateRoomNightRate?: (roomIdx: number, nightIdx: number, rate: any) => void;
+    updateRoomNightField?: (roomIdx: number, nightIdx: number, field: string, value: any) => void;
+    copyNightToAll?: (roomIdx: number, fromNightIdx?: number) => void;
     onCancel: () => void;
     onSubmit: () => void;
     onCommit?: () => void;
@@ -181,6 +183,8 @@ export function TransactionEntryForm({
     removeRoom,
     updateNightRate,
     updateRoomNightRate,
+    updateRoomNightField,
+    copyNightToAll,
     onCancel,
     onSubmit,
     onCommit,
@@ -421,253 +425,244 @@ export function TransactionEntryForm({
                         <table className={pmsStyles.pmsTable}>
                             <thead>
                                 <tr>
+                                    {nights > 1 && <th style={{ width: '135px', minWidth: '125px' }}>Stay Date / Night</th>}
                                     <th style={{ minWidth: '150px' }}>Room Type</th>
                                     <th style={{ width: '85px', minWidth: '82px' }}>Room No.</th>
                                     <th style={{ minWidth: '190px' }}>Rate Type</th>
                                     <th style={{ width: '56px', minWidth: '52px', textAlign: 'center' }}>Adult</th>
                                     <th style={{ width: '56px', minWidth: '52px', textAlign: 'center' }}>Child</th>
                                     <th style={{ width: '115px', minWidth: '105px' }}>Rate (Rp)</th>
-                                    <th style={{ width: '28px', textAlign: 'center' }}></th>
+                                    <th style={{ width: '60px', textAlign: 'center' }}>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {form.rooms?.map((rm: any, idx: number) => {
-                                    const availableNumbers = getAvailableRoomNumbers(rm.roomTypeId || "");
-                                    const currentRoomTypeId = rm.roomTypeId || form.rooms[0]?.roomTypeId;
-                                    const rtObj = roomTypes.find(t => t.id === currentRoomTypeId);
-                                    const filteredRatePlans = ratePlans.filter((rp: any) => {
-                                        if (!currentRoomTypeId) return true;
-                                        if (Array.isArray(rp.roomTypeIds) && rp.roomTypeIds.length > 0) {
-                                            return rp.roomTypeIds.includes(currentRoomTypeId);
-                                        }
-                                        if (!rp.roomTypeId) return true;
-                                        if (rp.roomTypeId === currentRoomTypeId) return true;
-                                        if (rtObj?.name && rp.name && (
-                                            rp.name.toLowerCase().includes(rtObj.name.toLowerCase()) ||
-                                            rtObj.name.toLowerCase().includes(rp.name.toLowerCase())
-                                        )) return true;
-                                        return false;
-                                    });
-
-                                    const roomNightList = (rm.nightRates && Array.isArray(rm.nightRates) && rm.nightRates.length === nights
-                                        ? rm.nightRates
-                                        : Array(nights).fill(rm.price || 0)
-                                    );
-                                    const roomTotalRate = roomNightList.reduce((sum: number, nr: any) => sum + (Number(nr) || 0), 0);
+                                {form.rooms?.map((rm: any, roomIdx: number) => {
+                                    const stayNights = getStayNightDetails(form.checkIn, nights);
+                                    const nightRows = nights > 1 ? stayNights : [{ index: 0, nightNum: 1, dateStr: form.checkIn, formattedDate: "", shortDate: "" }];
 
                                     return (
-                                        <React.Fragment key={idx}>
-                                            <tr>
-                                                <td>
-                                                    <select
-                                                        className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelect}`}
-                                                        value={rm.roomTypeId || ""}
-                                                        onWheel={(e) => (e.target as HTMLElement).blur()}
-                                                        onChange={(e) => {
-                                                            updateRoom(idx, "roomTypeId", e.target.value);
-                                                            updateRoom(idx, "roomNumber", "");
-                                                        }}
-                                                    >
-                                                        <option value="">-Select-</option>
-                                                        {roomTypes.map((rt) => (
-                                                            <option key={rt.id} value={rt.id}>
-                                                                {rt.name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <select
-                                                        className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelectSm}`}
-                                                        value={rm.roomNumber || ""}
-                                                        onWheel={(e) => (e.target as HTMLElement).blur()}
-                                                        onChange={(e) => updateRoom(idx, "roomNumber", e.target.value)}
-                                                    >
-                                                        <option value="">-Select-</option>
-                                                        {availableNumbers.map((num: string) => (
-                                                            <option key={num} value={num}>
-                                                                {num}
-                                                            </option>
-                                                        ))}
-                                                        {rm.roomNumber && !availableNumbers.includes(rm.roomNumber) && (
-                                                            <option value={rm.roomNumber}>{rm.roomNumber}</option>
-                                                        )}
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <select
-                                                        className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelect}`}
-                                                        value={rm.ratePlanId || rm.rateCode || ""}
-                                                        onWheel={(e) => (e.target as HTMLElement).blur()}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value;
-                                                            updateRoom(idx, "ratePlanId", val);
-                                                            const matched = ratePlans.find((p) => p.id === val || p.code === val);
-                                                            if (matched) {
-                                                                updateRoom(idx, "rateCode", matched.code || matched.name);
-                                                                updateRoom(idx, "ratePlanName", matched.name);
-                                                                const applicableRate = (matched.roomRates && matched.roomRates[rm.roomTypeId])
-                                                                    ? Number(matched.roomRates[rm.roomTypeId])
-                                                                    : Number(matched.baseRate || 0);
-                                                                if (applicableRate) {
-                                                                    updateRoom(idx, "price", applicableRate.toString());
-                                                                    if (idx === 0) updateNightRate(0, applicableRate);
-                                                                }
-                                                                if (matched.breakfastRate !== undefined) {
-                                                                    updateRoom(idx, "breakfastRate", matched.breakfastRate);
-                                                                }
-                                                                if (matched.mealsIncluded !== undefined) {
-                                                                    updateRoom(idx, "mealsIncluded", matched.mealsIncluded);
-                                                                }
-                                                            }
-                                                        }}
-                                                    >
-                                                        <option value="">-Select-</option>
-                                                        {filteredRatePlans.map((rp: any) => (
-                                                            <option key={rp.id || rp.code} value={rp.id || rp.code}>
-                                                                {rp.name || rp.code} {rp.mealsIncluded ? `(Inc. Bft Rp ${(rp.breakfastRate || 75000).toLocaleString('id-ID')})` : ''}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </td>
-                                                <td style={{ textAlign: 'center' }}>
-                                                    <select
-                                                        className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelectMini}`}
-                                                        value={rm.adults || 1}
-                                                        onWheel={(e) => (e.target as HTMLElement).blur()}
-                                                        onChange={(e) => updateRoom(idx, "adults", Number(e.target.value) || 1)}
-                                                    >
-                                                        {[1, 2, 3, 4, 5, 6].map((n) => (
-                                                            <option key={n} value={n}>{n}</option>
-                                                        ))}
-                                                    </select>
-                                                </td>
-                                                <td style={{ textAlign: 'center' }}>
-                                                    <select
-                                                        className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelectMini}`}
-                                                        value={rm.children || 0}
-                                                        onWheel={(e) => (e.target as HTMLElement).blur()}
-                                                        onChange={(e) => updateRoom(idx, "children", Number(e.target.value) || 0)}
-                                                    >
-                                                        {[0, 1, 2, 3, 4].map((n) => (
-                                                            <option key={n} value={n}>{n}</option>
-                                                        ))}
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <input
-                                                        type="number"
-                                                        className={`${pmsStyles.fieldInput} ${pmsStyles.tableRateInput}`}
-                                                        placeholder="0.00"
-                                                        value={rm.price ?? ""}
-                                                        onWheel={(e) => (e.target as HTMLElement).blur()}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value;
-                                                            updateRoom(idx, "price", val);
-                                                            if (idx === 0) updateNightRate(0, val);
-                                                        }}
-                                                    />
-                                                </td>
-                                                <td style={{ textAlign: 'center' }}>
-                                                    {form.rooms.length > 1 && removeRoom && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeRoom(idx)}
-                                                            className={pmsStyles.btnDeleteRow}
-                                                            title="Delete room"
-                                                        >
-                                                            ✕
-                                                        </button>
-                                                    )}
-                                                </td>
-                                            </tr>
-
-                                            {nights > 1 && (
-                                                <tr key={`daily-rates-${idx}`} className={pmsStyles.dailyRatesSubRow}>
-                                                    <td colSpan={7} style={{ padding: 0 }}>
-                                                        <div className={pmsStyles.dailyRatesPanel}>
-                                                            <div className={pmsStyles.dailyRatesHeader}>
-                                                                <div className={pmsStyles.dailyRatesTitleWrap}>
-                                                                    <span className={pmsStyles.dailyRatesTitle}>
-                                                                        📅 Rincian Tarif Harian ({nights} Malam Menginap)
-                                                                    </span>
-                                                                    <span className={pmsStyles.dailyRatesSubtitle}>
-                                                                        {rm.roomNumber || `Kamar ${idx + 1}`}: Masukkan tarif per malam jika harga berbeda per hari
-                                                                    </span>
-                                                                </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const baseP = rm.price !== undefined && rm.price !== "" ? rm.price : (rm.nightRates?.[0] || 0);
-                                                                        if (baseP) {
-                                                                            for (let n = 0; n < nights; n++) {
-                                                                                if (updateRoomNightRate) {
-                                                                                    updateRoomNightRate(idx, n, baseP);
-                                                                                } else if (idx === 0) {
-                                                                                    updateNightRate(n, baseP);
-                                                                                }
-                                                                            }
-                                                                            toast.success(`Tarif Rp ${formatCurrency(Number(baseP))} disalin ke semua ${nights} malam.`);
-                                                                        }
-                                                                    }}
-                                                                    className={pmsStyles.btnApplyAllRates}
-                                                                    title="Salin tarif malam 1 ke seluruh tanggal menginap"
-                                                                >
-                                                                    <span>⚡ Salin Tarif ke Semua Malam</span>
-                                                                </button>
-                                                            </div>
-
-                                                            <div className={pmsStyles.dailyRatesGrid}>
-                                                                {getStayNightDetails(form.checkIn, nights).map((nightDetail) => {
-                                                                    const currentNightRate = (rm.nightRates && rm.nightRates[nightDetail.index] !== undefined && rm.nightRates[nightDetail.index] !== "")
-                                                                        ? rm.nightRates[nightDetail.index]
-                                                                        : (rm.price || "");
-
-                                                                    return (
-                                                                        <div key={nightDetail.dateStr} className={pmsStyles.dailyRateItem}>
-                                                                            <div className={pmsStyles.dailyRateMeta}>
-                                                                                <span className={pmsStyles.dailyRateNightBadge}>
-                                                                                    Mlm {nightDetail.nightNum}
-                                                                                </span>
-                                                                                <span className={pmsStyles.dailyRateDateText}>
-                                                                                    {nightDetail.formattedDate}
-                                                                                </span>
-                                                                            </div>
-                                                                            <div className={pmsStyles.dailyRateInputWrap}>
-                                                                                <span className={pmsStyles.dailyRateCurrency}>Rp</span>
-                                                                                <input
-                                                                                    type="number"
-                                                                                    className={pmsStyles.dailyRateInput}
-                                                                                    placeholder="0"
-                                                                                    value={currentNightRate}
-                                                                                    onWheel={(e) => (e.target as HTMLElement).blur()}
-                                                                                    onChange={(e) => {
-                                                                                        const val = e.target.value;
-                                                                                        if (updateRoomNightRate) {
-                                                                                            updateRoomNightRate(idx, nightDetail.index, val);
-                                                                                        } else if (idx === 0) {
-                                                                                            updateNightRate(nightDetail.index, val);
-                                                                                        }
-                                                                                    }}
-                                                                                />
-                                                                            </div>
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-
-                                                            <div className={pmsStyles.dailyRatesFooter}>
-                                                                <span>
-                                                                    Total Kamar: <strong className={pmsStyles.dailyRatesTotalText}>Rp {formatCurrency(roomTotalRate)}</strong>
-                                                                </span>
-                                                                <span>
-                                                                    Rata-rata: Rp {formatCurrency(Math.round(roomTotalRate / nights))}/malam
-                                                                </span>
-                                                            </div>
-                                                        </div>
+                                        <React.Fragment key={`room-${roomIdx}`}>
+                                            {form.rooms.length > 1 && (
+                                                <tr className={pmsStyles.roomHeaderRow}>
+                                                    <td colSpan={nights > 1 ? 8 : 7} className={pmsStyles.roomHeaderCell}>
+                                                        Kamar {roomIdx + 1} {rm.roomNumber ? `(No. ${rm.roomNumber})` : ''} {nights > 1 ? `• ${nights} Malam` : ''}
                                                     </td>
                                                 </tr>
                                             )}
+                                            {nightRows.map((nightDetail) => {
+                                                const nightIdx = nightDetail.index;
+                                                const nightData = rm.nightsData?.[nightIdx] || {};
+                                                
+                                                const currentRoomTypeId = nightData.roomTypeId || rm.roomTypeId || form.rooms[0]?.roomTypeId || "";
+                                                const currentRoomNumber = nightData.roomNumber !== undefined ? nightData.roomNumber : (nightIdx === 0 ? rm.roomNumber : "");
+                                                const currentRatePlanId = nightData.ratePlanId || nightData.rateCode || (nightIdx === 0 ? (rm.ratePlanId || rm.rateCode) : "") || "";
+                                                const currentAdults = nightData.adults !== undefined ? nightData.adults : (rm.adults || 1);
+                                                const currentChildren = nightData.children !== undefined ? nightData.children : (rm.children || 0);
+                                                const currentPrice = (nightData.price !== undefined && nightData.price !== "")
+                                                    ? nightData.price
+                                                    : (rm.nightRates?.[nightIdx] !== undefined && rm.nightRates?.[nightIdx] !== "" 
+                                                        ? rm.nightRates[nightIdx] 
+                                                        : (rm.price ?? ""));
+
+                                                const availableNumbers = getAvailableRoomNumbers(currentRoomTypeId);
+                                                const rtObj = roomTypes.find(t => t.id === currentRoomTypeId);
+                                                const filteredRatePlans = ratePlans.filter((rp: any) => {
+                                                    if (!currentRoomTypeId) return true;
+                                                    if (Array.isArray(rp.roomTypeIds) && rp.roomTypeIds.length > 0) {
+                                                        return rp.roomTypeIds.includes(currentRoomTypeId);
+                                                    }
+                                                    if (!rp.roomTypeId) return true;
+                                                    if (rp.roomTypeId === currentRoomTypeId) return true;
+                                                    if (rtObj?.name && rp.name && (
+                                                        rp.name.toLowerCase().includes(rtObj.name.toLowerCase()) ||
+                                                        rtObj.name.toLowerCase().includes(rp.name.toLowerCase())
+                                                    )) return true;
+                                                    return false;
+                                                });
+
+                                                return (
+                                                    <tr key={`room-${roomIdx}-night-${nightIdx}`}>
+                                                        {nights > 1 && (
+                                                            <td>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                    <span className={`${pmsStyles.nightTag} ${nightIdx === 0 ? pmsStyles.nightTagPrimary : ''}`}>
+                                                                        {form.rooms.length > 1 ? `K${roomIdx + 1} • M${nightIdx + 1}` : `Mlm ${nightIdx + 1}`}
+                                                                    </span>
+                                                                    <span className={pmsStyles.nightDate}>
+                                                                        {nightDetail.formattedDate}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                        )}
+                                                        <td>
+                                                            <select
+                                                                className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelect}`}
+                                                                value={currentRoomTypeId}
+                                                                onWheel={(e) => (e.target as HTMLElement).blur()}
+                                                                onChange={(e) => {
+                                                                    if (updateRoomNightField) {
+                                                                        updateRoomNightField(roomIdx, nightIdx, "roomTypeId", e.target.value);
+                                                                    } else {
+                                                                        updateRoom(roomIdx, "roomTypeId", e.target.value);
+                                                                        updateRoom(roomIdx, "roomNumber", "");
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <option value="">-Select-</option>
+                                                                {roomTypes.map((rt) => (
+                                                                    <option key={rt.id} value={rt.id}>
+                                                                        {rt.name}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <select
+                                                                className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelectSm}`}
+                                                                value={currentRoomNumber}
+                                                                onWheel={(e) => (e.target as HTMLElement).blur()}
+                                                                onChange={(e) => {
+                                                                    if (updateRoomNightField) {
+                                                                        updateRoomNightField(roomIdx, nightIdx, "roomNumber", e.target.value);
+                                                                    } else {
+                                                                        updateRoom(roomIdx, "roomNumber", e.target.value);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <option value="">-Select-</option>
+                                                                {availableNumbers.map((num: string) => (
+                                                                    <option key={num} value={num}>
+                                                                        {num}
+                                                                    </option>
+                                                                ))}
+                                                                {currentRoomNumber && !availableNumbers.includes(currentRoomNumber) && (
+                                                                    <option value={currentRoomNumber}>{currentRoomNumber}</option>
+                                                                )}
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <select
+                                                                className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelect}`}
+                                                                value={currentRatePlanId}
+                                                                onWheel={(e) => (e.target as HTMLElement).blur()}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    if (updateRoomNightField) {
+                                                                        updateRoomNightField(roomIdx, nightIdx, "ratePlanId", val);
+                                                                    } else {
+                                                                        updateRoom(roomIdx, "ratePlanId", val);
+                                                                        const matched = ratePlans.find((p) => p.id === val || p.code === val);
+                                                                        if (matched) {
+                                                                            updateRoom(roomIdx, "rateCode", matched.code || matched.name);
+                                                                            updateRoom(roomIdx, "ratePlanName", matched.name);
+                                                                            const applicableRate = (matched.roomRates && matched.roomRates[currentRoomTypeId])
+                                                                                ? Number(matched.roomRates[currentRoomTypeId])
+                                                                                : Number(matched.baseRate || 0);
+                                                                            if (applicableRate) {
+                                                                                updateRoom(roomIdx, "price", applicableRate.toString());
+                                                                                if (roomIdx === 0) updateNightRate(nightIdx, applicableRate);
+                                                                            }
+                                                                            if (matched.breakfastRate !== undefined) {
+                                                                                updateRoom(roomIdx, "breakfastRate", matched.breakfastRate);
+                                                                            }
+                                                                            if (matched.mealsIncluded !== undefined) {
+                                                                                updateRoom(roomIdx, "mealsIncluded", matched.mealsIncluded);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <option value="">-Select-</option>
+                                                                {filteredRatePlans.map((rp: any) => (
+                                                                    <option key={rp.id || rp.code} value={rp.id || rp.code}>
+                                                                        {rp.name || rp.code} {rp.mealsIncluded ? `(Inc. Bft Rp ${(rp.breakfastRate || 75000).toLocaleString('id-ID')})` : ''}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                        <td style={{ textAlign: 'center' }}>
+                                                            <select
+                                                                className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelectMini}`}
+                                                                value={currentAdults}
+                                                                onWheel={(e) => (e.target as HTMLElement).blur()}
+                                                                onChange={(e) => {
+                                                                    const val = Number(e.target.value) || 1;
+                                                                    if (updateRoomNightField) {
+                                                                        updateRoomNightField(roomIdx, nightIdx, "adults", val);
+                                                                    } else {
+                                                                        updateRoom(roomIdx, "adults", val);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {[1, 2, 3, 4, 5, 6].map((n) => (
+                                                                    <option key={n} value={n}>{n}</option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                        <td style={{ textAlign: 'center' }}>
+                                                            <select
+                                                                className={`${pmsStyles.fieldSelect} ${pmsStyles.tableSelectMini}`}
+                                                                value={currentChildren}
+                                                                onWheel={(e) => (e.target as HTMLElement).blur()}
+                                                                onChange={(e) => {
+                                                                    const val = Number(e.target.value) || 0;
+                                                                    if (updateRoomNightField) {
+                                                                        updateRoomNightField(roomIdx, nightIdx, "children", val);
+                                                                    } else {
+                                                                        updateRoom(roomIdx, "children", val);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {[0, 1, 2, 3, 4].map((n) => (
+                                                                    <option key={n} value={n}>{n}</option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <input
+                                                                type="number"
+                                                                className={`${pmsStyles.fieldInput} ${pmsStyles.tableRateInput}`}
+                                                                placeholder="0.00"
+                                                                value={currentPrice}
+                                                                onWheel={(e) => (e.target as HTMLElement).blur()}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    if (updateRoomNightField) {
+                                                                        updateRoomNightField(roomIdx, nightIdx, "price", val);
+                                                                    } else {
+                                                                        updateRoom(roomIdx, "price", val);
+                                                                        if (roomIdx === 0) updateNightRate(nightIdx, val);
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </td>
+                                                        <td style={{ textAlign: 'center' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                                                {nightIdx === 0 && nights > 1 && copyNightToAll && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => copyNightToAll(roomIdx, 0)}
+                                                                        className={pmsStyles.btnCopyNight}
+                                                                        title="Salin data Malam 1 ke semua malam"
+                                                                    >
+                                                                        <span>⚡ Salin</span>
+                                                                    </button>
+                                                                )}
+                                                                {nightIdx === 0 && form.rooms.length > 1 && removeRoom && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => removeRoom(roomIdx)}
+                                                                        className={pmsStyles.btnDeleteRow}
+                                                                        title="Delete room"
+                                                                    >
+                                                                        ✕
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </React.Fragment>
                                     );
                                 })}

@@ -31,6 +31,8 @@ function AddTransactionContent() {
         updateRoom,
         updateNightRate,
         updateRoomNightRate,
+        updateRoomNightField,
+        copyNightToAll,
         totalGross,
         queue,
         addToQueue,
@@ -86,6 +88,8 @@ function AddTransactionContent() {
                             removeRoom={removeRoom}
                             updateNightRate={updateNightRate}
                             updateRoomNightRate={updateRoomNightRate}
+                            updateRoomNightField={updateRoomNightField}
+                            copyNightToAll={copyNightToAll}
                             onCancel={() => {
                                 if (isEditMode) {
                                     handleCancel();
