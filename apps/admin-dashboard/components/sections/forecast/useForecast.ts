@@ -239,8 +239,15 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                     const nightlyPayTransfer = totalStayNights > 0 ? Math.round(stayPayTransfer / totalStayNights) : stayPayTransfer;
 
                     // Distribute across each stay night date
-                    stayNightDates.forEach((nightDate) => {
+                    stayNightDates.forEach((nightDate, nIdx) => {
                         const [nY, nM, nD] = nightDate.split('-');
+
+                        const exactEntry = dateMap[nightDate];
+                        const specificNightRate = (exactEntry && Number(exactEntry.amount) > 0)
+                            ? Number(exactEntry.amount)
+                            : (Array.isArray(rep.nightRates) && rep.nightRates[nIdx] !== undefined && Number(rep.nightRates[nIdx]) > 0
+                                ? Number(rep.nightRates[nIdx])
+                                : nightlyRate);
 
                         // 1. Fill Trend Buckets
                         if (nightDate >= startStr && nightDate <= endStr) {
@@ -250,8 +257,8 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                             else bLabel = nY;
 
                             if (buckets[bLabel] && !isCancelled) {
-                                buckets[bLabel].gross += nightlyRate;
-                                buckets[bLabel].roomRev += nightlyRate;
+                                buckets[bLabel].gross += specificNightRate;
+                                buckets[bLabel].roomRev += specificNightRate;
                                 buckets[bLabel].sold += 1;
                             }
                         }
@@ -263,18 +270,18 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
 
                         if (isCurrentNight) {
                             if (!isCancelled) {
-                                gross += nightlyRate;
-                                roomRevenue += nightlyRate;
+                                gross += specificNightRate;
+                                roomRevenue += specificNightRate;
                                 roomsSold += 1;
                                 hotel += nightlyPayHotel;
                                 transferAmt += nightlyPayTransfer;
 
                                 if (rep.source === "Walk-in" || rep.channel === "Walk-in" || rep.channel === "WALKIN") {
-                                    walkin += nightlyRate;
+                                    walkin += specificNightRate;
                                 } else if (rep.source === "OTA" || (rep.channel && rep.channel !== "Walk-in" && rep.channel !== "WALKIN" && rep.channel !== "Direct")) {
-                                    ota += nightlyRate;
+                                    ota += specificNightRate;
                                 } else {
-                                    other += nightlyRate;
+                                    other += specificNightRate;
                                 }
                             }
 
@@ -282,7 +289,8 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                                 ...rep,
                                 effectiveDate: nightDate,
                                 date: nightDate,
-                                amount: nightlyRate,
+                                amount: specificNightRate,
+                                ratePerNight: specificNightRate,
                                 totalAmount: trueTotalAmount,
                                 nightlyRate: nightlyRate,
                                 payHotel: nightlyPayHotel,

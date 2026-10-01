@@ -30,6 +30,7 @@ function AddTransactionContent() {
         updateForm,
         updateRoom,
         updateNightRate,
+        updateRoomNightRate,
         totalGross,
         queue,
         addToQueue,
@@ -84,6 +85,7 @@ function AddTransactionContent() {
                             addRoom={addRoom}
                             removeRoom={removeRoom}
                             updateNightRate={updateNightRate}
+                            updateRoomNightRate={updateRoomNightRate}
                             onCancel={() => {
                                 if (isEditMode) {
                                     handleCancel();
@@ -172,6 +174,7 @@ function AddTransactionContent() {
                                     addRoom={addRoom}
                                     removeRoom={removeRoom}
                                     updateNightRate={updateNightRate}
+                                    updateRoomNightRate={updateRoomNightRate}
                                     onCancel={() => {
                                         if (isEditMode) {
                                             handleCancel();

@@ -1021,3 +1021,169 @@
   color: #d1d5db;
   border-color: #475569;
 }
+
+/* ── Daily Rates Breakdown per Stay Night (Multi-Night Support) ── */
+.dailyRatesSubRow {
+  background: var(--pms-surface, #f8fafc);
+  border-bottom: 1px solid var(--pms-border-light, #e2e8f0);
+}
+
+.dailyRatesPanel {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dailyRatesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dailyRatesTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dailyRatesTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--pms-text-primary, #0f172a);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dailyRatesSubtitle {
+  font-size: 11px;
+  color: var(--pms-text-muted, #64748b);
+}
+
+.btnApplyAllRates {
+  font-size: 11px;
+  font-weight: 600;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.btnApplyAllRates:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+:global(.dark) .btnApplyAllRates {
+  background: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
+  border-color: rgba(37, 99, 235, 0.4);
+}
+
+.dailyRatesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+}
+
+.dailyRateItem {
+  background: var(--pms-card-bg, #ffffff);
+  border: 1px solid var(--pms-border, #cbd5e1);
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.15s ease;
+}
+
+.dailyRateItem:focus-within {
+  border-color: var(--pms-accent, #2563eb);
+}
+
+.dailyRateMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dailyRateNightBadge {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #1e293b;
+  background: #e2e8f0;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+:global(.dark) .dailyRateNightBadge {
+  background: #334155;
+  color: #f1f5f9;
+}
+
+.dailyRateDateText {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--pms-text-muted, #64748b);
+}
+
+.dailyRateInputWrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.dailyRateCurrency {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--pms-text-muted, #64748b);
+}
+
+.dailyRateInput {
+  flex: 1;
+  width: 100%;
+  height: 28px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--pms-font-mono, monospace);
+  color: var(--pms-text-primary, #0f172a);
+  background: transparent;
+  border: 1px solid var(--pms-border-light, #e2e8f0);
+  border-radius: 3px;
+  padding: 2px 6px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.dailyRateInput:focus {
+  border-color: var(--pms-accent, #2563eb);
+  background: var(--pms-card-bg, #ffffff);
+}
+
+.dailyRatesFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--pms-text-muted, #64748b);
+  border-top: 1px dashed var(--pms-border-light, #e2e8f0);
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
+.dailyRatesTotalText {
+  font-weight: 700;
+  color: var(--pms-text-primary, #0f172a);
+}

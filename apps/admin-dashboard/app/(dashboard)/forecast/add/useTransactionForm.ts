@@ -248,14 +248,13 @@ export const useTransactionForm = () => {
     const totalGross = revenueType === "room" 
         ? (() => {
             if (form.isCompliment) return 0;
-            const totalFromRooms = (form.rooms || []).reduce((acc: number, r: any) => {
-                const p = Number(r.price) || 0;
-                return acc + (p * nights);
+            return (form.rooms || []).reduce((acc: number, r: any) => {
+                const rNights = Array.isArray(r.nightRates) && r.nightRates.length === nights
+                    ? r.nightRates
+                    : Array(nights).fill(r.price || 0);
+                const roomTotal = rNights.reduce((sum: number, nr: any) => sum + (Number(nr) || 0), 0);
+                return acc + roomTotal;
             }, 0);
-            if ((!form.rooms || form.rooms.length <= 1) && form.nightRates && form.nightRates.length > 0 && form.nightRates.some((r: any) => Number(r) > 0)) {
-                return (form.nightRates || []).reduce((acc: number, r: any) => acc + (Number(r) || 0), 0);
-            }
-            return totalFromRooms;
         })()
         : (form.isCompliment ? 0 : (Number(form.totalAmount) || 0));
         
@@ -545,42 +544,71 @@ export const useTransactionForm = () => {
     }, [isEditMode, editBookingId, editTimestamp, selectedDate, activeHotelCode, user]);
 
 
-    // Sync nightRates with nights
+    // Sync nightRates with nights for each room
     useEffect(() => {
         if (revenueType === "room") {
             setForm(prev => {
+                let hasChange = false;
+                const updatedRooms = (prev.rooms || []).map((rm: any) => {
+                    const currentRoomNightRates = Array.isArray(rm.nightRates) ? rm.nightRates : [];
+                    if (currentRoomNightRates.length === nights) return rm;
+                    hasChange = true;
+                    const defaultP = rm.price !== undefined && rm.price !== "" ? rm.price : (prev.rooms[0]?.price || "");
+                    const newR = Array(nights).fill("").map((_, i) => {
+                        if (currentRoomNightRates[i] !== undefined && currentRoomNightRates[i] !== "") {
+                            return currentRoomNightRates[i];
+                        }
+                        return defaultP;
+                    });
+                    return { ...rm, nightRates: newR };
+                });
+
                 const currentRates = prev.nightRates || [];
-                if (currentRates.length === nights) return prev;
-                
+                if (!hasChange && currentRates.length === nights) return prev;
+
                 const defaultPrice = prev.rooms[0]?.price || "";
                 const newRates = Array(nights).fill("").map((_, i) => {
+                    if (updatedRooms[0]?.nightRates?.[i] !== undefined) {
+                        return updatedRooms[0].nightRates[i];
+                    }
                     if (currentRates[i] !== undefined && currentRates[i] !== "") {
                         return currentRates[i];
                     }
                     return defaultPrice;
                 });
-                return { ...prev, nightRates: newRates };
+
+                return { ...prev, rooms: updatedRooms, nightRates: newRates };
             });
         }
     }, [nights, revenueType]);
 
-    const updateNightRate = (idx: number, val: string | number) => {
+    const updateRoomNightRate = (roomIdx: number, nightIdx: number, val: string | number) => {
         let finalVal = val;
         const num = Number(val);
         if (!isNaN(num) && num < 0) {
             finalVal = 0;
         }
         setForm(prev => {
-            const newRates = [...(prev.nightRates || [])];
-            newRates[idx] = finalVal;
-            
             const newRooms = [...prev.rooms];
-            if (idx === 0 && newRooms[0]) {
-                newRooms[0] = { ...newRooms[0], price: finalVal.toString() };
-            }
-            
-            return { ...prev, nightRates: newRates, rooms: newRooms };
+            if (!newRooms[roomIdx]) return prev;
+            const currentNR = Array.isArray(newRooms[roomIdx].nightRates) && newRooms[roomIdx].nightRates.length === nights
+                ? [...newRooms[roomIdx].nightRates]
+                : Array(nights).fill(newRooms[roomIdx].price || "");
+            currentNR[nightIdx] = finalVal;
+            newRooms[roomIdx] = { ...newRooms[roomIdx], nightRates: currentNR };
+
+            const newGlobalNightRates = roomIdx === 0 ? currentNR : (prev.nightRates || []);
+
+            return {
+                ...prev,
+                rooms: newRooms,
+                nightRates: newGlobalNightRates
+            };
         });
+    };
+
+    const updateNightRate = (idx: number, val: string | number) => {
+        updateRoomNightRate(0, idx, val);
     };
 
     const checkStopSell = useCallback((roomTypeId: string, ratePlanId: string, dateStr: string) => {
@@ -713,7 +741,26 @@ export const useTransactionForm = () => {
             if (field === "roomTypeId") {
                 const rt = roomTypes.find(r => r.id === value);
                 if (rt && (!newRooms[index].price || newRooms[index].price === "0" || newRooms[index].price === "")) {
-                    newRooms[index].price = (rt.basePrice || rt.price || "").toString();
+                    const defaultP = (rt.basePrice || rt.price || "").toString();
+                    newRooms[index].price = defaultP;
+                    newRooms[index].nightRates = Array(nights).fill(defaultP);
+                    if (index === 0) {
+                        return {
+                            ...prev,
+                            rooms: newRooms,
+                            nightRates: Array(nights).fill(defaultP)
+                        };
+                    }
+                }
+            } else if (field === "price") {
+                const priceStr = value !== undefined ? value.toString() : "";
+                newRooms[index].nightRates = Array(nights).fill(priceStr);
+                if (index === 0) {
+                    return {
+                        ...prev,
+                        rooms: newRooms,
+                        nightRates: Array(nights).fill(priceStr)
+                    };
                 }
             }
             return { ...prev, rooms: newRooms };
@@ -818,14 +865,20 @@ export const useTransactionForm = () => {
                 const roomTypeObj = roomTypes.find(rt => rt.id === rm.roomTypeId);
                 const roomTypeName = roomTypeObj?.name || rm.roomTypeName || "Standard Room";
                 const baseNightlyRate = Number(rm.price) || 0;
+                const roomNightRates = Array.isArray(rm.nightRates) && rm.nightRates.length === nights
+                    ? rm.nightRates
+                    : (rIdx === 0 && Array.isArray(form.nightRates) && form.nightRates.length === nights
+                        ? form.nightRates
+                        : Array(nights).fill(baseNightlyRate));
 
                 for (let i = 0; i < nights; i++) {
                     const currentDate = new Date(startD);
                     currentDate.setDate(currentDate.getDate() + i);
                     const dateStr = currentDate.toISOString().split('T')[0];
                     
-                    const nightlyRate = (rIdx === 0 && form.nightRates && form.nightRates[i] !== undefined && form.nightRates[i] !== "") 
-                        ? (Number(form.nightRates[i]) || 0) 
+                    const rawNightVal = roomNightRates[i];
+                    const nightlyRate = (rawNightVal !== undefined && rawNightVal !== "") 
+                        ? (Number(rawNightVal) || 0) 
                         : baseNightlyRate;
 
                     const ratio = totalGross > 0 ? nightlyRate / totalGross : 0;
@@ -945,6 +998,7 @@ export const useTransactionForm = () => {
                         checkOutDate: form.checkOut,
                         checkOutTime: form.checkOutTime || "12:00 PM",
                         effectiveDate: dateStr,
+                        date: dateStr,
                         roomType: roomTypeName,
                         roomTypeId: rm.roomTypeId || "",
                         roomNumber: rm.roomNumber || `Room ${rIdx + 1}`,
@@ -952,6 +1006,10 @@ export const useTransactionForm = () => {
                         roomIndex: rIdx,
                         totalRoomsInBooking: roomList.length,
                         nights: 1,
+                        totalStayNights: nights,
+                        stayNightIndex: i + 1,
+                        ratePerNight: nightlyRate,
+                        nightRates: roomNightRates,
                         channel: form.channel,
                         voucherCode: form.voucherCode,
                         amount: finalAmount,
@@ -1566,6 +1624,7 @@ export const useTransactionForm = () => {
         setRevenueType,
         updateForm,
         updateNightRate,
+        updateRoomNightRate,
         addRoom,
         removeRoom,
         updateRoom,

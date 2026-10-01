@@ -257,7 +257,18 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         const matchingNights = stayNightDates.filter(d => d >= startDateStr && d <= endDateStr);
                         const nightsInPeriod = matchingNights.length;
 
-                        const periodAmount = ratePerNight * nightsInPeriod;
+                        let periodAmount = 0;
+                        matchingNights.forEach(nightDate => {
+                            const exactEntry = dateMap[nightDate];
+                            const nIdx = stayNightDates.indexOf(nightDate);
+                            const specificNightRate = (exactEntry && Number(exactEntry.amount) > 0)
+                                ? Number(exactEntry.amount)
+                                : (Array.isArray(rep.nightRates) && nIdx >= 0 && rep.nightRates[nIdx] !== undefined && Number(rep.nightRates[nIdx]) > 0
+                                    ? Number(rep.nightRates[nIdx])
+                                    : ratePerNight);
+                            periodAmount += specificNightRate;
+                        });
+
                         const periodPayHotel = totalStayNights > 0 ? Math.round((stayPayHotel / totalStayNights) * nightsInPeriod) : stayPayHotel;
                         const periodPayTransfer = totalStayNights > 0 ? Math.round((stayPayTransfer / totalStayNights) * nightsInPeriod) : stayPayTransfer;
 
