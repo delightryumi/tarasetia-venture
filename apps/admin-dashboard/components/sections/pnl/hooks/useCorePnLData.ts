@@ -34,28 +34,9 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
             const hotelList: HotelMaster[] = [];
             for (const docSnap of propertiesSnap.docs) {
                 const d = docSnap.data();
-                let roomCount = typeof d.roomCount === 'number' ? d.roomCount : (typeof d.totalRooms === 'number' ? d.totalRooms : 0);
-                if (!roomCount || roomCount === 0) {
-                    try {
-                        const rtSnap = await getDocs(getHotelCollection(db, "roomTypes", docSnap.id));
-                        let subCount = 0;
-                        rtSnap.forEach(rt => {
-                            const rData = rt.data();
-                            if (Array.isArray(rData.physicalRooms) && rData.physicalRooms.length > 0) {
-                                subCount += rData.physicalRooms.length;
-                            } else if (typeof rData.roomCount === 'number' && rData.roomCount > 0) {
-                                subCount += rData.roomCount;
-                            } else if (typeof rData.totalRooms === 'number' && rData.totalRooms > 0) {
-                                subCount += rData.totalRooms;
-                            } else {
-                                subCount += 1;
-                            }
-                        });
-                        if (subCount > 0) roomCount = subCount;
-                    } catch (e) {
-                        // ignore fallback error
-                    }
-                }
+                const roomCount = typeof d.roomCount === 'number' && d.roomCount > 0
+                    ? d.roomCount
+                    : (typeof d.totalRooms === 'number' && d.totalRooms > 0 ? d.totalRooms : Number(d.roomsCount || 10));
                 hotelList.push({
                   id: docSnap.id,
                   name: d.Nama || d.name || `Property ${docSnap.id}`,
