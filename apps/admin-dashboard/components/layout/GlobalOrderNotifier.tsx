@@ -12,11 +12,13 @@ interface GlobalOrderNotifierProps {
 
 export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNotifierProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const prevIdsRef = useRef<Set<string>>(new Set());
-  const isInitialRef = useRef(true);
   const badgeCountRef = useRef(0);
-
   const posSoundUrlRef = useRef<string>('/sounds/notification.mp3');
+  const onBadgeChangeRef = useRef(onBadgeChange);
+
+  useEffect(() => {
+    onBadgeChangeRef.current = onBadgeChange;
+  }, [onBadgeChange]);
 
   useEffect(() => {
     if (!hotelCode || hotelCode === '0') return;
@@ -82,14 +84,11 @@ export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNot
     };
   }, [getAudio]);
 
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-
   useEffect(() => {
-    // Let FoodBeverageRealtimeTab manage audio on the realtime KDS page
-    if (pathname.includes('/food-beverage/realtime')) return;
     if (!hotelCode || hotelCode === '0') return;
 
-    const colHeldRef = collection(db, 'hotels', hotelCode, 'pos_held_orders');
+    // Listen with query limit to prevent massive document downloads
+    const colHeldRef = query(collection(db, 'hotels', hotelCode, 'pos_held_orders'), limit(25));
     let isInitialHeld = true;
 
     const unsubHeld = onSnapshot(colHeldRef, (snap: QuerySnapshot<DocumentData>) => {
@@ -97,6 +96,10 @@ export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNot
         isInitialHeld = false;
         return;
       }
+
+      // Check current page dynamically
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      if (currentPath.includes('/food-beverage/realtime')) return;
 
       snap.docChanges().forEach((change: DocumentChange<DocumentData>) => {
         if (change.type === 'added') {
@@ -113,7 +116,7 @@ export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNot
 
           if (isFresh) {
             badgeCountRef.current += 1;
-            onBadgeChange(badgeCountRef.current);
+            if (onBadgeChangeRef.current) onBadgeChangeRef.current(badgeCountRef.current);
 
             const audio = getAudio();
             if (audio) {
@@ -135,7 +138,7 @@ export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNot
                     audioRef.current.currentTime = 0;
                   }
                   badgeCountRef.current = Math.max(0, badgeCountRef.current - 1);
-                  onBadgeChange(badgeCountRef.current);
+                  if (onBadgeChangeRef.current) onBadgeChangeRef.current(badgeCountRef.current);
                 },
               },
             });
@@ -155,6 +158,10 @@ export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNot
         return;
       }
 
+      // Check current page dynamically
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      if (currentPath.includes('/food-beverage/realtime')) return;
+
       snap.docChanges().forEach((change: DocumentChange<DocumentData>) => {
         if (change.type === 'added') {
           const data = change.doc.data();
@@ -171,7 +178,7 @@ export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNot
 
           if (isFresh) {
             badgeCountRef.current += 1;
-            onBadgeChange(badgeCountRef.current);
+            if (onBadgeChangeRef.current) onBadgeChangeRef.current(badgeCountRef.current);
 
             const audio = getAudio();
             if (audio) {
@@ -191,7 +198,7 @@ export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNot
                     audioRef.current.currentTime = 0;
                   }
                   badgeCountRef.current = Math.max(0, badgeCountRef.current - 1);
-                  onBadgeChange(badgeCountRef.current);
+                  if (onBadgeChangeRef.current) onBadgeChangeRef.current(badgeCountRef.current);
                 },
               },
             });
@@ -210,7 +217,7 @@ export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNot
         audioRef.current = null;
       }
     };
-  }, [hotelCode, getAudio, onBadgeChange, pathname]);
+  }, [hotelCode, getAudio]);
 
   // No UI — purely a side-effect component
   return null;

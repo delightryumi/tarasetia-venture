@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export function getCurrencySymbol(code: string): string {
   switch (code) {
@@ -31,13 +31,14 @@ export function useCurrency() {
     };
   }, []);
 
-  const formatCurrency = (amount: number | string | undefined | null): string => {
+  const formatCurrency = useCallback((amount: number | string | undefined | null): string => {
     if (amount === undefined || amount === null) return '';
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
     if (isNaN(num)) return '';
     
     return `${symbol}${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-  };
+  }, [symbol]);
 
   return { symbol, formatCurrency };
 }
+

@@ -155,7 +155,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else {
             setHotelsList([]);
         }
-    }, [user]);
+    }, [user?.role, user?.hotelCode, user?.allowedOutlets?.join(",")]);
 
     // Real-time sync of user permissions, profile, and allowedOutlets from users_master
     useEffect(() => {
@@ -179,13 +179,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
                 setUser(prev => {
                     if (!prev) return prev;
+                    const nextAllowed = Array.isArray(data.allowedOutlets) && data.allowedOutlets.length > 0 ? data.allowedOutlets : prev.allowedOutlets || [];
+                    const nextName = data.name || data.displayName || prev.displayName;
+                    const nextRole = data.role || prev.role;
+                    const nextStatus = data.status;
+                    
+                    // Check if unchanged to preserve reference
+                    if (
+                        prev.displayName === nextName &&
+                        prev.name === (data.name || prev.name) &&
+                        prev.role === nextRole &&
+                        prev.status === nextStatus &&
+                        JSON.stringify(prev.allowedOutlets) === JSON.stringify(nextAllowed) &&
+                        JSON.stringify(prev.permissions) === JSON.stringify(data.permissions || {})
+                    ) {
+                        return prev;
+                    }
+
                     const updated: CustomUser = {
                         ...prev,
-                        displayName: data.name || data.displayName || prev.displayName,
+                        displayName: nextName,
                         name: data.name || prev.name,
-                        role: data.role || prev.role,
-                        status: data.status,
-                        allowedOutlets: Array.isArray(data.allowedOutlets) && data.allowedOutlets.length > 0 ? data.allowedOutlets : prev.allowedOutlets || [],
+                        role: nextRole,
+                        status: nextStatus,
+                        allowedOutlets: nextAllowed,
                         permissions: data.permissions || {}
                     };
                     localStorage.setItem("auth_user", JSON.stringify(updated));
@@ -221,7 +238,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
 
         window.addEventListener("focus", onFocus);
-        const aliveInterval = setInterval(checkAuthAlive, 15000);
+        const aliveInterval = setInterval(checkAuthAlive, 60000);
 
         return () => {
             unsubscribe();

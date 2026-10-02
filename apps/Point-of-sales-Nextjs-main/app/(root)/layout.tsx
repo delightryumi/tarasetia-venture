@@ -257,6 +257,11 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     return () => window.removeEventListener('soundChanged', handleSoundChange);
   }, []);
 
+  const formatCurrencyRef = React.useRef(formatCurrency);
+  useEffect(() => {
+    formatCurrencyRef.current = formatCurrency;
+  }, [formatCurrency]);
+
   useEffect(() => {
     let hotelCode = user?.hotelCode || '';
     if (!hotelCode && typeof window !== 'undefined') {
@@ -312,11 +317,12 @@ const RootLayout = ({ children }: RootLayoutProps) => {
             });
           }
 
+          const currentFormatter = formatCurrencyRef.current;
           toast.info(
             <div>
               <strong>{label}</strong><br/>
               {data.customerName || 'Tamu'} (Meja: {data.tableNumber || '-'})<br/>
-              {data.total ? <span style={{fontSize: '0.8em', opacity: 0.9}}>Total: {formatCurrency(data.total)}<br/></span> : null}
+              {data.total ? <span style={{fontSize: '0.8em', opacity: 0.9}}>Total: {currentFormatter ? currentFormatter(data.total) : data.total}<br/></span> : null}
               <span style={{fontSize: '0.8em', opacity: 0.8}}>Klik tanda silang (X) untuk mematikan alarm</span>
             </div>,
             {
@@ -336,8 +342,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       }
     };
 
-    // 1. Listen to held orders (unpaid / dine-in / self-orders)
-    const qHeld = collection(db, 'hotels', hotelCode, 'pos_held_orders');
+    // 1. Listen to held orders (unpaid / dine-in / self-orders) with safe limit
+    const qHeld = query(collection(db, 'hotels', hotelCode, 'pos_held_orders'), limit(30));
     let isInitialHeld = true;
     const unsubHeld = onSnapshot(qHeld, (snapshot) => {
       const orders = snapshot.docs.map(doc => ({
@@ -369,6 +375,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
           }
         }
       });
+    }, (err) => {
+      console.error('Firestore pos_held_orders listener error in layout:', err);
     });
 
     // 2. Listen to completed/paid orders (pos_orders) so pay-as-you-go or counter payments also sound alarm
@@ -401,13 +409,16 @@ const RootLayout = ({ children }: RootLayoutProps) => {
           }
         }
       });
+    }, (err) => {
+      console.error('Firestore pos_orders listener error in layout:', err);
     });
 
     return () => {
       unsubHeld();
       unsubPaid();
     };
-  }, [user?.hotelCode, getNotificationSound, formatCurrency]);
+  }, [user?.hotelCode]);
+
 
 
   const handleRestore = async (order: any) => {

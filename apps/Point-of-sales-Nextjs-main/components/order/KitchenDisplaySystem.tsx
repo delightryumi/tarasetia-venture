@@ -147,7 +147,7 @@ export default function KitchenDisplaySystem() {
         setTablesList(parsedTables);
 
         // 2. Listen to active held orders (pos_held_orders)
-        const heldCollection = getHotelCollection(db, 'pos_held_orders', activeCode);
+        const heldCollection = query(getHotelCollection(db, 'pos_held_orders', activeCode), limit(50));
         unsubHeld = onSnapshot(heldCollection, (snap) => {
           const orders = snap.docs.map(d => {
             const data = d.data();

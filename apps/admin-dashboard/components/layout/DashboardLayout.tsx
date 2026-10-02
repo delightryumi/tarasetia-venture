@@ -100,7 +100,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
             console.error('Error fetching hotel modules in DashboardLayout:', err);
         });
         return () => unsubscribe();
-    }, [activeHotelCode, user]);
+    }, [activeHotelCode, user?.role]);
 
     const [moduleParam, setModuleParam] = useState<string | null>(null);
 

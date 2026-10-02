@@ -281,7 +281,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
         });
 
         // 2. Listen to active held orders in REALTIME with instant docChanges
-        const heldCollection = getHotelCollection(db, 'pos_held_orders', activeCode);
+        const heldCollection = query(getHotelCollection(db, 'pos_held_orders', activeCode), limit(50));
         let isInitialHeld = true;
         unsubHeld = onSnapshot(heldCollection, (snap) => {
           const orders = snap.docs.map(doc => {
