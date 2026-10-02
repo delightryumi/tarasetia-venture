@@ -168,7 +168,7 @@ export const MobileBottomNav = () => {
             console.error('Error fetching hotel modules in MobileBottomNav:', err);
         });
         return () => unsubscribe();
-    }, [activeHotelCode, user]);
+    }, [activeHotelCode, user?.role]);
 
     // 2. Sync active section based on route
     let activeSection = "overview";
