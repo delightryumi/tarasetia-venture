@@ -19,17 +19,15 @@ export const fetchRecords = async ({
   endDate?: string;
 }) => {
   try {
-    // Default to today if no date is provided
-    if (!startDate && !endDate) {
-      const today = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Jakarta',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).format(new Date());
-      startDate = today;
-      endDate = today;
-    }
+    const today = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Jakarta',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(new Date());
+
+    const effectiveStartDate = startDate || endDate || today;
+    const effectiveEndDate = endDate || startDate || today;
 
     const cookieStore = await cookies();
     const hotelCode = cookieStore.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
@@ -54,10 +52,10 @@ export const fetchRecords = async ({
       taxRate = Number(sData.service || 0) + Number(sData.tax || 0) + Number(sData.lostBreakage || 0);
     }
 
-    const [sY, sM, sD] = startDate.split('-').map(Number);
+    const [sY, sM, sD] = effectiveStartDate.split('-').map(Number);
     const startDateTime = new Date(sY, (sM || 1) - 1, sD || 1, 0, 0, 0, 0);
 
-    const [eY, eM, eD] = (endDate || startDate).split('-').map(Number);
+    const [eY, eM, eD] = effectiveEndDate.split('-').map(Number);
     const endDateTime = new Date(eY, (eM || 1) - 1, eD || 1, 23, 59, 59, 999);
 
     const q = query(
