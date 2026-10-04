@@ -23,25 +23,34 @@ interface HotelBillingData {
   };
 }
 
-export function BillingAlertModal() {
+interface BillingAlertModalProps {
+  hotelData?: HotelBillingData | null;
+}
+
+export function BillingAlertModal({ hotelData: propHotelData }: BillingAlertModalProps = {}) {
   const { user, activeHotelCode, signOutUser } = useAuth();
-  const [hotelData, setHotelData] = useState<HotelBillingData | null>(null);
+  const [localHotelData, setLocalHotelData] = useState<HotelBillingData | null>(null);
   const [isDismissedExpiration, setIsDismissedExpiration] = useState(false);
   const [isDismissedCustomAlert, setIsDismissedCustomAlert] = useState(false);
+
+  const hotelData = propHotelData !== undefined ? propHotelData : localHotelData;
 
   const isUserSuperadmin =
     user?.role === 'superadmin' ||
     user?.email?.toLowerCase() === 'nexura.management@gmail.com';
 
   useEffect(() => {
+    // If parent component (DashboardLayout) already provides hotelData, skip redundant listener
+    if (propHotelData !== undefined) return;
+
     if (!activeHotelCode || isUserSuperadmin) {
-      setHotelData(null);
+      setLocalHotelData(null);
       return;
     }
     const docRef = doc(db, 'hotels', activeHotelCode);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
-        setHotelData(docSnap.data() as HotelBillingData);
+        setLocalHotelData(docSnap.data() as HotelBillingData);
         // Reset dismiss states when new updates are pulled from Firestore
         setIsDismissedExpiration(false);
         setIsDismissedCustomAlert(false);
@@ -50,7 +59,7 @@ export function BillingAlertModal() {
       console.error('Error listening to hotel billing data:', err);
     });
     return () => unsubscribe();
-  }, [activeHotelCode, isUserSuperadmin]);
+  }, [activeHotelCode, isUserSuperadmin, propHotelData]);
 
   if (isUserSuperadmin || !hotelData) return null;
 

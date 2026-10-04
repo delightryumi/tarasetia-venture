@@ -466,9 +466,24 @@ export const usePNLBudget = () => {
         console.warn("daily_revenue query error in usePNLBudget:", err);
       }
 
-      // B. POS Orders (from pos_orders - exact PnL Statement source)
+      // B. POS Orders bounded to year range
       try {
-        const posSnap = await getDocs(getHotelCollection(db, "pos_orders", hCode));
+        const startYearDate = new Date(`${startIso}T00:00:00.000Z`);
+        const endYearDate = new Date(`${endIso}T23:59:59.999Z`);
+
+        const posQ = query(
+          getHotelCollection(db, "pos_orders", hCode),
+          where("timestamp", ">=", startYearDate),
+          where("timestamp", "<=", endYearDate)
+        );
+        let posSnap = await getDocs(posQ);
+        if (posSnap.empty) {
+          const fallbackPosQ = query(
+            getHotelCollection(db, "pos_orders", hCode),
+            limit(150)
+          );
+          posSnap = await getDocs(fallbackPosQ);
+        }
         posSnap.forEach((d) => {
           const o = d.data();
           const st = (o.status || "").toUpperCase();

@@ -52,6 +52,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     const [activeModules, setActiveModules] = useState<string[] | null>(null);
     const [isHotelActive, setIsHotelActive] = useState<boolean | null>(null);
     const [nextDueDate, setNextDueDate] = useState<string>("");
+    const [hotelBillingData, setHotelBillingData] = useState<any>(null);
     const [orderBadge, setOrderBadge] = useState(0);
     const handleBadgeChange = useCallback((count: number) => setOrderBadge(count), []);
 
@@ -60,12 +61,14 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
         if (!activeHotelCode || activeHotelCode === "0") {
             setActiveModules(null);
             setIsHotelActive(true);
+            setHotelBillingData(null);
             return;
         }
         const docRef = doc(db, 'hotels', activeHotelCode);
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
+                setHotelBillingData(data);
                 // Superadmin tidak perlu dicek status aktif hotel yang sedang di-preview
                 if (user?.role === "superadmin") {
                     setIsHotelActive(true);
@@ -265,6 +268,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                             <Sidebar
                                 isCollapsed={isCollapsed}
                                 setIsCollapsed={setIsCollapsed}
+                                activeModules={activeModules}
                             />
                         </React.Suspense>
                     )
@@ -336,12 +340,12 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                         )}
                     </div>
                 </main>
-                {!isSuperadminPage && !isInnalyticsPage && !isFnbRealtimePage && (
+                {!isSuperadminPage && !isFnbRealtimePage && (
                     <React.Suspense fallback={null}>
-                        <MobileBottomNav />
+                        <MobileBottomNav activeModules={activeModules} />
                     </React.Suspense>
                 )}
-                <BillingAlertModal />
+                <BillingAlertModal hotelData={hotelBillingData} />
             </div>
         </div>
     );

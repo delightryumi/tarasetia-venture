@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import type { Staff, AttendanceLog, Shift } from "./types";
 import { ExportReportButton } from "./ExportReportButton";
 import { ManualCorrectionModal } from "./ManualCorrectionModal";
@@ -101,17 +101,25 @@ export function MonthlyReportTable({ hotelCode, shifts }: Props) {
         label = `Custom (${startDate} s/d ${endDate})`;
       }
 
-      // Fetch logs from all required month collections
+      // Fetch logs from all required month collections using targeted queries
       let rawLogs: AttendanceLog[] = [];
       await Promise.all(
         monthsToQuery.map(async (ym) => {
           const colRef = collection(db, `hotels/${hotelCode}/attendance/${ym}/logs`);
-          const snap = await getDocs(colRef);
+          let qLogs;
+          if (reportType === "daily") {
+            qLogs = query(colRef, where("date", "==", selectedDate));
+          } else if (reportType === "custom") {
+            qLogs = query(colRef, where("date", ">=", startDate), where("date", "<=", endDate));
+          } else {
+            qLogs = colRef;
+          }
+          const snap = await getDocs(qLogs);
           rawLogs.push(...snap.docs.map((d) => ({ id: d.id, ...d.data() } as AttendanceLog)));
         })
       );
 
-      // Filter exactly by bounds
+      // Final safety filter
       const logs = rawLogs.filter(l => {
         if (reportType === "daily") return l.date === selectedDate;
         if (reportType === "monthly") return l.date.startsWith(selectedMonth);

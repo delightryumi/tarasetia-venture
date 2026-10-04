@@ -90,25 +90,26 @@
   }
 }
 
-/* Modular Header Layout */
+/* Modular Header Layout — Apple iOS Frosted Glass */
 .headerBar {
   width: 100%;
   padding-top: 10px;
   padding-bottom: 10px;
   z-index: 30;
-  background-color: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
   user-select: none;
-  position: absolute;
+  position: sticky;
   top: 0;
   left: 0;
 }
 
 :global(.dark) .headerBar {
-  background-color: rgba(24, 24, 24, 0.65);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: rgba(14, 14, 18, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
 .headerInner {
@@ -182,32 +183,32 @@
 }
 
 .menuButton {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  border: none;
-  background-color: #282828;
-  color: #c2c2c2;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: #242428;
+  color: #e2e8f0;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 :global(.dark) .menuButton {
-  background-color: #282828;
-  color: #c2c2c2;
+  background-color: #1e1e24;
+  color: #e2e8f0;
 }
 
 .menuButton:hover {
-  background-color: #333333;
+  background-color: #2e2e36;
   color: #ffffff;
 }
 
 :global(.dark) .menuButton:hover {
-  background-color: #333333;
+  background-color: #2e2e36;
   color: #ffffff;
 }
 
@@ -226,11 +227,13 @@
   position: absolute;
   right: 0;
   margin-top: 8px;
-  width: 220px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  width: 230px;
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(30px) saturate(190%);
+  -webkit-backdrop-filter: blur(30px) saturate(190%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
   padding: 8px;
   z-index: 50;
   display: flex;
@@ -239,9 +242,9 @@
 }
 
 :global(.dark) .dropdownMenu {
-  background-color: #121212;
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  background-color: rgba(20, 20, 26, 0.94);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7);
 }
 
 .dropdownItem {

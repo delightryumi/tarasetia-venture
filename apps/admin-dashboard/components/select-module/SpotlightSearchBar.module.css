@@ -1,0 +1,122 @@
+/* SpotlightSearchBar.module.css - Modular Apple iOS Spotlight Capsule */
+
+.container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  color: #8e8e93;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: color 0.2s ease;
+}
+
+.input {
+  width: 100%;
+  height: 42px;
+  padding-left: 38px;
+  padding-right: 36px;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 13px;
+  font-weight: 500;
+  color: #1c1c1e;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+  outline: none;
+}
+
+.input::placeholder {
+  color: #8e8e93;
+  font-weight: 400;
+}
+
+.input:focus {
+  background-color: #ffffff;
+  border-color: rgba(0, 122, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15), 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.input:focus + .searchIcon {
+  color: #007aff;
+}
+
+.clearButton {
+  position: absolute;
+  right: 12px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.12);
+  color: #3a3a3c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+  z-index: 2;
+}
+
+.clearButton:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+}
+
+/* Dark Mode Scoped */
+:global(.dark) .input {
+  background-color: rgba(28, 28, 30, 0.75);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f2f2f7;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+:global(.dark) .input::placeholder {
+  color: #8e8e93;
+}
+
+:global(.dark) .input:focus {
+  background-color: rgba(38, 38, 42, 0.95);
+  border-color: rgba(10, 132, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25), 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+:global(.dark) .searchIcon {
+  color: #8e8e93;
+}
+
+:global(.dark) .input:focus + .searchIcon {
+  color: #0a84ff;
+}
+
+:global(.dark) .clearButton {
+  background-color: rgba(255, 255, 255, 0.18);
+  color: #f2f2f7;
+}
+
+:global(.dark) .clearButton:hover {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .input {
+    height: 38px;
+    font-size: 12px;
+    padding-left: 36px;
+    padding-right: 32px;
+  }
+}

@@ -19,6 +19,7 @@ export interface NavItemType {
 export interface SidebarProps {
     isCollapsed: boolean;
     setIsCollapsed: (collapsed: boolean) => void;
+    activeModules?: string[] | null;
 }
 
 export interface DockNavItemProps {

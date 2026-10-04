@@ -1,8 +1,10 @@
-'use client';
-
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { LucideIcon, Lock, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { 
+  LucideIcon, Lock, ArrowRight, ShoppingCart, 
+  Building2, BedDouble, UtensilsCrossed, ShoppingBag, 
+  Calculator, Users, Globe, TrendingUp, Settings, ChevronRight
+} from 'lucide-react';
 
 import styles from './ModuleBentoGrid.module.css';
 
@@ -22,66 +24,147 @@ interface ModuleBentoGridProps {
   menus: MenuItem[];
 }
 
-// Per-module accent color palette — enterprise style
-const MODULE_ACCENTS: Record<string, { icon: string; bg: string; bgDark: string; border: string }> = {
-  'POS':            { icon: '#e05252', bg: 'rgba(224,82,82,0.06)',    bgDark: 'rgba(224,82,82,0.1)',    border: '#e05252' },
-  'Front Office':   { icon: '#3b82f6', bg: 'rgba(59,130,246,0.06)',   bgDark: 'rgba(59,130,246,0.1)',   border: '#3b82f6' },
-  'House Keeping':  { icon: '#14b8a6', bg: 'rgba(20,184,166,0.06)',   bgDark: 'rgba(20,184,166,0.1)',   border: '#14b8a6' },
-  'Food & Beverage':{ icon: '#f97316', bg: 'rgba(249,115,22,0.06)', bgDark: 'rgba(249,115,22,0.1)',   border: '#f97316' },
-  'Purchasing':     { icon: '#8b5cf6', bg: 'rgba(139,92,246,0.06)',   bgDark: 'rgba(139,92,246,0.1)',   border: '#8b5cf6' },
-  'Accounting':     { icon: '#22c55e', bg: 'rgba(34,197,94,0.06)',    bgDark: 'rgba(34,197,94,0.1)',    border: '#22c55e' },
-  'HRD & Absensi':  { icon: '#ec4899', bg: 'rgba(236,72,153,0.06)',   bgDark: 'rgba(236,72,153,0.1)',   border: '#ec4899' },
-  'Channel Manager':{ icon: '#0284c7', bg: 'rgba(2,132,199,0.06)',   bgDark: 'rgba(2,132,199,0.1)',   border: '#0284c7' },
-  'Inalytics':      { icon: '#6366f1', bg: 'rgba(99,102,241,0.06)',   bgDark: 'rgba(99,102,241,0.1)',   border: '#6366f1' },
-  'Superadmin':     { icon: '#f59e0b', bg: 'rgba(245,158,11,0.06)',   bgDark: 'rgba(245,158,11,0.1)',   border: '#f59e0b' },
+// Per-module Apple SF iOS color palette & gradients
+interface ModuleAccentDef {
+  icon: React.ElementType;
+  gradient: string;
+  glow: string;
+  accentColor: string;
+  bgLight: string;
+}
+
+const MODULE_ACCENTS: Record<string, ModuleAccentDef> = {
+  'POS': { 
+    icon: ShoppingCart,
+    gradient: 'linear-gradient(135deg, #ff2d55 0%, #ff375f 100%)', 
+    glow: 'rgba(255, 45, 85, 0.45)', 
+    accentColor: '#ff2d55',
+    bgLight: 'rgba(255, 45, 85, 0.08)'
+  },
+  'Front Office': { 
+    icon: Building2,
+    gradient: 'linear-gradient(135deg, #007aff 0%, #0a84ff 100%)', 
+    glow: 'rgba(0, 122, 255, 0.45)', 
+    accentColor: '#007aff',
+    bgLight: 'rgba(0, 122, 255, 0.08)'
+  },
+  'House Keeping': { 
+    icon: BedDouble,
+    gradient: 'linear-gradient(135deg, #30d158 0%, #34c759 100%)', 
+    glow: 'rgba(48, 209, 88, 0.45)', 
+    accentColor: '#30d158',
+    bgLight: 'rgba(48, 209, 88, 0.08)'
+  },
+  'Food & Beverage': { 
+    icon: UtensilsCrossed,
+    gradient: 'linear-gradient(135deg, #ff9500 0%, #ff9f0a 100%)', 
+    glow: 'rgba(255, 149, 0, 0.45)', 
+    accentColor: '#ff9500',
+    bgLight: 'rgba(255, 149, 0, 0.08)'
+  },
+  'Purchasing': { 
+    icon: ShoppingBag,
+    gradient: 'linear-gradient(135deg, #5856d6 0%, #5e5ce6 100%)', 
+    glow: 'rgba(88, 86, 214, 0.45)', 
+    accentColor: '#5856d6',
+    bgLight: 'rgba(88, 86, 214, 0.08)'
+  },
+  'Accounting': { 
+    icon: Calculator,
+    gradient: 'linear-gradient(135deg, #ffd60a 0%, #ffcc00 100%)', 
+    glow: 'rgba(255, 214, 10, 0.45)', 
+    accentColor: '#eab308',
+    bgLight: 'rgba(234, 179, 8, 0.08)'
+  },
+  'HRD & Absensi': { 
+    icon: Users,
+    gradient: 'linear-gradient(135deg, #af52de 0%, #bf5af2 100%)', 
+    glow: 'rgba(175, 82, 222, 0.45)', 
+    accentColor: '#af52de',
+    bgLight: 'rgba(175, 82, 222, 0.08)'
+  },
+  'Channel Manager': { 
+    icon: Globe,
+    gradient: 'linear-gradient(135deg, #00c6ff 0%, #007aff 100%)', 
+    glow: 'rgba(0, 198, 255, 0.45)', 
+    accentColor: '#00c6ff',
+    bgLight: 'rgba(0, 198, 255, 0.08)'
+  },
+  'Inalytics': { 
+    icon: TrendingUp,
+    gradient: 'linear-gradient(135deg, #32d74b 0%, #00c6ff 100%)', 
+    glow: 'rgba(50, 215, 75, 0.45)', 
+    accentColor: '#32d74b',
+    bgLight: 'rgba(50, 215, 75, 0.08)'
+  },
+  'Superadmin': { 
+    icon: Settings,
+    gradient: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', 
+    glow: 'rgba(100, 116, 139, 0.45)', 
+    accentColor: '#64748b',
+    bgLight: 'rgba(100, 116, 139, 0.08)'
+  },
 };
 
-const getAccent = (title: string) =>
-  MODULE_ACCENTS[title] ?? { icon: '#6b7280', bg: 'rgba(107,114,128,0.06)', bgDark: 'rgba(107,114,128,0.1)', border: '#6b7280' };
+const getAccent = (title: string): ModuleAccentDef =>
+  MODULE_ACCENTS[title] ?? { 
+    icon: Settings, 
+    gradient: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', 
+    glow: 'rgba(100, 116, 139, 0.35)', 
+    accentColor: '#64748b',
+    bgLight: 'rgba(100, 116, 139, 0.08)'
+  };
 
-// --- Enterprise Card Component ---
+// --- Apple iOS Module Card Component with Rich 3D Image ---
 const EnterpriseCard = ({ item }: { item: MenuItem }) => {
-  const Icon = item.icon;
-  const accent = getAccent(item.title);
+  const triggerHaptic = (ms = 10) => {
+    if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(ms);
+      } catch (_) {}
+    }
+  };
 
   const cardMarkup = (
     <div className={`${styles.bentoCard} ${!item.active ? styles.disabledCard : ''}`}>
-      {item.image ? (
-        <div className={styles.cardImageLayer}>
-          <img src={item.image} alt={item.title} className={styles.cardImage} />
-          <div className={styles.cardVignette} />
-        </div>
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center -z-0">
-          <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: accent.bgDark }}>
-            {typeof item.icon === 'string' ? (
-              <span className="material-symbols-rounded text-[24px] md:text-[32px]" style={{ color: accent.icon }}>{item.icon}</span>
-            ) : (
-              React.createElement(Icon as LucideIcon, { strokeWidth: 1.5, color: accent.icon, className: "w-6 h-6 md:w-8 md:h-8" })
-            )}
-          </div>
-        </div>
-      )}
+      {/* Background Image Layer & Dark Gradient Vignette */}
+      <div className={styles.cardImageLayer}>
+        {item.image ? (
+          <img 
+            src={item.image} 
+            alt={item.title} 
+            className={styles.cardImage} 
+            loading="lazy" 
+          />
+        ) : (
+          <div className="w-full h-full bg-slate-900" />
+        )}
+        <div className={styles.cardVignette} />
+      </div>
 
+      {/* Card Body Overlay */}
       <div className={styles.cardBody}>
-        {/* Top bar: minimal lock icon only if disabled */}
+        {/* Top Bar for Lock / Status Badge */}
         <div className={styles.topBar}>
           {!item.active && (
             <span className={styles.lockBadge}>
-              <Lock size={10} />
+              <Lock size={10} color="#ffffff" />
+              <span>Terkunci</span>
             </span>
           )}
         </div>
 
-        {/* Floating Glass Dock Bottom Plate */}
+        {/* Bottom Floating Glass Dock (iOS Frosted Pill) */}
         <div className={styles.floatingDock}>
           <div className={styles.textGroup}>
             <span className={styles.cardTitle}>{item.title}</span>
             <span className={styles.cardSubtitle}>{item.subtitle}</span>
           </div>
-          <div className={item.active ? styles.actionButton : styles.actionButtonDisabled}>
+          <div 
+            className={item.active ? styles.actionButton : styles.actionButtonDisabled}
+          >
             {item.active ? (
-              <ArrowRight size={13} strokeWidth={2.5} />
+              <ChevronRight size={14} strokeWidth={2.5} />
             ) : (
               <Lock size={10} strokeWidth={2.5} />
             )}
@@ -92,7 +175,11 @@ const EnterpriseCard = ({ item }: { item: MenuItem }) => {
   );
 
   return item.active ? (
-    <Link href={item.href} className={styles.cardWrapper}>
+    <Link 
+      href={item.href} 
+      className={styles.cardWrapper}
+      onClick={() => triggerHaptic(12)}
+    >
       {cardMarkup}
     </Link>
   ) : (

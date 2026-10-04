@@ -409,27 +409,8 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
             });
         });
 
-        const unsubGallery = onSnapshot(getHotelCollection(db, "gallery", activeHotelCode), (snapshot) => {
-            setStats(prev => ({ ...prev, galleryCount: snapshot.size }));
-        });
-
-        const unsubAttractions = onSnapshot(getHotelCollection(db, "attractions", activeHotelCode), (snapshot) => {
-            setStats(prev => ({ ...prev, attractionsCount: snapshot.size }));
-        });
-
-        const unsubSEO = onSnapshot(doc(getHotelCollection(db, "settings", activeHotelCode), "seo"), (snapshot) => {
-            setStats(prev => ({
-                ...prev,
-                seoConfigured: snapshot.exists(),
-                loading: false
-            }));
-        });
-
         return () => {
             unsubRooms();
-            unsubGallery();
-            unsubAttractions();
-            unsubSEO();
         };
     }, [activeHotelCode]);
 

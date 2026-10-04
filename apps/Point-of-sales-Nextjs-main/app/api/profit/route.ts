@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, where, limit } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export async function GET(req: NextRequest) {
@@ -118,8 +118,20 @@ export async function GET(req: NextRequest) {
       categoryIncomeMap[c][s].net += net;
     };
 
-    // 1. Process pos_orders only
-    const posOrdersSnap = await getDocs(getHotelCollection(db, 'pos_orders', hotelCode));
+    // 1. Process pos_orders bounded by request date range
+    const posOrdersQuery = query(
+      getHotelCollection(db, 'pos_orders', hotelCode),
+      where('timestamp', '>=', startDate),
+      where('timestamp', '<=', endDate)
+    );
+    let posOrdersSnap = await getDocs(posOrdersQuery);
+    if (posOrdersSnap.empty) {
+      const fallbackQuery = query(
+        getHotelCollection(db, 'pos_orders', hotelCode),
+        limit(150)
+      );
+      posOrdersSnap = await getDocs(fallbackQuery);
+    }
     posOrdersSnap.forEach((docSnap) => {
       const data = docSnap.data();
       if (data.status === 'CANCELLED' || data.status === 'VOID' || data.isDeleted === true) return;

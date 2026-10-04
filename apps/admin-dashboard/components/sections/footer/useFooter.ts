@@ -9,15 +9,17 @@ export interface SocialLink {
     url: string;
 }
 
+let cachedFooterData: any = null;
+
 export const useFooter = () => {
-    const [address, setAddress] = useState("");
-    const [phones, setPhones] = useState<string[]>([]);
-    const [email, setEmail] = useState("");
-    const [mapsEmbed, setMapsEmbed] = useState("");
-    const [poweredByText, setPoweredByText] = useState("");
-    const [poweredByLink, setPoweredByLink] = useState("");
-    const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [address, setAddress] = useState(cachedFooterData?.address || "");
+    const [phones, setPhones] = useState<string[]>(cachedFooterData?.phones || []);
+    const [email, setEmail] = useState(cachedFooterData?.email || "");
+    const [mapsEmbed, setMapsEmbed] = useState(cachedFooterData?.mapsEmbed || "");
+    const [poweredByText, setPoweredByText] = useState(cachedFooterData?.poweredByText || "");
+    const [poweredByLink, setPoweredByLink] = useState(cachedFooterData?.poweredByLink || "");
+    const [socialLinks, setSocialLinks] = useState<SocialLink[]>(cachedFooterData?.socialLinks || []);
+    const [loading, setLoading] = useState(!cachedFooterData);
     const [saving, setSaving] = useState(false);
 
     const [newPhone, setNewPhone] = useState("");
@@ -25,6 +27,11 @@ export const useFooter = () => {
     const [newUrl, setNewUrl] = useState("");
 
     useEffect(() => {
+        if (cachedFooterData) {
+            setLoading(false);
+            return;
+        }
+
         const fetchFooter = async () => {
             try {
                 const docRef = doc(getHotelCollection(db, "settings"), "footer");
@@ -32,20 +39,23 @@ export const useFooter = () => {
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    setAddress(data.address || "");
-                    // Handle migration or default empty array
-                    if (Array.isArray(data.phones)) {
-                        setPhones(data.phones);
-                    } else if (typeof data.phone === "string" && data.phone) {
-                        setPhones([data.phone]);
-                    } else {
-                        setPhones([]);
-                    }
-                    setEmail(data.email || "");
-                    setMapsEmbed(data.mapsEmbed || "");
-                    setPoweredByText(data.poweredByText || "");
-                    setPoweredByLink(data.poweredByLink || "");
-                    setSocialLinks(data.socialLinks || []);
+                    const addr = data.address || "";
+                    const ph = Array.isArray(data.phones) ? data.phones : (typeof data.phone === "string" && data.phone ? [data.phone] : []);
+                    const em = data.email || "";
+                    const maps = data.mapsEmbed || "";
+                    const pText = data.poweredByText || "";
+                    const pLink = data.poweredByLink || "";
+                    const soc = data.socialLinks || [];
+
+                    cachedFooterData = { address: addr, phones: ph, email: em, mapsEmbed: maps, poweredByText: pText, poweredByLink: pLink, socialLinks: soc };
+
+                    setAddress(addr);
+                    setPhones(ph);
+                    setEmail(em);
+                    setMapsEmbed(maps);
+                    setPoweredByText(pText);
+                    setPoweredByLink(pLink);
+                    setSocialLinks(soc);
                 }
             } catch (err) {
                 console.error("Error fetching footer:", err);
@@ -95,6 +105,7 @@ export const useFooter = () => {
                 socialLinks,
                 updatedAt: new Date().toISOString()
             }, { merge: true });
+            cachedFooterData = { address, phones, email, mapsEmbed, poweredByText, poweredByLink, socialLinks };
             toast.success("Footer settings synchronized successfully.");
         } catch (err) {
             console.error("Error saving footer:", err);

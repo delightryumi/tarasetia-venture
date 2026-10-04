@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { getDocs, doc, getDoc } from 'firebase/firestore';
+import { getDocs, doc, getDoc, query, where, orderBy, limit } from 'firebase/firestore';
 import { cookies } from 'next/headers';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 
@@ -54,7 +54,30 @@ export const fetchRecords = async ({
       taxRate = Number(sData.service || 0) + Number(sData.tax || 0) + Number(sData.lostBreakage || 0);
     }
 
-    const snap = await getDocs(getHotelCollection(db, 'pos_orders', hotelCode));
+    const [sY, sM, sD] = startDate.split('-').map(Number);
+    const startDateTime = new Date(sY, (sM || 1) - 1, sD || 1, 0, 0, 0, 0);
+
+    const [eY, eM, eD] = (endDate || startDate).split('-').map(Number);
+    const endDateTime = new Date(eY, (eM || 1) - 1, eD || 1, 23, 59, 59, 999);
+
+    const q = query(
+      getHotelCollection(db, 'pos_orders', hotelCode),
+      where('timestamp', '>=', startDateTime),
+      where('timestamp', '<=', endDateTime),
+      orderBy('timestamp', 'desc')
+    );
+
+    let snap = await getDocs(q);
+
+    // Fallback for documents saved without native Firestore timestamp index or with string dates
+    if (snap.empty) {
+      const fallbackQuery = query(
+        getHotelCollection(db, 'pos_orders', hotelCode),
+        orderBy('timestamp', 'desc'),
+        limit(100)
+      );
+      snap = await getDocs(fallbackQuery);
+    }
     let transactions: any[] = [];
 
     snap.forEach((docSnap) => {

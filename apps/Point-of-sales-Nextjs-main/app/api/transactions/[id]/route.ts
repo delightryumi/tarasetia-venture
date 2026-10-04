@@ -367,9 +367,14 @@ export const DELETE = async (
       }
     }
 
-    // 4. Fallback: If no date could be found, or direct document delete didn't happen, scan daily_revenue
+    // 4. Fallback: If no date could be found, or direct document delete didn't happen, scan recent daily_revenue
     if (!deleted) {
-      const dailyRevSnap = await getDocs(getHotelCollection(db, 'daily_revenue', hotelCode));
+      let dailyRevSnap;
+      try {
+        dailyRevSnap = await getDocs(query(getHotelCollection(db, 'daily_revenue', hotelCode), orderBy('date', 'desc'), limit(60)));
+      } catch {
+        dailyRevSnap = await getDocs(query(getHotelCollection(db, 'daily_revenue', hotelCode), limit(60)));
+      }
       for (const docSnap of dailyRevSnap.docs) {
         const entries = docSnap.data().entries || [];
         const index = entries.findIndex((e: any) => e.bookingId === resolvedTxId);
@@ -602,9 +607,14 @@ export const PUT = async (
       }
     }
 
-    // Fallback scan daily_revenue if not updated
+    // Fallback scan recent daily_revenue if not updated
     if (!dailyUpdated) {
-      const dailyRevSnap = await getDocs(getHotelCollection(db, 'daily_revenue', hotelCode));
+      let dailyRevSnap;
+      try {
+        dailyRevSnap = await getDocs(query(getHotelCollection(db, 'daily_revenue', hotelCode), orderBy('date', 'desc'), limit(60)));
+      } catch {
+        dailyRevSnap = await getDocs(query(getHotelCollection(db, 'daily_revenue', hotelCode), limit(60)));
+      }
       for (const docSnap of dailyRevSnap.docs) {
         const entries = docSnap.data().entries || [];
         const index = entries.findIndex((e: any) => e.bookingId === resolvedTxId || e.transactionId === resolvedTxId);

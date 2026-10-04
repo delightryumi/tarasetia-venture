@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { getDocs, doc, getDoc } from 'firebase/firestore';
+import { getDocs, doc, getDoc, query, where, limit } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export async function GET(req: NextRequest) {
@@ -17,8 +17,25 @@ export async function GET(req: NextRequest) {
       totalStockCount += Number(d.data().stock || 0);
     });
 
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
+
     // 2. Fetch live POS sales entries from Firestore pos_orders for today
-    const ordersSnap = await getDocs(getHotelCollection(db, 'pos_orders', hotelCode));
+    const ordersQuery = query(
+      getHotelCollection(db, 'pos_orders', hotelCode),
+      where('timestamp', '>=', todayStart),
+      where('timestamp', '<=', todayEnd)
+    );
+    let ordersSnap = await getDocs(ordersQuery);
+    if (ordersSnap.empty) {
+      // Fallback for orders without timestamp index
+      const fallbackQuery = query(
+        getHotelCollection(db, 'pos_orders', hotelCode),
+        limit(50)
+      );
+      ordersSnap = await getDocs(fallbackQuery);
+    }
     let totalSalesAmount = 0;
     let totalQtyCount = 0;
     
@@ -26,10 +43,6 @@ export async function GET(req: NextRequest) {
     const posSettingsRef = doc(getHotelCollection(db, 'settings', hotelCode), 'pos');
     const posSettingsSnap = await getDoc(posSettingsRef);
     const taxRate = posSettingsSnap.exists() ? (Number(posSettingsSnap.data().tax) ?? 10) : 10;
-    
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
 
     ordersSnap.forEach(docSnap => {
       const data = docSnap.data();

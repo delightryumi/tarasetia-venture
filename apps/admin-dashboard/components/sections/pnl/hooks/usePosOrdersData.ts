@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase"; 
 import { getHotelCollection } from "@/lib/firestoreHelper"; 
 
@@ -136,8 +136,26 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
               };
             });
 
-            // 2. Fetch pos_orders
-            const posOrdersSnap = await getDocs(getHotelCollection(db, "pos_orders", hotelCode));
+            // 2. Fetch pos_orders bounded to selected month/period
+            const [sY, sM, sD] = startStr.split('-').map(Number);
+            const startDateTime = new Date(sY, (sM || 1) - 1, sD || 1, 0, 0, 0, 0);
+
+            const [eY, eM, eD] = endStr.split('-').map(Number);
+            const endDateTime = new Date(eY, (eM || 1) - 1, eD || 1, 23, 59, 59, 999);
+
+            const posQ = query(
+              getHotelCollection(db, "pos_orders", hotelCode),
+              where("timestamp", ">=", startDateTime),
+              where("timestamp", "<=", endDateTime)
+            );
+            let posOrdersSnap = await getDocs(posQ);
+            if (posOrdersSnap.empty) {
+              const fallbackQ = query(
+                getHotelCollection(db, "pos_orders", hotelCode),
+                limit(150)
+              );
+              posOrdersSnap = await getDocs(fallbackQ);
+            }
             const fetchedPosOrders: any[] = [];
             posOrdersSnap.forEach((docSnap) => {
               const data = docSnap.data();

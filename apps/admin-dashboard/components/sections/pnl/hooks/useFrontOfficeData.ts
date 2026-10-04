@@ -112,7 +112,13 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
             const yearlyBuckets: Record<number, number> = {};
             YEARS.forEach(yr => yearlyBuckets[yr] = 0);
 
-            const allRevenueQ = query(getHotelCollection(db, "daily_revenue"));
+            const minYear = Math.min(...YEARS);
+            const maxYear = Math.max(...YEARS);
+            const allRevenueQ = query(
+                getHotelCollection(db, "daily_revenue"),
+                where("date", ">=", `${minYear}-01-01`),
+                where("date", "<=", `${maxYear}-12-31`)
+            );
             const allRevenueSnap = await getDocs(allRevenueQ);
             
             allRevenueSnap.forEach(docSnap => {

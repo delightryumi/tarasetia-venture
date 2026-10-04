@@ -9,7 +9,8 @@ const COLLECTION_NAME = "stock_opnames";
 
 export const opnameService = {
   async getAll(): Promise<StockOpname[]> {
-    const snap = await getDocs(getHotelCollection(db, COLLECTION_NAME));
+    const q = query(getHotelCollection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
+    const snap = await getDocs(q);
     return snap.docs
       .map(d => ({ id: d.id, ...d.data() } as StockOpname))
       .filter(d => d.is_deleted !== true);

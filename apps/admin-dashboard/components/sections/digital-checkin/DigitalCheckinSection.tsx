@@ -8,7 +8,7 @@ import { PrivacyPolicyPrint } from "./PrivacyPolicyPrint";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { getHotelCollection } from "@/lib/firestoreHelper";
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc, Timestamp } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, Timestamp, limit } from "firebase/firestore";
 
 export interface DigitalCheckinData {
     id: string;
@@ -36,7 +36,8 @@ export function DigitalCheckinSection() {
 
         const q = query(
             getHotelCollection(db, "digital_checkins"),
-            orderBy("timestamp", "desc")
+            orderBy("timestamp", "desc"),
+            limit(100)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {

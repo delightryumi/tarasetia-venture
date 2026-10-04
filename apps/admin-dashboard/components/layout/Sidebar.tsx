@@ -23,6 +23,7 @@ import { navigateToSidebarItem } from "./sidebar/navigation";
 export const Sidebar: React.FC<SidebarProps> = ({
     isCollapsed,
     setIsCollapsed,
+    activeModules: activeModulesProp,
 }) => {
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -85,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     };
 
     const { user, signOutUser, activeHotelCode, activeHotelName } = useAuth();
-    const [activeModules, setActiveModules] = useState<string[] | null>(null);
+    const [activeModules, setActiveModules] = useState<string[] | null>(activeModulesProp ?? null);
     const [activeModule, setActiveModule] = useState<string>("front-office");
     const isSuperadmin = isUserSuperadmin(user);
     const userPermissions = user?.permissions || {};
@@ -112,8 +113,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         setExpandedGroups((prev) => ({ ...prev, [title]: !prev[title] }));
     };
 
-    // 1. Fetch active modules for the hotel
+    // 1. Fetch active modules for the hotel (skip if already provided via props by DashboardLayout)
     useEffect(() => {
+        if (activeModulesProp !== undefined) {
+            setActiveModules(activeModulesProp);
+            return;
+        }
         if (!activeHotelCode) {
             setActiveModules(null);
             return;
@@ -174,7 +179,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }
         );
         return () => unsubscribe();
-    }, [activeHotelCode]);
+    }, [activeHotelCode, activeModulesProp]);
 
     // 2. Track current module via pathname and query parameters
     useEffect(() => {

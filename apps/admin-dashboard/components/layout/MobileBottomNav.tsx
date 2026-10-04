@@ -2,14 +2,18 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { 
-    BarChart2, TrendingUp, ShoppingCart, FileText, 
-    PieChart, FileImage, Home, Layout, Info, 
-    Settings, MapPin, Gift, Package, Search, Users, 
-    LogOut, Coffee, ClipboardList, Activity, BookOpen, 
-    Calculator, ShieldCheck, Receipt, SlidersHorizontal, 
-    Globe, Layers, X, ChevronRight, Check, Sparkles, 
-    Building2, BedDouble, LayoutGrid, ArrowRight, User,
-    Lock, CalendarCheck, UserCheck, Clock, DollarSign, PlusCircle
+    Building2, BedDouble, Calculator, ShoppingCart, 
+    Coffee, ClipboardList, Settings, TrendingUp, 
+    BarChart3, PieChart, FileText, Receipt, 
+    PlusCircle, Calendar, CalendarDays, Users, 
+    UserCheck, Clock, Activity, Globe, Search, 
+    LogOut, X, ChevronRight, Check, LayoutGrid, 
+    Layers, Compass, UtensilsCrossed, ShoppingBag, 
+    Boxes, UserCog, Banknote, FileSpreadsheet, 
+    FileCheck, QrCode, Tag, Image, MapPin, 
+    SlidersHorizontal, Shield, Bed, Percent, 
+    Truck, FileSignature, Timer, UserPlus, Sliders,
+    User, Lock, Home
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { db } from "@/lib/firebase";
@@ -35,6 +39,12 @@ interface ModuleMeta {
     icon: React.ElementType;
     color: string;
     defaultRoute: string;
+    primaryAction: {
+        id: string;
+        label: string;
+        route: string;
+        icon: React.ElementType;
+    };
 }
 
 const MODULE_DEFINITIONS: Record<string, ModuleMeta> = {
@@ -42,100 +52,163 @@ const MODULE_DEFINITIONS: Record<string, ModuleMeta> = {
         id: "front-office",
         label: "Front Office",
         shortName: "FO",
-        subtitle: "Reception & Reservations",
+        subtitle: "Reception & Reservasi",
         icon: Building2,
         color: "#2563eb",
         defaultRoute: "/overview?module=front-office",
+        primaryAction: {
+            id: "fo_walkin",
+            label: "Walk-In",
+            route: "/forecast/add",
+            icon: UserPlus,
+        }
     },
     "housekeeping": {
         id: "housekeeping",
         label: "Housekeeping",
         shortName: "HK",
-        subtitle: "Room Status & Cleanliness",
+        subtitle: "Status & Kebersihan Kamar",
         icon: BedDouble,
         color: "#059669",
         defaultRoute: "/overview?module=housekeeping",
+        primaryAction: {
+            id: "forecast",
+            label: "Kamar",
+            route: "/forecast?module=housekeeping",
+            icon: Bed,
+        }
     },
     "accounting": {
         id: "accounting",
         label: "Accounting",
         shortName: "ACC",
-        subtitle: "Finance, P&L & Balance",
+        subtitle: "Laporan Keuangan & DSR",
         icon: Calculator,
         color: "#d97706",
         defaultRoute: "/pnl?module=accounting",
+        primaryAction: {
+            id: "dsr",
+            label: "DSR",
+            route: "/dsr?module=accounting",
+            icon: FileText,
+        }
     },
     "purchasing": {
         id: "purchasing",
         label: "Purchasing",
         shortName: "PUR",
-        subtitle: "Inventory, SR & PR Orders",
-        icon: ShoppingCart,
+        subtitle: "Inventaris & Permintaan Barang",
+        icon: ShoppingBag,
         color: "#0d9488",
         defaultRoute: "/purchasing?module=purchasing",
+        primaryAction: {
+            id: "store-requisition",
+            label: "SR Order",
+            route: "/purchasing/store-requisition",
+            icon: ClipboardList,
+        }
     },
     "food-beverage": {
         id: "food-beverage",
         label: "Food & Beverage",
         shortName: "F&B",
-        subtitle: "Dining, POS & Kitchen",
-        icon: Coffee,
+        subtitle: "Restoran, Kasir & Dapur",
+        icon: UtensilsCrossed,
         color: "#ea580c",
         defaultRoute: "/food-beverage/ledger?module=food-beverage",
+        primaryAction: {
+            id: "food-beverage-realtime",
+            label: "Live Order",
+            route: "/food-beverage/realtime",
+            icon: Activity,
+        }
     },
     "hrd": {
         id: "hrd",
         label: "HRD & Absensi",
         shortName: "HRD",
-        subtitle: "Staff, Shifts & Payroll",
-        icon: ClipboardList,
+        subtitle: "Staf, Shift & Penggajian",
+        icon: Users,
         color: "#9333ea",
         defaultRoute: "/hrd?module=hrd",
+        primaryAction: {
+            id: "hrd_attendance",
+            label: "Presensi",
+            route: "/hrd?tab=monitor",
+            icon: Clock,
+        }
     },
     "cpanel": {
         id: "cpanel",
         label: "CPanel & Web",
         shortName: "WEB",
-        subtitle: "Content, Media & Settings",
+        subtitle: "Konten & Pengaturan Hotel",
         icon: Settings,
         color: "#475569",
         defaultRoute: "/logo",
+        primaryAction: {
+            id: "users",
+            label: "Users",
+            route: "/users",
+            icon: UserCog,
+        }
     },
     "pos": {
         id: "pos",
-        label: "POS Terminal",
+        label: "POS Kasir",
         shortName: "POS",
-        subtitle: "Cashier & Register",
+        subtitle: "Terminal Kasir Resto",
         icon: ShoppingCart,
         color: "#e11d48",
         defaultRoute: "/pos",
+        primaryAction: {
+            id: "pos",
+            label: "Kasir",
+            route: "/pos",
+            icon: Receipt,
+        }
     },
     "innalytics": {
         id: "innalytics",
-        label: "Inalytics",
+        label: "Innalytics",
         shortName: "INA",
-        subtitle: "Hotel Intelligence & Reports",
+        subtitle: "Intelijen & Analitik Hotel",
         icon: TrendingUp,
         color: "#059669",
         defaultRoute: "/innalytics",
+        primaryAction: {
+            id: "ina_reports",
+            label: "Laporan",
+            route: "/innalytics?view=reports",
+            icon: PieChart,
+        }
     },
 };
 
-export const MobileBottomNav = () => {
+interface MobileBottomNavProps {
+    activeModules?: string[] | null;
+}
+
+export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeModules: activeModulesProp }) => {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();
     const { user, signOutUser, activeHotelCode, activeHotelName } = useAuth();
     
-    const [activeModules, setActiveModules] = useState<string[] | null>(null);
+    const [activeModules, setActiveModules] = useState<string[] | null>(activeModulesProp ?? null);
     const isSuperadmin = isUserSuperadmin(user);
     const userPermissions = user?.permissions || {};
     const [activeModule, setActiveModule] = useState<string>("front-office");
     const [isMenuHubOpen, setIsMenuHubOpen] = useState(false);
     const [menuHubTab, setMenuHubTab] = useState<"menus" | "modules">("menus");
+    const [searchQuery, setSearchQuery] = useState("");
 
-    // 1. Fetch active modules for the hotel
+    // 1. Fetch active modules for the hotel (skip if already provided via props by DashboardLayout)
     useEffect(() => {
+        if (activeModulesProp !== undefined) {
+            setActiveModules(activeModulesProp);
+            return;
+        }
         if (!activeHotelCode) {
             setActiveModules(null);
             return;
@@ -168,7 +241,7 @@ export const MobileBottomNav = () => {
             console.error('Error fetching hotel modules in MobileBottomNav:', err);
         });
         return () => unsubscribe();
-    }, [activeHotelCode, user?.role]);
+    }, [activeHotelCode, user?.role, activeModulesProp]);
 
     // 2. Sync active section based on route
     let activeSection = "overview";
@@ -290,85 +363,72 @@ export const MobileBottomNav = () => {
     // Close menu hub automatically on route change
     useEffect(() => {
         setIsMenuHubOpen(false);
-    }, [pathname]);
+        setSearchQuery("");
+    }, [pathname, searchParams]);
 
-    // 5. Complete list of all nav items across all modules
+    // Master list of all possible navigation items with real hotel & iOS icons
     const allNavItems: NavItemDef[] = useMemo(() => [
-        // Front Office & Inalytics
-        { id: "overview", label: "Overview", shortLabel: "Overview", icon: <BarChart2 size={16} /> },
-        { id: "fo_walkin", label: "Input Booking (Walk-In)", shortLabel: "Walk-In", icon: <PlusCircle size={16} /> },
-        { id: "forecast", label: "Forecast", shortLabel: "Forecast", icon: <TrendingUp size={16} /> },
-        { id: "revenue-breakdown", label: "Revenue Breakdown", shortLabel: "Revenue", icon: <Receipt size={16} /> },
-        { id: "rate-inventory", label: "Rate & Inventory", shortLabel: "Rate & Inv", icon: <SlidersHorizontal size={16} /> },
-        { id: "innalytics", label: "Inalytics Dashboard", shortLabel: "Inalytics", icon: <TrendingUp size={16} /> },
-        { id: "ina_reports", label: "Laporan & Statistik OTA", shortLabel: "Lap. OTA", icon: <BarChart2 size={16} /> },
-        { id: "invoice", label: "Invoice Desk", shortLabel: "Invoice", icon: <FileText size={16} /> },
-        { id: "digital-checkin", label: "GRC (Guest Card)", shortLabel: "GRC", icon: <FileText size={16} /> },
-        { id: "confirmation-letter", label: "Confirmation Letter", shortLabel: "CL", icon: <FileText size={16} /> },
-        { id: "inventory-control", label: "Inventory Control", shortLabel: "Inv Control", icon: <Layers size={16} /> },
-
-        // Accounting
-        { id: "pnl", label: "P&L Statement", shortLabel: "P&L", icon: <PieChart size={16} /> },
-        { id: "pnl-budget", label: "P&L Actual vs Budget", shortLabel: "Budget vs Act", icon: <BarChart2 size={16} /> },
-        { id: "dsr", label: "Daily Sales Report", shortLabel: "DSR", icon: <TrendingUp size={16} /> },
-        { id: "budgeting", label: "Budgeting Ledger", shortLabel: "Budgeting", icon: <Calculator size={16} /> },
-        { id: "statements", label: "Laporan Keuangan", shortLabel: "Lap. Keuangan", icon: <BookOpen size={16} /> },
-
-        // Purchasing
-        { id: "purchasing", label: "Dasbor Purchasing", shortLabel: "Dasbor", icon: <Home size={16} /> },
-        { id: "store-requisition", label: "Store Requisition", shortLabel: "Store Req", icon: <FileText size={16} /> },
-        { id: "purchase-requisition", label: "Purchase Requisition", shortLabel: "Purch Req", icon: <ShoppingCart size={16} /> },
-        { id: "daily-market-list", label: "Daily Market List", shortLabel: "Market List", icon: <Coffee size={16} /> },
-        { id: "stock-opname", label: "Stock Opname", shortLabel: "Opname", icon: <PieChart size={16} /> },
-        { id: "items", label: "Master Barang", shortLabel: "Barang", icon: <Package size={16} /> },
-        { id: "suppliers", label: "Supplier List", shortLabel: "Supplier", icon: <Users size={16} /> },
-
-        // Food & Beverage
-        { id: "food-beverage-ledger", label: "Ledger Overview", shortLabel: "Ledger", icon: <BookOpen size={16} /> },
-        { id: "food-beverage-performance", label: "Category Performance", shortLabel: "Performance", icon: <PieChart size={16} /> },
-        { id: "food-beverage-product", label: "F&B Products", shortLabel: "Products", icon: <Coffee size={16} /> },
-        { id: "food-beverage-realtime", label: "POS Real-time", shortLabel: "Real-time", icon: <Activity size={16} /> },
-
-        // Shared PO
-        { id: "purchase-order", label: "Purchase Order (PO)", shortLabel: "PO List", icon: <ClipboardList size={16} /> },
-
-        // HRD
-        { id: "hrd", label: "Manajemen Staf", shortLabel: "Staf", icon: <Users size={16} /> },
-        { id: "hrd_attendance", label: "Monitor Presensi & GPS", shortLabel: "Presensi", icon: <UserCheck size={16} /> },
-        { id: "hrd_shifts", label: "Master Shift Dasar", shortLabel: "Shift", icon: <Clock size={16} /> },
-        { id: "hrd_scheduling", label: "Plotting Jadwal & Roster", shortLabel: "Roster", icon: <CalendarCheck size={16} /> },
-        { id: "hrd_leaves", label: "Pengajuan Cuti & Izin", shortLabel: "Cuti", icon: <FileText size={16} /> },
-        { id: "hrd_overtime", label: "Persetujuan Lembur", shortLabel: "Lembur", icon: <SlidersHorizontal size={16} /> },
-        { id: "hrd_reports", label: "Rekap Laporan Absensi", shortLabel: "Laporan", icon: <BarChart2 size={16} /> },
-        { id: "hrd_payroll", label: "Penggajian Payroll", shortLabel: "Payroll", icon: <DollarSign size={16} /> },
-        { id: "hrd_settings", label: "Setting Lokasi & QR", shortLabel: "Setting", icon: <Settings size={16} /> },
-
-        // CPanel
-        { id: "logo", label: "Logo & Branding", shortLabel: "Logo", icon: <FileImage size={16} /> },
-        { id: "hero", label: "Manajemen Hero", shortLabel: "Hero", icon: <Home size={16} /> },
-        { id: "room-type", label: "Kategori Kamar", shortLabel: "Kamar", icon: <Layout size={16} /> },
-        { id: "about", label: "Tentang Hotel", shortLabel: "About", icon: <Info size={16} /> },
-        { id: "gallery", label: "Galeri Foto", shortLabel: "Galeri", icon: <FileImage size={16} /> },
-        { id: "footer", label: "Info Footer", shortLabel: "Footer", icon: <Settings size={16} /> },
-        { id: "attractions", label: "Atraksi Sekitar", shortLabel: "Atraksi", icon: <MapPin size={16} /> },
-        { id: "promo", label: "Manajemen Promo", shortLabel: "Promo", icon: <Gift size={16} /> },
-        { id: "packages", label: "Paket Kustom", shortLabel: "Paket", icon: <Package size={16} /> },
-        { id: "seo", label: "SEO & Metadata", shortLabel: "SEO", icon: <Search size={16} /> },
-        { id: "users", label: "Manajemen User", shortLabel: "Users", icon: <Users size={16} /> },
-        { id: "channel-manager", label: "Channel Manager", shortLabel: "Channel Mgr", icon: <Globe size={16} /> },
-        { id: "superadmin", label: "Super Admin", shortLabel: "Superadmin", icon: <ShieldCheck size={16} /> },
+        { id: "overview", label: "Overview", shortLabel: "Overview", icon: <Home size={18} /> },
+        { id: "fo_walkin", label: "Walk-In & Reservasi", shortLabel: "Walk-In", icon: <UserPlus size={18} /> },
+        { id: "forecast", label: "Forecast & Occupancy", shortLabel: "Forecast", icon: <CalendarDays size={18} /> },
+        { id: "revenue-breakdown", label: "Rincian Pendapatan", shortLabel: "Revenue", icon: <PieChart size={18} /> },
+        { id: "rate-inventory", label: "Rate & Allotment", shortLabel: "Rate & Allot", icon: <SlidersHorizontal size={18} /> },
+        { id: "digital-checkin", label: "Digital Check-In", shortLabel: "Digital CI", icon: <QrCode size={18} /> },
+        { id: "confirmation-letter", label: "Confirmation Letter", shortLabel: "Conf Letter", icon: <FileCheck size={18} /> },
+        { id: "invoice", label: "Invoice Generator", shortLabel: "Invoice", icon: <Receipt size={18} /> },
+        { id: "innalytics", label: "Innalytics Dashboard", shortLabel: "Innalytics", icon: <BarChart3 size={18} /> },
+        { id: "ina_reports", label: "Innalytics Laporan", shortLabel: "Laporan", icon: <PieChart size={18} /> },
+        { id: "pnl", label: "Laporan Laba Rugi", shortLabel: "P&L", icon: <Calculator size={18} /> },
+        { id: "pnl-budget", label: "P&L Budgeting", shortLabel: "Budgeting", icon: <Sliders size={18} /> },
+        { id: "dsr", label: "Daily Sales Report", shortLabel: "DSR", icon: <FileText size={18} /> },
+        { id: "statements", label: "Financial Statement", shortLabel: "Statement", icon: <FileSpreadsheet size={18} /> },
+        { id: "purchasing", label: "Purchasing Dashboard", shortLabel: "Purchasing", icon: <ShoppingBag size={18} /> },
+        { id: "store-requisition", label: "Permintaan Barang (SR)", shortLabel: "SR Order", icon: <ClipboardList size={18} /> },
+        { id: "purchase-requisition", label: "Purchase Request (PR)", shortLabel: "PR Order", icon: <FileSignature size={18} /> },
+        { id: "daily-market-list", label: "Daily Market List (DML)", shortLabel: "DML", icon: <ShoppingCart size={18} /> },
+        { id: "stock-opname", label: "Stock Opname", shortLabel: "Opname", icon: <Boxes size={18} /> },
+        { id: "items", label: "Master Barang", shortLabel: "Barang", icon: <Boxes size={18} /> },
+        { id: "suppliers", label: "Master Vendor & Supplier", shortLabel: "Vendor", icon: <Truck size={18} /> },
+        { id: "food-beverage-ledger", label: "Buku Besar F&B", shortLabel: "Ledger", icon: <UtensilsCrossed size={18} /> },
+        { id: "food-beverage-performance", label: "Performa Kasir & Menu", shortLabel: "Performa", icon: <TrendingUp size={18} /> },
+        { id: "food-beverage-product", label: "Katalog Produk & Menu", shortLabel: "Produk", icon: <Coffee size={18} /> },
+        { id: "food-beverage-realtime", label: "Pesanan Real-Time", shortLabel: "Live Order", icon: <Activity size={18} /> },
+        { id: "hrd", label: "Data Karyawan", shortLabel: "Karyawan", icon: <Users size={18} /> },
+        { id: "hrd_attendance", label: "Live Monitor Presensi", shortLabel: "Presensi", icon: <Clock size={18} /> },
+        { id: "hrd_shifts", label: "Master Shift", shortLabel: "Shift", icon: <CalendarDays size={18} /> },
+        { id: "hrd_scheduling", label: "Jadwal & Shift Planner", shortLabel: "Jadwal", icon: <Calendar size={18} /> },
+        { id: "hrd_leaves", label: "Pengajuan Cuti & Izin", shortLabel: "Cuti", icon: <UserCheck size={18} /> },
+        { id: "hrd_overtime", label: "Persetujuan Lembur", shortLabel: "Lembur", icon: <Timer size={18} /> },
+        { id: "hrd_reports", label: "Laporan Kehadiran", shortLabel: "Laporan", icon: <FileText size={18} /> },
+        { id: "hrd_payroll", label: "Penggajian (Payroll)", shortLabel: "Payroll", icon: <Banknote size={18} /> },
+        { id: "hrd_settings", label: "Pengaturan HRD", shortLabel: "Setting", icon: <Settings size={18} /> },
+        { id: "logo", label: "Branding & Logo", shortLabel: "Branding", icon: <Globe size={18} /> },
+        { id: "hero", label: "Hero Banner", shortLabel: "Hero", icon: <Image size={18} /> },
+        { id: "room-type", label: "Tipe & Foto Kamar", shortLabel: "Kamar", icon: <BedDouble size={18} /> },
+        { id: "about", label: "Tentang Hotel", shortLabel: "Tentang", icon: <Building2 size={18} /> },
+        { id: "gallery", label: "Galeri Foto", shortLabel: "Galeri", icon: <Image size={18} /> },
+        { id: "footer", label: "Footer & Kontak", shortLabel: "Kontak", icon: <MapPin size={18} /> },
+        { id: "attractions", label: "Wisata Sekitar", shortLabel: "Wisata", icon: <Compass size={18} /> },
+        { id: "promo", label: "Promo & Diskon", shortLabel: "Promo", icon: <Tag size={18} /> },
+        { id: "packages", label: "Paket Menginap", shortLabel: "Paket", icon: <Percent size={18} /> },
+        { id: "seo", label: "SEO & Meta Tag", shortLabel: "SEO", icon: <Search size={18} /> },
+        { id: "users", label: "Akses & Pengguna", shortLabel: "Users", icon: <UserCog size={18} /> },
+        { id: "channel-manager", label: "Channel Manager (OTA)", shortLabel: "OTA Sync", icon: <Layers size={18} /> },
+        { id: "superadmin", label: "Super Admin", shortLabel: "Superadmin", icon: <Shield size={18} /> },
+        { id: "purchase-order", label: "Purchase Order (PO)", shortLabel: "PO", icon: <ShoppingBag size={18} /> },
     ], []);
 
-    // 6. Filter submenus for current active module
+    // Active module navigation items
     const currentModuleNavItems = useMemo(() => {
         const moduleMap: Record<string, string> = {
             "front-office": "module_front_office",
-            "innalytics": "module_innalytics",
             "housekeeping": "module_housekeeping",
             "accounting": "module_accounting",
             "food-beverage": "module_food_beverage",
             "purchasing": "module_purchasing",
             "cpanel": "module_cpanel",
+            "pos": "module_pos",
+            "innalytics": "module_innalytics",
             "hrd": "module_hrd"
         };
         const moduleKey = moduleMap[activeModule];
@@ -380,7 +440,7 @@ export const MobileBottomNav = () => {
                 if (item.id === "innalytics" && !hasInnalytics) return false;
                 return [
                     "overview", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", 
-                    "inventory-control", "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"
+                    "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"
                 ].includes(item.id);
             });
         } else if (activeModule === "innalytics") {
@@ -436,7 +496,6 @@ export const MobileBottomNav = () => {
             }
         }
 
-        // Filter out POS terminal from items
         const canAccessCM = isSuperadmin || (user?.permissions?.["channel-manager"] === true && hasPermission(user, "channel-manager", "module_channel_manager"));
         let finalItems = items.filter(item => item.id !== "pos");
         if (!isSuperadmin) {
@@ -455,14 +514,16 @@ export const MobileBottomNav = () => {
             });
     }, [activeModule, allNavItems, isSuperadmin, user, activeModules, activeSection]);
 
-    // 7. Navigation dispatcher
+    // Navigation dispatcher
     const handleNavigate = (itemId: string) => {
+        triggerHaptic(10);
         setIsMenuHubOpen(false);
         router.push(getSidebarItemHref(itemId, activeModule));
     };
 
-    // 8. Module switcher
+    // Module switcher
     const handleSwitchModule = (modKey: string) => {
+        triggerHaptic(12);
         setIsMenuHubOpen(false);
         localStorage.setItem("active_module", modKey);
         setActiveModule(modKey);
@@ -472,7 +533,7 @@ export const MobileBottomNav = () => {
         }
     };
 
-    // Filter accessible modules for current user
+    // Accessible modules list
     const accessibleModules = useMemo(() => {
         const list = Object.values(MODULE_DEFINITIONS);
         return list.filter(m => {
@@ -491,89 +552,144 @@ export const MobileBottomNav = () => {
 
     const activeMeta = MODULE_DEFINITIONS[activeModule] || MODULE_DEFINITIONS["front-office"];
     const ActiveModuleIcon = activeMeta.icon;
+    const PrimaryActionIcon = activeMeta.primaryAction.icon;
 
-    // Detect currently active submenu item
-    const currentActiveItem = useMemo(() => {
-        return currentModuleNavItems.find(i => i.id === activeSection) || currentModuleNavItems[0];
-    }, [currentModuleNavItems, activeSection]);
+    // Filtered menus for search
+    const filteredMenuItems = useMemo(() => {
+        if (!searchQuery.trim()) return currentModuleNavItems;
+        const q = searchQuery.toLowerCase();
+        return currentModuleNavItems.filter(i => 
+            i.label.toLowerCase().includes(q) || 
+            (i.shortLabel && i.shortLabel.toLowerCase().includes(q))
+        );
+    }, [currentModuleNavItems, searchQuery]);
 
-    const activeItemLabel = currentActiveItem ? (currentActiveItem.shortLabel || currentActiveItem.label) : "Dashboard";
+    // Haptic feedback helper
+    const triggerHaptic = (ms = 10) => {
+        if (typeof window !== "undefined" && "navigator" in window && "vibrate" in navigator) {
+            try {
+                navigator.vibrate(ms);
+            } catch (_) {}
+        }
+    };
+
+    // Tab active status checks
+    const isHomeActive = pathname === "/select-module";
+    const isActionActive = activeSection === activeMeta.primaryAction.id || pathname === activeMeta.primaryAction.route.split('?')[0];
 
     return (
         <>
-            {/* ── 1. Floating Precision Dock Bar (100% Fixed, Zero Scroll, Zero Cutoff) ── */}
+            {/* ── 1. Apple iOS Floating Tab Bar (4-Tab Precision Dock) ── */}
             <div className={`no-print ${s.dockWrapper}`}>
-                <div className={s.dockBar}>
-                    {/* Slot 1: Modul Button (Opens Ganti Modul directly) */}
+                <nav className={s.dockBar} aria-label="Navigasi Utama Mobile">
+                    {/* Dynamic Ambient Tint Glow matching active module */}
+                    <div 
+                        className={s.dockAmbientGlow}
+                        style={{ background: `radial-gradient(circle at 20% 50%, ${activeMeta.color}30 0%, transparent 65%)` }}
+                    />
+
+                    {/* Tab 1: Modul Switcher */}
                     <button
                         type="button"
                         onClick={() => {
+                            triggerHaptic(10);
                             setMenuHubTab("modules");
                             setIsMenuHubOpen(true);
                         }}
-                        className={s.moduleBtn}
-                        title="Ganti Modul"
-                        aria-label="Pilih Modul"
+                        className={s.tabItem}
+                        title="Ganti Modul Hotel"
+                        aria-label="Pilih Modul Hotel"
                     >
-                        <div className={s.moduleIconWrapper}>
-                            <ActiveModuleIcon size={17} color={activeMeta.color} />
-                            <span className={s.moduleBadge}>
+                        <div className={s.iconWrapper}>
+                            <ActiveModuleIcon size={20} strokeWidth={1.8} color={activeMeta.color} />
+                            <span className={s.tabBadge}>
                                 {activeMeta.shortName}
                             </span>
                         </div>
-                        <span className={s.moduleBtnLabel}>
-                            Modul
-                        </span>
+                        <span className={s.tabLabel}>Modul</span>
                     </button>
 
-                    <div className={s.dockDivider} />
-
-                    {/* Slot 2: Active Location Breadcrumb (Shows current page name, clicks to open all menus) */}
+                    {/* Tab 2: Halaman Utama (Beranda / Select Module) */}
                     <button
                         type="button"
                         onClick={() => {
-                            setMenuHubTab("menus");
-                            setIsMenuHubOpen(true);
+                            triggerHaptic(10);
+                            setIsMenuHubOpen(false);
+                            router.push("/select-module");
                         }}
-                        className={s.centerLocationBtn}
-                        title={`Sedang di halaman ${activeItemLabel} — Klik untuk lihat semua menu`}
-                        aria-label={`Halaman Aktif: ${activeItemLabel}`}
+                        className={`${s.tabItem} ${isHomeActive && !isMenuHubOpen ? s.tabItemActive : ""}`}
+                        title="Halaman Beranda Modul"
+                        aria-label="Halaman Beranda Modul"
                     >
-                        <div className={s.locationTopRow}>
-                            <span className={s.activeDotPulse} />
-                            <span className={s.activePageName}>
-                                {activeItemLabel}
-                            </span>
+                        {isHomeActive && !isMenuHubOpen && (
+                            <motion.div 
+                                layoutId="iosActiveTabIndicator" 
+                                className={s.activeTabPill} 
+                                transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                            />
+                        )}
+                        <div className={s.iconWrapper}>
+                            <Home size={20} strokeWidth={isHomeActive && !isMenuHubOpen ? 2.2 : 1.7} />
                         </div>
-                        <span className={s.locationSubtext}>
-                            Halaman Aktif
-                        </span>
+                        <span className={s.tabLabel}>Beranda</span>
                     </button>
 
-                    <div className={s.dockDivider} />
-
-                    {/* Slot 3: Menu Hub Button (Opens Semua Menu Sheet) */}
+                    {/* Tab 3: Fitur Utama / Shortcut Cepat */}
                     <button
                         type="button"
                         onClick={() => {
+                            triggerHaptic(10);
+                            setIsMenuHubOpen(false);
+                            router.push(activeMeta.primaryAction.route);
+                        }}
+                        className={`${s.tabItem} ${isActionActive && !isMenuHubOpen ? s.tabItemActive : ""}`}
+                        title={activeMeta.primaryAction.label}
+                        aria-label={activeMeta.primaryAction.label}
+                    >
+                        {isActionActive && !isMenuHubOpen && (
+                            <motion.div 
+                                layoutId="iosActiveTabIndicator" 
+                                className={s.activeTabPill} 
+                                transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                            />
+                        )}
+                        <div className={s.iconWrapper}>
+                            <PrimaryActionIcon size={20} strokeWidth={isActionActive && !isMenuHubOpen ? 2.2 : 1.7} />
+                        </div>
+                        <span className={s.tabLabel}>{activeMeta.primaryAction.label}</span>
+                    </button>
+
+                    {/* Tab 4: Semua Menu Hub */}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            triggerHaptic(10);
                             setMenuHubTab("menus");
                             setIsMenuHubOpen(!isMenuHubOpen);
                         }}
-                        className={`${s.menuHubBtn} ${isMenuHubOpen ? s.menuHubBtnOpen : ""}`}
+                        className={`${s.tabItem} ${isMenuHubOpen ? s.tabItemActive : ""}`}
                         title="Buka Semua Menu"
                         aria-label="Semua Menu"
                     >
-                        <div className={s.menuHubIconWrapper}>
-                            {isMenuHubOpen ? <X size={17} /> : <LayoutGrid size={17} />}
+                        {isMenuHubOpen && (
+                            <motion.div 
+                                layoutId="iosActiveTabIndicator" 
+                                className={s.activeTabPill} 
+                                transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                            />
+                        )}
+                        <div className={s.iconWrapper}>
+                            <LayoutGrid size={20} strokeWidth={isMenuHubOpen ? 2.2 : 1.7} />
+                            <span className={`${s.tabBadge} ${s.tabBadgeCount}`}>
+                                {currentModuleNavItems.length}
+                            </span>
                         </div>
-                        <span className={s.menuHubBtnLabel}>
-                            {isMenuHubOpen ? "Tutup" : `Menu (${currentModuleNavItems.length})`}
-                        </span>
+                        <span className={s.tabLabel}>Menu</span>
                     </button>
-                </div>
+                </nav>
             </div>
 
-            {/* ── 2. Slide-Up Menu Hub (Bottom Sheet Modal) ── */}
+            {/* ── 2. iOS Slide-Up Bottom Sheet Modal ── */}
             <AnimatePresence>
                 {isMenuHubOpen && (
                     <>
@@ -583,26 +699,38 @@ export const MobileBottomNav = () => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.2 }}
-                            onClick={() => setIsMenuHubOpen(false)}
+                            onClick={() => {
+                                triggerHaptic(8);
+                                setIsMenuHubOpen(false);
+                            }}
                             className={`no-print ${s.sheetOverlay}`}
                         />
 
-                        {/* Slide-Up Container */}
+                        {/* Slide-Up Sheet Panel with Drag-to-Dismiss Gesture */}
                         <motion.div
                             initial={{ y: "100%" }}
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
-                            transition={{ type: "spring", damping: 30, stiffness: 320 }}
+                            drag="y"
+                            dragConstraints={{ top: 0 }}
+                            dragElastic={0.2}
+                            onDragEnd={(_, info) => {
+                                if (info.offset.y > 90 || info.velocity.y > 350) {
+                                    triggerHaptic(12);
+                                    setIsMenuHubOpen(false);
+                                }
+                            }}
+                            transition={{ type: "spring", damping: 30, stiffness: 350 }}
                             className={`no-print ${s.sheetPanel}`}
                         >
-                            {/* Drag Grab Handle */}
+                            {/* Drag Grabber Handle */}
                             <div className={s.sheetHandle} />
 
                             {/* Sheet Header */}
                             <div className={s.sheetHeader}>
                                 <div className={s.sheetHeaderLeft}>
                                     <div className={s.moduleIconBadge}>
-                                        <ActiveModuleIcon size={20} color={activeMeta.color} />
+                                        <ActiveModuleIcon size={22} color={activeMeta.color} />
                                     </div>
                                     <div>
                                         <h3 className={s.sheetModuleTitle}>
@@ -617,7 +745,10 @@ export const MobileBottomNav = () => {
 
                                 <button
                                     type="button"
-                                    onClick={() => setIsMenuHubOpen(false)}
+                                    onClick={() => {
+                                        triggerHaptic(8);
+                                        setIsMenuHubOpen(false);
+                                    }}
                                     className={s.sheetCloseBtn}
                                     aria-label="Tutup Menu"
                                 >
@@ -625,44 +756,81 @@ export const MobileBottomNav = () => {
                                 </button>
                             </div>
 
-                            {/* Segmented Control Switcher */}
-                            <div className={s.tabsContainer}>
+                            {/* Controls: Search + iOS Segmented Control */}
+                            <div className={s.sheetControls}>
+                                {menuHubTab === "menus" && (
+                                    <div className={s.searchBox}>
+                                        <Search size={14} className={s.searchIcon} />
+                                        <input
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            placeholder={`Cari menu di ${activeMeta.label}...`}
+                                            className={s.searchInput}
+                                        />
+                                        {searchQuery && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setSearchQuery("")}
+                                                className="absolute right-3 text-neutral-400 hover:text-neutral-600 dark:hover:text-white text-xs p-1"
+                                                aria-label="Hapus Pencarian"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div className={s.segmentedControl}>
                                     <button
                                         type="button"
-                                        onClick={() => setMenuHubTab("menus")}
+                                        onClick={() => {
+                                            triggerHaptic(8);
+                                            setMenuHubTab("menus");
+                                            setSearchQuery("");
+                                        }}
                                         className={`${s.segmentBtn} ${menuHubTab === "menus" ? s.segmentBtnActive : ""}`}
                                     >
+                                        {menuHubTab === "menus" && (
+                                            <motion.div 
+                                                layoutId="iosSegmentPill" 
+                                                className={s.segmentPill} 
+                                                transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                                            />
+                                        )}
                                         <LayoutGrid size={13} />
-                                        <span>Semua Menu ({currentModuleNavItems.length})</span>
+                                        <span>Daftar Menu ({currentModuleNavItems.length})</span>
                                     </button>
+
                                     <button
                                         type="button"
-                                        onClick={() => setMenuHubTab("modules")}
+                                        onClick={() => {
+                                            triggerHaptic(8);
+                                            setMenuHubTab("modules");
+                                            setSearchQuery("");
+                                        }}
                                         className={`${s.segmentBtn} ${menuHubTab === "modules" ? s.segmentBtnActive : ""}`}
                                     >
-                                        <Sparkles size={13} />
+                                        {menuHubTab === "modules" && (
+                                            <motion.div 
+                                                layoutId="iosSegmentPill" 
+                                                className={s.segmentPill} 
+                                                transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                                            />
+                                        )}
+                                        <Layers size={13} />
                                         <span>Ganti Modul ({accessibleModules.length})</span>
                                     </button>
                                 </div>
                             </div>
 
-                            {/* Sheet Scroll Body */}
+                            {/* Scrollable Content Body */}
                             <div className={s.sheetScrollBody}>
                                 {menuHubTab === "menus" ? (
-                                    /* ── Tab 1: Grid of All Menus in Active Module ── */
+                                    /* ── Tab 1: Grid of Menus in Active Module ── */
                                     <div>
-                                        <div className={s.sectionHeader}>
-                                            <span className={s.sectionTitle}>
-                                                Daftar Menu {activeMeta.label}
-                                            </span>
-                                            <span className={s.sectionSubtitle}>
-                                                Pilih untuk navigasi
-                                            </span>
-                                        </div>
-
                                         <div className={s.menusGrid}>
-                                            {currentModuleNavItems.map((item) => {
+                                            {filteredMenuItems.map((item) => {
                                                 const isActive = activeSection === item.id;
                                                 return (
                                                     <button
@@ -672,7 +840,7 @@ export const MobileBottomNav = () => {
                                                         className={`${s.menuCard} ${isActive ? s.menuCardActive : ""}`}
                                                     >
                                                         <div className={s.menuCardIconBox}>
-                                                            {React.cloneElement(item.icon, { size: 16 })}
+                                                            {React.cloneElement(item.icon, { size: 17 })}
                                                         </div>
                                                         <div className={s.menuCardMeta}>
                                                             <div className={s.menuCardName}>
@@ -693,26 +861,16 @@ export const MobileBottomNav = () => {
                                                 );
                                             })}
                                         </div>
+
+                                        {filteredMenuItems.length === 0 && (
+                                            <div className="text-center py-8 text-xs text-neutral-400">
+                                                Menu tidak ditemukan untuk pencarian "{searchQuery}"
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
-                                    /* ── Tab 2: Switch Modules List ── */
+                                    /* ── Tab 2: Switch Hotel Module List ── */
                                     <div>
-                                        <div className={s.sectionHeader}>
-                                            <span className={s.sectionTitle}>
-                                                Pilih Modul Hotel
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setIsMenuHubOpen(false);
-                                                    router.push('/select-module');
-                                                }}
-                                                style={{ fontSize: 11, color: '#2563eb', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}
-                                            >
-                                                Buka Penuh <ArrowRight size={11} />
-                                            </button>
-                                        </div>
-
                                         <div className={s.modulesList}>
                                             {accessibleModules.map((mod) => {
                                                 const isCurrent = activeModule === mod.id;
@@ -729,7 +887,7 @@ export const MobileBottomNav = () => {
                                                                 className={s.moduleCardIconBox}
                                                                 style={{ background: `${mod.color}15`, border: `1px solid ${mod.color}30` }}
                                                             >
-                                                                <ModIcon size={18} color={mod.color} />
+                                                                <ModIcon size={19} color={mod.color} />
                                                             </div>
                                                             <div className={s.moduleCardText}>
                                                                 <div className={s.moduleCardTitleRow}>
@@ -753,11 +911,11 @@ export const MobileBottomNav = () => {
                                 )}
                             </div>
 
-                            {/* Sheet Footer */}
+                            {/* Sheet Footer (User Profile & Log Out Button) */}
                             <div className={s.sheetFooter}>
                                 <div className={s.userCluster}>
                                     <div className={s.userAvatar}>
-                                        <User size={15} />
+                                        <User size={16} />
                                     </div>
                                     <div style={{ minWidth: 0 }}>
                                         <div className={s.userName}>
@@ -773,10 +931,10 @@ export const MobileBottomNav = () => {
                                     type="button"
                                     onClick={signOutUser}
                                     className={s.logoutBtn}
-                                    aria-label="Keluar dari sistem"
+                                    aria-label="Log out dari sistem"
                                 >
-                                    <LogOut size={12} />
-                                    <span>Keluar</span>
+                                    <LogOut size={13} />
+                                    <span>Log Out</span>
                                 </button>
                             </div>
                         </motion.div>

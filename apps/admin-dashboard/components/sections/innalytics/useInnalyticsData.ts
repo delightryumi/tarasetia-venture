@@ -278,14 +278,27 @@ export function useInnalyticsData(
     const hotelVoidMap: Record<string, any[]> = {};
 
     const unsubs = hotelCodesToQuery.map(({ code: hCode, name: hName }) => {
-      // When reportBy is 'booking_date', we must query all daily revenue docs to find bookings made in this period regardless of stay date
-      const q = filters.reportBy === 'booking_date'
-        ? query(getHotelCollection(db, 'daily_revenue', hCode))
-        : query(
-            getHotelCollection(db, 'daily_revenue', hCode),
-            where('date', '>=', filters.startDate),
-            where('date', '<=', filters.endDate)
-          );
+      // When reportBy is 'booking_date', bound query window (from 30 days before startDate to 365 days after endDate)
+      let q;
+      if (filters.reportBy === 'booking_date') {
+        const [sY, sM, sD] = (filters.startDate || '2024-01-01').split('-').map(Number);
+        const [eY, eM, eD] = (filters.endDate || '2026-12-31').split('-').map(Number);
+        const minD = new Date(sY || 2024, (sM || 1) - 1, (sD || 1) - 30);
+        const maxD = new Date(eY || 2026, (eM || 1) - 1, (eD || 1) + 365);
+        const minStr = minD.toISOString().slice(0, 10);
+        const maxStr = maxD.toISOString().slice(0, 10);
+        q = query(
+          getHotelCollection(db, 'daily_revenue', hCode),
+          where('date', '>=', minStr),
+          where('date', '<=', maxStr)
+        );
+      } else {
+        q = query(
+          getHotelCollection(db, 'daily_revenue', hCode),
+          where('date', '>=', filters.startDate),
+          where('date', '<=', filters.endDate)
+        );
+      }
 
       return onSnapshot(
         q,

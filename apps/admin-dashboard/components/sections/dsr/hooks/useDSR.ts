@@ -202,9 +202,25 @@ export const useDSR = () => {
 
         setTransactionsCache({ year: yr, entries: allEntries });
 
-        // Query POS Orders (single fetch, cached in memory)
+        // Query POS Orders bounded to year range
         try {
-          const posSnap = await getDocs(getHotelCollection(db, "pos_orders", hotelCode));
+          const startYearDate = new Date(`${yr}-01-01T00:00:00.000Z`);
+          const [uY, uM, uD] = upToDate.split('-').map(Number);
+          const endYearDate = new Date(uY, (uM || 1) - 1, uD || 1, 23, 59, 59, 999);
+
+          const qPos = query(
+            getHotelCollection(db, "pos_orders", hotelCode),
+            where("timestamp", ">=", startYearDate),
+            where("timestamp", "<=", endYearDate)
+          );
+          let posSnap = await getDocs(qPos);
+          if (posSnap.empty) {
+            const fallbackPosQ = query(
+              getHotelCollection(db, "pos_orders", hotelCode),
+              limit(150)
+            );
+            posSnap = await getDocs(fallbackPosQ);
+          }
           const posOrders: any[] = [];
           posSnap.forEach((d) => {
             const data = d.data() as any;

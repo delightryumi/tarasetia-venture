@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, onSnapshot, query, orderBy } from "firebase/firestore";
+import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { getHotelCollection } from "@/lib/firestoreHelper";
@@ -365,12 +365,19 @@ export const useConfirmationLetter = () => {
         return () => unsub();
     }, [hotelId]);
 
-    // 4. Fetch recent bookings from daily_revenue for fast import
+    // 4. Fetch recent bookings from daily_revenue for fast import (bounded to latest 30 days)
     useEffect(() => {
         if (!hotelId) return;
         const fetchRecentBookings = async () => {
             try {
-                const snap = await getDocs(getHotelCollection(db, "daily_revenue", hotelId));
+                let snap;
+                try {
+                    const qRecent = query(getHotelCollection(db, "daily_revenue", hotelId), orderBy("date", "desc"), limit(30));
+                    snap = await getDocs(qRecent);
+                } catch {
+                    const qFallback = query(getHotelCollection(db, "daily_revenue", hotelId), limit(30));
+                    snap = await getDocs(qFallback);
+                }
                 const allEntries: any[] = [];
                 snap.docs.forEach(d => {
                     const data = d.data();

@@ -84,11 +84,17 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                 trendMode = 'months';
                 trendLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             } else {
-                startStr = `2024-01-01`;
-                endStr = `2030-12-31`;
+                const numY = Number(year) || new Date().getFullYear();
+                const startYearNum = Math.max(2024, numY - 2);
+                const endYearNum = Math.min(2030, Math.max(numY + 1, startYearNum + 2));
+                startStr = `${startYearNum}-01-01`;
+                endStr = `${endYearNum}-12-31`;
                 totalDaysForOcc = (Number(year) % 4 === 0 && (Number(year) % 100 !== 0 || Number(year) % 400 === 0)) ? 366 : 365;
                 trendMode = 'years';
-                trendLabels = ['2024','2025','2026','2027','2028','2029','2030'];
+                trendLabels = [];
+                for (let y = startYearNum; y <= endYearNum; y++) {
+                    trendLabels.push(String(y));
+                }
             }
 
             // Expand query window by 35 days before startStr to catch multi-night stays originating in prior month

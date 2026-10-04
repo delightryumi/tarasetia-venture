@@ -1,9 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ModuleBentoGrid, MenuItem } from '@/components/layout/ModuleBentoGrid';
 import { WorkspaceFooter } from './WorkspaceFooter';
+import { DynamicIslandGreeting } from './DynamicIslandGreeting';
+import { SpotlightSearchBar } from './SpotlightSearchBar';
+import styles from './WorkspaceSection.module.css';
 
 interface WorkspaceSectionProps {
   menus: MenuItem[];
@@ -26,6 +29,19 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({
   onSignOut,
   isRefreshing = false,
 }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredMenus = useMemo(() => {
+    if (!searchQuery.trim()) return menus;
+    const q = searchQuery.toLowerCase().trim();
+    return menus.filter(
+      (m) =>
+        m.title.toLowerCase().includes(q) ||
+        m.subtitle.toLowerCase().includes(q) ||
+        (m.description && m.description.toLowerCase().includes(q))
+    );
+  }, [menus, searchQuery]);
+
   return (
     <motion.div
       key="workspace-grid"
@@ -33,14 +49,25 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="flex flex-col items-center justify-start w-full h-full relative z-10 overflow-y-auto custom-scrollbar bg-[#f5f5f7] dark:bg-black transition-colors duration-300"
+      className={styles.workspaceWrapper}
     >
       {/* Expanded Main Dashboard Container */}
-      <div className="w-full flex flex-col justify-start md:justify-center items-center w-full flex-grow pt-2 sm:pt-4">
-        
-        {/* Carousel Layout for Apple Aesthetic (Edge-to-edge) */}
-        <div className="flex flex-col items-center w-full justify-start md:justify-center overflow-hidden w-full">
-          <ModuleBentoGrid menus={menus} />
+      <div className={styles.mainContainer}>
+        {/* iOS Dynamic Glass Greeting & Spotlight Search Widget Stack */}
+        <div className={styles.widgetStack}>
+          <DynamicIslandGreeting user={user} moduleCount={menus.length} />
+          <SpotlightSearchBar value={searchQuery} onChange={setSearchQuery} />
+        </div>
+
+        {/* Carousel / Grid Layout for Modules */}
+        <div className={styles.gridContainer}>
+          {filteredMenus.length > 0 ? (
+            <ModuleBentoGrid menus={filteredMenus} />
+          ) : (
+            <div className={styles.emptyState}>
+              Modul tidak ditemukan untuk kata kunci "{searchQuery}"
+            </div>
+          )}
         </div>
       </div>
 

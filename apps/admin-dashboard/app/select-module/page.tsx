@@ -464,25 +464,25 @@ export default function SelectModulePage() {
               <div className={`${styles.dividerLine} hidden sm:block`} />
             )}
 
-            {/* Hotel Selector / Badge */}
+            {/* Hotel Selector / Badge (iOS Pill Style) */}
             {isSuperadmin || (hotelsList && hotelsList.length > 1) ? (
-              <div className={`relative hidden sm:flex items-center h-9 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[13px] transition-all ${styles.hotelBadge}`}>
+              <div className={`relative flex items-center h-8 sm:h-9 max-w-[150px] xs:max-w-[190px] sm:max-w-[320px] rounded-full border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-white/[0.06] backdrop-blur-md overflow-hidden shadow-xs text-[11px] sm:text-[13px] transition-all`}>
                 <select
                   value={activeHotelCode}
                   onChange={(e) => {
                     setActiveHotelCode(e.target.value);
                     window.location.reload();
                   }}
-                  className={`border-none pr-8 sm:pr-10 py-1 text-[11px] sm:text-[13px] font-medium focus:outline-none focus:ring-0 cursor-pointer appearance-none h-full w-full truncate rounded-[6px] text-left ${styles.hotelSelect}`}
+                  className={`border-none pr-6 sm:pr-8 py-0.5 text-[10.5px] sm:text-[12.5px] font-medium focus:outline-none cursor-pointer appearance-none h-full w-full truncate text-slate-800 dark:text-zinc-200 bg-transparent`}
                   style={{
                     backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239297a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
                     backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 8px center',
-                    backgroundSize: '16px',
-                    paddingLeft: '12px',
+                    backgroundPosition: 'right 6px center',
+                    backgroundSize: '14px',
+                    paddingLeft: '10px',
                   }}
                 >
-                  {isSuperadmin && <option value="0">— Superadmin (tidak ada preview) —</option>}
+                  {isSuperadmin && <option value="0">— Superadmin —</option>}
                   {hotelsList && hotelsList.length > 0 && (
                     hotelsList.map((hotel) => (
                       <option key={hotel.hotelCode} value={hotel.hotelCode}>
@@ -495,10 +495,9 @@ export default function SelectModulePage() {
             ) : (
               activeHotelCode && (
                 <div
-                  className={`hidden sm:flex items-center h-9 pr-3 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[11px] sm:text-[13px] font-semibold ${styles.hotelBadge}`}
-                  style={{ paddingLeft: '8px' }}
+                  className={`flex items-center h-8 sm:h-9 px-3 max-w-[150px] xs:max-w-[190px] sm:max-w-[320px] rounded-full border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-white/[0.06] backdrop-blur-md overflow-hidden shadow-xs text-[10.5px] sm:text-[12.5px] font-semibold text-slate-800 dark:text-zinc-200`}
                 >
-                  <span className="truncate w-full text-left" style={{ paddingLeft: '4px' }}>
+                  <span className="truncate w-full text-left">
                     [{activeHotelCode || "0"}] {activeHotelName || 'Memuat...'}
                   </span>
                 </div>
@@ -692,7 +691,7 @@ export default function SelectModulePage() {
       </div>
 
       {/* Main viewport body content */}
-      <div className={`flex-grow flex flex-col items-center relative overflow-hidden w-full h-full z-10 pt-[56px] md:pt-[64px] pb-0 ${showGrid ? 'justify-start md:justify-center' : 'justify-center'}`}>
+      <main className={`flex-1 min-h-0 w-full flex flex-col items-center relative overflow-y-auto z-10 ${showGrid ? 'justify-start' : 'justify-center'}`}>
         {showGrid ? (
           <WorkspaceSection
             menus={menus.filter(m => m.active)}
@@ -705,7 +704,7 @@ export default function SelectModulePage() {
         ) : (
           <IntroSection onOpenClick={() => setShowGrid(true)} />
         )}
-      </div>
+      </main>
       <BillingAlertModal />
 
       {/* PWA Notification Settings Drawer */}

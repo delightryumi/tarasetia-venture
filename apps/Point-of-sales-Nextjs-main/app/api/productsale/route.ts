@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, where, limit } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export async function GET(req: NextRequest) {
@@ -96,7 +96,19 @@ export async function GET(req: NextRequest) {
       };
     };
 
-    const snap = await getDocs(getHotelCollection(db, 'pos_orders', hotelCode));
+    const posOrdersQuery = query(
+      getHotelCollection(db, 'pos_orders', hotelCode),
+      where('timestamp', '>=', startDate),
+      where('timestamp', '<=', endDate)
+    );
+    let snap = await getDocs(posOrdersQuery);
+    if (snap.empty) {
+      const fallbackQuery = query(
+        getHotelCollection(db, 'pos_orders', hotelCode),
+        limit(150)
+      );
+      snap = await getDocs(fallbackQuery);
+    }
 
     const dailyCategoryQty: Record<string, Record<string, number>> = {};
     const allCategoriesSet = new Set<string>();

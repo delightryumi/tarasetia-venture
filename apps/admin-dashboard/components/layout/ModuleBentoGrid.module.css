@@ -327,7 +327,7 @@
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
 }
 
-/* Mobile Responsive Grid */
+/* Mobile Responsive Grid — Apple iOS 16 App Library Aesthetics */
 @media (max-width: 768px) {
   .carouselOuterWrapper {
     width: 100%;
@@ -335,9 +335,9 @@
   }
   .carouselContainer {
     width: 100%;
-    max-width: 440px;
+    max-width: 460px;
     overflow-x: visible;
-    padding: 4.75rem 0.875rem 8rem 0.875rem;
+    padding: 0.5rem 0.875rem 5rem 0.875rem;
     margin: 0 auto;
     justify-content: center;
   }
@@ -354,25 +354,50 @@
     min-width: 0;
   }
   .bentoCard {
-    height: 155px;
-    border-radius: 18px;
-    padding: 8px;
+    height: 168px;
+    border-radius: 20px;
+    padding: 10px;
+    background-color: #0c0c0e;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1);
+  }
+  .bentoCard:active {
+    transform: scale(0.95);
   }
   .floatingDock {
-    padding: 7px 9px;
-    border-radius: 12px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    background: rgba(18, 18, 24, 0.82);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
   }
   .cardTitle {
-    font-size: 12.5px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
   }
   .cardSubtitle {
-    font-size: 9px;
+    font-size: 9.5px;
+    color: #a1a1aa;
+    margin-top: 1px;
   }
-  .actionButton,
+  .actionButton {
+    width: 26px;
+    height: 26px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
   .actionButtonDisabled {
-    width: 24px;
-    height: 24px;
-    border-radius: 8px;
+    width: 26px;
+    height: 26px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
   .scrollGradient {
     display: none;
@@ -381,3 +406,4 @@
     display: none;
   }
 }
+
