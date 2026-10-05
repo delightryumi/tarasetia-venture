@@ -234,7 +234,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 setActiveModule("food-beverage");
                 return;
             }
-            const cpanelPaths = ['/logo', '/hero', '/room-type', '/about', '/gallery', '/footer', '/attractions', '/promo', '/packages', '/seo', '/channel-manager', '/users', '/superadmin'];
+            const cpanelPaths = ['/logo', '/hero', '/room-type', '/about', '/gallery', '/footer', '/attractions', '/promo', '/packages', '/seo', '/payment-gateway', '/channel-manager', '/users', '/superadmin'];
             if (pathname.startsWith('/cpanel') || cpanelPaths.some(p => pathname.startsWith(p))) {
                 localStorage.setItem("active_module", "cpanel");
                 setActiveModule("cpanel");
@@ -349,6 +349,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         "promo",
                         "packages",
                         "seo",
+                        "payment-gateway",
                     ];
                     const canAccessCM = isSuperadmin || (user?.permissions?.["channel-manager"] === true && hasPermission(user, "channel-manager", "module_channel_manager"));
                     if (canAccessCM) {
@@ -400,7 +401,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ["room-type", "attractions", "packages"].includes(item.id)
             );
             const marketingItems = navItems.filter((item) =>
-                ["promo", "seo"].includes(item.id) || (item.id === "channel-manager" && canAccessCM)
+                ["promo", "seo", "payment-gateway"].includes(item.id) || (item.id === "channel-manager" && canAccessCM)
             );
             const systemItems = navItems.filter((item) =>
                 item.id === "users" || (item.id === "superadmin" && isSuperadmin)

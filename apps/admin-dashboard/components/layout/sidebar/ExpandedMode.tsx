@@ -41,8 +41,12 @@ export function ExpandedMode({
 }: ExpandedModeProps) {
     const isItemLocked = (itemId: string) => {
         if (isSuperadmin) return false;
+        if (!activeModules) return false;
         if (itemId === "food-beverage-realtime") {
-            return activeModules !== null && !activeModules.includes("food-beverage-realtime") && !activeModules.includes("pos-realtime");
+            return !activeModules.includes("food-beverage-realtime") && !activeModules.includes("pos-realtime");
+        }
+        if (itemId === "payment-gateway") {
+            return !activeModules.includes("booking-engine") && !activeModules.includes("booking_engine") && !activeModules.includes("direct-booking");
         }
         return false;
     };

@@ -3,8 +3,8 @@ import React from "react";
 
 export type SectionType =
     | "overview" | "logo" | "hero" | "room-type" | "digital-checkin"
-    | "about" | "gallery" | "footer"
-    | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "revenue-breakdown" | "pnl" | "pnl-budget" | "users" | "superadmin" | "inventory-control" | "channel-manager" | "rate-inventory" | "confirmation-letter"
+    | "about" | "gallery" | "footer" | "cpanel"
+    | "attractions" | "promo" | "packages" | "seo" | "invoice" | "forecast" | "revenue-breakdown" | "pnl" | "pnl-budget" | "users" | "superadmin" | "inventory-control" | "channel-manager" | "rate-inventory" | "confirmation-letter" | "payment-gateway"
     | "purchasing" | "store-requisition" | "purchase-requisition" | "daily-market-list" | "stock-opname" | "items" | "suppliers"
     | "purchase-order" | "food-beverage-ledger" | "food-beverage-performance" | "food-beverage-product" | "food-beverage-realtime" | "hrd" | "statements" | "budgeting" | "dsr" | "innalytics"
     | "hrd_scheduling" | "hrd_attendance" | "hrd_leaves" | "hrd_payroll" | "ina_reports" | "fo_walkin"

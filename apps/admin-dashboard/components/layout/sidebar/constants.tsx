@@ -43,6 +43,7 @@ export const allNavItems: NavItemType[] = [
     { id: "promo", label: "Manajemen Promo", icon: <Gift size={18} weight="bold" /> },
     { id: "packages", label: "Paket Kustom", icon: <Package size={18} weight="bold" /> },
     { id: "seo", label: "SEO & Metadata", icon: <Globe size={18} weight="bold" /> },
+    { id: "payment-gateway", label: "Payment Gateway", icon: <CurrencyCircleDollar size={18} weight="bold" /> },
     { id: "users", label: "Manajemen User", icon: <Users size={18} weight="bold" /> },
     { id: "superadmin", label: "Super Admin", icon: <Gear size={18} weight="bold" /> },
     { id: "hrd", label: "Manajemen Staf", icon: <Users size={18} weight="bold" /> },

@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,13 +13,20 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-import { getAuth } from "firebase/auth";
-
 // Prevent duplicate initialization in Next.js dev mode (HMR)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Firestore
-const db = getFirestore(app);
+// Initialize Firestore with IndexedDB multi-tab local caching for ultra-low cost reads
+let db: ReturnType<typeof getFirestore>;
+try {
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager(),
+    }),
+  });
+} catch {
+  db = getFirestore(app);
+}
 
 // Storage
 const storage = getStorage(app);
@@ -27,3 +35,4 @@ const storage = getStorage(app);
 const auth = getAuth(app);
 
 export { app, db, storage, auth };
+

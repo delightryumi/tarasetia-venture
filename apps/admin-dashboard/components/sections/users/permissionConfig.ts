@@ -23,6 +23,9 @@ export function isPermissionAddon(permId: string): { isAddon: boolean; addonKey:
     if (permId === "pos_self_order" || permId === "pos-self-order") {
         return { isAddon: true, addonKey: "pos-self-order", addonName: "Self-Ordering" };
     }
+    if (permId === "payment-gateway" || permId === "payment_gateway" || permId === "booking-engine" || permId === "booking_engine") {
+        return { isAddon: true, addonKey: "booking-engine", addonName: "Direct Booking Engine & Payment Gateway" };
+    }
     return { isAddon: false, addonKey: "", addonName: "" };
 }
 
@@ -33,6 +36,9 @@ export function isAddonActiveForHotel(permId: string, activeModules: string[] | 
     }
     if (permId === "pos_self_order" || permId === "pos-self-order") {
         return activeModules.includes("pos-self-order") || activeModules.includes("pos_self_order");
+    }
+    if (permId === "payment-gateway" || permId === "payment_gateway" || permId === "booking-engine" || permId === "booking_engine") {
+        return activeModules.includes("booking-engine") || activeModules.includes("booking_engine") || activeModules.includes("direct-booking");
     }
     return true;
 }
@@ -265,6 +271,7 @@ export const COMPREHENSIVE_PERMISSION_GROUPS: PermissionGroup[] = [
             { id: "gallery", label: "Galeri Dokumentasi Foto Properti & Event", description: "Mengunggah dokumentasi visual resolusi tinggi suasana hotel untuk menarik calon pengunjung" },
             { id: "attractions", label: "Rekomendasi Wisata & Kuliner Sekitar Hotel", description: "Menambahkan rekomendasi objek wisata pantai, pusat kuliner, dan pusat belanja terdekat" },
             { id: "seo", label: "SEO Meta Tags & Pelacakan Google Analytics", description: "Mengatur judul penelusuran Google, kata kunci pencarian, dan tag tracking konversi iklan hotel" },
+            { id: "payment-gateway", label: "Payment Gateway & Direct Booking Engine", description: "Konfigurasi kredensial Midtrans, Xendit, Rekening Bank transfer, dan aturan pembayaran direct booking", isAddon: true, addonKey: "booking-engine", addonLabel: "Add-on Booking Engine", badgeText: "Add-on Modul" },
             { id: "users", label: "Akses Halaman User Management Staf", description: "Mengakses portal konfigurasi akun staf hotel, penetapan password, dan kontrol hak akses" },
         ]
     },

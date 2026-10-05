@@ -272,6 +272,13 @@ export function isPathAllowedForUser(
             }
         }
 
+        // Payment Gateway / Direct Booking Engine Add-on
+        if (pathname.startsWith("/payment-gateway")) {
+            if (!activeModules.includes("booking-engine") && !activeModules.includes("booking_engine") && !activeModules.includes("direct-booking")) {
+                return false;
+            }
+        }
+
         // If cpanel-full is not active, block landing page CMS subpaths
         if (!activeModules.includes("cpanel-full")) {
             const forbiddenCPanelPaths = [
