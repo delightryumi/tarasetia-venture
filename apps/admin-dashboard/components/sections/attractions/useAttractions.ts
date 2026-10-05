@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     collection,
-    onSnapshot,
+    getDocs,
     addDoc,
     deleteDoc,
     updateDoc,
@@ -34,19 +34,25 @@ export const useAttractions = () => {
     const [view, setView] = useState<'list' | 'stepper'>('list');
     const [currentStep, setCurrentStep] = useState(1);
 
-    useEffect(() => {
-        const q = query(getHotelCollection(db, "attractions"), orderBy("distance"));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+    const fetchAttractions = useCallback(async () => {
+        try {
+            const q = query(getHotelCollection(db, "attractions"), orderBy("distance"));
+            const snapshot = await getDocs(q);
             const data = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             })) as Attraction[];
             setAttractions(data);
+        } catch (err) {
+            console.error("Error loading attractions:", err);
+        } finally {
             setLoading(false);
-        });
-
-        return () => unsubscribe();
+        }
     }, []);
+
+    useEffect(() => {
+        fetchAttractions();
+    }, [fetchAttractions]);
 
     const resetForm = () => {
         setNewName("");
@@ -68,6 +74,7 @@ export const useAttractions = () => {
                 images: newImages,
                 createdAt: new Date().toISOString()
             });
+            await fetchAttractions();
             resetForm();
             setView('list');
             setCurrentStep(1);
@@ -94,6 +101,7 @@ export const useAttractions = () => {
                 images: newImages,
                 updatedAt: new Date().toISOString()
             });
+            await fetchAttractions();
             resetForm();
             setEditingAttraction(null);
             setView('list');
@@ -136,6 +144,7 @@ export const useAttractions = () => {
                 onClick: async () => {
                     try {
                         await deleteDoc(doc(getHotelCollection(db, "attractions"), id));
+                        await fetchAttractions();
                         toast.success(`${attraction.name} removed from attractions.`);
                     } catch (err) {
                         console.error("Error deleting attraction:", err);
@@ -143,7 +152,7 @@ export const useAttractions = () => {
                     }
                 }
             },
-            cancel: { label: "Keep" }
+            cancel: { label: "Keep", onClick: () => {} }
         });
     };
 

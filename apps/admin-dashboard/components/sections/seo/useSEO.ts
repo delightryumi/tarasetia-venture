@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { toast } from "sonner";
@@ -40,13 +40,19 @@ export const useSEO = () => {
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        const unsubscribe = onSnapshot(doc(getHotelCollection(db, "settings"), "seo"), (snapshot) => {
-            if (snapshot.exists()) {
-                setSeo((prev) => ({ ...prev, ...snapshot.data() }));
+        const fetchSEO = async () => {
+            try {
+                const snapshot = await getDoc(doc(getHotelCollection(db, "settings"), "seo"));
+                if (snapshot.exists()) {
+                    setSeo((prev) => ({ ...prev, ...snapshot.data() }));
+                }
+            } catch (err) {
+                console.error("Error loading SEO settings:", err);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
-        });
-        return () => unsubscribe();
+        };
+        fetchSEO();
     }, []);
 
     const handleSave = async (e?: React.FormEvent) => {

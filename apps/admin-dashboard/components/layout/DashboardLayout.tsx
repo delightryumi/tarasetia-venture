@@ -201,6 +201,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
             {activeHotelCode && activeHotelCode !== '0' && (
                 <GlobalOrderNotifier
                     hotelCode={activeHotelCode}
+                    posSoundUrl={hotelBillingData?.posSoundUrl}
                     onBadgeChange={handleBadgeChange}
                 />
             )}

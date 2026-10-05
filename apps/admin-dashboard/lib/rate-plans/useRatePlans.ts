@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { db } from "@/lib/firebase";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import {
     collection,
-    onSnapshot,
     addDoc,
     updateDoc,
     deleteDoc,
@@ -24,28 +23,30 @@ export const useRatePlans = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
+    const fetchRatePlans = useCallback(async () => {
         if (!activeHotelCode || activeHotelCode === "0") {
             setRatePlans([]);
             setLoading(false);
             return;
         }
-
-        const q = query(getHotelCollection(db, "ratePlans", activeHotelCode), orderBy("name"));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        try {
+            const q = query(getHotelCollection(db, "ratePlans", activeHotelCode), orderBy("name"));
+            const snapshot = await getDocs(q);
             const list = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             })) as MyTaraRatePlan[];
             setRatePlans(list);
-            setLoading(false);
-        }, (err) => {
+        } catch (err) {
             console.error("Error loading rate plans:", err);
+        } finally {
             setLoading(false);
-        });
-
-        return () => unsubscribe();
+        }
     }, [activeHotelCode]);
+
+    useEffect(() => {
+        fetchRatePlans();
+    }, [fetchRatePlans]);
 
     /**
      * Auto-seeds standard rate plans for all room types if none exist
@@ -115,6 +116,7 @@ export const useRatePlans = () => {
                 updatedAt: new Date().toISOString()
             });
 
+            await fetchRatePlans();
             toast.success("Default Master Rate Plans (RO & BB) berhasil dibuat untuk semua kamar.");
         } catch (err: any) {
             console.error("Error seeding rate plans:", err);
@@ -134,6 +136,7 @@ export const useRatePlans = () => {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             });
+            await fetchRatePlans();
             toast.success("Rate Plan berhasil ditambahkan.");
         } catch (err: any) {
             console.error("Error adding rate plan:", err);
@@ -152,6 +155,7 @@ export const useRatePlans = () => {
                 ...data,
                 updatedAt: new Date().toISOString()
             });
+            await fetchRatePlans();
             toast.success("Rate Plan berhasil diperbarui.");
         } catch (err: any) {
             console.error("Error updating rate plan:", err);
@@ -167,6 +171,7 @@ export const useRatePlans = () => {
         try {
             const ref = doc(getHotelCollection(db, "ratePlans", activeHotelCode), id);
             await deleteDoc(ref);
+            await fetchRatePlans();
             toast.success("Rate Plan berhasil dihapus.");
         } catch (err: any) {
             console.error("Error deleting rate plan:", err);

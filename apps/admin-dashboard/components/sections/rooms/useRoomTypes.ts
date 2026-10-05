@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     collection,
-    onSnapshot,
+    getDocs,
     addDoc,
     deleteDoc,
     updateDoc,
@@ -75,19 +75,25 @@ export const useRoomTypes = () => {
     const [view, setView] = useState<'list' | 'stepper'>('list');
     const [currentStep, setCurrentStep] = useState(1);
 
-    useEffect(() => {
-        const q = query(getHotelCollection(db, "roomTypes"), orderBy("name"));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+    const fetchRoomTypes = useCallback(async () => {
+        try {
+            const q = query(getHotelCollection(db, "roomTypes"), orderBy("name"));
+            const snapshot = await getDocs(q);
             const types = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             })) as RoomType[];
             setRoomTypes(types);
+        } catch (err) {
+            console.error("Error loading room types:", err);
+        } finally {
             setLoading(false);
-        });
-
-        return () => unsubscribe();
+        }
     }, []);
+
+    useEffect(() => {
+        fetchRoomTypes();
+    }, [fetchRoomTypes]);
 
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -112,6 +118,7 @@ export const useRoomTypes = () => {
                 physicalRooms: newPhysicalRooms,
                 createdAt: new Date().toISOString()
             });
+            await fetchRoomTypes();
             resetForm();
             setView('list');
             setCurrentStep(1);
@@ -147,6 +154,7 @@ export const useRoomTypes = () => {
                 physicalRooms: newPhysicalRooms,
                 updatedAt: new Date().toISOString()
             });
+            await fetchRoomTypes();
             resetForm();
             setEditingRoom(null);
             setView('list');
@@ -329,6 +337,7 @@ export const useRoomTypes = () => {
                         }
 
                         await deleteDoc(doc(getHotelCollection(db, "roomTypes"), id));
+                        await fetchRoomTypes();
                         toast.success(`${room.name} has been decommissioned.`);
                     } catch (err) {
                         console.error("Error deleting room type:", err);

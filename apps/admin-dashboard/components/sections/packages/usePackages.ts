@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     collection,
-    onSnapshot,
+    getDocs,
     addDoc,
     deleteDoc,
     updateDoc,
@@ -39,19 +39,25 @@ export const usePackages = () => {
     const [view, setView] = useState<'list' | 'stepper'>('list');
     const [currentStep, setCurrentStep] = useState(1);
 
-    useEffect(() => {
-        const q = query(getHotelCollection(db, "packages"), orderBy("createdAt", "desc"));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+    const fetchPackages = useCallback(async () => {
+        try {
+            const q = query(getHotelCollection(db, "packages"), orderBy("createdAt", "desc"));
+            const snapshot = await getDocs(q);
             const data = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             })) as Package[];
             setPackages(data);
+        } catch (err) {
+            console.error("Error loading packages:", err);
+        } finally {
             setLoading(false);
-        });
-
-        return () => unsubscribe();
+        }
     }, []);
+
+    useEffect(() => {
+        fetchPackages();
+    }, [fetchPackages]);
 
     const resetForm = () => {
         setNewName("");
@@ -90,6 +96,7 @@ export const usePackages = () => {
                 packageType: finalType,
                 createdAt: new Date().toISOString()
             });
+            await fetchPackages();
             resetForm();
             setView('list');
             setCurrentStep(1);
@@ -119,6 +126,7 @@ export const usePackages = () => {
                 packageType: finalType,
                 updatedAt: new Date().toISOString()
             });
+            await fetchPackages();
             resetForm();
             setEditingPackage(null);
             setView('list');
@@ -172,6 +180,7 @@ export const usePackages = () => {
                 onClick: async () => {
                     try {
                         await deleteDoc(doc(getHotelCollection(db, "packages"), id));
+                        await fetchPackages();
                         toast.success(`${pkg.name} has been removed.`);
                     } catch (err) {
                         console.error("Error deleting package:", err);

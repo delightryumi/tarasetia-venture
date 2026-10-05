@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     collection,
-    onSnapshot,
+    getDocs,
     addDoc,
     deleteDoc,
     doc,
@@ -30,19 +30,25 @@ export const useGallery = () => {
     const [lastPath, setLastPath] = useState("");
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        const q = query(getHotelCollection(db, "gallery"), orderBy("order", "asc"));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+    const fetchGallery = useCallback(async () => {
+        try {
+            const q = query(getHotelCollection(db, "gallery"), orderBy("order", "asc"));
+            const snapshot = await getDocs(q);
             const data = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             })) as GalleryItem[];
             setItems(data);
+        } catch (err) {
+            console.error("Error loading gallery:", err);
+        } finally {
             setLoading(false);
-        });
-
-        return () => unsubscribe();
+        }
     }, []);
+
+    useEffect(() => {
+        fetchGallery();
+    }, [fetchGallery]);
 
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -60,6 +66,7 @@ export const useGallery = () => {
                 category: "Sanctuary", // Default
                 createdAt: new Date().toISOString()
             });
+            await fetchGallery();
             setNewUrl("");
             setLastPath("");
         } catch (err) {
@@ -86,6 +93,7 @@ export const useGallery = () => {
 
                         // Delete from Firestore
                         await deleteDoc(doc(getHotelCollection(db, "gallery"), item.id));
+                        await fetchGallery();
                         toast.success("Masterpiece removed successfully.");
                     } catch (err) {
                         console.error("Error deleting gallery image:", err);

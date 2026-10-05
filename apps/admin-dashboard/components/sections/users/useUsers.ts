@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { 
     collection, setDoc, doc, updateDoc, 
-    deleteDoc, onSnapshot, query, orderBy, getDoc
+    deleteDoc, getDocs, query, orderBy, getDoc
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { UserProfile } from "./types";
@@ -154,8 +154,6 @@ export const useUsers = (menuItems: any[]) => {
                 if (u.permissions["food-beverage-performance"] === undefined) updates["permissions.food-beverage-performance"] = true;
             }
 
-
-
             if (Object.keys(updates).length > 0) {
                 try {
                     await updateDoc(doc(getHotelCollection(db, "users_master", hotelCode), u.id), updates);
@@ -166,15 +164,16 @@ export const useUsers = (menuItems: any[]) => {
         }
     };
 
-    useEffect(() => {
-        if (!hotelCode) return;
-        hasSyncedRef.current = false;
-        hasMigratedRef.current = false;
-        // Listen to Users
-        const unsubUsers = onSnapshot(query(getHotelCollection(db, "users_master", hotelCode), orderBy("name")), async (snap) => {
+    const fetchUsers = useCallback(async () => {
+        if (!hotelCode) {
+            setLoading(false);
+            return;
+        }
+        try {
+            const snap = await getDocs(query(getHotelCollection(db, "users_master", hotelCode), orderBy("name")));
             const list: UserProfile[] = [];
             snap.forEach(d => list.push({ id: d.id, ...d.data() } as UserProfile));
-            
+
             // Check for Hardcoded Admin
             const adminEmail = "nexura.management@gmail.com";
             const adminExists = list.some(u => u.email === adminEmail);
@@ -202,62 +201,56 @@ export const useUsers = (menuItems: any[]) => {
                     migrateUsersPermissions(needsMigration);
                 }
             } else {
-                // Check if existing users need new menu sync (once per mount/hotel change)
                 if (!hasSyncedRef.current) {
                     hasSyncedRef.current = true;
                     syncNewSubmenusToUsers(list);
                 }
             }
 
-            // Hide superadmin users from regular property admins, show for superadmin
             const isSuperViewer = authUser?.role?.toLowerCase() === "superadmin";
             const clientVisibleUsers = isSuperViewer ? list : list.filter(u => u.role?.toLowerCase() !== "superadmin");
             setUsers(clientVisibleUsers);
-            setLoading(false);
-        }, (err) => {
-            console.error("Firestore read error in useUsers:", err);
-            setLoading(false);
-        });
 
-        // Listen to Hotel active modules
-        let unsubHotel = () => {};
-        if (hotelCode) {
-            unsubHotel = onSnapshot(doc(db, "hotels", hotelCode), (snap) => {
-                if (snap.exists()) {
-                    const data = snap.data();
-                    let modules = data.billing?.activeModules || [];
-                    // Map old cpanel key to cpanel-full or cpanel-only
-                    if (modules.includes('cpanel')) {
-                        modules = modules.filter((m: string) => m !== 'cpanel');
-                        const plan = data.billing?.plan || 'enterprise';
-                        if (plan === 'startup') {
-                            if (!modules.includes('cpanel-only')) modules.push('cpanel-only');
-                        } else {
-                            if (!modules.includes('cpanel-full')) modules.push('cpanel-full');
-                        }
+            // Fetch hotel billing modules with getDoc
+            const hotelSnap = await getDoc(doc(db, "hotels", hotelCode));
+            if (hotelSnap.exists()) {
+                const data = hotelSnap.data();
+                let modules = data.billing?.activeModules || [];
+                if (modules.includes('cpanel')) {
+                    modules = modules.filter((m: string) => m !== 'cpanel');
+                    const plan = data.billing?.plan || 'enterprise';
+                    if (plan === 'startup') {
+                        if (!modules.includes('cpanel-only')) modules.push('cpanel-only');
+                    } else {
+                        if (!modules.includes('cpanel-full')) modules.push('cpanel-full');
                     }
-                    if (modules.length === 0) {
-                        const plan = data.billing?.plan || 'enterprise';
-                        if (plan === 'startup') {
-                            modules = ["pos", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"];
-                        } else if (plan === 'bisnis') {
-                            modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "innalytics", "hrd", "cpanel-only"];
-                        } else {
-                            modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "innalytics", "hrd", "cpanel-full", "pos-self-order", "food-beverage-realtime"];
-                        }
-                    }
-                    setActiveModules(modules);
-                } else {
-                    setActiveModules(["pos", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"]); // Fallback
                 }
-            });
+                if (modules.length === 0) {
+                    const plan = data.billing?.plan || 'enterprise';
+                    if (plan === 'startup') {
+                        modules = ["pos", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"];
+                    } else if (plan === 'bisnis') {
+                        modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "innalytics", "hrd", "cpanel-only"];
+                    } else {
+                        modules = ["pos", "front-office", "housekeeping", "food-beverage", "purchasing", "accounting", "innalytics", "hrd", "cpanel-full", "pos-self-order", "food-beverage-realtime"];
+                    }
+                }
+                setActiveModules(modules);
+            } else {
+                setActiveModules(["pos", "food-beverage", "purchasing", "accounting", "hrd", "cpanel-only"]);
+            }
+        } catch (err) {
+            console.error("Firestore read error in useUsers:", err);
+        } finally {
+            setLoading(false);
         }
+    }, [hotelCode, authUser?.role]);
 
-        return () => {
-            unsubUsers();
-            unsubHotel();
-        };
-    }, [hotelCode]);
+    useEffect(() => {
+        hasSyncedRef.current = false;
+        hasMigratedRef.current = false;
+        fetchUsers();
+    }, [fetchUsers]);
 
     const handleSaveUser = async (formData: any, editingUser: UserProfile | null) => {
         try {
@@ -288,6 +281,7 @@ export const useUsers = (menuItems: any[]) => {
                 }
                 throw new Error(errorMsg);
             }
+            await fetchUsers();
             return true;
         } catch (error) {
             console.error("Error saving user:", error);
@@ -326,6 +320,7 @@ export const useUsers = (menuItems: any[]) => {
                 }
                 throw new Error(errorMsg);
             }
+            await fetchUsers();
             return true;
         } catch (error) {
             console.error("Error deleting user:", error);
@@ -338,6 +333,7 @@ export const useUsers = (menuItems: any[]) => {
         await updateDoc(userDoc, {
             [`permissions.${menuId}`]: !currentValue
         });
+        await fetchUsers();
     };
 
     // Toggle module + auto-ON all submenus when enabling, just toggle module when disabling
@@ -358,6 +354,7 @@ export const useUsers = (menuItems: any[]) => {
             });
         }
         await updateDoc(userDoc, updates);
+        await fetchUsers();
     };
 
     const handleChangePassword = async (userId: string, newPassword: string) => {

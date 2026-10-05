@@ -7,13 +7,14 @@ import { toast } from 'sonner';
 
 interface GlobalOrderNotifierProps {
   hotelCode: string;
+  posSoundUrl?: string;
   onBadgeChange: (count: number) => void;
 }
 
-export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNotifierProps) {
+export function GlobalOrderNotifier({ hotelCode, posSoundUrl, onBadgeChange }: GlobalOrderNotifierProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const badgeCountRef = useRef(0);
-  const posSoundUrlRef = useRef<string>('/sounds/notification.mp3');
+  const posSoundUrlRef = useRef<string>(posSoundUrl || '/sounds/notification.mp3');
   const onBadgeChangeRef = useRef(onBadgeChange);
 
   useEffect(() => {
@@ -21,22 +22,14 @@ export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNot
   }, [onBadgeChange]);
 
   useEffect(() => {
-    if (!hotelCode || hotelCode === '0') return;
-    const hotelRef = doc(db, 'hotels', hotelCode);
-    const unsub = onSnapshot(hotelRef, (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data.posSoundUrl && data.posSoundUrl !== posSoundUrlRef.current) {
-          posSoundUrlRef.current = data.posSoundUrl;
-          if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current = null;
-          }
-        }
+    if (posSoundUrl && posSoundUrl !== posSoundUrlRef.current) {
+      posSoundUrlRef.current = posSoundUrl;
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
       }
-    });
-    return () => unsub();
-  }, [hotelCode]);
+    }
+  }, [posSoundUrl]);
 
   const getSoundPath = useCallback((): string => {
     return posSoundUrlRef.current || '/sounds/notification.mp3';
@@ -87,8 +80,8 @@ export function GlobalOrderNotifier({ hotelCode, onBadgeChange }: GlobalOrderNot
   useEffect(() => {
     if (!hotelCode || hotelCode === '0') return;
 
-    // Listen with query limit to prevent massive document downloads
-    const colHeldRef = query(collection(db, 'hotels', hotelCode, 'pos_held_orders'), limit(25));
+    // Listen with tight query limit to prevent massive document downloads
+    const colHeldRef = query(collection(db, 'hotels', hotelCode, 'pos_held_orders'), limit(10));
     let isInitialHeld = true;
 
     const unsubHeld = onSnapshot(colHeldRef, (snap: QuerySnapshot<DocumentData>) => {
