@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import styles from "../BookingEngine.module.css";
 import {
     Calendar,
     Users,
@@ -15,12 +16,10 @@ import {
     Clock,
     Landmark,
     Lock,
-    Sparkles,
     CheckCircle,
     Info,
-    Phone,
-    Mail,
-    Share2,
+    AlertCircle,
+    Flame,
 } from "lucide-react";
 import {
     getBookingEngineData,
@@ -28,6 +27,7 @@ import {
     BookingEnginePublicData,
     BookingSelection,
     BookingGuestDetails,
+    PublicRoomType,
 } from "@/services/bookingEngineService";
 
 export default function DirectBookingPage() {
@@ -74,16 +74,16 @@ export default function DirectBookingPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [confirmedBookingCode, setConfirmedBookingCode] = useState<string>("");
 
-    // Fetch booking data
+    // Fetch booking data (re-fetches inventory when checkIn or checkOut updates)
     useEffect(() => {
         async function load() {
             setLoading(true);
-            const data = await getBookingEngineData(hotelCodeParam);
+            const data = await getBookingEngineData(hotelCodeParam, checkIn, checkOut);
             setEngineData(data);
             if (data?.rooms && data.rooms.length > 0) {
                 const targetRoom = requestedRoomTypeId
                     ? data.rooms.find((r) => r.id === requestedRoomTypeId)
-                    : data.rooms[0];
+                    : data.rooms.find((r) => !r.isSoldOut) || data.rooms[0];
                 const activeRoom = targetRoom || data.rooms[0];
                 setSelectedRoomId(activeRoom.id);
                 if (activeRoom.ratePlans.length > 0) {
@@ -93,7 +93,7 @@ export default function DirectBookingPage() {
             setLoading(false);
         }
         load();
-    }, [hotelCodeParam, requestedRoomTypeId]);
+    }, [hotelCodeParam, checkIn, checkOut, requestedRoomTypeId]);
 
     // Calculate nights
     const nights = useMemo(() => {
@@ -141,8 +141,12 @@ export default function DirectBookingPage() {
     }, [selectedRatePlan, selectedRoom, nights, engineData]);
 
     // Handle room selection & jump to checkout step
-    const handleProceedToGuestForm = (roomId: string, ratePlanId: string) => {
-        setSelectedRoomId(roomId);
+    const handleProceedToGuestForm = (room: PublicRoomType, ratePlanId: string) => {
+        if (room.isSoldOut) {
+            alert("Maaf, tipe kamar ini telah habis terjual (Sold Out) pada tanggal yang dipilih.");
+            return;
+        }
+        setSelectedRoomId(room.id);
         setSelectedRatePlanId(ratePlanId);
         setStep(2);
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -152,7 +156,7 @@ export default function DirectBookingPage() {
     const handleCheckoutSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!guestDetails.fullName || !guestDetails.email || !guestDetails.phone) {
-            alert("Mohon lengkapi nama, email, dan nomor telepon kontak.");
+            alert("Mohon lengkapi nama, email, dan nomor kontak aktif.");
             return;
         }
 
@@ -190,17 +194,17 @@ export default function DirectBookingPage() {
             setStep(3);
             window.scrollTo({ top: 0, behavior: "smooth" });
         } else {
-            alert(res.error || "Terjadi kesalahan saat memproses pemesanan.");
+            alert(res.error || "Terjadi kesalahan saat memproses reservasi.");
         }
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#0d0f12] text-neutral-300 flex items-center justify-center p-6">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-xs uppercase tracking-[0.3em] text-neutral-400 font-light">
-                        Menyiapkan Tarif & Ketersediaan Kamar...
+            <div className={styles.pageWrapper} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ textAlign: "center", padding: "40px" }}>
+                    <div style={{ width: "36px", height: "36px", border: "3px solid #1e3a2f", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px auto" }} />
+                    <span style={{ fontSize: "13px", fontWeight: 700, color: "#64748b" }}>
+                        Menyiapkan Tarif & Ketersediaan Kamar Real-time...
                     </span>
                 </div>
             </div>
@@ -210,24 +214,20 @@ export default function DirectBookingPage() {
     // Add-on Inactive Gate
     if (engineData && !engineData.isAddonActive) {
         return (
-            <div className="min-h-screen bg-[#0d0f12] text-neutral-300 flex items-center justify-center p-6">
-                <div className="max-w-md w-full bg-[#151921] border border-neutral-800 rounded-3xl p-8 text-center space-y-5 shadow-2xl">
-                    <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 mx-auto flex items-center justify-center">
-                        <Lock size={24} />
+            <div className={styles.pageWrapper} style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+                <div className={styles.clayBox} style={{ maxWidth: "480px", textAlign: "center" }}>
+                    <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "#fef3c7", color: "#b45309", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px auto" }}>
+                        <Lock size={26} />
                     </div>
-                    <h2 className="text-xl font-medium text-neutral-100">
-                        Direct Booking Belum Diaktifkan
+                    <h2 style={{ fontSize: "18px", fontWeight: 800, color: "#0f172a", marginBottom: "8px" }}>
+                        Direct Booking Engine Belum Aktif
                     </h2>
-                    <p className="text-xs text-neutral-400 font-light leading-relaxed">
-                        Layanan pemesanan kamar langsung melalui website resmi untuk{" "}
-                        <strong className="text-neutral-200">{engineData.hotelName}</strong> sedang dalam masa penataan atau belum diaktifkan oleh pengelola hotel.
+                    <p style={{ fontSize: "13px", color: "#64748b", lineHeight: 1.5, marginBottom: "20px" }}>
+                        Layanan pemesanan kamar langsung untuk <strong>{engineData.hotelName}</strong> sedang dalam konfigurasi atau belum diaktifkan oleh pihak hotel.
                     </p>
-                    <Link
-                        href="/"
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium transition-all"
-                    >
+                    <Link href="/" className={styles.clayBtnPrimary}>
                         <ArrowLeft size={16} />
-                        <span>Kembali ke Beranda</span>
+                        <span>Kembali ke Website Hotel</span>
                     </Link>
                 </div>
             </div>
@@ -235,213 +235,203 @@ export default function DirectBookingPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0d0f12] text-neutral-100 font-sans selection:bg-amber-500 selection:text-black">
-            {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-40 bg-[#0d0f12]/90 backdrop-blur-md border-b border-neutral-800/80">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Link
-                            href="/"
-                            className="w-8 h-8 rounded-lg bg-neutral-800/80 hover:bg-neutral-700 flex items-center justify-center text-neutral-300 transition-all"
-                        >
-                            <ArrowLeft size={16} />
+        <div className={styles.pageWrapper}>
+            {/* Header */}
+            <header className={styles.header}>
+                <div className={styles.headerInner}>
+                    <div className={styles.brandGroup}>
+                        <Link href="/" className={styles.btnBackHome} title="Kembali ke Beranda">
+                            <ArrowLeft size={18} />
                         </Link>
                         <div>
-                            <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400 block">
-                                Situs Resmi Hotel
-                            </span>
-                            <span className="text-sm font-semibold text-neutral-100 line-clamp-1">
-                                {engineData?.hotelName}
-                            </span>
+                            <span className={styles.hotelBadge}>Situs Resmi Properti</span>
+                            <h1 className={styles.hotelName}>{engineData?.hotelName}</h1>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium">
-                            <ShieldCheck size={14} />
-                            <span>Jaminan Harga Terbaik</span>
-                        </span>
+                    <div className={styles.badgeOfficial}>
+                        <ShieldCheck size={16} />
+                        <span>Jaminan Harga Terbaik</span>
                     </div>
                 </div>
             </header>
 
-            {/* Step 1: Room Selection */}
-            {step === 1 && (
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-                    {/* Search & Date Filter Bar (Google Hotel Compatible) */}
-                    <div className="bg-[#151921] border border-neutral-800/80 rounded-2xl p-4 md:p-6 shadow-xl">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div>
-                                <label className="block text-[11px] uppercase tracking-wider text-neutral-400 font-semibold mb-1.5 flex items-center gap-1.5">
-                                    <Calendar size={14} className="text-amber-400" />
-                                    <span>Check-in</span>
-                                </label>
-                                <input
-                                    type="date"
-                                    value={checkIn}
-                                    onChange={(e) => setCheckIn(e.target.value)}
-                                    className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-700 rounded-xl text-xs font-medium text-neutral-100 focus:outline-none focus:border-amber-500"
-                                />
+            {/* Main Content Container */}
+            <main style={{ maxWidth: "1200px", margin: "32px auto 0 auto", padding: "0 20px" }}>
+                {/* STEP 1: ROOM SELECTION */}
+                {step === 1 && (
+                    <>
+                        {/* Search & Date Filter Bar */}
+                        <div className={styles.searchBarCard}>
+                            <div className={styles.searchGrid}>
+                                <div className={styles.fieldGroup}>
+                                    <label className={styles.fieldLabel}>
+                                        <Calendar size={14} color="#1e3a2f" />
+                                        <span>Check-In</span>
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={checkIn}
+                                        onChange={(e) => setCheckIn(e.target.value)}
+                                        className={styles.clayInput}
+                                    />
+                                </div>
+
+                                <div className={styles.fieldGroup}>
+                                    <label className={styles.fieldLabel}>
+                                        <Calendar size={14} color="#1e3a2f" />
+                                        <span>Check-Out</span>
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={checkOut}
+                                        min={checkIn}
+                                        onChange={(e) => setCheckOut(e.target.value)}
+                                        className={styles.clayInput}
+                                    />
+                                </div>
+
+                                <div className={styles.fieldGroup}>
+                                    <label className={styles.fieldLabel}>
+                                        <Users size={14} color="#1e3a2f" />
+                                        <span>Dewasa (Adults)</span>
+                                    </label>
+                                    <select
+                                        value={adults}
+                                        onChange={(e) => setAdults(parseInt(e.target.value, 10))}
+                                        className={styles.clayInput}
+                                    >
+                                        {[1, 2, 3, 4, 5, 6].map((n) => (
+                                            <option key={n} value={n}>{n} Orang Dewasa</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className={styles.fieldGroup}>
+                                    <label className={styles.fieldLabel}>
+                                        <Users size={14} color="#1e3a2f" />
+                                        <span>Anak-Anak (Children)</span>
+                                    </label>
+                                    <select
+                                        value={children}
+                                        onChange={(e) => setChildren(parseInt(e.target.value, 10))}
+                                        className={styles.clayInput}
+                                    >
+                                        {[0, 1, 2, 3].map((n) => (
+                                            <option key={n} value={n}>{n} Anak</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="block text-[11px] uppercase tracking-wider text-neutral-400 font-semibold mb-1.5 flex items-center gap-1.5">
-                                    <Calendar size={14} className="text-amber-400" />
-                                    <span>Check-out</span>
-                                </label>
-                                <input
-                                    type="date"
-                                    value={checkOut}
-                                    min={checkIn}
-                                    onChange={(e) => setCheckOut(e.target.value)}
-                                    className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-700 rounded-xl text-xs font-medium text-neutral-100 focus:outline-none focus:border-amber-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-[11px] uppercase tracking-wider text-neutral-400 font-semibold mb-1.5 flex items-center gap-1.5">
-                                    <Users size={14} className="text-amber-400" />
-                                    <span>Dewasa (Adults)</span>
-                                </label>
-                                <select
-                                    value={adults}
-                                    onChange={(e) => setAdults(parseInt(e.target.value, 10))}
-                                    className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-700 rounded-xl text-xs font-medium text-neutral-100 focus:outline-none focus:border-amber-500"
-                                >
-                                    {[1, 2, 3, 4, 5, 6].map((num) => (
-                                        <option key={num} value={num}>
-                                            {num} Orang Dewasa
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-[11px] uppercase tracking-wider text-neutral-400 font-semibold mb-1.5 flex items-center gap-1.5">
-                                    <Users size={14} className="text-amber-400" />
-                                    <span>Anak-anak (Children)</span>
-                                </label>
-                                <select
-                                    value={children}
-                                    onChange={(e) => setChildren(parseInt(e.target.value, 10))}
-                                    className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-700 rounded-xl text-xs font-medium text-neutral-100 focus:outline-none focus:border-amber-500"
-                                >
-                                    {[0, 1, 2, 3].map((num) => (
-                                        <option key={num} value={num}>
-                                            {num} Anak
-                                        </option>
-                                    ))}
-                                </select>
+                            <div className={styles.searchBarFooter}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <Clock size={15} color="#1e3a2f" />
+                                    <span>Durasi Menginap: <strong>{nights} Malam</strong></span>
+                                </div>
+                                <div>
+                                    Waktu Check-in: <strong>{engineData?.paymentSettings.checkInTime}</strong> | Check-out: <strong>{engineData?.paymentSettings.checkOutTime}</strong>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="mt-4 pt-3 border-t border-neutral-800/60 flex items-center justify-between text-xs text-neutral-400">
-                            <div className="flex items-center gap-2">
-                                <Clock size={14} className="text-amber-400" />
-                                <span>Durasi: <strong className="text-neutral-200">{nights} Malam</strong></span>
-                            </div>
-                            <div className="text-[11px] text-neutral-500">
-                                Check-in: {engineData?.paymentSettings.checkInTime} | Check-out: {engineData?.paymentSettings.checkOutTime}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Room Cards List */}
-                    <div className="space-y-6">
-                        <div>
-                            <h2 className="text-lg md:text-xl font-semibold text-neutral-100">
-                                Pilihan Tipe Kamar & Tarif Eksklusif
-                            </h2>
-                            <p className="text-xs text-neutral-400 font-light mt-0.5">
-                                Pesan langsung di situs resmi hotel tanpa perantara untuk jaminan konfirmasi instan.
+                        {/* Room Catalogue List */}
+                        <div className={styles.sectionTitleRow}>
+                            <h2 className={styles.sectionMainHeading}>Pilihan Kamar & Ketersediaan Kamar Real-time</h2>
+                            <p className={styles.sectionSubHeading}>
+                                Seluruh tarif kamar terhubung langsung dengan alokasi inventaris hotel tanpa komisi perantara OTA.
                             </p>
                         </div>
 
-                        <div className="space-y-6">
+                        <div>
                             {engineData?.rooms.map((room) => (
-                                <div
-                                    key={room.id}
-                                    className="bg-[#151921] border border-neutral-800/80 hover:border-neutral-700/80 rounded-3xl overflow-hidden shadow-lg transition-all"
-                                >
-                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-                                        {/* Room Image */}
-                                        <div className="lg:col-span-5 relative h-64 lg:h-auto min-h-[220px] bg-neutral-900">
+                                <div key={room.id} className={styles.roomCard}>
+                                    <div className={styles.roomGrid}>
+                                        {/* Room Photo & Badges */}
+                                        <div className={styles.roomImageArea}>
                                             {room.images?.[0]?.url ? (
                                                 <Image
                                                     src={room.images[0].url}
                                                     alt={room.name}
                                                     fill
-                                                    className="object-cover"
+                                                    style={{ objectFit: "cover" }}
                                                 />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-neutral-600">
-                                                    <Bed size={40} />
+                                                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>
+                                                    <Bed size={48} />
                                                 </div>
                                             )}
-                                            <div className="absolute top-3 left-3 bg-neutral-950/80 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-medium text-neutral-300 border border-neutral-700/50">
+
+                                            <div className={styles.badgeSize}>
                                                 Luas: {room.roomSizeValue} {room.roomSizeUnit}
+                                            </div>
+
+                                            {/* Real-time Inventory Status Badges */}
+                                            <div className={styles.badgeStockWrap}>
+                                                {room.isSoldOut ? (
+                                                    <div className={styles.badgeStockSoldOut}>
+                                                        <AlertCircle size={14} />
+                                                        <span>Habis Terjual (Sold Out)</span>
+                                                    </div>
+                                                ) : room.availableRooms <= 3 ? (
+                                                    <div className={styles.badgeStockUrgent}>
+                                                        <Flame size={14} color="#b45309" />
+                                                        <span>Hanya Sisa {room.availableRooms} Kamar!</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className={styles.badgeStockAvailable}>
+                                                        <Check size={14} />
+                                                        <span>Tersedia ({room.availableRooms} Kamar)</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
-                                        {/* Room Details & Rate Plans */}
-                                        <div className="lg:col-span-7 p-5 md:p-7 flex flex-col justify-between space-y-6">
+                                        {/* Room Specs & Rate Plans */}
+                                        <div className={styles.roomContent}>
                                             <div>
-                                                <h3 className="text-xl font-semibold text-neutral-100">{room.name}</h3>
-                                                <p className="text-xs text-neutral-400 font-light mt-1.5 line-clamp-2 leading-relaxed">
-                                                    {room.description || "Kamar nyaman dan luas dengan fasilitas lengkap untuk pengalaman istirahat terbaik."}
+                                                <h3 className={styles.roomTitle}>{room.name}</h3>
+                                                <p className={styles.roomDescription}>
+                                                    {room.description || "Nikmati kenyamanan beristirahat dengan fasilitas lengkap kamar hotel standar bintang."}
                                                 </p>
 
-                                                {/* Amenities chips */}
-                                                <div className="flex flex-wrap gap-1.5 mt-3">
+                                                {/* Amenities */}
+                                                <div className={styles.amenityChips}>
                                                     {room.amenities?.slice(0, 5).map((amenity, idx) => (
-                                                        <span
-                                                            key={idx}
-                                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-neutral-900/80 border border-neutral-800 text-[11px] text-neutral-300 font-light"
-                                                        >
-                                                            <Check size={11} className="text-amber-400" />
+                                                        <span key={idx} className={styles.chip}>
+                                                            <Check size={12} color="#1e3a2f" />
                                                             <span>{amenity}</span>
                                                         </span>
                                                     ))}
                                                 </div>
                                             </div>
 
-                                            {/* Rate Plans Box */}
-                                            <div className="space-y-3 pt-4 border-t border-neutral-800/80">
-                                                <span className="text-[11px] uppercase font-bold tracking-wider text-neutral-400 block">
-                                                    Pilihan Paket Tarif:
-                                                </span>
-
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {/* Rate Plans */}
+                                            <div className={styles.ratePlanSection}>
+                                                <div className={styles.ratePlanGrid}>
                                                     {room.ratePlans.map((plan) => (
-                                                        <div
-                                                            key={plan.id}
-                                                            className="p-4 rounded-2xl bg-neutral-900/90 border border-neutral-800 hover:border-amber-500/50 flex flex-col justify-between transition-all"
-                                                        >
+                                                        <div key={plan.id} className={styles.clayRateCard}>
                                                             <div>
-                                                                <span className="text-xs font-semibold text-neutral-200 block">
-                                                                    {plan.name}
-                                                                </span>
-                                                                <span className="text-[11px] text-neutral-400 font-light mt-0.5 block">
-                                                                    {plan.description}
-                                                                </span>
+                                                                <h4 className={styles.ratePlanName}>{plan.name}</h4>
+                                                                <p className={styles.ratePlanDesc}>{plan.description}</p>
                                                             </div>
 
-                                                            <div className="mt-4 pt-3 border-t border-neutral-800 flex items-end justify-between">
+                                                            <div className={styles.ratePriceRow}>
                                                                 <div>
-                                                                    <span className="text-[10px] text-neutral-500 uppercase tracking-wider block">
-                                                                        Mulai dari
-                                                                    </span>
-                                                                    <span className="text-base font-bold text-amber-400">
+                                                                    <span className={styles.priceLabel}>Mulai dari</span>
+                                                                    <span className={styles.priceAmount}>
                                                                         Rp {plan.price.toLocaleString("id-ID")}
                                                                     </span>
-                                                                    <span className="text-[10px] text-neutral-400"> /malam</span>
+                                                                    <span className={styles.priceNight}> /malam</span>
                                                                 </div>
 
                                                                 <button
-                                                                    onClick={() => handleProceedToGuestForm(room.id, plan.id)}
-                                                                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-xs transition-all active:scale-95 shadow-md shadow-amber-500/10"
+                                                                    type="button"
+                                                                    disabled={room.isSoldOut}
+                                                                    onClick={() => handleProceedToGuestForm(room, plan.id)}
+                                                                    className={styles.clayBtnPrimary}
                                                                 >
-                                                                    Pilih
+                                                                    {room.isSoldOut ? "Sold Out" : "Pilih Kamar"}
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -453,182 +443,145 @@ export default function DirectBookingPage() {
                                 </div>
                             ))}
                         </div>
-                    </div>
-                </main>
-            )}
+                    </>
+                )}
 
-            {/* Step 2: Guest Details & Payment Checkout */}
-            {step === 2 && (
-                <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-                    <button
-                        onClick={() => setStep(1)}
-                        className="inline-flex items-center gap-2 text-xs text-neutral-400 hover:text-neutral-200 mb-6 transition-all"
-                    >
-                        <ArrowLeft size={16} />
-                        <span>Ganti Pilihan Kamar</span>
-                    </button>
+                {/* STEP 2: GUEST FORM & CHECKOUT */}
+                {step === 2 && (
+                    <div>
+                        <button
+                            type="button"
+                            onClick={() => setStep(1)}
+                            style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "transparent", border: "none", color: "#475569", fontSize: "13px", fontWeight: 700, cursor: "pointer", marginBottom: "20px" }}
+                        >
+                            <ArrowLeft size={16} />
+                            <span>Ganti Pilihan Kamar</span>
+                        </button>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        {/* Guest Form */}
-                        <div className="lg:col-span-7 space-y-6">
-                            <div className="bg-[#151921] border border-neutral-800 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
-                                <div>
-                                    <h2 className="text-xl font-semibold text-neutral-100">Informasi Kontak & Tamu</h2>
-                                    <p className="text-xs text-neutral-400 font-light mt-1">
-                                        Konfirmasi booking resmi akan dikirimkan langsung ke email dan WhatsApp Anda.
-                                    </p>
-                                </div>
+                        <div className={styles.checkoutLayout}>
+                            {/* Guest Form */}
+                            <div className={styles.clayBox}>
+                                <h3 style={{ fontSize: "18px", fontWeight: 800, color: "#0f172a", marginBottom: "4px" }}>
+                                    Data Kontak & Informasi Tamu
+                                </h3>
+                                <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "24px" }}>
+                                    Voucher konfirmasi resmi akan dikirimkan langsung ke email dan WhatsApp Anda.
+                                </p>
 
-                                <form onSubmit={handleCheckoutSubmit} className="space-y-4">
-                                    <div>
-                                        <label className="block text-xs font-medium text-neutral-300 mb-1.5">
-                                            Nama Lengkap Tamu <span className="text-red-400">*</span>
-                                        </label>
+                                <form onSubmit={handleCheckoutSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                                    <div className={styles.fieldGroup}>
+                                        <label className={styles.fieldLabel}>Nama Lengkap Tamu *</label>
                                         <input
                                             type="text"
                                             required
                                             value={guestDetails.fullName}
-                                            onChange={(e) =>
-                                                setGuestDetails((p) => ({ ...p, fullName: e.target.value }))
-                                            }
+                                            onChange={(e) => setGuestDetails((p) => ({ ...p, fullName: e.target.value }))}
                                             placeholder="Sesuai KTP / Paspor"
-                                            className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-amber-500"
+                                            className={styles.clayInput}
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs font-medium text-neutral-300 mb-1.5">
-                                                Alamat Email <span className="text-red-400">*</span>
-                                            </label>
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                                        <div className={styles.fieldGroup}>
+                                            <label className={styles.fieldLabel}>Alamat Email *</label>
                                             <input
                                                 type="email"
                                                 required
                                                 value={guestDetails.email}
-                                                onChange={(e) =>
-                                                    setGuestDetails((p) => ({ ...p, email: e.target.value }))
-                                                }
+                                                onChange={(e) => setGuestDetails((p) => ({ ...p, email: e.target.value }))}
                                                 placeholder="nama@email.com"
-                                                className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-amber-500"
+                                                className={styles.clayInput}
                                             />
                                         </div>
 
-                                        <div>
-                                            <label className="block text-xs font-medium text-neutral-300 mb-1.5">
-                                                Nomor WhatsApp / HP <span className="text-red-400">*</span>
-                                            </label>
+                                        <div className={styles.fieldGroup}>
+                                            <label className={styles.fieldLabel}>Nomor WhatsApp / HP *</label>
                                             <input
                                                 type="tel"
                                                 required
                                                 value={guestDetails.phone}
-                                                onChange={(e) =>
-                                                    setGuestDetails((p) => ({ ...p, phone: e.target.value }))
-                                                }
+                                                onChange={(e) => setGuestDetails((p) => ({ ...p, phone: e.target.value }))}
                                                 placeholder="081234567890"
-                                                className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-amber-500"
+                                                className={styles.clayInput}
                                             />
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-xs font-medium text-neutral-300 mb-1.5">
-                                            Permintaan Khusus (Opsional)
-                                        </label>
+                                    <div className={styles.fieldGroup}>
+                                        <label className={styles.fieldLabel}>Permintaan Khusus (Opsional)</label>
                                         <textarea
                                             rows={2}
                                             value={guestDetails.specialRequests || ""}
-                                            onChange={(e) =>
-                                                setGuestDetails((p) => ({ ...p, specialRequests: e.target.value }))
-                                            }
-                                            placeholder="Contoh: Bebas asap rokok, lantai atas, check-in terlambat"
-                                            className="w-full px-3.5 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-amber-500 resize-none"
+                                            onChange={(e) => setGuestDetails((p) => ({ ...p, specialRequests: e.target.value }))}
+                                            placeholder="Contoh: Bebas asap rokok, lantai atas, estimasi check-in terlambat"
+                                            className={styles.clayInput}
+                                            style={{ resize: "none" }}
                                         />
                                     </div>
 
-                                    {/* Payment Method Notice */}
-                                    <div className="p-4 rounded-2xl bg-neutral-900/90 border border-neutral-800 space-y-2">
-                                        <span className="text-xs font-semibold text-neutral-200 flex items-center gap-2">
-                                            <CreditCard size={16} className="text-amber-400" />
-                                            <span>Metode Pembayaran Resmi Hotel:</span>
-                                        </span>
-                                        <p className="text-xs text-neutral-400 font-light leading-relaxed">
-                                            {engineData?.paymentSettings.activeProvider === "midtrans" &&
-                                                "Pembayaran instan online didukung oleh Midtrans (QRIS, BCA VA, Mandiri, Kartu Kredit)."}
-                                            {engineData?.paymentSettings.activeProvider === "xendit" &&
-                                                "Pembayaran invoice instan didukung oleh Xendit (QRIS, Virtual Account, E-Wallet)."}
-                                            {engineData?.paymentSettings.activeProvider === "manual" &&
-                                                "Transfer langsung ke rekening resmi hotel. Instruksi dan nomor rekening akan diberikan setelah konfirmasi."}
-                                        </p>
+                                    <div style={{ padding: "16px", borderRadius: "16px", background: "#f0fdf4", border: "1px solid #bbf7d0", fontSize: "13px", color: "#166534" }}>
+                                        <strong>Metode Pembayaran Properti:</strong>{" "}
+                                        {engineData?.paymentSettings.activeProvider === "midtrans" && "Didukung oleh Midtrans (QRIS, VA BCA, Mandiri, BNI, Kartu Kredit)."}
+                                        {engineData?.paymentSettings.activeProvider === "xendit" && "Didukung oleh Xendit Invoice (QRIS, Multi-Bank VA, E-Wallet)."}
+                                        {engineData?.paymentSettings.activeProvider === "manual" && "Transfer langsung ke rekening resmi hotel."}
                                     </div>
 
                                     <button
                                         type="submit"
                                         disabled={isSubmitting}
-                                        className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 font-bold text-sm transition-all shadow-lg shadow-amber-500/10 active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
+                                        className={styles.clayBtnPrimary}
+                                        style={{ width: "100%", padding: "14px", fontSize: "14px", marginTop: "10px" }}
                                     >
-                                        {isSubmitting ? (
-                                            <div className="w-5 h-5 border-2 border-neutral-950 border-t-transparent rounded-full animate-spin" />
-                                        ) : (
-                                            <>
-                                                <Lock size={16} />
-                                                <span>Lanjutkan Pembayaran Aman</span>
-                                            </>
-                                        )}
+                                        {isSubmitting ? "Memproses Pemesanan..." : "Konfirmasi & Lanjutkan Pembayaran"}
                                     </button>
                                 </form>
                             </div>
-                        </div>
 
-                        {/* Price Summary Sidebar */}
-                        <div className="lg:col-span-5 space-y-6">
-                            <div className="bg-[#151921] border border-neutral-800 rounded-3xl p-6 md:p-7 shadow-xl space-y-5 sticky top-24">
-                                <h3 className="text-base font-semibold text-neutral-100 border-b border-neutral-800 pb-3">
-                                    Ringkasan Reservasi
-                                </h3>
+                            {/* Summary Sidebar */}
+                            <div>
+                                <div className={`${styles.clayBox} ${styles.summarySticky}`}>
+                                    <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#0f172a", marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid #e2e8f0" }}>
+                                        Ringkasan Reservasi
+                                    </h3>
 
-                                <div className="space-y-3 text-xs">
-                                    <div className="flex justify-between text-neutral-300">
-                                        <span className="text-neutral-400">Tipe Kamar:</span>
-                                        <strong className="font-semibold text-neutral-100 text-right">{selectedRoom?.name}</strong>
+                                    <div className={styles.summaryRow}>
+                                        <span>Tipe Kamar:</span>
+                                        <strong>{selectedRoom?.name}</strong>
                                     </div>
 
-                                    <div className="flex justify-between text-neutral-300">
-                                        <span className="text-neutral-400">Paket Tarif:</span>
-                                        <span className="text-amber-400 font-medium text-right">{selectedRatePlan?.name}</span>
+                                    <div className={styles.summaryRow}>
+                                        <span>Paket Tarif:</span>
+                                        <span style={{ color: "#1e3a2f", fontWeight: 700 }}>{selectedRatePlan?.name}</span>
                                     </div>
 
-                                    <div className="flex justify-between text-neutral-300">
-                                        <span className="text-neutral-400">Jadwal Menginap:</span>
-                                        <span className="text-right">{checkIn} s/d {checkOut} ({nights} Malam)</span>
+                                    <div className={styles.summaryRow}>
+                                        <span>Periode:</span>
+                                        <span>{checkIn} s/d {checkOut} ({nights} Malam)</span>
                                     </div>
 
-                                    <div className="flex justify-between text-neutral-300">
-                                        <span className="text-neutral-400">Jumlah Tamu:</span>
-                                        <span className="text-right">{adults} Dewasa{children > 0 ? `, ${children} Anak` : ""}</span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2 pt-4 border-t border-neutral-800 text-xs">
-                                    <div className="flex justify-between text-neutral-400">
-                                        <span>Tarif Kamar ({nights} malam):</span>
-                                        <span className="text-neutral-200">Rp {priceCalculation.baseTotal.toLocaleString("id-ID")}</span>
+                                    <div className={styles.summaryRow}>
+                                        <span>Tamu:</span>
+                                        <span>{adults} Dewasa{children > 0 ? `, ${children} Anak` : ""}</span>
                                     </div>
 
-                                    <div className="flex justify-between text-neutral-400">
-                                        <span>Pajak Daerah PB1 ({priceCalculation.taxRate}%):</span>
-                                        <span className="text-neutral-200">Rp {priceCalculation.taxAmount.toLocaleString("id-ID")}</span>
+                                    <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "12px", marginTop: "12px" }}>
+                                        <div className={styles.summaryRow}>
+                                            <span>Tarif Kamar ({nights} malam):</span>
+                                            <span>Rp {priceCalculation.baseTotal.toLocaleString("id-ID")}</span>
+                                        </div>
+                                        <div className={styles.summaryRow}>
+                                            <span>Pajak Daerah PB1 ({priceCalculation.taxRate}%):</span>
+                                            <span>Rp {priceCalculation.taxAmount.toLocaleString("id-ID")}</span>
+                                        </div>
+                                        <div className={styles.summaryRow}>
+                                            <span>Service Charge ({priceCalculation.serviceRate}%):</span>
+                                            <span>Rp {priceCalculation.serviceAmount.toLocaleString("id-ID")}</span>
+                                        </div>
                                     </div>
 
-                                    <div className="flex justify-between text-neutral-400">
-                                        <span>Service Charge ({priceCalculation.serviceRate}%):</span>
-                                        <span className="text-neutral-200">Rp {priceCalculation.serviceAmount.toLocaleString("id-ID")}</span>
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 border-t border-neutral-800 flex justify-between items-baseline">
-                                    <div>
-                                        <span className="text-xs text-neutral-400 block font-light">Total Pembayaran:</span>
-                                        <span className="text-2xl font-bold text-amber-400 font-mono">
+                                    <div className={styles.summaryTotalRow}>
+                                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#64748b" }}>Total Bayar:</span>
+                                        <span className={styles.totalPrice}>
                                             Rp {priceCalculation.grandTotal.toLocaleString("id-ID")}
                                         </span>
                                     </div>
@@ -636,77 +589,63 @@ export default function DirectBookingPage() {
                             </div>
                         </div>
                     </div>
-                </main>
-            )}
+                )}
 
-            {/* Step 3: Confirmation & Payment Instructions */}
-            {step === 3 && (
-                <main className="max-w-2xl mx-auto px-4 py-12 text-center space-y-6">
-                    <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/10">
-                        <CheckCircle size={32} />
-                    </div>
-
-                    <div>
-                        <span className="text-xs uppercase font-bold tracking-widest text-emerald-400 block mb-1">
-                            Reservasi Berhasil Dibuat
-                        </span>
-                        <h1 className="text-2xl md:text-3xl font-bold text-neutral-100">
-                            Terima Kasih, {guestDetails.fullName}!
-                        </h1>
-                        <p className="text-xs text-neutral-400 font-light mt-2 leading-relaxed">
-                            Kode pemesanan Anda telah diterbitkan. Silakan selesaikan pembayaran sesuai instruksi di bawah ini.
-                        </p>
-                    </div>
-
-                    {/* Booking Reference Card */}
-                    <div className="bg-[#151921] border border-neutral-800 rounded-3xl p-6 text-left space-y-4 shadow-xl">
-                        <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
-                            <span className="text-xs text-neutral-400 font-light">Nomor Kode Booking:</span>
-                            <strong className="text-base font-mono font-bold text-amber-400 select-all tracking-wider">
-                                {confirmedBookingCode}
-                            </strong>
-                        </div>
-
-                        {/* Bank Transfer Instructions */}
-                        {engineData?.paymentSettings.activeProvider === "manual" && (
-                            <div className="space-y-4 pt-2">
-                                <span className="text-xs font-semibold text-neutral-200 block">
-                                    Transfer ke Rekening Resmi Hotel:
-                                </span>
-                                {engineData.paymentSettings.manualBanks.map((b) => (
-                                    <div
-                                        key={b.id}
-                                        className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 space-y-1.5"
-                                    >
-                                        <div className="flex justify-between items-center text-xs">
-                                            <span className="font-bold text-amber-300">{b.bankName}</span>
-                                            <span className="font-mono text-neutral-200 font-bold text-sm select-all">
-                                                {b.accountNumber}
-                                            </span>
-                                        </div>
-                                        <div className="text-[11px] text-neutral-400">
-                                            Atas Nama: <strong className="text-neutral-300">{b.accountHolder}</strong>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 leading-relaxed">
-                                    Total yang harus ditransfer: <strong className="text-white font-mono text-sm">Rp {priceCalculation.grandTotal.toLocaleString("id-ID")}</strong>. Cantumkan kode booking pada berita transfer.
-                                </div>
+                {/* STEP 3: CONFIRMATION & INSTRUCTIONS */}
+                {step === 3 && (
+                    <div className={styles.confirmCard}>
+                        <div className={styles.clayBox}>
+                            <div className={styles.successIconWrap}>
+                                <CheckCircle size={36} />
                             </div>
-                        )}
-                    </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-                        <Link
-                            href="/"
-                            className="px-6 py-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold transition-all"
-                        >
-                            Kembali ke Beranda
-                        </Link>
+                            <h2 style={{ fontSize: "22px", fontWeight: 900, color: "#0f172a", margin: "0 0 6px 0" }}>
+                                Reservasi Berhasil Diterbitkan!
+                            </h2>
+                            <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 20px 0" }}>
+                                Terima kasih, {guestDetails.fullName}. Kode pemesanan resmi Anda telah tercatat pada sistem hotel.
+                            </p>
+
+                            <div className={styles.bookingCodeBox}>
+                                <span style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", color: "#64748b", display: "block", marginBottom: "4px" }}>
+                                    Nomor Kode Booking
+                                </span>
+                                <span className={styles.bookingCodeText}>{confirmedBookingCode}</span>
+                            </div>
+
+                            {/* Bank Details if manual */}
+                            {engineData?.paymentSettings.activeProvider === "manual" && (
+                                <div style={{ textAlign: "left", marginTop: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                                    <span style={{ fontSize: "13px", fontWeight: 800, color: "#0f172a" }}>
+                                        Transfer ke Rekening Resmi Hotel:
+                                    </span>
+                                    {engineData.paymentSettings.manualBanks.map((b) => (
+                                        <div key={b.id} style={{ padding: "14px", borderRadius: "14px", background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: 800 }}>
+                                                <span style={{ color: "#1e3a2f" }}>{b.bankName}</span>
+                                                <span style={{ fontFamily: "monospace" }}>{b.accountNumber}</span>
+                                            </div>
+                                            <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>
+                                                Atas Nama: <strong>{b.accountHolder}</strong>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    <div style={{ padding: "12px", borderRadius: "12px", background: "#fef3c7", border: "1px solid #fde68a", color: "#92400e", fontSize: "12px" }}>
+                                        Total yang harus ditransfer: <strong>Rp {priceCalculation.grandTotal.toLocaleString("id-ID")}</strong>. Cantumkan kode booking pada berita transfer.
+                                    </div>
+                                </div>
+                            )}
+
+                            <div style={{ marginTop: "24px" }}>
+                                <Link href="/" className={styles.clayBtnPrimary}>
+                                    Kembali ke Beranda Hotel
+                                </Link>
+                            </div>
+                        </div>
                     </div>
-                </main>
-            )}
+                )}
+            </main>
         </div>
     );
 }

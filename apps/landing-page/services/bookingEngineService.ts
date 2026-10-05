@@ -27,6 +27,29 @@ export interface BookingSelection {
     children: number;
 }
 
+export interface PublicRoomType {
+    id: string;
+    name: string;
+    description: string;
+    images: { url: string; isProfile?: boolean }[];
+    amenities?: string[];
+    capacity?: number;
+    roomSizeValue?: number;
+    roomSizeUnit?: string;
+    basePrice: number;
+    totalRooms: number;
+    availableRooms: number;
+    isSoldOut: boolean;
+    stopSell?: boolean;
+    ratePlans: Array<{
+        id: string;
+        name: string;
+        mealsIncluded: boolean;
+        price: number;
+        description?: string;
+    }>;
+}
+
 export interface BookingEnginePublicData {
     hotelCode: string;
     hotelName: string;
@@ -53,31 +76,18 @@ export interface BookingEnginePublicData {
         checkInTime: string;
         checkOutTime: string;
     };
-    rooms: Array<{
-        id: string;
-        name: string;
-        description: string;
-        images: { url: string; isProfile?: boolean }[];
-        amenities?: string[];
-        capacity?: number;
-        roomSizeValue?: number;
-        roomSizeUnit?: string;
-        basePrice: number;
-        ratePlans: Array<{
-            id: string;
-            name: string;
-            mealsIncluded: boolean;
-            price: number;
-            description?: string;
-        }>;
-    }>;
+    rooms: PublicRoomType[];
 }
 
 /**
- * Loads all public booking engine data for a specific hotel tenant in 1 parallel batch.
+ * Loads all public booking engine data for a specific hotel tenant with real-time available inventory.
  * Utilizes indexed persistent local cache for low-cost Firestore reads.
  */
-export async function getBookingEngineData(hotelCode: string): Promise<BookingEnginePublicData | null> {
+export async function getBookingEngineData(
+    hotelCode: string,
+    checkInDate?: string,
+    checkOutDate?: string
+): Promise<BookingEnginePublicData | null> {
     if (!hotelCode) return null;
 
     try {
@@ -85,13 +95,15 @@ export async function getBookingEngineData(hotelCode: string): Promise<BookingEn
         const settingsRef = doc(db, "hotels", hotelCode, "settings", "payment_gateway");
         const roomsRef = query(collection(db, "hotels", hotelCode, "roomTypes"), orderBy("name"));
         const ratePlansRef = collection(db, "hotels", hotelCode, "ratePlans");
+        const reservationsRef = collection(db, "hotels", hotelCode, "reservations");
 
         // Single batch fetch
-        const [hotelSnap, settingsSnap, roomsSnap, ratePlansSnap] = await Promise.all([
+        const [hotelSnap, settingsSnap, roomsSnap, ratePlansSnap, resSnap] = await Promise.all([
             getDoc(hotelRef),
             getDoc(settingsRef),
             getDocs(roomsRef),
             getDocs(ratePlansRef),
+            getDocs(reservationsRef).catch(() => ({ docs: [] })),
         ]);
 
         if (!hotelSnap.exists()) return null;
@@ -109,12 +121,50 @@ export async function getBookingEngineData(hotelCode: string): Promise<BookingEn
         // Rate plans indexed by roomTypeId
         const allRatePlans = ratePlansSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as any[];
 
-        const rooms = roomsSnap.docs.map((d) => {
+        // Count booked rooms for the requested date window
+        const bookedCountByRoomType: Record<string, number> = {};
+        const ci = checkInDate || new Date().toISOString().split("T")[0];
+        const co = checkOutDate || new Date(Date.now() + 86400000).toISOString().split("T")[0];
+
+        (resSnap.docs || []).forEach((docSnap: any) => {
+            const res = docSnap.data();
+            if (res.status === "cancelled" || res.status === "void") return;
+            // Check date overlap: (res.checkIn < co && res.checkOut > ci)
+            const resCheckIn = res.checkIn || res.checkin || "";
+            const resCheckOut = res.checkOut || res.checkout || "";
+            if (resCheckIn && resCheckOut) {
+                if (resCheckIn < co && resCheckOut > ci) {
+                    const rtId = res.roomTypeId || res.roomType || "";
+                    if (rtId) {
+                        const count = Number(res.roomsCount || 1);
+                        bookedCountByRoomType[rtId] = (bookedCountByRoomType[rtId] || 0) + count;
+                    }
+                }
+            }
+        });
+
+        const rooms: PublicRoomType[] = roomsSnap.docs.map((d) => {
             const rData = d.data();
             const rId = d.id;
             const customRatePlans = allRatePlans.filter((rp) => rp.roomTypeId === rId || rp.roomTypeId === "all");
 
-            const defaultPrice = rData.basePrice || rData.price || 750000;
+            const defaultPrice = Number(rData.basePrice || rData.price || rData.defaultRate || 750000);
+
+            // Compute total physical rooms
+            const physList = Array.isArray(rData.physicalRooms)
+                ? rData.physicalRooms.map((p: any) => (typeof p === "string" ? p.trim() : String(p.number || "").trim())).filter(Boolean)
+                : [];
+
+            const totalRooms = Number(
+                rData.roomCount ??
+                rData.totalRooms ??
+                rData.roomsCount ??
+                (physList.length > 0 ? physList.length : (rData.quantity ?? 6))
+            );
+
+            const bookedRooms = bookedCountByRoomType[rId] || bookedCountByRoomType[rData.name] || 0;
+            const availableRooms = Math.max(0, totalRooms - bookedRooms);
+            const isSoldOut = availableRooms <= 0 || rData.stopSell === true;
 
             const plans =
                 customRatePlans.length > 0
@@ -122,7 +172,7 @@ export async function getBookingEngineData(hotelCode: string): Promise<BookingEn
                           id: rp.id,
                           name: rp.name || "Standar Tarif",
                           mealsIncluded: rp.mealsIncluded ?? false,
-                          price: rp.baseRate || defaultPrice,
+                          price: Number(rp.baseRate || defaultPrice),
                           description: rp.description || (rp.mealsIncluded ? "Termasuk Sarapan Pagi" : "Hanya Kamar (Room Only)"),
                       }))
                     : [
@@ -147,11 +197,15 @@ export async function getBookingEngineData(hotelCode: string): Promise<BookingEn
                 name: rData.name || "Kamar Tamu",
                 description: rData.description || "",
                 images: rData.images || [{ url: "/images/placeholder-room.jpg", isProfile: true }],
-                amenities: rData.amenities || ["Wi-Fi Kecepatan Tinggi", "AC", "Smart TV", "Shower Hangat"],
+                amenities: rData.amenities || ["Wi-Fi Kecepatan Tinggi", "AC Dingin", "Smart TV", "Shower Air Hangat"],
                 capacity: rData.capacity || 2,
                 roomSizeValue: rData.roomSizeValue || 28,
                 roomSizeUnit: rData.roomSizeUnit || "m²",
                 basePrice: defaultPrice,
+                totalRooms,
+                availableRooms,
+                isSoldOut,
+                stopSell: rData.stopSell ?? false,
                 ratePlans: plans,
             };
         });
