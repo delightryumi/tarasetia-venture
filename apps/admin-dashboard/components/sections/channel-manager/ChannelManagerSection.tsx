@@ -68,6 +68,7 @@ import { ChannelGoogleHotelsTab } from "./ChannelGoogleHotelsTab";
 import { ChannelDynamicPricingTab } from "./ChannelDynamicPricingTab";
 import { ChannelPromotionsTab } from "./ChannelPromotionsTab";
 import { ChannelPaymentTokenizationTab } from "./ChannelPaymentTokenizationTab";
+import { PaymentGatewayTab } from "./PaymentGatewayTab";
 import { ChannelTutorialTab } from "./ChannelTutorialTab";
 import { TravelAgentTab } from "./TravelAgentTab";
 import { db } from "@/lib/firebase";
@@ -184,7 +185,7 @@ export function ChannelManagerSection() {
     const { ratePlans, loading: loadingRates, saving: savingRates, updateRatePlan, seedDefaultRatePlans } = useRatePlans();
     const { roomTypes, loading: loadingRooms } = useRoomTypes();
 
-    type ChannelTabType = "tutorial" | "rooms" | "rateplans" | "matrix" | "mapping" | "dynamic_pricing" | "catalog" | "travel_agents" | "rules" | "google" | "promotions" | "content" | "messages" | "reviews" | "logs" | "payments" | "iframe" | "sandbox" | "golive" | "sync";
+    type ChannelTabType = "tutorial" | "rooms" | "rateplans" | "matrix" | "mapping" | "dynamic_pricing" | "catalog" | "travel_agents" | "rules" | "google" | "promotions" | "content" | "messages" | "reviews" | "logs" | "payments" | "payment_gateway" | "iframe" | "sandbox" | "golive" | "sync";
     const [activeTab, setActiveTab] = useState<ChannelTabType>("mapping");
     const [isVccModalOpen, setIsVccModalOpen] = useState<boolean>(false);
     const [isTaxesModalOpen, setIsTaxesModalOpen] = useState<boolean>(false);
@@ -195,7 +196,7 @@ export function ChannelManagerSection() {
             if (typeof window !== "undefined") {
                 const params = new URLSearchParams(window.location.search);
                 const tabParam = params.get("tab");
-                if (tabParam && ["tutorial", "rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "iframe", "sandbox", "golive", "sync"].includes(tabParam)) {
+                if (tabParam && ["tutorial", "rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "payment_gateway", "iframe", "sandbox", "golive", "sync"].includes(tabParam)) {
                     setActiveTab(tabParam as any);
                 }
             }
@@ -205,7 +206,7 @@ export function ChannelManagerSection() {
 
         const handleCustomTabChange = (e: any) => {
             const tab = typeof e.detail === "string" ? e.detail : e.detail?.tab;
-            if (tab && ["tutorial", "rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "iframe", "sandbox", "golive", "sync"].includes(tab)) {
+            if (tab && ["tutorial", "rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "payment_gateway", "iframe", "sandbox", "golive", "sync"].includes(tab)) {
                 setActiveTab(tab as any);
             }
         };
@@ -303,6 +304,13 @@ export function ChannelManagerSection() {
             title: "Online Reputation & Guest Reviews",
             subtitle: "Monitor aggregate review scores, track guest feedback, and publish responses directly to OTA platforms.",
             icon: Star
+        },
+        payment_gateway: {
+            title: "Tenant Payment Gateway & Direct Booking Engine",
+            subtitle: "Konfigurasi kredensial Midtrans, Xendit, Rekening Bank transfer, dan aturan pembayaran direct booking (Khusus Superadmin).",
+            icon: CreditCard,
+            badge: "Superadmin Only",
+            badgeColor: "#d97706"
         },
         payments: {
             title: "PCI Card Vault & Payment Processing",
@@ -3034,6 +3042,13 @@ export function ChannelManagerSection() {
             {activeTab === "dynamic_pricing" && (
                 <div className={`${styles.gridCard} ${styles.embeddedCard}`}>
                     <ChannelDynamicPricingTab hotelCode={activeHotelCode} />
+                </div>
+            )}
+
+            {/* TAB: TENANT PAYMENT GATEWAY & DIRECT BOOKING ENGINE (SUPERADMIN ONLY) */}
+            {activeTab === "payment_gateway" && (
+                <div className={`${styles.gridCard} ${styles.embeddedCard}`}>
+                    <PaymentGatewayTab hotelCode={activeHotelCode} />
                 </div>
             )}
 

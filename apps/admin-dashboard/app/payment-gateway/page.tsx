@@ -1,15 +1,18 @@
 "use client";
 
-import React from "react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { PaymentGatewaySection } from "@/components/sections/payment-gateway/PaymentGatewaySection";
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function PaymentGatewayPage() {
+export default function PaymentGatewayRedirectPage() {
+    const router = useRouter();
+
+    useEffect(() => {
+        router.replace("/channel-manager?tab=payment_gateway");
+    }, [router]);
+
     return (
-        <DashboardLayout>
-            <div className="p-4 md:p-8">
-                <PaymentGatewaySection />
-            </div>
-        </DashboardLayout>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#f8fafc" }}>
+            <span style={{ fontSize: "13px", color: "#64748b" }}>Mengalihkan ke Channel Manager &gt; Payment Gateway...</span>
+        </div>
     );
 }

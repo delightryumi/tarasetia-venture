@@ -31,6 +31,7 @@ import {
     Compass
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { isUserSuperadmin } from "@/lib/permissionCheck";
 import "./layout.css";
 
 interface ChannelManagerSidebarProps {
@@ -141,6 +142,18 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
         {
             title: "System, Security & Diagnostics",
             items: [
+                ...(isUserSuperadmin(user)
+                    ? [
+                          {
+                              id: "payment_gateway",
+                              label: "Tenant PG & Booking Engine",
+                              shortLabel: "Tenant PG",
+                              icon: CreditCard,
+                              badge: "Superadmin",
+                              badgeColor: "#d97706",
+                          },
+                      ]
+                    : []),
                 { id: "payments", label: "PCI Card Vault & Stripe", shortLabel: "PCI Vault", icon: CreditCard },
                 { id: "logs", label: "ARI Transmission Logs", shortLabel: "Audit Logs", icon: Terminal },
                 { id: "sandbox", label: "Certification Sandbox", shortLabel: "Sandbox", icon: Zap },
