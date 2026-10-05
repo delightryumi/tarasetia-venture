@@ -1,725 +1,2125 @@
-/* BookingEngine.module.css — 5-Star Luxury Claymorphism Light Design System */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,600&display=swap');
 
 .pageWrapper {
     min-height: 100vh;
-    background-color: #f1f5f9;
+    background-color: #f7f6f2;
     background-image: 
-        radial-gradient(at 0% 0%, rgba(241, 245, 249, 0.9) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(226, 232, 240, 0.6) 0px, transparent 50%),
-        radial-gradient(at 50% 100%, rgba(203, 213, 225, 0.4) 0px, transparent 60%);
-    color: #0f172a;
-    font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
-    padding-bottom: 80px;
-    selection-background-color: #1e3a2f;
-    selection-color: #ffffff;
+        radial-gradient(at 0% 0%, rgba(247, 246, 242, 0.98) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(238, 235, 227, 0.7) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(226, 222, 212, 0.45) 0px, transparent 60%);
+    color: #1c1917;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    letter-spacing: -0.015em;
+    padding-bottom: 100px;
+    box-sizing: border-box;
 }
 
-/* ── 1. Top Guarantee & Perks Bar (Accor / ASTON Style) ── */
-.topPerksBar {
-    background: #1e3a2f;
-    color: #f1f5f9;
-    padding: 8px 20px;
-    font-size: 11px;
-    font-weight: 600;
-}
-
-.topPerksInner {
-    max-width: 1240px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.perksGroup {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
-.perkItem {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: #e2e8f0;
-}
-
-.perkItem strong {
-    color: #fef08a;
-    font-weight: 800;
-}
-
-/* ── 2. Claymorphism Header ── */
-.header {
+/* ── 1. Unified Sticky Master Navigation & Search Area ── */
+.stickyHeaderArea {
+    position: -webkit-sticky;
     position: sticky;
     top: 0;
-    z-index: 40;
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-    box-shadow: 0 4px 20px rgba(166, 180, 200, 0.12);
+    z-index: 50;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+    box-shadow: 0 4px 24px rgba(15, 23, 42, 0.04);
+    padding: 0 0 10px 0;
+}
+
+.header {
+    background: transparent;
+    border-bottom: 1px solid rgba(241, 245, 249, 0.9);
 }
 
 .headerInner {
-    max-width: 1240px;
+    max-width: 1280px;
     margin: 0 auto;
-    padding: 0 20px;
-    height: 72px;
+    padding: 0 24px;
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 16px;
 }
 
+/* ── Brand Section ── */
 .brandGroup {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+    min-width: 0;
 }
 
-.btnBackHome {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    color: #334155;
+.brandLogoWrap {
     display: flex;
     align-items: center;
-    justify-content: center;
-    box-shadow: 4px 4px 10px rgba(166, 180, 200, 0.25), -4px -4px 10px #ffffff;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    text-decoration: none;
+    max-height: 40px;
 }
 
-.btnBackHome:hover {
-    transform: translateY(-1px);
-    box-shadow: 6px 6px 14px rgba(166, 180, 200, 0.35), -6px -6px 14px #ffffff;
-    color: #0f172a;
+.brandLogoImg {
+    max-height: 38px;
+    max-width: 140px;
+    object-fit: contain;
 }
 
-.hotelBadge {
-    font-size: 10px;
+.brandMetaDivider {
+    width: 1px;
+    height: 26px;
+    background: #e2e8f0;
+}
+
+.brandMetaInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.hotelStarsRow {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.hotelStars {
+    color: #f59e0b;
+    display: inline-flex;
+    gap: 1.5px;
+}
+
+.badgeOfficialText {
+    font-size: 9.5px;
     font-weight: 800;
-    letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: #1e3a2f;
-    display: block;
+    letter-spacing: 0.08em;
+    background: #ecfdf5;
+    color: #059669;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid #a7f3d0;
+}
+
+.hotelLocationText {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .hotelName {
-    font-size: 17px;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 18px;
     font-weight: 800;
     color: #0f172a;
     margin: 0;
     line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.02em;
 }
 
-.badgeOfficial {
+/* ── Center Stepper Capsule ── */
+.stepperCapsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    padding: 3px 6px;
+}
+
+.stepPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.stepPillActive {
+    background: #ffffff;
+    color: var(--theme-primary, #6D2B35);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.stepPillDone {
+    color: #059669;
+}
+
+.stepPillInactive {
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.stepPillNum {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9.5px;
+    font-weight: 800;
+}
+
+.stepPillActive .stepPillNum {
+    background: var(--theme-primary, #6D2B35);
+    color: #ffffff;
+}
+
+.stepPillDone .stepPillNum {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.stepPillInactive .stepPillNum {
+    background: #e2e8f0;
+    color: #64748b;
+}
+
+.stepPillArrow {
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Right Header Actions ── */
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.guaranteePill {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 7px 16px;
-    border-radius: 9999px;
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #bbf7d0;
-    font-size: 12px;
-    font-weight: 800;
-    box-shadow: 4px 4px 10px rgba(187, 247, 208, 0.45), -4px -4px 10px #ffffff;
-}
-
-/* ── 3. Clay Filter Search & Promo Bar ── */
-.searchBarCard {
-    background: #ffffff;
-    border-radius: 30px;
-    padding: 24px 28px;
-    box-shadow: 
-        14px 14px 30px rgba(166, 180, 200, 0.35),
-        -14px -14px 30px rgba(255, 255, 255, 0.95),
-        inset 2px 2px 4px rgba(255, 255, 255, 0.9),
-        inset -2px -2px 4px rgba(166, 180, 200, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    margin-bottom: 28px;
-}
-
-.searchGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-}
-
-.fieldGroup {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.fieldLabel {
     font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #475569;
-    display: flex;
+    font-weight: 700;
+    color: #047857;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 9999px;
+    padding: 5px 12px;
+}
+
+.hotlinePill {
+    display: inline-flex;
     align-items: center;
     gap: 6px;
-}
-
-.clayInput {
-    width: 100%;
-    padding: 12px 16px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #1e293b;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #0f172a;
-    box-shadow: inset 3px 3px 6px rgba(166, 180, 200, 0.2), inset -3px -3px 6px #ffffff;
+    border-radius: 9999px;
+    padding: 5px 13px;
+    text-decoration: none;
     transition: all 0.2s ease;
+}
+
+.hotlinePill:hover {
+    background: #ffffff;
+    border-color: var(--theme-primary, #6D2B35);
+    color: var(--theme-primary, #6D2B35);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.hotlinePill svg {
+    color: var(--theme-primary, #6D2B35);
+}
+
+/* ── Search Bar Section ── */
+.searchBarSection {
+    max-width: 1280px;
+    margin: 8px auto 0 auto;
+    padding: 0 24px;
     box-sizing: border-box;
 }
 
-.clayInput:focus {
-    outline: none;
-    border-color: #1e3a2f;
+.searchBarInner {
     background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(30, 58, 47, 0.12), inset 1px 1px 2px rgba(255, 255, 255, 0.8);
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 8px 14px;
+    display: grid;
+    grid-template-columns: 1.25fr auto 1.25fr 1fr 1.35fr;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
 }
 
-.promoInputWrap {
+.searchCol {
     display: flex;
-    gap: 8px;
+    flex-direction: column;
+    gap: 3px;
+    padding-right: 8px;
+    border-right: 1px solid #f1f5f9;
+}
+
+.searchColNight {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.searchColPromo {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.searchFieldLabel {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.searchFieldLabel svg {
+    color: var(--theme-primary, #6D2B35);
+}
+
+.searchFieldInput {
+    border: none;
+    background: transparent;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    padding: 3px 0;
+    outline: none;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.searchFieldSelect {
+    border: none;
+    background: transparent;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    padding: 3px 0;
+    outline: none;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.nightBadge {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.promoForm {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.promoInput {
+    flex: 1;
+    min-width: 0;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.promoInput:focus {
+    background: #ffffff;
+    border-color: var(--theme-primary, #6D2B35);
 }
 
 .btnApplyPromo {
-    padding: 0 16px;
-    border-radius: 14px;
-    background: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    color: #1e293b;
-    font-size: 12px;
-    font-weight: 800;
+    background: var(--theme-primary, #6D2B35);
+    color: #ffffff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 700;
     cursor: pointer;
-    box-shadow: 3px 3px 8px rgba(166, 180, 200, 0.2), -3px -3px 8px #ffffff;
     transition: all 0.15s ease;
     white-space: nowrap;
 }
 
 .btnApplyPromo:hover {
-    background: #1e3a2f;
-    color: #ffffff;
-    border-color: #1e3a2f;
+    background: var(--theme-primary-hover, #551e26);
 }
 
-.searchBarFooter {
-    margin-top: 18px;
-    padding-top: 14px;
-    border-top: 1px solid #f1f5f9;
+.appliedPromoBtn {
+    background: var(--theme-light, #fdf2f4);
+    border: 1px solid var(--theme-border, rgba(109, 43, 53, 0.25));
+    border-radius: 8px;
+    padding: 6px 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    color: var(--theme-primary, #6D2B35);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 2px;
+}
+
+/* ── Trust Ribbon ── */
+.trustRibbon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.trustItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.trustDivider {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #cbd5e1;
+}
+
+/* ── 5. Main Content 2-Column Grid ── */
+.mainContainer {
+    max-width: 1280px;
+    margin: 18px auto 0 auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+    align-items: start;
+}
+
+/* ── 6. Compact Proportional Room Card ── */
+.roomList {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.roomCard {
+    background: #ffffff;
+    border: 1px solid #e7e5e4;
+    border-radius: 16px;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 18px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.roomCard:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+    border-color: #d6d3d1;
+}
+
+.roomLeftCol {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.roomTitle {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 16.5px;
+    font-weight: 800;
+    color: #1c1917;
+    margin: 0 0 2px 0;
+    letter-spacing: -0.02em;
+}
+
+.roomMediaContainer {
+    position: relative;
+    width: 100%;
+    height: 160px;
+    min-height: 160px;
+    border-radius: 12px;
+    background: #e7e5e4;
+    overflow: hidden;
+}
+
+.roomImage {
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.roomCard:hover .roomImage {
+    transform: scale(1.03);
+}
+
+.roomMediaOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.roomMediaTop {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    font-size: 12px;
-    color: #64748b;
+    gap: 6px;
 }
 
-/* Quick Filter Pills (Bed Type, Facilities) */
-.filterPillsRow {
+.scarcityBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(220, 38, 38, 0.92);
+    color: #ffffff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 800;
+    backdrop-filter: blur(6px);
+}
+
+.roomOccupancyRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #475569;
+    margin-top: 3px;
+    flex-wrap: wrap;
+}
+
+.occupancyText {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.occupancyDivider {
+    color: #cbd5e1;
+}
+
+.btnRoomDetailLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    padding: 2px 0;
+    color: var(--theme-primary, #6D2B35);
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    width: fit-content;
+    margin-top: 2px;
+}
+
+.btnRoomDetailLink:hover {
+    transform: translateX(2px);
+    text-decoration: underline;
+}
+
+.roomBody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+/* Key Specs Pills */
+.specsRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f5f5f4;
+}
+
+.specPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #57534e;
+}
+
+.specPill svg {
+    color: #78716c;
+}
+
+/* Amenities Grid */
+.amenitiesList {
+    display: flex;
+    align-items: center;
+    gap: 6px 12px;
+    flex-wrap: wrap;
+    margin: 0;
+}
+
+.amenityTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #78716c;
+    font-weight: 600;
+}
+
+.amenityTag svg {
+    color: var(--theme-primary, #6D2B35);
+}
+
+/* ── 7. Rate Plans Selection Box ── */
+.ratePlansContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.ratePlanCard {
+    border: 1px solid #e7e5e4;
+    border-radius: 12px;
+    padding: 10px 14px;
+    background: #fafaf9;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.ratePlanCard:hover {
+    background: #ffffff;
+    border-color: #d6d3d1;
+}
+
+.ratePlanCardSelected {
+    background: #ffffff;
+    border-color: var(--theme-primary, #6D2B35);
+    box-shadow: 0 0 0 1.5px var(--theme-primary, #6D2B35), 0 2px 10px var(--theme-shadow, rgba(109, 43, 53, 0.06));
+}
+
+.ratePlanInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.ratePlanName {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #1c1917;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.breakfastBadge {
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 10.5px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.ratePlanDesc {
+    font-size: 11.5px;
+    color: #78716c;
+    margin: 0;
+    line-height: 1.35;
+}
+
+.ratePlanPerks {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 24px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+}
+
+.ratePerkItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #059669;
+}
+
+.ratePlanPricing {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.strikePrice {
+    font-size: 11px;
+    color: #a8a29e;
+    text-decoration: line-through;
+    font-variant-numeric: tabular-nums;
+}
+
+.actualPrice {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1c1917;
+    font-variant-numeric: tabular-nums;
+}
+
+.pricePerNight {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #78716c;
+}
+
+.btnSelectRate {
+    background: var(--theme-primary, #6D2B35);
+    color: #ffffff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btnSelectRate:hover {
+    background: var(--theme-primary-hover, #551e26);
+    transform: translateY(-1px);
+}
+
+.btnSelectRateActive {
+    background: #1c1917;
+    color: #ffffff;
+}
+
+/* ── 8. Right Sticky Reservation Summary Ledger ── */
+.summaryLedger {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 185px;
+    background: #ffffff;
+    border: 1px solid #e7e5e4;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+}
+
+.sidebarPriceHoldBanner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 13px;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 12px;
+    color: #e11d48;
+    font-size: 11.5px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(225, 29, 72, 0.06);
+}
+
+.sidebarPriceHoldTimer {
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    color: #be123c;
+    background: #ffffff;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid #fecdd3;
+    letter-spacing: 0.02em;
+}
+
+.summaryHeader {
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f5f5f4;
+}
+
+.summaryHotelName {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 17.5px;
+    font-weight: 800;
+    color: #1c1917;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.02em;
+}
+
+.stayDateRange {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #78716c;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.selectedRoomSummary {
+    padding: 16px 0;
+    border-bottom: 1px solid #f5f5f4;
+}
+
+.selectedRoomTitle {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #1c1917;
+    margin: 0 0 4px 0;
+}
+
+.selectedRateTitle {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--theme-primary, #6D2B35);
+    margin: 0;
+}
+
+/* Pricing Breakdown Ledger */
+.priceBreakdown {
+    padding: 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.breakdownRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #57534e;
+}
+
+.breakdownRowDiscount {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+.totalRow {
+    padding-top: 14px;
+    border-top: 1px dashed #e7e5e4;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+}
+
+.totalLabel {
+    font-size: 13px;
+    font-weight: 800;
+    color: #1c1917;
+    display: flex;
+    flex-direction: column;
+}
+
+.totalSubtext {
+    font-size: 11px;
+    font-weight: 600;
+    color: #78716c;
+}
+
+.totalValue {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--theme-primary, #6D2B35);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+}
+
+.btnProceed {
+    width: 100%;
+    margin-top: 18px;
+    background: var(--theme-primary, #6D2B35);
+    color: #ffffff;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px var(--theme-shadow, rgba(109, 43, 53, 0.25));
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btnProceed:hover:not(:disabled) {
+    background: var(--theme-primary-hover, #551e26);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--theme-shadow, rgba(109, 43, 53, 0.35));
+}
+
+.btnProceed:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.guaranteeBadge {
+    margin-top: 14px;
+    background: #fafaf9;
+    border: 1px solid #f5f5f4;
+    padding: 10px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #57534e;
+}
+
+/* ── 9. Step 2 Checkout Form & Multi-Gateway Payment ── */
+.checkoutContainer {
+    background: #ffffff;
+    border: 1px solid #e7e5e4;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.checkoutSectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.sectionHeaderIcon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--theme-light, #fdf2f4);
+    color: var(--theme-primary, #6D2B35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkoutTitle {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 19px;
+    font-weight: 800;
+    color: #1c1917;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.formGroupFull {
+    grid-column: 1 / -1;
+}
+
+.formLabel {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #44403c;
+    margin-bottom: 6px;
+}
+
+.formInput {
+    width: 100%;
+    background: #fafaf9;
+    border: 1px solid #e7e5e4;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 13.5px;
+    color: #1c1917;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+.formInput:focus {
+    background: #ffffff;
+    border-color: var(--theme-primary, #6D2B35);
+    box-shadow: 0 0 0 3px var(--theme-light, rgba(109, 43, 53, 0.1));
+}
+
+.formTextarea {
+    width: 100%;
+    background: #fafaf9;
+    border: 1px solid #e7e5e4;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 13.5px;
+    color: #1c1917;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Payment Gateway Selector */
+.paymentGatewayGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.paymentOptionCard {
+    border: 1px solid #e7e5e4;
+    border-radius: 12px;
+    padding: 14px;
+    background: #fafaf9;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.paymentOptionCard:hover {
+    background: #ffffff;
+    border-color: #d6d3d1;
+}
+
+.paymentOptionSelected {
+    background: #ffffff;
+    border-color: var(--theme-primary, #6D2B35);
+    box-shadow: 0 0 0 1.5px var(--theme-primary, #6D2B35);
+}
+
+/* Bank Account Detail Cards */
+.bankList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.bankCard {
+    background: #fafaf9;
+    border: 1px solid #e7e5e4;
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.bankInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.bankName {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #1c1917;
+}
+
+.bankAccount {
+    font-size: 15px;
+    font-weight: 900;
+    color: var(--theme-primary, #6D2B35);
+    letter-spacing: 0.04em;
+}
+
+.bankHolder {
+    font-size: 12px;
+    color: #78716c;
+}
+
+.btnCopy {
+    background: #ffffff;
+    border: 1px solid #d6d3d1;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #44403c;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s ease;
+}
+
+.btnCopy:hover {
+    background: #f5f5f4;
+    color: #1c1917;
+}
+
+/* ── 10. iOS Smooth Spring Room Detail Modal ── */
+@keyframes iosBackdropFadeIn {
+    from {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+        -webkit-backdrop-filter: blur(0px);
+    }
+    to {
+        opacity: 1;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+    }
+}
+
+@keyframes iosModalSpringIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.92) translateY(24px);
+    }
+    60% {
+        opacity: 1;
+        transform: scale(1.01) translateY(-2px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modalBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    animation: iosBackdropFadeIn 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.modalCard {
+    background: #ffffff;
+    border-radius: 20px;
+    max-width: 860px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+    position: relative;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    animation: iosModalSpringIn 0.38s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.modalHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 18px;
+}
+
+.modalHeaderLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.modalTitle {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.modalSubtitle {
+    font-size: 12.5px;
+    color: #64748b;
+    margin: 0;
+    font-weight: 500;
+}
+
+.modalSubtitle strong {
+    color: var(--theme-primary, #6D2B35);
+    font-weight: 800;
+}
+
+.modalCloseBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.modalCloseBtn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.modalBodyGrid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 22px;
+    align-items: start;
+}
+
+.modalGalleryCol {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.modalBigPhotoWrap {
+    position: relative;
+    width: 100%;
+    height: 250px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #e2e8f0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.modalBigPhotoImg {
+    object-fit: cover;
+    transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.modalNoPhoto {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #f8fafc;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.modalThumbRow {
+    display: flex;
+    gap: 8px;
     overflow-x: auto;
     padding-bottom: 4px;
 }
 
-.filterPill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: 9999px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    font-size: 12px;
-    font-weight: 700;
-    color: #475569;
-    cursor: pointer;
-    box-shadow: 4px 4px 10px rgba(166, 180, 200, 0.2), -4px -4px 10px #ffffff;
-    transition: all 0.15s ease;
-    white-space: nowrap;
-}
-
-.filterPillActive {
-    background: #1e3a2f;
-    color: #ffffff;
-    border-color: #1e3a2f;
-    box-shadow: 4px 4px 12px rgba(30, 58, 47, 0.3);
-}
-
-/* ── 4. 5-Star Clay Room Cards ── */
-.roomCard {
-    background: #ffffff;
-    border-radius: 32px;
-    overflow: hidden;
-    margin-bottom: 32px;
-    box-shadow: 
-        14px 14px 32px rgba(166, 180, 200, 0.35),
-        -14px -14px 32px rgba(255, 255, 255, 0.95),
-        inset 2px 2px 4px rgba(255, 255, 255, 0.9),
-        inset -2px -2px 4px rgba(166, 180, 200, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.roomCard:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-        18px 18px 40px rgba(166, 180, 200, 0.45),
-        -18px -18px 40px rgba(255, 255, 255, 1);
-}
-
-.roomGrid {
-    display: grid;
-    grid-template-columns: 1fr;
-}
-
-@media (min-width: 992px) {
-    .roomGrid {
-        grid-template-columns: 460px 1fr;
-    }
-}
-
-.roomImageArea {
+.modalThumbBtn {
     position: relative;
-    min-height: 280px;
+    width: 58px;
+    height: 44px;
+    min-width: 58px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid transparent;
     background: #e2e8f0;
-}
-
-.btnViewGallery {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(8px);
-    padding: 6px 12px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 700;
-    color: #0f172a;
-    border: 1px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    gap: 5px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    padding: 0;
     transition: all 0.15s ease;
 }
 
-.btnViewGallery:hover {
-    background: #1e3a2f;
-    color: #ffffff;
-    border-color: #1e3a2f;
+.modalThumbBtnActive {
+    border-color: var(--theme-primary, #6D2B35);
+    transform: scale(1.04);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
-.badgeSize {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(8px);
-    padding: 6px 12px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 700;
-    color: #0f172a;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+.modalThumbImg {
+    object-fit: cover;
 }
 
-/* Inventory Badges */
-.badgeStockWrap {
-    position: absolute;
-    bottom: 16px;
-    left: 16px;
-}
-
-.badgeStockAvailable {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: 9999px;
-    background: #ffffff;
-    color: #15803d;
-    font-size: 11px;
-    font-weight: 800;
-    box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.15);
-    border: 1px solid #bbf7d0;
-}
-
-.badgeStockUrgent {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: 9999px;
-    background: #fef3c7;
-    color: #b45309;
-    font-size: 11px;
-    font-weight: 800;
-    box-shadow: 4px 4px 12px rgba(180, 83, 9, 0.25);
-    border: 1px solid #fde68a;
-    animation: pulse 2s infinite;
-}
-
-.badgeStockSoldOut {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: 9999px;
-    background: #fee2e2;
-    color: #b91c1c;
-    font-size: 11px;
-    font-weight: 800;
-    box-shadow: 4px 4px 12px rgba(185, 28, 28, 0.25);
-    border: 1px solid #fecaca;
-}
-
-.roomContent {
-    padding: 26px 30px;
+.modalInfoCol {
     display: flex;
     flex-direction: column;
+    gap: 14px;
+}
+
+.modalSection {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modalSectionTitle {
+    font-size: 12px;
+    font-weight: 800;
+    color: #1e293b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0;
+}
+
+.modalFacilityGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+}
+
+.facilityPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.facilityIcon {
+    color: #059669;
+}
+
+.modalSpecsList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.modalSpecItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #475569;
+}
+
+.modalSpecItem strong {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+/* ── 10.5 Language & Currency Selectors & Modals ── */
+.langPillBtn,
+.currencyPillBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 9999px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.langPillBtn:hover,
+.currencyPillBtn:hover {
+    background: #ffffff;
+    border-color: var(--theme-primary, #6D2B35);
+    color: var(--theme-primary, #6D2B35);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+}
+
+.currencyPillBtn {
+    border-color: var(--theme-border, #6D2B35);
+    color: var(--theme-primary, #6D2B35);
+    background: var(--theme-light, #fdf2f4);
+}
+
+.langFlagIcon {
+    font-size: 15px;
+    line-height: 1;
+    display: inline-block;
+}
+
+.selectorDropdownIcon {
+    font-size: 10px;
+    color: #64748b;
+    transition: transform 0.2s ease;
+}
+
+.langPillBtn:hover .selectorDropdownIcon,
+.currencyPillBtn:hover .selectorDropdownIcon {
+    color: var(--theme-primary, #6D2B35);
+}
+
+/* Modal Selector Content */
+.selectorModalCard {
+    background: #ffffff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 840px;
+    max-height: 88vh;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: iosModalSpringIn 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.selectorModalHeader {
+    display: flex;
+    align-items: center;
     justify-content: space-between;
+    padding: 20px 24px 14px 24px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.selectorModalTitle {
+    font-size: 17px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+
+.selectorModalBody {
+    padding: 18px 24px 24px 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     gap: 20px;
 }
 
-.roomTitle {
-    font-size: 21px;
-    font-weight: 800;
-    color: #0f172a;
-    margin: 0;
+.selectorSearchWrap {
+    position: relative;
+    display: flex;
+    align-items: center;
 }
 
-.roomDescription {
+.selectorSearchIcon {
+    position: absolute;
+    left: 14px;
+    color: #94a3b8;
+    pointer-events: none;
     font-size: 13px;
-    color: #64748b;
-    margin: 6px 0 0 0;
-    line-height: 1.5;
 }
 
-.specsRow {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-top: 10px;
-    font-size: 12px;
-    color: #475569;
-    font-weight: 600;
-}
-
-.specItem {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.amenityChips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
-}
-
-.chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
+.selectorSearchInput {
+    width: 100%;
+    padding: 11px 16px 11px 38px;
+    font-size: 13.5px;
+    border: 1.5px solid #e2e8f0;
     border-radius: 12px;
     background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    font-size: 11px;
-    font-weight: 600;
-    color: #475569;
-    box-shadow: 2px 2px 6px rgba(166, 180, 200, 0.15), -2px -2px 6px #ffffff;
-}
-
-/* ── 5. Multi-Rate Plan Cards (Clay) ── */
-.ratePlanSection {
-    border-top: 1px solid #f1f5f9;
-    padding-top: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.ratePlanGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 14px;
-}
-
-.clayRateCard {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 22px;
-    padding: 20px;
-    box-shadow: 
-        6px 6px 16px rgba(166, 180, 200, 0.25),
-        -6px -6px 16px rgba(255, 255, 255, 0.95),
-        inset 1px 1px 2px rgba(255, 255, 255, 0.9);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 16px;
-    transition: all 0.2s ease;
-}
-
-.clayRateCard:hover {
-    background: #ffffff;
-    border-color: #cbd5e1;
-    transform: translateY(-2px);
-    box-shadow: 
-        8px 8px 20px rgba(166, 180, 200, 0.35),
-        -8px -8px 20px rgba(255, 255, 255, 1);
-}
-
-.ratePlanName {
-    font-size: 14px;
-    font-weight: 800;
     color: #0f172a;
+    outline: none;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.selectorSearchInput:focus {
+    background: #ffffff;
+    border-color: var(--theme-primary, #6D2B35);
+    box-shadow: 0 0 0 3px var(--theme-light, rgba(109, 43, 53, 0.1));
+}
+
+.selectorSectionGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.selectorGroupTitle {
+    font-size: 12px;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     margin: 0;
 }
 
-.ratePlanDesc {
-    font-size: 11px;
-    color: #64748b;
-    margin: 4px 0 0 0;
-    line-height: 1.4;
+.selectorGrid4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
 }
 
-.rateInclusions {
+/* Item Language Card */
+.langCardItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.32, 0.72, 0, 1);
+    text-align: left;
+    width: 100%;
+}
+
+.langCardItem:hover {
+    border-color: var(--theme-primary, #6D2B35);
+    background: #fafaf9;
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.langCardActive {
+    border-color: var(--theme-primary, #6D2B35);
+    background: var(--theme-light, #fdf2f4);
+    box-shadow: 0 0 0 1px var(--theme-primary, #6D2B35);
+}
+
+.langCardFlag {
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.langCardTextCol {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    margin-top: 8px;
-    font-size: 11px;
-    color: #166534;
+    min-width: 0;
+}
+
+.langCardName {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.langCardSub {
+    font-size: 10.5px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Item Currency Card */
+.currencyCardItem {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.32, 0.72, 0, 1);
+    text-align: left;
+    width: 100%;
+}
+
+.currencyCardItem:hover {
+    border-color: var(--theme-primary, #6D2B35);
+    background: #fafaf9;
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.currencyCardActive {
+    border-color: var(--theme-primary, #6D2B35);
+    background: var(--theme-light, #fdf2f4);
+    box-shadow: 0 0 0 1px var(--theme-primary, #6D2B35);
+}
+
+.currencyCardTop {
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.currencyCardActive .currencyCardTop {
+    color: var(--theme-primary, #6D2B35);
+}
+
+.currencyCardSub {
+    font-size: 10.5px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── 10.6 Custom Alert Notification Modal ── */
+.alertModalCard {
+    background: #ffffff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 420px;
+    padding: 24px 22px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    animation: iosModalSpringIn 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+    box-sizing: border-box;
+}
+
+.alertIconWrap {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.alertIconError {
+    background: #fef2f2;
+    color: #ef4444;
+    border: 1px solid #fee2e2;
+}
+
+.alertIconSuccess {
+    background: #f0fdf4;
+    color: #10b981;
+    border: 1px solid #dcfce7;
+}
+
+.alertIconWarning {
+    background: #fffbeb;
+    color: #f59e0b;
+    border: 1px solid #fef3c7;
+}
+
+.alertIconInfo {
+    background: var(--theme-light, #fdf2f4);
+    color: var(--theme-primary, #6D2B35);
+    border: 1px solid var(--theme-border, #fecdd3);
+}
+
+.alertTitle {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 16.5px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.alertMessage {
+    font-size: 13.5px;
+    color: #64748b;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.alertBtnOk {
+    width: 100%;
+    padding: 12px 20px;
+    background: var(--theme-primary, #6D2B35);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+    box-shadow: 0 2px 8px var(--theme-shadow, rgba(109, 43, 53, 0.2));
+    margin-top: 4px;
+}
+
+.alertBtnOk:hover {
+    background: var(--theme-primary-hover, #531f28);
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 14px var(--theme-shadow, rgba(109, 43, 53, 0.3));
+}
+
+.alertBtnOk:active {
+    transform: translateY(0);
+}
+
+/* ── 11. Mobile Floating Bottom Bar ── */
+.mobileStickyBar {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: #ffffff;
+    border-top: 1px solid #e7e5e4;
+    padding: 12px 16px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.mobileStickyInner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.mobilePriceWrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.mobilePriceLabel {
+    font-size: 10.5px;
+    color: #78716c;
     font-weight: 600;
 }
 
-.ratePriceRow {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    padding-top: 12px;
-    border-top: 1px solid #e2e8f0;
-}
-
-.priceLabel {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #94a3b8;
-    display: block;
-}
-
-.priceAmount {
-    font-size: 18px;
-    font-weight: 900;
-    color: #1e3a2f;
-}
-
-.priceNight {
-    font-size: 11px;
-    color: #64748b;
-    font-weight: 500;
-}
-
-/* ── 6. Clay Buttons ── */
-.clayBtnPrimary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 11px 20px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #1e3a2f 0%, #2e5949 100%);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    font-size: 12px;
+.mobilePriceValue {
+    font-size: 17px;
     font-weight: 800;
-    cursor: pointer;
-    box-shadow: 
-        5px 5px 14px rgba(30, 58, 47, 0.35),
-        -5px -5px 14px rgba(255, 255, 255, 0.9),
-        inset 1px 1px 2px rgba(255, 255, 255, 0.5);
-    transition: all 0.15s ease;
-    text-decoration: none;
+    color: var(--theme-primary, #6D2B35);
 }
 
-.clayBtnPrimary:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 
-        7px 7px 18px rgba(30, 58, 47, 0.45),
-        -7px -7px 18px rgba(255, 255, 255, 1);
-}
+/* ── 12. Responsive Breakpoints ── */
+@media (max-width: 1024px) {
+    .mainContainer {
+        grid-template-columns: 1fr;
+    }
 
-.clayBtnPrimary:active:not(:disabled) {
-    transform: scale(0.97);
-    box-shadow: 
-        inset 3px 3px 6px rgba(15, 30, 24, 0.6),
-        inset -2px -2px 4px rgba(255, 255, 255, 0.2);
-}
+    .summaryLedger {
+        position: static;
+        margin-top: 24px;
+    }
 
-.clayBtnPrimary:disabled {
-    background: #cbd5e1;
-    color: #94a3b8;
-    box-shadow: none;
-    border: none;
-    cursor: not-allowed;
-}
+    .stepperCapsule {
+        display: none;
+    }
 
-/* ── 7. Stay Enhancements & Add-ons (Aston / Accor Style) ── */
-.addonsCard {
-    background: #ffffff;
-    border-radius: 28px;
-    padding: 24px 28px;
-    margin-bottom: 24px;
-    box-shadow: 
-        10px 10px 24px rgba(166, 180, 200, 0.25),
-        -10px -10px 24px rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-}
+    .searchBarInner {
+        grid-template-columns: 1fr 1fr;
+    }
 
-.addonsGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 14px;
-    margin-top: 14px;
-}
+    .searchCol {
+        border-right: none;
+        padding-right: 0;
+    }
 
-.addonItem {
-    padding: 16px;
-    border-radius: 18px;
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 10px;
-    transition: all 0.2s ease;
-}
-
-.addonItemActive {
-    background: #f0fdf4;
-    border-color: #1e3a2f;
-    box-shadow: 0 4px 12px rgba(30, 58, 47, 0.1);
-}
-
-/* ── 8. Step 2 & 3 Checkout Layout ── */
-.checkoutLayout {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 28px;
-}
-
-@media (min-width: 992px) {
-    .checkoutLayout {
-        grid-template-columns: 1fr 420px;
+    .searchColNight {
+        display: none;
     }
 }
 
-.clayBox {
-    background: #ffffff;
-    border-radius: 30px;
-    padding: 28px;
-    box-shadow: 
-        14px 14px 30px rgba(166, 180, 200, 0.35),
-        -14px -14px 30px rgba(255, 255, 255, 0.95),
-        inset 2px 2px 4px rgba(255, 255, 255, 0.9),
-        inset -2px -2px 4px rgba(166, 180, 200, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.9);
+@media (max-width: 768px) {
+    .headerInner {
+        height: 56px;
+        padding: 0 16px;
+    }
+
+    .brandMetaDivider,
+    .brandMetaInfo,
+    .guaranteePill {
+        display: none;
+    }
+
+    .searchBarSection {
+        padding: 0 14px;
+    }
+
+    .searchBarInner {
+        grid-template-columns: 1fr;
+        padding: 10px 14px;
+        gap: 10px;
+    }
+
+    .trustRibbon {
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-start;
+        padding: 0 4px;
+    }
+
+    .trustDivider {
+        display: none;
+    }
+
+    .mainContainer {
+        padding: 0 14px;
+        margin-top: 14px;
+    }
+
+    .roomCard {
+        grid-template-columns: 1fr;
+        padding: 14px;
+        gap: 14px;
+    }
+
+    .roomMediaContainer {
+        height: 180px;
+        min-height: 180px;
+    }
+
+    .ratePlanCard {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .ratePlanPricing {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding-top: 10px;
+        border-top: 1px solid #f5f5f4;
+    }
+
+    .formGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .paymentGatewayGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .galleryGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .modalCard {
+        padding: 16px;
+        max-height: 94vh;
+        border-radius: 16px;
+    }
+
+    .modalBodyGrid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .modalBigPhotoWrap {
+        height: 200px;
+    }
+
+    .mobileStickyBar {
+        display: block;
+    }
+
+    .selectorGrid4 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .selectorModalCard {
+        max-height: 92vh;
+        border-radius: 16px;
+    }
+
+    .selectorModalHeader {
+        padding: 16px 18px 12px 18px;
+    }
+
+    .selectorModalBody {
+        padding: 14px 18px 20px 18px;
+    }
 }
 
-.summarySticky {
-    position: sticky;
-    top: 90px;
+@media (max-width: 480px) {
+    .selectorGrid4 {
+        grid-template-columns: 1fr;
+    }
 }
 
-.summaryRow {
-    display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    color: #475569;
-    margin-bottom: 10px;
+/* ── 8. Holding Price Badge & Booking Protection ── */
+.priceHoldBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 9999px;
+    color: #e11d48;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    box-shadow: 0 1px 4px rgba(225, 29, 72, 0.08);
 }
 
-.summaryTotalRow {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding-top: 14px;
-    border-top: 2px dashed #e2e8f0;
+.priceHoldTimer {
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    color: #be123c;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ── 9. Payment Option Card ── */
+.paymentOptionBox {
     margin-top: 14px;
+    padding: 16px 18px;
+    background: #fdf2f4;
+    border: 1.5px solid var(--theme-primary, #6D2B35);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
 }
 
-.totalPrice {
-    font-size: 24px;
-    font-weight: 900;
-    color: #1e3a2f;
-}
-
-.confirmCard {
-    max-width: 640px;
-    margin: 40px auto;
-    text-align: center;
-}
-
-.successIconWrap {
-    width: 68px;
-    height: 68px;
+.paymentRadioActive {
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: #dcfce7;
-    color: #166534;
+    border: 2px solid var(--theme-primary, #6D2B35);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 20px auto;
-    box-shadow: 
-        8px 8px 20px rgba(187, 247, 208, 0.6),
-        -8px -8px 20px #ffffff,
-        inset 2px 2px 4px rgba(255, 255, 255, 0.9);
+    flex-shrink: 0;
+    margin-top: 1px;
+    background: #ffffff;
 }
 
-.bookingCodeBox {
-    background: #f8fafc;
-    border-radius: 18px;
-    padding: 16px;
-    margin: 20px 0;
-    box-shadow: inset 3px 3px 6px rgba(166, 180, 200, 0.2), inset -3px -3px 6px #ffffff;
-    border: 1px solid #e2e8f0;
+.paymentRadioDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--theme-primary, #6D2B35);
 }
 
-.bookingCodeText {
-    font-size: 20px;
-    font-weight: 900;
-    letter-spacing: 0.1em;
-    color: #1e3a2f;
-    font-family: monospace;
-    user-select: all;
+.paymentOptionInfo {
+    flex: 1;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.75; }
+.paymentOptionTitle {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #1c1917;
+    margin: 0 0 3px 0;
+    letter-spacing: -0.01em;
 }
+
+.paymentOptionDesc {
+    font-size: 12px;
+    color: #78716c;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* ── 10. Reassurance Alert & Terms Checkbox ── */
+.securePriceAlert {
+    text-align: center;
+    color: #059669;
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.termsAgreementWrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: #44403c;
+    margin-bottom: 18px;
+    user-select: none;
+    text-align: center;
+    flex-wrap: wrap;
+}
+
+.termsCheckbox {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--theme-primary, #6D2B35);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.linkPolicy {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--theme-primary, #6D2B35);
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+    transition: opacity 0.15s ease;
+}
+
+.linkPolicy:hover {
+    opacity: 0.75;
+}
+
+.btnConfirmFull {
+    width: 100%;
+    padding: 15px 24px;
+    background: var(--theme-primary, #6D2B35);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 14px rgba(109, 43, 53, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.btnConfirmFull:hover:not(:disabled) {
+    background: var(--theme-primary-hover, #56212a);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(109, 43, 53, 0.35);
+}
+
+.btnConfirmFull:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btnConfirmFull:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ── 11. Policy & Terms Modal Content ── */
+.policyModalCard {
+    background: #ffffff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: springSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.policyModalHeader {
+    padding: 18px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafafa;
+}
+
+.policyModalHeaderTitle {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1c1917;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.policyModalBody {
+    padding: 20px 24px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #44403c;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.policySection {
+    background: #fafaf9;
+    border: 1px solid #e7e5e4;
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+
+.policySectionTitle {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #1c1917;
+    margin: 0 0 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.policySection p {
+    margin: 0 0 6px 0;
+    color: #57534e;
+}
+
+.policySection p:last-child {
+    margin-bottom: 0;
+}
+
+.policyModalFooter {
+    padding: 14px 24px;
+    border-top: 1px solid #f1f5f9;
+    background: #fafafa;
+    display: flex;
+    justify-content: flex-end;
+}
+

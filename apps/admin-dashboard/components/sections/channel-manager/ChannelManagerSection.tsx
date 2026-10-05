@@ -71,6 +71,7 @@ import { ChannelPaymentTokenizationTab } from "./ChannelPaymentTokenizationTab";
 import { PaymentGatewayTab } from "./PaymentGatewayTab";
 import { ChannelTutorialTab } from "./ChannelTutorialTab";
 import { TravelAgentTab } from "./TravelAgentTab";
+import { ChannelGroupsTab } from "./ChannelGroupsTab";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, setDoc, deleteField } from "firebase/firestore";
 import { toast } from "sonner";
@@ -185,8 +186,8 @@ export function ChannelManagerSection() {
     const { ratePlans, loading: loadingRates, saving: savingRates, updateRatePlan, seedDefaultRatePlans } = useRatePlans();
     const { roomTypes, loading: loadingRooms } = useRoomTypes();
 
-    type ChannelTabType = "tutorial" | "rooms" | "rateplans" | "matrix" | "mapping" | "dynamic_pricing" | "catalog" | "travel_agents" | "rules" | "google" | "promotions" | "content" | "messages" | "reviews" | "logs" | "payments" | "payment_gateway" | "iframe" | "sandbox" | "golive" | "sync";
-    const [activeTab, setActiveTab] = useState<ChannelTabType>("mapping");
+    type ChannelTabType = "groups" | "tutorial" | "rooms" | "rateplans" | "matrix" | "mapping" | "dynamic_pricing" | "catalog" | "travel_agents" | "rules" | "google" | "promotions" | "content" | "messages" | "reviews" | "logs" | "payments" | "payment_gateway" | "booking_engine" | "iframe" | "sandbox" | "golive" | "sync";
+    const [activeTab, setActiveTab] = useState<ChannelTabType>("groups");
     const [isVccModalOpen, setIsVccModalOpen] = useState<boolean>(false);
     const [isTaxesModalOpen, setIsTaxesModalOpen] = useState<boolean>(false);
 
@@ -196,7 +197,7 @@ export function ChannelManagerSection() {
             if (typeof window !== "undefined") {
                 const params = new URLSearchParams(window.location.search);
                 const tabParam = params.get("tab");
-                if (tabParam && ["tutorial", "rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "payment_gateway", "iframe", "sandbox", "golive", "sync"].includes(tabParam)) {
+                if (tabParam && ["groups", "tutorial", "rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "payment_gateway", "booking_engine", "iframe", "sandbox", "golive", "sync"].includes(tabParam)) {
                     setActiveTab(tabParam as any);
                 }
             }
@@ -206,7 +207,7 @@ export function ChannelManagerSection() {
 
         const handleCustomTabChange = (e: any) => {
             const tab = typeof e.detail === "string" ? e.detail : e.detail?.tab;
-            if (tab && ["tutorial", "rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "payment_gateway", "iframe", "sandbox", "golive", "sync"].includes(tab)) {
+            if (tab && ["groups", "tutorial", "rooms", "rateplans", "matrix", "mapping", "dynamic_pricing", "catalog", "travel_agents", "rules", "google", "promotions", "content", "messages", "reviews", "logs", "payments", "payment_gateway", "booking_engine", "iframe", "sandbox", "golive", "sync"].includes(tab)) {
                 setActiveTab(tab as any);
             }
         };
@@ -231,6 +232,13 @@ export function ChannelManagerSection() {
     };
 
     const TAB_METADATA: Record<ChannelTabType, { title: string; subtitle: string; icon: React.ElementType; badge?: string; badgeColor?: string }> = {
+        groups: {
+            title: "Hotel Groups & Multi-Property Management",
+            subtitle: "Kelola jaringan hotel, kelola grup properti untuk distribusi OTA serentak, dan pantau status koneksi terpusat.",
+            icon: Building2,
+            badge: "Multi-Hotel Chain",
+            badgeColor: "#0284c7"
+        },
         tutorial: {
             title: "Production Go-Live Roadmap",
             subtitle: "Step-by-step rollout guide: from account verification, pilot property testing, to full multi-property production deployment.",
@@ -305,12 +313,19 @@ export function ChannelManagerSection() {
             subtitle: "Monitor aggregate review scores, track guest feedback, and publish responses directly to OTA platforms.",
             icon: Star
         },
-        payment_gateway: {
-            title: "Tenant Payment Gateway & Direct Booking Engine",
-            subtitle: "Konfigurasi kredensial Midtrans, Xendit, Rekening Bank transfer, dan aturan pembayaran direct booking (Khusus Superadmin).",
+        booking_engine: {
+            title: "Direct Booking Engine & Payment Gateway Suite",
+            subtitle: "Pengaturan identitas visual, tema warna Burgundy, alamat website kembali, preferensi form tamu, analitik tracking, promo voucher, dan multi-tenant payment gateway.",
             icon: CreditCard,
-            badge: "Superadmin Only",
-            badgeColor: "#d97706"
+            badge: "Direct Suite",
+            badgeColor: "#6D2B35"
+        },
+        payment_gateway: {
+            title: "Direct Booking Engine & Payment Gateway Suite",
+            subtitle: "Pengaturan identitas visual, tema warna Burgundy, alamat website kembali, preferensi form tamu, analitik tracking, promo voucher, dan multi-tenant payment gateway.",
+            icon: CreditCard,
+            badge: "Direct Suite",
+            badgeColor: "#6D2B35"
         },
         payments: {
             title: "PCI Card Vault & Payment Processing",
@@ -1627,6 +1642,11 @@ export function ChannelManagerSection() {
                 );
             })()}
 
+            {/* TAB: HOTEL GROUPS & MULTI-PROPERTY MANAGEMENT */}
+            {activeTab === "groups" && (
+                <ChannelGroupsTab />
+            )}
+
             {/* TAB: PETA ALUR & TUTORIAL GO-LIVE PRODUKSI */}
             {activeTab === "tutorial" && (
                 <ChannelTutorialTab
@@ -1778,10 +1798,10 @@ export function ChannelManagerSection() {
                                     onClick={() => handleUpdateGlobalPricingModel(globalPricingModel)}
                                     disabled={syncingPricingWithChannex}
                                     className={styles.btnActionSecondary}
-                                    title="Synchronize Net/Gross amount settings with connected Channex channels"
+                                    title="Synchronize Net/Gross amount settings with connected distribution channels"
                                 >
                                     <RefreshCw size={12} className={syncingPricingWithChannex ? "animate-spin" : ""} />
-                                    <span>{syncingPricingWithChannex ? "Syncing..." : "Sync Channex"}</span>
+                                    <span>{syncingPricingWithChannex ? "Syncing..." : "Sync Channels"}</span>
                                 </button>
 
                                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -3046,7 +3066,7 @@ export function ChannelManagerSection() {
             )}
 
             {/* TAB: TENANT PAYMENT GATEWAY & DIRECT BOOKING ENGINE (SUPERADMIN ONLY) */}
-            {activeTab === "payment_gateway" && (
+            {(activeTab === "payment_gateway" || activeTab === "booking_engine") && (
                 <div className={`${styles.gridCard} ${styles.embeddedCard}`}>
                     <PaymentGatewayTab hotelCode={activeHotelCode} />
                 </div>

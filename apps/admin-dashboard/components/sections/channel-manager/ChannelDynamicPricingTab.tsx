@@ -203,7 +203,7 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
                             <option value="pricelabs">PriceLabs (Hotel &amp; Vacation Rental)</option>
                             <option value="roompricegenie">RoomPriceGenie (Boutique Hotel Specialist)</option>
                             <option value="beyond">Beyond Pricing (Dynamic Yield)</option>
-                            <option value="custom">Channex Built-in Pricing Engine / Custom Webhook</option>
+                            <option value="custom">Master Yield Engine / Custom Webhook</option>
                         </select>
                     </div>
 

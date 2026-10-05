@@ -32,6 +32,22 @@ export function usePaymentGateway() {
                 setSettings({
                     ...DEFAULT_PAYMENT_GATEWAY_SETTINGS,
                     ...data,
+                    theme: {
+                        ...DEFAULT_PAYMENT_GATEWAY_SETTINGS.theme,
+                        ...(data.theme || {}),
+                    },
+                    preferences: {
+                        ...DEFAULT_PAYMENT_GATEWAY_SETTINGS.preferences,
+                        ...(data.preferences || {}),
+                    },
+                    analytics: {
+                        ...DEFAULT_PAYMENT_GATEWAY_SETTINGS.analytics,
+                        ...(data.analytics || {}),
+                    },
+                    promotions: Array.isArray(data.promotions) ? data.promotions : [],
+                    directPerks: Array.isArray(data.directPerks) && data.directPerks.length > 0
+                        ? data.directPerks
+                        : DEFAULT_PAYMENT_GATEWAY_SETTINGS.directPerks,
                     midtrans: {
                         ...DEFAULT_PAYMENT_GATEWAY_SETTINGS.midtrans,
                         ...(data.midtrans || {}),
@@ -39,6 +55,10 @@ export function usePaymentGateway() {
                     xendit: {
                         ...DEFAULT_PAYMENT_GATEWAY_SETTINGS.xendit,
                         ...(data.xendit || {}),
+                    },
+                    doku: {
+                        ...DEFAULT_PAYMENT_GATEWAY_SETTINGS.doku,
+                        ...(data.doku || {}),
                     },
                     manualTransfer: {
                         ...DEFAULT_PAYMENT_GATEWAY_SETTINGS.manualTransfer,
@@ -93,7 +113,7 @@ export function usePaymentGateway() {
 
             await setDoc(docRef, payload, { merge: true });
             setSettings(newSettings);
-            setSuccessMessage("Pengaturan Payment Gateway & Booking Engine berhasil disimpan.");
+            setSuccessMessage("Pengaturan Direct Booking Engine & Payment Gateway berhasil disimpan.");
             return true;
         } catch (err: any) {
             console.error("Error saving payment gateway settings:", err);
@@ -111,9 +131,7 @@ export function usePaymentGateway() {
         saving,
         error,
         successMessage,
-        setError,
-        setSuccessMessage,
         saveSettings,
-        refreshSettings: fetchSettings,
+        refetch: fetchSettings,
     };
 }

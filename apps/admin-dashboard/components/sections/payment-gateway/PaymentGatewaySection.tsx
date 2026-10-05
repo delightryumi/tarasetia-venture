@@ -35,9 +35,10 @@ export function PaymentGatewaySection() {
         saveSettings,
     } = usePaymentGateway();
 
-    const [activeTab, setActiveTab] = useState<"provider" | "midtrans" | "xendit" | "manual" | "pricing" | "google">("provider");
+    const [activeTab, setActiveTab] = useState<"provider" | "midtrans" | "xendit" | "doku" | "manual" | "pricing" | "google">("provider");
     const [showMidtransServerKey, setShowMidtransServerKey] = useState(false);
     const [showXenditSecretKey, setShowXenditSecretKey] = useState(false);
+    const [showDokuSecretKey, setShowDokuSecretKey] = useState(false);
 
     // Form state clone for editing
     const [formData, setFormData] = useState<PaymentGatewaySettings>(settings);
@@ -189,6 +190,7 @@ export function PaymentGatewaySection() {
                     { key: "provider", label: "Pilihan Provider Utama", icon: <CreditCard size={16} /> },
                     { key: "midtrans", label: "Midtrans Snap", icon: <ShieldCheck size={16} /> },
                     { key: "xendit", label: "Xendit Invoice", icon: <ShieldCheck size={16} /> },
+                    { key: "doku", label: "DOKU Checkout", icon: <CreditCard size={16} /> },
                     { key: "manual", label: "Transfer Bank Manual", icon: <Bank size={16} /> },
                     { key: "pricing", label: "Pajak & Ketentuan", icon: <Receipt size={16} /> },
                     { key: "google", label: "Google Hotel Deep-Link", icon: <Globe size={16} /> },

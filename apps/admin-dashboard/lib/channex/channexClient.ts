@@ -108,6 +108,21 @@ export class ChannexClient {
     }
 
     // ==========================================
+    // 0. GROUP MANAGEMENT (HOTEL CHAINS / CLUSTERS)
+    // ==========================================
+
+    async getGroups(customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any[] }>("/groups", { method: "GET" }, customApiKey, environment);
+    }
+
+    async createGroup(title: string, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any }>("/groups", {
+            method: "POST",
+            body: JSON.stringify({ group: { title } })
+        }, customApiKey, environment);
+    }
+
+    // ==========================================
     // 1. PROPERTY MANAGEMENT
     // ==========================================
 
@@ -119,9 +134,16 @@ export class ChannexClient {
         return this.request<{ data: any }>(`/properties/${propertyId}`, { method: "GET" }, customApiKey, environment);
     }
 
-    async createProperty(property: Partial<ChannexProperty>, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+    async createProperty(property: Partial<ChannexProperty> & { group_id?: string }, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
         return this.request<{ data: any }>("/properties", {
             method: "POST",
+            body: JSON.stringify({ property })
+        }, customApiKey, environment);
+    }
+
+    async updateProperty(propertyId: string, property: Partial<ChannexProperty> & { group_id?: string }, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any }>(`/properties/${propertyId}`, {
+            method: "PUT",
             body: JSON.stringify({ property })
         }, customApiKey, environment);
     }

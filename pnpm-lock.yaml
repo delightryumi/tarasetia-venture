@@ -380,6 +380,9 @@ importers:
       '@gsap/react':
         specifier: ^2.1.2
         version: 2.1.2(gsap@3.15.0)(react@19.2.3)
+      '@phosphor-icons/react':
+        specifier: ^2.1.10
+        version: 2.1.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@studio-freight/lenis':
         specifier: ^1.0.42
         version: 1.0.42
@@ -416,6 +419,9 @@ importers:
       react-dom:
         specifier: 19.2.3
         version: 19.2.3(react@19.2.3)
+      react-icons:
+        specifier: ^5.7.0
+        version: 5.7.0(react@19.2.3)
       shadcn:
         specifier: ^4.0.5
         version: 4.8.3(@types/node@20.19.41)(typescript@5.9.3)
@@ -5659,6 +5665,11 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
+
+  react-icons@5.7.0:
+    resolution: {integrity: sha512-LBLy340Rzqy6+/yVhZKT3B/QpP1BZaesGqasf09HPOBzRarcDIFH0WwXlXQfE7q7ipxK4MSiC5DIBWURCny6fw==}
+    peerDependencies:
+      react: '*'
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -12670,6 +12681,10 @@ snapshots:
       scheduler: 0.27.0
 
   react-hook-form@7.76.1(react@19.2.3):
+    dependencies:
+      react: 19.2.3
+
+  react-icons@5.7.0(react@19.2.3):
     dependencies:
       react: 19.2.3
 

@@ -28,7 +28,8 @@ import {
     CheckCircle2,
     Bell,
     Users,
-    Compass
+    Compass,
+    Building2
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { isUserSuperadmin } from "@/lib/permissionCheck";
@@ -106,9 +107,10 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
 
     const MENU_GROUPS: CmMenuGroup[] = [
         {
-            title: "Setup & Onboarding",
+            title: "Properties & Hotel Groups",
             items: [
-                { id: "tutorial", label: "Go-Live Roadmap", shortLabel: "Roadmap", icon: Compass, badge: "Guide", badgeColor: "#0284c7" }
+                { id: "groups", label: "Hotel Groups & Properties", shortLabel: "Groups", icon: Building2, badge: "Multi-Hotel", badgeColor: "#0284c7" },
+                { id: "tutorial", label: "Go-Live Roadmap", shortLabel: "Roadmap", icon: Compass, badge: "Guide", badgeColor: "#64748b" }
             ]
         },
         {
@@ -117,48 +119,48 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                 { id: "mapping", label: "Channel Mapping", shortLabel: "Mapping", icon: Key, badge: "Parity", badgeColor: "#16a34a" },
                 { id: "catalog", label: "Channel Catalog (68+ OTAs)", shortLabel: "Catalog", icon: Globe },
                 { id: "travel_agents", label: "Travel Agents & B2B", shortLabel: "B2B Agents", icon: Users, badge: "B2B", badgeColor: "#7e22ce" },
-                { id: "rules", label: "Yield & Inventory Rules", shortLabel: "Yield", icon: Shield },
-                { id: "google", label: "Google Hotel Links", shortLabel: "Google", icon: Search },
                 { id: "promotions", label: "Promotions & Deals", shortLabel: "Promos", icon: Tag },
+                { id: "google", label: "Google Hotel Links", shortLabel: "Google", icon: Search },
                 { id: "content", label: "Content & Amenities", shortLabel: "Content", icon: UploadCloud }
             ]
         },
         {
-            title: "Inventory & Base Pricing",
+            title: "Inventory & Master Pricing",
             items: [
                 { id: "rooms", label: "Room Types & Allotment", shortLabel: "Rooms", icon: BedDouble },
                 { id: "rateplans", label: "Rate Plans & Packages", shortLabel: "Rates", icon: Sliders },
                 { id: "matrix", label: "Rate Matrix (Net / Gross)", shortLabel: "Matrix", icon: Table },
+                { id: "rules", label: "Yield & Inventory Rules", shortLabel: "Yield", icon: Shield },
                 { id: "dynamic_pricing", label: "Dynamic Pricing (RMS)", shortLabel: "RMS", icon: TrendingUp }
             ]
         },
         {
-            title: "Guest Services & Messaging",
+            title: "Direct Booking & Guest Suite",
             items: [
+                ...(isUserSuperadmin(user)
+                    ? [
+                          {
+                              id: "booking_engine",
+                              label: "Booking Engine & Payment Gateway",
+                              shortLabel: "Booking Engine",
+                              icon: Globe,
+                              badge: "Direct Suite",
+                              badgeColor: "#6D2B35",
+                          },
+                      ]
+                    : []),
                 { id: "messages", label: "Unified Guest Inbox", shortLabel: "Inbox", icon: MessageSquare },
                 { id: "reviews", label: "Guest Reviews & Ratings", shortLabel: "Reviews", icon: Star }
             ]
         },
         {
-            title: "System, Security & Diagnostics",
+            title: "Connectivity & Master Engine",
             items: [
-                ...(isUserSuperadmin(user)
-                    ? [
-                          {
-                              id: "payment_gateway",
-                              label: "Tenant PG & Booking Engine",
-                              shortLabel: "Tenant PG",
-                              icon: CreditCard,
-                              badge: "Superadmin",
-                              badgeColor: "#d97706",
-                          },
-                      ]
-                    : []),
+                { id: "golive", label: "API Credentials & Go-Live", shortLabel: "API Keys", icon: Lock },
                 { id: "payments", label: "PCI Card Vault & Stripe", shortLabel: "PCI Vault", icon: CreditCard },
                 { id: "logs", label: "ARI Transmission Logs", shortLabel: "Audit Logs", icon: Terminal },
                 { id: "sandbox", label: "Certification Sandbox", shortLabel: "Sandbox", icon: Zap },
                 { id: "iframe", label: "White-Label Hub (SSO)", shortLabel: "Hub SSO", icon: LayoutGrid },
-                { id: "golive", label: "API Credentials & Go-Live", shortLabel: "API Keys", icon: Lock },
                 { id: "sync", label: "Synchronization Feed", shortLabel: "Sync Feed", icon: RefreshCw }
             ]
         }

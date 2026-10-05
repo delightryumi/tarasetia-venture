@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Building2,
@@ -16,6 +16,8 @@ import {
   Users,
   LogOut,
   BellRing,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 import { NotificationSettingsDrawer } from '@/components/layout/NotificationSettingsDrawer';
 import { useAuth } from '@/context/AuthContext';
@@ -59,6 +61,25 @@ export default function SelectModulePage() {
   const [nextDueDate, setNextDueDate] = useState<string>('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isHotelDropdownOpen, setIsHotelDropdownOpen] = useState(false);
+  const hotelDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        hotelDropdownRef.current &&
+        !hotelDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsHotelDropdownOpen(false);
+      }
+    };
+    if (isHotelDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isHotelDropdownOpen]);
 
 
 
@@ -464,40 +485,77 @@ export default function SelectModulePage() {
               <div className={`${styles.dividerLine} hidden sm:block`} />
             )}
 
-            {/* Hotel Selector / Badge (iOS Pill Style) */}
+            {/* Hotel Selector / Badge (iOS Floating Card Style, No Blue Text) */}
             {isSuperadmin || (hotelsList && hotelsList.length > 1) ? (
-              <div className={`relative flex items-center h-8 sm:h-9 max-w-[150px] xs:max-w-[190px] sm:max-w-[320px] rounded-full border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-white/[0.06] backdrop-blur-md overflow-hidden shadow-xs text-[11px] sm:text-[13px] transition-all`}>
-                <select
-                  value={activeHotelCode}
-                  onChange={(e) => {
-                    setActiveHotelCode(e.target.value);
-                    window.location.reload();
-                  }}
-                  className={`border-none pr-6 sm:pr-8 py-0.5 text-[10.5px] sm:text-[12.5px] font-medium focus:outline-none cursor-pointer appearance-none h-full w-full truncate text-slate-800 dark:text-zinc-200 bg-transparent`}
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239297a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 6px center',
-                    backgroundSize: '14px',
-                    paddingLeft: '10px',
-                  }}
+              <div className={styles.hotelSelectorWrap} ref={hotelDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsHotelDropdownOpen(!isHotelDropdownOpen)}
+                  className={`${styles.hotelPillBtn} ${isHotelDropdownOpen ? styles.hotelPillBtnActive : ''}`}
+                  title="Ganti Properti / Hotel Aktif"
                 >
-                  {isSuperadmin && <option value="0">— Superadmin —</option>}
-                  {hotelsList && hotelsList.length > 0 && (
-                    hotelsList.map((hotel) => (
-                      <option key={hotel.hotelCode} value={hotel.hotelCode}>
-                        [{hotel.hotelCode}] {hotel.name}
-                      </option>
-                    ))
-                  )}
-                </select>
+                  <span className="truncate max-w-[200px] sm:max-w-[280px]">
+                    {activeHotelCode === '0' || !activeHotelCode
+                      ? '— Superadmin (Tanpa Preview) —'
+                      : `[${activeHotelCode}] ${hotelsList?.find((h) => String(h.hotelCode) === String(activeHotelCode))?.name || activeHotelName || 'Pilih Properti'}`}
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform duration-200 shrink-0 ${isHotelDropdownOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {isHotelDropdownOpen && (
+                  <div className={styles.hotelDropdownCard}>
+                    <div className={styles.hotelDropdownHeader}>Pilih Properti Aktif</div>
+                    {isSuperadmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveHotelCode('0');
+                          setIsHotelDropdownOpen(false);
+                          window.location.reload();
+                        }}
+                        className={`${styles.hotelDropdownItem} ${activeHotelCode === '0' || !activeHotelCode ? styles.hotelDropdownItemActive : ''}`}
+                      >
+                        <span className="truncate font-semibold">— Superadmin (Tanpa Preview) —</span>
+                        {(activeHotelCode === '0' || !activeHotelCode) && (
+                          <Check size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                        )}
+                      </button>
+                    )}
+                    {hotelsList && hotelsList.length > 0 && (
+                      hotelsList.map((hotel) => {
+                        const isSelected = String(activeHotelCode) === String(hotel.hotelCode);
+                        return (
+                          <button
+                            key={hotel.hotelCode}
+                            type="button"
+                            onClick={() => {
+                              setActiveHotelCode(hotel.hotelCode);
+                              setIsHotelDropdownOpen(false);
+                              window.location.reload();
+                            }}
+                            className={`${styles.hotelDropdownItem} ${isSelected ? styles.hotelDropdownItemActive : ''}`}
+                          >
+                            <div className="flex items-center gap-2 truncate text-left">
+                              <span className={styles.hotelCodeBadge}>{hotel.hotelCode}</span>
+                              <span className="truncate">{hotel.name}</span>
+                            </div>
+                            {isSelected && (
+                              <Check size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                            )}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               activeHotelCode && (
-                <div
-                  className={`flex items-center h-8 sm:h-9 px-3 max-w-[150px] xs:max-w-[190px] sm:max-w-[320px] rounded-full border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-white/[0.06] backdrop-blur-md overflow-hidden shadow-xs text-[10.5px] sm:text-[12.5px] font-semibold text-slate-800 dark:text-zinc-200`}
-                >
-                  <span className="truncate w-full text-left">
+                <div className={styles.hotelPillStatic}>
+                  <span>
                     [{activeHotelCode || "0"}] {activeHotelName || 'Memuat...'}
                   </span>
                 </div>
