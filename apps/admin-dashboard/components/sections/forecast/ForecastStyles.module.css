@@ -1,36 +1,37 @@
-/* ForecastStyles.module.css — Forecast & POS Isolated Style Module */
+/* ForecastStyles.module.css — Forecast & POS Isolated Style Module (iOS Claymorph) */
 
 .overviewRoot,
 .rightDrawer {
   /* ── Design Tokens ── */
-  --f-sage: #181d26;
-  --f-sage-light: #41454d;
-  --f-sage-dark: #181d26;
-  --f-sage-bg: #f3efe6;
-  --f-sage-border: rgba(0, 0, 0, 0.08);
+  --f-sage: #2563eb;
+  --f-sage-light: #3b82f6;
+  --f-sage-dark: #1d4ed8;
+  --f-sage-bg: #eff6ff;
+  --f-sage-border: rgba(37, 99, 235, 0.15);
 
-  --f-peach: #181d26;
-  --f-peach-dark: #181d26;
-  --f-rich-black: #1a1c14;
+  --f-peach: #2563eb;
+  --f-peach-dark: #1d4ed8;
+  --f-rich-black: #0f172a;
 
-  --f-canvas: #ffffff;
-  --f-surface: #faf9f6;
-  --f-surface-soft: #f5f5f4;
-  --f-hairline: rgba(0, 0, 0, 0.08);
+  --f-canvas: #f1f5f9;
+  --f-surface: #ffffff;
+  --f-surface-soft: #f8fafc;
+  --f-hairline: rgba(255, 255, 255, 0.85);
   
-  --f-ink: #1c1917;
-  --f-body: #44403c;
-  --f-muted: #78716c;
-  --f-light-muted: #a8a29e;
+  --f-ink: #0f172a;
+  --f-body: #334155;
+  --f-muted: #64748b;
+  --f-light-muted: #94a3b8;
   
-  --f-radius-sm: 6px;
-  --f-radius-md: 10px;
-  --f-radius-lg: 12px;
+  --f-radius-sm: 10px;
+  --f-radius-md: 14px;
+  --f-radius-lg: 20px;
+  --f-radius-xl: 24px;
   
   --f-font: var(--font-geist-sans), 'Inter', system-ui, -apple-system, sans-serif;
   --f-font-mono: var(--font-mono-jb), 'JetBrains Mono', monospace;
   
-  --f-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --f-ease-out: cubic-bezier(0.34, 1.56, 0.64, 1);
   --f-duration-fast: 150ms;
   --f-duration-base: 250ms;
 
@@ -40,42 +41,50 @@
 }
 
 .overviewRoot {
-  background-color: var(--f-canvas);
+  background-color: var(--f-canvas, #f1f5f9);
   min-height: 100vh;
 }
 
 /* ── Layout Panels ── */
 .mainContainer {
-  max-width: 1400px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 24px 32px 64px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
+  box-sizing: border-box;
 }
 
-/* ── Header ── */
+/* ── iOS Claymorphic Header ── */
 .header {
   position: relative;
-  background: transparent !important;
-  border-bottom: none !important;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 24px auto;
-  max-width: 1400px;
-  width: 100%;
-}
-
-.headerInner {
-  max-width: 1400px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 24px;
+  background: #ffffff !important;
+  border-radius: 24px;
+  padding: 20px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin: 0 auto;
+  max-width: 1440px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    8px 8px 24px rgba(160, 175, 200, 0.22),
+    -6px -6px 18px rgba(255, 255, 255, 0.95),
+    inset 1.5px 1.5px 2px rgba(255, 255, 255, 0.9);
+}
+
+.headerInner {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .headerLeft {
@@ -88,19 +97,22 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 /* ── Page Titles & Badges ── */
 .headerBadge {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--f-radius-sm);
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #181d26 !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  box-shadow: 
+    3px 3px 10px rgba(37, 99, 235, 0.35),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.4);
 }
 
 .headerMeta {
@@ -109,95 +121,101 @@
 }
 
 .headerSubtitle {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--f-light-muted);
+  letter-spacing: 0.08em;
+  color: #2563eb;
+  margin-bottom: 2px;
 }
 
 .headerTitle {
-  font-size: 14px;
+  font-size: 22px;
   font-weight: 800;
-  color: var(--f-ink);
-  text-transform: uppercase;
+  color: #0f172a;
   margin: 0;
-  letter-spacing: 0.05em;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
-/* ── Toggle buttons ── */
+/* ── iOS Segmented Control Pills ── */
 .toggleWrapper {
-  display: flex;
-  padding: 3px;
-  background-color: var(--f-surface-soft);
-  border-radius: var(--f-radius-md);
-  border: 1px solid var(--f-hairline);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  background-color: #f1f5f9;
+  border-radius: 14px;
+  border: none;
+  gap: 4px;
+  box-shadow: 
+    inset 2px 2px 5px rgba(0, 0, 0, 0.06),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85);
 }
 
 .toggleBtn {
   padding: 0 16px;
-  height: 32px;
-  font-size: 11px;
+  height: 36px;
+  font-size: 12px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: var(--f-radius-sm);
+  border-radius: 10px;
   border: none;
   cursor: pointer;
   background-color: transparent;
-  color: var(--f-muted);
-  transition: all var(--f-duration-fast);
+  color: #64748b;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .toggleBtn:hover:not(.toggleBtnActive) {
-  color: var(--f-ink);
-  background-color: rgba(0, 0, 0, 0.04);
+  color: #0f172a;
 }
 
 .toggleBtnActive {
-  background-color: #181d26 !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  background-color: #ffffff !important;
+  color: #2563eb !important;
+  box-shadow: 
+    3px 3px 8px rgba(160, 175, 200, 0.25),
+    -2px -2px 6px rgba(255, 255, 255, 0.95),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.9) !important;
 }
 
 /* ── Buttons ── */
 .btnPrimary {
-  background-color: #181d26 !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
-  border: 1px solid #181d26 !important;
-  border-radius: var(--f-radius-sm);
-  font-size: 11px;
+  border: none !important;
+  border-radius: 12px;
+  font-size: 12px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  height: 36px;
+  letter-spacing: 0.02em;
+  height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 0 18px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  box-shadow: 
+    3px 3px 10px rgba(37, 99, 235, 0.35),
+    -2px -2px 6px rgba(255, 255, 255, 0.9);
   cursor: pointer;
-  transition: all var(--f-duration-fast) var(--f-ease-out);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .btnPrimary:hover {
-  background-color: #000000 !important;
-  border-color: #000000 !important;
+  background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: 4px 6px 14px rgba(37, 99, 235, 0.45);
 }
 
 .btnSecondary {
   background-color: #ffffff !important;
-  color: #44403c !important;
-  border: 1px solid rgba(0, 0, 0, 0.12) !important;
-  border-radius: var(--f-radius-sm);
-  font-size: 11px;
+  color: #334155 !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -223,22 +241,25 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--f-radius-sm);
-  border: 1px solid var(--f-hairline);
-  background-color: var(--f-canvas);
-  color: var(--f-body);
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: #ffffff;
+  color: #334155;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: all var(--f-duration-fast) var(--f-ease-out);
+  box-shadow: 
+    3px 3px 8px rgba(160, 175, 200, 0.2),
+    -2px -2px 6px rgba(255, 255, 255, 0.95),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.9);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .btnIcon:hover {
-  background-color: var(--f-surface-soft);
-  color: var(--f-ink);
-  border-color: var(--f-light-muted);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 
+    4px 5px 12px rgba(160, 175, 200, 0.3),
+    -2px -2px 6px rgba(255, 255, 255, 0.98);
 }
 
 .btnIconExcel {
@@ -251,7 +272,7 @@
   background-color: #d1fae5 !important;
   border-color: #6ee7b7 !important;
   color: #047857 !important;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
 }
 
 .btnIconPDF {
@@ -264,74 +285,40 @@
   background-color: #ffe4e6 !important;
   border-color: #fda4af !important;
   color: #be123c !important;
-  box-shadow: 0 2px 6px rgba(225, 29, 72, 0.2);
-}
-
-.btnIconDetail {
-  color: #2563eb !important;
-  background-color: #eff6ff !important;
-  border-color: #bfdbfe !important;
-}
-
-.btnIconDetail:hover {
-  background-color: #dbeafe !important;
-  border-color: #93c5fd !important;
-  color: #1d4ed8 !important;
-}
-
-.btnIconEdit {
-  color: #4f46e5 !important;
-  background-color: #eef2ff !important;
-  border-color: #c7d2fe !important;
-}
-
-.btnIconEdit:hover {
-  background-color: #e0e7ff !important;
-  border-color: #a5b4fc !important;
-  color: #3730a3 !important;
-}
-
-.btnIconWarning {
-  color: #d97706 !important;
-  background-color: #fffbeb !important;
-  border-color: #fde68a !important;
-}
-
-.btnIconWarning:hover {
-  background-color: #fef3c7 !important;
-  border-color: #fcd34d !important;
-  color: #b45309 !important;
-}
-
-.btnIconDanger {
-  color: #dc2626 !important;
-  background-color: #fef2f2 !important;
-  border-color: #fecaca !important;
-}
-
-.btnIconDanger:hover {
-  background-color: #fee2e2 !important;
-  border-color: #fca5a5 !important;
-  color: #991b1b !important;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
 }
 
 .vDivider {
   width: 1px;
-  height: 32px;
-  background-color: var(--f-hairline);
+  height: 28px;
+  background-color: #e2e8f0;
+  margin: 0 4px;
 }
 
-/* ── Card Styling ── */
-.card {
-  background-color: var(--f-canvas);
-  border: 1px solid var(--f-hairline);
-  border-radius: var(--f-radius-lg);
+/* ── iOS Claymorphic Cards & Charts ── */
+.card,
+.chartCard {
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01);
+  box-shadow: 
+    8px 8px 24px rgba(160, 175, 200, 0.22),
+    -6px -6px 18px rgba(255, 255, 255, 0.95),
+    inset 1.5px 1.5px 2px rgba(255, 255, 255, 0.9);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   width: 100%;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chartCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    10px 10px 28px rgba(160, 175, 200, 0.26),
+    -8px -8px 20px rgba(255, 255, 255, 0.98);
 }
 
 .cardHeader {

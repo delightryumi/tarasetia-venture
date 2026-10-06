@@ -12,6 +12,43 @@ export interface BookingGuestDetails {
     estimatedArrivalTime?: string;
 }
 
+export interface SelectedRoomCartItem {
+    roomTypeId: string;
+    roomTypeName: string;
+    ratePlanId: string;
+    ratePlanName: string;
+    mealsIncluded?: boolean;
+    pricePerNight: number;
+    quantity: number;
+    subtotal: number;
+}
+
+export interface PublicAddOnItem {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    priceType: "per_night" | "per_stay" | "per_person";
+    icon?: string;
+    category?: string;
+}
+
+export interface SelectedAddOnCartItem {
+    id: string;
+    name: string;
+    price: number;
+    priceType: "per_night" | "per_stay" | "per_person";
+    quantity: number;
+    subtotal: number;
+}
+
+export interface RatePlanCancellationPolicy {
+    type: "free_cancellation" | "non_refundable" | "flexible";
+    title: string;
+    description: string;
+    deadlineHours?: number;
+}
+
 export interface BookingSelection {
     roomTypeId: string;
     roomTypeName: string;
@@ -30,6 +67,8 @@ export interface BookingSelection {
     children: number;
     promoCode?: string;
     discountAmount?: number;
+    items?: SelectedRoomCartItem[];
+    addOns?: SelectedAddOnCartItem[];
 }
 
 export interface PublicRoomType {
@@ -54,6 +93,7 @@ export interface PublicRoomType {
         mealsIncluded: boolean;
         price: number;
         description?: string;
+        cancellationPolicy?: RatePlanCancellationPolicy;
     }>;
 }
 
@@ -73,6 +113,7 @@ export interface BookingEnginePublicData {
     logoUrl?: string;
     hotelWebsiteUrl: string; // Dynamic website back link
     termsContent?: string;
+    addOns: PublicAddOnItem[];
     preferences?: {
         address?: { visible: boolean; mandatory: boolean };
         city?: { visible: boolean; mandatory: boolean };
@@ -191,12 +232,14 @@ export async function getBookingEngineData(
         } else {
             const hotelRef = doc(db, "hotels", hotelCode);
             const settingsRef = doc(db, "hotels", hotelCode, "settings", "payment_gateway");
+            const profileRef = doc(db, "hotels", hotelCode, "settings", "profile");
             const roomsRef = query(collection(db, "hotels", hotelCode, "roomTypes"), orderBy("name"));
             const ratePlansRef = collection(db, "hotels", hotelCode, "ratePlans");
 
-            const [hotelSnap, settingsSnap, roomsSnap, ratePlansSnap] = await Promise.all([
+            const [hotelSnap, settingsSnap, profileSnap, roomsSnap, ratePlansSnap] = await Promise.all([
                 getDoc(hotelRef),
                 getDoc(settingsRef),
+                getDoc(profileRef).catch(() => null),
                 getDocs(roomsRef),
                 getDocs(ratePlansRef),
             ]);
@@ -204,6 +247,7 @@ export async function getBookingEngineData(
             if (!hotelSnap.exists()) return null;
 
             hotelData = hotelSnap.data();
+            const profileData = profileSnap && profileSnap.exists() ? profileSnap.data() : null;
             pgData = settingsSnap.exists() ? settingsSnap.data() : null;
             roomsDocs = roomsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
             ratePlansDocs = ratePlansSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -211,6 +255,7 @@ export async function getBookingEngineData(
             tenantCacheMap[hotelCode] = {
                 timestamp: now,
                 hotelData,
+                profileData,
                 pgData,
                 roomsData: roomsDocs,
                 ratePlansData: ratePlansDocs,
@@ -391,12 +436,24 @@ export async function getBookingEngineData(
 
                           const averageNightlyRate = Math.round(totalPriceForStay / stayDates.length);
 
+                           const isNonRefundable = (rp.cancellationPolicy?.type === "non_refundable") ||
+                              /promo|non-refundable|non refundable|flash/i.test(rp.name || "") ||
+                              /promo|non-refundable/i.test(rp.description || "");
+
                           return {
                               id: rp.id,
                               name: rp.name || "Tarif Resmi",
                               mealsIncluded: rp.mealsIncluded ?? false,
                               price: averageNightlyRate,
                               description: rp.description || (rp.mealsIncluded ? "Termasuk Sarapan Pagi" : "Hanya Kamar (Room Only)"),
+                              cancellationPolicy: {
+                                  type: isNonRefundable ? ("non_refundable" as const) : ("free_cancellation" as const),
+                                  title: isNonRefundable ? "Non-Refundable" : "Pembatalan Gratis",
+                                  description: isNonRefundable
+                                      ? "Pesanan ini tidak dapat diubah atau dibatalkan setelah pembayaran dikonfirmasi."
+                                      : "Pembatalan tanpa biaya hingga 24 jam sebelum tanggal check-in (14:00 WIB).",
+                                  deadlineHours: isNonRefundable ? 0 : 24,
+                              },
                           };
                       })
                     : [
@@ -406,6 +463,12 @@ export async function getBookingEngineData(
                               mealsIncluded: false,
                               price: defaultPrice,
                               description: "Hanya Kamar (Room Only)",
+                              cancellationPolicy: {
+                                  type: "free_cancellation" as const,
+                                  title: "Pembatalan Gratis",
+                                  description: "Pembatalan tanpa biaya hingga 24 jam sebelum tanggal check-in (14:00 WIB).",
+                                  deadlineHours: 24,
+                              },
                           },
                       ];
 
@@ -438,9 +501,17 @@ export async function getBookingEngineData(
             ? pgData.manualTransfer.banks
             : [];
 
-        const taxRate = typeof pgData?.pricing?.taxRate === "number" ? pgData.pricing.taxRate : 0;
-        const serviceRate = typeof pgData?.pricing?.serviceRate === "number" ? pgData.pricing.serviceRate : 0;
-        const isTaxIncludedInRate = pgData?.pricing?.isTaxIncludedInRate ?? false;
+        const taxRate = typeof pgData?.pricing?.taxRate === "number"
+            ? pgData.pricing.taxRate
+            : typeof hotelData?.taxRate === "number"
+            ? hotelData.taxRate
+            : 11;
+        const serviceRate = typeof pgData?.pricing?.serviceRate === "number"
+            ? pgData.pricing.serviceRate
+            : typeof hotelData?.serviceRate === "number"
+            ? hotelData.serviceRate
+            : 0;
+        const isTaxIncludedInRate = pgData?.pricing?.isTaxIncludedInRate ?? hotelData?.isTaxIncludedInRate ?? false;
 
         const hotelFacilities = Array.isArray(hotelData?.facilities) && hotelData.facilities.length > 0
             ? hotelData.facilities
@@ -448,13 +519,27 @@ export async function getBookingEngineData(
             ? hotelData.amenities
             : ["WiFi Gratis", "Front Desk 24 Jam", "Parkir Area", "AC", "Restoran"];
 
+        const profileData = isCacheValid ? cached.profileData : undefined;
+        const hotelAddress = pgData?.theme?.hotelAddress ||
+            profileData?.address ||
+            hotelData?.address ||
+            hotelData?.alamat ||
+            hotelData?.location ||
+            hotelData?.streetAddress ||
+            "";
+        const hotelCity = pgData?.theme?.hotelCity ||
+            profileData?.city ||
+            hotelData?.city ||
+            hotelData?.kota ||
+            "";
+
         return {
             hotelCode,
-            hotelName: pgData?.theme?.headerTitle || hotelData?.name || "Hotel Mitra",
-            hotelPhone: pgData?.theme?.contactPhone || hotelData?.phone || hotelData?.whatsapp || "",
-            hotelEmail: hotelData?.email || "",
-            hotelAddress: hotelData?.address || "",
-            hotelCity: hotelData?.city || "",
+            hotelName: pgData?.theme?.headerTitle || profileData?.name || hotelData?.name || "Hotel Mitra",
+            hotelPhone: pgData?.theme?.contactPhone || profileData?.phone || hotelData?.phone || hotelData?.whatsapp || "",
+            hotelEmail: profileData?.email || hotelData?.email || "",
+            hotelAddress,
+            hotelCity,
             hotelFacilities,
             starRating: typeof hotelData?.starRating === "number" ? hotelData.starRating : 0,
             isAddonActive,
@@ -463,6 +548,46 @@ export async function getBookingEngineData(
             logoUrl,
             hotelWebsiteUrl,
             termsContent,
+            addOns: Array.isArray(pgData?.addOns) && pgData.addOns.length > 0
+                ? (pgData.addOns as PublicAddOnItem[]).filter((a: any) => a.isActive !== false)
+                : [
+                    {
+                        id: "extra_bed",
+                        name: "Extra Bed (Kasur Tambahan)",
+                        description: "Termasuk bantal & linen premium standar hotel untuk kenyamanan ekstra.",
+                        price: 150000,
+                        priceType: "per_night" as const,
+                        icon: "bed",
+                        category: "comfort",
+                    },
+                    {
+                        id: "airport_transfer",
+                        name: "Antar-Jemput Bandara / Stasiun",
+                        description: "Layanan penjemputan atau pengantaran dengan driver ramah dan mobil ber-AC.",
+                        price: 250000,
+                        priceType: "per_stay" as const,
+                        icon: "car",
+                        category: "transport",
+                    },
+                    {
+                        id: "late_checkout",
+                        name: "Late Check-Out (Hingga 16:00 WIB)",
+                        description: "Waktu bersantai lebih lama di kamar hingga sore hari tanpa terburu-buru.",
+                        price: 100000,
+                        priceType: "per_stay" as const,
+                        icon: "clock",
+                        category: "flexibility",
+                    },
+                    {
+                        id: "romantic_dinner",
+                        name: "Paket Romantic Dinner",
+                        description: "Makan malam romantis set menu 3-course dengan dekorasi meja cantik.",
+                        price: 350000,
+                        priceType: "per_stay" as const,
+                        icon: "utensils",
+                        category: "dining",
+                    },
+                ],
             preferences,
             promotions,
             pricing: {
@@ -523,6 +648,22 @@ export async function createDirectBookingReservation(
         const normalizedPaymentStatus = (payload.paymentStatus || "PENDING").toUpperCase();
         const isPaid = normalizedPaymentStatus === "PAID";
 
+        const itemsList: SelectedRoomCartItem[] = Array.isArray(payload.selection.items) && payload.selection.items.length > 0
+            ? payload.selection.items
+            : [
+                {
+                    roomTypeId: payload.selection.roomTypeId,
+                    roomTypeName: payload.selection.roomTypeName,
+                    ratePlanId: payload.selection.ratePlanId,
+                    ratePlanName: payload.selection.ratePlanName,
+                    pricePerNight: payload.selection.pricePerNight,
+                    quantity: payload.selection.roomsCount || 1,
+                    subtotal: payload.selection.baseTotal,
+                }
+            ];
+
+        const totalRoomsCount = itemsList.reduce((acc, it) => acc + (it.quantity || 1), 0);
+
         const newDoc = {
             bookingCode,
             source: "direct_engine",
@@ -538,10 +679,12 @@ export async function createDirectBookingReservation(
             roomTypeName: payload.selection.roomTypeName,
             ratePlanId: payload.selection.ratePlanId,
             ratePlanName: payload.selection.ratePlanName,
+            items: itemsList,
+            addOns: Array.isArray(payload.selection.addOns) ? payload.selection.addOns : [],
             checkIn: payload.selection.checkInDate,
             checkOut: payload.selection.checkOutDate,
             nights: payload.selection.nights,
-            roomsCount: payload.selection.roomsCount || 1,
+            roomsCount: totalRoomsCount,
             adults: payload.selection.adults,
             children: payload.selection.children,
             pricePerNight: payload.selection.pricePerNight,
@@ -584,51 +727,54 @@ export async function createDirectBookingReservation(
             const dailyDocRef = doc(db, "hotels", hotelCode, "daily_revenue", `${hotelCode}_${dateStr}`);
             const dailySnap = await getDoc(dailyDocRef);
 
-            const revenueEntry = {
-                bookingId: bookingCode,
-                voucherCode: bookingCode,
-                resId: bookingCode,
-                guestName: payload.guest.fullName,
-                guestEmail: payload.guest.email,
-                guestPhone: payload.guest.phone,
-                guestAddress: payload.guest.address || "",
-                guestCity: payload.guest.city || "",
-                guestCountry: payload.guest.country || "",
-                roomType: payload.selection.roomTypeName,
-                roomTypeId: payload.selection.roomTypeId,
-                ratePlanName: payload.selection.ratePlanName,
-                ratePlanId: payload.selection.ratePlanId,
-                checkIn: payload.selection.checkInDate,
-                checkOut: payload.selection.checkOutDate,
-                nights: payload.selection.nights,
-                roomsCount: payload.selection.roomsCount || 1,
-                roomCount: payload.selection.roomsCount || 1,
-                adults: payload.selection.adults,
-                children: payload.selection.children,
-                rate: payload.selection.pricePerNight,
-                price: payload.selection.pricePerNight,
-                totalPrice: payload.selection.grandTotal,
-                payTransfer: isPaid ? payload.selection.grandTotal : 0,
-                paidAmount1: isPaid ? payload.selection.grandTotal : 0,
-                status: "CONFIRMED",
-                paymentStatus: normalizedPaymentStatus,
-                paymentMethod: formattedPaymentMethod,
-                paymentCollect: "direct",
-                paymentType: payload.paymentMethod,
-                source: "Direct Booking Engine",
-                isDirectBooking: true,
-                specialRequests: payload.guest.specialRequests || "",
-                estimatedArrivalTime: payload.guest.estimatedArrivalTime || "14:00",
-                note: `Direct Booking Engine (${bookingCode}) - ${payload.guest.fullName}`,
-                timestamp: new Date().toISOString(),
-                createdAt: new Date().toISOString(),
-            };
+            const revenueEntriesForThisBooking = itemsList.map((item, idx) => {
+                const itemTotalGross = Math.round(item.subtotal * (1 + (payload.selection.taxAmount + payload.selection.serviceAmount) / (payload.selection.baseTotal || 1)));
+                return {
+                    bookingId: `${bookingCode}_${idx}`,
+                    voucherCode: bookingCode,
+                    resId: bookingCode,
+                    guestName: payload.guest.fullName,
+                    guestEmail: payload.guest.email,
+                    guestPhone: payload.guest.phone,
+                    guestAddress: payload.guest.address || "",
+                    guestCity: payload.guest.city || "",
+                    guestCountry: payload.guest.country || "",
+                    roomType: item.roomTypeName,
+                    roomTypeId: item.roomTypeId,
+                    ratePlanName: item.ratePlanName,
+                    ratePlanId: item.ratePlanId,
+                    checkIn: payload.selection.checkInDate,
+                    checkOut: payload.selection.checkOutDate,
+                    nights: payload.selection.nights,
+                    roomsCount: item.quantity || 1,
+                    roomCount: item.quantity || 1,
+                    adults: payload.selection.adults,
+                    children: payload.selection.children,
+                    rate: item.pricePerNight,
+                    price: item.pricePerNight,
+                    totalPrice: itemTotalGross,
+                    payTransfer: isPaid ? itemTotalGross : 0,
+                    paidAmount1: isPaid ? itemTotalGross : 0,
+                    status: "CONFIRMED",
+                    paymentStatus: normalizedPaymentStatus,
+                    paymentMethod: formattedPaymentMethod,
+                    paymentCollect: "direct",
+                    paymentType: payload.paymentMethod,
+                    source: "Direct Booking Engine",
+                    isDirectBooking: true,
+                    specialRequests: payload.guest.specialRequests || "",
+                    estimatedArrivalTime: payload.guest.estimatedArrivalTime || "14:00",
+                    note: `Direct Booking (${bookingCode}) - ${item.quantity}x ${item.roomTypeName} (${item.ratePlanName}) - ${payload.guest.fullName}`,
+                    timestamp: new Date().toISOString(),
+                    createdAt: new Date().toISOString(),
+                };
+            });
 
             if (dailySnap.exists()) {
                 const existingEntries = (dailySnap.data()?.entries || []).filter(
-                    (e: any) => e.bookingId !== bookingCode && e.voucherCode !== bookingCode
+                    (e: any) => e.voucherCode !== bookingCode && !String(e.bookingId || "").startsWith(bookingCode)
                 );
-                existingEntries.push(revenueEntry);
+                existingEntries.push(...revenueEntriesForThisBooking);
                 await setDoc(dailyDocRef, {
                     ...dailySnap.data(),
                     entries: existingEntries,
@@ -638,7 +784,7 @@ export async function createDirectBookingReservation(
                 }, { merge: true });
             } else {
                 await setDoc(dailyDocRef, {
-                    entries: [revenueEntry],
+                    entries: revenueEntriesForThisBooking,
                     date: dateStr,
                     hotelId: hotelCode,
                     createdAt: new Date().toISOString(),

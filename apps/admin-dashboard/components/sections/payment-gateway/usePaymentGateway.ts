@@ -48,6 +48,9 @@ export function usePaymentGateway() {
                     directPerks: Array.isArray(data.directPerks) && data.directPerks.length > 0
                         ? data.directPerks
                         : DEFAULT_PAYMENT_GATEWAY_SETTINGS.directPerks,
+                    addOns: Array.isArray(data.addOns) && data.addOns.length > 0
+                        ? data.addOns
+                        : DEFAULT_PAYMENT_GATEWAY_SETTINGS.addOns,
                     midtrans: {
                         ...DEFAULT_PAYMENT_GATEWAY_SETTINGS.midtrans,
                         ...(data.midtrans || {}),

@@ -1,0 +1,286 @@
+.card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    /* Compact tactile Claymorphism card styling */
+    box-shadow: 
+        6px 6px 14px rgba(166, 180, 200, 0.2),
+        -4px -4px 10px rgba(255, 255, 255, 0.95),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.9),
+        inset -1px -1px 2px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        8px 10px 20px rgba(150, 168, 192, 0.28),
+        -5px -5px 12px rgba(255, 255, 255, 1),
+        inset 1px 1px 2px rgba(255, 255, 255, 1);
+}
+
+.cardCancelled {
+    background: #fafaf9;
+    border: 1px dashed #fca5a5;
+    opacity: 0.88;
+}
+
+.cardCancelled:hover {
+    opacity: 1;
+    border-color: #f87171;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+.channelBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    background: #f8fafc;
+    border-radius: 8px;
+    box-shadow: 
+        inset 1px 1px 2px rgba(0, 0, 0, 0.04),
+        inset -1px -1px 2px rgba(255, 255, 255, 0.8);
+    font-size: 11px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.otaLogo {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.statusPill {
+    padding: 2px 7px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 
+        inset 1px 1px 2px rgba(255, 255, 255, 0.6),
+        1px 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.statusConfirmed {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.statusCheckedIn {
+    background: #f5f3ff;
+    color: #6d28d9;
+    border: 1px solid #ddd6fe;
+}
+
+.statusCheckedOut {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.statusCancelled {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.guestSection {
+    margin-bottom: 8px;
+}
+
+.guestName {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.25;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    word-break: break-word;
+}
+
+.guestNameCancelled {
+    text-decoration: line-through;
+    color: #64748b;
+}
+
+.voucherBar {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+    padding: 2px 7px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #475569;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.voucherBar:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.stayTimeline {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 
+        inset 1px 1px 2px rgba(0, 0, 0, 0.03),
+        inset -1px -1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.dateBlock {
+    display: flex;
+    flex-direction: column;
+}
+
+.dateLabel {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 0.04em;
+}
+
+.dateVal {
+    font-size: 11px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 1px;
+}
+
+.nightsBadge {
+    padding: 2px 6px;
+    background: #ffffff;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #2563eb;
+    box-shadow: 
+        1px 1px 3px rgba(0, 0, 0, 0.05),
+        -1px -1px 3px rgba(255, 255, 255, 0.9);
+}
+
+.detailsList {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 8px;
+    margin-bottom: 8px;
+    font-size: 11px;
+}
+
+.detailItem {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #475569;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.detailIcon {
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.cardFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+    margin-top: auto;
+}
+
+.amountBlock {
+    display: flex;
+    flex-direction: column;
+}
+
+.amountLabel {
+    font-size: 9px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.amountVal {
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.amountValCancelled {
+    text-decoration: line-through;
+    color: #94a3b8;
+}
+
+.viewBtn {
+    min-height: 32px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: none;
+    background: #ffffff;
+    color: #2563eb;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    box-shadow: 
+        3px 3px 6px rgba(160, 175, 200, 0.22),
+        -2px -2px 5px rgba(255, 255, 255, 0.95),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.viewBtn:hover {
+    transform: translateY(-1px);
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 
+        4px 4px 10px rgba(37, 99, 235, 0.3),
+        -2px -2px 5px rgba(255, 255, 255, 0.9);
+}
+
+.viewBtn:active {
+    transform: translateY(1px);
+    box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.15);
+}

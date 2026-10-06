@@ -251,6 +251,7 @@ export default function SelectModulePage() {
     switch (moduleKey) {
       case 'front-office':
         if (hasPermission(user, 'overview', 'module_front_office')) return '/overview?module=front-office';
+        if (hasPermission(user, 'bookings', 'module_front_office')) return '/bookings?module=front-office';
         if (hasPermission(user, 'fo_walkin', 'module_front_office')) return '/forecast/add?module=front-office';
         if (hasPermission(user, 'rate-inventory', 'module_front_office')) return '/rate-inventory?module=front-office';
         if (hasPermission(user, 'forecast', 'module_front_office')) return '/forecast?module=front-office';
@@ -496,7 +497,7 @@ export default function SelectModulePage() {
                 >
                   <span className="truncate max-w-[200px] sm:max-w-[280px]">
                     {activeHotelCode === '0' || !activeHotelCode
-                      ? '— Superadmin (Tanpa Preview) —'
+                      ? 'Superadmin (Tanpa Preview)'
                       : `[${activeHotelCode}] ${hotelsList?.find((h) => String(h.hotelCode) === String(activeHotelCode))?.name || activeHotelName || 'Pilih Properti'}`}
                   </span>
                   <ChevronDown
@@ -518,7 +519,7 @@ export default function SelectModulePage() {
                         }}
                         className={`${styles.hotelDropdownItem} ${activeHotelCode === '0' || !activeHotelCode ? styles.hotelDropdownItemActive : ''}`}
                       >
-                        <span className="truncate font-semibold">— Superadmin (Tanpa Preview) —</span>
+                        <span className="truncate font-semibold">Superadmin (Tanpa Preview)</span>
                         {(activeHotelCode === '0' || !activeHotelCode) && (
                           <Check size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
                         )}

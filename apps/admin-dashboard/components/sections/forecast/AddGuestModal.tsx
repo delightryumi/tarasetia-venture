@@ -49,6 +49,23 @@ export const AddGuestModal: React.FC<AddGuestModalProps> = ({ isOpen, onClose, s
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!formData.guestName || formData.guestName.trim() === "") {
+            toast.error("Nama Lengkap Tamu wajib diisi!");
+            return;
+        }
+
+        if (!formData.roomType || formData.roomType.trim() === "") {
+            toast.error("Kategori Kamar wajib dipilih!");
+            return;
+        }
+
+        const amountNum = Number(formData.amount);
+        if (formData.amount === "" || formData.amount === undefined || isNaN(amountNum) || amountNum <= 0) {
+            toast.error("Total Amount wajib diisi dan harus lebih dari 0!");
+            return;
+        }
+
         setLoading(true);
 
         try {

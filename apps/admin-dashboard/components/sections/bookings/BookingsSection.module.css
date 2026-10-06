@@ -1,0 +1,477 @@
+.container {
+    width: 100%;
+    min-height: 100vh;
+    padding: 24px 32px 64px;
+    background: #f1f5f9;
+    color: #0f172a;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+}
+
+.moduleBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: #ffffff;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #2563eb;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    width: fit-content;
+    margin-bottom: 8px;
+    
+    box-shadow: 
+        3px 3px 8px rgba(160, 175, 200, 0.2),
+        -2px -2px 6px rgba(255, 255, 255, 0.9),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.title {
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.subtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+/* Claymorphic Filter Panel */
+.filterPanel {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    
+    box-shadow: 
+        8px 8px 24px rgba(166, 180, 200, 0.22),
+        -6px -6px 16px rgba(255, 255, 255, 0.95),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.filterTopRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.dateRangeControls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.dateInputGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    padding: 6px 12px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: inset 1.5px 1.5px 3px rgba(0, 0, 0, 0.04);
+}
+
+.dateInput {
+    border: none;
+    background: transparent;
+    color: #0f172a;
+    font-size: 12px;
+    font-weight: 600;
+    outline: none;
+    font-family: inherit;
+}
+
+
+.filterBottomRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-top: 14px;
+    border-top: 1px solid #f1f5f9;
+}
+
+/* Status Filter Tabs */
+.statusTabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+
+.statusTabBtn {
+    min-height: 38px;
+    padding: 6px 14px;
+    border-radius: 12px;
+    border: none;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    box-shadow: 
+        2px 2px 6px rgba(0, 0, 0, 0.04),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.statusTabBtn:hover {
+    background: #ffffff;
+    color: #1e293b;
+    transform: translateY(-1px);
+}
+
+.statusTabBtnActive {
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 
+        4px 4px 10px rgba(37, 99, 235, 0.3),
+        -2px -2px 6px rgba(255, 255, 255, 0.9);
+}
+
+.statusTabBtnCancelActive {
+    background: #dc2626;
+    color: #ffffff;
+    box-shadow: 
+        4px 4px 10px rgba(220, 38, 38, 0.3),
+        -2px -2px 6px rgba(255, 255, 255, 0.9);
+}
+
+.filterControlsLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filterControlsRight {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.selectInput {
+    min-height: 38px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    box-shadow: inset 1.5px 1.5px 3px rgba(0, 0, 0, 0.04);
+}
+
+.searchInputWrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    padding: 6px 14px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    min-height: 38px;
+    box-shadow: inset 1.5px 1.5px 3px rgba(0, 0, 0, 0.04);
+}
+
+.searchInput {
+    border: none;
+    background: transparent;
+    color: #0f172a;
+    font-size: 12px;
+    font-weight: 600;
+    outline: none;
+    min-width: 180px;
+    font-family: inherit;
+}
+
+.searchActionBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 0 16px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 
+        3px 3px 10px rgba(37, 99, 235, 0.35),
+        -2px -2px 6px rgba(255, 255, 255, 0.9),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.searchActionBtn:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    transform: translateY(-1px);
+    box-shadow: 
+        4px 6px 14px rgba(37, 99, 235, 0.45),
+        -2px -2px 6px rgba(255, 255, 255, 0.95);
+}
+
+.searchActionBtn:active {
+    transform: translateY(1px);
+    box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.resetFilterIconBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    box-shadow: 
+        2px 2px 5px rgba(0, 0, 0, 0.04),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.resetFilterIconBtn:hover {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 
+        3px 3px 8px rgba(160, 175, 200, 0.2),
+        -2px -2px 6px rgba(255, 255, 255, 0.95);
+}
+
+/* View Mode Switcher */
+.viewModeGroup {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 12px;
+    gap: 3px;
+    
+    box-shadow: 
+        inset 1.5px 1.5px 3px rgba(0, 0, 0, 0.06),
+        inset -1.5px -1.5px 3px rgba(255, 255, 255, 0.8);
+}
+
+.viewModeBtn {
+    min-height: 34px;
+    min-width: 36px;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.viewModeBtnActive {
+    background: #ffffff;
+    color: #2563eb;
+    box-shadow: 
+        2px 2px 6px rgba(160, 175, 200, 0.25),
+        -2px -2px 5px rgba(255, 255, 255, 0.95),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+/* Grid Layout */
+.bookingsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+/* Empty State */
+.emptyState {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 60px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    
+    box-shadow: 
+        8px 8px 24px rgba(166, 180, 200, 0.2),
+        -6px -6px 16px rgba(255, 255, 255, 0.95);
+}
+
+.emptyIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    margin-bottom: 16px;
+    box-shadow: 
+        inset 2px 2px 5px rgba(0, 0, 0, 0.05),
+        inset -2px -2px 5px rgba(255, 255, 255, 0.8);
+}
+
+.emptyTitle {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.emptyDesc {
+    font-size: 13px;
+    color: #64748b;
+    max-width: 400px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.resetBtn {
+    min-height: 44px;
+    padding: 8px 20px;
+    border-radius: 12px;
+    border: none;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 
+        4px 4px 10px rgba(37, 99, 235, 0.3),
+        -2px -2px 6px rgba(255, 255, 255, 0.9);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.resetBtn:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+}
+
+/* Loading Skeletons */
+.skeletonGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 18px;
+}
+
+.skeletonCard {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 24px;
+    min-height: 260px;
+    animation: pulse 1.5s infinite ease-in-out;
+    box-shadow: 6px 6px 16px rgba(160, 175, 200, 0.15);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.95; }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 16px 16px 80px;
+    }
+    
+    .filterPanel {
+        padding: 16px;
+        border-radius: 20px;
+    }
+    
+    .filterTopRow, .filterBottomRow {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .dateTypeGroup {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .dateTypeBtn {
+        flex: 1;
+        text-align: center;
+        padding: 6px 8px;
+    }
+    
+    .dateRangeControls {
+        width: 100%;
+    }
+    
+    .dateInputGroup {
+        flex: 1;
+    }
+    
+    .filterControlsRight {
+        width: 100%;
+    }
+    
+    .searchInputWrapper {
+        flex: 1;
+        width: 100%;
+    }
+    
+    .searchInput {
+        min-width: 100px;
+        width: 100%;
+    }
+    
+    .bookingsGrid {
+        grid-template-columns: 1fr;
+    }
+}

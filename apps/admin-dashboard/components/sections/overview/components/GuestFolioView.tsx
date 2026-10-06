@@ -148,14 +148,18 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
     const checkIn = guest.checkInDate || guest.checkIn || '---';
     const checkOut = guest.checkOutDate || guest.checkOut || '---';
 
-    let nights = guest.nights || 1;
+    let nights = guest.totalStayNights || guest.nights || 1;
     if (checkIn !== '---' && checkOut !== '---') {
         const diff = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
         if (diff > 0) nights = diff;
     }
 
-    const totalAmount = Number(guest.totalAmount || guest.amount || 0);
-    const dailyPrice = Math.round(totalAmount / nights);
+    const specificNightRate = Number(guest.ratePerNight || guest.amount || 0);
+    let totalAmount = Number(guest.totalAmount || 0);
+    if (totalAmount <= 0) {
+        totalAmount = specificNightRate > 0 && nights > 1 ? specificNightRate * nights : specificNightRate;
+    }
+    const dailyPrice = nights > 0 ? Math.round(totalAmount / nights) : totalAmount;
 
     // Days breakdown
     const daysList = [];
@@ -164,9 +168,12 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
         for (let i = 0; i < nights; i++) {
             const d = new Date(start);
             d.setDate(d.getDate() + i);
+            const nightRate = (Array.isArray(guest.nightRates) && guest.nightRates[i] !== undefined && Number(guest.nightRates[i]) > 0)
+                ? Number(guest.nightRates[i])
+                : dailyPrice;
             daysList.push({
                 date: d.toISOString().split('T')[0],
-                price: dailyPrice
+                price: nightRate
             });
         }
     }

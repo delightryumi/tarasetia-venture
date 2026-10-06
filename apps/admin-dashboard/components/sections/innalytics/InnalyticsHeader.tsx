@@ -1,6 +1,4 @@
-'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -10,10 +8,11 @@ import {
   LineChart,
   BarChart3,
   User,
-  ChevronRight,
-  Repeat
+  ChevronDown,
+  Check
 } from 'lucide-react';
 import styles from './innalytics.module.css';
+import selectStyles from '@/app/select-module/select-module.module.css';
 import { useAuth } from '@/context/AuthContext';
 
 interface InnalyticsHeaderProps {
@@ -28,6 +27,24 @@ export const InnalyticsHeader: React.FC<InnalyticsHeaderProps> = ({
   const router = useRouter();
   const { activeHotelCode, activeHotelName, hotelsList, setActiveHotelCode, user } = useAuth();
   const [showPropertyModal, setShowPropertyModal] = useState(false);
+  const propertyDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        propertyDropdownRef.current &&
+        !propertyDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowPropertyModal(false);
+      }
+    };
+    if (showPropertyModal) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showPropertyModal]);
 
   return (
     <header className={`${styles.topHeader} no-print`}>
@@ -48,6 +65,61 @@ export const InnalyticsHeader: React.FC<InnalyticsHeaderProps> = ({
 
       {/* Right: Quick Access & Navigation */}
       <div className={styles.headerRight}>
+        {/* Switch Property Pill Dropdown */}
+        <div className={selectStyles.hotelSelectorWrap} ref={propertyDropdownRef}>
+          <button
+            type="button"
+            className={`${selectStyles.hotelPillBtn} ${showPropertyModal ? selectStyles.hotelPillBtnActive : ''}`}
+            onClick={() => setShowPropertyModal(!showPropertyModal)}
+            title="Ganti Properti / Hotel Aktif"
+          >
+            <span className="truncate max-w-[160px] sm:max-w-[220px]">
+              {`[${activeHotelCode || '0'}] ${activeHotelName || 'Pilih Properti'}`}
+            </span>
+            <ChevronDown
+              size={14}
+              className={`transition-transform duration-200 shrink-0 ${showPropertyModal ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {showPropertyModal && (
+            <div className={selectStyles.hotelDropdownCard}>
+              <div className={selectStyles.hotelDropdownHeader}>Pilih Properti Aktif</div>
+              {hotelsList && hotelsList.length > 0 ? (
+                hotelsList.map((hotel, idx) => {
+                  const hCode = String(hotel.hotelCode || hotel.id || hotel.code || idx);
+                  const hName = hotel.name || hotel.hotelName || 'Hotel';
+                  const isSelected = String(activeHotelCode) === hCode;
+                  return (
+                    <button
+                      key={hCode}
+                      type="button"
+                      onClick={() => {
+                        setActiveHotelCode(hCode);
+                        setShowPropertyModal(false);
+                        window.location.reload();
+                      }}
+                      className={`${selectStyles.hotelDropdownItem} ${isSelected ? selectStyles.hotelDropdownItemActive : ''}`}
+                    >
+                      <div className="flex items-center gap-2 truncate text-left">
+                        <span className={selectStyles.hotelCodeBadge}>{hCode}</span>
+                        <span className="truncate">{hName}</span>
+                      </div>
+                      {isSelected && (
+                        <Check size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                      )}
+                    </button>
+                  );
+                })
+              ) : (
+                <div style={{ padding: '8px 12px', fontSize: '12px', color: '#a0aec0' }}>
+                  Current: {activeHotelName || 'Hotel'}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* PMS Building Icon (Back to Select Module / PMS) */}
         <Link href="/select-module" title="Back to PMS Module Hub" className={styles.navShortcut}>
           <button className={styles.iconButton}>
@@ -90,86 +162,6 @@ export const InnalyticsHeader: React.FC<InnalyticsHeaderProps> = ({
         {/* User Avatar */}
         <div className={styles.avatarCircle} title={user?.email || 'User'}>
           <User size={16} />
-        </div>
-
-        {/* Switch Property Button */}
-        <div style={{ position: 'relative' }}>
-          <button
-            className={styles.switchPropertyBtn}
-            onClick={() => setShowPropertyModal(!showPropertyModal)}
-          >
-            <Repeat size={12} />
-            <span className={styles.switchPropertyText}>Switch Property</span>
-            <ChevronRight size={12} />
-          </button>
-
-          {/* Property Dropdown */}
-          {showPropertyModal && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                marginTop: '4px',
-                width: '260px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #cbd5e0',
-                borderRadius: '6px',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                zIndex: 60,
-                padding: '8px 0',
-                maxHeight: '300px',
-                overflowY: 'auto'
-              }}
-            >
-              <div
-                style={{
-                  padding: '6px 12px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: '#718096',
-                  textTransform: 'uppercase',
-                  borderBottom: '1px solid #edf2f7'
-                }}
-              >
-                Select Hotel Property
-              </div>
-              {hotelsList && hotelsList.length > 0 ? (
-                hotelsList.map((hotel, idx) => {
-                  const hCode = String(hotel.hotelCode || hotel.id || hotel.code || idx);
-                  const hName = hotel.name || hotel.hotelName || 'Hotel';
-                  return (
-                    <div
-                      key={hCode}
-                      onClick={() => {
-                        setActiveHotelCode(hCode);
-                        setShowPropertyModal(false);
-                        window.location.reload();
-                      }}
-                      style={{
-                        padding: '8px 12px',
-                        fontSize: '12px',
-                        cursor: 'pointer',
-                        backgroundColor:
-                          hCode === activeHotelCode ? '#eff6ff' : 'transparent',
-                        color: hCode === activeHotelCode ? '#2563eb' : '#2d3748',
-                        fontWeight: hCode === activeHotelCode ? 600 : 400
-                      }}
-                    >
-                      <div>{hName}</div>
-                      <div style={{ fontSize: '10px', color: '#718096' }}>
-                        ID: {hCode}
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div style={{ padding: '8px 12px', fontSize: '12px', color: '#a0aec0' }}>
-                  Current: {activeHotelName || 'Hotel'}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </header>

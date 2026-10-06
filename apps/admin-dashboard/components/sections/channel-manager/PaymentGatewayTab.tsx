@@ -7,6 +7,7 @@ import {
     PaymentGatewaySettings,
     ManualBankDetail,
     BookingEnginePromoCode,
+    HotelAddOnSetting,
 } from "../payment-gateway/types";
 import { useAuth } from "@/context/AuthContext";
 import { isUserSuperadmin } from "@/lib/permissionCheck";
@@ -34,6 +35,7 @@ import {
     Tag,
     ArrowSquareOut,
     Sparkle,
+    CalendarBlank,
 } from "@phosphor-icons/react";
 
 interface PaymentGatewayTabProps {
@@ -42,11 +44,12 @@ interface PaymentGatewayTabProps {
 
 type MainTab =
     | "settings"
+    | "payment_gateway"
+    | "addons"
+    | "promotions"
     | "preferences"
     | "analytics"
-    | "completeness"
-    | "promotions"
-    | "payment_gateway";
+    | "completeness";
 
 const PRESET_THEME_COLORS = [
     { label: "Burgundy (Default)", hex: "#6D2B35" },
@@ -174,8 +177,39 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
         return { items, totalScore };
     }, [formData]);
 
+    const todayDates = useMemo(() => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        const todayStr = `${year}-${month}-${day}`;
+
+        const nextDay = new Date(now);
+        nextDay.setDate(nextDay.getDate() + 1);
+        const ny = nextDay.getFullYear();
+        const nm = String(nextDay.getMonth() + 1).padStart(2, "0");
+        const nd = String(nextDay.getDate()).padStart(2, "0");
+        const tomorrowStr = `${ny}-${nm}-${nd}`;
+
+        return { todayStr, tomorrowStr };
+    }, []);
+
+    const publicBookingTodayUrl = useMemo(() => {
+        const { todayStr, tomorrowStr } = todayDates;
+        if (typeof window === "undefined") {
+            return `/book/${effectiveHotelCode}?checkin=${todayStr}&checkout=${tomorrowStr}`;
+        }
+        const origin = window.location.origin;
+        const baseOrigin = origin.includes(":3000")
+            ? origin.replace(":3000", ":3002")
+            : origin.includes(":3001")
+            ? origin.replace(":3001", ":3002")
+            : origin;
+        return `${baseOrigin}/book/${effectiveHotelCode}?checkin=${todayStr}&checkout=${tomorrowStr}`;
+    }, [effectiveHotelCode, todayDates]);
+
     const publicBookingUrl = typeof window !== "undefined"
-        ? `${window.location.origin.replace(":3000", ":3002")}/book/${effectiveHotelCode}`
+        ? `${window.location.origin.replace(":3000", ":3002").replace(":3001", ":3002")}/book/${effectiveHotelCode}`
         : `/book/${effectiveHotelCode}`;
 
     // Access control: only superadmin can configure tenant payment gateways & engine
@@ -290,6 +324,49 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
         }));
     };
 
+    // Add-Ons & Extra Services Helpers
+    const addCustomAddOn = () => {
+        const newAddOn: HotelAddOnSetting = {
+            id: `addon-${Date.now()}`,
+            name: "Layanan Baru",
+            description: "Deskripsi fasilitas tambahan atau layanan ekstra untuk tamu.",
+            price: 50000,
+            priceType: "per_stay",
+            icon: "sparkle",
+            category: "extra",
+            isActive: true,
+            revenueDepartment: "other",
+            accountCode: "4190 - Other Operating Revenue",
+            costCenter: "Front Desk",
+            cogsEstimatePercent: 0,
+        };
+        setFormData((prev) => ({
+            ...prev,
+            addOns: [...(prev.addOns || []), newAddOn],
+        }));
+    };
+
+    const removeAddOn = (id: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            addOns: (prev.addOns || []).filter((a) => a.id !== id),
+        }));
+    };
+
+    const updateAddOn = (id: string, field: keyof HotelAddOnSetting, value: any) => {
+        setFormData((prev) => ({
+            ...prev,
+            addOns: (prev.addOns || []).map((a) => (a.id === id ? { ...a, [field]: value } : a)),
+        }));
+    };
+
+    const toggleAddOnActive = (id: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            addOns: (prev.addOns || []).map((a) => (a.id === id ? { ...a, isActive: a.isActive === false ? true : false } : a)),
+        }));
+    };
+
     return (
         <div className={styles.container}>
             {/* Header Top Card */}
@@ -309,14 +386,16 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
 
                 <div className={styles.headerActions}>
                     <a
-                        href={publicBookingUrl}
+                        href={publicBookingTodayUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={styles.btnAuditTrail}
-                        title="Buka halaman booking engine live"
+                        className={styles.btnGoToBookingEngine}
+                        title={`Buka Booking Engine hotel ini untuk reservasi hari ini (${todayDates.todayStr})`}
                     >
-                        <ArrowSquareOut size={15} weight="bold" />
-                        <span>Pratinjau Live Portal</span>
+                        <CalendarBlank size={16} weight="bold" />
+                        <span>Go to Booking Engine</span>
+                        <span className={styles.todayTag}>Today ({todayDates.todayStr})</span>
+                        <ArrowSquareOut size={13} weight="bold" />
                     </a>
                     <button
                         type="button"
@@ -363,6 +442,15 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                 >
                     <CreditCard size={16} weight={mainTab === "payment_gateway" ? "fill" : "regular"} />
                     <span>Payment Gateway & Rekening Bank</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setMainTab("addons")}
+                    className={`${styles.tabBtn} ${mainTab === "addons" ? styles.tabBtnActive : ""}`}
+                >
+                    <Sparkle size={16} weight={mainTab === "addons" ? "fill" : "regular"} />
+                    <span>Add-Ons & Layanan Ekstra</span>
                 </button>
 
                 <button
@@ -579,6 +667,36 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                                 />
                                 <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "6px" }}>
                                     Rekomendasi: File PNG transparan atau SVG dengan aspek rasio horizontal (misal 240x80px).
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Hotel Property Address (Displayed right below logo in booking engine header) */}
+                        <div className={styles.fieldRow}>
+                            <div className={styles.fieldLabelCol}>
+                                <span>Alamat Properti Hotel:</span>
+                                <span title="Alamat lengkap properti yang tampil tepat di bawah logo pada header Booking Engine">
+                                    <Info size={14} color="#64748b" />
+                                </span>
+                            </div>
+                            <div>
+                                <input
+                                    type="text"
+                                    value={formData.theme?.hotelAddress || ""}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            theme: {
+                                                ...prev.theme,
+                                                hotelAddress: e.target.value,
+                                            },
+                                        }))
+                                    }
+                                    placeholder="Contoh: Jl. Palagan Tentara Pelajar Km. 8.1, Sariharjo, Ngaglik, Sleman, D.I. Yogyakarta"
+                                    className={styles.formInput}
+                                />
+                                <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "4px" }}>
+                                    Alamat ini akan ditampilkan tepat di bawah logo hotel pada header Booking Engine resmi.
                                 </span>
                             </div>
                         </div>
@@ -1071,6 +1189,219 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                                         <Trash size={14} />
                                         <span>Hapus</span>
                                     </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════
+                TAB: ADD-ONS & LAYANAN EKSTRA (Upselling & Extra Services)
+               ══════════════════════════════════════════════════════════ */}
+            {mainTab === "addons" && (
+                <div className={styles.contentCard}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
+                        <div>
+                            <h3 className={styles.sectionTitle}>Katalog Add-Ons & Layanan Ekstra Hotel</h3>
+                            <p className={styles.sectionDesc}>
+                                Kelola fasilitas tambahan dan layanan upselling (Extra Bed, Antar-Jemput, Late Check-Out, Romantic Dinner) yang dapat dipilih tamu saat booking di halaman reservasi langsung.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={addCustomAddOn}
+                            className={styles.btnSave}
+                            style={{ padding: "8px 16px", fontSize: "13px" }}
+                        >
+                            <Plus size={16} weight="bold" />
+                            <span>Tambah Layanan Ekstra</span>
+                        </button>
+                    </div>
+
+                    <div className={styles.addonsGrid}>
+                        {(formData.addOns || []).map((addon, index) => (
+                            <div
+                                key={addon.id || index}
+                                className={`${styles.addonCard} ${addon.isActive === false ? styles.addonCardInactive : ""}`}
+                            >
+                                <div className={styles.addonCardHeader}>
+                                    <div className={styles.addonIconBadge}>
+                                        <Sparkle size={14} weight="bold" />
+                                        <span>Layanan #{index + 1}</span>
+                                    </div>
+                                    <div className={styles.addonActions}>
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleAddOnActive(addon.id)}
+                                            className={`${styles.btnToggleAddon} ${addon.isActive !== false ? styles.btnToggleAddonActive : styles.btnToggleAddonInactive}`}
+                                        >
+                                            {addon.isActive !== false ? "● Aktif" : "Nonaktif"}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeAddOn(addon.id)}
+                                            className={styles.btnDeleteAddon}
+                                            title="Hapus Layanan"
+                                        >
+                                            <Trash size={14} />
+                                            <span>Hapus</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className={styles.addonFieldGroup}>
+                                    <label className={styles.addonFieldLabel}>Nama Layanan / Fasilitas</label>
+                                    <input
+                                        type="text"
+                                        value={addon.name}
+                                        onChange={(e) => updateAddOn(addon.id, "name", e.target.value)}
+                                        placeholder="Contoh: Extra Bed (Kasur Tambahan)"
+                                        className={styles.formInput}
+                                        style={{ fontWeight: 700 }}
+                                    />
+                                </div>
+
+                                <div className={styles.addonRowInputs}>
+                                    <div className={styles.addonFieldGroup}>
+                                        <label className={styles.addonFieldLabel}>Harga Nominal (Rp)</label>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            step={5000}
+                                            value={addon.price}
+                                            onChange={(e) => updateAddOn(addon.id, "price", parseFloat(e.target.value) || 0)}
+                                            className={styles.formInput}
+                                        />
+                                    </div>
+                                    <div className={styles.addonFieldGroup}>
+                                        <label className={styles.addonFieldLabel}>Tipe Perhitungan Tarif</label>
+                                        <select
+                                            value={addon.priceType || "per_stay"}
+                                            onChange={(e) => updateAddOn(addon.id, "priceType", e.target.value as any)}
+                                            className={styles.formSelect}
+                                        >
+                                            <option value="per_stay">Per Reservasi (Flat / Stay)</option>
+                                            <option value="per_night">Per Malam Inap (x Nights)</option>
+                                            <option value="per_person">Per Orang / Tamu</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className={styles.addonRowInputs}>
+                                    <div className={styles.addonFieldGroup}>
+                                        <label className={styles.addonFieldLabel}>Pilihan Ikon</label>
+                                        <select
+                                            value={addon.icon || "sparkle"}
+                                            onChange={(e) => updateAddOn(addon.id, "icon", e.target.value)}
+                                            className={styles.formSelect}
+                                        >
+                                            <option value="bed">Kasur / Extra Bed</option>
+                                            <option value="car">Mobil / Airport Transfer</option>
+                                            <option value="clock">Jam / Late Check-Out</option>
+                                            <option value="utensils">Makan / Romantic Dinner</option>
+                                            <option value="wine">Minuman / Bar</option>
+                                            <option value="spa">Spa / Wellness</option>
+                                            <option value="sparkle">Sparkle / Layanan Umum</option>
+                                        </select>
+                                    </div>
+                                    <div className={styles.addonFieldGroup}>
+                                        <label className={styles.addonFieldLabel}>Kategori</label>
+                                        <select
+                                            value={addon.category || "extra"}
+                                            onChange={(e) => updateAddOn(addon.id, "category", e.target.value)}
+                                            className={styles.formSelect}
+                                        >
+                                            <option value="comfort">Kenyamanan (Comfort)</option>
+                                            <option value="transport">Transportasi</option>
+                                            <option value="flexibility">Fleksibilitas</option>
+                                            <option value="dining">Dining & Kuliner</option>
+                                            <option value="wellness">Spa & Wellness</option>
+                                            <option value="extra">Lainnya</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className={styles.addonFieldGroup}>
+                                    <label className={styles.addonFieldLabel}>Deskripsi Singkat untuk Tamu</label>
+                                    <textarea
+                                        value={addon.description || ""}
+                                        onChange={(e) => updateAddOn(addon.id, "description", e.target.value)}
+                                        placeholder="Jelaskan fasilitas atau ketentuan layanan ini..."
+                                        rows={2}
+                                        className={styles.formInput}
+                                        style={{ resize: "vertical", fontSize: "12px" }}
+                                    />
+                                </div>
+
+                                {/* ── Accounting & Revenue Center Mapping (USALI) ── */}
+                                <div style={{ borderTop: "1px dashed #cbd5e1", paddingTop: "10px", marginTop: "4px", background: "#f8fafc", padding: "10px", borderRadius: "8px" }}>
+                                    <span style={{ fontSize: "11px", fontWeight: 800, color: "#1e3a2f", display: "block", marginBottom: "8px" }}>
+                                        🏛️ Integrasi Akuntansi & Alokasi Pos Revenue
+                                    </span>
+                                    <div className={styles.addonRowInputs}>
+                                        <div className={styles.addonFieldGroup}>
+                                            <label className={styles.addonFieldLabel}>Pos Pendapatan (Revenue Dept)</label>
+                                            <select
+                                                value={addon.revenueDepartment || "room"}
+                                                onChange={(e) => updateAddOn(addon.id, "revenueDepartment", e.target.value as any)}
+                                                className={styles.formSelect}
+                                                style={{ fontSize: "11px" }}
+                                            >
+                                                <option value="room">🛏️ Room Revenue (Pendapatan Kamar)</option>
+                                                <option value="food_beverage">🍽️ Food & Beverage Revenue</option>
+                                                <option value="transport">🚗 Transportation / Concierge</option>
+                                                <option value="spa">💆 Spa & Wellness Revenue</option>
+                                                <option value="laundry">🧺 Laundry Revenue</option>
+                                                <option value="other">📦 Other Operating Dept (MOD)</option>
+                                            </select>
+                                        </div>
+                                        <div className={styles.addonFieldGroup}>
+                                            <label className={styles.addonFieldLabel}>Departemen Biaya (Cost Center)</label>
+                                            <select
+                                                value={addon.costCenter || "Housekeeping"}
+                                                onChange={(e) => updateAddOn(addon.id, "costCenter", e.target.value)}
+                                                className={styles.formSelect}
+                                                style={{ fontSize: "11px" }}
+                                            >
+                                                <option value="Housekeeping">Housekeeping (Linen/Kasur)</option>
+                                                <option value="Kitchen & F&B Service">Kitchen & F&B Product</option>
+                                                <option value="Concierge & Driver">Concierge & Driver</option>
+                                                <option value="Front Desk">Front Desk / Front Office</option>
+                                                <option value="Spa Department">Spa & Wellness Team</option>
+                                                <option value="General & Admin">General & Administration</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className={styles.addonRowInputs} style={{ marginTop: "6px" }}>
+                                        <div className={styles.addonFieldGroup}>
+                                            <label className={styles.addonFieldLabel}>Kode Akun COA (Ledger)</label>
+                                            <input
+                                                type="text"
+                                                value={addon.accountCode || ""}
+                                                onChange={(e) => updateAddOn(addon.id, "accountCode", e.target.value)}
+                                                placeholder="Contoh: 4110 - Room Extra"
+                                                className={styles.formInput}
+                                                style={{ fontSize: "11px" }}
+                                            />
+                                        </div>
+                                        <div className={styles.addonFieldGroup}>
+                                            <label className={styles.addonFieldLabel}>Est. Biaya / HPP (COGS %)</label>
+                                            <div style={{ position: "relative" }}>
+                                                <input
+                                                    type="number"
+                                                    min={0}
+                                                    max={100}
+                                                    value={addon.cogsEstimatePercent ?? 0}
+                                                    onChange={(e) => updateAddOn(addon.id, "cogsEstimatePercent", parseFloat(e.target.value) || 0)}
+                                                    className={styles.formInput}
+                                                    style={{ fontSize: "11px", paddingRight: "24px" }}
+                                                />
+                                                <span style={{ position: "absolute", right: "8px", top: "7px", fontSize: "11px", color: "#64748b" }}>%</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}

@@ -65,6 +65,7 @@ export const COMPREHENSIVE_PERMISSION_GROUPS: PermissionGroup[] = [
         icon: "Building2",
         permissions: [
             { id: "overview", label: "Front Desk & Room Status Matrix (Tape Chart)", description: "Melihat visualisasi status kamar real-time, daftar kedatangan tamu (Arrival), dan keberangkatan (Departure)" },
+            { id: "bookings", label: "Master Bookings Ledger & OTA Reservations", description: "Melihat dan memfilter seluruh pemesanan masuk (termasuk dibatalkan), logo OTA, status voucher, dan data check-in/out" },
             { id: "digital-checkin", label: "Guest Registration Card (GRC) & E-Sign", description: "Mengakses formulir registrasi digital tamu, pemindaian identitas (KTP/Paspor), dan tanda tangan elektronik" },
             { id: "fo_walkin", label: "Walk-In Reservation & Quick Booking", description: "Menerima dan membuat reservasi kamar langsung di meja resepsionis untuk tamu walk-in tanpa pemesanan awal" },
             { id: "confirmation-letter", label: "Confirmation Letter (CL) & Booking Voucher", description: "Menerbitkan, mencetak, dan mengirimkan surat konfirmasi reservasi resmi berkop hotel kepada tamu" },
@@ -618,7 +619,7 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
     if (roleLower === "front office manager" || roleLower === "fom") {
         const allowed = [
             // FO
-            "module_front_office", "overview", "digital-checkin", "fo_checkin", "fo_checkout", 
+            "module_front_office", "overview", "bookings", "digital-checkin", "fo_checkin", "fo_checkout", 
             "fo_room_move", "fo_walkin", "confirmation-letter", "forecast", "revenue-breakdown", 
             "rate-inventory", "fo_stopsell", "fo_rate_change", "fo_inventory_change", "fo_cancel", 
             "fo_void", "fo_discount", "fo_refund", "inventory-control", "invoice",
@@ -640,7 +641,7 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
     // 4. Front Office Associate / Receptionist
     if (roleLower === "front office associate" || roleLower === "fo associate" || roleLower === "receptionist") {
         const allowed = [
-            "module_front_office", "overview", "digital-checkin", "fo_checkin", "fo_checkout",
+            "module_front_office", "overview", "bookings", "digital-checkin", "fo_checkin", "fo_checkout",
             "fo_room_move", "fo_walkin", "confirmation-letter", "rate-inventory", "invoice",
             "module_housekeeping", "hk_overview", "hk_lost_found"
         ];
@@ -651,7 +652,7 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
     // 5. Reservation Associate: Bookings, CL, GRC, Rates, Inalytics, Channel Manager
     if (roleLower === "reservation associate" || roleLower === "reservasi" || roleLower === "reservation") {
         const allowed = [
-            "module_front_office", "overview", "digital-checkin", "confirmation-letter",
+            "module_front_office", "overview", "bookings", "digital-checkin", "confirmation-letter",
             "fo_walkin", "forecast", "rate-inventory", "invoice",
             "module_innalytics", "innalytics", "ina_reports", "ina_occupancy", "ina_channels"
         ];
@@ -662,7 +663,7 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
     // 6. Night Auditor: Day-end processing, room & tax audit, DSR, cashier settlement balancing
     if (roleLower === "night auditor" || roleLower === "night audit") {
         const allowed = [
-            "module_front_office", "overview", "revenue-breakdown", "forecast", "invoice",
+            "module_front_office", "overview", "bookings", "revenue-breakdown", "forecast", "invoice",
             "module_night_audit", "na_run_audit", "na_rate_posting", "na_noshow_process", "dsr", "na_cashier_audit", "na_trial_balance",
             "module_accounting", "dsr", "pnl", "pnl-budget", "statements",
             "module_pos", "pos_home", "pos_records", "pos_settlement"
@@ -706,7 +707,7 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
     // 10. Revenue Manager: Rates, restrictions, stop sell, dynamic pricing, OTA sync, Inalytics
     if (roleLower === "revenue manager" || roleLower === "revenue") {
         const allowed = [
-            "module_front_office", "overview", "forecast", "revenue-breakdown",
+            "module_front_office", "overview", "bookings", "forecast", "revenue-breakdown",
             "rate-inventory", "fo_stopsell", "fo_rate_change", "fo_inventory_change",
             "module_innalytics", "innalytics", "ina_reports", "ina_occupancy", "ina_channels", "ina_competitor", "ina_guest_market"
         ];

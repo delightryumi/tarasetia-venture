@@ -907,33 +907,92 @@ export const useTransactionForm = () => {
     const prepareEntries = useCallback(() => {
         const isRoom = revenueType === "room";
         
-        // 1. Core Validation
+        // 1. Core Validation - Strict prevention of empty / missing data
         if (isRoom) {
-            if (!form.guestName) { toast.error("Guest Name is required"); return null; }
-            if (!form.checkOut) { toast.error("Check-out Date is required"); return null; }
-            if (form.checkOut <= form.checkIn) { toast.error("Check-out Date must be after Check-in Date"); return null; }
-            if (!form.rooms || form.rooms.length === 0 || !form.rooms[0]?.roomTypeId) { 
-                toast.error("Silakan pilih Tipe Kamar"); 
-                return null; 
+            if (!form.guestName || form.guestName.trim() === "") {
+                toast.error("Nama Tamu wajib diisi!");
+                return null;
             }
-            if (form.isCompliment && !form.complimentReason) { toast.error("Alasan Compliment wajib diisi"); return null; }
-            
-            // Check for negative room rates
-            const hasNegativeRate = (form.rooms || []).some(r => Number(r.price) < 0) || (form.nightRates || []).some(r => Number(r) < 0);
-            if (hasNegativeRate) {
-                toast.error("Tarif kamar tidak boleh bernilai negatif");
+            if (!form.checkIn || form.checkIn.trim() === "") {
+                toast.error("Tanggal Check-in wajib diisi!");
+                return null;
+            }
+            if (!form.checkOut || form.checkOut.trim() === "") {
+                toast.error("Tanggal Check-out wajib diisi!");
+                return null;
+            }
+            if (form.checkOut <= form.checkIn) {
+                toast.error("Tanggal Check-out harus setelah Check-in!");
+                return null;
+            }
+            if (!form.channel || form.channel.trim() === "") {
+                toast.error("Channel / Sumber Reservasi wajib dipilih!");
+                return null;
+            }
+            if (!form.rooms || form.rooms.length === 0) {
+                toast.error("Minimal satu kamar wajib dipilih!");
+                return null;
+            }
+
+            // Check each room in the booking
+            for (let rIdx = 0; rIdx < form.rooms.length; rIdx++) {
+                const rm = form.rooms[rIdx];
+                const roomLabel = form.rooms.length > 1 ? `Kamar #${rIdx + 1}` : "Kamar";
+                
+                if (!rm.roomTypeId || String(rm.roomTypeId).trim() === "") {
+                    toast.error(`Tipe kamar untuk ${roomLabel} wajib dipilih!`);
+                    return null;
+                }
+
+                if (!rm.roomNumber || String(rm.roomNumber).trim() === "") {
+                    toast.error(`Nomor kamar untuk ${roomLabel} wajib diisi atau dipilih!`);
+                    return null;
+                }
+
+                if (!form.isCompliment) {
+                    const basePrice = Number(rm.price);
+                    if (rm.price === "" || rm.price === undefined || isNaN(basePrice) || basePrice <= 0) {
+                        toast.error(`Tarif per malam untuk ${roomLabel} wajib diisi dan harus lebih dari 0!`);
+                        return null;
+                    }
+
+                    if (Array.isArray(rm.nightsData) && rm.nightsData.length > 0) {
+                        for (let nIdx = 0; nIdx < rm.nightsData.length; nIdx++) {
+                            const nd = rm.nightsData[nIdx];
+                            const nPrice = Number(nd.price);
+                            if (nd.price === "" || nd.price === undefined || isNaN(nPrice) || nPrice <= 0) {
+                                toast.error(`Tarif ${roomLabel} pada malam ke-${nIdx + 1} wajib diisi dan lebih dari 0!`);
+                                return null;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (form.isCompliment && (!form.complimentReason || form.complimentReason.trim() === "")) {
+                toast.error("Alasan Compliment wajib diisi jika tarif gratis/compliment!");
                 return null;
             }
         } else {
-            const amountVal = Number(form.totalAmount);
-            if (form.isCompliment && !form.complimentReason) { toast.error("Alasan Compliment wajib diisi"); return null; }
-            if (!form.isCompliment && (isNaN(amountVal) || amountVal === 0 || form.totalAmount === "")) {
-                toast.error("Total Amount is required");
+            // Non-room / Other income validation
+            if (!form.guestName || form.guestName.trim() === "") {
+                toast.error("Keterangan / Deskripsi Pendapatan Lain wajib diisi!");
                 return null;
             }
-            if (amountVal < 0) {
-                toast.error("Total Amount must be greater than 0");
+            if (!form.checkIn || form.checkIn.trim() === "") {
+                toast.error("Tanggal Transaksi wajib diisi!");
                 return null;
+            }
+            const amountVal = Number(form.totalAmount);
+            if (form.isCompliment && (!form.complimentReason || form.complimentReason.trim() === "")) {
+                toast.error("Alasan Compliment wajib diisi!");
+                return null;
+            }
+            if (!form.isCompliment) {
+                if (form.totalAmount === "" || form.totalAmount === undefined || isNaN(amountVal) || amountVal <= 0) {
+                    toast.error("Nominal Pendapatan Lain wajib diisi dan harus lebih dari 0!");
+                    return null;
+                }
             }
         }
 

@@ -96,6 +96,20 @@ export function resolveChannelName(item: any): string {
 }
 
 /**
+ * Checks if a booking belongs to a real OTA channel (Traveloka, Tiket.com, Agoda, Booking.com, etc.)
+ */
+export function isChannelOTA(item: any): boolean {
+  if (!item) return false;
+  if (item.type === "other_income") return false;
+  if (item.isOTA === true) return true;
+  const name = resolveChannelName(item).toLowerCase();
+  if (name.includes("walk") || name === "direct" || name.includes("front") || name.includes("other income") || name.includes("other_income")) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Returns the channel logo image path
  */
 export function getChannelLogo(channelOrItem: any): string {

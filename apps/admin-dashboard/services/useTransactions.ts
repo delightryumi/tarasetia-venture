@@ -27,7 +27,7 @@ export interface Transaction {
   bookingId: string;
 }
 
-export function useTransactions(month?: number, year?: number) {
+export function useTransactions(month?: number, year?: number, hotelCode?: string) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -36,6 +36,13 @@ export function useTransactions(month?: number, year?: number) {
     async function fetchTransactions() {
       setLoading(true);
       try {
+        const activeCode = hotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") || "" : "");
+        if (!activeCode || activeCode === "0") {
+          setTransactions([]);
+          setLoading(false);
+          return;
+        }
+
         const currentMonth = month !== undefined ? month + 1 : new Date().getMonth() + 1;
         const currentYear = year !== undefined ? year : new Date().getFullYear();
         
@@ -45,7 +52,7 @@ export function useTransactions(month?: number, year?: number) {
         const endStr = `${currentYear}-${monthStr}-${lastDay}`;
 
         const q = query(
-          getHotelCollection(db, "daily_revenue"),
+          getHotelCollection(db, "daily_revenue", activeCode),
           where("date", ">=", startStr),
           where("date", "<=", endStr)
         );

@@ -7,6 +7,7 @@ import {
     collection,
     onSnapshot,
     doc,
+    getDoc,
     getDocs,
     setDoc,
     updateDoc,
@@ -53,6 +54,29 @@ export const useRateInventory = () => {
     const [rateMode, setRateMode] = useState<"base" | "extra_adult" | "extra_child">("base");
     const [hideDerived, setHideDerived] = useState<boolean>(false);
     const [taxInclusive, setTaxInclusive] = useState<boolean>(false);
+    const [savedTaxInclusive, setSavedTaxInclusive] = useState<boolean>(false);
+    const [taxRate, setTaxRate] = useState<number>(10);
+    const [serviceRate, setServiceRate] = useState<number>(10);
+
+    // Load initial Tax Inclusive setting & tax/service rates from payment_gateway settings
+    useEffect(() => {
+        if (!activeHotelCode || activeHotelCode === "0") return;
+        const pgRef = doc(db, "hotels", activeHotelCode, "settings", "payment_gateway");
+        getDoc(pgRef).then((snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                const isInc = !!data?.pricing?.isTaxIncludedInRate;
+                const tRate = typeof data?.pricing?.taxRate === "number" ? data.pricing.taxRate : 10;
+                const sRate = typeof data?.pricing?.serviceRate === "number" ? data.pricing.serviceRate : 10;
+                setTaxInclusive(isInc);
+                setSavedTaxInclusive(isInc);
+                setTaxRate(tRate);
+                setServiceRate(sRate);
+            }
+        }).catch((err) => {
+            console.error("Error loading tax setting in rate inventory:", err);
+        });
+    }, [activeHotelCode]);
 
     // Data states
     const [roomTypes, setRoomTypes] = useState<RoomTypeInfo[]>([]);
@@ -494,11 +518,12 @@ export const useRateInventory = () => {
                         currentChildRate = Number(dayOverride.extraChildRates[rp.id]) || 0;
                     }
 
-                    // Apply Tax Inclusive if enabled (11% PB1 / Tax)
+                    // Apply Tax Inclusive if enabled (Dynamic PB1 + Service Charge from Payment Gateway settings)
                     if (taxInclusive) {
-                        currentRate = Math.round(currentRate * 1.11);
-                        currentAdultRate = Math.round(currentAdultRate * 1.11);
-                        currentChildRate = Math.round(currentChildRate * 1.11);
+                        const taxMultiplier = 1 + (taxRate + serviceRate) / 100;
+                        currentRate = Math.round(currentRate * taxMultiplier);
+                        currentAdultRate = Math.round(currentAdultRate * taxMultiplier);
+                        currentChildRate = Math.round(currentChildRate * taxMultiplier);
                     }
 
                     // Restrictions: Min Stay, CTA, CTD
@@ -622,14 +647,19 @@ export const useRateInventory = () => {
         setStagedUpdates(prev => ({ ...prev, [key]: value }));
     }, [canStopSell, canChangeRate, canChangeInventory, channelConfigs]);
 
-    // Count unsaved staged edits
-    const unsavedCount = useMemo(() => Object.keys(stagedUpdates).length, [stagedUpdates]);
+    // Count unsaved staged edits (including Tax Inclusive toggle)
+    const unsavedCount = useMemo(() => {
+        const stagedCount = Object.keys(stagedUpdates).length;
+        const isTaxDirty = taxInclusive !== savedTaxInclusive;
+        return stagedCount + (isTaxDirty ? 1 : 0);
+    }, [stagedUpdates, taxInclusive, savedTaxInclusive]);
 
     // Discard all staged changes
     const resetStaged = useCallback(() => {
         setStagedUpdates({});
+        setTaxInclusive(savedTaxInclusive);
         toast.info("Local changes discarded.");
-    }, []);
+    }, [savedTaxInclusive]);
 
     // Save all staged changes in batch to Firestore (Persisting both Common Pool & Per-Channel Overrides)
     const saveAllChanges = async () => {
@@ -637,6 +667,26 @@ export const useRateInventory = () => {
         setSaving(true);
 
         try {
+            // 1. Save Tax Inclusive toggle if changed
+            const isTaxDirty = taxInclusive !== savedTaxInclusive;
+            if (isTaxDirty) {
+                const pgRef = doc(db, "hotels", activeHotelCode, "settings", "payment_gateway");
+                const hotelRef = doc(db, "hotels", activeHotelCode);
+                await Promise.all([
+                    setDoc(pgRef, { pricing: { isTaxIncludedInRate: taxInclusive } }, { merge: true }),
+                    setDoc(hotelRef, { isTaxIncludedInRate: taxInclusive }, { merge: true })
+                ]);
+                setSavedTaxInclusive(taxInclusive);
+            }
+
+            // 2. If no ARI grid cell overrides, finish early with success
+            const hasGridEdits = Object.keys(stagedUpdates).length > 0;
+            if (!hasGridEdits) {
+                toast.success("Tax display setting saved successfully!");
+                setSaving(false);
+                return;
+            }
+
             // Group staged edits by date
             const dateEditsMap: Record<string, {
                 rates?: Record<string, number>;

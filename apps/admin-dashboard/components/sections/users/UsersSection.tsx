@@ -10,7 +10,7 @@ import {
     Gift, Package, Users, ShoppingCart, Banknote, Building2,
     BedDouble, Coffee, ShoppingBag, Calculator, Store, User as UserIcon, Archive, Star,
     Camera, ClipboardList, Layers, BarChart2, Zap, FileSpreadsheet, SlidersHorizontal, Globe,
-    Ban, Tag, XCircle, Trash2, Receipt, ShieldAlert
+    Ban, Tag, XCircle, Trash2, Receipt, ShieldAlert, CalendarDays
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -76,6 +76,7 @@ const PERMISSION_TREE: PermissionModule[] = [
         icon: <Building2 size={14} />,
         submenus: [
             { id: "overview", label: "Overview", icon: <LayoutDashboard size={14} /> },
+            { id: "bookings", label: "Master Bookings", icon: <CalendarDays size={14} /> },
             { id: "digital-checkin", label: "GRC (Guest Card)", icon: <FileText size={14} /> },
             { id: "confirmation-letter", label: "Confirmation Letter (CL)", icon: <FileText size={14} /> },
             { id: "forecast", label: "Forecast", icon: <TrendingUp size={14} /> },

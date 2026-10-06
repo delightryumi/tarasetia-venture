@@ -11,7 +11,7 @@ const SUPERADMIN_PERMISSIONS_FALLBACK = [
     "module_pos", "module_front_office", "module_innalytics", "module_housekeeping", 
     "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel",
     "module_hrd",
-    "innalytics", "overview", "forecast", "revenue-breakdown", "rate-inventory", "digital-checkin", "confirmation-letter", "inventory-control", "invoice",
+    "innalytics", "overview", "bookings", "forecast", "revenue-breakdown", "rate-inventory", "digital-checkin", "confirmation-letter", "inventory-control", "invoice",
     "pnl", "pnl-budget", "dsr", "budgeting", "statements",
     "logo", "hero", "room-type", "about", "gallery", "footer", "attractions", "promo", "packages", "seo", "users", "channel-manager", "superadmin",
     "purchasing", "store-requisition", "purchase-requisition", "daily-market-list", 
@@ -122,6 +122,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Fetch hotels list if superadmin or has allowedOutlets / assigned hotel
     useEffect(() => {
         if (user && user.role === "superadmin") {
+            // Superadmin needs full hotel fleet overview
             const unsubscribe = onSnapshot(collection(db, "hotels"), (snapshot) => {
                 const list: any[] = [];
                 snapshot.forEach((doc) => {
@@ -131,16 +132,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
             return () => unsubscribe();
         } else if (user && user.allowedOutlets && user.allowedOutlets.length > 0) {
-            const unsubscribe = onSnapshot(collection(db, "hotels"), (snapshot) => {
-                const list: any[] = [];
-                snapshot.forEach((doc) => {
-                    if (user.allowedOutlets?.includes(doc.id) || (user.hotelCode && doc.id === user.hotelCode)) {
-                        list.push({ ...doc.data(), hotelCode: doc.id });
-                    }
+            // Scoped multi-tenant access: fetch ONLY the assigned hotel documents (no global collection listener)
+            const targetHotelCodes = Array.from(new Set([...user.allowedOutlets, user.hotelCode].filter(Boolean) as string[]));
+            let isCancelled = false;
+
+            Promise.all(targetHotelCodes.map((code) => getDoc(doc(db, "hotels", code))))
+                .then((snapshots) => {
+                    if (isCancelled) return;
+                    const list: any[] = [];
+                    snapshots.forEach((snap) => {
+                        if (snap.exists()) {
+                            list.push({ ...snap.data(), hotelCode: snap.id });
+                        }
+                    });
+                    setHotelsList(list);
+                })
+                .catch((err) => {
+                    console.error("Error fetching allowed outlets:", err);
+                    if (!isCancelled) setHotelsList([]);
                 });
-                setHotelsList(list);
-            });
-            return () => unsubscribe();
+
+            return () => {
+                isCancelled = true;
+            };
         } else if (user && user.hotelCode) {
             const docRef = doc(db, "hotels", user.hotelCode);
             getDoc(docRef).then((snap) => {

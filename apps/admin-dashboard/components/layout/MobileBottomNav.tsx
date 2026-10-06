@@ -369,6 +369,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeModules:
     // Master list of all possible navigation items with real hotel & iOS icons
     const allNavItems: NavItemDef[] = useMemo(() => [
         { id: "overview", label: "Overview", shortLabel: "Overview", icon: <Home size={18} /> },
+        { id: "bookings", label: "Master Bookings", shortLabel: "Bookings", icon: <CalendarDays size={18} /> },
         { id: "fo_walkin", label: "Walk-In & Reservasi", shortLabel: "Walk-In", icon: <UserPlus size={18} /> },
         { id: "forecast", label: "Forecast & Occupancy", shortLabel: "Forecast", icon: <CalendarDays size={18} /> },
         { id: "revenue-breakdown", label: "Rincian Pendapatan", shortLabel: "Revenue", icon: <PieChart size={18} /> },
@@ -439,7 +440,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeModules:
             items = allNavItems.filter(item => {
                 if (item.id === "innalytics" && !hasInnalytics) return false;
                 return [
-                    "overview", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", 
+                    "overview", "bookings", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", 
                     "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"
                 ].includes(item.id);
             });

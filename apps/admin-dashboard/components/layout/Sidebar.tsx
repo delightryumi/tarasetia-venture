@@ -201,6 +201,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }
             if (
                 pathname.startsWith("/front-office") ||
+                pathname.startsWith("/bookings") ||
                 pathname === "/digital-checkin" ||
                 pathname === "/invoice" ||
                 pathname === "/rate-inventory" ||
@@ -276,7 +277,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         if (activeModule === "front-office") {
             items = allNavItems.filter((item) => {
                 if (item.id === "innalytics" && !hasInnalytics) return false;
-                return ["overview", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", "inventory-control", "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id);
+                return ["overview", "bookings", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", "inventory-control", "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id);
             });
         } else if (activeModule === "innalytics") {
             items = allNavItems.filter((item) =>

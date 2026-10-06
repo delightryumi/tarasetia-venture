@@ -1,4 +1,4 @@
-/* SummaryCard.module.css */
+/* SummaryCard.module.css — iOS Claymorphic Aesthetic */
 
 .summaryCard {
   position: relative;
@@ -6,70 +6,95 @@
   flex-direction: column;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px 20px;
-  border-radius: var(--f-radius-md, 10px);
-  background-color: var(--f-canvas, #ffffff);
-  border: 1px solid var(--f-hairline, #dddddd);
-  transition: all var(--f-duration-fast, 150ms) var(--f-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  padding: 18px 22px;
+  border-radius: 20px;
+  background-color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    6px 6px 18px rgba(160, 175, 200, 0.18),
+    -5px -5px 14px rgba(255, 255, 255, 0.95),
+    inset 1.5px 1.5px 2px rgba(255, 255, 255, 0.9);
+  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
-}
-
-.summaryCardActive {
-  border-color: var(--f-sage, #788069);
-  background-color: var(--f-surface-soft, #f8fafc);
+  box-sizing: border-box;
 }
 
 .summaryCard:hover {
-  transform: translateY(-2px);
-  border-color: var(--f-light-muted, #a8a29e);
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 
+    10px 10px 26px rgba(160, 175, 200, 0.28),
+    -6px -6px 18px rgba(255, 255, 255, 0.98),
+    inset 1.5px 1.5px 2px rgba(255, 255, 255, 0.9);
+}
+
+.summaryCardActive {
+  background: linear-gradient(135deg, #ffffff, #f0f9ff);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 
+    6px 6px 20px rgba(59, 130, 246, 0.2),
+    -4px -4px 12px rgba(255, 255, 255, 0.95),
+    inset 1.5px 1.5px 3px rgba(255, 255, 255, 0.9);
 }
 
 .cardLabel {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--f-muted, #41454d);
+  letter-spacing: 0.05em;
+  color: #64748b;
   background-color: transparent !important;
 }
 
 .cardIconBox {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--f-radius-sm, 6px);
-  border: 1px solid;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background-color: transparent !important;
+  box-shadow: 
+    inset 1.5px 1.5px 3px rgba(0, 0, 0, 0.06),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.8);
+  transition: transform 0.2s ease;
+}
+
+.summaryCard:hover .cardIconBox {
+  transform: scale(1.06);
 }
 
 .cardValue {
-  font-size: 24px;
-  font-weight: 500;
-  color: var(--f-ink, #181d26);
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
   margin: 0;
-  font-family: var(--f-font-mono, monospace);
+  font-family: inherit;
   letter-spacing: -0.02em;
+  line-height: 1.2;
   background-color: transparent !important;
 }
 
 .guestSubtext {
-  font-size: 10px;
-  color: var(--f-muted, #41454d);
-  text-transform: uppercase;
-  font-weight: 500;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
   background-color: transparent !important;
 }
 
 /* --- Dark Mode Overrides --- */
 :global(.dark) .summaryCard {
-  background-color: var(--f-surface, #1f1f1f);
-  border-color: var(--f-hairline, #333333);
+  background-color: #1e293b;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    6px 6px 18px rgba(0, 0, 0, 0.35),
+    -4px -4px 12px rgba(255, 255, 255, 0.03),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.05);
 }
 
-:global(.dark) .summaryCardActive {
-  background-color: var(--f-surface-soft, #262626);
-  border-color: var(--f-sage, #788069);
+:global(.dark) .cardValue {
+  color: #f8fafc;
+}
+
+:global(.dark) .cardLabel {
+  color: #94a3b8;
 }

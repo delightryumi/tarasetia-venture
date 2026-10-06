@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { onSnapshot, getDocs, query, where } from "firebase/firestore";
 import { getHotelCollection } from "@/lib/firestoreHelper";
+import { isChannelOTA } from "@/lib/channelHelper";
 
 export interface ForecastStats {
     totalGrossRevenue: number;
@@ -23,7 +24,7 @@ export interface ForecastStats {
     loading: boolean;
 }
 
-export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDate: string) => {
+export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDate: string, hotelCodeOverride?: string) => {
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [stats, setStats] = useState<ForecastStats>({
         totalGrossRevenue: 0,
@@ -43,11 +44,18 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
         loading: true,
     });
 
+    const hotelId = hotelCodeOverride || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") || "" : "");
+
     useEffect(() => {
         setStats(prev => ({ ...prev, loading: true }));
         
-        const fetchRooms = async () => {
-            const roomSnap = await getDocs(getHotelCollection(db, "roomTypes"));
+        if (!hotelId || hotelId === "0") {
+            setStats(prev => ({ ...prev, loading: false }));
+            return;
+        }
+
+        const fetchRooms = async (code: string) => {
+            const roomSnap = await getDocs(getHotelCollection(db, "roomTypes", code));
             let count = 0;
             roomSnap.forEach(d => {
                 const data = d.data();
@@ -55,15 +63,9 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
             });
             return count;
         };
-
-        const hotelId = localStorage.getItem("active_hotel_code") || "";
-        if (!hotelId || hotelId === "0") {
-            setStats(prev => ({ ...prev, loading: false }));
-            return;
-        }
         
         const fetchData = async () => {
-            const totalPhysicalRooms = await fetchRooms();
+            const totalPhysicalRooms = await fetchRooms(hotelId);
             const [year, month, day] = selectedDate.split("-");
             
             let startStr: string, endStr: string, totalDaysForOcc: number;
@@ -227,22 +229,10 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
 
                     const nightlyRate = totalStayNights > 0 ? Math.round(trueTotalAmount / totalStayNights) : trueTotalAmount;
 
-                    const stayPaidCash = distinctEntries.reduce((sum, item) => sum + (Number(item.paidCash) || 0), 0);
-                    const stayPaidEdc = distinctEntries.reduce((sum, item) => sum + (Number(item.paidEdc) || 0), 0);
-                    const stayPaidQris = distinctEntries.reduce((sum, item) => sum + (Number(item.paidQris) || 0), 0);
-                    const stayPaidTransfer = distinctEntries.reduce((sum, item) => sum + (Number(item.paidTransfer) || 0), 0);
-                    const stayPaidOta = distinctEntries.reduce((sum, item) => sum + (Number(item.paidOta) || 0), 0);
-
-                    const hasGranularStay = (stayPaidCash > 0 || stayPaidEdc > 0 || stayPaidQris > 0 || stayPaidTransfer > 0 || stayPaidOta > 0);
-                    const stayPayHotel = hasGranularStay 
-                        ? (stayPaidCash + stayPaidEdc + stayPaidQris + stayPaidTransfer) 
-                        : distinctEntries.reduce((sum, item) => sum + (Number(item.payHotel ?? item.paidCash ?? item.paidAmount1 ?? 0)), 0);
-                    const stayPayTransfer = hasGranularStay 
-                        ? (stayPaidOta + stayPaidTransfer) 
-                        : distinctEntries.reduce((sum, item) => sum + (Number(item.payTransfer ?? item.payNexura ?? item.paidTransfer ?? item.paidAmount2 ?? 0)), 0);
-
-                    const nightlyPayHotel = totalStayNights > 0 ? Math.round(stayPayHotel / totalStayNights) : stayPayHotel;
-                    const nightlyPayTransfer = totalStayNights > 0 ? Math.round(stayPayTransfer / totalStayNights) : stayPayTransfer;
+                    // Channel & Payment Stream Classification (Strict Walk-in vs OTA vs Nexura)
+                    const isOtaBooking = isChannelOTA(rep);
+                    const isNexura = String(rep.paymentStatus || "").toUpperCase().includes("NEXURA") || String(rep.paymentMethod || "").toUpperCase().includes("NEXURA");
+                    const isPropertyCollect = rep.paymentCollect === "property" || rep.paymentStatus === "Pay at Hotel";
 
                     // Distribute across each stay night date
                     stayNightDates.forEach((nightDate, nIdx) => {
@@ -254,6 +244,19 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                             : (Array.isArray(rep.nightRates) && rep.nightRates[nIdx] !== undefined && Number(rep.nightRates[nIdx]) > 0
                                 ? Number(rep.nightRates[nIdx])
                                 : nightlyRate);
+
+                        let nightlyPayHotel = 0;
+                        let nightlyPayTransfer = 0;
+
+                        if (!isOtaBooking || isPropertyCollect) {
+                            // Walk-in, Direct Booking, and Property Collect OTA go 100% to Hotel Collect
+                            nightlyPayHotel = specificNightRate;
+                            nightlyPayTransfer = 0;
+                        } else {
+                            // Real OTA Channel Collect & Nexura Virtual Sales go 100% to OTA Collect
+                            nightlyPayTransfer = specificNightRate;
+                            nightlyPayHotel = 0;
+                        }
 
                         // 1. Fill Trend Buckets
                         if (nightDate >= startStr && nightDate <= endStr) {
@@ -282,12 +285,10 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                                 hotel += nightlyPayHotel;
                                 transferAmt += nightlyPayTransfer;
 
-                                if (rep.source === "Walk-in" || rep.channel === "Walk-in" || rep.channel === "WALKIN") {
-                                    walkin += specificNightRate;
-                                } else if (rep.source === "OTA" || (rep.channel && rep.channel !== "Walk-in" && rep.channel !== "WALKIN" && rep.channel !== "Direct")) {
+                                if (isOtaBooking) {
                                     ota += specificNightRate;
                                 } else {
-                                    other += specificNightRate;
+                                    walkin += specificNightRate;
                                 }
                             }
 
@@ -455,7 +456,7 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
         let unsub: any;
         fetchData().then(fn => { unsub = fn; });
         return () => { if (unsub) unsub(); };
-    }, [viewMode, selectedDate, refreshTrigger]);
+    }, [viewMode, selectedDate, hotelId, refreshTrigger]);
 
     return { ...stats, refresh: () => setRefreshTrigger(prev => prev + 1) };
 };

@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, Settings, Users, LogOut } from "lucide-react";
+import { Menu, Settings, Users, LogOut, ChevronDown, Check } from "lucide-react";
 import { ModuleActionButtons } from "@/components/layout/ModuleActionButtons";
 import styles from "./SuperadminHeader.module.css";
+import selectStyles from "@/app/select-module/select-module.module.css";
 import { HotelMasterDoc } from "./types";
 
 interface SuperadminHeaderProps {
@@ -36,6 +37,26 @@ export const SuperadminHeader: React.FC<SuperadminHeaderProps> = ({
   onNavigate,
   onSignOut,
 }) => {
+  const [isHotelDropdownOpen, setIsHotelDropdownOpen] = useState(false);
+  const hotelDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        hotelDropdownRef.current &&
+        !hotelDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsHotelDropdownOpen(false);
+      }
+    };
+    if (isHotelDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isHotelDropdownOpen]);
+
   return (
     <header className={styles.headerBar}>
       <div className={styles.headerInner}>
@@ -53,45 +74,77 @@ export const SuperadminHeader: React.FC<SuperadminHeaderProps> = ({
             <div className={`${styles.dividerLine} hidden sm:block`} />
           )}
 
-          {isSuperadmin ? (
-            <div className={`relative hidden sm:flex items-center h-9 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[13px] transition-all ${styles.hotelBadge}`}>
-              <select
-                value={activeHotelCode}
-                onChange={(e) => {
-                  setActiveHotelCode(e.target.value);
-                  window.location.reload();
-                }}
-                className={`border-none pr-8 sm:pr-10 py-1 text-[11px] sm:text-[13px] font-medium focus:outline-none focus:ring-0 cursor-pointer appearance-none h-full w-full truncate rounded-[6px] text-left ${styles.hotelSelect}`}
-                style={{
-                  backgroundColor: "#ffffff",
-                  color: "#0f172a",
-                  fontWeight: 600,
-                  colorScheme: "light",
-                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "right 8px center",
-                  backgroundSize: "16px",
-                  paddingLeft: "12px",
-                }}
+          {/* Hotel Selector / Badge (iOS Floating Card Pill Style) */}
+          {isSuperadmin || (hotelsList && hotelsList.length > 1) ? (
+            <div className={selectStyles.hotelSelectorWrap} ref={hotelDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsHotelDropdownOpen(!isHotelDropdownOpen)}
+                className={`${selectStyles.hotelPillBtn} ${isHotelDropdownOpen ? selectStyles.hotelPillBtnActive : ""}`}
+                title="Ganti Properti / Hotel Aktif"
               >
-                {hotelsList && hotelsList.length > 0 ? (
-                  hotelsList.map((hotel) => (
-                    <option key={hotel.hotelCode} value={hotel.hotelCode} style={{ backgroundColor: "#ffffff", color: "#0f172a" }}>
-                      [{hotel.hotelCode}] {hotel.name}
-                    </option>
-                  ))
-                ) : (
-                  <option value="" disabled style={{ backgroundColor: "#ffffff", color: "#64748b" }}>Memuat daftar partner...</option>
-                )}
-              </select>
+                <span className="truncate max-w-[200px] sm:max-w-[280px]">
+                  {activeHotelCode === "0" || !activeHotelCode
+                    ? "Superadmin (Tanpa Preview)"
+                    : `[${activeHotelCode}] ${hotelsList?.find((h) => String(h.hotelCode) === String(activeHotelCode))?.name || activeHotelName || "Pilih Properti"}`}
+                </span>
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform duration-200 shrink-0 ${isHotelDropdownOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {isHotelDropdownOpen && (
+                <div className={selectStyles.hotelDropdownCard}>
+                  <div className={selectStyles.hotelDropdownHeader}>Pilih Properti Aktif</div>
+                  {isSuperadmin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveHotelCode("0");
+                        setIsHotelDropdownOpen(false);
+                        window.location.reload();
+                      }}
+                      className={`${selectStyles.hotelDropdownItem} ${activeHotelCode === "0" || !activeHotelCode ? selectStyles.hotelDropdownItemActive : ""}`}
+                    >
+                      <span className="truncate font-semibold">Superadmin (Tanpa Preview)</span>
+                      {(activeHotelCode === "0" || !activeHotelCode) && (
+                        <Check size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                      )}
+                    </button>
+                  )}
+                  {hotelsList && hotelsList.length > 0 && (
+                    hotelsList.map((hotel) => {
+                      const isSelected = String(activeHotelCode) === String(hotel.hotelCode);
+                      return (
+                        <button
+                          key={hotel.hotelCode}
+                          type="button"
+                          onClick={() => {
+                            setActiveHotelCode(hotel.hotelCode);
+                            setIsHotelDropdownOpen(false);
+                            window.location.reload();
+                          }}
+                          className={`${selectStyles.hotelDropdownItem} ${isSelected ? selectStyles.hotelDropdownItemActive : ""}`}
+                        >
+                          <div className="flex items-center gap-2 truncate text-left">
+                            <span className={selectStyles.hotelCodeBadge}>{hotel.hotelCode}</span>
+                            <span className="truncate">{hotel.name}</span>
+                          </div>
+                          {isSelected && (
+                            <Check size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             activeHotelCode && (
-              <div
-                className={`hidden sm:flex items-center h-9 pr-3 w-[260px] md:w-[320px] rounded-[6px] overflow-hidden shadow-sm text-[11px] sm:text-[13px] font-semibold ${styles.hotelBadge}`}
-                style={{ paddingLeft: "8px", backgroundColor: "#ffffff", color: "#0f172a" }}
-              >
-                <span className="truncate w-full text-left" style={{ paddingLeft: "4px" }}>
+              <div className={selectStyles.hotelPillStatic}>
+                <span>
                   [{activeHotelCode || "0"}] {activeHotelName || "Memuat..."}
                 </span>
               </div>

@@ -38,7 +38,7 @@ const ALL_KEYS = [
     "module_pos", "module_front_office", "module_innalytics", "module_housekeeping", 
     "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel", "module_hrd",
     // Front Office & Inalytics
-    "innalytics", "overview", "digital-checkin", "forecast", "revenue-breakdown", "rate-inventory", "confirmation-letter", "inventory-control", "invoice", "purchase-order",
+    "innalytics", "overview", "bookings", "digital-checkin", "forecast", "revenue-breakdown", "rate-inventory", "confirmation-letter", "inventory-control", "invoice", "purchase-order",
     // Granular Rate & Inventory & FO Transaction permissions
     "fo_stopsell", "fo_rate_change", "fo_inventory_change", "fo_cancel", "fo_void",
     // Accounting

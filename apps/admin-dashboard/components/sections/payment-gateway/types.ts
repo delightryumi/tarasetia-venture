@@ -66,6 +66,8 @@ export interface BookingEngineThemeSettings {
     themeColor: string; // Default: '#6D2B35' (Burgundy)
     logoUrl: string;
     headerTitle: string;
+    hotelAddress?: string;
+    hotelCity?: string;
     hotelWebsiteUrl: string; // Dynamic back button target (e.g. 'https://tentrem.com' or '/')
     guaranteeType: "confirm_booking" | "hold_cc" | "manual_approval";
     incompleteBookingAction: "failed_booking" | "hold_2hours" | "auto_release";
@@ -125,6 +127,22 @@ export interface DirectBookingPerk {
     isActive: boolean;
 }
 
+export interface HotelAddOnSetting {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    priceType: "per_night" | "per_stay" | "per_person";
+    icon?: string;
+    category?: string;
+    isActive: boolean;
+    // ── Akuntansi & Pos Pendapatan (USALI Standard) ──
+    revenueDepartment?: "room" | "food_beverage" | "transport" | "spa" | "laundry" | "other";
+    accountCode?: string; // e.g. "4110 - Room Extra", "4120 - F&B Dinner", "4130 - Transport"
+    costCenter?: string; // e.g. "Housekeeping", "Kitchen & F&B", "Concierge / Driver", "Front Desk"
+    cogsEstimatePercent?: number; // Perkiraan Biaya / HPP %
+}
+
 export interface PaymentGatewaySettings {
     enabled: boolean;
     activeProvider: PaymentProvider;
@@ -133,6 +151,7 @@ export interface PaymentGatewaySettings {
     analytics: BookingEngineAnalytics;
     promotions: BookingEnginePromoCode[];
     directPerks: DirectBookingPerk[];
+    addOns?: HotelAddOnSetting[];
     midtrans: MidtransConfig;
     xendit: XenditConfig;
     doku: DokuConfig;
@@ -183,6 +202,64 @@ export const DEFAULT_PAYMENT_GATEWAY_SETTINGS: PaymentGatewaySettings = {
         { id: "perk-1", title: "Jaminan Harga Resmi Bebas Komisi OTA 0%", icon: "ShieldCheck", isActive: true },
         { id: "perk-2", title: "Konfirmasi Instan Terhubung ke Front Desk", icon: "Sparkles", isActive: true },
         { id: "perk-3", title: "Mendukung QRIS, Multi-Bank VA & Kartu Kredit", icon: "CreditCard", isActive: true },
+    ],
+    addOns: [
+        {
+            id: "extra_bed",
+            name: "Extra Bed (Kasur Tambahan)",
+            description: "Termasuk bantal & linen premium standar hotel untuk kenyamanan ekstra.",
+            price: 150000,
+            priceType: "per_night",
+            icon: "bed",
+            category: "comfort",
+            isActive: true,
+            revenueDepartment: "room",
+            accountCode: "4110 - Room Extra Bed",
+            costCenter: "Housekeeping",
+            cogsEstimatePercent: 15,
+        },
+        {
+            id: "airport_transfer",
+            name: "Antar-Jemput Bandara / Stasiun",
+            description: "Layanan penjemputan atau pengantaran dengan driver ramah dan mobil ber-AC.",
+            price: 250000,
+            priceType: "per_stay",
+            icon: "car",
+            category: "transport",
+            isActive: true,
+            revenueDepartment: "transport",
+            accountCode: "4130 - Transportation Revenue",
+            costCenter: "Concierge & Driver",
+            cogsEstimatePercent: 40,
+        },
+        {
+            id: "late_checkout",
+            name: "Late Check-Out (Hingga 16:00 WIB)",
+            description: "Waktu bersantai lebih lama di kamar hingga sore hari tanpa terburu-buru.",
+            price: 100000,
+            priceType: "per_stay",
+            icon: "clock",
+            category: "flexibility",
+            isActive: true,
+            revenueDepartment: "room",
+            accountCode: "4110 - Room Late Check-Out",
+            costCenter: "Front Desk",
+            cogsEstimatePercent: 0,
+        },
+        {
+            id: "romantic_dinner",
+            name: "Paket Romantic Dinner",
+            description: "Makan malam romantis set menu 3-course dengan dekorasi meja cantik.",
+            price: 350000,
+            priceType: "per_stay",
+            icon: "utensils",
+            category: "dining",
+            isActive: true,
+            revenueDepartment: "food_beverage",
+            accountCode: "4120 - F&B Dinner Revenue",
+            costCenter: "Kitchen & F&B Service",
+            cogsEstimatePercent: 35,
+        },
     ],
     midtrans: {
         isProduction: false,

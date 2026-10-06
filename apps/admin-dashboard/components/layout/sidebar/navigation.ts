@@ -72,6 +72,7 @@ export function getSidebarItemHref(itemId: string, activeModule: string): string
 
         // Module-contextual pages
         case "overview":
+        case "bookings":
         case "forecast":
         case "confirmation-letter":
         case "revenue-breakdown":

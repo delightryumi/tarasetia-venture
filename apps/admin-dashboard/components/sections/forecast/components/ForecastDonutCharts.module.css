@@ -1,0 +1,183 @@
+.gridContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.donutCard {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 
+        6px 6px 18px rgba(160, 175, 200, 0.18),
+        -4px -4px 14px rgba(255, 255, 255, 0.95),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.9);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.donutCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        8px 8px 24px rgba(160, 175, 200, 0.25),
+        -6px -6px 18px rgba(255, 255, 255, 0.98);
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.cardTitleWrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cardIconBadge {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        inset 1.5px 1.5px 3px rgba(0, 0, 0, 0.05),
+        inset -1px -1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.cardTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.cardSubtitle {
+    font-size: 11px;
+    color: #64748b;
+    margin: 2px 0 0;
+}
+
+.chartWrapper {
+    width: 100%;
+    height: 220px;
+    position: relative;
+}
+
+.centerLabel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    text-align: center;
+}
+
+.centerValue {
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+}
+
+.centerSub {
+    font-size: 10px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+}
+
+.legendList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+    max-height: 160px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.legendList::-webkit-scrollbar {
+    width: 4px;
+}
+
+.legendList::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 4px;
+}
+
+.channelLogo {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+.legendLeft {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legendDot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.legendName {
+    color: #334155;
+    font-weight: 600;
+}
+
+.legendRight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legendValue {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.legendPct {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+    .gridContainer {
+        grid-template-columns: 1fr;
+    }
+}

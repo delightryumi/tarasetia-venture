@@ -35,7 +35,7 @@ export function PaymentGatewaySection() {
         saveSettings,
     } = usePaymentGateway();
 
-    const [activeTab, setActiveTab] = useState<"provider" | "midtrans" | "xendit" | "doku" | "manual" | "pricing" | "google">("provider");
+    const [activeTab, setActiveTab] = useState<"provider" | "midtrans" | "xendit" | "doku" | "manual" | "pricing" | "addons" | "google">("provider");
     const [showMidtransServerKey, setShowMidtransServerKey] = useState(false);
     const [showXenditSecretKey, setShowXenditSecretKey] = useState(false);
     const [showDokuSecretKey, setShowDokuSecretKey] = useState(false);
@@ -50,6 +50,37 @@ export function PaymentGatewaySection() {
 
     const handleSave = async () => {
         await saveSettings(formData);
+    };
+
+    const addCustomAddOn = () => {
+        const newAddOn = {
+            id: `addon-${Date.now()}`,
+            name: "Layanan Tambahan Baru",
+            description: "Deskripsi fasilitas atau layanan tambahan untuk kenyamanan tamu.",
+            price: 50000,
+            priceType: "per_stay" as const,
+            icon: "sparkle",
+            category: "extra",
+            isActive: true,
+        };
+        setFormData((prev) => ({
+            ...prev,
+            addOns: [...(prev.addOns || []), newAddOn],
+        }));
+    };
+
+    const removeAddOn = (id: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            addOns: (prev.addOns || []).filter((a) => a.id !== id),
+        }));
+    };
+
+    const updateAddOn = (id: string, field: string, value: any) => {
+        setFormData((prev) => ({
+            ...prev,
+            addOns: (prev.addOns || []).map((a) => (a.id === id ? { ...a, [field]: value } : a)),
+        }));
     };
 
     const addBankAccount = () => {
@@ -785,6 +816,24 @@ export function PaymentGatewaySection() {
                                     <option value="non_refundable">Non-Refundable (Tidak Dapat Dibatalkan)</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-3 bg-neutral-900/60 border border-neutral-800 rounded-lg">
+                            <input
+                                type="checkbox"
+                                id="isTaxIncludedInRate"
+                                checked={formData.pricing.isTaxIncludedInRate || false}
+                                onChange={(e) =>
+                                    setFormData((p) => ({
+                                        ...p,
+                                        pricing: { ...p.pricing, isTaxIncludedInRate: e.target.checked },
+                                    }))
+                                }
+                                className="w-4 h-4 rounded border-neutral-700 bg-neutral-950 text-amber-500 focus:ring-0 cursor-pointer"
+                            />
+                            <label htmlFor="isTaxIncludedInRate" className="text-xs text-neutral-300 font-medium cursor-pointer">
+                                Tarif Kamar Sudah Termasuk Pajak (Tax Inclusive / PB1 Included)
+                            </label>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

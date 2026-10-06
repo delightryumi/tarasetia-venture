@@ -18,6 +18,7 @@ export const DISTANCE = 200;
 
 export const allNavItems: NavItemType[] = [
     { id: "overview", label: "Overview", icon: <ChartPie size={18} weight="bold" /> },
+    { id: "bookings", label: "Bookings", icon: <CalendarCheck size={18} weight="bold" /> },
     { id: "forecast", label: "Forecast", icon: <TrendUp size={18} weight="bold" /> },
     { id: "revenue-breakdown", label: "Revenue Breakdown", icon: <Receipt size={18} weight="bold" /> },
     { id: "rate-inventory", label: "Rate & Inventory", icon: <SlidersHorizontal size={18} weight="bold" /> },

@@ -11,7 +11,7 @@ import { GlobalOrderNotifier } from "./GlobalOrderNotifier";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExternalLink, Bell, ShieldAlert } from "lucide-react";
 import { useFooter } from "../sections/footer/useFooter";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { isPathAllowedForUser } from "@/lib/permissionCheck";
 import gsap from "gsap";
@@ -23,6 +23,9 @@ import { db } from "@/lib/firebase";
 export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const { user, loading, activeHotelCode, signOutUser, activeHotelName } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const moduleParam = searchParams?.get("module") || null;
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     React.useEffect(() => {
@@ -40,7 +43,6 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
 
     const { poweredByText, poweredByLink } = useFooter();
     const containerRef = useRef<HTMLDivElement>(null);
-    const pathname = usePathname();
 
     // Auto-collapse sidebar on Rate & Inventory for full-screen view
     React.useEffect(() => {
@@ -105,22 +107,13 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
         return () => unsubscribe();
     }, [activeHotelCode, user?.role]);
 
-    const [moduleParam, setModuleParam] = useState<string | null>(null);
-
-    React.useEffect(() => {
-        if (typeof window !== "undefined") {
-            const searchParams = new URLSearchParams(window.location.search);
-            setModuleParam(searchParams.get("module"));
-        }
-    }, [pathname]);
-
     const isPathAllowed = isPathAllowedForUser(pathname, moduleParam, user, activeModules);
 
     React.useEffect(() => {
         if (!loading && user && !isPathAllowed) {
             router.push('/select-module');
         }
-    }, [pathname, isPathAllowed, user, loading, router]);
+    }, [pathname, moduleParam, isPathAllowed, user, loading, router]);
 
 
 

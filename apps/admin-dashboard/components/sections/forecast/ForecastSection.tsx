@@ -34,7 +34,8 @@ import { ChannelPerformance } from "./components/ChannelPerformance";
 import { VoidConfirmModal } from "../overview/VoidConfirmModal";
 import { CancelConfirmModal } from "../overview/CancelConfirmModal";
 import { ForecastDetailDrawer } from "./components/ForecastDetailDrawer";
-import { AuditLedger } from "../overview/AuditLedger";
+import { ForecastDonutCharts } from "./components/ForecastDonutCharts";
+import { isChannelOTA } from "@/lib/channelHelper";
 
 
 
@@ -73,7 +74,7 @@ export const ForecastSection: React.FC = () => {
     const [displayMode, setDisplayMode] = useState<"cards" | "charts">("cards");
     const [searchQuery, setSearchQuery] = useState("");
 
-    const stats = useForecast(viewMode, selectedDate);
+    const stats = useForecast(viewMode, selectedDate, activeHotelCode);
 
     const getFilteredEntries = (type: string) => {
         let filtered: any[] = [];
@@ -94,8 +95,13 @@ export const ForecastSection: React.FC = () => {
             case "Hotel Collect (Direct)":
             case "Penjualan (Hotel Collect)":
                 filtered = stats.entries.filter((e: any) => {
-                    const cashAmt = Number(e.payHotel || e.paidCash || e.paidAmount1 || 0);
-                    return cashAmt > 0 || e.paymentStatus === "Pay at Hotel";
+                    if (e.type === "other_income") {
+                        const isNexuraIncome = String(e.paymentStatus || "").toUpperCase().includes("NEXURA") || String(e.paymentMethod || "").toUpperCase().includes("NEXURA");
+                        return !isNexuraIncome && e.paymentStatus !== "Pay at Nexura" && e.paymentStatus !== "Virtual Payment / OTA";
+                    }
+                    const isOta = isChannelOTA(e);
+                    const isPropertyCollect = e.paymentCollect === "property" || e.paymentStatus === "Pay at Hotel";
+                    return !isOta || isPropertyCollect;
                 });
                 title = "Hotel Collect (Direct)";
                 break;
@@ -106,8 +112,13 @@ export const ForecastSection: React.FC = () => {
             case "OTA Collect (City Ledger)":
             case "Penjualan (OTA Collect)":
                 filtered = stats.entries.filter((e: any) => {
-                    const digitalAmt = Number(e.payTransfer || e.payNexura || e.paidTransfer || e.paidAmount2 || 0);
-                    return digitalAmt > 0 || e.paymentStatus === "Pay at Nexura" || e.paymentStatus === "Virtual Payment / OTA" || e.paymentStatus === "Virtual / OTA";
+                    if (e.type === "other_income") {
+                        const isNexuraIncome = String(e.paymentStatus || "").toUpperCase().includes("NEXURA") || String(e.paymentMethod || "").toUpperCase().includes("NEXURA");
+                        return isNexuraIncome || e.paymentStatus === "Pay at Nexura" || e.paymentStatus === "Virtual Payment / OTA";
+                    }
+                    const isOta = isChannelOTA(e);
+                    const isPropertyCollect = e.paymentCollect === "property" || e.paymentStatus === "Pay at Hotel";
+                    return isOta && !isPropertyCollect;
                 });
                 title = "OTA Collect (City Ledger)";
                 break;
@@ -115,7 +126,7 @@ export const ForecastSection: React.FC = () => {
             case "Walk-in Revenue":
             case "Pendapatan Walk-in":
             case "Pendapatan Walk-in (Front Desk)":
-                filtered = stats.entries.filter((e: any) => e.type !== "other_income" && (e.source === "Walk-in" || e.channel === "Walk-in" || e.channel === "WALKIN"));
+                filtered = stats.entries.filter((e: any) => e.type !== "other_income" && !isChannelOTA(e));
                 title = "Walk-in Revenue";
                 break;
             case "OTA":
@@ -123,7 +134,7 @@ export const ForecastSection: React.FC = () => {
             case "OTA Channel Revenue":
             case "Pendapatan OTA":
             case "Pendapatan OTA (Channel Manager)":
-                filtered = stats.entries.filter((e: any) => e.type !== "other_income" && e.source !== "Walk-in" && e.channel !== "Walk-in" && e.channel !== "WALKIN");
+                filtered = stats.entries.filter((e: any) => e.type !== "other_income" && isChannelOTA(e));
                 title = "OTA Channel Revenue";
                 break;
             case "Other":
@@ -605,27 +616,9 @@ export const ForecastSection: React.FC = () => {
                                 onClick={() => handleCardClick("Gross")}
                             />
                             <SummaryCard
-                                label="Hotel Collect (Direct)"
-                                icon={<Hotel size={18} />}
-                                accent="#3b82f6"
-                                value={stats.salesPayAtHotel}
-                                loading={stats.loading}
-                                formatter={formatCurrency}
-                                onClick={() => handleCardClick("Hotel")}
-                            />
-                            <SummaryCard
-                                label="OTA Collect (City Ledger)"
-                                icon={<CreditCard size={18} />}
-                                accent="#8b5cf6"
-                                value={stats.salesPayAtTransfer}
-                                loading={stats.loading}
-                                formatter={formatCurrency}
-                                onClick={() => handleCardClick("Virtual")}
-                            />
-                            <SummaryCard
                                 label="Walk-in Revenue"
                                 icon={<UserPlus size={18} />}
-                                accent="#cc6817ff"
+                                accent="#f97316"
                                 value={stats.walkInRevenue}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
@@ -688,32 +681,22 @@ export const ForecastSection: React.FC = () => {
                     )}
                 </AnimatePresence>
 
+                {/* Donut Charts Breakdown (Derived from Summary Cards Above) */}
+                {displayMode === "cards" && (
+                    <ForecastDonutCharts
+                        stats={stats}
+                        formatCurrency={formatCurrency}
+                    />
+                )}
+
                 <AnimatePresence mode="wait">
-                    {displayMode === "cards" && (
-                        viewMode === "daily" ? (
-                            <AuditLedger
-                                title="Daily Revenue & Folio Audit Ledger"
-                                bookings={activeFilter ? stats.entries.filter((e: any) => e.type === activeFilter) : stats.entries}
-                                activeFilter={activeFilter}
-                                activeHotelName={activeHotelName}
-                                onClearFilter={() => setActiveFilter(null)}
-                                onRefresh={() => stats.refresh()}
-                                onView={(b) => { setSelectedGuest(b); setIsEditing(false); }}
-                                onEdit={(b) => { setSelectedGuest(b); setIsEditing(true); }}
-                                onDelete={(b) => setBookingToVoid(b)}
-                                onCancel={(b) => setBookingToCancel(b)}
-                                onStatusUpdate={handleStatusUpdate}
-                                onExportExcel={handleExportExcel}
-                                onExportPDF={handleExportPDF}
-                            />
-                        ) : (
-                            <ChannelPerformance
-                                stats={stats}
-                                selectedDate={selectedDate}
-                                formatDate={formatDate}
-                                formatCurrency={formatCurrency}
-                            />
-                        )
+                    {displayMode === "cards" && viewMode !== "daily" && (
+                        <ChannelPerformance
+                            stats={stats}
+                            selectedDate={selectedDate}
+                            formatDate={formatDate}
+                            formatCurrency={formatCurrency}
+                        />
                     )}
                 </AnimatePresence>
 

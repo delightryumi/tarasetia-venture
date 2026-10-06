@@ -90,9 +90,9 @@ function DailyCalendar({ value, onChange }: { value: string, onChange: (v: strin
                                     fontFamily: "var(--f-font-mono)",
                                     cursor: "pointer",
                                     transition: "all var(--f-duration-fast)",
-                                    border: isSel(day) ? "none" : (isToday(day) ? "1px solid #181d26" : "none"),
-                                    backgroundColor: isSel(day) ? "#181d26" : (isToday(day) ? "var(--f-surface-soft)" : "transparent"),
-                                    color: isSel(day) ? "#ffffff" : (isToday(day) ? "#181d26" : "var(--f-body)")
+                                    border: isSel(day) ? "none" : (isToday(day) ? "1px solid #2563eb" : "none"),
+                                    backgroundColor: isSel(day) ? "#2563eb" : (isToday(day) ? "#eff6ff" : "transparent"),
+                                    color: isSel(day) ? "#ffffff" : (isToday(day) ? "#2563eb" : "#334155")
                                 }}
                             >
                                 {day}
@@ -128,31 +128,31 @@ function MonthlyCalendar({ value, onChange }: { value: string, onChange: (v: str
         <div style={{ width: "280px", padding: "16px" }}>
             {/* Year Header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                <button onClick={() => setViewYear(y => y - 1)} className={styles.btnIcon} style={{ width: "28px", height: "28px", borderRadius: "6px", border: "none", boxShadow: "none" }}>
+                <button onClick={() => setViewYear(y => y - 1)} className={styles.btnIcon} style={{ width: "28px", height: "28px", borderRadius: "8px", border: "none", boxShadow: "none" }}>
                     <ChevronLeft size={14} />
                 </button>
-                <span className={styles.guestSubtext} style={{ fontSize: "11px", color: "var(--f-ink)", fontWeight: 700 }}>{viewYear}</span>
-                <button onClick={() => setViewYear(y => y + 1)} className={styles.btnIcon} style={{ width: "28px", height: "28px", borderRadius: "6px", border: "none", boxShadow: "none" }}>
+                <span className={styles.guestSubtext} style={{ fontSize: "12px", color: "#0f172a", fontWeight: 700 }}>{viewYear}</span>
+                <button onClick={() => setViewYear(y => y + 1)} className={styles.btnIcon} style={{ width: "28px", height: "28px", borderRadius: "8px", border: "none", boxShadow: "none" }}>
                     <ChevronRight size={14} />
                 </button>
             </div>
 
             {/* Month Grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
                 {MONTHS_ID.map((name, i) => (
                     <button
                         key={name}
                         onClick={() => handleMonth(i)}
                         style={{
-                            padding: "8px 0",
-                            borderRadius: "6px",
-                            fontSize: "11px",
+                            padding: "10px 0",
+                            borderRadius: "10px",
+                            fontSize: "12px",
                             fontWeight: 700,
                             cursor: "pointer",
-                            transition: "all var(--f-duration-fast)",
-                            border: isSel(i) ? "none" : (isCurrentMonth(i) ? "1px solid #181d26" : "none"),
-                            backgroundColor: isSel(i) ? "#181d26" : (isCurrentMonth(i) ? "var(--f-surface-soft)" : "transparent"),
-                            color: isSel(i) ? "#ffffff" : (isCurrentMonth(i) ? "#181d26" : "var(--f-body)")
+                            transition: "all 0.15s ease",
+                            border: isSel(i) ? "none" : (isCurrentMonth(i) ? "1px solid #2563eb" : "none"),
+                            backgroundColor: isSel(i) ? "#2563eb" : (isCurrentMonth(i) ? "#eff6ff" : "transparent"),
+                            color: isSel(i) ? "#ffffff" : (isCurrentMonth(i) ? "#2563eb" : "#334155")
                         }}
                     >
                         {name.slice(0, 3)}
@@ -172,24 +172,23 @@ function YearlyCalendar({ value, onChange }: { value: string, onChange: (v: stri
     return (
         <div style={{ width: "280px", padding: "16px" }}>
             <div style={{ textAlign: "center", marginBottom: "16px", padding: "4px 0" }}>
-                <span className={styles.headerSubtitle} style={{ fontSize: "8px" }}>Pilih Tahun</span>
+                <span className={styles.headerSubtitle} style={{ fontSize: "10px", color: "#2563eb" }}>PILIH TAHUN</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
                 {years.map((yr) => (
                     <button
                         key={yr}
                         onClick={() => onChange(`${yr}-01-01`)}
                         style={{
                             padding: "10px 0",
-                            borderRadius: "6px",
-                            fontSize: "11px",
+                            borderRadius: "10px",
+                            fontSize: "12px",
                             fontWeight: 700,
-                            fontFamily: "var(--f-font-mono)",
                             cursor: "pointer",
-                            transition: "all var(--f-duration-fast)",
-                            border: currentYear === yr ? "none" : (today.getFullYear() === yr ? "1px solid #181d26" : "none"),
-                            backgroundColor: currentYear === yr ? "#181d26" : (today.getFullYear() === yr ? "var(--f-surface-soft)" : "transparent"),
-                            color: currentYear === yr ? "#ffffff" : (today.getFullYear() === yr ? "#181d26" : "var(--f-body)")
+                            transition: "all 0.15s ease",
+                            border: currentYear === yr ? "none" : (today.getFullYear() === yr ? "1px solid #2563eb" : "none"),
+                            backgroundColor: currentYear === yr ? "#2563eb" : (today.getFullYear() === yr ? "#eff6ff" : "transparent"),
+                            color: currentYear === yr ? "#ffffff" : (today.getFullYear() === yr ? "#2563eb" : "#334155")
                         }}
                     >
                         {yr}
@@ -237,18 +236,20 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ mode, value,
                     display: "flex", 
                     alignItems: "center", 
                     gap: "8px", 
-                    height: "36px", 
-                    padding: "0 14px", 
-                    borderRadius: "8px", 
-                    minWidth: "170px", 
+                    height: "38px", 
+                    padding: "0 16px", 
+                    borderRadius: "12px", 
+                    minWidth: "180px", 
                     justifyContent: "flex-start",
-                    backgroundColor: "var(--f-canvas)",
-                    borderColor: open ? "#181d26" : "var(--f-hairline)",
-                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)"
+                    backgroundColor: "#ffffff",
+                    borderColor: open ? "#2563eb" : "rgba(255, 255, 255, 0.85)",
+                    boxShadow: open 
+                        ? "0 0 0 2px rgba(37, 99, 235, 0.2), 3px 3px 8px rgba(160, 175, 200, 0.2)" 
+                        : "3px 3px 8px rgba(160, 175, 200, 0.2), -2px -2px 6px rgba(255, 255, 255, 0.95), inset 1px 1px 2px rgba(255, 255, 255, 0.9)"
                 }}
             >
-                <Calendar size={14} style={{ color: "#181d26", flexShrink: 0 }} />
-                <span className={styles.guestSubtext} style={{ color: "var(--f-ink)", fontSize: "11px", fontWeight: 700 }}>
+                <Calendar size={15} style={{ color: "#2563eb", flexShrink: 0 }} />
+                <span className={styles.guestSubtext} style={{ color: "#0f172a", fontSize: "12px", fontWeight: 700 }}>
                     {formatDisplay(value)}
                 </span>
             </button>
@@ -266,10 +267,10 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ mode, value,
                             right: 0,
                             top: "calc(100% + 8px)",
                             zIndex: 50,
-                            backgroundColor: "var(--f-canvas)",
-                            borderRadius: "var(--f-radius-lg)",
-                            border: "1px solid var(--f-hairline)",
-                            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)",
+                            backgroundColor: "#ffffff",
+                            borderRadius: "20px",
+                            border: "1px solid rgba(255, 255, 255, 0.85)",
+                            boxShadow: "10px 10px 30px rgba(160, 175, 200, 0.28), -6px -6px 20px rgba(255, 255, 255, 0.98), inset 1px 1px 2px rgba(255, 255, 255, 0.9)",
                             overflow: "hidden"
                         }}
                     >

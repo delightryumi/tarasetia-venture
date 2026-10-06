@@ -133,19 +133,50 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
             const checkOut = guest.checkOutDate || guest.checkOut || '';
             const isAcc = guest.type === 'accommodation' || !guest.type;
             const dates = getDatesBetween(checkIn, checkOut, isAcc);
-            const nights = dates.length || 1;
+            const nights = dates.length || guest.totalStayNights || guest.nights || 1;
             
-            const initTotalAmount = guest.totalAmount || (guest.amount && nights > 1 ? guest.amount * nights : (guest.amount || 0));
-            const hasGranular = (guest.paidCash !== undefined || guest.paidEdc !== undefined || guest.paidQris !== undefined || guest.paidTransfer !== undefined || guest.paidOta !== undefined);
-            
-            const initPaidCash = guest.paidCash !== undefined ? Number(guest.paidCash) : (!hasGranular ? Number(guest.payHotel || 0) : 0);
+            const specificNightRate = Number(guest.ratePerNight || guest.amount || 0);
+            let initTotalAmount = Number(guest.totalAmount || 0);
+            if (initTotalAmount <= 0) {
+                initTotalAmount = specificNightRate > 0 && nights > 1 ? specificNightRate * nights : specificNightRate;
+            }
+
+            const chLower = String(guest.channel || guest.otaName || guest.source || "").toLowerCase().trim();
+            const isWalkIn = chLower.includes("walk") || chLower === "direct" || guest.source === "Walk-in" || (!guest.isOTA && !guest.otaName && !chLower.includes("traveloka") && !chLower.includes("tiket") && !chLower.includes("agoda") && !chLower.includes("booking") && !chLower.includes("expedia") && !chLower.includes("airbnb") && !chLower.includes("trip") && !chLower.includes("mg"));
+            const isNexura = String(guest.paymentStatus || "").toUpperCase().includes("NEXURA") || String(guest.paymentMethod || "").toUpperCase().includes("NEXURA") || chLower.includes("nexura");
+            const isOtaBooking = !isWalkIn && (Boolean(guest.isOTA) || isNexura || chLower.includes("traveloka") || chLower.includes("tiket") || chLower.includes("agoda") || chLower.includes("booking") || chLower.includes("expedia") || chLower.includes("airbnb") || chLower.includes("trip") || chLower.includes("mg") || guest.source === "OTA");
+
+            const initPaidCash = Number(guest.paidCash || 0);
             const initPaidEdc = Number(guest.paidEdc || 0);
             const initPaidQris = Number(guest.paidQris || 0);
             const initPaidTransfer = Number(guest.paidTransfer || 0);
-            const initPaidOta = guest.paidOta !== undefined ? Number(guest.paidOta) : (!hasGranular ? Number(guest.payTransfer || guest.payNexura || 0) : 0);
+            const initPaidOta = Number(guest.paidOta || 0);
 
-            const initPayHotel = initPaidCash + initPaidEdc + initPaidQris + initPaidTransfer;
-            const initPayTransfer = initPaidOta + initPaidTransfer;
+            let initPayHotel = 0;
+            let initPayTransfer = 0;
+
+            if (isWalkIn) {
+                initPayHotel = initTotalAmount;
+                initPayTransfer = 0;
+            } else if (isNexura || (isOtaBooking && (guest.paymentCollect === "channel" || guest.paymentStatus === "Pay at Nexura" || guest.paymentStatus === "Virtual Payment / OTA" || guest.paymentStatus === "Virtual / OTA"))) {
+                initPayTransfer = initTotalAmount;
+                initPayHotel = 0;
+            } else if (isOtaBooking && (guest.paymentCollect === "property" || guest.paymentStatus === "Pay at Hotel")) {
+                initPayHotel = initTotalAmount;
+                initPayTransfer = 0;
+            } else {
+                const totalDirect = initPaidCash + initPaidEdc + initPaidQris;
+                if (totalDirect > 0 || initPaidTransfer > 0 || initPaidOta > 0) {
+                    initPayHotel = totalDirect;
+                    initPayTransfer = initPaidOta > 0 ? initPaidOta : initPaidTransfer;
+                } else if (isOtaBooking) {
+                    initPayTransfer = initTotalAmount;
+                    initPayHotel = 0;
+                } else {
+                    initPayHotel = initTotalAmount;
+                    initPayTransfer = 0;
+                }
+            }
 
             setFormData({
                 ...guest,
@@ -161,7 +192,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 checkOut,
                 roomTypeId: guest.roomTypeId || '',
                 roomNumber: guest.roomNumber || '',
-                channel: guest.channel || 'Walk-in',
+                channel: guest.channel || (isWalkIn ? 'Walk-in' : 'OTA'),
                 staffName: guest.staffName || '',
                 note: guest.note || '',
                 type: guest.type || 'accommodation',
