@@ -27,7 +27,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { registerNetworkSync, syncProductsFromServer, syncUnsyncedTransactions } from '@/lib/dexie-sync';
 import { db } from '@/lib/firebase';
 import { localDb } from '@/lib/dexie';
-import { collection, onSnapshot, query, where, deleteDoc, doc, orderBy, limit } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, deleteDoc, doc, orderBy, limit, getDocs } from 'firebase/firestore';
 import { useCurrency } from '@/hooks/useCurrency';
 import {
   Dialog,
@@ -112,8 +112,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       if (!hotelCode || hotelCode === "0") {
         setIsHotelActive(true);
         if (isSuper) {
-          // Tetap load daftar hotel untuk dropdown
-          const unsubscribeHotels = onSnapshot(collection(db, "hotels"), (snapshot) => {
+          // Tetap load daftar hotel untuk dropdown (sekali fetch via getDocs, bukan real-time listener berkala)
+          getDocs(collection(db, "hotels")).then((snapshot) => {
             const list: any[] = [];
             snapshot.forEach((d) => {
               const data = d.data();
@@ -121,8 +121,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
             });
             list.sort((a, b) => String(a.hotelCode).localeCompare(String(b.hotelCode)));
             setHotelsList(list);
-          });
-          return () => unsubscribeHotels();
+          }).catch(console.error);
         }
         return;
       }
@@ -155,9 +154,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         console.error('Error fetching hotel status in POS RootLayout:', err);
       });
 
-      let unsubscribeHotels: () => void = () => {};
       if (isSuper) {
-        unsubscribeHotels = onSnapshot(collection(db, "hotels"), (snapshot) => {
+        getDocs(collection(db, "hotels")).then((snapshot) => {
           const list: any[] = [];
           snapshot.forEach((d) => {
             const data = d.data();
@@ -165,14 +163,11 @@ const RootLayout = ({ children }: RootLayoutProps) => {
           });
           list.sort((a, b) => String(a.hotelCode).localeCompare(String(b.hotelCode)));
           setHotelsList(list);
-        });
+        }).catch(console.error);
       }
 
       return () => {
         unsubscribe();
-        if (isSuper) {
-          unsubscribeHotels();
-        }
       };
     } catch (e) {
       console.error('Error in POS active check:', e);
@@ -262,6 +257,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     formatCurrencyRef.current = formatCurrency;
   }, [formatCurrency]);
 
+  const activeSubscribedHotelRef = React.useRef<string>('');
+
   useEffect(() => {
     let hotelCode = user?.hotelCode || '';
     if (!hotelCode && typeof window !== 'undefined') {
@@ -282,7 +279,16 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       hotelCode = getCookie('hotelCode') || localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
     }
 
-    if (!hotelCode || hotelCode === '0') return;
+    if (!hotelCode || hotelCode === '0') {
+      activeSubscribedHotelRef.current = '';
+      return;
+    }
+
+    // Prevent double listener initialization if already subscribed to this same hotel
+    if (activeSubscribedHotelRef.current === hotelCode) {
+      return;
+    }
+    activeSubscribedHotelRef.current = hotelCode;
 
     const triggerAlarm = (label: string, data: any) => {
       try {
@@ -360,12 +366,21 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const data = change.doc.data();
+          if (data.status === 'CANCELLED' || data.status === 'VOID') return;
+
           let isFresh = true;
+          let orderTime = 0;
           if (data.createdAt) {
-            const createdTime = new Date(data.createdAt).getTime();
-            if (!isNaN(createdTime) && (Date.now() - createdTime > 10 * 60 * 1000)) {
-              isFresh = false;
-            }
+            orderTime = typeof data.createdAt.toDate === 'function'
+              ? data.createdAt.toDate().getTime()
+              : new Date(data.createdAt).getTime();
+          } else if (data.timestamp) {
+            orderTime = typeof data.timestamp.toDate === 'function'
+              ? data.timestamp.toDate().getTime()
+              : new Date(data.timestamp).getTime();
+          }
+          if (!orderTime || isNaN(orderTime) || (Date.now() - orderTime > 5 * 60 * 1000)) {
+            isFresh = false;
           }
 
           if (isFresh) {
@@ -400,7 +415,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
           } else if (data.createdAt) {
             orderTime = typeof data.createdAt.toDate === 'function' ? data.createdAt.toDate().getTime() : new Date(data.createdAt).getTime();
           }
-          if (orderTime && (Date.now() - orderTime > 5 * 60 * 1000)) {
+          if (!orderTime || isNaN(orderTime) || (Date.now() - orderTime > 5 * 60 * 1000)) {
             isFresh = false;
           }
 
@@ -414,6 +429,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
     });
 
     return () => {
+      activeSubscribedHotelRef.current = '';
       unsubHeld();
       unsubPaid();
     };

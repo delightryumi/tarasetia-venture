@@ -259,13 +259,22 @@ export function useInnalyticsData(
 
     const hotelCodesToQuery: { code: string; name: string }[] = [];
     if (filters.filterBy === 'hotel' && accessibleHotels && accessibleHotels.length > 0) {
-      accessibleHotels.forEach((h: any) => {
-        const c = String(h.code || h.hotelCode || h.id || '');
-        const n = String(h.name || h.hotelName || c);
-        if (c && !hotelCodesToQuery.some((x) => x.code === c)) {
-          hotelCodesToQuery.push({ code: c, name: n });
-        }
-      });
+      // If user specifically picked hotels in filters.selectedHotels, only query those!
+      if (filters.selectedHotels && filters.selectedHotels.length > 0) {
+        accessibleHotels.forEach((h: any) => {
+          const c = String(h.code || h.hotelCode || h.id || '');
+          const n = String(h.name || h.hotelName || c);
+          if (c && filters.selectedHotels.includes(c) && !hotelCodesToQuery.some((x) => x.code === c)) {
+            hotelCodesToQuery.push({ code: c, name: n });
+          }
+        });
+      } else {
+        // Default: query ONLY the currently active hotel instead of querying all 100 hotels simultaneously
+        const foundName = accessibleHotels.find(
+          (h: any) => String(h.code || h.hotelCode || h.id || '') === codeToUse
+        )?.name || '';
+        hotelCodesToQuery.push({ code: codeToUse, name: foundName });
+      }
     } else {
       const foundName = accessibleHotels?.find(
         (h: any) => String(h.code || h.hotelCode || h.id || '') === codeToUse
@@ -278,13 +287,16 @@ export function useInnalyticsData(
     const hotelVoidMap: Record<string, any[]> = {};
 
     const unsubs = hotelCodesToQuery.map(({ code: hCode, name: hName }) => {
-      // When reportBy is 'booking_date', bound query window (from 30 days before startDate to 365 days after endDate)
+      // When reportBy is 'booking_date', bound query window tightly around the selected date range
+      // (30 days buffer before startDate and up to endDate + 30 days, NOT entire multi-year spans)
       let q;
       if (filters.reportBy === 'booking_date') {
-        const [sY, sM, sD] = (filters.startDate || '2024-01-01').split('-').map(Number);
-        const [eY, eM, eD] = (filters.endDate || '2026-12-31').split('-').map(Number);
-        const minD = new Date(sY || 2024, (sM || 1) - 1, (sD || 1) - 30);
-        const maxD = new Date(eY || 2026, (eM || 1) - 1, (eD || 1) + 365);
+        const startBase = filters.startDate || new Date().toISOString().slice(0, 10);
+        const endBase = filters.endDate || startBase;
+        const [sY, sM, sD] = startBase.split('-').map(Number);
+        const [eY, eM, eD] = endBase.split('-').map(Number);
+        const minD = new Date(sY, (sM || 1) - 1, (sD || 1) - 30);
+        const maxD = new Date(eY, (eM || 1) - 1, (eD || 1) + 30);
         const minStr = minD.toISOString().slice(0, 10);
         const maxStr = maxD.toISOString().slice(0, 10);
         q = query(
@@ -449,7 +461,15 @@ export function useInnalyticsData(
     });
 
     return () => unsubs.forEach((unsub) => unsub());
-  }, [activeHotelCode, filters.startDate, filters.endDate, filters.reportBy, filters.filterBy, accessibleHotels]);
+  }, [
+    activeHotelCode, 
+    filters.startDate, 
+    filters.endDate, 
+    filters.reportBy, 
+    filters.filterBy, 
+    (filters.selectedHotels || []).join(','),
+    (accessibleHotels || []).map((h: any) => h.code || h.hotelCode || h.id).sort().join(',')
+  ]);
 
   // 3. Process transactions using PnL's EXACT net room formula & room nights formula
   const processedTransactions = useMemo(() => {

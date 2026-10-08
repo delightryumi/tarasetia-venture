@@ -5,6 +5,9 @@ import { getHotelCollection } from "@/lib/firestoreHelper";
 import { HotelMaster } from "@/lib/pnl-logic";
 import { PnlIncomeItem, PnlExpenseItem, InvestorItem } from "@/lib/pnl-utils";
 
+let globalPropertiesCache: { data: HotelMaster[]; timestamp: number } | null = null;
+const PROPERTIES_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
 export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") => {
     const [loadingCore, setLoadingCore] = useState(false);
     const [allHotels, setAllHotels] = useState<HotelMaster[]>([]);
@@ -29,19 +32,25 @@ export const useCorePnLData = (month: string, viewMode: "monthly" | "yearly") =>
     const fetchCoreData = async () => {
         setLoadingCore(true);
         try {
-            // Fetch properties (hotels)
-            const propertiesSnap = await getDocs(collection(db, "hotels"));
-            const hotelList: HotelMaster[] = [];
-            for (const docSnap of propertiesSnap.docs) {
-                const d = docSnap.data();
-                const roomCount = typeof d.roomCount === 'number' && d.roomCount > 0
-                    ? d.roomCount
-                    : (typeof d.totalRooms === 'number' && d.totalRooms > 0 ? d.totalRooms : Number(d.roomsCount || 10));
-                hotelList.push({
-                  id: docSnap.id,
-                  name: d.Nama || d.name || `Property ${docSnap.id}`,
-                  roomCount,
-                });
+            // Fetch properties (hotels) with in-memory caching
+            let hotelList: HotelMaster[] = [];
+            const now = Date.now();
+            if (globalPropertiesCache && (now - globalPropertiesCache.timestamp < PROPERTIES_CACHE_TTL)) {
+                hotelList = globalPropertiesCache.data;
+            } else {
+                const propertiesSnap = await getDocs(collection(db, "hotels"));
+                for (const docSnap of propertiesSnap.docs) {
+                    const d = docSnap.data();
+                    const roomCount = typeof d.roomCount === 'number' && d.roomCount > 0
+                        ? d.roomCount
+                        : (typeof d.totalRooms === 'number' && d.totalRooms > 0 ? d.totalRooms : Number(d.roomsCount || 10));
+                    hotelList.push({
+                      id: docSnap.id,
+                      name: d.Nama || d.name || `Property ${docSnap.id}`,
+                      roomCount,
+                    });
+                }
+                globalPropertiesCache = { data: hotelList, timestamp: now };
             }
             setAllHotels(hotelList);
 

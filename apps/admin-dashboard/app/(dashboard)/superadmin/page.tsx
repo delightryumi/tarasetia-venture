@@ -210,7 +210,7 @@ export default function SuperadminPage() {
     return () => unsubscribe();
   }, [user]);
 
-  // ── Billing KPI stats ──
+  // ── Billing KPI stats (Optimized with collectionGroup & stable dependency) ──
   useEffect(() => {
     if (activeMainTab === "billing" && hotels.length > 0) {
       const fetchStats = async () => {
@@ -218,19 +218,47 @@ export default function SuperadminPage() {
         let revenueSum = 0;
         let outstandingSum = 0;
         const allRecords: any[] = [];
-        for (const hotel of hotels) {
-          try {
-            const snap = await getDocs(collection(db, "hotels", hotel.hotelCode, "billing_records"));
-            snap.forEach((d) => {
-              const data = d.data();
-              allRecords.push({ id: d.id, hotelCode: hotel.hotelCode, hotelName: hotel.name, hotelEmail: hotel.email, hotelPhone: hotel.phone, hotelAddress: hotel.address, ...data });
-              if (data.status === "paid") revenueSum += Number(data.amount || 0);
-              else if (data.status === "unpaid") outstandingSum += Number(data.amount || 0);
+        const hotelsMap = new Map<string, HotelMasterDoc>();
+        hotels.forEach(h => hotelsMap.set(h.hotelCode, h));
+
+        try {
+          // Attempt fast 1-query fetch across all hotels using collectionGroup
+          const { collectionGroup } = await import("firebase/firestore");
+          const snap = await getDocs(collectionGroup(db, "billing_records"));
+          snap.forEach((d) => {
+            const data = d.data();
+            const parentHotelCode = d.ref.parent.parent?.id || data.hotelCode || "";
+            const hotel = hotelsMap.get(parentHotelCode);
+            allRecords.push({
+              id: d.id,
+              hotelCode: parentHotelCode,
+              hotelName: hotel?.name || data.hotelName || "Partner",
+              hotelEmail: hotel?.email || data.hotelEmail || "",
+              hotelPhone: hotel?.phone || data.hotelPhone || "",
+              hotelAddress: hotel?.address || data.hotelAddress || "",
+              ...data
             });
-          } catch (e) {
-            console.error("Error fetching stats for hotel:", hotel.hotelCode, e);
+            if (data.status === "paid") revenueSum += Number(data.amount || 0);
+            else if (data.status === "unpaid") outstandingSum += Number(data.amount || 0);
+          });
+        } catch (cgError) {
+          console.warn("collectionGroup billing_records fallback:", cgError);
+          // Fallback if collectionGroup index is not present
+          for (const hotel of hotels) {
+            try {
+              const snap = await getDocs(collection(db, "hotels", hotel.hotelCode, "billing_records"));
+              snap.forEach((d) => {
+                const data = d.data();
+                allRecords.push({ id: d.id, hotelCode: hotel.hotelCode, hotelName: hotel.name, hotelEmail: hotel.email, hotelPhone: hotel.phone, hotelAddress: hotel.address, ...data });
+                if (data.status === "paid") revenueSum += Number(data.amount || 0);
+                else if (data.status === "unpaid") outstandingSum += Number(data.amount || 0);
+              });
+            } catch (e) {
+              console.error("Error fetching stats for hotel:", hotel.hotelCode, e);
+            }
           }
         }
+
         allRecords.sort((a, b) => {
           const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const db2 = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -243,7 +271,7 @@ export default function SuperadminPage() {
       };
       fetchStats();
     }
-  }, [activeMainTab, hotels]);
+  }, [activeMainTab, hotels.length]);
 
   // ── Guards ──
   if (!mounted) return null;

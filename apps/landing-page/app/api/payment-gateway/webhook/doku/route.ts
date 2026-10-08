@@ -36,16 +36,30 @@ export async function POST(req: NextRequest) {
 
         console.log(`[DOKU Webhook] Received notification for: ${invoiceNumber}, Status: ${rawStatus}, Hotel: ${hotelCode}`);
 
-        // If hotelCode not in query, find the hotel containing this reservation
+        // If hotelCode not in query, find the hotel containing this reservation via collectionGroup (1 query instead of 100+)
         if (!hotelCode) {
-            const hotelsSnap = await getDocs(collection(db, "hotels"));
-            for (const hDoc of hotelsSnap.docs) {
+            try {
+                const { collectionGroup } = await import("firebase/firestore");
                 const resCheck = await getDocs(
-                    query(collection(db, "hotels", hDoc.id, "reservations"), where("bookingCode", "==", invoiceNumber))
+                    query(collectionGroup(db, "reservations"), where("bookingCode", "==", invoiceNumber))
                 );
                 if (!resCheck.empty) {
-                    hotelCode = hDoc.id;
-                    break;
+                    const parentHotelRef = resCheck.docs[0].ref.parent.parent;
+                    if (parentHotelRef) {
+                        hotelCode = parentHotelRef.id;
+                    }
+                }
+            } catch (cgErr) {
+                console.warn("[DOKU Webhook] collectionGroup fallback:", cgErr);
+                const hotelsSnap = await getDocs(collection(db, "hotels"));
+                for (const hDoc of hotelsSnap.docs) {
+                    const resCheck = await getDocs(
+                        query(collection(db, "hotels", hDoc.id, "reservations"), where("bookingCode", "==", invoiceNumber))
+                    );
+                    if (!resCheck.empty) {
+                        hotelCode = hDoc.id;
+                        break;
+                    }
                 }
             }
         }

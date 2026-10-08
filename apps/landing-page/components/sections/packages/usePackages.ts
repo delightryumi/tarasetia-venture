@@ -13,22 +13,54 @@ export interface Package {
     packageType?: string; // MICE, Wedding, Trip, etc.
 }
 
+// In-memory cache for landing page packages
+let packagesCache: { data: Package[]; timestamp: number } | null = null;
+const CACHE_TTL_MS = 15 * 60 * 1000;
+
 export const usePackages = () => {
-    const [packages, setPackages] = useState<Package[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [packages, setPackages] = useState<Package[]>(() => {
+        if (packagesCache && Date.now() - packagesCache.timestamp < CACHE_TTL_MS) {
+            return packagesCache.data;
+        }
+        return [];
+    });
+    const [loading, setLoading] = useState<boolean>(() => {
+        return !(packagesCache && Date.now() - packagesCache.timestamp < CACHE_TTL_MS);
+    });
 
     useEffect(() => {
-        const q = query(getHotelCollection(db, "packages"), orderBy("createdAt", "desc"));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as Package[];
-            setPackages(data);
+        if (packagesCache && Date.now() - packagesCache.timestamp < CACHE_TTL_MS) {
+            setPackages(packagesCache.data);
             setLoading(false);
-        });
+            return;
+        }
 
-        return () => unsubscribe();
+        let isMounted = true;
+        const fetchPackages = async () => {
+            try {
+                const { getDocs } = await import("firebase/firestore");
+                const q = query(getHotelCollection(db, "packages"), orderBy("createdAt", "desc"));
+                const snapshot = await getDocs(q);
+                const data = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })) as Package[];
+
+                packagesCache = { data, timestamp: Date.now() };
+                if (isMounted) {
+                    setPackages(data);
+                    setLoading(false);
+                }
+            } catch (err) {
+                console.error("Error loading packages:", err);
+                if (isMounted) setLoading(false);
+            }
+        };
+
+        fetchPackages();
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     return { packages, loading };

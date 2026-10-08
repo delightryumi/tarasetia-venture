@@ -13,6 +13,16 @@ export const MONTHS = [
     { n: "October", v: "10" }, { n: "November", v: "11" }, { n: "December", v: "12" }
 ];
 
+// In-memory cache for all-time trend data across years to prevent querying 1,100+ documents on every month toggle
+interface TrendCacheItem {
+    timestamp: number;
+    currentYear: string;
+    monthlyBuckets: number[];
+    yearlyBuckets: Record<number, number>;
+}
+const globalTrendCache: Record<string, TrendCacheItem> = {};
+const TREND_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
 export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly") => {
     const [loadingFO, setLoadingFO] = useState(false);
     const [rawTransactions, setRawTransactions] = useState<ExtendedTransaction[]>([]);
@@ -106,20 +116,28 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
             });
             setRawTransactions(transactions);
 
-            // Fetch all-time transactions for Trend Data
+            // Fetch all-time transactions for Trend Data (using cache if fresh)
             const currentYear = month.split('-')[0];
-            const monthlyBuckets = Array(12).fill(0);
-            const yearlyBuckets: Record<number, number> = {};
+            const cacheKey = (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") || "default" : "default") + "_" + currentYear;
+            const cached = globalTrendCache[cacheKey];
+            const now = Date.now();
+
+            let monthlyBuckets = Array(12).fill(0);
+            let yearlyBuckets: Record<number, number> = {};
             YEARS.forEach(yr => yearlyBuckets[yr] = 0);
 
-            const minYear = Math.min(...YEARS);
-            const maxYear = Math.max(...YEARS);
-            const allRevenueQ = query(
-                getHotelCollection(db, "daily_revenue"),
-                where("date", ">=", `${minYear}-01-01`),
-                where("date", "<=", `${maxYear}-12-31`)
-            );
-            const allRevenueSnap = await getDocs(allRevenueQ);
+            if (cached && (now - cached.timestamp < TREND_CACHE_TTL)) {
+                monthlyBuckets = [...cached.monthlyBuckets];
+                yearlyBuckets = { ...cached.yearlyBuckets };
+            } else {
+                const minYear = Math.min(...YEARS);
+                const maxYear = Math.max(...YEARS);
+                const allRevenueQ = query(
+                    getHotelCollection(db, "daily_revenue"),
+                    where("date", ">=", `${minYear}-01-01`),
+                    where("date", "<=", `${maxYear}-12-31`)
+                );
+                const allRevenueSnap = await getDocs(allRevenueQ);
             
             allRevenueSnap.forEach(docSnap => {
                 const data = docSnap.data();
@@ -187,8 +205,16 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
                     });
                 }
             });
+
+            globalTrendCache[cacheKey] = {
+                timestamp: Date.now(),
+                currentYear,
+                monthlyBuckets: [...monthlyBuckets],
+                yearlyBuckets: { ...yearlyBuckets }
+            };
+        }
             
-            setYearTrendData(monthlyBuckets.map((rev, i) => ({
+        setYearTrendData(monthlyBuckets.map((rev, i) => ({
                 month: MONTHS[i].n.slice(0, 3),
                 revenue: rev,
                 fullMonth: MONTHS[i].v

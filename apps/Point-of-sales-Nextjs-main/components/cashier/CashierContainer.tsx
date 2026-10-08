@@ -156,9 +156,15 @@ export default function CashierContainer() {
         return tB - tA;
       });
 
-      // ── Patch each shift's transactions from pos_orders without losing shift transactions ──
-      const enrichedHistory = await Promise.all(
-        history.map(async (shift) => {
+      // ── Patch only recent closed shifts if transactions are missing, saving hundreds of queries ──
+      const recentShifts = history.slice(0, 15);
+      const remainingShifts = history.slice(15);
+      const enrichedRecent = await Promise.all(
+        recentShifts.map(async (shift) => {
+          // If shift already has recorded transactions, reuse them to save Firestore reads!
+          if (Array.isArray(shift.transactions) && shift.transactions.length > 0) {
+            return shift;
+          }
           try {
             const ordersQ = query(
               getHotelCollection(db, 'pos_orders', hotelCode),
@@ -189,7 +195,7 @@ export default function CashierContainer() {
         })
       );
 
-      setShiftHistory(enrichedHistory);
+      setShiftHistory([...enrichedRecent, ...remainingShifts]);
     } catch (e) {
       console.error('Error loading shift history:', e);
     }

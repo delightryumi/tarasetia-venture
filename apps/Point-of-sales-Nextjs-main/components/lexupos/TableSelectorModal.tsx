@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, collection, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, onSnapshot, query, limit } from 'firebase/firestore';
 import { localDb } from '@/lib/dexie';
 import { toast } from 'react-toastify';
 import styles from './TableSelectorModal.module.css';
@@ -152,8 +152,8 @@ export default function TableSelectorModal({
             setTables(defaultTables);
           }
 
-          // Listen to live held orders
-          const ordersRef = collection(db, 'hotels', hotelCode, 'pos_held_orders');
+          // Listen to live held orders with safe limit
+          const ordersRef = query(collection(db, 'hotels', hotelCode, 'pos_held_orders'), limit(50));
           unsub = onSnapshot(ordersRef, (snap) => {
             const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             setHeldOrders(list);

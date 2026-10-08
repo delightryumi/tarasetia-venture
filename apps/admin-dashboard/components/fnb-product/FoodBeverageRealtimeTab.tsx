@@ -315,11 +315,18 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
               const data = change.doc.data();
               if (data.status === 'CANCELLED' || data.status === 'VOID') return;
               let isFresh = true;
+              let orderTime = 0;
               if (data.createdAt) {
-                const createdTime = new Date(data.createdAt).getTime();
-                if (!isNaN(createdTime) && (Date.now() - createdTime > 10 * 60 * 1000)) {
-                  isFresh = false;
-                }
+                orderTime = typeof data.createdAt.toDate === 'function'
+                  ? data.createdAt.toDate().getTime()
+                  : new Date(data.createdAt).getTime();
+              } else if (data.timestamp) {
+                orderTime = typeof data.timestamp.toDate === 'function'
+                  ? data.timestamp.toDate().getTime()
+                  : new Date(data.timestamp).getTime();
+              }
+              if (!orderTime || isNaN(orderTime) || (Date.now() - orderTime > 5 * 60 * 1000)) {
+                isFresh = false;
               }
               if (isFresh) {
                 const isSelfOrder = data.source === 'Self-Order Tamu' || data.orderType === 'Self-Order Tamu';
@@ -373,7 +380,7 @@ export default function FoodBeverageRealtimeTab({ hotelCode }: FoodBeverageRealt
               } else if (data.createdAt) {
                 orderTime = typeof data.createdAt.toDate === 'function' ? data.createdAt.toDate().getTime() : new Date(data.createdAt).getTime();
               }
-              if (orderTime && (Date.now() - orderTime > 5 * 60 * 1000)) {
+              if (!orderTime || isNaN(orderTime) || (Date.now() - orderTime > 5 * 60 * 1000)) {
                 isFresh = false;
               }
 

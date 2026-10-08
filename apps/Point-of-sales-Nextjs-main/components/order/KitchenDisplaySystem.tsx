@@ -400,7 +400,11 @@ export default function KitchenDisplaySystem() {
     }
 
     const currentIds = visibleHeldOrders.map(o => o.id);
-    const newOrders = visibleHeldOrders.filter(o => o.id && !prevOrdersIdsRef.current.includes(o.id));
+    const newOrders = visibleHeldOrders.filter(o => {
+      if (!o.id || prevOrdersIdsRef.current.includes(o.id)) return false;
+      const orderTime = o.createdAt ? new Date(o.createdAt).getTime() : 0;
+      return !orderTime || isNaN(orderTime) || (Date.now() - orderTime < 5 * 60 * 1000);
+    });
     prevOrdersIdsRef.current = currentIds;
 
     if (newOrders.length > 0 && isAddonActive) {
