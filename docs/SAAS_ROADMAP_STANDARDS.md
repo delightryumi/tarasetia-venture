@@ -49,9 +49,13 @@ Diadaptasi dari standar produk SaaS enterprise global (*Mews, Cloudbeds, Toast P
    * Memungkinkan pemilik hotel membuat peran khusus (misal: *Supervisor F&B*, *Night Auditor*) dengan izin checklist granular (batasan diskon kasir, izin void, visibilitas laporan omset).
 
 ### Fase 3: Integrasi Eksternal & Portabilitas Data (Developer & Data Portability)
-1. **Developer API Keys & Outbound Webhooks**:
+1. **Centralized Revenue Sync untuk Hotel Management Group (Nexura Sync)**:
+   * **Otomasi Night Audit EOD Push**: My Tara otomatis mengirimkan 1 paket data rekap omset harian (pendapatan kamar, F&B kasir, okupansi, dan metode pembayaran) ke sistem Nexura setiap tengah malam (jam 00:05 WIB).
+   * **On-Demand Financial Query API**: Menyediakan endpoint aman `GET /api/v1/reports/revenue` agar manajemen Nexura bisa memantau performa omset seluruh portofolio hotelnya secara real-time tanpa staf hotel mengirimkan Excel manual.
+   * **Efisiensi Database**: Hanya 1 request agregat per hari, menjamin beban server dan biaya Firebase tetap Rp 0.
+2. **Developer API Keys & Outbound Webhooks**:
    * Fasilitas bagi hotel untuk membuat API Key mereka sendiri guna menghubungkan data reservasi ke software akuntansi eksternal (*Xero*, *Jurnal.id*, atau sistem ERP kustom).
-2. **1-Click Universal Backup & Excel Export**:
+3. **1-Click Universal Backup & Excel Export**:
    * Ekspor otomatis dan instan untuk seluruh Laporan Keuangan, Reservasi Tamu, Rekap Kasir, dan Audit Log ke dalam format Excel (.xlsx) dan CSV.
 
 ### Fase 4: Monetisasi & Multi-Tenancy SaaS (Subscription Management)
