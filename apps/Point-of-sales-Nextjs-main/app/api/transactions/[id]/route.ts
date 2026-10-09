@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { query, getDocs, doc, updateDoc, orderBy, limit, deleteDoc, where, getDoc } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
+import { logAuditEvent } from '@/lib/auditLogger';
 
 // GET request handler to fetch onSaleProducts by transactionId from Firestore daily_revenue
 export async function GET(
@@ -250,6 +251,27 @@ export const PATCH = async (
       console.error('Failed to clear shadow held order on void:', e);
     }
 
+    // Log audit event for POS cancellation
+    await logAuditEvent({
+      hotelCode,
+      actor: {
+        uid: targetOrderDoc?.cashierId || 'pos-operator',
+        name: targetOrderDoc?.cashierName || 'Kasir POS',
+        email: targetOrderDoc?.cashierEmail || 'pos@system',
+        role: 'cashier',
+      },
+      category: 'POS',
+      action: 'CANCEL_ORDER',
+      description: `Order POS #${resolvedTxId} dibatalkan (Alasan: ${reason}). Total: Rp ${(targetOrderDoc?.total || 0).toLocaleString('id-ID')}`,
+      targetId: resolvedTxId,
+      targetName: targetOrderDoc?.customerName || 'Customer',
+      metadata: {
+        reason,
+        total: targetOrderDoc?.total,
+        tableNumber: targetOrderDoc?.tableNumber || '',
+      },
+    });
+
     return NextResponse.json({ id: resolvedTxId, message: 'Transaction voided successfully' }, { status: 200 });
   } catch (error: any) {
     console.error('Error voiding transaction in Firestore:', error);
@@ -414,6 +436,26 @@ export const DELETE = async (
         { status: 404 }
       );
     }
+
+    // Log audit event for permanent void
+    await logAuditEvent({
+      hotelCode,
+      actor: {
+        uid: targetOrderDoc?.cashierId || 'pos-supervisor',
+        name: targetOrderDoc?.cashierName || 'Supervisor POS',
+        email: targetOrderDoc?.cashierEmail || 'supervisor@system',
+        role: 'supervisor',
+      },
+      category: 'POS',
+      action: 'VOID_ORDER',
+      description: `Order POS #${resolvedTxId} dihapus permanen (Void) dari riwayat transaksi.`,
+      targetId: resolvedTxId,
+      targetName: targetOrderDoc?.customerName || 'Customer',
+      metadata: {
+        total: targetOrderDoc?.total,
+        tableNumber: targetOrderDoc?.tableNumber || '',
+      },
+    });
 
     return NextResponse.json({ id: resolvedTxId, message: 'Transaction deleted successfully' }, { status: 200 });
   } catch (error: any) {
@@ -666,6 +708,27 @@ export const PUT = async (
         console.error('Failed to update cashier shift for payment edit:', err);
       }
     }
+
+    // Log audit event for payment method update
+    await logAuditEvent({
+      hotelCode,
+      actor: {
+        uid: targetOrderDoc?.cashierId || 'pos-operator',
+        name: targetOrderDoc?.cashierName || 'Kasir POS',
+        email: targetOrderDoc?.cashierEmail || 'pos@system',
+        role: 'cashier',
+      },
+      category: 'POS',
+      action: 'UPDATE_PAYMENT_METHOD',
+      description: `Metode pembayaran order #${resolvedTxId} diubah dari ${oldPaymentMethod || 'unknown'} ke ${newPaymentMethod}.`,
+      targetId: resolvedTxId,
+      targetName: targetOrderDoc?.customerName || 'Customer',
+      diff: {
+        before: { paymentMethod: oldPaymentMethod },
+        after: { paymentMethod: newPaymentMethod },
+      },
+      metadata: { notes },
+    });
 
     return NextResponse.json({
       success: true,

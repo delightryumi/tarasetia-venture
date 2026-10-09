@@ -15,6 +15,7 @@ import { db } from "@/lib/firebase";
 import { doc, updateDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { resolveBookingIdentifiers } from "@/lib/channelHelper";
+import { logAuditEvent } from "@/lib/auditLogger";
 
 // Modular Imports
 import styles from "./OverviewStyles.module.css";
@@ -388,6 +389,26 @@ export function OverviewSection() {
                 }
             }
 
+            logAuditEvent({
+                hotelCode: hotelId,
+                hotelName: activeHotelName || undefined,
+                actor: {
+                    uid: user?.uid || "unknown",
+                    name: user?.displayName || user?.name || "System",
+                    email: user?.email || "",
+                    role: user?.role || "user",
+                },
+                category: "RESERVATIONS",
+                action: "VOID_BOOKING",
+                description: `Booking ${bookingToVoid.guestName || "Tamu"} (#${bookingToVoid.bookingId || "N/A"}) di-void dari sistem.`,
+                targetId: String(bookingToVoid.bookingId || bookingToVoid.id || ""),
+                targetName: bookingToVoid.guestName,
+                metadata: {
+                    roomNumber: bookingToVoid.roomNumber,
+                    dates: dates,
+                },
+            });
+
             setBookingToVoid(null);
             toast.success("Transaction voided successfully");
         } catch (error) {
@@ -452,6 +473,27 @@ export function OverviewSection() {
                     })
                 }).catch(err => console.warn("[Cancel Channex Sync Warning]:", err));
             }
+
+            logAuditEvent({
+                hotelCode: hotelId,
+                hotelName: activeHotelName || undefined,
+                actor: {
+                    uid: user?.uid || "unknown",
+                    name: user?.displayName || user?.name || "System",
+                    email: user?.email || "",
+                    role: user?.role || "user",
+                },
+                category: "RESERVATIONS",
+                action: "CANCEL_BOOKING",
+                description: `Booking ${bookingToCancel.guestName || "Tamu"} (#${bookingToCancel.bookingId || "N/A"}) dibatalkan.`,
+                targetId: String(bookingToCancel.bookingId || bookingToCancel.id || ""),
+                targetName: bookingToCancel.guestName,
+                metadata: {
+                    roomNumber: bookingToCancel.roomNumber,
+                    dates: dates,
+                    reason: bookingToCancel.cancellationReason || "Manual Cancellation",
+                },
+            });
 
             setBookingToCancel(null);
             toast.success("Transaction cancelled successfully");

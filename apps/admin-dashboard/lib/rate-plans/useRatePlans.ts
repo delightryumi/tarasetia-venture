@@ -16,12 +16,13 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { MyTaraRatePlan } from "../channex/types";
+import { logAuditEvent } from "../auditLogger";
 
 const ratePlansCache = new Map<string, { list: MyTaraRatePlan[]; timestamp: number }>();
 const RATE_PLANS_CACHE_TTL = 5 * 60 * 1000;
 
 export const useRatePlans = () => {
-    const { activeHotelCode } = useAuth();
+    const { user, activeHotelCode, activeHotelName } = useAuth();
     const [ratePlans, setRatePlans] = useState<MyTaraRatePlan[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -143,13 +144,28 @@ export const useRatePlans = () => {
         if (!activeHotelCode) return;
         setSaving(true);
         try {
-            await addDoc(getHotelCollection(db, "ratePlans", activeHotelCode), {
+            const docRef = await addDoc(getHotelCollection(db, "ratePlans", activeHotelCode), {
                 ...data,
                 hotelCode: activeHotelCode,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             });
             ratePlansCache.delete(activeHotelCode);
+            logAuditEvent({
+                hotelCode: activeHotelCode,
+                actor: {
+                    uid: user?.uid || "unknown",
+                    name: user?.displayName || user?.email || "Unknown",
+                    email: user?.email || "",
+                    role: user?.role || "admin",
+                },
+                category: "RATES",
+                action: "CREATE_RATE_PLAN",
+                description: `Membuat rate plan baru: ${data.name} (Base: Rp ${Number(data.baseRate || 0).toLocaleString()})`,
+                targetId: docRef.id,
+                targetName: data.name,
+                diff: { after: data }
+            });
             await fetchRatePlans(true);
             toast.success("Rate Plan berhasil ditambahkan.");
         } catch (err: any) {
@@ -170,6 +186,21 @@ export const useRatePlans = () => {
                 updatedAt: new Date().toISOString()
             });
             ratePlansCache.delete(activeHotelCode);
+            logAuditEvent({
+                hotelCode: activeHotelCode,
+                actor: {
+                    uid: user?.uid || "unknown",
+                    name: user?.displayName || user?.email || "Unknown",
+                    email: user?.email || "",
+                    role: user?.role || "admin",
+                },
+                category: "RATES",
+                action: "UPDATE_RATE_PLAN",
+                description: `Mengubah rate plan: ${data.name || id}`,
+                targetId: id,
+                targetName: data.name || id,
+                diff: { after: data }
+            });
             await fetchRatePlans(true);
             toast.success("Rate Plan berhasil diperbarui.");
         } catch (err: any) {
@@ -184,9 +215,25 @@ export const useRatePlans = () => {
         if (!activeHotelCode || !id) return;
         setSaving(true);
         try {
+            const existing = ratePlans.find(r => r.id === id);
             const ref = doc(getHotelCollection(db, "ratePlans", activeHotelCode), id);
             await deleteDoc(ref);
             ratePlansCache.delete(activeHotelCode);
+            logAuditEvent({
+                hotelCode: activeHotelCode,
+                actor: {
+                    uid: user?.uid || "unknown",
+                    name: user?.displayName || user?.email || "Unknown",
+                    email: user?.email || "",
+                    role: user?.role || "admin",
+                },
+                category: "RATES",
+                action: "DELETE_RATE_PLAN",
+                description: `Menghapus rate plan: ${existing?.name || id}`,
+                targetId: id,
+                targetName: existing?.name || id,
+                diff: { before: existing }
+            });
             await fetchRatePlans(true);
             toast.success("Rate Plan berhasil dihapus.");
         } catch (err: any) {

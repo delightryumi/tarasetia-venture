@@ -18,8 +18,10 @@ import {
   BellRing,
   ChevronDown,
   Check,
+  ShieldCheck,
 } from 'lucide-react';
 import { NotificationSettingsDrawer } from '@/components/layout/NotificationSettingsDrawer';
+import { TwoFactorAuthModal } from '@/components/shared/TwoFactorAuthModal';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { ModuleActionButtons } from '@/components/layout/ModuleActionButtons';
@@ -61,6 +63,7 @@ export default function SelectModulePage() {
   const [nextDueDate, setNextDueDate] = useState<string>('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [is2FaOpen, setIs2FaOpen] = useState(false);
   const [isHotelDropdownOpen, setIsHotelDropdownOpen] = useState(false);
   const hotelDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -714,6 +717,18 @@ export default function SelectModulePage() {
                         <span>Notification Settings</span>
                       </button>
 
+                      {/* 2FA Google Authenticator Menu Item */}
+                      <button
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          setIs2FaOpen(true);
+                        }}
+                        className={styles.dropdownItem}
+                      >
+                        <ShieldCheck className={styles.dropdownIcon} />
+                        <span>Keamanan 2FA (Google Auth)</span>
+                      </button>
+
                       <div className={styles.dropdownDivider} />
 
                       <button
@@ -773,6 +788,12 @@ export default function SelectModulePage() {
         hotelCode={activeHotelCode || '1'}
         userId={user?.uid || user?.email || 'guest'}
         userEmail={user?.email || undefined}
+      />
+
+      {/* Two-Factor Authentication (2FA) Security Modal */}
+      <TwoFactorAuthModal
+        isOpen={is2FaOpen}
+        onClose={() => setIs2FaOpen(false)}
       />
     </div>
   );

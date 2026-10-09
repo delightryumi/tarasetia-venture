@@ -1,0 +1,831 @@
+/* TwoFactorAuthModal.module.css - Enterprise Pro Security Modal */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalCard {
+  width: 100%;
+  max-width: 520px;
+  background-color: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 
+    0 25px 60px -15px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  max-height: min(90vh, 720px);
+  overflow: hidden;
+  position: relative;
+  animation: slideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+:global(.dark) .modalCard {
+  background-color: #18181b;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 25px 60px -15px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ========================================================
+   HEADER
+   ======================================================== */
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #ffffff;
+  flex-shrink: 0;
+}
+
+:global(.dark) .modalHeader {
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+  background-color: #18181b;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.headerIconBadge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 2px 6px rgba(37, 99, 235, 0.12);
+}
+
+:global(.dark) .headerIconBadge {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.25) 0%, rgba(30, 58, 138, 0.35) 100%);
+  color: #60a5fa;
+  box-shadow: none;
+}
+
+.headerTitle {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.015em;
+  margin: 0;
+  line-height: 1.25;
+}
+
+:global(.dark) .headerTitle {
+  color: #f8fafc;
+}
+
+.headerSubtitle {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 3px 0 0 0;
+  font-weight: 500;
+}
+
+:global(.dark) .headerSubtitle {
+  color: #94a3b8;
+}
+
+.closeButton {
+  width: 38px;
+  height: 38px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.closeButton:hover {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+:global(.dark) .closeButton:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+}
+
+/* ========================================================
+   BODY (SCROLLABLE)
+   ======================================================== */
+.modalBody {
+  padding: 22px 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.modalBody::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modalBody::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 9999px;
+}
+
+:global(.dark) .modalBody::-webkit-scrollbar-thumb {
+  background-color: #3f3f46;
+}
+
+/* Alerts */
+.errorAlert {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.78125rem;
+  line-height: 1.4;
+}
+
+:global(.dark) .errorAlert {
+  background-color: rgba(153, 27, 27, 0.2);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.warningBox {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 4px solid #f59e0b;
+  color: #92400e;
+  font-size: 0.78125rem;
+  line-height: 1.5;
+}
+
+:global(.dark) .warningBox {
+  background-color: rgba(180, 83, 9, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+  border-left-color: #f59e0b;
+  color: #fde68a;
+}
+
+/* ========================================================
+   STATUS BANNER (OVERVIEW)
+   ======================================================== */
+.statusBanner {
+  padding: 16px 18px;
+  border-radius: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.statusActive {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #bbf7d0;
+}
+
+:global(.dark) .statusActive {
+  background: linear-gradient(135deg, rgba(22, 101, 52, 0.25) 0%, rgba(20, 83, 45, 0.35) 100%);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.statusInactive {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fde68a;
+}
+
+:global(.dark) .statusInactive {
+  background: linear-gradient(135deg, rgba(180, 83, 9, 0.2) 0%, rgba(146, 64, 14, 0.28) 100%);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.statusIconBox {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.statusActive .statusIconBox {
+  background-color: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
+}
+
+.statusInactive .statusIconBox {
+  background-color: #d97706;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.25);
+}
+
+.statusTextGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statusTitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.statusActive .statusTitle {
+  color: #14532d;
+}
+
+:global(.dark) .statusActive .statusTitle {
+  color: #bbf7d0;
+}
+
+.statusInactive .statusTitle {
+  color: #78350f;
+}
+
+:global(.dark) .statusInactive .statusTitle {
+  color: #fde68a;
+}
+
+.statusDesc {
+  font-size: 0.78125rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.statusActive .statusDesc {
+  color: #15803d;
+}
+
+:global(.dark) .statusActive .statusDesc {
+  color: #86efac;
+}
+
+.statusInactive .statusDesc {
+  color: #92400e;
+}
+
+:global(.dark) .statusInactive .statusDesc {
+  color: #fcd34d;
+}
+
+.statusDate {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
+/* ========================================================
+   WORKFLOW STEPS (HOW IT WORKS)
+   ======================================================== */
+.workflowSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionHeaderLabel {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin: 0;
+}
+
+:global(.dark) .sectionHeaderLabel {
+  color: #94a3b8;
+}
+
+.stepsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stepPill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 0.78125rem;
+  color: #334155;
+  line-height: 1.4;
+  transition: border-color 0.15s ease;
+}
+
+:global(.dark) .stepPill {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+.stepPill:hover {
+  border-color: #cbd5e1;
+}
+
+:global(.dark) .stepPill:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.stepBadgeNumber {
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 700;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid #bfdbfe;
+}
+
+:global(.dark) .stepBadgeNumber {
+  background-color: rgba(37, 99, 235, 0.25);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+/* ========================================================
+   QR CODE SETUP VIEW
+   ======================================================== */
+.instructionHeader {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.instructionTitle {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+:global(.dark) .instructionTitle {
+  color: #f8fafc;
+}
+
+.instructionSubtitle {
+  font-size: 0.78125rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+:global(.dark) .instructionSubtitle {
+  color: #94a3b8;
+}
+
+.qrContainer {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0;
+}
+
+.qrFrame {
+  padding: 12px;
+  background-color: #ffffff !important;
+  border-radius: 16px;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  display: inline-block;
+}
+
+:global(.dark) .qrFrame {
+  border-color: #3f3f46;
+}
+
+.qrImage {
+  width: 170px;
+  height: 170px;
+  display: block;
+}
+
+/* Secret Key Box */
+.secretBox {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+:global(.dark) .secretBox {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.secretHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.secretLabel {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+:global(.dark) .secretLabel {
+  color: #94a3b8;
+}
+
+.copySecretBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.copySecretBtn:hover {
+  background-color: #eff6ff;
+}
+
+:global(.dark) .copySecretBtn {
+  color: #60a5fa;
+}
+
+:global(.dark) .copySecretBtn:hover {
+  background-color: rgba(37, 99, 235, 0.15);
+}
+
+.secretText {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #0f172a;
+  word-break: break-all;
+  user-select: all;
+  background: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  text-align: center;
+}
+
+:global(.dark) .secretText {
+  background-color: #1e1e24;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+}
+
+/* Verification Input */
+.inputFormGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inputLabel {
+  font-size: 0.78125rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+:global(.dark) .inputLabel {
+  color: #e2e8f0;
+}
+
+.codeInput {
+  width: 100%;
+  min-height: 48px;
+  height: 48px;
+  padding: 0 16px;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1.375rem;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  border-radius: 12px;
+  border: 1.5px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+:global(.dark) .codeInput {
+  background-color: #27272a;
+  border-color: #3f3f46;
+  color: #f8fafc;
+}
+
+.codeInput:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+:global(.dark) .codeInput:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+/* ========================================================
+   BACKUP CODES VIEW
+   ======================================================== */
+.recoveryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+:global(.dark) .recoveryGrid {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.recoveryCodeItem {
+  padding: 8px 12px;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: #0f172a;
+}
+
+:global(.dark) .recoveryCodeItem {
+  background-color: #27272a;
+  border-color: #3f3f46;
+  color: #f8fafc;
+}
+
+.recoveryActionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* ========================================================
+   DEDICATED MODAL FOOTER (STATIONARY & PROPORTIONAL)
+   ======================================================== */
+.modalFooter {
+  padding: 16px 24px;
+  background-color: #fafafa;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+:global(.dark) .modalFooter {
+  background-color: #141416;
+  border-top-color: rgba(255, 255, 255, 0.07);
+}
+
+.footerRightOnly {
+  justify-content: flex-end;
+}
+
+/* Buttons */
+.primaryButton {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+  transition: all 0.15s ease;
+}
+
+:global(.dark) .primaryButton {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
+}
+
+:global(.dark) .primaryButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.primaryButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.secondaryButton {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 11px;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.secondaryButton:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+:global(.dark) .secondaryButton {
+  color: #94a3b8;
+}
+
+:global(.dark) .secondaryButton:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+}
+
+.outlinedButton {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 11px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+:global(.dark) .outlinedButton {
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+}
+
+.outlinedButton:hover:not(:disabled) {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+:global(.dark) .outlinedButton:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.dangerButton {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 11px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border: 1px solid #fca5a5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+:global(.dark) .dangerButton {
+  background-color: rgba(185, 28, 28, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.dangerButton:hover:not(:disabled) {
+  background-color: #fecaca;
+  color: #991b1b;
+}
+
+:global(.dark) .dangerButton:hover:not(:disabled) {
+  background-color: rgba(185, 28, 28, 0.35);
+  color: #fca5a5;
+}
+
+.dangerSolidButton {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+  transition: all 0.15s ease;
+}
+
+.dangerSolidButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  transform: translateY(-1px);
+}
+
+.dangerSolidButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}

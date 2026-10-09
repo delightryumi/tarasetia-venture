@@ -14,7 +14,12 @@ import {
     HelpCircle, 
     X,
     Phone,
-    Headphones
+    Headphones,
+    ShieldCheck,
+    Check,
+    Copy,
+    Download,
+    Key
 } from "lucide-react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -29,10 +34,55 @@ export const LoginSection = () => {
         setPassword, 
         hotelCode, 
         setHotelCode, 
+        twoFactorCode, 
+        setTwoFactorCode, 
+        requires2Fa, 
+        requires2FaSetup, 
+        setupStep, 
+        setupSecret, 
+        setupQrUrl, 
+        setupRecoveryCodes, 
+        trustDevice, 
+        setTrustDevice, 
+        handleConfirmSetup, 
+        handleFinishSetupAndLogin, 
+        cancel2Fa, 
         error, 
         loading, 
         handleLogin 
     } = useLogin();
+
+    const [copiedSecret, setCopiedSecret] = useState(false);
+    const [copiedCodes, setCopiedCodes] = useState(false);
+
+    const handleCopySecret = () => {
+        if (!setupSecret) return;
+        navigator.clipboard.writeText(setupSecret);
+        setCopiedSecret(true);
+        setTimeout(() => setCopiedSecret(false), 2000);
+    };
+
+    const handleCopyCodes = () => {
+        if (!setupRecoveryCodes.length) return;
+        navigator.clipboard.writeText(setupRecoveryCodes.join("\n"));
+        setCopiedCodes(true);
+        setTimeout(() => setCopiedCodes(false), 2000);
+    };
+
+    const handleDownloadRecoveryCodes = () => {
+        const text = `TARA CRS - EMERGENCY RECOVERY CODES\nAccount: ${email}\nGenerated: ${new Date().toISOString()}\n\n` +
+            setupRecoveryCodes.map((c, i) => `${i + 1}. ${c}`).join("\n") +
+            `\n\nKEEP THESE CODES SECURE. Each code can be used once if you lose access to Google Authenticator.`;
+        const blob = new Blob([text], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `tara-recovery-codes-${email.replace(/[^a-zA-Z0-9]/g, "_")}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 
     const [showPassword, setShowPassword] = useState(false);
     const [mode, setMode] = useState<'login' | 'reset-password'>('login');
@@ -180,7 +230,278 @@ export const LoginSection = () => {
             {/* Centered Clean Card Area */}
             <main className={styles.centerStage}>
                 <div className={styles.cleanCard}>
-                    {mode === 'login' ? (
+                    {requires2FaSetup ? (
+                        setupStep === "codes" ? (
+                            <>
+                                <div className={styles.cardHeader}>
+                                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3">
+                                        <ShieldCheck size={28} />
+                                    </div>
+                                    <h1 className={styles.cardTitle}>
+                                        {language === 'EN' ? "Backup Recovery Codes" : "Simpan Kode Cadangan"}
+                                    </h1>
+                                    <p className={styles.cardSubtitle}>
+                                        {language === 'EN' 
+                                            ? "Save these 8 recovery codes in a secure place. Each code can be used once if you lose your authenticator device." 
+                                            : "Simpan 8 kode cadangan ini di tempat aman. Berguna jika Anda kehilangan akses ke Google Authenticator."}
+                                    </p>
+                                </div>
+
+                                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '12px' }}>
+                                        {setupRecoveryCodes.map((code, idx) => (
+                                            <div 
+                                                key={idx} 
+                                                style={{ 
+                                                    fontFamily: 'monospace', 
+                                                    fontSize: '12.5px', 
+                                                    fontWeight: 600, 
+                                                    background: '#ffffff', 
+                                                    padding: '6px 8px', 
+                                                    borderRadius: '6px', 
+                                                    border: '1px solid #cbd5e1', 
+                                                    textAlign: 'center',
+                                                    color: '#0f172a'
+                                                }}
+                                            >
+                                                {code}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                        <button 
+                                            type="button" 
+                                            onClick={handleCopyCodes}
+                                            className={styles.topbarBtn}
+                                            style={{ fontSize: '11px', padding: '5px 10px' }}
+                                        >
+                                            {copiedCodes ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                                            <span>{copiedCodes ? (language === 'EN' ? "Copied!" : "Tersalin!") : (language === 'EN' ? "Copy Codes" : "Salin Semua")}</span>
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            onClick={handleDownloadRecoveryCodes}
+                                            className={styles.topbarBtn}
+                                            style={{ fontSize: '11px', padding: '5px 10px' }}
+                                        >
+                                            <Download size={13} />
+                                            <span>{language === 'EN' ? "Download .txt" : "Unduh File .txt"}</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button 
+                                    type="button" 
+                                    onClick={handleFinishSetupAndLogin}
+                                    className={styles.primaryLoginBtn}
+                                    disabled={loading}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <Loader2 size={16} className="animate-spin" />
+                                            <span>{language === 'EN' ? "ENTERING DASHBOARD..." : "MASUK KE DASHBOARD..."}</span>
+                                        </>
+                                    ) : (
+                                        <span>{language === 'EN' ? "CONTINUE TO DASHBOARD" : "SELESAI & MASUK KE DASHBOARD"}</span>
+                                    )}
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <div className={styles.cardHeader}>
+                                    <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-3">
+                                        <ShieldCheck size={28} />
+                                    </div>
+                                    <h1 className={styles.cardTitle}>
+                                        {language === 'EN' ? "Mandatory 2FA Setup" : "Aktivasi Wajib 2FA"}
+                                    </h1>
+                                    <p className={styles.cardSubtitle}>
+                                        {language === 'EN' 
+                                            ? "Scan the QR code with Google Authenticator once to protect your account." 
+                                            : "Scan kode QR dengan Google Authenticator satu kali saja untuk mengamankan akun."}
+                                    </p>
+                                </div>
+
+                                {error && (
+                                    <div className={styles.alertError} role="alert">
+                                        {error}
+                                    </div>
+                                )}
+
+                                {setupQrUrl && (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '16px' }}>
+                                        <div style={{ padding: '8px', background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                                            <img 
+                                                src={setupQrUrl} 
+                                                alt="Google Authenticator QR Code" 
+                                                style={{ width: '150px', height: '150px', display: 'block' }}
+                                            />
+                                        </div>
+                                        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#64748b' }}>
+                                            <span>{language === 'EN' ? "Key:" : "Kode rahasia:"}</span>
+                                            <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 600, color: '#1e293b' }}>
+                                                {setupSecret}
+                                            </code>
+                                            <button 
+                                                type="button" 
+                                                onClick={handleCopySecret}
+                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: '2px', display: 'inline-flex', alignItems: 'center' }}
+                                                title="Salin kode"
+                                            >
+                                                {copiedSecret ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <form className={styles.authForm} onSubmit={handleConfirmSetup}>
+                                    <div className={styles.fieldGroup}>
+                                        <label htmlFor="totp-setup-input" className={styles.fieldLabel}>
+                                            {language === 'EN' ? "6-Digit Verification Code" : "6 Digit Kode Verifikasi"}
+                                        </label>
+                                        <div className={styles.inputContainer}>
+                                            <input 
+                                                id="totp-setup-input"
+                                                type="text"
+                                                inputMode="numeric"
+                                                autoFocus
+                                                placeholder="000000"
+                                                maxLength={6}
+                                                className={styles.textInput}
+                                                style={{ textAlign: 'center', letterSpacing: '0.3em', fontSize: '1.25rem', fontWeight: 'bold' }}
+                                                value={twoFactorCode}
+                                                onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ""))}
+                                                required
+                                                disabled={loading}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            id="setup-remember-device" 
+                                            checked={trustDevice} 
+                                            onChange={(e) => setTrustDevice(e.target.checked)} 
+                                            style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                        />
+                                        <label htmlFor="setup-remember-device" style={{ fontSize: '12px', color: '#475569', cursor: 'pointer', userSelect: 'none' }}>
+                                            {language === 'EN' ? "Remember this device for 30 days" : "Ingat perangkat ini selama 30 hari"}
+                                        </label>
+                                    </div>
+
+                                    <button 
+                                        type="submit" 
+                                        className={styles.primaryLoginBtn}
+                                        disabled={loading || twoFactorCode.length < 6}
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <Loader2 size={16} className="animate-spin" />
+                                                <span>{language === 'EN' ? "VERIFYING..." : "MEMVERIFIKASI..."}</span>
+                                            </>
+                                        ) : (
+                                            <span>{language === 'EN' ? "ACTIVATE & CONTINUE" : "AKTIFKAN & LANJUTKAN"}</span>
+                                        )}
+                                    </button>
+
+                                    <div className={styles.forgotPassRow}>
+                                        <button 
+                                            type="button" 
+                                            className={styles.forgotPassLink}
+                                            onClick={cancel2Fa}
+                                        >
+                                            {language === 'EN' ? "Back to Sign In" : "Kembali ke Login"}
+                                        </button>
+                                    </div>
+                                </form>
+                            </>
+                        )
+                    ) : requires2Fa ? (
+                        <>
+                            <div className={styles.cardHeader}>
+                                <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-3">
+                                    <ShieldCheck size={28} />
+                                </div>
+                                <h1 className={styles.cardTitle}>
+                                    {language === 'EN' ? "Two-Factor Verification" : "Verifikasi Dua Langkah"}
+                                </h1>
+                                <p className={styles.cardSubtitle}>
+                                    {language === 'EN' 
+                                        ? "Enter the 6-digit verification code from Google Authenticator." 
+                                        : "Masukkan 6 digit kode verifikasi dari Google Authenticator."}
+                                </p>
+                            </div>
+
+                            {error && (
+                                <div className={styles.alertError} role="alert">
+                                    {error}
+                                </div>
+                            )}
+
+                            <form className={styles.authForm} onSubmit={handleLogin}>
+                                <div className={styles.fieldGroup}>
+                                    <label htmlFor="totp-input" className={styles.fieldLabel}>
+                                        {language === 'EN' ? "Verification Code" : "Kode Verifikasi"}
+                                    </label>
+                                    <div className={styles.inputContainer}>
+                                        <input 
+                                            id="totp-input"
+                                            type="text"
+                                            inputMode="numeric"
+                                            autoFocus
+                                            placeholder="000000"
+                                            maxLength={10}
+                                            className={styles.textInput}
+                                            style={{ textAlign: 'center', letterSpacing: '0.3em', fontSize: '1.25rem', fontWeight: 'bold' }}
+                                            value={twoFactorCode}
+                                            onChange={(e) => setTwoFactorCode(e.target.value)}
+                                            required
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                                    <input 
+                                        type="checkbox" 
+                                        id="login-remember-device" 
+                                        checked={trustDevice} 
+                                        onChange={(e) => setTrustDevice(e.target.checked)} 
+                                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                    />
+                                    <label htmlFor="login-remember-device" style={{ fontSize: '12px', color: '#475569', cursor: 'pointer', userSelect: 'none' }}>
+                                        {language === 'EN' ? "Remember this device for 30 days" : "Ingat perangkat ini selama 30 hari"}
+                                    </label>
+                                </div>
+
+                                <button 
+                                    type="submit" 
+                                    className={styles.primaryLoginBtn}
+                                    disabled={loading || !twoFactorCode.trim()}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <Loader2 size={16} className="animate-spin" />
+                                            <span>{language === 'EN' ? "VERIFYING..." : "MEMVERIFIKASI..."}</span>
+                                        </>
+                                    ) : (
+                                        <span>{language === 'EN' ? "VERIFY & SIGN IN" : "VERIFIKASI & MASUK"}</span>
+                                    )}
+                                </button>
+
+                                <div className={styles.forgotPassRow}>
+                                    <button 
+                                        type="button" 
+                                        className={styles.forgotPassLink}
+                                        onClick={cancel2Fa}
+                                    >
+                                        {language === 'EN' ? "Back to Sign In" : "Kembali ke Login"}
+                                    </button>
+                                </div>
+                            </form>
+                        </>
+                    ) : mode === 'login' ? (
                         <>
                             <div className={styles.cardHeader}>
                                 <h1 className={styles.cardTitle}>

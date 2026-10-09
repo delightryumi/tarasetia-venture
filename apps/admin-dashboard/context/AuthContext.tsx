@@ -6,6 +6,7 @@ import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, collection, onSnapshot, getDocs } from "firebase/firestore";
 import { detectClientCity } from "@/lib/clientGeo";
 import { toast } from "sonner";
+import { isDeviceTrusted } from "@/lib/trustedDevice";
 
 const SUPERADMIN_PERMISSIONS_FALLBACK = [
     "module_pos", "module_front_office", "module_innalytics", "module_housekeeping", 
@@ -32,6 +33,14 @@ interface CustomUser {
     status?: string;
 }
 
+export type LoginResult = {
+    success: boolean;
+    requires2Fa?: boolean;
+    requires2FaSetup?: boolean;
+    error?: string;
+    errorCode?: string;
+};
+
 interface AuthContextType {
     user: CustomUser | null;
     loading: boolean;
@@ -39,7 +48,7 @@ interface AuthContextType {
     activeHotelName: string;
     hotelsList: any[];
     setActiveHotelCode: (code: string) => void;
-    loginWithFirestore: (email: string, password: string, hotelCode?: string) => Promise<boolean>;
+    loginWithFirestore: (email: string, password: string, hotelCode?: string, twoFactorCode?: string) => Promise<LoginResult>;
     signOutUser: () => Promise<void>;
 }
 
@@ -50,7 +59,7 @@ const AuthContext = createContext<AuthContextType>({
     activeHotelName: "",
     hotelsList: [],
     setActiveHotelCode: () => {},
-    loginWithFirestore: async () => false,
+    loginWithFirestore: async () => ({ success: false }),
     signOutUser: async () => {},
 });
 
@@ -328,7 +337,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, [user?.email, activeHotelCode]);
 
     // Helper to fetch user's real name, permissions, and assigned outlets from users_master
-    const fetchUserName = async (email: string, code?: string): Promise<{ exists: boolean; name: string; role?: string; hotelCode?: string; permissions?: Record<string, boolean>; allowedOutlets?: string[]; status?: string }> => {
+    const fetchUserName = async (email: string, code?: string): Promise<{ exists: boolean; name: string; role?: string; hotelCode?: string; permissions?: Record<string, boolean>; allowedOutlets?: string[]; status?: string; twoFactorEnabled?: boolean }> => {
         if (!email) return { exists: false, name: "" };
         const docId = email.toLowerCase().replace(/[@.]/g, "_");
         if (code && code !== "0") {
@@ -344,7 +353,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         hotelCode: data.hotelCode || code,
                         status: data.status,
                         permissions: data.permissions || {},
-                        allowedOutlets: Array.isArray(data.allowedOutlets) ? data.allowedOutlets : []
+                        allowedOutlets: Array.isArray(data.allowedOutlets) ? data.allowedOutlets : [],
+                        twoFactorEnabled: data.twoFactorEnabled === true
                     };
                 }
             } catch (e) {
@@ -363,7 +373,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     hotelCode: data.hotelCode || "",
                     status: data.status,
                     permissions: data.permissions || {},
-                    allowedOutlets: Array.isArray(data.allowedOutlets) ? data.allowedOutlets : []
+                    allowedOutlets: Array.isArray(data.allowedOutlets) ? data.allowedOutlets : [],
+                    twoFactorEnabled: data.twoFactorEnabled === true
                 };
             }
         } catch (e) {
@@ -376,10 +387,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         const checkSession = async () => {
             if (typeof window !== "undefined") {
+                if (window.location.pathname === "/login") {
+                    sessionStorage.removeItem("tara_2fa_pending");
+                }
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get("logout") === "true") {
                     localStorage.removeItem("auth_user");
                     localStorage.removeItem("active_hotel_code");
+                    sessionStorage.removeItem("tara_2fa_pending");
                     setUser(null);
                     setActiveHotelCodeState("");
                     await fbSignOut(auth);
@@ -469,6 +484,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             // Fallback to Firebase Auth
             const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+                if (typeof window !== "undefined" && sessionStorage.getItem("tara_2fa_pending") === "true") {
+                    // 2FA verification is currently in progress, do not set user until 2FA completes
+                    return;
+                }
                 if (fbUser) {
                     const email = fbUser.email || "";
                     const tokenResult = await fbUser.getIdTokenResult();
@@ -540,7 +559,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         checkSession();
     }, []);
 
-    const loginWithFirestore = async (email: string, password: string, hotelCodeInput?: string): Promise<boolean> => {
+    const loginWithFirestore = async (email: string, password: string, hotelCodeInput?: string, twoFactorCode?: string): Promise<LoginResult> => {
         try {
             const isSuperadminEmail = email.toLowerCase() === "superadmin@setara.co.id";
             let code = hotelCodeInput?.trim() || "";
@@ -549,20 +568,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const isSuperadminBypass = isSuperadminEmail || code === "0";
 
             if (code === "0" && !isSuperadminEmail) {
-                throw new Error("Hotel Code tidak valid.");
+                return { success: false, error: "Hotel Code tidak valid." };
             }
 
             if (!isSuperadminBypass) {
                 if (!code) {
-                    throw new Error("Hotel Code wajib diisi.");
+                    return { success: false, error: "Hotel Code wajib diisi." };
                 }
 
                 // Verify hotel exists
                 const hotelRef = doc(db, "hotels", code);
                 const hotelSnap = await getDoc(hotelRef);
                 if (!hotelSnap.exists()) {
-                    throw new Error("Hotel tidak terdaftar.");
+                    return { success: false, error: "Hotel tidak terdaftar." };
                 }
+            }
+
+            // Mark 2FA pending so onAuthStateChanged doesn't prematurely promote user
+            if (typeof window !== "undefined") {
+                sessionStorage.setItem("tara_2fa_pending", "true");
             }
 
             // Call Firebase Auth signInWithEmailAndPassword
@@ -578,6 +602,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             let allowedOutlets = claims.allowedOutlets as string[] || [];
 
             const userInfo = await fetchUserName(email, code);
+
+            // 2FA Security Challenge & Mandatory Setup Check
+            if (userInfo.twoFactorEnabled) {
+                const isTrusted = isDeviceTrusted(email);
+                if (!isTrusted) {
+                    if (!twoFactorCode) {
+                        return { success: false, requires2Fa: true };
+                    }
+                    const valRes = await fetch("/api/auth/2fa/validate", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            email,
+                            hotelCode: code,
+                            code: twoFactorCode,
+                        }),
+                    });
+                    const valData = await valRes.json();
+                    if (!valRes.ok || !valData.valid) {
+                        return { success: false, error: valData.error || "Kode verifikasi 2FA tidak valid." };
+                    }
+                }
+            } else {
+                // Mandatory 2FA: Force enrollment on first sign in
+                return { success: false, requires2FaSetup: true };
+            }
 
             // Fallback lookup from Firestore if claims aren't set yet
             if (!isSuperadminEmail && (!role || !hotelCode)) {
@@ -676,10 +726,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 localStorage.setItem("active_hotel_code", "0");
                 setActiveHotelName("Superadmin");
             }
-            return true;
+            if (typeof window !== "undefined") {
+                sessionStorage.removeItem("tara_2fa_pending");
+            }
+            return { success: true };
         } catch (e: any) {
-            console.error("Firebase Auth login error:", e);
-            throw e;
+            if (typeof window !== "undefined") {
+                sessionStorage.removeItem("tara_2fa_pending");
+            }
+            return {
+                success: false,
+                errorCode: e.code,
+                error: e.code === "auth/invalid-credential" || e.code === "auth/user-not-found" || e.code === "auth/wrong-password"
+                    ? "Email, Password, atau Partner Code salah."
+                    : e.message || "Gagal masuk."
+            };
         }
     };
 

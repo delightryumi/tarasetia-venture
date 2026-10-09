@@ -57,6 +57,14 @@ service cloud.firestore {
       allow read: if isSuperadmin() || isAssignedToHotel(hotelCode); 
       allow write: if isSuperadmin();
 
+      // Immutable Enterprise Audit Log: Hanya admin/owner/superadmin yang dapat membaca.
+      // Dilarang keras menghapus atau memodifikasi catatan audit log dari klien (SOC-2 Compliance).
+      match /audit_logs/{logId} {
+        allow read: if isSuperadmin() || (isAssignedToHotel(hotelCode) && (isAdmin() || isOwner()));
+        allow create: if isSuperadmin() || isAssignedToHotel(hotelCode);
+        allow update, delete: if false;
+      }
+
       // Sub-koleksi operasional milik hotelCode tertentu (Kamar, POS, PNL, Keuangan)
       match /{document=**} {
         // Satpam Verifikasi: Harus Superadmin ATAU Staff resmi hotel yang bersangkutan

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Menu, Settings, Users, LogOut, Building2, BellRing, ChevronDown, Check } from "lucide-react";
+import { Menu, Settings, Users, LogOut, Building2, BellRing, ChevronDown, Check, ShieldCheck } from "lucide-react";
 import { NotificationSettingsDrawer } from "./NotificationSettingsDrawer";
+import { TwoFactorAuthModal } from "@/components/shared/TwoFactorAuthModal";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -28,6 +29,7 @@ export const StatusWidget = () => {
     const hotelDropdownRef = useRef<HTMLDivElement>(null);
     const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('system');
     const [isNotifOpen, setIsNotifOpen] = useState(false);
+    const [is2FaOpen, setIs2FaOpen] = useState(false);
 
     const userName = user?.displayName || user?.email?.split('@')[0] || "Administrator";
 
@@ -307,6 +309,18 @@ export const StatusWidget = () => {
                                         <span>Notification Settings</span>
                                     </button>
 
+                                    {/* 2FA Google Authenticator Menu Item */}
+                                    <button
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            setIs2FaOpen(true);
+                                        }}
+                                        className={styles.dropdownItem}
+                                    >
+                                        <ShieldCheck className={styles.dropdownIcon} />
+                                        <span>Keamanan 2FA (Google Auth)</span>
+                                    </button>
+
                                     <div className={styles.dropdownDivider} />
 
                                     <button
@@ -333,6 +347,12 @@ export const StatusWidget = () => {
                 hotelCode={activeHotelCode || "1"}
                 userId={user?.uid || user?.email || "guest"}
                 userEmail={user?.email || undefined}
+            />
+
+            {/* Two-Factor Authentication (2FA) Security Modal */}
+            <TwoFactorAuthModal
+                isOpen={is2FaOpen}
+                onClose={() => setIs2FaOpen(false)}
             />
         </div>
     );

@@ -82,6 +82,9 @@ export function getSidebarItemHref(itemId: string, activeModule: string): string
         case "digital-checkin":
             return `/${itemId}?module=${activeModule}`;
 
+        case "audit-logs":
+            return "/audit-logs?module=cpanel";
+
         default:
             return `/${itemId}`;
     }

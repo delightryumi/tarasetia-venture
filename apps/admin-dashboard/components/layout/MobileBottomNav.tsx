@@ -13,8 +13,9 @@ import {
     FileCheck, QrCode, Tag, Image, MapPin, 
     SlidersHorizontal, Shield, Bed, Percent, 
     Truck, FileSignature, Timer, UserPlus, Sliders,
-    User, Lock, Home
+    User, Lock, Home, ShieldCheck
 } from "lucide-react";
+import { TwoFactorAuthModal } from "@/components/shared/TwoFactorAuthModal";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
@@ -200,6 +201,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeModules:
     const userPermissions = user?.permissions || {};
     const [activeModule, setActiveModule] = useState<string>("front-office");
     const [isMenuHubOpen, setIsMenuHubOpen] = useState(false);
+    const [is2FaOpen, setIs2FaOpen] = useState(false);
     const [menuHubTab, setMenuHubTab] = useState<"menus" | "modules">("menus");
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -928,20 +930,38 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeModules:
                                     </div>
                                 </div>
 
-                                <button
-                                    type="button"
-                                    onClick={signOutUser}
-                                    className={s.logoutBtn}
-                                    aria-label="Log out dari sistem"
-                                >
-                                    <LogOut size={13} />
-                                    <span>Log Out</span>
-                                </button>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIs2FaOpen(true)}
+                                        className={s.logoutBtn}
+                                        style={{ color: '#2563eb' }}
+                                        aria-label="Keamanan 2FA Google Authenticator"
+                                    >
+                                        <ShieldCheck size={13} />
+                                        <span>2FA</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={signOutUser}
+                                        className={s.logoutBtn}
+                                        aria-label="Log out dari sistem"
+                                    >
+                                        <LogOut size={13} />
+                                        <span>Log Out</span>
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     </>
                 )}
             </AnimatePresence>
+
+            <TwoFactorAuthModal
+                isOpen={is2FaOpen}
+                onClose={() => setIs2FaOpen(false)}
+            />
         </>
     );
 };

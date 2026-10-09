@@ -89,6 +89,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const [activeModules, setActiveModules] = useState<string[] | null>(activeModulesProp ?? null);
     const [activeModule, setActiveModule] = useState<string>("front-office");
     const isSuperadmin = isUserSuperadmin(user);
+    const userRole = user?.role?.toLowerCase() || "";
+    const canAccessAudit = isSuperadmin || userRole === "admin" || userRole === "owner" || userRole === "general manager" || userRole === "gm";
     const userPermissions = user?.permissions || {};
     const mouseY = useMotionValue(Infinity);
 
@@ -329,8 +331,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     item.id === "users" || (item.id === "superadmin" && isSuperadmin)
                 );
             } else {
+                const canAccessAudit = isSuperadmin || user?.role?.toLowerCase() === "admin" || user?.role?.toLowerCase() === "owner" || user?.role?.toLowerCase() === "general manager" || user?.role?.toLowerCase() === "gm";
                 if (activeModules !== null && !activeModules.includes("cpanel-full")) {
                     const cpanelAllowedIds = ["logo", "users"];
+                    if (canAccessAudit) {
+                        cpanelAllowedIds.push("audit-logs");
+                    }
                     if (isSuperadmin || (user?.permissions?.["channel-manager"] === true && hasPermission(user, "channel-manager", "module_channel_manager"))) {
                         cpanelAllowedIds.push("channel-manager");
                     }
@@ -350,7 +356,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         "promo",
                         "packages",
                         "seo",
+                        "users",
                     ];
+                    if (canAccessAudit) {
+                        cpanelAllowedIds.push("audit-logs");
+                    }
                     const canAccessCM = isSuperadmin || (user?.permissions?.["channel-manager"] === true && hasPermission(user, "channel-manager", "module_channel_manager"));
                     if (canAccessCM) {
                         cpanelAllowedIds.push("channel-manager");
@@ -367,10 +377,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         items = items.filter((item) => item.id !== "pos");
 
         const canAccessCM = isSuperadmin || (user?.permissions?.["channel-manager"] === true && hasPermission(user, "channel-manager", "module_channel_manager"));
+        const canAccessAudit = isSuperadmin || user?.role?.toLowerCase() === "admin" || user?.role?.toLowerCase() === "owner" || user?.role?.toLowerCase() === "general manager" || user?.role?.toLowerCase() === "gm";
         let finalItems = items;
         // Strictly filter out superadmin menu from anyone who is not confirmed superadmin
         if (!isSuperadmin) {
             finalItems = finalItems.filter((item) => item.id !== "superadmin");
+        }
+        // Strictly filter out audit-logs from unauthorized staff
+        if (!canAccessAudit) {
+            finalItems = finalItems.filter((item) => item.id !== "audit-logs");
         }
         // Strictly filter out channel-manager from anyone without CM authority
         if (!canAccessCM) {
@@ -381,6 +396,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             ? finalItems
             : finalItems.filter((item) => {
                 if (item.id === "superadmin") return false;
+                if (item.id === "audit-logs") return canAccessAudit;
                 if (item.id === "channel-manager") return canAccessCM;
                 return hasPermission(user, item.id, moduleKey);
             });
@@ -404,7 +420,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ["promo", "seo"].includes(item.id) || (item.id === "channel-manager" && canAccessCM)
             );
             const systemItems = navItems.filter((item) =>
-                item.id === "users" || (item.id === "superadmin" && isSuperadmin)
+                item.id === "users" || (item.id === "audit-logs" && canAccessAudit) || (item.id === "superadmin" && isSuperadmin)
             );
 
             if (layoutItems.length > 0) groups.push({ title: "Tampilan", items: layoutItems });

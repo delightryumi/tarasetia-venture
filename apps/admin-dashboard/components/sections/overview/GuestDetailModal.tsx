@@ -28,6 +28,7 @@ import styles from "./OverviewStyles.module.css";
 import footerStyles from "./GuestDetailFooter.module.css";
 import "./FolioAesthetic.css";
 import { resolveBookingIdentifiers } from "@/lib/channelHelper";
+import { logAuditEvent } from "@/lib/auditLogger";
 
 interface GuestDetailModalProps {
     guest: any;
@@ -650,6 +651,25 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 }).catch(err => console.warn("[Void Channex Sync Warning]:", err));
             }
 
+            logAuditEvent({
+                hotelCode: hotelId,
+                actor: {
+                    uid: user?.uid || "unknown",
+                    name: user?.displayName || user?.name || "System",
+                    email: user?.email || "",
+                    role: user?.role || "user",
+                },
+                category: "RESERVATIONS",
+                action: "VOID_BOOKING",
+                description: `Booking ${guest.guestName || "Tamu"} (#${guest.bookingId || "N/A"}) di-void dari sistem.`,
+                targetId: String(guest.bookingId || guest.id || ""),
+                targetName: guest.guestName,
+                metadata: {
+                    roomNumber: guest.roomNumber,
+                    dates: dates,
+                },
+            });
+
             toast.success("Transaction voided successfully");
             if (onSave) onSave();
             onClose();
@@ -716,6 +736,26 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                     })
                 }).catch(err => console.warn("[Cancel Channex Sync Warning]:", err));
             }
+
+            logAuditEvent({
+                hotelCode: hotelId,
+                actor: {
+                    uid: user?.uid || "unknown",
+                    name: user?.displayName || user?.name || "System",
+                    email: user?.email || "",
+                    role: user?.role || "user",
+                },
+                category: "RESERVATIONS",
+                action: "CANCEL_BOOKING",
+                description: `Booking ${guest.guestName || "Tamu"} (#${guest.bookingId || "N/A"}) dibatalkan.`,
+                targetId: String(guest.bookingId || guest.id || ""),
+                targetName: guest.guestName,
+                metadata: {
+                    roomNumber: guest.roomNumber,
+                    dates: dates,
+                    reason: guest.cancellationReason || "Manual Cancellation",
+                },
+            });
 
             toast.success("Transaction cancelled successfully");
             if (onSave) onSave();
