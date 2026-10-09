@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db as firestoreDb } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { invalidateCatalogCache } from '@/lib/catalogCache';
 
 export const PATCH = async (
   request: NextRequest,
@@ -28,6 +29,8 @@ export const PATCH = async (
       isSignature: Boolean(body.isSignature),
       isAvailable: Number(body.stockProduct) > 0
     }, { merge: true });
+
+    await invalidateCatalogCache(hotelCode);
 
     // Return the updated product structure matching the frontend's expectations
     return NextResponse.json({
@@ -64,6 +67,7 @@ export const DELETE = async (
 
     // Sync deletion to Firebase Firestore under the hotel-specific subcollection
     await deleteDoc(doc(firestoreDb, 'hotels', hotelCode, 'pos_products', String(id)));
+    await invalidateCatalogCache(hotelCode);
 
     return NextResponse.json({ success: true, id: id }, { status: 200 });
   } catch (error: any) {

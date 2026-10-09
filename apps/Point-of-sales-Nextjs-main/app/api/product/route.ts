@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { db as firestoreDb } from '@/lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { invalidateCatalogCache } from '@/lib/catalogCache';
 
 // Function to generate a unique ID for a new product using Firestore
 const generateUniqueId = async (hotelCode: string) => {
@@ -47,6 +48,7 @@ export const POST = async (request: NextRequest) => {
 
     // Sync the new product to Firebase Firestore under the hotel-specific subcollection
     await setDoc(doc(firestoreDb, 'hotels', hotelCode, 'pos_products', customId), newProductData);
+    await invalidateCatalogCache(hotelCode);
 
     // Return the newly created product format matching the frontend's expectations
     return NextResponse.json({

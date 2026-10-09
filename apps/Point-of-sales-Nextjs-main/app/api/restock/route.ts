@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db as firestoreDb } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { invalidateCatalogCache } from '@/lib/catalogCache';
 
 export const POST = async (request: NextRequest) => {
   try {
@@ -30,6 +31,8 @@ export const POST = async (request: NextRequest) => {
       stock: newStock,
       isAvailable: newStock > 0,
     });
+
+    await invalidateCatalogCache(hotelCode);
 
     return NextResponse.json(
       { message: 'Updated product stock' },

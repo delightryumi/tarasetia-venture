@@ -8,13 +8,25 @@ import { getHotelCollection } from "../../lib/firestoreHelper";
 
 const COLLECTION_NAME = "purchase_requisitions";
 
+let prCache: { data: PurchaseRequisition[]; timestamp: number } | null = null;
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes cache
+
+export function invalidatePRCache() {
+  prCache = null;
+}
+
 export const prService = {
-  async getAll(): Promise<PurchaseRequisition[]> {
+  async getAll(forceRefresh = false): Promise<PurchaseRequisition[]> {
+    if (!forceRefresh && prCache && Date.now() - prCache.timestamp < CACHE_TTL) {
+      return prCache.data;
+    }
     const q = query(getHotelCollection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
     const snap = await getDocs(q);
-    return snap.docs
+    const data = snap.docs
       .map(d => ({ id: d.id, ...d.data() } as PurchaseRequisition))
       .filter(d => d.is_deleted !== true);
+    prCache = { data, timestamp: Date.now() };
+    return data;
   },
 
   async getById(id: string): Promise<PurchaseRequisition | null> {
@@ -33,6 +45,7 @@ export const prService = {
       created_at: serverTimestamp(),
       updated_at: serverTimestamp()
     });
+    prCache = null;
     return docRef.id;
   },
 
@@ -42,6 +55,7 @@ export const prService = {
       ...pr,
       updated_at: serverTimestamp()
     });
+    prCache = null;
   },
 
   async softDelete(id: string): Promise<void> {
@@ -50,6 +64,7 @@ export const prService = {
       is_deleted: true,
       updated_at: serverTimestamp()
     });
+    prCache = null;
   },
 
   async seedDemoPRs(items: any[], suppliers: any[]): Promise<void> {

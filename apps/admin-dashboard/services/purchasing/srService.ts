@@ -18,16 +18,28 @@ import { getHotelCollection } from "../../lib/firestoreHelper";
 
 const COLLECTION_NAME = "store_requisitions";
 
+let srCache: { data: StoreRequisition[]; timestamp: number } | null = null;
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes cache
+
+export function invalidateSRCache() {
+  srCache = null;
+}
+
 export const srService = {
-  async getAll(): Promise<StoreRequisition[]> {
+  async getAll(forceRefresh = false): Promise<StoreRequisition[]> {
+    if (!forceRefresh && srCache && Date.now() - srCache.timestamp < CACHE_TTL) {
+      return srCache.data;
+    }
     const q = query(
       getHotelCollection(db, COLLECTION_NAME), 
       where("is_deleted", "!=", true)
     );
     const snap = await getDocs(q);
-    return snap.docs
+    const data = snap.docs
       .map(d => ({ id: d.id, ...d.data() } as StoreRequisition))
       .filter(d => d.is_deleted !== true);
+    srCache = { data, timestamp: Date.now() };
+    return data;
   },
 
   async getById(id: string): Promise<StoreRequisition | null> {
@@ -46,6 +58,7 @@ export const srService = {
       created_at: serverTimestamp(),
       updated_at: serverTimestamp()
     });
+    srCache = null;
     return docRef.id;
   },
 
@@ -55,6 +68,7 @@ export const srService = {
       ...sr,
       updated_at: serverTimestamp()
     });
+    srCache = null;
   },
 
   async softDelete(id: string): Promise<void> {
@@ -63,12 +77,14 @@ export const srService = {
       is_deleted: true,
       updated_at: serverTimestamp()
     });
+    srCache = null;
   },
 
   // Hard delete: permanently remove document, allowed for any status
   async hardDelete(id: string): Promise<void> {
     const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await deleteDoc(docRef);
+    srCache = null;
   },
 
   async seedDemoSRs(items: any[]): Promise<void> {

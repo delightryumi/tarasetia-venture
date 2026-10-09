@@ -7,13 +7,35 @@ import { getHotelCollection } from "../../lib/firestoreHelper";
 
 const COLLECTION_NAME = "items";
 
+let itemsCache: { data: ItemMaster[]; timestamp: number } | null = null;
+let categoriesCache: { data: string[]; timestamp: number } | null = null;
+let unitsCache: { data: string[]; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+
+export function invalidateItemsCache() {
+  itemsCache = null;
+}
+
+export function invalidateCategoriesCache() {
+  categoriesCache = null;
+}
+
+export function invalidateUnitsCache() {
+  unitsCache = null;
+}
+
 export const itemsService = {
-  async getAll(): Promise<ItemMaster[]> {
+  async getAll(forceRefresh = false): Promise<ItemMaster[]> {
+    if (!forceRefresh && itemsCache && Date.now() - itemsCache.timestamp < CACHE_TTL) {
+      return itemsCache.data;
+    }
     const q = query(getHotelCollection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
     const snap = await getDocs(q);
-    return snap.docs
+    const data = snap.docs
       .map(d => ({ id: d.id, ...d.data() } as ItemMaster))
       .filter(d => d.is_deleted !== true);
+    itemsCache = { data, timestamp: Date.now() };
+    return data;
   },
 
   async getById(id: string): Promise<ItemMaster | null> {
@@ -30,6 +52,7 @@ export const itemsService = {
       created_at: serverTimestamp(),
       updated_at: serverTimestamp()
     });
+    itemsCache = null;
     return docRef.id;
   },
 
@@ -39,6 +62,7 @@ export const itemsService = {
       ...item,
       updated_at: serverTimestamp()
     });
+    itemsCache = null;
   },
 
   async softDelete(id: string): Promise<void> {
@@ -47,11 +71,13 @@ export const itemsService = {
       is_deleted: true,
       updated_at: serverTimestamp()
     });
+    itemsCache = null;
   },
 
   async delete(id: string): Promise<void> {
     const docRef = doc(getHotelCollection(db, COLLECTION_NAME), id);
     await deleteDoc(docRef);
+    itemsCache = null;
   },
 
   // Helper to seeds demo item data
@@ -76,10 +102,15 @@ export const itemsService = {
     }
   },
 
-  async getCategories(): Promise<string[]> {
+  async getCategories(forceRefresh = false): Promise<string[]> {
+    if (!forceRefresh && categoriesCache && Date.now() - categoriesCache.timestamp < CACHE_TTL) {
+      return categoriesCache.data;
+    }
     const q = getHotelCollection(db, "item_categories");
     const snap = await getDocs(q);
-    return snap.docs.map(d => d.data().name as string);
+    const data = snap.docs.map(d => d.data().name as string);
+    categoriesCache = { data, timestamp: Date.now() };
+    return data;
   },
 
   async addCategory(name: string): Promise<void> {
@@ -87,12 +118,18 @@ export const itemsService = {
     if (!cleanName) return;
     const docRef = doc(getHotelCollection(db, "item_categories"), cleanName.toLowerCase());
     await setDoc(docRef, { name: cleanName, created_at: serverTimestamp() });
+    categoriesCache = null;
   },
 
-  async getUnits(): Promise<string[]> {
+  async getUnits(forceRefresh = false): Promise<string[]> {
+    if (!forceRefresh && unitsCache && Date.now() - unitsCache.timestamp < CACHE_TTL) {
+      return unitsCache.data;
+    }
     const q = getHotelCollection(db, "item_units");
     const snap = await getDocs(q);
-    return snap.docs.map(d => d.data().name as string);
+    const data = snap.docs.map(d => d.data().name as string);
+    unitsCache = { data, timestamp: Date.now() };
+    return data;
   },
 
   async addUnit(name: string): Promise<void> {
@@ -100,6 +137,7 @@ export const itemsService = {
     if (!cleanName) return;
     const docRef = doc(getHotelCollection(db, "item_units"), cleanName.toLowerCase());
     await setDoc(docRef, { name: cleanName, created_at: serverTimestamp() });
+    unitsCache = null;
   }
 };
 

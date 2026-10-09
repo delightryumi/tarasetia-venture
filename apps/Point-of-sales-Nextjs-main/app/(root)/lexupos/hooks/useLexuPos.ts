@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { Product, CartItem, PaymentMethodType } from '@/components/lexupos/types';
 import { localDb } from '@/lib/dexie';
 import { syncProductsFromServer } from '@/lib/dexie-sync';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, setDoc, deleteDoc, getDoc, updateDoc, arrayUnion, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, setDoc, deleteDoc, getDoc, updateDoc, arrayUnion, query, where, onSnapshot, orderBy, increment } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 
 const formatCurrency = (val: number): string => {
@@ -104,11 +104,27 @@ export function useLexuPos() {
   const [cashAmount, setCashAmount] = useState<string>('');
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [cashierName, setCashierName] = useState('Kasir');
-  const [customCategories, setCustomCategories] = useState<{ name: string; subcategories: string[] }[]>([]);
   const [taxRatePercent, setTaxRatePercent] = useState(10);
   const [selectedSubcategory, setSelectedSubcategory] = useState('All');
   const [isHoldConfirmOpen, setIsHoldConfirmOpen] = useState(false);
-  const [activeHotelCode, setActiveHotelCode] = useState('');
+  const [activeHotelCode, setActiveHotelCode] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    try {
+      const userJson = localStorage.getItem('user');
+      if (userJson) {
+        const user = JSON.parse(userJson);
+        if (user.hotelCode) return user.hotelCode;
+      }
+      const getCookie = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift();
+      };
+      return getCookie('hotelCode') || localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
+    } catch {
+      return '';
+    }
+  });
   const [transactionId, setTransactionId] = useState<string>('');
   const [receiptStatus, setReceiptStatus] = useState<'PAID' | 'UNPAID'>('PAID');
   const [heldOrderToPrint, setHeldOrderToPrint] = useState<any>(null);
@@ -129,28 +145,35 @@ export function useLexuPos() {
     remainingBalance?: number;
   } | null>(null);
 
-  const localProducts = useLiveQuery(() => localDb.products.toArray(), []) || [];
-  
-  const dynamicProducts: Product[] = localProducts.map(lp => {
-    const pStock = lp.stock !== undefined ? Number(lp.stock) : 0;
-    const catUpper = (lp.cat || '').toUpperCase().trim();
-    const isBkf = catUpper === 'ADD BREAKFAST' || catUpper === 'BREAKFAST';
-    return {
-      id: lp.id,
-      name: lp.name,
-      price: lp.price,
-      stock: pStock,
-      isAvailable: pStock > 0,
-      category: lp.cat,
-      subcategory: lp.subcategory || '',
-      pnlTarget: lp.pnlTarget || (isBkf ? 'BREAKFAST' : ''),
-      image: lp.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60',
-      description: lp.description || '',
-      addons: lp.addons || []
-    };
+  // 100% Online Realtime Products with Instant Local & Micro-Cache (NO DUMMY PRODUCTS)
+  const [products, setProducts] = useState<Product[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const code = activeHotelCode;
+      const cached = code ? localStorage.getItem(`pos_catalog_products_${code}`) : null;
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
   });
 
-  const allRawCats = [...customCategories.map(c => c.name)];
+  const [customCategories, setCustomCategories] = useState<{ name: string; subcategories: string[] }[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const code = activeHotelCode;
+      const cached = code ? localStorage.getItem(`pos_catalog_categories_${code}`) : null;
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const dynamicProducts: Product[] = products;
+
+  const allRawCats = [
+    ...customCategories.map(c => c.name),
+    ...dynamicProducts.map(p => p.category).filter((c): c is string => Boolean(c))
+  ];
   const uniqueCatsMap = new Map<string, string>();
   allRawCats.forEach(c => {
     if (typeof c === 'string' && c.trim() !== '') {
@@ -165,15 +188,22 @@ export function useLexuPos() {
 
   let rawSubcats: string[] = [];
   if (selectedCategory === 'All') {
-    const definedSubcats = customCategories.flatMap(c => c.subcategories);
-    rawSubcats = [...definedSubcats];
+    const definedSubcats = [
+      ...customCategories.flatMap(c => c.subcategories),
+      ...dynamicProducts.map(p => p.subcategory).filter((s): s is string => Boolean(s))
+    ];
+    rawSubcats = definedSubcats;
   } else {
     const matchedCat = customCategories.find(
       c => c.name.toLowerCase() === selectedCategory.toLowerCase()
     );
-    if (matchedCat) {
-      rawSubcats = matchedCat.subcategories;
-    }
+    rawSubcats = [
+      ...(matchedCat ? matchedCat.subcategories : []),
+      ...dynamicProducts
+        .filter(p => (p.category || '').toLowerCase() === selectedCategory.toLowerCase())
+        .map(p => p.subcategory)
+        .filter((s): s is string => Boolean(s))
+    ];
   }
 
   const uniqueSubCatsMap = new Map<string, string>();
@@ -186,6 +216,63 @@ export function useLexuPos() {
     }
   });
   const dynamicSubcategories = ['All', ...Array.from(uniqueSubCatsMap.values()).sort()];
+
+  const refreshCatalog = useCallback(async (hotelCode: string) => {
+    if (!hotelCode || hotelCode === '0') {
+      setProducts([]);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/catalog?hotelCode=${encodeURIComponent(hotelCode)}`, {
+        cache: 'default'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.products && Array.isArray(data.products)) {
+          setProducts(data.products);
+          try {
+            localStorage.setItem(`pos_catalog_products_${hotelCode}`, JSON.stringify(data.products));
+          } catch (e) {}
+        }
+        if (data.categories && Array.isArray(data.categories)) {
+          setCustomCategories(data.categories);
+          try {
+            localStorage.setItem(`pos_catalog_categories_${hotelCode}`, JSON.stringify(data.categories));
+          } catch (e) {}
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch catalog from API:', err);
+    }
+  }, []);
+
+  // Multi-tier cache synchronization
+  useEffect(() => {
+    // Clear any leftover offline dummy products from IndexedDB
+    try {
+      localDb.products.clear().catch(() => {});
+    } catch (e) {}
+
+    const effectiveCode = activeHotelCode;
+    if (!effectiveCode || effectiveCode === '0') {
+      setProducts([]);
+      return;
+    }
+
+    // 1. Initial background fetch / verification against server micro-cache
+    refreshCatalog(effectiveCode);
+
+    // 2. Real-time event listener: triggers when admin adds/edits products in /product
+    const handleCatalogUpdated = () => {
+      refreshCatalog(effectiveCode);
+    };
+
+    window.addEventListener('pos_catalog_updated', handleCatalogUpdated);
+    return () => {
+      window.removeEventListener('pos_catalog_updated', handleCatalogUpdated);
+    };
+  }, [activeHotelCode, refreshCatalog]);
 
   useEffect(() => {
     const userJson = localStorage.getItem('user');
@@ -209,20 +296,6 @@ export function useLexuPos() {
       hotelCode = getCookie('hotelCode') || localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
       if (hotelCode) setActiveHotelCode(hotelCode);
     }
-
-    const fetchCategories = async () => {
-      try {
-        const snap = await getDocs(getHotelCollection(db, 'pos_categories', hotelCode));
-        const dbCats = snap.docs.map(doc => ({
-          name: doc.data().name || '',
-          subcategories: doc.data().subcategories || [],
-        }));
-        setCustomCategories(dbCats);
-      } catch (e) {
-        console.error('Failed to fetch categories:', e);
-      }
-    };
-    fetchCategories();
 
     const fetchShopTax = async () => {
       try {
@@ -848,30 +921,29 @@ export function useLexuPos() {
       // Inventory Stock Deduction
       // If even split, only deduct physical inventory on portion 1 so it's not deducted multiple times
       const shouldDeductStock = !currentSplit || currentSplit.splitMode !== 'even' || (currentSplit.splitIndex === 1);
-      const stockPromises = shouldDeductStock ? itemsToRecord.map(async (item) => {
-        // 1. Update local IndexedDB
-        let newStock = 0;
-        const dbProd = await localDb.products.get(item.product.id);
-        if (dbProd) {
-          newStock = Math.max(0, (Number(dbProd.stock) || 0) - item.quantity);
-          await localDb.products.update(item.product.id, {
-            stock: newStock
-          });
-        }
+      
+      // Update UI state immediately so cashier sees updated stock without extra reads
+      if (shouldDeductStock) {
+        setProducts((prev) =>
+          prev.map((p) => {
+            const sold = itemsToRecord.find((it) => it.product.id === p.id);
+            if (sold) {
+              const newStock = Math.max(0, (p.stock || 0) - sold.quantity);
+              return { ...p, stock: newStock, isAvailable: newStock > 0 };
+            }
+            return p;
+          })
+        );
+      }
 
-        // 2. Update Firestore pos_products so /product and all devices immediately reflect decremented stock
+      const stockPromises = shouldDeductStock ? itemsToRecord.map(async (item) => {
+        // Atomic Firestore decrement: saves 1 extra getDoc read per item
         if (hotelCode && hotelCode !== '0') {
           try {
             const prodRef = doc(db, 'hotels', hotelCode, 'pos_products', item.product.id);
-            const pSnap = await getDoc(prodRef);
-            if (pSnap.exists()) {
-              const curFsStock = Number(pSnap.data().stock) || 0;
-              const updatedFsStock = Math.max(0, curFsStock - item.quantity);
-              await updateDoc(prodRef, {
-                stock: updatedFsStock,
-                isAvailable: updatedFsStock > 0
-              });
-            }
+            await updateDoc(prodRef, {
+              stock: increment(-item.quantity)
+            });
           } catch (fsErr) {
             console.error('Error updating Firestore stock for product:', item.product.id, fsErr);
           }

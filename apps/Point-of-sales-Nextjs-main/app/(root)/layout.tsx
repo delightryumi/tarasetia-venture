@@ -80,6 +80,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   useEffect(() => {
     try {
+      // Purge any leftover offline dummy products from Dexie IndexedDB
+      localDb.products.clear().catch(() => {});
       const userJson = localStorage.getItem('user');
       let effectiveHotelCode = '';
       let isSuper = false;
@@ -140,6 +142,15 @@ const RootLayout = ({ children }: RootLayoutProps) => {
           if (data.name) {
             setStoreName(data.name);
             localStorage.setItem('restoName', data.name);
+          }
+          if (data.posCatalogVersion) {
+            const lastSeenVersion = localStorage.getItem(`pos_catalog_version_${hotelCode}`);
+            if (String(data.posCatalogVersion) !== String(lastSeenVersion)) {
+              localStorage.setItem(`pos_catalog_version_${hotelCode}`, String(data.posCatalogVersion));
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('pos_catalog_updated', { detail: { version: data.posCatalogVersion } }));
+              }
+            }
           }
           if (data.posSoundUrl && data.posSoundUrl !== posSoundUrlRef.current) {
             posSoundUrlRef.current = data.posSoundUrl;

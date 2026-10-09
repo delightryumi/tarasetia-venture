@@ -17,18 +17,29 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { MyTaraRatePlan } from "../channex/types";
 
+const ratePlansCache = new Map<string, { list: MyTaraRatePlan[]; timestamp: number }>();
+const RATE_PLANS_CACHE_TTL = 5 * 60 * 1000;
+
 export const useRatePlans = () => {
     const { activeHotelCode } = useAuth();
     const [ratePlans, setRatePlans] = useState<MyTaraRatePlan[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    const fetchRatePlans = useCallback(async () => {
+    const fetchRatePlans = useCallback(async (forceRefresh = false) => {
         if (!activeHotelCode || activeHotelCode === "0") {
             setRatePlans([]);
             setLoading(false);
             return;
         }
+
+        const cached = ratePlansCache.get(activeHotelCode);
+        if (!forceRefresh && cached && Date.now() - cached.timestamp < RATE_PLANS_CACHE_TTL) {
+            setRatePlans(cached.list);
+            setLoading(false);
+            return;
+        }
+
         try {
             const q = query(getHotelCollection(db, "ratePlans", activeHotelCode), orderBy("name"));
             const snapshot = await getDocs(q);
@@ -36,6 +47,7 @@ export const useRatePlans = () => {
                 id: doc.id,
                 ...doc.data()
             })) as MyTaraRatePlan[];
+            ratePlansCache.set(activeHotelCode, { list, timestamp: Date.now() });
             setRatePlans(list);
         } catch (err) {
             console.error("Error loading rate plans:", err);
@@ -116,7 +128,8 @@ export const useRatePlans = () => {
                 updatedAt: new Date().toISOString()
             });
 
-            await fetchRatePlans();
+            ratePlansCache.delete(activeHotelCode);
+            await fetchRatePlans(true);
             toast.success("Default Master Rate Plans (RO & BB) berhasil dibuat untuk semua kamar.");
         } catch (err: any) {
             console.error("Error seeding rate plans:", err);
@@ -136,7 +149,8 @@ export const useRatePlans = () => {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             });
-            await fetchRatePlans();
+            ratePlansCache.delete(activeHotelCode);
+            await fetchRatePlans(true);
             toast.success("Rate Plan berhasil ditambahkan.");
         } catch (err: any) {
             console.error("Error adding rate plan:", err);
@@ -155,7 +169,8 @@ export const useRatePlans = () => {
                 ...data,
                 updatedAt: new Date().toISOString()
             });
-            await fetchRatePlans();
+            ratePlansCache.delete(activeHotelCode);
+            await fetchRatePlans(true);
             toast.success("Rate Plan berhasil diperbarui.");
         } catch (err: any) {
             console.error("Error updating rate plan:", err);
@@ -171,7 +186,8 @@ export const useRatePlans = () => {
         try {
             const ref = doc(getHotelCollection(db, "ratePlans", activeHotelCode), id);
             await deleteDoc(ref);
-            await fetchRatePlans();
+            ratePlansCache.delete(activeHotelCode);
+            await fetchRatePlans(true);
             toast.success("Rate Plan berhasil dihapus.");
         } catch (err: any) {
             console.error("Error deleting rate plan:", err);

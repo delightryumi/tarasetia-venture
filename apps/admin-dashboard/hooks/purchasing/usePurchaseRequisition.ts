@@ -9,11 +9,11 @@ export function usePurchaseRequisition() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPRs = useCallback(async () => {
+  const fetchPRs = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await prService.getAll();
+      const data = await prService.getAll(forceRefresh);
       setPrs(data);
     } catch (err: any) {
       console.error("Failed to load PRs:", err);
@@ -26,7 +26,7 @@ export function usePurchaseRequisition() {
   const createPR = async (pr: Omit<PurchaseRequisition, "id" | "pr_number" | "created_at" | "updated_at">) => {
     try {
       const newId = await prService.create(pr);
-      await fetchPRs();
+      await fetchPRs(true);
       return newId;
     } catch (err: any) {
       throw new Error(err?.message || "Failed to create Purchase Requisition");
@@ -36,7 +36,7 @@ export function usePurchaseRequisition() {
   const updatePR = async (id: string, pr: Partial<PurchaseRequisition>) => {
     try {
       await prService.update(id, pr);
-      await fetchPRs();
+      await fetchPRs(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to update Purchase Requisition");
     }
@@ -45,7 +45,7 @@ export function usePurchaseRequisition() {
   const deletePR = async (id: string) => {
     try {
       await prService.softDelete(id);
-      await fetchPRs();
+      await fetchPRs(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to delete Purchase Requisition");
     }
@@ -58,7 +58,7 @@ export function usePurchaseRequisition() {
         approved_by: userId,
         approved_by_name: userName
       });
-      await fetchPRs();
+      await fetchPRs(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to approve Purchase Requisition");
     }

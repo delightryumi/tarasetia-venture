@@ -7,13 +7,25 @@ import { getHotelCollection } from "../../lib/firestoreHelper";
 
 const COLLECTION_NAME = "stock_opnames";
 
+let opnameCache: { data: StockOpname[]; timestamp: number } | null = null;
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes cache
+
+export function invalidateOpnameCache() {
+  opnameCache = null;
+}
+
 export const opnameService = {
-  async getAll(): Promise<StockOpname[]> {
+  async getAll(forceRefresh = false): Promise<StockOpname[]> {
+    if (!forceRefresh && opnameCache && Date.now() - opnameCache.timestamp < CACHE_TTL) {
+      return opnameCache.data;
+    }
     const q = query(getHotelCollection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
     const snap = await getDocs(q);
-    return snap.docs
+    const data = snap.docs
       .map(d => ({ id: d.id, ...d.data() } as StockOpname))
       .filter(d => d.is_deleted !== true);
+    opnameCache = { data, timestamp: Date.now() };
+    return data;
   },
 
   async getById(id: string): Promise<StockOpname | null> {
@@ -44,6 +56,7 @@ export const opnameService = {
       created_at: serverTimestamp(),
       approved_at: null
     });
+    opnameCache = null;
     return docRef.id;
   },
 
@@ -53,6 +66,7 @@ export const opnameService = {
       ...opname,
       updated_at: serverTimestamp()
     });
+    opnameCache = null;
   },
 
   async approve(id: string, approvedBy: string, approvedByName: string): Promise<void> {
@@ -63,6 +77,7 @@ export const opnameService = {
       approved_by_name: approvedByName,
       approved_at: serverTimestamp()
     });
+    opnameCache = null;
   },
 
   async softDelete(id: string): Promise<void> {
@@ -70,5 +85,6 @@ export const opnameService = {
     await updateDoc(docRef, {
       is_deleted: true
     });
+    opnameCache = null;
   }
 };

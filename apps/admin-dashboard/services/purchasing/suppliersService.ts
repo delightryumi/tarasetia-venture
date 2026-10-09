@@ -7,13 +7,25 @@ import { getHotelCollection } from "../../lib/firestoreHelper";
 
 const COLLECTION_NAME = "suppliers";
 
+let suppliersCache: { data: Supplier[]; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+
+export function invalidateSuppliersCache() {
+  suppliersCache = null;
+}
+
 export const suppliersService = {
-  async getAll(): Promise<Supplier[]> {
+  async getAll(forceRefresh = false): Promise<Supplier[]> {
+    if (!forceRefresh && suppliersCache && Date.now() - suppliersCache.timestamp < CACHE_TTL) {
+      return suppliersCache.data;
+    }
     const q = query(getHotelCollection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
     const snap = await getDocs(q);
-    return snap.docs
+    const data = snap.docs
       .map(d => ({ id: d.id, ...d.data() } as Supplier))
       .filter(d => d.is_deleted !== true);
+    suppliersCache = { data, timestamp: Date.now() };
+    return data;
   },
 
   async getById(id: string): Promise<Supplier | null> {
@@ -30,6 +42,7 @@ export const suppliersService = {
       created_at: serverTimestamp(),
       updated_at: serverTimestamp()
     });
+    suppliersCache = null;
     return docRef.id;
   },
 
@@ -39,6 +52,7 @@ export const suppliersService = {
       ...supplier,
       updated_at: serverTimestamp()
     });
+    suppliersCache = null;
   },
 
   async softDelete(id: string): Promise<void> {
@@ -47,6 +61,7 @@ export const suppliersService = {
       is_deleted: true,
       updated_at: serverTimestamp()
     });
+    suppliersCache = null;
   },
 
   async seedDemoSuppliers(): Promise<void> {

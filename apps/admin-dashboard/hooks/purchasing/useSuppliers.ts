@@ -7,11 +7,11 @@ export function useSuppliers() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSuppliers = useCallback(async () => {
+  const fetchSuppliers = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await suppliersService.getAll();
+      const data = await suppliersService.getAll(forceRefresh);
       setSuppliers(data);
     } catch (err: any) {
       console.error("Failed to load suppliers:", err);
@@ -24,7 +24,7 @@ export function useSuppliers() {
   const createSupplier = async (supplier: Omit<Supplier, "id" | "created_at" | "updated_at">) => {
     try {
       const newId = await suppliersService.create(supplier);
-      await fetchSuppliers();
+      await fetchSuppliers(true);
       return newId;
     } catch (err: any) {
       throw new Error(err?.message || "Failed to create supplier");
@@ -34,7 +34,7 @@ export function useSuppliers() {
   const updateSupplier = async (id: string, supplier: Partial<Supplier>) => {
     try {
       await suppliersService.update(id, supplier);
-      await fetchSuppliers();
+      await fetchSuppliers(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to update supplier");
     }
@@ -43,7 +43,7 @@ export function useSuppliers() {
   const deleteSupplier = async (id: string) => {
     try {
       await suppliersService.softDelete(id);
-      await fetchSuppliers();
+      await fetchSuppliers(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to delete supplier");
     }

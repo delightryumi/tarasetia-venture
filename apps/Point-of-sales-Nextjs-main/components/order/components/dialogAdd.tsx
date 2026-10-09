@@ -43,7 +43,9 @@ type Data = {
 };
 
 import { localDb } from '@/lib/dexie';
-import { syncProductsFromServer } from '@/lib/dexie-sync';
+import { db } from '@/lib/firebase';
+import { getDocs, query, orderBy } from 'firebase/firestore';
+import { getHotelCollection } from '@/lib/firestoreHelper';
 
 export function DialogAdd({
   open,
@@ -68,25 +70,41 @@ export function DialogAdd({
       const fetchProductStocks = async () => {
         try {
           const userJson = localStorage.getItem('user');
-          const restoId = userJson ? JSON.parse(userJson).restoId : '';
-
-          const isOnline = navigator.onLine;
-
-          // 1. Sync from server first if online
-          if (isOnline && restoId) {
-            await syncProductsFromServer(restoId);
+          let hotelCode = '';
+          if (userJson) {
+            try {
+              const u = JSON.parse(userJson);
+              if (u.hotelCode) hotelCode = u.hotelCode;
+            } catch (e) {}
+          }
+          if (!hotelCode) {
+            const getCookie = (name: string) => {
+              const value = `; ${document.cookie}`;
+              const parts = value.split(`; ${name}=`);
+              if (parts.length === 2) return parts.pop()?.split(';').shift();
+            };
+            hotelCode = getCookie('hotelCode') || localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
           }
 
-          // 2. Load products from Dexie local database
-          const localProducts = await localDb.products.toArray();
-          const mappedData: Data[] = localProducts.map((p) => ({
-            id: p.id,
-            name: p.name,
-            price: p.price,
-            stock: p.stock,
-            cat: p.cat,
-            Product: [{ sellprice: p.price }],
-          }));
+          if (!hotelCode || hotelCode === '0') {
+            setProductStocks([]);
+            return;
+          }
+
+          const qProds = query(getHotelCollection(db, 'pos_products', hotelCode), orderBy('name', 'asc'));
+          const snap = await getDocs(qProds);
+          const mappedData: Data[] = snap.docs.map((docSnap) => {
+            const p = docSnap.data();
+            return {
+              id: docSnap.id,
+              name: p.name || 'Unnamed',
+              price: Number(p.price) || 0,
+              stock: Number(p.stock) || 0,
+              cat: p.category || 'General',
+              imageProduct: p.image || undefined,
+              Product: [{ sellprice: Number(p.price) || 0 }],
+            };
+          });
 
           setProductStocks(mappedData);
         } catch (error) {

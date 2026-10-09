@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, getDoc, query, where, limit } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
+import { getCachedCatalog, setCachedCatalog } from '@/lib/catalogCache';
 
 export async function GET(req: NextRequest) {
   try {
@@ -40,18 +41,49 @@ export async function GET(req: NextRequest) {
       taxRate = serviceRate + taxRateIndividual + lostBreakageRate;
     }
 
-    // 1. Fetch products definitions for mapping
-    const prodSnap = await getDocs(getHotelCollection(db, 'pos_products', hotelCode));
+    // 1. Fetch products definitions for mapping (using in-memory cache if available)
     const productMap: Record<string, { buyPrice: number; sellPrice: number; category: string; subcategory: string }> = {};
-    prodSnap.forEach((d) => {
-      const data = d.data();
-      productMap[d.id] = {
-        buyPrice: Number(data.buyPrice || 0),
-        sellPrice: Number(data.price || 0),
-        category: (data.category || '').trim().toUpperCase(),
-        subcategory: (data.subcategory || '').trim().toUpperCase(),
-      };
-    });
+    const cachedCatalog = getCachedCatalog(hotelCode);
+    if (cachedCatalog) {
+      cachedCatalog.products.forEach((p) => {
+        productMap[p.id] = {
+          buyPrice: Number(p.buyPrice || 0),
+          sellPrice: Number(p.price || 0),
+          category: (p.category || '').trim().toUpperCase(),
+          subcategory: (p.subcategory || '').trim().toUpperCase(),
+        };
+      });
+    } else {
+      const prodSnap = await getDocs(getHotelCollection(db, 'pos_products', hotelCode));
+      const catalogProducts = prodSnap.docs.map((d) => {
+        const data = d.data();
+        const pStock = data.stock !== undefined ? Number(data.stock) : 0;
+        return {
+          id: d.id,
+          name: data.name || 'Unnamed Product',
+          price: Number(data.price) || 0,
+          buyPrice: Number(data.buyPrice || 0),
+          stock: pStock,
+          isAvailable: data.isAvailable !== undefined ? Boolean(data.isAvailable) && pStock > 0 : pStock > 0,
+          category: data.category || 'General',
+          subcategory: data.subcategory || '',
+          pnlTarget: data.pnlTarget || '',
+          image: data.image || '',
+          description: data.description || '',
+          addons: data.addons || [],
+          isSignature: Boolean(data.isSignature),
+        };
+      });
+      setCachedCatalog(hotelCode, catalogProducts, []);
+      catalogProducts.forEach((p) => {
+        productMap[p.id] = {
+          buyPrice: p.buyPrice,
+          sellPrice: p.price,
+          category: (p.category || '').trim().toUpperCase(),
+          subcategory: (p.subcategory || '').trim().toUpperCase(),
+        };
+      });
+    }
 
     // 2. Fetch subcategories definitions for fallback matching
     const subcatSnap = await getDocs(getHotelCollection(db, 'pos_subcategories', hotelCode));

@@ -4,6 +4,7 @@ import { db } from '@/lib/firebase';
 import { getDocs, query, orderBy } from 'firebase/firestore';
 import { cookies } from 'next/headers';
 import { getHotelCollection } from '@/lib/firestoreHelper';
+import { getCachedCatalog, setCachedCatalog } from '@/lib/catalogCache';
 
 export const fetchProduct = async ({
   take = 5,
@@ -27,28 +28,83 @@ export const fetchProduct = async ({
       };
     }
 
-    const q = query(getHotelCollection(db, 'pos_products', hotelCode), orderBy('name', 'asc'));
-    const snap = await getDocs(q);
+    const cached = getCachedCatalog(hotelCode);
+    let results: any[] = [];
 
-    let results = snap.docs.map((docSnap) => {
-      const data = docSnap.data();
-      return {
-        id: docSnap.id,
-        sellprice: Number(data.price) || 0,
+    if (cached) {
+      results = cached.products.map((p) => ({
+        id: p.id,
+        sellprice: Number(p.price) || 0,
         productstock: {
+          id: p.id,
+          name: p.name || 'Unnamed Product',
+          cat: p.category || 'General',
+          subcategory: p.subcategory || '',
+          stock: Number(p.stock) || 0,
+          price: Number(p.buyPrice || 0),
+          imageProduct: p.image || null,
+          description: p.description || '',
+          addons: p.addons || [],
+          isSignature: Boolean(p.isSignature),
+        },
+      }));
+    } else {
+      const q = query(getHotelCollection(db, 'pos_products', hotelCode), orderBy('name', 'asc'));
+      const snap = await getDocs(q);
+
+      const catalogProducts = snap.docs.map((docSnap) => {
+        const data = docSnap.data();
+        const pStock = data.stock !== undefined ? Number(data.stock) : 0;
+        const catUpper = (data.category || '').toUpperCase().trim();
+        const isBkf = catUpper === 'ADD BREAKFAST' || catUpper === 'BREAKFAST';
+        return {
           id: docSnap.id,
           name: data.name || 'Unnamed Product',
-          cat: data.category || 'General',
+          price: Number(data.price) || 0,
+          buyPrice: Number(data.buyPrice || 0),
+          stock: pStock,
+          isAvailable: data.isAvailable !== undefined ? Boolean(data.isAvailable) && pStock > 0 : pStock > 0,
+          category: data.category || 'General',
           subcategory: data.subcategory || '',
-          stock: Number(data.stock) || 0,
-          price: Number(data.buyPrice || 0), // Buy price
-          imageProduct: data.image || null,
+          pnlTarget: data.pnlTarget || (isBkf ? 'BREAKFAST' : ''),
+          image: data.image || '',
           description: data.description || '',
           addons: data.addons || [],
           isSignature: Boolean(data.isSignature),
+        };
+      });
+
+      // Also fetch and cache categories
+      let catList: any[] = [];
+      try {
+        const catSnap = await getDocs(getHotelCollection(db, 'pos_categories', hotelCode));
+        catList = catSnap.docs.map((d) => ({
+          name: d.data().name || '',
+          subcategories: d.data().subcategories || [],
+        }));
+      } catch (e) {
+        // Safe fallback if pos_categories isn't available
+      }
+
+      setCachedCatalog(hotelCode, catalogProducts, catList);
+
+      results = catalogProducts.map((p) => ({
+        id: p.id,
+        sellprice: Number(p.price) || 0,
+        productstock: {
+          id: p.id,
+          name: p.name || 'Unnamed Product',
+          cat: p.category || 'General',
+          subcategory: p.subcategory || '',
+          stock: Number(p.stock) || 0,
+          price: Number(p.buyPrice || 0),
+          imageProduct: p.image || null,
+          description: p.description || '',
+          addons: p.addons || [],
+          isSignature: Boolean(p.isSignature),
         },
-      };
-    });
+      }));
+    }
 
     if (searchQuery) {
       const lowerQuery = searchQuery.toLowerCase();

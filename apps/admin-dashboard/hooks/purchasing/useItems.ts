@@ -7,12 +7,12 @@ export function useItems() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchItems = useCallback(async () => {
+  const fetchItems = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     try {
       // Demo seeds removed to allow permanent deletion
-      const data = await itemsService.getAll();
+      const data = await itemsService.getAll(forceRefresh);
       setItems(data);
     } catch (err: any) {
       console.error("Failed to load items:", err);
@@ -25,7 +25,7 @@ export function useItems() {
   const createItem = async (item: Omit<ItemMaster, "id" | "created_at" | "updated_at">) => {
     try {
       const newId = await itemsService.create(item);
-      await fetchItems();
+      await fetchItems(true);
       return newId;
     } catch (err: any) {
       throw new Error(err?.message || "Failed to create item");
@@ -35,7 +35,7 @@ export function useItems() {
   const updateItem = async (id: string, item: Partial<ItemMaster>) => {
     try {
       await itemsService.update(id, item);
-      await fetchItems();
+      await fetchItems(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to update item");
     }
@@ -44,7 +44,7 @@ export function useItems() {
   const deleteItem = async (id: string) => {
     try {
       await itemsService.delete(id);
-      await fetchItems();
+      await fetchItems(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to delete item");
     }

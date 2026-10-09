@@ -8,13 +8,25 @@ import { getHotelCollection } from "../../lib/firestoreHelper";
 
 const COLLECTION_NAME = "daily_market_lists";
 
+let dmlCache: { data: DailyMarketList[]; timestamp: number } | null = null;
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes cache
+
+export function invalidateDMLCache() {
+  dmlCache = null;
+}
+
 export const dmlService = {
-  async getAll(): Promise<DailyMarketList[]> {
+  async getAll(forceRefresh = false): Promise<DailyMarketList[]> {
+    if (!forceRefresh && dmlCache && Date.now() - dmlCache.timestamp < CACHE_TTL) {
+      return dmlCache.data;
+    }
     const q = query(getHotelCollection(db, COLLECTION_NAME), where("is_deleted", "!=", true));
     const snap = await getDocs(q);
-    return snap.docs
+    const data = snap.docs
       .map(d => ({ id: d.id, ...d.data() } as DailyMarketList))
       .filter(d => d.is_deleted !== true);
+    dmlCache = { data, timestamp: Date.now() };
+    return data;
   },
 
   async getById(id: string): Promise<DailyMarketList | null> {
@@ -32,6 +44,7 @@ export const dmlService = {
       is_deleted: false,
       created_at: serverTimestamp()
     });
+    dmlCache = null;
     return docRef.id;
   },
 
@@ -41,6 +54,7 @@ export const dmlService = {
       ...dml,
       updated_at: serverTimestamp()
     });
+    dmlCache = null;
   },
 
   async softDelete(id: string): Promise<void> {
@@ -48,6 +62,7 @@ export const dmlService = {
     await updateDoc(docRef, {
       is_deleted: true
     });
+    dmlCache = null;
   },
 
   async seedDemoDMLs(items: any[]): Promise<void> {

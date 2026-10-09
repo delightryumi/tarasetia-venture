@@ -8,11 +8,11 @@ export function useStockOpname() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchOpnames = useCallback(async () => {
+  const fetchOpnames = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await opnameService.getAll();
+      const data = await opnameService.getAll(forceRefresh);
       setOpnames(data);
     } catch (err: any) {
       console.error("Failed to load opnames:", err);
@@ -25,7 +25,7 @@ export function useStockOpname() {
   const createOpname = async (opname: Omit<StockOpname, "id" | "created_at" | "approved_at">) => {
     try {
       const newId = await opnameService.create(opname);
-      await fetchOpnames();
+      await fetchOpnames(true);
       return newId;
     } catch (err: any) {
       throw new Error(err?.message || "Failed to create stock opname");
@@ -35,7 +35,7 @@ export function useStockOpname() {
   const updateOpname = async (id: string, opname: Partial<StockOpname>) => {
     try {
       await opnameService.update(id, opname);
-      await fetchOpnames();
+      await fetchOpnames(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to update stock opname");
     }
@@ -44,7 +44,7 @@ export function useStockOpname() {
   const approveOpname = async (id: string, userId: string, userName: string) => {
     try {
       await opnameService.approve(id, userId, userName);
-      await fetchOpnames();
+      await fetchOpnames(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to approve stock opname");
     }
@@ -53,7 +53,7 @@ export function useStockOpname() {
   const deleteOpname = async (id: string) => {
     try {
       await opnameService.softDelete(id);
-      await fetchOpnames();
+      await fetchOpnames(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to delete stock opname");
     }

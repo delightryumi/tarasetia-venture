@@ -8,11 +8,11 @@ export function useStoreRequisition() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSRs = useCallback(async () => {
+  const fetchSRs = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await srService.getAll();
+      const data = await srService.getAll(forceRefresh);
       setSrs(data);
     } catch (err: any) {
       console.error("Failed to load SRs:", err);
@@ -25,7 +25,7 @@ export function useStoreRequisition() {
   const createSR = async (sr: Omit<StoreRequisition, "id" | "sr_number" | "created_at" | "updated_at">) => {
     try {
       const newId = await srService.create(sr);
-      await fetchSRs();
+      await fetchSRs(true);
       return newId;
     } catch (err: any) {
       throw new Error(err?.message || "Failed to create Store Requisition");
@@ -35,7 +35,7 @@ export function useStoreRequisition() {
   const updateSR = async (id: string, sr: Partial<StoreRequisition>) => {
     try {
       await srService.update(id, sr);
-      await fetchSRs();
+      await fetchSRs(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to update Store Requisition");
     }
@@ -44,7 +44,7 @@ export function useStoreRequisition() {
   const deleteSR = async (id: string) => {
     try {
       await srService.softDelete(id);
-      await fetchSRs();
+      await fetchSRs(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to delete Store Requisition");
     }
@@ -57,7 +57,7 @@ export function useStoreRequisition() {
         approved_by: userId,
         approved_by_name: userName
       });
-      await fetchSRs();
+      await fetchSRs(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to approve Store Requisition");
     }
@@ -69,7 +69,7 @@ export function useStoreRequisition() {
         status: "fulfilled",
         items
       });
-      await fetchSRs();
+      await fetchSRs(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to fulfill Store Requisition");
     }

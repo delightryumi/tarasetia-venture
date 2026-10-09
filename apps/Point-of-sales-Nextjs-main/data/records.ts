@@ -4,6 +4,7 @@ import { db } from '@/lib/firebase';
 import { getDocs, doc, getDoc, query, where, orderBy, limit } from 'firebase/firestore';
 import { cookies } from 'next/headers';
 import { getHotelCollection } from '@/lib/firestoreHelper';
+const posTaxSettingsCache = new Map<string, { taxRate: number; expiresAt: number }>();
 
 export const fetchRecords = async ({
   take = 5,
@@ -43,13 +44,20 @@ export const fetchRecords = async ({
       };
     }
 
-    // Fetch tax settings
-    const posSettingsRef = doc(getHotelCollection(db, 'settings', hotelCode), 'pos');
-    const posSettingsSnap = await getDoc(posSettingsRef);
+    // Fetch tax settings (cached for 10 minutes to avoid redundant reads)
     let taxRate = 10;
-    if (posSettingsSnap.exists()) {
-      const sData = posSettingsSnap.data();
-      taxRate = Number(sData.service || 0) + Number(sData.tax || 0) + Number(sData.lostBreakage || 0);
+    const now = Date.now();
+    const cachedSettings = posTaxSettingsCache.get(hotelCode);
+    if (cachedSettings && now < cachedSettings.expiresAt) {
+      taxRate = cachedSettings.taxRate;
+    } else {
+      const posSettingsRef = doc(getHotelCollection(db, 'settings', hotelCode), 'pos');
+      const posSettingsSnap = await getDoc(posSettingsRef);
+      if (posSettingsSnap.exists()) {
+        const sData = posSettingsSnap.data();
+        taxRate = Number(sData.service || 0) + Number(sData.tax || 0) + Number(sData.lostBreakage || 0);
+      }
+      posTaxSettingsCache.set(hotelCode, { taxRate, expiresAt: now + 10 * 60 * 1000 });
     }
 
     const [sY, sM, sD] = effectiveStartDate.split('-').map(Number);

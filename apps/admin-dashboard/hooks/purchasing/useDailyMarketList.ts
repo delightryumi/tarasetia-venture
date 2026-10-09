@@ -8,11 +8,11 @@ export function useDailyMarketList() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDMLs = useCallback(async () => {
+  const fetchDMLs = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await dmlService.getAll();
+      const data = await dmlService.getAll(forceRefresh);
       setDmls(data);
     } catch (err: any) {
       console.error("Failed to load DMLs:", err);
@@ -25,7 +25,7 @@ export function useDailyMarketList() {
   const createDML = async (dml: Omit<DailyMarketList, "id" | "dml_number" | "created_at">) => {
     try {
       const newId = await dmlService.create(dml);
-      await fetchDMLs();
+      await fetchDMLs(true);
       return newId;
     } catch (err: any) {
       throw new Error(err?.message || "Failed to create Daily Market List");
@@ -35,7 +35,7 @@ export function useDailyMarketList() {
   const updateDML = async (id: string, dml: Partial<DailyMarketList>) => {
     try {
       await dmlService.update(id, dml);
-      await fetchDMLs();
+      await fetchDMLs(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to update Daily Market List");
     }
@@ -44,7 +44,7 @@ export function useDailyMarketList() {
   const deleteDML = async (id: string) => {
     try {
       await dmlService.softDelete(id);
-      await fetchDMLs();
+      await fetchDMLs(true);
     } catch (err: any) {
       throw new Error(err?.message || "Failed to delete Daily Market List");
     }
