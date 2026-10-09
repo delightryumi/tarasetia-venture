@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/firebase';
 import { getHotelCollection } from '@/lib/firestoreHelper';
-import { query, where, onSnapshot, getDocs, doc } from 'firebase/firestore';
+import { query, where, onSnapshot, getDocs, doc, getDoc } from 'firebase/firestore';
 import { detectBreakfastAllocation } from '@/lib/breakfast-utils';
 
 export interface InnalyticsFilterState {
@@ -58,6 +58,16 @@ export const DEFAULT_TRAVEL_AGENTS = [
 ];
 
 export const PORTFOLIO_TRAVEL_AGENTS = DEFAULT_TRAVEL_AGENTS.map((name) => ({ name }));
+
+interface InnalyticsCacheEntry {
+  timestamp: number;
+  hotelClean: any[];
+  hotelCancelled: any[];
+  hotelVoid: any[];
+}
+const innalyticsRevenueCache = new Map<string, InnalyticsCacheEntry>();
+const INNALYTICS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+
 
 export interface ChannelMetric {
   channel: string;
@@ -172,9 +182,9 @@ export function useInnalyticsData(
       codeToUse = process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || '14034';
     }
 
-    // Fetch hotel doc for breakfastRate & channelManager.channels
+    // Fetch hotel doc for breakfastRate & channelManager.channels once via getDoc
     const hotelDocRef = doc(db, 'hotels', codeToUse);
-    const unsubHotel = onSnapshot(hotelDocRef, (snap) => {
+    getDoc(hotelDocRef).then((snap) => {
       if (snap.exists()) {
         const data = snap.data();
         const bRate = Number(
@@ -200,7 +210,7 @@ export function useInnalyticsData(
           setChannelManagerOtas(otas);
         }
       }
-    });
+    }).catch((err) => console.warn('Could not fetch hotel settings in Innalytics:', err));
 
     // Fetch ratePlans
     getDocs(getHotelCollection(db, 'ratePlans', codeToUse))
@@ -238,8 +248,6 @@ export function useInnalyticsData(
         }
       })
       .catch((err) => console.warn('Could not fetch travel_agents in Innalytics:', err));
-
-    return () => unsubHotel();
   }, [activeHotelCode]);
 
   // 2. Direct Firestore query from daily_revenue using real transactions across accessible hotels
@@ -282,185 +290,207 @@ export function useInnalyticsData(
       hotelCodesToQuery.push({ code: codeToUse, name: foundName });
     }
 
-    const hotelAccMap: Record<string, any[]> = {};
-    const hotelCancMap: Record<string, any[]> = {};
-    const hotelVoidMap: Record<string, any[]> = {};
+    let isMounted = true;
+    setLoading(true);
 
-    const unsubs = hotelCodesToQuery.map(({ code: hCode, name: hName }) => {
-      // When reportBy is 'booking_date', bound query window tightly around the selected date range
-      // (30 days buffer before startDate and up to endDate + 30 days, NOT entire multi-year spans)
-      let q;
-      if (filters.reportBy === 'booking_date') {
-        const startBase = filters.startDate || new Date().toISOString().slice(0, 10);
-        const endBase = filters.endDate || startBase;
-        const [sY, sM, sD] = startBase.split('-').map(Number);
-        const [eY, eM, eD] = endBase.split('-').map(Number);
-        const minD = new Date(sY, (sM || 1) - 1, (sD || 1) - 30);
-        const maxD = new Date(eY, (eM || 1) - 1, (eD || 1) + 30);
-        const minStr = minD.toISOString().slice(0, 10);
-        const maxStr = maxD.toISOString().slice(0, 10);
-        q = query(
-          getHotelCollection(db, 'daily_revenue', hCode),
-          where('date', '>=', minStr),
-          where('date', '<=', maxStr)
+    const runFetch = async () => {
+      try {
+        const hotelAccMap: Record<string, any[]> = {};
+        const hotelCancMap: Record<string, any[]> = {};
+        const hotelVoidMap: Record<string, any[]> = {};
+
+        await Promise.all(
+          hotelCodesToQuery.map(async ({ code: hCode, name: hName }) => {
+            let startBound = filters.startDate;
+            let endBound = filters.endDate;
+            if (filters.reportBy === 'booking_date') {
+              const startBase = filters.startDate || new Date().toISOString().slice(0, 10);
+              const endBase = filters.endDate || startBase;
+              const [sY, sM, sD] = startBase.split('-').map(Number);
+              const [eY, eM, eD] = endBase.split('-').map(Number);
+              const minD = new Date(sY, (sM || 1) - 1, (sD || 1) - 30);
+              const maxD = new Date(eY, (eM || 1) - 1, (eD || 1) + 30);
+              startBound = minD.toISOString().slice(0, 10);
+              endBound = maxD.toISOString().slice(0, 10);
+            }
+
+            const cacheKey = `${hCode}_${filters.reportBy}_${startBound}_${endBound}`;
+            const cached = innalyticsRevenueCache.get(cacheKey);
+            const now = Date.now();
+
+            if (cached && now - cached.timestamp < INNALYTICS_CACHE_TTL) {
+              hotelAccMap[hCode] = cached.hotelClean;
+              hotelCancMap[hCode] = cached.hotelCancelled;
+              hotelVoidMap[hCode] = cached.hotelVoid;
+              return;
+            }
+
+            const q = query(
+              getHotelCollection(db, 'daily_revenue', hCode),
+              where('date', '>=', startBound),
+              where('date', '<=', endBound)
+            );
+
+            const querySnapshot = await getDocs(q);
+            const hotelClean: any[] = [];
+            const hotelCancelled: any[] = [];
+            const hotelVoid: any[] = [];
+
+            querySnapshot.forEach((docSnap) => {
+              const data = docSnap.data();
+              const docDate = data.date || docSnap.id.replace(`${hCode}_`, '');
+              const hotelId = data.hotelId || hCode;
+
+              const dayAccommodationGroups: Record<string, any[]> = {};
+              const dayCancelledGroups: Record<string, any[]> = {};
+              const dayVoidGroups: Record<string, any[]> = {};
+
+              (data.entries || []).forEach((t: any) => {
+                const isPOS =
+                  t.guestName?.startsWith('POS Order') ||
+                  Array.isArray(t.posItems) ||
+                  (t.revenueType && t.revenueType !== 'breakfast');
+                if (isPOS) return;
+
+                const status = (t.status || '').toUpperCase();
+                const payStatus = (t.paymentStatus || '').toUpperCase();
+                const gst = String(t.guestStatus || '').toLowerCase();
+
+                const isDeleted = t.isDeleted || t.isHidden;
+                if (isDeleted) return;
+
+                const isVoid =
+                  status === 'VOID' ||
+                  status === 'VOIDED' ||
+                  payStatus === 'VOID' ||
+                  payStatus === 'VOIDED' ||
+                  gst === 'void' ||
+                  t.isVoid === true;
+
+                const isPelunasan =
+                  t.isPelunasan ||
+                  t.type === 'pelunasan_ar' ||
+                  t.type === 'pelunasan_reversal' ||
+                  t.guestName?.startsWith('Koreksi Tanggal Pelunasan') ||
+                  t.guestName?.startsWith('Pelunasan Piutang');
+                if (isPelunasan) return;
+
+                const isCancel =
+                  status === 'CANCEL' ||
+                  status === 'CANCELLED' ||
+                  status === 'NO-SHOW' ||
+                  payStatus === 'CANCEL' ||
+                  payStatus === 'CANCELLED' ||
+                  gst === 'cancelled' ||
+                  gst === 'cancel';
+
+                const isAcc =
+                  t.type === 'accommodation' ||
+                  (!t.type && t.guestName && !t.revenueType);
+
+                if (!isAcc) return;
+
+                const normGuestName = (t.guestName || '').trim().toLowerCase();
+                const roomIdent = String(
+                  t.roomNumber || t.roomTypeId || t.roomType || ''
+                ).trim();
+                const cIn = t.checkInDate || t.checkIn || '';
+                const cOut = t.checkOutDate || t.checkOut || '';
+                const bId = t.bookingId ? `b_${t.bookingId}` : '';
+                const rIdx = t.roomIndex !== undefined ? `_rIdx_${t.roomIndex}` : '';
+                const key =
+                  normGuestName && cIn
+                    ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}_${bId}${rIdx}_${t.id || ''}`
+                    : bId
+                    ? `${bId}${rIdx}`
+                    : `t_${t.timestamp}`;
+
+                const enhancedEntry = { ...t, docDate, hotelId, hotelCode: hCode, hotelName: hName };
+
+                if (isVoid) {
+                  if (!dayVoidGroups[key]) dayVoidGroups[key] = [];
+                  dayVoidGroups[key].push(enhancedEntry);
+                  return;
+                }
+
+                if (isCancel) {
+                  if (!dayCancelledGroups[key]) dayCancelledGroups[key] = [];
+                  dayCancelledGroups[key].push(enhancedEntry);
+                  return;
+                }
+
+                if (!dayAccommodationGroups[key]) {
+                  dayAccommodationGroups[key] = [];
+                }
+                dayAccommodationGroups[key].push(enhancedEntry);
+              });
+
+              Object.values(dayAccommodationGroups).forEach((group) => {
+                group.sort((a, b) => {
+                  const tA = new Date(a.timestamp || 0).getTime();
+                  const tB = new Date(b.timestamp || 0).getTime();
+                  return tA - tB;
+                });
+                hotelClean.push(group[group.length - 1]);
+              });
+
+              Object.values(dayCancelledGroups).forEach((group) => {
+                group.sort((a, b) => {
+                  const tA = new Date(a.timestamp || 0).getTime();
+                  const tB = new Date(b.timestamp || 0).getTime();
+                  return tA - tB;
+                });
+                hotelCancelled.push(group[group.length - 1]);
+              });
+
+              Object.values(dayVoidGroups).forEach((group) => {
+                group.sort((a, b) => {
+                  const tA = new Date(a.timestamp || 0).getTime();
+                  const tB = new Date(b.timestamp || 0).getTime();
+                  return tA - tB;
+                });
+                hotelVoid.push(group[group.length - 1]);
+              });
+            });
+
+            innalyticsRevenueCache.set(cacheKey, {
+              timestamp: Date.now(),
+              hotelClean,
+              hotelCancelled,
+              hotelVoid
+            });
+
+            hotelAccMap[hCode] = hotelClean;
+            hotelCancMap[hCode] = hotelCancelled;
+            hotelVoidMap[hCode] = hotelVoid;
+          })
         );
-      } else {
-        q = query(
-          getHotelCollection(db, 'daily_revenue', hCode),
-          where('date', '>=', filters.startDate),
-          where('date', '<=', filters.endDate)
-        );
+
+        if (!isMounted) return;
+
+        const mergedAcc: any[] = [];
+        const mergedCanc: any[] = [];
+        const mergedVoid: any[] = [];
+        Object.values(hotelAccMap).forEach((list) => mergedAcc.push(...list));
+        Object.values(hotelCancMap).forEach((list) => mergedCanc.push(...list));
+        Object.values(hotelVoidMap).forEach((list) => mergedVoid.push(...list));
+
+        setCleanTransactions(mergedAcc);
+        setCancelledTransactions(mergedCanc);
+        setVoidTransactions(mergedVoid);
+        setLoading(false);
+        setLastUpdated(new Date());
+      } catch (err) {
+        console.error('Error fetching daily_revenue in Innalytics:', err);
+        if (isMounted) setLoading(false);
       }
+    };
 
-      return onSnapshot(
-        q,
-        (querySnapshot) => {
-          const hotelClean: any[] = [];
-          const hotelCancelled: any[] = [];
-          const hotelVoid: any[] = [];
+    runFetch();
 
-          querySnapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const docDate = data.date || docSnap.id.replace(`${hCode}_`, '');
-            const hotelId = data.hotelId || hCode;
-
-            const dayAccommodationGroups: Record<string, any[]> = {};
-            const dayCancelledGroups: Record<string, any[]> = {};
-            const dayVoidGroups: Record<string, any[]> = {};
-
-            (data.entries || []).forEach((t: any) => {
-              const isPOS =
-                t.guestName?.startsWith('POS Order') ||
-                Array.isArray(t.posItems) ||
-                (t.revenueType && t.revenueType !== 'breakfast');
-              if (isPOS) return;
-
-              const status = (t.status || '').toUpperCase();
-              const payStatus = (t.paymentStatus || '').toUpperCase();
-              const gst = String(t.guestStatus || '').toLowerCase();
-
-              const isDeleted = t.isDeleted || t.isHidden;
-              if (isDeleted) return;
-
-              const isVoid =
-                status === 'VOID' ||
-                status === 'VOIDED' ||
-                payStatus === 'VOID' ||
-                payStatus === 'VOIDED' ||
-                gst === 'void' ||
-                t.isVoid === true;
-
-              const isPelunasan =
-                t.isPelunasan ||
-                t.type === 'pelunasan_ar' ||
-                t.type === 'pelunasan_reversal' ||
-                t.guestName?.startsWith('Koreksi Tanggal Pelunasan') ||
-                t.guestName?.startsWith('Pelunasan Piutang');
-              if (isPelunasan) return;
-
-              const isCancel =
-                status === 'CANCEL' ||
-                status === 'CANCELLED' ||
-                status === 'NO-SHOW' ||
-                payStatus === 'CANCEL' ||
-                payStatus === 'CANCELLED' ||
-                gst === 'cancelled' ||
-                gst === 'cancel';
-
-              const isAcc =
-                t.type === 'accommodation' ||
-                (!t.type && t.guestName && !t.revenueType);
-
-              if (!isAcc) return;
-
-              const normGuestName = (t.guestName || '').trim().toLowerCase();
-              const roomIdent = String(
-                t.roomNumber || t.roomTypeId || t.roomType || ''
-              ).trim();
-              const cIn = t.checkInDate || t.checkIn || '';
-              const cOut = t.checkOutDate || t.checkOut || '';
-              const bId = t.bookingId ? `b_${t.bookingId}` : '';
-              const rIdx = t.roomIndex !== undefined ? `_rIdx_${t.roomIndex}` : '';
-              const key =
-                normGuestName && cIn
-                  ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}_${bId}${rIdx}_${t.id || ''}`
-                  : bId
-                  ? `${bId}${rIdx}`
-                  : `t_${t.timestamp}`;
-
-              const enhancedEntry = { ...t, docDate, hotelId, hotelCode: hCode, hotelName: hName };
-
-              if (isVoid) {
-                if (!dayVoidGroups[key]) dayVoidGroups[key] = [];
-                dayVoidGroups[key].push(enhancedEntry);
-                return;
-              }
-
-              if (isCancel) {
-                if (!dayCancelledGroups[key]) dayCancelledGroups[key] = [];
-                dayCancelledGroups[key].push(enhancedEntry);
-                return;
-              }
-
-              if (!dayAccommodationGroups[key]) {
-                dayAccommodationGroups[key] = [];
-              }
-              dayAccommodationGroups[key].push(enhancedEntry);
-            });
-
-            Object.values(dayAccommodationGroups).forEach((group) => {
-              group.sort((a, b) => {
-                const tA = new Date(a.timestamp || 0).getTime();
-                const tB = new Date(b.timestamp || 0).getTime();
-                return tA - tB;
-              });
-              hotelClean.push(group[group.length - 1]);
-            });
-
-            Object.values(dayCancelledGroups).forEach((group) => {
-              group.sort((a, b) => {
-                const tA = new Date(a.timestamp || 0).getTime();
-                const tB = new Date(b.timestamp || 0).getTime();
-                return tA - tB;
-              });
-              hotelCancelled.push(group[group.length - 1]);
-            });
-
-            Object.values(dayVoidGroups).forEach((group) => {
-              group.sort((a, b) => {
-                const tA = new Date(a.timestamp || 0).getTime();
-                const tB = new Date(b.timestamp || 0).getTime();
-                return tA - tB;
-              });
-              hotelVoid.push(group[group.length - 1]);
-            });
-          });
-
-          hotelAccMap[hCode] = hotelClean;
-          hotelCancMap[hCode] = hotelCancelled;
-          hotelVoidMap[hCode] = hotelVoid;
-
-          const mergedAcc: any[] = [];
-          const mergedCanc: any[] = [];
-          const mergedVoid: any[] = [];
-          Object.values(hotelAccMap).forEach((list) => mergedAcc.push(...list));
-          Object.values(hotelCancMap).forEach((list) => mergedCanc.push(...list));
-          Object.values(hotelVoidMap).forEach((list) => mergedVoid.push(...list));
-
-          setCleanTransactions(mergedAcc);
-          setCancelledTransactions(mergedCanc);
-          setVoidTransactions(mergedVoid);
-          setLoading(false);
-          setLastUpdated(new Date());
-        },
-        (err) => {
-          console.error(`Error fetching daily_revenue for hotel ${hCode}:`, err);
-          setLoading(false);
-        }
-      );
-    });
-
-    return () => unsubs.forEach((unsub) => unsub());
+    return () => {
+      isMounted = false;
+    };
   }, [
     activeHotelCode, 
     filters.startDate, 

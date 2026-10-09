@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { CloudflareTurnstile } from "@/components/shared/CloudflareTurnstile";
 import styles from "./login.module.css";
 
 export const LoginSection = () => {
@@ -40,16 +41,45 @@ export const LoginSection = () => {
     const [resetSuccess, setResetSuccess] = useState("");
     const [resetLoading, setResetLoading] = useState(false);
 
+    // Cloudflare Turnstile Security State
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [turnstileError, setTurnstileError] = useState("");
+
     // Header State
     const [language, setLanguage] = useState<'EN' | 'ID'>('EN');
     const [showLangMenu, setShowLangMenu] = useState(false);
     const [showHelpModal, setShowHelpModal] = useState(false);
 
+    const [inactivityNotice, setInactivityNotice] = useState("");
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             document.documentElement.classList.remove('dark');
+            const reason = sessionStorage.getItem("logout_reason");
+            if (reason === "inactivity_timeout") {
+                setInactivityNotice(
+                    language === 'EN'
+                        ? "Your session expired automatically after 1 hour of inactivity for security reasons. Please sign in again."
+                        : "Sesi Anda telah berakhir secara otomatis demi keamanan karena tidak ada aktivitas selama 1 jam. Silakan masuk kembali."
+                );
+                sessionStorage.removeItem("logout_reason");
+            }
         }
-    }, []);
+    }, [language]);
+
+    const onFormSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!turnstileToken) {
+            setTurnstileError(
+                language === 'EN'
+                    ? "Please complete the Cloudflare security verification before signing in."
+                    : "Silakan selesaikan centang verifikasi keamanan Cloudflare terlebih dahulu."
+            );
+            return;
+        }
+        setTurnstileError("");
+        handleLogin(e);
+    };
 
     const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -145,38 +175,76 @@ export const LoginSection = () => {
                                 </p>
                             </div>
 
-                            {error && (
-                                <div className={styles.alertError} role="alert">
-                                    {error}
+                            {inactivityNotice && (
+                                <div 
+                                    className={styles.alertError} 
+                                    style={{ 
+                                        backgroundColor: "#fef3c7", 
+                                        borderColor: "#f59e0b", 
+                                        color: "#92400e",
+                                        marginBottom: "12px"
+                                    }} 
+                                    role="alert"
+                                >
+                                    {inactivityNotice}
                                 </div>
                             )}
 
-                            <form className={styles.authForm} onSubmit={handleLogin}>
-                                {/* Username Input */}
+                            {(error || turnstileError) && (
+                                <div className={styles.alertError} role="alert">
+                                    {turnstileError || error}
+                                </div>
+                            )}
+
+                            <form className={styles.authForm} onSubmit={onFormSubmit}>
+                                {/* 1. Email Input */}
                                 <div className={styles.fieldGroup}>
-                                    <label htmlFor="tara-username" className={styles.fieldLabel}>
-                                        {language === 'EN' ? "Username" : "Username"}
+                                    <label htmlFor="tara-email" className={styles.fieldLabel}>
+                                        {language === 'EN' ? "Email" : "Email"}
                                     </label>
                                     <div className={styles.inputContainer}>
                                         <span className={styles.inputIcon}>
-                                            <User size={16} />
+                                            <Mail size={16} />
                                         </span>
                                         <input 
-                                            id="tara-username"
+                                            id="tara-email"
                                             type="text"
-                                            name="username"
+                                            name="email"
                                             className={styles.textInput}
-                                            placeholder={language === 'EN' ? "Enter username" : "Masukkan username"}
+                                            placeholder={language === 'EN' ? "Enter your email" : "Masukkan email"}
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             required
                                             disabled={loading}
-                                            autoComplete="username"
+                                            autoComplete="email"
                                         />
                                     </div>
                                 </div>
 
-                                {/* Password Input */}
+                                {/* 2. Property Code Input */}
+                                <div className={styles.fieldGroup}>
+                                    <label htmlFor="tara-property-code" className={styles.fieldLabel}>
+                                        {language === 'EN' ? "Property Code" : "Property Code"}
+                                    </label>
+                                    <div className={styles.inputContainer}>
+                                        <span className={styles.inputIcon}>
+                                            <Store size={16} />
+                                        </span>
+                                        <input 
+                                            id="tara-property-code"
+                                            type="text"
+                                            name="propertyCode"
+                                            className={styles.textInput}
+                                            placeholder={language === 'EN' ? "Enter property code (e.g. 14034)" : "Masukkan property code (contoh: 14034)"}
+                                            value={hotelCode}
+                                            onChange={(e) => setHotelCode(e.target.value)}
+                                            disabled={loading}
+                                            autoComplete="off"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 3. Password Input */}
                                 <div className={styles.fieldGroup}>
                                     <label htmlFor="tara-password" className={styles.fieldLabel}>
                                         {language === 'EN' ? "Password" : "Password"}
@@ -190,7 +258,7 @@ export const LoginSection = () => {
                                             type={showPassword ? "text" : "password"}
                                             name="password"
                                             className={styles.textInput}
-                                            placeholder={language === 'EN' ? "Enter password" : "Masukkan password"}
+                                            placeholder={language === 'EN' ? "Enter your password" : "Masukkan password"}
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             required
@@ -209,34 +277,38 @@ export const LoginSection = () => {
                                     </div>
                                 </div>
 
-                                {/* Property Code Input */}
-                                <div className={styles.fieldGroup}>
-                                    <label htmlFor="tara-property-code" className={styles.fieldLabel}>
-                                        {language === 'EN' ? "Property Code" : "Property Code"}
-                                    </label>
-                                    <div className={styles.inputContainer}>
-                                        <span className={styles.inputIcon}>
-                                            <Store size={16} />
-                                        </span>
-                                        <input 
-                                            id="tara-property-code"
-                                            type="text"
-                                            name="propertyCode"
-                                            className={styles.textInput}
-                                            placeholder={language === 'EN' ? "Enter property code" : "Masukkan property code"}
-                                            value={hotelCode}
-                                            onChange={(e) => setHotelCode(e.target.value)}
-                                            disabled={loading}
-                                            autoComplete="off"
-                                        />
-                                    </div>
+                                {/* Cloudflare Turnstile Security Verification */}
+                                <div className="w-full flex flex-col items-center justify-center my-1.5">
+                                    <CloudflareTurnstile 
+                                        onVerify={(token) => {
+                                            setTurnstileToken(token);
+                                            setTurnstileError("");
+                                        }}
+                                        onExpire={() => {
+                                            setTurnstileToken(null);
+                                        }}
+                                        onError={() => {
+                                            setTurnstileToken(null);
+                                            setTurnstileError(
+                                                language === 'EN'
+                                                    ? "Security check failed. Please refresh or retry."
+                                                    : "Verifikasi keamanan gagal. Silakan coba lagi."
+                                            );
+                                        }}
+                                        theme="light"
+                                    />
                                 </div>
 
                                 {/* Primary Sign In Button */}
                                 <button 
                                     type="submit" 
                                     className={styles.primaryLoginBtn}
-                                    disabled={loading}
+                                    disabled={loading || !turnstileToken}
+                                    style={{
+                                        opacity: (!turnstileToken && !loading) ? 0.65 : 1,
+                                        cursor: (!turnstileToken && !loading) ? 'not-allowed' : 'pointer'
+                                    }}
+                                    title={!turnstileToken ? (language === 'EN' ? "Please complete the security check above" : "Selesaikan verifikasi keamanan di atas") : undefined}
                                 >
                                     {loading ? (
                                         <>

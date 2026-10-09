@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut as fbSignOut, signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, collection, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, collection, onSnapshot, getDocs } from "firebase/firestore";
 import { detectClientCity } from "@/lib/clientGeo";
 import { toast } from "sonner";
 
@@ -95,6 +95,66 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [user]);
 
+    // Auto-logout after 1 hour (60 minutes) of inactivity
+    // Industry standard for PMS / CRS: idle timer resets on user activity (mouse, keyboard, click, scroll, touch)
+    // Synchronized across multiple open tabs via localStorage
+    useEffect(() => {
+        if (!user || typeof window === "undefined") return;
+
+        const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour (60 minutes)
+        const ACTIVITY_CHECK_INTERVAL_MS = 30 * 1000; // Check every 30 seconds
+        const LAST_ACTIVITY_KEY = "tara_last_activity_timestamp";
+
+        if (!localStorage.getItem(LAST_ACTIVITY_KEY)) {
+            localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+        }
+
+        let lastRecordedTime = Date.now();
+        const recordActivity = () => {
+            const now = Date.now();
+            // Throttle write: update at most once every 10 seconds to maintain high performance
+            if (now - lastRecordedTime > 10000) {
+                lastRecordedTime = now;
+                localStorage.setItem(LAST_ACTIVITY_KEY, now.toString());
+            }
+        };
+
+        const activityEvents = ["mousedown", "mousemove", "keydown", "scroll", "touchstart", "click"];
+        activityEvents.forEach((evt) => {
+            window.addEventListener(evt, recordActivity, { passive: true });
+        });
+
+        // Sync activity across multiple tabs in real-time
+        const onStorageChange = (e: StorageEvent) => {
+            if (e.key === LAST_ACTIVITY_KEY && e.newValue) {
+                lastRecordedTime = parseInt(e.newValue, 10);
+            }
+        };
+        window.addEventListener("storage", onStorageChange);
+
+        // Periodic inactivity check
+        const intervalId = setInterval(() => {
+            const lastActiveStr = localStorage.getItem(LAST_ACTIVITY_KEY);
+            const lastActive = lastActiveStr ? parseInt(lastActiveStr, 10) : Date.now();
+            const now = Date.now();
+
+            if (now - lastActive >= INACTIVITY_TIMEOUT_MS) {
+                console.warn("[Security] User inactive for over 1 hour. Triggering auto-logout...");
+                sessionStorage.setItem("logout_reason", "inactivity_timeout");
+                toast.error("Sesi Anda telah berakhir secara otomatis demi keamanan karena tidak ada aktivitas selama 1 jam.");
+                signOutUser();
+            }
+        }, ACTIVITY_CHECK_INTERVAL_MS);
+
+        return () => {
+            activityEvents.forEach((evt) => {
+                window.removeEventListener(evt, recordActivity);
+            });
+            window.removeEventListener("storage", onStorageChange);
+            clearInterval(intervalId);
+        };
+    }, [user]);
+
     // Fetch active hotel details
     useEffect(() => {
         // Superadmin tanpa preview hotel → tampilkan label tetap
@@ -122,15 +182,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Fetch hotels list if superadmin or has allowedOutlets / assigned hotel
     useEffect(() => {
         if (user && user.role === "superadmin") {
-            // Superadmin needs full hotel fleet overview
-            const unsubscribe = onSnapshot(collection(db, "hotels"), (snapshot) => {
+            // Superadmin needs full hotel fleet overview: fetch once via getDocs to prevent continuous live collection streaming
+            let isCancelled = false;
+            getDocs(collection(db, "hotels")).then((snapshot) => {
+                if (isCancelled) return;
                 const list: any[] = [];
                 snapshot.forEach((doc) => {
                     list.push({ ...doc.data(), hotelCode: doc.id });
                 });
                 setHotelsList(list);
+            }).catch((err) => {
+                console.error("Error fetching hotels list for superadmin:", err);
             });
-            return () => unsubscribe();
+            return () => {
+                isCancelled = true;
+            };
         } else if (user && user.allowedOutlets && user.allowedOutlets.length > 0) {
             // Scoped multi-tenant access: fetch ONLY the assigned hotel documents (no global collection listener)
             const targetHotelCodes = Array.from(new Set([...user.allowedOutlets, user.hotelCode].filter(Boolean) as string[]));
@@ -598,6 +664,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
 
             localStorage.setItem("auth_user", JSON.stringify(customUser));
+            localStorage.setItem("tara_last_activity_timestamp", Date.now().toString());
             setUser(customUser);
 
             if (!isSuperadminEmail) {
@@ -641,6 +708,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         localStorage.removeItem("auth_user");
         localStorage.removeItem("active_hotel_code");
+        localStorage.removeItem("tara_last_activity_timestamp");
         setUser(null);
         setActiveHotelCodeState("");
         setActiveHotelName("");

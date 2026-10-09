@@ -190,13 +190,14 @@ export interface BookingEnginePublicData {
 interface TenantStaticCache {
     timestamp: number;
     hotelData: any;
+    profileData?: any;
     pgData: any;
     roomsData: any[];
     ratePlansData: any[];
 }
 
 const tenantCacheMap: Record<string, TenantStaticCache> = {};
-const TENANT_CACHE_TTL_MS = 15 * 1000; // 15 seconds in-memory cache to quickly reflect admin branding changes
+const TENANT_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes in-memory cache to prevent repetitive reads on guest browsing
 
 /**
  * Loads all public booking engine data for a specific hotel tenant with real-time available inventory
@@ -219,6 +220,7 @@ export async function getBookingEngineData(
         const isCacheValid = cached && now - cached.timestamp < TENANT_CACHE_TTL_MS;
 
         let hotelData: any = null;
+        let profileData: any = null;
         let pgData: any = null;
         let roomsDocs: any[] = [];
         let ratePlansDocs: any[] = [];
@@ -226,6 +228,7 @@ export async function getBookingEngineData(
         // 1. Fetch static tenant metadata (or serve from cache)
         if (isCacheValid) {
             hotelData = cached.hotelData;
+            profileData = cached.profileData;
             pgData = cached.pgData;
             roomsDocs = cached.roomsData;
             ratePlansDocs = cached.ratePlansData;
@@ -247,7 +250,7 @@ export async function getBookingEngineData(
             if (!hotelSnap.exists()) return null;
 
             hotelData = hotelSnap.data();
-            const profileData = profileSnap && profileSnap.exists() ? profileSnap.data() : null;
+            profileData = profileSnap && profileSnap.exists() ? profileSnap.data() : null;
             pgData = settingsSnap.exists() ? settingsSnap.data() : null;
             roomsDocs = roomsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
             ratePlansDocs = ratePlansSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -519,7 +522,6 @@ export async function getBookingEngineData(
             ? hotelData.amenities
             : ["WiFi Gratis", "Front Desk 24 Jam", "Parkir Area", "AC", "Restoran"];
 
-        const profileData = isCacheValid ? cached.profileData : undefined;
         const hotelAddress = pgData?.theme?.hotelAddress ||
             profileData?.address ||
             hotelData?.address ||

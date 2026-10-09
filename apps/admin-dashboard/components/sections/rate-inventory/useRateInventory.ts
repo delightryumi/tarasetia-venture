@@ -139,8 +139,10 @@ export const useRateInventory = () => {
             return;
         }
 
+        let isCancelled = false;
         const rtCol = getHotelCollection(db, "roomTypes", activeHotelCode);
-        const unsub = onSnapshot(rtCol, (snap) => {
+        getDocs(rtCol).then((snap) => {
+            if (isCancelled) return;
             const rts: RoomTypeInfo[] = [];
             snap.docs.forEach(docSnap => {
                 const data = docSnap.data();
@@ -168,20 +170,24 @@ export const useRateInventory = () => {
             });
             setRoomTypes(rts);
             setLoading(false);
-        }, (err) => {
+        }).catch((err) => {
             console.error("Error loading room types:", err);
-            setLoading(false);
+            if (!isCancelled) setLoading(false);
         });
 
-        return () => unsub();
+        return () => {
+            isCancelled = true;
+        };
     }, [activeHotelCode]);
 
     // 2. Fetch Rate Plans (Real data only, no dummy fallback)
     useEffect(() => {
         if (!activeHotelCode || activeHotelCode === "0") return;
 
+        let isCancelled = false;
         const rpCol = getHotelCollection(db, "ratePlans", activeHotelCode);
-        const unsub = onSnapshot(rpCol, (snap) => {
+        getDocs(rpCol).then((snap) => {
+            if (isCancelled) return;
             const rps: MyTaraRatePlan[] = [];
             snap.docs.forEach(docSnap => {
                 const data = docSnap.data();
@@ -210,11 +216,13 @@ export const useRateInventory = () => {
                 });
             });
             setRatePlans(rps);
-        }, (err) => {
+        }).catch((err) => {
             console.error("Error loading rate plans:", err);
         });
 
-        return () => unsub();
+        return () => {
+            isCancelled = true;
+        };
     }, [activeHotelCode]);
 
     // 3. Fetch Real Daily Bookings from daily_revenue / front office (100% Inline with Forecast & Overview)

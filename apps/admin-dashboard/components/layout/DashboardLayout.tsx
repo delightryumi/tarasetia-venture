@@ -190,8 +190,8 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
 
     return (
         <div className={`flex flex-col min-h-screen select-none ${isSuperadminPage ? 'bg-white dark:bg-[#09090b]' : isFnbRealtimePage ? 'bg-[#fbfaf8] text-stone-900' : 'bg-transparent'}`}>
-            {/* Global POS order notifier — active on every page except KDS screen where FoodBeverageRealtimeTab has its own listeners */}
-            {activeHotelCode && activeHotelCode !== '0' && !isFnbRealtimePage && (
+            {/* Global POS order notifier — only active if hotel has F&B/POS module and outside non-F&B screens */}
+            {activeHotelCode && activeHotelCode !== '0' && !isFnbRealtimePage && !isInnalyticsPage && !isSuperadminPage && (!activeModules || activeModules.includes('pos') || activeModules.includes('food-beverage')) && (
                 <GlobalOrderNotifier
                     hotelCode={activeHotelCode}
                     posSoundUrl={hotelBillingData?.posSoundUrl}

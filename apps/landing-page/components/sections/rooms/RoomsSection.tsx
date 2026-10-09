@@ -32,14 +32,31 @@ interface RoomType {
     roomSizeUnit?: string;
 }
 
+// In-memory cache for landing page rooms to prevent repeated reads on navigation
+let roomsCache: { data: RoomType[]; timestamp: number } | null = null;
+const ROOMS_CACHE_TTL = 15 * 60 * 1000;
+
 export const RoomsSection = () => {
-    const [rooms, setRooms] = useState<RoomType[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [rooms, setRooms] = useState<RoomType[]>(() => {
+        if (roomsCache && Date.now() - roomsCache.timestamp < ROOMS_CACHE_TTL) {
+            return roomsCache.data;
+        }
+        return [];
+    });
+    const [loading, setLoading] = useState(() => {
+        return !(roomsCache && Date.now() - roomsCache.timestamp < ROOMS_CACHE_TTL);
+    });
     const [viewType, setViewType] = useState<"grid" | "list">("grid");
     const sectionRef = useRef<HTMLElement>(null);
 
     // Fetch data
     useEffect(() => {
+        if (roomsCache && Date.now() - roomsCache.timestamp < ROOMS_CACHE_TTL) {
+            setRooms(roomsCache.data);
+            setLoading(false);
+            return;
+        }
+
         const fetchRooms = async () => {
             try {
                 const q = query(getHotelCollection(db, "roomTypes"), orderBy("name"));
@@ -48,6 +65,7 @@ export const RoomsSection = () => {
                     id: doc.id,
                     ...doc.data()
                 })) as RoomType[];
+                roomsCache = { data: roomsData, timestamp: Date.now() };
                 setRooms(roomsData);
             } catch (err) {
                 console.error("Error fetching rooms:", err);

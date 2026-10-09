@@ -98,32 +98,60 @@ function compressAvailabilityRanges(
     return ranges;
 }
 
+// In-memory cache for Channex Property ID to Hotel Code mapping
+const _propertyIdToHotelCodeCache: Map<string, string> = new Map();
+
 export class ChannexSyncService {
     /**
      * Resolves the internal hotelCode from a given Channex Property UUID
+     * Uses in-memory caching and targeted indexed queries to avoid full collection scans
      */
     async findHotelCodeByChannexPropertyId(channexPropertyId: string): Promise<string | null> {
         if (!channexPropertyId) return null;
 
+        // 1. Check in-memory cache
+        if (_propertyIdToHotelCodeCache.has(channexPropertyId)) {
+            return _propertyIdToHotelCodeCache.get(channexPropertyId)!;
+        }
+
         try {
-            // 1. Search in master /hotels collection
-            const hotelsSnap = await adminDb.collection("hotels").get();
-            for (const docSnap of hotelsSnap.docs) {
-                const data = docSnap.data();
-                if (
-                    docSnap.id === channexPropertyId ||
-                    data.channexPropertyId === channexPropertyId || 
-                    data.channelManager?.channexPropertyId === channexPropertyId ||
-                    data.channelManager?.openChannelHotelCode === channexPropertyId
-                ) {
-                    return docSnap.id;
-                }
+            // 2. Direct document ID lookup
+            const directDoc = await adminDb.collection("hotels").doc(channexPropertyId).get();
+            if (directDoc.exists) {
+                _propertyIdToHotelCodeCache.set(channexPropertyId, directDoc.id);
+                return directDoc.id;
+            }
+
+            // 3. Targeted indexed query for channexPropertyId
+            const q1 = await adminDb.collection("hotels").where("channexPropertyId", "==", channexPropertyId).limit(1).get();
+            if (!q1.empty) {
+                const foundId = q1.docs[0].id;
+                _propertyIdToHotelCodeCache.set(channexPropertyId, foundId);
+                return foundId;
+            }
+
+            // 4. Targeted indexed query for channelManager.channexPropertyId
+            const q2 = await adminDb.collection("hotels").where("channelManager.channexPropertyId", "==", channexPropertyId).limit(1).get();
+            if (!q2.empty) {
+                const foundId = q2.docs[0].id;
+                _propertyIdToHotelCodeCache.set(channexPropertyId, foundId);
+                return foundId;
+            }
+
+            // 5. Targeted indexed query for channelManager.openChannelHotelCode
+            const q3 = await adminDb.collection("hotels").where("channelManager.openChannelHotelCode", "==", channexPropertyId).limit(1).get();
+            if (!q3.empty) {
+                const foundId = q3.docs[0].id;
+                _propertyIdToHotelCodeCache.set(channexPropertyId, foundId);
+                return foundId;
             }
 
             // Fallback for primary/first hotel if not explicitly set
+            const hotelsSnap = await adminDb.collection("hotels").limit(5).get();
             if (hotelsSnap.docs.length > 0) {
                 const defaultHotel = hotelsSnap.docs[0];
                 console.warn(`[ChannexSync] Property ID ${channexPropertyId} not explicitly mapped. Falling back to default hotel: ${defaultHotel.id}`);
+                _propertyIdToHotelCodeCache.set(channexPropertyId, defaultHotel.id);
                 return defaultHotel.id;
             }
 
@@ -309,7 +337,19 @@ export class ChannexSyncService {
         // 1. GHOST BOOKING CLEANUP & CANCELLATION RETENTION (Certification Stage 5B & Audit Requirement)
         const affectedDates = new Set<string>();
         try {
-            const existingRevenueSnap = await adminDb.collection(`hotels/${hotelCode}/daily_revenue`).get();
+            // Bound search window around arrival/departure date (-30 to +30 days) to avoid scanning entire multi-year collection
+            const startWindow = new Date(arrivalDate || new Date().toISOString().split("T")[0]);
+            startWindow.setDate(startWindow.getDate() - 30);
+            const startStr = startWindow.toISOString().split("T")[0];
+
+            const endWindow = new Date(departureDate || arrivalDate || new Date().toISOString().split("T")[0]);
+            endWindow.setDate(endWindow.getDate() + 30);
+            const endStr = endWindow.toISOString().split("T")[0];
+
+            const existingRevenueSnap = await adminDb.collection(`hotels/${hotelCode}/daily_revenue`)
+                .where("date", ">=", startStr)
+                .where("date", "<=", endStr)
+                .get();
             for (const doc of existingRevenueSnap.docs) {
                 const dayData = doc.data();
                 const entries = dayData.entries || [];
@@ -379,11 +419,14 @@ export class ChannexSyncService {
         let primaryRoomTypeName = "Standard Room";
         let primaryRoomNumber = "AUTO";
 
-        // Fetch rate plans and ARI overrides to enforce Stop Sell validation
+        // Fetch rate plans and ARI overrides to enforce Stop Sell validation (bounded to stay dates)
         const ratePlansSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
         const hotelRatePlans = ratePlansSnap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
 
-        const overridesSnap = await adminDb.collection(`hotels/${hotelCode}/ari_overrides`).get();
+        const overridesSnap = await adminDb.collection(`hotels/${hotelCode}/ari_overrides`)
+            .where("date", ">=", arrivalDate)
+            .where("date", "<=", departureDate)
+            .get();
         const ariOverridesMap: Record<string, any> = {};
         overridesSnap.docs.forEach((d: any) => {
             const data = d.data();

@@ -18,13 +18,17 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 // Initialize Firestore with IndexedDB multi-tab local caching for ultra-low cost reads
 let db: ReturnType<typeof getFirestore>;
-try {
-  db = initializeFirestore(app, {
-    localCache: persistentLocalCache({
-      tabManager: persistentMultipleTabManager(),
-    }),
-  });
-} catch {
+if (typeof window !== "undefined") {
+  try {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+    });
+  } catch {
+    db = getFirestore(app);
+  }
+} else {
   db = getFirestore(app);
 }
 

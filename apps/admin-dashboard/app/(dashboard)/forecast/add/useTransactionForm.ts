@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { collection, getDocs, doc, updateDoc, getDoc, arrayUnion, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, getDoc, arrayUnion, setDoc, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { toast } from "sonner";
@@ -312,16 +312,34 @@ export const useTransactionForm = () => {
                     });
                 }
 
-                const bSnap = await getDocs(getHotelCollection(db, "daily_revenue", activeHotelCode));
+                // Bound query window around selected date (-15 days to +45 days) to avoid downloading entire multi-year database
+                const baseD = new Date(selectedDate || new Date().toISOString().split("T")[0]);
+                const startBound = new Date(baseD);
+                startBound.setDate(startBound.getDate() - 15);
+                const minDateStr = startBound.toISOString().split("T")[0];
+
+                const endBound = new Date(baseD);
+                endBound.setDate(endBound.getDate() + 45);
+                const maxDateStr = endBound.toISOString().split("T")[0];
+
+                const bSnap = await getDocs(query(
+                    getHotelCollection(db, "daily_revenue", activeHotelCode),
+                    where("date", ">=", minDateStr),
+                    where("date", "<=", maxDateStr)
+                ));
                 const allBookings = bSnap.docs.flatMap(d => d.data().entries || []);
                 const uniqueBookings = allBookings.filter((e: any, idx: number, self: any[]) => 
                     self.findIndex(t => t.timestamp === e.timestamp) === idx
                 );
                 setOccupancy(uniqueBookings);
 
-                // Fetch ARI Overrides for Stop Sell validation
+                // Fetch ARI Overrides bounded to the same window for Stop Sell validation
                 try {
-                    const ovSnap = await getDocs(getHotelCollection(db, "ari_overrides", activeHotelCode));
+                    const ovSnap = await getDocs(query(
+                        getHotelCollection(db, "ari_overrides", activeHotelCode),
+                        where("date", ">=", minDateStr),
+                        where("date", "<=", maxDateStr)
+                    ));
                     const ovMap: Record<string, any> = {};
                     ovSnap.docs.forEach(d => {
                         const data = d.data();

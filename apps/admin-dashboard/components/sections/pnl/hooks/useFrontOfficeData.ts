@@ -23,6 +23,14 @@ interface TrendCacheItem {
 const globalTrendCache: Record<string, TrendCacheItem> = {};
 const TREND_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
+// In-memory cache for period transactions (daily_revenue)
+interface PeriodFOCacheItem {
+    timestamp: number;
+    transactions: ExtendedTransaction[];
+}
+const globalPeriodFOCache: Record<string, PeriodFOCacheItem> = {};
+const PERIOD_FO_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
 export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly") => {
     const [loadingFO, setLoadingFO] = useState(false);
     const [rawTransactions, setRawTransactions] = useState<ExtendedTransaction[]>([]);
@@ -44,10 +52,20 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
                 endStr = `${y}-12-31`;
             }
 
-            // Fetch transactions for the current period
-            const q = query(getHotelCollection(db, "daily_revenue"), where("date", ">=", startStr), where("date", "<=", endStr));
-            const querySnapshot = await getDocs(q);
-            const transactions: ExtendedTransaction[] = [];
+            const hotelCode = typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") || "default" : "default";
+            const periodKey = `${hotelCode}_${viewMode}_${startStr}_${endStr}`;
+            const cachedPeriod = globalPeriodFOCache[periodKey];
+            const now = Date.now();
+
+            let transactions: ExtendedTransaction[] = [];
+            if (cachedPeriod && now - cachedPeriod.timestamp < PERIOD_FO_CACHE_TTL) {
+                transactions = [...cachedPeriod.transactions];
+                setRawTransactions(transactions);
+            } else {
+                // Fetch transactions for the current period
+                const q = query(getHotelCollection(db, "daily_revenue"), where("date", ">=", startStr), where("date", "<=", endStr));
+                const querySnapshot = await getDocs(q);
+
             querySnapshot.forEach((docSnap) => {
                 const data = docSnap.data();
                 const hotelId = data.hotelId || "";
@@ -114,19 +132,25 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
                     });
                 });
             });
+
+            globalPeriodFOCache[periodKey] = {
+                timestamp: Date.now(),
+                transactions
+            };
             setRawTransactions(transactions);
+        }
 
             // Fetch all-time transactions for Trend Data (using cache if fresh)
             const currentYear = month.split('-')[0];
             const cacheKey = (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") || "default" : "default") + "_" + currentYear;
             const cached = globalTrendCache[cacheKey];
-            const now = Date.now();
+            const nowTrend = Date.now();
 
             let monthlyBuckets = Array(12).fill(0);
             let yearlyBuckets: Record<number, number> = {};
             YEARS.forEach(yr => yearlyBuckets[yr] = 0);
 
-            if (cached && (now - cached.timestamp < TREND_CACHE_TTL)) {
+            if (cached && (nowTrend - cached.timestamp < TREND_CACHE_TTL)) {
                 monthlyBuckets = [...cached.monthlyBuckets];
                 yearlyBuckets = { ...cached.yearlyBuckets };
             } else {

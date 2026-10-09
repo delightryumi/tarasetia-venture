@@ -172,9 +172,9 @@ export default function KitchenDisplaySystem() {
           setIsLoading(false);
         });
 
-        // 3. Listen to cashier paid orders (pos_orders)
+        // 3. Listen to recent cashier paid orders (pos_orders)
         const completedCollection = getHotelCollection(db, 'pos_orders', activeCode);
-        const completedQuery = query(completedCollection, orderBy('timestamp', 'desc'), limit(50));
+        const completedQuery = query(completedCollection, orderBy('timestamp', 'desc'), limit(15));
         unsubCompleted = onSnapshot(completedQuery, (snap) => {
           const orders = snap.docs.map(d => {
             const data = d.data();
@@ -195,9 +195,9 @@ export default function KitchenDisplaySystem() {
           console.error('POS completed orders listener error:', err);
         });
 
-        // 4. Hotel Doc: Sound & Billing Modules
+        // 4. Hotel Doc: Sound & Billing Modules (fetch once)
         const hotelRef = doc(db, 'hotels', activeCode);
-        unsubHotelConfig = onSnapshot(hotelRef, (snap) => {
+        getDoc(hotelRef).then((snap) => {
           if (snap.exists()) {
             const data = snap.data();
             setHotelDocData(data);
@@ -213,8 +213,8 @@ export default function KitchenDisplaySystem() {
             }
           }
           setIsAddonCheckDone(true);
-        }, (err) => {
-          console.error('Error listening to hotel doc in POS KDS:', err);
+        }).catch((err) => {
+          console.error('Error fetching hotel doc in POS KDS:', err);
           setIsAddonCheckDone(true);
         });
 

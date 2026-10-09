@@ -20,23 +20,42 @@ interface PackageItem {
     imageUrl: string;
 }
 
+// In-memory cache for packages page
+let packagesPageCache: { data: PackageItem[]; timestamp: number } | null = null;
+const PACKAGES_PAGE_CACHE_TTL = 15 * 60 * 1000;
+
 export default function PackagesPage() {
-    const [packages, setPackages] = useState<PackageItem[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [packages, setPackages] = useState<PackageItem[]>(() => {
+        if (packagesPageCache && Date.now() - packagesPageCache.timestamp < PACKAGES_PAGE_CACHE_TTL) {
+            return packagesPageCache.data;
+        }
+        return [];
+    });
+    const [loading, setLoading] = useState(() => {
+        return !(packagesPageCache && Date.now() - packagesPageCache.timestamp < PACKAGES_PAGE_CACHE_TTL);
+    });
 
     useEffect(() => {
+        if (packagesPageCache && Date.now() - packagesPageCache.timestamp < PACKAGES_PAGE_CACHE_TTL) {
+            setPackages(packagesPageCache.data);
+            setLoading(false);
+            return;
+        }
+
         const fetchPackages = async () => {
             try {
                 const q = query(getHotelCollection(db, "packages"), orderBy("createdAt", "desc"));
                 const snap = await getDocs(q);
-                setPackages(snap.docs.map(d => ({ 
+                const data = snap.docs.map(d => ({ 
                     id: d.id, 
                     name: d.data().name,
                     category: d.data().packageType || "Package",
                     description: d.data().description,
                     price: d.data().price,
                     imageUrl: d.data().imageUrl
-                })) as PackageItem[]);
+                })) as PackageItem[];
+                packagesPageCache = { data, timestamp: Date.now() };
+                setPackages(data);
             } catch (err) {
                 console.error("Error fetching packages:", err);
             } finally {

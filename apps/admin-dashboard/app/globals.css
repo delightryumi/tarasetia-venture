@@ -501,16 +501,27 @@ textarea {
 .dark .input-clean,
 .dark .delete-modal-input,
 .dark .datepicker-btn-inactive:hover,
-.dark input[type="text"],
+.dark input[type="text"]:not([class*="textInput"]),
 .dark input[type="number"],
-.dark input[type="email"],
-.dark input[type="password"],
+.dark input[type="email"]:not([class*="textInput"]),
+.dark input[type="password"]:not([class*="textInput"]),
 .dark input[type="date"],
 .dark select,
 .dark textarea {
   background-color: #1e1e1e !important;
   color: #e4e4e7 !important;
   color-scheme: dark !important;
+}
+
+/* Login screen inputs must ALWAYS remain crisp, clean light theme with transparent input background */
+[class*="loginContainer"] input,
+[class*="cleanCard"] input,
+[class*="inputContainer"] input,
+[class*="textInput"] {
+  background-color: transparent !important;
+  background: transparent !important;
+  color: #0f172a !important;
+  color-scheme: light !important;
 }
 
 /* Force calendar/date inputs in light-themed containers (Overview, Forecast, Invoice cards) to render with light background & color scheme */

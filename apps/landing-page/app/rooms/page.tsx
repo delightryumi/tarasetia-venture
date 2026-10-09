@@ -45,16 +45,35 @@ function getAmenityIcon(amenity: string) {
     return Check;
 }
 
+// In-memory cache for rooms page
+let roomsPageCache: { data: RoomType[]; timestamp: number } | null = null;
+const ROOMS_PAGE_CACHE_TTL = 15 * 60 * 1000;
+
 export default function RoomsPage() {
-    const [rooms, setRooms] = useState<RoomType[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [rooms, setRooms] = useState<RoomType[]>(() => {
+        if (roomsPageCache && Date.now() - roomsPageCache.timestamp < ROOMS_PAGE_CACHE_TTL) {
+            return roomsPageCache.data;
+        }
+        return [];
+    });
+    const [loading, setLoading] = useState(() => {
+        return !(roomsPageCache && Date.now() - roomsPageCache.timestamp < ROOMS_PAGE_CACHE_TTL);
+    });
 
     useEffect(() => {
+        if (roomsPageCache && Date.now() - roomsPageCache.timestamp < ROOMS_PAGE_CACHE_TTL) {
+            setRooms(roomsPageCache.data);
+            setLoading(false);
+            return;
+        }
+
         const fetchRooms = async () => {
             try {
                 const q = query(getHotelCollection(db, "roomTypes"), orderBy("name"));
                 const snap = await getDocs(q);
-                setRooms(snap.docs.map(d => ({ id: d.id, ...d.data() })) as RoomType[]);
+                const data = snap.docs.map(d => ({ id: d.id, ...d.data() })) as RoomType[];
+                roomsPageCache = { data, timestamp: Date.now() };
+                setRooms(data);
             } catch (err) {
                 console.error("Error fetching rooms:", err);
             } finally {

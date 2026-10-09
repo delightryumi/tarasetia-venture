@@ -348,8 +348,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       }
     };
 
-    // 1. Listen to held orders (unpaid / dine-in / self-orders) with safe limit
-    const qHeld = query(collection(db, 'hotels', hotelCode, 'pos_held_orders'), limit(30));
+    // 1. Listen to held orders (unpaid / dine-in / self-orders) with tight limit
+    const qHeld = query(collection(db, 'hotels', hotelCode, 'pos_held_orders'), limit(10));
     let isInitialHeld = true;
     const unsubHeld = onSnapshot(qHeld, (snapshot) => {
       const orders = snapshot.docs.map(doc => ({
@@ -394,8 +394,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       console.error('Firestore pos_held_orders listener error in layout:', err);
     });
 
-    // 2. Listen to completed/paid orders (pos_orders) so pay-as-you-go or counter payments also sound alarm
-    const qPaid = query(collection(db, 'hotels', hotelCode, 'pos_orders'), orderBy('timestamp', 'desc'), limit(15));
+    // 2. Listen to completed/paid orders (limit 1) to sound alarm on new transactions without downloading historical batch
+    const qPaid = query(collection(db, 'hotels', hotelCode, 'pos_orders'), orderBy('timestamp', 'desc'), limit(1));
     let isInitialPaid = true;
     const unsubPaid = onSnapshot(qPaid, (snapshot) => {
       if (isInitialPaid) {

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, getDoc, getDocs, setDoc, addDoc } from 'firebase/firestore';
 import { AnimatePresence } from 'framer-motion';
 import { Utensils } from 'lucide-react';
 
@@ -122,30 +122,30 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
       }
     }
 
-    // 3. POS Settings
+    // 3. POS Settings (fetch once on guest mobile session)
     const configRef = doc(db, 'hotels', hotelCode, 'settings', 'pos_self_order');
-    const unsubConfig = onSnapshot(configRef, (snap) => {
+    getDoc(configRef).then((snap) => {
       if (snap.exists()) {
         const data = snap.data();
         if (data.promoBanners) setPromoBanners(data.promoBanners);
         if (data.shopLogo || data.logo) setShopLogo(data.shopLogo || data.logo);
         if (data.qrisUrl) setQrisImage(data.qrisUrl);
       }
-    });
+    }).catch((err) => console.warn('Could not read pos_self_order config:', err));
 
     const posConfigRef = doc(db, 'hotels', hotelCode, 'settings', 'pos');
-    const unsubPos = onSnapshot(posConfigRef, (snap) => {
+    getDoc(posConfigRef).then((snap) => {
       if (snap.exists()) {
         const data = snap.data();
         if (data.shopLogo || data.logo) setShopLogo(data.shopLogo || data.logo);
       }
-    });
+    }).catch((err) => console.warn('Could not read pos config:', err));
 
-    // 4. Products & Categories
+    // 4. Products & Categories (fetch once on guest mobile session)
     const menuRef = collection(db, 'hotels', hotelCode, 'pos_products');
     const catRef = collection(db, 'hotels', hotelCode, 'pos_categories');
 
-    const unsubCat = onSnapshot(catRef, (snap) => {
+    getDocs(catRef).then((snap) => {
       const cats = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
         .filter((c: any) => {
@@ -153,9 +153,9 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
           return catName !== 'ADD BREAKFAST' && !catName.includes('BREAKFAST');
         });
       setCategories(cats);
-    });
+    }).catch((err) => console.warn('Could not read pos categories:', err));
 
-    const unsubMenu = onSnapshot(menuRef, (snap) => {
+    getDocs(menuRef).then((snap) => {
       const prods: Product[] = snap.docs
         .map((d) => {
           const data = d.data();
@@ -182,14 +182,7 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
           return catName !== 'ADD BREAKFAST' && !catName.includes('BREAKFAST') && !prodName.includes('ADD BREAKFAST');
         });
       setProducts(prods);
-    });
-
-    return () => {
-      unsubConfig();
-      unsubPos();
-      unsubCat();
-      unsubMenu();
-    };
+    }).catch((err) => console.warn('Could not read pos products:', err));
   }, [hotelCode]);
 
   // Handlers

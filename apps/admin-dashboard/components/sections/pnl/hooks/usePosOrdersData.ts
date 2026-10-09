@@ -30,6 +30,18 @@ const isBeverageItem = (target: string, cat: string, name: string) => {
   return drinkKeywords.some(kw => n.includes(kw));
 };
 
+interface PosCatalogCache {
+  timestamp: number;
+  serviceRate: number;
+  taxRateIndividual: number;
+  lostBreakageRate: number;
+  taxRate: number;
+  categoryPnlMap: Record<string, string>;
+  productMap: Record<string, { buyPrice: number; sellPrice: number; category: string; name?: string }>;
+}
+const posCatalogCacheMap: Record<string, PosCatalogCache> = {};
+const POS_CATALOG_TTL = 15 * 60 * 1000; // 15 minutes
+
 export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") => {
     const [loadingPOS, setLoadingPOS] = useState(false);
 
@@ -102,39 +114,62 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
               } catch (e) {}
             }
 
-            // 1. Fetch settings, categories, and products
-            const posSettingsRef = doc(getHotelCollection(db, 'settings', hotelCode), 'pos');
-            const posSettingsSnap = await getDoc(posSettingsRef);
+            // 1. Fetch settings, categories, and products (from memory cache if fresh)
             let serviceRate = 0;
             let taxRateIndividual = 10;
             let lostBreakageRate = 0;
             let taxRate = 10;
-            if (posSettingsSnap.exists()) {
-              const sData = posSettingsSnap.data();
-              serviceRate = Number(sData.service || 0);
-              taxRateIndividual = Number(sData.tax || 0);
-              lostBreakageRate = Number(sData.lostBreakage || 0);
-              taxRate = serviceRate + taxRateIndividual + lostBreakageRate;
-            }
-            
-            const catSnap = await getDocs(getHotelCollection(db, 'pos_categories', hotelCode));
-            const categoryPnlMap: Record<string, string> = {};
-            catSnap.forEach((doc) => {
-              const name = (doc.data().name || '').toLowerCase().trim();
-              const pnlTarget = doc.data().pnlTarget || (name === 'food' ? 'FOOD' : name === 'beverage' ? 'BEVERAGE' : name === 'banquet' ? 'BANQUET' : 'FOOD');
-              categoryPnlMap[name] = pnlTarget;
-            });
+            let categoryPnlMap: Record<string, string> = {};
+            let productMap: Record<string, { buyPrice: number; sellPrice: number; category: string; name?: string }> = {};
 
-            const prodSnap = await getDocs(getHotelCollection(db, 'pos_products', hotelCode));
-            const productMap: Record<string, { buyPrice: number; sellPrice: number; category: string; name?: string }> = {};
-            prodSnap.forEach((d) => {
-              productMap[d.id] = { 
-                buyPrice: Number(d.data().buyPrice || 0), 
-                sellPrice: Number(d.data().price || 0),
-                category: (d.data().category || "").toLowerCase(),
-                name: d.data().name || d.data().Nama || ""
+            const cachedCat = posCatalogCacheMap[hotelCode];
+            const now = Date.now();
+
+            if (cachedCat && now - cachedCat.timestamp < POS_CATALOG_TTL) {
+              serviceRate = cachedCat.serviceRate;
+              taxRateIndividual = cachedCat.taxRateIndividual;
+              lostBreakageRate = cachedCat.lostBreakageRate;
+              taxRate = cachedCat.taxRate;
+              categoryPnlMap = cachedCat.categoryPnlMap;
+              productMap = cachedCat.productMap;
+            } else {
+              const posSettingsRef = doc(getHotelCollection(db, 'settings', hotelCode), 'pos');
+              const posSettingsSnap = await getDoc(posSettingsRef);
+              if (posSettingsSnap.exists()) {
+                const sData = posSettingsSnap.data();
+                serviceRate = Number(sData.service || 0);
+                taxRateIndividual = Number(sData.tax || 0);
+                lostBreakageRate = Number(sData.lostBreakage || 0);
+                taxRate = serviceRate + taxRateIndividual + lostBreakageRate;
+              }
+              
+              const catSnap = await getDocs(getHotelCollection(db, 'pos_categories', hotelCode));
+              catSnap.forEach((doc) => {
+                const name = (doc.data().name || '').toLowerCase().trim();
+                const pnlTarget = doc.data().pnlTarget || (name === 'food' ? 'FOOD' : name === 'beverage' ? 'BEVERAGE' : name === 'banquet' ? 'BANQUET' : 'FOOD');
+                categoryPnlMap[name] = pnlTarget;
+              });
+
+              const prodSnap = await getDocs(getHotelCollection(db, 'pos_products', hotelCode));
+              prodSnap.forEach((d) => {
+                productMap[d.id] = { 
+                  buyPrice: Number(d.data().buyPrice || 0), 
+                  sellPrice: Number(d.data().price || 0),
+                  category: (d.data().category || "").toLowerCase(),
+                  name: d.data().name || d.data().Nama || ""
+                };
+              });
+
+              posCatalogCacheMap[hotelCode] = {
+                timestamp: now,
+                serviceRate,
+                taxRateIndividual,
+                lostBreakageRate,
+                taxRate,
+                categoryPnlMap,
+                productMap
               };
-            });
+            }
 
             // 2. Fetch pos_orders bounded to selected month/period
             const [sY, sM, sD] = startStr.split('-').map(Number);

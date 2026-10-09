@@ -116,9 +116,9 @@ function LiveTableGrid() {
     let unsubPaid: any;
     const fetchConfigAndListen = async () => {
       try {
-        // 1. Listen to pos settings in real-time
+        // 1. Fetch POS settings once (tables setup is static configuration)
         const posRef = doc(db, 'hotels', hotelCode, 'settings', 'pos');
-        unsubPos = onSnapshot(posRef, (posSnap) => {
+        getDoc(posRef).then((posSnap) => {
           let parsedTables: string[] = [];
           if (posSnap.exists()) {
             const data = posSnap.data();
@@ -138,10 +138,10 @@ function LiveTableGrid() {
             for (let i = 1; i <= 10; i++) parsedTables.push(`Meja ${i}`);
           }
           setTablesList(parsedTables);
-        });
+        }).catch((err) => console.warn('Could not read pos settings in LiveTableGrid:', err));
 
         // 2. Listen in real-time to held orders (unpaid / dine-in / QR self-order)
-        const qHeld = query(collection(db, 'hotels', hotelCode, 'pos_held_orders'), limit(50));
+        const qHeld = query(collection(db, 'hotels', hotelCode, 'pos_held_orders'), limit(25));
         unsubHeld = onSnapshot(qHeld, (snap) => {
           const orders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           setHeldOrders(orders);
@@ -151,8 +151,8 @@ function LiveTableGrid() {
           setIsLoading(false);
         });
 
-        // 3. Listen in real-time to completed/paid orders (pay-as-you-go or cashier paid)
-        const qPaid = query(collection(db, 'hotels', hotelCode, 'pos_orders'), orderBy('timestamp', 'desc'), limit(30));
+        // 3. Listen in real-time to recent completed/paid orders
+        const qPaid = query(collection(db, 'hotels', hotelCode, 'pos_orders'), orderBy('timestamp', 'desc'), limit(15));
         unsubPaid = onSnapshot(qPaid, (snap) => {
           const orders = snap.docs.map(doc => ({
             id: doc.id,

@@ -25,9 +25,20 @@ interface GalleryImage {
 
 const CATEGORIES = ["All", "Sanctuary", "Culinary", "Lifestyle", "Adventure"];
 
+// In-memory cache for gallery page
+let galleryPageCache: { data: GalleryImage[]; timestamp: number } | null = null;
+const GALLERY_PAGE_CACHE_TTL = 15 * 60 * 1000;
+
 export default function GalleryPage() {
-    const [images, setImages] = useState<GalleryImage[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [images, setImages] = useState<GalleryImage[]>(() => {
+        if (galleryPageCache && Date.now() - galleryPageCache.timestamp < GALLERY_PAGE_CACHE_TTL) {
+            return galleryPageCache.data;
+        }
+        return [];
+    });
+    const [loading, setLoading] = useState(() => {
+        return !(galleryPageCache && Date.now() - galleryPageCache.timestamp < GALLERY_PAGE_CACHE_TTL);
+    });
     const [activeCategory, setActiveCategory] = useState("All");
     const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
     const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
@@ -39,6 +50,12 @@ export default function GalleryPage() {
 
     // Fetch Images
     useEffect(() => {
+        if (galleryPageCache && Date.now() - galleryPageCache.timestamp < GALLERY_PAGE_CACHE_TTL) {
+            setImages(galleryPageCache.data);
+            setLoading(false);
+            return;
+        }
+
         const fetchGallery = async () => {
             try {
                 const q = query(getHotelCollection(db, "gallery"), orderBy("createdAt", "desc"));
@@ -50,6 +67,7 @@ export default function GalleryPage() {
                     category: d.data().category || CATEGORIES[Math.floor(Math.random() * (CATEGORIES.length - 1)) + 1],
                     title: d.data().title || "Untitled"
                 })) as GalleryImage[];
+                galleryPageCache = { data, timestamp: Date.now() };
                 setImages(data);
             } catch (err) {
                 console.error("Error fetching gallery:", err);

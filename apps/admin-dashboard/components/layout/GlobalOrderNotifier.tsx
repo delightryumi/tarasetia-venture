@@ -80,8 +80,8 @@ export function GlobalOrderNotifier({ hotelCode, posSoundUrl, onBadgeChange }: G
   useEffect(() => {
     if (!hotelCode || hotelCode === '0') return;
 
-    // Listen with tight query limit to prevent massive document downloads
-    const colHeldRef = query(collection(db, 'hotels', hotelCode, 'pos_held_orders'), limit(10));
+    // Listen with tight query limit (limit 1) to eliminate initial document read waste since initial snapshot is discarded
+    const colHeldRef = query(collection(db, 'hotels', hotelCode, 'pos_held_orders'), limit(1));
     let isInitialHeld = true;
 
     const unsubHeld = onSnapshot(colHeldRef, (snap: QuerySnapshot<DocumentData>) => {
@@ -142,7 +142,7 @@ export function GlobalOrderNotifier({ hotelCode, posSoundUrl, onBadgeChange }: G
       console.error('[GlobalOrderNotifier] Firestore held error:', err);
     });
 
-    const colPaidRef = query(collection(db, 'hotels', hotelCode, 'pos_orders'), orderBy('timestamp', 'desc'), limit(10));
+    const colPaidRef = query(collection(db, 'hotels', hotelCode, 'pos_orders'), orderBy('timestamp', 'desc'), limit(1));
     let isInitialPaid = true;
 
     const unsubPaid = onSnapshot(colPaidRef, (snap: QuerySnapshot<DocumentData>) => {
