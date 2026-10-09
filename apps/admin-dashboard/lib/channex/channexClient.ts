@@ -441,6 +441,10 @@ export class ChannexClient {
         return this.request<{ data: any[] }>(`/tasks?filter[property_id]=${propertyId}&order_by=inserted_at&order_direction=desc&limit=25`, { method: "GET" }, customApiKey);
     }
 
+    async getTaskById(taskId: string, customApiKey?: string): Promise<any> {
+        return this.request<{ data: any }>(`/tasks/${taskId}`, { method: "GET" }, customApiKey);
+    }
+
     async getChannelLogs(propertyId: string, customApiKey?: string): Promise<any> {
         return this.request<{ data: any[] }>(`/channel_actions_log?filter[property_id]=${propertyId}&limit=25`, { method: "GET" }, customApiKey);
     }

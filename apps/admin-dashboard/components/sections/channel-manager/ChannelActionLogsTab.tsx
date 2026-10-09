@@ -8,7 +8,16 @@ import {
     ChevronRight, 
     ArrowUpDown,
     Trash2,
-    ShieldCheck
+    ShieldCheck,
+    Copy,
+    Check,
+    Code2,
+    Layers,
+    GitCompare,
+    Globe,
+    CheckCircle2,
+    AlertCircle,
+    Clock
 } from "lucide-react";
 import { toast } from "sonner";
 import { ChannelNotificationWidget } from "./ChannelNotificationWidget";
@@ -32,7 +41,11 @@ export interface ChannelTaskLog {
     message?: string;
     diff?: any;
     details?: any;
+    payload?: any;
+    response?: any;
     ota_responses?: any[];
+    timeline?: any[];
+    is_live_synced?: boolean;
 }
 
 interface Props {
@@ -56,8 +69,42 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
     const [page, setPage] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(6);
 
-    // Drawer modal state
+    // Drawer modal state & tabs
     const [selectedEvent, setSelectedEvent] = useState<ChannelTaskLog | null>(null);
+    const [activeDetailTab, setActiveDetailTab] = useState<"diff" | "payload" | "ota" | "response">("diff");
+    const [fetchingLiveTask, setFetchingLiveTask] = useState<boolean>(false);
+    const [copiedField, setCopiedField] = useState<string | null>(null);
+
+    const handleCopy = (text: string, label: string) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        setCopiedField(label);
+        toast.success(`${label} copied to clipboard!`);
+        setTimeout(() => setCopiedField(null), 2000);
+    };
+
+    const handleFetchLiveTask = async (taskIdToFetch: string) => {
+        if (!taskIdToFetch || !hotelCode) return;
+        setFetchingLiveTask(true);
+        try {
+            const res = await fetch(`/api/channex/tasks?hotelCode=${encodeURIComponent(hotelCode)}&taskId=${encodeURIComponent(taskIdToFetch)}`);
+            const data = await res.json();
+            if (data.success && data.task) {
+                setSelectedEvent(prev => prev ? ({
+                    ...prev,
+                    ...data.task,
+                    is_live_synced: true
+                }) : null);
+                toast.success("Live task data synced from Channex API");
+            } else {
+                toast.error(data.error || "Could not retrieve live task from Channex");
+            }
+        } catch (err: any) {
+            toast.error(`Sync error: ${err.message}`);
+        } finally {
+            setFetchingLiveTask(false);
+        }
+    };
 
     const fetchLogs = async () => {
         if (!hotelCode) return;
@@ -483,6 +530,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                     <ArrowUpDown size={11} color="#94a3b8" />
                                 </div>
                             </th>
+                            <th className={styles.th}>Task ID</th>
                             <th className={styles.th}>Channel</th>
                             <th className={styles.th}>User</th>
                             <th className={styles.th}>Started At</th>
@@ -508,6 +556,31 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                             />
                                             <span>{item.action}</span>
                                         </div>
+                                    </td>
+                                    <td className={styles.td}>
+                                        {(() => {
+                                            const displayTaskId = item.task_id || (item.task_ids && item.task_ids[0]) || item.id;
+                                            return (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleCopy(displayTaskId, `task-${item.id}`);
+                                                    }}
+                                                    className={styles.taskIdChip}
+                                                    title={`Click to copy Task ID: ${displayTaskId}`}
+                                                >
+                                                    <span className={styles.taskIdMono}>
+                                                        {displayTaskId.length > 13 ? `${displayTaskId.slice(0, 8)}...` : displayTaskId}
+                                                    </span>
+                                                    {copiedField === `task-${item.id}` ? (
+                                                        <Check size={11} color="#16a34a" />
+                                                    ) : (
+                                                        <Copy size={11} className={styles.taskIdCopyIcon} />
+                                                    )}
+                                                </button>
+                                            );
+                                        })()}
                                     </td>
                                     <td className={styles.td}>
                                         <span style={{ fontWeight: 600, color: "#334155" }}>
@@ -544,7 +617,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
 
                         {paginatedLogs.length === 0 && (
                             <tr>
-                                <td colSpan={6} style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
+                                <td colSpan={7} style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
                                     {loading ? "Loading channel events..." : "No channel events found matching the selected filter."}
                                 </td>
                             </tr>
@@ -618,6 +691,18 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                 </button>
                                 <span>Channel Action View</span>
                             </div>
+                            {(selectedEvent.task_id || selectedEvent.id) && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleFetchLiveTask(selectedEvent.task_id || selectedEvent.id)}
+                                    disabled={fetchingLiveTask}
+                                    className={styles.liveSyncBtn}
+                                    title="Sync live status and OTA responses directly from Channex API"
+                                >
+                                    <RefreshCw size={12} className={fetchingLiveTask ? "animate-spin" : ""} />
+                                    <span>{fetchingLiveTask ? "Syncing Channex..." : "Sync Live Status"}</span>
+                                </button>
+                            )}
                         </div>
 
                         <div className={styles.modalBody}>
@@ -637,10 +722,15 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                 </div>
                                 <div className={styles.metaRow}>
                                     <span className={styles.metaLabel}>Result:</span>
-                                    <span className={styles.metaValue}>
+                                    <span className={styles.metaValue} style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
                                         <span className={selectedEvent.result.toLowerCase() === "success" ? styles.badgeSuccessOutline : styles.badgeErrorOutline}>
                                             {selectedEvent.result}
                                         </span>
+                                        {selectedEvent.is_live_synced && (
+                                            <span style={{ fontSize: "11px", color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
+                                                ✓ Channex API Live
+                                            </span>
+                                        )}
                                     </span>
                                 </div>
                                 <div className={styles.metaRow}>
@@ -655,34 +745,32 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                         {selectedEvent.user}
                                     </span>
                                 </div>
-                                {(selectedEvent.task_id || (selectedEvent.task_ids && selectedEvent.task_ids.length > 0)) && (
-                                    <div className={styles.metaRow}>
-                                        <span className={styles.metaLabel}>Channex Task ID:</span>
-                                        <span className={styles.metaValue} style={{ fontFamily: "var(--font-mono-jb, monospace)", color: "#2563eb", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "8px" }}>
-                                            <span>{selectedEvent.task_id || selectedEvent.task_ids?.join(", ")}</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    const val = selectedEvent.task_id || selectedEvent.task_ids?.join(", ") || "";
-                                                    navigator.clipboard.writeText(val);
-                                                    toast.success("Channex Task ID copied to clipboard!");
-                                                }}
-                                                style={{
-                                                    border: "1px solid #cbd5e1",
-                                                    borderRadius: "4px",
-                                                    padding: "2px 8px",
-                                                    fontSize: "11px",
-                                                    cursor: "pointer",
-                                                    backgroundColor: "#f1f5f9",
-                                                    color: "#0f172a"
-                                                }}
-                                                title="Copy for PMS Certification Form"
-                                            >
-                                                Copy
-                                            </button>
-                                        </span>
-                                    </div>
-                                )}
+                                <div className={styles.metaRow}>
+                                    <span className={styles.metaLabel}>Channex Task ID:</span>
+                                    <span className={styles.metaValue} style={{ fontFamily: "var(--font-mono-jb, monospace)", color: "#2563eb", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                        <span>{selectedEvent.task_id || (selectedEvent.task_ids && selectedEvent.task_ids.join(", ")) || selectedEvent.id}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCopy(selectedEvent.task_id || (selectedEvent.task_ids && selectedEvent.task_ids[0]) || selectedEvent.id, "Task ID")}
+                                            style={{
+                                                border: "1px solid #cbd5e1",
+                                                borderRadius: "4px",
+                                                padding: "2px 8px",
+                                                fontSize: "11px",
+                                                cursor: "pointer",
+                                                backgroundColor: "#f1f5f9",
+                                                color: "#0f172a",
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                gap: "4px"
+                                            }}
+                                            title="Copy for PMS Certification Form"
+                                        >
+                                            {copiedField === "Task ID" ? <Check size={11} color="#16a34a" /> : <Copy size={11} />}
+                                            <span>{copiedField === "Task ID" ? "Copied" : "Copy"}</span>
+                                        </button>
+                                    </span>
+                                </div>
                                 {selectedEvent.reason && (
                                     <div className={styles.metaRow}>
                                         <span className={styles.metaLabel}>Reason:</span>
@@ -693,15 +781,151 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                 )}
                             </div>
 
-                            {/* Diff / Payload Section (Matching Channex Diff View) */}
-                            <div>
-                                <h4 style={{ fontSize: "13px", fontWeight: 700, color: "#334155", margin: "0 0 8px" }}>
-                                    Payload &amp; Settings Trace:
-                                </h4>
-                                <div className={styles.diffViewer}>
-                                    {renderDiffLines(selectedEvent.diff, selectedEvent)}
-                                </div>
+                            {/* Detail Tabs Bar matching Channex Inspector */}
+                            <div className={styles.detailTabsRow}>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveDetailTab("diff")}
+                                    className={`${styles.detailTabBtn} ${activeDetailTab === "diff" ? styles.detailTabBtnActive : ""}`}
+                                >
+                                    <GitCompare size={13} />
+                                    <span>Changes &amp; Diff</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveDetailTab("payload")}
+                                    className={`${styles.detailTabBtn} ${activeDetailTab === "payload" ? styles.detailTabBtnActive : ""}`}
+                                >
+                                    <Code2 size={13} />
+                                    <span>Request Payload</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveDetailTab("ota")}
+                                    className={`${styles.detailTabBtn} ${activeDetailTab === "ota" ? styles.detailTabBtnActive : ""}`}
+                                >
+                                    <Globe size={13} />
+                                    <span>OTA Responses {selectedEvent.ota_responses?.length ? `(${selectedEvent.ota_responses.length})` : ""}</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveDetailTab("response")}
+                                    className={`${styles.detailTabBtn} ${activeDetailTab === "response" ? styles.detailTabBtnActive : ""}`}
+                                >
+                                    <Layers size={13} />
+                                    <span>Channex Response</span>
+                                </button>
                             </div>
+
+                            {/* Tab 1: Diff View */}
+                            {activeDetailTab === "diff" && (
+                                <div>
+                                    <div className={styles.diffViewer}>
+                                        {renderDiffLines(selectedEvent.diff, selectedEvent)}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Tab 2: Request Payload */}
+                            {activeDetailTab === "payload" && (
+                                <div>
+                                    <div className={styles.codeBoxHeader}>
+                                        <span>Request Body (JSON)</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCopy(
+                                                JSON.stringify(selectedEvent.payload || selectedEvent.diff || selectedEvent.details || { action: selectedEvent.action, task_id: selectedEvent.task_id || selectedEvent.id }, null, 2),
+                                                "Request Payload"
+                                            )}
+                                            className={styles.copyCodeBtn}
+                                        >
+                                            {copiedField === "Request Payload" ? <Check size={12} color="#16a34a" /> : <Copy size={12} />}
+                                            <span>{copiedField === "Request Payload" ? "Copied" : "Copy Payload"}</span>
+                                        </button>
+                                    </div>
+                                    <pre className={styles.jsonPre}>
+                                        {JSON.stringify(selectedEvent.payload || selectedEvent.diff || selectedEvent.details || { action: selectedEvent.action, task_id: selectedEvent.task_id || selectedEvent.id }, null, 2)}
+                                    </pre>
+                                </div>
+                            )}
+
+                            {/* Tab 3: OTA Responses */}
+                            {activeDetailTab === "ota" && (
+                                <div className={styles.otaGrid}>
+                                    {Array.isArray(selectedEvent.ota_responses) && selectedEvent.ota_responses.length > 0 ? (
+                                        selectedEvent.ota_responses.map((ota: any, idx: number) => {
+                                            const isOtaSuccess = ota.status?.toString().startsWith("2") || ota.result === "Success" || ota.status === "OK" || ota.success;
+                                            return (
+                                                <div key={idx} className={styles.otaCard}>
+                                                    <div className={styles.otaCardTop}>
+                                                        <div className={styles.otaChannelTitle}>
+                                                            <Globe size={14} color="#2563eb" />
+                                                            <span>{ota.channel_name || ota.channel || ota.ota || "Connected OTA Channel"}</span>
+                                                        </div>
+                                                        <span className={`${styles.otaStatusBadge} ${isOtaSuccess ? styles.otaStatusSuccess : styles.otaStatusFailed}`}>
+                                                            {isOtaSuccess ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                                                            <span>{ota.status_code || ota.status || (isOtaSuccess ? "200 OK" : "Failed")}</span>
+                                                        </span>
+                                                    </div>
+                                                    {ota.latency_ms && (
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "#64748b" }}>
+                                                            <Clock size={11} />
+                                                            <span>Latency: {ota.latency_ms} ms</span>
+                                                        </div>
+                                                    )}
+                                                    <div className={styles.otaDetailText}>
+                                                        {typeof ota.body === "string" 
+                                                            ? ota.body 
+                                                            : JSON.stringify(ota.body || ota.response || ota.message || ota, null, 2)}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <div style={{ padding: "30px 20px", textAlign: "center", background: "#f8fafc", borderRadius: "6px", border: "1px dashed #cbd5e1", color: "#64748b" }}>
+                                            <p style={{ margin: "0 0 6px", fontWeight: 600, fontSize: "13px" }}>No Direct OTA Acknowledgements</p>
+                                            <p style={{ margin: 0, fontSize: "11px" }}>
+                                                This task was processed directly by Channex or internal CRS dispatch without separate third-party OTA roundtrips.
+                                            </p>
+                                            {!selectedEvent.is_live_synced && (selectedEvent.task_id || selectedEvent.id) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleFetchLiveTask(selectedEvent.task_id || selectedEvent.id)}
+                                                    disabled={fetchingLiveTask}
+                                                    className={styles.liveSyncBtn}
+                                                    style={{ marginTop: "12px" }}
+                                                >
+                                                    <RefreshCw size={12} className={fetchingLiveTask ? "animate-spin" : ""} />
+                                                    <span>Fetch Live OTA Responses from Channex</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Tab 4: Channex API Response */}
+                            {activeDetailTab === "response" && (
+                                <div>
+                                    <div className={styles.codeBoxHeader}>
+                                        <span>Channex API Response (JSON)</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCopy(
+                                                JSON.stringify(selectedEvent.response || selectedEvent.details || { status: selectedEvent.status, result: selectedEvent.result }, null, 2),
+                                                "Channex Response"
+                                            )}
+                                            className={styles.copyCodeBtn}
+                                        >
+                                            {copiedField === "Channex Response" ? <Check size={12} color="#16a34a" /> : <Copy size={12} />}
+                                            <span>{copiedField === "Channex Response" ? "Copied" : "Copy Response"}</span>
+                                        </button>
+                                    </div>
+                                    <pre className={styles.jsonPre}>
+                                        {JSON.stringify(selectedEvent.response || selectedEvent.details || { status: selectedEvent.status, result: selectedEvent.result }, null, 2)}
+                                    </pre>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

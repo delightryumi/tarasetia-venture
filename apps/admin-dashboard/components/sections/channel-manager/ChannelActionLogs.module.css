@@ -527,3 +527,199 @@
     padding: 1px 8px 1px 4px;
 }
 
+/* ── Task ID Chip in Table ── */
+.taskIdChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.taskIdChip:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.taskIdMono {
+    font-family: var(--font-mono-jb, monospace);
+    font-size: 11px;
+    color: #2563eb;
+    font-weight: 600;
+}
+
+.taskIdCopyIcon {
+    color: #64748b;
+}
+
+/* ── Live Sync Button in Drawer ── */
+.liveSyncBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #1d4ed8;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.liveSyncBtn:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+
+/* ── Detail Tabs in Drawer ── */
+.detailTabsRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 12px;
+    padding-bottom: 2px;
+}
+
+.detailTabBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.detailTabBtn:hover {
+    color: #0f172a;
+}
+
+.detailTabBtnActive {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+}
+
+/* ── Code Box & JSON Viewer ── */
+.codeBoxHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-bottom: none;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.copyCodeBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.copyCodeBtn:hover {
+    background: #f1f5f9;
+}
+
+.jsonPre {
+    margin: 0;
+    padding: 14px;
+    background: #0f172a;
+    color: #f8fafc;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    font-family: var(--font-mono-jb, monospace);
+    font-size: 11px;
+    line-height: 1.5;
+    overflow-x: auto;
+    max-height: 380px;
+}
+
+/* ── OTA Responses Grid ── */
+.otaGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.otaCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.otaCardTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.otaChannelTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.otaStatusBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.otaStatusSuccess {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.otaStatusFailed {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.otaDetailText {
+    font-size: 11px;
+    color: #475569;
+    font-family: var(--font-mono-jb, monospace);
+    background: #f8fafc;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid #f1f5f9;
+}
+

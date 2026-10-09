@@ -49,6 +49,7 @@ export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const hotelCode = searchParams.get("hotelCode");
+        const taskId = searchParams.get("taskId");
 
         if (!hotelCode) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
@@ -59,6 +60,60 @@ export async function GET(req: NextRequest) {
         const channexPropertyId = hotelData?.channelManager?.propertyId || hotelData?.channelManager?.channexPropertyId || hotelData?.channexPropertyId;
         const customApiKey = hotelData?.channelManager?.apiKey;
         const configuredRetentionDays = hotelData?.channelManager?.logRetentionDays || 60; // Default 60 days (2 months)
+
+        // If specific taskId is requested, fetch full live detail from Channex & local DB
+        if (taskId) {
+            let taskDetail: any = null;
+
+            // 1. Try local Firestore audit log first
+            const localDoc = await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).doc(taskId).get();
+            if (localDoc.exists) {
+                taskDetail = { id: localDoc.id, ...localDoc.data() };
+            } else {
+                const querySnap = await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`)
+                    .where("task_id", "==", taskId)
+                    .limit(1)
+                    .get();
+                if (!querySnap.empty) {
+                    taskDetail = { id: querySnap.docs[0].id, ...querySnap.docs[0].data() };
+                }
+            }
+
+            // 2. Fetch live data from Channex API if available
+            if (customApiKey) {
+                try {
+                    const channexRes = await channexClient.getTaskById(taskId, customApiKey);
+                    if (channexRes?.data) {
+                        const raw = channexRes.data;
+                        taskDetail = {
+                            ...(taskDetail || {}),
+                            id: raw.id || taskId,
+                            task_id: raw.id || taskId,
+                            task_type: raw.attributes?.task_type || taskDetail?.task_type,
+                            status: raw.attributes?.status || taskDetail?.status,
+                            result: raw.attributes?.status === "FAILED" ? "Failed" : "Success",
+                            inserted_at: raw.attributes?.inserted_at || taskDetail?.inserted_at,
+                            updated_at: raw.attributes?.updated_at || taskDetail?.updated_at,
+                            execution_time_ms: raw.attributes?.execution_time_ms || taskDetail?.execution_time_ms,
+                            payload: raw.attributes?.payload || raw.attributes?.request_payload || taskDetail?.payload || taskDetail?.diff,
+                            response: raw.attributes?.response || raw.attributes?.result || taskDetail?.details,
+                            ota_responses: raw.attributes?.ota_responses || raw.attributes?.channel_responses || taskDetail?.ota_responses || [],
+                            message: raw.attributes?.message || taskDetail?.message,
+                            timeline: raw.attributes?.timeline || [],
+                            is_live_synced: true
+                        };
+                    }
+                } catch (channexErr: any) {
+                    console.warn(`[Channex Task Detail] Live query for task ${taskId}:`, channexErr.message);
+                }
+            }
+
+            if (!taskDetail) {
+                return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 });
+            }
+
+            return NextResponse.json({ success: true, task: taskDetail });
+        }
 
         // Asynchronously check and prune old logs in background (non-blocking)
         autoPruneOldLogs(hotelCode, configuredRetentionDays).catch(err => {
