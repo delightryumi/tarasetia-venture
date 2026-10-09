@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useLogin } from "./useLogin";
 import { 
     User, 
@@ -47,6 +47,24 @@ export const LoginSection = () => {
 
     // Header State
     const [language, setLanguage] = useState<'EN' | 'ID'>('EN');
+
+    const handleTurnstileVerify = useCallback((token: string) => {
+        setTurnstileToken(token);
+        setTurnstileError("");
+    }, []);
+
+    const handleTurnstileExpire = useCallback(() => {
+        setTurnstileToken(null);
+    }, []);
+
+    const handleTurnstileError = useCallback(() => {
+        setTurnstileToken(null);
+        setTurnstileError(
+            language === 'EN'
+                ? "Security check failed. Please refresh or retry."
+                : "Verifikasi keamanan gagal. Silakan coba lagi."
+        );
+    }, [language]);
     const [showLangMenu, setShowLangMenu] = useState(false);
     const [showHelpModal, setShowHelpModal] = useState(false);
 
@@ -280,21 +298,9 @@ export const LoginSection = () => {
                                 {/* Cloudflare Turnstile Security Verification */}
                                 <div className="w-full flex flex-col items-center justify-center my-1.5">
                                     <CloudflareTurnstile 
-                                        onVerify={(token) => {
-                                            setTurnstileToken(token);
-                                            setTurnstileError("");
-                                        }}
-                                        onExpire={() => {
-                                            setTurnstileToken(null);
-                                        }}
-                                        onError={() => {
-                                            setTurnstileToken(null);
-                                            setTurnstileError(
-                                                language === 'EN'
-                                                    ? "Security check failed. Please refresh or retry."
-                                                    : "Verifikasi keamanan gagal. Silakan coba lagi."
-                                            );
-                                        }}
+                                        onVerify={handleTurnstileVerify}
+                                        onExpire={handleTurnstileExpire}
+                                        onError={handleTurnstileError}
                                         theme="light"
                                     />
                                 </div>

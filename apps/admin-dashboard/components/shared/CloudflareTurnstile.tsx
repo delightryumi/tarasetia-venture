@@ -49,6 +49,16 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
     process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY ||
     '0x4AAAAAAFR7kv8f7w77MRby';
 
+  const onVerifyRef = useRef(onVerify);
+  const onExpireRef = useRef(onExpire);
+  const onErrorRef = useRef(onError);
+
+  useEffect(() => {
+    onVerifyRef.current = onVerify;
+    onExpireRef.current = onExpire;
+    onErrorRef.current = onError;
+  });
+
   useEffect(() => {
     let isMounted = true;
 
@@ -59,13 +69,13 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
         const id = window.turnstile.render(containerRef.current, {
           sitekey: activeSiteKey,
           callback: (token: string) => {
-            if (isMounted) onVerify(token);
+            if (isMounted && onVerifyRef.current) onVerifyRef.current(token);
           },
           'expired-callback': () => {
-            if (isMounted && onExpire) onExpire();
+            if (isMounted && onExpireRef.current) onExpireRef.current();
           },
           'error-callback': () => {
-            if (isMounted && onError) onError();
+            if (isMounted && onErrorRef.current) onErrorRef.current();
           },
           theme,
           size: 'flexible',
@@ -108,7 +118,7 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
         widgetIdRef.current = null;
       }
     };
-  }, [activeSiteKey, theme, onVerify, onExpire, onError]);
+  }, [activeSiteKey, theme]);
 
   return (
     <div className={`w-full flex justify-center my-2 ${className}`}>
