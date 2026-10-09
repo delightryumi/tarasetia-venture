@@ -567,16 +567,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         const restoId = user.restoId;
     const cachedRestoName = localStorage.getItem('restoName') || 'POS Resto';
     setStoreName(cachedRestoName);
-
-    // 2. Register Network sync listener for IndexedDB to cloud Postgres
-    registerNetworkSync();
-
-    // 3. Trigger initial syncs
-    if (navigator.onLine && restoId) {
-      syncProductsFromServer(restoId);
-      syncUnsyncedTransactions();
-    }
-
+    // Real-time online mode: offline Dexie sync disabled to conserve Firestore reads
     // 4. Fetch shop data online
     const fetchShopData = async () => {
       try {

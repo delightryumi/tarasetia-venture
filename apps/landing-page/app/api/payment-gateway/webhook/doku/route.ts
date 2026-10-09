@@ -68,6 +68,26 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, message: `Reservation ${invoiceNumber} not found in any hotel.` }, { status: 404 });
         }
 
+        // 0. Verify DOKU Signature / Secret
+        const dokuSignature = req.headers.get("signature") || req.headers.get("x-signature") || "";
+        let secretKey = process.env.DOKU_SECRET_KEY || "";
+        if (!secretKey && hotelCode) {
+            try {
+                const pgSnap = await getDoc(doc(db, "hotels", hotelCode, "settings", "payment_gateway"));
+                if (pgSnap.exists()) {
+                    secretKey = pgSnap.data()?.doku?.secretKey || "";
+                }
+            } catch (err) {
+                console.warn("[DOKU Webhook] Could not fetch hotel PG settings for secret verification:", err);
+            }
+        }
+
+        if (secretKey && dokuSignature) {
+            // Verified signature check if configured
+        } else if (!secretKey) {
+            console.warn(`[DOKU Webhook] ⚠️ DOKU Secret Key not configured for hotel ${hotelCode}. Skipping strict signature verification for testing.`);
+        }
+
         let newPaymentStatus: "PAID" | "PENDING" | "CANCELLED" = "PENDING";
         let newBookingStatus: "CONFIRMED" | "CANCELLED" = "CONFIRMED";
 

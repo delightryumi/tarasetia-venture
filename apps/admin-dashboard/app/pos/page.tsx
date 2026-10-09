@@ -87,6 +87,13 @@ export default function POSPage() {
       const restoName = localStorage.getItem('restoName');
       if (restoName) params.set('restoName', restoName);
 
+      // Set cross-subdomain cookie for seamless SSO between live.mytara.id and point.mytara.id
+      const rootDomain = hostname.endsWith('mytara.id') ? '; domain=.mytara.id' : '';
+      const effectiveHotel = activeHotelCode || localStorage.getItem('active_hotel_code') || '';
+      if (effectiveHotel) {
+        document.cookie = `hotelCode=${effectiveHotel}; path=/${rootDomain}; max-age=86400; SameSite=Lax`;
+      }
+
       // Pass the dashboard's current URL for redirection back
       params.set('dashboardUrl', window.location.origin + '/select-module');
 

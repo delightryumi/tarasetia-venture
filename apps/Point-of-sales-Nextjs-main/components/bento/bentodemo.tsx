@@ -151,8 +151,8 @@ function LiveTableGrid() {
           setIsLoading(false);
         });
 
-        // 3. Listen in real-time to recent completed/paid orders
-        const qPaid = query(collection(db, 'hotels', hotelCode, 'pos_orders'), orderBy('timestamp', 'desc'), limit(15));
+        // 3. Listen in real-time to recent completed/paid orders (limit 5 to reduce reads)
+        const qPaid = query(collection(db, 'hotels', hotelCode, 'pos_orders'), orderBy('timestamp', 'desc'), limit(5));
         unsubPaid = onSnapshot(qPaid, (snap) => {
           const orders = snap.docs.map(doc => ({
             id: doc.id,

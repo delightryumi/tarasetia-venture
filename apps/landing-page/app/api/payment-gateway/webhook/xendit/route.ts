@@ -54,6 +54,29 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, message: `Reservation ${externalId} not found in any hotel.` }, { status: 404 });
         }
 
+        // 0. Verify Xendit Callback Token
+        const callbackToken = req.headers.get("x-callback-token");
+        let expectedToken = process.env.XENDIT_CALLBACK_TOKEN || "";
+        if (!expectedToken && hotelCode) {
+            try {
+                const pgSnap = await getDoc(doc(db, "hotels", hotelCode, "settings", "payment_gateway"));
+                if (pgSnap.exists()) {
+                    expectedToken = pgSnap.data()?.xendit?.webhookVerificationToken || "";
+                }
+            } catch (err) {
+                console.warn("[Xendit Webhook] Could not fetch hotel PG settings for token verification:", err);
+            }
+        }
+
+        if (expectedToken) {
+            if (callbackToken !== expectedToken) {
+                console.error(`[Xendit Webhook] Invalid callback token for ID: ${externalId}`);
+                return NextResponse.json({ success: false, message: "Invalid Xendit callback token" }, { status: 401 });
+            }
+        } else {
+            console.warn(`[Xendit Webhook] ⚠️ Xendit Callback Token not configured for hotel ${hotelCode}. Skipping strict token verification for testing.`);
+        }
+
         let newPaymentStatus: "PAID" | "PENDING" | "CANCELLED" = "PENDING";
         let newBookingStatus: "CONFIRMED" | "CANCELLED" = "CONFIRMED";
 

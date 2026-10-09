@@ -3,6 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
+// In-memory cache for POS shop settings (15-min TTL)
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+const posShopDataCache = new Map<string, CacheEntry<any>>();
+
 export async function GET(req: NextRequest) {
   try {
     // Read hotelCode from cookies
@@ -21,6 +28,15 @@ export async function GET(req: NextRequest) {
           tables: '10',
         }
       }, { status: 200 });
+    }
+
+    const now = Date.now();
+    const cached = posShopDataCache.get(hotelCode);
+    if (cached && cached.expiresAt > now) {
+      return NextResponse.json({ data: cached.data }, {
+        status: 200,
+        headers: { 'X-Cache': 'HIT', 'Cache-Control': 'private, max-age=900' }
+      });
     }
 
     // Attempt to read POS shop settings from Firestore under hotels/{hotelCode}/settings/pos
@@ -60,9 +76,15 @@ export async function GET(req: NextRequest) {
         shopData.address = fData.address || shopData.address;
         shopData.phone = fData.phone || shopData.phone;
       }
-    }
+    posShopDataCache.set(hotelCode, {
+      data: shopData,
+      expiresAt: now + 15 * 60 * 1000 // 15 min TTL
+    });
 
-    return NextResponse.json({ data: shopData }, { status: 200 });
+    return NextResponse.json({ data: shopData }, {
+      status: 200,
+      headers: { 'X-Cache': 'MISS', 'Cache-Control': 'private, max-age=900' }
+    });
   } catch (error: any) {
     console.error('Error fetching shop data from Firestore:', error);
     

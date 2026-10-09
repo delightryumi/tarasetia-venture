@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
 import { collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
+import crypto from "crypto";
 
 /**
  * Midtrans Payment Notification Webhook Endpoint
@@ -53,6 +54,32 @@ export async function POST(req: NextRequest) {
 
         if (!hotelCode) {
             return NextResponse.json({ success: false, message: `Reservation ${orderId} not found in any hotel.` }, { status: 404 });
+        }
+
+        // 0. Verify Midtrans SHA-512 Signature Key
+        let serverKey = process.env.MIDTRANS_SERVER_KEY || "";
+        if (!serverKey && hotelCode) {
+            try {
+                const pgSnap = await getDoc(doc(db, "hotels", hotelCode, "settings", "payment_gateway"));
+                if (pgSnap.exists()) {
+                    serverKey = pgSnap.data()?.midtrans?.serverKey || "";
+                }
+            } catch (err) {
+                console.warn("[Midtrans Webhook] Could not fetch hotel PG settings for verification:", err);
+            }
+        }
+
+        if (serverKey && body.signature_key) {
+            const expectedSig = crypto
+                .createHash("sha512")
+                .update(`${orderId}${body.status_code || ""}${body.gross_amount || ""}${serverKey}`)
+                .digest("hex");
+            if (body.signature_key !== expectedSig) {
+                console.error(`[Midtrans Webhook] Invalid signature for Order: ${orderId}`);
+                return NextResponse.json({ success: false, message: "Invalid Midtrans signature" }, { status: 401 });
+            }
+        } else if (!serverKey) {
+            console.warn(`[Midtrans Webhook] ⚠️ Midtrans Server Key not configured for hotel ${hotelCode}. Skipping strict signature verification for staging/testing.`);
         }
 
         let newPaymentStatus: "PAID" | "PENDING" | "CANCELLED" = "PENDING";

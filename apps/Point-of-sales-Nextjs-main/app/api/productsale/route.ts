@@ -4,6 +4,14 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, getDoc, query, where, limit } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 
+// In-memory cache for POS product sales report to eliminate redundant Firestore reads
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+const posProductSaleCache = new Map<string, CacheEntry<any>>();
+const posProductMetaCache = new Map<string, CacheEntry<{ productMap: any; subcatToParentMap: any; taxRate: number }>>();
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -30,42 +38,61 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const now = Date.now();
+    const cacheKey = `${hotelCode}_${start}_${end}`;
+    const cachedResult = posProductSaleCache.get(cacheKey);
+    if (cachedResult && cachedResult.expiresAt > now) {
+      return NextResponse.json(cachedResult.data, {
+        status: 200,
+        headers: { 'X-Cache': 'HIT', 'Cache-Control': 'private, max-age=600' }
+      });
+    }
+
     const startDate = new Date(start);
     const endDate = new Date(end);
     endDate.setUTCHours(23, 59, 59, 999);
 
-    // Fetch tax, service, and lostBreakage rates
-    const posSettingsRef = doc(getHotelCollection(db, 'settings', hotelCode), 'pos');
-    const posSettingsSnap = await getDoc(posSettingsRef);
-    let taxRate = 10;
-    if (posSettingsSnap.exists()) {
-      const sData = posSettingsSnap.data();
-      const svc = Number(sData.service || 0);
-      const tx = Number(sData.tax || 0);
-      const lb = Number(sData.lostBreakage || 0);
-      taxRate = svc + tx + lb;
+    // Fetch tax and product classification metadata (cached for 30 minutes)
+    let meta = posProductMetaCache.get(hotelCode);
+    if (!meta || meta.expiresAt <= now) {
+      const posSettingsRef = doc(getHotelCollection(db, 'settings', hotelCode), 'pos');
+      const posSettingsSnap = await getDoc(posSettingsRef);
+      let taxRate = 10;
+      if (posSettingsSnap.exists()) {
+        const sData = posSettingsSnap.data();
+        const svc = Number(sData.service || 0);
+        const tx = Number(sData.tax || 0);
+        const lb = Number(sData.lostBreakage || 0);
+        taxRate = svc + tx + lb;
+      }
+
+      const prodSnap = await getDocs(getHotelCollection(db, 'pos_products', hotelCode));
+      const productMap: Record<string, { category: string; subcategory: string }> = {};
+      prodSnap.forEach((d) => {
+        const data = d.data();
+        productMap[d.id] = {
+          category: (data.category || '').trim().toUpperCase(),
+          subcategory: (data.subcategory || '').trim().toUpperCase(),
+        };
+      });
+
+      const subcatSnap = await getDocs(getHotelCollection(db, 'pos_subcategories', hotelCode));
+      const subcatToParentMap: Record<string, string> = {};
+      subcatSnap.forEach((d) => {
+        const data = d.data();
+        if (data.name && data.parentCategory) {
+          subcatToParentMap[data.name.trim().toUpperCase()] = data.parentCategory.trim().toUpperCase();
+        }
+      });
+
+      meta = {
+        data: { productMap, subcatToParentMap, taxRate },
+        expiresAt: now + 30 * 60 * 1000 // 30 min TTL
+      };
+      posProductMetaCache.set(hotelCode, meta);
     }
 
-    // 1. Fetch product definitions for dynamic classification mapping
-    const prodSnap = await getDocs(getHotelCollection(db, 'pos_products', hotelCode));
-    const productMap: Record<string, { category: string; subcategory: string }> = {};
-    prodSnap.forEach((d) => {
-      const data = d.data();
-      productMap[d.id] = {
-        category: (data.category || '').trim().toUpperCase(),
-        subcategory: (data.subcategory || '').trim().toUpperCase(),
-      };
-    });
-
-    // 2. Fetch subcategories definitions for fallback matching
-    const subcatSnap = await getDocs(getHotelCollection(db, 'pos_subcategories', hotelCode));
-    const subcatToParentMap: Record<string, string> = {};
-    subcatSnap.forEach((d) => {
-      const data = d.data();
-      if (data.name && data.parentCategory) {
-        subcatToParentMap[data.name.trim().toUpperCase()] = data.parentCategory.trim().toUpperCase();
-      }
-    });
+    const { productMap, subcatToParentMap, taxRate } = meta.data;
 
     // Helper function to resolve category and subcategory cleanly
     const resolveProductClass = (itemId: string, rawCat: string, rawSub: string) => {
@@ -278,11 +305,21 @@ export async function GET(req: NextRequest) {
 
     breakdownList.sort((a, b) => a.category.localeCompare(b.category));
 
-    return NextResponse.json({
+    const finalResponse = {
       combinedResult,
       categoryList,
       breakdown: breakdownList,
-    }, { status: 200 });
+    };
+
+    posProductSaleCache.set(cacheKey, {
+      data: finalResponse,
+      expiresAt: now + 10 * 60 * 1000 // 10 min TTL
+    });
+
+    return NextResponse.json(finalResponse, {
+      status: 200,
+      headers: { 'X-Cache': 'MISS', 'Cache-Control': 'private, max-age=600' }
+    });
   } catch (error) {
     console.error('Error occurred in productsale GET:', error);
     return NextResponse.json(

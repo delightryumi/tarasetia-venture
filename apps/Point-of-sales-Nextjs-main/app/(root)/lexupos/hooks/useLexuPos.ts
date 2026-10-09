@@ -194,9 +194,6 @@ export function useLexuPos() {
       try {
         const user = JSON.parse(userJson);
         if (user.name) setCashierName(user.name);
-        if (user.restoId) {
-          syncProductsFromServer(user.restoId);
-        }
         if (user.hotelCode) {
             hotelCode = user.hotelCode;
             setActiveHotelCode(hotelCode);
