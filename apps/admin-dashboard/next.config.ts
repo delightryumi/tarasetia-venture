@@ -1,7 +1,8 @@
+import path from "path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // output: "standalone", 
+  outputFileTracingRoot: path.join(__dirname, "../../"),
   transpilePackages: ["@phosphor-icons/react"],
   eslint: {
     ignoreDuringBuilds: true,
@@ -22,8 +23,13 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com",
         port: "",
         pathname: "/**",
-      }
+      },
     ],
+  },
+  experimental: {
+    // Hemat alokasi memori heap saat build di Cloud Build / App Hosting
+    cpus: 1,
+    workerThreads: false,
   },
 };
 
@@ -31,4 +37,9 @@ import { withSentryConfig } from "@sentry/nextjs/config";
 
 export default withSentryConfig(nextConfig, {
   silent: true,
+  telemetry: false,
+  disableLogger: true,
+  sourcemaps: {
+    disable: true,
+  },
 });
