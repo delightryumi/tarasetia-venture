@@ -76,6 +76,8 @@ export async function GET(req: NextRequest) {
         shopData.address = fData.address || shopData.address;
         shopData.phone = fData.phone || shopData.phone;
       }
+    }
+
     posShopDataCache.set(hotelCode, {
       data: shopData,
       expiresAt: now + 15 * 60 * 1000 // 15 min TTL
