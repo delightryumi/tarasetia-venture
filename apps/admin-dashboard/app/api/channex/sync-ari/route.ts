@@ -21,9 +21,32 @@ export async function POST(req: NextRequest) {
         defaultEnd.setDate(defaultEnd.getDate() + 30);
         const end = endDate || defaultEnd.toISOString().split("T")[0];
 
+        const operatorUser = body.user || "Operator";
+
         if (type === "delta") {
             const { delta } = body;
             const result = await channexSyncService.pushDeltaBatch(hotelCode, delta || {});
+            try {
+                await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).add({
+                    action: "Sync Delta to Channex",
+                    task_type: "POST /ari-delta",
+                    channelName: "Channex ARI Engine",
+                    user: operatorUser,
+                    status: "SUCCESS",
+                    result: "Success",
+                    inserted_at: new Date().toISOString(),
+                    started_at: new Date(startTime).toISOString(),
+                    execution_time_ms: result.latencyMs || (Date.now() - startTime),
+                    task_ids: result.taskIds || [],
+                    task_id: result.taskIds?.[0] || `delta-${Date.now()}`,
+                    diff: delta,
+                    message: result.message || "Delta inventory & restrictions synced to Channex.",
+                    ota_responses: []
+                });
+            } catch (logErr) {
+                console.warn("[sync-ari] Could not log delta task:", logErr);
+            }
+
             return NextResponse.json({
                 success: true,
                 message: result.message,
@@ -37,6 +60,27 @@ export async function POST(req: NextRequest) {
         if (type === "full_sync") {
             const daysAhead = Number(body.daysAhead) || 500;
             const result = await channexSyncService.fullPropertySync(hotelCode, daysAhead);
+            try {
+                await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).add({
+                    action: "Full Property Sync (500d)",
+                    task_type: "FULL_SYNC",
+                    channelName: "Channex Master Sync",
+                    user: operatorUser,
+                    status: "SUCCESS",
+                    result: "Success",
+                    inserted_at: new Date().toISOString(),
+                    started_at: new Date(startTime).toISOString(),
+                    execution_time_ms: result.latencyMs || (Date.now() - startTime),
+                    task_ids: result.taskIds || [],
+                    task_id: result.taskIds?.[0] || `full-sync-${Date.now()}`,
+                    diff: { daysAhead, availabilityCount: result.availabilityCount, restrictionsCount: result.restrictionsCount },
+                    message: result.message || "Full property ARI sync completed.",
+                    ota_responses: []
+                });
+            } catch (logErr) {
+                console.warn("[sync-ari] Could not log full_sync task:", logErr);
+            }
+
             return NextResponse.json({
                 success: true,
                 message: result.message,
@@ -56,12 +100,19 @@ export async function POST(req: NextRequest) {
 
             try {
                 await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).add({
+                    action: `Push Rate Plan (${ratePlanId})`,
                     task_type: "POST /rates",
+                    channelName: "Channex Rates Engine",
                     entity: `Rate Plan ${ratePlanId}`,
+                    user: operatorUser,
                     status: "SUCCESS",
+                    result: "Success",
                     inserted_at: new Date().toISOString(),
-                    latency_ms: latency,
+                    started_at: new Date(startTime).toISOString(),
+                    execution_time_ms: latency,
                     task_ids: taskId ? [taskId] : [],
+                    task_id: taskId || `rate-${Date.now()}`,
+                    diff: { ratePlanId, rate, start, end, restrictions },
                     message: `Pembaruan harga (${start} s/d ${end}) berhasil didistribusikan ke Channex ARI. Task ID: ${taskId || "N/A"}`,
                     ota_responses: []
                 });
@@ -83,11 +134,17 @@ export async function POST(req: NextRequest) {
 
         try {
             await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).add({
+                action: "Push Availability Allotment",
                 task_type: "POST /availability",
+                channelName: "Channex Availability Engine",
                 entity: "Allotment Kamar",
+                user: operatorUser,
                 status: "SUCCESS",
+                result: "Success",
                 inserted_at: new Date().toISOString(),
-                latency_ms: latency,
+                started_at: new Date(startTime).toISOString(),
+                execution_time_ms: latency,
+                task_id: `avail-${Date.now()}`,
                 message: `Pembaruan ketersediaan kamar (${start} s/d ${end}) berhasil disebarkan ke Channex.`,
                 ota_responses: []
             });

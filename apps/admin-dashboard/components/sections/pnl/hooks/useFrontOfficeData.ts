@@ -21,7 +21,35 @@ interface TrendCacheItem {
     yearlyBuckets: Record<number, number>;
 }
 const globalTrendCache: Record<string, TrendCacheItem> = {};
-const TREND_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const TREND_CACHE_TTL = 60 * 60 * 1000; // 60 minutes cache
+
+const getStoredTrendCache = (key: string): TrendCacheItem | null => {
+    if (globalTrendCache[key] && (Date.now() - globalTrendCache[key].timestamp < TREND_CACHE_TTL)) {
+        return globalTrendCache[key];
+    }
+    if (typeof window !== "undefined") {
+        try {
+            const raw = sessionStorage.getItem(`trend_fo_${key}`);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Date.now() - parsed.timestamp < TREND_CACHE_TTL) {
+                    globalTrendCache[key] = parsed;
+                    return parsed;
+                }
+            }
+        } catch (e) {}
+    }
+    return null;
+};
+
+const setStoredTrendCache = (key: string, item: TrendCacheItem) => {
+    globalTrendCache[key] = item;
+    if (typeof window !== "undefined") {
+        try {
+            sessionStorage.setItem(`trend_fo_${key}`, JSON.stringify(item));
+        } catch (e) {}
+    }
+};
 
 // In-memory cache for period transactions (daily_revenue)
 interface PeriodFOCacheItem {
@@ -140,37 +168,55 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
             setRawTransactions(transactions);
         }
 
-            // Fetch all-time transactions for Trend Data (using cache if fresh)
+            // Fetch transactions for Trend Data (using cache if fresh)
             const currentYear = month.split('-')[0];
-            const cacheKey = (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") || "default" : "default") + "_" + currentYear;
-            const cached = globalTrendCache[cacheKey];
-            const nowTrend = Date.now();
+            const cacheKey = `${hotelCode}_${currentYear}`;
+            const cached = getStoredTrendCache(cacheKey);
 
             let monthlyBuckets = Array(12).fill(0);
             let yearlyBuckets: Record<number, number> = {};
             YEARS.forEach(yr => yearlyBuckets[yr] = 0);
 
-            if (cached && (nowTrend - cached.timestamp < TREND_CACHE_TTL)) {
+            if (cached) {
                 monthlyBuckets = [...cached.monthlyBuckets];
                 yearlyBuckets = { ...cached.yearlyBuckets };
+            } else if (viewMode === "yearly" && y === currentYear && transactions.length > 0) {
+                // Reuse current year transactions already queried above to save Firestore reads!
+                transactions.forEach((t: any) => {
+                    const d = t.date || "";
+                    const [, moStr] = d.split('-');
+                    const moIdx = parseInt(moStr) - 1;
+                    const amt = Number(t.amount) || 0;
+                    if (moIdx >= 0 && moIdx < 12) {
+                        monthlyBuckets[moIdx] += amt;
+                    }
+                    const numYr = Number(currentYear);
+                    if (yearlyBuckets[numYr] !== undefined) {
+                        yearlyBuckets[numYr] += amt;
+                    }
+                });
+                setStoredTrendCache(cacheKey, {
+                    timestamp: Date.now(),
+                    currentYear,
+                    monthlyBuckets: [...monthlyBuckets],
+                    yearlyBuckets: { ...yearlyBuckets }
+                });
             } else {
-                const minYear = Math.min(...YEARS);
-                const maxYear = Math.max(...YEARS);
+                // Query ONLY the current year to prevent reading 1,000+ documents across all 3 years
                 const allRevenueQ = query(
-                    getHotelCollection(db, "daily_revenue"),
-                    where("date", ">=", `${minYear}-01-01`),
-                    where("date", "<=", `${maxYear}-12-31`)
+                    getHotelCollection(db, "daily_revenue", hotelCode),
+                    where("date", ">=", `${currentYear}-01-01`),
+                    where("date", "<=", `${currentYear}-12-31`)
                 );
                 const allRevenueSnap = await getDocs(allRevenueQ);
-            
-            allRevenueSnap.forEach(docSnap => {
-                const data = docSnap.data();
-                const d = data.date || "";
-                const [yrStr, moStr] = d.split('-');
-                const yr = parseInt(yrStr);
-                const moIdx = parseInt(moStr) - 1;
 
-                if (yearlyBuckets[yr] !== undefined) {
+                allRevenueSnap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const d = data.date || "";
+                    const [yrStr, moStr] = d.split('-');
+                    const yr = parseInt(yrStr);
+                    const moIdx = parseInt(moStr) - 1;
+
                     const dayAccommodationGroups: Record<string, any[]> = {};
                     const dayNonAccEntries: any[] = [];
 
@@ -222,21 +268,22 @@ export const useFrontOfficeData = (month: string, viewMode: "monthly" | "yearly"
 
                     cleanEntries.forEach((t: any) => {
                         const amt = (Number(t.amount) || 0);
-                        yearlyBuckets[yr] += amt;
+                        if (yearlyBuckets[yr] !== undefined) {
+                            yearlyBuckets[yr] += amt;
+                        }
                         if (yrStr === currentYear && moIdx >= 0 && moIdx < 12) {
                             monthlyBuckets[moIdx] += amt;
                         }
                     });
-                }
-            });
+                });
 
-            globalTrendCache[cacheKey] = {
-                timestamp: Date.now(),
-                currentYear,
-                monthlyBuckets: [...monthlyBuckets],
-                yearlyBuckets: { ...yearlyBuckets }
-            };
-        }
+                setStoredTrendCache(cacheKey, {
+                    timestamp: Date.now(),
+                    currentYear,
+                    monthlyBuckets: [...monthlyBuckets],
+                    yearlyBuckets: { ...yearlyBuckets }
+                });
+            }
             
         setYearTrendData(monthlyBuckets.map((rev, i) => ({
                 month: MONTHS[i].n.slice(0, 3),

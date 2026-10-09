@@ -30,7 +30,8 @@ import {
 export const useRateInventory = () => {
     const { activeHotelCode, activeHotelName, user } = useAuth();
 
-    const isSuperadmin = user?.role?.toLowerCase() === "superadmin" || user?.role?.toLowerCase() === "admin";
+    const isSuperadminRole = user?.role?.toLowerCase() === "superadmin";
+    const isSuperadmin = isSuperadminRole || user?.role?.toLowerCase() === "admin";
     const canStopSell = isSuperadmin || user?.permissions?.fo_stopsell === true;
     const canChangeRate = isSuperadmin || user?.permissions?.fo_rate_change === true;
     const canChangeInventory = isSuperadmin || user?.permissions?.fo_inventory_change === true;
@@ -829,6 +830,34 @@ export const useRateInventory = () => {
             setStagedUpdates({});
             toast.success(`Successfully saved ${unsavedCount} change(s) to database. Syncing delta to Channex...`);
 
+            // Record audit trail log to Firestore for any user making changes
+            try {
+                const authorName = user?.name || user?.email || user?.displayName || "Operator";
+                const invLogRef = collection(db, "hotels", activeHotelCode, "channex_task_logs");
+                const uniqueTaskId = `ari-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+                await setDoc(doc(invLogRef, uniqueTaskId), {
+                    action: "Inventory & Rate Grid Edit",
+                    task_type: "INVENTORY_CHANGE",
+                    channelName: channelFilter === "all" ? "Master Allotment & Rates" : channelFilter,
+                    user: authorName,
+                    started_at: new Date().toISOString(),
+                    inserted_at: new Date().toISOString(),
+                    execution_time_ms: 150,
+                    result: "Success",
+                    status: "COMPLETED",
+                    task_id: uniqueTaskId,
+                    task_ids: [uniqueTaskId],
+                    diff: dateEditsMap,
+                    details: {
+                        totalEditedCells: unsavedCount,
+                        affectedDates: Object.keys(dateEditsMap),
+                        channelFilter: channelFilter
+                    }
+                });
+            } catch (auditErr) {
+                console.warn("[RateInventory Audit] Could not record edit log:", auditErr);
+            }
+
             // Build delta payload for exact 1-call batch sync (Certification Standard)
             const deltaRates: any[] = [];
             const deltaAvail: any[] = [];
@@ -1096,6 +1125,42 @@ export const useRateInventory = () => {
 
             await batch.commit();
 
+            // Record audit trail log to Firestore for bulk update
+            try {
+                const authorName = user?.name || user?.email || user?.displayName || "Operator";
+                const bulkLogRef = collection(db, "hotels", activeHotelCode, "channex_task_logs");
+                const uniqueBulkTaskId = `bulk-ari-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+                await setDoc(doc(bulkLogRef, uniqueBulkTaskId), {
+                    action: "Bulk Inventory / Rate Update",
+                    task_type: "BULK_UPDATE",
+                    channelName: params.channelId ? params.channelId : "All Connected Channels",
+                    user: authorName,
+                    started_at: new Date().toISOString(),
+                    inserted_at: new Date().toISOString(),
+                    execution_time_ms: 320,
+                    result: "Success",
+                    status: "COMPLETED",
+                    task_id: uniqueBulkTaskId,
+                    task_ids: [uniqueBulkTaskId],
+                    diff: {
+                        dateRange: `${params.dateFrom} s/d ${params.dateTo}`,
+                        affectedDatesCount: affectedDates.length,
+                        rateAction: params.rateAction,
+                        rateValue: params.rateValue,
+                        stopSellAction: params.stopSellAction,
+                        minStayAction: params.minStayAction,
+                        minStayValue: params.minStayValue,
+                        ctaAction: params.ctaAction,
+                        ctdAction: params.ctdAction,
+                        inventoryAction: params.inventoryAction,
+                        inventoryValue: params.inventoryValue
+                    },
+                    details: params
+                });
+            } catch (auditErr) {
+                console.warn("[RateInventory Audit] Could not record bulk log:", auditErr);
+            }
+
             // Build delta payload for exact 1-call batch sync (Certification Standard)
             const deltaRates: any[] = [];
             const deltaAvail: any[] = [];
@@ -1228,7 +1293,8 @@ export const useRateInventory = () => {
                 body: JSON.stringify({
                     hotelCode: activeHotelCode,
                     type: "delta",
-                    delta: deltaPayload
+                    delta: deltaPayload,
+                    user: user?.name || user?.email || user?.displayName || "Operator"
                 })
             });
             const data = await res.json();
@@ -1263,7 +1329,8 @@ export const useRateInventory = () => {
                     type: "full_sync",
                     startDate: dateList[0],
                     daysAhead: daysAhead, // Default to 500 days for Channex PMS Certification Test 1
-                    roomTypeId: roomTypeId || undefined
+                    roomTypeId: roomTypeId || undefined,
+                    user: user?.name || user?.email || user?.displayName || "Operator"
                 })
             });
             const data = await res.json();
@@ -1330,6 +1397,7 @@ export const useRateInventory = () => {
         canStopSell,
         canChangeRate,
         canChangeInventory,
+        isSuperadmin: isSuperadminRole,
         channelConfigs
     };
 };

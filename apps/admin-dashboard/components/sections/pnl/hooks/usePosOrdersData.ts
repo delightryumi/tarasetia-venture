@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, doc, getDoc, getDocs, query, where, limit } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase"; 
 import { getHotelCollection } from "@/lib/firestoreHelper"; 
 
@@ -183,14 +183,7 @@ export const usePosOrdersData = (month: string, viewMode: "monthly" | "yearly") 
               where("timestamp", ">=", startDateTime),
               where("timestamp", "<=", endDateTime)
             );
-            let posOrdersSnap = await getDocs(posQ);
-            if (posOrdersSnap.empty) {
-              const fallbackQ = query(
-                getHotelCollection(db, "pos_orders", hotelCode),
-                limit(150)
-              );
-              posOrdersSnap = await getDocs(fallbackQ);
-            }
+            const posOrdersSnap = await getDocs(posQ);
             const fetchedPosOrders: any[] = [];
             posOrdersSnap.forEach((docSnap) => {
               const data = docSnap.data();

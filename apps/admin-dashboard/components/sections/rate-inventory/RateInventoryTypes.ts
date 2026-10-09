@@ -9,7 +9,8 @@ export type RateInventoryTab =
     | "stopsell"
     | "minstay"
     | "cta"
-    | "ctd";
+    | "ctd"
+    | "logs";
 
 export interface DayInventoryStatus {
     date: string; // YYYY-MM-DD

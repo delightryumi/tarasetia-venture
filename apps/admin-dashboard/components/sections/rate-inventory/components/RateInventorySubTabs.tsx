@@ -14,6 +14,7 @@ interface RateInventorySubTabsProps {
     taxInclusive: boolean;
     onSyncAll?: () => void;
     syncingAri?: boolean;
+    isSuperadmin?: boolean;
 }
 
 const TABS_CONFIG: Array<{ id: RateInventoryTab; label: string; title: string }> = [
@@ -32,13 +33,18 @@ export function RateInventorySubTabs({
     onOpenBulkModal,
     taxInclusive,
     onSyncAll,
-    syncingAri = false
+    syncingAri = false,
+    isSuperadmin = false
 }: RateInventorySubTabsProps) {
     const handleToggleSidebar = () => {
         if (typeof window !== "undefined") {
             window.dispatchEvent(new CustomEvent("toggle-sidebar"));
         }
     };
+
+    const tabsToRender = isSuperadmin
+        ? [...TABS_CONFIG, { id: "logs" as RateInventoryTab, label: "Logs", title: "Inventory & Rate Changes Audit Trail (Superadmin Only)" }]
+        : TABS_CONFIG;
 
     return (
         <div className={styles.subTabsBar}>
@@ -55,7 +61,7 @@ export function RateInventorySubTabs({
                     <span>Sidebar</span>
                 </button>
 
-                {TABS_CONFIG.map(t => (
+                {tabsToRender.map(t => (
                     <button
                         key={t.id}
                         type="button"
@@ -68,11 +74,12 @@ export function RateInventorySubTabs({
                 ))}
             </div>
 
-            {/* 2. Right: Action Buttons */}
-            <div className={styles.subTabsActions}>
-                <button
-                    type="button"
-                    onClick={() => toast.info("Excel/CSV import feature is in preparation.")}
+            {/* 2. Right: Action Buttons (Only relevant when not on logs tab) */}
+            {activeTab !== "logs" && (
+                <div className={styles.subTabsActions}>
+                    <button
+                        type="button"
+                        onClick={() => toast.info("Excel/CSV import feature is in preparation.")}
                     className={styles.actionBtnSecondary}
                 >
                     <Upload size={14} />
@@ -115,6 +122,7 @@ export function RateInventorySubTabs({
                     <span>{taxInclusive ? "Tax Incl." : "Tax Excl."}</span>
                 </span>
             </div>
+            )}
         </div>
     );
 }

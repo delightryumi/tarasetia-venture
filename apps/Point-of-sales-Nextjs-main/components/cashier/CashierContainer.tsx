@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { 
   Coins, 
@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useCurrency } from '@/hooks/useCurrency';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, updateDoc, doc, getDocs, query, where, deleteDoc, onSnapshot, arrayUnion, setDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, getDocs, query, where, deleteDoc, onSnapshot, arrayUnion, setDoc, getDoc, orderBy, limit } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 import { localDb } from '@/lib/dexie';
 import { ShiftData } from './types';
@@ -131,7 +131,7 @@ export default function CashierContainer() {
     return { restoId, hotelCode };
   };
 
-  // loadActiveShift is removed because onSnapshot handles the real-time fetch with localStorage merging natively.
+  const hasSyncedCashierNameRef = useRef(false);
 
   const loadShiftHistory = async (restoId: string, hotelCode: string) => {
     if (!hotelCode || hotelCode === "0") {
@@ -139,63 +139,34 @@ export default function CashierContainer() {
       return;
     }
     try {
-      // Fetch all shifts without where clauses to support legacy records that lack status/restoId fields
-      const q = query(getHotelCollection(db, 'cashier_shifts', hotelCode));
-      const snap = await getDocs(q);
+      // Query recent 20 shifts with limit to eliminate unbounded document reads
+      let snap;
+      try {
+        const q = query(
+          getHotelCollection(db, 'cashier_shifts', hotelCode),
+          orderBy('openedAt', 'desc'),
+          limit(20)
+        );
+        snap = await getDocs(q);
+      } catch (err) {
+        // Fallback without orderBy in case legacy shifts lack openedAt field
+        snap = await getDocs(query(getHotelCollection(db, 'cashier_shifts', hotelCode), limit(20)));
+      }
+
       const history: ShiftData[] = [];
       snap.forEach((docSnap) => {
         const data = docSnap.data();
-        // A shift is considered closed if it has status == 'closed', OR if it has a closedAt timestamp (legacy)
         if (data.status === 'closed' || data.closedAt || data.active === false) {
           history.push({ id: docSnap.id, ...data } as ShiftData);
         }
       });
       history.sort((a, b) => {
-        const tA = a.closedAt ? new Date(a.closedAt).getTime() : 0;
-        const tB = b.closedAt ? new Date(b.closedAt).getTime() : 0;
+        const tA = a.closedAt ? new Date(a.closedAt).getTime() : (a.openedAt ? new Date(a.openedAt).getTime() : 0);
+        const tB = b.closedAt ? new Date(b.closedAt).getTime() : (b.openedAt ? new Date(b.openedAt).getTime() : 0);
         return tB - tA;
       });
 
-      // ── Patch only recent closed shifts if transactions are missing, saving hundreds of queries ──
-      const recentShifts = history.slice(0, 15);
-      const remainingShifts = history.slice(15);
-      const enrichedRecent = await Promise.all(
-        recentShifts.map(async (shift) => {
-          // If shift already has recorded transactions, reuse them to save Firestore reads!
-          if (Array.isArray(shift.transactions) && shift.transactions.length > 0) {
-            return shift;
-          }
-          try {
-            const ordersQ = query(
-              getHotelCollection(db, 'pos_orders', hotelCode),
-              where('shiftId', '==', shift.id)
-            );
-            const ordersSnap = await getDocs(ordersQ);
-            const txMap = new Map<string, any>();
-            (shift.transactions || []).forEach(t => {
-              if (t.id) txMap.set(t.id, t);
-            });
-            ordersSnap.docs.forEach(d => {
-              const od = d.data();
-              const txId = od.transactionId || d.id;
-              txMap.set(txId, {
-                id: txId,
-                amount: (od.status === 'CANCELLED' || od.status === 'VOID') ? 0 : (od.total ?? od.amount ?? 0),
-                method: (od.paymentMethod ?? od.method ?? 'cash').toLowerCase(),
-                timestamp: od.timestamp?.toDate ? od.timestamp.toDate().toISOString() : (od.timestamp ?? new Date().toISOString()),
-                revenueType: od.revenueType ?? '',
-                status: od.status || 'SUCCESS',
-              });
-            });
-            return { ...shift, transactions: Array.from(txMap.values()) };
-          } catch (e) {
-            // silent fail — keep original shift
-          }
-          return shift;
-        })
-      );
-
-      setShiftHistory([...enrichedRecent, ...remainingShifts]);
+      setShiftHistory(history);
     } catch (e) {
       console.error('Error loading shift history:', e);
     }
@@ -230,7 +201,8 @@ export default function CashierContainer() {
         const docSnap = snapshot.docs[0];
         const dbShift = { id: docSnap.id, ...docSnap.data() } as ShiftData;
         const loggedName = getLoggedInCashierName();
-        if (loggedName && (!dbShift.cashierName || dbShift.cashierName.toLowerCase() === 'kasir' || dbShift.cashierName.toLowerCase() === 'budi')) {
+        if (!hasSyncedCashierNameRef.current && loggedName && (!dbShift.cashierName || dbShift.cashierName.toLowerCase() === 'kasir' || dbShift.cashierName.toLowerCase() === 'budi')) {
+          hasSyncedCashierNameRef.current = true;
           dbShift.cashierName = loggedName;
           updateDoc(doc(getHotelCollection(db, 'cashier_shifts', hotelCode), dbShift.id), {
             cashierName: loggedName

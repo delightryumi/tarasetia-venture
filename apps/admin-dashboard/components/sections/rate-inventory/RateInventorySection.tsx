@@ -6,6 +6,7 @@ import { RateInventorySubTabs } from "./components/RateInventorySubTabs";
 import { RateInventoryFilterBar } from "./components/RateInventoryFilterBar";
 import { RateInventoryGrid } from "./components/RateInventoryGrid";
 import { BulkUpdateModal } from "./components/BulkUpdateModal";
+import { RateInventoryLogsTab } from "./components/RateInventoryLogsTab";
 import styles from "./rate-inventory.module.css";
 
 export function RateInventorySection() {
@@ -51,12 +52,13 @@ export function RateInventorySection() {
         canStopSell,
         canChangeRate,
         canChangeInventory,
+        isSuperadmin,
         channelConfigs
     } = useRateInventory();
 
     return (
         <div className={styles.container}>
-            {/* 1. Sub-Tabs Bar (Inventory, Rates, Stop Sell, Min Stay, CTA, CTD) */}
+            {/* 1. Sub-Tabs Bar (Inventory, Rates, Stop Sell, Min Stay, CTA, CTD, Logs) */}
             <RateInventorySubTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
@@ -65,74 +67,82 @@ export function RateInventorySection() {
                 taxInclusive={taxInclusive}
                 onSyncAll={() => syncAriToChannex(undefined, 500)}
                 syncingAri={syncingAri}
+                isSuperadmin={isSuperadmin}
             />
 
-            {/* 3. Filter & Controls Bar */}
-            <RateInventoryFilterBar
-                channelFilter={channelFilter}
-                setChannelFilter={setChannelFilter}
-                channelConfigs={channelConfigs}
-                roomTypeFilter={roomTypeFilter}
-                setRoomTypeFilter={setRoomTypeFilter}
-                roomTypes={roomTypes}
-                rateMode={rateMode}
-                setRateMode={setRateMode}
-                hideDerived={hideDerived}
-                setHideDerived={setHideDerived}
-                taxInclusive={taxInclusive}
-                setTaxInclusive={setTaxInclusive}
-                unsavedCount={unsavedCount}
-                saving={saving}
-                onResetStaged={resetStaged}
-                onSaveAllChanges={saveAllChanges}
-            />
-
-            {/* 4. Calendar Grid Table or Loading State */}
-            {loading ? (
-                <div className={styles.loadingContainer}>
-                    <div className={styles.spinner} />
-                    <div className={styles.loadingText}>
-                        Loading Rates &amp; Inventory Matrix...
-                    </div>
-                    <div className={styles.loadingSubtext}>
-                        Synchronizing physical room inventory and master rate plans
-                    </div>
-                </div>
+            {/* 2. Content: Logs Tab (Superadmin Only) or Normal Grid View */}
+            {activeTab === "logs" ? (
+                <RateInventoryLogsTab hotelCode={activeHotelCode} />
             ) : (
-                <RateInventoryGrid
-                    startDate={startDate}
-                    setStartDate={setStartDate}
-                    dateList={dateList}
-                    shiftDate={shiftDate}
-                    jumpToToday={jumpToToday}
-                    activeTab={activeTab}
-                    matrix={matrix}
-                    totalDailyAvailable={totalDailyAvailable}
-                    stageEdit={stageEdit}
-                    onSyncRoom={syncAriToChannex}
-                    syncingRoomTypeId={syncingRoomTypeId}
-                    canStopSell={canStopSell}
-                    canChangeRate={canChangeRate}
-                    canChangeInventory={canChangeInventory}
-                    channelFilter={channelFilter}
-                    channelConfigs={channelConfigs}
-                />
-            )}
+                <>
+                    {/* 3. Filter & Controls Bar */}
+                    <RateInventoryFilterBar
+                        channelFilter={channelFilter}
+                        setChannelFilter={setChannelFilter}
+                        channelConfigs={channelConfigs}
+                        roomTypeFilter={roomTypeFilter}
+                        setRoomTypeFilter={setRoomTypeFilter}
+                        roomTypes={roomTypes}
+                        rateMode={rateMode}
+                        setRateMode={setRateMode}
+                        hideDerived={hideDerived}
+                        setHideDerived={setHideDerived}
+                        taxInclusive={taxInclusive}
+                        setTaxInclusive={setTaxInclusive}
+                        unsavedCount={unsavedCount}
+                        saving={saving}
+                        onResetStaged={resetStaged}
+                        onSaveAllChanges={saveAllChanges}
+                    />
 
-            {/* 5. Bulk Update Modal */}
-            <BulkUpdateModal
-                isOpen={bulkModalOpen}
-                onClose={() => setBulkModalOpen(false)}
-                onApply={applyBulkUpdate}
-                roomTypes={roomTypes}
-                ratePlans={ratePlans}
-                channelConfigs={channelConfigs}
-                saving={saving}
-                defaultStartDate={startDate}
-                canStopSell={canStopSell}
-                canChangeRate={canChangeRate}
-                canChangeInventory={canChangeInventory}
-            />
+                    {/* 4. Calendar Grid Table or Loading State */}
+                    {loading ? (
+                        <div className={styles.loadingContainer}>
+                            <div className={styles.spinner} />
+                            <div className={styles.loadingText}>
+                                Loading Rates &amp; Inventory Matrix...
+                            </div>
+                            <div className={styles.loadingSubtext}>
+                                Synchronizing physical room inventory and master rate plans
+                            </div>
+                        </div>
+                    ) : (
+                        <RateInventoryGrid
+                            startDate={startDate}
+                            setStartDate={setStartDate}
+                            dateList={dateList}
+                            shiftDate={shiftDate}
+                            jumpToToday={jumpToToday}
+                            activeTab={activeTab}
+                            matrix={matrix}
+                            totalDailyAvailable={totalDailyAvailable}
+                            stageEdit={stageEdit}
+                            onSyncRoom={syncAriToChannex}
+                            syncingRoomTypeId={syncingRoomTypeId}
+                            canStopSell={canStopSell}
+                            canChangeRate={canChangeRate}
+                            canChangeInventory={canChangeInventory}
+                            channelFilter={channelFilter}
+                            channelConfigs={channelConfigs}
+                        />
+                    )}
+
+                    {/* 5. Bulk Update Modal */}
+                    <BulkUpdateModal
+                        isOpen={bulkModalOpen}
+                        onClose={() => setBulkModalOpen(false)}
+                        onApply={applyBulkUpdate}
+                        roomTypes={roomTypes}
+                        ratePlans={ratePlans}
+                        channelConfigs={channelConfigs}
+                        saving={saving}
+                        defaultStartDate={startDate}
+                        canStopSell={canStopSell}
+                        canChangeRate={canChangeRate}
+                        canChangeInventory={canChangeInventory}
+                    />
+                </>
+            )}
         </div>
     );
 }
