@@ -32,7 +32,11 @@ export function Setting() {
           return;
         }
 
-        const response = await axios.get('/api/shopdata');
+        const activeCode = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
+        const response = await axios.get('/api/shopdata', {
+          params: activeCode ? { hotelCode: activeCode } : {},
+          headers: activeCode ? { 'x-hotel-code': activeCode } : {}
+        });
         const shopdata = response.data.data;
 
         if (response.status === 200) {

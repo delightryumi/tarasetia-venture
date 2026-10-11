@@ -43,6 +43,8 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
   const [submittingOrder, setSubmittingOrder] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [lastOrderNumber, setLastOrderNumber] = useState<string>('');
+  const [taxRatePercent, setTaxRatePercent] = useState<number>(10);
+  const [serviceRatePercent, setServiceRatePercent] = useState<number>(0);
 
   // Refs
   const categoriesRef = useRef<HTMLDivElement>(null);
@@ -138,6 +140,12 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
       if (snap.exists()) {
         const data = snap.data();
         if (data.shopLogo || data.logo) setShopLogo(data.shopLogo || data.logo);
+        if (data.tax !== undefined && data.tax !== null && !isNaN(Number(data.tax))) {
+          setTaxRatePercent(Number(data.tax));
+        }
+        if (data.service !== undefined && data.service !== null && !isNaN(Number(data.service))) {
+          setServiceRatePercent(Number(data.service));
+        }
       }
     }).catch((err) => console.warn('Could not read pos config:', err));
 
@@ -284,8 +292,9 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
         const addonsTotal = item.addons.reduce((a: number, b: any) => a + b.price, 0);
         return sum + (item.price + addonsTotal) * item.qty;
       }, 0);
-      const tax = Math.round(subtotal * 0.10);
-      const total = subtotal + tax;
+      const service = Math.round(subtotal * (serviceRatePercent / 100));
+      const tax = Math.round(subtotal * (taxRatePercent / 100));
+      const total = subtotal + service + tax;
 
       const formattedCart = cartItems.map((item) => {
         const p = products.find((prod) => prod.id === item.id);
@@ -315,7 +324,10 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
         items: cartItems,
         notes: orderNotes.trim(),
         subtotal,
+        service,
+        serviceRate: serviceRatePercent,
         tax,
+        taxRate: taxRatePercent,
         discount: 0,
         discountPercent: 0,
         payableAmount: total,
@@ -471,6 +483,8 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
           onSubmitOrder={handleSubmitOrder}
           formatRupiah={formatRupiah}
           onUpdateQuantity={handleUpdateQuantity}
+          taxRate={taxRatePercent}
+          serviceRate={serviceRatePercent}
         />
       )}
 

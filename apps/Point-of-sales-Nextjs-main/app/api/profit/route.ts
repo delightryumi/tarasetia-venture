@@ -7,11 +7,14 @@ import { getCachedCatalog, setCachedCatalog } from '@/lib/catalogCache';
 
 export async function GET(req: NextRequest) {
   try {
-    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
+    const { searchParams } = new URL(req.url);
+    const paramHotelCode = searchParams.get('hotelCode');
+    const cookieHotelCode = req.cookies.get('hotelCode')?.value;
+    const headerHotelCode = req.headers.get('x-hotel-code');
+    const hotelCode = paramHotelCode || cookieHotelCode || headerHotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
     if (!hotelCode || hotelCode === "0") {
       return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
     }
-    const { searchParams } = new URL(req.url);
     const start = searchParams.get('start');
     const end = searchParams.get('end');
 

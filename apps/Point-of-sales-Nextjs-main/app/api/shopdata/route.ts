@@ -3,17 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
-// In-memory cache for POS shop settings (15-min TTL)
-interface CacheEntry<T> {
-  data: T;
-  expiresAt: number;
-}
-const posShopDataCache = new Map<string, CacheEntry<any>>();
+import { posShopDataCache } from '@/lib/posCache';
 
 export async function GET(req: NextRequest) {
   try {
-    // Read hotelCode from cookies
-    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
+    const { searchParams } = new URL(req.url);
+    const searchHotelCode = searchParams.get('hotelCode');
+    const cookieHotelCode = req.cookies.get('hotelCode')?.value;
+    const headerHotelCode = req.headers.get('x-hotel-code');
+    const hotelCode = searchHotelCode || cookieHotelCode || headerHotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
 
     if (!hotelCode || hotelCode === "0") {
       return NextResponse.json({

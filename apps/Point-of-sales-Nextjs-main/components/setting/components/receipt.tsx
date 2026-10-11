@@ -134,6 +134,8 @@ export default function ReceiptSettingCard() {
   const [activeTab, setActiveTab] = useState<'header' | 'transaction' | 'footer' | 'paper'>('header');
   const [isUploadingLogo, setIsUploadingLogo] = useState<boolean>(false);
   const [testingDepartment, setTestingDepartment] = useState<'cashier' | 'kitchen' | 'bar' | null>(null);
+  const [shopTaxRate, setShopTaxRate] = useState<number>(10);
+  const [shopServiceRate, setShopServiceRate] = useState<number>(0);
 
   // 1. Load configuration from Firestore & localStorage
   useEffect(() => {
@@ -236,7 +238,19 @@ export default function ReceiptSettingCard() {
       setIsPageLoading(false);
     });
 
-    return () => unsubReceipt();
+    const posRef = doc(db, 'hotels', code, 'settings', 'pos');
+    const unsubPos = onSnapshot(posRef, (posSnap) => {
+      if (posSnap.exists()) {
+        const posData = posSnap.data();
+        if (posData.tax !== undefined && !isNaN(Number(posData.tax))) setShopTaxRate(Number(posData.tax));
+        if (posData.service !== undefined && !isNaN(Number(posData.service))) setShopServiceRate(Number(posData.service));
+      }
+    });
+
+    return () => {
+      unsubReceipt();
+      unsubPos();
+    };
   }, []);
 
   // IP Printer inline handlers
@@ -1139,12 +1153,12 @@ export default function ReceiptSettingCard() {
                   totals={{
                     subtotal: 96000,
                     discount: 0,
-                    taxRate: 10,
-                    taxAmount: 9600,
-                    serviceRate: 5,
-                    serviceAmount: 4800,
-                    payableAmount: 110400,
-                    cashAmount: 110400,
+                    taxRate: shopTaxRate,
+                    taxAmount: Math.round(96000 * (shopTaxRate / 100)),
+                    serviceRate: shopServiceRate,
+                    serviceAmount: Math.round(96000 * (shopServiceRate / 100)),
+                    payableAmount: 96000 + Math.round(96000 * (shopTaxRate / 100)) + Math.round(96000 * (shopServiceRate / 100)),
+                    cashAmount: 96000 + Math.round(96000 * (shopTaxRate / 100)) + Math.round(96000 * (shopServiceRate / 100)),
                     changeAmount: 0
                   }}
                   paperSize={config.paperWidth}

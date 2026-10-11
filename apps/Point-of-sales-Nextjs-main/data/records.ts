@@ -6,6 +6,14 @@ import { cookies } from 'next/headers';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 const posTaxSettingsCache = new Map<string, { taxRate: number; expiresAt: number }>();
 
+export async function invalidateRecordsTaxCache(hotelCode?: string) {
+  if (hotelCode) {
+    posTaxSettingsCache.delete(hotelCode);
+  } else {
+    posTaxSettingsCache.clear();
+  }
+}
+
 export const fetchRecords = async ({
   take = 5,
   skip = 0,

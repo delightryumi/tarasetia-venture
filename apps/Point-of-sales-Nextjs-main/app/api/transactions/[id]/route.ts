@@ -9,10 +9,13 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-
   try {
-    const hotelCode = req.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
+    const { id } = await params;
+    const { searchParams } = new URL(req.url);
+    const paramHotelCode = searchParams.get('hotelCode');
+    const cookieHotelCode = req.cookies.get('hotelCode')?.value;
+    const headerHotelCode = req.headers.get('x-hotel-code');
+    const hotelCode = paramHotelCode || cookieHotelCode || headerHotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
     if (!hotelCode || hotelCode === "0") {
       return NextResponse.json({ error: "Hotel Code is missing or invalid" }, { status: 400 });
     }
@@ -47,6 +50,9 @@ export async function GET(
     const discount = Number(docData.discount || 0);
     const subtotal = docData.subtotal !== undefined ? Number(docData.subtotal) : undefined;
     const tax = docData.tax !== undefined ? Number(docData.tax) : undefined;
+    const taxRate = docData.taxRate !== undefined ? Number(docData.taxRate) : undefined;
+    const service = docData.service !== undefined ? Number(docData.service) : undefined;
+    const serviceRate = docData.serviceRate !== undefined ? Number(docData.serviceRate) : undefined;
     const total = docData.total !== undefined ? Number(docData.total) : undefined;
     const cashAmount = docData.cashAmount !== undefined ? Number(docData.cashAmount) : undefined;
     const changeAmount = docData.changeAmount !== undefined ? Number(docData.changeAmount) : undefined;
@@ -81,6 +87,9 @@ export async function GET(
       table: tableNumber,
       subtotal,
       tax,
+      taxRate,
+      service,
+      serviceRate,
       total,
       cashAmount,
       changeAmount,

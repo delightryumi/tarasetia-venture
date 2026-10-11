@@ -91,6 +91,7 @@ export const useDSR = () => {
 
   const [ratePlans, setRatePlans] = useState<any[]>([]);
   const [hotelBreakfastRate, setHotelBreakfastRate] = useState<number | undefined>(undefined);
+  const [posRates, setPosRates] = useState<{ taxRate: number; serviceRate: number }>({ taxRate: 10, serviceRate: 10 });
 
   // 1. Fetch Hotel Room Count from CPanel (hotels doc or roomTypes)
   const fetchHotelRoomCount = useCallback(async (code: string) => {
@@ -112,6 +113,20 @@ export const useDSR = () => {
         if (bRate > 0) {
           setHotelBreakfastRate(bRate);
         }
+      }
+
+      // Fetch POS settings for dynamic Tax & Service Rate
+      try {
+        const posSnap = await getDoc(doc(db, "hotels", code, "settings", "pos"));
+        if (posSnap.exists()) {
+          const pd = posSnap.data();
+          setPosRates({
+            taxRate: pd.tax !== undefined ? Number(pd.tax) : 10,
+            serviceRate: pd.service !== undefined ? Number(pd.service) : 10,
+          });
+        }
+      } catch (err) {
+        console.warn("Could not fetch settings/pos in useDSR:", err);
       }
 
       // Fetch Channel Manager rate plans for this hotel
@@ -330,6 +345,8 @@ export const useDSR = () => {
       customIncomes: customIncomesCache.items,
       ratePlans,
       hotelBreakfastRate,
+      posTaxRate: posRates.taxRate,
+      posServiceRate: posRates.serviceRate,
     });
   }, [
     selectedDate,
@@ -344,6 +361,7 @@ export const useDSR = () => {
     customIncomesCache,
     ratePlans,
     hotelBreakfastRate,
+    posRates,
   ]);
 
   return {

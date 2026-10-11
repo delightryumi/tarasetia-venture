@@ -25,6 +25,8 @@ interface PaymentWorkspaceProps {
   onConfirmPayment: () => void;
   onConfirmSplitPayment?: (splitData: any) => void;
   taxRatePercent?: number;
+  service?: number;
+  serviceRatePercent?: number;
   splitPaidCredit?: number;
   revenueType: 'alacarte' | 'banquet';
   setRevenueType: (type: 'alacarte' | 'banquet') => void;
@@ -37,6 +39,7 @@ export default function PaymentWorkspace({
   cart,
   subtotal,
   tax,
+  service,
   discount,
   payableAmount,
   splitPaidCredit,
@@ -47,7 +50,8 @@ export default function PaymentWorkspace({
   onBackToPOS,
   onConfirmPayment,
   onConfirmSplitPayment,
-  taxRatePercent = 10,
+  taxRatePercent = 0,
+  serviceRatePercent = 0,
   revenueType,
   setRevenueType
 }: PaymentWorkspaceProps) {
@@ -472,6 +476,8 @@ export default function PaymentWorkspace({
           tableNumber={tableNumber}
           customerName={customerName}
           taxRatePercent={taxRatePercent}
+          serviceRatePercent={serviceRatePercent}
+          payableAmount={payableAmount}
           onConfirmSplitPayment={(splitData) => {
             setIsSplitModalOpen(false);
             onConfirmSplitPayment(splitData);

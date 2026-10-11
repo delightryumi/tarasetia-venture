@@ -1068,18 +1068,32 @@ export default function ThermalReceipt({
                 </div>
               </>
             )}
-            {activeConfig?.showTaxService !== false && totals.serviceAmount !== undefined && totals.serviceAmount > 0 && (
-              <div className="flex justify-between items-center">
-                <span className="text-neutral-500 font-normal">Service Charge ({totals.serviceRate || 5}%):</span>
-                <span className="font-bold">+{formatCurrency(totals.serviceAmount)}</span>
-              </div>
-            )}
-            {activeConfig?.showTaxService !== false && totals.taxAmount > 0 && (
-              <div className="flex justify-between items-center">
-                <span className="text-neutral-500 font-normal">Pajak Resto (PB1) ({totals.taxRate || 10}%):</span>
-                <span className="font-bold">+{formatCurrency(totals.taxAmount)}</span>
-              </div>
-            )}
+            {(() => {
+              const netBase = Math.max(1, (totals.subtotal || 0) - (totals.discount || 0));
+              const effectiveSvcRate = totals.serviceRate !== undefined 
+                ? totals.serviceRate 
+                : ((totals.serviceAmount || 0) > 0 ? Math.round(((totals.serviceAmount || 0) / netBase) * 100) : 0);
+              const effectiveTxRate = totals.taxRate !== undefined 
+                ? totals.taxRate 
+                : ((totals.taxAmount || 0) > 0 ? Math.round(((totals.taxAmount || 0) / netBase) * 100) : 0);
+
+              return (
+                <>
+                  {activeConfig?.showTaxService !== false && totals.serviceAmount !== undefined && totals.serviceAmount > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-500 font-normal">Service Charge ({effectiveSvcRate}%):</span>
+                      <span className="font-bold">+{formatCurrency(totals.serviceAmount)}</span>
+                    </div>
+                  )}
+                  {activeConfig?.showTaxService !== false && totals.taxAmount > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-500 font-normal">Pajak Resto (PB1) ({effectiveTxRate}%):</span>
+                      <span className="font-bold">+{formatCurrency(totals.taxAmount)}</span>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           <div style={{ borderTop: '1px dashed #cccccc', margin: '5px 0' }} />

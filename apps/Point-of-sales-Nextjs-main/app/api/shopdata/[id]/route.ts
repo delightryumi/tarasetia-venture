@@ -4,6 +4,9 @@ import { doc, setDoc } from 'firebase/firestore';
 
 import { cookies } from 'next/headers';
 
+import { invalidateShopDataCache, invalidateProductSaleCache } from '@/lib/posCache';
+import { invalidateRecordsTaxCache } from '@/data/records';
+
 export const PATCH = async (
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -12,9 +15,13 @@ export const PATCH = async (
     const { id } = await params;
     const body = await request.json();
     
-    // Read hotelCode from cookies
+    // Read hotelCode from body, query, cookie or header
+    const { searchParams } = new URL(request.url);
+    const searchHotelCode = searchParams.get('hotelCode');
     const cookieStore = await cookies();
-    const hotelCode = cookieStore.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
+    const cookieHotelCode = cookieStore.get('hotelCode')?.value;
+    const headerHotelCode = request.headers.get('x-hotel-code');
+    const hotelCode = body?.hotelCode || searchHotelCode || cookieHotelCode || headerHotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
     if (!hotelCode || hotelCode === "0") {
       return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
     }
@@ -47,6 +54,9 @@ export const PATCH = async (
 
     if (Object.keys(updateData).length > 0) {
       await setDoc(posSettingsRef, updateData, { merge: true });
+      invalidateShopDataCache(hotelCode);
+      invalidateProductSaleCache(hotelCode);
+      await invalidateRecordsTaxCache(hotelCode);
       return NextResponse.json({ success: true, ...updateData }, { status: 201 });
     }
 

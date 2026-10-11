@@ -70,10 +70,19 @@ const TaxrateCard: React.FC<TaxrateCardProps> = ({ tax, service, lostBreakage, s
         lostBreakage: lostBreakageNumber,
       });
 
-      await axios.patch(`/api/shopdata/${storeId}`, validatedData);
+      const activeCode = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
+      await axios.patch(`/api/shopdata/${storeId}`, {
+        ...validatedData,
+        hotelCode: activeCode,
+      }, {
+        headers: activeCode ? { 'x-hotel-code': activeCode } : {},
+      });
 
       toast.success('Tax configurations updated successfully.');
       eventBus.emit('fetchStoreData');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('pos_settings_updated'));
+      }
     } catch (error) {
       if (error instanceof ZodError) {
         const fieldErrors = error.errors.map((err) => err.message);

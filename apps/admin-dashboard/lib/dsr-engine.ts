@@ -126,6 +126,8 @@ export interface DSREngineInput {
   customIncomes?: CustomIncomeItem[];
   ratePlans?: any[];
   hotelBreakfastRate?: number;
+  posTaxRate?: number;
+  posServiceRate?: number;
 }
 
 function calculateCell(
@@ -558,6 +560,14 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
 
       const items = order.items || [];
       if (items.length > 0) {
+        const ordSubtotal = Number(order.subtotal) || 0;
+        const ordTotal = Number(order.total) || 0;
+        const itemsSubtotalSum = items.reduce((s, it) => s + (Number(it.subtotal) || Number(it.price || 0) * Number(it.quantity || 1) || 0), 0);
+        const effectiveSubtotal = itemsSubtotalSum > 0 ? itemsSubtotalSum : ordSubtotal;
+        // Gross ratio ensures individual item revenues reflect their gross amount
+        // (including tax and service), keeping DSR departmental revenue aligned with gross receipts.
+        const grossRatio = ordTotal > 0 && effectiveSubtotal > 0 ? ordTotal / effectiveSubtotal : 1;
+
         const itemSum = items.reduce((iSum, item) => {
           const cat = (item.category || (item as any).pnlTarget || "").toLowerCase().trim();
           const pnlTarget = ((item as any).pnlTarget || "").toUpperCase().trim();
@@ -580,7 +590,8 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
 
           const matchesOutlet = outletMatcher ? outletMatcher(outlet) : true;
           if (matchesCat && matchesOutlet) {
-            return iSum + (Number(item.subtotal) || Number(item.price || 0) * Number(item.quantity || 1) || 0);
+            const rawSub = Number(item.subtotal) || Number(item.price || 0) * Number(item.quantity || 1) || 0;
+            return iSum + (grossRatio > 0 ? rawSub * grossRatio : rawSub);
           }
           return iSum;
         }, 0);
@@ -588,7 +599,7 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
       }
 
       // Fallback if order has no items array
-      const ordAmt = Number(order.subtotal || order.total || 0);
+      const ordAmt = Number(order.total || order.subtotal || 0);
       if (ordAmt > 0) {
         const ordCat = ((order as any).orderType || (order as any).category || (order as any).revenueType || "").toLowerCase().trim();
         const ordName = ((order as any).name || "").toLowerCase().trim();
@@ -742,11 +753,18 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
       }
       const items = order.items || [];
       if (items.length > 0) {
+        const ordSubtotal = Number(order.subtotal) || 0;
+        const ordTotal = Number(order.total) || 0;
+        const itemsSubtotalSum = items.reduce((s, it) => s + (Number(it.subtotal) || Number(it.price || 0) * Number(it.quantity || 1) || 0), 0);
+        const effectiveSubtotal = itemsSubtotalSum > 0 ? itemsSubtotalSum : ordSubtotal;
+        const grossRatio = ordTotal > 0 && effectiveSubtotal > 0 ? ordTotal / effectiveSubtotal : 1;
+
         const itemSum = items.reduce((iSum, item) => {
           const cat = (item.category || (item as any).pnlTarget || "").toLowerCase().trim();
           const name = (item.name || "").toLowerCase().trim();
           if (cat.includes(keyword) || name.includes(keyword)) {
-            return iSum + (Number(item.subtotal) || Number(item.price || 0) * Number(item.quantity || 1) || 0);
+            const rawSub = Number(item.subtotal) || Number(item.price || 0) * Number(item.quantity || 1) || 0;
+            return iSum + (grossRatio > 0 ? rawSub * grossRatio : rawSub);
           }
           return iSum;
         }, 0);
@@ -754,7 +772,7 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
       }
       const ordCat = ((order as any).orderType || (order as any).category || (order as any).revenueType || "").toLowerCase().trim();
       if (ordCat.includes(keyword)) {
-        return sum + (Number(order.subtotal || order.total) || 0);
+        return sum + (Number(order.total || order.subtotal) || 0);
       }
       return sum;
     }, 0);
@@ -926,8 +944,11 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
   const totalAmenitiesBudMtd = getAmenitiesBud(currentMonthBudget);
   const totalAmenitiesBudYtd = getYtdBudget(getAmenitiesBud);
 
-  const serviceRate = (currentMonthBudget.serviceChargeRate !== undefined ? currentMonthBudget.serviceChargeRate : 10) / 100;
-  const taxRate = (currentMonthBudget.taxRate !== undefined ? currentMonthBudget.taxRate : 10) / 100;
+  const defaultServiceCharge = input.posServiceRate !== undefined ? input.posServiceRate : (currentMonthBudget.serviceChargeRate !== undefined ? currentMonthBudget.serviceChargeRate : 10);
+  const defaultTaxRate = input.posTaxRate !== undefined ? input.posTaxRate : (currentMonthBudget.taxRate !== undefined ? currentMonthBudget.taxRate : 10);
+
+  const serviceRate = (budgetDoc?.months?.[monthKey]?.serviceChargeRate !== undefined ? budgetDoc.months[monthKey].serviceChargeRate : defaultServiceCharge) / 100;
+  const taxRate = (budgetDoc?.months?.[monthKey]?.taxRate !== undefined ? budgetDoc.months[monthKey].taxRate : defaultTaxRate) / 100;
   const taxAndServiceDivider = 1 + serviceRate + taxRate;
 
   // Actual transactions entered are Gross (all-in / ++ inclusive of Tax & Service)
@@ -1395,13 +1416,13 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
     },
     {
       id: "summary_service",
-      label: `Service Charge (${currentMonthBudget.serviceChargeRate !== undefined ? currentMonthBudget.serviceChargeRate : 10}%)`,
+      label: `Service Charge (${Math.round(serviceRate * 100)}%)`,
       isCurrency: true,
       cells: calculateCell(serviceToday, serviceMtd, serviceBudMtd, serviceYtd, serviceBudYtd, false, serviceBudToday),
     },
     {
       id: "summary_tax",
-      label: `Government Tax (${currentMonthBudget.taxRate !== undefined ? currentMonthBudget.taxRate : 10}%)`,
+      label: `Government Tax (${Math.round(taxRate * 100)}%)`,
       isCurrency: true,
       cells: calculateCell(taxToday, taxMtd, taxBudMtd, taxYtd, taxBudYtd, false, taxBudToday),
     },

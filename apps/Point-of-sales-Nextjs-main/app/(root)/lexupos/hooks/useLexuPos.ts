@@ -105,6 +105,7 @@ export function useLexuPos() {
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [cashierName, setCashierName] = useState('Kasir');
   const [taxRatePercent, setTaxRatePercent] = useState(10);
+  const [serviceRatePercent, setServiceRatePercent] = useState(0);
   const [selectedSubcategory, setSelectedSubcategory] = useState('All');
   const [isHoldConfirmOpen, setIsHoldConfirmOpen] = useState(false);
   const [activeHotelCode, setActiveHotelCode] = useState<string>(() => {
@@ -299,14 +300,17 @@ export function useLexuPos() {
 
     const fetchShopTax = async () => {
       try {
-        const response = await fetch('/api/shopdata', { cache: 'no-store' });
+        const codeToUse = hotelCode || activeHotelCode;
+        const url = codeToUse ? `/api/shopdata?hotelCode=${encodeURIComponent(codeToUse)}` : '/api/shopdata';
+        const response = await fetch(url, { cache: 'no-store' });
         if (response.ok) {
           const resData = await response.json();
           if (resData?.data) {
-            const svc = Number(resData.data.service || 0);
-            const tx = Number(resData.data.tax || 0);
+            const svc = (resData.data.service !== undefined && resData.data.service !== null && !isNaN(Number(resData.data.service))) ? Number(resData.data.service) : 0;
+            const tx = (resData.data.tax !== undefined && resData.data.tax !== null && !isNaN(Number(resData.data.tax))) ? Number(resData.data.tax) : 10;
             const lb = Number(resData.data.lostBreakage || 0);
-            setTaxRatePercent(svc + tx + lb);
+            setServiceRatePercent(svc);
+            setTaxRatePercent(tx + lb);
           }
         }
       } catch (err) {
@@ -314,6 +318,11 @@ export function useLexuPos() {
       }
     };
     fetchShopTax();
+
+    const handleSettingsUpdated = () => {
+      fetchShopTax();
+    };
+    window.addEventListener('pos_settings_updated', handleSettingsUpdated);
 
     // ── Sync active shift from Firestore across all devices ──
     // This ensures PC-B can see the shift opened by PC-A
@@ -343,7 +352,10 @@ export function useLexuPos() {
         }
       }
     );
-    return () => unsubShift();
+    return () => {
+      unsubShift();
+      window.removeEventListener('pos_settings_updated', handleSettingsUpdated);
+    };
   }, []);
 
 
@@ -520,8 +532,10 @@ export function useLexuPos() {
     return acc + ((item.product.price + addonsTotal) * item.quantity);
   }, 0);
   const discount = subtotal * (discountPercent / 100);
-  const tax = (subtotal - discount) * (taxRatePercent / 100); 
-  const rawPayable = subtotal - discount + tax;
+  const netBase = Math.max(0, subtotal - discount);
+  const service = Math.round(netBase * (serviceRatePercent / 100));
+  const tax = Math.round(netBase * (taxRatePercent / 100)); 
+  const rawPayable = netBase + service + tax;
   const payableAmount = Math.max(0, rawPayable - splitPaidCredit);
 
   const handleToggleCompliment = (cartItemId: string) => {
@@ -592,7 +606,10 @@ export function useLexuPos() {
       subtotal,
       discount,
       discountPercent,
+      service,
+      serviceRate: serviceRatePercent,
       tax,
+      taxRate: taxRatePercent,
       payableAmount,
       createdAt: new Date().toISOString(),
       restoId,
@@ -994,7 +1011,10 @@ export function useLexuPos() {
             };
           }),
           subtotal: currentSplit ? currentSplit.subtotal : subtotal,
+          service: currentSplit ? (currentSplit.service || 0) : service,
+          serviceRate: serviceRatePercent,
           tax: currentSplit ? currentSplit.tax : tax,
+          taxRate: taxRatePercent,
           discount: currentSplit ? 0 : discount,
           total: finalAmountToRecord,
           paymentMethod: finalPaymentMethod,
@@ -1124,6 +1144,8 @@ export function useLexuPos() {
     clearCart,
     subtotal,
     discount,
+    service,
+    serviceRatePercent,
     tax,
     payableAmount,
     handleToggleCompliment,

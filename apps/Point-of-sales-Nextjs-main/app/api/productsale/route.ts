@@ -4,13 +4,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, getDoc, query, where } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 
-// In-memory cache for POS product sales report to eliminate redundant Firestore reads
-interface CacheEntry<T> {
-  data: T;
-  expiresAt: number;
-}
-const posProductSaleCache = new Map<string, CacheEntry<any>>();
-const posProductMetaCache = new Map<string, CacheEntry<{ productMap: any; subcatToParentMap: any; taxRate: number }>>();
+import { posProductSaleCache, posProductMetaCache } from '@/lib/posCache';
 
 export async function GET(req: NextRequest) {
   try {

@@ -19,7 +19,10 @@ interface POSCartSidebarProps {
   onUpdateQuantity: (cartItemId: string, delta: number) => void;
   onClearCart: () => void;
   subtotal: number;
+  service?: number;
+  serviceRate?: number;
   tax: number;
+  taxRate?: number;
   discount: number;
   discountPercent: number;
   setDiscountPercent: (percent: number) => void;
@@ -41,7 +44,10 @@ export default function POSCartSidebar({
   onUpdateQuantity,
   onClearCart,
   subtotal,
+  service,
+  serviceRate,
   tax,
+  taxRate,
   discount,
   discountPercent,
   setDiscountPercent,
@@ -320,10 +326,18 @@ export default function POSCartSidebar({
               </div>
             </>
           )}
-          <div className={styles.summaryRow}>
-            <span>Pajak ({subtotal - discount > 0 ? Math.round((tax / (subtotal - discount)) * 100) : 10}% Service TAX)</span>
-            <span className={styles.summaryVal}>{formatCurrency(tax)}</span>
-          </div>
+          {service !== undefined && service > 0 && (
+            <div className={styles.summaryRow}>
+              <span>Service Charge ({serviceRate !== undefined ? serviceRate : Math.round((service / Math.max(1, subtotal - discount)) * 100)}%)</span>
+              <span className={styles.summaryVal}>{formatCurrency(service)}</span>
+            </div>
+          )}
+          {tax > 0 && (
+            <div className={styles.summaryRow}>
+              <span>Pajak Resto (PB1) ({taxRate !== undefined ? taxRate : (subtotal - discount > 0 ? Math.round((tax / (subtotal - discount)) * 100) : 0)}%)</span>
+              <span className={styles.summaryVal}>{formatCurrency(tax)}</span>
+            </div>
+          )}
 
           {splitPaidCredit && splitPaidCredit > 0 ? (
             <div className={styles.summaryRow}>

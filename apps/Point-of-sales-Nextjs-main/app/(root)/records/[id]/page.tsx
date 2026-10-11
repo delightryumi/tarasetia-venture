@@ -66,8 +66,8 @@ export default function DetailPage() {
   }
 
   const netBase = Math.max(1, finalSubtotal - finalDiscount);
-  const effectiveTaxRate = finalTax > 0 ? Math.round((finalTax / netBase) * 100) : 0;
-  const effectiveServiceRate = finalService > 0 ? Math.round((finalService / netBase) * 100) : 0;
+  const effectiveTaxRate = firstTx?.taxRate !== undefined ? Number(firstTx.taxRate) : (finalTax > 0 ? Math.round((finalTax / netBase) * 100) : 0);
+  const effectiveServiceRate = firstTx?.serviceRate !== undefined ? Number(firstTx.serviceRate) : (finalService > 0 ? Math.round((finalService / netBase) * 100) : 0);
 
   // Map transactionData to ReceiptItemData
   const receiptItems: ReceiptItemData[] = transactionData.map(item => {
@@ -93,7 +93,8 @@ export default function DetailPage() {
 
   // ── Fetch shop data ─────────────────────────────────────────────────────────
   useEffect(() => {
-    axios.get('/api/shopdata')
+    const activeCode = (typeof window !== 'undefined' && (localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode'))) || '';
+    axios.get(activeCode ? `/api/shopdata?hotelCode=${encodeURIComponent(activeCode)}` : '/api/shopdata')
       .then(res => {
         const d = res.data?.data;
         if (d) {

@@ -73,9 +73,9 @@ export function encodeReceiptData(data: StatelessReceiptData): string {
     if (data.totals?.subtotal) compact.sub = data.totals.subtotal;
     if (data.totals?.discount) compact.disc = data.totals.discount;
     if (data.totals?.taxAmount) compact.tax = data.totals.taxAmount;
-    if (data.totals?.taxRate) compact.txr = data.totals.taxRate;
+    if (data.totals?.taxRate !== undefined) compact.txr = data.totals.taxRate;
     if (data.totals?.serviceAmount) compact.srv = data.totals.serviceAmount;
-    if (data.totals?.serviceRate) compact.srvr = data.totals.serviceRate;
+    if (data.totals?.serviceRate !== undefined) compact.srvr = data.totals.serviceRate;
     if (data.totals?.cashAmount) compact.cash = data.totals.cashAmount;
     if (data.totals?.changeAmount) compact.chg = data.totals.changeAmount;
     if (data.footer?.message) compact.msg = data.footer.message;

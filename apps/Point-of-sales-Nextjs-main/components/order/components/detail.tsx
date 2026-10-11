@@ -71,7 +71,8 @@ useEffect(() => {
         return;
       }
 
-      const response = await axios.get('/api/shopdata');
+      const activeCode = (typeof window !== 'undefined' && (localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode'))) || '';
+      const response = await axios.get(activeCode ? `/api/shopdata?hotelCode=${encodeURIComponent(activeCode)}` : '/api/shopdata');
       const shopdata = response.data.data;
 
       if (response.status === 200) {

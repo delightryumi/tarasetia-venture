@@ -37,6 +37,8 @@ interface CartCheckoutProps {
   onSubmitOrder: () => void;
   formatRupiah: (val: number) => string;
   onUpdateQuantity: (cartItemId: string, delta: number) => void;
+  taxRate?: number;
+  serviceRate?: number;
 }
 
 export default function CartCheckout({
@@ -53,6 +55,8 @@ export default function CartCheckout({
   paymentMethod,
   setPaymentMethod,
   qrisImage,
+  taxRate = 10,
+  serviceRate = 0,
   submittingOrder,
   onSubmitOrder,
   formatRupiah,
@@ -83,8 +87,11 @@ export default function CartCheckout({
     .filter((item) => item.qty > 0);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const tax = Math.round(subtotal * 0.10); // PB1 10%
-  const grandTotal = subtotal + tax;
+  const effectiveTaxRate = taxRate !== undefined ? taxRate : 10;
+  const effectiveServiceRate = serviceRate !== undefined ? serviceRate : 0;
+  const service = Math.round(subtotal * (effectiveServiceRate / 100));
+  const tax = Math.round(subtotal * (effectiveTaxRate / 100));
+  const grandTotal = subtotal + service + tax;
 
   return (
     <>
@@ -431,10 +438,19 @@ export default function CartCheckout({
                     <span className="font-bold text-[#121615]">{formatRupiah(subtotal)}</span>
                   </div>
 
-                  <div className="flex justify-between items-center text-[12px] text-[#525a56]">
-                    <span>Pajak Restoran PB1 (10%)</span>
-                    <span className="font-bold text-[#121615]">{formatRupiah(tax)}</span>
-                  </div>
+                  {service > 0 && (
+                    <div className="flex justify-between items-center text-[12px] text-[#525a56]">
+                      <span>Service Charge ({effectiveServiceRate}%)</span>
+                      <span className="font-bold text-[#121615]">{formatRupiah(service)}</span>
+                    </div>
+                  )}
+
+                  {tax > 0 && (
+                    <div className="flex justify-between items-center text-[12px] text-[#525a56]">
+                      <span>Pajak Restoran PB1 ({effectiveTaxRate}%)</span>
+                      <span className="font-bold text-[#121615]">{formatRupiah(tax)}</span>
+                    </div>
+                  )}
 
                   <div className="w-full h-px bg-gray-200 my-1" />
 

@@ -63,6 +63,8 @@ export default function LexuPosPage() {
     clearCart,
     subtotal,
     discount,
+    service,
+    serviceRatePercent,
     tax,
     payableAmount,
     handleToggleCompliment,
@@ -113,7 +115,10 @@ export default function LexuPosPage() {
             paymentMethod={activeSplitData ? activeSplitData.paymentMethod : (receiptStatus === 'UNPAID' ? 'unpaid' : paymentMethod)}
             cart={activeSplitData ? activeSplitData.paidItems : (receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.cart : cart)}
             subtotal={activeSplitData ? activeSplitData.subtotal : (receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.subtotal : subtotal)}
+            service={activeSplitData ? (activeSplitData.service || 0) : (receiptStatus === 'UNPAID' && heldOrderToPrint ? (heldOrderToPrint.service || 0) : service)}
+            serviceRate={serviceRatePercent}
             tax={activeSplitData ? activeSplitData.tax : (receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.tax : tax)}
+            taxRate={taxRatePercent}
             discount={activeSplitData ? 0 : (receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.discount : discount)}
             payableAmount={activeSplitData ? activeSplitData.payableAmount : (receiptStatus === 'UNPAID' && heldOrderToPrint ? heldOrderToPrint.payableAmount : payableAmount)}
             cashAmount={receiptStatus === 'UNPAID' ? '0' : cashAmount}
@@ -162,7 +167,10 @@ export default function LexuPosPage() {
                   onUpdateQuantity={updateQuantity}
                   onClearCart={clearCart}
                   subtotal={subtotal}
+                  service={service}
+                  serviceRate={serviceRatePercent}
                   tax={tax}
+                  taxRate={taxRatePercent}
                   discount={discount}
                   discountPercent={discountPercent}
                   setDiscountPercent={setDiscountPercent}
@@ -202,6 +210,7 @@ export default function LexuPosPage() {
               cart={cart}
               subtotal={subtotal}
               tax={tax}
+              service={service}
               discount={discount}
               payableAmount={payableAmount}
               splitPaidCredit={splitPaidCredit}
@@ -213,6 +222,7 @@ export default function LexuPosPage() {
               onConfirmPayment={executePayment}
               onConfirmSplitPayment={handleConfirmSplitPayment}
               taxRatePercent={taxRatePercent}
+              serviceRatePercent={serviceRatePercent}
               revenueType={revenueType}
               setRevenueType={setRevenueType}
             />
