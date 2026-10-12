@@ -1,3 +1,5 @@
+/* GridRatePlanRow.module.css — Compact Rate Plan Row */
+
 .ratePlanRow {
     border-bottom: 1px solid #e2e8f0;
     background-color: #ffffff;
@@ -18,20 +20,24 @@
 }
 
 .ratePlanTitleCell {
-    width: 290px;
-    min-width: 290px;
-    max-width: 290px;
+    width: 230px;
+    min-width: 230px;
+    max-width: 230px;
     position: sticky;
     left: 0;
     z-index: 10;
     background-color: inherit;
-    border-right: 2px solid #cbd5e1;
+    border-right: 1px solid #cbd5e1;
     border-bottom: 1px solid #e2e8f0;
-    padding: 5px 8px 5px 18px;
+    padding: 5px 8px;
+    height: 48px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 3px;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 :global(.dark) .ratePlanTitleCell {
@@ -39,50 +45,99 @@
     border-bottom-color: #374151;
 }
 
-.ratePlanDetails {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-    flex: 1;
-}
-
-.ratePlanNameRow {
+.ratePlanHeaderRow {
     display: flex;
     align-items: center;
-    gap: 5px;
-    min-width: 0;
-    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    overflow: hidden;
 }
 
 .ratePlanName {
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 700;
-    color: #1e293b;
-    line-height: 1.25;
-    word-break: break-word;
+    color: #034694;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 :global(.dark) .ratePlanName {
-    color: #f1f5f9;
+    color: #60a5fa;
 }
 
 .ratePlanMetaRow {
     display: flex;
     align-items: center;
-    gap: 5px;
-    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow: hidden;
+}
+
+.ratePlanInfoBtn {
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.ratePlanInfoBtn:hover {
+    color: #0f172a;
+}
+
+:global(.dark) .ratePlanInfoBtn {
+    color: #94a3af;
+}
+
+:global(.dark) .ratePlanInfoBtn:hover {
+    color: #ffffff;
+}
+
+.ratePlanRightBadgeGroup {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.ratePlanIdBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border-radius: 4px;
+    font-size: 9.5px;
+    font-weight: 500;
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
+}
+
+:global(.dark) .ratePlanIdBadge {
+    background-color: #374151;
+    color: #cbd5e1;
+    border-color: #4b5563;
 }
 
 .mealBadge {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    font-size: 8.5px;
-    font-weight: 700;
-    padding: 1px 4px;
-    border-radius: 3px;
-    letter-spacing: 0.02em;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1.5px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
 }
 
 .mealBadgeBreakfast {
@@ -109,11 +164,27 @@
     border-color: #4b5563;
 }
 
-.channelSeparatedBadge {
-    font-size: 9px;
+.derivedPill {
+    font-size: 8.5px;
     font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 4px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background-color: #f5f3ff;
+    color: #6d28d9;
+    border: 1px solid #ddd6fe;
+}
+
+:global(.dark) .derivedPill {
+    background-color: #2e1065;
+    color: #c4b5fd;
+    border-color: #7c3aed;
+}
+
+.channelSeparatedBadge {
+    font-size: 8.5px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
     background-color: #eff6ff;
     color: #1d4ed8;
     border: 1px solid #bfdbfe;
@@ -125,18 +196,122 @@
     border-color: #2563eb;
 }
 
-.derivedPill {
-    font-size: 9px;
-    font-weight: 700;
-    padding: 1px 5px;
-    border-radius: 4px;
-    background-color: #f5f3ff;
-    color: #6d28d9;
-    border: 1px solid #ddd6fe;
+.baseRateLabel {
+    font-size: 11px;
+    color: #475569;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-:global(.dark) .derivedPill {
-    background-color: #2e1065;
-    color: #c4b5fd;
-    border-color: #7c3aed;
+:global(.dark) .baseRateLabel {
+    color: #94a3af;
 }
+
+.endSpacerCell {
+    background-color: inherit;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* Sub-Metric Rows when Multiple Features are selected */
+.subMetricRow {
+    border-bottom: 1px solid #e2e8f0;
+    background-color: #fafbfd;
+    transition: background-color 0.15s ease;
+}
+
+:global(.dark) .subMetricRow {
+    background-color: #1a2234;
+    border-bottom-color: #374151;
+}
+
+.subMetricRow:hover {
+    background-color: #f1f5f9;
+}
+
+:global(.dark) .subMetricRow:hover {
+    background-color: #243044;
+}
+
+.subMetricTitleCell {
+    width: 230px;
+    min-width: 230px;
+    max-width: 230px;
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background-color: inherit;
+    border-right: 1px solid #cbd5e1;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 4px 10px 4px 20px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+:global(.dark) .subMetricTitleCell {
+    border-right-color: #4b5563;
+    border-bottom-color: #374151;
+}
+
+.subMetricLabelGroup {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+}
+
+.subMetricBranch {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+    font-family: monospace;
+}
+
+:global(.dark) .subMetricBranch {
+    color: #64748b;
+}
+
+.subMetricName {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+:global(.dark) .subMetricName {
+    color: #cbd5e1;
+}
+
+.metricBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 9.5px;
+    font-weight: 600;
+    padding: 1.5px 5px;
+    border-radius: 3px;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+}
+
+:global(.dark) .metricBadge {
+    background-color: #1e3a8a;
+    color: #93c5fd;
+    border-color: #2563eb;
+}
+
+.firstMetricBadge {
+    margin-left: auto;
+}
+

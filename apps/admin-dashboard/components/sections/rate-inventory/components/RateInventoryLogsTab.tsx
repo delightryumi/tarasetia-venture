@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import styles from "../../channel-manager/ChannelActionLogs.module.css";
+import styles from "./RateInventoryLogsTab.module.css";
 
 export interface RateInventoryTaskLog {
     id: string;
@@ -32,6 +32,11 @@ export interface RateInventoryTaskLog {
     channelName: string;
     channelCode?: string;
     user: string;
+    user_label?: string;
+    user_name?: string;
+    user_email?: string;
+    user_role?: string;
+    email?: string;
     started_at: string;
     inserted_at: string;
     execution_time_ms?: number | null;
@@ -54,10 +59,40 @@ interface Props {
 
 export function RateInventoryLogsTab({ hotelCode }: Props) {
     const { user } = useAuth();
-    const isSuperadmin = user?.role?.toLowerCase() === "superadmin";
+    const isSuperadmin = user?.role?.toLowerCase() === "superadmin" || user?.role?.toLowerCase() === "admin";
 
     const [logs, setLogs] = useState<RateInventoryTaskLog[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
+
+    // Formatter to strictly extract name, email, and role of whoever made the change
+    const getUserDisplay = (item?: RateInventoryTaskLog | null) => {
+        if (!item) return { name: "-", email: "", role: "" };
+        let name = item.user_name || "";
+        let email = item.user_email || item.email || "";
+        let role = item.user_role || "";
+
+        if (!email && item.user) {
+            const match = item.user.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+            if (match) email = match[1];
+        }
+
+        if (!name && item.user) {
+            const cleaned = item.user.replace(/\s*\([^)]+\)/, "").trim();
+            if (cleaned && !cleaned.toLowerCase().includes("operator")) {
+                name = cleaned;
+            } else if (email) {
+                name = email.split("@")[0];
+            } else {
+                name = item.user;
+            }
+        }
+
+        return {
+            name: name || "Operator",
+            email,
+            role
+        };
+    };
 
     // Filters
     const [actionFilter, setActionFilter] = useState<string>("all");
@@ -76,16 +111,38 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
     const [fetchingLiveTask, setFetchingLiveTask] = useState<boolean>(false);
     const [copiedField, setCopiedField] = useState<string | null>(null);
 
-    // One-Time Fetching (Low Cost Firebase Read: only fetched on mount, cached in memory)
-    const fetchLogs = async () => {
+    // Low-Cost Firebase Read: 3-minute session cache + on-demand fetch (No real-time onSnapshot)
+    const fetchLogs = async (force: boolean = false) => {
         if (!hotelCode || !isSuperadmin) return;
+
+        // 1. Read from 3-minute session cache unless force refresh is requested
+        if (!force && typeof window !== "undefined") {
+            const cachedKey = `ari_logs_${hotelCode}`;
+            const cachedTimeKey = `ari_logs_time_${hotelCode}`;
+            const cachedData = sessionStorage.getItem(cachedKey);
+            const cachedTime = sessionStorage.getItem(cachedTimeKey);
+            if (cachedData && cachedTime && (Date.now() - Number(cachedTime) < 3 * 60 * 1000)) {
+                try {
+                    const parsed = JSON.parse(cachedData);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        setLogs(parsed);
+                        return;
+                    }
+                } catch (_) {}
+            }
+        }
+
         setLoading(true);
         try {
-            const res = await fetch(`/api/channex/tasks?hotelCode=${encodeURIComponent(hotelCode)}`);
+            const res = await fetch(`/api/channex/tasks?hotelCode=${encodeURIComponent(hotelCode)}&limit=100`);
             if (res.ok) {
                 const data = await res.json();
                 if (data.success && Array.isArray(data.logs)) {
                     setLogs(data.logs);
+                    if (typeof window !== "undefined") {
+                        sessionStorage.setItem(`ari_logs_${hotelCode}`, JSON.stringify(data.logs));
+                        sessionStorage.setItem(`ari_logs_time_${hotelCode}`, String(Date.now()));
+                    }
                 }
             }
         } catch (err: any) {
@@ -96,7 +153,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
     };
 
     useEffect(() => {
-        fetchLogs();
+        fetchLogs(false);
     }, [hotelCode, isSuperadmin]);
 
     const handleCopy = (text: string, label: string) => {
@@ -264,8 +321,8 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
 
         if (selectedEvent.details) {
             return (
-                <div style={{ padding: "12px", background: "#f8fafc", color: "#0f172a" }}>
-                    <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontSize: "11px", fontFamily: "var(--font-mono-jb, monospace)" }}>
+                <div className={styles.preDetailsBox}>
+                    <pre className={styles.preDetails}>
                         {typeof selectedEvent.details === "string" 
                             ? selectedEvent.details 
                             : JSON.stringify(selectedEvent.details, null, 2)}
@@ -312,10 +369,10 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
 
     if (!isSuperadmin) {
         return (
-            <div style={{ padding: "60px 20px", textAlign: "center", background: "#ffffff", borderRadius: "8px", border: "1px solid #e2e8f0", margin: "20px 0" }}>
-                <ShieldAlert size={40} color="#dc2626" style={{ margin: "0 auto 12px" }} />
-                <h3 style={{ margin: "0 0 6px", fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>Akses Terbatas: Superadmin Saja</h3>
-                <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>
+            <div className={styles.restrictedContainer}>
+                <ShieldAlert size={40} color="#dc2626" className={styles.restrictedIcon} />
+                <h3 className={styles.restrictedTitle}>Akses Terbatas: Superadmin Saja</h3>
+                <p className={styles.restrictedDesc}>
                     Tab audit log inventori dan rate hanya dapat dibuka oleh akun dengan role Superadmin untuk mengamankan riwayat dan menghemat kuota pembacaan basis data.
                 </p>
             </div>
@@ -323,12 +380,12 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
     }
 
     return (
-        <div style={{ marginTop: "16px" }}>
+        <div className={styles.logsContainer}>
             {/* Filter Bar */}
             <div className={styles.filterBar}>
                 <div className={styles.filterInputs}>
                     {/* Search */}
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "4px", padding: "2px 8px" }}>
+                    <div className={styles.searchWrapper}>
                         <Search size={13} color="#94a3b8" />
                         <input
                             type="text"
@@ -338,7 +395,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                 setPage(1);
                             }}
                             placeholder="Cari Task ID / User..."
-                            style={{ border: "none", outline: "none", fontSize: "12px", width: "160px", color: "#0f172a" }}
+                            className={styles.searchInput}
                         />
                     </div>
 
@@ -349,8 +406,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                             setActionFilter(e.target.value);
                             setPage(1);
                         }}
-                        className={styles.filterSelect}
-                        style={{ minWidth: "180px" }}
+                        className={`${styles.filterSelect} ${styles.filterSelectScope}`}
                     >
                         <option value="all">Action (All)</option>
                         {actionTypes.map(act => (
@@ -359,7 +415,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                     </select>
 
                     {/* Date Range */}
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                    <div className={styles.dateRangeWrapper}>
                         <input
                             type="date"
                             value={startDate}
@@ -370,7 +426,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                             className={styles.filterDateInput}
                             title="Tanggal Mulai"
                         />
-                        <span style={{ color: "#94a3b8", fontSize: "12px" }}>→</span>
+                        <span className={styles.dateArrow}>→</span>
                         <input
                             type="date"
                             value={endDate}
@@ -390,8 +446,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                             setResultFilter(e.target.value);
                             setPage(1);
                         }}
-                        className={styles.filterSelect}
-                        style={{ minWidth: "120px" }}
+                        className={`${styles.filterSelect} ${styles.filterSelectLimit}`}
                     >
                         <option value="all">Status (All)</option>
                         <option value="Success">Success</option>
@@ -401,7 +456,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
 
                 <button
                     type="button"
-                    onClick={fetchLogs}
+                    onClick={() => fetchLogs(true)}
                     className={styles.btnRefresh}
                     title="Refresh inventory audit logs"
                 >
@@ -416,7 +471,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                     <thead>
                         <tr>
                             <th className={`${styles.th} ${styles.thWithSort}`}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <div className={styles.actionHeaderRow}>
                                     <span>Action</span>
                                     <ArrowUpDown size={11} color="#94a3b8" />
                                 </div>
@@ -426,7 +481,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                             <th className={styles.th}>User</th>
                             <th className={styles.th}>Started At</th>
                             <th className={styles.th}>Execution Time (ms)</th>
-                            <th className={styles.th} style={{ textAlign: "right" }}>Actions</th>
+                            <th className={`${styles.th} ${styles.thRight}`}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -445,7 +500,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                                     styles.statusRingWarning
                                                 } 
                                             />
-                                            <span style={{ fontWeight: 600 }}>{item.action}</span>
+                                            <span className={styles.actionName}>{item.action}</span>
                                         </div>
                                     </td>
                                     <td className={styles.td}>
@@ -462,7 +517,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                                     title={`Klik untuk menyalin Task ID: ${displayTaskId}`}
                                                 >
                                                     <span className={styles.taskIdMono}>
-                                                        {displayTaskId.length > 13 ? `${displayTaskId.slice(0, 8)}...` : displayTaskId}
+                                                        {displayTaskId}
                                                     </span>
                                                     {copiedField === `task-${item.id}` ? (
                                                         <Check size={11} color="#16a34a" />
@@ -474,26 +529,43 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                         })()}
                                     </td>
                                     <td className={styles.td}>
-                                        <span style={{ fontWeight: 500, color: "#334155" }}>
+                                        <span className={styles.channelNameText}>
                                             {item.channelName || "Master Inventory"}
                                         </span>
                                     </td>
                                     <td className={styles.td}>
-                                        <span style={{ fontSize: "12px", color: "#475569", fontWeight: 600 }}>
-                                            {item.user}
-                                        </span>
+                                        {(() => {
+                                            const u = getUserDisplay(item);
+                                            return (
+                                                <div className={styles.userCell}>
+                                                    <div className={styles.userNameRow}>
+                                                        <span className={styles.userText}>{u.name}</span>
+                                                        {u.role && (
+                                                            <span className={styles.roleBadge} title={`User Role: ${u.role}`}>
+                                                                {u.role}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {u.email && (
+                                                        <span className={styles.userEmailSubText}>
+                                                            {u.email}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                     </td>
                                     <td className={styles.td}>
-                                        <span style={{ fontFamily: "var(--font-mono-jb, monospace)", fontSize: "12px", color: "#334155" }}>
+                                        <span className={styles.timestampText}>
                                             {formatTimestamp(item.started_at || item.inserted_at)}
                                         </span>
                                     </td>
                                     <td className={styles.td}>
-                                        <span style={{ fontSize: "12px", color: "#475569" }}>
+                                        <span className={styles.executionTimeText}>
                                             {item.execution_time_ms ? `${item.execution_time_ms}` : "-"}
                                         </span>
                                     </td>
-                                    <td className={styles.td} style={{ textAlign: "right" }}>
+                                    <td className={`${styles.td} ${styles.tdRight}`}>
                                         <button
                                             type="button"
                                             onClick={() => setSelectedEvent(item)}
@@ -508,7 +580,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
 
                         {paginatedLogs.length === 0 && (
                             <tr>
-                                <td colSpan={7} style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
+                                <td colSpan={7} className={styles.emptyCell}>
                                     {loading ? "Memuat riwayat perubahan inventori..." : "Tidak ada log perubahan yang cocok dengan filter."}
                                 </td>
                             </tr>
@@ -555,8 +627,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                             setPageSize(Number(e.target.value));
                             setPage(1);
                         }}
-                        className={styles.filterSelect}
-                        style={{ padding: "3px 8px", fontSize: "11px", marginLeft: "8px" }}
+                        className={`${styles.filterSelect} ${styles.pageSizeSelect}`}
                     >
                         <option value={10}>10 / halaman</option>
                         <option value={20}>20 / halaman</option>
@@ -600,24 +671,24 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                             <div className={styles.metaGrid}>
                                 <div className={styles.metaRow}>
                                     <span className={styles.metaLabel}>Event:</span>
-                                    <span className={styles.metaValue} style={{ fontWeight: 700 }}>
+                                    <span className={`${styles.metaValue} ${styles.metaValueBold}`}>
                                         {selectedEvent.action}
                                     </span>
                                 </div>
                                 <div className={styles.metaRow}>
                                     <span className={styles.metaLabel}>Waktu Diubah:</span>
-                                    <span className={styles.metaValue} style={{ fontFamily: "var(--font-mono-jb, monospace)" }}>
+                                    <span className={`${styles.metaValue} ${styles.metaValueMono}`}>
                                         {formatTimestampWithMs(selectedEvent.inserted_at || selectedEvent.started_at)}
                                     </span>
                                 </div>
                                 <div className={styles.metaRow}>
                                     <span className={styles.metaLabel}>Hasil:</span>
-                                    <span className={styles.metaValue} style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                                    <span className={`${styles.metaValue} ${styles.metaValueLiveSynced}`}>
                                         <span className={selectedEvent.result.toLowerCase() === "success" ? styles.badgeSuccessOutline : styles.badgeErrorOutline}>
                                             {selectedEvent.result}
                                         </span>
                                         {selectedEvent.is_live_synced && (
-                                            <span style={{ fontSize: "11px", color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
+                                            <span className={styles.badgeLivePill}>
                                                 ✓ Channex API Live
                                             </span>
                                         )}
@@ -625,35 +696,43 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                 </div>
                                 <div className={styles.metaRow}>
                                     <span className={styles.metaLabel}>Scope / Channel:</span>
-                                    <span className={styles.metaValue} style={{ color: "#2563eb", fontWeight: 600 }}>
+                                    <span className={`${styles.metaValue} ${styles.metaValueBlue}`}>
                                         {selectedEvent.channelName}
                                     </span>
                                 </div>
                                 <div className={styles.metaRow}>
                                     <span className={styles.metaLabel}>User Pengubah:</span>
-                                    <span className={styles.metaValue} style={{ fontWeight: 600 }}>
-                                        {selectedEvent.user}
-                                    </span>
+                                    <div className={styles.metaValue}>
+                                        {(() => {
+                                            const u = getUserDisplay(selectedEvent);
+                                            return (
+                                                <div className={styles.drawerUserBox}>
+                                                    <div className={styles.drawerUserNameRow}>
+                                                        <span className={styles.drawerUserName}>{u.name}</span>
+                                                        {u.role && (
+                                                            <span className={styles.roleBadgeDrawer} title={`User Role: ${u.role}`}>
+                                                                {u.role}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {u.email && (
+                                                        <span className={styles.drawerUserEmail}>
+                                                            {u.email}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
                                 </div>
                                 <div className={styles.metaRow}>
                                     <span className={styles.metaLabel}>Task ID:</span>
-                                    <span className={styles.metaValue} style={{ fontFamily: "var(--font-mono-jb, monospace)", color: "#2563eb", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                    <span className={`${styles.metaValue} ${styles.metaValueTaskId}`}>
                                         <span>{selectedEvent.task_id || (selectedEvent.task_ids && selectedEvent.task_ids.join(", ")) || selectedEvent.id}</span>
                                         <button
                                             type="button"
                                             onClick={() => handleCopy(selectedEvent.task_id || (selectedEvent.task_ids && selectedEvent.task_ids[0]) || selectedEvent.id, "Task ID")}
-                                            style={{
-                                                border: "1px solid #cbd5e1",
-                                                borderRadius: "4px",
-                                                padding: "2px 8px",
-                                                fontSize: "11px",
-                                                cursor: "pointer",
-                                                backgroundColor: "#f1f5f9",
-                                                color: "#0f172a",
-                                                display: "inline-flex",
-                                                alignItems: "center",
-                                                gap: "4px"
-                                            }}
+                                            className={styles.copyCodeBtn}
                                             title="Salin Task ID"
                                         >
                                             {copiedField === "Task ID" ? <Check size={11} color="#16a34a" /> : <Copy size={11} />}
@@ -664,7 +743,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                 {selectedEvent.reason && (
                                     <div className={styles.metaRow}>
                                         <span className={styles.metaLabel}>Alasan / Info:</span>
-                                        <span className={styles.metaValue} style={{ color: "#475569" }}>
+                                        <span className={styles.metaValue}>
                                             {selectedEvent.reason}
                                         </span>
                                     </div>
@@ -758,7 +837,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                                         </span>
                                                     </div>
                                                     {ota.latency_ms && (
-                                                        <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "#64748b" }}>
+                                                        <div className={styles.syncPayloadRow}>
                                                             <Clock size={11} />
                                                             <span>Latency: {ota.latency_ms} ms</span>
                                                         </div>
@@ -772,18 +851,17 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                             );
                                         })
                                     ) : (
-                                        <div style={{ padding: "30px 20px", textAlign: "center", background: "#f8fafc", borderRadius: "6px", border: "1px dashed #cbd5e1", color: "#64748b" }}>
-                                            <p style={{ margin: "0 0 6px", fontWeight: 600, fontSize: "13px" }}>Tidak Ada Respons OTA Langsung</p>
-                                            <p style={{ margin: 0, fontSize: "11px" }}>
-                                                Tugas ini disimpan langsung di pangkalan data inventori internal CRS dan/atau disinkronkan langsung via delta ARI Channex.
+                                        <div className={styles.emptyOtaNotice}>
+                                            <p className={styles.emptyOtaTitle}>Tidak Ada Respons OTA Langsung</p>
+                                            <p className={styles.emptyOtaSubtext}>
+                                                Tugas ini disimpan langsung di pangkalan data internal CRS dan/atau disinkronkan langsung via delta ARI Channex.
                                             </p>
                                             {!selectedEvent.is_live_synced && (selectedEvent.task_id || selectedEvent.id) && (
                                                 <button
                                                     type="button"
                                                     onClick={() => handleFetchLiveTask(selectedEvent.task_id || selectedEvent.id)}
                                                     disabled={fetchingLiveTask}
-                                                    className={styles.liveSyncBtn}
-                                                    style={{ marginTop: "12px" }}
+                                                    className={`${styles.liveSyncBtn} ${styles.liveSyncBtnSpaced}`}
                                                 >
                                                     <RefreshCw size={12} className={fetchingLiveTask ? "animate-spin" : ""} />
                                                     <span>Tarik Respons Live OTA dari Channex</span>

@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Save, User, CreditCard, Home, MessageSquare, Globe, Info } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, arrayUnion, collection, getDocs } from "firebase/firestore";
-import { toast } from "sonner";
 import { getHotelCollection } from "@/lib/firestoreHelper";
+import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 interface AddGuestModalProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ interface AddGuestModalProps {
 }
 
 export const AddGuestModal: React.FC<AddGuestModalProps> = ({ isOpen, onClose, selectedDate }) => {
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [roomTypes, setRoomTypes] = useState<string[]>([]);
     
@@ -123,7 +125,8 @@ export const AddGuestModal: React.FC<AddGuestModalProps> = ({ isOpen, onClose, s
                     hotelCode: hotelId,
                     startDate: selectedDate,
                     endDate: selectedDate,
-                    type: "availability"
+                    type: "availability",
+                    user: user?.email ? `${user.displayName || user.name || user.email.split("@")[0]} (${user.email})` : (user?.displayName || user?.name || "Operator")
                 })
             }).catch(e => console.warn("[Channex Sync Trigger Warning]:", e));
 

@@ -1,8 +1,6 @@
-"use client";
-
 import React, { useMemo } from "react";
 import { Bed } from "lucide-react";
-import { RateInventoryTab, RoomTypeInventoryRow } from "../RateInventoryTypes";
+import { RateInventoryTab, RoomTypeInventoryRow, GridFeatureId } from "../RateInventoryTypes";
 import { GridDateHeader } from "./grid/GridDateHeader";
 import { GridTotalAvailableRow } from "./grid/GridTotalAvailableRow";
 import { GridRoomTypeCard } from "./grid/GridRoomTypeCard";
@@ -15,6 +13,7 @@ interface RateInventoryGridProps {
     shiftDate: (days: number) => void;
     jumpToToday?: () => void;
     activeTab: RateInventoryTab;
+    visibleFeatures?: Record<GridFeatureId, boolean>;
     matrix: RoomTypeInventoryRow[];
     totalDailyAvailable: Record<string, number>;
     stageEdit: (key: string, value: any) => void;
@@ -34,6 +33,7 @@ export function RateInventoryGrid({
     shiftDate,
     jumpToToday,
     activeTab,
+    visibleFeatures,
     matrix,
     totalDailyAvailable,
     stageEdit,
@@ -51,6 +51,22 @@ export function RateInventoryGrid({
     const isAllotmentSeparated = isChannelSpecific && (chSeparationMode === "separated_allotment" || chSeparationMode === "separated_both");
     const isRateSeparated = isChannelSpecific && (chSeparationMode === "separated_rate" || chSeparationMode === "separated_both");
 
+    const fallbackVisibleFeatures: Record<GridFeatureId, boolean> = useMemo(() => {
+        if (visibleFeatures && typeof visibleFeatures === "object") {
+            return visibleFeatures;
+        }
+        return {
+            availability: activeTab === "inventory",
+            rate: activeTab === "rates" || activeTab === "custom",
+            minStayThrough: activeTab === "minstay" || activeTab === "minstay_through",
+            minStayArrival: activeTab === "minstay" || activeTab === "minstay_arrival",
+            maxStay: activeTab === "maxstay",
+            closedToArrival: activeTab === "cta",
+            closedToDeparture: activeTab === "ctd",
+            stopSell: activeTab === "stopsell"
+        };
+    }, [visibleFeatures, activeTab]);
+
     const todayStr = useMemo(() => {
         const d = new Date();
         const y = d.getFullYear();
@@ -62,6 +78,15 @@ export function RateInventoryGrid({
     const totalPhysicalRooms = useMemo(() => {
         return matrix.reduce((acc, rt) => acc + (rt.totalPhysicalRooms || 1), 0);
     }, [matrix]);
+
+    const isPureInventory = fallbackVisibleFeatures.availability && 
+        !fallbackVisibleFeatures.rate && 
+        !fallbackVisibleFeatures.minStayThrough && 
+        !fallbackVisibleFeatures.minStayArrival && 
+        !fallbackVisibleFeatures.maxStay && 
+        !fallbackVisibleFeatures.closedToArrival && 
+        !fallbackVisibleFeatures.closedToDeparture && 
+        !fallbackVisibleFeatures.stopSell;
 
     return (
         <div className={styles.gridScrollWrapper}>
@@ -105,6 +130,7 @@ export function RateInventoryGrid({
                                 dateList={dateList}
                                 todayStr={todayStr}
                                 activeTab={activeTab}
+                                visibleFeatures={fallbackVisibleFeatures}
                                 channelFilter={channelFilter}
                                 channelConfigs={channelConfigs}
                                 isAllotmentSeparated={isAllotmentSeparated}
@@ -121,7 +147,7 @@ export function RateInventoryGrid({
                 </tbody>
 
                 {/* 3. Sticky Bottom Total Available Row */}
-                {matrix.length > 0 && (
+                {!isPureInventory && matrix.length > 0 && (
                     <tfoot>
                         <GridTotalAvailableRow
                             dateList={dateList}

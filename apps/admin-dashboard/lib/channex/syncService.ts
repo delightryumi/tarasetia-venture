@@ -488,6 +488,7 @@ export class ChannexSyncService {
             await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).add({
                 task_type: `OTA Booking Rejected (Stop Sell Active)`,
                 entity: `Stop Sell Protection`,
+                user: `Channex Sync Engine (${channelName})`,
                 status: "STOP_SELL_BLOCKED",
                 inserted_at: new Date().toISOString(),
                 latency_ms: 0,
@@ -739,6 +740,7 @@ export class ChannexSyncService {
             
             await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).add({
                 task_type: taskType,
+                user: `Channex Webhook (${channelName})`,
                 status: "SUCCESS",
                 inserted_at: new Date().toISOString(),
                 entity: "ota_booking",
@@ -941,8 +943,9 @@ export class ChannexSyncService {
                     date_from: effectiveDateFrom,
                     date_to: dateTo,
                     rate: Math.round(Number(rate)),
-                    min_stay_arrival: restrictions?.minStay || 1,
-                    min_stay_through: restrictions?.minStay || 1,
+                    min_stay_arrival: restrictions?.minStayArrival || restrictions?.minStay || 1,
+                    min_stay_through: restrictions?.minStayThrough || restrictions?.minStay || 1,
+                    ...(restrictions?.maxStay !== undefined && restrictions?.maxStay !== null ? { max_stay: Number(restrictions.maxStay) } : {}),
                     stop_sell: !!restrictions?.stopSell,
                     closed_to_arrival: !!restrictions?.closedToArrival,
                     closed_to_departure: !!restrictions?.closedToDeparture
@@ -958,7 +961,7 @@ export class ChannexSyncService {
 
     /**
      * Delta Batch Push for Staged UI Edits (Compliance with Channex Rate Limits & 1-Call Standard)
-     * Batches all rate, min_stay, stop_sell, CTA, CTD updates into 1 call to /restrictions
+     * Batches all rate, min_stay (arrival & through), max_stay, stop_sell, CTA, CTD updates into 1 call to /restrictions
      * Batches all inventory allotment updates into 1 call to /availability
      */
     async pushDeltaBatch(hotelCode: string, deltaPayload: {
@@ -969,6 +972,9 @@ export class ChannexSyncService {
             dateTo?: string;
             rate?: number;
             minStay?: number;
+            minStayArrival?: number;
+            minStayThrough?: number;
+            maxStay?: number;
             stopSell?: boolean;
             closedToArrival?: boolean;
             closedToDeparture?: boolean;
@@ -1035,10 +1041,26 @@ export class ChannexSyncService {
                 }
 
                 if (r.rate !== undefined && r.rate !== null) valObj.rate = Math.round(Number(r.rate));
-                if (r.minStay !== undefined && r.minStay !== null) {
+                
+                // Min Stay Arrival
+                if (r.minStayArrival !== undefined && r.minStayArrival !== null) {
+                    valObj.min_stay_arrival = Number(r.minStayArrival);
+                } else if (r.minStay !== undefined && r.minStay !== null) {
                     valObj.min_stay_arrival = Number(r.minStay);
+                }
+
+                // Min Stay Through
+                if (r.minStayThrough !== undefined && r.minStayThrough !== null) {
+                    valObj.min_stay_through = Number(r.minStayThrough);
+                } else if (r.minStay !== undefined && r.minStay !== null) {
                     valObj.min_stay_through = Number(r.minStay);
                 }
+
+                // Max Stay
+                if (r.maxStay !== undefined && r.maxStay !== null) {
+                    valObj.max_stay = Number(r.maxStay);
+                }
+
                 if (r.stopSell !== undefined) valObj.stop_sell = Boolean(r.stopSell);
                 if (r.closedToArrival !== undefined) valObj.closed_to_arrival = Boolean(r.closedToArrival);
                 if (r.closedToDeparture !== undefined) valObj.closed_to_departure = Boolean(r.closedToDeparture);
@@ -1093,6 +1115,7 @@ export class ChannexSyncService {
             await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).add({
                 task_type: "POST /delta_sync (Batch Standard)",
                 entity: `Delta Update: ${rateItems.length} rates/restrictions, ${availItems.length} inventory slots`,
+                user: "Channex Sync Engine",
                 status: "SUCCESS",
                 inserted_at: new Date().toISOString(),
                 latency_ms: latencyMs,
@@ -1242,28 +1265,42 @@ export class ChannexSyncService {
             Object.entries(overridesMap).forEach(([overrideDate, oData]) => {
                 const hasRateOverride = oData.rates && oData.rates[rp.id] !== undefined;
                 const hasStopSellOverride = oData.stopSell && oData.stopSell[rp.id] !== undefined;
-                const hasMinStayOverride = oData.minStay && oData.minStay[rp.id] !== undefined;
+                const hasMinStayArrOverride = oData.minStayArrival && oData.minStayArrival[rp.id] !== undefined;
+                const hasMinStayThruOverride = oData.minStayThrough && oData.minStayThrough[rp.id] !== undefined;
+                const hasMinStayLegacyOverride = oData.minStay && oData.minStay[rp.id] !== undefined;
+                const hasMaxStayOverride = oData.maxStay && oData.maxStay[rp.id] !== undefined;
                 const hasCtaOverride = oData.cta && oData.cta[rp.id] !== undefined;
                 const hasCtdOverride = oData.ctd && oData.ctd[rp.id] !== undefined;
 
-                if (hasRateOverride || hasStopSellOverride || hasMinStayOverride || hasCtaOverride || hasCtdOverride) {
+                if (hasRateOverride || hasStopSellOverride || hasMinStayArrOverride || hasMinStayThruOverride || hasMinStayLegacyOverride || hasMaxStayOverride || hasCtaOverride || hasCtdOverride) {
                     const customRate = hasRateOverride ? Number(oData.rates[rp.id]) : basePrice;
                     const customStopSell = hasStopSellOverride ? !!oData.stopSell[rp.id] : stopSell;
-                    const customMinStay = hasMinStayOverride ? Number(oData.minStay[rp.id]) : minStay;
+                    const customMinStayArr = hasMinStayArrOverride 
+                        ? Number(oData.minStayArrival[rp.id]) 
+                        : (hasMinStayLegacyOverride ? Number(oData.minStay[rp.id]) : minStay);
+                    const customMinStayThru = hasMinStayThruOverride 
+                        ? Number(oData.minStayThrough[rp.id]) 
+                        : (hasMinStayLegacyOverride ? Number(oData.minStay[rp.id]) : minStay);
+                    const customMaxStay = hasMaxStayOverride ? Number(oData.maxStay[rp.id]) : undefined;
                     const customCta = hasCtaOverride ? !!oData.cta[rp.id] : closedToArrival;
                     const customCtd = hasCtdOverride ? !!oData.ctd[rp.id] : closedToDeparture;
 
-                    restrictionValues.push({
+                    const overrideRestObj: any = {
                         property_id: channexPropertyId,
                         rate_plan_id: channexRatePlanId,
                         date: overrideDate,
                         rate: Math.round(Number(customRate)),
-                        min_stay_arrival: customMinStay,
-                        min_stay_through: customMinStay,
+                        min_stay_arrival: customMinStayArr,
+                        min_stay_through: customMinStayThru,
                         stop_sell: customStopSell,
                         closed_to_arrival: customCta,
                         closed_to_departure: customCtd
-                    });
+                    };
+                    if (customMaxStay !== undefined && customMaxStay !== null) {
+                        overrideRestObj.max_stay = customMaxStay;
+                    }
+
+                    restrictionValues.push(overrideRestObj);
                 }
             });
         }
@@ -1299,6 +1336,7 @@ export class ChannexSyncService {
             await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).add({
                 task_type: "POST /full_sync (2-Call Standard, 500 Days)",
                 entity: `All Room Types (${roomTypes.length}) & Rate Plans (${ratePlans.length})`,
+                user: "Channex Master Sync",
                 status: "SUCCESS",
                 inserted_at: new Date().toISOString(),
                 latency_ms: latencyMs,

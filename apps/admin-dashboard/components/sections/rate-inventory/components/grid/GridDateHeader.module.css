@@ -1,3 +1,5 @@
+/* GridDateHeader.module.css — Compact Calendar Header */
+
 .headerRow {
     background-color: #f8fafc;
     position: sticky;
@@ -7,64 +9,59 @@
 }
 
 :global(.dark) .headerRow {
-    background-color: #111827;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    background-color: #1e293b;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .colTitle {
-    width: 290px;
-    min-width: 290px;
-    max-width: 290px;
+    width: 230px;
+    min-width: 230px;
+    max-width: 230px;
     position: sticky;
     left: 0;
     z-index: 30;
     background-color: #f8fafc;
-    border-right: 2px solid #cbd5e1;
-    border-bottom: 2px solid #cbd5e1;
+    border-right: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
     box-sizing: border-box;
     padding: 0;
 }
 
 :global(.dark) .colTitle {
-    background-color: #111827;
-    border-right-color: #4b5563;
-    border-bottom-color: #4b5563;
+    background-color: #1e293b;
+    border-right-color: #475569;
+    border-bottom-color: #475569;
 }
 
 .dateNavControl {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     padding: 4px 8px;
-    height: 48px;
-    gap: 6px;
+    height: 42px;
+    gap: 4px;
     box-sizing: border-box;
 }
 
-.navBtnGroup {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-}
-
 .dateStepperBtn {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
-    border-radius: 5px;
+    border-radius: 4px;
     cursor: pointer;
-    color: #334155;
+    color: #475569;
     transition: all 0.15s ease;
     flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 :global(.dark) .dateStepperBtn {
-    background-color: #1f2937;
-    border-color: #4b5563;
+    background-color: #0f172a;
+    border-color: #334155;
     color: #cbd5e1;
 }
 
@@ -75,65 +72,31 @@
 }
 
 :global(.dark) .dateStepperBtn:hover {
-    background-color: #374151;
+    background-color: #334155;
     color: #ffffff;
-    border-color: #6b7280;
-}
-
-.btnToday {
-    height: 28px;
-    padding: 0 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    background-color: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 5px;
-    cursor: pointer;
-    color: #1d4ed8;
-    font-size: 10.5px;
-    font-weight: 700;
-    transition: all 0.15s ease;
-    white-space: nowrap;
-}
-
-:global(.dark) .btnToday {
-    background-color: #1e3a8a;
-    border-color: #3b82f6;
-    color: #93c5fd;
-}
-
-.btnToday:hover {
-    background-color: #dbeafe;
-    border-color: #93c5fd;
-}
-
-:global(.dark) .btnToday:hover {
-    background-color: #1d4ed8;
 }
 
 .datePickerInput {
-    height: 28px;
-    padding: 0 4px;
+    height: 26px;
+    padding: 0 6px;
     border: 1px solid #cbd5e1;
-    border-radius: 5px;
+    border-radius: 4px;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 500;
     color: #0f172a;
     background-color: #ffffff;
     outline: none;
     cursor: pointer;
-    flex: 1;
-    min-width: 0;
-    text-align: center;
     font-family: inherit;
+    text-align: center;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
     transition: all 0.15s ease;
+    width: 125px;
 }
 
 :global(.dark) .datePickerInput {
-    background-color: #1f2937;
-    border-color: #4b5563;
+    background-color: #0f172a;
+    border-color: #334155;
     color: #f8fafc;
 }
 
@@ -142,69 +105,44 @@
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
 
-/* Day Header Columns */
+/* Day Columns */
 .colDay {
-    width: 82px;
-    min-width: 82px;
-    max-width: 82px;
+    min-width: 68px;
+    padding: 4px 2px;
+    height: 42px;
     text-align: center;
     border-right: 1px solid #e2e8f0;
-    border-bottom: 2px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
     box-sizing: border-box;
-    padding: 4px 2px;
+    user-select: none;
+    transition: background-color 0.15s ease;
+    vertical-align: middle;
+    background-color: #ffffff;
 }
 
 :global(.dark) .colDay {
-    border-right-color: #374151;
-    border-bottom-color: #4b5563;
-}
-
-.colWeekend {
-    background-color: #f1f5f9;
-}
-
-:global(.dark) .colWeekend {
-    background-color: #182234;
-}
-
-.colToday {
-    background-color: #eff6ff !important;
-    border-left: 2px solid #3b82f6 !important;
-    border-right: 2px solid #3b82f6 !important;
-}
-
-:global(.dark) .colToday {
-    background-color: #172554 !important;
-    border-left-color: #60a5fa !important;
-    border-right-color: #60a5fa !important;
+    background-color: #1e293b;
+    border-right-color: #334155;
+    border-bottom-color: #475569;
 }
 
 .dayOfWeek {
-    font-size: 9.5px;
-    font-weight: 800;
-    letter-spacing: 0.03em;
+    font-size: 11px;
+    font-weight: 500;
     color: #64748b;
-    text-transform: uppercase;
+    text-transform: capitalize;
+    line-height: 1.15;
 }
 
 :global(.dark) .dayOfWeek {
-    color: #94a3b8;
-}
-
-.dayOfWeekWeekend {
-    color: #e11d48;
-}
-
-:global(.dark) .dayOfWeekWeekend {
-    color: #fb7185;
+    color: #94a3af;
 }
 
 .dayNumber {
-    font-size: 14px;
-    font-weight: 800;
+    font-size: 12.5px;
+    font-weight: 500;
     color: #0f172a;
-    line-height: 1.1;
-    margin: 1px 0;
+    line-height: 1.2;
 }
 
 :global(.dark) .dayNumber {
@@ -212,64 +150,83 @@
 }
 
 .monthLabel {
-    font-size: 9px;
-    font-weight: 700;
+    font-size: 10px;
+    font-weight: 400;
     color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    line-height: 1.1;
 }
 
 :global(.dark) .monthLabel {
-    color: #9ca3af;
+    color: #94a3af;
 }
 
-.todayTag {
-    display: inline-block;
-    margin-top: 1px;
-    padding: 0 4px;
-    border-radius: 3px;
-    font-size: 7.5px;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    background-color: #2563eb;
-    color: #ffffff;
+.colWeekend {
+    background-color: #ffffff;
 }
 
+:global(.dark) .colWeekend {
+    background-color: #1e293b;
+}
+
+.colToday {
+    background-color: #f0f7ff !important;
+    border-bottom: 2px solid #3b82f6 !important;
+}
+
+:global(.dark) .colToday {
+    background-color: #172554 !important;
+    border-bottom-color: #3b82f6 !important;
+}
+
+.colToday .dayNumber {
+    color: #2563eb !important;
+    font-weight: 600 !important;
+}
+
+:global(.dark) .colToday .dayNumber {
+    color: #60a5fa !important;
+}
+
+/* Jump Forward Column */
 .jumpForwardTh {
-    width: 36px;
-    min-width: 36px;
+    width: 34px;
+    min-width: 34px;
+    max-width: 34px;
     text-align: center;
-    border-bottom: 2px solid #cbd5e1;
-    background-color: #f8fafc;
+    border-bottom: 1px solid #cbd5e1;
+    background-color: inherit;
+    padding: 0;
+    vertical-align: middle;
 }
 
 :global(.dark) .jumpForwardTh {
-    background-color: #111827;
-    border-bottom-color: #4b5563;
+    border-bottom-color: #475569;
 }
 
 .jumpForwardBtn {
     width: 28px;
     height: 28px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
-    border-radius: 5px;
+    border-radius: 4px;
     cursor: pointer;
-    color: #334155;
-    margin: 0 auto;
-    transition: all 0.15s ease;
+    color: #475569;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.03);
 }
 
 :global(.dark) .jumpForwardBtn {
-    background-color: #1f2937;
-    border-color: #4b5563;
+    background-color: #0f172a;
+    border-color: #334155;
     color: #cbd5e1;
 }
 
 .jumpForwardBtn:hover {
     background-color: #f1f5f9;
     color: #0f172a;
+    border-color: #94a3b8;
+    transform: translateY(-1px);
 }

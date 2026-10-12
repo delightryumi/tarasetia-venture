@@ -1,43 +1,42 @@
-.cardSpacerRow {
-    height: 8px;
-}
-
-.cardSpacerCell {
-    background-color: #f1f5f9;
-    border: none;
-    padding: 0;
-    height: 8px;
-}
-
-:global(.dark) .cardSpacerCell {
-    background-color: #0b0f19;
-}
+/* GridRoomTypeCard.module.css — Compact Room Type Header Row */
 
 /* Room Type Header Row */
 .roomTypeRow {
     background-color: #f8fafc;
-    border-top: 2px solid #cbd5e1;
-    border-bottom: 2px solid #cbd5e1;
-    font-weight: 700;
+    border-top: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
+    font-weight: 500;
 }
 
 :global(.dark) .roomTypeRow {
-    background-color: #111827;
-    border-top-color: #4b5563;
-    border-bottom-color: #4b5563;
+    background-color: #1e293b;
+    border-top-color: #475569;
+    border-bottom-color: #475569;
+}
+
+.roomTypeRowInventory {
+    background-color: #ffffff !important;
+    border-top: none;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+:global(.dark) .roomTypeRowInventory {
+    background-color: #1f2937 !important;
+    border-bottom-color: #374151 !important;
 }
 
 .roomTypeTitleCell {
-    width: 290px;
-    min-width: 290px;
-    max-width: 290px;
+    width: 230px;
+    min-width: 230px;
+    max-width: 230px;
     position: sticky;
     left: 0;
     z-index: 12;
     background-color: #f8fafc;
-    border-right: 2px solid #cbd5e1;
-    border-bottom: 2px solid #cbd5e1;
+    border-right: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
     padding: 6px 10px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -45,145 +44,105 @@
 }
 
 :global(.dark) .roomTypeTitleCell {
-    background-color: #111827;
-    border-right-color: #4b5563;
-    border-bottom-color: #4b5563;
+    background-color: #1e293b;
+    border-right-color: #475569;
+    border-bottom-color: #475569;
+}
+
+.roomTypeTitleCellInventory {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+:global(.dark) .roomTypeTitleCellInventory {
+    background-color: #1f2937 !important;
+    border-bottom-color: #374151 !important;
 }
 
 .roomTypeLeft {
     display: flex;
     align-items: center;
-    gap: 8px;
-    min-width: 0;
-}
-
-.roomIconBox {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #eff6ff;
-    color: #2563eb;
-    border: 1px solid #bfdbfe;
-    flex-shrink: 0;
-}
-
-:global(.dark) .roomIconBox {
-    background-color: #1e3a8a;
-    color: #93c5fd;
-    border-color: #2563eb;
-}
-
-.roomTypeInfoCol {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    gap: 7px;
     min-width: 0;
     flex: 1;
 }
 
-.roomTypeNameRow {
+.roomIconBox {
+    color: #475569;
     display: flex;
     align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+:global(.dark) .roomIconBox {
+    color: #cbd5e1;
 }
 
 .roomTypeNameText {
-    font-size: 13px;
-    font-weight: 800;
-    color: #0f172a;
-    line-height: 1.25;
-    word-break: break-word;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 :global(.dark) .roomTypeNameText {
     color: #f8fafc;
 }
 
-.roomTypeCodeBadge {
-    font-size: 9.5px;
-    font-weight: 700;
-    padding: 1px 5px;
-    border-radius: 3px;
-    background-color: #e2e8f0;
-    color: #475569;
-    font-family: inherit;
-}
-
-:global(.dark) .roomTypeCodeBadge {
-    background-color: #374151;
-    color: #cbd5e1;
-}
-
-.roomTypeMetaRow {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
 .roomCountPill {
-    font-size: 9.5px;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 10px;
-    background-color: #dbeafe;
-    color: #1d4ed8;
-}
-
-:global(.dark) .roomCountPill {
-    background-color: #1e3a8a;
-    color: #93c5fd;
-}
-
-.roomBasePricePill {
-    font-size: 9.5px;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 10px;
-    background-color: #ecfdf5;
-    color: #065f46;
-}
-
-:global(.dark) .roomBasePricePill {
-    background-color: #064e3b;
-    color: #6ee7b7;
-}
-
-.btnSyncRoom {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 3px;
-    height: 24px;
-    padding: 0 7px;
-    border-radius: 5px;
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 4px;
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 500;
+    background-color: #e2e8f0;
     color: #334155;
-    cursor: pointer;
-    transition: all 0.15s ease;
     flex-shrink: 0;
 }
 
-:global(.dark) .btnSyncRoom {
-    background-color: #1f2937;
-    border-color: #4b5563;
+:global(.dark) .roomCountPill {
+    background-color: #334155;
     color: #cbd5e1;
 }
 
-.btnSyncRoom:hover:not(:disabled) {
-    background-color: #eff6ff;
-    color: #1d4ed8;
-    border-color: #93c5fd;
+.btnSyncRoom {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-:global(.dark) .btnSyncRoom:hover:not(:disabled) {
-    background-color: #1e3a8a;
-    color: #93c5fd;
+:global(.dark) .btnSyncRoom {
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3af;
+}
+
+.btnSyncRoom:hover:not(:disabled) {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.btnSyncRoom:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .spinIcon {
@@ -195,13 +154,55 @@
     to { transform: rotate(360deg); }
 }
 
-.noRatePlanCell {
-    padding: 14px 20px;
+.categoryCell {
+    min-width: 68px;
+    padding: 6px 2px;
+    text-align: center;
+    vertical-align: middle;
+    background-color: #f8fafc;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #cbd5e1;
+    box-sizing: border-box;
+}
+
+:global(.dark) .categoryCell {
+    background-color: #1e293b;
+    border-right-color: #334155;
+    border-bottom-color: #475569;
+}
+
+/* Category Daily Available Count */
+.categoryAvailText {
+    display: inline-block;
+    width: 100%;
     text-align: center;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
+    color: #1e293b;
+    line-height: 1;
+}
+
+:global(.dark) .categoryAvailText {
+    color: #f1f5f9;
+}
+
+.categoryAvailZero {
+    color: #ef4444 !important;
+    font-weight: 500 !important;
+}
+
+.spacerCell {
+    background-color: inherit;
+    border-bottom: 1px solid #cbd5e1;
+}
+
+.noRatePlanCell {
+    text-align: center;
+    padding: 14px;
+    font-size: 11.5px;
     color: #64748b;
-    background-color: #f8fafc;
+    font-style: italic;
+    background-color: #ffffff;
     border-bottom: 1px solid #e2e8f0;
 }
 

@@ -1,18 +1,25 @@
+/* RateInventoryGrid.module.css — Claymorphic Architecture */
+
 .gridScrollWrapper {
     width: 100%;
     overflow-x: auto;
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    border-radius: 6px;
+    box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.04),
+                inset 0 1px 2px rgba(255, 255, 255, 0.95);
     position: relative;
     box-sizing: border-box;
+    transition: all 0.2s ease;
 }
 
 :global(.dark) .gridScrollWrapper {
-    background-color: #111827;
-    border-color: #374151;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    background: #1e293b;
+    border-color: rgba(51, 65, 85, 0.8);
+    box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.35),
+                0 4px 12px -2px rgba(0, 0, 0, 0.2),
+                inset 0 1px 2px rgba(255, 255, 255, 0.08),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .gridTable {
@@ -25,40 +32,41 @@
 }
 
 .emptyStateCell {
-    padding: 60px 20px;
+    padding: 70px 24px;
     text-align: center;
-    background-color: #ffffff;
-}
-
-:global(.dark) .emptyStateCell {
-    background-color: #111827;
+    background: transparent;
 }
 
 .emptyStateContent {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
 .emptyIconWrapper {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background-color: #f1f5f9;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: #f1f5f9;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #64748b;
+    color: #475569;
+    box-shadow: 0 6px 14px -2px rgba(15, 23, 42, 0.06),
+                inset 0 2px 3px rgba(255, 255, 255, 0.9),
+                inset 0 -2px 3px rgba(15, 23, 42, 0.04);
 }
 
 :global(.dark) .emptyIconWrapper {
-    background-color: #1f2937;
-    color: #9ca3af;
+    background: #0f172a;
+    color: #94a3b8;
+    box-shadow: 0 6px 14px -2px rgba(0, 0, 0, 0.3),
+                inset 0 1px 2px rgba(255, 255, 255, 0.08);
 }
 
 .emptyTitle {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 800;
     color: #0f172a;
 }
@@ -68,10 +76,10 @@
 }
 
 .emptySubtitle {
-    font-size: 12.5px;
+    font-size: 13px;
     color: #64748b;
-    max-width: 400px;
-    line-height: 1.4;
+    max-width: 440px;
+    line-height: 1.5;
 }
 
 :global(.dark) .emptySubtitle {

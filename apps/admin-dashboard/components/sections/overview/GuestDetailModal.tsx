@@ -646,7 +646,8 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                         hotelCode: hotelId,
                         startDate: dates[0],
                         endDate: dates[dates.length - 1],
-                        type: "availability"
+                        type: "availability",
+                        user: user?.email ? `${user.displayName || user.name || "Operator"} (${user.email})` : (user?.displayName || user?.name || "Operator")
                     })
                 }).catch(err => console.warn("[Void Channex Sync Warning]:", err));
             }
@@ -732,7 +733,8 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                         hotelCode: hotelId,
                         startDate: dates[0],
                         endDate: dates[dates.length - 1],
-                        type: "availability"
+                        type: "availability",
+                        user: user?.email ? `${user.displayName || user.name || "Operator"} (${user.email})` : (user?.displayName || user?.name || "Operator")
                     })
                 }).catch(err => console.warn("[Cancel Channex Sync Warning]:", err));
             }

@@ -1,14 +1,18 @@
 "use client";
 
-import React from "react";
-import { Download, Upload, SlidersHorizontal, Info, RefreshCw, PanelLeft } from "lucide-react";
-import { RateInventoryTab } from "../RateInventoryTypes";
+import React, { useState, useRef, useEffect } from "react";
+import { Download, Upload, Info, ChevronLeft, Menu, Check, SlidersHorizontal } from "lucide-react";
+import { RateInventoryTab, GridFeatureId, GRID_FEATURES } from "../RateInventoryTypes";
 import styles from "./RateInventorySubTabs.module.css";
 import { toast } from "sonner";
 
 interface RateInventorySubTabsProps {
     activeTab: RateInventoryTab;
     setActiveTab: (tab: RateInventoryTab) => void;
+    visibleFeatures: Record<GridFeatureId, boolean>;
+    onToggleFeature: (id: GridFeatureId) => void;
+    onSelectAllFeatures: () => void;
+    onDeselectAllFeatures: () => void;
     onExportCsv: () => void;
     onOpenBulkModal: () => void;
     taxInclusive: boolean;
@@ -18,17 +22,23 @@ interface RateInventorySubTabsProps {
 }
 
 const TABS_CONFIG: Array<{ id: RateInventoryTab; label: string; title: string }> = [
-    { id: "inventory", label: "Inventory", title: "Room Allotment & Physical Inventory" },
-    { id: "rates", label: "Rates", title: "Base Room Rates (IDR)" },
-    { id: "stopsell", label: "Stop Sell", title: "Sales Restrictions & Stop Sell" },
-    { id: "minstay", label: "Min Stay", title: "Minimum Length of Stay (MLOS in Nights)" },
-    { id: "cta", label: "CTA", title: "Closed to Arrival (No Check-in Allowed)" },
-    { id: "ctd", label: "CTD", title: "Closed to Departure (No Check-out Allowed)" }
+    { id: "inventory", label: "Inventory", title: "Room Allotment and Physical Inventory (Availability)" },
+    { id: "rates", label: "Rates", title: "Room Rate Plans (Rate)" },
+    { id: "minstay_through", label: "Min Stay Through", title: "Minimum Stay Through (Min Nights required across stay)" },
+    { id: "minstay_arrival", label: "Min Stay Arrival", title: "Minimum Stay Arrival (Min Nights required for check-in)" },
+    { id: "maxstay", label: "Maximum Nights", title: "Maximum Stay (Maximum Allowed Nights)" },
+    { id: "stopsell", label: "Stopsells", title: "Sales Restrictions and Stop Sell Blackout" },
+    { id: "cta", label: "COA", title: "Closed to Arrival (No Check-in Allowed)" },
+    { id: "ctd", label: "COD", title: "Closed to Departure (No Check-out Allowed)" }
 ];
 
 export function RateInventorySubTabs({
     activeTab,
     setActiveTab,
+    visibleFeatures,
+    onToggleFeature,
+    onSelectAllFeatures,
+    onDeselectAllFeatures,
     onExportCsv,
     onOpenBulkModal,
     taxInclusive,
@@ -36,92 +46,173 @@ export function RateInventorySubTabs({
     syncingAri = false,
     isSuperadmin = false
 }: RateInventorySubTabsProps) {
+    const [featuresMenuOpen, setFeaturesMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setFeaturesMenuOpen(false);
+            }
+        }
+        if (featuresMenuOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [featuresMenuOpen]);
+
     const handleToggleSidebar = () => {
         if (typeof window !== "undefined") {
             window.dispatchEvent(new CustomEvent("toggle-sidebar"));
         }
     };
 
-    const tabsToRender = isSuperadmin
-        ? [...TABS_CONFIG, { id: "logs" as RateInventoryTab, label: "Logs", title: "Inventory & Rate Changes Audit Trail (Superadmin Only)" }]
-        : TABS_CONFIG;
+    // Exactly 8 ARI Features + Logs Tab
+    const tabsToRender: Array<{ id: RateInventoryTab; label: string; title: string }> = [
+        ...TABS_CONFIG,
+        { id: "logs" as RateInventoryTab, label: "Logs", title: "Inventory and Rate Changes Audit Trail" }
+    ];
+
 
     return (
         <div className={styles.subTabsBar}>
-            {/* 1. Left: Sub-Tabs Selector */}
+            {/* 1. Left: Navigation Stepper and Sub-Tabs */}
             <div className={styles.subTabsGroup}>
                 <button
                     type="button"
                     onClick={handleToggleSidebar}
-                    className={styles.actionBtnSecondary}
-                    title="Toggle Full View / Navigation Sidebar"
-                    style={{ marginRight: "4px" }}
+                    className={styles.stepperBtnLeft}
+                    title="Toggle Navigation Sidebar"
                 >
-                    <PanelLeft size={14} />
-                    <span>Sidebar</span>
+                    <ChevronLeft size={16} />
                 </button>
 
-                {tabsToRender.map(t => (
-                    <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => setActiveTab(t.id)}
-                        className={`${styles.tabItem} ${activeTab === t.id ? styles.tabItemActive : ""}`}
-                        title={t.title}
-                    >
-                        {t.label}
-                    </button>
-                ))}
+                {tabsToRender.map(t => {
+                    const isActive = activeTab === t.id;
+                    return (
+                        <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => setActiveTab(t.id)}
+                            className={`${styles.tabItem} ${isActive ? styles.tabItemActive : ""}`}
+                            title={t.title}
+                        >
+                            {isActive && <span className={styles.activeIndicator} />}
+                            <span>{t.label}</span>
+                        </button>
+                    );
+                })}
             </div>
 
-            {/* 2. Right: Action Buttons (Only relevant when not on logs tab) */}
+            {/* 2. Right: Action Controls matching Screenshot */}
             {activeTab !== "logs" && (
                 <div className={styles.subTabsActions}>
                     <button
                         type="button"
-                        onClick={() => toast.info("Excel/CSV import feature is in preparation.")}
-                    className={styles.actionBtnSecondary}
-                >
-                    <Upload size={14} />
-                    <span>Import</span>
-                </button>
+                        onClick={() => toast.info("Fitur Import CSV/Excel sedang disiapkan.")}
+                        className={styles.actionBtnSecondary}
+                        title="Import CSV Rates & Inventory"
+                    >
+                        <Upload size={13} />
+                        <span>Import</span>
+                    </button>
 
-                <button
-                    type="button"
-                    onClick={() => onExportCsv()}
-                    className={styles.actionBtnSecondary}
-                >
-                    <Download size={14} />
-                    <span>Export CSV</span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => onOpenBulkModal()}
-                    className={styles.actionBtnPrimary}
-                >
-                    <SlidersHorizontal size={14} />
-                    <span>Bulk Update</span>
-                </button>
-
-                {onSyncAll && (
                     <button
                         type="button"
-                        onClick={() => onSyncAll()}
-                        disabled={syncingAri}
+                        onClick={() => onExportCsv()}
                         className={styles.actionBtnSecondary}
-                        title="Push full 500-day ARI matrix to Channel Manager (Channex Certification Standard)"
+                        title="Export Grid Table to CSV"
                     >
-                        <RefreshCw size={14} className={syncingAri ? styles.spinIcon : ""} style={{ color: "#2563eb" }} />
-                        <span>{syncingAri ? "Syncing (500d)..." : "Full Sync (500d)"}</span>
+                        <Download size={13} />
+                        <span>Export</span>
                     </button>
-                )}
 
-                <span className={styles.infoBadgeText} title={taxInclusive ? "Tax Inclusive: All rates shown include taxes & service charges (PB1 / VAT)" : "Tax Exclusive: All rates shown exclude taxes & service charges"}>
-                    <Info size={13} />
-                    <span>{taxInclusive ? "Tax Incl." : "Tax Excl."}</span>
-                </span>
-            </div>
+                    {/* 3-Line Menu with 8 Feature Toggles Popover */}
+                    <div className={styles.menuWrapper} ref={menuRef}>
+                        <button
+                            type="button"
+                            onClick={() => setFeaturesMenuOpen(prev => !prev)}
+                            className={`${styles.menuBtn} ${featuresMenuOpen ? styles.menuBtnActive : ""}`}
+                            title="Tampilkan 8 Pilihan Metrik & Bulk Update"
+                        >
+                            <Menu size={16} />
+                        </button>
+
+                        {featuresMenuOpen && (
+                            <div className={styles.featuresPopover}>
+                                {/* Popover Header with Quick Select Actions */}
+                                <div className={styles.popoverHeader}>
+                                    <span className={styles.popoverTitle}>Metrik Tampilan</span>
+                                    <div className={styles.popoverQuickActions}>
+                                        <button
+                                            type="button"
+                                            onClick={onSelectAllFeatures}
+                                            className={styles.quickActionBtn}
+                                            title="Pilih Semua 8 Metrik"
+                                        >
+                                            Semua
+                                        </button>
+                                        <span className={styles.quickActionDot}>•</span>
+                                        <button
+                                            type="button"
+                                            onClick={onDeselectAllFeatures}
+                                            className={styles.quickActionBtn}
+                                            title="Kembalikan ke Inventory Standar"
+                                        >
+                                            Reset
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* The 8 Feature Checkboxes Matching User's Screenshot */}
+                                <div className={styles.featureList}>
+                                    {GRID_FEATURES.map(feat => {
+                                        const isChecked = !!visibleFeatures[feat.id];
+                                        return (
+                                            <div
+                                                key={feat.id}
+                                                className={styles.featureItem}
+                                                onClick={() => onToggleFeature(feat.id)}
+                                                role="button"
+                                                tabIndex={0}
+                                                onKeyDown={e => {
+                                                    if (e.key === "Enter" || e.key === " ") {
+                                                        e.preventDefault();
+                                                        onToggleFeature(feat.id);
+                                                    }
+                                                }}
+                                            >
+                                                <div className={`${styles.customCheckbox} ${isChecked ? styles.checkboxChecked : ""}`}>
+                                                    {isChecked && <Check size={12} strokeWidth={3} />}
+                                                </div>
+                                                <span className={styles.featureLabel}>{feat.label}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className={styles.popoverDivider} />
+
+                                {/* Bulk Update Modal Trigger inside the Menu */}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setFeaturesMenuOpen(false);
+                                        onOpenBulkModal();
+                                    }}
+                                    className={styles.btnBulkUpdateInMenu}
+                                    title="Pembaruan Massal Allotment & Restriksi"
+                                >
+                                    <SlidersHorizontal size={13} />
+                                    <span>Bulk Update...</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
             )}
         </div>
     );

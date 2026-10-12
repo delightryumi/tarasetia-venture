@@ -1471,7 +1471,8 @@ export const useTransactionForm = () => {
                                 hotelCode: hotelId,
                                 startDate: sortedDates[0],
                                 endDate: sortedDates[sortedDates.length - 1],
-                                type: "availability"
+                                type: "availability",
+                                user: user?.email ? `${user.displayName || user.name || user.email.split("@")[0]} (${user.email})` : (user?.displayName || user?.name || "Operator")
                             })
                         });
                     } catch (e) {
@@ -1531,7 +1532,8 @@ export const useTransactionForm = () => {
                             hotelCode: hotelIdForSync,
                             startDate: affectedDates[0],
                             endDate: affectedDates[affectedDates.length - 1],
-                            type: "availability"
+                            type: "availability",
+                            user: user?.email ? `${user.displayName || user.name || user.email.split("@")[0]} (${user.email})` : (user?.displayName || user?.name || "Operator")
                         })
                     });
                 } catch (e) {

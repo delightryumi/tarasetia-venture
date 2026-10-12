@@ -120,19 +120,71 @@ export async function GET(req: NextRequest) {
             console.warn("[AutoPrune Background]", err?.message);
         });
 
-        // 1. Fetch local Firestore audit task logs (Fast & Instant)
+        // 1. Fetch local Firestore audit task logs (Fast & Low Cost: capped at 100 docs)
+        const requestedLimit = Math.min(100, Math.max(10, parseInt(searchParams.get("limit") || "100", 10)));
         const localTasksSnap = await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`)
             .orderBy("inserted_at", "desc")
-            .limit(150)
+            .limit(requestedLimit)
             .get();
+
+        // 1. Fetch user directory from user settings (users_master) to accurately resolve author name, email, and role
+        // Low cost: single snapshot per request, cached in userMap
+        const userMap = new Map<string, { name: string; email: string; role: string }>();
+        try {
+            const hotelUsersSnap = await adminDb.collection(`hotels/${hotelCode}/users_master`).get();
+            hotelUsersSnap.forEach(uDoc => {
+                const u = uDoc.data();
+                const email = (u.email || "").toLowerCase().trim();
+                const name = u.name || u.displayName || (email ? email.split("@")[0] : uDoc.id);
+                const role = u.role || "Staff";
+                if (email) userMap.set(email, { name, email, role });
+                userMap.set(uDoc.id.toLowerCase().trim(), { name, email: email || uDoc.id, role });
+            });
+
+            // Also include root users_master (for superadmins and system accounts)
+            const rootUsersSnap = await adminDb.collection("users_master").get();
+            rootUsersSnap.forEach(uDoc => {
+                const u = uDoc.data();
+                const email = (u.email || "").toLowerCase().trim();
+                const name = u.name || u.displayName || (email ? email.split("@")[0] : uDoc.id);
+                const role = u.role || "superadmin";
+                if (email && !userMap.has(email)) userMap.set(email, { name, email, role });
+                if (!userMap.has(uDoc.id.toLowerCase().trim())) userMap.set(uDoc.id.toLowerCase().trim(), { name, email: email || uDoc.id, role });
+            });
+        } catch (uErr: any) {
+            console.warn("[Tasks Route] Could not load users_master for attribution:", uErr?.message);
+        }
 
         const localTasks = localTasksSnap.docs.map(doc => {
             const data = doc.data();
             const action = normalizeActionName(data.action || data.task_type);
-            const userLabel = data.user_label || 
-                (typeof data.user === "string" ? data.user : 
-                (data.user?.name || data.user?.displayName ? `${data.user.name || data.user.displayName} (${data.user.email || ""})` : 
-                (data.user?.email || "Nexura Management (nexura.management@gmail.com)")));
+
+            // Extract candidate email & name from log data
+            let candidateEmail = (data.user_email || data.email || "").toLowerCase().trim();
+            let rawUserStr = typeof data.user === "string" ? data.user : (data.user_label || "");
+
+            if (!candidateEmail && rawUserStr) {
+                const match = rawUserStr.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+                if (match) {
+                    candidateEmail = match[1].toLowerCase().trim();
+                }
+            }
+
+            // Look up against user settings directory (users_master)
+            const matchedUser = candidateEmail ? userMap.get(candidateEmail) : null;
+
+            const resolvedName = data.user_name || matchedUser?.name || (
+                rawUserStr && !rawUserStr.toLowerCase().includes("operator") && !rawUserStr.includes("@")
+                    ? rawUserStr.replace(/\s*\([^)]+\)/, "").trim()
+                    : (candidateEmail ? candidateEmail.split("@")[0] : "Operator")
+            );
+
+            const resolvedEmail = candidateEmail || matchedUser?.email || (data.user_email || data.email || "");
+            const resolvedRole = data.user_role || matchedUser?.role || (data.role || "Staff");
+
+            const formattedLabel = resolvedEmail 
+                ? `${resolvedName} (${resolvedEmail})` 
+                : (resolvedName || "Operator");
 
             return {
                 id: doc.id,
@@ -142,7 +194,11 @@ export async function GET(req: NextRequest) {
                 task_type: data.task_type || action,
                 channelName: data.channelName || data.channel_name || "MyTara Open Channel",
                 channelCode: data.channelCode || "open_channel",
-                user: userLabel,
+                user: formattedLabel,
+                user_label: formattedLabel,
+                user_name: resolvedName,
+                user_email: resolvedEmail,
+                user_role: resolvedRole,
                 started_at: data.started_at || data.inserted_at || new Date().toISOString(),
                 inserted_at: data.inserted_at || data.started_at || new Date().toISOString(),
                 execution_time_ms: data.execution_time_ms ?? data.latency_ms ?? (action === "Sync" ? 1358 : action === "Push Booking" ? 11 : null),
@@ -180,7 +236,7 @@ export async function GET(req: NextRequest) {
                             task_type: t.attributes?.task_type || action,
                             channelName: "MyTara Open Channel",
                             channelCode: "open_channel",
-                            user: "Nexura Management (nexura.management@gmail.com)",
+                            user: "Channex Cloud Engine",
                             started_at: t.attributes?.inserted_at || new Date().toISOString(),
                             inserted_at: t.attributes?.inserted_at || new Date().toISOString(),
                             execution_time_ms: t.attributes?.execution_time_ms || 1240,

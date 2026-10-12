@@ -1,176 +1,225 @@
-/* RateInventorySubTabs.module.css — Professional Hospitality Theme */
+/* RateInventorySubTabs.module.css — Compact Space-Efficient Claymorphic Bar */
 
 .subTabsBar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    background-color: #ffffff;
-    padding: 10px 16px;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
+    gap: 8px;
+    background: #ffffff;
+    padding: 6px 12px;
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    border-radius: 6px;
     width: 100%;
     box-sizing: border-box;
-    margin-bottom: 12px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    flex-wrap: wrap;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 8px -1px rgba(15, 23, 42, 0.04),
+                inset 0 1px 2px rgba(255, 255, 255, 0.95);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    transition: all 0.2s ease;
 }
 
 :global(.dark) .subTabsBar {
-    background-color: #111827;
-    border-color: #374151;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    background: #1e293b;
+    border-color: rgba(51, 65, 85, 0.8);
+    box-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.3),
+                inset 0 1px 2px rgba(255, 255, 255, 0.08);
 }
 
 .subTabsGroup {
     display: flex;
     align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
+    gap: 4px;
+    flex-shrink: 0;
 }
 
+/* Stepper Chevron Button on Far Left */
+.stepperBtnLeft {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03),
+                inset 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+:global(.dark) .stepperBtnLeft {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+.stepperBtnLeft:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+    transform: translateY(-1px);
+}
+
+:global(.dark) .stepperBtnLeft:hover {
+    background: #334155;
+    color: #ffffff;
+}
+
+/* Compact Claymorphic Tab Items */
 .tabItem {
-    padding: 8px 16px;
-    font-size: 12.5px;
-    font-weight: 700;
+    height: 30px;
+    padding: 0 11px;
+    font-size: 12px;
+    font-weight: 500;
     color: #475569;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 4px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
     font-family: inherit;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02),
+                inset 0 1px 2px rgba(255, 255, 255, 0.9);
 }
 
 :global(.dark) .tabItem {
-    background-color: #1f2937;
-    border-color: #374151;
-    color: #cbd5e1;
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3af;
 }
 
 .tabItem:hover {
     color: #0f172a;
-    background-color: #f1f5f9;
+    background: #f1f5f9;
     border-color: #cbd5e1;
+    transform: translateY(-1px);
 }
 
 :global(.dark) .tabItem:hover {
-    background-color: #374151;
-    color: #ffffff;
-}
-
-.tabItemActive {
-    background-color: #2563eb !important;
-    color: #ffffff !important;
-    font-weight: 800;
-    border-color: #1d4ed8 !important;
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
-}
-
-.subTabsActions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.actionBtnSecondary {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 36px;
-    padding: 0 12px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #334155;
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    font-family: inherit;
-    white-space: nowrap;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-}
-
-:global(.dark) .actionBtnSecondary {
-    background-color: #1f2937;
-    border-color: #4b5563;
+    background: #1e293b;
     color: #f8fafc;
 }
 
-.actionBtnSecondary:hover:not(:disabled) {
-    background-color: #f8fafc;
-    border-color: #94a3b8;
-    color: #0f172a;
+/* Active Clay Tab */
+.tabItemActive {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-weight: 600;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 2px 4px -1px rgba(15, 23, 42, 0.06),
+                inset 0 1px 2px rgba(255, 255, 255, 1) !important;
+    transform: translateY(-1px);
 }
 
-:global(.dark) .actionBtnSecondary:hover:not(:disabled) {
-    background-color: #374151;
+:global(.dark) .tabItemActive {
+    background: #2563eb !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4) !important;
 }
 
-.actionBtnSecondary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.activeIndicator {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: #2563eb;
 }
 
-.actionBtnPrimary {
-    display: inline-flex;
+:global(.dark) .activeIndicator {
+    background-color: #ffffff;
+}
+
+/* Right Actions Container */
+.subTabsActions {
+    display: flex;
     align-items: center;
-    gap: 6px;
-    height: 36px;
-    padding: 0 14px;
-    font-size: 12px;
-    font-weight: 800;
-    color: #ffffff;
-    background-color: #0f172a;
-    border: 1px solid #0f172a;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
-    font-family: inherit;
-    white-space: nowrap;
+    gap: 7px;
+    flex-shrink: 0;
 }
 
-:global(.dark) .actionBtnPrimary {
-    background-color: #f8fafc;
-    color: #0f172a;
-    border-color: #f8fafc;
-}
-
-.actionBtnPrimary:hover {
-    background-color: #1e293b;
-    border-color: #1e293b;
-}
-
-:global(.dark) .actionBtnPrimary:hover {
-    background-color: #e2e8f0;
-}
-
-.infoBadgeText {
-    font-size: 11px;
-    font-weight: 700;
-    color: #475569;
+/* Compact Action Buttons */
+.actionBtnSecondary {
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    height: 30px;
     padding: 0 10px;
-    background-color: #f1f5f9;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    height: 36px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #334155;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02),
+                inset 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+:global(.dark) .actionBtnSecondary {
+    background: #1e293b;
+    border-color: #475569;
+    color: #f1f5f9;
+}
+
+.actionBtnSecondary:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
+    transform: translateY(-1px);
+}
+
+:global(.dark) .actionBtnSecondary:hover:not(:disabled) {
+    background: #334155;
+}
+
+.taxNote {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #64748b;
+    padding: 4px 6px;
     white-space: nowrap;
 }
 
-:global(.dark) .infoBadgeText {
-    background-color: #1f2937;
-    border-color: #374151;
-    color: #cbd5e1;
+:global(.dark) .taxNote {
+    color: #94a3af;
+}
+
+.menuBtn {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #0f172a;
+    border: 1px solid #0f172a;
+    border-radius: 4px;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.menuBtn:hover {
+    background: #1e293b;
+    transform: translateY(-1px);
+}
+
+:global(.dark) .menuBtn {
+    background: #334155;
+    border-color: #475569;
 }
 
 .spinIcon {
@@ -181,3 +230,213 @@
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+
+/* Custom Features Popover & Menu */
+.menuWrapper {
+    position: relative;
+    display: inline-flex;
+}
+
+.menuBtnActive {
+    background: #0284c7 !important;
+    border-color: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+.featuresPopover {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 220px;
+    background: #ffffff;
+    border: 1px solid rgba(203, 213, 225, 0.95);
+    border-radius: 6px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15),
+                0 8px 10px -6px rgba(15, 23, 42, 0.08);
+    padding: 10px 12px;
+    z-index: 100;
+    box-sizing: border-box;
+    animation: fadeInScale 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:global(.dark) .featuresPopover {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.popoverHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+:global(.dark) .popoverHeader {
+    border-bottom-color: #334155;
+}
+
+.popoverTitle {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+:global(.dark) .popoverTitle {
+    color: #94a3af;
+}
+
+.popoverQuickActions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.quickActionBtn {
+    background: none;
+    border: none;
+    font-size: 11px;
+    font-weight: 500;
+    color: #0284c7;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    transition: color 0.15s ease;
+}
+
+.quickActionBtn:hover {
+    color: #0369a1;
+    text-decoration: underline;
+}
+
+:global(.dark) .quickActionBtn {
+    color: #38bdf8;
+}
+
+.quickActionDot {
+    font-size: 9px;
+    color: #cbd5e1;
+}
+
+:global(.dark) .quickActionDot {
+    color: #475569;
+}
+
+.featureList {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.featureItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.12s ease;
+}
+
+.featureItem:hover {
+    background: #f8fafc;
+}
+
+:global(.dark) .featureItem:hover {
+    background: #334155;
+}
+
+.customCheckbox {
+    width: 17px;
+    height: 17px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    transition: all 0.12s ease;
+    box-sizing: border-box;
+}
+
+:global(.dark) .customCheckbox {
+    background: #0f172a;
+    border-color: #475569;
+}
+
+.checkboxChecked {
+    background: #0284c7 !important;
+    border-color: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+.featureLabel {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #1e293b;
+    flex: 1;
+    white-space: nowrap;
+}
+
+:global(.dark) .featureLabel {
+    color: #f1f5f9;
+}
+
+.popoverDivider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 8px 0;
+}
+
+:global(.dark) .popoverDivider {
+    background: #334155;
+}
+
+.btnBulkUpdateInMenu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    height: 29px;
+    padding: 0 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #0284c7;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.btnBulkUpdateInMenu:hover {
+    background: #e0f2fe;
+    border-color: #7dd3fc;
+}
+
+:global(.dark) .btnBulkUpdateInMenu {
+    background: #0c4a6e;
+    border-color: #0369a1;
+    color: #38bdf8;
+}
+

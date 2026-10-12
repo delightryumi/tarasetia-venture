@@ -357,7 +357,8 @@ export const ForecastSection: React.FC = () => {
                         hotelCode: hotelId,
                         startDate: dates[0],
                         endDate: dates[dates.length - 1],
-                        type: "availability"
+                        type: "availability",
+                        user: user?.email ? `${user.displayName || user.name || user.email.split("@")[0]} (${user.email})` : (user?.displayName || user?.name || "Operator")
                     })
                 }).catch(err => console.warn("[Void Channex Sync Warning]:", err));
             }
@@ -420,7 +421,8 @@ export const ForecastSection: React.FC = () => {
                         hotelCode: hotelId,
                         startDate: dates[0],
                         endDate: dates[dates.length - 1],
-                        type: "availability"
+                        type: "availability",
+                        user: user?.email ? `${user.displayName || user.name || user.email.split("@")[0]} (${user.email})` : (user?.displayName || user?.name || "Operator")
                     })
                 }).catch(err => console.warn("[Cancel Channex Sync Warning]:", err));
             }
@@ -485,7 +487,8 @@ export const ForecastSection: React.FC = () => {
                         hotelCode: hotelId,
                         startDate: dates[0],
                         endDate: dates[dates.length - 1],
-                        type: "availability"
+                        type: "availability",
+                        user: user?.email ? `${user.displayName || user.name || user.email.split("@")[0]} (${user.email})` : (user?.displayName || user?.name || "Operator")
                     })
                 }).catch(err => console.warn("[Status Update Channex Sync Warning]:", err));
             }

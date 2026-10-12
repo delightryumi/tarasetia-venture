@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import {
     collection,
@@ -30,6 +30,26 @@ import {
 export const useRateInventory = () => {
     const { activeHotelCode, activeHotelName, user } = useAuth();
 
+    // Returns identity info for audit logs.
+    // Prefers the AuthContext user, falls back to Firebase auth.currentUser
+    // so the identity is always the real actor, even if context hasn't hydrated.
+    const getAuthorIdentity = useCallback(() => {
+        let localUser: any = null;
+        if (typeof window !== "undefined") {
+            try {
+                const stored = localStorage.getItem("auth_user");
+                if (stored) localUser = JSON.parse(stored);
+            } catch (_) {}
+        }
+
+        const email = user?.email || localUser?.email || auth.currentUser?.email || "";
+        const displayName = user?.displayName || user?.name || localUser?.displayName || localUser?.name || auth.currentUser?.displayName || "";
+        const name = displayName || (email ? email.split("@")[0] : "Operator");
+        const role = user?.role || localUser?.role || "Staff";
+        const label = email ? `${name} (${email})` : (name || "Operator");
+        return { label, user_name: name, user_email: email, user_role: role };
+    }, [user]);
+
     const isSuperadminRole = user?.role?.toLowerCase() === "superadmin";
     const isSuperadmin = isSuperadminRole || user?.role?.toLowerCase() === "admin";
     const canStopSell = isSuperadmin || user?.permissions?.fo_stopsell === true;
@@ -39,7 +59,7 @@ export const useRateInventory = () => {
     // Active sub-view tab: "inventory" | "rates" | "stopsell"
     const [activeTab, setActiveTab] = useState<RateInventoryTab>("inventory");
 
-    // Date range: 14 days default
+    // Date range: 13 days default
     const [startDate, setStartDate] = useState<string>(() => {
         const d = new Date();
         const y = d.getFullYear();
@@ -47,7 +67,7 @@ export const useRateInventory = () => {
         const day = String(d.getDate()).padStart(2, "0");
         return `${y}-${m}-${day}`;
     });
-    const [daysCount, setDaysCount] = useState<number>(14);
+    const [daysCount, setDaysCount] = useState<number>(13);
 
     // Filters & Display Options
     const [channelFilter, setChannelFilter] = useState<string>("all");
@@ -535,17 +555,47 @@ export const useRateInventory = () => {
                         currentChildRate = Math.round(currentChildRate * taxMultiplier);
                     }
 
-                    // Restrictions: Min Stay, CTA, CTD
-                    const minStayKey = `min_${rp.id}_${dateStr}`;
+                    // Restrictions: Min Stay (Legacy, Arrival, Through), Max Stay, CTA, CTD
+                    const minStayLegacyKey = `min_${rp.id}_${dateStr}`;
+                    const minStayArrKey = `min_arr_${rp.id}_${dateStr}`;
+                    const minStayThruKey = `min_thru_${rp.id}_${dateStr}`;
+                    const maxStayKey = `max_${rp.id}_${dateStr}`;
                     const ctaKey = `cta_${rp.id}_${dateStr}`;
                     const ctdKey = `ctd_${rp.id}_${dateStr}`;
 
-                    let currentMinStay = Number((rp as any).minStay || 1);
-                    if (stagedUpdates[minStayKey] !== undefined) {
-                        currentMinStay = Number(stagedUpdates[minStayKey]) || 1;
+                    // Min Stay Arrival
+                    let currentMinStayArr = Number((rp as any).minStayArrival || (rp as any).minStay || 1);
+                    if (stagedUpdates[minStayArrKey] !== undefined) {
+                        currentMinStayArr = Number(stagedUpdates[minStayArrKey]) || 1;
+                    } else if (stagedUpdates[minStayLegacyKey] !== undefined) {
+                        currentMinStayArr = Number(stagedUpdates[minStayLegacyKey]) || 1;
+                    } else if (dayOverride?.minStayArrival?.[rp.id] !== undefined) {
+                        currentMinStayArr = Number(dayOverride.minStayArrival[rp.id]) || 1;
                     } else if (dayOverride?.minStay?.[rp.id] !== undefined) {
-                        currentMinStay = Number(dayOverride.minStay[rp.id]) || 1;
+                        currentMinStayArr = Number(dayOverride.minStay[rp.id]) || 1;
                     }
+
+                    // Min Stay Through
+                    let currentMinStayThru = Number((rp as any).minStayThrough || (rp as any).minStay || 1);
+                    if (stagedUpdates[minStayThruKey] !== undefined) {
+                        currentMinStayThru = Number(stagedUpdates[minStayThruKey]) || 1;
+                    } else if (stagedUpdates[minStayLegacyKey] !== undefined) {
+                        currentMinStayThru = Number(stagedUpdates[minStayLegacyKey]) || 1;
+                    } else if (dayOverride?.minStayThrough?.[rp.id] !== undefined) {
+                        currentMinStayThru = Number(dayOverride.minStayThrough[rp.id]) || 1;
+                    } else if (dayOverride?.minStay?.[rp.id] !== undefined) {
+                        currentMinStayThru = Number(dayOverride.minStay[rp.id]) || 1;
+                    }
+
+                    // Max Stay
+                    let currentMaxStay: number | undefined = (rp as any).maxStay ? Number((rp as any).maxStay) : undefined;
+                    if (stagedUpdates[maxStayKey] !== undefined) {
+                        currentMaxStay = stagedUpdates[maxStayKey] ? Number(stagedUpdates[maxStayKey]) : undefined;
+                    } else if (dayOverride?.maxStay?.[rp.id] !== undefined) {
+                        currentMaxStay = dayOverride.maxStay[rp.id] ? Number(dayOverride.maxStay[rp.id]) : undefined;
+                    }
+
+                    let currentMinStay = currentMinStayArr; // unified fallback
 
                     let currentCta = !!(rp as any).closedToArrival;
                     if (stagedUpdates[ctaKey] !== undefined) {
@@ -566,6 +616,9 @@ export const useRateInventory = () => {
                         rate: currentRate,
                         stopSell: currentStopSell,
                         minStay: currentMinStay,
+                        minStayArrival: currentMinStayArr,
+                        minStayThrough: currentMinStayThru,
+                        maxStay: currentMaxStay,
                         closedToArrival: currentCta,
                         closedToDeparture: currentCtd,
                         extraAdultRate: currentAdultRate,
@@ -701,6 +754,9 @@ export const useRateInventory = () => {
                 rates?: Record<string, number>;
                 stopSell?: Record<string, boolean>;
                 minStay?: Record<string, number>;
+                minStayArrival?: Record<string, number>;
+                minStayThrough?: Record<string, number>;
+                maxStay?: Record<string, number>;
                 cta?: Record<string, boolean>;
                 ctd?: Record<string, boolean>;
                 extraAdultRates?: Record<string, number>;
@@ -775,10 +831,26 @@ export const useRateInventory = () => {
                     const id = parts.slice(1, parts.length - 1).join("_");
                     if (!dateEditsMap[dateStr].inventoryOverrides) dateEditsMap[dateStr].inventoryOverrides = {};
                     dateEditsMap[dateStr].inventoryOverrides![id] = Number(value) || 0;
+                } else if (key.startsWith("min_arr_")) {
+                    const id = key.substring(8, key.lastIndexOf("_"));
+                    if (!dateEditsMap[dateStr].minStayArrival) dateEditsMap[dateStr].minStayArrival = {};
+                    dateEditsMap[dateStr].minStayArrival![id] = Math.max(1, Number(value) || 1);
+                } else if (key.startsWith("min_thru_")) {
+                    const id = key.substring(9, key.lastIndexOf("_"));
+                    if (!dateEditsMap[dateStr].minStayThrough) dateEditsMap[dateStr].minStayThrough = {};
+                    dateEditsMap[dateStr].minStayThrough![id] = Math.max(1, Number(value) || 1);
+                } else if (key.startsWith("max_")) {
+                    const id = key.substring(4, key.lastIndexOf("_"));
+                    if (!dateEditsMap[dateStr].maxStay) dateEditsMap[dateStr].maxStay = {};
+                    dateEditsMap[dateStr].maxStay![id] = Number(value) ? Math.max(1, Number(value)) : 0;
                 } else if (type === "min") {
                     const id = parts.slice(1, parts.length - 1).join("_");
                     if (!dateEditsMap[dateStr].minStay) dateEditsMap[dateStr].minStay = {};
                     dateEditsMap[dateStr].minStay![id] = Math.max(1, Number(value) || 1);
+                    if (!dateEditsMap[dateStr].minStayArrival) dateEditsMap[dateStr].minStayArrival = {};
+                    dateEditsMap[dateStr].minStayArrival![id] = Math.max(1, Number(value) || 1);
+                    if (!dateEditsMap[dateStr].minStayThrough) dateEditsMap[dateStr].minStayThrough = {};
+                    dateEditsMap[dateStr].minStayThrough![id] = Math.max(1, Number(value) || 1);
                 } else if (type === "cta") {
                     const id = parts.slice(1, parts.length - 1).join("_");
                     if (!dateEditsMap[dateStr].cta) dateEditsMap[dateStr].cta = {};
@@ -814,6 +886,9 @@ export const useRateInventory = () => {
                     rates: { ...(currentDoc.rates || {}), ...(edits.rates || {}) },
                     stopSell: { ...(currentDoc.stopSell || {}), ...(edits.stopSell || {}) },
                     minStay: { ...(currentDoc.minStay || {}), ...(edits.minStay || {}) },
+                    minStayArrival: { ...(currentDoc.minStayArrival || {}), ...(edits.minStayArrival || {}) },
+                    minStayThrough: { ...(currentDoc.minStayThrough || {}), ...(edits.minStayThrough || {}) },
+                    maxStay: { ...(currentDoc.maxStay || {}), ...(edits.maxStay || {}) },
                     cta: { ...(currentDoc.cta || {}), ...(edits.cta || {}) },
                     ctd: { ...(currentDoc.ctd || {}), ...(edits.ctd || {}) },
                     extraAdultRates: { ...(currentDoc.extraAdultRates || {}), ...(edits.extraAdultRates || {}) },
@@ -832,14 +907,18 @@ export const useRateInventory = () => {
 
             // Record audit trail log to Firestore for any user making changes
             try {
-                const authorName = user?.name || user?.email || user?.displayName || "Operator";
+                const { label: authorLabel, user_name, user_email, user_role } = getAuthorIdentity();
                 const invLogRef = collection(db, "hotels", activeHotelCode, "channex_task_logs");
                 const uniqueTaskId = `ari-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
                 await setDoc(doc(invLogRef, uniqueTaskId), {
                     action: "Inventory & Rate Grid Edit",
                     task_type: "INVENTORY_CHANGE",
                     channelName: channelFilter === "all" ? "Master Allotment & Rates" : channelFilter,
-                    user: authorName,
+                    user: authorLabel,
+                    user_label: authorLabel,
+                    user_name,
+                    user_email,
+                    user_role,
                     started_at: new Date().toISOString(),
                     inserted_at: new Date().toISOString(),
                     execution_time_ms: 150,
@@ -867,6 +946,9 @@ export const useRateInventory = () => {
                     ...Object.keys(edits.rates || {}),
                     ...Object.keys(edits.stopSell || {}),
                     ...Object.keys(edits.minStay || {}),
+                    ...Object.keys(edits.minStayArrival || {}),
+                    ...Object.keys(edits.minStayThrough || {}),
+                    ...Object.keys(edits.maxStay || {}),
                     ...Object.keys(edits.cta || {}),
                     ...Object.keys(edits.ctd || {})
                 ]);
@@ -876,6 +958,9 @@ export const useRateInventory = () => {
                     if (edits.rates?.[rpId] !== undefined) item.rate = edits.rates[rpId];
                     if (edits.stopSell?.[rpId] !== undefined) item.stopSell = edits.stopSell[rpId];
                     if (edits.minStay?.[rpId] !== undefined) item.minStay = edits.minStay[rpId];
+                    if (edits.minStayArrival?.[rpId] !== undefined) item.minStayArrival = edits.minStayArrival[rpId];
+                    if (edits.minStayThrough?.[rpId] !== undefined) item.minStayThrough = edits.minStayThrough[rpId];
+                    if (edits.maxStay?.[rpId] !== undefined) item.maxStay = edits.maxStay[rpId];
                     if (edits.cta?.[rpId] !== undefined) item.closedToArrival = edits.cta[rpId];
                     if (edits.ctd?.[rpId] !== undefined) item.closedToDeparture = edits.ctd[rpId];
                     deltaRates.push(item);
@@ -1052,6 +1137,9 @@ export const useRateInventory = () => {
                     const newRates = { ...(currentDoc.rates || {}) };
                     const newStopSell = { ...(currentDoc.stopSell || {}) };
                     const newMinStay = { ...(currentDoc.minStay || {}) };
+                    const newMinStayArr = { ...(currentDoc.minStayArrival || {}) };
+                    const newMinStayThru = { ...(currentDoc.minStayThrough || {}) };
+                    const newMaxStay = { ...(currentDoc.maxStay || {}) };
                     const newCta = { ...(currentDoc.cta || {}) };
                     const newCtd = { ...(currentDoc.ctd || {}) };
                     const newInv = { ...(currentDoc.inventoryOverrides || {}) };
@@ -1083,11 +1171,47 @@ export const useRateInventory = () => {
                         targetRatePlans.forEach(rp => { newStopSell[rp.id] = false; });
                     }
 
-                    // Apply Min Stay
+                    // Apply Min Stay Arrival
+                    if (params.minStayArrivalAction === "set" && params.minStayArrivalValue !== undefined) {
+                        targetRatePlans.forEach(rp => { 
+                            newMinStayArr[rp.id] = params.minStayArrivalValue!; 
+                            newMinStay[rp.id] = params.minStayArrivalValue!;
+                        });
+                    } else if (params.minStayArrivalAction === "remove") {
+                        targetRatePlans.forEach(rp => { delete newMinStayArr[rp.id]; });
+                    }
+
+                    // Apply Min Stay Through
+                    if (params.minStayThroughAction === "set" && params.minStayThroughValue !== undefined) {
+                        targetRatePlans.forEach(rp => { 
+                            newMinStayThru[rp.id] = params.minStayThroughValue!; 
+                        });
+                    } else if (params.minStayThroughAction === "remove") {
+                        targetRatePlans.forEach(rp => { delete newMinStayThru[rp.id]; });
+                    }
+
+                    // Apply Max Stay
+                    if (params.maxStayAction === "set" && params.maxStayValue !== undefined) {
+                        targetRatePlans.forEach(rp => { 
+                            newMaxStay[rp.id] = params.maxStayValue!; 
+                        });
+                    } else if (params.maxStayAction === "remove") {
+                        targetRatePlans.forEach(rp => { delete newMaxStay[rp.id]; });
+                    }
+
+                    // Apply Legacy Min Stay
                     if (params.minStayAction === "set" && params.minStayValue !== undefined) {
-                        targetRatePlans.forEach(rp => { newMinStay[rp.id] = params.minStayValue!; });
+                        targetRatePlans.forEach(rp => { 
+                            newMinStay[rp.id] = params.minStayValue!; 
+                            newMinStayArr[rp.id] = params.minStayValue!;
+                            newMinStayThru[rp.id] = params.minStayValue!;
+                        });
                     } else if (params.minStayAction === "remove") {
-                        targetRatePlans.forEach(rp => { delete newMinStay[rp.id]; });
+                        targetRatePlans.forEach(rp => { 
+                            delete newMinStay[rp.id]; 
+                            delete newMinStayArr[rp.id];
+                            delete newMinStayThru[rp.id];
+                        });
                     }
 
                     // Apply CTA
@@ -1115,6 +1239,9 @@ export const useRateInventory = () => {
                         rates: newRates,
                         stopSell: newStopSell,
                         minStay: newMinStay,
+                        minStayArrival: newMinStayArr,
+                        minStayThrough: newMinStayThru,
+                        maxStay: newMaxStay,
                         cta: newCta,
                         ctd: newCtd,
                         inventoryOverrides: newInv,
@@ -1127,14 +1254,18 @@ export const useRateInventory = () => {
 
             // Record audit trail log to Firestore for bulk update
             try {
-                const authorName = user?.name || user?.email || user?.displayName || "Operator";
+                const { label: authorLabel, user_name, user_email, user_role } = getAuthorIdentity();
                 const bulkLogRef = collection(db, "hotels", activeHotelCode, "channex_task_logs");
                 const uniqueBulkTaskId = `bulk-ari-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
                 await setDoc(doc(bulkLogRef, uniqueBulkTaskId), {
                     action: "Bulk Inventory / Rate Update",
                     task_type: "BULK_UPDATE",
                     channelName: params.channelId ? params.channelId : "All Connected Channels",
-                    user: authorName,
+                    user: authorLabel,
+                    user_label: authorLabel,
+                    user_name,
+                    user_email,
+                    user_role,
                     started_at: new Date().toISOString(),
                     inserted_at: new Date().toISOString(),
                     execution_time_ms: 320,
@@ -1150,6 +1281,12 @@ export const useRateInventory = () => {
                         stopSellAction: params.stopSellAction,
                         minStayAction: params.minStayAction,
                         minStayValue: params.minStayValue,
+                        minStayArrivalAction: params.minStayArrivalAction,
+                        minStayArrivalValue: params.minStayArrivalValue,
+                        minStayThroughAction: params.minStayThroughAction,
+                        minStayThroughValue: params.minStayThroughValue,
+                        maxStayAction: params.maxStayAction,
+                        maxStayValue: params.maxStayValue,
                         ctaAction: params.ctaAction,
                         ctdAction: params.ctdAction,
                         inventoryAction: params.inventoryAction,
@@ -1170,10 +1307,13 @@ export const useRateInventory = () => {
                 const hasRateChange = params.rateAction !== "none";
                 const hasStopSellChange = params.stopSellAction !== "none";
                 const hasMinStayChange = params.minStayAction && params.minStayAction !== "none";
+                const hasMinStayArrChange = params.minStayArrivalAction && params.minStayArrivalAction !== "none";
+                const hasMinStayThruChange = params.minStayThroughAction && params.minStayThroughAction !== "none";
+                const hasMaxStayChange = params.maxStayAction && params.maxStayAction !== "none";
                 const hasCtaChange = params.ctaAction && params.ctaAction !== "none";
                 const hasCtdChange = params.ctdAction && params.ctdAction !== "none";
 
-                if (hasRateChange || hasStopSellChange || hasMinStayChange || hasCtaChange || hasCtdChange) {
+                if (hasRateChange || hasStopSellChange || hasMinStayChange || hasMinStayArrChange || hasMinStayThruChange || hasMaxStayChange || hasCtaChange || hasCtdChange) {
                     targetRatePlans.forEach(rp => {
                         const item: any = { ratePlanId: rp.id, date: dateStr };
                         if (hasRateChange) {
@@ -1189,6 +1329,15 @@ export const useRateInventory = () => {
                         }
                         if (params.stopSellAction === "close") item.stopSell = true;
                         else if (params.stopSellAction === "open") item.stopSell = false;
+
+                        if (params.minStayArrivalAction === "set" && params.minStayArrivalValue !== undefined) item.minStayArrival = params.minStayArrivalValue;
+                        else if (params.minStayArrivalAction === "remove") item.minStayArrival = null;
+
+                        if (params.minStayThroughAction === "set" && params.minStayThroughValue !== undefined) item.minStayThrough = params.minStayThroughValue;
+                        else if (params.minStayThroughAction === "remove") item.minStayThrough = null;
+
+                        if (params.maxStayAction === "set" && params.maxStayValue !== undefined) item.maxStay = params.maxStayValue;
+                        else if (params.maxStayAction === "remove") item.maxStay = null;
 
                         if (params.minStayAction === "set" && params.minStayValue !== undefined) item.minStay = params.minStayValue;
                         else if (params.minStayAction === "remove") item.minStay = null;
@@ -1287,6 +1436,7 @@ export const useRateInventory = () => {
         if (!activeHotelCode) return;
         setSyncingAri(true);
         try {
+            const { label: authorLabel, user_name, user_email, user_role } = getAuthorIdentity();
             const res = await fetch("/api/channex/sync-ari", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1294,11 +1444,17 @@ export const useRateInventory = () => {
                     hotelCode: activeHotelCode,
                     type: "delta",
                     delta: deltaPayload,
-                    user: user?.name || user?.email || user?.displayName || "Operator"
+                    user: authorLabel,
+                    userName: user_name,
+                    userEmail: user_email,
+                    userRole: user_role
                 })
             });
             const data = await res.json();
             if (data.success) {
+                if (typeof window !== "undefined") {
+                    sessionStorage.removeItem(`ari_logs_${activeHotelCode}`);
+                }
                 setLastSyncedAt(new Date().toLocaleTimeString("en-US"));
                 const taskMsg = data.taskIds && data.taskIds.length > 0
                     ? ` (Task ID: ${data.taskIds.join(", ")})`
@@ -1321,6 +1477,7 @@ export const useRateInventory = () => {
         setSyncingAri(true);
         if (roomTypeId) setSyncingRoomTypeId(roomTypeId);
         try {
+            const { label: fsLabel, user_name: fsName, user_email: fsEmail, user_role: fsRole } = getAuthorIdentity();
             const res = await fetch("/api/channex/sync-ari", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1328,13 +1485,19 @@ export const useRateInventory = () => {
                     hotelCode: activeHotelCode,
                     type: "full_sync",
                     startDate: dateList[0],
-                    daysAhead: daysAhead, // Default to 500 days for Channex PMS Certification Test 1
+                    daysAhead: daysAhead,
                     roomTypeId: roomTypeId || undefined,
-                    user: user?.name || user?.email || user?.displayName || "Operator"
+                    user: fsLabel,
+                    userName: fsName,
+                    userEmail: fsEmail,
+                    userRole: fsRole
                 })
             });
             const data = await res.json();
             if (data.success) {
+                if (typeof window !== "undefined") {
+                    sessionStorage.removeItem(`ari_logs_${activeHotelCode}`);
+                }
                 setLastSyncedAt(new Date().toLocaleTimeString("en-US"));
                 const taskMsg = data.taskIds && data.taskIds.length > 0
                     ? ` (Task IDs: ${data.taskIds.join(", ")})`

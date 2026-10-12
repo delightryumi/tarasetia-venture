@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Building2 } from "lucide-react";
+import { Info } from "lucide-react";
 import styles from "./GridTotalAvailableRow.module.css";
 
 interface GridTotalAvailableRowProps {
@@ -21,38 +21,37 @@ export const GridTotalAvailableRow = React.memo(function GridTotalAvailableRow({
         <tr className={styles.row}>
             <td className={styles.colTitle}>
                 <div className={styles.titleLabel}>
-                    <Building2 size={16} style={{ color: "#2563eb" }} />
-                    <span>Total Property Availability</span>
+                    <span>Available Inventory</span>
+                    <button
+                        type="button"
+                        className={styles.infoBtn}
+                        title={`Total Available Inventory (Property Capacity: ${totalPhysicalRooms} Units)`}
+                    >
+                        <Info size={13} />
+                    </button>
                 </div>
-                <span className={styles.titleBadge}>
-                    {totalPhysicalRooms} Total Units
-                </span>
             </td>
 
             {dateList.map(dateStr => {
                 const avail = totalDailyAvailable[dateStr] ?? totalPhysicalRooms;
-                const dObj = new Date(dateStr);
-                const isWeekend = dObj.getDay() === 0 || dObj.getDay() === 6;
                 const isToday = dateStr === todayStr;
-                const isZero = avail === 0;
 
                 return (
                     <td
                         key={dateStr}
                         className={[
                             styles.colDay,
-                            isWeekend ? styles.colWeekend : "",
                             isToday ? styles.colToday : ""
                         ].filter(Boolean).join(" ")}
                     >
-                        <span className={[styles.valueText, isZero ? styles.valueZero : ""].filter(Boolean).join(" ")}>
+                        <span className={styles.valueText}>
                             {avail}
                         </span>
                     </td>
                 );
             })}
 
-            <td style={{ backgroundColor: "inherit" }} />
+            <td className={styles.endSpacerCell} />
         </tr>
     );
 });

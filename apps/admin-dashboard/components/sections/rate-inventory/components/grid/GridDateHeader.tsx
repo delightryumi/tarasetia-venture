@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ChevronLeft, ChevronRight, ChevronsRight, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import styles from "./GridDateHeader.module.css";
 
 interface GridDateHeaderProps {
@@ -18,7 +18,6 @@ export const GridDateHeader = React.memo(function GridDateHeader({
     setStartDate,
     dateList,
     shiftDate,
-    jumpToToday,
     todayStr
 }: GridDateHeaderProps) {
     return (
@@ -26,56 +25,40 @@ export const GridDateHeader = React.memo(function GridDateHeader({
             {/* 1. Left Sticky Navigation Controls */}
             <th className={styles.colTitle}>
                 <div className={styles.dateNavControl}>
-                    <div className={styles.navBtnGroup}>
-                        <button
-                            type="button"
-                            onClick={() => shiftDate(-14)}
-                            className={styles.dateStepperBtn}
-                            title="14 Days Previous"
-                        >
-                            <ChevronLeft size={16} />
-                        </button>
-
-                        {jumpToToday && (
-                            <button
-                                type="button"
-                                onClick={jumpToToday}
-                                className={styles.btnToday}
-                                title="Jump to Today"
-                            >
-                                <Calendar size={13} />
-                                <span>Today</span>
-                            </button>
-                        )}
-                    </div>
+                    <button
+                        type="button"
+                        onClick={() => shiftDate(-13)}
+                        className={styles.dateStepperBtn}
+                        title="13 Hari Sebelumnya"
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
 
                     <input
                         type="date"
                         value={startDate}
                         onChange={e => setStartDate(e.target.value)}
                         className={styles.datePickerInput}
-                        title="Select Calendar Start Date"
+                        title="Pilih Tanggal Kalender"
                     />
 
-                    <div className={styles.navBtnGroup}>
-                        <button
-                            type="button"
-                            onClick={() => shiftDate(14)}
-                            className={styles.dateStepperBtn}
-                            title="14 Days Forward"
-                        >
-                            <ChevronRight size={16} />
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={() => shiftDate(13)}
+                        className={styles.dateStepperBtn}
+                        title="13 Hari Berikutnya"
+                    >
+                        <ChevronRight size={16} />
+                    </button>
                 </div>
             </th>
 
-            {/* 2. Date Columns (14 Days) */}
+            {/* 2. Date Columns (13 Days) */}
             {dateList.map(dateStr => {
                 const dObj = new Date(dateStr);
-                const dayName = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][dObj.getDay()];
+                const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dObj.getDay()];
                 const dayNum = String(dObj.getDate()).padStart(2, "0");
-                const monthName = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][dObj.getMonth()];
+                const monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][dObj.getMonth()];
                 const isWeekend = dObj.getDay() === 0 || dObj.getDay() === 6;
                 const isToday = dateStr === todayStr;
 
@@ -87,26 +70,26 @@ export const GridDateHeader = React.memo(function GridDateHeader({
                             isWeekend ? styles.colWeekend : "",
                             isToday ? styles.colToday : ""
                         ].filter(Boolean).join(" ")}
+                        title={`${dayName}, ${dayNum} ${monthName}`}
                     >
-                        <div className={[styles.dayOfWeek, isWeekend ? styles.dayOfWeekWeekend : ""].filter(Boolean).join(" ")}>
+                        <div className={styles.dayOfWeek}>
                             {dayName}
                         </div>
                         <div className={styles.dayNumber}>{dayNum}</div>
                         <div className={styles.monthLabel}>{monthName}</div>
-                        {isToday && <span className={styles.todayTag}>TODAY</span>}
                     </th>
                 );
             })}
 
-            {/* 3. Fast Forward Button */}
+            {/* 3. Fast Forward Stepper Button */}
             <th className={styles.jumpForwardTh}>
                 <button
                     type="button"
-                    onClick={() => shiftDate(14)}
+                    onClick={() => shiftDate(13)}
                     className={styles.jumpForwardBtn}
-                    title="Jump 14 Days Ahead"
+                    title="Lompat 13 Hari ke Depan"
                 >
-                    <ChevronsRight size={16} />
+                    <ChevronsRight size={15} />
                 </button>
             </th>
         </tr>

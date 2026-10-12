@@ -44,7 +44,7 @@ export function RateInventoryOverviewCards({
             <div className={styles.kpiCard}>
                 <div className={styles.kpiLeft}>
                     <div className={styles.kpiLabel}>
-                        <Bed size={14} style={{ color: "#2563eb" }} />
+                        <Bed size={14} className={styles.iconBlueText} />
                         <span>Categories &amp; Units</span>
                     </div>
                     <div className={styles.kpiValueRow}>
@@ -66,7 +66,7 @@ export function RateInventoryOverviewCards({
             <div className={styles.kpiCard}>
                 <div className={styles.kpiLeft}>
                     <div className={styles.kpiLabel}>
-                        <DollarSign size={14} style={{ color: "#059669" }} />
+                        <DollarSign size={14} className={styles.iconGreenText} />
                         <span>Master Rate Plans</span>
                     </div>
                     <div className={styles.kpiValueRow}>
@@ -88,7 +88,7 @@ export function RateInventoryOverviewCards({
             <div className={styles.kpiCard}>
                 <div className={styles.kpiLeft}>
                     <div className={styles.kpiLabel}>
-                        <CalendarCheck size={14} style={{ color: "#d97706" }} />
+                        <CalendarCheck size={14} className={styles.iconAmberText} />
                         <span>Today's Availability</span>
                     </div>
                     <div className={styles.kpiValueRow}>
@@ -110,11 +110,11 @@ export function RateInventoryOverviewCards({
             <div className={styles.kpiCard}>
                 <div className={styles.kpiLeft}>
                     <div className={styles.kpiLabel}>
-                        <RefreshCw size={14} style={{ color: "#7c3aed" }} />
+                        <RefreshCw size={14} className={styles.iconPurpleText} />
                         <span>Channel Sync Status</span>
                     </div>
                     <div className={styles.kpiValueRow}>
-                        <span className={styles.kpiValue} style={{ fontSize: "16px" }}>
+                        <span className={`${styles.kpiValue} ${styles.kpiValueSmall}`}>
                             {lastSyncedAt ? `Synced ${lastSyncedAt}` : "Ready to Sync"}
                         </span>
                     </div>
@@ -123,15 +123,7 @@ export function RateInventoryOverviewCards({
                             type="button"
                             onClick={onSyncAll}
                             disabled={syncingAri}
-                            style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 4,
-                                border: "none",
-                                background: "none",
-                                padding: 0,
-                                cursor: syncingAri ? "not-allowed" : "pointer"
-                            }}
+                            className={styles.syncButton}
                         >
                             <span className={`${styles.kpiBadge} ${styles.badgePurple}`}>
                                 <SlidersHorizontal size={10} />

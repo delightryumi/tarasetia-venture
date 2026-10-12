@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRateInventory } from "./useRateInventory";
+import { RateInventoryTab, GridFeatureId } from "./RateInventoryTypes";
 import { RateInventorySubTabs } from "./components/RateInventorySubTabs";
 import { RateInventoryFilterBar } from "./components/RateInventoryFilterBar";
 import { RateInventoryGrid } from "./components/RateInventoryGrid";
@@ -56,12 +57,181 @@ export function RateInventorySection() {
         channelConfigs
     } = useRateInventory();
 
+    // 8 Feature matrix visibility toggles
+    const [visibleFeatures, setVisibleFeatures] = useState<Record<GridFeatureId, boolean>>({
+        availability: true,
+        rate: false,
+        minStayThrough: false,
+        minStayArrival: false,
+        maxStay: false,
+        closedToArrival: false,
+        closedToDeparture: false,
+        stopSell: false
+    });
+
+    const handleTabChange = (tab: RateInventoryTab) => {
+        setActiveTab(tab);
+        if (tab === "inventory") {
+            setVisibleFeatures({
+                availability: true,
+                rate: false,
+                minStayThrough: false,
+                minStayArrival: false,
+                maxStay: false,
+                closedToArrival: false,
+                closedToDeparture: false,
+                stopSell: false
+            });
+        } else if (tab === "rates") {
+            setVisibleFeatures({
+                availability: false,
+                rate: true,
+                minStayThrough: false,
+                minStayArrival: false,
+                maxStay: false,
+                closedToArrival: false,
+                closedToDeparture: false,
+                stopSell: false
+            });
+        } else if (tab === "minstay") {
+            setVisibleFeatures({
+                availability: false,
+                rate: false,
+                minStayThrough: true,
+                minStayArrival: true,
+                maxStay: false,
+                closedToArrival: false,
+                closedToDeparture: false,
+                stopSell: false
+            });
+        } else if (tab === "minstay_arrival") {
+            setVisibleFeatures({
+                availability: false,
+                rate: false,
+                minStayThrough: false,
+                minStayArrival: true,
+                maxStay: false,
+                closedToArrival: false,
+                closedToDeparture: false,
+                stopSell: false
+            });
+        } else if (tab === "minstay_through") {
+            setVisibleFeatures({
+                availability: false,
+                rate: false,
+                minStayThrough: true,
+                minStayArrival: false,
+                maxStay: false,
+                closedToArrival: false,
+                closedToDeparture: false,
+                stopSell: false
+            });
+        } else if (tab === "maxstay") {
+            setVisibleFeatures({
+                availability: false,
+                rate: false,
+                minStayThrough: false,
+                minStayArrival: false,
+                maxStay: true,
+                closedToArrival: false,
+                closedToDeparture: false,
+                stopSell: false
+            });
+        } else if (tab === "stopsell") {
+            setVisibleFeatures({
+                availability: false,
+                rate: false,
+                minStayThrough: false,
+                minStayArrival: false,
+                maxStay: false,
+                closedToArrival: false,
+                closedToDeparture: false,
+                stopSell: true
+            });
+        } else if (tab === "cta") {
+            setVisibleFeatures({
+                availability: false,
+                rate: false,
+                minStayThrough: false,
+                minStayArrival: false,
+                maxStay: false,
+                closedToArrival: true,
+                closedToDeparture: false,
+                stopSell: false
+            });
+        } else if (tab === "ctd") {
+            setVisibleFeatures({
+                availability: false,
+                rate: false,
+                minStayThrough: false,
+                minStayArrival: false,
+                maxStay: false,
+                closedToArrival: false,
+                closedToDeparture: true,
+                stopSell: false
+            });
+        }
+    };
+
+    const handleToggleFeature = (id: GridFeatureId) => {
+        setVisibleFeatures(prev => {
+            const next = { ...prev, [id]: !prev[id] };
+            const activeCount = Object.values(next).filter(Boolean).length;
+            if (activeCount === 1) {
+                if (next.availability) setActiveTab("inventory");
+                else if (next.rate) setActiveTab("rates");
+                else if (next.maxStay) setActiveTab("maxstay");
+                else if (next.stopSell) setActiveTab("stopsell");
+                else if (next.closedToArrival) setActiveTab("cta");
+                else if (next.closedToDeparture) setActiveTab("ctd");
+                else setActiveTab("custom");
+            } else if (activeCount === 2 && next.minStayArrival && next.minStayThrough) {
+                setActiveTab("minstay");
+            } else {
+                setActiveTab("custom");
+            }
+            return next;
+        });
+    };
+
+    const handleSelectAllFeatures = () => {
+        setVisibleFeatures({
+            availability: true,
+            rate: true,
+            minStayThrough: true,
+            minStayArrival: true,
+            maxStay: true,
+            closedToArrival: true,
+            closedToDeparture: true,
+            stopSell: true
+        });
+        setActiveTab("custom");
+    };
+
+    const handleDeselectAllFeatures = () => {
+        setVisibleFeatures({
+            availability: true,
+            rate: false,
+            minStayThrough: false,
+            minStayArrival: false,
+            maxStay: false,
+            closedToArrival: false,
+            closedToDeparture: false,
+            stopSell: false
+        });
+        setActiveTab("inventory");
+    };
+
     return (
         <div className={styles.container}>
             {/* 1. Sub-Tabs Bar (Inventory, Rates, Stop Sell, Min Stay, CTA, CTD, Logs) */}
             <RateInventorySubTabs
                 activeTab={activeTab}
-                setActiveTab={setActiveTab}
+                setActiveTab={handleTabChange}
+                visibleFeatures={visibleFeatures}
+                onToggleFeature={handleToggleFeature}
+                onSelectAllFeatures={handleSelectAllFeatures}
+                onDeselectAllFeatures={handleDeselectAllFeatures}
                 onExportCsv={exportGridToCsv}
                 onOpenBulkModal={() => setBulkModalOpen(true)}
                 taxInclusive={taxInclusive}
@@ -77,6 +247,7 @@ export function RateInventorySection() {
                 <>
                     {/* 3. Filter & Controls Bar */}
                     <RateInventoryFilterBar
+                        activeTab={activeTab}
                         channelFilter={channelFilter}
                         setChannelFilter={setChannelFilter}
                         channelConfigs={channelConfigs}
@@ -114,6 +285,7 @@ export function RateInventorySection() {
                             shiftDate={shiftDate}
                             jumpToToday={jumpToToday}
                             activeTab={activeTab}
+                            visibleFeatures={visibleFeatures}
                             matrix={matrix}
                             totalDailyAvailable={totalDailyAvailable}
                             stageEdit={stageEdit}

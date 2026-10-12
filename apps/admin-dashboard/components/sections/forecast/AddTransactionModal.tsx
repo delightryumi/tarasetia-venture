@@ -25,6 +25,7 @@ import { collection, getDocs, doc, updateDoc, getDoc, arrayUnion, setDoc } from 
 import { db } from "@/lib/firebase";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 /* ── Brand Colors ── */
 const PEACH = "#8d7a52";
@@ -58,8 +59,9 @@ export const AddTransactionModal = ({
 }: { 
     isOpen: boolean; 
     onClose: () => void;
-    selectedDate: string;
+    selectedDate: string; 
 }) => {
+    const { user } = useAuth();
     const [step, setStep] = useState<"type" | "form">("type");
     const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
     const [saving, setSaving] = useState(false);
@@ -233,7 +235,8 @@ export const AddTransactionModal = ({
                         hotelCode: hotelId,
                         startDate: form.checkIn,
                         endDate: form.checkOut,
-                        type: "availability"
+                        type: "availability",
+                        user: user?.email ? `${user.displayName || user.name || user.email.split("@")[0]} (${user.email})` : (user?.displayName || user?.name || "Operator")
                     })
                 }).catch(e => console.warn("[Channex Sync Trigger Warning]:", e));
             }

@@ -1243,7 +1243,8 @@ export function ChannelManagerSection() {
                 body: JSON.stringify({
                     hotelCode: activeHotelCode,
                     type: "full_sync",
-                    daysAhead: 500
+                    daysAhead: 500,
+                    user: user?.email ? `${user.displayName || user.name || user.email.split("@")[0]} (${user.email})` : (user?.displayName || user?.name || "Operator")
                 })
             });
 

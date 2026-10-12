@@ -1,8 +1,6 @@
-"use client";
-
-import React from "react";
+import React, { useMemo } from "react";
 import { Bed, RefreshCw, Check, Ban } from "lucide-react";
-import { RateInventoryTab, RoomTypeInventoryRow } from "../../RateInventoryTypes";
+import { RateInventoryTab, RoomTypeInventoryRow, GridFeatureId } from "../../RateInventoryTypes";
 import { GridRatePlanRow } from "./GridRatePlanRow";
 import styles from "./GridRoomTypeCard.module.css";
 import cellStyles from "./GridCellInput.module.css";
@@ -13,6 +11,7 @@ interface GridRoomTypeCardProps {
     dateList: string[];
     todayStr: string;
     activeTab: RateInventoryTab;
+    visibleFeatures?: Record<GridFeatureId, boolean>;
     channelFilter: string;
     channelConfigs?: Record<string, any>;
     isAllotmentSeparated: boolean;
@@ -31,6 +30,7 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
     dateList,
     todayStr,
     activeTab,
+    visibleFeatures,
     channelFilter,
     channelConfigs = {},
     isAllotmentSeparated,
@@ -45,51 +45,58 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
     const isChannelSpecific = channelFilter && channelFilter !== "all";
     const chConfig = isChannelSpecific && channelConfigs ? channelConfigs[channelFilter] : null;
 
-    const formatCurrency = (val: number) => {
-        return Number(val || 0).toLocaleString("id-ID", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        });
-    };
+    const safeVisibleFeatures: Record<GridFeatureId, boolean> = useMemo(() => {
+        if (visibleFeatures && typeof visibleFeatures === "object") {
+            return visibleFeatures;
+        }
+        return {
+            availability: activeTab === "inventory",
+            rate: activeTab === "rates" || activeTab === "custom",
+            minStayThrough: activeTab === "minstay" || activeTab === "minstay_through",
+            minStayArrival: activeTab === "minstay" || activeTab === "minstay_arrival",
+            maxStay: activeTab === "maxstay",
+            closedToArrival: activeTab === "cta",
+            closedToDeparture: activeTab === "ctd",
+            stopSell: activeTab === "stopsell"
+        };
+    }, [visibleFeatures, activeTab]);
+
+    const hasActiveRatePlanFeature = useMemo(() => {
+        return Boolean(
+            safeVisibleFeatures.rate ||
+            safeVisibleFeatures.minStayThrough ||
+            safeVisibleFeatures.minStayArrival ||
+            safeVisibleFeatures.maxStay ||
+            safeVisibleFeatures.closedToArrival ||
+            safeVisibleFeatures.closedToDeparture ||
+            safeVisibleFeatures.stopSell
+        );
+    }, [safeVisibleFeatures]);
+
+    const isPureInventory = safeVisibleFeatures.availability && !hasActiveRatePlanFeature;
+
 
     return (
         <React.Fragment>
-            {/* Visual spacer before card if not first */}
-            {index > 0 && (
-                <tr className={styles.cardSpacerRow}>
-                    <td colSpan={dateList.length + 2} className={styles.cardSpacerCell} />
-                </tr>
-            )}
-
             {/* 1. ROOM TYPE HEADER / INVENTORY ROW */}
-            <tr className={styles.roomTypeRow}>
-                <td className={styles.roomTypeTitleCell}>
+            <tr className={[
+                styles.roomTypeRow,
+                isPureInventory ? styles.roomTypeRowInventory : ""
+            ].filter(Boolean).join(" ")}>
+                <td className={[
+                    styles.roomTypeTitleCell,
+                    isPureInventory ? styles.roomTypeTitleCellInventory : ""
+                ].filter(Boolean).join(" ")}>
                     <div className={styles.roomTypeLeft}>
                         <div className={styles.roomIconBox}>
-                            <Bed size={18} />
+                            <Bed size={15} />
                         </div>
-                        <div className={styles.roomTypeInfoCol}>
-                            <div className={styles.roomTypeNameRow}>
-                                <span className={styles.roomTypeNameText} title={`Room Type: ${rt.roomTypeName} (ID: ${rt.roomTypeId})`}>
-                                    {rt.roomTypeName}
-                                </span>
-                                {rt.roomTypeCode && rt.roomTypeCode !== rt.roomTypeId && rt.roomTypeCode.length <= 8 && (
-                                    <span className={styles.roomTypeCodeBadge} title={`Code: ${rt.roomTypeCode}`}>
-                                        {rt.roomTypeCode}
-                                    </span>
-                                )}
-                            </div>
-                            <div className={styles.roomTypeMetaRow}>
-                                <span className={styles.roomCountPill}>
-                                    {rt.totalPhysicalRooms} Units
-                                </span>
-                                {rt.basePrice > 0 && (
-                                    <span className={styles.roomBasePricePill} title="Base Net Rate">
-                                        IDR {formatCurrency(rt.basePrice)}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+                        <span className={styles.roomTypeNameText} title={`Room Type: ${rt.roomTypeName} (ID: ${rt.roomTypeId})`}>
+                            {rt.roomTypeName}
+                        </span>
+                        <span className={styles.roomCountPill} title={`Total ${rt.totalPhysicalRooms} Physical Units`}>
+                            {rt.totalPhysicalRooms}
+                        </span>
                     </div>
 
                     {onSyncRoom && (
@@ -103,10 +110,9 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
                             title={`Sync ${rt.roomTypeName} inventory to connected OTAs`}
                         >
                             <RefreshCw
-                                size={12}
+                                size={13}
                                 className={syncingRoomTypeId === rt.roomTypeId ? styles.spinIcon : ""}
                             />
-                            <span>{syncingRoomTypeId === rt.roomTypeId ? "Sync..." : "Sync"}</span>
                         </button>
                     )}
                 </td>
@@ -129,8 +135,8 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
                         isToday ? cellStyles.cellToday : ""
                     ].filter(Boolean).join(" ");
 
-                    // INVENTORY TAB: Editable room allotment
-                    if (activeTab === "inventory") {
+                    // AVAILABILITY FEATURE: Editable room allotment input
+                    if (safeVisibleFeatures.availability) {
                         const canEditCellInv = canChangeInventory && (!isChannelSpecific || isAllotmentSeparated);
 
                         return (
@@ -166,8 +172,8 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
                         );
                     }
 
-                    // STOP SELL TAB: Category Master Toggle
-                    if (activeTab === "stopsell") {
+                    // STOP SELL TAB (When only Stop Sell is active): Master Category Toggle
+                    if (safeVisibleFeatures.stopSell && !safeVisibleFeatures.rate && !safeVisibleFeatures.minStayThrough && !safeVisibleFeatures.minStayArrival && !safeVisibleFeatures.maxStay && !safeVisibleFeatures.closedToArrival && !safeVisibleFeatures.closedToDeparture) {
                         const allStop = rt.ratePlans.length > 0 && rt.ratePlans.every(rp => !!rp.days[dateStr]?.stopSell);
                         return (
                             <td key={dateStr} className={cellClasses}>
@@ -198,8 +204,8 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
                         );
                     }
 
-                    // CTA TAB: Category Master Toggle
-                    if (activeTab === "cta") {
+                    // CTA TAB (When only CTA is active): Master Category Toggle
+                    if (safeVisibleFeatures.closedToArrival && !safeVisibleFeatures.rate && !safeVisibleFeatures.minStayThrough && !safeVisibleFeatures.minStayArrival && !safeVisibleFeatures.maxStay && !safeVisibleFeatures.stopSell && !safeVisibleFeatures.closedToDeparture) {
                         const allCta = rt.ratePlans.length > 0 && rt.ratePlans.every(rp => !!rp.days[dateStr]?.closedToArrival);
                         return (
                             <td key={dateStr} className={cellClasses}>
@@ -227,8 +233,8 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
                         );
                     }
 
-                    // CTD TAB: Category Master Toggle
-                    if (activeTab === "ctd") {
+                    // CTD TAB (When only CTD is active): Master Category Toggle
+                    if (safeVisibleFeatures.closedToDeparture && !safeVisibleFeatures.rate && !safeVisibleFeatures.minStayThrough && !safeVisibleFeatures.minStayArrival && !safeVisibleFeatures.maxStay && !safeVisibleFeatures.stopSell && !safeVisibleFeatures.closedToArrival) {
                         const allCtd = rt.ratePlans.length > 0 && rt.ratePlans.every(rp => !!rp.days[dateStr]?.closedToDeparture);
                         return (
                             <td key={dateStr} className={cellClasses}>
@@ -256,43 +262,48 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
                         );
                     }
 
-                    // RATES or MINSTAY TAB: Header shows category available count
+                    // Standard Category available count badge
                     return (
-                        <td key={dateStr} className={cellClasses}>
-                            <span style={{ fontSize: "11px", fontWeight: 800, color: isZero ? "#dc2626" : "#0f172a" }}>
-                                {avail} Ready
+                        <td key={dateStr} className={styles.categoryCell}>
+                            <span className={`${styles.categoryAvailText} ${isZero ? styles.categoryAvailZero : ""}`}>
+                                {avail}
                             </span>
                         </td>
                     );
                 })}
 
-                <td style={{ backgroundColor: "inherit" }} />
+                <td className={styles.spacerCell} />
             </tr>
 
-            {/* 2. CHILD RATE PLANS */}
-            {rt.ratePlans.length === 0 ? (
-                <tr>
-                    <td colSpan={dateList.length + 2} className={styles.noRatePlanCell}>
-                        No Rate Plans configured for this room category. Please configure Rate Plans in Channel Manager.
-                    </td>
-                </tr>
-            ) : (
-                rt.ratePlans.map(rp => (
-                    <GridRatePlanRow
-                        key={`${rt.roomTypeId}_${rp.ratePlanId}`}
-                        roomTypeId={rt.roomTypeId}
-                        ratePlan={rp}
-                        dateList={dateList}
-                        todayStr={todayStr}
-                        activeTab={activeTab}
-                        channelFilter={channelFilter}
-                        isRateSeparated={isRateSeparated}
-                        canStopSell={canStopSell}
-                        canChangeRate={canChangeRate}
-                        stageEdit={stageEdit}
-                    />
-                ))
+            {/* 2. CHILD RATE PLANS (Rendered only when at least one rate plan metric is visible) */}
+            {hasActiveRatePlanFeature && (
+                rt.ratePlans.length === 0 ? (
+                    <tr>
+                        <td colSpan={dateList.length + 2} className={styles.noRatePlanCell}>
+                            Belum ada Rate Plan untuk tipe kamar ini. Silakan buat Rate Plan di Channel Manager.
+                        </td>
+                    </tr>
+                ) : (
+                    rt.ratePlans.map(rp => (
+                        <GridRatePlanRow
+                            key={`${rt.roomTypeId}_${rp.ratePlanId}`}
+                            roomTypeId={rt.roomTypeId}
+                            ratePlan={rp}
+                            dateList={dateList}
+                            todayStr={todayStr}
+                            activeTab={activeTab}
+                            visibleFeatures={safeVisibleFeatures}
+                            channelFilter={channelFilter}
+                            isRateSeparated={isRateSeparated}
+                            canStopSell={canStopSell}
+                            canChangeRate={canChangeRate}
+                            stageEdit={stageEdit}
+                        />
+                    ))
+                )
             )}
+
         </React.Fragment>
     );
 });
+

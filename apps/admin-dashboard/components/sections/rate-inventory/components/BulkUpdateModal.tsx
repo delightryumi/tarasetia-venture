@@ -8,7 +8,9 @@ import {
     Check,
     Bed,
     DollarSign,
-    Ban
+    Ban,
+    Clock,
+    Lock
 } from "lucide-react";
 import { BulkUpdateParams } from "../RateInventoryTypes";
 import { RoomTypeInfo, MyTaraRatePlan } from "@/lib/channex/types";
@@ -48,27 +50,46 @@ export function BulkUpdateModal({
         return d.toISOString().split("T")[0];
     })();
 
-    // Date range
+    // 1. Date Range
     const [dateFrom, setDateFrom] = useState<string>(todayStr);
     const [dateTo, setDateTo] = useState<string>(defaultEndStr);
 
-    // Days of week (0=Sun, 1=Mon, ..., 6=Sat)
+    // Days of Week (0=Sun, 1=Mon, ..., 6=Sat)
     const [daysOfWeek, setDaysOfWeek] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
 
-    // Target Room Types & Rate Plans & Channel
+    // Target Scope
     const [selectedRoomTypes, setSelectedRoomTypes] = useState<string[]>(["all"]);
     const [selectedRatePlans, setSelectedRatePlans] = useState<string[]>(["all"]);
     const [selectedChannel, setSelectedChannel] = useState<string>("all");
 
-    // Actions
+    // All 8 Restrictions:
+    // 1. Rate Action
     const [rateAction, setRateAction] = useState<BulkUpdateParams["rateAction"]>("none");
     const [rateValue, setRateValue] = useState<number>(0);
-    const [stopSellAction, setStopSellAction] = useState<BulkUpdateParams["stopSellAction"]>("none");
+
+    // 2. Inventory (Availability) Action
     const [inventoryAction, setInventoryAction] = useState<BulkUpdateParams["inventoryAction"]>("none");
     const [inventoryValue, setInventoryValue] = useState<number>(0);
-    const [minStayAction, setMinStayAction] = useState<BulkUpdateParams["minStayAction"]>("none");
-    const [minStayValue, setMinStayValue] = useState<number>(1);
+
+    // 3. Stop Sell Action
+    const [stopSellAction, setStopSellAction] = useState<BulkUpdateParams["stopSellAction"]>("none");
+
+    // 4. Min Stay Arrival Action
+    const [minStayArrAction, setMinStayArrAction] = useState<"none" | "set" | "remove">("none");
+    const [minStayArrValue, setMinStayArrValue] = useState<number>(1);
+
+    // 5. Min Stay Through Action
+    const [minStayThruAction, setMinStayThruAction] = useState<"none" | "set" | "remove">("none");
+    const [minStayThruValue, setMinStayThruValue] = useState<number>(1);
+
+    // 6. Max Stay Action
+    const [maxStayAction, setMaxStayAction] = useState<"none" | "set" | "remove">("none");
+    const [maxStayValue, setMaxStayValue] = useState<number>(14);
+
+    // 7. Closed To Arrival (CTA) Action
     const [ctaAction, setCtaAction] = useState<BulkUpdateParams["ctaAction"]>("none");
+
+    // 8. Closed To Departure (CTD) Action
     const [ctdAction, setCtdAction] = useState<BulkUpdateParams["ctdAction"]>("none");
 
     // Close on Escape key press (WCAG AA Accessibility)
@@ -111,8 +132,12 @@ export function BulkUpdateModal({
             stopSellAction,
             inventoryAction,
             inventoryValue: inventoryAction === "set" ? inventoryValue : undefined,
-            minStayAction,
-            minStayValue: minStayAction === "set" ? minStayValue : undefined,
+            minStayArrivalAction: minStayArrAction,
+            minStayArrivalValue: minStayArrAction === "set" ? minStayArrValue : undefined,
+            minStayThroughAction: minStayThruAction,
+            minStayThroughValue: minStayThruAction === "set" ? minStayThruValue : undefined,
+            maxStayAction,
+            maxStayValue: maxStayAction === "set" ? maxStayValue : undefined,
             ctaAction,
             ctdAction
         });
@@ -128,13 +153,20 @@ export function BulkUpdateModal({
         { idx: 0, label: "Sun" }
     ];
 
+    const hasAnyRestrictionChange = 
+        minStayArrAction !== "none" ||
+        minStayThruAction !== "none" ||
+        maxStayAction !== "none" ||
+        ctaAction !== "none" ||
+        ctdAction !== "none";
+
     return (
         <div className={styles.modalBackdrop}>
             <div className={styles.modalContent}>
                 <div className={styles.modalHeader}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <SlidersHorizontal size={18} style={{ color: "#2563eb" }} />
-                        <h3 className={styles.modalTitle}>Bulk Update: Rates, Inventory &amp; Restrictions</h3>
+                    <div className={styles.modalHeaderLeft}>
+                        <SlidersHorizontal size={20} className={styles.headerIcon} />
+                        <h3 className={styles.modalTitle}>Bulk Update: Rates, Inventory &amp; 8 Restrictions</h3>
                     </div>
                     <button
                         type="button"
@@ -151,130 +183,92 @@ export function BulkUpdateModal({
                     <div className={styles.sectionBox}>
                         <div className={styles.sectionTitle}>
                             <Calendar size={14} />
-                            <span>1. Date Range &amp; Days of Week</span>
+                            <span>1. Date Range and Days of Week</span>
                         </div>
 
                         <div className={styles.grid2Col}>
                             <div>
-                                <label className={styles.inputLabel}>
-                                    From Date
-                                </label>
+                                <label className={styles.inputLabel}>From Date</label>
                                 <input
                                     type="date"
                                     value={dateFrom}
                                     onChange={e => setDateFrom(e.target.value)}
-                                    required
                                     className={styles.inputField}
+                                    required
                                 />
                             </div>
                             <div>
-                                <label className={styles.inputLabel}>
-                                    To Date
-                                </label>
+                                <label className={styles.inputLabel}>To Date</label>
                                 <input
                                     type="date"
                                     value={dateTo}
                                     onChange={e => setDateTo(e.target.value)}
-                                    required
                                     className={styles.inputField}
+                                    required
                                 />
                             </div>
                         </div>
 
-                        <div style={{ marginTop: "12px" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-                                <label className={styles.inputLabel} style={{ margin: 0 }}>
-                                    Active Days of Week
-                                </label>
-                                <div style={{ display: "flex", gap: "6px" }}>
-                                    <button
-                                        type="button"
-                                        onClick={() => setDayPreset("all")}
-                                        className={styles.btnDayPreset}
-                                    >
-                                        All
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setDayPreset("weekdays")}
-                                        className={styles.btnDayPreset}
-                                    >
-                                        Weekdays
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setDayPreset("weekends")}
-                                        className={styles.btnDayPreset}
-                                    >
-                                        Weekends
-                                    </button>
-                                </div>
+                        <div className={styles.daysControlHeader}>
+                            <span className={styles.inputLabel}>Apply to Days of Week:</span>
+                            <div className={styles.presetsGroup}>
+                                <button
+                                    type="button"
+                                    onClick={() => setDayPreset("all")}
+                                    className={styles.btnDayPreset}
+                                >
+                                    All Days
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setDayPreset("weekdays")}
+                                    className={styles.btnDayPreset}
+                                >
+                                    Weekdays Only
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setDayPreset("weekends")}
+                                    className={styles.btnDayPreset}
+                                >
+                                    Weekends Only
+                                </button>
                             </div>
+                        </div>
 
-                            <div className={styles.daysBtnGroup}>
-                                {DAYS_CONFIG.map(d => {
-                                    const active = daysOfWeek.includes(d.idx);
-                                    return (
-                                        <button
-                                            key={d.idx}
-                                            type="button"
-                                            onClick={() => toggleDay(d.idx)}
-                                            className={`${styles.dayPillBtn} ${active ? styles.dayPillBtnActive : ""}`}
-                                        >
-                                            {d.label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                        <div className={styles.daysBtnGroup}>
+                            {DAYS_CONFIG.map(d => {
+                                const active = daysOfWeek.includes(d.idx);
+                                return (
+                                    <button
+                                        key={d.idx}
+                                        type="button"
+                                        onClick={() => toggleDay(d.idx)}
+                                        className={`${styles.dayPillBtn} ${active ? styles.dayPillBtnActive : ""}`}
+                                    >
+                                        {d.label}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    {/* 2. Target Channel, Room Types & Rate Plans */}
+                    {/* 2. Target Scope */}
                     <div className={styles.sectionBox}>
                         <div className={styles.sectionTitle}>
-                            <SlidersHorizontal size={14} />
-                            <span>2. Target Channel, Room Types &amp; Rate Plans</span>
+                            <Bed size={14} />
+                            <span>2. Target Categories, Rate Plans &amp; Channels</span>
                         </div>
 
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                        <div className={styles.grid2Col}>
                             <div>
-                                <label className={styles.inputLabel}>
-                                    Target Distribution Channel
-                                </label>
-                                <select
-                                    value={selectedChannel}
-                                    onChange={e => setSelectedChannel(e.target.value)}
-                                    className={styles.selectField}
-                                    style={{ fontWeight: 600 }}
-                                >
-                                    <option value="all">🌐 All Channels (Common Pool)</option>
-                                    {channelConfigs && Object.keys(channelConfigs).length > 0 ? (
-                                        Object.entries(channelConfigs).map(([code, cfg]: [string, any]) => (
-                                            <option key={code} value={code}>
-                                                {cfg.icon || "🏨"} {cfg.channelName || code}
-                                            </option>
-                                        ))
-                                    ) : (
-                                        <>
-                                            <option value="traveloka">🕊️ Traveloka</option>
-                                            <option value="booking_com">🅱️ Booking.com</option>
-                                            <option value="agoda">🅰️ Agoda</option>
-                                            <option value="tiket">🎫 Tiket.com</option>
-                                        </>
-                                    )}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className={styles.inputLabel}>
-                                    Room Types
-                                </label>
+                                <label className={styles.inputLabel}>Room Category Scope</label>
                                 <select
                                     value={selectedRoomTypes[0] || "all"}
                                     onChange={e => setSelectedRoomTypes([e.target.value])}
                                     className={styles.selectField}
                                 >
-                                    <option value="all">All Room Types</option>
+                                    <option value="all">All Room Categories</option>
                                     {roomTypes.map(rt => (
                                         <option key={rt.id} value={rt.id}>{rt.name}</option>
                                     ))}
@@ -282,9 +276,7 @@ export function BulkUpdateModal({
                             </div>
 
                             <div>
-                                <label className={styles.inputLabel}>
-                                    Rate Plans
-                                </label>
+                                <label className={styles.inputLabel}>Rate Plan Scope</label>
                                 <select
                                     value={selectedRatePlans[0] || "all"}
                                     onChange={e => setSelectedRatePlans([e.target.value])}
@@ -292,200 +284,249 @@ export function BulkUpdateModal({
                                 >
                                     <option value="all">All Rate Plans</option>
                                     {ratePlans.map(rp => (
-                                        <option key={rp.id} value={rp.id}>{rp.name} ({rp.code})</option>
+                                        <option key={rp.id} value={rp.id}>{rp.name}</option>
                                     ))}
                                 </select>
                             </div>
                         </div>
+
+                        <div className={styles.fieldGroupSpaced}>
+                            <label className={styles.inputLabel}>Channel Pool Scope</label>
+                            <select
+                                value={selectedChannel}
+                                onChange={e => setSelectedChannel(e.target.value)}
+                                className={styles.selectField}
+                            >
+                                <option value="all">Common Pool (Applies to Master and Connected Channels)</option>
+                                {Object.entries(channelConfigs).map(([code, cfg]: [string, any]) => (
+                                    <option key={code} value={code}>
+                                        {cfg.channelName || code}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
-                    {/* 3. Action Updates (Rates, StopSell, Inventory, Restrictions) */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                        {/* A. Rate Adjustment */}
-                        <div className={`${styles.actionCard} ${rateAction !== "none" ? styles.actionCardActive : ""}`}>
-                            <div className={styles.actionCardHeader}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                    <DollarSign size={15} style={{ color: "#16a34a" }} />
-                                    <span className={styles.actionCardTitle}>
-                                        Rate Adjustment (Pricing)
-                                    </span>
-                                </div>
-                                <select
-                                    value={rateAction}
-                                    disabled={!canChangeRate}
-                                    onChange={e => {
-                                        if (!canChangeRate) return;
-                                        setRateAction(e.target.value as any);
-                                    }}
-                                    className={styles.selectField}
-                                    style={{ width: "auto", height: "30px", opacity: !canChangeRate ? 0.6 : 1, cursor: !canChangeRate ? "not-allowed" : undefined }}
-                                >
-                                    <option value="none">{!canChangeRate ? "No Permission" : "No Change"}</option>
-                                    <option value="set">Set Fixed Rate (Exact Amount)</option>
-                                    <option value="inc_amount">Increase by Amount (+)</option>
-                                    <option value="dec_amount">Decrease by Amount (-)</option>
-                                    <option value="inc_percent">Increase by Percent (+%)</option>
-                                    <option value="dec_percent">Decrease by Percent (-%)</option>
-                                </select>
-                            </div>
-                            {rateAction !== "none" && canChangeRate && (
-                                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "10px" }}>
-                                    <label style={{ fontSize: "11px", color: "#64748b" }}>
-                                        Adjustment Value:
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={rateValue}
-                                        onChange={e => setRateValue(Number(e.target.value) || 0)}
-                                        onWheel={e => e.currentTarget.blur()}
-                                        className={styles.inputField}
-                                        style={{ width: "160px", height: "32px", fontWeight: 700 }}
-                                        placeholder="0"
-                                    />
-                                    <span style={{ fontSize: "11px", color: "#64748b" }}>
-                                        {rateAction.includes("percent") ? "%" : "IDR"}
-                                    </span>
-                                </div>
-                            )}
+                    {/* 3. Actions: Rates, Availability & All 8 Restrictions */}
+                    <div className={styles.sectionBox}>
+                        <div className={styles.sectionTitle}>
+                            <SlidersHorizontal size={14} />
+                            <span>3. Restriction Modifiers</span>
                         </div>
 
-                        {/* B. Stop Sell */}
-                        <div className={`${styles.actionCard} ${stopSellAction !== "none" ? styles.actionCardDanger : ""}`}>
+                        {/* Rate Modifier */}
+                        <div className={`${styles.actionCard} ${rateAction !== "none" ? styles.actionCardActive : ""}`}>
                             <div className={styles.actionCardHeader}>
                                 <div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <Ban size={15} style={{ color: "#dc2626" }} />
-                                        <span className={styles.actionCardTitle}>
-                                            Stop Sell (Open / Close Sales)
-                                        </span>
+                                    <div className={styles.actionCardTitleRow}>
+                                        <DollarSign size={15} className={styles.iconGreen} />
+                                        <span className={styles.actionCardTitle}>Rate Adjustment (Room Price)</span>
                                     </div>
-                                    <p className={styles.actionCardSubtitle} style={{ marginTop: "2px" }}>
-                                        Open or close sales availability for the selected dates
+                                    <p className={styles.actionCardSubtitle}>
+                                        Set exact rate or apply percentage / flat amount increments
                                     </p>
                                 </div>
+                            </div>
+
+                            <div className={styles.inlineInputGroup}>
+                                <select
+                                    value={rateAction}
+                                    onChange={e => setRateAction(e.target.value as any)}
+                                    disabled={!canChangeRate}
+                                    className={styles.selectField}
+                                >
+                                    <option value="none">No Change</option>
+                                    <option value="set">Set Exact Rate (IDR)</option>
+                                    <option value="inc_amount">Increase by Amount (+IDR)</option>
+                                    <option value="dec_amount">Decrease by Amount (-IDR)</option>
+                                    <option value="inc_percent">Increase by Percentage (+%)</option>
+                                    <option value="dec_percent">Decrease by Percentage (-%)</option>
+                                </select>
+
+                                {rateAction !== "none" && (
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        value={rateValue}
+                                        onChange={e => setRateValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                                        onWheel={e => e.currentTarget.blur()}
+                                        className={`${styles.inputField} ${styles.rateValueInput}`}
+                                        placeholder="0"
+                                    />
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Inventory Allotment */}
+                        <div className={`${styles.actionCard} ${styles.actionCardSpaced} ${inventoryAction !== "none" ? styles.actionCardActive : ""}`}>
+                            <div className={styles.actionCardHeader}>
+                                <div>
+                                    <div className={styles.actionCardTitleRow}>
+                                        <Bed size={15} className={styles.iconBlue} />
+                                        <span className={styles.actionCardTitle}>Availability Allotment</span>
+                                    </div>
+                                    <p className={styles.actionCardSubtitle}>
+                                        Set total physical units available to sell across OTAs
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className={styles.inlineInputGroup}>
+                                <select
+                                    value={inventoryAction}
+                                    onChange={e => setInventoryAction(e.target.value as any)}
+                                    disabled={!canChangeInventory}
+                                    className={styles.selectField}
+                                >
+                                    <option value="none">No Change</option>
+                                    <option value="set">Set Fixed Allotment</option>
+                                </select>
+
+                                {inventoryAction === "set" && (
+                                    <>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            value={inventoryValue}
+                                            onChange={e => setInventoryValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                                            onWheel={e => e.currentTarget.blur()}
+                                            className={`${styles.inputField} ${styles.inventoryValueInput}`}
+                                            placeholder="0"
+                                        />
+                                        <span className={styles.unitLabel}>Units</span>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Stop Sell */}
+                        <div className={`${styles.actionCard} ${styles.actionCardSpaced} ${stopSellAction !== "none" ? (stopSellAction === "close" ? styles.actionCardDanger : styles.actionCardActive) : ""}`}>
+                            <div className={styles.actionCardHeader}>
+                                <div>
+                                    <div className={styles.actionCardTitleRow}>
+                                        <Ban size={15} className={styles.iconRed} />
+                                        <span className={styles.actionCardTitle}>Stop Sell (Sales Blackout)</span>
+                                    </div>
+                                    <p className={styles.actionCardSubtitle}>
+                                        Block sales immediately without changing allotment count
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className={styles.inlineInputGroup}>
                                 <select
                                     value={stopSellAction}
+                                    onChange={e => setStopSellAction(e.target.value as any)}
                                     disabled={!canStopSell}
-                                    onChange={e => {
-                                        if (!canStopSell) return;
-                                        setStopSellAction(e.target.value as any);
-                                    }}
                                     className={styles.selectField}
-                                    style={{ width: "auto", height: "30px", opacity: !canStopSell ? 0.6 : 1, cursor: !canStopSell ? "not-allowed" : undefined }}
                                 >
-                                    <option value="none">{!canStopSell ? "No Permission" : "No Change"}</option>
+                                    <option value="none">No Change</option>
                                     <option value="close">🚫 Close Sales (Stop Sell ON)</option>
                                     <option value="open">✓ Open Sales (Stop Sell OFF)</option>
                                 </select>
                             </div>
                         </div>
 
-                        {/* C. Inventory Adjustment */}
-                        <div className={`${styles.actionCard} ${inventoryAction !== "none" ? styles.actionCardActive : ""}`}>
+                        {/* Advanced Stay & Arrival Restrictions: Min Stay Arr, Min Stay Thru, Max Stay, CTA, CTD */}
+                        <div className={`${styles.actionCard} ${styles.actionCardSpaced} ${hasAnyRestrictionChange ? styles.actionCardActive : ""}`}>
                             <div className={styles.actionCardHeader}>
                                 <div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <Bed size={15} style={{ color: "#2563eb" }} />
-                                        <span className={styles.actionCardTitle}>
-                                            Room Inventory (Availability Allotment)
-                                        </span>
+                                    <div className={styles.actionCardTitleRow}>
+                                        <Clock size={15} className={styles.iconAmber} />
+                                        <span className={styles.actionCardTitle}>Stay &amp; Check-in Restrictions</span>
                                     </div>
-                                    <p className={styles.actionCardSubtitle} style={{ marginTop: "2px" }}>
-                                        Set physical room inventory quota for the selected dates
+                                    <p className={styles.actionCardSubtitle}>
+                                        Control Min Stay Arrival, Min Stay Through, Max Stay, CTA, and CTD locks
                                     </p>
                                 </div>
-                                <select
-                                    value={inventoryAction}
-                                    disabled={!canChangeInventory}
-                                    onChange={e => {
-                                        if (!canChangeInventory) return;
-                                        setInventoryAction(e.target.value as any);
-                                    }}
-                                    className={styles.selectField}
-                                    style={{ width: "auto", height: "30px", opacity: !canChangeInventory ? 0.6 : 1, cursor: !canChangeInventory ? "not-allowed" : undefined }}
-                                >
-                                    <option value="none">{!canChangeInventory ? "No Permission" : "No Change"}</option>
-                                    <option value="set">Set Available Units</option>
-                                </select>
                             </div>
-                            {inventoryAction === "set" && (
-                                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "10px" }}>
-                                    <label style={{ fontSize: "11px", color: "#64748b" }}>
-                                        Available Units:
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        value={inventoryValue}
-                                        onChange={e => setInventoryValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                                        onWheel={e => e.currentTarget.blur()}
-                                        className={styles.inputField}
-                                        style={{ width: "120px", height: "32px", fontWeight: 700 }}
-                                        placeholder="0"
-                                    />
-                                    <span style={{ fontSize: "11px", color: "#64748b" }}>
-                                        Units
-                                    </span>
-                                </div>
-                            )}
-                        </div>
 
-                        {/* D. Restrictions Adjustment (Min Stay, CTA, CTD) */}
-                        <div className={`${styles.actionCard} ${(minStayAction !== "none" || ctaAction !== "none" || ctdAction !== "none") ? styles.actionCardActive : ""}`}>
-                            <div className={styles.actionCardHeader}>
-                                <div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <SlidersHorizontal size={15} style={{ color: "#d97706" }} />
-                                        <span className={styles.actionCardTitle}>
-                                            Booking Restrictions (Min Stay, CTA, CTD)
-                                        </span>
-                                    </div>
-                                    <p className={styles.actionCardSubtitle} style={{ marginTop: "2px" }}>
-                                        Set minimum stay nights and control arrival (CTA) / departure (CTD) locks
-                                    </p>
-                                </div>
-                            </div>
-                            
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginTop: "12px" }}>
-                                {/* Min Stay */}
-                                <div>
-                                    <label style={{ fontSize: "11px", fontWeight: 600, color: "#475569", display: "block", marginBottom: "4px" }}>
-                                        Minimum Length of Stay (Nights):
-                                    </label>
-                                    <div style={{ display: "flex", gap: "6px" }}>
+                            <div className={styles.restrictionsGrid}>
+                                {/* 4. Min Stay Arrival */}
+                                <div className={styles.restrictionFieldBlock}>
+                                    <label className={styles.inputLabel}>Min Stay Arrival (Nights):</label>
+                                    <div className={styles.restrictionInputRow}>
                                         <select
-                                            value={minStayAction}
-                                            onChange={e => setMinStayAction(e.target.value as any)}
-                                            className={styles.selectField}
-                                            style={{ height: "30px", fontSize: "11px" }}
+                                            value={minStayArrAction}
+                                            onChange={e => setMinStayArrAction(e.target.value as any)}
+                                            className={`${styles.selectField} ${styles.compactSelect}`}
                                         >
                                             <option value="none">No Change</option>
-                                            <option value="set">Set Min Stay</option>
+                                            <option value="set">Set Min</option>
+                                            <option value="remove">Remove (1)</option>
                                         </select>
-                                        {minStayAction === "set" && (
+                                        {minStayArrAction === "set" && (
                                             <input
                                                 type="number"
                                                 min={1}
                                                 max={30}
-                                                value={minStayValue}
-                                                onChange={e => setMinStayValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                                                className={styles.inputField}
-                                                style={{ width: "60px", height: "30px", fontSize: "11px", fontWeight: 700 }}
+                                                value={minStayArrValue}
+                                                onChange={e => setMinStayArrValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                                                className={`${styles.inputField} ${styles.compactNumberInput}`}
                                             />
                                         )}
                                     </div>
                                 </div>
 
-                                {/* CTA */}
-                                <div>
-                                    <label style={{ fontSize: "11px", fontWeight: 600, color: "#475569", display: "block", marginBottom: "4px" }}>
-                                        Closed to Arrival (CTA):
-                                    </label>
+                                {/* 5. Min Stay Through */}
+                                <div className={styles.restrictionFieldBlock}>
+                                    <label className={styles.inputLabel}>Min Stay Through (Nights):</label>
+                                    <div className={styles.restrictionInputRow}>
+                                        <select
+                                            value={minStayThruAction}
+                                            onChange={e => setMinStayThruAction(e.target.value as any)}
+                                            className={`${styles.selectField} ${styles.compactSelect}`}
+                                        >
+                                            <option value="none">No Change</option>
+                                            <option value="set">Set Min</option>
+                                            <option value="remove">Remove (1)</option>
+                                        </select>
+                                        {minStayThruAction === "set" && (
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                max={30}
+                                                value={minStayThruValue}
+                                                onChange={e => setMinStayThruValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                                                className={`${styles.inputField} ${styles.compactNumberInput}`}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 6. Max Stay */}
+                                <div className={styles.restrictionFieldBlock}>
+                                    <label className={styles.inputLabel}>Max Stay (Nights):</label>
+                                    <div className={styles.restrictionInputRow}>
+                                        <select
+                                            value={maxStayAction}
+                                            onChange={e => setMaxStayAction(e.target.value as any)}
+                                            className={`${styles.selectField} ${styles.compactSelect}`}
+                                        >
+                                            <option value="none">No Change</option>
+                                            <option value="set">Set Max</option>
+                                            <option value="remove">Remove (None)</option>
+                                        </select>
+                                        {maxStayAction === "set" && (
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                max={365}
+                                                value={maxStayValue}
+                                                onChange={e => setMaxStayValue(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                                                className={`${styles.inputField} ${styles.compactNumberInput}`}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 7. Closed to Arrival (CTA) */}
+                                <div className={styles.restrictionFieldBlock}>
+                                    <label className={styles.inputLabel}>Closed to Arrival (CTA):</label>
                                     <select
                                         value={ctaAction}
                                         onChange={e => setCtaAction(e.target.value as any)}
-                                        className={styles.selectField}
-                                        style={{ height: "30px", fontSize: "11px" }}
+                                        className={`${styles.selectField} ${styles.compactSelect}`}
                                     >
                                         <option value="none">No Change</option>
                                         <option value="close">🚫 Closed to Arrival (CTA ON)</option>
@@ -493,16 +534,13 @@ export function BulkUpdateModal({
                                     </select>
                                 </div>
 
-                                {/* CTD */}
-                                <div>
-                                    <label style={{ fontSize: "11px", fontWeight: 600, color: "#475569", display: "block", marginBottom: "4px" }}>
-                                        Closed to Departure (CTD):
-                                    </label>
+                                {/* 8. Closed to Departure (CTD) */}
+                                <div className={styles.restrictionFieldBlock}>
+                                    <label className={styles.inputLabel}>Closed to Departure (CTD):</label>
                                     <select
                                         value={ctdAction}
                                         onChange={e => setCtdAction(e.target.value as any)}
-                                        className={styles.selectField}
-                                        style={{ height: "30px", fontSize: "11px" }}
+                                        className={`${styles.selectField} ${styles.compactSelect}`}
                                     >
                                         <option value="none">No Change</option>
                                         <option value="close">🚫 Closed to Departure (CTD ON)</option>
@@ -513,12 +551,11 @@ export function BulkUpdateModal({
                         </div>
                     </div>
 
-                    {/* Footer Actions */}
+                    {/* Footer */}
                     <div className={styles.footer}>
                         <button
                             type="button"
                             onClick={onClose}
-                            disabled={saving}
                             className={styles.btnCancel}
                         >
                             Cancel
@@ -528,7 +565,7 @@ export function BulkUpdateModal({
                             disabled={saving}
                             className={styles.btnSubmit}
                         >
-                            <Check size={14} />
+                            <Check size={16} />
                             <span>{saving ? "Applying Updates..." : "Apply Bulk Update"}</span>
                         </button>
                     </div>

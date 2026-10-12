@@ -1,100 +1,104 @@
-/* RateInventoryFilterBar.module.css — Professional Hospitality Theme */
+/* RateInventoryFilterBar.module.css — Ultra Compact Single-Line Strip */
 
 .filterBar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 18px;
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    flex-wrap: wrap;
+    padding: 6px 12px;
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    border-radius: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
     gap: 12px;
     width: 100%;
     box-sizing: border-box;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    margin-bottom: 8px;
+    box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.04),
+                inset 0 1px 2px rgba(255, 255, 255, 0.95);
+    transition: all 0.2s ease;
 }
 
 :global(.dark) .filterBar {
-    background-color: #111827;
-    border-color: #374151;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    background: #1e293b;
+    border-color: rgba(51, 65, 85, 0.8);
+    box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.3),
+                inset 0 1px 2px rgba(255, 255, 255, 0.08);
 }
 
 .filterLeftGroup {
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
+/* Clay Select Dropdowns */
 .selectDropdown {
-    height: 38px;
-    padding: 0 12px;
-    font-size: 12px;
-    font-weight: 700;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 11.5px;
+    font-weight: 500;
     color: #0f172a;
-    background-color: #f8fafc;
+    background: #f8fafc;
     border: 1px solid #cbd5e1;
-    border-radius: 8px;
+    border-radius: 4px;
     outline: none;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
     font-family: inherit;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.03),
+                inset 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.channelSelectDropdown {
+    min-width: 160px;
+}
+
+.roomTypeSelectDropdown {
+    min-width: 130px;
 }
 
 :global(.dark) .selectDropdown {
-    background-color: #1f2937;
-    border-color: #4b5563;
+    background: #0f172a;
+    border-color: #334155;
     color: #f8fafc;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .selectDropdown:hover {
-    background-color: #f1f5f9;
+    background: #f1f5f9;
     border-color: #94a3b8;
 }
 
 :global(.dark) .selectDropdown:hover {
-    background-color: #374151;
+    background: #1e293b;
+    border-color: #475569;
 }
 
 .selectDropdown:focus {
     border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-    background-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 
-:global(.dark) .selectDropdown:focus {
-    background-color: #111827;
-    border-color: #60a5fa;
-}
-
+/* Inline Radio Buttons */
 .radioGroup {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 4px 10px;
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-}
-
-:global(.dark) .radioGroup {
-    background-color: #1f2937;
-    border-color: #374151;
+    gap: 10px;
+    margin: 0 2px;
 }
 
 .radioLabel {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     font-size: 11.5px;
-    font-weight: 700;
-    color: #475569;
+    font-weight: 600;
+    color: #334155;
     cursor: pointer;
     user-select: none;
+    white-space: nowrap;
 }
 
 :global(.dark) .radioLabel {
@@ -103,24 +107,30 @@
 
 .radioInput {
     accent-color: #2563eb;
+    width: 14px;
+    height: 14px;
     cursor: pointer;
+    margin: 0;
 }
 
+/* Inline Checkboxes */
 .checkboxGroup {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+    margin-left: 2px;
 }
 
 .checkboxLabel {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     font-size: 11.5px;
-    font-weight: 700;
-    color: #475569;
+    font-weight: 600;
+    color: #334155;
     cursor: pointer;
     user-select: none;
+    white-space: nowrap;
 }
 
 :global(.dark) .checkboxLabel {
@@ -129,97 +139,112 @@
 
 .checkboxInput {
     accent-color: #2563eb;
+    width: 14px;
+    height: 14px;
     cursor: pointer;
+    margin: 0;
 }
 
+/* Right Controls */
 .filterRightGroup {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .btnReset {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 38px;
-    padding: 0 12px;
-    font-size: 12px;
-    font-weight: 700;
+    gap: 4px;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 11.5px;
+    font-weight: 500;
     color: #b91c1c;
-    background-color: #fef2f2;
+    background: #fef2f2;
     border: 1px solid #fecaca;
-    border-radius: 8px;
+    border-radius: 4px;
     cursor: pointer;
-    transition: all 0.15s ease;
-    font-family: inherit;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.08);
 }
 
-:global(.dark) .btnReset {
-    background-color: #450a0a;
-    border-color: #7f1d1d;
-    color: #fca5a5;
+.btnReset:hover:not(:disabled) {
+    background: #fee2e2;
+    transform: translateY(-1px);
 }
 
-.btnReset:hover {
-    background-color: #fee2e2;
-    border-color: #fca5a5;
-}
-
-:global(.dark) .btnReset:hover {
-    background-color: #7f1d1d;
-}
-
+/* Clay Save Button */
 .btnSave {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 38px;
-    padding: 0 18px;
-    font-size: 12.5px;
-    font-weight: 800;
-    color: #ffffff;
-    background-color: #0f172a;
-    border: 1px solid #0f172a;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s ease;
+    gap: 5px;
+    height: 32px;
+    padding: 0 14px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    cursor: not-allowed;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
     font-family: inherit;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.03),
+                inset 0 1px 2px rgba(255, 255, 255, 0.9);
 }
 
 :global(.dark) .btnSave {
-    background-color: #f8fafc;
-    color: #0f172a;
-    border-color: #f8fafc;
-}
-
-.btnSave:hover:not(:disabled) {
-    background-color: #1e293b;
-    border-color: #1e293b;
-}
-
-:global(.dark) .btnSave:hover:not(:disabled) {
-    background-color: #e2e8f0;
-}
-
-.btnSave:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    background-color: #64748b;
-    border-color: #64748b;
+    background: #1e293b;
+    border-color: #334155;
+    color: #64748b;
 }
 
 .btnSaveDirty {
-    background-color: #059669 !important;
-    border-color: #047857 !important;
     color: #ffffff !important;
-    box-shadow: 0 2px 10px rgba(5, 150, 105, 0.4) !important;
-    animation: pulseSave 2s infinite;
+    background: #16a34a !important;
+    border-color: #15803d !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 8px -1px rgba(22, 163, 74, 0.35),
+                inset 0 1px 2px rgba(255, 255, 255, 0.45) !important;
 }
 
-@keyframes pulseSave {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
+.btnSaveDirty:hover {
+    background: #15803d !important;
+    transform: translateY(-1px);
+}
+
+.infoIconBtn {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+:global(.dark) .infoIconBtn {
+    background: #1e293b;
+    border-color: #475569;
+    color: #94a3af;
+}
+
+.infoIconBtn:hover {
+    color: #0f172a;
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+
+:global(.dark) .infoIconBtn:hover {
+    color: #ffffff;
+    background: #334155;
 }
