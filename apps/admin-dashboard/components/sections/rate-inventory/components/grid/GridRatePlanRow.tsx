@@ -3,6 +3,8 @@ import { Check, Ban, Utensils, Bed } from "lucide-react";
 import { RateInventoryTab, RatePlanGridRow, GridFeatureId, GRID_FEATURES } from "../../RateInventoryTypes";
 import styles from "./GridRatePlanRow.module.css";
 import cellStyles from "./GridCellInput.module.css";
+import { getCurrencyConfig } from "@/lib/currency-utils";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface GridRatePlanRowProps {
     roomTypeId: string;
@@ -20,7 +22,7 @@ interface GridRatePlanRowProps {
 
 const METRIC_LABELS: Record<GridFeatureId, string> = {
     availability: "Availability",
-    rate: "Rate (IDR)",
+    rate: "Rate",
     minStayThrough: "Min Stay Through",
     minStayArrival: "Min Stay Arrival",
     maxStay: "Max Stay",
@@ -45,10 +47,12 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
     const isChannelSpecific = channelFilter && channelFilter !== "all";
     const isBreakfast = rp.mealsIncluded || rp.ratePlanName.toLowerCase().includes("breakfast") || rp.ratePlanName.toLowerCase().includes("sarapan");
 
+    const { currencyCode } = useCurrency();
+    const currConfig = getCurrencyConfig(rp.currency || currencyCode || "IDR");
     const formatCurrency = (val: number) => {
         return Number(val || 0).toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+            minimumFractionDigits: currConfig.decimals,
+            maximumFractionDigits: currConfig.decimals
         });
     };
 
@@ -126,7 +130,7 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
                                 !canEdit ? cellStyles.inputDisabled : "",
                                 dayStat?.isChannelCustom ? cellStyles.inputCapped : ""
                             ].filter(Boolean).join(" ")}
-                            title={`Tarif: IDR ${formatCurrency(currentRate)}`}
+                            title={`Tarif: ${currConfig.code} ${formatCurrency(currentRate)}`}
                         />
                     </td>
                 );

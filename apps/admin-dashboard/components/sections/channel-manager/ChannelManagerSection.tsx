@@ -72,6 +72,7 @@ import { PaymentGatewayTab } from "./PaymentGatewayTab";
 import { ChannelTutorialTab } from "./ChannelTutorialTab";
 import { TravelAgentTab } from "./TravelAgentTab";
 import { ChannelGroupsTab } from "./ChannelGroupsTab";
+import { SUPPORTED_CURRENCIES } from "@/lib/currency-utils";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, setDoc, deleteField } from "firebase/firestore";
 import { toast } from "sonner";
@@ -374,6 +375,7 @@ export function ChannelManagerSection() {
     const [channexWebhookSecret, setChannexWebhookSecret] = useState<string>("");
     const [showWebhookSecret, setShowWebhookSecret] = useState<boolean>(false);
     const [channexPropertyId, setChannexPropertyId] = useState<string>("");
+    const [hotelCurrency, setHotelCurrency] = useState<string>("IDR");
     const [webhookRegistrationStatus, setWebhookRegistrationStatus] = useState<{
         isRegistered: boolean;
         webhookId?: string;
@@ -509,6 +511,7 @@ export function ChannelManagerSection() {
                     setChannexApiKey(cm.apiKey || "");
                     setChannexWebhookSecret(cm.webhookSecret || "");
                     setChannexPropertyId(data.channexPropertyId || cm.channexPropertyId || "");
+                    setHotelCurrency(data.currency || cm.currency || "IDR");
 
                     if (cm.webhookId) {
                         setWebhookRegistrationStatus({
@@ -714,11 +717,13 @@ export function ChannelManagerSection() {
             const docRef = doc(db, "hotels", activeHotelCode);
             await updateDoc(docRef, {
                 channexPropertyId,
+                currency: hotelCurrency,
                 channelManager: {
                     env: channexEnv,
                     apiKey: channexApiKey,
                     webhookSecret: channexWebhookSecret,
                     channexPropertyId,
+                    currency: hotelCurrency,
                     channels: channelConfigs,
                     pricingModel: globalPricingModel,
                     isSyncActive: true,
@@ -1284,7 +1289,7 @@ export function ChannelManagerSection() {
             const res = await fetch("/api/channex/sync-master", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ hotelCode: activeHotelCode })
+                body: JSON.stringify({ hotelCode: activeHotelCode, currency: hotelCurrency })
             });
 
             const data = await res.json();
@@ -1306,6 +1311,31 @@ export function ChannelManagerSection() {
             toast.error(err.message || "Error occurred while synchronizing with Channel Manager", { id: toastId });
         } finally {
             setSyncingMaster(false);
+        }
+    };
+
+    // Unlink / Reset Channex Property connection
+    const handleUnlinkProperty = async () => {
+        if (!activeHotelCode || activeHotelCode === "0") return;
+        if (!window.confirm("Apakah Anda yakin ingin memutuskan dan me-reset kaitan properti Channex ini? Kamar dan rate plan di Tara tidak akan terhapus, namun relasi ID Channex akan dibersihkan.")) {
+            return;
+        }
+        const toastId = toast.loading("Memutuskan koneksi properti Channex...");
+        try {
+            const res = await fetch("/api/channex/sync-master", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hotelCode: activeHotelCode, action: "unlink" })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setChannexPropertyId("");
+                toast.success(data.message || "Koneksi properti Channex berhasil diputus.", { id: toastId });
+            } else {
+                toast.error(data.error || "Gagal memutus koneksi", { id: toastId });
+            }
+        } catch (err: any) {
+            toast.error(err.message || "Gagal memutus koneksi", { id: toastId });
         }
     };
 
@@ -3496,23 +3526,98 @@ export function ChannelManagerSection() {
                                 )}
                             </div>
 
-                            {/* Field B: Channel Property ID */}
-                            <div>
-                                <label className={styles.channelFieldLabel}>
-                                    Channel Property ID (Optional / Auto-generated):
+                            {/* Field B: Hotel Distribution Base Currency */}
+                            <div style={{ marginBottom: "20px" }}>
+                                <label className={styles.credentialsLabelBold}>
+                                    Hotel Distribution Base Currency: <span className={styles.requiredAsterisk}>*</span>
                                 </label>
-                                <input
-                                    type="text"
-                                    value={channexPropertyId}
-                                    onChange={e => setChannexPropertyId(e.target.value)}
-                                    placeholder="Automatically generated upon opening the Mapping Hub, or specify if already registered"
-                                    className={`${styles.cellInput} ${styles.propertyIdInput}`}
-                                />
-                                <p className={styles.fieldHelpMuted}>
-                                    {channexPropertyId
-                                        ? `✓ Property registered with ID: ${channexPropertyId}`
-                                        : "Leave blank if not yet registered. The system will provision a property ID automatically when an API key is provided."}
+                                <p className={styles.fieldHelpMuted} style={{ marginBottom: "8px" }}>
+                                    Mata uang hotel untuk distribusi harga ke Channex &amp; OTA. Pilih <strong>USD</strong> untuk properti sertifikasi uji coba, atau <strong>IDR</strong> untuk hotel komersial Indonesia.
                                 </p>
+                                <select
+                                    value={hotelCurrency}
+                                    onChange={e => setHotelCurrency(e.target.value)}
+                                    className={styles.cellInput}
+                                    style={{ maxWidth: "420px", fontWeight: 600, padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
+                                >
+                                    {SUPPORTED_CURRENCIES.map(c => (
+                                        <option key={c.code} value={c.code}>
+                                            {c.flag} {c.code} — {c.name} ({c.symbol})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Field C: Real Property Distribution Identity & Registration Hub */}
+                            <div style={{
+                                marginBottom: "24px",
+                                padding: "18px",
+                                borderRadius: "10px",
+                                background: channexPropertyId ? "#f0fdf4" : "#fefce8",
+                                border: `1px solid ${channexPropertyId ? "#86efac" : "#fde047"}`
+                            }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", marginBottom: "14px" }}>
+                                    <div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                                            {channexPropertyId ? (
+                                                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "#16a34a", color: "#fff", padding: "4px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px" }}>
+                                                    <Check size={13} /> TERDAFTAR DI CHANNEX
+                                                </span>
+                                            ) : (
+                                                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "#ca8a04", color: "#fff", padding: "4px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px" }}>
+                                                    <AlertTriangle size={13} /> BELUM TERDAFTAR DI CHANNEX
+                                                </span>
+                                            )}
+                                            <span style={{ fontWeight: 700, fontSize: "14px", color: "#1e293b" }}>
+                                                {activeHotelName || "Hotel Aktif"} &bull; {hotelCurrency}
+                                            </span>
+                                        </div>
+                                        <p style={{ margin: 0, fontSize: "12px", color: "#475569", maxWidth: "600px" }}>
+                                            {channexPropertyId
+                                                ? `Properti aktif terhubung ke Channex dengan UUID: ${channexPropertyId}. Kamar dan rate plan telah disinkronkan.`
+                                                : `Klik 'Daftarkan Hotel Ini ke Channex' untuk mendaftarkan properti ini secara nyata ke Channex ${channexEnv.toUpperCase()}. Seluruh tipe kamar & rate plan yang telah dibuat di Tara akan otomatis dibuatkan di Channex.`}
+                                        </p>
+                                    </div>
+
+                                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                                        <button
+                                            type="button"
+                                            onClick={handleSyncMasterToChannex}
+                                            disabled={syncingMaster}
+                                            className={styles.btnActionPrimary}
+                                            style={{ padding: "8px 16px", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "6px" }}
+                                        >
+                                            <RefreshCw size={13} className={syncingMaster ? "animate-spin" : ""} />
+                                            <span>{channexPropertyId ? "Sinkronkan Kamar & Rate Plan" : "🚀 Daftarkan Hotel Ini ke Channex"}</span>
+                                        </button>
+                                        {channexPropertyId && (
+                                            <button
+                                                type="button"
+                                                onClick={handleUnlinkProperty}
+                                                className={styles.btnActionSecondary}
+                                                style={{ padding: "8px 14px", color: "#dc2626", borderColor: "#fca5a5", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                                                title="Putus relasi UUID Channex jika properti telah dihapus di portal Channex"
+                                            >
+                                                <Unlink size={13} />
+                                                <span>Putus / Reset Link</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className={styles.channelFieldLabel} style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                        Channex Property UUID:
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={channexPropertyId}
+                                        onChange={e => setChannexPropertyId(e.target.value)}
+                                        placeholder="Auto-generated setelah klik 'Daftarkan Hotel Ini ke Channex', atau input UUID manual"
+                                        className={`${styles.cellInput} ${styles.propertyIdInput}`}
+                                        style={{ fontFamily: "monospace", fontSize: "13px" }}
+                                    />
+                                </div>
                             </div>
 
                             {/* Field C: Webhook Callback URL */}

@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Download, Upload, Info, ChevronLeft, Menu, Check, SlidersHorizontal } from "lucide-react";
+import { Download, Upload, Info, ChevronLeft, Menu, Check, SlidersHorizontal, Coins } from "lucide-react";
 import { RateInventoryTab, GridFeatureId, GRID_FEATURES } from "../RateInventoryTypes";
 import styles from "./RateInventorySubTabs.module.css";
 import { toast } from "sonner";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface RateInventorySubTabsProps {
     activeTab: RateInventoryTab;
@@ -46,6 +47,7 @@ export function RateInventorySubTabs({
     syncingAri = false,
     isSuperadmin = false
 }: RateInventorySubTabsProps) {
+    const { config: currConfig } = useCurrency();
     const [featuresMenuOpen, setFeaturesMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -110,6 +112,20 @@ export function RateInventorySubTabs({
             {/* 2. Right: Action Controls matching Screenshot */}
             {activeTab !== "logs" && (
                 <div className={styles.subTabsActions}>
+                    {/* Active Property Currency Badge */}
+                    <div
+                        className={styles.currencyBadge}
+                        title={`Mata Uang Aktif Properti: ${currConfig.name} (${currConfig.code}) • Tersinkronisasi Inline`}
+                        onClick={() => toast.info(`Mata uang aktif properti: ${currConfig.name} (${currConfig.code}). Diatur di Pengaturan Hotel & POS.`)}
+                        role="button"
+                        tabIndex={0}
+                    >
+                        <Coins size={12} className={styles.currencyIcon} />
+                        <span className={styles.currencyFlag}>{currConfig.flag}</span>
+                        <span className={styles.currencyCode}>{currConfig.code}</span>
+                        <span className={styles.currencySymbol}>({currConfig.symbol})</span>
+                    </div>
+
                     <button
                         type="button"
                         onClick={() => toast.info("Fitur Import CSV/Excel sedang disiapkan.")}

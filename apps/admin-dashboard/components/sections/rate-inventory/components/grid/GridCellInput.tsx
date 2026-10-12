@@ -53,12 +53,19 @@ export const GridCellInput = React.memo(function GridCellInput({
                 <input
                     type="number"
                     min={0}
+                    step={tab === "rates" ? "0.01" : "1"}
                     value={numValue}
                     disabled={disabled}
                     onChange={e => {
                         if (disabled || !onNumChange) return;
-                        const val = Math.max(0, parseInt(e.target.value, 10) || 0);
-                        onNumChange(val);
+                        if (tab === "rates") {
+                            const parsed = parseFloat(e.target.value);
+                            const val = isNaN(parsed) ? 0 : Math.max(0, Math.round((parsed + Number.EPSILON) * 100) / 100);
+                            onNumChange(val);
+                        } else {
+                            const val = Math.max(0, parseInt(e.target.value, 10) || 0);
+                            onNumChange(val);
+                        }
                     }}
                     onWheel={e => e.currentTarget.blur()}
                     className={[

@@ -5,6 +5,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { Globe, CreditCard, Percent } from "lucide-react";
 import { resolveChannelName, getChannelLogo } from "@/lib/channelHelper";
 import s from "./ForecastDonutCharts.module.css";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface ForecastDonutChartsProps {
     stats: any;
@@ -32,6 +33,7 @@ const CHANNEL_COLORS: Record<string, string> = {
 const FALLBACK_PALETTE = ["#06b6d4", "#8b5cf6", "#f59e0b", "#14b8a6", "#64748b", "#a855f7", "#3b82f6", "#ef4444"];
 
 export function ForecastDonutCharts({ stats, formatCurrency }: ForecastDonutChartsProps) {
+    const { symbol } = useCurrency();
     // 1. Channel Revenue Breakdown (Granular per OTA / Channel)
     const channelMap: Record<string, number> = {};
     if (Array.isArray(stats?.entries) && stats.entries.length > 0) {
@@ -125,13 +127,13 @@ export function ForecastDonutCharts({ stats, formatCurrency }: ForecastDonutChar
                                         fontSize: "12px",
                                         fontWeight: 600,
                                     }}
-                                    formatter={(val: any) => `Rp ${formatCurrency(Number(val) || 0)}`}
+                                    formatter={(val: any) => `${symbol}${formatCurrency(Number(val) || 0)}`}
                                 />
                             )}
                         </PieChart>
                     </ResponsiveContainer>
                     <div className={s.centerLabel}>
-                        <span className={s.centerValue}>Rp {formatCurrency(totalChannelRevenue || stats.totalGrossRevenue || 0)}</span>
+                        <span className={s.centerValue}>{symbol}{formatCurrency(totalChannelRevenue || stats.totalGrossRevenue || 0)}</span>
                         <span className={s.centerSub}>Total Revenue</span>
                     </div>
                 </div>
@@ -157,7 +159,7 @@ export function ForecastDonutCharts({ stats, formatCurrency }: ForecastDonutChar
                                     <span className={s.legendName}>{item.name}</span>
                                 </div>
                                 <div className={s.legendRight}>
-                                    <span className={s.legendValue}>Rp {formatCurrency(item.value)}</span>
+                                    <span className={s.legendValue}>{symbol}{formatCurrency(item.value)}</span>
                                     <span className={s.legendPct}>{pct}%</span>
                                 </div>
                             </div>
@@ -206,13 +208,13 @@ export function ForecastDonutCharts({ stats, formatCurrency }: ForecastDonutChar
                                         fontSize: "12px",
                                         fontWeight: 600,
                                     }}
-                                    formatter={(val: any) => `Rp ${formatCurrency(Number(val) || 0)}`}
+                                    formatter={(val: any) => `${symbol}${formatCurrency(Number(val) || 0)}`}
                                 />
                             )}
                         </PieChart>
                     </ResponsiveContainer>
                     <div className={s.centerLabel}>
-                        <span className={s.centerValue}>Rp {formatCurrency(totalRevTypeAmount)}</span>
+                        <span className={s.centerValue}>{symbol}{formatCurrency(totalRevTypeAmount)}</span>
                         <span className={s.centerSub}>Total Gross</span>
                     </div>
                 </div>
@@ -227,7 +229,7 @@ export function ForecastDonutCharts({ stats, formatCurrency }: ForecastDonutChar
                                     <span className={s.legendName}>{item.name}</span>
                                 </div>
                                 <div className={s.legendRight}>
-                                    <span className={s.legendValue}>Rp {formatCurrency(item.value)}</span>
+                                    <span className={s.legendValue}>{symbol}{formatCurrency(item.value)}</span>
                                     <span className={s.legendPct}>{pct}%</span>
                                 </div>
                             </div>

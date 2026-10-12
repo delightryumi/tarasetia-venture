@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { LogOut, Coffee, FileText, TrendingUp, X, Globe } from "lucide-react";
 import styles from "../ForecastStyles.module.css";
+import { useCurrency } from "@/hooks/useCurrency";
 
 
 
@@ -31,6 +32,7 @@ const getChannelIcon = (channel?: string, source?: string) => {
 };
 
 export const ForecastDetailDrawer: React.FC<ForecastDetailDrawerProps> = ({ title, entries, summary, onClose, formatCurrency, onSelectGuest }) => {
+    const { symbol } = useCurrency();
     // Check if clicked outside
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -137,7 +139,7 @@ export const ForecastDetailDrawer: React.FC<ForecastDetailDrawerProps> = ({ titl
                                         </div>
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", flexShrink: 0 }}>
-                                        <span className={styles.guestAmount} style={{ fontSize: "11px" }}>Rp {formatCurrency(item.amount)}</span>
+                                        <span className={styles.guestAmount} style={{ fontSize: "11px" }}>{symbol}{formatCurrency(item.amount)}</span>
                                         <span className={`${styles.paymentBadge} ${item.paymentStatus?.includes('Lunas') || !item.paymentStatus ? styles.paymentLunas : styles.paymentPending}`} style={{ fontSize: "8px" }}>
                                             {item.paymentStatus || item.status}
                                         </span>
@@ -156,7 +158,7 @@ export const ForecastDetailDrawer: React.FC<ForecastDetailDrawerProps> = ({ titl
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "13px", fontWeight: 800, marginTop: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                         <span>Grand Total</span>
                         <span style={{ color: 'var(--f-ink)' }}>
-                            Rp {formatCurrency(entries.reduce((acc, e) => acc + (Number(e.amount) || 0), 0))}
+                            {symbol}{formatCurrency(entries.reduce((acc, e) => acc + (Number(e.amount) || 0), 0))}
                         </span>
                     </div>
                 </footer>

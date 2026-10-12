@@ -6,6 +6,7 @@ import { Activity, Search, Coffee, ChevronDown, Eye, Pencil, Trash2, CalendarX, 
 import { RoomStatusPicker } from "./RoomStatusPicker";
 import { GuestStatusPicker } from "./GuestStatusPicker";
 import styles from "../ForecastStyles.module.css";
+import { useCurrency } from "@/hooks/useCurrency";
 
 
 
@@ -41,6 +42,7 @@ export function TransactionTable({
     handleCancelClick,
     formatCurrency
 }: TransactionTableProps) {
+    const { symbol } = useCurrency();
     const filteredEntries = stats.entries.filter((e: any) => 
         (!activeFilter || e.type === activeFilter) && 
         ((e.guestName || e.incomeCategory || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -258,7 +260,7 @@ export function TransactionTable({
                                             {/* Financials */}
                                             <td className={styles.tableCell}>
                                                 <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                                                    <p className={styles.guestAmount} style={{ margin: 0 }}>Rp {formatCurrency(entry.amount)}</p>
+                                                    <p className={styles.guestAmount} style={{ margin: 0 }}>{symbol}{formatCurrency(entry.amount)}</p>
                                                     <span className={`${styles.paymentBadge} ${entry.paymentStatus?.includes('Lunas') || !entry.paymentStatus ? styles.paymentLunas : styles.paymentPending}`} style={{ margin: 0, width: "fit-content" }}>
                                                         {entry.paymentStatus || 'Pending'}
                                                     </span>

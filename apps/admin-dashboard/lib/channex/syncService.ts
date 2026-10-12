@@ -942,7 +942,7 @@ export class ChannexSyncService {
                     rate_plan_id: ratePlanId,
                     date_from: effectiveDateFrom,
                     date_to: dateTo,
-                    rate: Math.round(Number(rate)),
+                    rate: Math.round((Number(rate) + Number.EPSILON) * 100) / 100,
                     min_stay_arrival: restrictions?.minStayArrival || restrictions?.minStay || 1,
                     min_stay_through: restrictions?.minStayThrough || restrictions?.minStay || 1,
                     ...(restrictions?.maxStay !== undefined && restrictions?.maxStay !== null ? { max_stay: Number(restrictions.maxStay) } : {}),
@@ -1040,7 +1040,7 @@ export class ChannexSyncService {
                     valObj.date_to = r.dateTo;
                 }
 
-                if (r.rate !== undefined && r.rate !== null) valObj.rate = Math.round(Number(r.rate));
+                if (r.rate !== undefined && r.rate !== null) valObj.rate = Math.round((Number(r.rate) + Number.EPSILON) * 100) / 100;
                 
                 // Min Stay Arrival
                 if (r.minStayArrival !== undefined && r.minStayArrival !== null) {
@@ -1253,7 +1253,7 @@ export class ChannexSyncService {
                 rate_plan_id: channexRatePlanId,
                 date_from: startDateStr,
                 date_to: endDateStr,
-                rate: Math.round(Number(basePrice)),
+                rate: Math.round((Number(basePrice) + Number.EPSILON) * 100) / 100,
                 min_stay_arrival: minStay,
                 min_stay_through: minStay,
                 stop_sell: stopSell,
@@ -1289,7 +1289,7 @@ export class ChannexSyncService {
                         property_id: channexPropertyId,
                         rate_plan_id: channexRatePlanId,
                         date: overrideDate,
-                        rate: Math.round(Number(customRate)),
+                        rate: Math.round((Number(customRate) + Number.EPSILON) * 100) / 100,
                         min_stay_arrival: customMinStayArr,
                         min_stay_through: customMinStayThru,
                         stop_sell: customStopSell,

@@ -21,12 +21,11 @@ export interface SummaryResult {
   finalReconcile: number;
 }
 
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("id-ID", { 
-    style: "currency", 
-    currency: "IDR", 
-    minimumFractionDigits: 0 
-  }).format(amount);
+import { formatCurrencyAmount, DEFAULT_CURRENCY } from "./currency-utils";
+
+export const formatCurrency = (amount: number, currencyCode?: string): string => {
+  const activeCurr = currencyCode || (typeof window !== "undefined" ? localStorage.getItem("shopCurrency") || DEFAULT_CURRENCY : DEFAULT_CURRENCY);
+  return formatCurrencyAmount(amount, activeCurr);
 };
 
 export const formatRupiahShort = (amount: number): string => {

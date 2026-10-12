@@ -22,13 +22,12 @@ import styles from "../OverviewStyles.module.css";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface OtherIncomeFolioViewProps {
     guest: any;
     onEditPayment?: () => void;
 }
-
-const formatCurrency = (val: number) => new Intl.NumberFormat("id-ID").format(Math.floor(val || 0));
 
 const formatLongDate = (dateStr?: string) => {
     if (!dateStr || dateStr === "---") return "---";
@@ -76,6 +75,7 @@ const formatAuditTimestamp = (raw?: any, fallbackDate?: string) => {
 
 export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioViewProps) {
     const { activeHotelName } = useAuth();
+    const { formatCurrency, symbol } = useCurrency();
     const router = useRouter();
     const [copiedField, setCopiedField] = useState<string | null>(null);
 
@@ -276,7 +276,7 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "10px", borderBottom: "1px solid var(--f-hairline)" }}>
                         <span style={{ fontSize: "12px", color: "var(--f-muted)" }}>Total Nilai Transaksi:</span>
                         <span style={{ fontSize: "15px", fontWeight: 800, fontFamily: "var(--f-font-mono)", color: "var(--f-foreground)" }}>
-                            Rp {guest.isCompliment ? "0" : formatCurrency(totalAmount)}
+                            {guest.isCompliment ? formatCurrency(0) : formatCurrency(totalAmount)}
                         </span>
                     </div>
 
@@ -290,14 +290,14 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
                                 paymentBreakdown.map((item, i) => (
                                     <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
                                         <span>{item.label}:</span>
-                                        <span style={{ fontWeight: 700, fontFamily: "var(--f-font-mono)" }}>Rp {formatCurrency(item.amount)}</span>
+                                        <span style={{ fontWeight: 700, fontFamily: "var(--f-font-mono)" }}>{formatCurrency(item.amount)}</span>
                                     </div>
                                 ))
                             ) : (
                                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
                                     <span>{guest.paymentMethod || "Tunai / Cash Kasir"}:</span>
                                     <span style={{ fontWeight: 700, fontFamily: "var(--f-font-mono)" }}>
-                                        Rp {formatCurrency(Number(guest.payHotel || totalAmount))}
+                                        {formatCurrency(Number(guest.payHotel || totalAmount))}
                                     </span>
                                 </div>
                             )}
@@ -309,7 +309,7 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
                             {dueAmount > 0 ? "Sisa Tagihan (Due Amount):" : "Status Pembayaran:"}
                         </span>
                         <span style={{ fontSize: "14px", fontWeight: 800, fontFamily: "var(--f-font-mono)", color: dueAmount > 0 ? "#b45309" : "#059669" }}>
-                            {dueAmount > 0 ? `Rp ${formatCurrency(dueAmount)}` : "LUNAS (Rp 0)"}
+                            {dueAmount > 0 ? formatCurrency(dueAmount) : `LUNAS (${formatCurrency(0)})`}
                         </span>
                     </div>
                 </div>
@@ -342,7 +342,7 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
                                 Operator: {staffDisplay} • No. Voucher: <b style={{ fontFamily: "var(--f-font-mono)" }}>{voucherId}</b>
                             </span>
                             <span style={{ color: "var(--f-muted)", display: "block" }}>
-                                Item: {category} ({guest.guestName || guest.description || "Pendapatan Lain"}) • Nominal: <b>Rp {formatCurrency(totalAmount)}</b>
+                                Item: {category} ({guest.guestName || guest.description || "Pendapatan Lain"}) • Nominal: <b>{formatCurrency(totalAmount)}</b>
                             </span>
                         </div>
                     </div>
@@ -365,7 +365,7 @@ export function OtherIncomeFolioView({ guest, onEditPayment }: OtherIncomeFolioV
                             </span>
                             {paymentBreakdown.length > 0 && (
                                 <span style={{ color: "var(--f-muted)", display: "block", fontSize: "10px" }}>
-                                    Rincian: {paymentBreakdown.map(p => `${p.method}: Rp ${formatCurrency(p.amount)}`).join(" | ")}
+                                    Rincian: {paymentBreakdown.map(p => `${p.method}: ${formatCurrency(p.amount)}`).join(" | ")}
                                 </span>
                             )}
                         </div>

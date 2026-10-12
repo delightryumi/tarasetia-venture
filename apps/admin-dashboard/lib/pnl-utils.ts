@@ -147,10 +147,9 @@ export interface DrillDownData {
   items: PnLDetailedItem[];
 }
 
-export const formatIDR = (amount: number): string => {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(amount);
+import { formatCurrencyAmount, DEFAULT_CURRENCY } from "./currency-utils";
+
+export const formatIDR = (amount: number, currencyCode?: string): string => {
+  const activeCurr = currencyCode || (typeof window !== "undefined" ? localStorage.getItem("shopCurrency") || DEFAULT_CURRENCY : DEFAULT_CURRENCY);
+  return formatCurrencyAmount(amount, activeCurr);
 };

@@ -4,9 +4,10 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { Building2, MapPin, Phone, Mail, Globe, Save, Sparkles, CheckCircle2 } from "lucide-react";
+import { Building2, MapPin, Phone, Mail, Globe, Save, Sparkles, CheckCircle2, Coins } from "lucide-react";
 import { toast } from "sonner";
 import superadminStyles from "../../../app/(dashboard)/superadmin/superadmin.module.css";
+import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY } from "@/lib/currency-utils";
 
 export const ProfileSection = () => {
     const { activeHotelCode, activeHotelName } = useAuth();
@@ -20,6 +21,7 @@ export const ProfileSection = () => {
     const [email, setEmail] = useState("");
     const [domain, setDomain] = useState("");
     const [subdomain, setSubdomain] = useState("");
+    const [currency, setCurrency] = useState<string>(DEFAULT_CURRENCY);
 
     useEffect(() => {
         const fetchHotelProfile = async () => {
@@ -38,6 +40,7 @@ export const ProfileSection = () => {
                     setEmail(data.email || "");
                     setDomain(data.domain || "");
                     setSubdomain(data.subdomain || "");
+                    setCurrency(data.currency || DEFAULT_CURRENCY);
                 }
             } catch (err) {
                 console.error("Error loading hotel profile:", err);
@@ -62,9 +65,14 @@ export const ProfileSection = () => {
                 address,
                 phone,
                 email,
-                domain
+                domain,
+                currency
             });
-            toast.success("Profil properti berhasil diperbarui!");
+            if (typeof window !== "undefined") {
+                localStorage.setItem("shopCurrency", currency);
+                window.dispatchEvent(new Event("currencyChanged"));
+            }
+            toast.success("Profil properti & mata uang berhasil diperbarui!");
         } catch (err) {
             console.error("Error saving hotel profile:", err);
             toast.error("Gagal menyimpan perubahan.");
@@ -223,6 +231,31 @@ export const ProfileSection = () => {
                                 disabled
                                 className={superadminStyles.formInput}
                             />
+                        </div>
+                    </div>
+
+                    <div className={superadminStyles.formGrid}>
+                        {/* Base Currency */}
+                        <div className={superadminStyles.formField}>
+                            <label className={superadminStyles.formLabel} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Coins size={14} className="text-[#8d7a52]" />
+                                <span>Mata Uang Utama Properti (Base Currency)</span>
+                            </label>
+                            <select
+                                value={currency}
+                                onChange={(e) => setCurrency(e.target.value)}
+                                className={superadminStyles.formInput}
+                                style={{ cursor: 'pointer', fontWeight: 500 }}
+                            >
+                                {SUPPORTED_CURRENCIES.map((c) => (
+                                    <option key={c.code} value={c.code}>
+                                        {c.flag} {c.code} - {c.name} ({c.symbol})
+                                    </option>
+                                ))}
+                            </select>
+                            <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                                Mata uang dasar hotel: otomatis inline dengan POS Kasir, Rate & Inventory (Channex/OTA), dan Laporan Akuntansi.
+                            </span>
                         </div>
                     </div>
 

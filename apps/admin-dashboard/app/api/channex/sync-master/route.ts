@@ -5,12 +5,16 @@ import { channexSyncService } from "@/lib/channex/syncService";
 
 /**
  * Route: POST /api/channex/sync-master
- * Pushes Room Types and Rate Plans from My Tara to Channex automatically.
+ * Production Registration & Two-Way Master Synchronization
+ * - Registers real hotel properties to Channex
+ * - Auto-detects if property was deleted on Channex (404 recovery)
+ * - Pushes Room Types and Rate Plans with dynamic hotel currency
+ * - Supports clean un-link / disconnect
  */
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { hotelCode } = body;
+        const { hotelCode, action, currency: requestedCurrency } = body;
 
         if (!hotelCode) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
@@ -24,38 +28,104 @@ export async function POST(req: NextRequest) {
         const hotelData = hotelDoc.data();
         let channexPropertyId = hotelData?.channexPropertyId || hotelData?.channelManager?.channexPropertyId;
         const customApiKey = hotelData?.channelManager?.apiKey || process.env.CHANNEX_API_KEY;
-        const env = hotelData?.channelManager?.env || "staging";
+        const env = hotelData?.channelManager?.env || hotelData?.channelManager?.environment || "staging";
 
         if (!customApiKey) {
             return NextResponse.json({
-                error: "API Key Channex belum diisi. Masukkan User API Key di tab 'Konfigurasi & Akun Channex' terlebih dahulu."
+                error: "API Key Channex belum diisi. Masukkan User API Key di tab 'API Credentials & Production' terlebih dahulu."
             }, { status: 400 });
         }
 
-        // 1. Ensure Property exists on Channex
-        if (!channexPropertyId) {
+        // ==========================================
+        // ACTION: UNLINK / RESET CONNECTION
+        // ==========================================
+        if (action === "unlink") {
+            await adminDb.collection("hotels").doc(hotelCode).set({
+                channexPropertyId: null,
+                "channelManager.channexPropertyId": null,
+                "channelManager.isSyncActive": false,
+                "channelManager.lastSyncAt": null
+            }, { merge: true });
+
+            const rtSnap = await adminDb.collection(`hotels/${hotelCode}/roomTypes`).get();
+            for (const d of rtSnap.docs) {
+                await d.ref.update({ channexRoomTypeId: null });
+            }
+
+            const rpSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
+            for (const d of rpSnap.docs) {
+                await d.ref.update({ channexRatePlanId: null });
+            }
+
+            return NextResponse.json({
+                success: true,
+                message: `Koneksi properti Channex untuk [${hotelData?.name || hotelCode}] berhasil diputus dan di-reset.`
+            });
+        }
+
+        // Determine active hotel currency (requested > hotelData > default IDR)
+        const targetCurrency = (requestedCurrency || hotelData?.currency || hotelData?.channelManager?.currency || "IDR").toUpperCase().trim();
+
+        // Save currency to hotel doc if updated
+        if (hotelData?.currency !== targetCurrency) {
+            await adminDb.collection("hotels").doc(hotelCode).set({
+                currency: targetCurrency,
+                "channelManager.currency": targetCurrency
+            }, { merge: true });
+        }
+
+        // ==========================================
+        // 1. VERIFY OR CREATE PROPERTY ON CHANNEX
+        // ==========================================
+        let propertyNeedsCreation = !channexPropertyId;
+
+        // If ID exists locally, verify if it still exists on Channex (handle remote deletion / 404)
+        if (channexPropertyId) {
             try {
+                await channexClient.getProperty(channexPropertyId, customApiKey, env);
+            } catch (checkErr: any) {
+                if (checkErr.message?.includes("404") || checkErr.message?.toLowerCase().includes("not found")) {
+                    console.warn(`[SyncMaster] Channex property ${channexPropertyId} not found on Channex (deleted). Creating a new one...`);
+                    propertyNeedsCreation = true;
+                    channexPropertyId = null;
+                }
+            }
+        }
+
+        if (propertyNeedsCreation) {
+            try {
+                const hotelTitle = hotelData?.name || hotelData?.propertyName || `Hotel ${hotelCode}`;
+                console.log(`[SyncMaster] Registering new property on Channex: "${hotelTitle}" (${targetCurrency})...`);
+                
                 const createdProp = await channexClient.createProperty({
-                    title: hotelData?.name || `Partner Hotel ${hotelCode}`,
-                    currency: "IDR",
-                    timezone: "Asia/Jakarta",
-                    country: "ID",
-                    address: hotelData?.address || "Indonesia"
+                    title: hotelTitle,
+                    currency: targetCurrency,
+                    timezone: hotelData?.timezone || "Asia/Jakarta",
+                    country: hotelData?.country || "ID",
+                    address: hotelData?.address || "Indonesia",
+                    email: hotelData?.email || undefined,
+                    phone: hotelData?.phone || undefined
                 }, customApiKey, env);
 
                 channexPropertyId = createdProp?.data?.id;
-                if (channexPropertyId) {
-                    await adminDb.collection("hotels").doc(hotelCode).set({
-                        channexPropertyId,
-                        channelManager: {
-                            channexPropertyId,
-                            isSyncActive: true,
-                            lastSyncAt: new Date().toISOString()
-                        }
-                    }, { merge: true });
+                if (!channexPropertyId) {
+                    throw new Error("Channex tidak mengembalikan Property ID");
                 }
+
+                await adminDb.collection("hotels").doc(hotelCode).set({
+                    channexPropertyId,
+                    currency: targetCurrency,
+                    channelManager: {
+                        channexPropertyId,
+                        currency: targetCurrency,
+                        isSyncActive: true,
+                        lastSyncAt: new Date().toISOString()
+                    }
+                }, { merge: true });
+
+                console.log(`[SyncMaster] Property successfully registered on Channex with ID: ${channexPropertyId}`);
             } catch (err: any) {
-                return NextResponse.json({ error: `Gagal membuat properti di Channex: ${err.message}` }, { status: 500 });
+                return NextResponse.json({ error: `Gagal mendaftarkan properti di Channex: ${err.message}` }, { status: 500 });
             }
         }
 
@@ -63,7 +133,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Gagal mengaitkan Property ID Channex" }, { status: 500 });
         }
 
-        // 2. Fetch existing Room Types on Channex
+        // ==========================================
+        // 2. FETCH EXISTING ROOM TYPES ON CHANNEX
+        // ==========================================
         let existingChannexRooms: any[] = [];
         try {
             const channexRoomsRes = await channexClient.getRoomTypes(channexPropertyId, customApiKey, env);
@@ -72,7 +144,9 @@ export async function POST(req: NextRequest) {
             console.warn("[SyncMaster] Warning fetching existing room types from Channex:", e);
         }
 
-        // 3. Fetch local Room Types from Firestore
+        // ==========================================
+        // 3. SYNC LOCAL ROOM TYPES TO CHANNEX
+        // ==========================================
         const roomTypesSnap = await adminDb.collection(`hotels/${hotelCode}/roomTypes`).get();
         const localRoomTypes = roomTypesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -80,17 +154,17 @@ export async function POST(req: NextRequest) {
         let syncedRoomsCount = 0;
 
         for (const rt of localRoomTypes as any[]) {
-            const totalRooms = Number(rt.totalRooms || rt.roomCount || (rt.physicalRooms?.length) || 1);
-            const capacity = Number(rt.capacity || 2);
-            const roomTitle = rt.name || "Standard Room";
+            const totalRooms = Math.max(1, Number(rt.totalRooms || rt.roomCount || (rt.physicalRooms?.length) || 1));
+            const capacity = Math.max(1, Number(rt.capacity || rt.occAdults || 2));
+            const roomTitle = rt.name || rt.roomTypeName || "Standard Room";
 
-            // Check if already on Channex
+            // Check if already exists on Channex
             const existing = existingChannexRooms.find((cr: any) => 
                 cr.id === rt.channexRoomTypeId || 
                 cr.attributes?.title?.toLowerCase() === roomTitle.toLowerCase()
             );
 
-            let assignedChannexRoomId = existing?.id || rt.channexRoomTypeId;
+            let assignedChannexRoomId = existing?.id;
 
             if (!assignedChannexRoomId) {
                 try {
@@ -99,8 +173,8 @@ export async function POST(req: NextRequest) {
                         title: roomTitle,
                         count_of_rooms: totalRooms,
                         occ_adults: capacity,
-                        occ_children: Number((rt as any).occChildren ?? 0),
-                        occ_infants: Number((rt as any).occInfants ?? 0),
+                        occ_children: Number(rt.occChildren ?? 0),
+                        occ_infants: Number(rt.occInfants ?? 0),
                         default_occupancy: capacity
                     }, customApiKey, env);
 
@@ -113,7 +187,6 @@ export async function POST(req: NextRequest) {
 
             if (assignedChannexRoomId) {
                 roomTypeMapping[rt.id] = assignedChannexRoomId;
-                // Update Firestore if changed
                 if (rt.channexRoomTypeId !== assignedChannexRoomId) {
                     await adminDb.collection(`hotels/${hotelCode}/roomTypes`).doc(rt.id).update({
                         channexRoomTypeId: assignedChannexRoomId
@@ -122,7 +195,9 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // 4. Fetch existing Rate Plans on Channex
+        // ==========================================
+        // 4. FETCH EXISTING RATE PLANS ON CHANNEX
+        // ==========================================
         let existingChannexRates: any[] = [];
         try {
             const channexRatesRes = await channexClient.getRatePlans(channexPropertyId, customApiKey, env);
@@ -131,7 +206,9 @@ export async function POST(req: NextRequest) {
             console.warn("[SyncMaster] Warning fetching existing rate plans from Channex:", e);
         }
 
-        // 5. Fetch local Rate Plans from Firestore
+        // ==========================================
+        // 5. SYNC LOCAL RATE PLANS TO CHANNEX
+        // ==========================================
         const ratePlansSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
         const localRatePlans = ratePlansSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -141,15 +218,15 @@ export async function POST(req: NextRequest) {
             const targetChannexRoomTypeId = roomTypeMapping[rp.roomTypeId] || Object.values(roomTypeMapping)[0];
             if (!targetChannexRoomTypeId) continue;
 
-            const rateTitle = rp.name || "Standard Rate";
-            const baseRate = Number(rp.baseRate || rp.basePrice || rp.rate || 500000);
+            const rateTitle = rp.name || rp.ratePlanName || "Best Available Rate";
+            const baseRate = Number(rp.baseRate || rp.basePrice || rp.rate || (targetCurrency === "IDR" ? 500000 : 100));
 
             const existingRate = existingChannexRates.find((cr: any) => 
                 cr.id === rp.channexRatePlanId || 
                 (cr.attributes?.title?.toLowerCase() === rateTitle.toLowerCase() && cr.attributes?.room_type_id === targetChannexRoomTypeId)
             );
 
-            let assignedChannexRateId = existingRate?.id || rp.channexRatePlanId;
+            let assignedChannexRateId = existingRate?.id;
 
             if (!assignedChannexRateId) {
                 try {
@@ -157,7 +234,7 @@ export async function POST(req: NextRequest) {
                         property_id: channexPropertyId,
                         room_type_id: targetChannexRoomTypeId,
                         title: rateTitle,
-                        currency: "IDR",
+                        currency: targetCurrency,
                         options: [
                             {
                                 occupancy: 2,
@@ -181,7 +258,9 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // 6. Push initial availability for the next 30 days
+        // ==========================================
+        // 6. INITIAL ARI AVAILABILITY SEED (30 DAYS)
+        // ==========================================
         const start = new Date().toISOString().split("T")[0];
         const endD = new Date();
         endD.setDate(endD.getDate() + 30);
@@ -196,11 +275,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             success: true,
             propertyId: channexPropertyId,
+            currency: targetCurrency,
             syncedRooms: syncedRoomsCount,
             syncedRatePlans: syncedRatePlansCount,
             totalLocalRooms: localRoomTypes.length,
             totalLocalRatePlans: localRatePlans.length,
-            message: `Berhasil menyinkronkan ${localRoomTypes.length} tipe kamar dan ${localRatePlans.length} rate plan ke Channex!`
+            message: `Properti [${hotelData?.name || hotelCode}] berhasil didaftarkan dan disinkronkan ke Channex (${targetCurrency})! (${localRoomTypes.length} tipe kamar, ${localRatePlans.length} rate plan)`
         });
     } catch (error: any) {
         console.error("[Channex Sync-Master Error]:", error);

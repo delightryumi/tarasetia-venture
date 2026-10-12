@@ -15,7 +15,9 @@
     box-shadow: 0 2px 8px -1px rgba(15, 23, 42, 0.04),
                 inset 0 1px 2px rgba(255, 255, 255, 0.95);
     flex-wrap: nowrap;
-    overflow-x: auto;
+    position: relative;
+    z-index: 50;
+    overflow: visible;
     transition: all 0.2s ease;
 }
 
@@ -30,7 +32,20 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    flex-shrink: 0;
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    padding: 2px 0;
+}
+
+.subTabsGroup::-webkit-scrollbar {
+    height: 3px;
+}
+
+.subTabsGroup::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.4);
+    border-radius: 3px;
 }
 
 /* Stepper Chevron Button on Far Left */
@@ -142,6 +157,76 @@
     align-items: center;
     gap: 7px;
     flex-shrink: 0;
+    position: relative;
+    z-index: 60;
+}
+
+/* Active Property Currency Badge (Low-Cost Real-Time Indicator) */
+.currencyBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 30px;
+    padding: 0 9px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03),
+                inset 0 1px 2px rgba(255, 255, 255, 0.9);
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:global(.dark) .currencyBadge {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.currencyBadge:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    transform: translateY(-1px);
+}
+
+:global(.dark) .currencyBadge:hover {
+    background: #1e293b;
+    border-color: #475569;
+}
+
+.currencyIcon {
+    color: #b45309;
+    flex-shrink: 0;
+}
+
+:global(.dark) .currencyIcon {
+    color: #f59e0b;
+}
+
+.currencyFlag {
+    font-size: 12px;
+    line-height: 1;
+}
+
+.currencyCode {
+    letter-spacing: 0.02em;
+    font-weight: 700;
+}
+
+.currencySymbol {
+    color: #64748b;
+    font-size: 11px;
+    font-family: inherit;
+}
+
+:global(.dark) .currencySymbol {
+    color: #94a3af;
 }
 
 /* Compact Action Buttons */
@@ -235,6 +320,7 @@
 .menuWrapper {
     position: relative;
     display: inline-flex;
+    z-index: 70;
 }
 
 .menuBtnActive {
@@ -254,7 +340,7 @@
     box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15),
                 0 8px 10px -6px rgba(15, 23, 42, 0.08);
     padding: 10px 12px;
-    z-index: 100;
+    z-index: 9999;
     box-sizing: border-box;
     animation: fadeInScale 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }

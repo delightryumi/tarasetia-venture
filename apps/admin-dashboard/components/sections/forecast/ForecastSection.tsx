@@ -24,6 +24,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import styles from "./ForecastStyles.module.css";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // Sub-components
 import { SummaryCard } from "./components/SummaryCard";
@@ -202,8 +203,13 @@ export const ForecastSection: React.FC = () => {
         setDetailDrawerConfig({ title, entries: filtered, summary });
     };
 
+    const { symbol: currSymbol, config: currConfig } = useCurrency();
+
     const formatCurrency = (val: number) => {
-        return new Intl.NumberFormat('id-ID').format(Math.floor(val));
+        return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: currConfig.decimals,
+            maximumFractionDigits: currConfig.decimals
+        }).format(val || 0);
     };
 
     const [selectedGuest, setSelectedGuest] = useState<any>(null);
@@ -544,7 +550,7 @@ export const ForecastSection: React.FC = () => {
             e.guestName || e.incomeCategory,
             e.roomNumber || '-',
             e.channel || 'Internal',
-            `Rp ${formatCurrency(e.amount)}`,
+            `${currSymbol}${formatCurrency(e.amount)}`,
             e.paymentStatus,
             e.status,
             e.staffName || '-'

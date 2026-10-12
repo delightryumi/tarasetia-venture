@@ -336,9 +336,9 @@ export function BulkUpdateModal({
                                     className={styles.selectField}
                                 >
                                     <option value="none">No Change</option>
-                                    <option value="set">Set Exact Rate (IDR)</option>
-                                    <option value="inc_amount">Increase by Amount (+IDR)</option>
-                                    <option value="dec_amount">Decrease by Amount (-IDR)</option>
+                                    <option value="set">Set Exact Rate</option>
+                                    <option value="inc_amount">Increase by Amount (+)</option>
+                                    <option value="dec_amount">Decrease by Amount (-)</option>
                                     <option value="inc_percent">Increase by Percentage (+%)</option>
                                     <option value="dec_percent">Decrease by Percentage (-%)</option>
                                 </select>
@@ -347,8 +347,12 @@ export function BulkUpdateModal({
                                     <input
                                         type="number"
                                         min={0}
+                                        step="0.01"
                                         value={rateValue}
-                                        onChange={e => setRateValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                                        onChange={e => {
+                                            const parsed = parseFloat(e.target.value);
+                                            setRateValue(isNaN(parsed) ? 0 : Math.max(0, Math.round((parsed + Number.EPSILON) * 100) / 100));
+                                        }}
                                         onWheel={e => e.currentTarget.blur()}
                                         className={`${styles.inputField} ${styles.rateValueInput}`}
                                         placeholder="0"

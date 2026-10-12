@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Activity, Globe } from "lucide-react";
 import styles from "../ForecastStyles.module.css";
+import { useCurrency } from "@/hooks/useCurrency";
 
 
 
@@ -25,6 +26,7 @@ export function ChannelPerformance({
     formatDate,
     formatCurrency
 }: ChannelPerformanceProps) {
+    const { symbol } = useCurrency();
     const channelsData = [
         { name: "Traveloka", file: "traveloka.png", color: "#00aaf2" },
         { name: "Booking.com", file: "booking_com.png", color: "#003580" },
@@ -133,7 +135,7 @@ export function ChannelPerformance({
                                     <span className={styles.guestSubtext}>{ch.trxCount} Bookings</span>
                                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                                         <span className={styles.guestSubtext}>Revenue:</span>
-                                        <span className={styles.guestSubtext} style={{ color: "var(--f-ink)", fontWeight: 700 }}>Rp {formatCurrency(ch.revenue)}</span>
+                                        <span className={styles.guestSubtext} style={{ color: "var(--f-ink)", fontWeight: 700 }}>{symbol}{formatCurrency(ch.revenue)}</span>
                                     </div>
                                 </div>
                             </div>
