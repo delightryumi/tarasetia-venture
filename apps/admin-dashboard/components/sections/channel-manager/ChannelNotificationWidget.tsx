@@ -206,7 +206,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
             <div className={styles.waCard}>
                 <div className={styles.topRow}>
                     <div className={styles.titleArea}>
-                        <div className={styles.iconCircle} style={{ background: "#eff6ff", color: "#2563eb" }}>
+                        <div className={styles.iconCircle} style={{ background: "#fdf2f4", color: "#5c0f1e" }}>
                             <MessageSquare size={18} />
                         </div>
                         <div>
@@ -236,16 +236,16 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                 {/* Master System Credentials Banner (Locked & Semi-Dynamic) */}
                 <div className={styles.metaMasterBanner}>
                     <div className={styles.metaMasterLeft}>
-                        <ShieldCheck size={16} color="#16a34a" />
+                        <ShieldCheck size={16} color="#5c0f1e" />
                         <div>
-                            <div style={{ fontWeight: 600, color: "#14532d" }}>
+                            <div style={{ fontWeight: 600, color: "#09090b" }}>
                                 Master Gateway: <b>{senderDisplay}</b>
                             </div>
                             <div className={styles.metaMasterPills} style={{ marginTop: "4px" }}>
                                 <span className={styles.metaPill}>WABA ID: {systemWabaId}</span>
                                 <span className={styles.metaPill}>Phone ID: {systemPhoneId}</span>
-                                <span className={styles.metaPill} style={{ background: "#dcfce7", borderColor: "#86efac", color: "#166534" }}>
-                                    ✓ Permanent System Token Active
+                                <span className={styles.metaPillActive}>
+                                    Permanent System Token Active
                                 </span>
                             </div>
                         </div>
@@ -267,7 +267,6 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                 type="button"
                                 onClick={() => setIsAdvancedUnlocked(false)}
                                 className={styles.btnLockToggle}
-                                style={{ color: "#b45309", borderColor: "#fde68a", background: "#fef3c7" }}
                             >
                                 <Unlock size={12} />
                                 <span>Kunci Kembali</span>
@@ -324,11 +323,12 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                             <div className={styles.waField}>
                                 <div className={styles.waLabelRow}>
                                     <span className={styles.waLabel}>
-                                        📱 Nomor WhatsApp Owner / Management (Mendukung Multi-Nomor):
+                                        <Smartphone size={13} style={{ color: "#5c0f1e" }} />
+                                        <span>Nomor WhatsApp Owner / Management (Mendukung Multi-Nomor):</span>
                                     </span>
                                     {parsedRecipients.length > 1 && (
-                                        <span style={{ fontSize: "11px", color: "#16a34a", fontWeight: 600 }}>
-                                            ✓ {parsedRecipients.length} Nomor Penerima Terdeteksi
+                                        <span style={{ fontSize: "11px", color: "#5c0f1e", fontWeight: 600 }}>
+                                            {parsedRecipients.length} Nomor Penerima Terdeteksi
                                         </span>
                                     )}
                                 </div>
@@ -339,26 +339,16 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                     placeholder="Contoh: 08813794763, 081234567890, 085645365440 (pisahkan dengan koma)"
                                     className={styles.waInput}
                                     disabled={loadingWa || savingWa}
-                                    style={{ fontSize: "14px", fontWeight: 500 }}
+                                    style={{ fontSize: "13px", fontWeight: 500 }}
                                 />
                                 {parsedRecipients.length > 0 && (
                                     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
                                         {parsedRecipients.map((num, idx) => (
                                             <span
                                                 key={idx}
-                                                style={{
-                                                    fontSize: "11px",
-                                                    padding: "3px 8px",
-                                                    background: "#f8fafc",
-                                                    borderRadius: "6px",
-                                                    color: "#1e293b",
-                                                    border: "1px solid #cbd5e1",
-                                                    display: "inline-flex",
-                                                    alignItems: "center",
-                                                    gap: "4px"
-                                                }}
+                                                className={styles.recipientTag}
                                             >
-                                                <span>👤 Penerima #{idx + 1}:</span>
+                                                <span style={{ color: "#71717a" }}>Penerima #{idx + 1}:</span>
                                                 <b>{num}</b>
                                             </span>
                                         ))}
@@ -371,10 +361,10 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
 
                 {/* Advanced Fields: Unlocked Only with Admin PIN */}
                 {isAdvancedUnlocked && (
-                    <div className={styles.waInputsGrid} style={{ background: "#fffbeb", padding: "14px", borderRadius: "8px", border: "1px dashed #f59e0b" }}>
+                    <div className={styles.waInputsGrid} style={{ background: "#fafafa", padding: "14px", borderRadius: "6px", border: "1px dashed #e4e4e7" }}>
                         <div className={styles.waField}>
-                            <label className={styles.waLabel} style={{ color: "#92400e" }}>
-                                ⚙️ Custom Meta Phone Number ID (Optional Override):
+                            <label className={styles.waLabel}>
+                                Custom Meta Phone Number ID (Optional Override):
                             </label>
                             <input
                                 type="text"
@@ -388,8 +378,8 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
 
                         <div className={styles.waField} style={{ gridColumn: "span 2" }}>
                             <div className={styles.waLabelRow}>
-                                <span className={styles.waLabel} style={{ color: "#92400e" }}>
-                                    🔑 Custom Permanent Access Token (Optional Override):
+                                <span className={styles.waLabel}>
+                                    Custom Permanent Access Token (Optional Override):
                                 </span>
                                 <a
                                     href="https://developers.facebook.com/apps/922508960562373"
@@ -432,7 +422,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                 onChange={e => setNotifyNewBooking(e.target.checked)}
                                 disabled={!waEnabled}
                             />
-                            <span>🛎️ Booking Baru</span>
+                            <span>Booking Baru</span>
                         </label>
 
                         <label className={styles.waCheckboxLabel}>
@@ -442,7 +432,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                 onChange={e => setNotifyCancellation(e.target.checked)}
                                 disabled={!waEnabled}
                             />
-                            <span>🚨 Pembatalan OTA</span>
+                            <span>Pembatalan OTA</span>
                         </label>
 
                         <label className={styles.waCheckboxLabel}>
@@ -452,7 +442,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                 onChange={e => setNotifyModification(e.target.checked)}
                                 disabled={!waEnabled}
                             />
-                            <span>✏️ Perubahan / Reschedule</span>
+                            <span>Perubahan / Reschedule</span>
                         </label>
                     </div>
 
@@ -482,14 +472,14 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                 </div>
 
                 {/* Info Bar at Bottom */}
-                <div className={styles.metaInfoBar} style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e40af" }}>
+                <div className={styles.metaInfoBar}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <ShieldCheck size={14} color="#2563eb" />
+                        <ShieldCheck size={14} style={{ color: "#5c0f1e" }} />
                         <span>
-                            <b>Meta Official WhatsApp Cloud API • Serverless 24/7 • Template crs_booking_notification • Tanpa Perlu HP Menyala</b>
+                            <b>Meta Official WhatsApp Cloud API • Serverless 24/7 • Template crs_booking_notification</b>
                         </span>
                     </div>
-                    <span>Multi-tenant terisolasi per properti hotel</span>
+                    <span style={{ fontFamily: "var(--font-geist-mono, monospace)", fontSize: "10.5px" }}>Multi-tenant terisolasi per properti hotel</span>
                 </div>
             </div>
 
@@ -497,8 +487,8 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
             <div className={styles.card}>
                 <div className={styles.topRow}>
                     <div className={styles.titleArea}>
-                        <div className={styles.iconCircle} style={{ background: isGranted ? "#ecfdf5" : isDenied ? "#fef2f2" : "#eff6ff", color: isGranted ? "#059669" : isDenied ? "#dc2626" : "#2563eb" }}>
-                            <Bell size={18} />
+                        <div className={styles.iconCircle}>
+                            <Bell size={16} />
                         </div>
                         <div>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -521,7 +511,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                                 )}
                             </div>
                             <p className={styles.subtitleText}>
-                                Notifikasi instan di layar kunci perangkat / browser komputer dengan suara dering saat ada reservasi baru atau pembatalan masuk.
+                                Notifikasi instan di layar kunci perangkat / browser komputer dengan nada dering saat reservasi baru atau pembatalan masuk.
                             </p>
                         </div>
                     </div>

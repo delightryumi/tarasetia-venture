@@ -137,7 +137,7 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
             <div className={styles.topBar}>
                 <div className={styles.titleGroup}>
                     <div className={styles.title}>
-                        <TrendingUp size={18} color="#1e3a2f" />
+                        <TrendingUp size={18} color="#09090b" />
                         <span>Dynamic Pricing &amp; Revenue Management System (RMS) Connector</span>
                         {config.isEnabled ? (
                             <span className={styles.badgeActive}>● ACTIVE ({config.provider.toUpperCase()})</span>
@@ -179,7 +179,7 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
             <form onSubmit={handleSave} className={styles.card}>
                 <div className={styles.cardHeader}>
                     <span className={styles.cardTitle}>
-                        <Sliders size={16} color="#1e3a2f" />
+                        <Sliders size={16} color="#09090b" />
                         <span>RMS Provider Configuration &amp; Rate Guardrails</span>
                     </span>
                     <button

@@ -574,7 +574,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                                         {displayTaskId.length > 13 ? `${displayTaskId.slice(0, 8)}...` : displayTaskId}
                                                     </span>
                                                     {copiedField === `task-${item.id}` ? (
-                                                        <Check size={11} color="#16a34a" />
+                                                        <Check size={11} color="#09090b" />
                                                     ) : (
                                                         <Copy size={11} className={styles.taskIdCopyIcon} />
                                                     )}
@@ -727,7 +727,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                             {selectedEvent.result}
                                         </span>
                                         {selectedEvent.is_live_synced && (
-                                            <span style={{ fontSize: "11px", color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
+                                            <span style={{ fontSize: "11px", color: "#5c0f1e", background: "#fdf2f4", border: "1px solid #f3cfd6", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
                                                 ✓ Channex API Live
                                             </span>
                                         )}
@@ -735,7 +735,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                 </div>
                                 <div className={styles.metaRow}>
                                     <span className={styles.metaLabel}>Channel:</span>
-                                    <span className={styles.metaValue} style={{ color: "#2563eb", fontWeight: 600 }}>
+                                    <span className={styles.metaValue} style={{ color: "#5c0f1e", fontWeight: 600 }}>
                                         {selectedEvent.channelName}
                                     </span>
                                 </div>
@@ -747,7 +747,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                 </div>
                                 <div className={styles.metaRow}>
                                     <span className={styles.metaLabel}>Channex Task ID:</span>
-                                    <span className={styles.metaValue} style={{ fontFamily: "var(--font-mono-jb, monospace)", color: "#2563eb", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                    <span className={styles.metaValue} style={{ fontFamily: "var(--font-mono-jb, monospace)", color: "#5c0f1e", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                                         <span>{selectedEvent.task_id || (selectedEvent.task_ids && selectedEvent.task_ids.join(", ")) || selectedEvent.id}</span>
                                         <button
                                             type="button"
@@ -766,7 +766,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                             }}
                                             title="Copy for PMS Certification Form"
                                         >
-                                            {copiedField === "Task ID" ? <Check size={11} color="#16a34a" /> : <Copy size={11} />}
+                                            {copiedField === "Task ID" ? <Check size={11} color="#09090b" /> : <Copy size={11} />}
                                             <span>{copiedField === "Task ID" ? "Copied" : "Copy"}</span>
                                         </button>
                                     </span>
@@ -839,7 +839,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                             )}
                                             className={styles.copyCodeBtn}
                                         >
-                                            {copiedField === "Request Payload" ? <Check size={12} color="#16a34a" /> : <Copy size={12} />}
+                                            {copiedField === "Request Payload" ? <Check size={12} color="#09090b" /> : <Copy size={12} />}
                                             <span>{copiedField === "Request Payload" ? "Copied" : "Copy Payload"}</span>
                                         </button>
                                     </div>
@@ -859,7 +859,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                                 <div key={idx} className={styles.otaCard}>
                                                     <div className={styles.otaCardTop}>
                                                         <div className={styles.otaChannelTitle}>
-                                                            <Globe size={14} color="#2563eb" />
+                                                            <Globe size={14} color="#09090b" />
                                                             <span>{ota.channel_name || ota.channel || ota.ota || "Connected OTA Channel"}</span>
                                                         </div>
                                                         <span className={`${styles.otaStatusBadge} ${isOtaSuccess ? styles.otaStatusSuccess : styles.otaStatusFailed}`}>
@@ -917,7 +917,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                             )}
                                             className={styles.copyCodeBtn}
                                         >
-                                            {copiedField === "Channex Response" ? <Check size={12} color="#16a34a" /> : <Copy size={12} />}
+                                            {copiedField === "Channex Response" ? <Check size={12} color="#09090b" /> : <Copy size={12} />}
                                             <span>{copiedField === "Channex Response" ? "Copied" : "Copy Response"}</span>
                                         </button>
                                     </div>

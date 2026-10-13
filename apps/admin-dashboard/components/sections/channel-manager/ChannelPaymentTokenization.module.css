@@ -1,4 +1,4 @@
-/* ChannelPaymentTokenization.module.css — Stripe Tokenization & PCI Compliance Hub */
+/* ChannelPaymentTokenization.module.css — Clean Monochrome & Subtle Burgundy */
 
 .container {
     display: flex;
@@ -8,7 +8,7 @@
 
 .topBar {
     background: #ffffff;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e4e4e7;
     border-radius: 8px;
     padding: 14px 20px;
     display: flex;
@@ -16,7 +16,7 @@
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .titleGroup {
@@ -27,50 +27,51 @@
 
 .title {
     font-size: 15px;
-    font-weight: 800;
-    color: #0f172a;
+    font-weight: 700;
+    color: #09090b;
     display: flex;
     align-items: center;
     gap: 8px;
+    letter-spacing: -0.01em;
 }
 
 .desc {
     font-size: 12px;
-    color: #64748b;
+    color: #71717a;
 }
 
 .badgeConnected {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 10px;
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #bbf7d0;
-    border-radius: 9999px;
-    font-size: 11px;
-    font-weight: 700;
+    padding: 3px 8px;
+    background: #09090b;
+    color: #ffffff;
+    border: 1px solid #09090b;
+    border-radius: 4px;
+    font-size: 10.5px;
+    font-weight: 600;
 }
 
 .badgeNotConfigured {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 10px;
-    background: #fef3c7;
-    color: #92400e;
-    border: 1px solid #fde68a;
-    border-radius: 9999px;
-    font-size: 11px;
-    font-weight: 700;
+    padding: 3px 8px;
+    background: #f4f4f5;
+    color: #71717a;
+    border: 1px solid #e4e4e7;
+    border-radius: 4px;
+    font-size: 10.5px;
+    font-weight: 600;
 }
 
 .card {
     background: #ffffff;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e4e4e7;
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .cardHeader {
@@ -79,13 +80,13 @@
     justify-content: space-between;
     margin-bottom: 16px;
     padding-bottom: 12px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #f4f4f5;
 }
 
 .cardTitle {
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 700;
-    color: #0f172a;
+    color: #09090b;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -106,37 +107,42 @@
 .label {
     font-size: 12px;
     font-weight: 600;
-    color: #334155;
+    color: #27272a;
 }
 
 .hint {
     font-size: 11px;
-    color: #64748b;
+    color: #71717a;
 }
 
 .input {
     padding: 8px 12px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e4e4e7;
     border-radius: 6px;
-    font-size: 12px;
-    color: #0f172a;
+    font-size: 12.5px;
+    color: #09090b;
     background: #ffffff;
     outline: none;
     transition: border-color 0.15s ease;
 }
 
 .input:focus {
-    border-color: #1e3a2f;
+    border-color: #09090b;
+    box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.06);
 }
 
 .select {
     padding: 8px 12px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e4e4e7;
     border-radius: 6px;
-    font-size: 12px;
-    color: #0f172a;
+    font-size: 12.5px;
+    color: #09090b;
     background: #ffffff;
     outline: none;
+}
+
+.select:focus {
+    border-color: #09090b;
 }
 
 .btnPrimary {
@@ -144,9 +150,9 @@
     align-items: center;
     gap: 6px;
     padding: 8px 18px;
-    background: #1e3a2f;
+    background: #09090b;
     color: #ffffff;
-    border: 1px solid #13241d;
+    border: 1px solid #09090b;
     border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
@@ -155,7 +161,8 @@
 }
 
 .btnPrimary:hover:not(:disabled) {
-    background: #152720;
+    background: #5c0f1e;
+    border-color: #5c0f1e;
 }
 
 .btnSecondary {
@@ -163,9 +170,9 @@
     align-items: center;
     gap: 6px;
     padding: 8px 16px;
-    background: #f8fafc;
-    color: #334155;
-    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #27272a;
+    border: 1px solid #e4e4e7;
     border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
@@ -174,18 +181,20 @@
 }
 
 .btnSecondary:hover {
-    background: #f1f5f9;
+    background: #f4f4f5;
+    border-color: #a1a1aa;
+    color: #09090b;
 }
 
 .pciBanner {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 8px;
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-radius: 6px;
     padding: 14px 18px;
     display: flex;
     align-items: flex-start;
     gap: 14px;
     font-size: 12px;
-    color: #166534;
+    color: #52525b;
     line-height: 1.5;
 }

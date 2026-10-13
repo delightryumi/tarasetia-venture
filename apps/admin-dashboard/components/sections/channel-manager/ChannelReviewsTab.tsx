@@ -114,7 +114,7 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
         <div className={styles.container}>
             {/* 1. Score Summary Metrics */}
             <div className={styles.scoreCardsGrid}>
-                <div className={styles.scoreCard} style={{ borderLeft: "4px solid #1e3a2f" }}>
+                <div className={styles.scoreCard} style={{ borderLeft: "4px solid #5c0f1e" }}>
                     <span className={styles.scoreTitle}>Average OTA Score</span>
                     <div className={styles.scoreValueRow}>
                         <span className={styles.scoreValueLarge}>{summary.averageScore}</span>
@@ -236,7 +236,7 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
                             {rev.scores.map(s => (
                                 <div key={s.category} className={styles.subScoreItem}>
                                     <span style={{ fontWeight: 600 }}>{s.name || s.category}:</span>
-                                    <span style={{ color: "#1e3a2f", fontWeight: 700 }}>{s.score}</span>
+                                    <span style={{ color: "#5c0f1e", fontWeight: 700 }}>{s.score}</span>
                                 </div>
                             ))}
                         </div>
@@ -292,9 +292,9 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
                                         gap: "5px",
                                         fontSize: "11px",
                                         fontWeight: 600,
-                                        color: "#1e3a2f",
-                                        background: "#f0fdf4",
-                                        border: "1px solid #86efac",
+                                        color: "#5c0f1e",
+                                        background: "#fdf2f4",
+                                        border: "1px solid #f3cfd6",
                                         padding: "4px 10px",
                                         borderRadius: "4px",
                                         cursor: "pointer"

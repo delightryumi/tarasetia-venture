@@ -141,7 +141,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
             <div className={styles.topBar}>
                 <div className={styles.titleGroup}>
                     <div className={styles.title}>
-                        <Globe size={18} color="#1e3a2f" />
+                        <Globe size={18} color="#09090b" />
                         <span>Google Hotel Search &amp; Free Booking Links (Metasearch Direct)</span>
                         {config.status === "ACTIVE" ? (
                             <span className={styles.statusBadgeActive}>● LIVE GOOGLE LINKS</span>
@@ -164,7 +164,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                         className={styles.btnSecondary}
                         title="Synchronize ARI Feed and Room Metadata to Google Hotel Center"
                     >
-                        <RefreshCw size={14} className={syncing ? "animate-spin" : ""} color="#2563eb" />
+                        <RefreshCw size={14} className={syncing ? "animate-spin" : ""} color="#09090b" />
                         <span>{syncing ? "Pushing Feed..." : "Sync ARI Feed to Google"}</span>
                     </button>
                 </div>
@@ -174,7 +174,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
             <div className={styles.statsGrid}>
                 <div className={styles.statCard}>
                     <span className={styles.statLabel}>Google Hotel Center Status</span>
-                    <span className={styles.statValue} style={{ fontSize: "16px", color: config.isEnabled ? "#16a34a" : "#64748b" }}>
+                    <span className={styles.statValue} style={{ fontSize: "16px", color: config.isEnabled ? "#5c0f1e" : "#71717a" }}>
                         {config.isEnabled ? (config.googleHotelCenterId ? "Verified" : "Pending Account ID") : "Disconnected"}
                     </span>
                 </div>

@@ -109,16 +109,16 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
         {
             title: "Properties & Hotel Groups",
             items: [
-                { id: "groups", label: "Hotel Groups & Properties", shortLabel: "Groups", icon: Building2, badge: "Multi-Hotel", badgeColor: "#0284c7" },
-                { id: "tutorial", label: "Go-Live Roadmap", shortLabel: "Roadmap", icon: Compass, badge: "Guide", badgeColor: "#64748b" }
+                { id: "groups", label: "Hotel Groups & Properties", shortLabel: "Groups", icon: Building2, badge: "Multi-Hotel", badgeColor: "#5c0f1e" },
+                { id: "tutorial", label: "Go-Live Roadmap", shortLabel: "Roadmap", icon: Compass, badge: "Guide", badgeColor: "#71717a" }
             ]
         },
         {
             title: "OTA Distribution & Channels",
             items: [
-                { id: "mapping", label: "Channel Mapping", shortLabel: "Mapping", icon: Key, badge: "Parity", badgeColor: "#16a34a" },
+                { id: "mapping", label: "Channel Mapping", shortLabel: "Mapping", icon: Key, badge: "Parity", badgeColor: "#5c0f1e" },
                 { id: "catalog", label: "Channel Catalog (68+ OTAs)", shortLabel: "Catalog", icon: Globe },
-                { id: "travel_agents", label: "Travel Agents & B2B", shortLabel: "B2B Agents", icon: Users, badge: "B2B", badgeColor: "#7e22ce" },
+                { id: "travel_agents", label: "Travel Agents & B2B", shortLabel: "B2B Agents", icon: Users, badge: "B2B", badgeColor: "#18181b" },
                 { id: "promotions", label: "Promotions & Deals", shortLabel: "Promos", icon: Tag },
                 { id: "google", label: "Google Hotel Links", shortLabel: "Google", icon: Search },
                 { id: "content", label: "Content & Amenities", shortLabel: "Content", icon: UploadCloud }
@@ -145,7 +145,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                               shortLabel: "Booking Engine",
                               icon: Globe,
                               badge: "Direct Suite",
-                              badgeColor: "#6D2B35",
+                              badgeColor: "#5c0f1e",
                           },
                       ]
                     : []),
@@ -189,7 +189,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
             </motion.button>
 
             {/* Sidebar Header: Suite Brand & Switch Back Button */}
-            <div style={{ padding: isCollapsed ? "10px 0" : "4px 8px 12px 8px", borderBottom: "1px solid var(--sidebar-border, #e2e8f0)" }}>
+            <div style={{ padding: isCollapsed ? "10px 0" : "4px 8px 12px 8px", borderBottom: "1px solid var(--sidebar-border, #e4e4e7)" }}>
                 {/* Back to PMS Module button */}
                 <button
                     type="button"
@@ -200,14 +200,14 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                         alignItems: "center",
                         gap: "8px",
                         width: "100%",
-                        padding: isCollapsed ? "8px 0" : "8px 10px",
+                        padding: isCollapsed ? "8px 0" : "7px 10px",
                         justifyContent: isCollapsed ? "center" : "flex-start",
                         borderRadius: "6px",
-                        background: "rgba(30, 58, 47, 0.08)",
-                        border: "1px solid rgba(30, 58, 47, 0.2)",
-                        color: "#1e3a2f",
+                        background: "#fafafa",
+                        border: "1px solid #e4e4e7",
+                        color: "#27272a",
                         fontSize: "11px",
-                        fontWeight: 700,
+                        fontWeight: 600,
                         cursor: "pointer",
                         marginBottom: "10px",
                         transition: "all 0.15s ease"
@@ -223,22 +223,23 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                         <div style={{
                             width: "32px",
                             height: "32px",
-                            borderRadius: "8px",
-                            background: "#1e3a2f",
+                            borderRadius: "6px",
+                            background: "#09090b",
                             color: "#ffffff",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            boxShadow: "0 2px 4px rgba(30, 58, 47, 0.2)",
+                            border: "1px solid #27272a",
+                            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
                             flexShrink: 0
                         }}>
-                            <Globe size={18} />
+                            <Globe size={16} />
                         </div>
                         <div style={{ overflow: "hidden" }}>
-                            <div style={{ fontSize: "12px", fontWeight: 800, color: "#0f172a", whiteSpace: "nowrap" }}>
+                            <div style={{ fontSize: "12px", fontWeight: 700, color: "#09090b", whiteSpace: "nowrap" }}>
                                 Global Channel Manager
                             </div>
-                            <div style={{ fontSize: "10px", color: "#64748b", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
+                            <div style={{ fontSize: "10.5px", color: "#71717a", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
                                 {activeHotelName || "My Tara Hotel"} ({activeHotelCode})
                             </div>
                         </div>
@@ -246,17 +247,18 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                 ) : (
                     <div style={{ display: "flex", justifyContent: "center", padding: "4px 0" }}>
                         <div style={{
-                            width: "36px",
-                            height: "36px",
-                            borderRadius: "8px",
-                            background: "#1e3a2f",
+                            width: "34px",
+                            height: "34px",
+                            borderRadius: "6px",
+                            background: "#09090b",
                             color: "#ffffff",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            boxShadow: "0 2px 4px rgba(30, 58, 47, 0.2)"
+                            border: "1px solid #27272a",
+                            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)"
                         }}>
-                            <Globe size={20} />
+                            <Globe size={18} />
                         </div>
                     </div>
                 )}
@@ -265,15 +267,15 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
             {/* Navigation Groups Container */}
             <div className="nav-group" style={{ marginTop: "8px" }}>
                 {MENU_GROUPS.map((group, gIdx) => (
-                    <div key={gIdx} style={{ marginBottom: "16px" }}>
+                    <div key={gIdx} style={{ marginBottom: "14px" }}>
                         {!isCollapsed && (
                             <div style={{
-                                fontSize: "10px",
-                                fontWeight: 800,
+                                fontSize: "9.5px",
+                                fontWeight: 700,
                                 textTransform: "uppercase",
                                 letterSpacing: "0.06em",
-                                color: "#94a3b8",
-                                padding: "4px 12px 6px 12px"
+                                color: "#a1a1aa",
+                                padding: "4px 10px 6px 10px"
                             }}>
                                 {group.title}
                             </div>
@@ -291,22 +293,23 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                                         onClick={() => handleSelectTab(item.id)}
                                         className="nav-item"
                                         style={{
-                                            backgroundColor: isActive ? "#eff6ff" : "transparent",
-                                            color: isActive ? "#1d4ed8" : "#334155",
-                                            fontWeight: isActive ? 700 : 500,
-                                            border: isActive ? "1px solid #bfdbfe" : "1px solid transparent",
-                                            boxShadow: isActive ? "0 1px 3px rgba(37, 99, 235, 0.08)" : "none",
+                                            backgroundColor: isActive ? "#09090b" : "transparent",
+                                            color: isActive ? "#ffffff" : "#52525b",
+                                            fontWeight: isActive ? 600 : 500,
+                                            border: isActive ? "1px solid #09090b" : "1px solid transparent",
+                                            borderRadius: "6px",
+                                            boxShadow: isActive ? "0 1px 3px rgba(9, 9, 11, 0.12)" : "none",
                                             position: "relative"
                                         }}
                                         title={item.label}
                                     >
                                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: "20px" }}>
-                                            <IconComponent size={16} color={isActive ? "#2563eb" : "#64748b"} />
+                                            <IconComponent size={15} color={isActive ? "#ffffff" : "#71717a"} />
                                         </div>
 
                                         {!isCollapsed && (
                                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: 1, minWidth: 0, gap: "6px" }}>
-                                                <span className="nav-label" style={{ fontSize: "12px", color: isActive ? "#1d4ed8" : "#1e293b" }}>
+                                                <span className="nav-label" style={{ fontSize: "12px", color: isActive ? "#ffffff" : "#27272a" }}>
                                                     {item.label}
                                                 </span>
                                                 {item.badge && (
@@ -314,9 +317,10 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                                                         fontSize: "9px",
                                                         fontWeight: 700,
                                                         padding: "1px 6px",
-                                                        borderRadius: "9999px",
-                                                        background: isActive ? "#dbeafe" : "#f1f5f9",
-                                                        color: isActive ? "#1e40af" : item.badgeColor || "#475569",
+                                                        borderRadius: "4px",
+                                                        background: isActive ? "rgba(255, 255, 255, 0.2)" : "#f4f4f5",
+                                                        color: isActive ? "#ffffff" : item.badgeColor || "#71717a",
+                                                        border: isActive ? "none" : "1px solid #e4e4e7",
                                                         flexShrink: 0
                                                     }}>
                                                         {item.badge}
@@ -335,9 +339,9 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
             {/* Footer: Sync Status + Notification Settings Bell */}
             <div style={{
                 padding: isCollapsed ? "10px 0" : "10px 12px",
-                borderTop: "1px solid var(--sidebar-border, #e2e8f0)",
+                borderTop: "1px solid var(--sidebar-border, #e4e4e7)",
                 fontSize: "10px",
-                color: "#64748b",
+                color: "#71717a",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: isCollapsed ? "center" : "space-between",
@@ -346,13 +350,13 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
             }}>
                 {!isCollapsed && (
                     <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                        <CheckCircle2 size={12} color="#16a34a" />
+                        <CheckCircle2 size={12} style={{ color: "#5c0f1e" }} />
                         <span>Direct 2-Way OTA Sync</span>
                     </span>
                 )}
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     {!isCollapsed && (
-                        <span style={{ fontWeight: 700, color: "#334155" }}>CRS v2.6</span>
+                        <span style={{ fontWeight: 700, color: "#27272a" }}>CRS v2.6</span>
                     )}
                     {/* PWA Notification Settings Bell Button */}
                     <button
@@ -365,18 +369,16 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                             justifyContent: "center",
                             width: "28px",
                             height: "28px",
-                            borderRadius: "7px",
-                            background: "#ecfdf5",
-                            border: "1px solid #a7f3d0",
-                            color: "#059669",
+                            borderRadius: "6px",
+                            background: "#ffffff",
+                            border: "1px solid #e4e4e7",
+                            color: "#52525b",
                             cursor: "pointer",
                             transition: "all 0.15s ease",
                             flexShrink: 0
                         }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#d1fae5"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#ecfdf5"; }}
                     >
-                        <Bell size={14} />
+                        <Bell size={13} />
                     </button>
                 </div>
             </div>

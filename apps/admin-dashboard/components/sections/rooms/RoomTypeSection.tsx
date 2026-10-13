@@ -224,7 +224,6 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                     <button
                         onClick={() => setView('stepper')}
                         className={styles.btnPrimary}
-                        style={{ backgroundColor: "#1e3a2f", borderColor: "#142921" }}
                     >
                         <Plus size={15} strokeWidth={2.5} />
                         <span>Tambah Tipe Kamar</span>
@@ -321,7 +320,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                             className={vhpStyles.btnAddRoom}
                         >
                             <Plus size={14} strokeWidth={2.5} />
-                            <span>+ Kategori Baru</span>
+                            <span>Kategori Baru</span>
                         </button>
                     </div>
                 </div>
@@ -339,7 +338,6 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                         <button
                             onClick={() => setView('stepper')}
                             className={styles.btnPrimary}
-                            style={{ backgroundColor: "#1e3a2f", borderColor: "#142921" }}
                         >
                             <Plus size={15} />
                             <span>Tambah Kategori Pertama</span>
@@ -351,7 +349,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                         <p style={{ margin: 0, fontWeight: 600 }}>Tidak ada tipe kamar yang cocok dengan pencarian "{searchQuery}"</p>
                         <button
                             onClick={() => setSearchQuery("")}
-                            style={{ marginTop: 10, background: "none", border: "none", color: "#1e3a2f", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
+                            style={{ marginTop: 10, background: "none", border: "none", color: "#5c0f1e", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
                         >
                             Reset Pencarian
                         </button>
@@ -565,7 +563,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                         </div>
                         <div className={vhpStyles.tableFooter}>
                             <span className={vhpStyles.footerHint}>
-                                <CheckCircle2 size={13} color="#166534" />
+                                <CheckCircle2 size={13} color="#5c0f1e" />
                                 Menampilkan {filteredTypes.length} dari {totalRoomTypes} kategori kamar hotel
                             </span>
                             <span>Sistem Master Inventory TARA PMS</span>
@@ -886,7 +884,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                         <div className={styles.subPanelHeader}>
                                             <div>
                                                 <div className={styles.subPanelTitle}>
-                                                    <Hash size={14} color="#0071e3" /> Nomor Kamar Fisik (Room Numbers)
+                                                    <Hash size={14} color="#5c0f1e" /> Nomor Kamar Fisik (Room Numbers)
                                                 </div>
                                                 <p className={styles.subPanelSubtitle}>
                                                     Daftar nomor kamar spesifik. Terintegrasi langsung dengan Add Reservation, GRC, dan Kalender Kamar.
@@ -967,7 +965,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                 <div className={styles.formGroupFull}>
                                     <div className={styles.subPanel}>
                                         <div className={styles.subPanelTitle}>
-                                            <BedDouble size={14} color="#0071e3" /> Konfigurasi Tempat Tidur (Bed Planner)
+                                            <BedDouble size={14} color="#5c0f1e" /> Konfigurasi Tempat Tidur (Bed Planner)
                                         </div>
 
                                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, alignItems: "flex-end" }}>

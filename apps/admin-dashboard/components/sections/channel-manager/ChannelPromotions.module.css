@@ -81,9 +81,10 @@
     align-items: center;
     gap: 4px;
     padding: 2px 8px;
-    background: #dcfce7;
-    color: #166534;
-    border-radius: 9999px;
+    background: #fdf2f4;
+    color: #5c0f1e;
+    border: 1px solid #f3cfd6;
+    border-radius: 4px;
     font-size: 10px;
     font-weight: 700;
 }
@@ -93,9 +94,10 @@
     align-items: center;
     gap: 4px;
     padding: 2px 8px;
-    background: #f1f5f9;
-    color: #64748b;
-    border-radius: 9999px;
+    background: #f4f4f5;
+    color: #71717a;
+    border: 1px solid #e4e4e7;
+    border-radius: 4px;
     font-size: 10px;
     font-weight: 700;
 }
@@ -167,19 +169,20 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 16px;
-    background: #1e3a2f;
+    padding: 8px 18px;
+    background: #09090b;
     color: #ffffff;
-    border: 1px solid #13241d;
+    border: 1px solid #09090b;
     border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
 }
 
 .btnPrimary:hover:not(:disabled) {
-    background: #152720;
+    background: #5c0f1e;
+    border-color: #5c0f1e;
 }
 
 .btnSecondary {

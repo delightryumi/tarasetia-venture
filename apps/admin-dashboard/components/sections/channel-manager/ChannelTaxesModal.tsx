@@ -80,7 +80,7 @@ export function ChannelTaxesModal({
             <div className={styles.modal}>
                 <div className={styles.header}>
                     <div className={styles.title}>
-                        <Receipt size={16} color="#1e3a2f" />
+                        <Receipt size={16} color="#09090b" />
                         <span>Distribution Tax &amp; Service Charge Policy (Taxes &amp; Fees Sets)</span>
                     </div>
                     <button

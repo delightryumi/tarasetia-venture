@@ -154,7 +154,7 @@ export function ChannelContentPushTab({ hotelCode }: Props) {
             <div className={styles.topBar}>
                 <div className={styles.titleGroup}>
                     <div className={styles.title}>
-                        <UploadCloud size={16} color="#1e3a2f" />
+                        <UploadCloud size={16} color="#09090b" />
                         <span>Content &amp; Amenities Distribution (Photos &amp; Facilities Content Push)</span>
                     </div>
                     <span className={styles.desc}>
@@ -179,10 +179,10 @@ export function ChannelContentPushTab({ hotelCode }: Props) {
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
                         <div className={styles.cardTitle}>
-                            <ImageIcon size={15} color="#1e3a2f" />
+                            <ImageIcon size={15} color="#5c0f1e" />
                             <span>Property &amp; Room Photo Gallery ({photos.length} Active Photos)</span>
                         </div>
-                        <span style={{ fontSize: "11px", color: "#15803d", fontWeight: 700 }}>
+                        <span style={{ fontSize: "11px", color: "#5c0f1e", fontWeight: 700 }}>
                             {loadingPhotos ? "Loading..." : `${photos.length} Uploaded`}
                         </span>
                     </div>
@@ -201,18 +201,18 @@ export function ChannelContentPushTab({ hotelCode }: Props) {
                             ))}
                         </div>
                     ) : (
-                        <div style={{ padding: "36px 20px", textAlign: "center", background: "#f8fafc", borderRadius: "8px", border: "1px dashed #cbd5e1" }}>
-                            <ImageIcon size={32} color="#94a3b8" style={{ margin: "0 auto 8px" }} />
-                            <div style={{ fontSize: "12px", fontWeight: 700, color: "#475569" }}>
+                        <div style={{ padding: "36px 20px", textAlign: "center", background: "#fafafa", borderRadius: "8px", border: "1px dashed #e4e4e7" }}>
+                            <ImageIcon size={32} color="#71717a" style={{ margin: "0 auto 8px" }} />
+                            <div style={{ fontSize: "12px", fontWeight: 700, color: "#09090b" }}>
                                 No photos uploaded yet
                             </div>
-                            <div style={{ fontSize: "11px", color: "#94a3b8", maxWidth: "360px", margin: "4px auto 0" }}>
+                            <div style={{ fontSize: "11px", color: "#71717a", maxWidth: "360px", margin: "4px auto 0" }}>
                                 Upload photos under <b>Hotel Gallery</b> or <b>Room Types</b> to synchronize across all connected distribution channels.
                             </div>
                         </div>
                     )}
 
-                    <div style={{ fontSize: "11px", color: "#64748b", lineHeight: 1.4 }}>
+                    <div style={{ fontSize: "11px", color: "#71717a", lineHeight: 1.4 }}>
                         Photos are sourced from your active Hotel Gallery and Room Types, formatted for distribution to Airbnb, Google Hotel Ads, and connected OTA extranets.
                     </div>
                 </div>
@@ -221,10 +221,10 @@ export function ChannelContentPushTab({ hotelCode }: Props) {
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
                         <div className={styles.cardTitle}>
-                            <Wifi size={15} color="#1e3a2f" />
+                            <Wifi size={15} color="#09090b" />
                             <span>Hotel Amenities &amp; Facility Checklist</span>
                         </div>
-                        <span style={{ fontSize: "11px", color: "#64748b" }}>Click to Toggle</span>
+                        <span style={{ fontSize: "11px", color: "#71717a" }}>Click to Toggle</span>
                     </div>
 
                     <div className={styles.facilitiesGrid}>
@@ -236,7 +236,7 @@ export function ChannelContentPushTab({ hotelCode }: Props) {
                                     onClick={() => toggleFacility(key)}
                                     className={`${styles.facilityItem} ${isActive ? styles.facilityItemActive : ""}`}
                                 >
-                                    <CheckCircle2 size={14} color={isActive ? "#166534" : "#cbd5e1"} />
+                                    <CheckCircle2 size={14} color={isActive ? "#5c0f1e" : "#d4d4d8"} />
                                     <span>{facilityLabels[key] || key}</span>
                                 </div>
                             );

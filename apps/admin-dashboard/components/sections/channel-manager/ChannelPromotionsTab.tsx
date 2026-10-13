@@ -142,7 +142,7 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
             <div className={styles.topBar}>
                 <div className={styles.titleGroup}>
                     <div className={styles.title}>
-                        <Tag size={18} color="#1e3a2f" />
+                        <Tag size={18} color="#09090b" />
                         <span>OTA Channel Promotion Engine</span>
                     </div>
                     <span className={styles.desc}>
@@ -199,7 +199,7 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                                     {p.minLos ? ` (Min. ${p.minLos} Nights)` : ""}
                                 </td>
                                 <td className={styles.td}>
-                                    <span style={{ fontWeight: 800, color: "#16a34a", fontSize: "13px" }}>
+                                    <span style={{ fontWeight: 800, color: "#5c0f1e", fontSize: "13px" }}>
                                         {p.discountPercent}%
                                     </span>
                                 </td>

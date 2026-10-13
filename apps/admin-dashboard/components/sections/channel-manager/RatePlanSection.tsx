@@ -18,9 +18,14 @@ import {
     BedDouble,
     Minus,
     Copy,
-    Activity
+    Activity,
+    LayoutGrid,
+    List,
+    SlidersHorizontal
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrency } from "@/hooks/useCurrency";
+import { formatCurrencyAmount } from "@/lib/currency-utils";
 import { toast } from "sonner";
 import styles from "./RatePlanSection.module.css";
 
@@ -31,6 +36,7 @@ interface RatePlanSectionProps {
 export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = false }) => {
     const { activeHotelCode } = useAuth();
     const [pingingId, setPingingId] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<"folio" | "ledger">("folio");
 
     const handlePingRatePlan = async (plan: MyTaraRatePlan) => {
         setPingingId(plan.id);
@@ -63,6 +69,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
         navigator.clipboard.writeText(text);
         toast.success(`${label} copied to clipboard!`);
     };
+
     const {
         ratePlans,
         loading: loadingRates,
@@ -75,15 +82,21 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
 
     const { roomTypes, loading: loadingRooms } = useRoomTypes();
 
+    const { currencyCode, symbol, config: currConfig } = useCurrency();
+    const isIDR = (currencyCode || "IDR").toUpperCase() === "IDR";
+    const defaultFallbackRoomPrice = isIDR ? 500000 : (currencyCode === "JPY" ? 5000 : 50);
+    const defaultBreakfastFee = isIDR ? 75000 : (currencyCode === "JPY" ? 1000 : 10);
+    const stepValue = currConfig?.step || (isIDR ? "5000" : "1");
+
     const [searchQuery, setSearchQuery] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPlan, setEditingPlan] = useState<MyTaraRatePlan | null>(null);
 
-    // Form fields (Inverted: Rate Plan as Master, with Room Checklist)
+    // Form fields
     const [formName, setFormName] = useState("");
     const [formCode, setFormCode] = useState("");
     const [formMeals, setFormMeals] = useState<boolean>(false);
-    const [formBreakfastRate, setFormBreakfastRate] = useState<number>(75000);
+    const [formBreakfastRate, setFormBreakfastRate] = useState<number>(defaultBreakfastFee);
     const [formPolicy, setFormPolicy] = useState<"FREE" | "NON_REFUNDABLE" | "MODERATE">("FREE");
     const [formMinStay, setFormMinStay] = useState<number>(1);
     const [formStopSell, setFormStopSell] = useState<boolean>(false);
@@ -98,7 +111,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
         setFormCode(code);
         setFormMeals(meals);
         if (meals && (!formBreakfastRate || formBreakfastRate === 0)) {
-            setFormBreakfastRate(75000);
+            setFormBreakfastRate(defaultBreakfastFee);
         }
     };
 
@@ -128,7 +141,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
         setFormName("Room Only (RO)");
         setFormCode("RO");
         setFormMeals(false);
-        setFormBreakfastRate(75000);
+        setFormBreakfastRate(defaultBreakfastFee);
         setFormPolicy("FREE");
         setFormMinStay(1);
         setFormStopSell(false);
@@ -139,7 +152,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
 
         const initialRates: Record<string, number> = {};
         roomTypes.forEach(rt => {
-            initialRates[rt.id] = Number(rt.price || rt.basePrice || 500000);
+            initialRates[rt.id] = Number(rt.price || rt.basePrice || defaultFallbackRoomPrice);
         });
         setRoomRates(initialRates);
         setIsModalOpen(true);
@@ -150,7 +163,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
         setFormName(plan.name || "");
         setFormCode(plan.code || "");
         setFormMeals(Boolean(plan.mealsIncluded));
-        setFormBreakfastRate(Number(plan.breakfastRate || 75000));
+        setFormBreakfastRate(Number(plan.breakfastRate || defaultBreakfastFee));
         setFormPolicy(plan.cancellationPolicy || "FREE");
         setFormMinStay(plan.minStay || 1);
         setFormStopSell(Boolean(plan.stopSell));
@@ -168,7 +181,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
             } else if (plan.roomTypeId === rt.id && plan.baseRate) {
                 initialRates[rt.id] = Number(plan.baseRate);
             } else {
-                initialRates[rt.id] = Number(rt.price || rt.basePrice || plan.baseRate || 500000);
+                initialRates[rt.id] = Number(rt.price || rt.basePrice || plan.baseRate || defaultFallbackRoomPrice);
             }
         });
         setRoomRates(initialRates);
@@ -178,7 +191,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
     const handleMealsToggle = (meals: boolean) => {
         setFormMeals(meals);
         if (meals && (!formBreakfastRate || formBreakfastRate === 0)) {
-            setFormBreakfastRate(75000);
+            setFormBreakfastRate(defaultBreakfastFee);
         }
     };
 
@@ -197,12 +210,12 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
         const activeRates: Record<string, number> = {};
         selectedRoomTypeIds.forEach(id => {
             const rt = roomTypes.find(r => r.id === id);
-            activeRates[id] = Number(roomRates[id] ?? rt?.price ?? rt?.basePrice ?? 500000);
+            activeRates[id] = Number(roomRates[id] ?? rt?.price ?? rt?.basePrice ?? defaultFallbackRoomPrice);
         });
 
         const primaryRoomId = selectedRoomTypeIds[0] || "";
         const primaryRoomName = selectedRoomNames[0] || "";
-        const primaryBaseRate = activeRates[primaryRoomId] || 500000;
+        const primaryBaseRate = activeRates[primaryRoomId] || defaultFallbackRoomPrice;
 
         const payload: Omit<MyTaraRatePlan, "id"> = {
             hotelCode: activeHotelCode,
@@ -214,9 +227,9 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
             roomTypeNames: selectedRoomNames,
             roomRates: activeRates,
             baseRate: primaryBaseRate,
-            currency: "IDR",
+            currency: currencyCode || editingPlan?.currency || "IDR",
             mealsIncluded: formMeals,
-            breakfastRate: formMeals ? Number(formBreakfastRate || 75000) : 0,
+            breakfastRate: formMeals ? Number(formBreakfastRate || defaultBreakfastFee) : 0,
             cancellationPolicy: formPolicy,
             minStay: Number(formMinStay),
             stopSell: formStopSell
@@ -230,8 +243,8 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
         setIsModalOpen(false);
     };
 
-    const formatIDR = (val: number) => {
-        return new Intl.NumberFormat("id-ID").format(val);
+    const formatPlanRate = (val: number, planCurr?: string) => {
+        return formatCurrencyAmount(val, planCurr || currencyCode);
     };
 
     // Filter
@@ -247,7 +260,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
         );
     });
 
-    // KPI stats (Calculated across master rate plans and unique covered room types)
+    // KPI stats
     const totalPlans = ratePlans.length;
     const allCoveredRoomIds = new Set<string>();
     ratePlans.forEach(p => {
@@ -276,77 +289,107 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
 
     return (
         <div className={styles.container}>
-            {/* 1. KPI Summary Strip */}
-            <div className={styles.kpiSummaryStrip}>
-                <div className={styles.kpiCard}>
-                    <div className={styles.kpiIconBox}>
-                        <Layers size={18} />
-                    </div>
-                    <div className={styles.kpiContent}>
-                        <span className={styles.kpiLabel}>Total Rate Plans</span>
-                        <span className={styles.kpiValue}>{totalPlans}</span>
-                        <span className={styles.kpiSubtext}>Active rate structures</span>
-                    </div>
+            {/* 1. Editorial Header & Masthead */}
+            <div className={styles.editorialMasthead}>
+                <div className={styles.mastheadMeta}>
+                    <span className={styles.mastheadEyebrow}>My Tara Central Reservation · Rate Portfolio</span>
+                    <h2 className={styles.mastheadTitle}>Rate Plans &amp; Distribution</h2>
+                    <p className={styles.mastheadDesc}>
+                        Curated room tariff structures, USALI breakfast allocations, and live two-way ARI distribution across global OTA channels.
+                    </p>
                 </div>
-
-                <div className={styles.kpiCard}>
-                    <div className={styles.kpiIconBox}>
-                        <CheckCircle2 size={18} />
-                    </div>
-                    <div className={styles.kpiContent}>
-                        <span className={styles.kpiLabel}>Assigned Room Types</span>
-                        <span className={styles.kpiValue}>{coveredRooms} / {roomTypes.length}</span>
-                        <span className={styles.kpiSubtext}>Categories configured</span>
-                    </div>
-                </div>
-
-                <div className={styles.kpiCard}>
-                    <div className={styles.kpiIconBox}>
-                        <TrendingUp size={18} />
-                    </div>
-                    <div className={styles.kpiContent}>
-                        <span className={styles.kpiLabel}>Average Base Rate (BAR)</span>
-                        <span className={styles.kpiValue}>Rp {formatIDR(avgRate)}</span>
-                        <span className={styles.kpiSubtext}>PMS net rate average</span>
-                    </div>
-                </div>
-
-                <div className={styles.kpiCard}>
-                    <div className={styles.kpiIconBox}>
-                        <ShieldCheck size={18} />
-                    </div>
-                    <div className={styles.kpiContent}>
-                        <span className={styles.kpiLabel}>Channel Distribution</span>
-                        <span className={styles.kpiValue}>2-Way Active</span>
-                        <span className={styles.kpiSubtext}>ARI Push Ready</span>
+                <div className={styles.mastheadActions}>
+                    <div className={styles.currencyPill} title={`Base Currency: ${currConfig?.name || "IDR"}`}>
+                        <span>{currConfig?.flag || "🇮🇩"}</span>
+                        <span>{currConfig?.code || "IDR"}</span>
+                        <span style={{ color: "#71717a" }}>({currConfig?.symbol || "Rp"})</span>
                     </div>
                 </div>
             </div>
 
-            {/* 2. Toolbar */}
-            <div className={styles.toolbar}>
-                <div className={styles.searchWrapper}>
-                    <Search size={15} color="#94a3b8" />
-                    <input
-                        type="text"
-                        placeholder="Search rate plans, rate codes, or room types..."
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                        className={styles.searchInput}
-                    />
+            {/* 2. Executive Stat Strip (Fluid & Non-Boxy) */}
+            <div className={styles.statStrip}>
+                <div className={styles.statItem}>
+                    <span className={styles.statLabel}>
+                        <Layers size={13} /> Rate Structures
+                    </span>
+                    <span className={styles.statValue}>{totalPlans}</span>
+                    <span className={styles.statSubtext}>Active tariff packages</span>
                 </div>
 
-                <div className={styles.toolbarActions}>
-                    {ratePlans.length === 0 && roomTypes.length > 0 && (
+                <div className={styles.statItem}>
+                    <span className={styles.statLabel}>
+                        <CheckCircle2 size={13} /> Room Categories
+                    </span>
+                    <span className={styles.statValue}>{coveredRooms} / {roomTypes.length}</span>
+                    <span className={styles.statSubtext}>Room inventory mapped</span>
+                </div>
+
+                <div className={styles.statItem}>
+                    <span className={styles.statLabel}>
+                        <TrendingUp size={13} /> Average Base Rate (BAR)
+                    </span>
+                    <span className={styles.statValue}>{formatPlanRate(avgRate)}</span>
+                    <span className={styles.statSubtext}>Net PMS base average</span>
+                </div>
+
+                <div className={styles.statItem}>
+                    <span className={styles.statLabel}>
+                        <ShieldCheck size={13} /> Channel Sync
+                    </span>
+                    <span className={styles.statValue}>2-Way Live</span>
+                    <span className={styles.statSubtext}>Channex ARI push ready</span>
+                </div>
+            </div>
+
+            {/* 3. Editorial Toolbar */}
+            <div className={styles.toolbar}>
+                <div className={styles.toolbarLeft}>
+                    <div className={styles.searchWrapper}>
+                        <Search size={14} color="#71717a" />
+                        <input
+                            type="text"
+                            placeholder="Search rate plans, codes, or rooms..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className={styles.searchInput}
+                        />
+                    </div>
+                </div>
+
+                <div className={styles.toolbarRight}>
+                    {/* View Switcher: Folio Cards vs Ledger */}
+                    <div className={styles.viewSwitcher}>
                         <button
                             type="button"
-                            onClick={() => seedDefaultRatePlans(roomTypes)}
+                            onClick={() => setViewMode("folio")}
+                            className={`${styles.viewBtn} ${viewMode === "folio" ? styles.viewBtnActive : ""}`}
+                            title="Switch to Editorial Folio Cards View"
+                        >
+                            <LayoutGrid size={13} />
+                            <span>Folios</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode("ledger")}
+                            className={`${styles.viewBtn} ${viewMode === "ledger" ? styles.viewBtnActive : ""}`}
+                            title="Switch to Editorial Ledger View"
+                        >
+                            <List size={13} />
+                            <span>Ledger</span>
+                        </button>
+                    </div>
+
+                    {ratePlans.length === 0 && (
+                        <button
+                            type="button"
+                            onClick={() => seedDefaultRatePlans(roomTypes, currencyCode)}
                             disabled={savingRates}
                             className={styles.btnSeed}
-                            title="Auto-create standard Room Only & Bed and Breakfast plans for all room types"
+                            title="Auto-create standard Best Available Rate and Bed & Breakfast plans"
                         >
-                            <TrendingUp size={14} color="#b45309" />
-                            <span>Auto-Generate Standard (RO &amp; BB)</span>
+                            <SlidersHorizontal size={13} />
+                            <span>Generate Standard Rates</span>
                         </button>
                     )}
 
@@ -356,258 +399,355 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                         className={styles.btnAddRatePlan}
                     >
                         <Plus size={14} strokeWidth={2.5} />
-                        <span>+ New Rate Plan</span>
+                        <span>Create Rate Plan</span>
                     </button>
                 </div>
             </div>
 
-            {/* 3. Table / Empty State */}
-            {ratePlans.length === 0 ? (
+            {/* 4. Content Area: Folios or Ledger */}
+            {filteredPlans.length === 0 ? (
                 <div className={styles.emptyState}>
                     <div className={styles.emptyIcon}>
-                        <Layers size={24} />
+                        <Layers size={22} />
                     </div>
-                    <h3 style={{ margin: "4px 0", fontSize: "16px", color: "#0f172a" }}>No Rate Plans Configured</h3>
-                    <p style={{ margin: "0 0 12px 0", fontSize: "12.5px", color: "#64748b", maxWidth: 450 }}>
-                        Rate Plans define room pricing structures (such as Room Only, Bed &amp; Breakfast, Non-Refundable) distributed across OTA channels and the PMS front desk.
+                    <h3 className={styles.emptyTitle}>
+                        {ratePlans.length === 0 ? "No Rate Plans Configured" : "No Matching Rate Plans Found"}
+                    </h3>
+                    <p className={styles.emptySubtitle}>
+                        {ratePlans.length === 0
+                            ? "Establish your property tariff structures (such as Room Only, Bed & Breakfast, or Non-Refundable) to begin channel distribution."
+                            : "Adjust your search filter above to locate specific rate plans or codes."}
                     </p>
-                    <div style={{ display: "flex", gap: "10px" }}>
-                        {roomTypes.length > 0 && (
+                    {ratePlans.length === 0 && (
+                        <div style={{ display: "flex", gap: "10px", marginTop: "4px" }}>
                             <button
                                 type="button"
-                                onClick={() => seedDefaultRatePlans(roomTypes)}
+                                onClick={() => seedDefaultRatePlans(roomTypes, currencyCode)}
+                                disabled={savingRates}
                                 className={styles.btnSeed}
-                                style={{ background: "#f0fdf4", borderColor: "#86efac", color: "#166534" }}
                             >
-                                <TrendingUp size={14} />
-                                <span>Auto-Generate Standard Rates</span>
+                                <SlidersHorizontal size={13} />
+                                <span>Generate Standard Rates</span>
                             </button>
-                        )}
-                        <button
-                            type="button"
-                            onClick={openAddModal}
-                            className={styles.btnAddRatePlan}
-                        >
-                            <Plus size={14} strokeWidth={2.5} />
-                            <span>Create New Rate Plan</span>
-                        </button>
-                    </div>
+                            <button
+                                type="button"
+                                onClick={openAddModal}
+                                className={styles.btnAddRatePlan}
+                            >
+                                <Plus size={14} strokeWidth={2.5} />
+                                <span>Create New Rate Plan</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            ) : viewMode === "folio" ? (
+                /* VIEW A: Editorial Folio Cards */
+                <div className={styles.folioGrid}>
+                    {filteredPlans.map(plan => {
+                        const rates = plan.roomRates && Object.keys(plan.roomRates).length > 0
+                            ? Object.values(plan.roomRates)
+                            : [Number(plan.baseRate || 0)];
+                        const minRate = Math.min(...rates);
+                        const maxRate = Math.max(...rates);
+                        const isRange = minRate !== maxRate && isFinite(minRate) && isFinite(maxRate);
+
+                        const ids = (plan.roomTypeIds && plan.roomTypeIds.length > 0)
+                            ? plan.roomTypeIds
+                            : (plan.roomTypeId ? [plan.roomTypeId] : []);
+
+                        return (
+                            <div key={plan.id} className={styles.folioCard}>
+                                {/* Header */}
+                                <div className={styles.folioCardHeader}>
+                                    <div className={styles.folioTitleArea}>
+                                        <span className={styles.folioCodeBadge}>{plan.code || "STD"}</span>
+                                        <h3 className={styles.folioPlanName}>{plan.name}</h3>
+                                    </div>
+                                    <div className={styles.folioTopActions}>
+                                        <button
+                                            type="button"
+                                            onClick={() => openEditModal(plan)}
+                                            className={styles.btnFolioAction}
+                                            title="Edit Rate Plan"
+                                        >
+                                            <Edit2 size={13} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => deleteRatePlan(plan.id)}
+                                            className={`${styles.btnFolioAction} ${styles.btnFolioDelete}`}
+                                            title="Delete Rate Plan"
+                                        >
+                                            <Trash2 size={13} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Price Showcase */}
+                                <div className={styles.folioPriceBox}>
+                                    <span className={styles.folioPriceLabel}>Net Base Tariff</span>
+                                    <div className={styles.folioPriceAmount}>
+                                        {isRange ? (
+                                            `${formatPlanRate(minRate, plan.currency)} - ${formatPlanRate(maxRate, plan.currency)}`
+                                        ) : (
+                                            formatPlanRate(Number(plan.baseRate || minRate || 0), plan.currency)
+                                        )}
+                                    </div>
+                                    <span className={styles.folioPriceSub}>
+                                        Per night in {plan.currency || currConfig?.code || "IDR"} (PMS Net Rate)
+                                    </span>
+                                </div>
+
+                                {/* Specs Grid */}
+                                <div className={styles.folioSpecsGrid}>
+                                    <div className={styles.folioSpecCol}>
+                                        <span className={styles.folioSpecTitle}>Meal Inclusions</span>
+                                        <span className={styles.folioSpecValue}>
+                                            {plan.mealsIncluded ? (
+                                                <>
+                                                    <Coffee size={12} />
+                                                    <span>Bed &amp; Breakfast</span>
+                                                </>
+                                            ) : (
+                                                <span>Room Only (EP)</span>
+                                            )}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.folioSpecCol}>
+                                        <span className={styles.folioSpecTitle}>Cancellation</span>
+                                        <span className={styles.folioSpecValue}>
+                                            {plan.cancellationPolicy === "NON_REFUNDABLE"
+                                                ? "Non-Refundable"
+                                                : plan.cancellationPolicy === "MODERATE"
+                                                ? "Moderate Policy"
+                                                : "Free Cancellation"}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.folioSpecCol}>
+                                        <span className={styles.folioSpecTitle}>Minimum Stay</span>
+                                        <span className={styles.folioSpecValue}>
+                                            {plan.minStay || 1} Night(s)
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.folioSpecCol}>
+                                        <span className={styles.folioSpecTitle}>Sales Status</span>
+                                        <span className={styles.folioSpecValue}>
+                                            <span className={plan.stopSell ? styles.dotBlack : styles.dotGray} />
+                                            {plan.stopSell ? "Stop Sell (Closed)" : "Open for Booking"}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Assigned Rooms */}
+                                <div className={styles.folioRoomsSection}>
+                                    <div className={styles.folioRoomsHeader}>
+                                        <span className={styles.folioRoomsLabel}>
+                                            Linked Categories ({ids.length} of {roomTypes.length})
+                                        </span>
+                                    </div>
+                                    <div className={styles.folioRoomBadges}>
+                                        {ids.length === 0 ? (
+                                            <span style={{ fontSize: 11, color: "#71717a" }}>All Room Types</span>
+                                        ) : ids.length === roomTypes.length && roomTypes.length > 1 ? (
+                                            <span className={styles.folioRoomPill}>
+                                                <BedDouble size={11} /> All Room Categories ({ids.length})
+                                            </span>
+                                        ) : (
+                                            <>
+                                                {ids.slice(0, 3).map(id => {
+                                                    const rt = roomTypes.find(r => r.id === id);
+                                                    return (
+                                                        <span key={id} className={styles.folioRoomPill}>
+                                                            <BedDouble size={10} /> {rt?.name || plan.roomTypeName || id}
+                                                        </span>
+                                                    );
+                                                })}
+                                                {ids.length > 3 && (
+                                                    <span className={styles.folioRoomPillMore}>
+                                                        +{ids.length - 3} more
+                                                    </span>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Footer: Channel Sync & IDs */}
+                                <div className={styles.folioCardFooter}>
+                                    <div className={styles.folioSyncPill}>
+                                        <span className={plan.channexRatePlanId ? styles.dotBlack : styles.dotGray} />
+                                        <span>{plan.channexRatePlanId ? "Channel Synced" : "PMS Direct"}</span>
+                                    </div>
+
+                                    <div className={styles.folioIdList}>
+                                        <span
+                                            className={styles.idPill}
+                                            onClick={() => copyToClipboard(plan.id, "PMS Plan ID")}
+                                            title="Click to copy PMS Rate Plan ID"
+                                        >
+                                            <Copy size={10} /> PMS: <b>{plan.id.slice(0, 8)}...</b>
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handlePingRatePlan(plan)}
+                                            disabled={pingingId === plan.id}
+                                            className={styles.btnFolioPing}
+                                            title="Ping test ARI sync with Channex distribution server"
+                                        >
+                                            <Activity size={10} className={pingingId === plan.id ? "animate-spin" : ""} />
+                                            <span>{pingingId === plan.id ? "Pinging" : "Ping ARI"}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             ) : (
-                <div className={styles.tableContainer}>
-                    <div className={styles.tableResponsive}>
-                        <table className={styles.table}>
+                /* VIEW B: Editorial Ledger (Airy, Spacious Table) */
+                <div className={styles.ledgerContainer}>
+                    <div className={styles.ledgerResponsive}>
+                        <table className={styles.ledgerTable}>
                             <thead>
                                 <tr>
-                                    <th>Rate Plan &amp; Code</th>
-                                    <th>Assigned Room Types</th>
-                                    <th>Base Net Rate (PMS)</th>
+                                    <th>Rate Plan</th>
+                                    <th>Assigned Rooms</th>
+                                    <th>Base Net Rate</th>
                                     <th>Meal Plan</th>
-                                    <th>Cancellation Policy</th>
-                                    <th>Min. Stay (MLOS)</th>
-                                    <th>Sales Status</th>
-                                    <th>Channel Sync</th>
+                                    <th>Policy</th>
+                                    <th>Min. Stay</th>
+                                    <th>Status</th>
+                                    <th>Sync</th>
                                     <th style={{ textAlign: "right" }}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredPlans.map(plan => (
-                                    <tr key={plan.id}>
-                                        <td>
-                                             <div className={styles.planNameCell}>
-                                                <span className={styles.planName}>{plan.name}</span>
-                                                <span className={styles.planCodeBadge}>{plan.code || "STD-01"}</span>
-                                                <div className={styles.idList}>
-                                                    <span
-                                                        className={styles.idPill}
-                                                        onClick={() => copyToClipboard(plan.id, "PMS Rate Plan ID")}
-                                                        title="Click to copy PMS internal rate plan ID"
-                                                    >
-                                                        <Copy size={10} /> PMS ID: <b>{plan.id}</b>
-                                                    </span>
-                                                    <span
-                                                        className={`${styles.idPill} ${plan.channexRatePlanId ? styles.idPillChannex : ""}`}
-                                                        onClick={() => copyToClipboard(plan.channexRatePlanId || "", "Channel Rate Plan ID")}
-                                                        title="Click to copy Channel Rate Plan UUID"
-                                                    >
-                                                        <Copy size={10} /> Channel ID: <b>{plan.channexRatePlanId || "(Not Synced)"}</b>
+                                {filteredPlans.map(plan => {
+                                    const rates = plan.roomRates && Object.keys(plan.roomRates).length > 0
+                                        ? Object.values(plan.roomRates)
+                                        : [Number(plan.baseRate || 0)];
+                                    const minRate = Math.min(...rates);
+                                    const maxRate = Math.max(...rates);
+                                    const isRange = minRate !== maxRate && isFinite(minRate) && isFinite(maxRate);
+
+                                    const ids = (plan.roomTypeIds && plan.roomTypeIds.length > 0)
+                                        ? plan.roomTypeIds
+                                        : (plan.roomTypeId ? [plan.roomTypeId] : []);
+
+                                    return (
+                                        <tr key={plan.id}>
+                                            <td>
+                                                <div className={styles.ledgerPlanCell}>
+                                                    <span className={styles.ledgerPlanName}>{plan.name}</span>
+                                                    <span className={styles.folioCodeBadge} style={{ alignSelf: "flex-start" }}>
+                                                        {plan.code || "STD"}
                                                     </span>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className={styles.roomBadgesList}>
-                                                {(() => {
-                                                    const ids = (plan.roomTypeIds && plan.roomTypeIds.length > 0)
-                                                        ? plan.roomTypeIds
-                                                        : (plan.roomTypeId ? [plan.roomTypeId] : []);
-                                                    
-                                                    if (ids.length === 0) {
-                                                        return <span style={{ color: "#94a3b8", fontSize: 11 }}>All Room Types</span>;
-                                                    }
-
-                                                    if (ids.length === roomTypes.length && roomTypes.length > 1) {
-                                                        return (
-                                                            <span className={styles.roomBadgePill} style={{ background: "#ecfdf5", borderColor: "#a7f3d0", color: "#065f46" }}>
-                                                                <BedDouble size={11} /> All Room Types ({ids.length})
-                                                            </span>
-                                                        );
-                                                    }
-
-                                                    const visible = ids.slice(0, 2);
-                                                    const remaining = ids.length - 2;
-
-                                                    return (
-                                                        <>
-                                                            {visible.map(id => {
-                                                                const rt = roomTypes.find(r => r.id === id);
-                                                                return (
-                                                                    <span key={id} className={styles.roomBadgePill}>
-                                                                        <BedDouble size={10} /> {rt?.name || plan.roomTypeName || id}
-                                                                    </span>
-                                                                );
-                                                            })}
-                                                            {remaining > 0 && (
-                                                                <span 
-                                                                    className={styles.roomBadgePillMore}
-                                                                    title={ids.slice(2).map(id => roomTypes.find(r => r.id === id)?.name || id).join(", ")}
-                                                                >
-                                                                    +{remaining} more
-                                                                </span>
-                                                            )}
-                                                        </>
-                                                    );
-                                                })()}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                                                {(() => {
-                                                    const rates = plan.roomRates && Object.keys(plan.roomRates).length > 0
-                                                        ? Object.values(plan.roomRates)
-                                                        : [Number(plan.baseRate || 0)];
-                                                    const minRate = Math.min(...rates);
-                                                    const maxRate = Math.max(...rates);
-
-                                                    if (minRate === maxRate || !isFinite(minRate)) {
-                                                        return (
-                                                            <span className={styles.rateMoneyCell}>
-                                                                Rp {formatIDR(Number(plan.baseRate || minRate || 0))}
-                                                            </span>
-                                                        );
-                                                    }
-
-                                                    return (
-                                                        <>
-                                                            <span className={styles.rateMoneyCell} style={{ fontSize: 12.5 }}>
-                                                                Rp {formatIDR(minRate)} - Rp {formatIDR(maxRate)}
-                                                            </span>
-                                                            <span style={{ fontSize: 10, color: "#64748b" }}>
-                                                                Per room type
-                                                            </span>
-                                                        </>
-                                                    );
-                                                })()}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            {plan.mealsIncluded ? (
-                                                <span className={styles.mealBadgeBreakfast} title={`USALI Allocation: Rp ${(plan.breakfastRate || 75000).toLocaleString('id-ID')} / pax`}>
-                                                    <Coffee size={11} /> Bed &amp; Breakfast ({((plan.breakfastRate || 75000) / 1000).toFixed(0)}k/pax)
+                                            </td>
+                                            <td>
+                                                <span style={{ fontSize: 12, color: "#18181b" }}>
+                                                    {ids.length === roomTypes.length
+                                                        ? `All Rooms (${ids.length})`
+                                                        : `${ids.length} Room(s)`}
                                                 </span>
-                                            ) : (
-                                                <span className={styles.mealBadgeRoomOnly}>
-                                                    Room Only (EP)
+                                            </td>
+                                            <td>
+                                                <div className={styles.ledgerRateCell}>
+                                                    {isRange ? (
+                                                        `${formatPlanRate(minRate, plan.currency)} - ${formatPlanRate(maxRate, plan.currency)}`
+                                                    ) : (
+                                                        formatPlanRate(Number(plan.baseRate || minRate || 0), plan.currency)
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {plan.mealsIncluded ? (
+                                                    <span className={styles.badgeMonochrome}>
+                                                        <Coffee size={11} /> Bed &amp; Breakfast
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ color: "#71717a", fontSize: 12 }}>
+                                                        Room Only (EP)
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <span className={styles.badgeMonochrome}>
+                                                    {plan.cancellationPolicy || "FREE"}
                                                 </span>
-                                            )}
-                                        </td>
-                                        <td>
-                                            <span className={`${styles.policyBadge} ${
-                                                plan.cancellationPolicy === "NON_REFUNDABLE"
-                                                    ? styles.policyNonRef
-                                                    : plan.cancellationPolicy === "MODERATE"
-                                                    ? styles.policyModerate
-                                                    : styles.policyFree
-                                            }`}>
-                                                {plan.cancellationPolicy || "FREE"}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span style={{ fontFamily: "monospace", fontWeight: 600 }}>
-                                                {plan.minStay || 1} Night(s)
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {plan.stopSell ? (
-                                                <span className={styles.statusStopSell}>
-                                                    <span className={styles.dotRed} />
-                                                    Stop Sell
+                                            </td>
+                                            <td>
+                                                <span style={{ fontFamily: "var(--font-geist-mono, monospace)", fontVariantNumeric: "tabular-nums" }}>
+                                                    {plan.minStay || 1} Night(s)
                                                 </span>
-                                            ) : (
-                                                <span className={styles.statusSelling}>
-                                                    <span className={styles.dotGreen} />
-                                                    Open
+                                            </td>
+                                            <td>
+                                                <span className={`${styles.badgeMonochrome} ${plan.stopSell ? styles.badgeStopSell : ""}`}>
+                                                    <span className={plan.stopSell ? styles.dotGray : styles.dotBlack} />
+                                                    {plan.stopSell ? "Stop Sell" : "Open"}
                                                 </span>
-                                            )}
-                                        </td>
-                                        <td>
-                                            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                                                <span className={plan.channexRatePlanId ? styles.statusSelling : styles.statusStopSell} style={{ width: "fit-content" }}>
-                                                    <span className={plan.channexRatePlanId ? styles.dotGreen : styles.dotRed} />
-                                                    {plan.channexRatePlanId ? "Synchronized" : "PMS Only"}
-                                                </span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handlePingRatePlan(plan)}
-                                                    disabled={pingingId === plan.id}
-                                                    className={styles.btnPing}
-                                                    title="Ping test this rate plan against the distribution server"
-                                                >
-                                                    <Activity size={11} className={pingingId === plan.id ? "animate-spin" : ""} />
-                                                    <span>{pingingId === plan.id ? "Pinging..." : "Ping ARI"}</span>
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className={styles.actionsCell} style={{ justifyContent: "flex-end" }}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openEditModal(plan)}
-                                                    className={styles.btnActionEdit}
-                                                >
-                                                    <Edit2 size={12} />
-                                                    <span>Edit</span>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => deleteRatePlan(plan.id)}
-                                                    className={styles.btnActionDelete}
-                                                    title="Delete Rate Plan"
-                                                >
-                                                    <Trash2 size={13} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            </td>
+                                            <td>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                    <span className={styles.folioSyncPill}>
+                                                        <span className={plan.channexRatePlanId ? styles.dotBlack : styles.dotGray} />
+                                                        {plan.channexRatePlanId ? "Synced" : "PMS"}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handlePingRatePlan(plan)}
+                                                        disabled={pingingId === plan.id}
+                                                        className={styles.btnFolioPing}
+                                                        title="Ping test"
+                                                    >
+                                                        <Activity size={10} className={pingingId === plan.id ? "animate-spin" : ""} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openEditModal(plan)}
+                                                        className={styles.btnFolioAction}
+                                                        title="Edit Plan"
+                                                    >
+                                                        <Edit2 size={12} />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => deleteRatePlan(plan.id)}
+                                                        className={`${styles.btnFolioAction} ${styles.btnFolioDelete}`}
+                                                        title="Delete Plan"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
                 </div>
             )}
 
-            {/* 4. Elegant Enterprise Modal (Inverted Architecture: Rate Plan with Room Checklist) */}
+            {/* 5. Luxury Editorial Modal */}
             {isModalOpen && (
                 <div className={styles.modalBackdrop} onClick={() => setIsModalOpen(false)}>
-                    <div className={styles.modalBox} style={{ maxWidth: 640 }} onClick={e => e.stopPropagation()}>
+                    <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
                             <div className={styles.modalHeaderLeft}>
-                                <span className={styles.modalCategoryTag}>Hotel PMS &amp; Distribution Setup</span>
+                                <span className={styles.modalCategoryTag}>Hotel CRS &amp; Distribution Architecture</span>
                                 <h3 className={styles.modalTitle}>
-                                    {editingPlan ? "Edit Rate Plan" : "New Rate Plan"}
+                                    {editingPlan ? "Configure Rate Plan" : "Create Rate Plan"}
                                 </h3>
                                 <p className={styles.modalSubtitle}>
-                                    Configure rate plan details, meal plan inclusions, cancellation policies, and assigned room types.
+                                    Define tariff structure, USALI meal allocations, cancellation rules, and room assignments.
                                 </p>
                             </div>
                             <button
@@ -626,7 +766,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                 <div className={styles.formGroup}>
                                     <label className={styles.formLabel}>
                                         <span>Quick Templates</span>
-                                        <span className={styles.formLabelHint}>Click to apply standard hospitality rate templates</span>
+                                        <span className={styles.formLabelHint}>Standard hospitality rate presets</span>
                                     </label>
                                     <div className={styles.presetChipsRow}>
                                         <button
@@ -634,28 +774,28 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                             onClick={() => applyPreset("Room Only (RO)", "RO", false)}
                                             className={styles.presetChip}
                                         >
-                                            🏠 Room Only (RO)
+                                            Room Only (RO)
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => applyPreset("With Breakfast (BB)", "BB", true)}
+                                            onClick={() => applyPreset("Bed & Breakfast (BB)", "BB", true)}
                                             className={styles.presetChip}
                                         >
-                                            🍳 Bed &amp; Breakfast (BB)
+                                            Bed &amp; Breakfast (BB)
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => applyPreset("Non-Refundable (NR)", "NR", false)}
                                             className={styles.presetChip}
                                         >
-                                            🔒 Non-Refundable (NR)
+                                            Non-Refundable (NR)
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => applyPreset("Long Stay Package (LS)", "LS", false)}
+                                            onClick={() => applyPreset("Long Stay Special (LS)", "LS", false)}
                                             className={styles.presetChip}
                                         >
-                                            🗓️ Long Stay (LS)
+                                            Long Stay (LS)
                                         </button>
                                     </div>
                                 </div>
@@ -670,28 +810,28 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                             type="text"
                                             value={formName}
                                             onChange={e => setFormName(e.target.value)}
-                                            placeholder="e.g. Best Available Rate (BAR) or Room Only (RO)"
+                                            placeholder="e.g. Best Available Rate (BAR)"
                                             className={styles.formInput}
                                             required
                                         />
                                     </div>
                                     <div className={styles.formGroup}>
                                         <label className={styles.formLabel}>
-                                            <span>Rate Code (PMS / Channel)</span>
+                                            <span>Rate Code</span>
                                         </label>
                                         <input
                                             type="text"
                                             value={formCode}
                                             onChange={e => setFormCode(e.target.value.toUpperCase())}
-                                            placeholder="RO"
+                                            placeholder="BAR"
                                             className={styles.formInput}
-                                            style={{ fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase" }}
+                                            style={{ fontFamily: "var(--font-geist-mono, monospace)", textTransform: "uppercase" }}
                                             required
                                         />
                                     </div>
                                 </div>
 
-                                {/* Meals & USALI Breakfast Allocation */}
+                                {/* Meals & Policy */}
                                 <div className={styles.formRow}>
                                     <div className={styles.formGroup}>
                                         <label className={styles.formLabel}>
@@ -712,7 +852,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                                 className={`${styles.segmentBtn} ${formMeals ? styles.segmentBtnActive : ""}`}
                                             >
                                                 <Coffee size={13} />
-                                                <span>Bed &amp; Breakfast (CP)</span>
+                                                <span>Bed &amp; Breakfast</span>
                                             </button>
                                         </div>
                                     </div>
@@ -734,31 +874,31 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                 </div>
 
                                 {formMeals && (
-                                    <div className={styles.formGroup} style={{ padding: '10px 14px', background: 'rgba(245, 158, 11, 0.08)', borderRadius: 8, border: '1px dashed rgba(245, 158, 11, 0.4)' }}>
-                                        <label className={styles.formLabel} style={{ marginBottom: 4 }}>
-                                            <span style={{ color: '#d97706', fontWeight: 700 }}>Breakfast Revenue Allocation (USALI Per Pax)</span>
-                                            <span className={styles.formLabelHint}>Dynamic &amp; USALI Standard</span>
-                                        </label>
+                                    <div className={styles.allocationBox}>
+                                        <div className={styles.allocationBoxTitle}>
+                                            <span>Breakfast Revenue Allocation (USALI Per Pax)</span>
+                                            <span className={styles.formLabelHint}>Per pax per night</span>
+                                        </div>
                                         <div className={styles.currencyInputWrapper}>
-                                            <span className={styles.currencyPrefix}>Rp</span>
+                                            <span className={styles.currencyPrefix}>{currConfig?.symbol || "Rp"}</span>
                                             <input
                                                 type="number"
                                                 min={0}
-                                                step={5000}
+                                                step={stepValue}
                                                 value={formBreakfastRate}
                                                 onChange={e => setFormBreakfastRate(Number(e.target.value) || 0)}
                                                 className={styles.currencyInput}
-                                                placeholder="75000"
+                                                placeholder={String(defaultBreakfastFee)}
                                                 required
                                             />
                                         </div>
-                                        <p style={{ fontSize: 11, color: '#64748b', margin: '4px 0 0 0', lineHeight: 1.3 }}>
-                                            Complies with <strong>USALI (11th/12th Edition)</strong>: automatically allocated to <strong>F&amp;B Breakfast Revenue</strong> per pax per night; remaining balance posts to <strong>Rooms Revenue (Net)</strong>.
+                                        <p className={styles.allocationBoxDesc}>
+                                            Complies with <strong>USALI standards</strong>: automatically separated into <strong>F&amp;B Breakfast Revenue</strong> per guest per night; remaining balance credited to Rooms Revenue.
                                         </p>
                                     </div>
                                 )}
 
-                                {/* Min Stay & Stop Sell */}
+                                {/* Min Stay & Sales Status */}
                                 <div className={styles.formRow}>
                                     <div className={styles.formGroup}>
                                         <label className={styles.formLabel}>
@@ -793,7 +933,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                                 onClick={() => setFormStopSell(false)}
                                                 className={`${styles.segmentBtn} ${!formStopSell ? styles.segmentBtnActive : ""}`}
                                             >
-                                                <span className={styles.dotGreen} />
+                                                <span className={styles.dotBlack} />
                                                 <span>Open / Active</span>
                                             </button>
                                             <button
@@ -801,22 +941,22 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                                 onClick={() => setFormStopSell(true)}
                                                 className={`${styles.segmentBtn} ${formStopSell ? styles.segmentBtnActive : ""}`}
                                             >
-                                                <span className={styles.dotRed} />
-                                                <span>Stop Sell (Closed)</span>
+                                                <span className={styles.dotGray} />
+                                                <span>Stop Sell</span>
                                             </button>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Room Checklist Section */}
+                                {/* Room Checklist */}
                                 <div className={styles.roomsChecklistSection}>
                                     <div className={styles.roomsChecklistHeader}>
                                         <div className={styles.roomsChecklistTitleBox}>
                                             <span className={styles.roomsChecklistTitle}>
-                                                Assigned Room Types ({selectedRoomTypeIds.length} / {roomTypes.length} Selected)
+                                                Assigned Room Categories ({selectedRoomTypeIds.length} / {roomTypes.length} Selected)
                                             </span>
                                             <span className={styles.roomsChecklistSubtitle}>
-                                                Check room types applicable for this rate plan and set the base net rate per night for each room
+                                                Select applicable room categories and specify base net tariff per night
                                             </span>
                                         </div>
                                         <div className={styles.roomsChecklistActions}>
@@ -842,7 +982,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                             const isChecked = selectedRoomTypeIds.includes(rt.id);
                                             const currentRate = roomRates[rt.id] !== undefined
                                                 ? roomRates[rt.id]
-                                                : Number(rt.price || rt.basePrice || 500000);
+                                                : Number(rt.price || rt.basePrice || defaultFallbackRoomPrice);
 
                                             return (
                                                 <div
@@ -863,23 +1003,24 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                                         <div className={styles.roomCheckInfo}>
                                                             <span className={styles.roomCheckName}>{rt.name}</span>
                                                             <span className={styles.roomCheckUnits}>
-                                                                <BedDouble size={11} /> {rt.physicalRooms?.length || rt.roomCount || 0} Physical Units
+                                                                <BedDouble size={11} /> {rt.physicalRooms?.length || rt.roomCount || 0} Units
                                                             </span>
                                                         </div>
                                                     </div>
 
                                                     {isChecked ? (
                                                         <div className={styles.roomCheckPriceWrapper}>
-                                                            <span className={styles.roomCheckPriceLabel}>Base Net Rate:</span>
+                                                            <span className={styles.roomCheckPriceLabel}>Base Rate:</span>
                                                             <div className={styles.roomCheckPriceBox}>
-                                                                <span className={styles.roomCheckPrefix}>Rp</span>
+                                                                <span className={styles.roomCheckPrefix}>{currConfig?.symbol || "Rp"}</span>
                                                                 <input
                                                                     type="number"
                                                                     min={0}
-                                                                    step={5000}
+                                                                    step={stepValue}
                                                                     value={currentRate}
                                                                     onChange={e => handleRoomRateChange(rt.id, Number(e.target.value) || 0)}
                                                                     className={styles.roomCheckInput}
+                                                                    placeholder={String(defaultFallbackRoomPrice)}
                                                                     required
                                                                 />
                                                             </div>
@@ -909,7 +1050,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                     disabled={savingRates}
                                     className={styles.btnSubmit}
                                 >
-                                    {savingRates ? "Saving..." : editingPlan ? "Save Changes" : "+ Create Rate Plan"}
+                                    {savingRates ? "Saving..." : editingPlan ? "Save Changes" : "Create Rate Plan"}
                                 </button>
                             </div>
                         </form>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from "firebase/firestore";
 import { ChannexClient } from "@/lib/channex/channexClient";
 
 const channex = new ChannexClient();
@@ -96,8 +96,40 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        // 4. Merge Groups (Channex Groups + Firestore Groups)
-        const combinedGroups: any[] = [...localGroups];
+        // 4. Merge Groups & Auto-Prune deleted Channex groups
+        let activeLocalGroups = [...localGroups];
+        if (apiKey && Array.isArray(channexGroups)) {
+            const channexGroupIds = new Set(channexGroups.map((cg) => cg.id));
+            const retainedLocalGroups: any[] = [];
+
+            for (const lg of localGroups) {
+                const cxId = lg.channexGroupId || (typeof lg.id === "string" && lg.id.startsWith("cx_") ? lg.id.replace("cx_", "") : null);
+                // If it's a Channex-linked group, but no longer exists on Channex -> delete from Firestore!
+                if (cxId && !channexGroupIds.has(cxId)) {
+                    try {
+                        await deleteDoc(doc(db, "hotel_groups", lg.id));
+                        // Clean up references in hotels
+                        for (const h of localHotels) {
+                            if (h.groupId === lg.id || h.groupId === cxId || h.groupId === `cx_${cxId}`) {
+                                await updateDoc(doc(db, "hotels", h.hotelCode), {
+                                    groupId: "",
+                                    groupName: "",
+                                });
+                                h.groupId = "";
+                                h.groupName = "";
+                            }
+                        }
+                    } catch (pErr: any) {
+                        console.warn("[Auto-Prune Group Error]:", pErr.message);
+                    }
+                } else {
+                    retainedLocalGroups.push(lg);
+                }
+            }
+            activeLocalGroups = retainedLocalGroups;
+        }
+
+        const combinedGroups: any[] = [...activeLocalGroups];
         channexGroups.forEach((cg) => {
             const existing = combinedGroups.find((lg) => lg.channexGroupId === cg.id || lg.id === cg.id);
             if (!existing) {
@@ -228,6 +260,85 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
     try {
         const body = await req.json();
+
+        // Mode A: Rename / Update Hotel Group Details
+        if (body.action === "update_group" || (!body.hotelCode && body.groupId && body.name)) {
+            const { groupId, name, description, apiKey: customKey, environment: customEnv } = body;
+            if (!groupId || !name || !name.trim()) {
+                return NextResponse.json({ success: false, error: "groupId dan name wajib diisi." }, { status: 400 });
+            }
+            const groupTitle = name.trim();
+            let channexGroupId = "";
+
+            const groupRef = doc(db, "hotel_groups", groupId);
+            const groupSnap = await getDoc(groupRef);
+            if (groupSnap.exists()) {
+                channexGroupId = groupSnap.data()?.channexGroupId || "";
+                await updateDoc(groupRef, {
+                    name: groupTitle,
+                    description: description !== undefined ? description : (groupSnap.data()?.description || ""),
+                    updatedAt: new Date().toISOString()
+                });
+            } else {
+                if (groupId.startsWith("cx_")) {
+                    channexGroupId = groupId.replace("cx_", "");
+                }
+                await setDoc(groupRef, {
+                    id: groupId,
+                    name: groupTitle,
+                    description: description || "",
+                    channexGroupId,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+            }
+            if (!channexGroupId && groupId.startsWith("cx_")) {
+                channexGroupId = groupId.replace("cx_", "");
+            }
+
+            // Lookup apiKey
+            let effKey = customKey || "";
+            let effEnv = customEnv || "staging";
+            if (!effKey) {
+                const hotelsSnap = await getDocs(collection(db, "hotels"));
+                hotelsSnap.forEach((d) => {
+                    const cm = d.data()?.channelManager || {};
+                    const k = cm.apiKey || d.data()?.channexApiKey;
+                    if (k && !effKey) {
+                        effKey = k;
+                        effEnv = cm.env || "staging";
+                    }
+                });
+            }
+
+            // Update in Channex
+            if (channexGroupId && effKey) {
+                try {
+                    await channex.updateGroup(channexGroupId, groupTitle, effKey, effEnv);
+                } catch (cxErr: any) {
+                    console.warn("[Channex Update Group Warning]:", cxErr.message);
+                }
+            }
+
+            // Also update groupName in hotels collection for assigned hotels
+            const hotelsSnap = await getDocs(collection(db, "hotels"));
+            for (const d of hotelsSnap.docs) {
+                const data = d.data();
+                if (data.groupId === groupId || (channexGroupId && (data.groupId === channexGroupId || data.groupId === `cx_${channexGroupId}`))) {
+                    await updateDoc(doc(db, "hotels", d.id), {
+                        groupName: groupTitle,
+                        updatedAt: new Date().toISOString()
+                    });
+                }
+            }
+
+            return NextResponse.json({
+                success: true,
+                message: `Hotel Group berhasil diubah menjadi "${groupTitle}".`
+            });
+        }
+
+        // Mode B: Assign Hotel to Group
         let { hotelCode, groupId, groupName, apiKey, environment } = body;
 
         if (!hotelCode) {
@@ -277,7 +388,7 @@ export async function PUT(req: NextRequest) {
 
                 await channex.updateProperty(
                     channexPropertyId,
-                    { group_id: cxGroupId || undefined },
+                    { group_id: cxGroupId ? cxGroupId : (null as any) },
                     apiKey,
                     environment || hotelData.channelManager?.env || "staging"
                 );
@@ -297,3 +408,124 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ success: false, error: err.message }, { status: 500 });
     }
 }
+
+export async function DELETE(req: NextRequest) {
+    try {
+        const { searchParams } = new URL(req.url);
+        let groupId = searchParams.get("groupId") || "";
+        let apiKey = searchParams.get("apiKey") || "";
+        let env = (searchParams.get("env") as "staging" | "production") || "staging";
+
+        if (!groupId) {
+            const body = await req.json().catch(() => ({}));
+            groupId = body.groupId || "";
+            if (!apiKey) apiKey = body.apiKey || "";
+            if (body.env) env = body.env;
+        }
+
+        if (!groupId) {
+            return NextResponse.json({ success: false, error: "groupId wajib disertakan." }, { status: 400 });
+        }
+
+        // 1. Check if group exists in Firestore
+        const groupRef = doc(db, "hotel_groups", groupId);
+        const groupSnap = await getDoc(groupRef);
+        let channexGroupId = "";
+        let groupTitle = groupId;
+
+        if (groupSnap.exists()) {
+            const gData = groupSnap.data();
+            channexGroupId = gData.channexGroupId || "";
+            groupTitle = gData.name || groupId;
+        }
+        if (!channexGroupId && groupId.startsWith("cx_")) {
+            channexGroupId = groupId.replace("cx_", "");
+        }
+
+        // Lookup API key if not provided
+        if (!apiKey) {
+            const hotelsSnap = await getDocs(collection(db, "hotels"));
+            hotelsSnap.forEach((d) => {
+                const cm = d.data()?.channelManager || {};
+                const key = cm.apiKey || d.data()?.channexApiKey;
+                if (key && !apiKey) {
+                    apiKey = key;
+                    if (!env) env = cm.env || "staging";
+                }
+            });
+        }
+
+        // 2. Unlink properties and delete from Channex API if linked
+        if (channexGroupId && apiKey) {
+            try {
+                // First unlink all properties associated with this group in Channex
+                const channexPropsRes = await channex.getProperties(apiKey, env).catch(() => ({ data: [] }));
+                const channexProps = channexPropsRes?.data || [];
+                for (const cp of channexProps) {
+                    if (cp.groupId === channexGroupId || cp.group_id === channexGroupId) {
+                        try {
+                            await channex.updateProperty(cp.id, { group_id: null as any }, apiKey, env);
+                        } catch (uErr: any) {
+                            console.warn(`[Channex Unlink Property ${cp.id} Warning]:`, uErr.message);
+                        }
+                    }
+                }
+                // Now delete group from Channex
+                await channex.deleteGroup(channexGroupId, apiKey, env);
+            } catch (cxErr: any) {
+                console.error("[Channex Delete Group Error]:", cxErr.message);
+                const errMsg = cxErr.message || "";
+                if (errMsg.toLowerCase().includes("at least one group") || errMsg.includes("should have at least one group")) {
+                    return NextResponse.json({
+                        success: false,
+                        error: "Channex mengharuskan akun Anda memiliki minimal 1 Hotel Group (Root Group). Grup ini tidak dapat dihapus karena merupakan satu-satunya grup yang ada di akun Channex Anda. Silakan buat grup pengganti terlebih dahulu sebelum menghapus grup ini, atau gunakan opsi Edit Nama."
+                    }, { status: 422 });
+                }
+                return NextResponse.json({
+                    success: false,
+                    error: `Gagal menghapus grup di Channex: ${errMsg}`
+                }, { status: 400 });
+            }
+        }
+
+        // 3. Delete from Firestore hotel_groups
+        await deleteDoc(groupRef).catch(() => {});
+        if (groupId.startsWith("cx_")) {
+            await deleteDoc(doc(db, "hotel_groups", groupId.replace("cx_", ""))).catch(() => {});
+        }
+        if (channexGroupId) {
+            const grpQuerySnap = await getDocs(collection(db, "hotel_groups"));
+            for (const gd of grpQuerySnap.docs) {
+                if (gd.data()?.channexGroupId === channexGroupId || gd.id === channexGroupId || gd.id === `cx_${channexGroupId}`) {
+                    await deleteDoc(doc(db, "hotel_groups", gd.id)).catch(() => {});
+                }
+            }
+        }
+
+        // 4. Clean up hotels referencing this group
+        const hotelsSnap = await getDocs(collection(db, "hotels"));
+        for (const d of hotelsSnap.docs) {
+            const data = d.data();
+            if (
+                data.groupId === groupId || 
+                (channexGroupId && (data.groupId === channexGroupId || data.groupId === `cx_${channexGroupId}`)) ||
+                (groupId.startsWith("cx_") && data.groupId === groupId.replace("cx_", ""))
+            ) {
+                await updateDoc(doc(db, "hotels", d.id), {
+                    groupId: "",
+                    groupName: "",
+                    updatedAt: new Date().toISOString()
+                });
+            }
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: `Group "${groupTitle}" berhasil dihapus dari Tara CRS dan Channel Manager.`
+        });
+    } catch (err: any) {
+        console.error("[Channex Groups DELETE Error]:", err);
+        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    }
+}
+

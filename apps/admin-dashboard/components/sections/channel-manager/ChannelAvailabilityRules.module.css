@@ -44,18 +44,19 @@
     align-items: center;
     gap: 6px;
     padding: 7px 14px;
-    background: #1e3a2f;
+    background: #09090b;
     color: #ffffff;
     font-size: 12px;
     font-weight: 600;
-    border: 1px solid #13241d;
+    border: 1px solid #09090b;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .btnAdd:hover {
-    background: #152720;
+    background: #5c0f1e;
+    border-color: #5c0f1e;
 }
 
 /* ── Table Grid ── */
@@ -138,7 +139,7 @@
 }
 
 .dayPillActive {
-    background: #1e3a2f;
+    background: #09090b;
     color: #ffffff;
 }
 
@@ -211,7 +212,7 @@
 }
 
 .input:focus {
-    border-color: #1e3a2f;
+    border-color: #09090b;
 }
 
 .modalFooter {
@@ -238,9 +239,14 @@
     padding: 0 16px;
     font-size: 12px;
     font-weight: 600;
-    background: #1e3a2f;
+    background: #09090b;
     color: #ffffff;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.btnSave:hover {
+    background: #5c0f1e;
 }

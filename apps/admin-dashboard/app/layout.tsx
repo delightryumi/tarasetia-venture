@@ -67,6 +67,13 @@ export default function RootLayout({
                   );
                 });
               }
+
+              // Prevent mouse scroll wheel from altering number inputs globally
+              window.addEventListener('wheel', function(e) {
+                if (document.activeElement && document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'number') {
+                  document.activeElement.blur();
+                }
+              }, { passive: true });
             `,
           }}
         />

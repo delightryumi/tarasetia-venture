@@ -1,12 +1,14 @@
+/* ChannelNotificationWidget.module.css — Clean Monochrome & Subtle Burgundy */
+
 .card {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e4e4e7;
     border-radius: 8px;
-    padding: 16px 20px;
+    padding: 18px 22px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    gap: 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .topRow {
@@ -20,15 +22,16 @@
 .titleArea {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .iconCircle {
     width: 36px;
     height: 36px;
-    border-radius: 8px;
-    background: #eff6ff;
-    color: #2563eb;
+    border-radius: 6px;
+    background: #fdf2f4;
+    color: #5c0f1e;
+    border: 1px solid #f3cfd6;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -36,41 +39,44 @@
 }
 
 .titleText {
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 700;
-    color: #0f172a;
+    color: #09090b;
     margin: 0;
+    letter-spacing: -0.01em;
 }
 
 .subtitleText {
     font-size: 12px;
-    color: #64748b;
-    margin: 2px 0 0;
+    color: #71717a;
+    margin: 3px 0 0;
+    line-height: 1.4;
 }
 
 .badgeActive {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 4px 10px;
-    border-radius: 9999px;
-    background: #ecfdf5;
-    border: 1px solid #a7f3d0;
-    color: #065f46;
-    font-size: 11px;
-    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: #09090b;
+    border: 1px solid #09090b;
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
 }
 
 .badgeInactive {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 4px 10px;
-    border-radius: 9999px;
-    background: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    color: #475569;
-    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    color: #71717a;
+    font-size: 10.5px;
     font-weight: 600;
 }
 
@@ -78,27 +84,27 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 4px 10px;
-    border-radius: 9999px;
+    padding: 3px 8px;
+    border-radius: 4px;
     background: #fef2f2;
     border: 1px solid #fecaca;
     color: #991b1b;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 10.5px;
+    font-weight: 600;
 }
 
 .dot {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
 }
 
 .dotGreen {
-    background: #10b981;
+    background: #ffffff;
 }
 
 .dotGray {
-    background: #94a3b8;
+    background: #a1a1aa;
 }
 
 .dotRed {
@@ -112,7 +118,7 @@
     flex-wrap: wrap;
     gap: 10px;
     padding-top: 10px;
-    border-top: 1px solid #f1f5f9;
+    border-top: 1px solid #f4f4f5;
 }
 
 .featureList {
@@ -121,7 +127,7 @@
     flex-wrap: wrap;
     gap: 16px;
     font-size: 11px;
-    color: #475569;
+    color: #71717a;
 }
 
 .featureItem {
@@ -145,19 +151,20 @@
     font-size: 12px;
     font-weight: 600;
     border-radius: 6px;
-    background: #2563eb;
+    background: #09090b;
     color: #ffffff;
-    border: 1px solid #1d4ed8;
+    border: 1px solid #09090b;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
 }
 
-.btnPrimary:hover {
-    background: #1d4ed8;
+.btnPrimary:hover:not(:disabled) {
+    background: #5c0f1e;
+    border-color: #5c0f1e;
 }
 
 .btnPrimary:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
@@ -170,19 +177,20 @@
     font-weight: 600;
     border-radius: 6px;
     background: #ffffff;
-    color: #334155;
-    border: 1px solid #cbd5e1;
+    color: #18181b;
+    border: 1px solid #e4e4e7;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
-.btnSecondary:hover {
-    background: #f8fafc;
-    border-color: #94a3b8;
+.btnSecondary:hover:not(:disabled) {
+    background: #f4f4f5;
+    border-color: #a1a1aa;
+    color: #09090b;
 }
 
 .btnSecondary:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
@@ -195,32 +203,32 @@
     font-weight: 600;
     border-radius: 6px;
     background: #ffffff;
-    color: #b91c1c;
-    border: 1px solid #fca5a5;
+    color: #991b1b;
+    border: 1px solid #fecaca;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
-.btnDangerOutline:hover {
+.btnDangerOutline:hover:not(:disabled) {
     background: #fef2f2;
+    border-color: #f87171;
 }
 
 .btnDangerOutline:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
-/* WhatsApp Notification Styles */
-/* WhatsApp Notification Modern Card & Form Styles */
+/* WhatsApp Notification Clean Aesthetics */
 .waCard {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 20px 24px;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    padding: 18px 22px;
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    gap: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .metaMasterBanner {
@@ -230,11 +238,11 @@
     flex-wrap: wrap;
     gap: 12px;
     padding: 12px 16px;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 8px;
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-radius: 6px;
     font-size: 12px;
-    color: #166534;
+    color: #18181b;
 }
 
 .metaMasterLeft {
@@ -246,7 +254,7 @@
 .metaMasterPills {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
 }
 
@@ -254,13 +262,28 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 3px 9px;
+    padding: 3px 8px;
     background: #ffffff;
-    border: 1px solid #86efac;
-    border-radius: 9999px;
+    border: 1px solid #e4e4e7;
+    border-radius: 4px;
+    font-family: var(--font-geist-mono, monospace);
+    font-variant-numeric: tabular-nums;
     font-size: 11px;
     font-weight: 600;
-    color: #15803d;
+    color: #27272a;
+}
+
+.metaPillActive {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    background: #fdf2f4;
+    border: 1px solid #f3cfd6;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #5c0f1e;
 }
 
 .metaMasterRight {
@@ -278,23 +301,23 @@
     font-weight: 600;
     border-radius: 6px;
     background: #ffffff;
-    border: 1px solid #cbd5e1;
-    color: #475569;
+    border: 1px solid #e4e4e7;
+    color: #52525b;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .btnLockToggle:hover {
-    background: #f8fafc;
-    color: #0f172a;
-    border-color: #94a3b8;
+    background: #f4f4f5;
+    color: #09090b;
+    border-color: #a1a1aa;
 }
 
 .metaUnlockBox {
     padding: 12px 16px;
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    border-radius: 8px;
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -304,21 +327,22 @@
 .pinInput {
     padding: 6px 10px;
     font-size: 12px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e4e4e7;
     border-radius: 6px;
     background: #ffffff;
+    color: #09090b;
     width: 140px;
 }
 
 .pinInput:focus {
     outline: none;
-    border-color: #d97706;
+    border-color: #09090b;
 }
 
 .waInputsGridSingle {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 14px;
     width: 100%;
 }
 
@@ -347,24 +371,26 @@
     justify-content: space-between;
     font-size: 12px;
     font-weight: 600;
-    color: #334155;
+    color: #27272a;
 }
 
 .waLabel {
     font-size: 12px;
     font-weight: 600;
-    color: #334155;
-    white-space: nowrap;
+    color: #27272a;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .waExtLink {
     font-size: 11px;
-    color: #2563eb;
+    color: #5c0f1e;
     display: inline-flex;
     align-items: center;
     gap: 3px;
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .waExtLink:hover {
@@ -372,12 +398,14 @@
 }
 
 .waInput {
-    padding: 9px 12px;
+    padding: 8px 12px;
     font-size: 13px;
+    font-family: var(--font-geist-mono, monospace);
+    font-variant-numeric: tabular-nums;
     border-radius: 6px;
-    border: 1px solid #cbd5e1;
-    background: #f8fafc;
-    color: #0f172a;
+    border: 1px solid #e4e4e7;
+    background: #ffffff;
+    color: #09090b;
     transition: all 0.15s ease;
     width: 100%;
     box-sizing: border-box;
@@ -385,9 +413,23 @@
 
 .waInput:focus {
     outline: none;
-    border-color: #2563eb;
+    border-color: #09090b;
     background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.06);
+}
+
+.recipientTag {
+    font-size: 11px;
+    padding: 3px 8px;
+    background: #fafafa;
+    border-radius: 4px;
+    color: #18181b;
+    border: 1px solid #e4e4e7;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-geist-mono, monospace);
+    font-variant-numeric: tabular-nums;
 }
 
 .waBottomControls {
@@ -396,24 +438,24 @@
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 16px;
-    padding-top: 6px;
-    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+    border-top: 1px solid #f4f4f5;
 }
 
 .waCheckboxes {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 18px;
     flex-wrap: wrap;
 }
 
 .waCheckboxLabel {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     font-size: 12px;
     font-weight: 500;
-    color: #334155;
+    color: #27272a;
     cursor: pointer;
     user-select: none;
 }
@@ -421,14 +463,15 @@
 .waCheckboxLabel input[type="checkbox"] {
     width: 15px;
     height: 15px;
-    accent-color: #2563eb;
+    accent-color: #09090b;
     cursor: pointer;
+    border-radius: 3px;
 }
 
 .waBtnRow {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .btnSuccess {
@@ -439,21 +482,22 @@
     font-size: 12px;
     font-weight: 600;
     border-radius: 6px;
-    background: #059669;
+    background: #09090b;
     color: #ffffff;
-    border: 1px solid #047857;
+    border: 1px solid #09090b;
     cursor: pointer;
     transition: all 0.15s ease;
     white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.btnSuccess:hover {
-    background: #047857;
-    box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2);
+.btnSuccess:hover:not(:disabled) {
+    background: #5c0f1e;
+    border-color: #5c0f1e;
 }
 
 .btnSuccess:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
@@ -464,9 +508,10 @@
     flex-wrap: wrap;
     gap: 8px;
     padding: 10px 14px;
-    border-radius: 7px;
+    border-radius: 6px;
     font-size: 11px;
     font-weight: 500;
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
+    color: #52525b;
 }
-
-

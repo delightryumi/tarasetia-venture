@@ -24,9 +24,10 @@
 }
 
 .mainTitle {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
-    color: #1e293b;
+    color: #09090b;
+    letter-spacing: -0.01em;
     margin: 0;
 }
 
@@ -34,20 +35,20 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    color: #2563eb;
-    background: #eff6ff;
-    padding: 3px 10px;
-    border-radius: 9999px;
-    border: 1px solid #bfdbfe;
+    color: #5c0f1e;
+    background: #fdf2f4;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #f3cfd6;
 }
 
 .channelDot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: #ef4444;
+    background: #5c0f1e;
 }
 
 /* ── Filter Bar ── */
@@ -58,10 +59,9 @@
     flex-wrap: wrap;
     gap: 10px;
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e4e4e7;
     border-radius: 6px;
     padding: 10px 14px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .filterInputs {
@@ -75,18 +75,18 @@
 .filterDateInput {
     padding: 6px 12px;
     font-size: 12px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e4e4e7;
     border-radius: 4px;
     background: #ffffff;
-    color: #334155;
+    color: #09090b;
     outline: none;
     transition: border-color 0.15s ease;
 }
 
 .filterSelect:focus,
 .filterDateInput:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    border-color: #5c0f1e;
+    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.1);
 }
 
 .btnRefresh {
@@ -97,25 +97,24 @@
     font-size: 12px;
     font-weight: 600;
     background: #ffffff;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e4e4e7;
     border-radius: 4px;
-    color: #334155;
+    color: #18181b;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .btnRefresh:hover {
-    background: #f8fafc;
-    border-color: #94a3b8;
+    background: #fafafa;
+    border-color: #d4d4d8;
 }
 
 /* ── Table Card ── */
 .tableCard {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e4e4e7;
     border-radius: 6px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .table {
@@ -127,10 +126,10 @@
 
 .th {
     background: #fafafa;
-    color: #475569;
-    font-weight: 700;
+    color: #71717a;
+    font-weight: 600;
     padding: 12px 16px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e4e4e7;
     font-size: 12px;
     user-select: none;
 }
@@ -140,21 +139,21 @@
 }
 
 .thWithSort:hover {
-    color: #0f172a;
+    color: #09090b;
 }
 
 .tr {
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f4f4f5;
     transition: background 0.15s ease;
 }
 
 .tr:hover {
-    background: #f8fafc;
+    background: #fafafa;
 }
 
 .td {
-    padding: 13px 16px;
-    color: #1e293b;
+    padding: 12px 16px;
+    color: #09090b;
     vertical-align: middle;
 }
 
@@ -164,52 +163,49 @@
     align-items: center;
     gap: 8px;
     font-weight: 500;
-    color: #0f172a;
+    color: #09090b;
 }
 
 .statusRingSuccess {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: #22c55e;
-    box-shadow: 0 0 0 2px #dcfce7;
+    background: #09090b;
     flex-shrink: 0;
 }
 
 .statusRingError {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: #ef4444;
-    box-shadow: 0 0 0 2px #fee2e2;
+    background: #5c0f1e;
     flex-shrink: 0;
 }
 
 .statusRingWarning {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: #f59e0b;
-    box-shadow: 0 0 0 2px #fef3c7;
+    background: #71717a;
     flex-shrink: 0;
 }
 
 .btnView {
-    color: #2563eb;
+    color: #09090b;
     background: none;
     border: none;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    text-decoration: none;
+    text-decoration: underline;
     padding: 4px 8px;
     border-radius: 4px;
     transition: background 0.15s ease;
 }
 
 .btnView:hover {
-    background: #eff6ff;
-    text-decoration: underline;
+    background: #f4f4f5;
+    color: #5c0f1e;
 }
 
 /* ── Pagination ── */
@@ -220,9 +216,9 @@
     gap: 12px;
     padding: 12px 18px;
     background: #ffffff;
-    border-top: 1px solid #f1f5f9;
+    border-top: 1px solid #f4f4f5;
     font-size: 12px;
-    color: #64748b;
+    color: #71717a;
 }
 
 .pageBtn {
@@ -232,23 +228,23 @@
     align-items: center;
     justify-content: center;
     border-radius: 4px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e4e4e7;
     background: #ffffff;
-    color: #334155;
+    color: #18181b;
     font-size: 12px;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .pageBtn:hover:not(:disabled) {
-    background: #f1f5f9;
-    border-color: #94a3b8;
+    background: #fafafa;
+    border-color: #d4d4d8;
 }
 
 .pageBtnActive {
-    background: #2563eb;
+    background: #09090b;
     color: #ffffff;
-    border-color: #2563eb;
+    border-color: #09090b;
     font-weight: 700;
 }
 
@@ -264,7 +260,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15, 23, 42, 0.4);
+    background: rgba(9, 9, 11, 0.4);
     backdrop-filter: blur(2px);
     z-index: 9999;
     display: flex;
@@ -276,7 +272,7 @@
     max-width: 90vw;
     height: 100%;
     background: #ffffff;
-    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
     animation: slideInRight 0.25s ease-out;
@@ -296,36 +292,36 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e4e4e7;
 }
 
 .modalTitle {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
-    color: #0f172a;
+    color: #09090b;
 }
 
 .modalCloseBtn {
     background: none;
     border: none;
     font-size: 18px;
-    color: #64748b;
+    color: #71717a;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 32px;
     height: 32px;
-    border-radius: 6px;
+    border-radius: 4px;
     transition: background 0.15s ease;
 }
 
 .modalCloseBtn:hover {
-    background: #f1f5f9;
-    color: #0f172a;
+    background: #f4f4f5;
+    color: #09090b;
 }
 
 .modalBody {
@@ -334,16 +330,16 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
 }
 
 .metaGrid {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    font-size: 13px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    gap: 10px;
+    font-size: 12px;
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
     border-radius: 6px;
     padding: 14px 16px;
 }
@@ -356,36 +352,38 @@
 }
 
 .metaLabel {
-    color: #64748b;
+    color: #71717a;
     font-weight: 600;
 }
 
 .metaValue {
-    color: #0f172a;
+    color: #09090b;
     font-weight: 500;
     word-break: break-all;
 }
 
 .badgeSuccessOutline {
     display: inline-flex;
-    padding: 2px 10px;
+    padding: 2px 8px;
     border-radius: 4px;
-    border: 1px solid #86efac;
-    background: #f0fdf4;
-    color: #166534;
-    font-size: 12px;
-    font-weight: 700;
+    border: 1px solid #e4e4e7;
+    background: #ffffff;
+    color: #09090b;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-geist-mono, monospace);
 }
 
 .badgeErrorOutline {
     display: inline-flex;
-    padding: 2px 10px;
+    padding: 2px 8px;
     border-radius: 4px;
-    border: 1px solid #fca5a5;
-    background: #fef2f2;
-    color: #991b1b;
-    font-size: 12px;
-    font-weight: 700;
+    border: 1px solid #f3cfd6;
+    background: #fdf2f4;
+    color: #5c0f1e;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-geist-mono, monospace);
 }
 
 /* ── Retention & Auto-Clean Bar ── */
@@ -395,8 +393,8 @@
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
     border-radius: 6px;
     padding: 10px 14px;
     font-size: 12px;
@@ -413,17 +411,17 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-weight: 700;
-    color: #1e293b;
+    font-weight: 600;
+    color: #09090b;
 }
 
 .retentionSelect {
     padding: 4px 10px;
     font-size: 12px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e4e4e7;
     border-radius: 4px;
     background: #ffffff;
-    color: #334155;
+    color: #09090b;
     outline: none;
     cursor: pointer;
 }
@@ -432,11 +430,11 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 3px 9px;
-    border-radius: 9999px;
-    background: #ecfdf5;
-    border: 1px solid #a7f3d0;
-    color: #065f46;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    color: #09090b;
     font-weight: 600;
     font-size: 11px;
 }
@@ -445,7 +443,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #10b981;
+    background: #09090b;
 }
 
 .btnCleanLogs {
@@ -456,17 +454,17 @@
     font-size: 12px;
     font-weight: 600;
     background: #ffffff;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e4e4e7;
     border-radius: 4px;
-    color: #475569;
+    color: #18181b;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .btnCleanLogs:hover {
-    background: #fee2e2;
-    border-color: #fca5a5;
-    color: #b91c1c;
+    background: #fdf2f4;
+    border-color: #f3cfd6;
+    color: #5c0f1e;
 }
 
 .btnCleanLogs:disabled {
@@ -477,10 +475,10 @@
 /* ── Diff / Code View ── */
 .diffViewer {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e4e4e7;
     border-radius: 6px;
     overflow: hidden;
-    font-family: var(--font-mono-jb, monospace);
+    font-family: var(--font-geist-mono, monospace);
     font-size: 12px;
     line-height: 1.5;
 }
@@ -489,22 +487,23 @@
     display: flex;
     align-items: stretch;
     min-height: 22px;
-    border-bottom: 1px solid #f8fafc;
+    border-bottom: 1px solid #fafafa;
 }
 
 .diffLineAdd {
-    background: #e6ffed;
-    color: #1a7f37;
+    background: #fafafa;
+    color: #09090b;
+    font-weight: 600;
 }
 
 .diffLineDel {
-    background: #ffebe9;
-    color: #cf222e;
+    background: #fdf2f4;
+    color: #5c0f1e;
 }
 
 .diffColNum {
     width: 28px;
-    color: #8c959f;
+    color: #a1a1aa;
     user-select: none;
     text-align: right;
     padding-right: 6px;
@@ -532,8 +531,8 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
     padding: 3px 8px;
     border-radius: 4px;
     cursor: pointer;
@@ -541,19 +540,19 @@
 }
 
 .taskIdChip:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
+    background: #fafafa;
+    border-color: #d4d4d8;
 }
 
 .taskIdMono {
-    font-family: var(--font-mono-jb, monospace);
+    font-family: var(--font-geist-mono, monospace);
     font-size: 11px;
-    color: #2563eb;
+    color: #09090b;
     font-weight: 600;
 }
 
 .taskIdCopyIcon {
-    color: #64748b;
+    color: #71717a;
 }
 
 /* ── Live Sync Button in Drawer ── */
@@ -564,17 +563,17 @@
     padding: 4px 10px;
     font-size: 11px;
     font-weight: 600;
-    color: #1d4ed8;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    color: #ffffff;
+    background: #09090b;
+    border: 1px solid #09090b;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .liveSyncBtn:hover {
-    background: #dbeafe;
-    border-color: #93c5fd;
+    background: #5c0f1e;
+    border-color: #5c0f1e;
 }
 
 /* ── Detail Tabs in Drawer ── */
@@ -582,7 +581,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e4e4e7;
     margin-bottom: 12px;
     padding-bottom: 2px;
 }
@@ -594,7 +593,7 @@
     padding: 6px 12px;
     font-size: 12px;
     font-weight: 600;
-    color: #64748b;
+    color: #71717a;
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
@@ -603,12 +602,13 @@
 }
 
 .detailTabBtn:hover {
-    color: #0f172a;
+    color: #09090b;
 }
 
 .detailTabBtnActive {
-    color: #2563eb;
-    border-bottom-color: #2563eb;
+    color: #09090b;
+    border-bottom-color: #09090b;
+    font-weight: 700;
 }
 
 /* ── Code Box & JSON Viewer ── */
@@ -616,15 +616,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
     border-bottom: none;
     border-top-left-radius: 6px;
     border-top-right-radius: 6px;
     padding: 8px 12px;
     font-size: 11px;
     font-weight: 600;
-    color: #475569;
+    color: #09090b;
 }
 
 .copyCodeBtn {
@@ -632,27 +632,27 @@
     align-items: center;
     gap: 4px;
     background: #ffffff;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e4e4e7;
     border-radius: 4px;
     padding: 2px 8px;
     font-size: 11px;
-    color: #334155;
+    color: #18181b;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .copyCodeBtn:hover {
-    background: #f1f5f9;
+    background: #fafafa;
 }
 
 .jsonPre {
     margin: 0;
     padding: 14px;
-    background: #0f172a;
-    color: #f8fafc;
+    background: #09090b;
+    color: #fafafa;
     border-bottom-left-radius: 6px;
     border-bottom-right-radius: 6px;
-    font-family: var(--font-mono-jb, monospace);
+    font-family: var(--font-geist-mono, monospace);
     font-size: 11px;
     line-height: 1.5;
     overflow-x: auto;
@@ -668,7 +668,7 @@
 
 .otaCard {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e4e4e7;
     border-radius: 6px;
     padding: 12px 14px;
     display: flex;
@@ -685,7 +685,7 @@
 .otaChannelTitle {
     font-size: 13px;
     font-weight: 700;
-    color: #0f172a;
+    color: #09090b;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -696,30 +696,30 @@
     align-items: center;
     gap: 4px;
     padding: 2px 8px;
-    border-radius: 9999px;
+    border-radius: 4px;
     font-size: 11px;
     font-weight: 600;
 }
 
 .otaStatusSuccess {
-    background: #ecfdf5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
+    background: #ffffff;
+    color: #09090b;
+    border: 1px solid #e4e4e7;
 }
 
 .otaStatusFailed {
-    background: #fef2f2;
-    color: #991b1b;
-    border: 1px solid #fecaca;
+    background: #fdf2f4;
+    color: #5c0f1e;
+    border: 1px solid #f3cfd6;
 }
 
 .otaDetailText {
     font-size: 11px;
-    color: #475569;
-    font-family: var(--font-mono-jb, monospace);
-    background: #f8fafc;
+    color: #71717a;
+    font-family: var(--font-geist-mono, monospace);
+    background: #fafafa;
     padding: 6px 10px;
     border-radius: 4px;
-    border: 1px solid #f1f5f9;
+    border: 1px solid #e4e4e7;
 }
 

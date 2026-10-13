@@ -62,10 +62,14 @@ export const useRatePlans = () => {
     }, [fetchRatePlans]);
 
     /**
-     * Auto-seeds standard rate plans for all room types if none exist
+     * Auto-seeds standard rate plans matching Channex certification standard:
+     * Room 1: Twin Room -> 1. Best Available Rate ($100 / Rp 1.000.000)
+     *                      2. Bed & Breakfast Rate ($120 / Rp 1.200.000)
+     * Room 2: Double Room -> 1. Best Available Rate ($100 / Rp 1.000.000)
+     *                        2. Bed & Breakfast Rate ($120 / Rp 1.200.000)
      */
-    const seedDefaultRatePlans = async (roomTypes: any[]) => {
-        if (!activeHotelCode || roomTypes.length === 0) return;
+    const seedDefaultRatePlans = async (existingRoomTypes: any[] = [], targetCurrency: string = "USD") => {
+        if (!activeHotelCode) return;
         setSaving(true);
         try {
             const existingSnap = await getDocs(getHotelCollection(db, "ratePlans", activeHotelCode));
@@ -74,64 +78,123 @@ export const useRatePlans = () => {
                 return;
             }
 
-            const allRoomTypeIds = roomTypes.map(r => r.id);
-            const allRoomTypeNames = roomTypes.map(r => r.name);
+            const curr = (targetCurrency || "USD").toUpperCase();
+            const isIDR = curr === "IDR";
+            const isUSD = curr === "USD";
+            const defaultBarPrice = isUSD ? 100 : (isIDR ? 1000000 : 100);
+            const defaultBbPrice = isUSD ? 120 : (isIDR ? 1200000 : 120);
+            const defaultBreakfastFee = isUSD ? 20 : (isIDR ? 100000 : 20);
 
-            const roRates: Record<string, number> = {};
-            const bbRates: Record<string, number> = {};
+            let effectiveRoomTypes = Array.isArray(existingRoomTypes) ? [...existingRoomTypes] : [];
 
-            roomTypes.forEach(rt => {
-                const rtBase = Number(rt.price || rt.baseRate || 500000);
-                roRates[rt.id] = rtBase;
-                bbRates[rt.id] = rtBase + 100000;
-            });
+            // Jika belum ada room types sama sekali di properti, buatkan 2 tipe kamar standar: Twin Room & Double Room
+            if (effectiveRoomTypes.length === 0) {
+                const rtCollection = getHotelCollection(db, "roomTypes", activeHotelCode);
+                
+                // 1. Twin Room (Max Occupancy: 2 Dewasa)
+                const twinDoc = await addDoc(rtCollection, {
+                    name: "Twin Room",
+                    description: "Kamar standard twin dengan 2 single bed nyaman dan fasilitas lengkap.",
+                    capacity: 2,
+                    bedType: "Twin Bed",
+                    beds: [{ type: "Single", quantity: 2, size: "100x200" }],
+                    roomCount: 5,
+                    roomSizeValue: 32,
+                    roomSizeUnit: "m²",
+                    price: defaultBarPrice,
+                    amenities: ["wifi", "ac", "tv", "shower"],
+                    physicalRooms: [
+                        { id: "101", number: "101" },
+                        { id: "102", number: "102" },
+                        { id: "103", number: "103" },
+                        { id: "104", number: "104" },
+                        { id: "105", number: "105" }
+                    ],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
 
-            const primaryBaseRate = Number(roomTypes[0]?.price || roomTypes[0]?.baseRate || 500000);
+                // 2. Double Room (Max Occupancy: 2 Dewasa)
+                const doubleDoc = await addDoc(rtCollection, {
+                    name: "Double Room",
+                    description: "Kamar standard double dengan 1 king bed luas cocok untuk pasangan dan traveler.",
+                    capacity: 2,
+                    bedType: "King Bed",
+                    beds: [{ type: "King", quantity: 1, size: "180x200" }],
+                    roomCount: 5,
+                    roomSizeValue: 32,
+                    roomSizeUnit: "m²",
+                    price: defaultBarPrice,
+                    amenities: ["wifi", "ac", "tv", "shower"],
+                    physicalRooms: [
+                        { id: "201", number: "201" },
+                        { id: "202", number: "202" },
+                        { id: "203", number: "203" },
+                        { id: "204", number: "204" },
+                        { id: "205", number: "205" }
+                    ],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
 
-            // 1. Master Room Only Plan (RO)
-            await addDoc(getHotelCollection(db, "ratePlans", activeHotelCode), {
-                hotelCode: activeHotelCode,
-                name: "Room Only (RO)",
-                code: "RO",
-                roomTypeId: roomTypes[0]?.id || "",
-                roomTypeName: roomTypes[0]?.name || "",
-                roomTypeIds: allRoomTypeIds,
-                roomTypeNames: allRoomTypeNames,
-                roomRates: roRates,
-                baseRate: primaryBaseRate,
-                currency: "IDR",
-                mealsIncluded: false,
-                cancellationPolicy: "FREE",
-                minStay: 1,
-                stopSell: false,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            });
+                effectiveRoomTypes = [
+                    { id: twinDoc.id, name: "Twin Room", price: defaultBarPrice },
+                    { id: doubleDoc.id, name: "Double Room", price: defaultBarPrice }
+                ];
+            }
 
-            // 2. Master Bed & Breakfast Plan (BB)
-            await addDoc(getHotelCollection(db, "ratePlans", activeHotelCode), {
-                hotelCode: activeHotelCode,
-                name: "With Breakfast (BB)",
-                code: "BB",
-                roomTypeId: roomTypes[0]?.id || "",
-                roomTypeName: roomTypes[0]?.name || "",
-                roomTypeIds: allRoomTypeIds,
-                roomTypeNames: allRoomTypeNames,
-                roomRates: bbRates,
-                baseRate: primaryBaseRate + 100000,
-                currency: "IDR",
-                mealsIncluded: true,
-                breakfastRate: 75000,
-                cancellationPolicy: "FREE",
-                minStay: 1,
-                stopSell: false,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            });
+            // Buat Rate Plan terpisah untuk tiap tipe kamar (Best Available Rate & Bed & Breakfast Rate)
+            const ratePlansCollection = getHotelCollection(db, "ratePlans", activeHotelCode);
+
+            for (const rt of effectiveRoomTypes) {
+                const rtBarRate = Number(rt.price || rt.baseRate || defaultBarPrice);
+                const rtBbRate = isUSD ? (rtBarRate + 20) : (isIDR ? rtBarRate + 200000 : rtBarRate + 20);
+
+                // 1. Best Available Rate (BAR)
+                await addDoc(ratePlansCollection, {
+                    hotelCode: activeHotelCode,
+                    name: effectiveRoomTypes.length > 1 ? `Best Available Rate (${rt.name})` : "Best Available Rate",
+                    code: "BAR",
+                    roomTypeId: rt.id,
+                    roomTypeName: rt.name,
+                    roomTypeIds: [rt.id],
+                    roomTypeNames: [rt.name],
+                    roomRates: { [rt.id]: rtBarRate },
+                    baseRate: rtBarRate,
+                    currency: curr,
+                    mealsIncluded: false,
+                    cancellationPolicy: "FREE",
+                    minStay: 1,
+                    stopSell: false,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+
+                // 2. Bed & Breakfast Rate (BB)
+                await addDoc(ratePlansCollection, {
+                    hotelCode: activeHotelCode,
+                    name: effectiveRoomTypes.length > 1 ? `Bed & Breakfast Rate (${rt.name})` : "Bed & Breakfast Rate",
+                    code: "BB",
+                    roomTypeId: rt.id,
+                    roomTypeName: rt.name,
+                    roomTypeIds: [rt.id],
+                    roomTypeNames: [rt.name],
+                    roomRates: { [rt.id]: rtBbRate },
+                    baseRate: rtBbRate,
+                    currency: curr,
+                    mealsIncluded: true,
+                    breakfastRate: defaultBreakfastFee,
+                    cancellationPolicy: "FREE",
+                    minStay: 1,
+                    stopSell: false,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+            }
 
             ratePlansCache.delete(activeHotelCode);
             await fetchRatePlans(true);
-            toast.success("Default Master Rate Plans (RO & BB) berhasil dibuat untuk semua kamar.");
+            toast.success("Standard Rate Plans (Best Available Rate & Bed & Breakfast) berhasil digenerate.");
         } catch (err: any) {
             console.error("Error seeding rate plans:", err);
             toast.error(`Gagal membuat default rate plans: ${err.message}`);

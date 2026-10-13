@@ -122,6 +122,19 @@ export class ChannexClient {
         }, customApiKey, environment);
     }
 
+    async updateGroup(groupId: string, title: string, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any }>(`/groups/${groupId}`, {
+            method: "PUT",
+            body: JSON.stringify({ group: { title } })
+        }, customApiKey, environment);
+    }
+
+    async deleteGroup(groupId: string, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any }>(`/groups/${groupId}`, {
+            method: "DELETE"
+        }, customApiKey, environment);
+    }
+
     // ==========================================
     // 1. PROPERTY MANAGEMENT
     // ==========================================

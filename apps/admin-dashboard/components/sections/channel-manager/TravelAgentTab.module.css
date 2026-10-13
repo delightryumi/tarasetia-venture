@@ -105,8 +105,9 @@
 
 .searchInput:focus {
     outline: none;
-    border-color: #1e3a2f;
+    border-color: #5c0f1e;
     background: #ffffff;
+    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.1);
 }
 
 .filterSelect {
@@ -123,19 +124,20 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 7px 14px;
-    background: #1e3a2f;
+    padding: 8px 16px;
+    background: #09090b;
     color: #ffffff;
     font-size: 12px;
     font-weight: 600;
-    border: 1px solid #13241d;
+    border: 1px solid #09090b;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .btnAdd:hover {
-    background: #152720;
+    background: #5c0f1e;
+    border-color: #5c0f1e;
 }
 
 .tableCard {
@@ -223,38 +225,38 @@
     align-items: center;
     gap: 4px;
     padding: 2px 8px;
-    border-radius: 9999px;
+    border-radius: 4px;
     font-size: 11px;
     font-weight: 600;
 }
 
 .badgeOta {
-    background: #eff6ff;
-    color: #1d4ed8;
-    border: 1px solid #bfdbfe;
+    background: #fdf2f4;
+    color: #5c0f1e;
+    border: 1px solid #f3cfd6;
 }
 
 .badgeOffline {
-    background: #f0fdf4;
-    color: #166534;
-    border: 1px solid #bbf7d0;
+    background: #f4f4f5;
+    color: #18181b;
+    border: 1px solid #e4e4e7;
 }
 
 .badgeCorporate {
-    background: #fefce8;
-    color: #854d0e;
-    border: 1px solid #fef08a;
+    background: #fafafa;
+    color: #27272a;
+    border: 1px solid #e4e4e7;
 }
 
 .badgeWholesaler {
-    background: #faf5ff;
-    color: #7e22ce;
-    border: 1px solid #e9d5ff;
+    background: #fdf2f4;
+    color: #5c0f1e;
+    border: 1px solid #f3cfd6;
 }
 
 .badgeActive {
-    background: #f0fdf4;
-    color: #15803d;
+    background: #09090b;
+    color: #ffffff;
 }
 
 .badgeInactive {
@@ -378,8 +380,8 @@
 
 .input:focus {
     outline: none;
-    border-color: #1e3a2f;
-    box-shadow: 0 0 0 2px rgba(30, 58, 47, 0.1);
+    border-color: #5c0f1e;
+    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.1);
 }
 
 .modalFooter {
@@ -408,9 +410,9 @@
 }
 
 .btnPrimary {
-    padding: 7px 16px;
-    background: #1e3a2f;
-    border: 1px solid #13241d;
+    padding: 8px 18px;
+    background: #09090b;
+    border: 1px solid #09090b;
     border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
@@ -419,8 +421,10 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    transition: all 0.15s ease;
 }
 
 .btnPrimary:hover {
-    background: #152720;
+    background: #5c0f1e;
+    border-color: #5c0f1e;
 }

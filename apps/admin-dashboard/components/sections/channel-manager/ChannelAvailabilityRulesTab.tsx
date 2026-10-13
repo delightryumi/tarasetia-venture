@@ -149,7 +149,7 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
             <div className={styles.topBar}>
                 <div className={styles.titleGroup}>
                     <div className={styles.title}>
-                        <Sliders size={16} color="#1e3a2f" />
+                        <Sliders size={16} color="#09090b" />
                         <span>Channel Availability Rules (Yield Management &amp; Allotment Limits)</span>
                     </div>
                     <span className={styles.desc}>
@@ -371,10 +371,10 @@ export function ChannelAvailabilityRulesTab({ hotelCode, roomTypes = [] }: Props
                                                     fontSize: "11px",
                                                     fontWeight: 600,
                                                     borderRadius: "4px",
-                                                    border: "1px solid #cbd5e1",
+                                                    border: "1px solid #e4e4e7",
                                                     cursor: "pointer",
-                                                    background: selectedDays.includes(d.code) ? "#1e3a2f" : "#ffffff",
-                                                    color: selectedDays.includes(d.code) ? "#ffffff" : "#334155"
+                                                    background: selectedDays.includes(d.code) ? "#09090b" : "#ffffff",
+                                                    color: selectedDays.includes(d.code) ? "#ffffff" : "#18181b"
                                                 }}
                                             >
                                                 {d.label}

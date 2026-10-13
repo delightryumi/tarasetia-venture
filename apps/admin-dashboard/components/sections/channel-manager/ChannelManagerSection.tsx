@@ -238,21 +238,21 @@ export function ChannelManagerSection() {
             subtitle: "Kelola jaringan hotel, kelola grup properti untuk distribusi OTA serentak, dan pantau status koneksi terpusat.",
             icon: Building2,
             badge: "Multi-Hotel Chain",
-            badgeColor: "#0284c7"
+            badgeColor: "#5c0f1e"
         },
         tutorial: {
             title: "Production Go-Live Roadmap",
             subtitle: "Step-by-step rollout guide: from account verification, pilot property testing, to full multi-property production deployment.",
             icon: Compass,
             badge: "5-Stage Roadmap",
-            badgeColor: "#0284c7"
+            badgeColor: "#5c0f1e"
         },
         mapping: {
             title: "Channel Mapping & Rate Parity",
             subtitle: "Manage PMS-to-OTA room mapping, rate plan codes, commission structures, and channel-level rate & inventory separation rules.",
             icon: Key,
             badge: "Active Mapping",
-            badgeColor: "#15803d"
+            badgeColor: "#5c0f1e"
         },
         catalog: {
             title: "OTA Channel Catalog & Global Distribution",
@@ -365,7 +365,7 @@ export function ChannelManagerSection() {
             subtitle: "Manage contracted offline travel agencies, corporate accounts, wholesale partners, and connected distribution channels.",
             icon: Users,
             badge: "B2B Partners",
-            badgeColor: "#2563eb"
+            badgeColor: "#5c0f1e"
         }
     };
     
@@ -426,6 +426,8 @@ export function ChannelManagerSection() {
             message: "2-Way Enterprise Channel Manager ready for 68+ OTA distribution channels."
         }
     ]);
+    const [syncFilterStatus, setSyncFilterStatus] = useState<"ALL" | "SUCCESS" | "ERROR">("ALL");
+    const [syncSearchTerm, setSyncSearchTerm] = useState<string>("");
 
     // Sandbox Simulator States
     const [simChannel, setSimChannel] = useState<string>("Traveloka");
@@ -606,12 +608,28 @@ export function ChannelManagerSection() {
         return Object.values(channelConfigs).filter(c => c.isActive);
     }, [channelConfigs]);
 
+    const filteredSyncLogs = useMemo(() => {
+        return syncLog.filter(log => {
+            const matchesStatus =
+                syncFilterStatus === "ALL" ? true :
+                syncFilterStatus === "SUCCESS" ? log.status === "SUCCESS" :
+                syncFilterStatus === "ERROR" ? log.status === "ERROR" : true;
+            const matchesSearch = syncSearchTerm.trim() === "" ? true :
+                log.message.toLowerCase().includes(syncSearchTerm.toLowerCase()) ||
+                log.status.toLowerCase().includes(syncSearchTerm.toLowerCase());
+            return matchesStatus && matchesSearch;
+        });
+    }, [syncLog, syncFilterStatus, syncSearchTerm]);
+
+    const syncSuccessCount = useMemo(() => syncLog.filter(l => l.status === "SUCCESS").length, [syncLog]);
+    const syncErrorCount = useMemo(() => syncLog.filter(l => l.status === "ERROR").length, [syncLog]);
+
     // ── TWO-TIER CATEGORIZED NAVIGATION SYSTEM ──
     type ChannelCategoryType = "inventory" | "distribution" | "guest" | "system";
 
     const activeCategory = useMemo<ChannelCategoryType>(() => {
         if (["rooms", "rateplans", "matrix", "mapping", "dynamic_pricing"].includes(activeTab)) return "inventory";
-        if (["catalog", "rules", "google", "promotions", "content"].includes(activeTab)) return "distribution";
+        if (["catalog", "travel_agents", "rules", "google", "promotions", "content"].includes(activeTab)) return "distribution";
         if (["messages", "reviews"].includes(activeTab)) return "guest";
         return "system";
     }, [activeTab]);
@@ -631,7 +649,7 @@ export function ChannelManagerSection() {
                 { id: "rateplans", label: "Rate Plans & Packages" },
                 { id: "matrix", label: "Rate Matrix (Net / Gross)" },
                 { id: "mapping", label: "Channel Mapping" },
-                { id: "dynamic_pricing", label: "📈 Dynamic Pricing (RMS)" }
+                { id: "dynamic_pricing", label: "Dynamic Pricing (RMS)" }
             ]
         },
         {
@@ -640,10 +658,10 @@ export function ChannelManagerSection() {
             badge: `${activeChannelsList.length} Channels`,
             tabs: [
                 { id: "catalog", label: `Channel Catalog (${activeChannelsList.length})` },
-                { id: "travel_agents", label: "🤝 Travel Agents & Wholesalers" },
+                { id: "travel_agents", label: "Travel Agents & Wholesalers" },
                 { id: "rules", label: "Yield & Allocation Rules" },
-                { id: "google", label: "🇬 Google Hotel Free Links" },
-                { id: "promotions", label: "🏷️ OTA Promotions & Deals" },
+                { id: "google", label: "Google Hotel Free Links" },
+                { id: "promotions", label: "OTA Promotions & Deals" },
                 { id: "content", label: "Property Content & Amenities" }
             ]
         },
@@ -659,11 +677,12 @@ export function ChannelManagerSection() {
         {
             id: "system",
             label: "System & Connectivity",
-            badge: "7",
+            badge: "8",
             tabs: [
-                { id: "tutorial", label: "🧭 Peta Alur Go-Live" },
-                { id: "payments", label: "💳 Stripe & PCI Card Vault" },
-                { id: "sandbox", label: "🧪 Certification Sandbox" },
+                { id: "groups", label: "Hotel Groups & Properties" },
+                { id: "tutorial", label: "Peta Alur Go-Live" },
+                { id: "payments", label: "Stripe & PCI Card Vault" },
+                { id: "sandbox", label: "Certification Sandbox" },
                 { id: "logs", label: "ARI Transmission Logs" },
                 { id: "iframe", label: "Channel Console (SSO)" },
                 { id: "golive", label: "API Credentials & Production" },
@@ -1204,6 +1223,14 @@ export function ChannelManagerSection() {
         return Number(val || 0).toLocaleString("id-ID");
     };
 
+    const formatMatrixPrice = (val: number) => {
+        const isUSD = hotelCurrency?.toUpperCase() === "USD";
+        if (isUSD) {
+            return `$ ${Number(val || 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+        }
+        return `Rp ${Number(val || 0).toLocaleString("id-ID")}`;
+    };
+
     // Load Iframe SSO URL
     const loadIframeUrl = async () => {
         if (!activeHotelCode || activeHotelCode === "0") return;
@@ -1706,7 +1733,7 @@ export function ChannelManagerSection() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     {/* Educational Hospitality Context Banner */}
                     <div className={styles.matrixEducationalBanner}>
-                        <Calculator size={20} color="#166534" style={{ flexShrink: 0, marginTop: "2px" }} />
+                        <Calculator size={18} color="#5c0f1e" style={{ flexShrink: 0, marginTop: "2px" }} />
                         <div className={styles.matrixBannerText}>
                             <strong style={{ fontSize: "13px" }}>
                                 What is the Rate Matrix? (Net Base vs. OTA Gross Selling Rates)
@@ -1726,8 +1753,8 @@ export function ChannelManagerSection() {
                             <span className={styles.matrixMetricLabel}>Base Net Rate Range</span>
                             <span className={styles.matrixMetricValue}>
                                 {ratePlans.length > 0 
-                                    ? `Rp ${formatIDR(Math.min(...ratePlans.map(r => Number(r.baseRate || 0))))}`
-                                    : "Rp 0"}
+                                    ? formatMatrixPrice(Math.min(...ratePlans.map(r => Number(r.baseRate || 0))))
+                                    : formatMatrixPrice(0)}
                             </span>
                             <span className={styles.matrixMetricSub}>
                                 Across {ratePlans.length} active rate plans
@@ -1740,13 +1767,13 @@ export function ChannelManagerSection() {
                                 {activeChannelsList.length} Channels
                             </span>
                             <span className={styles.matrixMetricSub}>
-                                {activeChannelsList.length > 0 ? "Real-time pricing enabled" : "No active channels connected"}
+                                {activeChannelsList.length > 0 ? "Real-time pricing parity enabled" : "No active channels connected"}
                             </span>
                         </div>
 
                         <div className={styles.matrixMetricCard}>
                             <span className={styles.matrixMetricLabel}>Average OTA Commission</span>
-                            <span className={styles.matrixMetricValue} style={{ color: "#d97706" }}>
+                            <span className={styles.matrixMetricValue} style={{ color: "#5c0f1e" }}>
                                 {activeChannelsList.length > 0
                                     ? `${(activeChannelsList.reduce((acc, c) => acc + Number(c.commissionPercent || 0), 0) / activeChannelsList.length).toFixed(1)}%`
                                     : "16.5% (Est.)"}
@@ -1756,7 +1783,7 @@ export function ChannelManagerSection() {
 
                         <div className={styles.matrixMetricCard}>
                             <span className={styles.matrixMetricLabel}>Highest Yield Channel</span>
-                            <span className={styles.matrixMetricValue} style={{ color: "#16a34a" }}>
+                            <span className={styles.matrixMetricValue}>
                                 Direct (0%)
                             </span>
                             <span className={styles.matrixMetricSub}>100% Net Revenue Retained</span>
@@ -1768,7 +1795,7 @@ export function ChannelManagerSection() {
                         <div className={styles.gridToolbar}>
                             <div className={styles.matrixHeaderLeft}>
                                 <span className={styles.matrixHeaderTitle}>
-                                    <Table size={16} color="#1e3a2f" />
+                                    <Table size={16} color="#09090b" />
                                     <span>Rate Calculation &amp; Parity Matrix</span>
                                 </span>
                                 <span className={styles.matrixHeaderSubtitle}>
@@ -1778,50 +1805,28 @@ export function ChannelManagerSection() {
 
                             <div className={styles.matrixControls}>
                                 {/* Global PMS & Accounting Ledger Pricing Mode (Net vs Gross) */}
-                                <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "#f8fafc", padding: "3px 8px", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
-                                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#334155" }}>
-                                        Folio &amp; Ledger:
+                                <div className={styles.matrixPricingToggleGroup}>
+                                    <span style={{ fontSize: "11px", fontWeight: 600, color: "#71717a", paddingLeft: "2px" }}>
+                                        Folio:
                                     </span>
-                                    <div style={{ display: "flex", gap: "2px" }}>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleUpdateGlobalPricingModel("net")}
-                                            disabled={syncingPricingWithChannex}
-                                            style={{
-                                                padding: "3px 8px",
-                                                fontSize: "11px",
-                                                fontWeight: 700,
-                                                borderRadius: "4px",
-                                                border: "none",
-                                                cursor: "pointer",
-                                                background: globalPricingModel === "net" ? "#166534" : "transparent",
-                                                color: globalPricingModel === "net" ? "#ffffff" : "#475569",
-                                                transition: "all 0.15s ease"
-                                            }}
-                                            title="When set to NET: All rates, transactions, and accounting folios use the net hotel realization (after OTA commission)"
-                                        >
-                                            🟢 NET
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleUpdateGlobalPricingModel("gross")}
-                                            disabled={syncingPricingWithChannex}
-                                            style={{
-                                                padding: "3px 8px",
-                                                fontSize: "11px",
-                                                fontWeight: 700,
-                                                borderRadius: "4px",
-                                                border: "none",
-                                                cursor: "pointer",
-                                                background: globalPricingModel === "gross" ? "#1e40af" : "transparent",
-                                                color: globalPricingModel === "gross" ? "#ffffff" : "#475569",
-                                                transition: "all 0.15s ease"
-                                            }}
-                                            title="When set to GROSS: All rates, transactions, and accounting folios use the gross retail OTA selling price (paid by guest)"
-                                        >
-                                            🔵 GROSS
-                                        </button>
-                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleUpdateGlobalPricingModel("net")}
+                                        disabled={syncingPricingWithChannex}
+                                        className={`${styles.matrixToggleBtn} ${globalPricingModel === "net" ? styles.matrixToggleBtnActiveNet : styles.matrixToggleBtnInactive}`}
+                                        title="When set to NET: All rates and folios use net realization"
+                                    >
+                                        NET
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleUpdateGlobalPricingModel("gross")}
+                                        disabled={syncingPricingWithChannex}
+                                        className={`${styles.matrixToggleBtn} ${globalPricingModel === "gross" ? styles.matrixToggleBtnActiveGross : styles.matrixToggleBtnInactive}`}
+                                        title="When set to GROSS: All rates and folios use gross retail selling price"
+                                    >
+                                        GROSS
+                                    </button>
                                 </div>
 
                                 <button
@@ -1840,7 +1845,7 @@ export function ChannelManagerSection() {
                                     <select
                                         value={pricingViewMode}
                                         onChange={e => setPricingViewMode(e.target.value as any)}
-                                        className={`${styles.cellSelect} ${styles.matrixSelect}`}
+                                        className={styles.matrixSelect}
                                     >
                                         <option value="all">Full Breakdown (Commission %, Markup %, Gross Rate)</option>
                                         <option value="gross_only">Channel Gross Selling Rate Only</option>
@@ -1872,12 +1877,12 @@ export function ChannelManagerSection() {
 
                         {/* When 0 channels are active, provide a helpful prompt */}
                         {activeChannelsList.length === 0 ? (
-                            <div style={{ padding: "40px 24px", textAlign: "center", background: "#f8fafc", borderRadius: "8px", border: "1px dashed #cbd5e1" }}>
-                                <Globe size={36} color="#94a3b8" style={{ margin: "0 auto 10px" }} />
-                                <div style={{ fontSize: "14px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
+                            <div className={styles.matrixEmptyState}>
+                                <Globe size={32} color="#71717a" style={{ margin: "0 auto 8px" }} />
+                                <div className={styles.matrixEmptyStateTitle}>
                                     No Active OTA Channels Connected Yet
                                 </div>
-                                <div style={{ fontSize: "12px", color: "#64748b", maxWidth: "520px", margin: "0 auto 16px", lineHeight: 1.5 }}>
+                                <div className={styles.matrixEmptyStateSubtitle}>
                                     To calculate Gross rates and commission margins across your distribution network, activate channels from the <b>Channel Catalog</b> or initialize standard core OTA channels.
                                 </div>
                                 <div style={{ display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap" }}>
@@ -1885,12 +1890,12 @@ export function ChannelManagerSection() {
                                         type="button"
                                         onClick={() => {
                                             const coreChannels: Record<string, ChannelMappingConfig> = {
-                                                booking_com: { channelCode: "booking_com", channelName: "Booking.com", icon: "🅱️", hotelId: activeHotelCode, currency: "IDR", pricingModel: "gross", commissionPercent: 15, markupPercent: 0, isActive: true, roomMappings: {}, rateMappings: {} },
-                                                agoda: { channelCode: "agoda", channelName: "Agoda", icon: "🅰️", hotelId: activeHotelCode, currency: "IDR", pricingModel: "gross", commissionPercent: 17, markupPercent: 0, isActive: true, roomMappings: {}, rateMappings: {} },
-                                                traveloka: { channelCode: "traveloka", channelName: "Traveloka", icon: "🕊️", hotelId: activeHotelCode, currency: "IDR", pricingModel: "gross", commissionPercent: 18, markupPercent: 0, isActive: true, roomMappings: {}, rateMappings: {} },
-                                                tiket: { channelCode: "tiket", channelName: "Tiket.com", icon: "🎫", hotelId: activeHotelCode, currency: "IDR", pricingModel: "gross", commissionPercent: 15, markupPercent: 0, isActive: true, roomMappings: {}, rateMappings: {} },
-                                                expedia: { channelCode: "expedia", channelName: "Expedia", icon: "✈️", hotelId: activeHotelCode, currency: "IDR", pricingModel: "gross", commissionPercent: 18, markupPercent: 0, isActive: true, roomMappings: {}, rateMappings: {} },
-                                                direct_engine: { channelCode: "direct_engine", channelName: "Direct Booking Engine", icon: "🌐", hotelId: activeHotelCode, currency: "IDR", pricingModel: "net", commissionPercent: 0, markupPercent: 0, isActive: true, roomMappings: {}, rateMappings: {} }
+                                                booking_com: { channelCode: "booking_com", channelName: "Booking.com", icon: "🅱️", hotelId: activeHotelCode, currency: hotelCurrency || "IDR", pricingModel: "gross", commissionPercent: 15, markupPercent: 0, isActive: true, roomMappings: {}, rateMappings: {} },
+                                                agoda: { channelCode: "agoda", channelName: "Agoda", icon: "🅰️", hotelId: activeHotelCode, currency: hotelCurrency || "IDR", pricingModel: "gross", commissionPercent: 17, markupPercent: 0, isActive: true, roomMappings: {}, rateMappings: {} },
+                                                traveloka: { channelCode: "traveloka", channelName: "Traveloka", icon: "🕊️", hotelId: activeHotelCode, currency: hotelCurrency || "IDR", pricingModel: "gross", commissionPercent: 18, markupPercent: 0, isActive: true, roomMappings: {}, rateMappings: {} },
+                                                tiket: { channelCode: "tiket", channelName: "Tiket.com", icon: "🎫", hotelId: activeHotelCode, currency: hotelCurrency || "IDR", pricingModel: "gross", commissionPercent: 15, markupPercent: 0, isActive: true, roomMappings: {}, rateMappings: {} },
+                                                expedia: { channelCode: "expedia", channelName: "Expedia", icon: "✈️", hotelId: activeHotelCode, currency: hotelCurrency || "IDR", pricingModel: "gross", commissionPercent: 18, markupPercent: 0, isActive: true, roomMappings: {}, rateMappings: {} },
+                                                direct_engine: { channelCode: "direct_engine", channelName: "Direct Booking Engine", icon: "🌐", hotelId: activeHotelCode, currency: hotelCurrency || "IDR", pricingModel: "net", commissionPercent: 0, markupPercent: 0, isActive: true, roomMappings: {}, rateMappings: {} }
                                             };
                                             setChannelConfigs(prev => ({ ...prev, ...coreChannels }));
                                             toast.success("Initialized 6 core OTA channels. Click 'Save Matrix Settings' to confirm.");
@@ -1914,7 +1919,7 @@ export function ChannelManagerSection() {
                             <div className={styles.tableContainer}>
                                 <table className={styles.dsiTable}>
                                     <thead>
-                                        <tr>
+                                        <tr className={styles.matrixTheadRow1}>
                                             <th rowSpan={2} className={`${styles.dsiTh} ${styles.colStickyLeft} ${styles.matrixThStickyLeft}`}>
                                                 Room Types &amp; Rate Plans
                                             </th>
@@ -1930,23 +1935,23 @@ export function ChannelManagerSection() {
                                                     className={styles.dsiThGroup}
                                                 >
                                                     <div className={styles.matrixGroupHeader}>
-                                                        <OtaLogo code={ch.channelCode} name={ch.channelName} size={18} />
+                                                        <OtaLogo code={ch.channelCode} name={ch.channelName} size={16} />
                                                         <span>{ch.channelName}</span>
                                                         <span className={styles.matrixPricingBadge}>
-                                                            ({ch.pricingModel === "gross" ? `Gross [Comm: ${ch.commissionPercent}%]` : "Net Direct"})
+                                                            {ch.pricingModel === "gross" ? `Gross (${ch.commissionPercent}%)` : "Net Direct"}
                                                         </span>
                                                     </div>
                                                 </th>
                                             ))}
                                         </tr>
 
-                                        <tr>
+                                        <tr className={styles.matrixTheadRow2}>
                                             {activeChannelsList.map(ch => (
                                                 <React.Fragment key={`${ch.channelCode}_sub`}>
                                                     {pricingViewMode === "all" && (
                                                         <>
-                                                            <th className={`${styles.dsiTh} ${styles.matrixThPercent}`}>Commission %</th>
-                                                            <th className={`${styles.dsiTh} ${styles.matrixThPercent}`}>Markup %</th>
+                                                            <th className={`${styles.dsiTh} ${styles.matrixThPercent}`}>Commission</th>
+                                                            <th className={`${styles.dsiTh} ${styles.matrixThPercent}`}>Markup</th>
                                                             <th className={`${styles.dsiTh} ${styles.matrixThGross}`}>Gross Selling Rate</th>
                                                         </>
                                                     )}
@@ -1964,7 +1969,7 @@ export function ChannelManagerSection() {
                                     <tbody>
                                         {ratePlans.length === 0 ? (
                                             <tr>
-                                                <td colSpan={2 + activeChannelsList.length * 3} className={styles.matrixEmptyCell}>
+                                                <td colSpan={2 + activeChannelsList.length * (pricingViewMode === "all" ? 3 : 1)} className={styles.matrixEmptyCell}>
                                                     <div className={styles.matrixEmptyContainer}>
                                                         <span>No rate plans configured for this property yet.</span>
                                                         <button
@@ -1993,7 +1998,7 @@ export function ChannelManagerSection() {
                                                         </td>
 
                                                         <td className={`${styles.cellMoney} ${styles.cellMoneyNet} ${styles.matrixBaseNetCell}`}>
-                                                            Rp {formatIDR(baseNet)}
+                                                            {formatMatrixPrice(baseNet)}
                                                         </td>
 
                                                         {/* Calculated Channel Columns */}
@@ -2007,41 +2012,47 @@ export function ChannelManagerSection() {
                                                                 <React.Fragment key={`${rp.id}_${ch.channelCode}`}>
                                                                     {pricingViewMode === "all" && (
                                                                         <>
-                                                                            <td className={styles.cellPercent}>
-                                                                                <input
-                                                                                    type="number"
-                                                                                    min={0}
-                                                                                    max={50}
-                                                                                    value={ch.commissionPercent}
-                                                                                    onChange={e => updateChannelField(ch.channelCode, "commissionPercent", Number(e.target.value) || 0)}
-                                                                                    className={`${styles.cellInput} ${styles.matrixInputPercent}`}
-                                                                                />
-                                                                                %
+                                                                            <td className={styles.matrixCellInputPercent}>
+                                                                                <div className={styles.matrixInputWrapper}>
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        min={0}
+                                                                                        max={50}
+                                                                                        value={ch.commissionPercent}
+                                                                                        onChange={e => updateChannelField(ch.channelCode, "commissionPercent", Number(e.target.value) || 0)}
+                                                                                        onWheel={e => e.currentTarget.blur()}
+                                                                                        className={styles.matrixInputNumber}
+                                                                                    />
+                                                                                    <span className={styles.matrixInputSuffix}>%</span>
+                                                                                </div>
                                                                             </td>
-                                                                            <td className={styles.cellPercent}>
-                                                                                <input
-                                                                                    type="number"
-                                                                                    min={0}
-                                                                                    max={100}
-                                                                                    value={ch.markupPercent}
-                                                                                    onChange={e => updateChannelField(ch.channelCode, "markupPercent", Number(e.target.value) || 0)}
-                                                                                    className={`${styles.cellInput} ${styles.matrixInputPercent}`}
-                                                                                />
-                                                                                %
+                                                                            <td className={styles.matrixCellInputPercent}>
+                                                                                <div className={styles.matrixInputWrapper}>
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        min={0}
+                                                                                        max={100}
+                                                                                        value={ch.markupPercent}
+                                                                                        onChange={e => updateChannelField(ch.channelCode, "markupPercent", Number(e.target.value) || 0)}
+                                                                                        onWheel={e => e.currentTarget.blur()}
+                                                                                        className={styles.matrixInputNumber}
+                                                                                    />
+                                                                                    <span className={styles.matrixInputSuffix}>%</span>
+                                                                                </div>
                                                                             </td>
-                                                                            <td className={`${styles.cellMoney} ${styles.cellMoneyGross}`} title={`Net Hotel Remittance: Rp ${formatIDR(calculatedNet)}`}>
-                                                                                Rp {formatIDR(calculatedGross)}
+                                                                            <td className={`${styles.cellMoney} ${styles.cellMoneyGross}`} title={`Net Hotel Remittance: ${formatMatrixPrice(calculatedNet)}`}>
+                                                                                {formatMatrixPrice(calculatedGross)}
                                                                             </td>
                                                                         </>
                                                                     )}
                                                                     {pricingViewMode === "gross_only" && (
                                                                         <td className={`${styles.cellMoney} ${styles.cellMoneyGross}`}>
-                                                                            Rp {formatIDR(calculatedGross)}
+                                                                            {formatMatrixPrice(calculatedGross)}
                                                                         </td>
                                                                     )}
                                                                     {pricingViewMode === "net_only" && (
                                                                         <td className={`${styles.cellMoney} ${styles.cellMoneyNet}`}>
-                                                                            Rp {formatIDR(calculatedNet)}
+                                                                            {formatMatrixPrice(calculatedNet)}
                                                                         </td>
                                                                     )}
                                                                 </React.Fragment>
@@ -2064,139 +2075,142 @@ export function ChannelManagerSection() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <ChannelNotificationWidget hotelCode={activeHotelCode} />
                     <div className={styles.gridCard}>
-                    <div className={styles.gridToolbar}>
-                        <div>
-                            <span className={styles.mappingHeaderTitle}>
-                                OTA Extranet Mapping &amp; Distribution Configuration:
-                            </span>
-                            <p className={styles.mappingHeaderSubtitle}>
-                                Map <b>Extranet Hotel ID</b>, <b>Room Type IDs</b>, and <b>Rate Plan IDs</b> to enable automated 2-way ARI and reservation synchronization with Channel Manager.
-                            </p>
-                        </div>
+                        <div style={{ padding: "20px 24px 18px 24px", borderBottom: "1px solid #e4e4e7" }}>
+                            <div>
+                                <span className={styles.mappingHeaderTitle}>
+                                    OTA Extranet Mapping &amp; Distribution Configuration
+                                </span>
+                                <p className={styles.mappingHeaderSubtitle}>
+                                    Map <b>Extranet Hotel ID</b>, <b>Room Type IDs</b>, and <b>Rate Plan IDs</b> to enable automated 2-way ARI and reservation synchronization with Channel Manager.
+                                </p>
+                            </div>
 
-                        {/* Quick Control Matrix: Channel Distribution Strategy & Front Office Separation */}
-                        <div style={{ marginTop: "14px", padding: "14px 18px", background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: "8px", width: "100%" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
-                                <div>
-                                    <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", display: "flex", alignItems: "center", gap: "8px" }}>
-                                        <span>Channel Distribution Strategy &amp; Front Office Separation</span>
+                            {/* Quick Control Matrix: Channel Distribution Strategy & Front Office Separation */}
+                            <div className={styles.strategyCard}>
+                                <div className={styles.strategyCardHeader}>
+                                    <div>
+                                        <div className={styles.strategyCardTitle}>
+                                            <Sliders size={14} style={{ color: "#5c0f1e" }} />
+                                            <span>Channel Distribution Strategy &amp; Front Office Separation</span>
+                                        </div>
+                                        <p className={styles.strategyCardDesc}>
+                                            Configure channel inventory isolation for Front Office Rate &amp; Inventory Grid (Rates only, Allotment quota, or Dedicated pool). Channels set to Master Pool share common inventory.
+                                        </p>
                                     </div>
-                                    <p style={{ fontSize: "11px", color: "#64748b", margin: "2px 0 0" }}>
-                                        Configure channel inventory isolation for Front Office Rate &amp; Inventory Grid (Rates only, Allotment quota, or Dedicated pool). Channels set to Master Pool share common inventory.
-                                    </p>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsAddChannelModalOpen(true)}
+                                            className={styles.btnActionBlue}
+                                            style={{ padding: "6px 14px", fontSize: "11px" }}
+                                        >
+                                            <Plus size={13} />
+                                            <span>Connect Channel</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleSaveAll}
+                                            disabled={savingSettings}
+                                            className={styles.btnActionPrimary}
+                                            style={{ padding: "6px 14px", fontSize: "11px" }}
+                                        >
+                                            <Save size={13} />
+                                            <span>{savingSettings ? "Saving..." : "Save Changes"}</span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsAddChannelModalOpen(true)}
-                                        className={styles.btnActionBlue}
-                                        style={{ padding: "6px 14px", fontSize: "11px" }}
-                                    >
-                                        <Plus size={13} />
-                                        <span>+ Connect Channel</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleSaveAll}
-                                        disabled={savingSettings}
-                                        className={styles.btnActionPrimary}
-                                        style={{ padding: "6px 14px", fontSize: "11px" }}
-                                    >
-                                        <Save size={13} />
-                                        <span>{savingSettings ? "Saving..." : "Save Changes"}</span>
-                                    </button>
+
+                                <div className={styles.strategyTableWrapper}>
+                                    <table className={styles.strategyTable}>
+                                        <thead>
+                                            <tr>
+                                                <th>Connected OTA Channel</th>
+                                                <th>Extranet Hotel ID</th>
+                                                <th>Distribution Strategy</th>
+                                                <th>Front Office Grid Effect</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {activeChannelsList.map(ch => {
+                                                const mode = ch.separationMode || "merged";
+                                                return (
+                                                    <tr key={ch.channelCode}>
+                                                        <td style={{ fontWeight: 600 }}>
+                                                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                                                <OtaLogo code={ch.channelCode} name={ch.channelName} size={18} />
+                                                                <span>{ch.channelName}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td style={{ fontFamily: "monospace", fontSize: "11px", color: "#475569" }}>
+                                                            {ch.hotelId || <span style={{ color: "#94a3b8" }}>(Unset)</span>}
+                                                        </td>
+                                                        <td>
+                                                            <select
+                                                                value={mode}
+                                                                onChange={e => updateChannelField(ch.channelCode, "separationMode", e.target.value as ChannelSeparationMode)}
+                                                                className={styles.cellSelect}
+                                                                style={{
+                                                                    fontWeight: 600,
+                                                                    fontSize: "11px",
+                                                                    padding: "5px 8px",
+                                                                    color: mode !== "merged" ? "#5c0f1e" : "#09090b",
+                                                                    backgroundColor: mode !== "merged" ? "#fdf2f4" : "#ffffff",
+                                                                    borderColor: mode !== "merged" ? "#f3cfd6" : "#e4e4e7"
+                                                                }}
+                                                            >
+                                                                <option value="merged">Master Pool (Shared Inventory)</option>
+                                                                <option value="separated_rate">Separated Rates (Custom Rate Strategy)</option>
+                                                                <option value="separated_allotment">Separated Allotment (Dedicated Quota)</option>
+                                                                <option value="separated_both">Fully Separated (Dedicated Rates &amp; Quota)</option>
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            {mode === "merged" && (
+                                                                <span style={{ fontSize: "11px", color: "#71717a" }}>
+                                                                    Shared via Master Pool (Unified inventory in FO grid).
+                                                                </span>
+                                                            )}
+                                                            {mode === "separated_rate" && (
+                                                                <span style={{ fontSize: "11px", color: "#5c0f1e", fontWeight: 600 }}>
+                                                                    Active in FO: Custom rate tier with shared master room pool.
+                                                                </span>
+                                                            )}
+                                                            {mode === "separated_allotment" && (
+                                                                <span style={{ fontSize: "11px", color: "#09090b", fontWeight: 600 }}>
+                                                                    Active in FO: Dedicated room quota with unified rate parity.
+                                                                </span>
+                                                            )}
+                                                            {mode === "separated_both" && (
+                                                                <span style={{ fontSize: "11px", color: "#5c0f1e", fontWeight: 700 }}>
+                                                                    Active in FO: Fully isolated dedicated rates and room quota.
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
 
-                            <table className={styles.dsiTable} style={{ margin: 0, width: "100%", fontSize: "12px" }}>
-                                <thead>
-                                    <tr>
-                                        <th className={styles.dsiTh}>Connected OTA Channel</th>
-                                        <th className={styles.dsiTh}>Extranet Hotel ID</th>
-                                        <th className={styles.dsiTh}>Distribution Strategy</th>
-                                        <th className={styles.dsiTh}>Front Office Grid Effect</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {activeChannelsList.map(ch => {
-                                        const mode = ch.separationMode || "merged";
-                                        return (
-                                            <tr key={ch.channelCode} className={styles.dsiRow}>
-                                                <td style={{ fontWeight: 600 }}>
-                                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                                        <OtaLogo code={ch.channelCode} name={ch.channelName} size={18} />
-                                                        <span>{ch.channelName}</span>
-                                                    </div>
-                                                </td>
-                                                <td style={{ fontFamily: "monospace", fontSize: "11px", color: "#475569" }}>
-                                                    {ch.hotelId || <span style={{ color: "#94a3b8" }}>(Unset)</span>}
-                                                </td>
-                                                <td>
-                                                    <select
-                                                        value={mode}
-                                                        onChange={e => updateChannelField(ch.channelCode, "separationMode", e.target.value as ChannelSeparationMode)}
-                                                        className={styles.cellSelect}
-                                                        style={{
-                                                            fontWeight: 600,
-                                                            fontSize: "11px",
-                                                            padding: "5px 8px",
-                                                            color: mode !== "merged" ? "#166534" : "#475569",
-                                                            backgroundColor: mode !== "merged" ? "#f0fdf4" : "#ffffff",
-                                                            borderColor: mode !== "merged" ? "#86efac" : "#cbd5e1"
-                                                        }}
-                                                    >
-                                                        <option value="merged">Master Pool (Shared Inventory)</option>
-                                                        <option value="separated_rate">Separated Rates (Custom Rate Strategy)</option>
-                                                        <option value="separated_allotment">Separated Allotment (Dedicated Quota)</option>
-                                                        <option value="separated_both">Fully Separated (Dedicated Rates &amp; Quota)</option>
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    {mode === "merged" && (
-                                                        <span style={{ fontSize: "11px", color: "#64748b" }}>
-                                                            Shared via Master Pool (Unified inventory in FO grid).
-                                                        </span>
-                                                    )}
-                                                    {mode === "separated_rate" && (
-                                                        <span style={{ fontSize: "11px", color: "#166534", fontWeight: 600 }}>
-                                                            Active in FO: Custom rate tier with shared master room pool.
-                                                        </span>
-                                                    )}
-                                                    {mode === "separated_allotment" && (
-                                                        <span style={{ fontSize: "11px", color: "#7c3aed", fontWeight: 600 }}>
-                                                            Active in FO: Dedicated room quota with unified rate parity.
-                                                        </span>
-                                                    )}
-                                                    {mode === "separated_both" && (
-                                                        <span style={{ fontSize: "11px", color: "#0284c7", fontWeight: 700 }}>
-                                                            Active in FO: Fully isolated dedicated rates and room quota.
-                                                        </span>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                            {/* Selected Channel Switcher */}
+                            <div className={styles.channelSwitcherList} style={{ marginTop: "14px" }}>
+                                {activeChannelsList.map(ch => (
+                                    <button
+                                        key={ch.channelCode}
+                                        type="button"
+                                        onClick={() => setSelectedChannelCode(ch.channelCode)}
+                                        className={`${styles.channelSwitcherBtn} ${selectedChannelCode === ch.channelCode ? styles.channelSwitcherBtnActive : ""}`}
+                                    >
+                                        <OtaLogo code={ch.channelCode} name={ch.channelName} size={18} />
+                                        <span>{ch.channelName}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Selected Channel Switcher */}
-                        <div className={styles.channelSwitcherList}>
-                            {activeChannelsList.map(ch => (
-                                <button
-                                    key={ch.channelCode}
-                                    type="button"
-                                    onClick={() => setSelectedChannelCode(ch.channelCode)}
-                                    className={`${styles.channelSwitcherBtn} ${selectedChannelCode === ch.channelCode ? styles.channelSwitcherBtnActive : ""}`}
-                                >
-                                    <OtaLogo code={ch.channelCode} name={ch.channelName} size={18} />
-                                    <span>{ch.channelName}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Mapping Form for Selected Channel */}
+                        {/* Mapping Form for Selected Channel */}
                     {channelConfigs[selectedChannelCode] && channelConfigs[selectedChannelCode]?.isActive ? (
                         <div className={styles.channelMappingBody}>
                             {/* Active Channel Header & Disconnect Controls */}
@@ -2325,6 +2339,7 @@ export function ChannelManagerSection() {
                                         type="number"
                                         value={channelConfigs[selectedChannelCode].commissionPercent}
                                         onChange={e => updateChannelField(selectedChannelCode, "commissionPercent", Number(e.target.value) || 0)}
+                                        onWheel={e => e.currentTarget.blur()}
                                         className={`${styles.cellInput} ${styles.channelFieldInput}`}
                                     />
                                 </div>
@@ -2339,9 +2354,9 @@ export function ChannelManagerSection() {
                                         className={`${styles.cellSelect} ${styles.channelFieldSelect}`}
                                         style={{
                                             fontWeight: 600,
-                                            color: (channelConfigs[selectedChannelCode].separationMode && channelConfigs[selectedChannelCode].separationMode !== "merged") ? "#166534" : "#334155",
-                                            backgroundColor: (channelConfigs[selectedChannelCode].separationMode && channelConfigs[selectedChannelCode].separationMode !== "merged") ? "#f0fdf4" : "#ffffff",
-                                            borderColor: (channelConfigs[selectedChannelCode].separationMode && channelConfigs[selectedChannelCode].separationMode !== "merged") ? "#86efac" : "#cbd5e1"
+                                            color: (channelConfigs[selectedChannelCode].separationMode && channelConfigs[selectedChannelCode].separationMode !== "merged") ? "#5c0f1e" : "#09090b",
+                                            backgroundColor: (channelConfigs[selectedChannelCode].separationMode && channelConfigs[selectedChannelCode].separationMode !== "merged") ? "#fdf2f4" : "#ffffff",
+                                            borderColor: (channelConfigs[selectedChannelCode].separationMode && channelConfigs[selectedChannelCode].separationMode !== "merged") ? "#f3cfd6" : "#e4e4e7"
                                         }}
                                     >
                                         <option value="merged">Master Pool (Shared Inventory)</option>
@@ -2359,12 +2374,13 @@ export function ChannelManagerSection() {
                                         1. Room Type Mapping (PMS to OTA):
                                     </span>
                                     {otaExtranetRooms[selectedChannelCode] && otaExtranetRooms[selectedChannelCode].length > 0 && (
-                                        <span style={{ fontSize: "11px", color: "#166534", backgroundColor: "#dcfce7", padding: "3px 8px", borderRadius: "12px", border: "1px solid #86efac", fontWeight: 600 }}>
+                                        <span style={{ fontSize: "11px", color: "#5c0f1e", backgroundColor: "#fdf2f4", padding: "3px 8px", borderRadius: "4px", border: "1px solid #f3cfd6", fontWeight: 600 }}>
                                             {otaExtranetRooms[selectedChannelCode].length} Extranet Rooms Linked
                                         </span>
                                     )}
                                 </div>
-                                <table className={styles.dsiTable}>
+                                <div className={styles.mappingTableWrapper}>
+                                    <table className={styles.dsiTable}>
                                     <thead>
                                         <tr>
                                             <th className={styles.dsiTh}>PMS Room Type & Code</th>
@@ -2494,15 +2510,19 @@ export function ChannelManagerSection() {
                                             );
                                         })}
                                     </tbody>
-                                </table>
+                                    </table>
+                                </div>
                             </div>
 
                             {/* Rate Plan Mapping Sub-Table */}
                             <div>
-                                <span className={styles.mappingSectionHeading}>
-                                    2. Rate Plan &amp; Package Mapping (PMS to OTA):
-                                </span>
-                                <table className={styles.dsiTable}>
+                                <div style={{ marginBottom: "12px" }}>
+                                    <span className={styles.mappingSectionHeading} style={{ margin: 0 }}>
+                                        2. Rate Plan &amp; Package Mapping (PMS to OTA):
+                                    </span>
+                                </div>
+                                <div className={styles.mappingTableWrapper}>
+                                    <table className={styles.dsiTable}>
                                     <thead>
                                         <tr>
                                             <th className={styles.dsiTh}>PMS Rate Plan &amp; Code</th>
@@ -2646,21 +2666,22 @@ export function ChannelManagerSection() {
                                             );
                                         })}
                                     </tbody>
-                                </table>
+                                    </table>
+                                </div>
                             </div>
 
                             {/* Mapping Action Footer */}
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px", paddingTop: "14px", borderTop: "1px solid #e2e8f0", flexWrap: "wrap", gap: "10px" }}>
-                                <div style={{ fontSize: "12px", color: "#64748b" }}>
+                            <div className={styles.mappingFooter}>
+                                <div className={styles.mappingFooterText}>
                                     Enter Room IDs and Rate IDs from your OTA Extranet, then click <strong>Save &amp; Sync Channel</strong> to activate 2-way real-time ARI.
                                 </div>
-                                <div style={{ display: "flex", gap: "8px" }}>
+                                <div className={styles.mappingFooterButtons}>
                                     <button
                                         type="button"
                                         onClick={handleSaveAll}
                                         disabled={savingSettings}
                                         className={styles.btnActionSecondary}
-                                        style={{ padding: "7px 14px", fontSize: "12px" }}
+                                        style={{ padding: "8px 16px", fontSize: "12px" }}
                                     >
                                         <Save size={13} />
                                         <span>{savingSettings ? "Saving..." : "Save Mappings"}</span>
@@ -2673,7 +2694,7 @@ export function ChannelManagerSection() {
                                         }}
                                         disabled={savingSettings || syncingChannex}
                                         className={styles.btnActionPrimary}
-                                        style={{ padding: "7px 16px", fontSize: "12px", background: "#059669" }}
+                                        style={{ padding: "8px 18px", fontSize: "12px" }}
                                         title="Save mappings and sync rate plans to Channel Manager server"
                                     >
                                         <RefreshCw size={13} className={syncingChannex ? "animate-spin" : ""} />
@@ -2689,7 +2710,7 @@ export function ChannelManagerSection() {
                                 No Channel Selected or Connected
                             </h4>
                             <p style={{ fontSize: "12px", color: "#64748b", margin: "0 auto 16px", maxWidth: "420px" }}>
-                                Select an active channel from the list above, or click "+ Connect Channel" to map a new OTA channel from the catalog.
+                                Select an active channel from the list above, or click &ldquo;Connect Channel&rdquo; to map a new OTA channel from the catalog.
                             </p>
                             <button
                                 type="button"
@@ -2698,7 +2719,7 @@ export function ChannelManagerSection() {
                                 style={{ padding: "6px 16px", fontSize: "12px" }}
                             >
                                 <Plus size={13} />
-                                <span>+ Connect Channel</span>
+                                <span>Connect Channel</span>
                             </button>
                         </div>
                     )}
@@ -2932,7 +2953,7 @@ export function ChannelManagerSection() {
                                     const hotelId = channelConfigs[ch.code]?.hotelId || "";
 
                                     return (
-                                        <div key={ch.code} className={styles.channelCard}>
+                                        <div key={ch.code} className={`${styles.channelCard} ${isConnected ? styles.channelCardConnected : ""}`}>
                                             <div className={styles.channelCardHeader}>
                                                 <div className={styles.channelCardTitle}>
                                                     <OtaLogo code={ch.code} name={ch.name} size={22} />
@@ -2942,8 +2963,8 @@ export function ChannelManagerSection() {
                                                 {isConnected ? (
                                                     <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                                                         <span className={`${styles.badge} ${styles.badgeActive}`}>Connected</span>
-                                                        <span className={`${styles.badge} ${channelConfigs[ch.code]?.channexStatus === "ACTIVE" ? styles.badgeActive : styles.badgePending}`} style={{ fontSize: "10px" }}>
-                                                            Status: {channelConfigs[ch.code]?.channexStatus || "ACTIVE"}
+                                                        <span className={`${styles.badge} ${channelConfigs[ch.code]?.channexStatus === "ACTIVE" ? styles.badgeActive : styles.badgePending}`}>
+                                                            {channelConfigs[ch.code]?.channexStatus || "ACTIVE"}
                                                         </span>
                                                     </div>
                                                 ) : (
@@ -2952,17 +2973,17 @@ export function ChannelManagerSection() {
                                             </div>
 
                                             <div className={styles.catalogMeta}>
-                                                <span>Commission: <b>{ch.defaultCommission}%</b></span>
+                                                <span>Komisi: <b>{ch.defaultCommission}%</b></span>
                                                 <span className={styles.catalogMetaDot}>•</span>
-                                                <span>Category: <b>{ch.category.toUpperCase()}</b></span>
+                                                <span>Kategori: <b>{ch.category.toUpperCase()}</b></span>
                                             </div>
 
                                             {isConnected && (
                                                 <div className={styles.catalogHotelIdBadge}>
-                                                    <span>Hotel ID: <b>{hotelId || "(Unassigned)"}</b></span>
+                                                    <span>Hotel ID: <b>{hotelId || "(Belum Diatur)"}</b></span>
                                                     {channelConfigs[ch.code]?.channexChannelId && (
-                                                        <span style={{ marginLeft: "8px", color: "#64748b" }}>
-                                                            • CID: {channelConfigs[ch.code].channexChannelId?.slice(0, 8)}...
+                                                        <span style={{ fontSize: "10.5px", color: "#71717a" }}>
+                                                            CID: {channelConfigs[ch.code].channexChannelId?.slice(0, 8)}...
                                                         </span>
                                                     )}
                                                 </div>
@@ -2977,7 +2998,7 @@ export function ChannelManagerSection() {
                                                                 setSelectedChannelCode(ch.code);
                                                                 setActiveTab("mapping");
                                                             }}
-                                                            className={`${styles.btnActionSecondary} ${styles.btnFlexCenter}`}
+                                                            className={styles.btnCardManage}
                                                         >
                                                             Manage Mapping
                                                         </button>
@@ -2985,7 +3006,7 @@ export function ChannelManagerSection() {
                                                             type="button"
                                                             onClick={() => handleSyncSingleChannelToChannex(ch.code)}
                                                             disabled={syncingChannex}
-                                                            className={`${styles.btnActionSecondary} ${styles.btnCenter}`}
+                                                            className={styles.btnCardSync}
                                                             title="Sync ARI directly with Channel Manager"
                                                         >
                                                             <RefreshCw size={12} className={syncingChannex ? "animate-spin" : ""} />
@@ -2994,10 +3015,10 @@ export function ChannelManagerSection() {
                                                         <button
                                                             type="button"
                                                             onClick={() => promptDisconnectChannel(ch.code, ch.name)}
-                                                            className={`${styles.btnActionDanger} ${styles.btnCenter}`}
+                                                            className={styles.btnCardDisconnect}
                                                             title="Disconnect channel"
                                                         >
-                                                            <Unlink size={13} />
+                                                            <Unlink size={12} />
                                                             <span>Disconnect</span>
                                                         </button>
                                                     </>
@@ -3005,9 +3026,10 @@ export function ChannelManagerSection() {
                                                     <button
                                                         type="button"
                                                         onClick={() => handleConnectChannel(ch)}
-                                                        className={`${styles.btnActionBlue} ${styles.btnFlexCenter}`}
+                                                        className={styles.btnCardConnect}
                                                     >
-                                                        + Connect Channel
+                                                        <Plus size={13} />
+                                                        <span>Connect Channel</span>
                                                     </button>
                                                 )}
                                             </div>
@@ -3122,53 +3144,95 @@ export function ChannelManagerSection() {
 
             {/* TAB 4: GLOBAL CHANNEL MAPPING HUB (IFRAME) */}
             {activeTab === "iframe" && (
-                <div className={styles.gridCard}>
+                <div className={styles.iframeCard}>
                     <div className={styles.gridToolbar}>
                         <div>
-                            <span className={styles.mappingHeaderTitle}>
-                                Global Channel Mapping Hub (Embedded SSO):
-                            </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+                                <span className={styles.mappingHeaderTitle}>
+                                    Global Channel Mapping Extranet (Channex Hub)
+                                </span>
+                                <span className={`${styles.badge} ${channexEnv === "production" ? styles.badgeActive : styles.badgeInfo}`}>
+                                    {channexEnv === "production" ? "PRODUCTION HUB" : "SANDBOX STAGING HUB"}
+                                </span>
+                            </div>
                             <p className={styles.mappingHeaderSubtitle}>
-                                Official visual mapping extranet interface to activate and configure online channels directly.
+                                Antarmuka visual mapping extranet resmi untuk mengaktifkan saluran OTA (Booking.com, Agoda, Tiket.com, Expedia, Airbnb) serta memetakan tipe kamar dan rate plan secara visual.
                             </p>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={() => {
-                                loadIframeUrl().catch(err => console.error("Error loading iframe:", err));
-                            }}
-                            className={styles.btnActionSecondary}
-                        >
-                            <RefreshCw size={13} />
-                            <span>Reload Hub Frame</span>
-                        </button>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {iframeUrl && (
+                                <a
+                                    href={iframeUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={styles.btnActionSecondary}
+                                    title="Buka interface mapping di tab browser baru"
+                                >
+                                    <ExternalLink size={13} />
+                                    <span>Buka di Tab Baru</span>
+                                </a>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    loadIframeUrl().catch(err => console.error("Error loading iframe:", err));
+                                }}
+                                disabled={loadingIframe}
+                                className={styles.btnActionSecondary}
+                            >
+                                <RefreshCw size={13} className={loadingIframe ? "animate-spin" : ""} />
+                                <span>{loadingIframe ? "Menghubungkan..." : "Reload Hub Frame"}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className={styles.iframeHeaderBar}>
+                        <div className={styles.iframeSecurityBadge}>
+                            <Shield size={13} color="#16a34a" />
+                            <span>SSO Session: Authenticated &amp; Encrypted</span>
+                            <span style={{ color: "#a1a1aa", margin: "0 4px" }}>|</span>
+                            <span>Property ID: <strong>{activeHotelCode || "Default Property"}</strong></span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, color: "#71717a", fontSize: 11 }}>
+                            <span>Gateway: <strong style={{ color: channexEnv === "production" ? "#16a34a" : "#d97706" }}>{channexEnv.toUpperCase()}</strong></span>
+                            <span>Direct Channel Distribution Engine</span>
+                        </div>
                     </div>
 
                     <div className={styles.iframeBody}>
                         {loadingIframe ? (
                             <div className={styles.iframeLoadingBox}>
-                                <RefreshCw size={24} className="animate-spin" />
-                                <span>Establishing secure SSO session to Channel Distribution Hub...</span>
+                                <RefreshCw size={28} className={`${styles.iframeLoadingSpinner} animate-spin`} />
+                                <div className={styles.iframeLoadingTitle}>Menghubungkan ke Channel Distribution Hub...</div>
+                                <p className={styles.iframeLoadingSub}>
+                                    Sedang menginisialisasi sesi Single Sign-On (SSO) aman untuk properti <strong>{activeHotelCode || "aktif"}</strong>. Antarmuka extranet Channex akan segera dimuat di sini.
+                                </p>
                             </div>
                         ) : iframeUrl ? (
                             <iframe
                                 src={iframeUrl}
                                 className={styles.iframeElement}
                                 title="Global Channel Mapping Hub"
+                                allow="clipboard-read; clipboard-write"
                             />
                         ) : (
                             <div className={styles.iframeEmptyBox}>
-                                <AlertTriangle size={32} color="#f59e0b" />
-                                <span>No active channel mapping session found.</span>
+                                <AlertTriangle size={36} color="#d97706" />
+                                <div className={styles.iframeEmptyTitle}>Sesi Visual Mapping Extranet Belum Terhubung</div>
+                                <p className={styles.iframeEmptySub}>
+                                    Belum ada sesi SSO aktif untuk properti <strong>{activeHotelCode || "ini"}</strong>. Klik tombol di bawah untuk membuat token akses sekali pakai dan memuat konsol mapping.
+                                </p>
                                 <button
                                     type="button"
                                     onClick={() => {
                                         loadIframeUrl().catch(err => console.error("Error generating token:", err));
                                     }}
                                     className={styles.btnActionPrimary}
+                                    style={{ marginTop: 8 }}
                                 >
-                                    Generate Token &amp; Open Mapping Hub
+                                    <Zap size={13} />
+                                    <span>Generate SSO Token &amp; Buka Mapping Hub</span>
                                 </button>
                             </div>
                         )}
@@ -3184,7 +3248,7 @@ export function ChannelManagerSection() {
                         <div className={styles.gridToolbar}>
                             <div>
                                 <span className={styles.sandboxToolbarTitle}>
-                                    <Shield size={16} color="#2563eb" />
+                                    <Shield size={16} color="#09090b" />
                                     <span>Global Distribution Certification &amp; Testing Suite</span>
                                 </span>
                                 <p className={styles.mappingHeaderSubtitle}>
@@ -3233,10 +3297,9 @@ export function ChannelManagerSection() {
                                             type="button"
                                             disabled={stage.status === "running" || runningCertAll}
                                             onClick={() => runCertStage(idx, lastCreatedBookingId || undefined)}
-                                            className={styles.btnActionSecondary}
-                                            style={{ fontSize: "11px", padding: "4px 8px" }}
+                                            className={`${styles.btnActionSecondary} ${styles.btnTestStage}`}
                                         >
-                                            {stage.status === "running" ? "Testing..." : "Test This Stage"}
+                                            {stage.status === "running" ? "Testing..." : "Test Stage"}
                                         </button>
                                     </div>
                                 ))}
@@ -3357,11 +3420,12 @@ export function ChannelManagerSection() {
 
                                 <div className={styles.simFieldRow}>
                                     <div className={styles.simFieldGroup}>
-                                        <label className={styles.simLabel}>Total Amount (IDR):</label>
+                                        <label className={styles.simLabel}>Total Amount ({hotelCurrency || "IDR"}):</label>
                                         <input
                                             type="number"
                                             value={simPrice}
                                             onChange={e => setSimPrice(Number(e.target.value))}
+                                            onWheel={e => e.currentTarget.blur()}
                                             className={styles.simInput}
                                         />
                                     </div>
@@ -3404,8 +3468,7 @@ export function ChannelManagerSection() {
                                         type="button"
                                         disabled={pushingOpenChannel || !simRoomTypeId}
                                         onClick={handlePushOpenChannelBooking}
-                                        className={styles.btnActionSecondary}
-                                        style={{ fontSize: "12px", padding: "7px 12px" }}
+                                        className={`${styles.btnActionSecondary} ${styles.btnPushQueue}`}
                                         title="Dispatch booking directly to channel queue"
                                     >
                                         <span>{pushingOpenChannel ? "Dispatching to Channel..." : "Push to Channel Queue"}</span>
@@ -3482,24 +3545,20 @@ export function ChannelManagerSection() {
                         {/* 2. API Credentials & Property ID Form */}
                         <div className={styles.credentialsCard}>
                             <div className={styles.credentialsHeader}>
-                                <Key size={16} className={styles.credentialsHeaderIcon} />
+                                <Key size={18} className={styles.credentialsHeaderIcon} />
                                 <span className={styles.credentialsTitle}>
                                     API Credentials &amp; Property Distribution Identity
                                 </span>
                             </div>
 
                             {/* Field A: User API Key */}
-                            <div>
+                            <div className={styles.credentialsFieldGroup}>
                                 <div className={styles.credentialsFieldHeader}>
                                     <label className={styles.credentialsLabelBold}>
-                                        Channel Distribution API Key: <span className={styles.requiredAsterisk}>*</span>
+                                        Channel Distribution API Key <span className={styles.requiredAsterisk}>*</span>
                                     </label>
                                     <span className={styles.credentialsExtLink}>
-                                        {channexEnv === "production" ? (
-                                            <>Production Live Environment Credentials</>
-                                        ) : (
-                                            <>Sandbox / Staging Environment Credentials</>
-                                        )}
+                                        {channexEnv === "production" ? "Production Live Environment Credentials" : "Sandbox / Staging Environment Credentials"}
                                     </span>
                                 </div>
                                 <div className={styles.inputGroupRow}>
@@ -3521,24 +3580,23 @@ export function ChannelManagerSection() {
                                 </div>
                                 {!channexApiKey && (
                                     <p className={styles.apiKeyMissingAlert}>
-                                        API Key is required to create properties, open the mapping hub, and ingest OTA bookings.
+                                        <AlertTriangle size={13} /> API Key is required to create properties, open the mapping hub, and ingest OTA bookings.
                                     </p>
                                 )}
                             </div>
 
                             {/* Field B: Hotel Distribution Base Currency */}
-                            <div style={{ marginBottom: "20px" }}>
+                            <div className={styles.credentialsFieldGroup}>
                                 <label className={styles.credentialsLabelBold}>
-                                    Hotel Distribution Base Currency: <span className={styles.requiredAsterisk}>*</span>
+                                    Hotel Distribution Base Currency <span className={styles.requiredAsterisk}>*</span>
                                 </label>
-                                <p className={styles.fieldHelpMuted} style={{ marginBottom: "8px" }}>
+                                <p className={styles.fieldHelpMuted}>
                                     Mata uang hotel untuk distribusi harga ke Channex &amp; OTA. Pilih <strong>USD</strong> untuk properti sertifikasi uji coba, atau <strong>IDR</strong> untuk hotel komersial Indonesia.
                                 </p>
                                 <select
                                     value={hotelCurrency}
                                     onChange={e => setHotelCurrency(e.target.value)}
-                                    className={styles.cellInput}
-                                    style={{ maxWidth: "420px", fontWeight: 600, padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
+                                    className={styles.currencySelect}
                                 >
                                     {SUPPORTED_CURRENCIES.map(c => (
                                         <option key={c.code} value={c.code}>
@@ -3549,43 +3607,36 @@ export function ChannelManagerSection() {
                             </div>
 
                             {/* Field C: Real Property Distribution Identity & Registration Hub */}
-                            <div style={{
-                                marginBottom: "24px",
-                                padding: "18px",
-                                borderRadius: "10px",
-                                background: channexPropertyId ? "#f0fdf4" : "#fefce8",
-                                border: `1px solid ${channexPropertyId ? "#86efac" : "#fde047"}`
-                            }}>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", marginBottom: "14px" }}>
+                            <div className={`${styles.propertyIdentityCard} ${channexPropertyId ? styles.propertyIdentityCardConnected : styles.propertyIdentityCardUnregistered}`}>
+                                <div className={styles.propertyIdentityHeader}>
                                     <div>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                                        <div className={styles.propertyIdentityStatusRow}>
                                             {channexPropertyId ? (
-                                                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "#16a34a", color: "#fff", padding: "4px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px" }}>
-                                                    <Check size={13} /> TERDAFTAR DI CHANNEX
+                                                <span className={styles.propertyBadgeConnected}>
+                                                    <Check size={12} /> TERDAFTAR DI CHANNEX
                                                 </span>
                                             ) : (
-                                                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "#ca8a04", color: "#fff", padding: "4px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px" }}>
-                                                    <AlertTriangle size={13} /> BELUM TERDAFTAR DI CHANNEX
+                                                <span className={styles.propertyBadgeUnregistered}>
+                                                    <AlertTriangle size={12} /> BELUM TERDAFTAR DI CHANNEX
                                                 </span>
                                             )}
-                                            <span style={{ fontWeight: 700, fontSize: "14px", color: "#1e293b" }}>
+                                            <span className={styles.propertyNameMeta}>
                                                 {activeHotelName || "Hotel Aktif"} &bull; {hotelCurrency}
                                             </span>
                                         </div>
-                                        <p style={{ margin: 0, fontSize: "12px", color: "#475569", maxWidth: "600px" }}>
+                                        <p className={styles.propertyIdentityDesc}>
                                             {channexPropertyId
                                                 ? `Properti aktif terhubung ke Channex dengan UUID: ${channexPropertyId}. Kamar dan rate plan telah disinkronkan.`
                                                 : `Klik 'Daftarkan Hotel Ini ke Channex' untuk mendaftarkan properti ini secara nyata ke Channex ${channexEnv.toUpperCase()}. Seluruh tipe kamar & rate plan yang telah dibuat di Tara akan otomatis dibuatkan di Channex.`}
                                         </p>
                                     </div>
 
-                                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                                    <div className={styles.propertyActions}>
                                         <button
                                             type="button"
                                             onClick={handleSyncMasterToChannex}
                                             disabled={syncingMaster}
                                             className={styles.btnActionPrimary}
-                                            style={{ padding: "8px 16px", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "6px" }}
                                         >
                                             <RefreshCw size={13} className={syncingMaster ? "animate-spin" : ""} />
                                             <span>{channexPropertyId ? "Sinkronkan Kamar & Rate Plan" : "🚀 Daftarkan Hotel Ini ke Channex"}</span>
@@ -3594,8 +3645,7 @@ export function ChannelManagerSection() {
                                             <button
                                                 type="button"
                                                 onClick={handleUnlinkProperty}
-                                                className={styles.btnActionSecondary}
-                                                style={{ padding: "8px 14px", color: "#dc2626", borderColor: "#fca5a5", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                                                className={`${styles.btnActionSecondary} ${styles.btnUnlinkProperty}`}
                                                 title="Putus relasi UUID Channex jika properti telah dihapus di portal Channex"
                                             >
                                                 <Unlink size={13} />
@@ -3605,9 +3655,9 @@ export function ChannelManagerSection() {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className={styles.channelFieldLabel} style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                                        Channex Property UUID:
+                                <div className={styles.credentialsFieldGroup}>
+                                    <label className={styles.credentialsLabelBold} style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                        Channex Property UUID
                                     </label>
                                     <input
                                         type="text"
@@ -3615,15 +3665,14 @@ export function ChannelManagerSection() {
                                         onChange={e => setChannexPropertyId(e.target.value)}
                                         placeholder="Auto-generated setelah klik 'Daftarkan Hotel Ini ke Channex', atau input UUID manual"
                                         className={`${styles.cellInput} ${styles.propertyIdInput}`}
-                                        style={{ fontFamily: "monospace", fontSize: "13px" }}
                                     />
                                 </div>
                             </div>
 
-                            {/* Field C: Webhook Callback URL */}
-                            <div>
-                                <label className={styles.channelFieldLabel}>
-                                    Webhook Ingestion Callback URL (Inbound Reservations):
+                            {/* Field D: Webhook Callback URL */}
+                            <div className={styles.credentialsFieldGroup}>
+                                <label className={styles.credentialsLabelBold}>
+                                    Webhook Ingestion Callback URL (Inbound Reservations)
                                 </label>
                                 <div className={styles.inputGroupRow}>
                                     <input
@@ -3641,7 +3690,7 @@ export function ChannelManagerSection() {
                                         }}
                                         className={`${styles.btnActionSecondary} ${styles.btnCopyWebhook}`}
                                     >
-                                        <Copy size={12} />
+                                        <Copy size={13} />
                                         <span>Copy URL</span>
                                     </button>
                                 </div>
@@ -3650,11 +3699,11 @@ export function ChannelManagerSection() {
                                 </p>
                             </div>
 
-                            {/* Field D: Webhook Secret (Shared Secret) */}
-                            <div>
+                            {/* Field E: Webhook Secret (Shared Secret) */}
+                            <div className={styles.credentialsFieldGroup}>
                                 <div className={styles.credentialsFieldHeader}>
                                     <label className={styles.credentialsLabelBold}>
-                                        Webhook Shared Secret (HMAC Signature Verification): <span className={styles.requiredAsterisk}>*</span>
+                                        Webhook Shared Secret (HMAC Signature Verification) <span className={styles.requiredAsterisk}>*</span>
                                     </label>
                                     <span className={styles.credentialsExtLink}>
                                         Inbound Webhook Verification Key
@@ -3685,11 +3734,11 @@ export function ChannelManagerSection() {
                                             setChannexWebhookSecret(hex);
                                             toast.info("New Webhook Secret (32 hex) generated. Click 'Save Channel Configuration' to apply.");
                                         }}
-                                        className={styles.btnActionSecondary}
+                                        className={`${styles.btnActionSecondary} ${styles.btnApiKeyToggle}`}
                                         title="Generate random 32 hex string"
                                     >
-                                        <RefreshCw size={12} />
-                                        <span>Generate Random Secret</span>
+                                        <RefreshCw size={13} />
+                                        <span>Generate</span>
                                     </button>
                                     {channexWebhookSecret && (
                                         <button
@@ -3698,10 +3747,10 @@ export function ChannelManagerSection() {
                                                 navigator.clipboard.writeText(channexWebhookSecret);
                                                 toast.success("Webhook Secret copied to clipboard!");
                                             }}
-                                            className={styles.btnActionSecondary}
+                                            className={`${styles.btnActionSecondary} ${styles.btnApiKeyToggle}`}
                                             title="Copy Secret"
                                         >
-                                            <Copy size={12} />
+                                            <Copy size={13} />
                                         </button>
                                     )}
                                 </div>
@@ -3710,30 +3759,22 @@ export function ChannelManagerSection() {
                                 </p>
                             </div>
 
-                            {/* Section E: Registration Status & 1-Click Register Webhook */}
-                            <div style={{
-                                background: webhookRegistrationStatus?.isRegistered ? "#f0fdf4" : "#f8fafc",
-                                border: `1px solid ${webhookRegistrationStatus?.isRegistered ? "#86efac" : "#e2e8f0"}`,
-                                borderRadius: "8px",
-                                padding: "14px 16px",
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "10px"
-                            }}>
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            {/* Section F: Registration Status & 1-Click Register Webhook */}
+                            <div className={`${styles.webhookStatusBox} ${webhookRegistrationStatus?.isRegistered ? styles.webhookStatusBoxActive : styles.webhookStatusBoxInactive}`}>
+                                <div className={styles.webhookStatusRow}>
+                                    <div className={styles.webhookStatusIndicator}>
                                         {webhookRegistrationStatus?.isRegistered ? (
-                                            <CheckCircle2 size={16} color="#16a34a" />
+                                            <CheckCircle2 size={16} color="#5c0f1e" />
                                         ) : (
-                                            <AlertTriangle size={16} color="#eab308" />
+                                            <AlertTriangle size={16} color="#71717a" />
                                         )}
-                                        <span style={{ fontSize: "12px", fontWeight: 700, color: webhookRegistrationStatus?.isRegistered ? "#15803d" : "#475569" }}>
+                                        <span style={{ color: webhookRegistrationStatus?.isRegistered ? "#09090b" : "#71717a" }}>
                                             {webhookRegistrationStatus?.isRegistered
                                                 ? `✓ Webhook Active & Verified in Channex (ID: ${webhookRegistrationStatus.webhookId})`
                                                 : "Webhook Not Registered in Channex"}
                                         </span>
                                     </div>
-                                    <div style={{ display: "flex", gap: "8px" }}>
+                                    <div className={styles.webhookActions}>
                                         <button
                                             type="button"
                                             disabled={checkingWebhookStatus}
@@ -3745,10 +3786,10 @@ export function ChannelManagerSection() {
                                                     const data = await res.json();
                                                     if (data.isRegistered) {
                                                         setWebhookRegistrationStatus({
-                                                             isRegistered: true,
-                                                             webhookId: data.webhookId,
-                                                             webhookUrl: data.webhookUrl,
-                                                             webhookRegisteredAt: data.webhookRegisteredAt
+                                                            isRegistered: true,
+                                                            webhookId: data.webhookId,
+                                                            webhookUrl: data.webhookUrl,
+                                                            webhookRegisteredAt: data.webhookRegisteredAt
                                                         });
                                                         toast.success(`Webhook active and verified (ID: ${data.webhookId})`);
                                                     } else {
@@ -3762,9 +3803,9 @@ export function ChannelManagerSection() {
                                                 }
                                             }}
                                             className={styles.btnActionSecondary}
-                                            style={{ height: "30px", fontSize: "11px" }}
+                                            style={{ height: "32px", fontSize: "11.5px" }}
                                         >
-                                            <RefreshCw size={11} className={checkingWebhookStatus ? "animate-spin" : ""} />
+                                            <RefreshCw size={12} className={checkingWebhookStatus ? "animate-spin" : ""} />
                                             <span>{checkingWebhookStatus ? "Verifying..." : "Verify Status"}</span>
                                         </button>
                                         <button
@@ -3789,7 +3830,6 @@ export function ChannelManagerSection() {
 
                                                 setRegisteringWebhook(true);
                                                 try {
-                                                    // 1. Save config to Firestore hotel
                                                     const docRef = doc(db, "hotels", activeHotelCode);
                                                     await updateDoc(docRef, {
                                                         channexPropertyId,
@@ -3804,7 +3844,6 @@ export function ChannelManagerSection() {
                                                         }
                                                     });
 
-                                                    // 2. Register directly with Channex API
                                                     const webhookUrl = `${window.location.origin}/api/channex/webhook`;
                                                     const res = await fetch("/api/channex/register-webhook", {
                                                         method: "POST",
@@ -3838,15 +3877,15 @@ export function ChannelManagerSection() {
                                                 }
                                             }}
                                             className={styles.btnActionPrimary}
-                                            style={{ height: "30px", fontSize: "11px", background: "#16a34a", borderColor: "#15803d" }}
+                                            style={{ height: "32px", fontSize: "11.5px" }}
                                         >
-                                            <ArrowRight size={11} />
-                                            <span>{registeringWebhook ? "Registering with Gateway..." : "Register Webhook with Gateway"}</span>
+                                            <ArrowRight size={12} />
+                                            <span>{registeringWebhook ? "Registering..." : "Register Webhook with Gateway"}</span>
                                         </button>
                                     </div>
                                 </div>
-                                <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>
-                                    Click <b>Register Webhook with Gateway</b> to automatically bind this PMS endpoint without manual configuration in external portals.
+                                <p className={styles.fieldHelpMuted} style={{ margin: 0 }}>
+                                    Click <strong>Register Webhook with Gateway</strong> to automatically bind this PMS endpoint without manual configuration in external portals.
                                 </p>
                             </div>
 
@@ -3879,55 +3918,57 @@ export function ChannelManagerSection() {
 
                         {/* 3. 4-Step Onboarding Guide */}
                         <div className={styles.guideList}>
-                            <span className={styles.mappingHeaderTitle}>
-                                Distribution Gateway Onboarding Guide (Sandbox &amp; Production):
+                            <span className={styles.guideListTitle}>
+                                Distribution Gateway Onboarding Guide (Sandbox &amp; Production)
                             </span>
 
-                            <div className={styles.guideCard}>
-                                <div className={styles.guideStepNumber}>
-                                    1
+                            <div className={styles.guideGrid}>
+                                <div className={styles.guideCard}>
+                                    <div className={styles.guideStepNumber}>
+                                        1
+                                    </div>
+                                    <div>
+                                        <span className={styles.guideStepTitle}>Obtain Provider Account</span>
+                                        <p className={styles.guideStepDesc}>
+                                            Retrieve your API Key from the channel distribution portal (Staging Sandbox or Production Live).
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <span className={styles.guideStepTitle}>Obtain Distribution Provider Account</span>
-                                    <p className={styles.guideStepDesc}>
-                                        Retrieve your API Key from the channel distribution portal (Staging Sandbox or Production Live).
-                                    </p>
-                                </div>
-                            </div>
 
-                            <div className={styles.guideCard}>
-                                <div className={styles.guideStepNumber}>
-                                    2
+                                <div className={styles.guideCard}>
+                                    <div className={styles.guideStepNumber}>
+                                        2
+                                    </div>
+                                    <div>
+                                        <span className={styles.guideStepTitle}>Configure API Key</span>
+                                        <p className={styles.guideStepDesc}>
+                                            Enter your API Key into the field above and click <strong>Save Channel Configuration</strong>.
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <span className={styles.guideStepTitle}>Configure API Key</span>
-                                    <p className={styles.guideStepDesc}>
-                                        Enter your API Key into the <b>Channel Distribution API Key</b> field above and click <b>Save Channel Configuration</b>.
-                                    </p>
-                                </div>
-                            </div>
 
-                            <div className={styles.guideCard}>
-                                <div className={styles.guideStepNumber}>
-                                    3
+                                <div className={styles.guideCard}>
+                                    <div className={styles.guideStepNumber}>
+                                        3
+                                    </div>
+                                    <div>
+                                        <span className={styles.guideStepTitle}>Register Inbound Webhook</span>
+                                        <p className={styles.guideStepDesc}>
+                                            Use the 1-click registration button to verify the callback URL for real-time reservation streaming.
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <span className={styles.guideStepTitle}>Register Inbound Webhook Endpoint</span>
-                                    <p className={styles.guideStepDesc}>
-                                        Use the one-click registration button or verify the <b>Webhook Callback URL</b> to ensure reservations and cancellations stream into My Tara PMS.
-                                    </p>
-                                </div>
-                            </div>
 
-                            <div className={styles.guideCard}>
-                                <div className={styles.guideStepNumber}>
-                                    4
-                                </div>
-                                <div>
-                                    <span className={styles.guideStepTitle}>Map Channels &amp; Push Initial ARI</span>
-                                    <p className={styles.guideStepDesc}>
-                                        Open the <b>Channel Mapping Hub</b> tab to map room and rate identifiers, then execute <b>Force Push ARI</b> to synchronize inventory across all channels.
-                                    </p>
+                                <div className={styles.guideCard}>
+                                    <div className={styles.guideStepNumber}>
+                                        4
+                                    </div>
+                                    <div>
+                                        <span className={styles.guideStepTitle}>Map Channels &amp; Push ARI</span>
+                                        <p className={styles.guideStepDesc}>
+                                            Open the <strong>Channel Mapping Hub</strong> tab to map room rates, then execute <strong>Force Push ARI</strong>.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3937,62 +3978,241 @@ export function ChannelManagerSection() {
 
             {/* TAB 7: LIVE ACTIVITY & SYNC LOG */}
             {activeTab === "sync" && (
-                <div className={styles.gridCard}>
-                    <div className={styles.gridToolbar}>
-                        <div>
-                            <span className={styles.mappingHeaderTitle}>
-                                Live Distribution Activity Stream &amp; Audit Log:
-                            </span>
-                            <p className={styles.mappingHeaderSubtitle}>
-                                Real-time audit log of inventory updates, rate distributions, and incoming OTA webhook reservations.
-                            </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                    {/* STATS OVERVIEW CARDS */}
+                    <div className={styles.syncStatsGrid}>
+                        <div className={styles.syncStatCard}>
+                            <div className={styles.syncStatHeader}>
+                                <span>DISTRIBUTION GATEWAY</span>
+                                <span className={styles.syncLiveDot} title="Live Gateway Connection Active" />
+                            </div>
+                            <div className={styles.syncStatValue}>
+                                {channexEnv === "production" ? "Production Live" : "Sandbox Gateway"}
+                            </div>
+                            <div className={styles.syncStatSub}>
+                                <span>2-Way Engine • Mode: <strong>{channexEnv.toUpperCase()}</strong></span>
+                            </div>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                            <button
-                                type="button"
-                                onClick={handleSyncAllChannelsFromChannex}
-                                disabled={syncingChannex}
-                                className={styles.btnActionSecondary}
-                                title="Synchronize online channel connection status directly from channel distribution gateway"
-                            >
-                                <RefreshCw size={14} className={syncingChannex ? "animate-spin" : ""} color="#f59e0b" />
-                                <span>{syncingChannex ? "Connecting..." : "Sync Online Channels"}</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleSyncMasterToChannex}
-                                disabled={syncingMaster}
-                                className={styles.btnActionSecondary}
-                                title="Automatically provision hotel room types and rate plans into the channel gateway via API"
-                            >
-                                <RefreshCw size={14} className={`${syncingMaster ? "animate-spin" : ""} ${styles.syncMasterIcon}`} />
-                                <span>{syncingMaster ? "Provisioning..." : "Sync Rooms & Rates"}</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    handleSyncAllAri().catch(err => console.error("Error syncing ARI:", err));
-                                }}
-                                disabled={syncingAri}
-                                className={styles.btnActionPrimary}
-                                title="Push all room availability, rates, and restrictions to all connected channels"
-                            >
-                                <RefreshCw size={14} className={syncingAri ? "animate-spin" : ""} />
-                                <span>{syncingAri ? "Synchronizing..." : "Force Push ARI"}</span>
-                            </button>
+
+                        <div className={styles.syncStatCard}>
+                            <div className={styles.syncStatHeader}>
+                                <span>SALURAN OTA TERHUBUNG</span>
+                                <Globe size={13} color="#2563eb" />
+                            </div>
+                            <div className={styles.syncStatValue}>
+                                {activeChannelsList.length} <span style={{ fontSize: 13, fontWeight: 500, color: "#71717a" }}>Saluran</span>
+                            </div>
+                            <div className={styles.syncStatSub}>
+                                <span>{activeChannelsList.length > 0 ? activeChannelsList.map(c => c.channelName.split(" ")[0]).slice(0, 3).join(", ") + (activeChannelsList.length > 3 ? "..." : "") : "Belum ada saluran aktif"}</span>
+                            </div>
+                        </div>
+
+                        <div className={styles.syncStatCard}>
+                            <div className={styles.syncStatHeader}>
+                                <span>HORIZON KALENDER ARI</span>
+                                <Activity size={13} color="#16a34a" />
+                            </div>
+                            <div className={styles.syncStatValue}>
+                                500 <span style={{ fontSize: 13, fontWeight: 500, color: "#71717a" }}>Hari Kalender</span>
+                            </div>
+                            <div className={styles.syncStatSub}>
+                                <span>Otomatis sinkron alokasi kamar &amp; tarif</span>
+                            </div>
+                        </div>
+
+                        <div className={styles.syncStatCard}>
+                            <div className={styles.syncStatHeader}>
+                                <span>TOTAL AUDIT EVENT</span>
+                                <Terminal size={13} color="#71717a" />
+                            </div>
+                            <div className={styles.syncStatValue}>
+                                {syncLog.length} <span style={{ fontSize: 13, fontWeight: 500, color: "#71717a" }}>Catatan</span>
+                            </div>
+                            <div className={styles.syncStatSub}>
+                                <span style={{ color: "#16a34a" }}>{syncSuccessCount} Sukses</span>
+                                {syncErrorCount > 0 && <span style={{ color: "#dc2626" }}> • {syncErrorCount} Alert</span>}
+                            </div>
                         </div>
                     </div>
 
-                    <div className={styles.activityLogList}>
-                        {syncLog.map((log, idx) => (
-                            <div key={idx} className={styles.activityLogItem}>
-                                <div className={styles.activityLogLeft}>
-                                    <CheckCircle2 size={15} className={styles.activityLogIcon} />
-                                    <span className={styles.activityLogText}>{log.message}</span>
-                                </div>
-                                <span className={styles.activityLogTime}>{log.time}</span>
+                    {/* MAIN AUDIT LOG CARD */}
+                    <div className={styles.gridCard}>
+                        <div className={styles.gridToolbar}>
+                            <div>
+                                <span className={styles.mappingHeaderTitle}>
+                                    Live Distribution Activity Stream &amp; Audit Log
+                                </span>
+                                <p className={styles.mappingHeaderSubtitle}>
+                                    Audit trail real-time untuk pembaruan alokasi inventaris kamar, rate plan, dan reservasi webhook dari seluruh saluran OTA.
+                                </p>
                             </div>
-                        ))}
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                <button
+                                    type="button"
+                                    onClick={handleSyncAllChannelsFromChannex}
+                                    disabled={syncingChannex}
+                                    className={styles.btnActionSecondary}
+                                    title="Synchronize online channel connection status directly from channel distribution gateway"
+                                >
+                                    <RefreshCw size={13} className={syncingChannex ? "animate-spin" : ""} color="#f59e0b" />
+                                    <span>{syncingChannex ? "Connecting..." : "Sync Online Channels"}</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSyncMasterToChannex}
+                                    disabled={syncingMaster}
+                                    className={styles.btnActionSecondary}
+                                    title="Automatically provision hotel room types and rate plans into the channel gateway via API"
+                                >
+                                    <RefreshCw size={13} className={`${syncingMaster ? "animate-spin" : ""} ${styles.syncMasterIcon}`} />
+                                    <span>{syncingMaster ? "Provisioning..." : "Sync Rooms & Rates"}</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        handleSyncAllAri().catch(err => console.error("Error syncing ARI:", err));
+                                    }}
+                                    disabled={syncingAri}
+                                    className={styles.btnActionPrimary}
+                                    title="Push all room availability, rates, and restrictions to all connected channels"
+                                >
+                                    <RefreshCw size={13} className={syncingAri ? "animate-spin" : ""} />
+                                    <span>{syncingAri ? "Synchronizing..." : "Force Push ARI (500 Hari)"}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* CONTROLS BAR: FILTER PILLS + SEARCH + CLEAR */}
+                        <div className={styles.syncControlsBar}>
+                            <div className={styles.syncFilterPills}>
+                                <button
+                                    type="button"
+                                    onClick={() => setSyncFilterStatus("ALL")}
+                                    className={`${styles.syncFilterPill} ${syncFilterStatus === "ALL" ? styles.syncFilterPillActive : ""}`}
+                                >
+                                    Semua ({syncLog.length})
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setSyncFilterStatus("SUCCESS")}
+                                    className={`${styles.syncFilterPill} ${syncFilterStatus === "SUCCESS" ? styles.syncFilterPillActive : ""}`}
+                                >
+                                    Sukses ({syncSuccessCount})
+                                </button>
+                                {syncErrorCount > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSyncFilterStatus("ERROR")}
+                                        className={`${styles.syncFilterPill} ${syncFilterStatus === "ERROR" ? styles.syncFilterPillActive : ""}`}
+                                    >
+                                        Alert / Gagal ({syncErrorCount})
+                                    </button>
+                                )}
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                <div className={styles.syncSearchBox}>
+                                    <Search size={13} color="#71717a" />
+                                    <input
+                                        type="text"
+                                        placeholder="Cari pesan log..."
+                                        value={syncSearchTerm}
+                                        onChange={e => setSyncSearchTerm(e.target.value)}
+                                        className={styles.syncSearchInput}
+                                    />
+                                    {syncSearchTerm && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSyncSearchTerm("")}
+                                            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "#a1a1aa", display: "flex" }}
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSyncLog([
+                                            {
+                                                time: new Date().toLocaleTimeString(),
+                                                status: "SUCCESS",
+                                                message: "Live distribution feed di-reset oleh operator. Menunggu transmisi data berikutnya."
+                                            }
+                                        ]);
+                                        setSyncSearchTerm("");
+                                        setSyncFilterStatus("ALL");
+                                    }}
+                                    className={styles.btnActionSecondary}
+                                    style={{ padding: "5px 10px", fontSize: 11 }}
+                                    title="Bersihkan riwayat aktivitas log di browser"
+                                >
+                                    <RotateCcw size={12} />
+                                    <span>Reset Feed</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* AUDIT LOG LIST BODY */}
+                        <div className={styles.activityLogList}>
+                            {filteredSyncLogs.length === 0 ? (
+                                <div className={styles.activityLogEmpty}>
+                                    <Terminal size={32} color="#a1a1aa" />
+                                    <div className={styles.activityLogEmptyTitle}>Tidak Ada Log yang Cocok</div>
+                                    <p className={styles.activityLogEmptySub}>
+                                        Tidak ditemukan event transmisi yang sesuai dengan kata kunci pencarian atau filter yang dipilih.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSyncSearchTerm("");
+                                            setSyncFilterStatus("ALL");
+                                        }}
+                                        className={styles.btnActionSecondary}
+                                        style={{ fontSize: 11.5 }}
+                                    >
+                                        Reset Filter &amp; Pencarian
+                                    </button>
+                                </div>
+                            ) : (
+                                filteredSyncLogs.map((log, idx) => {
+                                    const isError = log.status === "ERROR";
+                                    const isSuccess = log.status === "SUCCESS";
+                                    return (
+                                        <div key={idx} className={styles.activityLogItem}>
+                                            <div className={styles.activityLogLeft}>
+                                                {isError ? (
+                                                    <AlertTriangle size={16} className={styles.activityLogIconError} />
+                                                ) : isSuccess ? (
+                                                    <CheckCircle2 size={16} className={styles.activityLogIconSuccess} />
+                                                ) : (
+                                                    <RefreshCw size={15} className={styles.activityLogIconSync} />
+                                                )}
+                                                <div className={styles.activityLogContent}>
+                                                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 3 }}>
+                                                        <span
+                                                            className={`${styles.activityLogStatusBadge} ${
+                                                                isError
+                                                                    ? styles.activityLogStatusBadgeError
+                                                                    : isSuccess
+                                                                    ? styles.activityLogStatusBadgeSuccess
+                                                                    : styles.activityLogStatusBadgeInfo
+                                                            }`}
+                                                        >
+                                                            {log.status || "EVENT"}
+                                                        </span>
+                                                        <span style={{ fontSize: 11, color: "#71717a" }}>• Properti: {activeHotelCode || "Default"}</span>
+                                                    </div>
+                                                    <span className={styles.activityLogText}>{log.message}</span>
+                                                </div>
+                                            </div>
+                                            <span className={styles.activityLogTime}>{log.time}</span>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

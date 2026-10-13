@@ -130,7 +130,7 @@ export function ChannelVccViewerModal({
                 {/* Header */}
                 <div className={styles.header}>
                     <div className={styles.headerLeft}>
-                        <ShieldCheck size={18} color="#86efac" />
+                        <ShieldCheck size={18} color="#f3cfd6" />
                         <div>
                             <div className={styles.title}>PCI Virtual Credit Card (VCC) Viewer</div>
                             <div style={{ fontSize: "10px", opacity: 0.8 }}>PCI-DSS Level 1 Compliance &amp; Security Standard</div>
@@ -147,13 +147,13 @@ export function ChannelVccViewerModal({
 
                 <div className={styles.body}>
                     {/* Real OTA Booking Selector */}
-                    <div style={{ marginBottom: "16px", background: "#f8fafc", padding: "12px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                        <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
+                    <div style={{ marginBottom: "16px", background: "#fafafa", padding: "12px 14px", borderRadius: "6px", border: "1px solid #e4e4e7" }}>
+                        <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#09090b", marginBottom: "6px" }}>
                             Select OTA Reservation Source:
                         </label>
 
                         {loadingBookings ? (
-                            <div style={{ fontSize: "12px", color: "#64748b" }}>Loading OTA reservations from Front Office...</div>
+                            <div style={{ fontSize: "12px", color: "#71717a" }}>Loading OTA reservations from Front Office...</div>
                         ) : bookings.length > 0 ? (
                             <select
                                 value={selectedBookingId}
@@ -161,7 +161,7 @@ export function ChannelVccViewerModal({
                                     setSelectedBookingId(e.target.value);
                                     handleReset();
                                 }}
-                                style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px", fontWeight: 600, background: "#ffffff" }}
+                                style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #e4e4e7", fontSize: "12px", fontWeight: 600, background: "#ffffff", color: "#09090b" }}
                             >
                                 {bookings.map(b => (
                                     <option key={b.bookingId} value={b.bookingId}>
@@ -170,18 +170,18 @@ export function ChannelVccViewerModal({
                                 ))}
                             </select>
                         ) : (
-                            <div style={{ fontSize: "12px", color: "#94a3b8" }}>
+                            <div style={{ fontSize: "12px", color: "#71717a" }}>
                                 No active OTA reservations found in the Front Office system.
                             </div>
                         )}
 
                         {/* Selected Booking Details Card */}
                         {currentBooking && (
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "10px", fontSize: "11px", color: "#475569" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "10px", fontSize: "11px", color: "#3f3f46" }}>
                                 <div>Guest: <b>{currentBooking.guestName}</b></div>
                                 <div>Channel: <b>{currentBooking.channel}</b></div>
                                 <div>Room: <b>{currentBooking.roomType}</b></div>
-                                <div>Total: <b>Rp {currentBooking.totalAmount.toLocaleString("en-US")}</b></div>
+                                <div>Total: <b style={{ fontFamily: "var(--font-geist-mono, monospace)" }}>Rp {currentBooking.totalAmount.toLocaleString("en-US")}</b></div>
                                 <div>Stay Period: <b>{currentBooking.checkInDate} to {currentBooking.checkOutDate}</b></div>
                                 <div>Status: <b>{currentBooking.status}</b></div>
                             </div>
@@ -191,15 +191,15 @@ export function ChannelVccViewerModal({
                     {!isAuthenticated ? (
                         /* PIN Gate */
                         <form onSubmit={handleVerifyPin} className={styles.pinBox}>
-                            <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <Lock size={24} color="#1e3a2f" />
+                            <div style={{ width: "44px", height: "44px", borderRadius: "6px", background: "#f4f4f5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <Lock size={20} color="#09090b" />
                             </div>
 
                             <div style={{ textAlign: "center" }}>
-                                <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>
+                                <div style={{ fontSize: "14px", fontWeight: 700, color: "#09090b" }}>
                                     Card Access Security Authorization
                                 </div>
-                                <div style={{ fontSize: "11px", color: "#64748b", marginTop: "4px" }}>
+                                <div style={{ fontSize: "11px", color: "#71717a", marginTop: "4px" }}>
                                     All virtual credit card decryption events are recorded in the permanent PCI DSS compliance audit trail.
                                 </div>
                             </div>
@@ -213,7 +213,7 @@ export function ChannelVccViewerModal({
                                 className={styles.pinInput}
                                 autoFocus
                             />
-                            <div style={{ fontSize: "11px", color: "#94a3b8" }}>
+                            <div style={{ fontSize: "11px", color: "#71717a" }}>
                                 Enter Security Master PIN (Default: <b>1234</b>)
                             </div>
 
@@ -283,23 +283,23 @@ export function ChannelVccViewerModal({
                             {/* Balance & Merchant Settlement Box */}
                             <div className={styles.balanceNotice}>
                                 <div>
-                                    <div style={{ fontWeight: 700, fontSize: "13px" }}>
+                                    <div style={{ fontWeight: 700, fontSize: "13px", fontFamily: "var(--font-geist-mono, monospace)" }}>
                                         Available Settlement Balance: Rp {Number(cardData?.current_balance || currentBooking?.totalAmount || 0).toLocaleString("en-US")}
                                     </div>
-                                    <div style={{ fontSize: "11px", opacity: 0.9 }}>
+                                    <div style={{ fontSize: "11px", color: "#71717a" }}>
                                         Active from {cardData?.activation_date || "-"} to {cardData?.expiration_date || "-"}
                                     </div>
                                 </div>
-                                <span style={{ fontSize: "11px", fontWeight: 700, background: "#dcfce7", color: "#15803d", padding: "4px 8px", borderRadius: "4px" }}>
+                                <span style={{ fontSize: "11px", fontWeight: 700, background: "#fdf2f4", color: "#5c0f1e", border: "1px solid #f3cfd6", padding: "3px 8px", borderRadius: "4px" }}>
                                     READY FOR POS / EDC TERMINAL CHARGE
                                 </span>
                             </div>
 
                             {/* Instructions & Audit Confirmation */}
                             <div className={styles.pciAuditNotice}>
-                                <b>Front Desk Cashier Instructions:</b>
+                                <b style={{ color: "#09090b" }}>Front Desk Cashier Instructions:</b>
                                 <div>{cardData?.settlement_instruction}</div>
-                                <div style={{ marginTop: "6px", color: "#64748b", fontSize: "10px" }}>
+                                <div style={{ marginTop: "6px", color: "#71717a", fontSize: "10px" }}>
                                     PCI Session ID: <code>pci-sess-{Date.now().toString(36)}</code> • Access logged and audited.
                                 </div>
                             </div>
@@ -308,7 +308,7 @@ export function ChannelVccViewerModal({
                                 <button
                                     type="button"
                                     onClick={handleReset}
-                                    style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: "12px", cursor: "pointer" }}
+                                    style={{ padding: "6px 14px", borderRadius: "6px", border: "1px solid #e4e4e7", background: "#ffffff", fontSize: "12px", cursor: "pointer", color: "#18181b" }}
                                 >
                                     Select Another Reservation
                                 </button>
@@ -323,15 +323,15 @@ export function ChannelVccViewerModal({
                         </>
                     ) : (
                         /* Case: Hotel Collect / No VCC issued by OTA */
-                        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "20px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-                            <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "#ecfdf5", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <CheckCircle2 size={24} color="#059669" />
+                        <div style={{ background: "#fafafa", border: "1px solid #e4e4e7", borderRadius: "6px", padding: "20px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+                            <div style={{ width: "40px", height: "40px", borderRadius: "6px", background: "#f4f4f5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <CheckCircle2 size={20} color="#09090b" />
                             </div>
                             <div>
-                                <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>
+                                <div style={{ fontSize: "13px", fontWeight: 700, color: "#09090b" }}>
                                     Payment Method: Property Collect / Pay at Front Desk
                                 </div>
-                                <p style={{ fontSize: "12px", color: "#64748b", maxWidth: "420px", margin: "6px auto 0" }}>
+                                <p style={{ fontSize: "12px", color: "#71717a", maxWidth: "420px", margin: "6px auto 0" }}>
                                     {statusMessage || "This booking does not require virtual card settlement because the guest pays directly at the hotel front desk during check-in or check-out."}
                                 </p>
                             </div>
@@ -340,7 +340,7 @@ export function ChannelVccViewerModal({
                                 <button
                                     type="button"
                                     onClick={handleReset}
-                                    style={{ padding: "6px 14px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#ffffff", fontSize: "12px", cursor: "pointer" }}
+                                    style={{ padding: "6px 14px", borderRadius: "6px", border: "1px solid #e4e4e7", background: "#ffffff", fontSize: "12px", cursor: "pointer", color: "#18181b" }}
                                 >
                                     Select Another Reservation
                                 </button>

@@ -12,6 +12,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { isUserSuperadmin } from "@/lib/permissionCheck";
 import { ImageUpload } from "@/components/ui/ImageUpload/ImageUpload";
+import { useCurrency } from "@/hooks/useCurrency";
 import {
     CreditCard,
     ShieldCheck,
@@ -73,6 +74,11 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
         successMessage,
         saveSettings,
     } = usePaymentGateway();
+
+    const { currencyCode, symbol, config: currConfig, formatCurrency } = useCurrency();
+    const isIDR = (currencyCode || "IDR").toUpperCase() === "IDR";
+    const stepValue = currConfig?.step || (isIDR ? "5000" : "1");
+    const defaultAddOnPrice = isIDR ? 50000 : (currencyCode === "JPY" ? 5000 : 50);
 
     // Top Level Tabs matching user's screenshot
     const [mainTab, setMainTab] = useState<MainTab>("settings");
@@ -330,7 +336,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
             id: `addon-${Date.now()}`,
             name: "Layanan Baru",
             description: "Deskripsi fasilitas tambahan atau layanan ekstra untuk tamu.",
-            price: 50000,
+            price: defaultAddOnPrice,
             priceType: "per_stay",
             icon: "sparkle",
             category: "extra",
@@ -1032,7 +1038,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                                     <path
                                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                         fill="none"
-                                        stroke={completenessItems.totalScore >= 80 ? "#16a34a" : "#d97706"}
+                                        stroke={completenessItems.totalScore >= 80 ? "#5c0f1e" : "#71717a"}
                                         strokeDasharray={`${completenessItems.totalScore}, 100`}
                                         strokeWidth="3.8"
                                         strokeLinecap="round"
@@ -1168,7 +1174,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                                         <button
                                             type="button"
                                             onClick={() => handleTogglePromo(promo.id)}
-                                            style={{ background: promo.isActive ? "#dcfce7" : "#f1f5f9", color: promo.isActive ? "#166534" : "#64748b", border: "none", padding: "4px 10px", borderRadius: "9999px", fontSize: "11px", fontWeight: 800, cursor: "pointer" }}
+                                            style={{ background: promo.isActive ? "#fdf2f4" : "#f4f4f5", color: promo.isActive ? "#5c0f1e" : "#71717a", border: promo.isActive ? "1px solid #f3cfd6" : "1px solid #e4e4e7", padding: "3px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
                                         >
                                             {promo.isActive ? "● Aktif" : "Nonaktif"}
                                         </button>
@@ -1178,7 +1184,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                                 </div>
 
                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #e2e8f0", paddingTop: "10px" }}>
-                                    <span style={{ fontSize: "14px", fontWeight: 900, color: "#1e3a2f" }}>
+                                    <span style={{ fontSize: "14px", fontWeight: 800, color: "#5c0f1e" }}>
                                         Diskon: {promo.discountPercent}%
                                     </span>
                                     <button
@@ -1201,11 +1207,18 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                ══════════════════════════════════════════════════════════ */}
             {mainTab === "addons" && (
                 <div className={styles.contentCard}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
                         <div>
-                            <h3 className={styles.sectionTitle}>Katalog Add-Ons & Layanan Ekstra Hotel</h3>
-                            <p className={styles.sectionDesc}>
-                                Kelola fasilitas tambahan dan layanan upselling (Extra Bed, Antar-Jemput, Late Check-Out, Romantic Dinner) yang dapat dipilih tamu saat booking di halaman reservasi langsung.
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                                <h3 className={styles.sectionTitle} style={{ margin: 0 }}>Katalog Add-Ons & Layanan Ekstra Hotel</h3>
+                                <div className={styles.currencyPill} title={`Mata Uang Aktif Properti: ${currConfig?.name || "IDR"} (${currConfig?.code || "IDR"})`}>
+                                    <span>{currConfig?.flag || "🇮🇩"}</span>
+                                    <span>{currConfig?.code || "IDR"}</span>
+                                    <span style={{ color: "#71717a" }}>({currConfig?.symbol || "Rp"})</span>
+                                </div>
+                            </div>
+                            <p className={styles.sectionDesc} style={{ marginTop: "4px" }}>
+                                Kelola fasilitas tambahan dan layanan upselling (Extra Bed, Antar-Jemput, Late Check-Out, Romantic Dinner) yang dapat dipilih tamu saat booking di halaman reservasi langsung. Tarif mengikuti standar mata uang aktif properti ({currConfig?.code || "IDR"}).
                             </p>
                         </div>
                         <button
@@ -1229,6 +1242,9 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                                     <div className={styles.addonIconBadge}>
                                         <Sparkle size={14} weight="bold" />
                                         <span>Layanan #{index + 1}</span>
+                                        <span style={{ marginLeft: "6px", opacity: 0.85, fontWeight: 600 }}>
+                                            • {formatCurrency(addon.price)} / {addon.priceType === "per_night" ? "malam" : addon.priceType === "per_person" ? "pax" : "stay"}
+                                        </span>
                                     </div>
                                     <div className={styles.addonActions}>
                                         <button
@@ -1264,15 +1280,29 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
 
                                 <div className={styles.addonRowInputs}>
                                     <div className={styles.addonFieldGroup}>
-                                        <label className={styles.addonFieldLabel}>Harga Nominal (Rp)</label>
-                                        <input
-                                            type="number"
-                                            min={0}
-                                            step={5000}
-                                            value={addon.price}
-                                            onChange={(e) => updateAddOn(addon.id, "price", parseFloat(e.target.value) || 0)}
-                                            className={styles.formInput}
-                                        />
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                                            <label className={styles.addonFieldLabel}>
+                                                Harga Nominal ({currConfig?.code || "IDR"})
+                                            </label>
+                                            <span style={{ fontSize: "10px", color: "#71717a", fontWeight: 600 }}>
+                                                Step: {stepValue}
+                                            </span>
+                                        </div>
+                                        <div className={styles.currencyInputWrapper}>
+                                            <span className={styles.currencyPrefix}>{currConfig?.symbol || "Rp"}</span>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                step={stepValue}
+                                                value={addon.price}
+                                                onChange={(e) => updateAddOn(addon.id, "price", parseFloat(e.target.value) || 0)}
+                                                className={styles.currencyInput}
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                        <div className={styles.addonPricePreview}>
+                                            <span>Tampil di Guest: {formatCurrency(addon.price)}</span>
+                                        </div>
                                     </div>
                                     <div className={styles.addonFieldGroup}>
                                         <label className={styles.addonFieldLabel}>Tipe Perhitungan Tarif</label>
@@ -1335,9 +1365,9 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                                 </div>
 
                                 {/* ── Accounting & Revenue Center Mapping (USALI) ── */}
-                                <div style={{ borderTop: "1px dashed #cbd5e1", paddingTop: "10px", marginTop: "4px", background: "#f8fafc", padding: "10px", borderRadius: "8px" }}>
-                                    <span style={{ fontSize: "11px", fontWeight: 800, color: "#1e3a2f", display: "block", marginBottom: "8px" }}>
-                                        🏛️ Integrasi Akuntansi & Alokasi Pos Revenue
+                                <div style={{ borderTop: "1px dashed #e4e4e7", paddingTop: "10px", marginTop: "4px", background: "#fafafa", padding: "10px", borderRadius: "8px" }}>
+                                    <span style={{ fontSize: "11px", fontWeight: 800, color: "#5c0f1e", display: "block", marginBottom: "8px" }}>
+                                        Integrasi Akuntansi &amp; Alokasi Pos Revenue
                                     </span>
                                     <div className={styles.addonRowInputs}>
                                         <div className={styles.addonFieldGroup}>
@@ -1429,14 +1459,14 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                                 type="button"
                                 onClick={() => setPgSubTab(sub.id as any)}
                                 style={{
-                                    padding: "8px 14px",
-                                    borderRadius: "8px",
+                                    padding: "7px 14px",
+                                    borderRadius: "6px",
                                     border: "1px solid",
-                                    borderColor: pgSubTab === sub.id ? "#1e3a2f" : "#cbd5e1",
-                                    background: pgSubTab === sub.id ? "#1e3a2f" : "#ffffff",
-                                    color: pgSubTab === sub.id ? "#ffffff" : "#475569",
+                                    borderColor: pgSubTab === sub.id ? "#09090b" : "#e4e4e7",
+                                    background: pgSubTab === sub.id ? "#09090b" : "#ffffff",
+                                    color: pgSubTab === sub.id ? "#ffffff" : "#71717a",
                                     fontSize: "12px",
-                                    fontWeight: 700,
+                                    fontWeight: 600,
                                     cursor: "pointer",
                                 }}
                             >

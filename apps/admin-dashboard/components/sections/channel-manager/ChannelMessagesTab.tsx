@@ -129,7 +129,7 @@ export function ChannelMessagesTab({ hotelCode }: Props) {
                 <div className={styles.sidebarHeader}>
                     <div className={styles.sidebarTitle}>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                            <MessageSquare size={16} color="#1e3a2f" />
+                            <MessageSquare size={16} color="#09090b" />
                             <span>OTA Guest Inbox</span>
                         </div>
                         <button
@@ -225,8 +225,8 @@ export function ChannelMessagesTab({ hotelCode }: Props) {
 
                     {/* Quick Replies Bar */}
                     <div className={styles.quickRepliesBar}>
-                        <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
-                            <FileText size={12} color="#1e3a2f" /> Quick Templates:
+                        <span style={{ fontSize: "11px", fontWeight: 700, color: "#71717a", display: "flex", alignItems: "center", gap: "4px" }}>
+                            <FileText size={12} color="#09090b" /> Quick Templates:
                         </span>
                         <button
                             type="button"

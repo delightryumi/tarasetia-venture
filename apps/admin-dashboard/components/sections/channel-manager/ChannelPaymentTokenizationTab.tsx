@@ -102,7 +102,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
             <div className={styles.topBar}>
                 <div className={styles.titleGroup}>
                     <div className={styles.title}>
-                        <CreditCard size={18} color="#1e3a2f" />
+                        <CreditCard size={18} color="#09090b" />
                         <span>Stripe Tokenization &amp; PCI-DSS Card Vault</span>
                         {config.accountStatus === "CONNECTED" ? (
                             <span className={styles.badgeConnected}>● STRIPE VAULT CONNECTED</span>
@@ -118,7 +118,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
 
             {/* PCI Security Badge Banner */}
             <div className={styles.pciBanner}>
-                <ShieldCheck size={24} style={{ flexShrink: 0, marginTop: "2px", color: "#166534" }} />
+                <ShieldCheck size={24} style={{ flexShrink: 0, marginTop: "2px", color: "#5c0f1e" }} />
                 <div>
                     <b>PCI DSS Level 1 Certified Protection:</b>
                     <p style={{ margin: "4px 0 0 0" }}>
@@ -131,7 +131,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
             <form onSubmit={handleSave} className={styles.card}>
                 <div className={styles.cardHeader}>
                     <span className={styles.cardTitle}>
-                        <Lock size={16} color="#1e3a2f" />
+                        <Lock size={16} color="#09090b" />
                         <span>Payment Gateway Credentials &amp; Automated Settlement Rules</span>
                     </span>
                     <button

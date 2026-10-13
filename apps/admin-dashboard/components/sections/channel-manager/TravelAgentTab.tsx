@@ -208,7 +208,7 @@ export function TravelAgentTab({
                         <span className={styles.statLabel}>Total Distribution Channels</span>
                         <span className={styles.statValue}>{activeOtaChannels.length + agents.length}</span>
                     </div>
-                    <div className={styles.statIcon} style={{ background: "#f0fdf4", color: "#166534" }}>
+                    <div className={styles.statIcon} style={{ background: "#fafafa", color: "#09090b" }}>
                         <Users size={18} />
                     </div>
                 </div>
@@ -218,7 +218,7 @@ export function TravelAgentTab({
                         <span className={styles.statLabel}>Connected OTAs (2-Way)</span>
                         <span className={styles.statValue}>{activeOtaChannels.length}</span>
                     </div>
-                    <div className={styles.statIcon} style={{ background: "#eff6ff", color: "#1d4ed8" }}>
+                    <div className={styles.statIcon} style={{ background: "#fdf2f4", color: "#5c0f1e" }}>
                         <Globe size={18} />
                     </div>
                 </div>
@@ -228,7 +228,7 @@ export function TravelAgentTab({
                         <span className={styles.statLabel}>Offline Travel Agents &amp; B2B</span>
                         <span className={styles.statValue}>{agents.filter(a => a.isActive).length}</span>
                     </div>
-                    <div className={styles.statIcon} style={{ background: "#faf5ff", color: "#7e22ce" }}>
+                    <div className={styles.statIcon} style={{ background: "#fafafa", color: "#09090b" }}>
                         <Briefcase size={18} />
                     </div>
                 </div>
@@ -238,7 +238,7 @@ export function TravelAgentTab({
                         <span className={styles.statLabel}>Direct Booking Sources</span>
                         <span className={styles.statValue}>2</span>
                     </div>
-                    <div className={styles.statIcon} style={{ background: "#fefce8", color: "#854d0e" }}>
+                    <div className={styles.statIcon} style={{ background: "#fafafa", color: "#09090b" }}>
                         <Building2 size={18} />
                     </div>
                 </div>
@@ -248,7 +248,7 @@ export function TravelAgentTab({
             <div className={styles.topBar}>
                 <div className={styles.titleGroup}>
                     <span className={styles.title}>
-                        <Users size={16} color="#1e3a2f" />
+                        <Users size={16} color="#09090b" />
                         <span>Travel Agents &amp; Distribution Partners</span>
                     </span>
                     <span className={styles.desc}>
@@ -309,7 +309,7 @@ export function TravelAgentTab({
                             <tr className={styles.tr}>
                                 <td className={styles.td}>
                                     <div className={styles.agentNameCell}>
-                                        <div className={styles.agentAvatar} style={{ background: "#dcfce7", color: "#166534" }}>
+                                        <div className={styles.agentAvatar} style={{ background: "#09090b", color: "#ffffff" }}>
                                             DIR
                                         </div>
                                         <div className={styles.agentInfo}>
@@ -322,7 +322,7 @@ export function TravelAgentTab({
                                     <span className={`${styles.badge} ${styles.badgeOffline}`}>Direct Guest</span>
                                 </td>
                                 <td className={styles.td}>
-                                    <span style={{ fontSize: "11px", color: "#15803d", fontWeight: 600 }}>● Direct PMS Engine</span>
+                                    <span style={{ fontSize: "11px", color: "#09090b", fontWeight: 600 }}>● Direct PMS Engine</span>
                                 </td>
                                 <td className={styles.td} style={{ color: "#64748b" }}>Front Desk / Walk-in Desk</td>
                                 <td className={styles.td}>
@@ -391,7 +391,7 @@ export function TravelAgentTab({
                                 <tr key={ota.channelCode} className={styles.tr}>
                                     <td className={styles.td}>
                                         <div className={styles.agentNameCell}>
-                                            <div className={styles.agentAvatar} style={{ background: "#dbeafe", color: "#1d4ed8" }}>
+                                            <div className={styles.agentAvatar} style={{ background: "#fdf2f4", color: "#5c0f1e" }}>
                                                 OTA
                                             </div>
                                             <div className={styles.agentInfo}>
@@ -404,7 +404,7 @@ export function TravelAgentTab({
                                         <span className={`${styles.badge} ${styles.badgeOta}`}>Online Travel Agency</span>
                                     </td>
                                     <td className={styles.td}>
-                                        <span style={{ fontSize: "11px", color: "#2563eb", fontWeight: 600 }}>● Direct 2-Way OTA Sync</span>
+                                        <span style={{ fontSize: "11px", color: "#5c0f1e", fontWeight: 600 }}>● Direct 2-Way OTA Sync</span>
                                     </td>
                                     <td className={styles.td} style={{ color: "#64748b" }}>
                                         Extranet Property ID: {ota.hotelId || "Connected"}
@@ -526,7 +526,7 @@ export function TravelAgentTab({
                     <div className={styles.modalCard}>
                         <div className={styles.modalHeader}>
                             <span className={styles.modalTitle}>
-                                <Briefcase size={16} color="#1e3a2f" />
+                                <Briefcase size={16} color="#09090b" />
                                 <span>{editingAgent ? "Edit Travel Agent / Account" : "New Travel Agent / Distribution Partner"}</span>
                             </span>
                             <button

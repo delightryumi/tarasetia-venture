@@ -16,7 +16,10 @@ import {
     Hotel,
     Search,
     ShieldCheck,
-    ChevronDown
+    ChevronDown,
+    Trash2,
+    AlertTriangle,
+    Pencil
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -57,11 +60,21 @@ export const ChannelGroupsTab: React.FC = () => {
     const [showKeyInput, setShowKeyInput] = useState<boolean>(false);
     const [syncing, setSyncing] = useState<boolean>(false);
 
-    // Modal state
+    // Modal state - Create
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
     const [newGroupName, setNewGroupName] = useState<string>("");
     const [newGroupDesc, setNewGroupDesc] = useState<string>("");
     const [submitting, setSubmitting] = useState<boolean>(false);
+
+    // Modal state - Edit / Rename
+    const [editingGroup, setEditingGroup] = useState<HotelGroup | null>(null);
+    const [editGroupName, setEditGroupName] = useState<string>("");
+    const [editGroupDesc, setEditGroupDesc] = useState<string>("");
+    const [updating, setUpdating] = useState<boolean>(false);
+
+    // Custom CSS Alert Modal for Delete Group
+    const [groupToDelete, setGroupToDelete] = useState<HotelGroup | null>(null);
+    const [deleting, setDeleting] = useState<boolean>(false);
 
     // Reassignment state
     const [assigningHotelCode, setAssigningHotelCode] = useState<string | null>(null);
@@ -179,6 +192,72 @@ export const ChannelGroupsTab: React.FC = () => {
         }
     };
 
+    const handleUpdateGroup = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingGroup || !editGroupName.trim()) {
+            toast.error("Nama Hotel Group wajib diisi!");
+            return;
+        }
+
+        setUpdating(true);
+        try {
+            const res = await fetch("/api/channex/groups", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "update_group",
+                    groupId: editingGroup.id,
+                    name: editGroupName.trim(),
+                    description: editGroupDesc.trim(),
+                    apiKey,
+                    environment
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success(data.message || "Hotel Group berhasil diperbarui!");
+                setEditingGroup(null);
+                fetchData(apiKey, environment);
+            } else {
+                toast.error("Gagal update group: " + (data.error || "Unknown error"));
+            }
+        } catch (err: any) {
+            toast.error("Terjadi kesalahan sistem: " + err.message);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const executeDeleteGroup = async () => {
+        if (!groupToDelete) return;
+        const group = groupToDelete;
+        setDeleting(true);
+
+        try {
+            const params = new URLSearchParams();
+            params.set("groupId", group.id);
+            if (group.channexGroupId) params.set("channexGroupId", group.channexGroupId);
+            if (apiKey) params.set("apiKey", apiKey);
+            if (environment) params.set("env", environment);
+
+            const res = await fetch(`/api/channex/groups?${params.toString()}`, {
+                method: "DELETE"
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success(data.message || `Group "${group.name}" berhasil dihapus.`);
+                setGroupToDelete(null);
+                await fetchData();
+            } else {
+                toast.error(data.error || "Gagal menghapus group");
+            }
+        } catch (err: any) {
+            toast.error("Terjadi kesalahan sistem: " + err.message);
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     // Calculate metrics
     const totalProperties = hotels.length;
     const connectedChannexCount = hotels.filter((h) => !!h.channexPropertyId).length;
@@ -199,8 +278,8 @@ export const ChannelGroupsTab: React.FC = () => {
             {/* Top Overview Cards */}
             <div className={styles.statsGrid}>
                 <div className={styles.statCard}>
-                    <div className={styles.statIconWrap} style={{ background: "#e0f2fe", color: "#0284c7" }}>
-                        <Layers size={22} />
+                    <div className={styles.statIconWrap}>
+                        <Layers size={18} />
                     </div>
                     <div className={styles.statInfo}>
                         <span className={styles.statLabel}>Total Hotel Groups</span>
@@ -209,8 +288,8 @@ export const ChannelGroupsTab: React.FC = () => {
                 </div>
 
                 <div className={styles.statCard}>
-                    <div className={styles.statIconWrap} style={{ background: "#f0fdf4", color: "#16a34a" }}>
-                        <Hotel size={22} />
+                    <div className={styles.statIconWrap} style={{ background: "#f4f4f5", color: "#09090b", borderColor: "#e4e4e7" }}>
+                        <Hotel size={18} />
                     </div>
                     <div className={styles.statInfo}>
                         <span className={styles.statLabel}>Total Kelola Properti</span>
@@ -219,8 +298,8 @@ export const ChannelGroupsTab: React.FC = () => {
                 </div>
 
                 <div className={styles.statCard}>
-                    <div className={styles.statIconWrap} style={{ background: "#fef3c7", color: "#d97706" }}>
-                        <ShieldCheck size={22} />
+                    <div className={styles.statIconWrap} style={{ background: "#f4f4f5", color: "#09090b", borderColor: "#e4e4e7" }}>
+                        <ShieldCheck size={18} />
                     </div>
                     <div className={styles.statInfo}>
                         <span className={styles.statLabel}>Tersambung OTA Engine</span>
@@ -229,8 +308,8 @@ export const ChannelGroupsTab: React.FC = () => {
                 </div>
 
                 <div className={styles.statCard}>
-                    <div className={styles.statIconWrap} style={{ background: "#f5f3ff", color: "#7c3aed" }}>
-                        <Link2 size={22} />
+                    <div className={styles.statIconWrap}>
+                        <Link2 size={18} />
                     </div>
                     <div className={styles.statInfo}>
                         <span className={styles.statLabel}>Tergrup Jaringan</span>
@@ -240,19 +319,19 @@ export const ChannelGroupsTab: React.FC = () => {
             </div>
 
             {/* Live Master Channel Connection & Sync Banner */}
-            <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "16px", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "14px" }}>
+            <div style={{ background: "#ffffff", border: "1px solid #e4e4e7", borderRadius: "8px", padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "14px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: environment === "production" ? "#dcfce7" : "#fef3c7", color: environment === "production" ? "#15803d" : "#b45309", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Globe size={20} />
+                    <div style={{ width: "36px", height: "36px", borderRadius: "6px", background: environment === "production" ? "#fdf2f4" : "#f4f4f5", color: environment === "production" ? "#5c0f1e" : "#27272a", border: environment === "production" ? "1px solid #f3cfd6" : "1px solid #e4e4e7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Globe size={18} />
                     </div>
                     <div>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <strong style={{ fontSize: "14px", color: "#0f172a" }}>Master Channel Live Sync</strong>
-                            <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "6px", background: environment === "production" ? "#dcfce7" : "#fef3c7", color: environment === "production" ? "#15803d" : "#b45309" }}>
+                            <strong style={{ fontSize: "13.5px", color: "#09090b" }}>Master Channel Live Sync</strong>
+                            <span style={{ fontSize: "10.5px", fontWeight: 600, padding: "2px 7px", borderRadius: "4px", background: environment === "production" ? "#fdf2f4" : "#f4f4f5", color: environment === "production" ? "#5c0f1e" : "#27272a", border: environment === "production" ? "1px solid #f3cfd6" : "1px solid #e4e4e7" }}>
                                 {environment === "production" ? "Production Cloud" : "Sandbox Test Mode"}
                             </span>
                         </div>
-                        <p style={{ fontSize: "12px", color: "#64748b", margin: "2px 0 0 0" }}>
+                        <p style={{ fontSize: "12px", color: "#71717a", margin: "2px 0 0 0" }}>
                             {hasApiKey ? "API Key terverifikasi aktif. Data Group dan Properti terhubung langsung dua arah." : "Masukkan API Key Channel Manager untuk menghubungkan Group & Properti jaringan Anda."}
                         </p>
                     </div>
@@ -285,7 +364,7 @@ export const ChannelGroupsTab: React.FC = () => {
                         type="button"
                         onClick={() => setShowKeyInput(!showKeyInput)}
                         className={styles.btnCancel}
-                        style={{ fontSize: "12px", padding: "8px 12px" }}
+                        style={{ fontSize: "12px", padding: "7px 12px" }}
                     >
                         {showKeyInput ? "Tutup Input Key" : (hasApiKey ? "Ubah API Key" : "Set API Key")}
                     </button>
@@ -295,9 +374,8 @@ export const ChannelGroupsTab: React.FC = () => {
                         onClick={handleSyncChannex}
                         disabled={syncing || loading}
                         className={styles.btnPrimary}
-                        style={{ background: "#0f766e" }}
                     >
-                        <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
+                        <RefreshCw size={13} className={syncing ? "animate-spin" : ""} />
                         <span>{syncing ? "Menyinkronkan..." : "Tarik Data Properti & Group"}</span>
                     </button>
                 </div>
@@ -307,8 +385,8 @@ export const ChannelGroupsTab: React.FC = () => {
             <div className={styles.headerActionRow}>
                 <div className={styles.headerLeft}>
                     <h3 className={styles.headerTitle}>
-                        <Building2 size={18} color="#0284c7" />
-                        <span>Hotel Chains & Multi-Property Grouping</span>
+                        <Building2 size={16} style={{ color: "#5c0f1e" }} />
+                        <span>Hotel Chains &amp; Multi-Property Grouping</span>
                     </h3>
                     <p className={styles.headerDesc}>
                         Kelola jaringan hotel, tetapkan grup properti untuk distribusi OTA serentak, dan pantau status koneksi terpusat.
@@ -322,7 +400,7 @@ export const ChannelGroupsTab: React.FC = () => {
                         style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
                         title="Segarkan Data"
                     >
-                        <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+                        <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
                         <span>Refresh</span>
                     </button>
                     <button
@@ -330,7 +408,7 @@ export const ChannelGroupsTab: React.FC = () => {
                         onClick={() => setIsCreateModalOpen(true)}
                         className={styles.btnPrimary}
                     >
-                        <Plus size={16} />
+                        <Plus size={15} />
                         <span>Buat Hotel Group Baru</span>
                     </button>
                 </div>
@@ -344,25 +422,30 @@ export const ChannelGroupsTab: React.FC = () => {
                     <div key={group.id} className={styles.groupCard}>
                         <div className={styles.groupHeader}>
                             <div className={styles.groupTitleWrap}>
-                                <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#0284c7", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>
+                                <div className={styles.groupAvatar}>
                                     {group.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div>
                                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                        <strong style={{ fontSize: "15px", color: "#0f172a" }}>{group.name}</strong>
+                                        <strong style={{ fontSize: "14px", color: "#09090b" }}>{group.name}</strong>
                                         <span className={styles.groupBadge}>
                                             {groupHotels.length} Properti
                                         </span>
+                                        {groups.length <= 1 && (
+                                            <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: "4px", background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" }}>
+                                                Root Group Utama
+                                            </span>
+                                        )}
                                     </div>
                                     {group.description && (
-                                        <p style={{ fontSize: "12px", color: "#64748b", margin: "2px 0 0 0" }}>
+                                        <p style={{ fontSize: "12px", color: "#71717a", margin: "2px 0 0 0" }}>
                                             {group.description}
                                         </p>
                                     )}
                                 </div>
                             </div>
 
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                 {group.channexGroupId ? (
                                     <span className={styles.groupChannexBadge} title="Tersinkronisasi dengan Master Channel ID">
                                         Group ID: {group.channexGroupId.slice(0, 8)}...
@@ -370,82 +453,126 @@ export const ChannelGroupsTab: React.FC = () => {
                                 ) : (
                                     <span style={{ fontSize: "11px", color: "#94a3b8" }}>Lokal CRS Group</span>
                                 )}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setEditingGroup(group);
+                                        setEditGroupName(group.name);
+                                        setEditGroupDesc(group.description || "");
+                                    }}
+                                    className={styles.btnCancel}
+                                    title={`Edit Nama Group ${group.name}`}
+                                    style={{
+                                        color: "#09090b",
+                                        borderColor: "#e4e4e7",
+                                        background: "#ffffff",
+                                        padding: "4px 10px",
+                                        fontSize: "12px",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "4px"
+                                    }}
+                                >
+                                    <Pencil size={13} />
+                                    <span>Edit</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setGroupToDelete(group)}
+                                    className={styles.btnCancel}
+                                    title={`Hapus Group ${group.name}`}
+                                    style={{
+                                        color: "#5c0f1e",
+                                        borderColor: "#f3cfd6",
+                                        background: "#fdf2f4",
+                                        padding: "4px 10px",
+                                        fontSize: "12px",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "4px"
+                                    }}
+                                >
+                                    <Trash2 size={13} />
+                                    <span>Hapus</span>
+                                </button>
                             </div>
                         </div>
 
                         {groupHotels.length > 0 ? (
-                            <table className={styles.hotelTable}>
-                                <thead>
-                                    <tr>
-                                        <th>Nama Properti</th>
-                                        <th>Kota / Lokasi</th>
-                                        <th>Kamar</th>
-                                        <th>Channel Property ID</th>
-                                        <th>Status Distribusi</th>
-                                        <th style={{ textAlign: "right" }}>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {groupHotels.map((h) => {
-                                        const isActive = h.hotelCode === activeHotelCode;
+                            <div className={styles.tableResponsive}>
+                                <table className={styles.hotelTable}>
+                                    <thead>
+                                        <tr>
+                                            <th>Nama Properti</th>
+                                            <th>Kota / Lokasi</th>
+                                            <th>Kamar</th>
+                                            <th>Channel Property ID</th>
+                                            <th>Status Distribusi</th>
+                                            <th style={{ textAlign: "right" }}>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {groupHotels.map((h) => {
+                                            const isActive = h.hotelCode === activeHotelCode;
 
-                                        return (
-                                            <tr key={h.hotelCode} className={`${styles.hotelTableRow} ${isActive ? styles.activeHotelRow : ""}`}>
-                                                <td>
-                                                    <span className={styles.hotelName}>{h.name}</span>
-                                                    <span className={styles.hotelCode}>ID: {h.hotelCode}</span>
-                                                </td>
-                                                <td>{h.city}</td>
-                                                <td><strong>{h.totalRooms || "-"}</strong> Kamar</td>
-                                                <td>
-                                                    {h.channexPropertyId ? (
-                                                        <span style={{ fontFamily: "monospace", fontSize: "11.5px", background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>
-                                                            {h.channexPropertyId.slice(0, 13)}...
-                                                        </span>
-                                                    ) : (
-                                                        <span style={{ fontSize: "11.5px", color: "#94a3b8" }}>Belum Dipetakan</span>
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {h.channexPropertyId ? (
-                                                        <span className={`${styles.statusPill} ${styles.statusConnected}`}>
-                                                            <CheckCircle2 size={12} />
-                                                            <span>Tersambung ({h.channexEnvironment === "production" ? "Production" : "Sandbox"})</span>
-                                                        </span>
-                                                    ) : (
-                                                        <span className={`${styles.statusPill} ${styles.statusPending}`}>
-                                                            <AlertCircle size={12} />
-                                                            <span>Perlu Setup</span>
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td style={{ textAlign: "right" }}>
-                                                    <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setActiveHotelCode(h.hotelCode)}
-                                                            className={`${styles.btnSwitch} ${isActive ? styles.btnSwitchActive : ""}`}
-                                                        >
-                                                            {isActive ? "● Sedang Aktif" : "Beralih ke Hotel"}
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleAssignGroup(h.hotelCode, "", "")}
-                                                            className={styles.btnSwitch}
-                                                            title="Lepas dari Group ini"
-                                                            style={{ color: "#ef4444" }}
-                                                        >
-                                                            <Unlink size={12} />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                                            return (
+                                                <tr key={h.hotelCode} className={`${styles.hotelTableRow} ${isActive ? styles.activeHotelRow : ""}`}>
+                                                    <td>
+                                                        <span className={styles.hotelName}>{h.name}</span>
+                                                        <span className={styles.hotelCode}>ID: {h.hotelCode}</span>
+                                                    </td>
+                                                    <td>{h.city}</td>
+                                                    <td><strong>{h.totalRooms || "-"}</strong> Kamar</td>
+                                                    <td>
+                                                        {h.channexPropertyId ? (
+                                                            <span style={{ fontFamily: "monospace", fontSize: "11.5px", background: "#f4f4f5", color: "#18181b", padding: "2px 6px", borderRadius: "4px", border: "1px solid #e4e4e7" }}>
+                                                                {h.channexPropertyId.slice(0, 13)}...
+                                                            </span>
+                                                        ) : (
+                                                            <span style={{ fontSize: "11.5px", color: "#71717a" }}>Belum Dipetakan</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        {h.channexPropertyId ? (
+                                                            <span className={`${styles.statusPill} ${styles.statusConnected}`}>
+                                                                <CheckCircle2 size={12} />
+                                                                <span>Tersambung ({h.channexEnvironment === "production" ? "Production" : "Sandbox"})</span>
+                                                            </span>
+                                                        ) : (
+                                                            <span className={`${styles.statusPill} ${styles.statusPending}`}>
+                                                                <AlertCircle size={12} />
+                                                                <span>Perlu Setup</span>
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td style={{ textAlign: "right" }}>
+                                                        <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setActiveHotelCode(h.hotelCode)}
+                                                                className={`${styles.btnSwitch} ${isActive ? styles.btnSwitchActive : ""}`}
+                                                            >
+                                                                {isActive ? "● Sedang Aktif" : "Beralih ke Hotel"}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleAssignGroup(h.hotelCode, "", "")}
+                                                                className={styles.btnSwitch}
+                                                                title="Lepas dari Group ini"
+                                                                style={{ color: "#5c0f1e" }}
+                                                            >
+                                                                <Unlink size={12} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         ) : (
-                            <div style={{ padding: "24px", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                            <div style={{ padding: "24px", textAlign: "center", color: "#71717a", fontSize: "13px" }}>
                                 Belum ada hotel yang dimasukkan ke group ini. Pilih hotel dari daftar "Properti Mandiri" di bawah untuk menautkan.
                             </div>
                         )}
@@ -455,91 +582,95 @@ export const ChannelGroupsTab: React.FC = () => {
 
             {/* Unassigned Properties Section */}
             {unassignedHotels.length > 0 && (
-                <div className={styles.groupCard} style={{ borderColor: "#cbd5e1" }}>
-                    <div className={styles.groupHeader} style={{ background: "#f1f5f9" }}>
+                <div className={styles.groupCard} style={{ borderColor: "#e4e4e7" }}>
+                    <div className={styles.groupHeader} style={{ background: "#fafafa" }}>
                         <div className={styles.groupTitleWrap}>
-                            <Hotel size={20} color="#475569" />
+                            <div className={styles.statIconWrap} style={{ width: "34px", height: "34px" }}>
+                                <Hotel size={18} />
+                            </div>
                             <div>
-                                <strong style={{ fontSize: "14px", color: "#334155" }}>Properti Mandiri / Belum Tergrup ({unassignedHotels.length})</strong>
-                                <p style={{ fontSize: "12px", color: "#64748b", margin: "2px 0 0 0" }}>
+                                <strong style={{ fontSize: "14px", color: "#09090b" }}>Properti Mandiri / Belum Tergrup ({unassignedHotels.length})</strong>
+                                <p style={{ fontSize: "12px", color: "#71717a", margin: "2px 0 0 0" }}>
                                     Hotel-hotel berikut beroperasi mandiri dan dapat Anda masukkan ke dalam salah satu Group di atas.
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <table className={styles.hotelTable}>
-                        <thead>
-                            <tr>
-                                <th>Nama Properti</th>
-                                <th>Kota</th>
-                                <th>Channel Property ID</th>
-                                <th style={{ textAlign: "right" }}>Tautkan ke Group</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {unassignedHotels.map((h) => {
-                                const isActive = h.hotelCode === activeHotelCode;
+                    <div className={styles.tableResponsive}>
+                        <table className={styles.hotelTable}>
+                            <thead>
+                                <tr>
+                                    <th>Nama Properti</th>
+                                    <th>Kota</th>
+                                    <th>Channel Property ID</th>
+                                    <th style={{ textAlign: "right" }}>Tautkan ke Group</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {unassignedHotels.map((h) => {
+                                    const isActive = h.hotelCode === activeHotelCode;
 
-                                return (
-                                    <tr key={h.hotelCode} className={`${styles.hotelTableRow} ${isActive ? styles.activeHotelRow : ""}`}>
-                                        <td>
-                                            <span className={styles.hotelName}>{h.name}</span>
-                                            <span className={styles.hotelCode}>ID: {h.hotelCode}</span>
-                                        </td>
-                                        <td>{h.city}</td>
-                                        <td>
-                                            {h.channexPropertyId ? (
-                                                <span style={{ fontFamily: "monospace", fontSize: "11.5px", background: "#e2e8f0", padding: "2px 6px", borderRadius: "4px" }}>
-                                                    {h.channexPropertyId.slice(0, 13)}...
-                                                </span>
-                                            ) : (
-                                                <span style={{ fontSize: "11.5px", color: "#94a3b8" }}>Belum Terhubung</span>
-                                            )}
-                                        </td>
-                                        <td style={{ textAlign: "right" }}>
-                                            <div className={styles.groupAssignWrap}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setOpenDropdownHotelCode(openDropdownHotelCode === h.hotelCode ? null : h.hotelCode)}
-                                                    className={`${styles.groupSelectBtn} ${openDropdownHotelCode === h.hotelCode ? styles.groupSelectBtnActive : ""}`}
-                                                >
-                                                    <span>+ Tautkan ke Group</span>
-                                                    <ChevronDown size={13} />
-                                                </button>
-
-                                                {openDropdownHotelCode === h.hotelCode && (
-                                                    <div className={styles.groupDropdownMenu}>
-                                                        <div className={styles.groupDropdownHeader}>Pilih Group Tujuan</div>
-                                                        {groups.length > 0 ? (
-                                                            groups.map((g) => (
-                                                                <button
-                                                                    key={g.id}
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        handleAssignGroup(h.hotelCode, g.id, g.name);
-                                                                        setOpenDropdownHotelCode(null);
-                                                                    }}
-                                                                    className={styles.groupDropdownItem}
-                                                                >
-                                                                    <span>{g.name}</span>
-                                                                    <CheckCircle2 size={13} color="#16a34a" />
-                                                                </button>
-                                                            ))
-                                                        ) : (
-                                                            <div style={{ padding: "8px 12px", fontSize: "12px", color: "#94a3b8" }}>
-                                                                Belum ada grup. Buat grup baru di atas.
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                    return (
+                                        <tr key={h.hotelCode} className={`${styles.hotelTableRow} ${isActive ? styles.activeHotelRow : ""}`}>
+                                            <td>
+                                                <span className={styles.hotelName}>{h.name}</span>
+                                                <span className={styles.hotelCode}>ID: {h.hotelCode}</span>
+                                            </td>
+                                            <td>{h.city}</td>
+                                            <td>
+                                                {h.channexPropertyId ? (
+                                                    <span style={{ fontFamily: "monospace", fontSize: "11.5px", background: "#f4f4f5", color: "#18181b", padding: "2px 6px", borderRadius: "4px", border: "1px solid #e4e4e7" }}>
+                                                        {h.channexPropertyId.slice(0, 13)}...
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ fontSize: "11.5px", color: "#71717a" }}>Belum Terhubung</span>
                                                 )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                                            </td>
+                                            <td style={{ textAlign: "right" }}>
+                                                <div className={styles.groupAssignWrap}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setOpenDropdownHotelCode(openDropdownHotelCode === h.hotelCode ? null : h.hotelCode)}
+                                                        className={`${styles.groupSelectBtn} ${openDropdownHotelCode === h.hotelCode ? styles.groupSelectBtnActive : ""}`}
+                                                    >
+                                                        <span>+ Tautkan ke Group</span>
+                                                        <ChevronDown size={13} />
+                                                    </button>
+
+                                                    {openDropdownHotelCode === h.hotelCode && (
+                                                        <div className={styles.groupDropdownMenu}>
+                                                            <div className={styles.groupDropdownHeader}>Pilih Group Tujuan</div>
+                                                            {groups.length > 0 ? (
+                                                                groups.map((g) => (
+                                                                    <button
+                                                                        key={g.id}
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            handleAssignGroup(h.hotelCode, g.id, g.name);
+                                                                            setOpenDropdownHotelCode(null);
+                                                                        }}
+                                                                        className={styles.groupDropdownItem}
+                                                                    >
+                                                                        <span>{g.name}</span>
+                                                                        <CheckCircle2 size={13} style={{ color: "#5c0f1e" }} />
+                                                                    </button>
+                                                                ))
+                                                            ) : (
+                                                                <div style={{ padding: "8px 12px", fontSize: "12px", color: "#71717a" }}>
+                                                                    Belum ada grup. Buat grup baru di atas.
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
@@ -548,7 +679,7 @@ export const ChannelGroupsTab: React.FC = () => {
                 <div className={styles.modalOverlay} onClick={() => setIsCreateModalOpen(false)}>
                     <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                         <h3 className={styles.modalTitle}>Tambah Hotel Group / Chain Baru</h3>
-                        <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
+                        <p style={{ fontSize: "13px", color: "#71717a", margin: 0 }}>
                             Group ini akan otomatis dibuat di Tara CRS dan disinkronkan ke Master Channel Manager jaringan Anda.
                         </p>
 
@@ -594,6 +725,140 @@ export const ChannelGroupsTab: React.FC = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit / Rename Group Modal */}
+            {editingGroup && (
+                <div className={styles.modalOverlay} onClick={() => !updating && setEditingGroup(null)}>
+                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <div>
+                                <h3 className={styles.modalTitle}>Edit Detail Hotel Group</h3>
+                                <p className={styles.modalSubtitle}>
+                                    Ubah nama atau deskripsi jaringan grup hotel di Tara CRS dan Channex Cloud.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setEditingGroup(null)}
+                                className={styles.modalCloseBtn}
+                                disabled={updating}
+                            >
+                                &times;
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleUpdateGroup} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                            <div className={styles.formGroup}>
+                                <label className={styles.formLabel}>
+                                    Nama Hotel Group <span style={{ color: "#ef4444" }}>*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={editGroupName}
+                                    onChange={(e) => setEditGroupName(e.target.value)}
+                                    placeholder="Contoh: Setara Hospitality Group"
+                                    className={styles.formInput}
+                                    disabled={updating}
+                                />
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label className={styles.formLabel}>Deskripsi / Catatan Jaringan (Opsional)</label>
+                                <textarea
+                                    rows={3}
+                                    value={editGroupDesc}
+                                    onChange={(e) => setEditGroupDesc(e.target.value)}
+                                    placeholder="Deskripsi singkat jaringan atau cluster grup..."
+                                    className={styles.formInput}
+                                    disabled={updating}
+                                />
+                            </div>
+
+                            <div className={styles.modalActions}>
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingGroup(null)}
+                                    className={styles.btnCancel}
+                                    disabled={updating}
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    className={styles.btnPrimary}
+                                    disabled={updating}
+                                >
+                                    {updating ? "Menyimpan..." : "Simpan Perubahan"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Group Custom Confirmation Modal */}
+            {groupToDelete && (
+                <div className={styles.modalOverlay} onClick={() => !deleting && setGroupToDelete(null)}>
+                    <div className={styles.confirmModalContent} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.confirmModalHeader}>
+                            <div className={styles.confirmModalIcon}>
+                                <AlertTriangle size={20} />
+                            </div>
+                            <div>
+                                <h3 className={styles.confirmModalTitle}>Hapus Hotel Group</h3>
+                                <p className={styles.confirmModalSubtitle}>
+                                    Tindakan ini akan menghapus grup dari Tara CRS dan Channel Manager secara permanen.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className={styles.confirmModalBody}>
+                            <p className={styles.confirmModalText}>
+                                Yakin ingin menghapus group <strong>&ldquo;{groupToDelete.name}&rdquo;</strong>?
+                            </p>
+                            <p className={styles.confirmModalNotice}>
+                                Seluruh properti hotel yang bertaut akan otomatis dilepaskan secara aman dan kembali berstatus properti independen.
+                            </p>
+
+                            {groups.length <= 1 && (
+                                <div style={{ background: "#fef3c7", border: "1px solid #fde68a", borderRadius: "6px", padding: "10px 12px", color: "#92400e", fontSize: "11.5px", marginTop: "10px", lineHeight: "1.45" }}>
+                                    <strong>Perhatian Aturan Channex Cloud:</strong> Akun Channel Manager mewajibkan memiliki <strong>minimal 1 Hotel Group (Root Group)</strong>. Jika grup ini adalah satu-satunya grup yang tersisa, Channex akan menolak penghapusan. Buat grup baru terlebih dahulu sebelum menghapus grup ini, atau gunakan tombol <strong>Edit</strong> untuk mengganti namanya.
+                                </div>
+                            )}
+                        </div>
+
+                        <div className={styles.modalActions}>
+                            <button
+                                type="button"
+                                onClick={() => setGroupToDelete(null)}
+                                className={styles.btnCancel}
+                                disabled={deleting}
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={executeDeleteGroup}
+                                className={styles.btnDeleteConfirm}
+                                disabled={deleting}
+                            >
+                                {deleting ? (
+                                    <>
+                                        <RefreshCw size={13} className="animate-spin" />
+                                        <span>Menghapus...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 size={13} />
+                                        <span>Hapus Group Sekarang</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
