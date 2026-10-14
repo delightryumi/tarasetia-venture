@@ -19,7 +19,10 @@ import {
     ChevronDown,
     Trash2,
     AlertTriangle,
-    Pencil
+    Pencil,
+    Eye,
+    EyeOff,
+    Save
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -55,9 +58,12 @@ export const ChannelGroupsTab: React.FC = () => {
     
     // Live Channex API Key & Environment configuration
     const [apiKey, setApiKey] = useState<string>("");
+    const [savedApiKey, setSavedApiKey] = useState<string>("");
     const [environment, setEnvironment] = useState<"staging" | "production">("staging");
     const [hasApiKey, setHasApiKey] = useState<boolean>(false);
-    const [showKeyInput, setShowKeyInput] = useState<boolean>(false);
+    const [showKeyInput, setShowKeyInput] = useState<boolean>(true);
+    const [showApiKey, setShowApiKey] = useState<boolean>(false);
+    const [savingKey, setSavingKey] = useState<boolean>(false);
     const [syncing, setSyncing] = useState<boolean>(false);
 
     // Modal state - Create
@@ -95,6 +101,10 @@ export const ChannelGroupsTab: React.FC = () => {
                 setGroups(data.groups || []);
                 setHotels(data.hotels || []);
                 setHasApiKey(data.hasApiKey || !!effectiveKey);
+                if (data.apiKey) {
+                    setApiKey(data.apiKey);
+                    setSavedApiKey(data.apiKey);
+                }
                 if (data.environment) setEnvironment(data.environment);
             } else {
                 toast.error("Gagal memuat data grup hotel: " + data.error);
@@ -113,6 +123,39 @@ export const ChannelGroupsTab: React.FC = () => {
         await fetchData(apiKey, environment);
         setSyncing(false);
         toast.success("Sinkronisasi data Master Channel selesai!");
+    };
+
+    const handleSaveApiKey = async () => {
+        if (!apiKey.trim()) {
+            toast.error("API Key tidak boleh kosong!");
+            return;
+        }
+        setSavingKey(true);
+        try {
+            const res = await fetch("/api/channex/groups", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "save_api_key",
+                    apiKey: apiKey.trim(),
+                    environment,
+                    hotelCode: activeHotelCode
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success(data.message || "API Key berhasil disimpan!");
+                setSavedApiKey(apiKey.trim());
+                setHasApiKey(true);
+                await fetchData(apiKey.trim(), environment);
+            } else {
+                toast.error("Gagal menyimpan API Key: " + data.error);
+            }
+        } catch (err: any) {
+            toast.error("Terjadi kesalahan sistem: " + err.message);
+        } finally {
+            setSavingKey(false);
+        }
     };
 
     useEffect(() => {
@@ -325,39 +368,109 @@ export const ChannelGroupsTab: React.FC = () => {
                         <Globe size={18} />
                     </div>
                     <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                             <strong style={{ fontSize: "13.5px", color: "#09090b" }}>Master Channel Live Sync</strong>
                             <span style={{ fontSize: "10.5px", fontWeight: 600, padding: "2px 7px", borderRadius: "4px", background: environment === "production" ? "#fdf2f4" : "#f4f4f5", color: environment === "production" ? "#5c0f1e" : "#27272a", border: environment === "production" ? "1px solid #f3cfd6" : "1px solid #e4e4e7" }}>
                                 {environment === "production" ? "Production Cloud" : "Sandbox Test Mode"}
                             </span>
+                            {apiKey && apiKey === savedApiKey && (
+                                <span style={{ fontSize: "10.5px", fontWeight: 600, padding: "2px 7px", borderRadius: "4px", background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                    <CheckCircle2 size={11} />
+                                    Tersimpan
+                                </span>
+                            )}
+                            {apiKey && apiKey !== savedApiKey && (
+                                <span style={{ fontSize: "10.5px", fontWeight: 600, padding: "2px 7px", borderRadius: "4px", background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                    <AlertCircle size={11} />
+                                    Belum Disimpan
+                                </span>
+                            )}
                         </div>
                         <p style={{ fontSize: "12px", color: "#71717a", margin: "2px 0 0 0" }}>
-                            {hasApiKey ? "API Key terverifikasi aktif. Data Group dan Properti terhubung langsung dua arah." : "Masukkan API Key Channel Manager untuk menghubungkan Group & Properti jaringan Anda."}
+                            {hasApiKey 
+                                ? (apiKey && apiKey !== savedApiKey ? "Perubahan API Key terdeteksi. Klik \"Simpan API Key\" untuk menyimpan ke database." : "API Key terverifikasi aktif. Data Group dan Properti terhubung langsung dua arah.") 
+                                : "Masukkan API Key Channel Manager untuk menghubungkan Group & Properti jaringan Anda."}
                         </p>
                     </div>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
                     {showKeyInput ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <input
-                                type="password"
-                                placeholder="Paste Channel Manager API Key..."
-                                value={apiKey}
-                                onChange={(e) => setApiKey(e.target.value)}
-                                className={styles.formInput}
-                                style={{ width: "240px", padding: "6px 12px", fontSize: "12px" }}
-                            />
+                        <>
+                            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+                                <input
+                                    type={showApiKey ? "text" : "password"}
+                                    placeholder="Paste Channel Manager API Key..."
+                                    value={apiKey}
+                                    onChange={(e) => setApiKey(e.target.value)}
+                                    className={styles.formInput}
+                                    style={{
+                                        width: "250px",
+                                        padding: "7px 32px 7px 10px",
+                                        fontSize: "12px",
+                                        fontFamily: showApiKey ? "inherit" : "monospace"
+                                    }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowApiKey(!showApiKey)}
+                                    title={showApiKey ? "Sembunyikan API Key" : "Tampilkan API Key"}
+                                    style={{
+                                        position: "absolute",
+                                        right: "6px",
+                                        background: "none",
+                                        border: "none",
+                                        color: "#71717a",
+                                        cursor: "pointer",
+                                        padding: "3px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center"
+                                    }}
+                                >
+                                    {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                                </button>
+                            </div>
+
                             <select
                                 value={environment}
                                 onChange={(e) => setEnvironment(e.target.value as any)}
                                 className={styles.formInput}
-                                style={{ padding: "6px 10px", fontSize: "12px", width: "auto" }}
+                                style={{ padding: "7px 10px", fontSize: "12px", width: "auto" }}
                             >
                                 <option value="staging">Sandbox Test Mode</option>
                                 <option value="production">Production Cloud</option>
                             </select>
-                        </div>
+
+                            <button
+                                type="button"
+                                onClick={handleSaveApiKey}
+                                disabled={savingKey || !apiKey.trim()}
+                                className={styles.btnPrimary}
+                                style={{
+                                    fontSize: "12px",
+                                    padding: "7px 13px",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                    background: (apiKey && apiKey !== savedApiKey) ? "#5c0f1e" : "#09090b",
+                                    borderColor: (apiKey && apiKey !== savedApiKey) ? "#5c0f1e" : "#09090b"
+                                }}
+                                title="Simpan API Key ke database"
+                            >
+                                {savingKey ? (
+                                    <>
+                                        <RefreshCw size={13} className="animate-spin" />
+                                        <span>Menyimpan...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={13} />
+                                        <span>Simpan API Key</span>
+                                    </>
+                                )}
+                            </button>
+                        </>
                     ) : null}
 
                     <button
@@ -366,14 +479,22 @@ export const ChannelGroupsTab: React.FC = () => {
                         className={styles.btnCancel}
                         style={{ fontSize: "12px", padding: "7px 12px" }}
                     >
-                        {showKeyInput ? "Tutup Input Key" : (hasApiKey ? "Ubah API Key" : "Set API Key")}
+                        {showKeyInput ? "Tutup Form Key" : (hasApiKey ? "Buka Form API Key" : "Set API Key")}
                     </button>
 
                     <button
                         type="button"
                         onClick={handleSyncChannex}
                         disabled={syncing || loading}
-                        className={styles.btnPrimary}
+                        className={styles.btnCancel}
+                        style={{
+                            fontSize: "12px",
+                            padding: "7px 12px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            borderColor: "#e4e4e7"
+                        }}
                     >
                         <RefreshCw size={13} className={syncing ? "animate-spin" : ""} />
                         <span>{syncing ? "Menyinkronkan..." : "Tarik Data Properti & Group"}</span>
@@ -840,24 +961,46 @@ export const ChannelGroupsTab: React.FC = () => {
                             >
                                 Batal
                             </button>
-                            <button
-                                type="button"
-                                onClick={executeDeleteGroup}
-                                className={styles.btnDeleteConfirm}
-                                disabled={deleting}
-                            >
-                                {deleting ? (
-                                    <>
-                                        <RefreshCw size={13} className="animate-spin" />
-                                        <span>Menghapus...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Trash2 size={13} />
-                                        <span>Hapus Group Sekarang</span>
-                                    </>
-                                )}
-                            </button>
+                            {groups.length <= 1 ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const g = groupToDelete;
+                                        setGroupToDelete(null);
+                                        setEditingGroup(g);
+                                        setEditGroupName(g.name);
+                                        setEditGroupDesc(g.description || "");
+                                    }}
+                                    className={styles.btnPrimary}
+                                    style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "6px"
+                                    }}
+                                >
+                                    <Pencil size={13} />
+                                    <span>Ganti Nama Group Saja (Edit)</span>
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={executeDeleteGroup}
+                                    className={styles.btnDeleteConfirm}
+                                    disabled={deleting}
+                                >
+                                    {deleting ? (
+                                        <>
+                                            <RefreshCw size={13} className="animate-spin" />
+                                            <span>Menghapus...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Trash2 size={13} />
+                                            <span>Hapus Group Sekarang</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

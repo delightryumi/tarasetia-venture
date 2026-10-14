@@ -85,7 +85,25 @@ export class ChannexClient {
                 }
 
                 if (!response.ok) {
-                    const errorMsg = data?.errors?.title || data?.errors?.details || data?.meta?.message || response.statusText;
+                    let errorMsg = response.statusText;
+                    if (data?.errors) {
+                        if (Array.isArray(data.errors) && data.errors.length > 0) {
+                            const err0 = data.errors[0];
+                            errorMsg = err0.detail || err0.title || err0.message || JSON.stringify(err0);
+                        } else if (typeof data.errors === "object") {
+                            const details = data.errors.details;
+                            if (details && typeof details === "object") {
+                                const detailsList = Object.entries(details)
+                                    .map(([k, v]) => `${k} ${Array.isArray(v) ? v.join(", ") : v}`)
+                                    .join("; ");
+                                errorMsg = detailsList || data.errors.title || "Validation Error";
+                            } else {
+                                errorMsg = data.errors.detail || data.errors.title || data.errors.message || JSON.stringify(data.errors);
+                            }
+                        }
+                    } else if (data?.meta?.message) {
+                        errorMsg = data.meta.message;
+                    }
                     console.error(`[Channex API Error] ${response.status} ${url}:`, JSON.stringify(data));
                     throw new Error(`Channex Error (${response.status}): ${typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg)}`);
                 }

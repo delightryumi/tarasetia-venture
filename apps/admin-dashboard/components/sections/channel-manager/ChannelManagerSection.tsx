@@ -393,6 +393,7 @@ export function ChannelManagerSection() {
     const [isAddChannelModalOpen, setIsAddChannelModalOpen] = useState<boolean>(false);
     const [channelSearchQuery, setChannelSearchQuery] = useState<string>("");
     const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<string>("all");
+    const [modalCategoryFilter, setModalCategoryFilter] = useState<string>("all");
     const [catalogViewMode, setCatalogViewMode] = useState<"table" | "grid">("table");
     const [savingSettings, setSavingSettings] = useState<boolean>(false);
     const [syncingAri, setSyncingAri] = useState<boolean>(false);
@@ -499,6 +500,17 @@ export function ChannelManagerSection() {
     };
 
     // 1. Fetch Configuration from Firestore
+    useEffect(() => {
+        if (!isAddChannelModalOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                setIsAddChannelModalOpen(false);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isAddChannelModalOpen]);
+
     useEffect(() => {
         if (!activeHotelCode || activeHotelCode === "0") return;
 
@@ -4219,78 +4231,206 @@ export function ChannelManagerSection() {
 
             {/* MODAL: CONNECT ONLINE CHANNEL FROM CATALOG */}
             {isAddChannelModalOpen && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modalCard}>
-                        <div className={styles.modalHeader}>
-                            <div>
-                                <span className={styles.mappingHeaderTitle}>
-                                    + Connect Online Channel from Global Catalog
-                                </span>
-                                <p className={styles.mappingHeaderSubtitle}>
-                                    Select an OTA, GDS, or Wholesaler channel to enable for this property.
-                                </p>
+                <div
+                    className={styles.modalOverlay}
+                    onClick={() => setIsAddChannelModalOpen(false)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="modal-catalog-title"
+                >
+                    <div
+                        className={styles.catalogModalCard}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className={styles.catalogModalHeader}>
+                            <div className={styles.catalogHeaderInfo}>
+                                <div className={styles.catalogHeaderIconBox}>
+                                    <Globe size={18} />
+                                </div>
+                                <div>
+                                    <h3 id="modal-catalog-title" className={styles.catalogHeaderTitle}>
+                                        Connect Online Channel
+                                    </h3>
+                                    <p className={styles.catalogHeaderSubtitle}>
+                                        Select an OTA, GDS, or distribution partner from the global catalog to enable for this property.
+                                    </p>
+                                </div>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setIsAddChannelModalOpen(false)}
                                 className={styles.modalCloseBtn}
+                                aria-label="Close dialog"
                             >
                                 <X size={18} />
                             </button>
                         </div>
 
-                        <div className={styles.modalBody}>
-                            <input
-                                type="text"
-                                value={channelSearchQuery}
-                                onChange={e => setChannelSearchQuery(e.target.value)}
-                                placeholder="Search channel name (e.g. Traveloka, Booking.com, Agoda, Expedia)..."
-                                className={`${styles.cellInput} ${styles.addChannelSearchField}`}
-                            />
+                        {/* Search & Category Filter Toolbar */}
+                        <div className={styles.catalogToolbar}>
+                            <div className={styles.catalogSearchBox}>
+                                <Search size={15} className={styles.catalogSearchIcon} />
+                                <input
+                                    type="text"
+                                    value={channelSearchQuery}
+                                    onChange={e => setChannelSearchQuery(e.target.value)}
+                                    placeholder="Search channel name or code (e.g. Traveloka, Booking.com, Agoda, Expedia)..."
+                                    className={styles.catalogSearchInput}
+                                    autoFocus
+                                />
+                                {channelSearchQuery && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setChannelSearchQuery("")}
+                                        className={styles.catalogSearchClearBtn}
+                                        aria-label="Clear search"
+                                    >
+                                        <X size={13} />
+                                    </button>
+                                )}
+                            </div>
 
-                            <div className={styles.addChannelGrid}>
-                                {CHANNEX_OTA_CATALOG
-                                    .filter(c => c.name.toLowerCase().includes(channelSearchQuery.toLowerCase()))
-                                    .map(ch => {
-                                        const isConnected = Boolean(channelConfigs[ch.code]?.isActive);
-                                        return (
-                                            <div
-                                                key={ch.code}
-                                                className={`${styles.addChannelItem} ${isConnected ? styles.addChannelItemConnected : styles.addChannelItemAvailable}`}
-                                            >
-                                                <div className={styles.addChannelItemHeader}>
-                                                    <div className={styles.addChannelItemIdentity}>
-                                                        <OtaLogo code={ch.code} name={ch.name} size={20} />
-                                                        <span className={styles.addChannelItemTitle}>
-                                                            {ch.name}
-                                                        </span>
-                                                    </div>
-                                                    {isConnected ? (
-                                                        <span className={`${styles.badge} ${styles.badgeActive}`}>Connected</span>
-                                                    ) : (
-                                                        <span className={`${styles.badge} ${styles.badgeInactive}`}>Available</span>
-                                                    )}
-                                                </div>
-
-                                                <span className={styles.addChannelItemMeta}>
-                                                    Standard Commission: {ch.defaultCommission}% • {ch.category.toUpperCase()}
-                                                </span>
-
-                                                <button
-                                                    type="button"
-                                                    disabled={isConnected}
-                                                    onClick={() => handleConnectChannel(ch)}
-                                                    className={`${isConnected ? styles.btnActionSecondary : styles.btnActionBlue} ${styles.addChannelItemBtn}`}
-                                                >
-                                                    {isConnected ? "Already Connected" : "+ Connect Channel"}
-                                                </button>
-                                            </div>
-                                        );
-                                    })}
+                            <div className={styles.catalogFilterRow}>
+                                {[
+                                    { id: "all", label: "All Channels" },
+                                    { id: "ota", label: "Popular OTAs" },
+                                    { id: "wholesaler", label: "Wholesalers & B2B" },
+                                    { id: "meta", label: "Metasearch" },
+                                    { id: "vacation", label: "Vacation" },
+                                    { id: "connected", label: "Connected" }
+                                ].map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        type="button"
+                                        onClick={() => setModalCategoryFilter(tab.id)}
+                                        className={`${styles.catalogFilterPill} ${modalCategoryFilter === tab.id ? styles.catalogFilterPillActive : ""}`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
-                        <div className={styles.modalFooter}>
+                        {/* Modal Body: Channel Cards Grid or Empty State */}
+                        <div className={styles.catalogModalBody}>
+                            {(() => {
+                                const q = channelSearchQuery.trim().toLowerCase();
+                                const filtered = CHANNEX_OTA_CATALOG.filter(ch => {
+                                    const matchesQuery =
+                                        !q ||
+                                        ch.name.toLowerCase().includes(q) ||
+                                        ch.code.toLowerCase().includes(q) ||
+                                        ch.category.toLowerCase().includes(q);
+                                    if (!matchesQuery) return false;
+                                    if (modalCategoryFilter === "all") return true;
+                                    if (modalCategoryFilter === "connected") return Boolean(channelConfigs[ch.code]?.isActive);
+                                    return ch.category === modalCategoryFilter;
+                                });
+
+                                if (filtered.length === 0) {
+                                    return (
+                                        <div className={styles.catalogEmptyState}>
+                                            <div className={styles.catalogEmptyIconBox}>
+                                                <Search size={22} />
+                                            </div>
+                                            <p className={styles.catalogEmptyTitle}>No channels found</p>
+                                            <p className={styles.catalogEmptyDesc}>
+                                                No distribution channels match your current search or category filter.
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setChannelSearchQuery("");
+                                                    setModalCategoryFilter("all");
+                                                }}
+                                                className={styles.btnActionSecondary}
+                                                style={{ marginTop: "6px" }}
+                                            >
+                                                Reset Filters
+                                            </button>
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div className={styles.addChannelGrid}>
+                                        {filtered.map(ch => {
+                                            const isConnected = Boolean(channelConfigs[ch.code]?.isActive);
+                                            return (
+                                                <div
+                                                    key={ch.code}
+                                                    className={`${styles.addChannelCard} ${isConnected ? styles.addChannelCardConnected : ""}`}
+                                                >
+                                                    <div className={styles.addChannelCardHeader}>
+                                                        <div className={styles.addChannelCardIdentity}>
+                                                            <div className={styles.addChannelLogoWrap}>
+                                                                <OtaLogo code={ch.code} name={ch.name} size={22} />
+                                                            </div>
+                                                            <div className={styles.addChannelCardTitleWrap}>
+                                                                <span className={styles.addChannelCardTitle} title={ch.name}>
+                                                                    {ch.name}
+                                                                </span>
+                                                                <span className={styles.addChannelCardCode}>
+                                                                    {ch.code}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        {isConnected ? (
+                                                            <span className={styles.badgeConnected}>
+                                                                <Check size={11} strokeWidth={2.5} />
+                                                                Connected
+                                                            </span>
+                                                        ) : (
+                                                            <span className={styles.badgeAvailable}>
+                                                                Available
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div className={styles.addChannelCardMeta}>
+                                                        <div className={styles.addChannelMetaItem}>
+                                                            <span className={styles.addChannelMetaLabel}>Commission</span>
+                                                            <span className={styles.addChannelMetaValue}>{ch.defaultCommission}%</span>
+                                                        </div>
+                                                        <div className={styles.addChannelMetaDivider} />
+                                                        <div className={styles.addChannelMetaItem}>
+                                                            <span className={styles.addChannelMetaLabel}>Category</span>
+                                                            <span className={styles.addChannelMetaCategory}>{ch.category.toUpperCase()}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        disabled={isConnected}
+                                                        onClick={() => handleConnectChannel(ch)}
+                                                        className={`${styles.addChannelActionBtn} ${isConnected ? styles.addChannelActionBtnConnected : styles.addChannelActionBtnAvailable}`}
+                                                    >
+                                                        {isConnected ? (
+                                                            <>
+                                                                <Check size={13} />
+                                                                <span>Already Connected</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Plus size={13} />
+                                                                <span>Connect Channel</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })()}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className={styles.catalogModalFooter}>
+                            <span className={styles.catalogFooterSummary}>
+                                Global Catalog: <b>{CHANNEX_OTA_CATALOG.length}</b> channels available
+                            </span>
                             <button
                                 type="button"
                                 onClick={() => setIsAddChannelModalOpen(false)}

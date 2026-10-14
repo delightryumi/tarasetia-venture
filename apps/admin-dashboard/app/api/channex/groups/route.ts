@@ -16,11 +16,26 @@ export async function GET(req: NextRequest) {
         let env = (searchParams.get("env") as "staging" | "production") || "staging";
         const hotelCode = searchParams.get("hotelCode") || "";
 
-        // 1. Fetch all hotels from Firestore
-        const hotelsSnap = await getDocs(collection(db, "hotels"));
-        const localHotels: any[] = [];
+        // 1. Fetch system_settings/channex first (Master Key)
         let foundApiKey = "";
         let foundEnv: "staging" | "production" = "staging";
+
+        try {
+            const sysDoc = await getDoc(doc(db, "system_settings", "channex"));
+            if (sysDoc.exists()) {
+                const sData = sysDoc.data();
+                if (sData.apiKey) {
+                    foundApiKey = sData.apiKey;
+                    foundEnv = sData.env || "staging";
+                }
+            }
+        } catch (err) {
+            console.warn("[Groups API] Could not read system_settings/channex:", err);
+        }
+
+        // 2. Fetch all hotels from Firestore
+        const hotelsSnap = await getDocs(collection(db, "hotels"));
+        const localHotels: any[] = [];
 
         hotelsSnap.forEach((d) => {
             const data = d.data();
@@ -186,6 +201,7 @@ export async function GET(req: NextRequest) {
             groups: combinedGroups,
             hotels: combinedHotels,
             hasApiKey: !!apiKey,
+            apiKey: apiKey,
             environment: env,
         });
     } catch (err: any) {
@@ -197,6 +213,54 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
+
+        // Mode 0: Save API Key
+        if (body.action === "save_api_key") {
+            const { apiKey: newApiKey, environment: newEnv, hotelCode } = body;
+            if (!newApiKey || !newApiKey.trim()) {
+                return NextResponse.json({ success: false, error: "API Key tidak boleh kosong." }, { status: 400 });
+            }
+
+            const cleanKey = newApiKey.trim();
+            const cleanEnv = newEnv === "production" ? "production" : "staging";
+
+            // 1. Save to system_settings/channex
+            try {
+                await setDoc(doc(db, "system_settings", "channex"), {
+                    apiKey: cleanKey,
+                    env: cleanEnv,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+            } catch (sysErr: any) {
+                console.warn("[Save API Key to system_settings error]:", sysErr.message);
+            }
+
+            // 2. Also update hotels collection
+            try {
+                const hotelsSnap = await getDocs(collection(db, "hotels"));
+                for (const hDoc of hotelsSnap.docs) {
+                    if (!hotelCode || hDoc.id === hotelCode) {
+                        await setDoc(doc(db, "hotels", hDoc.id), {
+                            channexApiKey: cleanKey,
+                            channexEnvironment: cleanEnv,
+                            channelManager: {
+                                apiKey: cleanKey,
+                                env: cleanEnv,
+                                updatedAt: new Date().toISOString()
+                            }
+                        }, { merge: true });
+                    }
+                }
+            } catch (hErr: any) {
+                console.warn("[Save API Key to hotels error]:", hErr.message);
+            }
+
+            return NextResponse.json({
+                success: true,
+                message: "API Key Channel Manager berhasil disimpan ke database."
+            });
+        }
+
         let { name, description, apiKey, environment, hotelCode } = body;
 
         if (!name || !name.trim()) {
@@ -458,18 +522,33 @@ export async function DELETE(req: NextRequest) {
         // 2. Unlink properties and delete from Channex API if linked
         if (channexGroupId && apiKey) {
             try {
-                // First unlink all properties associated with this group in Channex
+                // Check total groups in Channex first
+                const cxGroupsRes = await channex.getGroups(apiKey, env).catch(() => ({ data: [] }));
+                const allCxGroups = cxGroupsRes?.data || [];
+                if (allCxGroups.length <= 1) {
+                    return NextResponse.json({
+                        success: false,
+                        error: "Channex Cloud mewajibkan setiap akun memiliki minimal 1 Hotel Group (Root Group). Grup ini tidak dapat dihapus karena merupakan satu-satunya grup yang ada di akun Anda. Silakan buat grup baru terlebih dahulu sebelum menghapus grup ini, atau gunakan tombol Edit untuk mengganti namanya."
+                    }, { status: 422 });
+                }
+
+                // If multiple groups exist, reassign properties to another active group
+                const fallbackGroup = allCxGroups.find((g: any) => g.id !== channexGroupId);
+                const fallbackGroupId = fallbackGroup?.id || null;
+
                 const channexPropsRes = await channex.getProperties(apiKey, env).catch(() => ({ data: [] }));
                 const channexProps = channexPropsRes?.data || [];
                 for (const cp of channexProps) {
-                    if (cp.groupId === channexGroupId || cp.group_id === channexGroupId) {
+                    const pGroupId = cp.attributes?.group_id || cp.group_id || cp.groupId;
+                    if (pGroupId === channexGroupId && fallbackGroupId) {
                         try {
-                            await channex.updateProperty(cp.id, { group_id: null as any }, apiKey, env);
+                            await channex.updateProperty(cp.id, { group_id: fallbackGroupId }, apiKey, env);
                         } catch (uErr: any) {
-                            console.warn(`[Channex Unlink Property ${cp.id} Warning]:`, uErr.message);
+                            console.warn(`[Channex Reassign Property ${cp.id} Warning]:`, uErr.message);
                         }
                     }
                 }
+
                 // Now delete group from Channex
                 await channex.deleteGroup(channexGroupId, apiKey, env);
             } catch (cxErr: any) {
@@ -478,7 +557,7 @@ export async function DELETE(req: NextRequest) {
                 if (errMsg.toLowerCase().includes("at least one group") || errMsg.includes("should have at least one group")) {
                     return NextResponse.json({
                         success: false,
-                        error: "Channex mengharuskan akun Anda memiliki minimal 1 Hotel Group (Root Group). Grup ini tidak dapat dihapus karena merupakan satu-satunya grup yang ada di akun Channex Anda. Silakan buat grup pengganti terlebih dahulu sebelum menghapus grup ini, atau gunakan opsi Edit Nama."
+                        error: "Channex Cloud mewajibkan setiap akun memiliki minimal 1 Hotel Group (Root Group). Grup ini tidak dapat dihapus karena merupakan satu-satunya grup yang ada di akun Anda. Silakan buat grup baru terlebih dahulu sebelum menghapus grup ini, atau gunakan tombol Edit untuk mengganti namanya."
                     }, { status: 422 });
                 }
                 return NextResponse.json({

@@ -1593,6 +1593,427 @@
     background-color: #fafafa;
 }
 
+/* ── Connect Channel Global Catalog Modal ── */
+.catalogModalCard {
+    background: #ffffff;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 780px;
+    max-height: 86vh;
+    box-shadow: 0 24px 60px -12px rgba(9, 9, 11, 0.35);
+    border: 1px solid #e4e4e7;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalPopIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.catalogModalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 18px 24px;
+    border-bottom: 1px solid #e4e4e7;
+    background: #fafafa;
+}
+
+.catalogHeaderInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.catalogHeaderIconBox {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background-color: #fdf2f4;
+    color: #5c0f1e;
+    border: 1px solid #f3cfd6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.catalogHeaderTitle {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: #09090b;
+    margin: 0;
+    line-height: 1.25;
+}
+
+.catalogHeaderSubtitle {
+    font-size: 12px;
+    color: #71717a;
+    margin: 3px 0 0 0;
+    line-height: 1.4;
+}
+
+.catalogToolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 24px 12px;
+    background: #ffffff;
+    border-bottom: 1px solid #f4f4f5;
+}
+
+.catalogSearchBox {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.catalogSearchIcon {
+    position: absolute;
+    left: 12px;
+    color: #a1a1aa;
+    pointer-events: none;
+}
+
+.catalogSearchInput {
+    width: 100%;
+    height: 38px;
+    padding: 0 34px 0 36px;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: #09090b;
+    background-color: #fcfcfc;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.catalogSearchInput:focus {
+    outline: none;
+    background-color: #ffffff;
+    border-color: #5c0f1e;
+    box-shadow: 0 0 0 3px rgba(92, 15, 30, 0.08);
+}
+
+.catalogSearchClearBtn {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    color: #a1a1aa;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.catalogSearchClearBtn:hover {
+    color: #09090b;
+    background-color: #f4f4f5;
+}
+
+.catalogFilterRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+
+.catalogFilterPill {
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #52525b;
+    background-color: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.catalogFilterPill:hover {
+    background-color: #e4e4e7;
+    color: #09090b;
+}
+
+.catalogFilterPillActive {
+    background-color: #09090b;
+    color: #ffffff;
+    border-color: #09090b;
+    font-weight: 600;
+}
+
+.catalogFilterPillActive:hover {
+    background-color: #5c0f1e;
+    border-color: #5c0f1e;
+    color: #ffffff;
+}
+
+.catalogModalBody {
+    padding: 16px 24px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 280px;
+    max-height: 52vh;
+    background-color: #fafafa;
+}
+
+.addChannelGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+@media (max-width: 640px) {
+    .addChannelGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.addChannelCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.addChannelCard:hover {
+    border-color: #d4d4d8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.addChannelCardConnected {
+    background-color: #fafafa;
+    border-color: #e4e4e7;
+    opacity: 0.88;
+}
+
+.addChannelCardHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.addChannelCardIdentity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+
+.addChannelLogoWrap {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background-color: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.addChannelCardTitleWrap {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.addChannelCardTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: #09090b;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.addChannelCardCode {
+    font-family: var(--font-geist-mono, monospace);
+    font-size: 10px;
+    color: #71717a;
+    line-height: 1.2;
+    margin-top: 1px;
+}
+
+.badgeConnected {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    font-size: 10.5px;
+    font-weight: 600;
+    background-color: #fdf2f4;
+    color: #5c0f1e;
+    border: 1px solid #f3cfd6;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.badgeAvailable {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    font-size: 10.5px;
+    font-weight: 500;
+    background-color: #f4f4f5;
+    color: #52525b;
+    border: 1px solid #e4e4e7;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.addChannelCardMeta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 12px;
+    background-color: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #f1f5f9;
+}
+
+.addChannelMetaItem {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.addChannelMetaDivider {
+    width: 1px;
+    height: 22px;
+    background-color: #e2e8f0;
+}
+
+.addChannelMetaLabel {
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.addChannelMetaValue {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.addChannelMetaCategory {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    text-transform: uppercase;
+}
+
+.addChannelActionBtn {
+    width: 100%;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+}
+
+.addChannelActionBtnAvailable {
+    background-color: #5c0f1e;
+    color: #ffffff;
+    border-color: #5c0f1e;
+}
+
+.addChannelActionBtnAvailable:hover:not(:disabled) {
+    background-color: #420a15;
+    border-color: #420a15;
+}
+
+.addChannelActionBtnConnected {
+    background-color: #f4f4f5;
+    color: #71717a;
+    border-color: #e4e4e7;
+    cursor: not-allowed;
+}
+
+.catalogEmptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    text-align: center;
+    gap: 8px;
+}
+
+.catalogEmptyIconBox {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background-color: #f4f4f5;
+    color: #71717a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.catalogEmptyTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #09090b;
+    margin: 0;
+}
+
+.catalogEmptyDesc {
+    font-size: 12px;
+    color: #71717a;
+    max-width: 340px;
+    margin: 0;
+    line-height: 1.45;
+}
+
+.catalogModalFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-top: 1px solid #e4e4e7;
+    background-color: #fafafa;
+}
+
+.catalogFooterSummary {
+    font-size: 12px;
+    color: #71717a;
+}
+
+.catalogFooterSummary b {
+    color: #09090b;
+    font-weight: 600;
+}
+
 /* ── Card, Toolbar & Global Action Buttons ── */
 .gridCard {
     background: #ffffff;
