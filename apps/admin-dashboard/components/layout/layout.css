@@ -334,8 +334,14 @@
 }
 
 .main-scroll-container.main-scroll-container-wide {
-    padding: 8px 16px 40px 16px;
+    padding: 20px 32px 56px 32px;
     scrollbar-gutter: stable;
+}
+
+@media (max-width: 1024px) {
+    .main-scroll-container.main-scroll-container-wide {
+        padding: 16px 20px 48px 20px;
+    }
 }
 
 /* No padding and pure clean canvas for superadmin full-width page */

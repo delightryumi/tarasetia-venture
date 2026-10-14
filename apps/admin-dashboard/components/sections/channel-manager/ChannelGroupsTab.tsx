@@ -84,6 +84,30 @@ export const ChannelGroupsTab: React.FC = () => {
 
     // Reassignment state
     const [assigningHotelCode, setAssigningHotelCode] = useState<string | null>(null);
+    const [registeringHotelCode, setRegisteringHotelCode] = useState<string | null>(null);
+
+    const handleRegisterPropertyToChannex = async (hotelCode: string, hotelName: string) => {
+        setRegisteringHotelCode(hotelCode);
+        const toastId = toast.loading(`Mendaftarkan ${hotelName} ke Channex via API...`);
+        try {
+            const res = await fetch("/api/channex/sync-master", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hotelCode })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || "Gagal mendaftarkan properti ke Channex");
+            }
+            toast.success(`Berhasil! ${hotelName} kini terhubung ke Channex.`, { id: toastId });
+            await fetchData();
+        } catch (err: any) {
+            console.error("Register property error:", err);
+            toast.error(err.message || "Gagal mendaftarkan hotel ke Channex", { id: toastId });
+        } finally {
+            setRegisteringHotelCode(null);
+        }
+    };
 
     const fetchData = async (overrideKey?: string, overrideEnv?: "staging" | "production") => {
         setLoading(true);
@@ -667,7 +691,33 @@ export const ChannelGroupsTab: React.FC = () => {
                                                         )}
                                                     </td>
                                                     <td style={{ textAlign: "right" }}>
-                                                        <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                                                        <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", alignItems: "center" }}>
+                                                            {!h.channexPropertyId && (
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={registeringHotelCode === h.hotelCode}
+                                                                    onClick={() => handleRegisterPropertyToChannex(h.hotelCode, h.name)}
+                                                                    className={styles.btnPrimary}
+                                                                    style={{
+                                                                        padding: "3px 8px",
+                                                                        fontSize: "11px",
+                                                                        height: "26px",
+                                                                        display: "inline-flex",
+                                                                        alignItems: "center",
+                                                                        gap: "4px",
+                                                                        background: "#5c0f1e",
+                                                                        color: "#ffffff"
+                                                                    }}
+                                                                    title="Daftarkan properti ini langsung ke Channex via API"
+                                                                >
+                                                                    {registeringHotelCode === h.hotelCode ? (
+                                                                        <RefreshCw size={11} className="animate-spin" />
+                                                                    ) : (
+                                                                        <Plus size={11} />
+                                                                    )}
+                                                                    <span>{registeringHotelCode === h.hotelCode ? "Mendaftarkan..." : "Daftarkan ke Channex"}</span>
+                                                                </button>
+                                                            )}
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setActiveHotelCode(h.hotelCode)}
@@ -749,7 +799,33 @@ export const ChannelGroupsTab: React.FC = () => {
                                                 )}
                                             </td>
                                             <td style={{ textAlign: "right" }}>
-                                                <div className={styles.groupAssignWrap}>
+                                                <div className={styles.groupAssignWrap} style={{ display: "inline-flex", gap: "8px", alignItems: "center" }}>
+                                                    {!h.channexPropertyId && (
+                                                        <button
+                                                            type="button"
+                                                            disabled={registeringHotelCode === h.hotelCode}
+                                                            onClick={() => handleRegisterPropertyToChannex(h.hotelCode, h.name)}
+                                                            className={styles.btnPrimary}
+                                                            style={{
+                                                                padding: "3px 8px",
+                                                                fontSize: "11px",
+                                                                height: "26px",
+                                                                display: "inline-flex",
+                                                                alignItems: "center",
+                                                                gap: "4px",
+                                                                background: "#5c0f1e",
+                                                                color: "#ffffff"
+                                                            }}
+                                                            title="Daftarkan properti ini langsung ke Channex via API"
+                                                        >
+                                                            {registeringHotelCode === h.hotelCode ? (
+                                                                <RefreshCw size={11} className="animate-spin" />
+                                                            ) : (
+                                                                <Plus size={11} />
+                                                            )}
+                                                            <span>{registeringHotelCode === h.hotelCode ? "Mendaftarkan..." : "Daftarkan ke Channex"}</span>
+                                                        </button>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         onClick={() => setOpenDropdownHotelCode(openDropdownHotelCode === h.hotelCode ? null : h.hotelCode)}

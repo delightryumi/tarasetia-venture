@@ -2834,7 +2834,8 @@
 .goliveContainer {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 22px;
+    padding: 24px 28px 36px 28px;
 }
 
 .envBanner {

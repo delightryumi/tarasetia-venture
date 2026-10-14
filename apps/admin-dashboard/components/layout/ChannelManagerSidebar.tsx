@@ -107,44 +107,43 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
 
     const MENU_GROUPS: CmMenuGroup[] = [
         {
-            title: "Properties & Hotel Groups",
+            title: "1. Onboarding & Setup",
             items: [
-                { id: "groups", label: "Hotel Groups & Properties", shortLabel: "Groups", icon: Building2, badge: "Multi-Hotel", badgeColor: "#5c0f1e" },
-                { id: "tutorial", label: "Go-Live Roadmap", shortLabel: "Roadmap", icon: Compass, badge: "Guide", badgeColor: "#71717a" }
+                { id: "groups", label: "Properties & Hotel Groups", shortLabel: "Properties", icon: Building2, badge: "Step 1", badgeColor: "#5c0f1e" },
+                { id: "golive", label: "API Credentials & Gateway", shortLabel: "Gateway", icon: Lock, badge: "Step 2", badgeColor: "#5c0f1e" },
+                { id: "sandbox", label: "Testing Sandbox & Roadmap", shortLabel: "Sandbox", icon: Zap, badge: "Test", badgeColor: "#71717a" }
             ]
         },
         {
-            title: "OTA Distribution & Channels",
+            title: "2. Rooms & Master Pricing",
             items: [
-                { id: "mapping", label: "Channel Mapping", shortLabel: "Mapping", icon: Key, badge: "Parity", badgeColor: "#5c0f1e" },
-                { id: "catalog", label: "Channel Catalog (68+ OTAs)", shortLabel: "Catalog", icon: Globe },
-                { id: "travel_agents", label: "Travel Agents & B2B", shortLabel: "B2B Agents", icon: Users, badge: "B2B", badgeColor: "#18181b" },
+                { id: "rooms", label: "Room Types & Allotment", shortLabel: "Rooms", icon: BedDouble },
+                { id: "rateplans", label: "Rate Plans & Packages", shortLabel: "Rates", icon: Sliders },
+                { id: "matrix", label: "Rate Matrix Calendar", shortLabel: "Matrix", icon: Table },
+                { id: "dynamic_pricing", label: "Yield & Dynamic Pricing", shortLabel: "RMS", icon: TrendingUp }
+            ]
+        },
+        {
+            title: "3. OTA Distribution",
+            items: [
+                { id: "mapping", label: "Channel Mapping & Catalog", shortLabel: "Channels", icon: Key, badge: "68+ OTA", badgeColor: "#5c0f1e" },
                 { id: "promotions", label: "Promotions & Deals", shortLabel: "Promos", icon: Tag },
                 { id: "google", label: "Google Hotel Links", shortLabel: "Google", icon: Search },
+                { id: "travel_agents", label: "Travel Agents & B2B", shortLabel: "B2B Agents", icon: Users },
                 { id: "content", label: "Content & Amenities", shortLabel: "Content", icon: UploadCloud }
             ]
         },
         {
-            title: "Inventory & Master Pricing",
-            items: [
-                { id: "rooms", label: "Room Types & Allotment", shortLabel: "Rooms", icon: BedDouble },
-                { id: "rateplans", label: "Rate Plans & Packages", shortLabel: "Rates", icon: Sliders },
-                { id: "matrix", label: "Rate Matrix (Net / Gross)", shortLabel: "Matrix", icon: Table },
-                { id: "rules", label: "Yield & Inventory Rules", shortLabel: "Yield", icon: Shield },
-                { id: "dynamic_pricing", label: "Dynamic Pricing (RMS)", shortLabel: "RMS", icon: TrendingUp }
-            ]
-        },
-        {
-            title: "Direct Booking & Guest Suite",
+            title: "4. Guest Suite & Direct",
             items: [
                 ...(isUserSuperadmin(user)
                     ? [
                           {
                               id: "booking_engine",
-                              label: "Booking Engine & Payment Gateway",
-                              shortLabel: "Booking Engine",
+                              label: "Direct Booking Engine",
+                              shortLabel: "Direct Web",
                               icon: Globe,
-                              badge: "Direct Suite",
+                              badge: "Direct",
                               badgeColor: "#5c0f1e",
                           },
                       ]
@@ -154,14 +153,11 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
             ]
         },
         {
-            title: "Connectivity & Master Engine",
+            title: "5. Monitoring & Security",
             items: [
-                { id: "golive", label: "API Credentials & Go-Live", shortLabel: "API Keys", icon: Lock },
-                { id: "payments", label: "PCI Card Vault & Stripe", shortLabel: "PCI Vault", icon: CreditCard },
-                { id: "logs", label: "ARI Transmission Logs", shortLabel: "Audit Logs", icon: Terminal },
-                { id: "sandbox", label: "Certification Sandbox", shortLabel: "Sandbox", icon: Zap },
-                { id: "iframe", label: "White-Label Hub (SSO)", shortLabel: "Hub SSO", icon: LayoutGrid },
-                { id: "sync", label: "Synchronization Feed", shortLabel: "Sync Feed", icon: RefreshCw }
+                { id: "logs", label: "Transmission & Audit Logs", shortLabel: "Logs", icon: Terminal },
+                { id: "iframe", label: "Channex Console (SSO)", shortLabel: "Extranet SSO", icon: LayoutGrid },
+                { id: "payments", label: "PCI Card Vault & Security", shortLabel: "PCI Vault", icon: CreditCard }
             ]
         }
     ];

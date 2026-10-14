@@ -97,6 +97,16 @@ export async function POST(req: NextRequest) {
                 const hotelTitle = hotelData?.name || hotelData?.propertyName || `Hotel ${hotelCode}`;
                 console.log(`[SyncMaster] Registering new property on Channex: "${hotelTitle}" (${targetCurrency})...`);
                 
+                let groupToAssign: string | undefined = undefined;
+                if (hotelData?.groupId) {
+                    const groupSnap = await adminDb.collection("hotel_groups").doc(hotelData.groupId).get();
+                    if (groupSnap.exists) {
+                        groupToAssign = groupSnap.data()?.channexGroupId || hotelData.groupId;
+                    } else if (hotelData.groupId.length > 20) {
+                        groupToAssign = hotelData.groupId;
+                    }
+                }
+
                 const createdProp = await channexClient.createProperty({
                     title: hotelTitle,
                     currency: targetCurrency,
@@ -104,7 +114,8 @@ export async function POST(req: NextRequest) {
                     country: hotelData?.country || "ID",
                     address: hotelData?.address || "Indonesia",
                     email: hotelData?.email || undefined,
-                    phone: hotelData?.phone || undefined
+                    phone: hotelData?.phone || undefined,
+                    group_id: groupToAssign
                 }, customApiKey, env);
 
                 channexPropertyId = createdProp?.data?.id;
