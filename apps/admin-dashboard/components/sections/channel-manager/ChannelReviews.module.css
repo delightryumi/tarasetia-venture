@@ -1,9 +1,26 @@
 /* ChannelReviews.module.css — Clean Monochrome & Subtle Burgundy Reviews */
 
 .container {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 24px 28px 80px 28px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
+    box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
+    .container {
+        padding: 28px 36px 96px 36px;
+    }
+}
+
+@media (max-width: 640px) {
+    .container {
+        padding: 16px 16px 64px 16px;
+    }
 }
 
 /* ── Top Metric Score Summary ── */

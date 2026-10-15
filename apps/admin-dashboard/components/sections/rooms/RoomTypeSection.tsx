@@ -62,10 +62,10 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
             if (data.success) {
                 toast.success(data.message);
             } else {
-                toast.error(data.message || "Gagal melakukan ping ke Channex");
+                toast.error(data.message || "Failed to ping Channel Manager");
             }
         } catch (err: any) {
-            toast.error(`Koneksi Ping Error: ${err.message}`);
+            toast.error(`Channel Manager Ping Error: ${err.message}`);
         } finally {
             setPingingId(null);
         }
@@ -74,7 +74,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
     const copyToClipboard = (text: string, label: string) => {
         if (!text) return;
         navigator.clipboard.writeText(text);
-        toast.success(`${label} disalin ke clipboard!`);
+        toast.success(`${label} copied to clipboard!`);
     };
     const {
         roomTypes,
@@ -211,13 +211,13 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
             <div className={`${styles.header} ${embedded ? styles.headerEmbedded : ""}`}>
                 <div className={styles.headerContent}>
                     <span className={styles.headerTag}>
-                        Store & Inventory Master
+                        Hotel PMS &amp; CRS Master
                     </span>
                     <h1 className={styles.headerTitle}>
-                        Master Kategori Kamar & Allotment
+                        Master Room Types &amp; Allotment
                     </h1>
                     <p className={styles.headerSubtitle}>
-                        Manajemen enterprise tipe kamar, nomor kamar fisik, kapasitas pax tamu, dan pemetaan ke sistem Channel Manager.
+                        Enterprise management of room types, physical room inventory, guest occupancy, and Channel Manager distribution mapping.
                     </p>
                 </div>
                 <div className={styles.headerActions}>
@@ -226,7 +226,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                         className={styles.btnPrimary}
                     >
                         <Plus size={15} strokeWidth={2.5} />
-                        <span>Tambah Tipe Kamar</span>
+                        <span>Add Room Type</span>
                     </button>
                 </div>
             </div>
@@ -240,9 +240,9 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                             <Building2 size={20} />
                         </div>
                         <div className={vhpStyles.kpiContent}>
-                            <span className={vhpStyles.kpiLabel}>Total Tipe Kamar</span>
+                            <span className={vhpStyles.kpiLabel}>Total Room Types</span>
                             <span className={vhpStyles.kpiValue}>{totalRoomTypes}</span>
-                            <span className={vhpStyles.kpiSubtext}>Kategori aktif</span>
+                            <span className={vhpStyles.kpiSubtext}>Active categories</span>
                         </div>
                     </div>
 
@@ -251,9 +251,9 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                             <Hash size={20} />
                         </div>
                         <div className={vhpStyles.kpiContent}>
-                            <span className={vhpStyles.kpiLabel}>Total Kamar Fisik</span>
+                            <span className={vhpStyles.kpiLabel}>Total Physical Rooms</span>
                             <span className={vhpStyles.kpiValue}>{totalPhysicalRooms}</span>
-                            <span className={vhpStyles.kpiSubtext}>Unit allotment terdaftar</span>
+                            <span className={vhpStyles.kpiSubtext}>Registered inventory units</span>
                         </div>
                     </div>
 
@@ -262,9 +262,9 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                             <Users size={20} />
                         </div>
                         <div className={vhpStyles.kpiContent}>
-                            <span className={vhpStyles.kpiLabel}>Kapasitas Maksimal</span>
+                            <span className={vhpStyles.kpiLabel}>Max Guest Capacity</span>
                             <span className={vhpStyles.kpiValue}>{totalCapacityPax}</span>
-                            <span className={vhpStyles.kpiSubtext}>Pax total properti</span>
+                            <span className={vhpStyles.kpiSubtext}>Property total pax</span>
                         </div>
                     </div>
 
@@ -273,8 +273,8 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                             <ShieldCheck size={20} />
                         </div>
                         <div className={vhpStyles.kpiContent}>
-                            <span className={vhpStyles.kpiLabel}>Integrasi Channex</span>
-                            <span className={vhpStyles.kpiValue}>Aktif</span>
+                            <span className={vhpStyles.kpiLabel}>Channel Manager Sync</span>
+                            <span className={vhpStyles.kpiValue}>2-Way Live</span>
                             <span className={vhpStyles.kpiSubtext}>OTA Mapping Ready</span>
                         </div>
                     </div>
@@ -286,7 +286,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                         <Search size={15} color="#94a3b8" />
                         <input
                             type="text"
-                            placeholder="Cari tipe kamar, deskripsi, atau no. kamar (misal 101)..."
+                            placeholder="Search room types, codes, or room numbers (e.g. 101)..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className={vhpStyles.searchInput}
@@ -299,19 +299,19 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                 type="button"
                                 onClick={() => setViewMode("vhp")}
                                 className={`${vhpStyles.viewModeBtn} ${viewMode === "vhp" ? vhpStyles.viewModeBtnActive : ""}`}
-                                title="Tampilan Tabel Sistematis TARA"
+                                title="Systematic Table Ledger"
                             >
                                 <Table size={14} />
-                                <span>Tabel Sistematis (TARA)</span>
+                                <span>Ledger View</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setViewMode("cards")}
                                 className={`${vhpStyles.viewModeBtn} ${viewMode === "cards" ? vhpStyles.viewModeBtnActive : ""}`}
-                                title="Tampilan Galeri Kartu"
+                                title="Visual Folio Cards"
                             >
                                 <LayoutGrid size={14} />
-                                <span>Galeri Visual</span>
+                                <span>Folios</span>
                             </button>
                         </div>
 
@@ -320,7 +320,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                             className={vhpStyles.btnAddRoom}
                         >
                             <Plus size={14} strokeWidth={2.5} />
-                            <span>Kategori Baru</span>
+                            <span>New Room Type</span>
                         </button>
                     </div>
                 </div>
@@ -331,27 +331,27 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                         <div className={styles.emptyIcon}>
                             <Home size={26} strokeWidth={1.5} />
                         </div>
-                        <h3 className={styles.emptyTitle}>Belum Ada Kategori Kamar</h3>
+                        <h3 className={styles.emptyTitle}>No Room Types Configured</h3>
                         <p className={styles.emptyDescription}>
-                            Buat kategori kamar pertama properti Anda untuk mulai mengatur inventaris dan nomor kamar fisik.
+                            Establish your property's room categories to manage physical inventory allotments, guest capacities, and OTA distribution.
                         </p>
                         <button
                             onClick={() => setView('stepper')}
                             className={styles.btnPrimary}
                         >
                             <Plus size={15} />
-                            <span>Tambah Kategori Pertama</span>
+                            <span>Add First Room Type</span>
                         </button>
                     </div>
                 ) : filteredTypes.length === 0 ? (
                     <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 8, padding: 32, textAlign: "center", color: "#64748b" }}>
                         <Search size={28} style={{ margin: "0 auto 8px", opacity: 0.5 }} />
-                        <p style={{ margin: 0, fontWeight: 600 }}>Tidak ada tipe kamar yang cocok dengan pencarian "{searchQuery}"</p>
+                        <p style={{ margin: 0, fontWeight: 600 }}>No room types match "{searchQuery}"</p>
                         <button
                             onClick={() => setSearchQuery("")}
                             style={{ marginTop: 10, background: "none", border: "none", color: "#5c0f1e", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
                         >
-                            Reset Pencarian
+                            Clear Search
                         </button>
                     </div>
                 ) : viewMode === "vhp" ? (
@@ -361,13 +361,13 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                             <table className={vhpStyles.vhpTable}>
                                 <thead>
                                     <tr>
-                                        <th>Tipe Kamar & Kode</th>
-                                        <th>Allotment & Nomor Kamar Fisik</th>
-                                        <th>Kapasitas & Dimensi</th>
-                                        <th>Konfigurasi Ranjang</th>
-                                        <th>Fasilitas Utama</th>
-                                        <th>Status Channex</th>
-                                        <th style={{ textAlign: "right" }}>Aksi</th>
+                                        <th>Room Type &amp; Code</th>
+                                        <th>Allotment &amp; Physical Rooms</th>
+                                        <th>Occupancy &amp; Dimensions</th>
+                                        <th>Bedding Configuration</th>
+                                        <th>Core Amenities</th>
+                                        <th>Channel Manager Status</th>
+                                        <th style={{ textAlign: "right" }}>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -376,7 +376,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                         const allotmentCount = type.physicalRooms?.length || type.roomCount || 0;
                                         return (
                                             <tr key={type.id}>
-                                                {/* Tipe Kamar & Thumbnail */}
+                                                {/* Room Type & Thumbnail */}
                                                 <td>
                                                     <div className={vhpStyles.roomCell}>
                                                         <div className={vhpStyles.roomThumbnail}>
@@ -391,17 +391,17 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                             <div className={vhpStyles.idList}>
                                                                 <span
                                                                     className={vhpStyles.idPill}
-                                                                    onClick={() => copyToClipboard(type.id, "ID PMS")}
-                                                                    title="Klik untuk salin ID Kamar Internal PMS"
+                                                                    onClick={() => copyToClipboard(type.id, "PMS ID")}
+                                                                    title="Click to copy PMS Internal Room ID"
                                                                 >
                                                                     <Copy size={10} /> PMS ID: <b>{type.id}</b>
                                                                 </span>
                                                                 <span
                                                                     className={`${vhpStyles.idPill} ${type.channexRoomTypeId ? vhpStyles.idPillChannex : ""}`}
                                                                     onClick={() => copyToClipboard(type.channexRoomTypeId || "", "Channex Room ID")}
-                                                                    title="Klik untuk salin UUID Channex"
+                                                                    title="Click to copy Channex UUID"
                                                                 >
-                                                                    <Copy size={10} /> Channex ID: <b>{type.channexRoomTypeId || "(Belum Sync)"}</b>
+                                                                    <Copy size={10} /> Channex ID: <b>{type.channexRoomTypeId || "(Not Synced)"}</b>
                                                                 </span>
                                                             </div>
                                                             {type.bookingUrl && (
@@ -410,7 +410,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                                     target="_blank"
                                                                     rel="noreferrer"
                                                                     className={vhpStyles.bookingIconLink}
-                                                                    title="Buka Booking Engine"
+                                                                    title="Open Booking Engine"
                                                                     style={{ marginTop: 2 }}
                                                                 >
                                                                     <ExternalLink size={11} /> Booking Engine
@@ -425,7 +425,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                     <div className={vhpStyles.allotmentCell}>
                                                         <div className={vhpStyles.allotmentHeader}>
                                                             <span className={vhpStyles.allotmentBadge}>
-                                                                <Hash size={11} /> {allotmentCount} Unit Fisik
+                                                                <Hash size={11} /> {allotmentCount} Physical Units
                                                             </span>
                                                         </div>
                                                         {type.physicalRooms && type.physicalRooms.length > 0 ? (
@@ -446,18 +446,18 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                             </div>
                                                         ) : (
                                                             <span className={vhpStyles.emptyRoomNotice}>
-                                                                Belum ada nomor fisik
+                                                                No physical rooms assigned
                                                             </span>
                                                         )}
                                                     </div>
                                                 </td>
 
-                                                {/* Kapasitas & Dimensi */}
+                                                {/* Occupancy & Dimensions */}
                                                 <td>
                                                     <div className={vhpStyles.specsCell}>
                                                         <div className={vhpStyles.specRow}>
                                                             <Users size={12} color="#64748b" />
-                                                            <span><strong>{type.capacity || 2}</strong> Tamu Max</span>
+                                                            <span><strong>{type.capacity || 2}</strong> Max Guests</span>
                                                         </div>
                                                         <div className={vhpStyles.specRow}>
                                                             <Maximize2 size={12} color="#64748b" />
@@ -468,7 +468,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                     </div>
                                                 </td>
 
-                                                {/* Ranjang */}
+                                                {/* Bedding Configuration */}
                                                 <td>
                                                     <div className={vhpStyles.bedsCell}>
                                                         {type.beds && type.beds.length > 0 ? (
@@ -487,7 +487,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                     </div>
                                                 </td>
 
-                                                {/* Fasilitas Utama */}
+                                                {/* Core Amenities */}
                                                 <td>
                                                     <div className={vhpStyles.amenitiesCell}>
                                                         {type.amenities && type.amenities.length > 0 ? (
@@ -513,19 +513,19 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                     </div>
                                                 </td>
 
-                                                {/* Status Channex */}
+                                                {/* Status Channel Manager */}
                                                 <td>
                                                     <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                                                         <span className={type.channexRoomTypeId ? vhpStyles.statusBadgeReady : vhpStyles.statusBadgeLocal}>
-                                                            <span className={type.channexRoomTypeId ? vhpStyles.statusDotGreen : vhpStyles.statusDotGray} />
-                                                            {type.channexRoomTypeId ? "Tersambung Channex" : "Lokal PMS"}
+                                                             <span className={type.channexRoomTypeId ? vhpStyles.statusDotGreen : vhpStyles.statusDotGray} />
+                                                            {type.channexRoomTypeId ? "Channel Connected" : "Local PMS Only"}
                                                         </span>
                                                         <button
                                                             type="button"
                                                             onClick={() => handlePingRoom(type)}
                                                             disabled={pingingId === type.id}
                                                             className={vhpStyles.btnPing}
-                                                            title="Uji coba koneksi ping Room Type ini ke Channex Server"
+                                                            title="Test live connectivity ping to Channel Manager server"
                                                         >
                                                             <Activity size={11} className={pingingId === type.id ? "animate-spin" : ""} />
                                                             <span>{pingingId === type.id ? "Pinging..." : "⚡ Test Ping"}</span>
@@ -533,14 +533,14 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                     </div>
                                                 </td>
 
-                                                {/* Aksi */}
+                                                {/* Actions */}
                                                 <td>
                                                     <div className={vhpStyles.actionsCell} style={{ justifyContent: "flex-end" }}>
                                                         <button
                                                             type="button"
                                                             onClick={() => startEditing(type)}
                                                             className={vhpStyles.btnActionEdit}
-                                                            title="Edit Tipe Kamar & Allotment"
+                                                            title="Edit Room Type & Allotment"
                                                         >
                                                             <Edit2 size={12} />
                                                             <span>Edit</span>
@@ -549,7 +549,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                             type="button"
                                                             onClick={() => handleDelete(type.id)}
                                                             className={vhpStyles.btnActionDelete}
-                                                            title="Hapus Kategori"
+                                                            title="Delete Room Type"
                                                         >
                                                             <Trash2 size={13} />
                                                         </button>
@@ -564,9 +564,9 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                         <div className={vhpStyles.tableFooter}>
                             <span className={vhpStyles.footerHint}>
                                 <CheckCircle2 size={13} color="#5c0f1e" />
-                                Menampilkan {filteredTypes.length} dari {totalRoomTypes} kategori kamar hotel
+                                Showing {filteredTypes.length} of {totalRoomTypes} hotel room types
                             </span>
-                            <span>Sistem Master Inventory TARA PMS</span>
+                            <span>TARA PMS Master Inventory System</span>
                         </div>
                     </div>
                 ) : (
@@ -596,7 +596,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                     </div>
                                                 )}
                                                 <div className={styles.cardUnitBadge}>
-                                                    {type.physicalRooms?.length || type.roomCount || 0} Unit
+                                                    {type.physicalRooms?.length || type.roomCount || 0} Units
                                                 </div>
                                             </div>
 
@@ -613,7 +613,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                                 target="_blank" 
                                                                 rel="noreferrer" 
                                                                 className={styles.cardBookingLink} 
-                                                                title="Buka Booking Gateway"
+                                                                title="Open Booking Engine"
                                                             >
                                                                 <ExternalLink size={13} />
                                                             </a>
@@ -623,7 +623,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                         {type.name}
                                                     </h3>
                                                     <p className={styles.cardDescription}>
-                                                        {type.description || "Belum ada deskripsi untuk kategori kamar ini."}
+                                                        {type.description || "No description provided for this room type."}
                                                     </p>
                                                 </div>
 
@@ -631,7 +631,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                 <div className={styles.cardSpecs}>
                                                     <div className={styles.specItem}>
                                                         <Users size={13} color="#8e8e93" />
-                                                        <span>{type.capacity || 2} Tamu</span>
+                                                        <span>{type.capacity || 2} Guests</span>
                                                     </div>
                                                     <span className={styles.specDot}>•</span>
                                                     <div className={styles.specItem}>
@@ -649,10 +649,10 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                 <div className={styles.roomNumbersBox}>
                                                     <div className={styles.roomNumbersHeader}>
                                                         <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                                            <Hash size={12} color="#111113" /> No. Kamar Terdaftar
+                                                            <Hash size={12} color="#111113" /> Assigned Room Numbers
                                                         </span>
                                                         <span className={styles.roomNumbersCount}>
-                                                            {type.physicalRooms?.length || 0} Unit
+                                                            {type.physicalRooms?.length || 0} Units
                                                         </span>
                                                     </div>
                                                     <div className={styles.roomChipsList}>
@@ -668,13 +668,13 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                                 })}
                                                                 {type.physicalRooms.length > 8 && (
                                                                     <span className={styles.roomChipMore}>
-                                                                        +{type.physicalRooms.length - 8} lainnya
+                                                                        +{type.physicalRooms.length - 8} more
                                                                     </span>
                                                                 )}
                                                             </>
                                                         ) : (
                                                             <span className={styles.roomEmptyNotice}>
-                                                                Belum ada nomor kamar spesifik
+                                                                No physical room numbers assigned
                                                             </span>
                                                         )}
                                                     </div>
@@ -693,7 +693,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                     })}
                                                     {type.amenities && type.amenities.length > 3 && (
                                                         <span className={styles.amenityMore}>
-                                                            +{type.amenities.length - 3} lainnya
+                                                            +{type.amenities.length - 3} more
                                                         </span>
                                                     )}
                                                 </div>
@@ -706,12 +706,12 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                 onClick={() => startEditing(type)}
                                                 className={styles.btnEdit}
                                             >
-                                                Edit Kategori
+                                                Edit Room Type
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(type.id)}
                                                 className={styles.btnDelete}
-                                                title="Hapus kategori"
+                                                title="Delete Room Type"
                                             >
                                                 <Trash2 size={15} />
                                             </button>
@@ -740,7 +740,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                 className={styles.btnBack}
             >
                 <ChevronLeft size={15} />
-                <span>Kembali ke Katalog</span>
+                <span>Back to Room Inventory</span>
             </button>
 
             {/* Stepper Navigation Strip */}
@@ -753,7 +753,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                     <span className={`${styles.stepNum} ${currentStep === 1 ? styles.stepNumActive : ''} ${currentStep > 1 ? styles.stepNumCompleted : ''}`}>
                         {currentStep > 1 ? <Check size={11} strokeWidth={3} /> : "1"}
                     </span>
-                    <span>Essentials</span>
+                    <span>Room Essentials</span>
                 </button>
                 <button 
                     type="button" 
@@ -764,7 +764,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                     <span className={`${styles.stepNum} ${currentStep === 2 ? styles.stepNumActive : ''} ${currentStep > 2 ? styles.stepNumCompleted : ''}`}>
                         {currentStep > 2 ? <Check size={11} strokeWidth={3} /> : "2"}
                     </span>
-                    <span>Atmosphere</span>
+                    <span>Gallery &amp; Photos</span>
                 </button>
                 <button 
                     type="button" 
@@ -775,7 +775,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                     <span className={`${styles.stepNum} ${currentStep === 3 ? styles.stepNumActive : ''}`}>
                         3
                     </span>
-                    <span>Amenities</span>
+                    <span>Amenities &amp; Inclusions</span>
                 </button>
             </div>
 
@@ -790,29 +790,29 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                             exit={{ opacity: 0, x: -8 }}
                         >
                             <div className={styles.builderHeader}>
-                                <h2 className={styles.builderTitle}>Category Essentials</h2>
+                                <h2 className={styles.builderTitle}>Room Type Essentials</h2>
                                 <p className={styles.builderSubtitle}>
-                                    Definisikan nama kategori, nomor kamar fisik, kapasitas tamu, dan ukuran kamar.
+                                    Define room type identity, physical room inventory, guest occupancy, and room dimensions.
                                 </p>
                             </div>
 
                             <div className={styles.formGrid}>
                                 {/* Category Title */}
                                 <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>Nama Kategori Kamar</label>
+                                    <label className={styles.formLabel}>Room Type Name</label>
                                     <input
                                         type="text"
                                         className={styles.formInput}
                                         value={newName}
                                         onChange={(e) => setNewName(e.target.value)}
-                                        placeholder="Contoh: Deluxe King Suite"
+                                        placeholder="e.g. Deluxe King Suite"
                                         style={{ fontWeight: 600 }}
                                     />
                                 </div>
 
                                 {/* Booking Gateway URL */}
                                 <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>Booking Gateway URL (Opsional)</label>
+                                    <label className={styles.formLabel}>Direct Booking URL (Optional)</label>
                                     <input
                                         type="url"
                                         className={styles.formInput}
@@ -824,7 +824,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
 
                                 {/* Room Capacity */}
                                 <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>Kapasitas Tamu (Capacity)</label>
+                                    <label className={styles.formLabel}>Guest Capacity (Max Occupancy)</label>
                                     <div className={styles.formRowFlex}>
                                         <input
                                             type="number"
@@ -834,20 +834,20 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                             onChange={(e) => setNewCapacity(parseInt(e.target.value) || 1)}
                                             style={{ width: 100, textAlign: "center", fontWeight: 700 }}
                                         />
-                                        <span style={{ fontSize: 13, color: "#6c6c70" }}>Dewasa / Tamu</span>
+                                        <span style={{ fontSize: 13, color: "#6c6c70" }}>Guests (Pax)</span>
                                     </div>
                                 </div>
 
                                 {/* Room Dimensions */}
                                 <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>Ukuran Kamar (Dimensions)</label>
+                                    <label className={styles.formLabel}>Room Dimensions (Area)</label>
                                     <div className={styles.formRowFlex}>
                                         <input
                                             type="number"
                                             className={styles.formInput}
                                             value={newRoomSizeValue}
                                             onChange={(e) => setNewRoomSizeValue(parseFloat(e.target.value) || 0)}
-                                            placeholder="Luas"
+                                            placeholder="Size"
                                             style={{ flex: 1 }}
                                         />
                                         <select 
@@ -864,7 +864,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
 
                                 {/* Room Inventory (Available Units) */}
                                 <div className={styles.formGroupFull}>
-                                    <label className={styles.formLabel}>Total Unit Kamar (Allotment)</label>
+                                    <label className={styles.formLabel}>Room Allotment (Total Inventory)</label>
                                     <div className={styles.formRowFlex}>
                                         <input
                                             type="number"
@@ -874,7 +874,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                             onChange={(e) => setNewRoomCount(parseInt(e.target.value) || 1)}
                                             style={{ width: 100, textAlign: "center", fontWeight: 700 }}
                                         />
-                                        <span style={{ fontSize: 13, color: "#6c6c70" }}>Total unit kamar fisik yang dialokasikan</span>
+                                        <span style={{ fontSize: 13, color: "#6c6c70" }}>Total physical room inventory allocated</span>
                                     </div>
                                 </div>
 
@@ -884,14 +884,14 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                         <div className={styles.subPanelHeader}>
                                             <div>
                                                 <div className={styles.subPanelTitle}>
-                                                    <Hash size={14} color="#5c0f1e" /> Nomor Kamar Fisik (Room Numbers)
+                                                    <Hash size={14} color="#5c0f1e" /> Physical Room Numbers (Inventory)
                                                 </div>
                                                 <p className={styles.subPanelSubtitle}>
-                                                    Daftar nomor kamar spesifik. Terintegrasi langsung dengan Add Reservation, GRC, dan Kalender Kamar.
+                                                    Assigned room numbers. Directly linked to Front Desk check-in, Reservation Folios, GRC, and Room Rack.
                                                 </p>
                                             </div>
                                             <span className={styles.subPanelBadge}>
-                                                {newPhysicalRooms.length} Kamar Terdaftar
+                                                {newPhysicalRooms.length} Rooms Assigned
                                             </span>
                                         </div>
 
@@ -910,7 +910,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                         }
                                                     }
                                                 }}
-                                                placeholder="Ketik: 101, 102 atau rentang 101-108 (Tekan Enter)"
+                                                placeholder="Enter: 101, 102 or range 101-108 (Press Enter)"
                                                 style={{ backgroundColor: "#ffffff", fontFamily: "monospace" }}
                                             />
                                             <button
@@ -925,7 +925,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                 style={{ flexShrink: 0 }}
                                             >
                                                 <Plus size={14} />
-                                                <span>Tambah</span>
+                                                <span>Add Room</span>
                                             </button>
                                         </div>
 
@@ -945,7 +945,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                             type="button"
                                                             onClick={() => removePhysicalRoom(idx)}
                                                             className={styles.tagChipDelete}
-                                                            title="Hapus nomor kamar"
+                                                            title="Remove room number"
                                                         >
                                                             &times;
                                                         </button>
@@ -954,7 +954,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                             </AnimatePresence>
                                             {newPhysicalRooms.length === 0 && (
                                                 <span style={{ fontSize: 12, color: "#8e8e93", fontStyle: "italic" }}>
-                                                    Belum ada nomor kamar spesifik. Masukkan nomor kamar di atas (misal: 101-105 atau 101, 102).
+                                                    No physical room numbers assigned yet. Enter room numbers above (e.g. 101-105 or 101, 102).
                                                 </span>
                                             )}
                                         </div>
@@ -965,12 +965,12 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                 <div className={styles.formGroupFull}>
                                     <div className={styles.subPanel}>
                                         <div className={styles.subPanelTitle}>
-                                            <BedDouble size={14} color="#5c0f1e" /> Konfigurasi Tempat Tidur (Bed Planner)
+                                            <BedDouble size={14} color="#5c0f1e" /> Bedding Configuration (Bed Planner)
                                         </div>
 
                                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, alignItems: "flex-end" }}>
                                             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                                                <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", color: "#8e8e93" }}>Tipe Bed</span>
+                                                <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", color: "#8e8e93" }}>Bed Type</span>
                                                 <select
                                                     className={styles.formSelect}
                                                     value={selectedBedType}
@@ -983,7 +983,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                 </select>
                                             </div>
                                             <div style={{ display: "flex", flexDirection: "column", gap: 4, maxWidth: 100 }}>
-                                                <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", color: "#8e8e93" }}>Jumlah</span>
+                                                <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", color: "#8e8e93" }}>Quantity</span>
                                                 <input
                                                     type="number"
                                                     min="1"
@@ -995,7 +995,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                             </div>
                                             {selectedBedType === "Custom" && (
                                                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                                                    <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", color: "#8e8e93" }}>Ukuran (PxL)</span>
+                                                    <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", color: "#8e8e93" }}>Dimensions (LxW)</span>
                                                     <input
                                                         type="text"
                                                         className={styles.formInput}
@@ -1014,7 +1014,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                     style={{ width: "100%", height: 44 }}
                                                 >
                                                     <Plus size={14} />
-                                                    <span>Tambah Bed</span>
+                                                    <span>Add Bed</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -1043,7 +1043,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                                             type="button"
                                                             onClick={() => removeBed(idx)}
                                                             className={styles.btnDelete}
-                                                            title="Hapus bed"
+                                                            title="Remove bed"
                                                         >
                                                             <Trash2 size={14} />
                                                         </button>
@@ -1053,7 +1053,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                             {newBeds.length === 0 && (
                                                 <div style={{ padding: "16px 0", textAlign: "center", border: "1px dashed #dcdce0", borderRadius: 8 }}>
                                                     <span style={{ fontSize: 12, color: "#8e8e93", fontStyle: "italic" }}>
-                                                        Belum ada tempat tidur yang dikonfigurasi.
+                                                        No bedding configured yet.
                                                     </span>
                                                 </div>
                                             )}
@@ -1063,12 +1063,12 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
 
                                 {/* Description */}
                                 <div className={styles.formGroupFull}>
-                                    <label className={styles.formLabel}>Deskripsi Kamar (Narrative Description)</label>
+                                    <label className={styles.formLabel}>Room Description (Overview)</label>
                                     <textarea
                                         className={styles.formTextarea}
                                         value={newDesc}
                                         onChange={(e) => setNewDesc(e.target.value)}
-                                        placeholder="Tuliskan deskripsi lengkap dan keunikan kamar..."
+                                        placeholder="Enter comprehensive room description, layout highlights, and features..."
                                     />
                                 </div>
                             </div>
@@ -1080,7 +1080,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                     className={styles.btnPrimary}
                                     disabled={!newName}
                                 >
-                                    <span>Lanjut: Foto & Atmosfer</span>
+                                    <span>Next: Photography &amp; Gallery</span>
                                     <ChevronRight size={15} />
                                 </button>
                             </div>
@@ -1096,11 +1096,11 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                         >
                             <div className={styles.builderHeader} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
                                 <div>
-                                    <h2 className={styles.builderTitle}>Foto & Atmosfer Kamar</h2>
-                                    <p className={styles.builderSubtitle}>Unggah foto representatif untuk kategori kamar ini.</p>
+                                    <h2 className={styles.builderTitle}>Room Photography &amp; Gallery</h2>
+                                    <p className={styles.builderSubtitle}>Upload high-resolution photography showcasing room ambiance and layout.</p>
                                 </div>
                                 <span style={{ fontSize: 12, fontWeight: 600, color: "#111113", padding: "4px 10px", backgroundColor: "#f7f7f9", borderRadius: 6 }}>
-                                    {newImages.length} / 10 Foto Terunggah
+                                    {newImages.length} / 10 Photos Uploaded
                                 </span>
                             </div>
 
@@ -1131,7 +1131,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
 
                                         {img.isProfile && (
                                             <div className={styles.galleryMainBadge}>
-                                                Foto Utama
+                                                Hero Photo (Featured)
                                             </div>
                                         )}
 
@@ -1139,14 +1139,14 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                             <button
                                                 onClick={() => toggleProfile(idx)}
                                                 className={`${styles.galleryBtn} ${img.isProfile ? styles.galleryBtnActive : ''}`}
-                                                title="Jadikan Foto Utama"
+                                                title="Set as Hero Photo"
                                             >
                                                 <Sparkles size={14} />
                                             </button>
                                             <button
                                                 onClick={() => removeImage(idx)}
                                                 className={styles.galleryBtn}
-                                                title="Hapus Foto"
+                                                title="Remove Photo"
                                             >
                                                 <Trash2 size={14} />
                                             </button>
@@ -1161,13 +1161,13 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                     className={styles.btnSecondary}
                                 >
                                     <ChevronLeft size={15} />
-                                    <span>Kembali ke Essentials</span>
+                                    <span>Back to Essentials</span>
                                 </button>
                                 <button
                                     onClick={() => setCurrentStep(3)}
                                     className={styles.btnPrimary}
                                 >
-                                    <span>Lanjut: Fasilitas & Amenities</span>
+                                    <span>Next: Amenities &amp; Inclusions</span>
                                     <ChevronRight size={15} />
                                 </button>
                             </div>
@@ -1183,11 +1183,11 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                         >
                             <div className={styles.builderHeader} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
                                 <div>
-                                    <h2 className={styles.builderTitle}>Fasilitas Kamar (Amenities)</h2>
-                                    <p className={styles.builderSubtitle}>Pilih fasilitas yang tersedia untuk kategori kamar ini.</p>
+                                    <h2 className={styles.builderTitle}>Room Amenities &amp; Inclusions</h2>
+                                    <p className={styles.builderSubtitle}>Select hospitality features, in-room amenities, and inclusions for this room type.</p>
                                 </div>
                                 <span style={{ fontSize: 12, fontWeight: 600, color: "#111113", padding: "4px 10px", backgroundColor: "#f7f7f9", borderRadius: 6 }}>
-                                    {newAmenities.length} Fasilitas Terpilih
+                                    {newAmenities.length} Amenities Selected
                                 </span>
                             </div>
 
@@ -1220,7 +1220,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                     className={styles.btnSecondary}
                                 >
                                     <ChevronLeft size={15} />
-                                    <span>Kembali ke Foto</span>
+                                    <span>Back to Photos</span>
                                 </button>
                                 <button
                                     onClick={editingRoom ? handleUpdate : handleAdd}
@@ -1231,7 +1231,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                     {saving ? (
                                         <div style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
                                     ) : (
-                                        editingRoom ? "Simpan Perubahan" : "Simpan Kategori"
+                                        editingRoom ? "Save Changes" : "Create Room Type"
                                     )}
                                 </button>
                             </div>

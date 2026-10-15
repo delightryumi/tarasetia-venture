@@ -13,8 +13,24 @@
   flex-direction: column;
   gap: 24px;
   width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px 28px 80px 28px;
+  box-sizing: border-box;
   font-family: 'Plus Jakarta Sans', var(--font-inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   color: #09090b;
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 28px 36px 96px 36px;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 16px 16px 64px 16px;
+  }
 }
 
 /* ── 1. Editorial Header & Masthead ── */
@@ -24,7 +40,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  padding: 8px 4px 18px 4px;
+  padding: 6px 0 20px 0;
   border-bottom: 1px solid #e4e4e7;
 }
 
@@ -715,13 +731,14 @@
 .modalBackdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(9, 9, 11, 0.45);
+  background-color: rgba(9, 9, 11, 0.55);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 16px;
 }
 
 .modalBox {
@@ -729,13 +746,21 @@
   border: 1px solid #e4e4e7;
   border-radius: 20px;
   width: 100%;
-  max-width: 680px;
-  max-height: 90vh;
+  max-width: 720px;
+  max-height: min(92vh, 840px);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 48px -12px rgba(9, 9, 11, 0.25);
+  box-shadow: 0 24px 60px -12px rgba(9, 9, 11, 0.3);
   overflow: hidden;
   animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 @keyframes modalIn {
@@ -750,11 +775,12 @@
 }
 
 .modalHeader {
+  flex-shrink: 0;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 24px 28px 18px 28px;
+  padding: 20px 28px 16px 28px;
   border-bottom: 1px solid #e4e4e7;
   background: #fafafa;
 }
@@ -775,7 +801,7 @@
 
 .modalTitle {
   font-family: var(--font-plus-jakarta, 'Plus Jakarta Sans', var(--font-inter, sans-serif));
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 600;
   color: #09090b;
   margin: 0;
@@ -805,11 +831,13 @@
 }
 
 .modalBody {
-  padding: 24px 28px;
+  padding: 20px 28px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
 /* Preset Chips */
@@ -835,6 +863,13 @@
   background: #09090b;
   color: #ffffff;
   border-color: #09090b;
+}
+
+.presetChipActive {
+  background: #09090b;
+  color: #ffffff;
+  border-color: #09090b;
+  font-weight: 600;
 }
 
 /* Form Groups & Controls */
@@ -1074,9 +1109,22 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 240px;
+  max-height: 280px;
   overflow-y: auto;
   padding-right: 4px;
+}
+
+.emptyRoomsNote {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: #fafafa;
+  border: 1px dashed #d4d4d8;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #71717a;
+  line-height: 1.5;
 }
 
 .roomCheckCard {
@@ -1089,6 +1137,7 @@
   border: 1px solid #e4e4e7;
   border-radius: 10px;
   transition: all 0.15s ease;
+  flex-wrap: wrap;
 }
 
 .roomCheckCardActive {
@@ -1103,6 +1152,7 @@
   gap: 10px;
   cursor: pointer;
   flex: 1;
+  min-width: 180px;
 }
 
 .roomCheckCheckbox {
@@ -1184,10 +1234,11 @@
 
 /* Modal Footer */
 .modalFooter {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
   padding: 16px 28px;
   border-top: 1px solid #e4e4e7;
   background: #fafafa;
@@ -1479,6 +1530,18 @@
   background: #27272a;
   border-color: #3f3f46;
   color: #e4e4e7;
+}
+
+:global(.dark) .presetChipActive {
+  background: #fafafa;
+  border-color: #fafafa;
+  color: #09090b;
+}
+
+:global(.dark) .emptyRoomsNote {
+  background: #18181b;
+  border-color: #27272a;
+  color: #a1a1aa;
 }
 
 :global(.dark) .formLabel {

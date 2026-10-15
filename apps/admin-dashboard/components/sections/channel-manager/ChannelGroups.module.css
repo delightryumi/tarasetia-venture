@@ -3,12 +3,26 @@
 .container {
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    padding: 16px 0 64px 0;
+    gap: 20px;
+    padding: 24px 28px 80px 28px;
     width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
     min-height: 100%;
     box-sizing: border-box;
     font-family: var(--font-plus-jakarta, 'Plus Jakarta Sans', sans-serif);
+}
+
+@media (min-width: 1024px) {
+    .container {
+        padding: 28px 36px 96px 36px;
+    }
+}
+
+@media (max-width: 640px) {
+    .container {
+        padding: 16px 16px 64px 16px;
+    }
 }
 
 .tableResponsive {

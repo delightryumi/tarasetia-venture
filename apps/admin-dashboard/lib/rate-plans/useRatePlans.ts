@@ -143,58 +143,72 @@ export const useRatePlans = () => {
                 ];
             }
 
-            // Buat Rate Plan terpisah untuk tiap tipe kamar (Best Available Rate & Bed & Breakfast Rate)
+            // Buat 2 Rate Plan standar terpadu (Best Available Rate & Bed & Breakfast Rate)
+            // Setiap rate plan terhubung ke seluruh tipe kamar via roomTypeIds dan roomRates (checklist)
             const ratePlansCollection = getHotelCollection(db, "ratePlans", activeHotelCode);
 
-            for (const rt of effectiveRoomTypes) {
-                const rtBarRate = Number(rt.price || rt.baseRate || defaultBarPrice);
-                const rtBbRate = isUSD ? (rtBarRate + 20) : (isIDR ? rtBarRate + 200000 : rtBarRate + 20);
+            const allRoomIds = effectiveRoomTypes.map(rt => rt.id);
+            const allRoomNames = effectiveRoomTypes.map(rt => rt.name);
+            const primaryRoom = effectiveRoomTypes[0] || { id: "", name: "Standard Room", price: defaultBarPrice };
 
-                // 1. Best Available Rate (BAR)
-                await addDoc(ratePlansCollection, {
-                    hotelCode: activeHotelCode,
-                    name: effectiveRoomTypes.length > 1 ? `Best Available Rate (${rt.name})` : "Best Available Rate",
-                    code: "BAR",
-                    roomTypeId: rt.id,
-                    roomTypeName: rt.name,
-                    roomTypeIds: [rt.id],
-                    roomTypeNames: [rt.name],
-                    roomRates: { [rt.id]: rtBarRate },
-                    baseRate: rtBarRate,
-                    currency: curr,
-                    mealsIncluded: false,
-                    cancellationPolicy: "FREE",
-                    minStay: 1,
-                    stopSell: false,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                });
+            const barRates: Record<string, number> = {};
+            const bbRates: Record<string, number> = {};
 
-                // 2. Bed & Breakfast Rate (BB)
-                await addDoc(ratePlansCollection, {
-                    hotelCode: activeHotelCode,
-                    name: effectiveRoomTypes.length > 1 ? `Bed & Breakfast Rate (${rt.name})` : "Bed & Breakfast Rate",
-                    code: "BB",
-                    roomTypeId: rt.id,
-                    roomTypeName: rt.name,
-                    roomTypeIds: [rt.id],
-                    roomTypeNames: [rt.name],
-                    roomRates: { [rt.id]: rtBbRate },
-                    baseRate: rtBbRate,
-                    currency: curr,
-                    mealsIncluded: true,
-                    breakfastRate: defaultBreakfastFee,
-                    cancellationPolicy: "FREE",
-                    minStay: 1,
-                    stopSell: false,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                });
-            }
+            effectiveRoomTypes.forEach(rt => {
+                const rtBar = Number(rt.price || rt.baseRate || defaultBarPrice);
+                const rtBb = isUSD ? (rtBar + 20) : (isIDR ? rtBar + 200000 : rtBar + 20);
+                barRates[rt.id] = rtBar;
+                bbRates[rt.id] = rtBb;
+            });
+
+            const primaryBarRate = barRates[primaryRoom.id] || defaultBarPrice;
+            const primaryBbRate = bbRates[primaryRoom.id] || (primaryBarRate + (isUSD ? 20 : isIDR ? 200000 : 20));
+
+            // 1. Best Available Rate (BAR) — Default Standard Rate (Room Only / Flexible)
+            await addDoc(ratePlansCollection, {
+                hotelCode: activeHotelCode,
+                name: "Best Available Rate",
+                code: "BAR",
+                roomTypeId: primaryRoom.id,
+                roomTypeName: primaryRoom.name,
+                roomTypeIds: allRoomIds,
+                roomTypeNames: allRoomNames,
+                roomRates: barRates,
+                baseRate: primaryBarRate,
+                currency: curr,
+                mealsIncluded: false,
+                breakfastRate: 0,
+                cancellationPolicy: "FREE",
+                minStay: 1,
+                stopSell: false,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+
+            // 2. Bed & Breakfast Rate (BB) — Standard Rate dengan Sarapan
+            await addDoc(ratePlansCollection, {
+                hotelCode: activeHotelCode,
+                name: "Bed & Breakfast Rate",
+                code: "BB",
+                roomTypeId: primaryRoom.id,
+                roomTypeName: primaryRoom.name,
+                roomTypeIds: allRoomIds,
+                roomTypeNames: allRoomNames,
+                roomRates: bbRates,
+                baseRate: primaryBbRate,
+                currency: curr,
+                mealsIncluded: true,
+                breakfastRate: defaultBreakfastFee,
+                cancellationPolicy: "FREE",
+                minStay: 1,
+                stopSell: false,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
 
             ratePlansCache.delete(activeHotelCode);
             await fetchRatePlans(true);
-            toast.success("Standard Rate Plans (Best Available Rate & Bed & Breakfast) berhasil digenerate.");
+            toast.success("Standard Rate Plans (Best Available Rate & Bed & Breakfast Rate) berhasil digenerate.");
         } catch (err: any) {
             console.error("Error seeding rate plans:", err);
             toast.error(`Gagal membuat default rate plans: ${err.message}`);

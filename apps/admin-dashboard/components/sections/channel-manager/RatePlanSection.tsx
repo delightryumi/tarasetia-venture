@@ -138,8 +138,8 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
 
     const openAddModal = () => {
         setEditingPlan(null);
-        setFormName("Room Only (RO)");
-        setFormCode("RO");
+        setFormName("Best Available Rate");
+        setFormCode("BAR");
         setFormMeals(false);
         setFormBreakfastRate(defaultBreakfastFee);
         setFormPolicy("FREE");
@@ -380,18 +380,16 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                         </button>
                     </div>
 
-                    {ratePlans.length === 0 && (
-                        <button
-                            type="button"
-                            onClick={() => seedDefaultRatePlans(roomTypes, currencyCode)}
-                            disabled={savingRates}
-                            className={styles.btnSeed}
-                            title="Auto-create standard Best Available Rate and Bed & Breakfast plans"
-                        >
-                            <SlidersHorizontal size={13} />
-                            <span>Generate Standard Rates</span>
-                        </button>
-                    )}
+                    <button
+                        type="button"
+                        onClick={() => seedDefaultRatePlans(roomTypes, currencyCode)}
+                        disabled={savingRates}
+                        className={styles.btnSeed}
+                        title="Auto-create standard Best Available Rate and Bed & Breakfast plans"
+                    >
+                        <SlidersHorizontal size={13} />
+                        <span>Generate Standard Rates</span>
+                    </button>
 
                     <button
                         type="button"
@@ -760,7 +758,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit}>
+                        <form onSubmit={handleSubmit} className={styles.modalForm}>
                             <div className={styles.modalBody}>
                                 {/* Quick Templates */}
                                 <div className={styles.formGroup}>
@@ -771,29 +769,36 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                     <div className={styles.presetChipsRow}>
                                         <button
                                             type="button"
+                                            onClick={() => applyPreset("Best Available Rate", "BAR", false)}
+                                            className={`${styles.presetChip} ${formCode === "BAR" ? styles.presetChipActive : ""}`}
+                                        >
+                                            Best Available Rate (BAR)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => applyPreset("Bed & Breakfast Rate", "BB", true)}
+                                            className={`${styles.presetChip} ${formCode === "BB" ? styles.presetChipActive : ""}`}
+                                        >
+                                            Bed &amp; Breakfast Rate (BB)
+                                        </button>
+                                        <button
+                                            type="button"
                                             onClick={() => applyPreset("Room Only (RO)", "RO", false)}
-                                            className={styles.presetChip}
+                                            className={`${styles.presetChip} ${formCode === "RO" ? styles.presetChipActive : ""}`}
                                         >
                                             Room Only (RO)
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => applyPreset("Bed & Breakfast (BB)", "BB", true)}
-                                            className={styles.presetChip}
-                                        >
-                                            Bed &amp; Breakfast (BB)
-                                        </button>
-                                        <button
-                                            type="button"
                                             onClick={() => applyPreset("Non-Refundable (NR)", "NR", false)}
-                                            className={styles.presetChip}
+                                            className={`${styles.presetChip} ${formCode === "NR" ? styles.presetChipActive : ""}`}
                                         >
                                             Non-Refundable (NR)
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => applyPreset("Long Stay Special (LS)", "LS", false)}
-                                            className={styles.presetChip}
+                                            className={`${styles.presetChip} ${formCode === "LS" ? styles.presetChipActive : ""}`}
                                         >
                                             Long Stay (LS)
                                         </button>
@@ -978,7 +983,13 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                     </div>
 
                                     <div className={styles.roomsChecklistList}>
-                                        {roomTypes.map(rt => {
+                                        {roomTypes.length === 0 ? (
+                                            <div className={styles.emptyRoomsNote}>
+                                                <BedDouble size={18} color="#71717a" />
+                                                <span>Belum ada kategori tipe kamar. Tambahkan Room Type terlebih dahulu di tab Master Room Types.</span>
+                                            </div>
+                                        ) : (
+                                            roomTypes.map(rt => {
                                             const isChecked = selectedRoomTypeIds.includes(rt.id);
                                             const currentRate = roomRates[rt.id] !== undefined
                                                 ? roomRates[rt.id]
@@ -1032,7 +1043,7 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                                     )}
                                                 </div>
                                             );
-                                        })}
+                                        }))}
                                     </div>
                                 </div>
                             </div>
