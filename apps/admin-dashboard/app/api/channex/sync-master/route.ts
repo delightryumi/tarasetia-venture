@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { FieldValue } from "firebase-admin/firestore";
 import { channexClient } from "@/lib/channex/channexClient";
 import { channexSyncService } from "@/lib/channex/syncService";
 
@@ -26,9 +27,24 @@ export async function POST(req: NextRequest) {
         }
 
         const hotelData = hotelDoc.data();
-        let channexPropertyId = hotelData?.channexPropertyId || hotelData?.channelManager?.channexPropertyId;
-        const customApiKey = hotelData?.channelManager?.apiKey || process.env.CHANNEX_API_KEY;
-        const env = hotelData?.channelManager?.env || hotelData?.channelManager?.environment || "staging";
+        let channexPropertyId = hotelData?.channexPropertyId || hotelData?.channelManager?.channexPropertyId || hotelData?.channelManager?.propertyId;
+        let customApiKey = hotelData?.channelManager?.apiKey || hotelData?.channexApiKey || process.env.CHANNEX_API_KEY;
+        let env = hotelData?.channelManager?.env || hotelData?.channelManager?.environment || "staging";
+
+        if (!customApiKey) {
+            try {
+                const sysDoc = await adminDb.collection("system_settings").doc("channex").get();
+                if (sysDoc.exists) {
+                    const sData = sysDoc.data();
+                    if (sData?.apiKey) {
+                        customApiKey = sData.apiKey;
+                        env = sData.env || env;
+                    }
+                }
+            } catch (sysErr) {
+                console.warn("[SyncMaster] Failed to read system_settings/channex:", sysErr);
+            }
+        }
 
         if (!customApiKey) {
             return NextResponse.json({
@@ -40,21 +56,42 @@ export async function POST(req: NextRequest) {
         // ACTION: UNLINK / RESET CONNECTION
         // ==========================================
         if (action === "unlink") {
-            await adminDb.collection("hotels").doc(hotelCode).set({
-                channexPropertyId: null,
-                "channelManager.channexPropertyId": null,
+            // Attempt to delete property on Channex server if propertyId exists
+            if (channexPropertyId && customApiKey) {
+                try {
+                    await channexClient.deleteProperty(channexPropertyId, customApiKey, env);
+                    console.log(`[ChannexUnlink] Successfully deleted property ${channexPropertyId} on Channex server.`);
+                } catch (delErr: any) {
+                    console.log(`[ChannexUnlink] Note: Channex server returned (${delErr.message}). Clearing local database link.`);
+                }
+            }
+
+            const currentCm = hotelData?.channelManager || {};
+            const updatedCm = { ...currentCm };
+            delete updatedCm.channexPropertyId;
+            delete updatedCm.propertyId;
+            delete updatedCm.openChannelHotelCode;
+            updatedCm.isSyncActive = false;
+            updatedCm.lastSyncAt = null;
+
+            await adminDb.collection("hotels").doc(hotelCode).update({
+                channexPropertyId: FieldValue.delete(),
+                "channelManager.channexPropertyId": FieldValue.delete(),
+                "channelManager.propertyId": FieldValue.delete(),
+                "channelManager.openChannelHotelCode": FieldValue.delete(),
                 "channelManager.isSyncActive": false,
-                "channelManager.lastSyncAt": null
-            }, { merge: true });
+                "channelManager.lastSyncAt": null,
+                channelManager: updatedCm
+            });
 
             const rtSnap = await adminDb.collection(`hotels/${hotelCode}/roomTypes`).get();
             for (const d of rtSnap.docs) {
-                await d.ref.update({ channexRoomTypeId: null });
+                await d.ref.update({ channexRoomTypeId: FieldValue.delete() });
             }
 
             const rpSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
             for (const d of rpSnap.docs) {
-                await d.ref.update({ channexRatePlanId: null });
+                await d.ref.update({ channexRatePlanId: FieldValue.delete() });
             }
 
             return NextResponse.json({

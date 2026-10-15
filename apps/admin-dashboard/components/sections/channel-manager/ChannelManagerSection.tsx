@@ -375,6 +375,8 @@ export function ChannelManagerSection() {
     const [channexWebhookSecret, setChannexWebhookSecret] = useState<string>("");
     const [showWebhookSecret, setShowWebhookSecret] = useState<boolean>(false);
     const [channexPropertyId, setChannexPropertyId] = useState<string>("");
+    const [isUnlinkModalOpen, setIsUnlinkModalOpen] = useState<boolean>(false);
+    const [unlinkingProperty, setUnlinkingProperty] = useState<boolean>(false);
     const [hotelCurrency, setHotelCurrency] = useState<string>("IDR");
     const [webhookRegistrationStatus, setWebhookRegistrationStatus] = useState<{
         isRegistered: boolean;
@@ -523,6 +525,9 @@ export function ChannelManagerSection() {
                     const cm = data.channelManager || {};
                     setChannexEnv(cm.env || "staging");
                     setChannexApiKey(cm.apiKey || "");
+                    const resolvedPropId = data.channexPropertyId || cm.channexPropertyId || cm.propertyId || "";
+                    setChannexPropertyId(resolvedPropId);
+                    setChannexWebhookSecret(cm.webhookSecret || "");
                     const resolvedCurrency = data.currency || cm.currency || "IDR";
                     setHotelCurrency(resolvedCurrency);
                     if (typeof window !== "undefined") {
@@ -1363,11 +1368,14 @@ export function ChannelManagerSection() {
     };
 
     // Unlink / Reset Channex Property connection
-    const handleUnlinkProperty = async () => {
+    const handleUnlinkProperty = () => {
         if (!activeHotelCode || activeHotelCode === "0") return;
-        if (!window.confirm("Apakah Anda yakin ingin memutuskan dan me-reset kaitan properti Channex ini? Kamar dan rate plan di Tara tidak akan terhapus, namun relasi ID Channex akan dibersihkan.")) {
-            return;
-        }
+        setIsUnlinkModalOpen(true);
+    };
+
+    const handleConfirmUnlinkProperty = async () => {
+        if (!activeHotelCode || activeHotelCode === "0") return;
+        setUnlinkingProperty(true);
         const toastId = toast.loading("Memutuskan koneksi properti Channex...");
         try {
             const res = await fetch("/api/channex/sync-master", {
@@ -1379,11 +1387,14 @@ export function ChannelManagerSection() {
             if (data.success) {
                 setChannexPropertyId("");
                 toast.success(data.message || "Koneksi properti Channex berhasil diputus.", { id: toastId });
+                setIsUnlinkModalOpen(false);
             } else {
                 toast.error(data.error || "Gagal memutus koneksi", { id: toastId });
             }
         } catch (err: any) {
             toast.error(err.message || "Gagal memutus koneksi", { id: toastId });
+        } finally {
+            setUnlinkingProperty(false);
         }
     };
 
@@ -4539,6 +4550,78 @@ export function ChannelManagerSection() {
                                     <>
                                         <RotateCcw size={14} />
                                         <span>Yes, Clear All Channel Mappings</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* UNLINK / RESET CHANNEX PROPERTY CUSTOM CONFIRMATION MODAL */}
+            {isUnlinkModalOpen && (
+                <div className={styles.modalOverlay} onClick={() => !unlinkingProperty && setIsUnlinkModalOpen(false)}>
+                    <div className={styles.confirmModalCard} onClick={e => e.stopPropagation()}>
+                        <div className={styles.confirmHeader}>
+                            <div className={`${styles.confirmIconBox} ${styles.confirmIconDanger}`}>
+                                <Unlink size={20} />
+                            </div>
+                            <div className={styles.flexOne}>
+                                <h3 className={styles.confirmHeaderTitle}>
+                                    Putus Kaitan Channex Property
+                                </h3>
+                                <p className={styles.confirmHeaderSub}>
+                                    Central Reservation System • Property: <b>{activeHotelName || activeHotelCode}</b>
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => !unlinkingProperty && setIsUnlinkModalOpen(false)}
+                                className={styles.modalCloseBtn}
+                                disabled={unlinkingProperty}
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <div className={styles.modalBody}>
+                            <div className={styles.confirmImpactList}>
+                                <span className={styles.confirmConsequenceTitle}>⚠️ Konfirmasi Pemutusan Relasi Channex:</span>
+                                <span>• Apakah Anda yakin ingin memutuskan dan me-reset kaitan Channex untuk properti <b>&ldquo;{activeHotelName || activeHotelCode}&rdquo;</b>?</span>
+                                <span>• Relasi ID Channex di database Tara dan server Channex akan dibersihkan.</span>
+                                <span>• Kamar dan rate plan lokal di My Tara tidak akan dihapus.</span>
+                            </div>
+                        </div>
+
+                        <div className={styles.modalFooter}>
+                            <button
+                                type="button"
+                                onClick={() => setIsUnlinkModalOpen(false)}
+                                className={styles.btnActionSecondary}
+                                disabled={unlinkingProperty}
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmUnlinkProperty}
+                                className={`${styles.btnActionDanger} ${styles.confirmBoldBtn}`}
+                                disabled={unlinkingProperty}
+                                style={{
+                                    background: "#be123c",
+                                    borderColor: "#be123c",
+                                    color: "#ffffff"
+                                }}
+                            >
+                                {unlinkingProperty ? (
+                                    <>
+                                        <RefreshCw size={14} className="animate-spin" />
+                                        <span>Memutuskan...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Unlink size={14} />
+                                        <span>Ya, Putus Kaitan</span>
                                     </>
                                 )}
                             </button>

@@ -165,11 +165,10 @@ export async function GET(req: NextRequest) {
         // For each Channex property, match with local hotel or add as imported property
         channexProperties.forEach((cp) => {
             const matchedLocal = combinedHotels.find(
-                (h) => h.channexPropertyId === cp.id || h.hotelCode.toLowerCase() === cp.title.toLowerCase().replace(/\s+/g, "-")
+                (h) => h.channexPropertyId === cp.id
             );
 
             if (matchedLocal) {
-                matchedLocal.channexPropertyId = cp.id;
                 // If Channex has a group assignment and local doesn't, map it
                 if (cp.groupId) {
                     const matchedGrp = combinedGroups.find((g) => g.channexGroupId === cp.groupId || g.id === cp.groupId || g.id === `cx_${cp.groupId}`);

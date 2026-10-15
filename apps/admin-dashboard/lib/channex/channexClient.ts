@@ -179,6 +179,12 @@ export class ChannexClient {
         }, customApiKey, environment);
     }
 
+    async deleteProperty(propertyId: string, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any }>(`/properties/${propertyId}`, {
+            method: "DELETE"
+        }, customApiKey, environment);
+    }
+
     // ==========================================
     // 2. ROOM TYPES MANAGEMENT
     // ==========================================

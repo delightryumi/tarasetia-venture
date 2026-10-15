@@ -85,6 +85,38 @@ export const ChannelGroupsTab: React.FC = () => {
     // Reassignment state
     const [assigningHotelCode, setAssigningHotelCode] = useState<string | null>(null);
     const [registeringHotelCode, setRegisteringHotelCode] = useState<string | null>(null);
+    const [unlinkingHotelCode, setUnlinkingHotelCode] = useState<string | null>(null);
+    const [propertyToUnlink, setPropertyToUnlink] = useState<{ hotelCode: string; hotelName: string } | null>(null);
+
+    const handleUnlinkProperty = (hotelCode: string, hotelName: string) => {
+        setPropertyToUnlink({ hotelCode, hotelName });
+    };
+
+    const handleConfirmUnlink = async () => {
+        if (!propertyToUnlink) return;
+        const { hotelCode, hotelName } = propertyToUnlink;
+        setUnlinkingHotelCode(hotelCode);
+        const toastId = toast.loading(`Memutuskan kaitan Channex untuk ${hotelName}...`);
+        try {
+            const res = await fetch("/api/channex/sync-master", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hotelCode, action: "unlink" })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || "Gagal memutus relasi properti Channex");
+            }
+            toast.success(data.message || `Relasi Channex untuk ${hotelName} berhasil diputus.`, { id: toastId });
+            setPropertyToUnlink(null);
+            await fetchData();
+        } catch (err: any) {
+            console.error("Unlink property error:", err);
+            toast.error(err.message || "Gagal memutus kaitan Channex", { id: toastId });
+        } finally {
+            setUnlinkingHotelCode(null);
+        }
+    };
 
     const handleRegisterPropertyToChannex = async (hotelCode: string, hotelName: string) => {
         setRegisteringHotelCode(hotelCode);
@@ -692,7 +724,7 @@ export const ChannelGroupsTab: React.FC = () => {
                                                     </td>
                                                     <td style={{ textAlign: "right" }}>
                                                         <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", alignItems: "center" }}>
-                                                            {!h.channexPropertyId && (
+                                                            {!h.channexPropertyId ? (
                                                                 <button
                                                                     type="button"
                                                                     disabled={registeringHotelCode === h.hotelCode}
@@ -716,6 +748,34 @@ export const ChannelGroupsTab: React.FC = () => {
                                                                         <Plus size={11} />
                                                                     )}
                                                                     <span>{registeringHotelCode === h.hotelCode ? "Mendaftarkan..." : "Daftarkan ke Channex"}</span>
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={unlinkingHotelCode === h.hotelCode}
+                                                                    onClick={() => handleUnlinkProperty(h.hotelCode, h.name)}
+                                                                    style={{
+                                                                        padding: "3px 8px",
+                                                                        fontSize: "11px",
+                                                                        height: "26px",
+                                                                        display: "inline-flex",
+                                                                        alignItems: "center",
+                                                                        gap: "4px",
+                                                                        background: "#fff1f2",
+                                                                        border: "1px solid #fecdd3",
+                                                                        color: "#be123c",
+                                                                        borderRadius: "6px",
+                                                                        cursor: "pointer",
+                                                                        fontWeight: 600
+                                                                    }}
+                                                                    title="Putus relasi Channex ID ini"
+                                                                >
+                                                                    {unlinkingHotelCode === h.hotelCode ? (
+                                                                        <RefreshCw size={11} className="animate-spin" />
+                                                                    ) : (
+                                                                        <Unlink size={11} />
+                                                                    )}
+                                                                    <span>Putus Link</span>
                                                                 </button>
                                                             )}
                                                             <button
@@ -800,7 +860,7 @@ export const ChannelGroupsTab: React.FC = () => {
                                             </td>
                                             <td style={{ textAlign: "right" }}>
                                                 <div className={styles.groupAssignWrap} style={{ display: "inline-flex", gap: "8px", alignItems: "center" }}>
-                                                    {!h.channexPropertyId && (
+                                                    {!h.channexPropertyId ? (
                                                         <button
                                                             type="button"
                                                             disabled={registeringHotelCode === h.hotelCode}
@@ -824,6 +884,34 @@ export const ChannelGroupsTab: React.FC = () => {
                                                                 <Plus size={11} />
                                                             )}
                                                             <span>{registeringHotelCode === h.hotelCode ? "Mendaftarkan..." : "Daftarkan ke Channex"}</span>
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            disabled={unlinkingHotelCode === h.hotelCode}
+                                                            onClick={() => handleUnlinkProperty(h.hotelCode, h.name)}
+                                                            style={{
+                                                                padding: "3px 8px",
+                                                                fontSize: "11px",
+                                                                height: "26px",
+                                                                display: "inline-flex",
+                                                                alignItems: "center",
+                                                                gap: "4px",
+                                                                background: "#fff1f2",
+                                                                border: "1px solid #fecdd3",
+                                                                color: "#be123c",
+                                                                borderRadius: "6px",
+                                                                cursor: "pointer",
+                                                                fontWeight: 600
+                                                            }}
+                                                            title="Putus relasi Channex ID ini"
+                                                        >
+                                                            {unlinkingHotelCode === h.hotelCode ? (
+                                                                <RefreshCw size={11} className="animate-spin" />
+                                                            ) : (
+                                                                <Unlink size={11} />
+                                                            )}
+                                                            <span>Putus Link</span>
                                                         </button>
                                                     )}
                                                     <button
@@ -1077,6 +1165,68 @@ export const ChannelGroupsTab: React.FC = () => {
                                     )}
                                 </button>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Unlink Property Custom Confirmation Modal */}
+            {propertyToUnlink && (
+                <div className={styles.modalOverlay} onClick={() => !unlinkingHotelCode && setPropertyToUnlink(null)}>
+                    <div className={styles.confirmModalContent} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.confirmModalHeader}>
+                            <div className={styles.confirmModalIcon} style={{ background: "#fff1f2", color: "#be123c", borderColor: "#fecdd3" }}>
+                                <Unlink size={20} />
+                            </div>
+                            <div>
+                                <h3 className={styles.confirmModalTitle}>Putus Kaitan Channex</h3>
+                                <p className={styles.confirmModalSubtitle}>
+                                    Memutuskan relasi UUID properti antara Tara CRS dan server Channex.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className={styles.confirmModalBody}>
+                            <p className={styles.confirmModalText}>
+                                Apakah Anda yakin ingin memutuskan dan me-reset kaitan Channex untuk <strong>&ldquo;{propertyToUnlink.hotelName}&rdquo;</strong>?
+                            </p>
+                            <p className={styles.confirmModalNotice}>
+                                Relasi ID Channex di database Tara dan server Channex akan dibersihkan. Kamar dan rate plan di Tara tidak akan terhapus.
+                            </p>
+                        </div>
+
+                        <div className={styles.modalActions}>
+                            <button
+                                type="button"
+                                onClick={() => setPropertyToUnlink(null)}
+                                className={styles.btnCancel}
+                                disabled={!!unlinkingHotelCode}
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmUnlink}
+                                className={styles.btnDeleteConfirm}
+                                disabled={!!unlinkingHotelCode}
+                                style={{
+                                    background: "#be123c",
+                                    borderColor: "#be123c",
+                                    boxShadow: "0 1px 3px rgba(190, 18, 60, 0.25)"
+                                }}
+                            >
+                                {unlinkingHotelCode ? (
+                                    <>
+                                        <RefreshCw size={13} className="animate-spin" />
+                                        <span>Memutuskan...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Unlink size={13} />
+                                        <span>Ya, Putus Kaitan</span>
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>
