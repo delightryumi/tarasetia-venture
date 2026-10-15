@@ -13,6 +13,8 @@ import {
 } from "@/lib/budget-types";
 import { detectBreakfastAllocation } from "@/lib/breakfast-utils";
 import { isStartupPlan } from "@/lib/hotelPlanHelper";
+import { formatIDR } from "@/lib/pnl-utils";
+import { DEFAULT_CURRENCY } from "@/lib/currency-utils";
 
 export interface PnLComparisonRow {
   code: string;
@@ -89,6 +91,17 @@ export const usePNLBudget = () => {
   const [budgetDoc, setBudgetDoc] = useState<YearlyBudgetDocument | null>(null);
   const [hotelRoomCount, setHotelRoomCount] = useState<number>(8);
   const [isStartup, setIsStartup] = useState<boolean>(false);
+  const [currencyCode, setCurrencyCode] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const hCode = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
+      if (hCode) {
+        const cached = localStorage.getItem(`hotel_currency_${hCode}`);
+        if (cached) return cached;
+      }
+      return localStorage.getItem("shopCurrency") || DEFAULT_CURRENCY;
+    }
+    return DEFAULT_CURRENCY;
+  });
 
   // Live actual monthly data aggregated from transactions/orders/incomes/expenses
   const [actualMonthlyData, setActualMonthlyData] = useState<Record<string, ActualMonthlyPnLData>>({});
@@ -103,6 +116,24 @@ export const usePNLBudget = () => {
       if (hSnap.exists()) {
         const hd = hSnap.data() as any;
         setIsStartup(isStartupPlan(hd));
+        const resolvedCurrency = (
+          hd.channelManager?.currency ||
+          hd.currency ||
+          hd.cm?.currency ||
+          hd.settings?.currency ||
+          hd.baseCurrency ||
+          DEFAULT_CURRENCY
+        ).toUpperCase().trim();
+
+        if (resolvedCurrency) {
+          setCurrencyCode(resolvedCurrency);
+          if (typeof window !== "undefined") {
+            localStorage.setItem(`hotel_currency_${hCode}`, resolvedCurrency);
+            localStorage.setItem("shopCurrency", resolvedCurrency);
+            window.dispatchEvent(new Event("currencyChanged"));
+          }
+        }
+
         count =
           typeof hd.roomCount === "number"
             ? hd.roomCount
@@ -937,7 +968,7 @@ export const usePNLBudget = () => {
             docNum: "AUTO-MGMT",
             name: `Exp. Management Fees (Base Fee ${mgmtPercent}%)`,
             department: "Non-Operating",
-            description: `Dihitung otomatis sistem: ${mgmtPercent}% x Total Pendapatan (Rp ${x.totalRevenue.toLocaleString("id-ID")})`,
+            description: `Dihitung otomatis sistem: ${mgmtPercent}% x Total Pendapatan (${formatIDR(x.totalRevenue, currencyCode)})`,
             amount: x.nonOpBaseFee,
             date: `${yr}-${k}`,
             source: "Expense",
@@ -952,7 +983,7 @@ export const usePNLBudget = () => {
             docNum: "AUTO-INCENTIVE",
             name: `Exp. Incentive Fees (${incPercent}%)`,
             department: "Non-Operating",
-            description: `Dihitung otomatis sistem: ${incPercent}% x GOP (Rp ${gop.toLocaleString("id-ID")})`,
+            description: `Dihitung otomatis sistem: ${incPercent}% x GOP (${formatIDR(gop, currencyCode)})`,
             amount: x.nonOpIncentiveFee,
             date: `${yr}-${k}`,
             source: "Expense",
@@ -1002,6 +1033,7 @@ export const usePNLBudget = () => {
     hotelName: activeHotelName || "BUMI ANYOM RESORT",
     hotelRoomCount,
     isStartup,
+    currencyCode,
     selectedYear,
     setSelectedYear,
     selectedMonth,

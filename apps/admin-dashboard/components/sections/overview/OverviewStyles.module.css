@@ -1237,3 +1237,26 @@
   margin: 0;
 }
 
+.desktopOnly {
+  display: contents;
+}
+
+.mobileOnly {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .overviewRoot {
+    min-height: auto !important;
+    background: transparent !important;
+  }
+  .desktopOnly {
+    display: none !important;
+  }
+  .mobileOnly {
+    display: block !important;
+    width: 100%;
+  }
+}
+
+

@@ -12,7 +12,7 @@ const SUPERADMIN_PERMISSIONS_FALLBACK = [
     "module_pos", "module_front_office", "module_innalytics", "module_housekeeping", 
     "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel",
     "module_hrd",
-    "innalytics", "overview", "bookings", "forecast", "revenue-breakdown", "rate-inventory", "digital-checkin", "confirmation-letter", "inventory-control", "invoice",
+    "innalytics", "overview", "bookings", "forecast", "revenue-breakdown", "rate-inventory", "digital-checkin", "confirmation-letter", "invoice",
     "pnl", "pnl-budget", "dsr", "budgeting", "statements",
     "logo", "hero", "room-type", "about", "gallery", "footer", "attractions", "promo", "packages", "seo", "users", "channel-manager", "superadmin",
     "purchasing", "store-requisition", "purchase-requisition", "daily-market-list", 

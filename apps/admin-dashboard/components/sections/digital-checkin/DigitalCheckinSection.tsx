@@ -90,7 +90,7 @@ export function DigitalCheckinSection() {
     };
 
     return (
-        <div className="w-full max-w-[1280px] mx-auto px-4 md:px-8 lg:px-10 py-6 md:py-8 flex flex-col gap-8 md:gap-12 font-sans text-[var(--rich-black)] dark:text-white print:p-0">
+        <div className="w-full max-w-[1280px] mx-auto px-2 pt-1 pb-24 md:px-8 lg:px-10 md:py-8 flex flex-col gap-4 md:gap-12 font-sans text-[var(--rich-black)] dark:text-white print:p-0">
             {/* Header (Hidden on Print) */}
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 lg:gap-6 pb-6 lg:pb-8 border-b border-[var(--f-hairline)] print:hidden">
                 <div className="flex flex-col gap-2 lg:gap-3">

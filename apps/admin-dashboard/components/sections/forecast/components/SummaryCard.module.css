@@ -81,6 +81,17 @@
   background-color: transparent !important;
 }
 
+@media (max-width: 640px) {
+  .summaryCard {
+    padding: 14px 16px;
+    border-radius: 16px;
+    gap: 8px;
+  }
+  .cardValue {
+    font-size: 19px;
+  }
+}
+
 /* --- Dark Mode Overrides --- */
 :global(.dark) .summaryCard {
   background-color: #1e293b;

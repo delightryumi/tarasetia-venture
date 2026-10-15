@@ -174,9 +174,9 @@ export function BookingsSection() {
                                 className={s.dateInput}
                                 value={startDate}
                                 onChange={(e) => handleStartDateChange(e.target.value)}
-                                aria-label="Tanggal mulai"
+                                aria-label="Start date"
                             />
-                            <span style={{ color: "#94a3b8", fontSize: "12px" }}>s/d</span>
+                            <span style={{ color: "#94a3b8", fontSize: "12px" }}>to</span>
                             <input
                                 ref={endDateInputRef}
                                 type="date"
@@ -184,17 +184,17 @@ export function BookingsSection() {
                                 value={endDate}
                                 min={startDate}
                                 onChange={(e) => setEndDate(e.target.value)}
-                                aria-label="Tanggal akhir"
+                                aria-label="End date"
                             />
                         </div>
                         <button
                             type="button"
                             className={s.searchActionBtn}
                             onClick={handleApplySearch}
-                            title="Terapkan filter dan cari"
+                            title="Search bookings"
                         >
                             <MagnifyingGlass size={15} weight="bold" />
-                            <span>Cari</span>
+                            <span>Search</span>
                         </button>
                     </div>
                 </div>
@@ -207,9 +207,9 @@ export function BookingsSection() {
                             className={s.selectInput}
                             value={channelFilter}
                             onChange={(e) => setChannelFilter(e.target.value)}
-                            aria-label="Filter Channel OTA"
+                            aria-label="Filter OTA Channel"
                         >
-                            <option value="ALL">Semua Channel</option>
+                            <option value="ALL">All Channels</option>
                             {filterOptions.channels.map((ch) => (
                                 <option key={ch} value={ch}>{ch}</option>
                             ))}
@@ -220,9 +220,9 @@ export function BookingsSection() {
                             className={s.selectInput}
                             value={roomTypeFilter}
                             onChange={(e) => setRoomTypeFilter(e.target.value)}
-                            aria-label="Filter Tipe Kamar"
+                            aria-label="Filter Room Type"
                         >
-                            <option value="ALL">Semua Tipe Kamar</option>
+                            <option value="ALL">All Room Types</option>
                             {filterOptions.roomTypes.map((rt) => (
                                 <option key={rt} value={rt}>{rt}</option>
                             ))}
@@ -234,7 +234,7 @@ export function BookingsSection() {
                             <input
                                 type="text"
                                 className={s.searchInput}
-                                placeholder="Cari nama, voucher, kamar..."
+                                placeholder="Search guest, voucher, room..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyDown={(e) => {
@@ -248,7 +248,7 @@ export function BookingsSection() {
                             type="button"
                             className={s.resetFilterIconBtn}
                             onClick={handleResetFilters}
-                            title="Reset semua filter"
+                            title="Reset all filters"
                         >
                             <ArrowCounterClockwise size={14} weight="bold" />
                             <span>Reset</span>
@@ -260,8 +260,8 @@ export function BookingsSection() {
                                 type="button"
                                 className={`${s.viewModeBtn} ${viewMode === "grid" ? s.viewModeBtnActive : ""}`}
                                 onClick={() => setViewMode("grid")}
-                                title="Tampilan Grid"
-                                aria-label="Tampilan Grid"
+                                title="Grid View"
+                                aria-label="Grid View"
                             >
                                 <SquaresFour size={18} weight="bold" />
                             </button>
@@ -269,8 +269,8 @@ export function BookingsSection() {
                                 type="button"
                                 className={`${s.viewModeBtn} ${viewMode === "list" ? s.viewModeBtnActive : ""}`}
                                 onClick={() => setViewMode("list")}
-                                title="Tampilan Tabel / List"
-                                aria-label="Tampilan List"
+                                title="List View"
+                                aria-label="List View"
                             >
                                 <ListBullets size={18} weight="bold" />
                             </button>
@@ -291,12 +291,12 @@ export function BookingsSection() {
                     <div className={s.emptyIcon}>
                         <CalendarCheck size={32} weight="bold" />
                     </div>
-                    <div className={s.emptyTitle}>Tidak ada booking ditemukan</div>
+                    <div className={s.emptyTitle}>No bookings found</div>
                     <div className={s.emptyDesc}>
-                        Tidak ada data reservasi yang cocok dengan rentang tanggal atau kata kunci pencarian saat ini.
+                        There are no reservations matching the selected date range or search criteria.
                     </div>
                     <button type="button" className={s.resetBtn} onClick={handleResetFilters}>
-                        Reset Filter
+                        Reset Filters
                     </button>
                 </div>
             ) : viewMode === "grid" ? (

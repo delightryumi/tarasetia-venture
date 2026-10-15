@@ -57,7 +57,7 @@ export const InnalyticsHeader: React.FC<InnalyticsHeaderProps> = ({
             className={styles.headerLogo}
           />
         </Link>
-        <div className={styles.headerPropertyText}>
+        <div className={`${styles.headerPropertyText} hidden md:flex`}>
           <div className={styles.propertyName}>{activeHotelName || 'Titik Damai Nexura Collection'}</div>
           <div className={styles.propertyId}>{activeHotelCode || '61872'}</div>
         </div>
@@ -73,7 +73,7 @@ export const InnalyticsHeader: React.FC<InnalyticsHeaderProps> = ({
             onClick={() => setShowPropertyModal(!showPropertyModal)}
             title="Ganti Properti / Hotel Aktif"
           >
-            <span className="truncate max-w-[160px] sm:max-w-[220px]">
+            <span className="truncate max-w-[130px] xs:max-w-[180px] sm:max-w-[240px]">
               {`[${activeHotelCode || '0'}] ${activeHotelName || 'Pilih Properti'}`}
             </span>
             <ChevronDown
@@ -121,21 +121,21 @@ export const InnalyticsHeader: React.FC<InnalyticsHeaderProps> = ({
         </div>
 
         {/* PMS Building Icon (Back to Select Module / PMS) */}
-        <Link href="/select-module" title="Back to PMS Module Hub" className={styles.navShortcut}>
+        <Link href="/select-module" title="Back to PMS Module Hub" className={`${styles.navShortcut} hidden sm:flex`}>
           <button className={styles.iconButton}>
             <Building2 size={18} />
           </button>
         </Link>
 
         {/* Channel Manager Link */}
-        <Link href="/channel-manager" title="Go to Channel Manager" className={styles.navShortcut}>
+        <Link href="/channel-manager" title="Go to Channel Manager" className={`${styles.navShortcut} hidden sm:flex`}>
           <button className={styles.iconButton}>
             <Globe size={18} />
           </button>
         </Link>
 
         {/* Cashier / Folio */}
-        <Link href="/pos" title="POS / Cashier" className={styles.navShortcut}>
+        <Link href="/pos" title="POS / Cashier" className={`${styles.navShortcut} hidden sm:flex`}>
           <button className={styles.iconButton}>
             <Wallet size={18} />
           </button>

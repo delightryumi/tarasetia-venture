@@ -262,7 +262,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ activeHotelCode })
 
         <div className={styles.toolbarActions}>
           {/* Quick Month Selector matching IPMS247 pill style */}
-          <div className={styles.datePickerBox} style={{ width: '135px', height: '32px', marginRight: '6px' }} title="Change Month">
+          <div className={styles.datePickerBox} title="Change Month">
             <span className={styles.datePickerText}>
               {formatMonthDisplay(selectedMonth)}
             </span>

@@ -437,14 +437,14 @@ export function GRCSection() {
                     className="grc-btn-primary"
                 >
                     <Plus size={16} />
-                    <span>Buat GRC Baru / Manual</span>
+                    <span>New Manual GRC</span>
                 </button>
             </header>
 
             {/* KPI Summary Cards (Hidden on Print) */}
             <div className="grc-kpi-grid grc-no-print">
                 <div className="grc-kpi-card">
-                    <span className="grc-kpi-label">Check-in & In-House Hari Ini</span>
+                    <span className="grc-kpi-label">Today Check-in & In-House</span>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
                         <span className="grc-kpi-value">{kpiData.todayCount}</span>
                         {kpiData.todayExtend > 0 && (
@@ -455,15 +455,15 @@ export function GRCSection() {
                     </div>
                 </div>
                 <div className="grc-kpi-card">
-                    <span className="grc-kpi-label">Kamar Terisi (Occupied)</span>
+                    <span className="grc-kpi-label">Rooms Occupied</span>
                     <span className="grc-kpi-value">{kpiData.occupiedCount}</span>
                 </div>
                 <div className="grc-kpi-card">
-                    <span className="grc-kpi-label">Total Data Tamu</span>
+                    <span className="grc-kpi-label">Total Guests</span>
                     <span className="grc-kpi-value">{kpiData.totalGuests}</span>
                 </div>
                 <div className="grc-kpi-card">
-                    <span className="grc-kpi-label">Format Cetak</span>
+                    <span className="grc-kpi-label">Print Format</span>
                     <span className="grc-kpi-value" style={{ fontSize: "16px", color: "#006241" }}>
                         {paperSize.toUpperCase()} {paperSize === "f4" ? "(Folio)" : "(Standard)"}
                     </span>
@@ -476,7 +476,7 @@ export function GRCSection() {
                     <Search size={16} style={{ position: "absolute", left: "14px", top: "12px", color: "var(--grc-muted)" }} />
                     <input
                         type="text"
-                        placeholder="Cari nama tamu, nomor kamar, booking ID..."
+                        placeholder="Search guest name, room number, booking ID..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="grc-search-input"
@@ -489,7 +489,7 @@ export function GRCSection() {
                             onClick={() => setFilterPeriod("today")}
                             className={`grc-chip-btn ${filterPeriod === "today" ? "active" : ""}`}
                         >
-                            Hari Ini {kpiData.todayCount > 0 ? `(${kpiData.todayCount})` : ""}
+                            Today {kpiData.todayCount > 0 ? `(${kpiData.todayCount})` : ""}
                         </button>
                         <button
                             onClick={() => setFilterPeriod("upcoming")}
@@ -501,7 +501,7 @@ export function GRCSection() {
                             onClick={() => setFilterPeriod("all")}
                             className={`grc-chip-btn ${filterPeriod === "all" ? "active" : ""}`}
                         >
-                            Semua ({kpiData.totalGuests})
+                            All ({kpiData.totalGuests})
                         </button>
                     </div>
                 </div>
@@ -513,27 +513,27 @@ export function GRCSection() {
                     <table className="grc-data-table">
                         <thead>
                             <tr>
-                                <th>Periode Inap</th>
-                                <th>Kamar</th>
-                                <th>Nama Tamu & No Reservasi</th>
+                                <th>Stay Period</th>
+                                <th>Room</th>
+                                <th>Guest Name & Booking ID</th>
                                 <th>Channel</th>
-                                <th>Tarif Kamar</th>
-                                <th>Status Bayar</th>
-                                <th style={{ textAlign: "right" }}>Aksi GRC</th>
+                                <th>Room Rate</th>
+                                <th>Payment</th>
+                                <th style={{ textAlign: "right" }}>GRC Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
                                 <tr>
                                     <td colSpan={7} style={{ textAlign: "center", padding: "48px 20px", color: "var(--grc-muted)" }}>
-                                        Memuat data tamu overview...
+                                        Loading guest data...
                                     </td>
                                 </tr>
                             ) : filteredEntries.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} style={{ textAlign: "center", padding: "48px 20px", color: "var(--grc-muted)" }}>
                                         <FileText size={36} style={{ margin: "0 auto 8px auto", opacity: 0.25 }} />
-                                        Tidak ada data reservasi tamu yang cocok.
+                                        No matching guest reservations found.
                                     </td>
                                 </tr>
                             ) : (
@@ -587,7 +587,7 @@ export function GRCSection() {
                                                 <button
                                                     onClick={() => handleSelectGuestForGRC(guest)}
                                                     className="grc-btn-secondary"
-                                                    title="Buka Editor & Preview GRC"
+                                                    title="Open Editor & Preview GRC"
                                                 >
                                                     <Eye size={13} />
                                                     <span>Preview & Edit</span>
@@ -596,10 +596,10 @@ export function GRCSection() {
                                                     onClick={() => handleDirectPrintRow(guest)}
                                                     className="grc-btn-primary"
                                                     style={{ height: "34px", padding: "0 12px", fontSize: "11px", backgroundColor: "#006241" }}
-                                                    title="Cetak GRC Langsung (F4)"
+                                                    title="Direct Print GRC (F4)"
                                                 >
                                                     <Printer size={13} />
-                                                    <span>Cetak F4</span>
+                                                    <span>Print F4</span>
                                                 </button>
                                             </div>
                                         </td>
@@ -632,7 +632,7 @@ export function GRCSection() {
                                             Guest Registration Card (GRC) Editor & Preview
                                         </h3>
                                         <p style={{ fontSize: "11px", color: "var(--grc-muted)", margin: "2px 0 0 0" }}>
-                                            Periksa dan lengkapi rincian kartu registrasi tamu sebelum mencetak (Format F4).
+                                            Review and complete guest registration details before printing.
                                         </p>
                                     </div>
                                 </div>
@@ -644,7 +644,7 @@ export function GRCSection() {
                                             type="button"
                                             onClick={() => setPaperSize("f4")}
                                             className={`grc-paper-toggle-btn ${paperSize === "f4" ? "active" : ""}`}
-                                            title="Ukuran Folio / F4 (215 × 330 mm)"
+                                            title="Folio / F4 Size (215 × 330 mm)"
                                         >
                                             F4 (Folio)
                                         </button>
@@ -652,7 +652,7 @@ export function GRCSection() {
                                             type="button"
                                             onClick={() => setPaperSize("a4")}
                                             className={`grc-paper-toggle-btn ${paperSize === "a4" ? "active" : ""}`}
-                                            title="Ukuran Standard A4 (210 × 297 mm)"
+                                            title="Standard A4 Size (210 × 297 mm)"
                                         >
                                             A4
                                         </button>
@@ -664,7 +664,7 @@ export function GRCSection() {
                                         style={{ backgroundColor: "#006241", height: "36px", padding: "0 18px" }}
                                     >
                                         <Printer size={15} />
-                                        <span>Cetak GRC ({paperSize.toUpperCase()})</span>
+                                        <span>Print GRC ({paperSize.toUpperCase()})</span>
                                     </button>
                                     <button
                                         onClick={() => setIsEditorOpen(false)}
@@ -683,22 +683,22 @@ export function GRCSection() {
                                     {/* Section 01: Stay & Room */}
                                     <div className="grc-section-title">
                                         <span className="grc-section-num">01</span>
-                                        <span>Kamar & Stay Details</span>
+                                        <span>Room & Stay Details</span>
                                     </div>
 
                                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                                         <div className="grc-field-group">
-                                            <label className="grc-field-label">No. Kamar</label>
+                                            <label className="grc-field-label">Room No.</label>
                                             <input
                                                 type="text"
                                                 value={grcData.roomNumber}
                                                 onChange={e => setGrcData({ ...grcData, roomNumber: e.target.value })}
                                                 className="grc-input grc-input-mono"
-                                                placeholder="Contoh: 110"
+                                                placeholder="e.g. 101"
                                             />
                                         </div>
                                         <div className="grc-field-group">
-                                            <label className="grc-field-label">Tarif Kamar (Rp)</label>
+                                            <label className="grc-field-label">Room Rate</label>
                                             <input
                                                 type="text"
                                                 value={grcData.roomRate}
@@ -711,7 +711,7 @@ export function GRCSection() {
 
                                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                                         <div className="grc-field-group">
-                                            <label className="grc-field-label">No. Reservasi</label>
+                                            <label className="grc-field-label">Booking ID</label>
                                             <input
                                                 type="text"
                                                 value={grcData.bookingId}
@@ -720,7 +720,7 @@ export function GRCSection() {
                                             />
                                         </div>
                                         <div className="grc-field-group">
-                                            <label className="grc-field-label">Tipe Kamar</label>
+                                            <label className="grc-field-label">Room Type</label>
                                             <input
                                                 type="text"
                                                 value={grcData.roomType}
@@ -732,7 +732,7 @@ export function GRCSection() {
 
                                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                                         <div className="grc-field-group">
-                                            <label className="grc-field-label">Kode Harga</label>
+                                            <label className="grc-field-label">Rate Code</label>
                                             <input
                                                 type="text"
                                                 value={grcData.rateCode}
@@ -741,7 +741,7 @@ export function GRCSection() {
                                             />
                                         </div>
                                         <div className="grc-field-group">
-                                            <label className="grc-field-label">Jumlah Tamu (Pax)</label>
+                                            <label className="grc-field-label">No. of Pax</label>
                                             <input
                                                 type="number"
                                                 value={grcData.noOfPax}
@@ -764,11 +764,11 @@ export function GRCSection() {
                                     {/* Section 02: Guest Identity */}
                                     <div className="grc-section-title" style={{ marginTop: "12px" }}>
                                         <span className="grc-section-num">02</span>
-                                        <span>Identitas & Kontak Tamu</span>
+                                        <span>Guest Identity & Contact</span>
                                     </div>
 
                                     <div className="grc-field-group">
-                                        <label className="grc-field-label">Nama Lengkap</label>
+                                        <label className="grc-field-label">Full Name</label>
                                         <input
                                             type="text"
                                             value={grcData.guestName}
@@ -780,17 +780,17 @@ export function GRCSection() {
 
                                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                                         <div className="grc-field-group">
-                                            <label className="grc-field-label">No. Identitas / NIK</label>
+                                            <label className="grc-field-label">Identity / Passport No.</label>
                                             <input
                                                 type="text"
                                                 value={grcData.identityNo}
                                                 onChange={e => setGrcData({ ...grcData, identityNo: e.target.value })}
                                                 className="grc-input grc-input-mono"
-                                                placeholder="KTP / Paspor..."
+                                                placeholder="ID / Passport..."
                                             />
                                         </div>
                                         <div className="grc-field-group">
-                                            <label className="grc-field-label">Kewarganegaraan</label>
+                                            <label className="grc-field-label">Nationality</label>
                                             <input
                                                 type="text"
                                                 value={grcData.nationality}
@@ -802,7 +802,7 @@ export function GRCSection() {
 
                                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                                         <div className="grc-field-group">
-                                            <label className="grc-field-label">No. Telp / HP</label>
+                                            <label className="grc-field-label">Phone / Mobile</label>
                                             <input
                                                 type="text"
                                                 value={grcData.phone}
@@ -822,7 +822,7 @@ export function GRCSection() {
                                     </div>
 
                                     <div className="grc-field-group">
-                                        <label className="grc-field-label">Alamat Lengkap</label>
+                                        <label className="grc-field-label">Full Address</label>
                                         <textarea
                                             value={grcData.address}
                                             onChange={e => setGrcData({ ...grcData, address: e.target.value })}
@@ -835,11 +835,11 @@ export function GRCSection() {
                                     {/* Section 03: Settlement */}
                                     <div className="grc-section-title" style={{ marginTop: "12px" }}>
                                         <span className="grc-section-num">03</span>
-                                        <span>Metode Pembayaran & Petugas</span>
+                                        <span>Billing & Handling Staff</span>
                                     </div>
 
                                     <div className="grc-field-group">
-                                        <label className="grc-field-label">Checklist Pembayaran</label>
+                                        <label className="grc-field-label">Billing Account</label>
                                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "11px" }}>
                                             <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
                                                 <input

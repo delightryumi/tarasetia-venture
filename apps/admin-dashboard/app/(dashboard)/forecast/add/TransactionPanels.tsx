@@ -48,8 +48,8 @@ const getStayNightDetails = (checkInStr: string, totalNights: number) => {
     if (!checkInStr || totalNights <= 0) return [];
     const [ciY, ciM, ciD] = checkInStr.split('-').map(Number);
     const start = new Date(ciY, (ciM || 1) - 1, ciD || 1);
-    const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     
     return Array.from({ length: totalNights }).map((_, i) => {
         const d = new Date(start);
@@ -82,7 +82,7 @@ export function TerminalHeader({ checkIn, queueLength, saving, onCommit, onBack 
                     <button 
                         onClick={onBack} 
                         className={styles.btnIcon}
-                        title="Kembali"
+                        title="Back"
                     >
                         <ArrowLeft size={16} strokeWidth={2} />
                     </button>
@@ -105,7 +105,7 @@ export function TerminalHeader({ checkIn, queueLength, saving, onCommit, onBack 
                         className={styles.btnPrimary}
                     >
                         <ShieldCheck size={14} />
-                        {saving ? "MENYIMPAN..." : `COMMIT (${queueLength} TRX)`}
+                        {saving ? "SAVING..." : `COMMIT (${queueLength} TRX)`}
                     </button>
                 </div>
             </div>

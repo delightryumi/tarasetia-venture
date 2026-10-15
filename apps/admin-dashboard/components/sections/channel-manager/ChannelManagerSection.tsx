@@ -523,9 +523,12 @@ export function ChannelManagerSection() {
                     const cm = data.channelManager || {};
                     setChannexEnv(cm.env || "staging");
                     setChannexApiKey(cm.apiKey || "");
-                    setChannexWebhookSecret(cm.webhookSecret || "");
-                    setChannexPropertyId(data.channexPropertyId || cm.channexPropertyId || "");
-                    setHotelCurrency(data.currency || cm.currency || "IDR");
+                    const resolvedCurrency = data.currency || cm.currency || "IDR";
+                    setHotelCurrency(resolvedCurrency);
+                    if (typeof window !== "undefined") {
+                        localStorage.setItem(`hotel_currency_${activeHotelCode}`, resolvedCurrency);
+                        localStorage.setItem("shopCurrency", resolvedCurrency);
+                    }
 
                     if (cm.webhookId) {
                         setWebhookRegistrationStatus({
@@ -762,6 +765,12 @@ export function ChannelManagerSection() {
                 },
                 "settings.revenueRecordingMode": globalPricingModel
             });
+
+            if (typeof window !== "undefined") {
+                localStorage.setItem(`hotel_currency_${activeHotelCode}`, hotelCurrency);
+                localStorage.setItem("shopCurrency", hotelCurrency);
+                window.dispatchEvent(new Event("currencyChanged"));
+            }
 
             // Sinkronkan juga ke collection system_settings jika webhookSecret diisi
             if (channexWebhookSecret) {

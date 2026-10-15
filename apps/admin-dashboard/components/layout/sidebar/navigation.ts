@@ -76,7 +76,6 @@ export function getSidebarItemHref(itemId: string, activeModule: string): string
         case "forecast":
         case "confirmation-letter":
         case "revenue-breakdown":
-        case "inventory-control":
         case "rate-inventory":
         case "invoice":
         case "digital-checkin":

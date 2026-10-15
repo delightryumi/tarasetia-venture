@@ -5,11 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import styles from "./ForecastStyles.module.css";
 
-const MONTHS_ID = [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+const MONTHS_EN = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
 ];
-const DAYS_SHORT = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /* ── Daily Calendar ── */
 function DailyCalendar({ value, onChange }: { value: string, onChange: (v: string) => void }) {
@@ -60,7 +60,7 @@ function DailyCalendar({ value, onChange }: { value: string, onChange: (v: strin
                     <ChevronLeft size={14} />
                 </button>
                 <span className={styles.guestSubtext} style={{ fontSize: "11px", color: "var(--f-ink)", fontWeight: 700 }}>
-                    {MONTHS_ID[viewMonth]} {viewYear}
+                    {MONTHS_EN[viewMonth]} {viewYear}
                 </span>
                 <button onClick={nextMonth} className={styles.btnIcon} style={{ width: "28px", height: "28px", borderRadius: "6px", border: "none", boxShadow: "none" }}>
                     <ChevronRight size={14} />
@@ -139,7 +139,7 @@ function MonthlyCalendar({ value, onChange }: { value: string, onChange: (v: str
 
             {/* Month Grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
-                {MONTHS_ID.map((name, i) => (
+                {MONTHS_EN.map((name, i) => (
                     <button
                         key={name}
                         onClick={() => handleMonth(i)}
@@ -172,7 +172,7 @@ function YearlyCalendar({ value, onChange }: { value: string, onChange: (v: stri
     return (
         <div style={{ width: "280px", padding: "16px" }}>
             <div style={{ textAlign: "center", marginBottom: "16px", padding: "4px 0" }}>
-                <span className={styles.headerSubtitle} style={{ fontSize: "10px", color: "#2563eb" }}>PILIH TAHUN</span>
+                <span className={styles.headerSubtitle} style={{ fontSize: "10px", color: "#2563eb" }}>SELECT YEAR</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
                 {years.map((yr) => (

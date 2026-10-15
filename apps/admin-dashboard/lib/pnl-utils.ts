@@ -150,6 +150,15 @@ export interface DrillDownData {
 import { formatCurrencyAmount, DEFAULT_CURRENCY } from "./currency-utils";
 
 export const formatIDR = (amount: number, currencyCode?: string): string => {
-  const activeCurr = currencyCode || (typeof window !== "undefined" ? localStorage.getItem("shopCurrency") || DEFAULT_CURRENCY : DEFAULT_CURRENCY);
-  return formatCurrencyAmount(amount, activeCurr);
+  let activeCurr = currencyCode;
+  if (!activeCurr && typeof window !== "undefined") {
+    const hCode = localStorage.getItem("active_hotel_code") || localStorage.getItem("hotelCode");
+    if (hCode) {
+      activeCurr = localStorage.getItem(`hotel_currency_${hCode}`) || undefined;
+    }
+    if (!activeCurr) {
+      activeCurr = localStorage.getItem("shopCurrency") || DEFAULT_CURRENCY;
+    }
+  }
+  return formatCurrencyAmount(amount, activeCurr || DEFAULT_CURRENCY);
 };

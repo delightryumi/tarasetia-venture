@@ -11,6 +11,8 @@ interface MultiYearAnalysisTabProps {
   actualMonthlyData: Record<string, any>;
   hotelRoomCount: number;
   isStartup?: boolean;
+  currencyCode?: string;
+  currencySymbol?: string;
 }
 
 export const MultiYearAnalysisTab: React.FC<MultiYearAnalysisTabProps> = ({
@@ -19,6 +21,8 @@ export const MultiYearAnalysisTab: React.FC<MultiYearAnalysisTabProps> = ({
   actualMonthlyData,
   hotelRoomCount,
   isStartup = false,
+  currencyCode,
+  currencySymbol,
 }) => {
   // Compute Current Year Actual & Budget totals
   let aTotalRev = 0;

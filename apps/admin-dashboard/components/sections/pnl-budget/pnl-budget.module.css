@@ -101,6 +101,43 @@
   color: #0c0a09;
 }
 
+.pdfExportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  background-color: #1e4d3a;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(30, 77, 58, 0.2);
+  transition: all 0.15s ease;
+}
+
+.pdfExportBtn:hover {
+  background-color: #163b2c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(30, 77, 58, 0.28);
+}
+
+.pdfExportBtn:active {
+  transform: translateY(0);
+}
+
+:global(.dark) .pdfExportBtn {
+  background-color: #10b981;
+  color: #064e3b;
+}
+
+:global(.dark) .pdfExportBtn:hover {
+  background-color: #059669;
+  color: #ffffff;
+}
+
 /* KPIs Top Row */
 .kpiGrid {
   display: grid;

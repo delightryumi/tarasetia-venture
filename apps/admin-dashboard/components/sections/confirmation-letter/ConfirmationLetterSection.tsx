@@ -353,11 +353,11 @@ export default function ConfirmationLetterSection() {
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
                             >
-                                <option value="ALL">Semua Status Reservasi</option>
+                                <option value="ALL">All Reservation Statuses</option>
                                 <option value="DRAFT">Draft</option>
-                                <option value="SENT">Terkirim (Sent)</option>
-                                <option value="CONFIRMED">Terkonfirmasi (Guaranteed)</option>
-                                <option value="CANCELLED">Dibatalkan (Cancelled)</option>
+                                <option value="SENT">Sent</option>
+                                <option value="CONFIRMED">Confirmed (Guaranteed)</option>
+                                <option value="CANCELLED">Cancelled</option>
                             </select>
 
                             <select
@@ -365,9 +365,9 @@ export default function ConfirmationLetterSection() {
                                 value={typeFilter}
                                 onChange={(e) => setTypeFilter(e.target.value)}
                             >
-                                <option value="ALL">Semua Kategori Klien</option>
+                                <option value="ALL">All Client Categories</option>
                                 <option value="CORPORATE">Corporate (B2B)</option>
-                                <option value="GOVERNMENT">Government (Dinas / K/L)</option>
+                                <option value="GOVERNMENT">Government (Dinas / Ministry)</option>
                                 <option value="GROUP">Group / Tour & Travel</option>
                                 <option value="FIT">Individual Guest (FIT)</option>
                             </select>
@@ -376,25 +376,25 @@ export default function ConfirmationLetterSection() {
 
                     {loading ? (
                         <div style={{ textAlign: "center", padding: "3rem 1rem", color: "#94a3b8" }}>
-                            Memuat arsip Confirmation Letter...
+                            Loading Confirmation Letters...
                         </div>
                     ) : filteredLetters.length === 0 ? (
                         <div className={styles.emptyState}>
                             <div className={styles.emptyStateIcon}>
                                 <FileText size={48} weight="thin" />
                             </div>
-                            <h3 className={styles.emptyStateTitle}>Belum Ada Dokumen Confirmation Letter</h3>
+                            <h3 className={styles.emptyStateTitle}>No Confirmation Letters Found</h3>
                             <p className={styles.emptyStateText}>
                                 {searchQuery || statusFilter !== "ALL" || typeFilter !== "ALL"
-                                    ? "Tidak ada dokumen yang cocok dengan filter pencarian."
-                                    : "Terbitkan surat konfirmasi reservasi resmi berstandar hotel untuk tamu korporat atau instansi pemerintah."}
+                                    ? "No documents match the active filter criteria."
+                                    : "Issue official hotel reservation confirmation letters for corporate or government group bookings."}
                             </p>
                             <button
                                 className={`${styles.btnAction} ${styles.btnPrimary}`}
                                 onClick={openCreateNew}
                             >
                                 <Plus size={16} weight="bold" />
-                                Buat Dokumen Konfirmasi Baru
+                                Create New Confirmation Letter
                             </button>
                         </div>
                     ) : (
@@ -402,15 +402,15 @@ export default function ConfirmationLetterSection() {
                             <table className={styles.vhpTable}>
                                 <thead>
                                     <tr>
-                                        <th className={styles.vhpTh}>No. Dokumen</th>
-                                        <th className={styles.vhpTh}>Tgl Terbit</th>
-                                        <th className={styles.vhpThLeft}>Instansi / Perusahaan</th>
-                                        <th className={styles.vhpThLeft}>Agenda Kegiatan</th>
-                                        <th className={styles.vhpTh}>Periode Menginap</th>
-                                        <th className={styles.vhpTh}>Alokasi</th>
-                                        <th className={styles.vhpThRight}>Total Nilai Kontrak</th>
+                                        <th className={styles.vhpTh}>Letter No.</th>
+                                        <th className={styles.vhpTh}>Date</th>
+                                        <th className={styles.vhpThLeft}>Client / Company</th>
+                                        <th className={styles.vhpThLeft}>Event / Purpose</th>
+                                        <th className={styles.vhpTh}>Stay Period</th>
+                                        <th className={styles.vhpTh}>Allocation</th>
+                                        <th className={styles.vhpThRight}>Total Amount</th>
                                         <th className={styles.vhpTh}>Status</th>
-                                        <th className={styles.vhpTh} style={{ textAlign: "right" }}>Aksi</th>
+                                        <th className={styles.vhpTh} style={{ textAlign: "right" }}>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -442,7 +442,7 @@ export default function ConfirmationLetterSection() {
                                                 </td>
                                                 <td>
                                                     <div style={{ fontWeight: 600 }}>
-                                                        {item.eventName || "Reservasi Kamar & Fasilitas Hotel"}
+                                                        {item.eventName || "Room & Facility Reservation"}
                                                     </div>
                                                     {item.spkNumber && (
                                                         <div style={{ fontSize: "10px", color: "#b49b67" }}>
@@ -452,10 +452,10 @@ export default function ConfirmationLetterSection() {
                                                 </td>
                                                 <td style={{ textAlign: "center", fontSize: "11px" }}>
                                                     <div><strong>CI:</strong> {item.checkInDate}</div>
-                                                    <div style={{ color: "#64748b" }}><strong>CO:</strong> {item.checkOutDate} ({item.totalNights || 1} Mlm)</div>
+                                                    <div style={{ color: "#64748b" }}><strong>CO:</strong> {item.checkOutDate} ({item.totalNights || 1} Nts)</div>
                                                 </td>
                                                 <td style={{ textAlign: "center", fontSize: "11px" }}>
-                                                    <div><strong>{totalRooms}</strong> Kamar</div>
+                                                    <div><strong>{totalRooms}</strong> Rooms</div>
                                                     {totalPax > 0 && <div style={{ color: "#64748b" }}>{totalPax} Pax MICE</div>}
                                                 </td>
                                                 <td style={{ textAlign: "right", fontWeight: 800, color: "#16a34a" }}>
@@ -469,7 +469,7 @@ export default function ConfirmationLetterSection() {
                                                         <button
                                                             className={`${styles.btnAction} ${styles.btnSecondary}`}
                                                             style={{ padding: "4px 7px" }}
-                                                            title="Pratinjau & Cetak A4"
+                                                            title="Preview & Print A4"
                                                             onClick={() => openForEdit(item)}
                                                         >
                                                             <Printer size={14} />
@@ -477,7 +477,7 @@ export default function ConfirmationLetterSection() {
                                                         <button
                                                             className={`${styles.btnAction} ${styles.btnSecondary}`}
                                                             style={{ padding: "4px 7px" }}
-                                                            title="Edit Matrix Dossier"
+                                                            title="Edit Details"
                                                             onClick={() => openForEdit(item)}
                                                         >
                                                             <PencilSimple size={14} />

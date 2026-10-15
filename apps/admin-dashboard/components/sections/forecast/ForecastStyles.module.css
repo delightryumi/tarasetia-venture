@@ -776,9 +776,19 @@
 }
 
 @media (max-width: 768px) {
+  .header {
+    border-radius: 18px !important;
+    padding: 16px 14px !important;
+    margin: 0 0 16px 0 !important;
+    box-shadow: 
+      4px 4px 16px rgba(160, 175, 200, 0.15),
+      -3px -3px 12px rgba(255, 255, 255, 0.95),
+      inset 1px 1px 2px rgba(255, 255, 255, 0.9) !important;
+  }
+
   .mainContainer {
-    padding: 16px;
-    gap: 24px;
+    padding: 16px 14px calc(96px + env(safe-area-inset-bottom, 20px)) 14px !important;
+    gap: 16px !important;
   }
   
   .cardHeader {
@@ -824,26 +834,36 @@
   
   .dateInput {
     width: 100%;
+    height: 40px !important;
   }
   
   .toggleWrapper {
     width: 100%;
+    gap: 4px;
+    padding: 4px;
   }
   
   .toggleBtn {
     flex: 1;
     text-align: center;
     padding: 0 8px;
+    min-height: 44px;
+    font-size: 13px;
+  }
+
+  .btnIcon {
+    width: 44px;
+    height: 44px;
   }
 
   .statGrid {
     grid-template-columns: 1fr !important;
-    gap: 16px !important;
+    gap: 12px !important;
   }
 
   .chartsGrid {
     grid-template-columns: 1fr !important;
-    gap: 20px !important;
+    gap: 16px !important;
   }
 }
 
@@ -927,4 +947,22 @@
 :global(.dark) .paymentPending {
   background-color: #78350f !important;
   color: #fbbf24;
+}
+
+@media (max-width: 768px) {
+  .overviewRoot {
+    min-height: auto !important;
+    background: transparent !important;
+  }
+
+  .mainContainer {
+    padding: 2px 4px calc(96px + env(safe-area-inset-bottom, 20px)) 4px !important;
+    gap: 12px !important;
+  }
+
+  .header {
+    margin: 0 0 10px 0 !important;
+    padding: 12px 14px !important;
+    border-radius: 16px !important;
+  }
 }

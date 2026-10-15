@@ -18,8 +18,11 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  Download,
 } from "lucide-react";
 import { formatIDR } from "@/lib/pnl-utils";
+import { useCurrency } from "@/hooks/useCurrency";
+import { exportPNLBudgetPDF } from "./hooks/usePNLBudgetPDF";
 import { usePNLBudget } from "./hooks/usePNLBudget";
 import { MonthlyActualVsBudgetTab } from "./components/MonthlyActualVsBudgetTab";
 import { QuarterlyReviewTab } from "./components/QuarterlyReviewTab";
@@ -55,9 +58,11 @@ const MONTH_OPTIONS = [
 
 export const PNLBudgetSection: React.FC = () => {
   const {
+    hotelCode,
     hotelName,
     hotelRoomCount,
     isStartup,
+    currencyCode: pnlCurrencyCode,
     selectedYear,
     setSelectedYear,
     selectedMonth,
@@ -70,7 +75,35 @@ export const PNLBudgetSection: React.FC = () => {
     reloadData,
   } = usePNLBudget();
 
+  const { currencyCode: activeCurrencyCode, symbol: activeSymbol, formatCurrency } = useCurrency(hotelCode);
+  const effectiveCurrencyCode = activeCurrencyCode || pnlCurrencyCode || "IDR";
+  const effectiveSymbol = activeSymbol || (effectiveCurrencyCode === "IDR" ? "Rp " : `${effectiveCurrencyCode} `);
+
   const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [isExportingPDF, setIsExportingPDF] = useState<boolean>(false);
+
+  const handleExportPDF = () => {
+    try {
+      setIsExportingPDF(true);
+      exportPNLBudgetPDF({
+        hotelName,
+        hotelCode: hotelCode || "0",
+        year: selectedYear,
+        monthKey: selectedMonth,
+        activeView,
+        budgetDoc,
+        actualMonthlyData,
+        hotelRoomCount,
+        isStartup,
+        currencyCode: effectiveCurrencyCode,
+        currencySymbol: effectiveSymbol,
+      });
+    } catch (err) {
+      console.error("Gagal export PDF PNL Budget:", err);
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem("crs_pnl_budget_zoom");
@@ -294,6 +327,16 @@ export const PNLBudgetSection: React.FC = () => {
           >
             <RefreshCw size={16} />
           </button>
+
+          <button
+            onClick={handleExportPDF}
+            disabled={isExportingPDF}
+            className={styles.pdfExportBtn}
+            title="Export Laporan P&L Actual vs Budget ke Dokumen PDF Presisi USALI"
+          >
+            <Download size={15} />
+            <span>{isExportingPDF ? "Memproses..." : "Export PDF"}</span>
+          </button>
         </div>
       </motion.header>
 
@@ -302,10 +345,10 @@ export const PNLBudgetSection: React.FC = () => {
         <div className={styles.kpiCard}>
           <span className={styles.kpiLabel}>Total Operating Revenue</span>
           <span className={styles.kpiValue} style={{ color: "#0284c7" }}>
-            {formatIDR(actRev)}
+            {formatIDR(actRev, effectiveCurrencyCode)}
           </span>
           <div className={styles.kpiComparison}>
-            <span style={{ color: "#78716c" }}>Target: {formatIDR(budRev)}</span>
+            <span style={{ color: "#78716c" }}>Target: {formatIDR(budRev, effectiveCurrencyCode)}</span>
             <span className={revVar >= 0 ? styles.variancePositive : styles.varianceNegative}>
               {revVar >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
               {revVarPct.toFixed(1)}%
@@ -316,10 +359,10 @@ export const PNLBudgetSection: React.FC = () => {
         <div className={styles.kpiCard}>
           <span className={styles.kpiLabel}>Gross Operating Profit (GOP)</span>
           <span className={styles.kpiValue} style={{ color: actGop >= 0 ? "#16a34a" : "#dc2626" }}>
-            {formatIDR(actGop)}
+            {formatIDR(actGop, effectiveCurrencyCode)}
           </span>
           <div className={styles.kpiComparison}>
-            <span style={{ color: "#78716c" }}>Target: {formatIDR(budGop)}</span>
+            <span style={{ color: "#78716c" }}>Target: {formatIDR(budGop, effectiveCurrencyCode)}</span>
             <span className={gopVar >= 0 ? styles.variancePositive : styles.varianceNegative}>
               {gopVar >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
               {gopVarPct.toFixed(1)}%
@@ -420,6 +463,8 @@ export const PNLBudgetSection: React.FC = () => {
             allActualMonthlyData={actualMonthlyData}
             hotelRoomCount={hotelRoomCount}
             isStartup={isStartup}
+            currencyCode={effectiveCurrencyCode}
+            currencySymbol={effectiveSymbol}
           />
         )}
 
@@ -430,6 +475,8 @@ export const PNLBudgetSection: React.FC = () => {
             actualMonthlyData={actualMonthlyData}
             hotelRoomCount={hotelRoomCount}
             isStartup={isStartup}
+            currencyCode={effectiveCurrencyCode}
+            currencySymbol={effectiveSymbol}
           />
         )}
 
@@ -440,6 +487,8 @@ export const PNLBudgetSection: React.FC = () => {
             actualMonthlyData={actualMonthlyData}
             hotelRoomCount={hotelRoomCount}
             isStartup={isStartup}
+            currencyCode={effectiveCurrencyCode}
+            currencySymbol={effectiveSymbol}
           />
         )}
 
@@ -450,6 +499,8 @@ export const PNLBudgetSection: React.FC = () => {
             actualMonthlyData={actualMonthlyData}
             hotelRoomCount={hotelRoomCount}
             isStartup={isStartup}
+            currencyCode={effectiveCurrencyCode}
+            currencySymbol={effectiveSymbol}
           />
         )}
       </motion.div>

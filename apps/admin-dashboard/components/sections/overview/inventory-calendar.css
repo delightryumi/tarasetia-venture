@@ -395,8 +395,16 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
+    .gantt-container {
+        height: auto !important;
+        min-height: 520px !important;
+        border-radius: 16px !important;
+        border: 1px solid rgba(226, 232, 240, 0.9) !important;
+        box-shadow: 0 4px 14px rgba(160, 175, 200, 0.12), -2px -2px 10px rgba(255, 255, 255, 0.95) !important;
+    }
     .gantt-scroll-area {
         overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
     .gantt-timeline-container {
         min-width: 700px; /* Ensure 14 days have enough space */
@@ -407,6 +415,10 @@
     }
     .gantt-room-row-label {
         padding-left: 12px;
+    }
+    .gantt-nav-btn {
+        min-height: 40px !important;
+        padding: 0 14px !important;
     }
 }
 

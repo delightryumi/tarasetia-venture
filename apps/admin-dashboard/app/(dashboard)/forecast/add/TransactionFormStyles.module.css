@@ -1875,3 +1875,9 @@
   border-color: rgba(225, 29, 72, 0.3) !important;
 }
 
+@media (max-width: 768px) {
+  .mainContainer {
+    padding: 16px 12px calc(96px + env(safe-area-inset-bottom, 20px)) 12px !important;
+  }
+}
+

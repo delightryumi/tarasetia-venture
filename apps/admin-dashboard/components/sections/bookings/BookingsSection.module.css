@@ -425,53 +425,76 @@
 
 @media (max-width: 768px) {
     .container {
-        padding: 16px 16px 80px;
+        padding: 2px 4px calc(92px + env(safe-area-inset-bottom, 20px));
+        background: transparent;
+        min-height: auto;
     }
     
     .filterPanel {
-        padding: 16px;
+        padding: 14px 12px;
         border-radius: 20px;
+        box-shadow: 
+            0 4px 0 #e2e8f0,
+            0 8px 18px -4px rgba(15, 23, 42, 0.05);
+        border: 1px solid rgba(226, 232, 240, 0.9);
     }
     
     .filterTopRow, .filterBottomRow {
         flex-direction: column;
         align-items: stretch;
+        gap: 12px;
     }
     
-    .dateTypeGroup {
+    .statusTabs {
         width: 100%;
-        justify-content: space-between;
+        padding-bottom: 6px;
     }
-    
-    .dateTypeBtn {
-        flex: 1;
-        text-align: center;
-        padding: 6px 8px;
+
+    .statusTabBtn {
+        min-height: 42px;
+        font-size: 11.5px;
     }
     
     .dateRangeControls {
         width: 100%;
+        display: flex;
+        gap: 8px;
     }
     
     .dateInputGroup {
         flex: 1;
+        min-height: 44px;
+        padding: 4px 10px;
     }
     
-    .filterControlsRight {
+    .searchActionBtn {
+        min-height: 44px;
+        padding: 0 16px;
+    }
+
+    .filterControlsLeft {
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
     
+    .selectInput {
+        width: 100%;
+        min-height: 44px;
+    }
+
     .searchInputWrapper {
-        flex: 1;
         width: 100%;
+        min-height: 44px;
     }
     
     .searchInput {
-        min-width: 100px;
         width: 100%;
     }
     
     .bookingsGrid {
         grid-template-columns: 1fr;
+        gap: 14px;
     }
 }

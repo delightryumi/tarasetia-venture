@@ -87,7 +87,6 @@ const PERMISSION_TREE: PermissionModule[] = [
             { id: "fo_inventory_change", label: "↳ Akses Merubah Inventory / Allotment", icon: <Layers size={14} /> },
             { id: "fo_cancel", label: "Akses Cancel Reservasi (FO)", icon: <XCircle size={14} /> },
             { id: "fo_void", label: "Akses Void Reservasi (FO)", icon: <Trash2 size={14} /> },
-            { id: "inventory-control", label: "Inventory Control", icon: <Layers size={14} /> },
             { id: "invoice", label: "Create Invoice", icon: <FileText size={14} /> },
             { id: "purchase-order", label: "Purchase Order", icon: <ShoppingCart size={14} /> },
         ]
@@ -107,7 +106,6 @@ const PERMISSION_TREE: PermissionModule[] = [
         submenus: [
             { id: "overview", label: "Overview", icon: <LayoutDashboard size={14} /> },
             { id: "forecast", label: "Forecast", icon: <TrendingUp size={14} /> },
-            { id: "inventory-control", label: "Inventory Control", icon: <Layers size={14} /> },
             { id: "purchase-order", label: "Purchase Order", icon: <ShoppingCart size={14} /> },
         ]
     },

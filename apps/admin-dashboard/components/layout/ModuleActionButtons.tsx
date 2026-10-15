@@ -32,7 +32,7 @@ export function ModuleActionButtons({
       )}
 
       {/* Theme switcher toggle container */}
-      <div className="relative z-50">
+      <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={styles.squareButton}

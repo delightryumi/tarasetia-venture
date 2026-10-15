@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import { SummaryCard } from "./SummaryCard";
 import styles from "../ForecastStyles.module.css";
+import { useCurrency } from "@/hooks/useCurrency";
 
 const PEACH = "#3b82f6"; // Dynamic corporate blue
 const SAGE = "#181d26";  // Charcoal theme
@@ -21,6 +22,7 @@ interface AnalyticsChartsProps {
 }
 
 export function AnalyticsCharts({ stats, viewMode, formatCurrency }: AnalyticsChartsProps) {
+    const { symbol: currSymbol } = useCurrency();
     return (
         <motion.section
             key="charts"
@@ -54,7 +56,7 @@ export function AnalyticsCharts({ stats, viewMode, formatCurrency }: AnalyticsCh
                             </Pie>
                             <Tooltip 
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
-                                formatter={(value: any) => `Rp ${formatCurrency(Number(value) || 0)}`}
+                                formatter={(value: any) => `${currSymbol}${formatCurrency(Number(value) || 0)}`}
                             />
                             <Legend verticalAlign="bottom" height={36}/>
                         </PieChart>
@@ -80,7 +82,7 @@ export function AnalyticsCharts({ stats, viewMode, formatCurrency }: AnalyticsCh
                             <Tooltip 
                                 cursor={{ fill: 'transparent' }}
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
-                                formatter={(value: any) => `Rp ${formatCurrency(Number(value) || 0)}`}
+                                formatter={(value: any) => `${currSymbol}${formatCurrency(Number(value) || 0)}`}
                             />
                             <Bar dataKey="value" radius={[6, 6, 0, 0]} animationDuration={2000} barSize={50} />
                         </BarChart>
@@ -133,10 +135,10 @@ export function AnalyticsCharts({ stats, viewMode, formatCurrency }: AnalyticsCh
                             <Tooltip 
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
                                 formatter={(value: any, name: any) => {
-                                    if (name === "gross") return [`Rp ${formatCurrency(Number(value) || 0)}`, "Gross Revenue"];
+                                    if (name === "gross") return [`${currSymbol}${formatCurrency(Number(value) || 0)}`, "Gross Revenue"];
                                     if (name === "occ") return [`${Number(value || 0).toFixed(1)}%`, "Occupancy"];
-                                    if (name === "arr") return [`Rp ${formatCurrency(Number(value) || 0)}`, "ADR"];
-                                    if (name === "revPar") return [`Rp ${formatCurrency(Number(value) || 0)}`, "RevPAR"];
+                                    if (name === "arr") return [`${currSymbol}${formatCurrency(Number(value) || 0)}`, "ADR"];
+                                    if (name === "revPar") return [`${currSymbol}${formatCurrency(Number(value) || 0)}`, "RevPAR"];
                                     return [value, name];
                                 }}
                             />
@@ -182,6 +184,7 @@ export function AnalyticsCharts({ stats, viewMode, formatCurrency }: AnalyticsCh
                     label="Average Room Rate"
                     icon={<Coins size={18} />}
                     accent="#10b981"
+                    prefix={currSymbol.trim()}
                     value={stats.arr}
                     loading={stats.loading}
                     formatter={formatCurrency}
@@ -190,6 +193,7 @@ export function AnalyticsCharts({ stats, viewMode, formatCurrency }: AnalyticsCh
                     label="RevPAR (Yield)"
                     icon={<Activity size={18} />}
                     accent="#6366f1"
+                    prefix={currSymbol.trim()}
                     value={stats.revPar}
                     loading={stats.loading}
                     formatter={formatCurrency}

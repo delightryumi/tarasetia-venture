@@ -109,7 +109,7 @@ export const InvoiceSection = () => {
                                 <div className="relative">
                                     <input 
                                         type="text" 
-                                        placeholder="Cari nama tamu (min. 2 huruf)..."
+                                        placeholder="Search guest name (min. 2 letters)..."
                                         className="w-full h-11 px-4 bg-[#fbf9f4] dark:bg-[#1a1a1a] border border-[rgba(141,122,82,0.12)] dark:border-[#333333] rounded-xl text-sm outline-none focus:border-[var(--sidebar-link-active-bg)] focus:ring-1 focus:ring-[var(--sidebar-link-active-bg)] transition-all shadow-sm dark:text-white"
                                         onChange={(e) => searchTransactions(e.target.value)}
                                     />
@@ -122,7 +122,7 @@ export const InvoiceSection = () => {
 
                                 <div className={`${styles.verifyResultsList} ${styles.customScrollbar}`}>
                                     {transactions.length === 0 && !searching && (
-                                        <p className={styles.verifyHelperText}>Ketik nama tamu untuk mencari data asli dari sistem...</p>
+                                        <p className={styles.verifyHelperText}>Type guest name to search PMS records...</p>
                                     )}
                                     {transactions.map((tr, i) => (
                                         <button
@@ -132,7 +132,7 @@ export const InvoiceSection = () => {
                                         >
                                             <div className={styles.verifyResultInfo}>
                                                 <div className={styles.verifyResultName}>{tr.guestName || tr.incomeCategory}</div>
-                                                <div className={styles.verifyResultMeta}>{tr.checkInDate || new Date(tr.timestamp).toLocaleDateString()} — {tr.channel || 'Internal'}</div>
+                                                <div className={styles.verifyResultMeta}>{tr.checkInDate || new Date(tr.timestamp).toLocaleDateString()} · {tr.channel || 'Internal'}</div>
                                             </div>
                                             <div className={styles.verifyResultValue}>
                                                 <div className={styles.verifyResultAmount}>Rp {Number(tr.amount).toLocaleString('id-ID')}</div>
@@ -334,7 +334,7 @@ export const InvoiceSection = () => {
                                     />
                                 </div>
                                 <div className={styles.formGroupCustom}>
-                                    <label>Pajak PB1 / Tax (%)</label>
+                                    <label>Local Tax / PB1 (%)</label>
                                     <input 
                                         type="number" 
                                         min="0"

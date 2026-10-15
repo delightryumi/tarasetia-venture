@@ -193,20 +193,20 @@ export const RevenueBreakdownSection: React.FC = () => {
               type="button"
               onClick={handlePrint}
               className={styles.btnSecondary}
-              title="Cetak format cetak audit hotel (A4 Landscape)"
+              title="Print report (A4 Landscape)"
             >
               <Printer size={14} />
-              <span>Cetak Laporan</span>
+              <span>Print Report</span>
             </button>
 
             <button
               type="button"
               onClick={handleExportCSV}
               className={styles.btnSecondary}
-              title="Download format CSV / Excel"
+              title="Export CSV / Excel format"
             >
               <Download size={14} />
-              <span>Ekspor CSV</span>
+              <span>Export CSV</span>
             </button>
 
             <button
@@ -214,10 +214,10 @@ export const RevenueBreakdownSection: React.FC = () => {
               onClick={refetch}
               disabled={loading}
               className={styles.btnPrimary}
-              title="Segarkan data audit terbaru"
+              title="Refresh revenue breakdown data"
             >
               <RotateCw size={14} className={loading ? "animate-spin" : ""} />
-              <span>{loading ? "Memuat..." : "Proses Data"}</span>
+              <span>{loading ? "Loading..." : "Process"}</span>
             </button>
           </div>
         </div>
@@ -227,7 +227,7 @@ export const RevenueBreakdownSection: React.FC = () => {
           {/* Date range inputs */}
           <div className={styles.dateRangeWrapper}>
             <div className={styles.dateInputGroup}>
-              <label htmlFor="startDate">Periode Dari</label>
+              <label htmlFor="startDate">From</label>
               <input
                 id="startDate"
                 type="date"
@@ -238,9 +238,9 @@ export const RevenueBreakdownSection: React.FC = () => {
                 }}
               />
             </div>
-            <span className={styles.dateSeparator}>s/d</span>
+            <span className={styles.dateSeparator}>to</span>
             <div className={styles.dateInputGroup}>
-              <label htmlFor="endDate">Sampai</label>
+              <label htmlFor="endDate">To</label>
               <input
                 id="endDate"
                 type="date"
@@ -260,28 +260,28 @@ export const RevenueBreakdownSection: React.FC = () => {
               onClick={() => handleShortcut("today")}
               className={`${styles.quickBtn} ${activeShortcut === "today" ? styles.quickBtnActive : ""}`}
             >
-              Hari Ini
+              Today
             </button>
             <button
               type="button"
               onClick={() => handleShortcut("yesterday")}
               className={`${styles.quickBtn} ${activeShortcut === "yesterday" ? styles.quickBtnActive : ""}`}
             >
-              Kemarin
+              Yesterday
             </button>
             <button
               type="button"
               onClick={() => handleShortcut("last7")}
               className={`${styles.quickBtn} ${activeShortcut === "last7" ? styles.quickBtnActive : ""}`}
             >
-              7 Hari Terakhir
+              Last 7 Days
             </button>
             <button
               type="button"
               onClick={() => handleShortcut("mtd")}
               className={`${styles.quickBtn} ${activeShortcut === "mtd" ? styles.quickBtnActive : ""}`}
             >
-              Bulan Berjalan (MTD)
+              MTD
             </button>
           </div>
 
@@ -293,7 +293,7 @@ export const RevenueBreakdownSection: React.FC = () => {
               onChange={(e) => setIncludeCancelled(e.target.checked)}
               className={styles.checkboxInput}
             />
-            <span>Sertakan Void / Batal</span>
+            <span>Include Void / Cancelled</span>
           </label>
         </div>
       </div>
@@ -301,13 +301,13 @@ export const RevenueBreakdownSection: React.FC = () => {
       {/* 2. KPI Summary Cards */}
       <div className={styles.kpiBar}>
         <div className={styles.kpiCard}>
-          <span className={styles.kpiLabel}>Total Produksi (RN)</span>
+          <span className={styles.kpiLabel}>Total Production (RN)</span>
           <span className={styles.kpiValue}>
-            {grandTotal.qty} <span className={styles.kpiUnit}>RN ({rows.length} Folio)</span>
+            {grandTotal.qty} <span className={styles.kpiUnit}>RN ({rows.length} Folios)</span>
           </span>
         </div>
         <div className={styles.kpiCard}>
-          <span className={styles.kpiLabel}>Total Bruto (Gross)</span>
+          <span className={styles.kpiLabel}>Total Gross Revenue</span>
           <span className={`${styles.kpiValue} ${styles.valEmerald}`}>
             Rp {formatNumber(grandTotal.gross)}
           </span>
@@ -317,11 +317,11 @@ export const RevenueBreakdownSection: React.FC = () => {
           <span className={styles.kpiValue}>Rp {formatNumber(grandTotal.service)}</span>
         </div>
         <div className={styles.kpiCard}>
-          <span className={styles.kpiLabel}>Pajak Daerah (PB1 10%)</span>
+          <span className={styles.kpiLabel}>Local Tax (PB1 10%)</span>
           <span className={styles.kpiValue}>Rp {formatNumber(grandTotal.tax)}</span>
         </div>
         <div className={styles.kpiCard}>
-          <span className={styles.kpiLabel}>Total Netto (Nett)</span>
+          <span className={styles.kpiLabel}>Total Nett Revenue</span>
           <span className={`${styles.kpiValue} ${styles.valSky}`}>
             Rp {formatNumber(grandTotal.nett)}
           </span>
@@ -338,9 +338,9 @@ export const RevenueBreakdownSection: React.FC = () => {
               REVENUE BREAKDOWN WITH PAYMENT On : {formatHeaderDate(startDate)} to {formatHeaderDate(endDate)}
             </div>
             <div className={styles.reportSubMeta}>
-              <span>Waktu Audit / Cetak: {printTimeStr}</span>
-              <span>Modul: Front Office & Night Audit</span>
-              <span>Total Data: {rows.length} Transaksi ({grandTotal.qty} RN)</span>
+              <span>Audit / Print Time: {printTimeStr}</span>
+              <span>Module: Front Office & Night Audit</span>
+              <span>Total Records: {rows.length} Transactions ({grandTotal.qty} RN)</span>
             </div>
           </div>
 

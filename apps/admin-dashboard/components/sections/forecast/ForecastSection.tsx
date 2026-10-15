@@ -77,6 +77,15 @@ export const ForecastSection: React.FC = () => {
 
     const stats = useForecast(viewMode, selectedDate, activeHotelCode);
 
+    const { symbol: currSymbol, config: currConfig } = useCurrency(activeHotelCode);
+
+    const formatCurrency = (val: number) => {
+        return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: currConfig.decimals,
+            maximumFractionDigits: currConfig.decimals
+        }).format(val || 0);
+    };
+
     const getFilteredEntries = (type: string) => {
         let filtered: any[] = [];
         let title = "";
@@ -170,8 +179,8 @@ export const ForecastSection: React.FC = () => {
                 summary = {
                     label: "ADR Calculation",
                     formula: "Room Revenue / Rooms Sold",
-                    values: `IDR ${(stats.totalRoomRevenue || Math.round(stats.arr * stats.roomsSold)).toLocaleString()} / ${stats.roomsSold}`,
-                    result: `IDR ${stats.arr.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                    values: `${currSymbol.trim()} ${(stats.totalRoomRevenue || Math.round(stats.arr * stats.roomsSold)).toLocaleString()} / ${stats.roomsSold}`,
+                    result: `${currSymbol.trim()} ${stats.arr.toLocaleString(undefined, { maximumFractionDigits: currConfig.decimals })}`
                 };
                 break;
             case "RevPAR":
@@ -184,8 +193,8 @@ export const ForecastSection: React.FC = () => {
                 summary = {
                     label: "RevPAR Calculation",
                     formula: "Total Room Revenue / Total Available Rooms",
-                    values: `IDR ${(stats.totalRoomRevenue || Math.round(stats.revPar * stats.totalPossibleRoomNights)).toLocaleString()} / ${stats.totalPossibleRoomNights}`,
-                    result: `IDR ${stats.revPar.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                    values: `${currSymbol.trim()} ${(stats.totalRoomRevenue || Math.round(stats.revPar * stats.totalPossibleRoomNights)).toLocaleString()} / ${stats.totalPossibleRoomNights}`,
+                    result: `${currSymbol.trim()} ${stats.revPar.toLocaleString(undefined, { maximumFractionDigits: currConfig.decimals })}`
                 };
         }
         return { filtered, title, summary };
@@ -201,15 +210,6 @@ export const ForecastSection: React.FC = () => {
     const handleCardClick = (type: string) => {
         const { filtered, title, summary } = getFilteredEntries(type);
         setDetailDrawerConfig({ title, entries: filtered, summary });
-    };
-
-    const { symbol: currSymbol, config: currConfig } = useCurrency();
-
-    const formatCurrency = (val: number) => {
-        return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: currConfig.decimals,
-            maximumFractionDigits: currConfig.decimals
-        }).format(val || 0);
     };
 
     const [selectedGuest, setSelectedGuest] = useState<any>(null);
@@ -574,12 +574,12 @@ export const ForecastSection: React.FC = () => {
             if (isNaN(date.getTime())) return dateStr;
 
             if (viewMode === "daily") {
-                return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+                return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
             }
             if (viewMode === "monthly") {
-                return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+                return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
             }
-            return date.toLocaleDateString('id-ID', { year: 'numeric' });
+            return date.toLocaleDateString('en-US', { year: 'numeric' });
         } catch {
             return dateStr;
         }
@@ -619,6 +619,7 @@ export const ForecastSection: React.FC = () => {
                                 label="Total Gross Revenue"
                                 icon={<TrendingUp size={18} />}
                                 accent="#4ade80"
+                                prefix={currSymbol.trim()}
                                 value={stats.totalGrossRevenue}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
@@ -628,6 +629,7 @@ export const ForecastSection: React.FC = () => {
                                 label="Walk-in Revenue"
                                 icon={<UserPlus size={18} />}
                                 accent="#f97316"
+                                prefix={currSymbol.trim()}
                                 value={stats.walkInRevenue}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
@@ -637,6 +639,7 @@ export const ForecastSection: React.FC = () => {
                                 label="OTA Channel Revenue"
                                 icon={<Globe size={18} />}
                                 accent="#06b6d4"
+                                prefix={currSymbol.trim()}
                                 value={stats.otaRevenue}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
@@ -646,6 +649,7 @@ export const ForecastSection: React.FC = () => {
                                 label="Non-Room Revenue"
                                 icon={<MoreHorizontal size={18} />}
                                 accent="#ec4899"
+                                prefix={currSymbol.trim()}
                                 value={stats.otherRevenue}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
@@ -666,6 +670,7 @@ export const ForecastSection: React.FC = () => {
                                 label="Average Daily Rate (ADR)"
                                 icon={<Coins size={18} />}
                                 accent="#10b981"
+                                prefix={currSymbol.trim()}
                                 value={stats.arr}
                                 loading={stats.loading}
                                 formatter={formatCurrency}
@@ -675,6 +680,7 @@ export const ForecastSection: React.FC = () => {
                                 label="RevPAR"
                                 icon={<TrendingUp size={18} />}
                                 accent="#6366f1"
+                                prefix={currSymbol.trim()}
                                 value={stats.revPar}
                                 loading={stats.loading}
                                 formatter={formatCurrency}

@@ -290,6 +290,13 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeModules:
     // 3. Sync active module
     useEffect(() => {
         if (typeof window !== "undefined") {
+            const modParam = searchParams?.get("module");
+            if (modParam && MODULE_DEFINITIONS[modParam]) {
+                localStorage.setItem("active_module", modParam);
+                setActiveModule(modParam);
+                return;
+            }
+
             if (pathname.startsWith('/innalytics')) {
                 localStorage.setItem("active_module", "innalytics");
                 setActiveModule("innalytics");
@@ -307,6 +314,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeModules:
             }
             if (
                 pathname.startsWith('/front-office') ||
+                pathname.startsWith('/bookings') ||
                 pathname === '/digital-checkin' ||
                 pathname === '/invoice' ||
                 pathname.startsWith('/rate-inventory') ||
@@ -346,18 +354,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeModules:
                 return;
             }
 
-            const modParam = searchParams?.get("module");
-            if (modParam) {
-                localStorage.setItem("active_module", modParam);
-                setActiveModule(modParam);
+            const storedMod = localStorage.getItem("active_module");
+            if (storedMod && MODULE_DEFINITIONS[storedMod]) {
+                setActiveModule(storedMod);
             } else {
-                const storedMod = localStorage.getItem("active_module");
-                if (storedMod) {
-                    setActiveModule(storedMod);
-                } else {
-                    localStorage.setItem("active_module", "front-office");
-                    setActiveModule("front-office");
-                }
+                localStorage.setItem("active_module", "front-office");
+                setActiveModule("front-office");
             }
         }
     }, [pathname, searchParams]);
@@ -437,15 +439,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeModules:
         const moduleKey = moduleMap[activeModule];
 
         let items = allNavItems;
-        const hasInnalytics = isSuperadmin || activeModules === null || activeModules.includes("innalytics") || activeModules.includes("inalytics");
         if (activeModule === "front-office") {
-            items = allNavItems.filter(item => {
-                if (item.id === "innalytics" && !hasInnalytics) return false;
-                return [
-                    "overview", "bookings", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", 
-                    "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"
-                ].includes(item.id);
-            });
+            items = allNavItems.filter(item => [
+                "overview", "bookings", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", 
+                "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"
+            ].includes(item.id));
         } else if (activeModule === "innalytics") {
             items = allNavItems.filter(item => [
                 "innalytics", "ina_reports", "overview", "forecast", "revenue-breakdown"
@@ -843,7 +841,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeModules:
                                                         className={`${s.menuCard} ${isActive ? s.menuCardActive : ""}`}
                                                     >
                                                         <div className={s.menuCardIconBox}>
-                                                            {React.cloneElement(item.icon, { size: 17 })}
+                                                            {React.cloneElement(item.icon, { size: 17 } as any)}
                                                         </div>
                                                         <div className={s.menuCardMeta}>
                                                             <div className={s.menuCardName}>

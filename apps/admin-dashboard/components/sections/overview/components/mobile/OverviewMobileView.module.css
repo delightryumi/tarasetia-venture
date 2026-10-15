@@ -1,0 +1,513 @@
+/* OverviewMobileView.module.css - 3D Tactile Claymorphic Front Office Overview Mobile View */
+
+.mobileRoot {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 2px 4px 36px 4px;
+  gap: 16px;
+  box-sizing: border-box;
+  font-family: inherit;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── 1. Top 3D Header Card ── */
+.headerCard {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 
+    0 4px 0 #e2e8f0,
+    0 10px 20px -4px rgba(15, 23, 42, 0.05),
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+:global(.dark) .headerCard {
+  background: #141a24;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 0 #0a0e16,
+    0 10px 24px -4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.headerTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hotelBadgeGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hotelTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+:global(.dark) .hotelTitle {
+  color: #f8fafc;
+}
+
+.hotelSub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.addTxBtn3D {
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: #2563eb;
+  border: 1px solid #1d4ed8;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 3px 0 #1e40af, 0 4px 8px rgba(37, 99, 235, 0.25);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.addTxBtn3D:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #1e40af;
+}
+
+/* ── 3D Period Filter Pills ── */
+.periodPillsWrapper {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 14px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+:global(.dark) .periodPillsWrapper {
+  background: #0f141d;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.periodPillBtn {
+  border: none;
+  background: transparent;
+  padding: 8px 4px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+:global(.dark) .periodPillBtn {
+  color: #94a3b8;
+}
+
+.periodPillActive {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 0 #cbd5e1, 0 3px 6px rgba(0, 0, 0, 0.05);
+}
+
+:global(.dark) .periodPillActive {
+  background: #1e293b;
+  color: #ffffff;
+  box-shadow: 0 2px 0 #0a0e16;
+}
+
+/* ── 2. 3D KPI Operational Cards ── */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.kpiCard3D {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  cursor: pointer;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 
+    0 4px 0 #e2e8f0,
+    0 8px 16px -4px rgba(15, 23, 42, 0.05);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+:global(.dark) .kpiCard3D {
+  background: #141a24;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 0 #0a0e16,
+    0 8px 16px -4px rgba(0, 0, 0, 0.4);
+}
+
+.kpiCard3D:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #e2e8f0;
+}
+
+:global(.dark) .kpiCard3D:active {
+  box-shadow: 0 2px 0 #0a0e16;
+}
+
+.kpiSelected {
+  border-color: #2563eb !important;
+  box-shadow: 
+    0 4px 0 #1d4ed8 !important,
+    0 8px 20px rgba(37, 99, 235, 0.25) !important;
+}
+
+.kpiIconWrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.kpiCount {
+  font-size: 22px;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1;
+}
+
+:global(.dark) .kpiCount {
+  color: #ffffff;
+}
+
+.kpiLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+:global(.dark) .kpiLabel {
+  color: #94a3b8;
+}
+
+/* ── 3. Active List Section ── */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #1e293b;
+  letter-spacing: 0.05em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+:global(.dark) .sectionTitle {
+  color: #f1f5f9;
+}
+
+.exportButtonGroup {
+  display: flex;
+  gap: 6px;
+}
+
+.exportBtn3D {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 0 #cbd5e1;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.exportBtn3D:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 #cbd5e1;
+}
+
+:global(.dark) .exportBtn3D {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+  box-shadow: 0 2px 0 #0a0e16;
+}
+
+/* ── 4. 3D Guest / Transaction Cards ── */
+.guestCardsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.guestCard3D {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 
+    0 4px 0 #e2e8f0,
+    0 8px 18px -4px rgba(15, 23, 42, 0.06),
+    inset 0 1px 1px rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+:global(.dark) .guestCard3D {
+  background: #141b26;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 0 #090e16,
+    0 8px 18px -4px rgba(0, 0, 0, 0.4);
+}
+
+.guestCard3D:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #e2e8f0;
+}
+
+:global(.dark) .guestCard3D:active {
+  box-shadow: 0 2px 0 #090e16;
+}
+
+.cardTopRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.guestInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.guestName {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:global(.dark) .guestName {
+  color: #f8fafc;
+}
+
+.bookingIdCode {
+  font-size: 11px;
+  font-family: monospace;
+  color: #64748b;
+  letter-spacing: 0.02em;
+}
+
+.roomBadge3D {
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 0 #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+:global(.dark) .roomBadge3D {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 2px 0 #0a0e16;
+}
+
+.roomNumberText {
+  font-size: 14px;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1;
+}
+
+:global(.dark) .roomNumberText {
+  color: #ffffff;
+}
+
+.roomLabelText {
+  font-size: 9px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+/* Card Mid Row: Channel & Room Type */
+.cardMidRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+:global(.dark) .cardMidRow {
+  background: #0f141d;
+  border-color: #1e293b;
+}
+
+.channelTag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.roomTypeTag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+}
+
+:global(.dark) .roomTypeTag {
+  color: #94a3b8;
+}
+
+/* Card Bottom Row: Price & Status */
+.cardBottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.priceTag {
+  font-size: 15px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+:global(.dark) .priceTag {
+  color: #ffffff;
+}
+
+.statusPill3D {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statusConfirmed {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.statusCheckedIn {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.statusCheckedOut {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.statusCancelled {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+/* Empty State */
+.emptyStateCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 32px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 0 #e2e8f0;
+}
+
+:global(.dark) .emptyStateCard {
+  background: #141b26;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 0 #0a0e16;
+}
+
+.emptyTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: #334155;
+  margin: 0;
+}
+
+.emptySub {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}

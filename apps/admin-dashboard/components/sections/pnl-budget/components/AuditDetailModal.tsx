@@ -17,6 +17,8 @@ interface AuditDetailModalProps {
   budgetAmount: number;
   items: ActualBreakdownItem[];
   isCostOrExpense?: boolean;
+  currencyCode?: string;
+  currencySymbol?: string;
 }
 
 export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
@@ -29,6 +31,8 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
   budgetAmount,
   items = [],
   isCostOrExpense = true,
+  currencyCode,
+  currencySymbol,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
@@ -105,13 +109,13 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
             <div className={styles.modalKpiCard}>
               <span className={styles.modalKpiLabel}>Realisasi (Aktual)</span>
               <span className={styles.modalKpiValue} style={{ color: "#2563eb" }}>
-                {formatIDR(actualAmount)}
+                {formatIDR(actualAmount, currencyCode)}
               </span>
             </div>
             <div className={styles.modalKpiCard}>
               <span className={styles.modalKpiLabel}>Anggaran (Budget)</span>
               <span className={styles.modalKpiValue} style={{ color: "#475569" }}>
-                {formatIDR(budgetAmount)}
+                {formatIDR(budgetAmount, currencyCode)}
               </span>
             </div>
             <div className={styles.modalKpiCard}>
@@ -131,7 +135,7 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
                       : "#dc2626",
                 }}
               >
-                {variance > 0 ? `+${formatIDR(variance)}` : formatIDR(variance)}
+                {variance > 0 ? `+${formatIDR(variance, currencyCode)}` : formatIDR(variance, currencyCode)}
                 <span style={{ fontSize: 11, fontWeight: 600, marginLeft: 4 }}>
                   ({budgetAmount > 0 ? `${variancePct.toFixed(1)}%` : "0.0%"})
                 </span>
@@ -208,7 +212,9 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
                     <th style={{ width: 150 }}>No. Dokumen</th>
                     <th style={{ width: 140 }}>Departemen</th>
                     <th>Deskripsi / Item</th>
-                    <th style={{ width: 120, textAlign: "right" }}>Nominal (Rp)</th>
+                    <th style={{ width: 120, textAlign: "right" }}>
+                      Nominal ({currencySymbol ? currencySymbol.trim() : (currencyCode || "Rp")})
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -254,7 +260,7 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
                             fontVariantNumeric: "tabular-nums",
                           }}
                         >
-                          {formatIDR(item.amount)}
+                          {formatIDR(item.amount, currencyCode)}
                         </td>
                       </tr>
                     );
@@ -268,7 +274,7 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
           <div className={styles.modalFooter}>
             <div className={styles.modalFooterInfo}>
               Menampilkan <strong>{filteredItems.length}</strong> dari <strong>{items.length}</strong> transaksi •
-              Subtotal Terfilter: <strong style={{ color: "#2563eb", marginLeft: 4 }}>{formatIDR(filteredTotal)}</strong>
+              Subtotal Terfilter: <strong style={{ color: "#2563eb", marginLeft: 4 }}>{formatIDR(filteredTotal, currencyCode)}</strong>
             </div>
             <button className={styles.modalPrimaryBtn} onClick={onClose}>
               Tutup Rincian

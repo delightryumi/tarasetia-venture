@@ -16,6 +16,8 @@ interface MonthlyActualVsBudgetTabProps {
   allActualMonthlyData?: Record<string, any>;
   hotelRoomCount: number;
   isStartup?: boolean;
+  currencyCode?: string;
+  currencySymbol?: string;
 }
 
 const MONTH_NAMES = [
@@ -41,6 +43,8 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
   allActualMonthlyData = {},
   hotelRoomCount,
   isStartup = false,
+  currencyCode,
+  currencySymbol,
 }) => {
   const [mode, setMode] = useState<"mtd" | "ytd">("mtd");
   const [detailModal, setDetailModal] = useState<{
@@ -364,7 +368,7 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
           style={{ color: isFavorable ? "#16a34a" : "#dc2626" }}
         >
           {diffVal > 0 ? "+" : ""}
-          {isCurrency ? formatIDR(diffVal) : diffVal.toLocaleString("id-ID")}
+          {isCurrency ? formatIDR(diffVal, currencyCode) : diffVal.toLocaleString("id-ID")}
         </td>
         <td
           className={styles.colPercent}
@@ -462,7 +466,9 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
               <th className={styles.colAmount} style={{ background: "#f1f5f9" }}>
                 BUDGET ({mode === "mtd" ? monthName.slice(0, 3) : `YTD ${monthName.slice(0, 3)}`})
               </th>
-              <th className={styles.colVariance}>VARIANCE (RP)</th>
+              <th className={styles.colVariance}>
+                VARIANCE ({currencySymbol ? currencySymbol.trim() : (currencyCode || "RP")})
+              </th>
               <th className={styles.colPercent}>VAR (%)</th>
             </tr>
           </thead>
@@ -1017,6 +1023,8 @@ export const MonthlyActualVsBudgetTab: React.FC<MonthlyActualVsBudgetTabProps> =
         budgetAmount={detailModal.budgetAmount}
         items={detailModal.items}
         isCostOrExpense={detailModal.isCostOrExpense}
+        currencyCode={currencyCode}
+        currencySymbol={currencySymbol}
       />
     </div>
   );

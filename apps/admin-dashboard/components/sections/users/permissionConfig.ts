@@ -72,7 +72,6 @@ export const COMPREHENSIVE_PERMISSION_GROUPS: PermissionGroup[] = [
             { id: "forecast", label: "Room Occupancy & Availability Forecast", description: "Melihat prakiraan tingkat keterisian kamar harian, mingguan, dan proyeksi ketersediaan fisik kamar" },
             { id: "revenue-breakdown", label: "Revenue Breakdown & Department Income", description: "Melihat rincian pendapatan harian per tipe kamar, outlet makanan minuman, dan pos pendapatan lainnya" },
             { id: "rate-inventory", label: "Master Kalender Rate & Allotment Grid", description: "Mengakses kalender tarif harian (Daily Rates) dan alokasi kuota kamar yang tersedia untuk dijual" },
-            { id: "inventory-control", label: "Kontrol Fisik Kamar & Room Blocking", description: "Mengatur pemblokiran fisik kamar untuk rombongan VIP atau keperluan perbaikan kamar berkala" },
             { id: "invoice", label: "Cetak & Terbitkan Invoice Tagihan Resmi", description: "Mencetak faktur tagihan resmi hotel untuk tamu korporat (Company Invoice) maupun tamu perseorangan" },
             { id: "purchase-order", label: "Permintaan Pembelian Departemen Front Desk", description: "Mengajukan kebutuhan perlengkapan operasional Front Desk (keycard, map GRC, perlengkapan resepsionis)" },
 
@@ -622,7 +621,7 @@ export const getStandardRolePermissions = (roleName: string, activeModules?: str
             "module_front_office", "overview", "bookings", "digital-checkin", "fo_checkin", "fo_checkout", 
             "fo_room_move", "fo_walkin", "confirmation-letter", "forecast", "revenue-breakdown", 
             "rate-inventory", "fo_stopsell", "fo_rate_change", "fo_inventory_change", "fo_cancel", 
-            "fo_void", "fo_discount", "fo_refund", "inventory-control", "invoice",
+            "fo_void", "fo_discount", "fo_refund", "invoice",
             // Night Audit
             "module_night_audit", "dsr", "na_cashier_audit",
             // POS

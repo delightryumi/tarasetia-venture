@@ -26,6 +26,7 @@ import { VoidConfirmModal } from "./VoidConfirmModal";
 import { CancelConfirmModal } from "./CancelConfirmModal";
 import { GuestListDrawer } from "./GuestListDrawer";
 import { ChannexDashboardPanel } from "./ChannexDashboardPanel";
+import { OverviewMobileView } from "./components/mobile/OverviewMobileView";
 
 const SAGE = "var(--sidebar-link-active-bg, #181d26)";
 const PEACH = "var(--sidebar-link-active-bg, #181d26)";
@@ -1044,232 +1045,268 @@ export function OverviewSection() {
 
     return (
         <div className={styles.overviewRoot}>
-            {/* Header - Unified with Forecast */}
-            <header className={styles.header}>
-                <div className={styles.headerInner}>
-                    <div className={styles.headerLeft}>
-                        <div className={styles.headerBadge} style={{ backgroundColor: PEACH, color: 'var(--sidebar-link-active-text, #ffffff)' }}>
-                            <PlusCircle size={15} />
-                        </div>
-                        <div className={styles.headerMeta}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span className={styles.headerSubtitle}>{activeHotelName || "Nexura Hotel"}</span>
-                                <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-                                <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700, textTransform: 'uppercase' }}>Live System</span>
-                            </div>
-                            <h1 className={styles.headerTitle}>
-                                Front Office Command Center
-                            </h1>
-                        </div>
-                    </div>
-
-                    <div className={styles.headerRight}>
-                        {/* Quick Presets Toggle */}
-                        <div className={styles.toggleWrapper}>
-                            <motion.button 
-                                whileTap={{ scale: 0.97 }}
-                                onClick={() => {
-                                    setStartDate(todayStr);
-                                    setEndDate(todayStr);
-                                }}
-                                className={`${styles.toggleBtn} ${isTodayActive ? styles.toggleBtnActive : ''}`}
-                            >
-                                Today
-                            </motion.button>
-                            <motion.button 
-                                whileTap={{ scale: 0.97 }}
-                                onClick={() => {
-                                    setStartDate(tomorrowStr);
-                                    setEndDate(tomorrowStr);
-                                }}
-                                className={`${styles.toggleBtn} ${isTomorrowActive ? styles.toggleBtnActive : ''}`}
-                            >
-                                Tomorrow
-                            </motion.button>
-                            <motion.button 
-                                whileTap={{ scale: 0.97 }}
-                                onClick={() => {
-                                    setStartDate(last7DaysStr);
-                                    setEndDate(todayStr);
-                                }}
-                                className={`${styles.toggleBtn} ${is7DaysActive ? styles.toggleBtnActive : ''}`}
-                            >
-                                7 Days
-                            </motion.button>
-                            <motion.button 
-                                whileTap={{ scale: 0.97 }}
-                                onClick={() => {
-                                    setStartDate(monthStartStr);
-                                    setEndDate(monthEndStr);
-                                }}
-                                className={`${styles.toggleBtn} ${isMonthActive ? styles.toggleBtnActive : ''}`}
-                            >
-                                Month
-                            </motion.button>
-                        </div>
-
-                        <div className={styles.vDivider} />
-
-                        {/* Custom Date Range Picker */}
-                        <div className={styles.datePickerWrapper}>
-                            <div className={styles.datePickerInputGroup}>
-                                <span className={styles.datePickerLabel}>From</span>
-                                <input 
-                                    type="date" 
-                                    value={startDate} 
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        if (val) {
-                                            setStartDate(val);
-                                            if (val > endDate) setEndDate(val);
-                                        }
-                                    }} 
-                                    className={styles.dateInput}
-                                />
-                            </div>
-                            <div className={styles.datePickerDivider}>→</div>
-                            <div className={styles.datePickerInputGroup}>
-                                <span className={styles.datePickerLabel}>To</span>
-                                <input 
-                                    type="date" 
-                                    value={endDate} 
-                                    min={startDate}
-                                    onChange={(e) => {
-                                        if (e.target.value) setEndDate(e.target.value);
-                                    }} 
-                                    className={styles.dateInput}
-                                />
-                            </div>
-                        </div>
-
-                        <div className={styles.vDivider} />
-
-                        <div className={styles.actionGroup}>
-                            <button
-                                onClick={() => {
-                                    if (isReadOnly) {
-                                        toast.error('Add transaction is not allowed in housekeeping view.');
-                                    } else {
-                                        router.push(`/forecast/add?date=${startDate}&module=${currentModule}`);
-                                    }
-                                }}
-                                className={styles.btnAddTransaction}
-                                title="Add Transaction"
-                                disabled={isReadOnly}
-                            >
-                                <PlusCircle size={16} />
-                                <span>Add Transaction</span>
-                            </button>
-
-                            <button 
-                                type="button"
-                                onClick={handleExportExcel}
-                                className={styles.btnExportExcel}
-                                title="Export to Excel"
-                                aria-label="Export to Excel"
-                            >
-                                <Download size={15} />
-                            </button>
-                            <button 
-                                type="button"
-                                onClick={handleExportPDF}
-                                className={styles.btnExportPdf}
-                                title="Export to PDF"
-                                aria-label="Export to PDF"
-                            >
-                                <FileText size={15} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <main className={styles.mainContainer}>
-                {/* SECTION 1: CHANNEX EXECUTIVE DASHBOARD PANEL */}
-                <ChannexDashboardPanel
-                    bookings={latestBookings}
+            {/* MOBILE ADAPTIVE VIEW (<= 768px) - 3D Tactile Hotelier Experience */}
+            <div className={styles.mobileOnly}>
+                <OverviewMobileView
+                    hotelName={activeHotelName}
                     startDate={startDate}
                     endDate={endDate}
-                    hotelName={activeHotelName}
-                    onSelectBooking={(b) => {
-                        setSelectedGuest(b);
-                        setIsEditing(false);
-                    }}
-                    onDetailsClick={scrollToLedger}
-                />
-
-                {/* SECTION 2: OPERATIONAL MOVEMENT GRID */}
-                <div className={styles.sectionHeaderGroup}>
-                    <h3 className={styles.sectionTitle}>
-                        <LogIn size={15} style={{ color: "#334155" }} />
-                        Today's Operations
-                        <span className={styles.sectionBadge}>Front Desk Movements</span>
-                    </h3>
-                    <p className={styles.sectionSubtitle}>
-                        Direct check in, check out, and cancellation management
-                    </p>
-                </div>
-
-                <section className={styles.statGrid}>
-                    <StatCard 
-                        accent="#059669" icon={<LogIn size={18} />} 
-                        label={isTodayActive ? "Check In Today" : (isTomorrowActive ? "Check In Tomorrow" : `Check In (${startDate} to ${endDate})`)} 
-                        count={dash || checkInCount} items={todayCheckIns}
-                        onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
-                        onStatusUpdate={handleStatusUpdate}
-                    />
-                    <StatCard 
-                        accent="#d97706" icon={<Calendar size={18} />} 
-                        label={isTodayActive ? "Check Out Today" : (isTomorrowActive ? "Check Out Tomorrow" : `Check Out (${startDate} to ${endDate})`)} 
-                        count={dash || checkOutCount} items={todayCheckOuts}
-                        onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
-                        onStatusUpdate={handleStatusUpdate}
-                    />
-                    <StatCard 
-                        accent="#dc2626" icon={<XCircle size={18} />} 
-                        label={isTodayActive ? "Cancellations Today" : (isTomorrowActive ? "Cancellations Tomorrow" : `Cancellations (${startDate} to ${endDate})`)} 
-                        count={dash || cancelCount} items={todayCanceled}
-                        onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
-                        onStatusUpdate={handleStatusUpdate}
-                    />
-                </section>
-
-                {/* SECTION 3: AUDIT LEDGER */}
-                <div ref={ledgerRef} className={styles.sectionHeaderGroup}>
-                    <h3 className={styles.sectionTitle}>
-                        <FileText size={15} style={{ color: "#334155" }} />
-                        Transaction Audit & Ledger
-                        <span className={styles.sectionBadge}>{latestBookings.length} Records</span>
-                    </h3>
-                    <p className={styles.sectionSubtitle}>
-                        Detailed financial accounting audit, status mutations and multi-format exports
-                    </p>
-                </div>
-
-                <AuditLedger 
-                    bookings={latestBookings}
-                    activeHotelName={activeHotelName}
-                    onView={(b) => { setSelectedGuest(b); setIsEditing(false); }}
-                    onEdit={(b) => { setSelectedGuest(b); setIsEditing(true); }}
-                    onDelete={(b) => {
-                        if (!canVoid) {
-                            toast.error("Anda tidak memiliki izin untuk melakukan Void booking/transaksi.");
-                            return;
+                    setStartDate={setStartDate}
+                    setEndDate={setEndDate}
+                    todayStr={todayStr}
+                    tomorrowStr={tomorrowStr}
+                    last7DaysStr={last7DaysStr}
+                    monthStartStr={monthStartStr}
+                    monthEndStr={monthEndStr}
+                    checkInCount={dash || checkInCount}
+                    checkOutCount={dash || checkOutCount}
+                    cancelCount={dash || cancelCount}
+                    todayCheckIns={todayCheckIns}
+                    todayCheckOuts={todayCheckOuts}
+                    todayCanceled={todayCanceled}
+                    latestBookings={latestBookings}
+                    onSelectBooking={(b) => { setSelectedGuest(b); setIsEditing(false); }}
+                    onAddTransaction={() => {
+                        if (isReadOnly) {
+                            toast.error('Add transaction is not allowed in housekeeping view.');
+                        } else {
+                            router.push(`/forecast/add?date=${startDate}&module=${currentModule}`);
                         }
-                        setBookingToVoid(b);
                     }}
-                    onCancel={(b) => {
-                        if (!canCancel) {
-                            toast.error("Anda tidak memiliki izin untuk membatalkan booking/transaksi.");
-                            return;
-                        }
-                        setBookingToCancel(b);
-                    }}
-                    onStatusUpdate={handleStatusUpdate}
                     onExportExcel={handleExportExcel}
                     onExportPDF={handleExportPDF}
                 />
-            </main>
+            </div>
+
+            {/* DESKTOP COMMAND CENTER (> 768px) - Completely untouched */}
+            <div className={styles.desktopOnly}>
+                {/* Header - Unified with Forecast */}
+                <header className={styles.header}>
+                    <div className={styles.headerInner}>
+                        <div className={styles.headerLeft}>
+                            <div className={styles.headerBadge} style={{ backgroundColor: PEACH, color: 'var(--sidebar-link-active-text, #ffffff)' }}>
+                                <PlusCircle size={15} />
+                            </div>
+                            <div className={styles.headerMeta}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span className={styles.headerSubtitle}>{activeHotelName || "Nexura Hotel"}</span>
+                                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                                    <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700, textTransform: 'uppercase' }}>Live System</span>
+                                </div>
+                                <h1 className={styles.headerTitle}>
+                                    Front Office Command Center
+                                </h1>
+                            </div>
+                        </div>
+
+                        <div className={styles.headerRight}>
+                            {/* Quick Presets Toggle */}
+                            <div className={styles.toggleWrapper}>
+                                <motion.button 
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={() => {
+                                        setStartDate(todayStr);
+                                        setEndDate(todayStr);
+                                    }}
+                                    className={`${styles.toggleBtn} ${isTodayActive ? styles.toggleBtnActive : ''}`}
+                                >
+                                    Today
+                                </motion.button>
+                                <motion.button 
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={() => {
+                                        setStartDate(tomorrowStr);
+                                        setEndDate(tomorrowStr);
+                                    }}
+                                    className={`${styles.toggleBtn} ${isTomorrowActive ? styles.toggleBtnActive : ''}`}
+                                >
+                                    Tomorrow
+                                </motion.button>
+                                <motion.button 
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={() => {
+                                        setStartDate(last7DaysStr);
+                                        setEndDate(todayStr);
+                                    }}
+                                    className={`${styles.toggleBtn} ${is7DaysActive ? styles.toggleBtnActive : ''}`}
+                                >
+                                    7 Days
+                                </motion.button>
+                                <motion.button 
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={() => {
+                                        setStartDate(monthStartStr);
+                                        setEndDate(monthEndStr);
+                                    }}
+                                    className={`${styles.toggleBtn} ${isMonthActive ? styles.toggleBtnActive : ''}`}
+                                >
+                                    Month
+                                </motion.button>
+                            </div>
+
+                            <div className={styles.vDivider} />
+
+                            {/* Custom Date Range Picker */}
+                            <div className={styles.datePickerWrapper}>
+                                <div className={styles.datePickerInputGroup}>
+                                    <span className={styles.datePickerLabel}>From</span>
+                                    <input 
+                                        type="date" 
+                                        value={startDate} 
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val) {
+                                                setStartDate(val);
+                                                if (val > endDate) setEndDate(val);
+                                            }
+                                        }} 
+                                        className={styles.dateInput}
+                                    />
+                                </div>
+                                <div className={styles.datePickerDivider}>→</div>
+                                <div className={styles.datePickerInputGroup}>
+                                    <span className={styles.datePickerLabel}>To</span>
+                                    <input 
+                                        type="date" 
+                                        value={endDate} 
+                                        min={startDate}
+                                        onChange={(e) => {
+                                            if (e.target.value) setEndDate(e.target.value);
+                                        }} 
+                                        className={styles.dateInput}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className={styles.vDivider} />
+
+                            <div className={styles.actionGroup}>
+                                <button
+                                    onClick={() => {
+                                        if (isReadOnly) {
+                                            toast.error('Add transaction is not allowed in housekeeping view.');
+                                        } else {
+                                            router.push(`/forecast/add?date=${startDate}&module=${currentModule}`);
+                                        }
+                                    }}
+                                    className={styles.btnAddTransaction}
+                                    title="Add Transaction"
+                                    disabled={isReadOnly}
+                                >
+                                    <PlusCircle size={16} />
+                                    <span>Add Transaction</span>
+                                </button>
+
+                                <button 
+                                    type="button"
+                                    onClick={handleExportExcel}
+                                    className={styles.btnExportExcel}
+                                    title="Export to Excel"
+                                    aria-label="Export to Excel"
+                                >
+                                    <Download size={15} />
+                                </button>
+                                <button 
+                                    type="button"
+                                    onClick={handleExportPDF}
+                                    className={styles.btnExportPdf}
+                                    title="Export to PDF"
+                                    aria-label="Export to PDF"
+                                >
+                                    <FileText size={15} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <main className={styles.mainContainer}>
+                    {/* SECTION 1: CHANNEX EXECUTIVE DASHBOARD PANEL */}
+                    <ChannexDashboardPanel
+                        bookings={latestBookings}
+                        startDate={startDate}
+                        endDate={endDate}
+                        hotelName={activeHotelName}
+                        onSelectBooking={(b) => {
+                            setSelectedGuest(b);
+                            setIsEditing(false);
+                        }}
+                        onDetailsClick={scrollToLedger}
+                    />
+
+                    {/* SECTION 2: OPERATIONAL MOVEMENT GRID */}
+                    <div className={styles.sectionHeaderGroup}>
+                        <h3 className={styles.sectionTitle}>
+                            <LogIn size={15} style={{ color: "#334155" }} />
+                            Today's Operations
+                            <span className={styles.sectionBadge}>Front Desk Movements</span>
+                        </h3>
+                        <p className={styles.sectionSubtitle}>
+                            Direct check in, check out, and cancellation management
+                        </p>
+                    </div>
+
+                    <section className={styles.statGrid}>
+                        <StatCard 
+                            accent="#059669" icon={<LogIn size={18} />} 
+                            label={isTodayActive ? "Check In Today" : (isTomorrowActive ? "Check In Tomorrow" : `Check In (${startDate} to ${endDate})`)} 
+                            count={dash || checkInCount} items={todayCheckIns}
+                            onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
+                            onStatusUpdate={handleStatusUpdate}
+                        />
+                        <StatCard 
+                            accent="#d97706" icon={<Calendar size={18} />} 
+                            label={isTodayActive ? "Check Out Today" : (isTomorrowActive ? "Check Out Tomorrow" : `Check Out (${startDate} to ${endDate})`)} 
+                            count={dash || checkOutCount} items={todayCheckOuts}
+                            onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
+                            onStatusUpdate={handleStatusUpdate}
+                        />
+                        <StatCard 
+                            accent="#dc2626" icon={<XCircle size={18} />} 
+                            label={isTodayActive ? "Cancellations Today" : (isTomorrowActive ? "Cancellations Tomorrow" : `Cancellations (${startDate} to ${endDate})`)} 
+                            count={dash || cancelCount} items={todayCanceled}
+                            onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
+                            onStatusUpdate={handleStatusUpdate}
+                        />
+                    </section>
+
+                    {/* SECTION 3: AUDIT LEDGER */}
+                    <div ref={ledgerRef} className={styles.sectionHeaderGroup}>
+                        <h3 className={styles.sectionTitle}>
+                            <FileText size={15} style={{ color: "#334155" }} />
+                            Transaction Audit & Ledger
+                            <span className={styles.sectionBadge}>{latestBookings.length} Records</span>
+                        </h3>
+                        <p className={styles.sectionSubtitle}>
+                            Detailed financial accounting audit, status mutations and multi-format exports
+                        </p>
+                    </div>
+
+                    <AuditLedger 
+                        bookings={latestBookings}
+                        activeHotelName={activeHotelName}
+                        onView={(b) => { setSelectedGuest(b); setIsEditing(false); }}
+                        onEdit={(b) => { setSelectedGuest(b); setIsEditing(true); }}
+                        onDelete={(b) => {
+                            if (!canVoid) {
+                                toast.error("Anda tidak memiliki izin untuk melakukan Void booking/transaksi.");
+                                return;
+                            }
+                            setBookingToVoid(b);
+                        }}
+                        onCancel={(b) => {
+                            if (!canCancel) {
+                                toast.error("Anda tidak memiliki izin untuk membatalkan booking/transaksi.");
+                                return;
+                            }
+                            setBookingToCancel(b);
+                        }}
+                        onStatusUpdate={handleStatusUpdate}
+                        onExportExcel={handleExportExcel}
+                        onExportPDF={handleExportPDF}
+                    />
+                </main>
+            </div>
 
 
             {/* Right Drawer Overlay Popup */}

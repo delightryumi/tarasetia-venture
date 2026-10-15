@@ -186,6 +186,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // 2. Track current module via pathname and query parameters
     useEffect(() => {
         if (typeof window !== "undefined") {
+            const modParam = searchParams?.get("module");
+            if (modParam) {
+                localStorage.setItem("active_module", modParam);
+                setActiveModule(modParam);
+                return;
+            }
+
             if (pathname.startsWith("/purchasing")) {
                 localStorage.setItem("active_module", "purchasing");
                 setActiveModule("purchasing");
@@ -244,18 +251,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 return;
             }
 
-            const modParam = searchParams?.get("module");
-            if (modParam) {
-                localStorage.setItem("active_module", modParam);
-                setActiveModule(modParam);
+            const storedMod = localStorage.getItem("active_module");
+            if (storedMod) {
+                setActiveModule(storedMod);
             } else {
-                const storedMod = localStorage.getItem("active_module");
-                if (storedMod) {
-                    setActiveModule(storedMod);
-                } else {
-                    localStorage.setItem("active_module", "front-office");
-                    setActiveModule("front-office");
-                }
+                localStorage.setItem("active_module", "front-office");
+                setActiveModule("front-office");
             }
         }
     }, [pathname, searchParams]);
@@ -275,11 +276,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         const moduleKey = moduleMap[activeModule];
 
         let items = allNavItems;
-        const hasInnalytics = activeModules === null || activeModules.includes("innalytics") || activeModules.includes("inalytics");
         if (activeModule === "front-office") {
             items = allNavItems.filter((item) => {
-                if (item.id === "innalytics" && !hasInnalytics) return false;
-                return ["overview", "bookings", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", "inventory-control", "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id);
+                return ["overview", "bookings", "fo_walkin", "forecast", "revenue-breakdown", "rate-inventory", "innalytics", "invoice", "digital-checkin", "confirmation-letter", "purchase-order"].includes(item.id);
             });
         } else if (activeModule === "innalytics") {
             items = allNavItems.filter((item) =>

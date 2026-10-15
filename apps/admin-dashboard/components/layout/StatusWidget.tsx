@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { ModuleActionButtons } from "@/components/layout/ModuleActionButtons";
-import styles from "@/app/select-module/select-module.module.css";
+import styles from "./StatusWidget.module.css";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getHotelCollection } from "@/lib/firestoreHelper";
@@ -18,7 +18,11 @@ interface StatusWidgetProps {
     onToggleSidebar?: () => void;
 }
 
-export const StatusWidget = () => {
+export const StatusWidget = ({
+    onMenuClick,
+    isCollapsed,
+    onToggleSidebar,
+}: StatusWidgetProps = {}) => {
     const pathname = usePathname();
     const router = useRouter();
     const { user, signOutUser, activeHotelCode, activeHotelName, hotelsList, setActiveHotelCode } = useAuth();
@@ -84,12 +88,13 @@ export const StatusWidget = () => {
     const canAccessProfile = isSuperadmin || user?.role?.toLowerCase() === "admin";
 
     return (
-        <div className="status-widget-container flex items-center justify-between w-full z-50">
+        <div className={`status-widget-container flex items-center justify-between w-full z-50 ${styles.widgetContainer}`}>
             {/* Left Side: Nexura Logo & Hotel Badge/Selector */}
             <div className={styles.logoArea}>
                 <button
+                    type="button"
                     onClick={() => router.push('/select-module')}
-                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    className={styles.logoBtn}
                     title="Kembali ke Module Selector"
                 >
                     <img
@@ -113,7 +118,7 @@ export const StatusWidget = () => {
                             className={`${styles.hotelPillBtn} ${isHotelDropdownOpen ? styles.hotelPillBtnActive : ''}`}
                             title="Ganti Properti / Hotel Aktif"
                         >
-                            <span className="truncate max-w-[200px] sm:max-w-[280px]">
+                            <span className={styles.hotelPillText}>
                                 {activeHotelCode === '0' || !activeHotelCode
                                     ? 'Superadmin (Tanpa Preview)'
                                     : `[${activeHotelCode}] ${hotelsList?.find((h) => String(h.hotelCode) === String(activeHotelCode))?.name || activeHotelName || 'Pilih Properti'}`}
@@ -174,7 +179,7 @@ export const StatusWidget = () => {
                 ) : (
                     activeHotelCode && (
                         <div className={styles.hotelPillStatic}>
-                            <span>
+                            <span className={styles.hotelPillText}>
                                 [{activeHotelCode || "0"}] {activeHotelName || 'Memuat...'}
                             </span>
                         </div>
@@ -183,7 +188,7 @@ export const StatusWidget = () => {
             </div>
 
             {/* Right Side: Theme Switcher & Hamburger Menu */}
-            <div className="flex items-center gap-3">
+            <div className={styles.rightActions}>
                 <ModuleActionButtons
                     showGrid={false}
                     setShowGrid={() => {}}
@@ -196,6 +201,7 @@ export const StatusWidget = () => {
 
                 <div className={styles.menuWrapper}>
                     <button
+                        type="button"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         className={styles.menuButton}
                         title="Menu CPanel & Akun"

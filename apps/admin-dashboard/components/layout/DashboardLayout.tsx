@@ -186,7 +186,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     const isInnalyticsPage = pathname.startsWith("/innalytics");
     const isFnbRealtimePage = pathname.startsWith("/food-beverage/realtime");
     const isRateInventoryPage = pathname?.startsWith("/rate-inventory");
-    const hideSidebar = isSuperadminPage || pathname === "/inventory-control" || isInnalyticsPage || isFnbRealtimePage;
+    const hideSidebar = isSuperadminPage || isInnalyticsPage || isFnbRealtimePage;
 
     return (
         <div className={`flex flex-col min-h-screen select-none ${isSuperadminPage ? 'bg-white dark:bg-[#09090b]' : isFnbRealtimePage ? 'bg-[#fbfaf8] text-stone-900' : 'bg-transparent'}`}>
@@ -278,7 +278,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                     className="main-content"
                     style={hideSidebar ? { marginLeft: 0, maxWidth: "100vw", width: "100%", paddingTop: 0 } : undefined}
                 >
-                    <div className={`main-scroll-container ${isChannelManagerPage || pathname.startsWith("/rate-inventory") || isInnalyticsPage || isFnbRealtimePage || pathname.startsWith("/users") || pathname.startsWith("/hrd") ? "main-scroll-container-wide" : ""}`} style={isFnbRealtimePage ? { padding: 0, maxWidth: "100%", margin: 0 } : undefined}>
+                    <div className={`main-scroll-container ${isChannelManagerPage || pathname.startsWith("/rate-inventory") || isInnalyticsPage || isFnbRealtimePage || pathname.startsWith("/users") || pathname.startsWith("/hrd") ? "main-scroll-container-wide" : ""}`} style={isFnbRealtimePage || isInnalyticsPage ? { padding: 0, maxWidth: "100%", margin: 0 } : undefined}>
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={pathname}
@@ -288,7 +288,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                                 exit={{ opacity: 0, y: -10 }}
                                 transition={{ duration: 0.3 }}
                                 className="section-wrapper"
-                                style={isFnbRealtimePage ? { padding: 0, maxWidth: "100%", margin: 0 } : undefined}
+                                style={isFnbRealtimePage || isInnalyticsPage ? { padding: 0, maxWidth: "100%", margin: 0 } : undefined}
                             >
                                 {isPathAllowed ? (
                                     children

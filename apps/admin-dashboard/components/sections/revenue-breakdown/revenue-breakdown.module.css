@@ -662,6 +662,30 @@
 }
 
 /* Responsive Rules for Mobile Devices */
+@media (max-width: 768px) {
+  .container {
+    padding: 2px 4px calc(96px + env(safe-area-inset-bottom, 20px)) 4px !important;
+  }
+
+  .controlCard {
+    border-radius: 16px !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    box-shadow: 0 4px 14px rgba(160, 175, 200, 0.12), -2px -2px 10px rgba(255, 255, 255, 0.95) !important;
+  }
+
+  .kpiCard {
+    border-radius: 14px !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    box-shadow: 0 3px 10px rgba(160, 175, 200, 0.1) !important;
+    padding: 12px 14px !important;
+  }
+
+  .btnPrimary,
+  .btnSecondary {
+    min-height: 44px !important;
+  }
+}
+
 @media (max-width: 640px) {
   .controlRowTop {
     flex-direction: column;
@@ -671,7 +695,14 @@
 
   .actionsGroup {
     width: 100%;
-    justify-content: flex-start;
+    display: flex;
+    justify-content: stretch;
+    gap: 8px;
+  }
+
+  .actionsGroup button {
+    flex: 1;
+    justify-content: center;
   }
 
   .filterBar {
@@ -685,19 +716,36 @@
     justify-content: space-between;
   }
 
+  .dateInputGroup input {
+    min-height: 44px;
+  }
+
   .quickFilters {
     width: 100%;
     overflow-x: auto;
     flex-wrap: nowrap;
     padding-bottom: 0.25rem;
+    gap: 6px;
+  }
+
+  .quickBtn {
+    min-height: 42px;
+    padding: 0 14px;
+    flex-shrink: 0;
   }
 
   .kpiBar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .kpiBar > div:last-child {
+    grid-column: span 2;
   }
 
   .paperWrapper {
     min-height: 460px;
+    border-radius: 16px !important;
   }
 }
 

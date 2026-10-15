@@ -534,6 +534,78 @@
     border-color: var(--grc-muted);
 }
 
+/* ── Mobile View Responsiveness (Soft Tactile Theme & Touch-Friendly) ── */
+@media (max-width: 768px) {
+    .grc-root {
+        padding: 4px 6px calc(96px + env(safe-area-inset-bottom, 20px)) 6px !important;
+        gap: 16px !important;
+    }
+
+    .grc-header {
+        padding-bottom: 14px;
+        gap: 12px;
+    }
+
+    .grc-kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+
+    .grc-kpi-card {
+        border-radius: 14px !important;
+        padding: 12px 14px !important;
+        border: 1px solid rgba(226, 232, 240, 0.9) !important;
+        box-shadow: 0 4px 14px rgba(160, 175, 200, 0.12), -2px -2px 10px rgba(255, 255, 255, 0.95) !important;
+    }
+
+    .grc-table-card {
+        border-radius: 16px !important;
+        border: 1px solid rgba(226, 232, 240, 0.9) !important;
+        box-shadow: 0 4px 14px rgba(160, 175, 200, 0.12) !important;
+    }
+
+    .grc-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .grc-search-box {
+        width: 100%;
+    }
+
+    .grc-period-chips {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .grc-chip-btn {
+        flex: 1;
+        text-align: center;
+        min-height: 40px;
+    }
+
+    .grc-btn-primary,
+    .grc-btn-secondary {
+        min-height: 44px;
+    }
+
+    .grc-modal-overlay {
+        padding: 8px;
+    }
+
+    .grc-modal-window {
+        max-height: 98vh;
+        border-radius: 16px;
+    }
+
+    .grc-modal-body {
+        grid-template-columns: 1fr;
+        padding: 12px;
+        gap: 14px;
+    }
+}
+
 /* ── Dedicated Warm Pre-Rendered Native Print Sheet (GPU Rendered, Screen Hidden) ── */
 #grc-native-print-sheet {
     position: fixed !important;

@@ -1,0 +1,569 @@
+/* StatusWidget.module.css — 3D Tactile Hotelier Header Styling (Modular & Low-Cost) */
+
+.widgetContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Left Area: Logo & Hotel Selector ── */
+.logoArea {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+@media (min-width: 768px) {
+  .logoArea {
+    gap: 14px;
+  }
+}
+
+.logoBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logoBtn:active {
+  transform: scale(0.94);
+}
+
+.logoImage {
+  height: 22px;
+  width: auto;
+  object-fit: contain;
+  filter: invert(1) brightness(0);
+  transition: opacity 0.2s ease;
+}
+
+:global(.dark) .logoImage {
+  filter: none;
+}
+
+@media (min-width: 768px) {
+  .logoImage {
+    height: 26px;
+  }
+}
+
+.dividerLine {
+  display: none;
+  height: 20px;
+  width: 1px;
+  background-color: rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+
+:global(.dark) .dividerLine {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+@media (min-width: 640px) {
+  .dividerLine {
+    display: block;
+  }
+}
+
+/* ── 3D Tactile Hotel Selector Capsule ── */
+.hotelSelectorWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  z-index: 40;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.hotelPillBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background-color: #ffffff;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  min-width: 0;
+  box-shadow: 
+    0 3px 0 #cbd5e1,
+    0 6px 14px -2px rgba(15, 23, 42, 0.06),
+    inset 0 1px 1px #ffffff;
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hotelPillBtn:hover {
+  border-color: rgba(203, 213, 225, 0.9);
+  background-color: #ffffff;
+}
+
+.hotelPillBtn:active {
+  transform: translateY(2px);
+  box-shadow: 
+    0 1px 0 #cbd5e1,
+    0 2px 6px rgba(15, 23, 42, 0.04),
+    inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.hotelPillBtnActive {
+  background-color: #ffffff;
+  border-color: #2563eb;
+  color: #1e40af;
+  box-shadow: 
+    0 3px 0 #93c5fd,
+    0 6px 14px -2px rgba(37, 99, 235, 0.15),
+    inset 0 1px 1px #ffffff;
+}
+
+:global(.dark) .hotelPillBtn {
+  background-color: #141a24;
+  border-color: rgba(255, 255, 255, 0.09);
+  color: #f8fafc;
+  box-shadow: 
+    0 3px 0 #0a0e16,
+    0 6px 16px rgba(0, 0, 0, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+:global(.dark) .hotelPillBtn:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background-color: #18202c;
+}
+
+:global(.dark) .hotelPillBtn:active {
+  transform: translateY(2px);
+  box-shadow: 
+    0 1px 0 #0a0e16,
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .hotelPillBtnActive {
+  background-color: #141a24;
+  border-color: #3b82f6;
+  color: #60a5fa;
+  box-shadow: 
+    0 3px 0 #1e3a8a,
+    0 6px 16px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.hotelPillText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 140px;
+}
+
+@media (min-width: 400px) {
+  .hotelPillText {
+    max-width: 175px;
+  }
+}
+
+@media (min-width: 640px) {
+  .hotelPillText {
+    max-width: 240px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hotelPillText {
+    max-width: 280px;
+  }
+}
+
+.hotelPillStatic {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background-color: #ffffff;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 
+    0 3px 0 #cbd5e1,
+    0 6px 14px -2px rgba(15, 23, 42, 0.06),
+    inset 0 1px 1px #ffffff;
+  white-space: nowrap;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:global(.dark) .hotelPillStatic {
+  background-color: #141a24;
+  border-color: rgba(255, 255, 255, 0.09);
+  color: #f8fafc;
+  box-shadow: 
+    0 3px 0 #0a0e16,
+    0 6px 16px rgba(0, 0, 0, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+/* ── 3D Tactile Hotel Dropdown Card ── */
+.hotelDropdownCard {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 280px;
+  width: min(340px, 86vw);
+  max-height: 340px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 18px;
+  box-shadow: 
+    0 16px 36px -6px rgba(15, 23, 42, 0.14),
+    0 4px 0 #cbd5e1,
+    inset 0 1px 1px #ffffff;
+  padding: 8px;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+:global(.dark) .hotelDropdownCard {
+  background: #141a24;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 20px 48px rgba(0, 0, 0, 0.65),
+    0 4px 0 #0a0e16,
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+.hotelDropdownHeader {
+  padding: 8px 12px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #94a3b8;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+  margin-bottom: 4px;
+}
+
+:global(.dark) .hotelDropdownHeader {
+  color: #64748b;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.hotelDropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  gap: 10px;
+}
+
+.hotelDropdownItem:hover {
+  background-color: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.8);
+  color: #0f172a;
+}
+
+:global(.dark) .hotelDropdownItem {
+  color: #e2e8f0;
+}
+
+:global(.dark) .hotelDropdownItem:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.hotelDropdownItemActive {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+  font-weight: 800;
+}
+
+:global(.dark) .hotelDropdownItemActive {
+  background-color: rgba(37, 99, 235, 0.16);
+  border-color: rgba(96, 165, 250, 0.3);
+  color: #93c5fd;
+}
+
+.hotelCodeBadge {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #475569;
+  font-family: var(--font-mono-jb, monospace);
+  background: #e2e8f0;
+  padding: 2px 6px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+:global(.dark) .hotelCodeBadge {
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Right Actions: Theme Toggle & 3D Hamburger Menu ── */
+.rightActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.menuWrapper {
+  position: relative;
+  z-index: 50;
+}
+
+/* 3D Tactile Hamburger Button */
+.menuButton {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background-color: #ffffff;
+  color: #1e293b;
+  cursor: pointer;
+  box-shadow: 
+    0 3px 0 #cbd5e1,
+    0 6px 14px -2px rgba(15, 23, 42, 0.06),
+    inset 0 1px 1px #ffffff;
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.menuButton:hover {
+  background-color: #ffffff;
+  border-color: rgba(203, 213, 225, 0.9);
+  color: #0f172a;
+}
+
+.menuButton:active {
+  transform: translateY(2px);
+  box-shadow: 
+    0 1px 0 #cbd5e1,
+    0 2px 6px rgba(15, 23, 42, 0.04),
+    inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+:global(.dark) .menuButton {
+  background-color: #141a24;
+  border-color: rgba(255, 255, 255, 0.09);
+  color: #f8fafc;
+  box-shadow: 
+    0 3px 0 #0a0e16,
+    0 6px 16px rgba(0, 0, 0, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+:global(.dark) .menuButton:hover {
+  background-color: #18202c;
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+:global(.dark) .menuButton:active {
+  transform: translateY(2px);
+  box-shadow: 
+    0 1px 0 #0a0e16,
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.menuButton:focus {
+  outline: none;
+}
+
+/* Backdrop */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background-color: rgba(15, 23, 42, 0.2);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+:global(.dark) .backdrop {
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+/* 3D Tactile Hamburger Dropdown Card */
+.dropdownMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(270px, 92vw);
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 20px;
+  box-shadow: 
+    0 20px 48px -8px rgba(15, 23, 42, 0.16),
+    0 4px 0 #cbd5e1,
+    inset 0 1px 1px #ffffff;
+  padding: 8px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+:global(.dark) .dropdownMenu {
+  background: #141a24;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 24px 56px rgba(0, 0, 0, 0.7),
+    0 4px 0 #0a0e16,
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+.menuUserCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  margin-bottom: 4px;
+}
+
+:global(.dark) .menuUserCard {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.menuUserName {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+:global(.dark) .menuUserName {
+  color: #f8fafc;
+}
+
+.menuUserEmail {
+  font-size: 11px;
+  color: #64748b;
+}
+
+:global(.dark) .menuUserEmail {
+  color: #94a3b8;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dropdownItem:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+:global(.dark) .dropdownItem {
+  color: #cbd5e1;
+}
+
+:global(.dark) .dropdownItem:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.dropdownIcon {
+  width: 16px;
+  height: 16px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+:global(.dark) .dropdownIcon {
+  color: #94a3b8;
+}
+
+.dropdownDivider {
+  height: 1px;
+  background-color: rgba(226, 232, 240, 0.8);
+  margin: 4px 6px;
+}
+
+:global(.dark) .dropdownDivider {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.dropdownItemDanger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: #dc2626;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dropdownItemDanger:hover {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+:global(.dark) .dropdownItemDanger {
+  color: #f87171;
+}
+
+:global(.dark) .dropdownItemDanger:hover {
+  background-color: rgba(220, 38, 38, 0.12);
+  color: #fca5a5;
+}

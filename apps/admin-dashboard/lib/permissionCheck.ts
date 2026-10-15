@@ -88,7 +88,7 @@ export function hasPermission(
         if (permissions["overview"] === true) return true;
         const anyFoAction = Object.entries(permissions).some(([k, v]) => v === true && (
             k.startsWith("fo_") || k === "digital-checkin" || k === "forecast" || 
-            k === "revenue-breakdown" || k === "rate-inventory" || k === "inventory-control" || k === "invoice"
+            k === "revenue-breakdown" || k === "rate-inventory" || k === "invoice"
         ));
         if (anyFoAction) return true;
     }
@@ -177,7 +177,7 @@ export function hasModuleAccess(
     if (moduleKey === "front-office" || moduleGroupKey === "module_front_office") {
         return Object.entries(permissions).some(([k, v]) => v === true && (
             k === "overview" || k === "digital-checkin" || k === "forecast" || k === "revenue-breakdown" ||
-            k === "rate-inventory" || k === "inventory-control" || k === "invoice" || k === "confirmation-letter" ||
+            k === "rate-inventory" || k === "invoice" || k === "confirmation-letter" ||
             k.startsWith("fo_")
         ));
     }
@@ -324,7 +324,6 @@ export function isPathAllowedForUser(
             pathname.startsWith("/rate-inventory") ||
             pathname.startsWith("/confirmation-letter") ||
             pathname === "/digital-checkin" ||
-            pathname === "/inventory-control" ||
             pathname.startsWith("/bookings")
         ) {
             requiredBillingModule = "front-office";
@@ -402,9 +401,6 @@ export function isPathAllowedForUser(
     }
     if (pathname === "/rate-inventory" || pathname.startsWith("/rate-inventory/")) {
         return hasPermission(user, "rate-inventory", "module_front_office");
-    }
-    if (pathname === "/inventory-control") {
-        return hasPermission(user, "inventory-control", "module_front_office");
     }
     if (pathname === "/invoice") {
         return hasPermission(user, "invoice", "module_front_office");

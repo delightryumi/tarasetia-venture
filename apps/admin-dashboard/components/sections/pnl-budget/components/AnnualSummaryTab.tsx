@@ -12,6 +12,8 @@ interface AnnualSummaryTabProps {
   actualMonthlyData: Record<string, any>;
   hotelRoomCount: number;
   isStartup?: boolean;
+  currencyCode?: string;
+  currencySymbol?: string;
 }
 
 export const AnnualSummaryTab: React.FC<AnnualSummaryTabProps> = ({
@@ -20,6 +22,8 @@ export const AnnualSummaryTab: React.FC<AnnualSummaryTabProps> = ({
   actualMonthlyData,
   hotelRoomCount,
   isStartup = false,
+  currencyCode,
+  currencySymbol,
 }) => {
   // Aggregate Annual Totals (12 Months)
   let bRoomsAvail = 0;
@@ -186,7 +190,7 @@ export const AnnualSummaryTab: React.FC<AnnualSummaryTabProps> = ({
       <>
         <td className={styles.colVariance} style={{ color: isFavorable ? "#16a34a" : "#dc2626" }}>
           {diffVal > 0 ? "+" : ""}
-          {isCurrency ? formatIDR(diffVal) : diffVal.toLocaleString("id-ID")}
+          {isCurrency ? formatIDR(diffVal, currencyCode) : diffVal.toLocaleString("id-ID")}
         </td>
         <td className={styles.colPercent} style={{ color: isFavorable ? "#16a34a" : "#dc2626" }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: "2px" }}>
@@ -216,7 +220,9 @@ export const AnnualSummaryTab: React.FC<AnnualSummaryTabProps> = ({
               <th className={styles.colDesc}>DESKRIPSI AKUN USALI</th>
               <th className={styles.colAmount} style={{ background: "#e0f2fe", color: "#0369a1" }}>ACTUAL FULL YEAR</th>
               <th className={styles.colAmount} style={{ background: "#f1f5f9" }}>BUDGET FULL YEAR</th>
-              <th className={styles.colVariance}>VARIANCE (RP)</th>
+              <th className={styles.colVariance}>
+                VARIANCE ({currencySymbol ? currencySymbol.trim() : (currencyCode || "RP")})
+              </th>
               <th className={styles.colPercent}>VAR (%)</th>
             </tr>
           </thead>

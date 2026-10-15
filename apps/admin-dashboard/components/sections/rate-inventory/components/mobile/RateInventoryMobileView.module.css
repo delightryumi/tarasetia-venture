@@ -1,0 +1,898 @@
+/* RateInventoryMobileView.module.css - 3D Tactile Claymorphic Hotelier Mobile View */
+
+.mobileRoot {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 2px 4px 32px 4px;
+  gap: 16px;
+  box-sizing: border-box;
+  font-family: inherit;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Top Hotel & Status Header Bar ── */
+.topBarCard {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 20px;
+  padding: 14px 16px;
+  box-shadow: 
+    0 4px 0 #e2e8f0,
+    0 10px 20px -4px rgba(15, 23, 42, 0.05),
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+:global(.dark) .topBarCard {
+  background: #141a24;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 0 #0a0e16,
+    0 10px 24px -4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.hotelMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hotelTitle {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:global(.dark) .hotelTitle {
+  color: #f8fafc;
+}
+
+.hotelSub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+:global(.dark) .hotelSub {
+  color: #94a3b8;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+/* 3D Action Buttons on Top Bar */
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iconBtn3D {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 3px 0 #cbd5e1, 0 4px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #334155;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.iconBtn3D:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #cbd5e1, 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+:global(.dark) .iconBtn3D {
+  background: #1e2638;
+  border-color: #334155;
+  color: #cbd5e1;
+  box-shadow: 0 3px 0 #0f172a, 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .iconBtn3D:active {
+  box-shadow: 0 1px 0 #0f172a;
+}
+
+/* ── 3D Mode Selector Pills ── */
+.modeSelector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: #e2e8f0;
+  padding: 4px;
+  border-radius: 16px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+:global(.dark) .modeSelector {
+  background: #0f141d;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.modeTabBtn {
+  border: none;
+  background: transparent;
+  padding: 10px 6px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+}
+
+:global(.dark) .modeTabBtn {
+  color: #94a3b8;
+}
+
+.modeTabBtnActive {
+  background: #ffffff;
+  color: #1e293b;
+  box-shadow: 
+    0 3px 0 #cbd5e1,
+    0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+:global(.dark) .modeTabBtnActive {
+  background: #1e293b;
+  color: #ffffff;
+  box-shadow: 
+    0 3px 0 #0b0f19,
+    0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Date Navigator & 3D Strip ── */
+.dateNavHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.dateMonthLabel {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+:global(.dark) .dateMonthLabel {
+  color: #f1f5f9;
+}
+
+.todayBtn3D {
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  box-shadow: 0 2px 0 #93c5fd;
+  cursor: pointer;
+}
+
+.todayBtn3D:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 #93c5fd;
+}
+
+:global(.dark) .todayBtn3D {
+  background: #172554;
+  color: #60a5fa;
+  border-color: #1e3a8a;
+  box-shadow: 0 2px 0 #0f172a;
+}
+
+/* Horizontal 3D Date Strip */
+.dateStripWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.dateStepperEdgeBtn {
+  width: 38px;
+  height: 70px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 3px 0 #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dateStepperEdgeBtn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #cbd5e1;
+}
+
+:global(.dark) .dateStepperEdgeBtn {
+  background: #151c28;
+  border-color: #334155;
+  color: #94a3b8;
+  box-shadow: 0 3px 0 #090e17;
+}
+
+.dateStripScroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 2px 2px 8px 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.dateStripScroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Individual 3D Date Pill */
+.datePill {
+  flex: 0 0 62px;
+  height: 72px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 
+    0 4px 0 #cbd5e1,
+    0 4px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+:global(.dark) .datePill {
+  background: #141a24;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 0 #090d14,
+    0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.datePill:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #cbd5e1;
+}
+
+:global(.dark) .datePill:active {
+  box-shadow: 0 2px 0 #090d14;
+}
+
+.datePillActive {
+  background: #2563eb !important;
+  border-color: #1d4ed8 !important;
+  box-shadow: 
+    0 4px 0 #1e40af !important,
+    0 8px 16px rgba(37, 99, 235, 0.35) !important;
+  transform: translateY(-2px);
+}
+
+.datePillDay {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.datePillNum {
+  font-size: 18px;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.datePillDot {
+  font-size: 9px;
+  font-weight: 700;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 1px 5px;
+  border-radius: 6px;
+}
+
+.datePillActive .datePillDay {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.datePillActive .datePillNum {
+  color: #ffffff;
+}
+
+.datePillActive .datePillDot {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Room Cards Container ── */
+.roomListContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 3D Tactile Room Card */
+.room3DCard {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: 
+    0 5px 0 #e2e8f0,
+    0 12px 24px -6px rgba(15, 23, 42, 0.06),
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+:global(.dark) .room3DCard {
+  background: #141b26;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 5px 0 #090e16,
+    0 12px 28px -6px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.roomCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.roomName {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+:global(.dark) .roomName {
+  color: #f8fafc;
+}
+
+.roomMetaTag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.roomBadge3D {
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.badgeAvailable {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  box-shadow: 0 2px 0 #6ee7b7;
+}
+
+:global(.dark) .badgeAvailable {
+  background: #064e3b;
+  color: #34d399;
+  border-color: #047857;
+  box-shadow: 0 2px 0 #022c22;
+}
+
+.badgeSoldOut {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  box-shadow: 0 2px 0 #fca5a5;
+}
+
+:global(.dark) .badgeSoldOut {
+  background: #450a0a;
+  color: #f87171;
+  border-color: #7f1d1d;
+  box-shadow: 0 2px 0 #280505;
+}
+
+/* ── 3D Stepper Section for Allotment ── */
+.stepperSection {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+:global(.dark) .stepperSection {
+  background: #0d121b;
+  border-color: #1e293b;
+}
+
+.stepperLabelGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.stepperLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+:global(.dark) .stepperLabel {
+  color: #f1f5f9;
+}
+
+.stepperSub {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.stepperControl {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stepBtn3D {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 3px 0 #cbd5e1, 0 3px 6px rgba(0, 0, 0, 0.05);
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.stepBtn3D:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #cbd5e1;
+}
+
+:global(.dark) .stepBtn3D {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+  box-shadow: 0 3px 0 #090e17;
+}
+
+:global(.dark) .stepBtn3D:active {
+  box-shadow: 0 1px 0 #090e17;
+}
+
+.stepValue {
+  font-size: 19px;
+  font-weight: 900;
+  min-width: 32px;
+  text-align: center;
+  color: #0f172a;
+  font-feature-settings: "tnum" 1;
+}
+
+:global(.dark) .stepValue {
+  color: #ffffff;
+}
+
+/* ── Stop Sell 3D Toggle Pill ── */
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px;
+}
+
+.toggleLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+:global(.dark) .toggleLabel {
+  color: #cbd5e1;
+}
+
+.stopSellToggleBtn {
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid #cbd5e1;
+  background: #f1f5f9;
+  color: #475569;
+  box-shadow: 0 3px 0 #cbd5e1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stopSellToggleBtn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #cbd5e1;
+}
+
+.stopSellActive {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border-color: #fca5a5 !important;
+  box-shadow: 0 3px 0 #f87171 !important;
+}
+
+/* ── Rate Plans in 3D Card ── */
+.ratePlansList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
+}
+
+:global(.dark) .ratePlansList {
+  border-top-color: #1e293b;
+}
+
+.ratePlanRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+:global(.dark) .ratePlanRow {
+  background: #0f141d;
+  border-color: #1e293b;
+}
+
+.ratePlanInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ratePlanName {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+:global(.dark) .ratePlanName {
+  color: #f1f5f9;
+}
+
+.ratePriceBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.priceTag3D {
+  font-size: 14px;
+  font-weight: 900;
+  color: #0f172a;
+  background: #ffffff;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 0 #cbd5e1;
+  font-feature-settings: "tnum" 1;
+}
+
+:global(.dark) .priceTag3D {
+  background: #1e293b;
+  border-color: #334155;
+  color: #ffffff;
+  box-shadow: 0 2px 0 #0a0e16;
+}
+
+.priceEditBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
+  box-shadow: 0 2px 0 #93c5fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.priceEditBtn:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 #93c5fd;
+}
+
+/* ── Sticky Bottom 3D Action Save Dock ── */
+.stickySaveDock {
+  position: fixed;
+  bottom: calc(76px + env(safe-area-inset-bottom, 12px));
+  left: 12px;
+  right: 12px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 4px 0 #000000;
+  z-index: 950;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.dockCountText {
+  display: flex;
+  flex-direction: column;
+  color: #ffffff;
+}
+
+.dockCountTitle {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.dockCountSub {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.dockActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dockResetBtn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dockSaveBtn {
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: #10b981;
+  color: #ffffff;
+  border: 1px solid #059669;
+  box-shadow: 0 3px 0 #047857, 0 4px 10px rgba(16, 185, 129, 0.3);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dockSaveBtn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #047857;
+}
+
+/* ── Quick Price Modal Bottom Sheet ── */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modalSheet {
+  background: #ffffff;
+  border-radius: 24px 24px 0 0;
+  width: 100%;
+  max-width: 500px;
+  padding: 24px 20px calc(24px + env(safe-area-inset-bottom, 16px)) 20px;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+:global(.dark) .modalSheet {
+  background: #141b26;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sheetHandle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: #cbd5e1;
+  align-self: center;
+  margin-bottom: 4px;
+}
+
+:global(.dark) .sheetHandle {
+  background: #334155;
+}
+
+.sheetTitle {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+:global(.dark) .sheetTitle {
+  color: #f8fafc;
+}
+
+.sheetInput {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 20px;
+  font-weight: 800;
+  border-radius: 14px;
+  border: 2px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  text-align: right;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.sheetInput:focus {
+  border-color: #2563eb;
+  background: #ffffff;
+}
+
+:global(.dark) .sheetInput {
+  background: #0f141d;
+  border-color: #334155;
+  color: #ffffff;
+}
+
+.sheetQuickPills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quickPillBtn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 0 #cbd5e1;
+  color: #334155;
+  cursor: pointer;
+}
+
+.quickPillBtn:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 #cbd5e1;
+}
+
+:global(.dark) .quickPillBtn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+  box-shadow: 0 2px 0 #0a0e16;
+}
+
+.sheetActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.sheetCancelBtn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+}
+
+:global(.dark) .sheetCancelBtn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+.sheetSaveBtn {
+  flex: 2;
+  padding: 14px;
+  border-radius: 14px;
+  background: #2563eb;
+  border: 1px solid #1d4ed8;
+  box-shadow: 0 3px 0 #1e40af;
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.sheetSaveBtn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #1e40af;
+}

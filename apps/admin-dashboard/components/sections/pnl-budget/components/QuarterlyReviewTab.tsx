@@ -11,6 +11,8 @@ interface QuarterlyReviewTabProps {
   actualMonthlyData: Record<string, any>;
   hotelRoomCount: number;
   isStartup?: boolean;
+  currencyCode?: string;
+  currencySymbol?: string;
 }
 
 const QUARTERS = [
@@ -26,6 +28,8 @@ export const QuarterlyReviewTab: React.FC<QuarterlyReviewTabProps> = ({
   actualMonthlyData,
   hotelRoomCount,
   isStartup = false,
+  currencyCode = "IDR",
+  currencySymbol,
 }) => {
   // Aggregate Q1 - Q4 data for Budget and Actual
   const qData = QUARTERS.map((q) => {
@@ -191,20 +195,20 @@ export const QuarterlyReviewTab: React.FC<QuarterlyReviewTabProps> = ({
                   ))}
                 </tr>
                 <tr>
-                  <td className={styles.colDesc}>ARR (IDR)</td>
+                  <td className={styles.colDesc}>ARR ({currencyCode})</td>
                   {qData.map((q) => (
                     <React.Fragment key={q.qId}>
-                      <td className={styles.colAmount}>{formatIDR(q.aArr)}</td>
-                      <td className={styles.colAmount}>{formatIDR(q.bArr)}</td>
+                      <td className={styles.colAmount}>{formatIDR(q.aArr, currencyCode)}</td>
+                      <td className={styles.colAmount}>{formatIDR(q.bArr, currencyCode)}</td>
                     </React.Fragment>
                   ))}
                 </tr>
                 <tr>
-                  <td className={styles.colDesc}>RevPAR (IDR)</td>
+                  <td className={styles.colDesc}>RevPAR ({currencyCode})</td>
                   {qData.map((q) => (
                     <React.Fragment key={q.qId}>
-                      <td className={styles.colAmount}>{formatIDR(q.aRevPar)}</td>
-                      <td className={styles.colAmount}>{formatIDR(q.bRevPar)}</td>
+                      <td className={styles.colAmount}>{formatIDR(q.aRevPar, currencyCode)}</td>
+                      <td className={styles.colAmount}>{formatIDR(q.bRevPar, currencyCode)}</td>
                     </React.Fragment>
                   ))}
                 </tr>

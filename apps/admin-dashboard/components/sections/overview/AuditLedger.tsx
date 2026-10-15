@@ -23,7 +23,12 @@ interface AuditLedgerProps {
     onClearFilter?: () => void;
     onRefresh?: () => void;
     onView: (booking: any) => void;
+    onEdit?: (booking: any) => void;
+    onDelete?: (booking: any) => void;
+    onCancel?: (booking: any) => void;
+    onStatusUpdate?: any;
     onExportExcel: () => void;
+    onExportPDF?: () => void;
     activeHotelName?: string;
 }
 

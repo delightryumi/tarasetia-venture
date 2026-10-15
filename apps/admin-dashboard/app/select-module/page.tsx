@@ -262,7 +262,6 @@ export default function SelectModulePage() {
         if (hasPermission(user, 'invoice', 'module_front_office')) return '/invoice?module=front-office';
         if (hasPermission(user, 'digital-checkin', 'module_front_office')) return '/digital-checkin?module=front-office';
         if (hasPermission(user, 'confirmation-letter', 'module_front_office')) return '/confirmation-letter?module=front-office';
-        if (hasPermission(user, 'inventory-control', 'module_front_office')) return '/inventory-control?module=front-office';
         if (hasPermission(user, 'purchase-order', 'module_front_office')) return '/front-office/purchase-order';
         return fallback;
 
@@ -498,7 +497,7 @@ export default function SelectModulePage() {
                   className={`${styles.hotelPillBtn} ${isHotelDropdownOpen ? styles.hotelPillBtnActive : ''}`}
                   title="Ganti Properti / Hotel Aktif"
                 >
-                  <span className="truncate max-w-[200px] sm:max-w-[280px]">
+                  <span className="truncate min-w-0 max-w-[125px] xs:max-w-[180px] sm:max-w-[280px]">
                     {activeHotelCode === '0' || !activeHotelCode
                       ? 'Superadmin (Tanpa Preview)'
                       : `[${activeHotelCode}] ${hotelsList?.find((h) => String(h.hotelCode) === String(activeHotelCode))?.name || activeHotelName || 'Pilih Properti'}`}
@@ -559,7 +558,7 @@ export default function SelectModulePage() {
             ) : (
               activeHotelCode && (
                 <div className={styles.hotelPillStatic}>
-                  <span>
+                  <span className="truncate min-w-0 max-w-[125px] xs:max-w-[180px] sm:max-w-[280px]">
                     [{activeHotelCode || "0"}] {activeHotelName || 'Memuat...'}
                   </span>
                 </div>
@@ -568,7 +567,7 @@ export default function SelectModulePage() {
           </div>
 
           {/* Right Side: Action Buttons (Theme Switcher, Hamburger Menu, Logout) */}
-          <div className="flex items-center gap-3">
+          <div className={styles.headerRightActions}>
             <ModuleActionButtons
               showGrid={false}
               setShowGrid={setShowGrid}

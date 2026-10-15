@@ -117,14 +117,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-left: 16px;
-  padding-right: 16px;
+  gap: 10px;
+  padding-left: 12px;
+  padding-right: 12px;
 }
 
 @media (min-width: 768px) {
   .headerInner {
     padding-left: 16px;
     padding-right: 16px;
+    gap: 16px;
   }
 }
 
@@ -139,18 +141,21 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 @media (min-width: 768px) {
   .logoArea {
-    gap: 16px;
+    gap: 14px;
   }
 }
 
 .logoImage {
-  height: 24px;
+  height: 22px;
   width: auto;
   object-fit: contain;
+  flex-shrink: 0;
   margin-left: 0;
   filter: invert(1) brightness(0);
 }
@@ -166,9 +171,10 @@
 }
 
 .dividerLine {
-  height: 24px;
+  height: 20px;
   width: 1px;
-  background-color: #2e2e30;
+  flex-shrink: 0;
+  background-color: #e2e8f0;
 }
 
 :global(.dark) .dividerLine {
@@ -180,27 +186,41 @@
   position: relative;
   display: inline-flex;
   align-items: center;
+  min-width: 0;
+  flex-shrink: 1;
+  max-width: 100%;
   z-index: 40;
 }
 
 .hotelPillBtn {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  height: 36px;
-  padding: 0 16px;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
   border-radius: 9999px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   color: #0f172a;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (min-width: 640px) {
+  .hotelPillBtn {
+    height: 36px;
+    padding: 0 14px;
+    gap: 8px;
+    font-size: 12.5px;
+  }
 }
 
 .hotelPillBtn:hover {
@@ -353,19 +373,28 @@
 .hotelPillStatic {
   display: inline-flex;
   align-items: center;
-  height: 36px;
-  padding: 0 16px;
+  height: 34px;
+  padding: 0 10px;
   border-radius: 9999px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   color: #0f172a;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  max-width: 440px;
+  max-width: 100%;
+  min-width: 0;
   white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .hotelPillStatic {
+    height: 36px;
+    padding: 0 14px;
+    font-size: 12.5px;
+  }
 }
 
 :global(.dark) .hotelPillStatic {
@@ -374,11 +403,26 @@
   color: #f8fafc;
 }
 
+/* Header Right Action Buttons Container */
+.headerRightActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .headerRightActions {
+    gap: 12px;
+  }
+}
+
 /* Hamburger Menu & Dropdown Styles */
 .menuWrapper {
   position: relative;
   z-index: 50;
   margin-right: 0;
+  flex-shrink: 0;
 }
 
 .menuButton {

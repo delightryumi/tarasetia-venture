@@ -9,8 +9,7 @@ const ALL_KEYS = [
     // Modules
     "module_pos", "module_front_office", "module_innalytics", "module_housekeeping", 
     "module_food_beverage", "module_purchasing", "module_accounting", "module_cpanel", "module_hrd",
-    // Submenus
-    "overview", "bookings", "digital-checkin", "forecast", "inventory-control", "invoice", 
+    "overview", "bookings", "digital-checkin", "forecast", "invoice", 
     "pnl", "pnl-budget", "dsr", "budgeting", "statements",
     "logo", "hero", "room-type", "about", "gallery", "footer", "attractions", "promo", "packages", "seo", "users",
     "purchasing", "store-requisition", "purchase-requisition", "daily-market-list", 
