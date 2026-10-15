@@ -6,28 +6,61 @@
     <title>Panduan & SOP Sertifikasi Channex PMS — My Tara</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --clay-bg: #f8fafc;
+            /* ── Sistem 3 Warna Harmonis Claymorphic (Dominan Burgundy) ──
+               Warna 1 (Dominan): Deep Royal Burgundy (#5c0f1e, #36050e, #7a1329)
+               Warna 2: Warm Champagne Gold (#c59218, #d4af37, #fae69e, #fffbe8)
+               Warna 3: Rose Mauve Clay (#b84a60, #fcecee, #f8d3dc, #fff0f3)
+            */
+            --bg-page: #fbf8f9;
             --clay-surface: #ffffff;
-            --clay-border: rgba(226, 232, 240, 0.95);
-            --clay-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04), inset 0 1px 1px rgba(255, 255, 255, 1);
-            --clay-inset: inset 0 2px 4px rgba(15, 23, 42, 0.04);
-            --text-main: #0f172a;
-            --text-muted: #475569;
-            --text-light: #64748b;
-            --primary: #0284c7;
-            --primary-soft: #f0f9ff;
-            --primary-border: #bae6fd;
-            --accent-amber: #d97706;
-            --accent-amber-soft: #fffbeb;
-            --accent-green: #059669;
-            --accent-green-soft: #ecfdf5;
-            --accent-purple: #7c3aed;
-            --accent-purple-soft: #f5f3ff;
-            --accent-rose: #e11d48;
-            --accent-rose-soft: #fff1f2;
+            --clay-surface-soft: #fdf5f6;
+            --clay-border: #ebd0d5;
+            --clay-border-gold: #f3d178;
+            --clay-border-burgundy: #c25b70;
+            
+            /* 3D Clay Morphism Dual Shadows (Inflated Pillowy Elevation) */
+            --clay-card-shadow: 
+                0 16px 36px -4px rgba(92, 15, 30, 0.12),
+                0 6px 14px -2px rgba(0, 0, 0, 0.04),
+                inset 3px 3px 6px rgba(255, 255, 255, 0.95),
+                inset -3px -3px 6px rgba(92, 15, 30, 0.07);
+
+            --clay-pill-shadow: 
+                0 4px 10px -1px rgba(92, 15, 30, 0.16),
+                inset 2px 2px 4px rgba(255, 255, 255, 0.9),
+                inset -2px -2px 4px rgba(92, 15, 30, 0.15);
+
+            --clay-inset-shadow: 
+                inset 3px 3px 6px rgba(92, 15, 30, 0.08),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.85);
+
+            /* Warna 1: Burgundy (Dominan) */
+            --burgundy-primary: #5c0f1e;
+            --burgundy-dark: #36050e;
+            --burgundy-light: #7a1329;
+            --burgundy-soft-bg: #fae8eb;
+            --burgundy-border: #f1b8c3;
+
+            /* Warna 2: Gold */
+            --gold-primary: #b8860b;
+            --gold-amber: #c59218;
+            --gold-light: #d4af37;
+            --gold-soft-bg: #fffbe8;
+            --gold-border: #fae69e;
+            --gold-text: #000000;
+
+            /* Warna 3: Rose Clay */
+            --rose-primary: #b84a60;
+            --rose-soft-bg: #fdf2f4;
+            --rose-border: #f5c4cd;
+
+            /* Teks Ditekankan Solid Hitam (Ultra High Contrast) */
+            --text-main: #000000;
+            --text-secondary: #000000;
+            --text-muted: #111111;
         }
 
         * {
@@ -40,21 +73,23 @@
 
         body {
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--clay-bg);
-            color: var(--text-main);
-            font-size: 10pt;
+            background-color: var(--bg-page);
+            color: #000000;
+            font-size: 9.8pt;
             line-height: 1.55;
+            font-weight: 500;
             padding: 0;
         }
 
         @page {
             size: A4 portrait;
-            margin: 12mm 10mm 14mm 10mm;
+            margin: 11mm 10mm 13mm 10mm;
             @bottom-right {
-                content: counter(page) " / " counter(pages);
+                content: "My Tara CRS • Channex SOP • Hal. " counter(page) " / " counter(pages);
                 font-family: 'Plus Jakarta Sans', sans-serif;
                 font-size: 8pt;
-                color: #94a3b8;
+                color: #000000;
+                font-weight: 700;
             }
         }
 
@@ -68,47 +103,68 @@
             break-inside: avoid;
         }
 
-        /* ── Header Cover Banner ── */
+        /* ── Header Cover Banner 3D Clay Burgundy & Gold ── */
         .cover-banner {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0369a1 100%);
-            border-radius: 14px;
+            background: linear-gradient(135deg, #36050e 0%, #5c0f1e 50%, #7a1329 100%);
+            border: 2.5px solid #d4af37;
+            border-radius: 20px;
             padding: 24px 28px;
             color: #ffffff;
             margin-bottom: 20px;
             position: relative;
-            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
+            box-shadow: 0 18px 40px -6px rgba(92, 15, 30, 0.4), inset 0 3px 6px rgba(255, 255, 255, 0.35), inset 0 -3px 6px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+        }
+
+        .cover-banner::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 340px;
+            height: 340px;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, transparent 70%);
+            pointer-events: none;
         }
 
         .cover-tag {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            padding: 4px 10px;
+            gap: 7px;
+            background: rgba(255, 255, 255, 0.18);
+            border: 1.5px solid #fde68a;
+            padding: 4px 14px;
             border-radius: 9999px;
             font-size: 8pt;
-            font-weight: 700;
-            letter-spacing: 0.08em;
+            font-weight: 800;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
+            color: #fffbeb;
             margin-bottom: 12px;
-            backdrop-filter: blur(8px);
+            box-shadow: var(--clay-pill-shadow);
         }
 
         .cover-title {
             font-size: 20pt;
             font-weight: 800;
-            line-height: 1.2;
+            line-height: 1.25;
             letter-spacing: -0.02em;
+            color: #ffffff;
             margin-bottom: 8px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .cover-title span {
+            color: #fde68a;
         }
 
         .cover-subtitle {
-            font-size: 10.5pt;
-            color: #cbd5e1;
-            font-weight: 400;
-            line-height: 1.45;
-            margin-bottom: 16px;
+            font-size: 10pt;
+            color: #fbebee;
+            font-weight: 500;
+            line-height: 1.5;
+            margin-bottom: 18px;
+            max-width: 95%;
         }
 
         .cover-meta-grid {
@@ -116,39 +172,40 @@
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
             padding-top: 14px;
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-top: 1.5px solid rgba(255, 255, 255, 0.25);
         }
 
         .cover-meta-item {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 8px;
-            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1.5px solid rgba(253, 230, 138, 0.5);
+            border-radius: 12px;
+            padding: 8px 12px;
+            box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.3), inset -1px -1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .cover-meta-label {
-            font-size: 7.5pt;
+            font-size: 7.2pt;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: #94a3b8;
-            font-weight: 600;
+            letter-spacing: 0.08em;
+            color: #fde68a;
+            font-weight: 800;
         }
 
         .cover-meta-value {
             font-size: 9pt;
-            font-weight: 700;
+            font-weight: 800;
             color: #ffffff;
-            margin-top: 2px;
+            margin-top: 3px;
         }
 
-        /* ── Clay Card Base ── */
+        /* ── 3D Clay Cards (Claymorphism) ── */
         .clay-card {
             background: var(--clay-surface);
-            border: 1px solid var(--clay-border);
-            border-radius: 12px;
-            padding: 16px 18px;
-            margin-bottom: 14px;
-            box-shadow: var(--clay-shadow);
+            border: 2px solid var(--clay-border);
+            border-radius: 18px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--clay-card-shadow);
         }
 
         .clay-card-header {
@@ -157,98 +214,148 @@
             justify-content: space-between;
             margin-bottom: 12px;
             padding-bottom: 10px;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 2px solid #fae1e5;
         }
 
         .clay-card-title {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 12pt;
+            gap: 9px;
+            font-size: 11.5pt;
             font-weight: 800;
-            color: #0f172a;
+            color: #000000;
             letter-spacing: -0.01em;
         }
 
         .badge-pill {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 3px 8px;
+            gap: 5px;
+            padding: 4px 12px;
             border-radius: 9999px;
             font-size: 7.5pt;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            box-shadow: var(--clay-pill-shadow);
         }
 
-        .badge-blue { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-        .badge-green { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-        .badge-amber { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
-        .badge-purple { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
-        .badge-slate { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
-
-        /* ── Typography & Headings ── */
-        h2.section-header {
-            font-size: 13.5pt;
+        .badge-burgundy { 
+            background: linear-gradient(135deg, #5c0f1e 0%, #7a1329 100%); 
+            color: #ffffff; 
+            border: 1.5px solid #fae8eb; 
+            box-shadow: 0 4px 10px -1px rgba(92, 15, 30, 0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.4), inset -1px -1px 2px rgba(0, 0, 0, 0.2);
+        }
+        .badge-gold { 
+            background: var(--gold-soft-bg); 
+            color: #000000; 
+            border: 2px solid var(--gold-border); 
             font-weight: 800;
-            color: #0f172a;
+        }
+        .badge-rose { 
+            background: var(--rose-soft-bg); 
+            color: #000000; 
+            border: 2px solid var(--rose-border); 
+            font-weight: 800;
+        }
+        .badge-green { 
+            background: #ecfdf5; 
+            color: #000000; 
+            border: 2px solid #a7f3d0; 
+            font-weight: 800;
+        }
+        .badge-amber { 
+            background: #fffbe8; 
+            color: #000000; 
+            border: 2px solid #fed7aa; 
+            font-weight: 800;
+        }
+        .badge-slate { 
+            background: #f8fafc; 
+            color: #000000; 
+            border: 2px solid #cbd5e1; 
+            font-weight: 800;
+        }
+
+        /* ── Typography & Headings (High Contrast Solid Black) ── */
+        h2.section-header {
+            font-size: 13pt;
+            font-weight: 800;
+            color: #000000;
             letter-spacing: -0.02em;
-            margin: 20px 0 12px 0;
+            margin: 22px 0 12px 0;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 9px;
         }
 
         h2.section-header::before {
             content: "";
             display: inline-block;
-            width: 4px;
-            height: 18px;
-            background: #0284c7;
-            border-radius: 2px;
+            width: 6px;
+            height: 20px;
+            background: linear-gradient(180deg, #d4af37, #5c0f1e);
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(92, 15, 30, 0.4);
         }
 
         h3.sub-header {
-            font-size: 11pt;
-            font-weight: 700;
-            color: #1e293b;
+            font-size: 10.5pt;
+            font-weight: 800;
+            color: #000000;
             margin: 10px 0 6px 0;
         }
 
         p {
-            color: var(--text-muted);
+            color: #000000;
+            font-weight: 500;
             margin-bottom: 8px;
-            font-size: 9.5pt;
+            font-size: 9.3pt;
+            line-height: 1.6;
         }
 
-        /* ── Clay Step & Callout Boxes ── */
+        /* ── 3D Clay Callout Boxes ── */
         .callout-box {
-            border-radius: 10px;
-            padding: 12px 14px;
+            border-radius: 14px;
+            padding: 13px 16px;
             margin: 10px 0;
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: flex-start;
             font-size: 9pt;
+            line-height: 1.55;
+            color: #000000;
+            font-weight: 500;
+            box-shadow: var(--clay-card-shadow);
         }
 
-        .callout-info {
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            color: #0369a1;
+        .callout-box b {
+            color: #000000;
+            font-weight: 800;
+        }
+
+        .callout-gold {
+            background: var(--gold-soft-bg);
+            border: 2px solid var(--gold-border);
+            color: #000000;
+        }
+
+        .callout-burgundy {
+            background: var(--burgundy-soft-bg);
+            border: 2px solid var(--burgundy-border);
+            color: #000000;
         }
 
         .callout-warning {
-            background: #fffbeb;
-            border: 1px solid #fde68a;
-            color: #92400e;
+            background: #fffbe8;
+            border: 2px solid var(--gold-border);
+            color: #000000;
         }
 
         .callout-success {
             background: #ecfdf5;
-            border: 1px solid #a7f3d0;
-            color: #065f46;
+            border: 2px solid #a7f3d0;
+            color: #000000;
         }
 
         .callout-icon {
@@ -257,13 +364,14 @@
             flex-shrink: 0;
         }
 
-        /* ── Clay Tables ── */
+        /* ── 3D Clay Tables (Crisp White & Solid Black Text) ── */
         .table-wrap {
             overflow: hidden;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            border: 2px solid #ebd0d5;
             margin: 10px 0 14px 0;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+            box-shadow: 0 8px 20px -4px rgba(92, 15, 30, 0.08), inset 2px 2px 4px #ffffff, inset -2px -2px 4px rgba(92, 15, 30, 0.05);
+            background: #ffffff;
         }
 
         table.clay-table {
@@ -275,15 +383,15 @@
         }
 
         table.clay-table th {
-            background: #f8fafc;
-            color: #475569;
-            font-weight: 700;
+            background: linear-gradient(180deg, #fcecee 0%, #fae1e5 100%);
+            color: #36050e;
+            font-weight: 800;
             text-transform: uppercase;
             font-size: 7.5pt;
-            letter-spacing: 0.05em;
-            padding: 8px 10px;
-            border-bottom: 1px solid #e2e8f0;
-            border-right: 1px solid #f1f5f9;
+            letter-spacing: 0.06em;
+            padding: 10px 12px;
+            border-bottom: 2px solid #ebd0d5;
+            border-right: 1.5px solid #ebd0d5;
         }
 
         table.clay-table th:last-child {
@@ -291,11 +399,17 @@
         }
 
         table.clay-table td {
-            padding: 7px 10px;
-            border-bottom: 1px solid #f1f5f9;
-            border-right: 1px solid #f8fafc;
-            color: #1e293b;
+            padding: 9px 12px;
+            border-bottom: 1px solid #ebd0d5;
+            border-right: 1px solid #f8e5e8;
+            color: #000000;
+            font-weight: 500;
             vertical-align: middle;
+        }
+
+        table.clay-table td b {
+            color: #000000;
+            font-weight: 800;
         }
 
         table.clay-table td:last-child {
@@ -307,34 +421,49 @@
         }
 
         table.clay-table tr:nth-child(even) {
-            background-color: #fafbfc;
+            background-color: #fdf8f9;
         }
 
         .font-mono {
             font-family: 'JetBrains Mono', monospace;
             font-size: 8pt;
+            color: #000000;
+            font-weight: 700;
+            background: #fbf0f2;
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1px solid #ebd0d5;
         }
 
         .code-snippet {
             font-family: 'JetBrains Mono', monospace;
-            background: #0f172a;
-            color: #38bdf8;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 8pt;
+            background: #1f0309;
+            color: #fde68a;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 7.8pt;
+            border: 2px solid rgba(212, 175, 55, 0.5);
             overflow-x: auto;
             margin: 6px 0;
             line-height: 1.4;
+            box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.45);
         }
 
-        /* ── Checklist Pills ── */
+        /* ── Checklist Pills (Claymorphic) ── */
         .checklist-item {
             display: flex;
             align-items: flex-start;
-            gap: 8px;
-            padding: 6px 0;
-            border-bottom: 1px dashed #e2e8f0;
+            gap: 11px;
+            padding: 8px 0;
+            border-bottom: 1.5px dashed #ebd0d5;
             font-size: 9pt;
+            color: #000000;
+            font-weight: 500;
+        }
+
+        .checklist-item b {
+            color: #000000;
+            font-weight: 800;
         }
 
         .checklist-item:last-child {
@@ -342,61 +471,92 @@
         }
 
         .check-box {
-            width: 16px;
-            height: 16px;
-            border: 2px solid #0284c7;
-            border-radius: 4px;
+            width: 19px;
+            height: 19px;
+            border: 2px solid var(--burgundy-primary);
+            background: #ffffff;
+            border-radius: 6px;
             flex-shrink: 0;
             margin-top: 2px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
-            color: #0284c7;
+            font-size: 11px;
+            color: var(--burgundy-primary);
             font-weight: 800;
+            box-shadow: var(--clay-pill-shadow);
         }
 
-        /* ── Key-Value Grid ── */
+        /* ── Key-Value Grid (Claymorphic) ── */
         .kv-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            margin: 8px 0;
+            gap: 10px;
+            margin: 10px 0;
         }
 
         .kv-box {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 8px 10px;
+            background: #ffffff;
+            border: 2px solid var(--clay-border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            box-shadow: var(--clay-pill-shadow);
         }
 
         .kv-label {
-            font-size: 7.5pt;
+            font-size: 7.3pt;
             text-transform: uppercase;
-            font-weight: 700;
-            color: #64748b;
-            letter-spacing: 0.05em;
+            font-weight: 800;
+            color: #000000;
+            letter-spacing: 0.06em;
         }
 
         .kv-value {
             font-size: 9pt;
-            font-weight: 700;
-            color: #0f172a;
+            font-weight: 800;
+            color: #000000;
             margin-top: 2px;
+        }
+
+        /* ── Breadcrumb Step Tracker (Clay Pill) ── */
+        .menu-path {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #fae8eb;
+            border: 1.5px solid #f1b8c3;
+            border-radius: 8px;
+            padding: 3px 8px;
+            font-size: 8pt;
+            color: #000000;
+            font-weight: 700;
+            box-shadow: var(--clay-pill-shadow);
+        }
+
+        .exec-guide {
+            font-size: 8.8pt;
+            color: #000000;
+            font-weight: 500;
+            margin-top: 6px;
+            line-height: 1.55;
+        }
+
+        .exec-guide b {
+            color: #000000;
+            font-weight: 800;
         }
     </style>
 </head>
 <body>
 
     <!-- ═══════════════════════════════════════════════════════════ -->
-    <!-- COVER / HEADER BANNER                                       -->
+    <!-- COVER / HEADER BANNER (3D CLAY BURGUNDY & GOLD ACCENT)      -->
     <!-- ═══════════════════════════════════════════════════════════ -->
     <div class="cover-banner">
         <div class="cover-tag">Official Integration Playbook</div>
-        <div class="cover-title">SOP & Skema Uji Sertifikasi Channex PMS</div>
+        <div class="cover-title">SOP & Skema Uji <span>Sertifikasi Channex PMS</span></div>
         <div class="cover-subtitle">
-            Panduan Lengkap Langkah Demi Langkah untuk Account Manager & Tim Operasional My Tara CRS dalam Menjalankan 14 Skenario Pengujian dan Pengisian Formulir Akreditasi Resmi Channex API v1.
+            Panduan Lengkap Langkah Demi Langkah untuk Account Manager & Tim Operasional My Tara CRS dalam Menjalankan 14 Skenario Pengujian Resmi Channex API v1 melalui Struktur 5-Pilar Channel Manager Terbaru.
         </div>
         <div class="cover-meta-grid">
             <div class="cover-meta-item">
@@ -409,7 +569,7 @@
             </div>
             <div class="cover-meta-item">
                 <div class="cover-meta-label">Status Kesiapan</div>
-                <div class="cover-meta-value" style="color: #4ade80;">100% Certified Ready</div>
+                <div class="cover-meta-value" style="color: #6ee7b7;">100% Certified Ready</div>
             </div>
             <div class="cover-meta-item">
                 <div class="cover-meta-label">Formulir Submit</div>
@@ -419,43 +579,108 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════ -->
-    <!-- BAB 1: ARSITEKTUR & PRINSIP INTEGRASI                       -->
+    <!-- BAB 1: ARSITEKTUR & SITEMAP NAVIGASI TERBARU                -->
     <!-- ═══════════════════════════════════════════════════════════ -->
     <div class="clay-card no-break">
         <div class="clay-card-header">
             <div class="clay-card-title">
-                <span>01. Arsitektur Sistem Integrasi My Tara & Channex</span>
+                <span>01. Arsitektur & Peta Navigasi 5-Pilar Channel Manager</span>
             </div>
-            <span class="badge-pill badge-blue">Arsitektur & Standar</span>
+            <span class="badge-pill badge-burgundy">Arsitektur Terpadu</span>
         </div>
         <p>
-            Channex adalah penyedia infrastruktur Channel Manager global yang menghubungkan My Tara CRS dengan ratusan Online Travel Agent (Booking.com, Agoda, Expedia, Traveloka, Airbnb, dll.). Agar My Tara mendapatkan status <b>Certified PMS Partner</b>, My Tara harus lulus audit teknis terhadap protokol sinkronisasi 2 arah.
+            Channex adalah penyedia infrastruktur Channel Manager global yang menghubungkan My Tara CRS dengan 68+ Online Travel Agent (Booking.com, Agoda, Expedia, Traveloka, Airbnb, Trip.com, dll.). Agar My Tara mendapatkan status <b>Official Certified PMS Partner</b>, My Tara harus lulus audit teknis terhadap protokol sinkronisasi 2 arah.
         </p>
 
-        <div class="callout-box callout-info">
-            <div class="callout-icon">💡</div>
+        <div class="callout-box callout-gold">
+            <div class="callout-icon">⚜️</div>
             <div>
-                <b>Prinsip Inti yang Dinilai oleh Tim Channex:</b><br>
-                1. <b>Kepatuhan 2-Call Full Sync:</b> Sinkronisasi massal tahunan dikirim dalam 2 request API terpisah (Call 1: Allotment Kamar, Call 2: Tarif & Restriksi).<br>
-                2. <b>Delta Update Batching:</b> Setiap perubahan tanggal/harga majemuk wajib digabung (batch) ke dalam 1 request API, dilarang melakukan looping per tanggal.<br>
+                <b>Prinsip Inti yang Dinilai oleh Tim Audit Channex:</b><br>
+                1. <b>Kepatuhan 2-Call Full Sync:</b> Sinkronisasi massal 500 hari dikirim dalam 2 request API terpisah (Call 1: Allotment Kamar, Call 2: Tarif & Restriksi).<br>
+                2. <b>Delta Update Batching:</b> Setiap perubahan tanggal/harga jamak wajib digabung (batch) ke dalam 1 request API, dilarang melakukan looping per tanggal.<br>
                 3. <b>Mandatory Booking ACK Loop:</b> Setiap reservasi webhook yang diterima wajib dikonfirmasi balik via <span class="font-mono">POST /booking_revisions/:id/ack</span> dalam batas SLA 30 menit.<br>
                 4. <b>Task ID Tracking:</b> Channex memproses data secara antrean latar belakang (*async*). Respon sukses mengembalikan <b>Task ID</b> yang wajib dicatat di formulir.
             </div>
         </div>
 
+        <h3 class="sub-header" style="margin-top: 10px;">Sitemap Struktur Menu Terbaru di My Tara Channel Manager</h3>
+        <p style="font-size: 8.5pt;">Semua pengujian sertifikasi kini dilakukan secara terpusat melalui navigasi 5-Pilar berikut (tidak lagi menggunakan menu lama yang terpisah):</p>
+        
+        <div class="table-wrap">
+            <table class="clay-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Pilar & Kategori</th>
+                        <th style="width: 35%;">Tab Navigasi Baru</th>
+                        <th style="width: 40%;">Fungsi Utama dalam Sertifikasi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><b>1. Onboarding & Setup</b></td>
+                        <td>
+                            • <span class="menu-path">tab=groups</span> Properties & Hotel Groups<br>
+                            • <span class="menu-path">tab=golive</span> API Credentials & Gateway<br>
+                            • <span class="menu-path">tab=sandbox</span> Testing Sandbox & Roadmap
+                        </td>
+                        <td>Inisialisasi properti staging, verifikasi API Key, tombol Force ARI Sync, dan simulasi 8-stage sandbox.</td>
+                    </tr>
+                    <tr>
+                        <td><b>2. Rooms & Master Pricing</b></td>
+                        <td>
+                            • <span class="menu-path">tab=rooms</span> Room Types & Allotment<br>
+                            • <span class="menu-path">tab=rateplans</span> Rate Plans & Packages<br>
+                            • <span class="menu-path">tab=matrix</span> Rate Matrix Calendar<br>
+                            • <span class="menu-path">tab=dynamic_pricing</span> Yield & Dynamic Pricing
+                        </td>
+                        <td>Pendaftaran tipe kamar (Twin & Double), rate plans (BAR & BB) dengan checklist kamar, serta kalender grid tarif & restriksi (Test 2 s/d 10).</td>
+                    </tr>
+                    <tr>
+                        <td><b>3. OTA Distribution</b></td>
+                        <td>
+                            • <span class="menu-path">tab=mapping</span> Channel Mapping & Catalog<br>
+                            • <span class="menu-path">tab=promotions</span> Promotions & Deals<br>
+                            • <span class="menu-path">tab=google</span> Google Hotel Links<br>
+                            • <span class="menu-path">tab=travel_agents</span> Travel Agents & B2B<br>
+                            • <span class="menu-path">tab=content</span> Content & Amenities
+                        </td>
+                        <td>Pemetaan kamar & tarif ke saluran OTA, promosi diskon, integrasi Google Free Booking Links, dan sinkronisasi konten/fasilitas.</td>
+                    </tr>
+                    <tr>
+                        <td><b>4. Guest Suite & Direct</b></td>
+                        <td>
+                            • <span class="menu-path">tab=booking_engine</span> Direct Booking Engine<br>
+                            • <span class="menu-path">tab=messages</span> Unified Guest Inbox<br>
+                            • <span class="menu-path">tab=reviews</span> Guest Reviews & Ratings
+                        </td>
+                        <td>Engine reservasi langsung hotel dan komunikasi tamu lintas kanal OTA.</td>
+                    </tr>
+                    <tr>
+                        <td><b>5. Monitoring & Security</b></td>
+                        <td>
+                            • <span class="menu-path">tab=logs</span> Transmission & Audit Logs<br>
+                            • <span class="menu-path">tab=iframe</span> Channex Console SSO<br>
+                            • <span class="menu-path">tab=payments</span> PCI Card Vault & Security
+                        </td>
+                        <td>Pencatatan Task ID Channex secara riil, audit payload JSON, akses portal Channex via iframe SSO, dan verifikasi PCI DSS.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
         <div class="kv-grid">
             <div class="kv-box">
-                <div class="kv-label">Format Task ID Channex (Wajib Dicatat)</div>
+                <div class="kv-label">Format Task ID Channex (Wajib Disalin)</div>
                 <div class="code-snippet">{"data": [{"id": "03854d5e-5234-43e9-b673-803e91bfe640", "type": "task"}], "meta": {"message": "Success"}}</div>
-                <div style="font-size: 7.5pt; color: #64748b; margin-top: 4px;">*Catat UUID pada field <b style="color: #0284c7;">"id"</b> untuk dimasukkan ke Google Form sertifikasi.</div>
+                <div style="font-size: 7.5pt; color: #000000; font-weight: 700; margin-top: 3px;">*Salin nilai UUID pada field <b>"id"</b> untuk dimasukkan ke Google Form sertifikasi.</div>
             </div>
             <div class="kv-box">
                 <div class="kv-label">URL & Endpoint Kunci</div>
-                <div style="font-size: 8pt; margin-top: 4px;">
+                <div style="font-size: 7.8pt; margin-top: 3px;">
                     • <b>Portal Staging:</b> <span class="font-mono">https://staging.channex.io</span><br>
                     • <b>API Base:</b> <span class="font-mono">https://staging.channex.io/api/v1</span><br>
                     • <b>Webhook Inbound:</b> <span class="font-mono">https://[domain-anda]/api/channex/webhook</span><br>
-                    • <b>Dashboard PMS:</b> <span class="font-mono">/channel-manager?module=channel-manager</span>
+                    • <b>Audit Logs:</b> <span class="font-mono">/channel-manager?tab=logs</span>
                 </div>
             </div>
         </div>
@@ -469,41 +694,41 @@
             <div class="clay-card-title">
                 <span>02. Persiapan Properti Pengujian (Mandatory Initial Setup)</span>
             </div>
-            <span class="badge-pill badge-amber">Wajib Disiapkan</span>
+            <span class="badge-pill badge-gold">Wajib Disiapkan</span>
         </div>
         <p>
-            Channex mewajibkan Account Manager membuat properti uji khusus dengan konfigurasi persis sesuai petunjuk berikut sebelum menjalankan skenario 1 s/d 14:
+            Channex mewajibkan Account Manager membuat properti uji khusus dengan konfigurasi persis sesuai petunjuk berikut sebelum menjalankan skenario pengujian 1 s/d 14:
         </p>
 
         <div class="table-wrap">
             <table class="clay-table">
                 <thead>
                     <tr>
-                        <th style="width: 25%;">Parameter</th>
-                        <th style="width: 40%;">Nilai Wajib (Sesuai Aturan Channex)</th>
-                        <th style="width: 35%;">Lokasi Input di My Tara</th>
+                        <th style="width: 25%;">Parameter Uji</th>
+                        <th style="width: 40%;">Nilai Wajib (Aturan Channex)</th>
+                        <th style="width: 35%;">Lokasi Input di Menu Baru My Tara</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td><b>Nama Properti</b></td>
-                        <td><span class="font-mono" style="color: #0284c7; font-weight: 700;">Test Property - My Tara</span></td>
-                        <td>Pengaturan Hotel (<span class="font-mono">/profile</span>)</td>
+                        <td><span class="font-mono" style="font-weight: 700;">Test Property - My Tara</span></td>
+                        <td><span class="menu-path">tab=groups</span> Properties & Hotel Groups</td>
                     </tr>
                     <tr>
                         <td><b>Mata Uang (Currency)</b></td>
                         <td><span class="badge-pill badge-green">USD ($)</span></td>
-                        <td>Base Currency (<span class="font-mono">/profile</span> & <span class="font-mono">/channel-manager</span>)</td>
+                        <td><span class="menu-path">tab=golive</span> API Credentials & Gateway</td>
                     </tr>
                     <tr>
                         <td><b>Tipe Kamar 1</b></td>
-                        <td><b>Twin Room</b> (Max Occupancy: 2 Dewasa)</td>
-                        <td>Manajemen Kamar (<span class="font-mono">/rooms</span>)</td>
+                        <td><b>Twin Room</b> (Max Occupancy: 2 Dewasa, Stok Fisik: 8)</td>
+                        <td><span class="menu-path">tab=rooms</span> Room Types & Allotment</td>
                     </tr>
                     <tr>
                         <td><b>Tipe Kamar 2</b></td>
-                        <td><b>Double Room</b> (Max Occupancy: 2 Dewasa)</td>
-                        <td>Manajemen Kamar (<span class="font-mono">/rooms</span>)</td>
+                        <td><b>Double Room</b> (Max Occupancy: 2 Dewasa, Stok Fisik: 8)</td>
+                        <td><span class="menu-path">tab=rooms</span> Room Types & Allotment</td>
                     </tr>
                     <tr>
                         <td><b>Rate Plans (Twin)</b></td>
@@ -511,7 +736,7 @@
                             1. <b>Best Available Rate</b> (Default Rate: $100)<br>
                             2. <b>Bed & Breakfast Rate</b> (Default Rate: $120)
                         </td>
-                        <td>Rate Plans (<span class="font-mono">/rate-inventory</span>)</td>
+                        <td><span class="menu-path">tab=rateplans</span> Rate Plans & Packages (Centang Twin Room)</td>
                     </tr>
                     <tr>
                         <td><b>Rate Plans (Double)</b></td>
@@ -519,7 +744,7 @@
                             1. <b>Best Available Rate</b> (Default Rate: $100)<br>
                             2. <b>Bed & Breakfast Rate</b> (Default Rate: $120)
                         </td>
-                        <td>Rate Plans (<span class="font-mono">/rate-inventory</span>)</td>
+                        <td><span class="menu-path">tab=rateplans</span> Rate Plans & Packages (Centang Double Room)</td>
                     </tr>
                 </tbody>
             </table>
@@ -528,8 +753,8 @@
         <div class="callout-box callout-success">
             <div class="callout-icon">⚡</div>
             <div>
-                <b>Cara Pendaftaran Otomatis via My Tara CRS:</b><br>
-                Buka menu <b>Channel Manager > Tab Go Live</b>. Pilih mata uang <b>USD</b>, lalu klik tombol <b>"Daftarkan Properti ke Channex"</b>. Sistem akan secara otomatis mendaftarkan properti, 2 kamar, dan 4 rate plan tersebut ke Channex Staging serta langsung mengaitkan ID-nya secara otomatis.
+                <b>Otomasi Pembuatan Entitas via My Tara Channel Manager:</b><br>
+                Buka tab <span class="menu-path">tab=golive</span>. Pastikan environment terpilih adalah <b>Staging</b> dan mata uang <b>USD</b>, lalu klik tombol <b>"Daftarkan Properti ke Channex"</b>. Sistem akan otomatis memetakan ID properti, 2 kamar, dan 4 paket harga ke server Channex Staging dan menyimpan token integrasinya.
             </div>
         </div>
     </div>
@@ -541,14 +766,14 @@
     <!-- ═══════════════════════════════════════════════════════════ -->
     <h2 class="section-header">03. Panduan Langkah Demi Langkah 14 Skenario Pengujian</h2>
     <p>
-        Jalankan masing-masing skenario secara berurutan. Di setiap akhir uji coba, simpan <b>Task ID</b> yang dihasilkan untuk dimasukkan ke formulir sertifikasi.
+        Jalankan masing-masing skenario secara berurutan. Di setiap akhir uji coba, catat <b>Task ID</b> yang dihasilkan pada riwayat tugas untuk dimasukkan ke formulir sertifikasi.
     </p>
 
     <!-- TEST 1 -->
     <div class="clay-card no-break">
         <div class="clay-card-header">
             <div class="clay-card-title">
-                <span class="badge-pill badge-blue">TEST 1</span>
+                <span class="badge-pill badge-burgundy">TEST 1</span>
                 <span>Full Data Update (Full Sync 500 Hari)</span>
             </div>
             <span class="badge-pill badge-green">2 API Calls Wajib</span>
@@ -559,7 +784,7 @@
         <div class="callout-box callout-warning">
             <div class="callout-icon">⚠️</div>
             <div>
-                <b>Perhatian Khusus Channex:</b> Channex menolak data yang seragam/flat (misal semua kamar availability 1 dan harga $100 sepanjang tahun). Data harus bervariasi menyerupai hotel riil.
+                <b>Perhatian Khusus Channex:</b> Channex menolak data yang seragam/flat (misal semua kamar availability 1 dan harga $100 sepanjang tahun). Data harus bervariasi menyerupai operasional hotel riil.
             </div>
         </div>
         <div class="table-wrap">
@@ -588,8 +813,8 @@
                 </tbody>
             </table>
         </div>
-        <div style="font-size: 8.5pt; color: #475569;">
-            <b>Cara Eksekusi di My Tara:</b> Buka <b>Channel Manager > Go Live</b> > Klik tombol <b>"Sync Full ARI (365–500 Hari)"</b>. Sistem akan mengeksekusi 2 panggilan API dan mencatat 2 Task ID pada tabel riwayat tugas (*Task Log*).
+        <div class="exec-guide">
+            <b>Cara Eksekusi di Menu Baru:</b> Buka <span class="menu-path">tab=sandbox</span> Testing Sandbox atau <span class="menu-path">tab=golive</span> > Klik tombol <b>"Force Push ARI to Channels (500 Hari)"</b>. Sistem akan mengeksekusi 2 panggilan API bertahap dan mencatat 2 Task ID pada <span class="menu-path">tab=logs</span> Transmission Logs.
         </div>
     </div>
 
@@ -597,12 +822,12 @@
     <div class="clay-card no-break">
         <div class="clay-card-header">
             <div class="clay-card-title">
-                <span class="badge-pill badge-blue">TEST 2</span>
+                <span class="badge-pill badge-burgundy">TEST 2</span>
                 <span>Single Date Update for Single Rate</span>
             </div>
             <span class="badge-pill badge-slate">1 Kamar / 1 Tarif / 1 Hari</span>
         </div>
-        <p><b>Skenario:</b> Ubah harga 1 malam tertentu langsung dari grid Rate & Inventory.</p>
+        <p><b>Skenario:</b> Ubah harga 1 malam tertentu langsung dari grid kalender matriks.</p>
         <div class="table-wrap">
             <table class="clay-table">
                 <thead>
@@ -613,13 +838,13 @@
                         <td><b>Twin Room</b></td>
                         <td>Best Available Rate</td>
                         <td><span class="font-mono">22 November 2026</span></td>
-                        <td><b style="color: #059669;">333 USD ($)</b></td>
+                        <td><b style="color: #000000; font-weight: 800;">333 USD ($)</b></td>
                     </tr>
                 </tbody>
             </table>
         </div>
-        <div style="font-size: 8.5pt; color: #475569;">
-            <b>Cara Eksekusi:</b> Buka <span class="font-mono">/rate-inventory</span> > Tab <b>Rates</b> > Cari kolom tanggal <b>22 Nov 2026</b> pada baris Twin Room (BAR) > Masukkan angka <b>333</b> > Klik <b>Save</b>. Catat Task ID pada notifikasi toast / audit log.
+        <div class="exec-guide">
+            <b>Cara Eksekusi:</b> Buka <span class="menu-path">tab=matrix</span> Rate Matrix Calendar > Cari kolom tanggal <b>22 Nov 2026</b> pada baris <b>Twin Room (Best Available Rate)</b> > Masukkan angka <b>333</b> > Klik <b>Save Changes</b>. Catat Task ID pada banner notifikasi sukses atau di <span class="menu-path">tab=logs</span>.
         </div>
     </div>
 
@@ -627,10 +852,10 @@
     <div class="clay-card no-break">
         <div class="clay-card-header">
             <div class="clay-card-title">
-                <span class="badge-pill badge-blue">TEST 3</span>
+                <span class="badge-pill badge-burgundy">TEST 3</span>
                 <span>Single Date Update for Multiple Rates</span>
             </div>
-            <span class="badge-pill badge-amber">Wajib 1 Batched API Call</span>
+            <span class="badge-pill badge-gold">Wajib 1 Batched API Call</span>
         </div>
         <p><b>Skenario:</b> Memperbarui beberapa rate plan pada tanggal yang berbeda, namun dikirim bersamaan dalam <b>1 request API</b> (dilarang kirim terpisah).</p>
         <div class="table-wrap">
@@ -639,14 +864,14 @@
                     <tr><th>Room Type</th><th>Rate Plan</th><th>Tanggal</th><th>Nilai Baru</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td>Twin Room</td><td>Best Available Rate</td><td><span class="font-mono">21 November 2026</span></td><td><b style="color: #059669;">333 $</b></td></tr>
-                    <tr><td>Double Room</td><td>Best Available Rate</td><td><span class="font-mono">25 November 2026</span></td><td><b style="color: #059669;">444 $</b></td></tr>
-                    <tr><td>Double Room</td><td>Bed & Breakfast</td><td><span class="font-mono">29 November 2026</span></td><td><b style="color: #059669;">456.23 $</b> (Desimal)</td></tr>
+                    <tr><td>Twin Room</td><td>Best Available Rate</td><td><span class="font-mono">21 November 2026</span></td><td><b style="color: #000000; font-weight: 800;">333 $</b></td></tr>
+                    <tr><td>Double Room</td><td>Best Available Rate</td><td><span class="font-mono">25 November 2026</span></td><td><b style="color: #000000; font-weight: 800;">444 $</b></td></tr>
+                    <tr><td>Double Room</td><td>Bed & Breakfast</td><td><span class="font-mono">29 November 2026</span></td><td><b style="color: #000000; font-weight: 800;">456.23 $</b> (Desimal)</td></tr>
                 </tbody>
             </table>
         </div>
-        <div style="font-size: 8.5pt; color: #475569;">
-            <b>Cara Eksekusi:</b> Edit ketiga sel di atas pada grid tanpa refresh. Tombol Save akan menampilkan <i>"Save (3)"</i>. Klik <b>Save</b>. Sistem My Tara secara otomatis menggabungkannya ke dalam 1 request batch API.
+        <div class="exec-guide">
+            <b>Cara Eksekusi:</b> Pada <span class="menu-path">tab=matrix</span> Rate Matrix Calendar, edit ketiga sel di atas tanpa merefresh halaman. Tombol simpan akan menampilkan <i>"Save Changes (3)"</i>. Klik tombol tersebut. Sistem My Tara secara otomatis menggabungkannya ke dalam 1 request batch API. Catat 1 Task ID yang keluar.
         </div>
     </div>
 
@@ -654,10 +879,10 @@
     <div class="clay-card no-break">
         <div class="clay-card-header">
             <div class="clay-card-title">
-                <span class="badge-pill badge-blue">TEST 4</span>
+                <span class="badge-pill badge-burgundy">TEST 4</span>
                 <span>Multiple Date Update for Multiple Rates</span>
             </div>
-            <span class="badge-pill badge-amber">Wajib 1 Batched API Call</span>
+            <span class="badge-pill badge-gold">Wajib 1 Batched API Call</span>
         </div>
         <p><b>Skenario:</b> Rentang tanggal jamak (*date range*) dengan nilai desimal untuk beberapa tipe kamar dalam <b>1 request API</b>.</p>
         <div class="table-wrap">
@@ -666,14 +891,14 @@
                     <tr><th>Room Type</th><th>Rate Plan</th><th>Rentang Tanggal</th><th>Nilai Baru</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td>Twin Room</td><td>Best Available Rate</td><td><span class="font-mono">01 Nov 2026 — 10 Nov 2026</span></td><td><b style="color: #059669;">241 $</b></td></tr>
-                    <tr><td>Double Room</td><td>Best Available Rate</td><td><span class="font-mono">10 Nov 2026 — 16 Nov 2026</span></td><td><b style="color: #059669;">312.66 $</b></td></tr>
-                    <tr><td>Double Room</td><td>Bed & Breakfast</td><td><span class="font-mono">01 Nov 2026 — 20 Nov 2026</span></td><td><b style="color: #059669;">111 $</b></td></tr>
+                    <tr><td>Twin Room</td><td>Best Available Rate</td><td><span class="font-mono">01 Nov 2026 — 10 Nov 2026</span></td><td><b style="color: #000000; font-weight: 800;">241 $</b></td></tr>
+                    <tr><td>Double Room</td><td>Best Available Rate</td><td><span class="font-mono">10 Nov 2026 — 16 Nov 2026</span></td><td><b style="color: #000000; font-weight: 800;">312.66 $</b></td></tr>
+                    <tr><td>Double Room</td><td>Bed & Breakfast</td><td><span class="font-mono">01 Nov 2026 — 20 Nov 2026</span></td><td><b style="color: #000000; font-weight: 800;">111 $</b></td></tr>
                 </tbody>
             </table>
         </div>
-        <div style="font-size: 8.5pt; color: #475569;">
-            <b>Cara Eksekusi:</b> Gunakan fitur <b>Menu Garis 3 > Bulk Update...</b> di Rate & Inventory. Pilih rentang tanggal sesuai tabel di atas untuk masing-masing rate plan, lalu jalankan.
+        <div class="exec-guide">
+            <b>Cara Eksekusi:</b> Buka <span class="menu-path">tab=matrix</span> Rate Matrix Calendar > Klik tombol <b>"Bulk Update ARI"</b>. Masukkan rentang tanggal dan nominal tarif sesuai tabel di atas untuk masing-masing rate plan, lalu jalankan. Sistem akan membungkus seluruh rentang dalam 1 batched payload.
         </div>
     </div>
 
@@ -683,14 +908,14 @@
     <div class="clay-card no-break">
         <div class="clay-card-header">
             <div class="clay-card-title">
-                <span class="badge-pill badge-blue">TEST 5 & 6</span>
+                <span class="badge-pill badge-burgundy">TEST 5 & 6</span>
                 <span>Min Stay & Stop Sell Restrictions Update</span>
             </div>
-            <span class="badge-pill badge-purple">Restriksi 1 Call</span>
+            <span class="badge-pill badge-burgundy">Restriksi 1 Call</span>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div>
-                <h3 class="sub-header" style="color: #0284c7;">Test 5: Minimum Stay (1 Call)</h3>
+                <h3 class="sub-header">Test 5: Minimum Stay (1 Call)</h3>
                 <div class="table-wrap">
                     <table class="clay-table">
                         <thead><tr><th>Kamar & Rate</th><th>Tanggal</th><th>Min Stay</th></tr></thead>
@@ -703,7 +928,7 @@
                 </div>
             </div>
             <div>
-                <h3 class="sub-header" style="color: #e11d48;">Test 6: Stop Sell (1 Call)</h3>
+                <h3 class="sub-header">Test 6: Stop Sell (1 Call)</h3>
                 <div class="table-wrap">
                     <table class="clay-table">
                         <thead><tr><th>Kamar & Rate</th><th>Tanggal</th><th>Stop Sell</th></tr></thead>
@@ -716,8 +941,8 @@
                 </div>
             </div>
         </div>
-        <p style="font-size: 8.5pt;">
-            <b>Cara Eksekusi:</b> Buka tab sub-menu <b>Min Stay Through</b> untuk Test 5 dan tab <b>Stopsells</b> untuk Test 6 di Rate & Inventory. Ubah sel tanggal terkait lalu klik <b>Save</b>.
+        <p class="exec-guide">
+            <b>Cara Eksekusi:</b> Buka <span class="menu-path">tab=matrix</span> Rate Matrix Calendar > Aktifkan layer tampilan <b>Restrictions</b> (Min Stay Through untuk Test 5 dan Stop Sell untuk Test 6). Klik sel tanggal terkait, sesuaikan nilainya, lalu klik <b>Save Changes</b>.
         </p>
     </div>
 
@@ -725,10 +950,10 @@
     <div class="clay-card no-break">
         <div class="clay-card-header">
             <div class="clay-card-title">
-                <span class="badge-pill badge-blue">TEST 7 & 8</span>
+                <span class="badge-pill badge-burgundy">TEST 7 & 8</span>
                 <span>Multiple Restrictions & Half-Year Update</span>
             </div>
-            <span class="badge-pill badge-purple">Restriksi Gabungan</span>
+            <span class="badge-pill badge-burgundy">Restriksi Gabungan</span>
         </div>
         <h3 class="sub-header">Test 7: Multi-Restriksi Kompleks (CTA, CTD, Min/Max Stay - 1 Batched Call)</h3>
         <div class="table-wrap">
@@ -753,21 +978,24 @@
                 </tbody>
             </table>
         </div>
+        <p class="exec-guide">
+            <b>Cara Eksekusi:</b> Gunakan modal <b>"Bulk Update ARI"</b> pada <span class="menu-path">tab=matrix</span> untuk menerapkan multi-restriksi Test 7 dan pembaruan semester Test 8 dalam 1 kali eksekusi batch.
+        </p>
     </div>
 
     <!-- TEST 9 & 10 -->
     <div class="clay-card no-break">
         <div class="clay-card-header">
             <div class="clay-card-title">
-                <span class="badge-pill badge-blue">TEST 9 & 10</span>
+                <span class="badge-pill badge-burgundy">TEST 9 & 10</span>
                 <span>Single & Multiple Date Availability Updates</span>
             </div>
             <span class="badge-pill badge-green">Feed Allotment</span>
         </div>
-        <p><b>Skenario:</b> Mensimulasikan pengurangan dan pembaruan stok fisik kamar di PMS.</p>
+        <p><b>Skenario:</b> Mensimulasikan pengurangan dan penyesuaian kuota stok fisik kamar di PMS.</p>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div>
-                <h3 class="sub-header" style="color: #059669;">Test 9: Single Date Availability</h3>
+                <h3 class="sub-header">Test 9: Single Date Availability</h3>
                 <div class="table-wrap">
                     <table class="clay-table">
                         <thead><tr><th>Room Type</th><th>Tanggal</th><th>Stok Akhir</th></tr></thead>
@@ -779,7 +1007,7 @@
                 </div>
             </div>
             <div>
-                <h3 class="sub-header" style="color: #0284c7;">Test 10: Multiple Date Availability</h3>
+                <h3 class="sub-header">Test 10: Multiple Date Availability</h3>
                 <div class="table-wrap">
                     <table class="clay-table">
                         <thead><tr><th>Room Type</th><th>Rentang Tanggal</th><th>Stok</th></tr></thead>
@@ -791,8 +1019,8 @@
                 </div>
             </div>
         </div>
-        <p style="font-size: 8.5pt;">
-            <b>Cara Eksekusi:</b> Buka tab <b>Inventory</b> di Rate & Inventory. Ubah angka allotment fisik pada sel tanggal di atas lalu klik <b>Save</b>.
+        <p class="exec-guide">
+            <b>Cara Eksekusi:</b> Buka <span class="menu-path">tab=rooms</span> Room Types & Allotment atau pilih sub-view <b>Inventory / Allotment</b> pada <span class="menu-path">tab=matrix</span>. Masukkan angka stok fisik kamar sesuai data di atas dan klik <b>Save</b>. Catat Task ID masing-masing.
         </p>
     </div>
 
@@ -800,34 +1028,34 @@
     <div class="clay-card no-break">
         <div class="clay-card-header">
             <div class="clay-card-title">
-                <span class="badge-pill badge-blue">TEST 11</span>
+                <span class="badge-pill badge-burgundy">TEST 11</span>
                 <span>Booking Receiving, Modification, Cancellation & Mandatory ACK</span>
             </div>
-            <span class="badge-pill badge-rose">Krusial Webhook</span>
+            <span class="badge-pill badge-burgundy">Krusial Webhook</span>
         </div>
-        <p><b>Skenario Uji:</b> Menguji kemampuan My Tara menerima 3 siklus hidup reservasi dari OTA via Channex.</p>
+        <p><b>Skenario Uji:</b> Menguji ketahanan My Tara dalam memproses 3 siklus hidup reservasi dari OTA via Channex.</p>
         <div class="checklist-item">
             <div class="check-box">✔</div>
             <div>
-                <b>11.1 Booking Baru (New Booking):</b> Buat reservasi baru di Channex (via Test Account Booking.com atau aplikasi <i>"Booking CRS"</i> di menu Applications Channex). Pastikan reservasi otomatis masuk ke My Tara PMS dan mengunci allotment kamar.
+                <b>11.1 Booking Baru (New Booking):</b> Simulasikan reservasi baru via sub-menu <i>Booking Simulator</i> di <span class="menu-path">tab=sandbox</span> Testing Sandbox atau dari portal staging Channex. Pastikan reservasi otomatis masuk ke kalender My Tara dan memotong allotment kamar.
             </div>
         </div>
         <div class="checklist-item">
             <div class="check-box">✔</div>
             <div>
-                <b>11.2 Modifikasi Booking (Modification):</b> Ubah tanggal inap reservasi yang ada di Channex. Pastikan tanggal lama terlepas dan tanggal baru terkunci di My Tara PMS.
+                <b>11.2 Modifikasi Booking (Modification):</b> Ubah tanggal inap reservasi yang ada. Pastikan tanggal lama terlepas dan tanggal baru terkunci di PMS.
             </div>
         </div>
         <div class="checklist-item">
             <div class="check-box">✔</div>
             <div>
-                <b>11.3 Pembatalan Booking (Cancellation):</b> Batalkan reservasi di Channex. Pastikan status booking di My Tara berubah menjadi <span class="badge-pill badge-amber">CANCELLED</span> dan kamar kembali bertambah ke allotment.
+                <b>11.3 Pembatalan Booking (Cancellation):</b> Batalkan reservasi. Pastikan status booking berubah menjadi <span class="badge-pill badge-amber">CANCELLED</span> dan kuota allotment otomatis dikembalikan.
             </div>
         </div>
         <div class="checklist-item">
             <div class="check-box">✔</div>
             <div>
-                <b>11.4 Wajib Booking ACK (<span class="font-mono">POST /booking_revisions/:id/ack</span>):</b> My Tara wajib membalas panggilan ACK secara otomatis begitu webhook selesai diproses. <i>(Sudah tertanam otomatis di endpoint <span class="font-mono">/api/channex/webhook</span>).</i>
+                <b>11.4 Wajib Booking ACK (<span class="font-mono">POST /booking_revisions/:id/ack</span>):</b> My Tara wajib membalas panggilan ACK secara instan begitu webhook sukses diproses. Respon ACK otomatis ini dapat diverifikasi langsung pada <span class="menu-path">tab=logs</span> Transmission & Audit Logs.
             </div>
         </div>
     </div>
@@ -838,33 +1066,33 @@
     <div class="clay-card no-break">
         <div class="clay-card-header">
             <div class="clay-card-title">
-                <span class="badge-pill badge-blue">TEST 12 — 14</span>
-                <span>Standar Operasional Teknis & Kebijakan Channex</span>
+                <span class="badge-pill badge-burgundy">TEST 12 — 14</span>
+                <span>Standar Operasional Teknis & Kepatuhan Arsitektur</span>
             </div>
             <span class="badge-pill badge-green">Compliance</span>
         </div>
 
         <div style="margin-bottom: 12px;">
-            <h3 class="sub-header">Test 12: Kepatuhan Rate Limits (Batas Beban Request)</h3>
+            <h3 class="sub-header">Test 12: Kepatuhan Batas Request (Rate Limits)</h3>
             <p>
                 <b>Pertanyaan Channex:</b> <i>"Can you stay in rate limits? Do you have a queue or limiter to not spam our API endpoints?"</i><br>
-                <b>Jawaban Resmi:</b> <b style="color: #059669;">YES.</b> My Tara CRS mengimplementasikan antrean terpusat (*job queue*) dengan pembatasan maksimal 10 request per detik, exponential backoff retry otomatis pada respon status 429 / 5xx, dan batching dinamis.
+                <b>Jawaban Resmi:</b> <b style="color: #000000; font-weight: 800;">YES.</b> My Tara CRS mengimplementasikan antrean terpusat (*job queue*) dengan pembatasan maksimal 10 request per detik, exponential backoff retry otomatis saat menerima status 429 / 5xx, dan penggabungan payload dinamis.
             </p>
         </div>
 
         <div style="margin-bottom: 12px;">
-            <h3 class="sub-header">Test 13: Logika Pembaruan / Update Logic (Larangan Loop Timer)</h3>
+            <h3 class="sub-header">Test 13: Logika Sinkronisasi Efisien (Larangan Polling Timer)</h3>
             <p>
                 <b>Pertanyaan Channex:</b> <i>"Do you agree to only send updated changes to Channex? (No full sync on a 5-min timer)"</i><br>
-                <b>Jawaban Resmi:</b> <b style="color: #059669;">YES, AGREE.</b> My Tara menerapkan 100% *Delta-based updates*. Sinkronisasi ke Channex hanya dipicu saat terjadi modifikasi tarif atau pemesanan kamar. Full Sync hanya diizinkan manual atau maksimal 1x setiap 24 jam di jam sepi (*off-peak*).
+                <b>Jawaban Resmi:</b> <b style="color: #000000; font-weight: 800;">YES, AGREE.</b> My Tara menerapkan 100% *Delta-based updates*. Sinkronisasi ke Channex hanya dipicu saat terjadi modifikasi tarif atau pemesanan kamar. Full Sync hanya diizinkan manual via <span class="menu-path">tab=golive</span> atau maksimal 1x setiap 24 jam pada jam sepi (*off-peak*).
             </p>
         </div>
 
         <div>
-            <h3 class="sub-header">Test 14: Catatan Khusus Fitur (Extra Technical Notes)</h3>
+            <h3 class="sub-header">Test 14: Matriks Kepatuhan Fitur Tambahan (Technical Specifications)</h3>
             <div class="table-wrap">
                 <table class="clay-table">
-                    <thead><tr><th style="width: 45%;">Pertanyaan Channex di Form</th><th style="width: 55%;">Jawaban Resmi yang Harus Dipilih</th></tr></thead>
+                    <thead><tr><th style="width: 45%;">Pertanyaan Channex di Formulir</th><th style="width: 55%;">Jawaban Resmi yang Harus Dipilih</th></tr></thead>
                     <tbody>
                         <tr>
                             <td>Do you support both Min Stay Through and Arrival?</td>
@@ -880,11 +1108,11 @@
                         </tr>
                         <tr>
                             <td>Do you need credit card details with bookings?</td>
-                            <td><b>Optional (Tokenized / Masked, managed per hotel policy).</b></td>
+                            <td><b>Optional (Tokenized / Masked, managed per hotel policy via <span class="menu-path">tab=payments</span>).</b></td>
                         </tr>
                         <tr>
                             <td>Are you PCI Certified or use a PCI service?</td>
-                            <td><b>PCI DSS Compliant through certified payment gateway proxy & tokenization.</b></td>
+                            <td><b>PCI DSS Compliant through certified payment gateway proxy & tokenization vault (<span class="menu-path">tab=payments</span>).</b></td>
                         </tr>
                     </tbody>
                 </table>
@@ -898,14 +1126,14 @@
     <div class="clay-card no-break">
         <div class="clay-card-header">
             <div class="clay-card-title">
-                <span>04. Cheatsheet Pengisian Formulir Sertifikasi Channex</span>
+                <span>04. Cheatsheet Pengisian Formulir Akreditasi Resmi Channex</span>
             </div>
             <span class="badge-pill badge-green">Formulir Submit</span>
         </div>
         <p>
-            Setelah seluruh 14 skenario selesai dijalankan di akun uji, buka formulir resmi Channex di:
+            Setelah seluruh 14 skenario selesai dieksekusi di akun staging, buka formulir resmi Channex di tautan berikut:
             <br>
-            <a href="https://forms.gle/xA8F3eSYBPBd8apYA" style="color: #0284c7; font-weight: 700; text-decoration: underline;" target="_blank">
+            <a href="https://forms.gle/xA8F3eSYBPBd8apYA" style="color: #000000; font-weight: 800; text-decoration: underline;" target="_blank">
                 https://forms.gle/xA8F3eSYBPBd8apYA
             </a>
         </p>
@@ -915,50 +1143,50 @@
                 <thead>
                     <tr>
                         <th style="width: 30%;">Field Formulir</th>
-                        <th style="width: 40%;">Isian yang Wajib Diketik</th>
-                        <th style="width: 30%;">Keterangan</th>
+                        <th style="width: 42%;">Isian yang Wajib Diketik / Dipilih</th>
+                        <th style="width: 28%;">Keterangan & Sumber Data</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td><b>PMS / Provider Name</b></td>
                         <td><span class="font-mono">Tara PMS / Tara Setara Venture</span></td>
-                        <td>Nama sistem resmi</td>
+                        <td>Nama sistem resmi terdaftar</td>
                     </tr>
                     <tr>
                         <td><b>Contact Email</b></td>
                         <td><span class="font-mono">Email Account Manager / Pengisi Form</span></td>
-                        <td>Email aktif Anda</td>
+                        <td>Email aktif PIC integrasi</td>
                     </tr>
                     <tr>
                         <td><b>Staging Property ID</b></td>
                         <td><span class="font-mono">UUID Property uji (contoh: 8b7e2a...)</span></td>
-                        <td>Tercatat di tab Go Live</td>
+                        <td>Tercatat di <span class="menu-path">tab=golive</span></td>
                     </tr>
                     <tr>
                         <td><b>Staging Webhook URL</b></td>
                         <td><span class="font-mono">https://[domain-anda]/api/channex/webhook</span></td>
-                        <td>Wajib public HTTPS</td>
+                        <td>Wajib domain public HTTPS aktif</td>
                     </tr>
                     <tr>
                         <td><b>Test 1 (Full Sync) Task IDs</b></td>
                         <td><span class="font-mono">Task ID 1 (Availability), Task ID 2 (Rates)</span></td>
-                        <td>Salin 2 UUID dari respon</td>
+                        <td>Salin 2 UUID dari <span class="menu-path">tab=logs</span></td>
                     </tr>
                     <tr>
                         <td><b>Test 2 s/d 10 Task IDs</b></td>
                         <td><span class="font-mono">Task ID masing-masing pengujian</span></td>
-                        <td>Salin 1 UUID per test</td>
+                        <td>Salin 1 UUID per skenario pengujian</td>
                     </tr>
                     <tr>
                         <td><b>Test 11 (Booking Tests)</b></td>
                         <td><span class="font-mono">Booking ID & Revision ID yang berhasil di-ACK</span></td>
-                        <td>Lihat log reservasi</td>
+                        <td>Lihat log reservasi di <span class="menu-path">tab=logs</span></td>
                     </tr>
                     <tr>
                         <td><b>Test 12 s/d 14 (Compliance)</b></td>
-                        <td>Pilih <b>"YES" / Centang Semua Fitur</b></td>
-                        <td>Sesuai Bab 3 di atas</td>
+                        <td>Pilih <b>"YES" / Centang Semua Fitur Sesuai Matriks</b></td>
+                        <td>Sesuai Bab 3 Test 12–14 di atas</td>
                     </tr>
                 </tbody>
             </table>
@@ -967,8 +1195,8 @@
         <div class="callout-box callout-success">
             <div class="callout-icon">🏆</div>
             <div>
-                <b>Langkah Pasca Submit Formulir:</b><br>
-                Tim sertifikasi Channex akan memvalidasi Task ID di sistem mereka dalam 1–2 hari kerja. Setelah disetujui, My Tara akan diberikan akses <b>Production API Key</b> dan terdaftar secara resmi sebagai <b>Official Channex PMS Partner</b>!
+                <b>Prosedur Pasca Submit Formulir Sertifikasi:</b><br>
+                Tim sertifikasi Channex akan memvalidasi log Task ID di server mereka dalam 1–2 hari kerja. Begitu disetujui, My Tara akan diberikan akses <b>Production API Key</b> dan terdaftar secara resmi sebagai <b>Official Channex PMS Partner</b>!
             </div>
         </div>
     </div>

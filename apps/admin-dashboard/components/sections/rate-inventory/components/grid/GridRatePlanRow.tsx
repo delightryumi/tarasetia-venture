@@ -1,10 +1,127 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Check, Ban, Utensils, Bed } from "lucide-react";
 import { RateInventoryTab, RatePlanGridRow, GridFeatureId, GRID_FEATURES } from "../../RateInventoryTypes";
 import styles from "./GridRatePlanRow.module.css";
 import cellStyles from "./GridCellInput.module.css";
 import { getCurrencyConfig } from "@/lib/currency-utils";
 import { useCurrency } from "@/hooks/useCurrency";
+
+interface RateCellInputProps {
+    value: number;
+    disabled?: boolean;
+    isChannelCustom?: boolean;
+    currencyCode?: string;
+    onSave: (val: number) => void;
+}
+
+const RateCellInput = React.memo(function RateCellInput({
+    value,
+    disabled = false,
+    isChannelCustom = false,
+    currencyCode = "IDR",
+    onSave
+}: RateCellInputProps) {
+    const [isFocused, setIsFocused] = useState(false);
+    const [rawText, setRawText] = useState("");
+
+    // Display formatted: no trailing .00 if it's an integer!
+    const displayValue = useMemo(() => {
+        const num = Number(value) || 0;
+        if (num === 0) return "0";
+        // If it has decimal parts like 456.23:
+        if (num % 1 !== 0) {
+            return num.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+        // If integer like 100 or 1000000:
+        return num.toLocaleString("en-US", {
+            maximumFractionDigits: 0
+        });
+    }, [value]);
+
+    // Keep local rawText in sync when value changes externally
+    React.useEffect(() => {
+        if (!isFocused) {
+            const num = Number(value) || 0;
+            setRawText(num === 0 ? "" : String(num));
+        }
+    }, [value, isFocused]);
+
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+        setIsFocused(true);
+        const num = Number(value) || 0;
+        const initialText = num === 0 ? "" : String(num);
+        setRawText(initialText);
+        // Select all text automatically so typing immediately replaces the whole number
+        setTimeout(() => {
+            e.target.select();
+        }, 10);
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        // Clean any invalid characters except digits and single decimal dot
+        const cleaned = val.replace(/[^0-9.]/g, "");
+        const parts = cleaned.split(".");
+        const safeText = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : cleaned;
+        setRawText(safeText);
+
+        // Immediately trigger onSave so stagedUpdates & unsavedCount update in real-time!
+        if (safeText.trim() === "") {
+            onSave(0);
+        } else {
+            const parsed = parseFloat(safeText);
+            if (!isNaN(parsed) && parsed >= 0) {
+                const finalVal = Math.round((parsed + Number.EPSILON) * 100) / 100;
+                onSave(finalVal);
+            }
+        }
+    };
+
+    const commitChange = () => {
+        setIsFocused(false);
+        if (rawText.trim() === "") {
+            if (value !== 0) onSave(0);
+            return;
+        }
+        const parsed = parseFloat(rawText);
+        const finalVal = isNaN(parsed) || parsed < 0 ? 0 : Math.round((parsed + Number.EPSILON) * 100) / 100;
+        onSave(finalVal);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            commitChange();
+            e.currentTarget.blur();
+        } else if (e.key === "Escape") {
+            setIsFocused(false);
+            setRawText(value === 0 ? "" : String(value));
+            e.currentTarget.blur();
+        }
+    };
+
+    return (
+        <input
+            type="text"
+            inputMode="decimal"
+            value={isFocused ? rawText : displayValue}
+            disabled={disabled}
+            onFocus={handleFocus}
+            onChange={handleChange}
+            onBlur={commitChange}
+            onKeyDown={handleKeyDown}
+            onWheel={e => e.currentTarget.blur()}
+            className={[
+                cellStyles.numberInput,
+                disabled ? cellStyles.inputDisabled : "",
+                isChannelCustom ? cellStyles.inputCapped : ""
+            ].filter(Boolean).join(" ")}
+            title={`Tarif: ${currencyCode} ${displayValue}`}
+        />
+    );
+});
 
 interface GridRatePlanRowProps {
     roomTypeId: string;
@@ -98,11 +215,12 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
             const isStopSell = !!dayStat?.stopSell;
             const isToday = dateStr === todayStr;
 
+            const isRateDirty = metricId === "rate" && dayStat?.rate !== undefined && dayStat.rate !== rp.baseRate;
             const cellClasses = [
                 cellStyles.cell,
                 isWeekend ? cellStyles.cellWeekend : "",
                 isToday ? cellStyles.cellToday : "",
-                metricId === "stopSell" && isStopSell ? cellStyles.cellDirty : ""
+                (metricId === "stopSell" && isStopSell) || isRateDirty ? cellStyles.cellDirty : ""
             ].filter(Boolean).join(" ");
 
             // 1. Rate Metric
@@ -110,27 +228,17 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
                 const currentRate = dayStat?.rate ?? rp.baseRate;
                 const canEdit = canChangeRate && (!isChannelSpecific || isRateSeparated);
                 const rateKey = isChannelSpecific 
-                    ? `channelRate_${channelFilter}_${rp.ratePlanId}_${dateStr}` 
-                    : `rate_${rp.ratePlanId}_${dateStr}`;
+                    ? `channelRate_${channelFilter}_${roomTypeId}_${rp.ratePlanId}_${dateStr}` 
+                    : `rate_${roomTypeId}_${rp.ratePlanId}_${dateStr}`;
 
                 return (
                     <td key={dateStr} className={cellClasses}>
-                        <input
-                            type="text"
-                            value={formatCurrency(currentRate)}
+                        <RateCellInput
+                            value={currentRate}
                             disabled={!canEdit}
-                            onChange={e => {
-                                if (!canEdit) return;
-                                const rawNum = Number(e.target.value.replace(/[^0-9.-]+/g, "")) || 0;
-                                stageEdit(rateKey, rawNum);
-                            }}
-                            onWheel={e => e.currentTarget.blur()}
-                            className={[
-                                cellStyles.numberInput,
-                                !canEdit ? cellStyles.inputDisabled : "",
-                                dayStat?.isChannelCustom ? cellStyles.inputCapped : ""
-                            ].filter(Boolean).join(" ")}
-                            title={`Tarif: ${currConfig.code} ${formatCurrency(currentRate)}`}
+                            isChannelCustom={dayStat?.isChannelCustom}
+                            currencyCode={currConfig.code}
+                            onSave={val => stageEdit(rateKey, val)}
                         />
                     </td>
                 );
@@ -139,8 +247,8 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
             // 2. Stop Sell Metric
             if (metricId === "stopSell") {
                 const stopSellKey = isChannelSpecific 
-                    ? `channelStopSell_${channelFilter}_${rp.ratePlanId}_${dateStr}` 
-                    : `stopSell_${rp.ratePlanId}_${dateStr}`;
+                    ? `channelStopSell_${channelFilter}_${roomTypeId}_${rp.ratePlanId}_${dateStr}` 
+                    : `stopSell_${roomTypeId}_${rp.ratePlanId}_${dateStr}`;
 
                 return (
                     <td key={dateStr} className={cellClasses}>
@@ -167,7 +275,7 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
 
             // 3. Min Stay Arrival Metric
             if (metricId === "minStayArrival") {
-                const minStayArrKey = `min_arr_${rp.ratePlanId}_${dateStr}`;
+                const minStayArrKey = `min_arr_${roomTypeId}_${rp.ratePlanId}_${dateStr}`;
                 const val = dayStat?.minStayArrival ?? dayStat?.minStay ?? 1;
 
                 return (
@@ -191,7 +299,7 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
 
             // 4. Min Stay Through Metric
             if (metricId === "minStayThrough") {
-                const minStayThruKey = `min_thru_${rp.ratePlanId}_${dateStr}`;
+                const minStayThruKey = `min_thru_${roomTypeId}_${rp.ratePlanId}_${dateStr}`;
                 const val = dayStat?.minStayThrough ?? dayStat?.minStay ?? 1;
 
                 return (
@@ -215,7 +323,7 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
 
             // 5. Max Stay Metric
             if (metricId === "maxStay") {
-                const maxStayKey = `max_${rp.ratePlanId}_${dateStr}`;
+                const maxStayKey = `max_${roomTypeId}_${rp.ratePlanId}_${dateStr}`;
                 const val = dayStat?.maxStay ?? 0;
 
                 return (
@@ -240,7 +348,7 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
 
             // 6. Closed to Arrival Metric
             if (metricId === "closedToArrival") {
-                const ctaKey = `cta_${rp.ratePlanId}_${dateStr}`;
+                const ctaKey = `cta_${roomTypeId}_${rp.ratePlanId}_${dateStr}`;
                 const isCta = !!dayStat?.closedToArrival;
 
                 return (
@@ -268,7 +376,7 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
 
             // 7. Closed to Departure Metric
             if (metricId === "closedToDeparture") {
-                const ctdKey = `ctd_${rp.ratePlanId}_${dateStr}`;
+                const ctdKey = `ctd_${roomTypeId}_${rp.ratePlanId}_${dateStr}`;
                 const isCtd = !!dayStat?.closedToDeparture;
 
                 return (

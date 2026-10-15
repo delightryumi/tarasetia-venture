@@ -471,16 +471,21 @@ export const useRateInventory = () => {
                     const dayOverride = ariOverridesMap[dateStr];
 
                     // Check Staged Updates first, then Firestore Overrides, then Rate Plan Master Default
-                    const rateKey = isChannelSpecific ? `channelRate_${channelCode}_${rp.id}_${dateStr}` : `rate_${rp.id}_${dateStr}`;
-                    const stopSellKey = isChannelSpecific ? `channelStopSell_${channelCode}_${rp.id}_${dateStr}` : `stopSell_${rp.id}_${dateStr}`;
-                    const adultKey = `adult_${rp.id}_${dateStr}`;
-                    const childKey = `child_${rp.id}_${dateStr}`;
+                    const rateKey = isChannelSpecific ? `channelRate_${channelCode}_${rt.id}_${rp.id}_${dateStr}` : `rate_${rt.id}_${rp.id}_${dateStr}`;
+                    const legacyRateKey = isChannelSpecific ? `channelRate_${channelCode}_${rp.id}_${dateStr}` : `rate_${rp.id}_${dateStr}`;
+                    const stopSellKey = isChannelSpecific ? `channelStopSell_${channelCode}_${rt.id}_${rp.id}_${dateStr}` : `stopSell_${rt.id}_${rp.id}_${dateStr}`;
+                    const legacyStopSellKey = isChannelSpecific ? `channelStopSell_${channelCode}_${rp.id}_${dateStr}` : `stopSell_${rp.id}_${dateStr}`;
+                    const adultKey = `adult_${rt.id}_${rp.id}_${dateStr}`;
+                    const legacyAdultKey = `adult_${rp.id}_${dateStr}`;
+                    const childKey = `child_${rt.id}_${rp.id}_${dateStr}`;
+                    const legacyChildKey = `child_${rp.id}_${dateStr}`;
 
-                    // Base rate from Master / Common Pool
+                    // Base rate from Master / Common Pool for this specific Room Type
                     const baseRateValue = Number(rp.roomRates?.[rt.id] ?? rp.baseRate ?? rt.basePrice ?? 0);
-                    const commonPoolRate = dayOverride?.rates?.[rp.id] !== undefined 
-                        ? Number(dayOverride.rates[rp.id]) 
-                        : baseRateValue;
+                    const roomRateOverride = dayOverride?.roomRates?.[rt.id]?.[rp.id] ?? dayOverride?.rates?.[`${rt.id}_${rp.id}`];
+                    const commonPoolRate = roomRateOverride !== undefined 
+                        ? Number(roomRateOverride) 
+                        : (dayOverride?.rates?.[rp.id] !== undefined ? Number(dayOverride.rates[rp.id]) : baseRateValue);
 
                     let currentRate = commonPoolRate;
                     let isChannelCustom = false;
@@ -490,6 +495,12 @@ export const useRateInventory = () => {
                     if (canSeparateRate) {
                         if (stagedUpdates[rateKey] !== undefined) {
                             currentRate = Number(stagedUpdates[rateKey]) || 0;
+                            isChannelCustom = true;
+                        } else if (stagedUpdates[legacyRateKey] !== undefined) {
+                            currentRate = Number(stagedUpdates[legacyRateKey]) || 0;
+                            isChannelCustom = true;
+                        } else if (dayOverride?.channels?.[channelCode]?.rates?.[`${rt.id}_${rp.id}`]?.rate !== undefined) {
+                            currentRate = Number(dayOverride.channels[channelCode].rates[`${rt.id}_${rp.id}`].rate) || 0;
                             isChannelCustom = true;
                         } else if (dayOverride?.channels?.[channelCode]?.rates?.[rp.id]?.rate !== undefined) {
                             currentRate = Number(dayOverride.channels[channelCode].rates[rp.id].rate) || 0;
@@ -507,26 +518,39 @@ export const useRateInventory = () => {
                     } else {
                         if (stagedUpdates[rateKey] !== undefined) {
                             currentRate = Number(stagedUpdates[rateKey]) || 0;
+                        } else if (stagedUpdates[legacyRateKey] !== undefined) {
+                            currentRate = Number(stagedUpdates[legacyRateKey]) || 0;
+                        } else if (roomRateOverride !== undefined) {
+                            currentRate = Number(roomRateOverride) || 0;
                         } else if (dayOverride?.rates?.[rp.id] !== undefined) {
                             currentRate = Number(dayOverride.rates[rp.id]) || 0;
                         }
                     }
 
                     // Stop Sell
+                    const roomStopSellOverride = dayOverride?.roomStopSell?.[rt.id]?.[rp.id] ?? dayOverride?.stopSell?.[`${rt.id}_${rp.id}`];
                     let currentStopSell = rp.stopSell || false;
                     if (isChannelSpecific) {
                         if (stagedUpdates[stopSellKey] !== undefined) {
                             currentStopSell = !!stagedUpdates[stopSellKey];
+                        } else if (stagedUpdates[legacyStopSellKey] !== undefined) {
+                            currentStopSell = !!stagedUpdates[legacyStopSellKey];
+                        } else if (dayOverride?.channels?.[channelCode]?.rates?.[`${rt.id}_${rp.id}`]?.stopSell !== undefined) {
+                            currentStopSell = !!dayOverride.channels[channelCode].rates[`${rt.id}_${rp.id}`].stopSell;
                         } else if (dayOverride?.channels?.[channelCode]?.rates?.[rp.id]?.stopSell !== undefined) {
                             currentStopSell = !!dayOverride.channels[channelCode].rates[rp.id].stopSell;
                         } else if (dayOverride?.channels?.[channelCode]?.stopSell !== undefined) {
                             currentStopSell = !!dayOverride.channels[channelCode].stopSell;
                         } else {
-                            currentStopSell = dayOverride?.stopSell?.[rp.id] !== undefined ? !!dayOverride.stopSell[rp.id] : (rp.stopSell || false);
+                            currentStopSell = roomStopSellOverride !== undefined ? !!roomStopSellOverride : (dayOverride?.stopSell?.[rp.id] !== undefined ? !!dayOverride.stopSell[rp.id] : (rp.stopSell || false));
                         }
                     } else {
                         if (stagedUpdates[stopSellKey] !== undefined) {
                             currentStopSell = !!stagedUpdates[stopSellKey];
+                        } else if (stagedUpdates[legacyStopSellKey] !== undefined) {
+                            currentStopSell = !!stagedUpdates[legacyStopSellKey];
+                        } else if (roomStopSellOverride !== undefined) {
+                            currentStopSell = !!roomStopSellOverride;
                         } else if (dayOverride?.stopSell?.[rp.id] !== undefined) {
                             currentStopSell = !!dayOverride.stopSell[rp.id];
                         }
@@ -536,6 +560,10 @@ export const useRateInventory = () => {
                     let currentAdultRate = Number((rp as any).extraAdultRate || 0);
                     if (stagedUpdates[adultKey] !== undefined) {
                         currentAdultRate = Number(stagedUpdates[adultKey]) || 0;
+                    } else if (stagedUpdates[legacyAdultKey] !== undefined) {
+                        currentAdultRate = Number(stagedUpdates[legacyAdultKey]) || 0;
+                    } else if (dayOverride?.extraAdultRates?.[`${rt.id}_${rp.id}`] !== undefined) {
+                        currentAdultRate = Number(dayOverride.extraAdultRates[`${rt.id}_${rp.id}`]) || 0;
                     } else if (dayOverride?.extraAdultRates?.[rp.id] !== undefined) {
                         currentAdultRate = Number(dayOverride.extraAdultRates[rp.id]) || 0;
                     }
@@ -543,6 +571,10 @@ export const useRateInventory = () => {
                     let currentChildRate = Number((rp as any).extraChildRate || 0);
                     if (stagedUpdates[childKey] !== undefined) {
                         currentChildRate = Number(stagedUpdates[childKey]) || 0;
+                    } else if (stagedUpdates[legacyChildKey] !== undefined) {
+                        currentChildRate = Number(stagedUpdates[legacyChildKey]) || 0;
+                    } else if (dayOverride?.extraChildRates?.[`${rt.id}_${rp.id}`] !== undefined) {
+                        currentChildRate = Number(dayOverride.extraChildRates[`${rt.id}_${rp.id}`]) || 0;
                     } else if (dayOverride?.extraChildRates?.[rp.id] !== undefined) {
                         currentChildRate = Number(dayOverride.extraChildRates[rp.id]) || 0;
                     }
@@ -557,18 +589,27 @@ export const useRateInventory = () => {
 
                     // Restrictions: Min Stay (Legacy, Arrival, Through), Max Stay, CTA, CTD
                     const minStayLegacyKey = `min_${rp.id}_${dateStr}`;
-                    const minStayArrKey = `min_arr_${rp.id}_${dateStr}`;
-                    const minStayThruKey = `min_thru_${rp.id}_${dateStr}`;
-                    const maxStayKey = `max_${rp.id}_${dateStr}`;
-                    const ctaKey = `cta_${rp.id}_${dateStr}`;
-                    const ctdKey = `ctd_${rp.id}_${dateStr}`;
+                    const minStayArrKey = `min_arr_${rt.id}_${rp.id}_${dateStr}`;
+                    const legacyMinStayArrKey = `min_arr_${rp.id}_${dateStr}`;
+                    const minStayThruKey = `min_thru_${rt.id}_${rp.id}_${dateStr}`;
+                    const legacyMinStayThruKey = `min_thru_${rp.id}_${dateStr}`;
+                    const maxStayKey = `max_${rt.id}_${rp.id}_${dateStr}`;
+                    const legacyMaxStayKey = `max_${rp.id}_${dateStr}`;
+                    const ctaKey = `cta_${rt.id}_${rp.id}_${dateStr}`;
+                    const legacyCtaKey = `cta_${rp.id}_${dateStr}`;
+                    const ctdKey = `ctd_${rt.id}_${rp.id}_${dateStr}`;
+                    const legacyCtdKey = `ctd_${rp.id}_${dateStr}`;
 
                     // Min Stay Arrival
                     let currentMinStayArr = Number((rp as any).minStayArrival || (rp as any).minStay || 1);
                     if (stagedUpdates[minStayArrKey] !== undefined) {
                         currentMinStayArr = Number(stagedUpdates[minStayArrKey]) || 1;
+                    } else if (stagedUpdates[legacyMinStayArrKey] !== undefined) {
+                        currentMinStayArr = Number(stagedUpdates[legacyMinStayArrKey]) || 1;
                     } else if (stagedUpdates[minStayLegacyKey] !== undefined) {
                         currentMinStayArr = Number(stagedUpdates[minStayLegacyKey]) || 1;
+                    } else if (dayOverride?.minStayArrival?.[`${rt.id}_${rp.id}`] !== undefined) {
+                        currentMinStayArr = Number(dayOverride.minStayArrival[`${rt.id}_${rp.id}`]) || 1;
                     } else if (dayOverride?.minStayArrival?.[rp.id] !== undefined) {
                         currentMinStayArr = Number(dayOverride.minStayArrival[rp.id]) || 1;
                     } else if (dayOverride?.minStay?.[rp.id] !== undefined) {
@@ -579,8 +620,12 @@ export const useRateInventory = () => {
                     let currentMinStayThru = Number((rp as any).minStayThrough || (rp as any).minStay || 1);
                     if (stagedUpdates[minStayThruKey] !== undefined) {
                         currentMinStayThru = Number(stagedUpdates[minStayThruKey]) || 1;
+                    } else if (stagedUpdates[legacyMinStayThruKey] !== undefined) {
+                        currentMinStayThru = Number(stagedUpdates[legacyMinStayThruKey]) || 1;
                     } else if (stagedUpdates[minStayLegacyKey] !== undefined) {
                         currentMinStayThru = Number(stagedUpdates[minStayLegacyKey]) || 1;
+                    } else if (dayOverride?.minStayThrough?.[`${rt.id}_${rp.id}`] !== undefined) {
+                        currentMinStayThru = Number(dayOverride.minStayThrough[`${rt.id}_${rp.id}`]) || 1;
                     } else if (dayOverride?.minStayThrough?.[rp.id] !== undefined) {
                         currentMinStayThru = Number(dayOverride.minStayThrough[rp.id]) || 1;
                     } else if (dayOverride?.minStay?.[rp.id] !== undefined) {
@@ -591,6 +636,10 @@ export const useRateInventory = () => {
                     let currentMaxStay: number | undefined = (rp as any).maxStay ? Number((rp as any).maxStay) : undefined;
                     if (stagedUpdates[maxStayKey] !== undefined) {
                         currentMaxStay = stagedUpdates[maxStayKey] ? Number(stagedUpdates[maxStayKey]) : undefined;
+                    } else if (stagedUpdates[legacyMaxStayKey] !== undefined) {
+                        currentMaxStay = stagedUpdates[legacyMaxStayKey] ? Number(stagedUpdates[legacyMaxStayKey]) : undefined;
+                    } else if (dayOverride?.maxStay?.[`${rt.id}_${rp.id}`] !== undefined) {
+                        currentMaxStay = dayOverride.maxStay[`${rt.id}_${rp.id}`] ? Number(dayOverride.maxStay[`${rt.id}_${rp.id}`]) : undefined;
                     } else if (dayOverride?.maxStay?.[rp.id] !== undefined) {
                         currentMaxStay = dayOverride.maxStay[rp.id] ? Number(dayOverride.maxStay[rp.id]) : undefined;
                     }
@@ -600,6 +649,10 @@ export const useRateInventory = () => {
                     let currentCta = !!(rp as any).closedToArrival;
                     if (stagedUpdates[ctaKey] !== undefined) {
                         currentCta = !!stagedUpdates[ctaKey];
+                    } else if (stagedUpdates[legacyCtaKey] !== undefined) {
+                        currentCta = !!stagedUpdates[legacyCtaKey];
+                    } else if (dayOverride?.cta?.[`${rt.id}_${rp.id}`] !== undefined) {
+                        currentCta = !!dayOverride.cta[`${rt.id}_${rp.id}`];
                     } else if (dayOverride?.cta?.[rp.id] !== undefined) {
                         currentCta = !!dayOverride.cta[rp.id];
                     }
@@ -607,6 +660,10 @@ export const useRateInventory = () => {
                     let currentCtd = !!(rp as any).closedToDeparture;
                     if (stagedUpdates[ctdKey] !== undefined) {
                         currentCtd = !!stagedUpdates[ctdKey];
+                    } else if (stagedUpdates[legacyCtdKey] !== undefined) {
+                        currentCtd = !!stagedUpdates[legacyCtdKey];
+                    } else if (dayOverride?.ctd?.[`${rt.id}_${rp.id}`] !== undefined) {
+                        currentCtd = !!dayOverride.ctd[`${rt.id}_${rp.id}`];
                     } else if (dayOverride?.ctd?.[rp.id] !== undefined) {
                         currentCtd = !!dayOverride.ctd[rp.id];
                     }
@@ -1144,31 +1201,52 @@ export const useRateInventory = () => {
                     const newCtd = { ...(currentDoc.ctd || {}) };
                     const newInv = { ...(currentDoc.inventoryOverrides || {}) };
 
-                    // Apply Rate Adjustments
+                    // Apply Rate Adjustments per Room Type & Rate Plan
                     if (params.rateAction !== "none") {
-                        targetRatePlans.forEach(rp => {
-                            const basePrice = Number(rp.baseRate || 0);
-                            const currPrice = currentDoc.rates?.[rp.id] !== undefined ? currentDoc.rates[rp.id] : basePrice;
+                        targetRoomTypes.forEach(rt => {
+                            targetRatePlans.forEach(rp => {
+                                const compoundKey = `${rt.id}_${rp.id}`;
+                                const basePrice = Number(rp.roomRates?.[rt.id] ?? rp.baseRate ?? rt.basePrice ?? 0);
+                                const currPrice = currentDoc.rates?.[compoundKey] !== undefined 
+                                    ? currentDoc.rates[compoundKey] 
+                                    : (currentDoc.rates?.[rp.id] !== undefined ? currentDoc.rates[rp.id] : basePrice);
 
-                            if (params.rateAction === "set" && params.rateValue !== undefined) {
-                                newRates[rp.id] = params.rateValue;
-                            } else if (params.rateAction === "inc_amount" && params.rateValue !== undefined) {
-                                newRates[rp.id] = currPrice + params.rateValue;
-                            } else if (params.rateAction === "dec_amount" && params.rateValue !== undefined) {
-                                newRates[rp.id] = Math.max(0, currPrice - params.rateValue);
-                            } else if (params.rateAction === "inc_percent" && params.rateValue !== undefined) {
-                                newRates[rp.id] = Math.round(currPrice * (1 + params.rateValue / 100));
-                            } else if (params.rateAction === "dec_percent" && params.rateValue !== undefined) {
-                                newRates[rp.id] = Math.max(0, Math.round(currPrice * (1 - params.rateValue / 100)));
-                            }
+                                let finalPrice = currPrice;
+                                if (params.rateAction === "set" && params.rateValue !== undefined) {
+                                    finalPrice = params.rateValue;
+                                } else if (params.rateAction === "inc_amount" && params.rateValue !== undefined) {
+                                    finalPrice = currPrice + params.rateValue;
+                                } else if (params.rateAction === "dec_amount" && params.rateValue !== undefined) {
+                                    finalPrice = Math.max(0, currPrice - params.rateValue);
+                                } else if (params.rateAction === "inc_percent" && params.rateValue !== undefined) {
+                                    finalPrice = Math.round(currPrice * (1 + params.rateValue / 100));
+                                } else if (params.rateAction === "dec_percent" && params.rateValue !== undefined) {
+                                    finalPrice = Math.max(0, Math.round(currPrice * (1 - params.rateValue / 100)));
+                                }
+                                newRates[compoundKey] = finalPrice;
+                                // Fallback single key if only 1 room type
+                                if (targetRoomTypes.length === 1) {
+                                    newRates[rp.id] = finalPrice;
+                                }
+                            });
                         });
                     }
 
-                    // Apply Stop Sell
+                    // Apply Stop Sell per Room Type & Rate Plan
                     if (params.stopSellAction === "close") {
-                        targetRatePlans.forEach(rp => { newStopSell[rp.id] = true; });
+                        targetRoomTypes.forEach(rt => {
+                            targetRatePlans.forEach(rp => { 
+                                newStopSell[`${rt.id}_${rp.id}`] = true;
+                                if (targetRoomTypes.length === 1) newStopSell[rp.id] = true;
+                            });
+                        });
                     } else if (params.stopSellAction === "open") {
-                        targetRatePlans.forEach(rp => { newStopSell[rp.id] = false; });
+                        targetRoomTypes.forEach(rt => {
+                            targetRatePlans.forEach(rp => { 
+                                newStopSell[`${rt.id}_${rp.id}`] = false;
+                                if (targetRoomTypes.length === 1) newStopSell[rp.id] = false;
+                            });
+                        });
                     }
 
                     // Apply Min Stay Arrival
