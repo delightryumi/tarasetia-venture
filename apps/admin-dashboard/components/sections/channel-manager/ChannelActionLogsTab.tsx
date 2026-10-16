@@ -602,7 +602,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                                         styles.statusRingWarning
                                                     } 
                                                 />
-                                                <span style={{ fontWeight: 600, color: "#09090b", fontSize: "12.5px" }}>{item.action}</span>
+                                                <span style={{ fontWeight: 600, color: "#09090b", fontSize: "11px" }}>{item.action}</span>
                                             </div>
                                         </td>
                                         <td className={styles.td}>
@@ -629,7 +629,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                                                     className={styles.btnCopyAllTasks}
                                                                     title="Salin 2 Task ID sekaligus (format 1 ID per baris untuk Form Sertifikasi Test #1)"
                                                                 >
-                                                                    {copiedField === `task-all-${item.id}` ? <Check size={10} color="#34d399" /> : <Copy size={10} />}
+                                                                    {copiedField === `task-all-${item.id}` ? <Check size={9} color="#34d399" /> : <Copy size={9} />}
                                                                     <span>{copiedField === `task-all-${item.id}` ? "Tersalin (2 Baris)" : "Salin Keduanya"}</span>
                                                                 </button>
                                                             </div>
@@ -649,7 +649,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                                                                 className={styles.multiTaskCopyBtn}
                                                                                 title={`Salin ${label}: ${tid}`}
                                                                             >
-                                                                                {copiedField === `task-${item.id}-${idx}` ? <Check size={10} color="#059669" /> : <Copy size={10} />}
+                                                                                {copiedField === `task-${item.id}-${idx}` ? <Check size={9} color="#059669" /> : <Copy size={9} />}
                                                                             </button>
                                                                         </div>
                                                                     );
@@ -674,36 +674,36 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                                             {tid}
                                                         </span>
                                                         {copiedField === `task-${item.id}` ? (
-                                                            <Check size={11} color="#059669" />
+                                                            <Check size={10} color="#059669" />
                                                         ) : (
-                                                            <Copy size={11} className={styles.taskIdCopyIcon} />
+                                                            <Copy size={10} className={styles.taskIdCopyIcon} />
                                                         )}
                                                     </button>
                                                 );
                                             })()}
                                         </td>
                                         <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
-                                            <span style={{ fontWeight: 500, color: "#334155", fontSize: "12px" }}>
+                                            <span style={{ fontWeight: 500, color: "#334155", fontSize: "11px" }}>
                                                 {item.channelName}
                                             </span>
                                         </td>
                                         <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
-                                            <span style={{ fontSize: "12px", color: "#64748b" }}>
+                                            <span style={{ fontSize: "11px", color: "#64748b" }}>
                                                 {item.user}
                                             </span>
                                         </td>
                                         <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
-                                            <span style={{ fontFamily: "var(--font-mono-jb, monospace)", fontSize: "11.5px", color: "#334155" }}>
+                                            <span style={{ fontFamily: "var(--font-mono-jb, monospace)", fontSize: "10.5px", color: "#334155" }}>
                                                 {formatTimestamp(item.started_at || item.inserted_at)}
                                             </span>
                                         </td>
                                         <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
-                                            <span style={{ fontFamily: "var(--font-mono-jb, monospace)", fontSize: "11.5px", color: "#64748b" }}>
+                                            <span style={{ fontFamily: "var(--font-mono-jb, monospace)", fontSize: "10.5px", color: "#64748b" }}>
                                                 {item.execution_time_ms ? `${item.execution_time_ms} ms` : "-"}
                                             </span>
                                         </td>
                                         <td className={styles.td} style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                                            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                                            <div style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
                                                 <button
                                                     type="button"
                                                     onClick={() => setSelectedEvent(item)}
@@ -718,7 +718,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                                     title="Hapus baris log ini"
                                                     aria-label={`Hapus log ${item.action}`}
                                                 >
-                                                    <Trash2 size={13} />
+                                                    <Trash2 size={12} />
                                                 </button>
                                             </div>
                                         </td>

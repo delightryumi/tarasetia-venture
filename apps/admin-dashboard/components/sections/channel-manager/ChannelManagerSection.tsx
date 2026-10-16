@@ -2998,7 +2998,7 @@ export function ChannelManagerSection() {
                                                                 </span>
                                                                 {channelConfigs[ch.code]?.channexChannelId && (
                                                                     <div 
-                                                                        onClick={() => copyText(channelConfigs[ch.code].channexChannelId, "Channel ID")}
+                                                                        onClick={() => copyText(channelConfigs[ch.code]?.channexChannelId || "", "Channel ID")}
                                                                         style={{ fontSize: "10px", color: "var(--s-muted, #64748b)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px", marginTop: "2px" }}
                                                                         title="Klik untuk menyalin Channel ID lengkap"
                                                                     >
@@ -3125,7 +3125,7 @@ export function ChannelManagerSection() {
                                                     <span>Hotel ID: <b>{hotelId || "(Belum Diatur)"}</b></span>
                                                     {channelConfigs[ch.code]?.channexChannelId && (
                                                         <span 
-                                                            onClick={() => copyText(channelConfigs[ch.code].channexChannelId, "Channel ID")}
+                                                            onClick={() => copyText(channelConfigs[ch.code]?.channexChannelId || "", "Channel ID")}
                                                             style={{ fontSize: "10.5px", color: "#71717a", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
                                                             title="Klik untuk menyalin Channel ID lengkap"
                                                         >
